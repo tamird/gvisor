@@ -19,7 +19,7 @@ def benchmark_test(name, tags = [], use_for_pgo = True, **kwargs):
         tags = tags + ["gvisor_pgo_benchmark"]
 
     # Requires docker and runsc at execution time, not during compilation.
-    kwargs["local"] = True
+    kwargs.setdefault("local", True)
     kwargs["args"] = ["-test.v=false"] + (kwargs.pop("args", []) or [])
     go_test(
         name,

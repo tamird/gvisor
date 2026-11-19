@@ -26,7 +26,10 @@ import (
 
 var (
 	help  = flag.Bool("help", false, "print this usage message")
-	debug = flag.Bool("debug", false, "turns on debug messages for individual benchmarks")
+	ownedDocker = flag.Bool("owned-docker", false, "start a private Docker worker from declared inputs")
+ workerRunsc = flag.String("worker-runsc", "", "entrypoint in the declared complete runsc release; empty selects native runc")
+ workerArchives = flag.String("worker-image-archives", "", "comma-separated declared Docker-save archives")
+ debug = flag.Bool("debug", false, "turns on debug messages for individual benchmarks")
 )
 
 // Init performs any harness initialization before runs.
@@ -40,7 +43,9 @@ func Init() error {
 		flag.Usage()
 		os.Exit(0)
 	}
-	dockerutil.EnsureSupportedDockerVersion()
+	if !*ownedDocker {
+ dockerutil.EnsureSupportedDockerVersion()
+ }
 	return nil
 }
 

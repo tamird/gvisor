@@ -474,6 +474,7 @@ use_repo(
     "com_github_felixge_httpsnoop",
     "com_github_fxamacker_cbor_v2",
     "com_github_go_echarts_go_echarts_v2",
+    "com_github_go_json_experiment_json",
     "com_github_go_logr_logr",
     "com_github_go_logr_stdr",
     "com_github_go_openapi_jsonpointer",
@@ -1036,4 +1037,28 @@ go_deps.gazelle_override(
         "gazelle:proto disable_global",
     ],
     path = "k8s.io/apimachinery",
+)
+
+img_pull(
+    name = "benchmark_node_amd64",
+    digest = "sha256:b2cb415cd6e6c0fe9dd98351b0629a8e2b8caaeb2188eb6c586f07a6d8faf287",
+    layer_handling = "eager",
+    registries = ["us-central1-docker.pkg.dev"],
+    repository = "gvisor-presubmit/gvisor-presubmit-images/benchmarks/node_x86_64",
+)
+
+img_pull(
+    name = "benchmark_hey_amd64",
+    digest = "sha256:4ee056774685f11df9503e9e67db54d5fcb1a9c9d9ffa9afa3b1ce93bb9e02b0",
+    layer_handling = "eager",
+    registries = ["us-central1-docker.pkg.dev"],
+    repository = "gvisor-presubmit/gvisor-presubmit-images/benchmarks/hey_x86_64",
+)
+
+img_pull(
+    name = "benchmark_util_amd64",
+    digest = "sha256:1c1e09a0ed76fec9cb2489227c8e9ad4f7c45d824126b12a1610c45ead46cbe5",
+    layer_handling = "eager",
+    registries = ["us-central1-docker.pkg.dev"],
+    repository = "gvisor-presubmit/gvisor-presubmit-images/benchmarks/util_x86_64",
 )

@@ -89,3 +89,24 @@ image_outputs(
     }),
     image_name = "benchmarks/alpine",
 )
+
+image_outputs(
+    name = "benchmark_node",
+    archive_visibility = ["//test/benchmarks/network:__pkg__"],
+    image = "@benchmark_node_amd64",
+    image_name = "benchmarks/node",
+)
+
+image_outputs(
+    name = "benchmark_hey",
+    archive_visibility = ["//test/benchmarks/network:__pkg__"],
+    image = "@benchmark_hey_amd64",
+    image_name = "benchmarks/hey",
+)
+
+image_outputs(
+    name = "benchmark_util",
+    archive_visibility = ["//test/benchmarks/network:__pkg__"],
+    image = "@benchmark_util_amd64",
+    image_name = "benchmarks/util",
+)

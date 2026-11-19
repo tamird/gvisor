@@ -54,6 +54,44 @@ benchmark_test(
 )
 
 benchmark_test(
+    name = "node_worker_test",
+    srcs = [
+        "node_test.go",
+    ],
+    args = [
+        "--owned-docker",
+        "--worker-image-archives=$(rootpath //images:benchmark_node_archive),$(rootpath //images:benchmark_hey_archive),$(rootpath //images:benchmark_util_archive),$(rootpath //images/basic:benchmark_redis_archive)",
+        "-test.run=^$",
+        "-test.bench=^BenchmarkNode$",
+        "-test.benchtime=25x",
+    ],
+    data = [
+        "//images:benchmark_hey_archive",
+        "//images:benchmark_node_archive",
+        "//images:benchmark_util_archive",
+        "//images/basic:benchmark_redis_archive",
+    ],
+    embed = [":network"],
+    exec_properties = {
+        "test.init-dockerd": "false",
+        "test.workload-isolation-type": "firecracker",
+    },
+    local = False,
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    use_for_pgo = False,
+    visibility = ["//:sandbox"],
+    deps = [
+        "//pkg/test/dockerutil",
+        "//test/benchmarks/harness",
+        "//test/benchmarks/tools",
+        "//test/metricsviz",
+    ],
+)
+
+benchmark_test(
     name = "ruby_test",
     srcs = [
         "ruby_test.go",

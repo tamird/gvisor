@@ -25,9 +25,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
-	"syscall"
 	"testing"
 	"time"
 
@@ -37,11 +35,12 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/errdefs"
 	"gvisor.dev/gvisor/pkg/test/testutil"
+ "gvisor.dev/gvisor/test/benchmarks/harness"
 )
 
 var (
 	alpineArchive   = flag.String("alpine-archive", "", "declared Alpine Docker-save archive")
-	workerRuntime   = flag.String("runtime", "runc", "runtime under test: runc or runsc")
+	workerRuntime   = flag.String("worker-runtime", "runc", "runtime under test: runc or runsc")
 	runscEntrypoint = flag.String("release-runsc", "", "assembled entrypoint of the declared complete release")
 )
 
@@ -85,7 +84,7 @@ func testDockerWorker(t *testing.T, bridge bool) {
 	default:
 		t.Fatalf("unsupported worker runtime %q", *workerRuntime)
 	}
-	host, selectedRuntime := startDockerDaemon(t, ctx, runsc, bridge)
+	host, selectedRuntime, _ := harness.StartDockerDaemon(t, ctx, runsc, bridge)
 	cli, err := client.NewClientWithOpts(client.WithHost(host), client.WithAPIVersionNegotiation())
 	if err != nil {
 		t.Fatal(err)
@@ -255,268 +254,6 @@ printf 'container\n' > /shared/output`},
 		info, err := os.Lstat(filepath.Join(dir, "fifo"))
 		if err != nil || info.Mode()&os.ModeNamedPipe == 0 {
 			t.Fatalf("bind-mounted FIFO = %v, %v", info, err)
-		}
-	}
-}
-
-// startDockerDaemon starts a daemon whose storage, socket and child processes
-// belong to this test. Its cleanup runs after container and client cleanup.
-func startDockerDaemon(t *testing.T, ctx context.Context, runsc string, bridge bool) (string, string) {
-	t.Helper()
-	interfaces, err := net.Interfaces()
-	if err != nil {
-		t.Fatalf("list network interfaces before Docker startup: %v", err)
-	}
-	for _, iface := range interfaces {
-		if iface.Name == "docker0" {
-			t.Fatal("fresh Docker worker already has a docker0 bridge")
-		}
-	}
-	var parentNet string
-	var forwarding []byte
-	if bridge {
-		parentNet, err = os.Readlink("/proc/self/ns/net")
-		if err != nil {
-			t.Fatal(err)
-		}
-		forwarding, err = os.ReadFile("/proc/sys/net/ipv4/ip_forward")
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-	root, err := os.MkdirTemp(os.Getenv("TEST_TMPDIR"), "dockerd-")
-	if err != nil {
-		t.Fatal(err)
-	}
-	socket := filepath.Join(root, "docker.sock")
-	dataRoot := filepath.Join(root, "data")
-	execRoot := filepath.Join(root, "e")
-	// Docker-managed containerd reserves space for socket suffixes.
-	managedSocket := filepath.Join(execRoot, "containerd", "containerd.sock.ttrpc")
-	if len(managedSocket) > 104 {
-		os.RemoveAll(root)
-		t.Fatalf("owned containerd socket path is too long: %d bytes", len(managedSocket))
-	}
-	if len(socket) >= 108 {
-		os.RemoveAll(root)
-		t.Fatalf("owned Docker socket path is too long: %d bytes", len(socket))
-	}
-	configPath := filepath.Join(root, "daemon.json")
-	settings := map[string]any{
-		"hosts":     []string{"unix://" + socket},
-		"bridge":    "none",
-		"iptables":  false,
-		"ip6tables": false,
-		"data-root": dataRoot,
-		"exec-root": execRoot,
-		"pidfile":   filepath.Join(root, "docker.pid"),
-	}
-	if bridge {
-		delete(settings, "bridge")
-		settings["ip-forward"] = true
-	}
-	config, err := json.Marshal(settings)
-	if err != nil {
-		os.RemoveAll(root)
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(configPath, config, 0600); err != nil {
-		os.RemoveAll(root)
-		t.Fatal(err)
-	}
-	logPath := filepath.Join(root, "daemon.log")
-	log, err := os.Create(logPath)
-	if err != nil {
-		os.RemoveAll(root)
-		t.Fatal(err)
-	}
-	cmd := exec.Command("dockerd", "--config-file="+configPath)
-	cmd.Stdout, cmd.Stderr = log, log
-	// Keep Docker mounts out of the test's mount namespace. Go marks the
-	// child namespace recursively private before exec.
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Unshareflags: syscall.CLONE_NEWNS}
-	if bridge {
-		cmd.SysProcAttr.Unshareflags |= syscall.CLONE_NEWNET
-	}
-	var exited chan error
-	t.Cleanup(func() {
-		stopped := true
-		if cmd.Process != nil {
-			pgid := cmd.Process.Pid
-			if err := syscall.Kill(-pgid, syscall.SIGTERM); err != nil && err != syscall.ESRCH {
-				t.Errorf("terminate owned Docker group: %v", err)
-			}
-			deadline := time.Now().Add(10 * time.Second)
-			for syscall.Kill(-pgid, 0) == nil && time.Now().Before(deadline) {
-				time.Sleep(20 * time.Millisecond)
-			}
-			if err := syscall.Kill(-pgid, 0); err != syscall.ESRCH {
-				if err := syscall.Kill(-pgid, syscall.SIGKILL); err != nil && err != syscall.ESRCH {
-					t.Errorf("kill owned Docker group: %v", err)
-				}
-			}
-			select {
-			case <-exited:
-			case <-time.After(2 * time.Second):
-				t.Error("owned Docker leader was not reaped")
-				stopped = false
-			}
-			deadline = time.Now().Add(2 * time.Second)
-			for syscall.Kill(-pgid, 0) == nil && time.Now().Before(deadline) {
-				time.Sleep(20 * time.Millisecond)
-			}
-			if err := syscall.Kill(-pgid, 0); err != syscall.ESRCH {
-				t.Errorf("owned Docker process group remains: %v", err)
-				stopped = false
-			}
-		}
-		if bridge {
-			current, err := os.Readlink("/proc/self/ns/net")
-			if err != nil || current != parentNet {
-				t.Errorf("parent network namespace changed: %q, %v", current, err)
-			}
-			currentForwarding, err := os.ReadFile("/proc/sys/net/ipv4/ip_forward")
-			if err != nil || string(currentForwarding) != string(forwarding) {
-				t.Errorf("parent IP forwarding changed: %q, %v", currentForwarding, err)
-			}
-			interfaces, err := net.Interfaces()
-			if err != nil {
-				t.Errorf("list parent interfaces after Docker cleanup: %v", err)
-			}
-			for _, iface := range interfaces {
-				if iface.Name == "docker0" {
-					t.Error("Docker bridge appeared in the parent network namespace")
-				}
-			}
-		}
-		if err := log.Close(); err != nil {
-			t.Errorf("close Docker log: %v", err)
-		}
-		if t.Failed() {
-			f, err := os.Open(logPath)
-			if err == nil {
-				defer f.Close()
-				if info, err := f.Stat(); err == nil && info.Size() > 8192 {
-					f.Seek(-8192, io.SeekEnd)
-				}
-				data, _ := io.ReadAll(io.LimitReader(f, 8192))
-				t.Logf("owned Docker daemon log tail: %s", data)
-			}
-		}
-		rootCleaned := false
-		if stopped {
-			if err := os.RemoveAll(root); err != nil {
-				t.Errorf("remove owned Docker files: %v", err)
-			} else {
-				rootCleaned = true
-			}
-		}
-		if err := json.NewEncoder(os.Stdout).Encode(struct {
-			DaemonStopped bool `json:"owned_daemon_stopped"`
-			RootCleaned   bool `json:"owned_daemon_files_removed"`
-		}{stopped, rootCleaned}); err != nil {
-			t.Errorf("write daemon cleanup metadata: %v", err)
-		}
-	})
-	selectedRuntime := "runc"
-	if runsc != "" {
-		selectedRuntime = "gvisor-worker-" + strings.ToLower(rand.Text())
-		runtimeRoot := filepath.Join(root, "runsc")
-		if err := os.Mkdir(runtimeRoot, 0700); err != nil {
-			t.Fatal(err)
-		}
-		env := make([]string, 0, len(os.Environ())+1)
-		for _, value := range os.Environ() {
-			if !strings.HasPrefix(value, "GVISOR_SIDECAR_BINARIES_DIR=") {
-				env = append(env, value)
-			}
-		}
-		env = append(env, "GVISOR_SIDECAR_BINARIES_DIR="+filepath.Join(filepath.Dir(runsc), "gvisor-bin"))
-		cmd.Env = env
-		install := exec.CommandContext(ctx, runsc, "install", "--config_file="+configPath,
-			"--runtime="+selectedRuntime, "--clobber=false", "--download-sidecars=NEVER",
-			"--require-sidecars=ALWAYS", "--", "--platform=systrap", "--root="+runtimeRoot)
-		install.Env = env
-		if output, err := install.CombinedOutput(); err != nil {
-			t.Fatalf("install declared runsc runtime: %v: %s", err, output)
-		}
-		contents, err := os.ReadFile(configPath)
-		if err != nil {
-			t.Fatal(err)
-		}
-		var installed struct {
-			Runtimes map[string]struct {
-				Path string   `json:"path"`
-				Args []string `json:"runtimeArgs"`
-			} `json:"runtimes"`
-		}
-		if err := json.Unmarshal(contents, &installed); err != nil {
-			t.Fatal(err)
-		}
-		entry, ok := installed.Runtimes[selectedRuntime]
-		if !ok || entry.Path != runsc || len(installed.Runtimes) != 1 || len(entry.Args) != 2 || entry.Args[0] != "--platform=systrap" || entry.Args[1] != "--root="+runtimeRoot {
-			t.Fatalf("installed runsc configuration does not match the owned runtime: %+v", installed)
-		}
-		t.Cleanup(func() {
-			cleanupCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
-			list := exec.CommandContext(cleanupCtx, runsc, "--root="+runtimeRoot, "list", "--format=json")
-			list.Env = env
-			output, err := list.Output()
-			if err != nil {
-				t.Errorf("list owned runsc containers after Docker cleanup: %v", err)
-				return
-			}
-			var remaining []json.RawMessage
-			if err := json.Unmarshal(output, &remaining); err != nil || len(remaining) != 0 {
-				t.Errorf("owned runsc containers remain: %s (%v)", output, err)
-				return
-			}
-			if err := json.NewEncoder(os.Stdout).Encode(struct {
-				RuntimeEmpty bool `json:"owned_runsc_empty"`
-			}{true}); err != nil {
-				t.Errorf("write runsc cleanup metadata: %v", err)
-			}
-		})
-	}
-	if err := cmd.Start(); err != nil {
-		t.Fatalf("start owned Docker daemon: %v", err)
-	}
-	exited = make(chan error, 1)
-	go func() { exited <- cmd.Wait() }()
-	if bridge {
-		childNet, err := os.Readlink("/proc/" + strconv.Itoa(cmd.Process.Pid) + "/ns/net")
-		if err != nil || childNet == parentNet {
-			t.Fatalf("Docker network namespace is not private: %q, %v", childNet, err)
-		}
-	}
-	cli, err := client.NewClientWithOpts(client.WithHost("unix://"+socket), client.WithAPIVersionNegotiation())
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer cli.Close()
-	ticker := time.NewTicker(100 * time.Millisecond)
-	defer ticker.Stop()
-	for {
-		select {
-		case err := <-exited:
-			exited <- err
-			t.Fatalf("owned Docker daemon exited before readiness: %v", err)
-		case <-ctx.Done():
-			t.Fatalf("owned Docker daemon readiness: %v", ctx.Err())
-		case <-ticker.C:
-			if _, err := cli.Ping(ctx); err == nil {
-				if runsc != "" {
-					info, err := cli.Info(ctx)
-					if err != nil {
-						t.Fatalf("inspect installed Docker runtime: %v", err)
-					}
-					if entry, ok := info.Runtimes[selectedRuntime]; !ok || entry.Path != runsc {
-						t.Fatalf("Docker did not load the declared runtime %q", selectedRuntime)
-					}
-				}
-				return "unix://" + socket, selectedRuntime
-			}
 		}
 	}
 }

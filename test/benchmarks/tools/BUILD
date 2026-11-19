@@ -23,6 +23,7 @@ go_library(
     ],
     importpath = "gvisor.dev/gvisor/test/benchmarks/tools",
     visibility = ["//:sandbox"],
+    deps = ["@com_github_go_json_experiment_json//:json"],
 )
 
 go_test(

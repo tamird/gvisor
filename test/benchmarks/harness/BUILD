@@ -9,6 +9,8 @@ go_library(
     name = "harness",
     testonly = 1,
     srcs = [
+        "docker_worker_linux.go",
+        "docker_worker_unsupported.go",
         "harness.go",
         "machine.go",
         "util.go",
@@ -20,6 +22,7 @@ go_library(
         "//pkg/test/dockerutil",
         "//pkg/test/testutil",
         "@com_github_docker_docker//api/types/mount:go_default_library",
+        "@com_github_docker_docker//client:go_default_library",
     ],
 )
 
@@ -38,6 +41,7 @@ go_test(
     tags = ["manual"],
     target_compatible_with = ["@platforms//os:linux"],
     deps = [
+        ":harness",
         "//pkg/test/testutil",
         "@com_github_docker_docker//api/types/container:go_default_library",
         "@com_github_docker_docker//api/types/mount:go_default_library",
@@ -68,7 +72,7 @@ go_test(
     srcs = ["docker_worker_test.go"],
     args = [
         "--alpine-archive=$(rootpath //images/basic:alpine_archive)",
-        "--runtime=runsc",
+        "--worker-runtime=runsc",
         "--release-runsc=$(rootpath :runsc_entrypoint)",
     ],
     data = [
@@ -84,6 +88,7 @@ go_test(
     tags = ["manual"],
     target_compatible_with = ["@platforms//os:linux"],
     deps = [
+        ":harness",
         "//pkg/test/testutil",
         "@com_github_docker_docker//api/types/container:go_default_library",
         "@com_github_docker_docker//api/types/mount:go_default_library",
