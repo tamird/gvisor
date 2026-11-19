@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-19T11:49:55.882922+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-19T11:00:16.411290+00:00",
+  "registryDate": "2026-11-19T12:00:52.475051+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -397166,9 +397166,6 @@
           "state": "unknown"
         },
         "description": "No matching public export was found in the complete lookup."
-      },
-      "inspectedReviewHeads": {
-        "PRRC_kwDOB9IlXs8AAAABEMQaoQ": "80c001d2b316feaa887a5ee53498d6ee55799a6a"
       }
     },
     {
@@ -445518,7 +445515,7 @@
       "number": 15730,
       "head": "58fb6b08096d65974497d16c020b3f8a0cd955a8",
       "sourceNumber": 15730,
-      "owner": "root",
+      "owner": "systrap_regression",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABhcY25A",
       "needsTriage": false,
@@ -445556,7 +445553,7 @@
       "number": 15730,
       "head": "58fb6b08096d65974497d16c020b3f8a0cd955a8",
       "sourceNumber": 15730,
-      "owner": "root",
+      "owner": "systrap_regression",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABiG3yvw",
       "needsTriage": false,
@@ -447147,10 +447144,30 @@
   "reviewWatchHandoff": [
     {
       "repo": "google/gvisor",
+      "number": 17374,
+      "head": "7a76e29df38e1627c28a852d936c83bec6e9ac67",
+      "action": "Await before/after results from an existing broad workload benchmark before full approval. Re-review new source or evidence; do not substitute component samples or claim fresh runtime validation. Keep the outstanding broad benchmark approval obligation separate from the consumed native request.",
+      "claimed": true,
+      "firstObservedHead": "80c001d2b316feaa887a5ee53498d6ee55799a6a",
+      "reviewHead": null,
+      "kind": "inline",
+      "id": "PRRC_kwDOB9IlXs8AAAABEMQaoQ",
+      "url": "https://github.com/google/gvisor/pull/17374#discussion_r4576254625",
+      "author": "botirkhaltaev",
+      "updatedAt": "2026-11-14T23:48:44Z",
+      "threadId": "PRRT_kwDOB9IlXs62cYS5",
+      "rootURL": "https://github.com/google/gvisor/pull/17374#discussion_r4545607204",
+      "rootId": "PRRC_kwDOB9IlXs8AAAABDvB2JA",
+      "owner": "root",
+      "assigned": false,
+      "feedbackComplete": true
+    },
+    {
+      "repo": "google/gvisor",
       "number": 16887,
       "head": "dce51b337bb15dd1e81800ded9f56c6f4e21930c",
-      "action": "Read the reply on this review and follow up on the current revision.",
-      "claimed": false,
+      "action": "Await before/after results from an existing broad network benchmark before full approval. Do not substitute the reported component samples. Re-review changed source or new author evidence while preserving Botir's source ownership.",
+      "claimed": true,
       "firstObservedHead": "1668e58d4c0cb17ecb5fcf6457389575a3c01459",
       "reviewHead": null,
       "kind": "comment",
@@ -447161,7 +447178,7 @@
       "threadId": null,
       "rootURL": null,
       "rootId": null,
-      "owner": "Netstack",
+      "owner": "root",
       "assigned": false,
       "feedbackComplete": true
     },
@@ -447327,7 +447344,7 @@
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "disposition": "First permanent Bazel NORMAL layer passes on340e test source/fa452 shared CI: actual five-configuration GoInfo selection and tiny executed protobuf report after counter clearing. Removing only the coverage patch produces the expected own/both generated-PB selection failures. This does not close full Sentry generated-position fidelity, Uname, ARM/RACE/performance or original PR conflict.",
-        "nextAction": "Root completes the native-C toolchain mechanism fix and validates the missing ARM build/runtime and RACE matrix through permanent Bazel owners, preserving the AMD64 NORMAL100-iteration and current-inventory passes. Current-source legacy parity and controlled performance remain open; no contributor permission decision."
+        "nextAction": "Complete the RACE matrix, matched current-source legacy parity and controlled performance through permanent Bazel owners. Reuse valid AMD/ARM NORMAL evidence; normal coverage does not establish those remaining gates or resolve the original PR publication conflict."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -448363,10 +448380,10 @@
         }
       ],
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "systrap_regression",
         "sourceHead": "58fb6b08096d65974497d16c020b3f8a0cd955a8",
         "disposition": "Footer-only DCO metadata is published and green; technical source/import obligations remain. Preserve nybidari internal dependency and landing coordination.",
-        "nextAction": "Root completes the independent owning EOF follow-ups and validates whether it resolves the retained netgofer teardown; do not call the original failure a flake or proven EOF manifestation. Complete remaining ARM-Nogo native-C compiler gate through its responsible mechanism. Preserve nybidari internal dependency/import coordination and original source-review boundaries; no permission, suppression or blind retry."
+        "nextAction": "Advance the remaining netgofer functional evidence and separate EOF diagnosis. Preserve the private importing dependency; no original-PR push, blind retry or performance/import-completion claim."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN0QEaKw"
@@ -448995,7 +449012,7 @@
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "disposition": "First permanent Bazel NORMAL layer passes on340e test source/fa452 shared CI: actual five-configuration GoInfo selection and tiny executed protobuf report after counter clearing. Removing only the coverage patch produces the expected own/both generated-PB selection failures. This does not close full Sentry generated-position fidelity, Uname, ARM/RACE/performance or original PR conflict.",
-        "nextAction": "Root completes the native-C toolchain mechanism fix and validates the missing ARM build/runtime and RACE matrix through permanent Bazel owners, preserving the AMD64 NORMAL100-iteration and current-inventory passes. Current-source legacy parity and controlled performance remain open; no contributor permission decision."
+        "nextAction": "Complete the RACE matrix, matched current-source legacy parity and controlled performance through permanent Bazel owners. Reuse valid AMD/ARM NORMAL evidence; normal coverage does not establish those remaining gates or resolve the original PR publication conflict."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN0DBRBA"
@@ -449160,10 +449177,10 @@
         }
       ],
       "recordedFollowup": {
-        "owner": "fuse_full20_resume",
+        "owner": "root",
         "sourceHead": "7f37bebc1adeb13213c29774b278d3e3e861fff5",
-        "disposition": "Approved production and generator tests published as one signed DCO commit7f37bebc on latest upstream a05. Exact three topic blobs and net patch match the approved series. Source ref and PR projection read back; DCO passes and GitHub reports mergeable. Current-head First Pass1880 failed at pipeline upload exit80; canonical primary logs are empty, so the cause remains unknown. No source failure is inferred.",
-        "nextAction": "Follow exact-head lightweight checks and canonical First Pass1880 diagnosis, then substantive maintainer/import changes. No repeated source, DCO, squash or publication approval."
+        "disposition": "The approved production and tests are published as one signed DCO commit 7f37bebc. All six native checks pass. First Pass 1880 rejected pipeline upload before agent assignment because the author reached the 30-day, 360,000 compute-minute quota. Public job metadata supplies the cause despite an empty log.",
+        "nextAction": "Follow actual provider quota recovery and substantive review/import changes. No source rewrite, blind retry, repeated approval or manual DCO step."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN0dTBVw"
@@ -455518,10 +455535,10 @@
         }
       ],
       "recordedFollowup": {
-        "owner": "coverage_security_review",
+        "owner": "root",
         "sourceHead": "fed8dca3a5b49843809ae3fa70befdfe532b9e6f",
-        "disposition": "DELIVERED as17808 at a1ab971; exact approved patch preserved. DCO passes. First Pass1879 rejected before agent execution by 30-day compute-minute quota.",
-        "nextAction": "Follow exact-head checks, substantive review and provider quota recovery; no blind retry, duplicate PR or approval question."
+        "disposition": "Delivered PR17808 remains mergeable; all GitHub checks and DCO pass. First Pass 1879 failed before tests because the author reached the 30-day, 360,000 compute-minute quota. No source failure was observed.",
+        "nextAction": "Root follows the already-assigned reviewers and provider admission recovery. Do not duplicate reviewer notifications or retry the rejected build."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN0ci3Xg"
@@ -463963,7 +463980,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T11:00:16.411290+00:00"
+        "observedAt": "2026-11-19T12:00:52.475051+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -463972,7 +463989,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T11:00:16.411290+00:00"
+        "observedAt": "2026-11-19T12:00:52.475051+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -463981,7 +463998,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T11:00:16.411290+00:00"
+        "observedAt": "2026-11-19T12:00:52.475051+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -463990,7 +464007,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T11:00:16.411290+00:00"
+        "observedAt": "2026-11-19T12:00:52.475051+00:00"
       }
     },
     "issue:google/benchmark:1634": {
@@ -463999,7 +464016,7 @@
         "since": "2026-11-19T00:39:33.110112+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T11:00:16.411290+00:00"
+        "observedAt": "2026-11-19T12:00:52.475051+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464008,7 +464025,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T11:00:16.411290+00:00"
+        "observedAt": "2026-11-19T12:00:52.475051+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464017,7 +464034,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T11:00:16.411290+00:00"
+        "observedAt": "2026-11-19T12:00:52.475051+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464026,7 +464043,16 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T11:00:16.411290+00:00"
+        "observedAt": "2026-11-19T12:00:52.475051+00:00"
+      }
+    },
+    "branch:buildkite-pre-agent-details": {
+      "contributor-review": {
+        "scope": "25948ae156fc3e39cd2231c0c4c9131adb4e1ef7",
+        "since": "2026-11-19T12:00:52.475051+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-19T12:00:52.475051+00:00"
       }
     }
   },
