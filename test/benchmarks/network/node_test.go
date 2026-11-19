@@ -18,6 +18,7 @@ import (
 	"flag"
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -122,9 +123,17 @@ func runNode(b *testing.B, hey *tools.Hey) {
 		Links:      []string{nodeApp.MakeLink("node")},
 		CpusetCpus: harness.ClientCPUSet(),
 	}
-	if *nodeWarmupRequests > 0 {
+	warmupRequests := *nodeWarmupRequests
+	if count, fixed := strings.CutSuffix(flag.Lookup("test.benchtime").Value.String(), "x"); fixed && b.N == 1 {
+		if iterations, err := strconv.Atoi(count); err == nil && iterations > 1 {
+			// testing.B discards this calibration server before the fixed-count
+			// measurement. Warm only the server whose requests are measured.
+			warmupRequests = 0
+		}
+	}
+	if warmupRequests > 0 {
 		warmup := *hey
-		warmup.Requests = *nodeWarmupRequests
+		warmup.Requests = warmupRequests
 		warmupClient := clientMachine.GetNativeContainer(ctx, b)
 		defer warmupClient.CleanUp(ctx)
 		// Warm the same server process whose requests will be measured.
