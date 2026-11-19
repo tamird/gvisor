@@ -66,10 +66,14 @@ def _runner_test_impl(ctx):
     if ctx.attr.requires_atime:
         runfiles = runfiles.merge(ctx.attr._setup_container[DefaultInfo].default_runfiles)
         runfiles = runfiles.merge(ctx.runfiles(files = [ctx.executable._setup_container]))
-    return [DefaultInfo(executable = runner, runfiles = runfiles)]
+    providers = [DefaultInfo(executable = runner, runfiles = runfiles)]
+    if ctx.attr.env:
+        providers.append(RunEnvironmentInfo(environment = ctx.attr.env))
+    return providers
 
 _runner_test = rule(
     attrs = {
+        "env": attr.string_dict(),
         "runner": attr.label(
             default = "//test/runner:runner",
         ),
