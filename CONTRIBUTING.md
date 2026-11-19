@@ -90,7 +90,8 @@ install [clangd][clangd] on the host, then generate its compilation database:
 ```sh
 bazel run --platforms=@platforms//host //tools/compile_commands -- \
   --resolve --bazel-command=bazel //test/... //tools/...
-bazel build --aspects=//tools:cc_compile_inputs.bzl%cc_compile_inputs \
+bazel build --remote_download_outputs=all \
+  --aspects=//tools:cc_compile_inputs.bzl%cc_compile_inputs \
   --output_groups=cc_compile_inputs //test/... //tools/...
 ```
 
@@ -98,6 +99,8 @@ The first command runs the maintained generator recommended in [Bazel's IDE
 documentation](https://bazel.build/install/ide#autocomplete-for-source-code).
 The second materializes generated sources and headers without compiling the
 tests. Run it last so that Bazel leaves their execution-root paths available.
+Download all outputs because a generator can produce a header and source in
+the same action.
 After reloading the editor window, clangd should work.
 
 ### Other Editors

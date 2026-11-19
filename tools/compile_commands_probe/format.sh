@@ -9,4 +9,4 @@ assert joined.split() == options
 print(joined)
 OPTIONS
 )
-bash tools/lint.sh --bazel="$QUALIFICATION_BAZEL" --bazel-options="$options"
+bash tools/lint.sh --bazel="$QUALIFICATION_BAZEL" --bazel-options="$options" spelling
