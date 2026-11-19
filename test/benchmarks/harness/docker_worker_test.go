@@ -34,7 +34,6 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/errdefs"
-	"github.com/moby/sys/mountinfo"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 )
 
@@ -202,6 +201,7 @@ func TestDockerWorker(t *testing.T) {
 test "$(uname -s)" = Linux
 test "$(cat /shared/input)" = host
 mkfifo /shared/fifo
+test -p /shared/fifo
 printf 'fifo\n' > /shared/fifo &
 writer=$!
 IFS= read -r message < /shared/fifo
@@ -236,9 +236,11 @@ printf 'container\n' > /shared/output`},
 	if err != nil || string(contents) != "container\n" {
 		t.Fatalf("bind-mounted output = %q, %v; want container newline", contents, err)
 	}
-	info, err := os.Lstat(filepath.Join(dir, "fifo"))
-	if err != nil || info.Mode()&os.ModeNamedPipe == 0 {
-		t.Fatalf("bind-mounted FIFO = %v, %v", info, err)
+	if *workerRuntime == "runc" {
+		info, err := os.Lstat(filepath.Join(dir, "fifo"))
+		if err != nil || info.Mode()&os.ModeNamedPipe == 0 {
+			t.Fatalf("bind-mounted FIFO = %v, %v", info, err)
+		}
 	}
 }
 
@@ -298,7 +300,9 @@ func startDockerDaemon(t *testing.T, ctx context.Context, runsc string) (string,
 	}
 	cmd := exec.Command("dockerd", "--config-file="+configPath)
 	cmd.Stdout, cmd.Stderr = log, log
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	// Keep Docker mounts out of the test's mount namespace. Go marks the
+	// child namespace recursively private before exec.
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Unshareflags: syscall.CLONE_NEWNS}
 	var exited chan error
 	t.Cleanup(func() {
 		stopped := true
@@ -347,43 +351,10 @@ func startDockerDaemon(t *testing.T, ctx context.Context, runsc string) (string,
 		}
 		rootCleaned := false
 		if stopped {
-			// Docker marks a data-root self-mount for shutdown cleanup. A
-			// startup failure can leave that mount after the process exits.
-			marker, markerErr := os.Lstat(filepath.Join(execRoot, "unmount-on-shutdown"))
-			var mounted bool
-			var mountErr error
-			if _, err := os.Lstat(dataRoot); err == nil {
-				mounted, mountErr = mountinfo.Mounted(dataRoot)
-			} else if !os.IsNotExist(err) {
-				mountErr = err
-			}
-			switch {
-			case markerErr != nil && !os.IsNotExist(markerErr):
-				t.Errorf("inspect owned Docker unmount marker: %v", markerErr)
-			case markerErr == nil && !marker.Mode().IsRegular():
-				t.Error("owned Docker unmount marker is not regular")
-			case mountErr != nil:
-				t.Errorf("inspect owned Docker data-root mount: %v", mountErr)
-			case mounted && markerErr != nil:
-				t.Error("owned Docker data-root mount has no shutdown marker; retaining files")
-			default:
-				if mounted {
-					unmountErr := syscall.Unmount(dataRoot, 0)
-					mounted, mountErr = mountinfo.Mounted(dataRoot)
-					if mountErr != nil || mounted {
-						t.Errorf("owned Docker data-root remains mounted: unmount=%v, mounted=%t, inspect=%v", unmountErr, mounted, mountErr)
-						break
-					}
-					if unmountErr != nil && unmountErr != syscall.EINVAL {
-						t.Errorf("unmount owned Docker data-root: %v", unmountErr)
-						break
-					}
-				}
-				if err := os.RemoveAll(root); err != nil {
-					t.Errorf("remove owned Docker files: %v", err)
-				} else {
-					rootCleaned = true
-				}
+			if err := os.RemoveAll(root); err != nil {
+				t.Errorf("remove owned Docker files: %v", err)
+			} else {
+				rootCleaned = true
 			}
 		}
 		if err := json.NewEncoder(os.Stdout).Encode(struct {

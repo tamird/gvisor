@@ -42,7 +42,6 @@ go_test(
         "@com_github_docker_docker//api/types/mount:go_default_library",
         "@com_github_docker_docker//client:go_default_library",
         "@com_github_docker_docker//errdefs:go_default_library",
-        "@com_github_moby_sys_mountinfo//:go_default_library",
     ],
 )
 
@@ -87,6 +86,5 @@ go_test(
         "@com_github_docker_docker//api/types/mount:go_default_library",
         "@com_github_docker_docker//client:go_default_library",
         "@com_github_docker_docker//errdefs:go_default_library",
-        "@com_github_moby_sys_mountinfo//:go_default_library",
     ],
 )
