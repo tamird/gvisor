@@ -49,32 +49,40 @@ class AspectFixerTest(unittest.TestCase):
 
   def test_reject_fix_and_accept(self) -> None:
     cases = (
-        ("pkg/tcpip/seqnum/seqnum.go", "package seqnum", "package    seqnum"),
-        ("tools/buildbuddy/BUILD", "name =", "name="),
-        ("MODULE.bazel", "module(", "module( "),
-        ("tools/lint/defs.bzl", "load(", "load( "),
+        ("pkg/tcpip/seqnum/seqnum.go", "package seqnum", "package    seqnum", 0),
+        ("tools/buildbuddy/BUILD", "name =", "name=", 1),
+        ("MODULE.bazel", "module(", "module( ", 2),
+        ("tools/lint/defs.bzl", "load(", "load( ", 3),
+        ("space dir/file.go", "package seqnum", "package    seqnum", 0),
+        ("literal[ab].go", "package seqnum", "package    seqnum", 0),
     )
-    with tempfile.TemporaryDirectory(dir=os.environ["TEST_TMPDIR"]) as directory:
+    with tempfile.TemporaryDirectory(
+        prefix="aspect format ", dir=os.environ["TEST_TMPDIR"]
+    ) as directory:
       root = Path(directory)
       env = dict(os.environ, BUILD_WORKSPACE_DIRECTORY=directory,
                  BUILD_WORKING_DIRECTORY=directory)
       originals = []
-      for (name, _, _), source in zip(cases, SOURCES, strict=True):
-        clean = Path(source).read_text()
+      for name, _, _, source_index in cases:
+        clean = Path(SOURCES[source_index]).read_text()
         originals.append(clean)
         (root / name).parent.mkdir(parents=True, exist_ok=True)
         (root / name).write_text(clean)
-      names = [name for name, _, _ in cases]
+      names = [name for name, _, _, _ in cases]
+      unselected = originals[0].replace("package seqnum", "package    seqnum", 1)
+      (root / "literala.go").write_text(unselected)
+      parameter_file = root / "sources.txt"
 
       def run(binary: str) -> subprocess.CompletedProcess[str]:
+        parameter_file.write_text("\n".join(names) + "\n")
         return subprocess.run(
-            [binary, *names], cwd=root, env=env,
+            [binary, "@" + str(parameter_file)], cwd=root, env=env,
             capture_output=True, text=True, check=False,
         )
 
       result = run(CHECKER)
       self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-      for (name, before, after), clean in zip(cases, originals, strict=True):
+      for (name, before, after, _), clean in zip(cases, originals, strict=True):
         with self.subTest(name=name):
           self.assertIn(before, clean)
           (root / name).write_text(clean.replace(before, after, 1))
@@ -85,6 +93,12 @@ class AspectFixerTest(unittest.TestCase):
           self.assertEqual((root / name).read_text(), clean)
           result = run(CHECKER)
           self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+          self.assertEqual((root / "literala.go").read_text(), unselected)
+
+      names.append("missing.go")
+      for command in (CHECKER, FIXER):
+        result = run(command)
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
 
 
 if __name__ == "__main__":

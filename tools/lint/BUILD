@@ -1,6 +1,7 @@
 load("@aspect_rules_lint//format:defs.bzl", "format_multirun", "format_test")
 load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@rules_python//python:defs.bzl", "py_binary")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//tools:defs.bzl", "bzl_library")
 load(":aspect_preflight.bzl", "host_command")
 load(":defs.bzl", "fixer_test", "source_lint")
@@ -160,4 +161,18 @@ copy_file(
     name = "aspect_input_bzl",
     src = "@analysis_sources//:files/tools/lint/defs.bzl.source",
     out = "aspect_inputs/tools/lint/defs.bzl",
+)
+
+sh_test(
+    name = "aspect_bash32_test",
+    size = "small",
+    timeout = "short",
+    srcs = ["aspect_bash32_test.sh"],
+    args = ["$(rlocationpath @aspect_rules_lint//format/private:format)"],
+    data = ["@aspect_rules_lint//format/private:format"],
+    tags = [
+        "manual",
+        "no-remote",
+    ],
+    target_compatible_with = ["@platforms//os:osx"],
 )
