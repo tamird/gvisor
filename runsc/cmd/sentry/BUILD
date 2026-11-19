@@ -168,3 +168,36 @@ deps_test(
         ":gvisor_sentry_plugin_stack",
     ],
 )
+
+genrule(
+    name = "legacy_current_sentry_coverage",
+    srcs = [
+        "sentry_main.go",
+        "//:go.mod",
+        "//:go.sum",
+        "//:gopath",
+        "//tools:go-allow-internal.patch",
+        "@coverage_legacy_go_bootstrap//file",
+        "@coverage_legacy_go_source//file",
+    ],
+    outs = ["legacy_current_sentry_cov"],
+    cmd = (
+        "timeout --kill-after=5 780 " +
+        "\"$(execpath //tools:build_cover.sh)\" " +
+        "\"$@\" \"$(execpath //:gopath)\" " +
+        "\"$(execpath //:go.mod)\" \"$(execpath //:go.sum)\" " +
+        "\"$(execpath sentry_main.go)\" " +
+        "\"$(execpath //tools:go-allow-internal.patch)\" false " +
+        "\"$(execpath @coverage_legacy_go_bootstrap//file)\" " +
+        "\"$(execpath @coverage_legacy_go_source//file)\""
+    ),
+    exec_compatible_with = [
+        "//tools/bazeldefs:rbe_ubuntu24_c",
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    executable = True,
+    tags = ["manual", "no-local"],
+    tools = ["//tools:build_cover.sh"],
+    visibility = ["//tools/bazeldefs/tests/coverage:__pkg__"],
+)

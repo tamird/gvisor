@@ -1,0 +1,98 @@
+#!/bin/bash
+
+# Copyright 2025 The gVisor Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+set -x -e -o pipefail
+
+if [[ $# != 9 ]]; then
+  echo "Expected output, source export, module files, main, patch, race and SDK archives" >&2
+  exit 1
+fi
+
+dst=$(realpath "$1")
+gopath_zip="$2"
+go_mod=$(realpath "$3")
+go_sum=$(realpath "$4")
+main_go="$5" # Path of the main package Go file, relative to the repository root.
+golang_patch=$(realpath "$6")
+race="$7"
+bootstrap_archive=$(realpath "$8")
+source_archive=$(realpath "$9")
+export GOENV=off GOTOOLCHAIN=local
+
+mkdir .gocache
+GOMODCACHE="$(pwd)/.gocache"
+GOCACHE="$(pwd)/.gocache"
+export GOMODCACHE GOCACHE
+
+(
+  # The gVisor code coverage implementation uses internal packages. More details
+  # can be found here: https://github.com/golang/go/issues/76098.
+
+  mkdir go-bootstrap
+  tar -xzf "$bootstrap_archive" -C go-bootstrap
+  GOROOT_BOOTSTRAP="$(pwd)/go-bootstrap/go"
+  export GOROOT_BOOTSTRAP
+
+  tar -xzf "$source_archive"
+  cd go
+  patch -p1 < "$golang_patch"
+  cd src
+  ./make.bash
+)
+
+goroot_dir="$(pwd)/go"
+go_tool="$goroot_dir/bin/go"
+
+gvisor_gopath="gopath"
+
+unzip -q "$gopath_zip" -d "$gvisor_gopath"
+cp "$go_mod" "$go_sum" "$gvisor_gopath/src/gvisor.dev/gvisor/"
+mkdir -p "$gvisor_gopath/src/gvisor.dev/gvisor/$(dirname "$main_go")"
+cp "$main_go" "$gvisor_gopath/src/gvisor.dev/gvisor/$main_go"
+cd "$gvisor_gopath/src/gvisor.dev/gvisor/"
+export GOROOT="$goroot_dir"
+# Keep module versions and checksums fixed, with no direct VCS fallback.
+export GOFLAGS=-mod=readonly GOPROXY=https://proxy.golang.org GOVCS='*:off'
+go_opts=""
+go_tags="kcov,opensource"
+if [[ "$race" = true ]]; then
+  go_opts="-race"
+  go_tags="$go_tags,lockdep"
+else
+  # runsc has to be a self-contained binary to be able to run it in a minimal
+  # mount namespace.
+  export CGO_ENABLED=0
+fi
+# sleep, sync, syncevent use go:norace, which is not respected by coverage
+# instrumentation. Race builds will be instrumented with atomic coverage (using
+# sync/atomic.AddInt32), which will not work. We may be able to re-enable
+# coverage on them when https://golang.org/issue/43007 is resolved.
+# bpf is excluded because `bpf.Optimize` runs at sandbox startup and is a
+# very expensive loop that restarts on every change.
+# Under -covermode=atomic each of those blocks does a sync/atomic counter
+# increment, and in a race build every one of those atomics additionally goes
+# through the race detector on top, which compounds the issue and can make it
+# take 10s of seconds for a codepath that is in practive never exercised on
+# real ssndboxes, because seccomp filters are precompiled there. The only
+# reason this runs at startup at all is because the presence of
+# instrumentation itself changes the set of required seccomp filters, and we
+# don't want to precompile the BPF instruction for those into the real runsc
+# binary, so it is forced to run from scratch.
+gopkgs=$("$go_tool" list ./... | grep -E -v 'pkg/sentry/platform|pkg/ring0|pkg/coverage|pkg/sleep|pkg/sync|pkg/syncevent|pkg/bpf' | paste -sd,)
+"$go_tool" build --tags "$go_tags" $go_opts -cover -coverpkg="$gopkgs" -covermode=atomic -o "$dst" "$main_go"
+
+cmp "$go_mod" go.mod
+cmp "$go_sum" go.sum

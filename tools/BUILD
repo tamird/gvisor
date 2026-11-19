@@ -96,3 +96,8 @@ py_test(
         "//:.clang-format",
     ],
 )
+
+exports_files(
+    ["build_cover.sh", "go-allow-internal.patch"],
+    visibility = ["//runsc/cmd/sentry:__pkg__"],
+)
