@@ -49,6 +49,7 @@ var (
 	pairedBenchtime   = flag.String("paired-benchtime", "1000x", "ordinary Go benchmark time or operation count")
 	pairedBlocks      = flag.Int("paired-blocks", 1, "number of balanced BASE/CANDIDATE/CANDIDATE/BASE blocks")
 	pairedLeaves      = flag.Int("paired-leaves", 4, "number of selected benchmark leaves per visit")
+	pairedNodeWarmup  = flag.Int("paired-node-warmup-requests", 0, "warmup requests for each actual Node server process")
 	pairedWarmups     = flag.Int("paired-warmup-pairs", 0, "unmeasured warmup visits for each runtime before balanced blocks")
 	pairedObserve     = flag.Bool("paired-observe-affinity", false, "inspect actual workload affinity during capability preflight")
 )
@@ -169,7 +170,8 @@ func TestPairedBenchmark(t *testing.T) {
 			}
 			cmd := exec.CommandContext(ctx, binary,
 				"-test.v=false", "--runtime="+runtimes[index], "--config_path="+config,
-				"-test.run=^$", "-test.bench="+*pairedFilter, "-test.benchtime="+*pairedBenchtime)
+				"-test.run=^$", "-test.bench="+*pairedFilter, "-test.benchtime="+*pairedBenchtime,
+				"--node-warmup-requests="+strconv.Itoa(*pairedNodeWarmup))
 			var observed chan error
 			var stopObserver context.CancelFunc
 			if *pairedObserve {
@@ -230,7 +232,7 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 	for {
 		select {
 		case <-ctx.Done():
-			for _, image := range []string{"benchmarks/node", "benchmarks/hey"} {
+			for _, image := range []string{"benchmarks/node", "benchmarks/hey", "benchmarks/redis"} {
 				if seen[image] < *pairedLeaves {
 					return fmt.Errorf("visit %d has no actual affinity observation for %s", visit, image)
 				}
@@ -251,7 +253,7 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 			}
 			image := message.Actor.Attributes["image"]
 			kind := ""
-			for _, candidate := range []string{"benchmarks/node", "benchmarks/hey"} {
+			for _, candidate := range []string{"benchmarks/node", "benchmarks/hey", "benchmarks/redis"} {
 				if strings.Contains(image, candidate) {
 					kind = candidate
 				}
@@ -292,7 +294,7 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 			if kind == "benchmarks/hey" {
 				want = ClientCPUSet()
 			}
-			if want == "" || state.HostConfig.CpusetCpus != want || effective != want {
+			if kind != "benchmarks/redis" && (want == "" || state.HostConfig.CpusetCpus != want || effective != want) {
 				return fmt.Errorf("workload %s requested CPUs %q, effective %q, want %q", kind, state.HostConfig.CpusetCpus, effective, want)
 			}
 			executable := "/proc/" + strconv.Itoa(state.State.Pid) + "/exe"
@@ -326,7 +328,7 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 				Effective  string `json:"effective_cpus"`
 				Executable string `json:"executable"`
 				Digest     string `json:"executable_sha256"`
-			}{visit, image, state.Name, state.HostConfig.Runtime, want, effective, exe, digest}); err != nil {
+			}{visit, image, state.Name, state.HostConfig.Runtime, state.HostConfig.CpusetCpus, effective, exe, digest}); err != nil {
 				return err
 			}
 			seen[kind]++

@@ -15,6 +15,8 @@ package network
 
 import (
 	"context"
+	"encoding/json"
+	"flag"
 	"os"
 	"strconv"
 	"testing"
@@ -25,6 +27,8 @@ import (
 	"gvisor.dev/gvisor/test/benchmarks/tools"
 	"gvisor.dev/gvisor/test/metricsviz"
 )
+
+var nodeWarmupRequests = flag.Int("node-warmup-requests", 0, "requests to warm each actual Node server before measurement")
 
 // BenchmarkNode runs requests using 'hey' against a Node server run on
 // 'runtime'. The server responds to requests by grabbing some data in a
@@ -110,16 +114,35 @@ func runNode(b *testing.B, hey *tools.Hey) {
 		b.Fatalf("server readiness failed: %v", err)
 	}
 
-	heyCmd := hey.MakeCmd("node", port)
-
-	// the client should run on Native.
-	client := clientMachine.GetNativeContainer(ctx, b)
-	defer client.CleanUp(ctx)
-	runHey(b, ctx, client, dockerutil.RunOpts{
+	opts := dockerutil.RunOpts{
 		Image:      "benchmarks/hey",
 		Links:      []string{nodeApp.MakeLink("node")},
 		CpusetCpus: harness.ClientCPUSet(),
-	}, hey, heyCmd...)
+	}
+	if *nodeWarmupRequests > 0 {
+		version, err := nodeApp.Exec(ctx, dockerutil.ExecOpts{}, "node", "--version")
+		if err != nil {
+			b.Fatalf("inspect Node version: %v", err)
+		}
+		if err := json.NewEncoder(os.Stdout).Encode(struct {
+			Version  string `json:"node_version"`
+			Requests int    `json:"node_process_warmup_requests"`
+		}{version, *nodeWarmupRequests}); err != nil {
+			b.Fatal(err)
+		}
+		warmup := *hey
+		warmup.Requests = *nodeWarmupRequests
+		warmupClient := clientMachine.GetNativeContainer(ctx, b)
+		defer warmupClient.CleanUp(ctx)
+		// Warm the same server process whose requests will be measured.
+		// The final runHey resets timing and replaces the warmup metrics.
+		runHey(b, ctx, warmupClient, opts, &warmup, warmup.MakeCmd("node", port)...)
+	}
+
+	// The client runs on native runc.
+	client := clientMachine.GetNativeContainer(ctx, b)
+	defer client.CleanUp(ctx)
+	runHey(b, ctx, client, opts, hey, hey.MakeCmd("node", port)...)
 }
 
 func TestMain(m *testing.M) {

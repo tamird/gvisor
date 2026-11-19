@@ -142,7 +142,7 @@ go_test(
         "--paired-benchtime=5000x",
         "--paired-leaves=1",
         "--paired-observe-affinity=true",
-        "--paired-warmup-pairs=1",
+        "--paired-node-warmup-requests=5000",
         "--paired-image-archives='$(rootpaths //test/benchmarks/network:node_worker_images)'",
         "-test.run=^TestPairedBenchmark$$",
     ],
