@@ -43,6 +43,19 @@ export tool lang=Go mode=fix flags='' disable_git_attribute_checks=true
 cmp sources.txt "$SEEN"
 
 : > "$SEEN"
+printf '%s\n%s' 'space dir/file.go' 'literal[ab].go' > unterminated.txt
+/bin/bash "$formatter" "@$BUILD_WORKSPACE_DIRECTORY/unterminated.txt"
+cmp sources.txt "$SEEN"
+
+: > "$SEEN"
+printf '\n%s\n' 'literal[ab].go' > blank.txt
+if /bin/bash "$formatter" "@$BUILD_WORKSPACE_DIRECTORY/blank.txt" > "$TEST_TMPDIR/blank.log" 2>&1; then
+  echo 'A blank record hid a later valid input' >&2
+  exit 1
+fi
+test ! -s "$SEEN"
+
+: > "$SEEN"
 if /bin/bash "$formatter" missing.go > "$TEST_TMPDIR/missing.log" 2>&1; then
   echo 'A missing explicit source was accepted' >&2
   exit 1

@@ -1,6 +1,6 @@
 --- a/format/private/format.sh
 +++ b/format/private/format.sh
-@@ -80,7 +80,11 @@
+@@ -80,7 +80,15 @@
              echo "Error: File '$file' not found."
              return 1
          fi
@@ -8,12 +8,16 @@
 +        args=()
 +        local arg
 +        while IFS= read -r arg || [[ -n "$arg" ]]; do
++            if [[ -z "$arg" ]]; then
++                echo "Error: Blank argument in parameter file '$file'." >&2
++                return 1
++            fi
 +            args+=("$arg")
 +        done < "$file"
          if [ ${#args[@]} -eq 0 ]; then
              echo "Error: No arguments found in the specified file."
              return 1
-@@ -232,14 +236,12 @@
+@@ -232,14 +240,12 @@
              ')' "-print"
            )
          fi
@@ -30,7 +34,7 @@
        return
      fi
  
-@@ -294,7 +296,8 @@
+@@ -294,7 +300,8 @@
    local args="$1" && shift
    local TIMEFORMAT="Formatted ${lang} in %lR"
  
