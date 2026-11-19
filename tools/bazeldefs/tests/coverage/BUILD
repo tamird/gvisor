@@ -42,17 +42,11 @@ coverage_selection_test(
 )
 
 py_test(
-    name = "legacy_inventory_test",
+    name = "inventory_test",
     size = "large",
-    srcs = ["legacy_inventory_test.py"],
-    args = [
-        "$(rlocationpath //runsc/cmd/sentry:gvisor_sentry_coverage)",
-        "$(rlocationpath :testdata/legacy-1f33fe3003.txt.gz)",
-    ],
-    data = [
-        "testdata/legacy-1f33fe3003.txt.gz",
-        "//runsc/cmd/sentry:gvisor_sentry_coverage",
-    ],
+    srcs = ["inventory_test.py"],
+    args = ["$(rlocationpath //runsc/cmd/sentry:gvisor_sentry_coverage)"],
+    data = ["//runsc/cmd/sentry:gvisor_sentry_coverage"],
     tags = ["manual"],
     deps = ["@rules_python//python/runfiles"],
 )

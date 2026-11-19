@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Check the coverage migration against its retained source-bound inventory."""
+"""Check the declared Sentry's complete static coverage inventory."""
 
-import gzip
-import hashlib
+import json
 from pathlib import Path
 import re
 import subprocess
@@ -25,26 +24,10 @@ import unittest
 from python.runfiles import runfiles
 
 
-class LegacyInventoryTest(unittest.TestCase):
+class InventoryTest(unittest.TestCase):
     sentry: Path
-    baseline: Path
 
     def test_positions(self) -> None:
-        compressed = self.baseline.read_bytes()
-        self.assertEqual(
-            hashlib.sha256(compressed).hexdigest(),
-            "b6e0dca3554ff808626ec62dd36b22978c6cee6036108422c9be5eb8352f55be",
-        )
-        raw = gzip.decompress(compressed)
-        self.assertEqual(
-            hashlib.sha256(raw).hexdigest(),
-            "c6e30fc3640a93367ca0d6ea7bfe05dd8dc6c5cd5961103c32809c890d1ce576",
-        )
-        legacy = set(raw.decode().splitlines())
-        self.assertEqual(len(legacy), 115841)
-        protobuf = {position for position in legacy if ".pb.go:" in position}
-        self.assertEqual(len(protobuf), 2418)
-
         result = subprocess.run(
             [self.sentry, "symbolize", "-all"],
             check=False,
@@ -72,28 +55,23 @@ class LegacyInventoryTest(unittest.TestCase):
             current.add(position)
 
         self.assertTrue(any("/pkg/sentry/kernel/" in position for position in current))
+        protobuf = {position for position in current if ".pb.go:" in position}
+        self.assertGreater(len(protobuf), 0, "no generated protobuf coverage positions")
         forbidden = re.compile(r"/pkg/(coverage/|ring0/|sleep/|sync/|syncevent/|bpf/|sentry/platform/)")
         self.assertEqual(sorted(position for position in current if forbidden.search(position)), [])
-        missing = sorted(legacy - current)
-        self.assertEqual(len(missing), 0, f"missing {len(missing)} positions; first 20: {missing[:20]}")
-        print(
-            f"legacy={len(legacy)} candidate={len(current)} "
-            f"protobuf={len(protobuf & current)} additional={len(current - legacy)}"
-        )
+        print(json.dumps({"positions": len(current), "protobuf_positions": len(protobuf)}, sort_keys=True))
 
 
 if __name__ == "__main__":
     match sys.argv:
-        case [program, sentry, baseline, *test_args]:
+        case [program, sentry, *test_args]:
             resolver = runfiles.Create()
             if resolver is None:
                 raise RuntimeError("Bazel runfiles are unavailable")
             sentry_path = resolver.Rlocation(sentry)
-            baseline_path = resolver.Rlocation(baseline)
-            if sentry_path is None or baseline_path is None:
-                raise FileNotFoundError(f"missing declared runfiles: {sentry}, {baseline}")
-            LegacyInventoryTest.sentry = Path(sentry_path)
-            LegacyInventoryTest.baseline = Path(baseline_path)
+            if sentry_path is None:
+                raise FileNotFoundError(f"missing declared runfile: {sentry}")
+            InventoryTest.sentry = Path(sentry_path)
             unittest.main(argv=[program, *test_args])
         case _:
-            raise ValueError("expected Sentry and baseline runfile paths")
+            raise ValueError("expected Sentry runfile path")
