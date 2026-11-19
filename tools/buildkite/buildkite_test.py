@@ -274,13 +274,17 @@ class ParseRefTest(unittest.TestCase):
         with self.assertRaises(buildkite.Error):
           self.parse("1", pipeline=pipeline)
 
-  def test_pull_request_schema_error(self):
+  def test_pull_request_response_errors(self):
     url = "https://api.github.com/repos/someowner/gvisor/pulls/1"
-    with mock.patch.object(buildkite, "_fetch", FakeFetch({url: {"head": []}})):
-      with self.assertRaises(buildkite.Error) as error:
-        buildkite._pull_request_branch("someowner", "gvisor", 1)
-    self.assertIn("head: expected an object", str(error.exception))
-    self.assertNotIn("API requests per hour", str(error.exception))
+    for response, message in (({"head": []}, "head: expected an object"),
+                              (b"not JSON", "bad JSON response")):
+      with self.subTest(response=response), mock.patch.object(
+          buildkite, "_fetch", FakeFetch({url: response})
+      ):
+        with self.assertRaises(buildkite.Error) as error:
+          buildkite._pull_request_branch("someowner", "gvisor", 1)
+        self.assertIn(message, str(error.exception))
+        self.assertNotIn("API requests per hour", str(error.exception))
 
 
 class FetchTest(unittest.TestCase):

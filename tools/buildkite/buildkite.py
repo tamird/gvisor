@@ -279,11 +279,8 @@ def _pull_request_branch(owner: str, repo: str, number: int) -> str:
   """
 
   url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{number}"
-  try:
-    value = _fetch_json(url)
-  except Error as e:
-    raise Error(f"{e}; GitHub allows 60 API requests per hour") from e
-  head = _object(_object(value, url).get("head"), url + ": head")
+  response = _object(_fetch_json(url), url)
+  head = _object(response.get("head"), url + ": head")
   repo_value = head.get("repo")
   repo_info = _object({} if repo_value is None else repo_value, url + ": head.repo")
   if repo_info.get("full_name") == f"{owner}/{repo}":
