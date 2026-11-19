@@ -547,15 +547,19 @@ def _annotated_targets(build: Build) -> tuple[dict[str, list[dict[str, str]]], l
 def _build_info(b: dict[str, object]) -> dict[str, object]:
   value = b.get("pull_request")
   pull_request = _object({} if value is None else value, "build.pull_request")
-  return _compact({
-      "number": b["number"],
+  fields: dict[str, object] = {
       "url": BASE_URL + _string(b.get("path"), "build.path"),
-      "state": b["state"],
       "branch": b.get("branch_name"),
       "commit": b.get("commit_id"),
-      "message": (_optional_string(b.get("message"), "build.message") or "").split("\n", 1)[0],
-      "pull_request": pull_request.get("url"),
-  })
+      "pull_request_url": pull_request.get("url"),
+  }
+  # The result owns job selection separately from build metadata.
+  info = {
+      key: value for key, value in b.items()
+      if key != "jobs" and key not in fields
+  }
+  info.update(_compact(fields))
+  return info
 
 
 def job_info(
@@ -564,7 +568,7 @@ def job_info(
     targets: list[dict[str, str]],
     retry: str | None,
 ) -> dict[str, object]:
-  """Returns the interesting fields of a job record.
+  """Returns public job metadata with normalized display fields.
 
   Args:
     build: Target Buildkite build.
@@ -578,17 +582,21 @@ def job_info(
     value = job.get("step")
     step = _object({} if value is None else value, "job.step")
     name = _optional_string(step.get("label"), "job.step.label")
-  return _compact({
+  fields: dict[str, object] = {
       "name": name,
       "parallel_job": job.get("parallel_group_index"),
-      "state": job.get("state"),
-      "exit_status": job.get("exit_status"),
       "attempt": _integer(job.get("retries_count"), "job.retries_count") + 1,
       "retry": retry,
-      "soft_failed": job.get("soft_failed") or None,
       "url": f"{build.url}#{_string(job.get('id'), 'job.id')}",
       "annotated_targets": targets,
-  })
+  }
+  # Keep provider metadata except aliases and log analysis owned by this tool.
+  info = {
+      key: value for key, value in job.items()
+      if key not in fields and key not in ("log", "log_error")
+  }
+  info.update(_compact(fields))
+  return info
 
 
 def _matches(
