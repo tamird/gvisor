@@ -16,6 +16,7 @@ package harness
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/json"
 	"flag"
@@ -48,11 +49,12 @@ var (
 	pairedBenchtime   = flag.String("paired-benchtime", "1000x", "ordinary Go benchmark time or operation count")
 	pairedBlocks      = flag.Int("paired-blocks", 1, "number of balanced BASE/CANDIDATE/CANDIDATE/BASE blocks")
 	pairedLeaves      = flag.Int("paired-leaves", 4, "number of selected benchmark leaves per visit")
+	pairedWarmups     = flag.Int("paired-warmup-pairs", 0, "unmeasured warmup visits for each runtime before balanced blocks")
 	pairedObserve     = flag.Bool("paired-observe-affinity", false, "inspect actual workload affinity during capability preflight")
 )
 
 func TestPairedBenchmark(t *testing.T) {
-	if *pairedBlocks < 1 || *pairedLeaves < 1 {
+	if *pairedBlocks < 1 || *pairedLeaves < 1 || *pairedWarmups < 0 {
 		t.Fatal("paired blocks and leaves must be positive")
 	}
 	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Minute)
@@ -65,6 +67,7 @@ func TestPairedBenchmark(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	workerID := rand.Text()
 	binarySHA := fmt.Sprintf("%x", sha256.Sum256(contents))
 	arms := []struct{ name, runsc, source, digest string }{
 		{"BASE", *pairedBase, *pairedBaseID, ""},
@@ -88,6 +91,24 @@ func TestPairedBenchmark(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+	}
+	releaseProducts := make([]map[string]string, len(arms))
+	allProducts := make(map[string]string)
+	for i, arm := range arms {
+		products, err := releaseDigests(filepath.Dir(arm.runsc))
+		if err != nil {
+			t.Fatal(err)
+		}
+		releaseProducts[i] = products
+		for path, digest := range products {
+			allProducts[path] = digest
+		}
+	}
+	actualHashes := make(map[string]string)
+	if err := json.NewEncoder(os.Stdout).Encode(struct {
+		Products []map[string]string `json:"opaque_release_products"`
+	}{releaseProducts}); err != nil {
+		t.Fatal(err)
 	}
 	host, runtimes, config := startDockerDaemons(t, ctx, []string{arms[0].runsc, arms[1].runsc}, true)
 	t.Setenv("DOCKER_HOST", host)
@@ -117,21 +138,33 @@ func TestPairedBenchmark(t *testing.T) {
 		t.Fatal(err)
 	}
 	blocks := *pairedBlocks
-	order := make([]int, 0, 4*blocks)
+	warmups := *pairedWarmups
+	order := make([]int, 0, 2*warmups+4*blocks)
+	for range *pairedWarmups {
+		order = append(order, 0, 1)
+	}
 	for range *pairedBlocks {
 		order = append(order, 0, 1, 1, 0)
 	}
 	for visit, index := range order {
 		arm := arms[index]
 		t.Run(fmt.Sprintf("visit%d/%s", visit, arm.name), func(t *testing.T) {
+			warmup := visit < 2*warmups
+			block := -1
+			if !warmup {
+				block = (visit - 2*warmups) / 4
+			}
 			if err := json.NewEncoder(os.Stdout).Encode(struct {
 				Visit    int    `json:"paired_visit"`
+				Worker   string `json:"paired_worker"`
+				Block    int    `json:"paired_block"`
+				Warmup   bool   `json:"paired_warmup"`
 				Arm      string `json:"arm"`
 				Source   string `json:"runtime_source"`
 				Process  int    `json:"pair_process"`
 				RunscSHA string `json:"runsc_entrypoint_sha256"`
 				NodeSHA  string `json:"benchmark_sha256"`
-			}{visit, arm.name, arm.source, os.Getpid(), arm.digest, binarySHA}); err != nil {
+			}{visit, workerID, block, warmup, arm.name, arm.source, os.Getpid(), arm.digest, binarySHA}); err != nil {
 				t.Fatal(err)
 			}
 			cmd := exec.CommandContext(ctx, binary,
@@ -144,7 +177,7 @@ func TestPairedBenchmark(t *testing.T) {
 				stopObserver = cancel
 				observed = make(chan error, 1)
 				messages, failures := cli.Events(observeCtx, events.ListOptions{Filters: filters.NewArgs(filters.Arg("type", "container"), filters.Arg("event", "start"))})
-				go func() { observed <- attestBenchmarkContainers(observeCtx, cli, messages, failures, visit) }()
+				go func() { observed <- attestBenchmarkContainers(observeCtx, cli, messages, failures, visit, releaseProducts[index], actualHashes) }()
 			}
 			output, err := cmd.CombinedOutput()
 			if stopObserver != nil {
@@ -152,6 +185,19 @@ func TestPairedBenchmark(t *testing.T) {
 				if observeErr := <-observed; observeErr != nil {
 					t.Error(observeErr)
 				}
+			}
+			remaining, processErr := ownedReleaseProcesses(allProducts)
+			if processErr != nil {
+				t.Error(processErr)
+			}
+			if encodeErr := json.NewEncoder(os.Stdout).Encode(struct {
+				Visit     int            `json:"quiescent_visit"`
+				Remaining map[int]string `json:"remaining_release_processes"`
+			}{visit, remaining}); encodeErr != nil {
+				t.Error(encodeErr)
+			}
+			if len(remaining) != 0 {
+				t.Errorf("owned runtime processes remain after visit %d: %v", visit, remaining)
 			}
 			if _, writeErr := os.Stdout.Write(output); writeErr != nil {
 				t.Fatal(writeErr)
@@ -169,12 +215,15 @@ func TestPairedBenchmark(t *testing.T) {
 				t.Fatalf("completed %d benchmark leaves, want %d", leaves, *pairedLeaves)
 			}
 		})
+		if t.Failed() {
+			return
+		}
 	}
 }
 
 // attestBenchmarkContainers observes the actual workload containers without
 // adding inspection calls to the benchmark's timed request sequence.
-func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages <-chan events.Message, failures <-chan error, visit int) error {
+func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages <-chan events.Message, failures <-chan error, visit int, products, actualHashes map[string]string) error {
 	seen := make(map[string]int)
 	for {
 		select {
@@ -244,14 +293,38 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 			if want == "" || state.HostConfig.CpusetCpus != want || effective != want {
 				return fmt.Errorf("workload %s requested CPUs %q, effective %q, want %q", kind, state.HostConfig.CpusetCpus, effective, want)
 			}
+			executable := "/proc/" + strconv.Itoa(state.State.Pid) + "/exe"
+			exe, err := os.Readlink(executable)
+			if os.IsNotExist(err) {
+				continue
+			}
+			if err != nil {
+				return err
+			}
+			digest, ok := actualHashes[exe]
+			if !ok {
+				digest, err = executableDigest(executable)
+				if os.IsNotExist(err) {
+					continue
+				}
+				if err != nil {
+					return err
+				}
+				actualHashes[exe] = digest
+			}
+			if kind == "benchmarks/node" && products[exe] != digest {
+				return fmt.Errorf("actual server executable %q (%s) is outside the selected complete release", exe, digest)
+			}
 			if err := json.NewEncoder(os.Stdout).Encode(struct {
-				Visit     int    `json:"affinity_visit"`
-				Image     string `json:"image"`
-				Container string `json:"container"`
-				Runtime   string `json:"runtime"`
-				Requested string `json:"requested_cpus"`
-				Effective string `json:"effective_cpus"`
-			}{visit, image, state.Name, state.HostConfig.Runtime, want, effective}); err != nil {
+				Visit      int    `json:"affinity_visit"`
+				Image      string `json:"image"`
+				Container  string `json:"container"`
+				Runtime    string `json:"runtime"`
+				Requested  string `json:"requested_cpus"`
+				Effective  string `json:"effective_cpus"`
+				Executable string `json:"executable"`
+				Digest     string `json:"executable_sha256"`
+			}{visit, image, state.Name, state.HostConfig.Runtime, want, effective, exe, digest}); err != nil {
 				return err
 			}
 			seen[kind]++
