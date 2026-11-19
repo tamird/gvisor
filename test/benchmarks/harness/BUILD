@@ -137,7 +137,7 @@ go_test(
         "--paired-base-source=a05ab5909d2518dd541a1eb4396057e9292f4178",
         "--paired-candidate-source=362bfd09934c5497e4a48fb97fbe1f445152f841",
         "--paired-benchmark=$(rootpath //test/benchmarks/network:node_test)",
-        "--paired-image-archives=$(rootpaths //test/benchmarks/network:node_worker_images)",
+        "--paired-image-archives='$(rootpaths //test/benchmarks/network:node_worker_images)'",
         "-test.run=^TestPairedBenchmark$$",
     ],
     data = [
