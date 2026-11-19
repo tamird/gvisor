@@ -55,9 +55,11 @@ go_test(
     gc_linkopts = ["-checklinkname=0"],
     gotags = ["fuzz"],
     pure = True,
-    target_compatible_with = [
-        "@platforms//os:linux",
-    ],
+    target_compatible_with = ["@platforms//os:linux"] + select({
+        "@platforms//cpu:aarch64": [],
+        "@platforms//cpu:x86_64": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
     deps = [
         ":instrumented",
         "//pkg/bpf",
