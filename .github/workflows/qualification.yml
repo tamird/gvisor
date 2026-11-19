@@ -273,6 +273,7 @@ jobs:
         if: always()
         with:
           name: bazel-${{ inputs.architecture }}-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
           path: |
             ${{ runner.temp }}/bazel-qualification/events.json
             ${{ runner.temp }}/bazel-qualification/actions.json
