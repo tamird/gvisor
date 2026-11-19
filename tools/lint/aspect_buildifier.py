@@ -19,7 +19,7 @@ import sys
 
 from python.runfiles import runfiles
 
-from runner import BUILDIFIER_WARNINGS, buildifier_result
+from tools.lint.runner import BUILDIFIER_WARNINGS, buildifier_result
 
 
 def main() -> int:
