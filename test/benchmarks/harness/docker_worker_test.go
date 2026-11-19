@@ -350,9 +350,12 @@ func startDockerDaemon(t *testing.T, ctx context.Context, runsc string) (string,
 			// Docker marks a data-root self-mount for shutdown cleanup. A
 			// startup failure can leave that mount after the process exits.
 			marker, markerErr := os.Lstat(filepath.Join(execRoot, "unmount-on-shutdown"))
-			mounted, mountErr := mountinfo.Mounted(dataRoot)
-			if os.IsNotExist(mountErr) {
-				mounted, mountErr = false, nil
+			var mounted bool
+			var mountErr error
+			if _, err := os.Lstat(dataRoot); err == nil {
+				mounted, mountErr = mountinfo.Mounted(dataRoot)
+			} else if !os.IsNotExist(err) {
+				mountErr = err
 			}
 			switch {
 			case markerErr != nil && !os.IsNotExist(markerErr):
