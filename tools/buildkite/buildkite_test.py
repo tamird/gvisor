@@ -397,6 +397,35 @@ class FailedTest(unittest.TestCase):
     with mock.patch.object(buildkite, "_fetch", fetch):
       return buildkite.failed(_BUILD, **kwargs)
 
+  def test_pre_agent_error_without_log(self):
+    detail = "Author has reached 30 day quota of 360000 compute-minutes"
+    for error in [detail, None]:
+      with self.subTest(stack_error_detail=error):
+        responses = _build_responses()
+        responses[_BUILD.data_url("jobs")] = {
+            "records": [
+                _job(
+                    1,
+                    "Pipeline upload",
+                    exit_status=80,
+                    stack_errored=error is not None,
+                    stack_error_detail=error,
+                    started_at=None,
+                    agent_assigned_at=None,
+                )
+            ]
+        }
+        responses[_BUILD.data_url("annotations")] = {"records": []}
+        responses[_BUILD.job_log_url(_job_id(1))] = b""
+        result = self.failed(responses, logs=True)
+        [job] = result["jobs"]
+        self.assertEqual(job["exit_status"], 80)
+        self.assertEqual(job["log"], {})
+        if error is None:
+          self.assertNotIn("stack_error_detail", job)
+        else:
+          self.assertEqual(job["stack_error_detail"], error)
+
   def test_failed(self):
     self.assertEqual(
         self.failed(),

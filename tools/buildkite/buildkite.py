@@ -508,6 +508,7 @@ def job_info(
       "parallel_job": job.get("parallel_group_index"),
       "state": job.get("state"),
       "exit_status": job.get("exit_status"),
+      "stack_error_detail": job.get("stack_error_detail"),
       "attempt": (job.get("retries_count") or 0) + 1,
       "retry": retry,
       "soft_failed": job.get("soft_failed") or None,
