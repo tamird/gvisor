@@ -25,32 +25,4 @@ gh --version
 gh auth login --with-token < "$HOME/.github-token"
 gh auth setup-git
 
-# Create new branch for the PR and stages changes in it.
-git stash push --include-untracked
-git pull --rebase=true "$repo_url" master
-git checkout -b "$pgo_branch_name"
-git stash pop
-git add runsc/profiles/data
-git status
-
-# Commit and push PR branch.
-export GIT_AUTHOR_NAME=gvisor-bot
-export GIT_AUTHOR_EMAIL=gvisor-bot@google.com
-export GIT_COMMITTER_NAME=gvisor-bot
-export GIT_COMMITTER_EMAIL=gvisor-bot@google.com
-git commit -m "Update runsc profiles for PGO (profile-guided optimizations), $today."
-git push --set-upstream "$repo_url" "$pgo_branch_name"
-
-# Send PR.
-# The 'yes' command will fail when the `gh` command closes its stdin,
-# which the `pipefail` option treats as a total failure.
-# So disable this option for this particular command.
-set +o pipefail
-yes '' | gh pr --repo="$repo_url" create \
-  --title="Update runsc profiles for PGO (profile-guided optimizations), $today." \
-  --body='This PR updates the runsc profiles for PGO (profile-guided optimizations).' \
-  --label=pgo-update --label='ready to pull' \
-  --base=master --head="$pgo_branch_name"
-set -o pipefail
-
-echo 'PGO profile update PR created.' >&2
+exec "$(dirname "$0")/publish.sh" "$today" "$repo_url" "$pgo_branch_name"
