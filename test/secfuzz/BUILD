@@ -36,6 +36,29 @@ go_test(
     deps = ["//pkg/bpf"],
 )
 
+go_library(
+    name = "instrumented",
+    testonly = 1,
+    srcs = ["instrumentation_probe.go"],
+    gc_goopts = ["-d=libfuzzer"],
+)
+
+go_test(
+    name = "fuzz_instrumentation_test",
+    size = "small",
+    srcs = ["fuzz_instrumentation_test.go"],
+    # The pinned Go fuzzing engine has no exported counter reader. Limit its
+    # private-symbol reference to this test binary.
+    gc_linkopts = ["-checklinkname=0"],
+    gotags = ["fuzz"],
+    pure = True,
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    deps = [":instrumented"],
+)
+
 run_binary(
     name = "secfuzz_covermeup",
     srcs = ["secfuzz_covermeup.tmpl"],
