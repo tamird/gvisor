@@ -15,6 +15,7 @@
 """Tests for buildkite.py. These tests do not use the network."""
 
 import contextlib
+import copy
 import http.client
 import io
 import json
@@ -418,6 +419,96 @@ class FailedTest(unittest.TestCase):
     with mock.patch.object(buildkite, "_fetch", fetch):
       return buildkite.failed(_BUILD, **kwargs)
 
+  def test_pre_agent_error_without_log(self):
+    detail = "Author has reached 30 day quota of 360000 compute-minutes"
+    for error in [detail, None]:
+      with self.subTest(stack_error_detail=error):
+        responses = _build_responses()
+        responses[_BUILD.data_url("jobs")] = {
+            "records": [
+                _job(
+                    1,
+                    "Pipeline upload",
+                    exit_status=80,
+                    stack_errored=error is not None,
+                    stack_error_detail=error,
+                    started_at=None,
+                    agent_assigned_at=None,
+                )
+            ]
+        }
+        responses[_BUILD.data_url("annotations")] = {"records": []}
+        responses[_BUILD.job_log_url(_job_id(1))] = b""
+        result = self.failed(responses, logs=True)
+        [job] = result["jobs"]
+        self.assertEqual(job["exit_status"], 80)
+        self.assertEqual(job["log"], {})
+        self.assertEqual(job["stack_error_detail"], error)
+        self.assertIsNone(job["started_at"])
+        self.assertIsNone(job["agent_assigned_at"])
+
+  def test_preserves_build_metadata(self):
+    responses = _build_responses()
+    metadata = {
+        "number": 1,
+        "path": "/gvisor/pipeline/builds/1",
+        "state": "failed",
+        "branch_name": "master",
+        "commit_id": "source commit",
+        "message": "Title\n\nDiagnostic details",
+        "account": {"job_minute_limit_reached": True},
+        "not_run_reason": None,
+        "started_at": None,
+        "steps": [],
+        "future": {"nested": [None, [], {}, False, ""]},
+        "pull_request": {"id": 1, "url": "https://github.com/example/repo/pull/1"},
+        "jobs": [{"id": "unselected", "state": "finished", "passed": True}],
+        "url": "provider URL",
+        "branch": "provider branch",
+        "commit": "provider commit",
+        "pull_request_url": "provider alias",
+    }
+    original = copy.deepcopy(metadata)
+    responses[_BUILD_URL + ".json"] = metadata
+    result = self.failed(responses)
+    info = result["build"]
+    self.assertEqual(metadata, original)
+    for field in ("message", "account", "not_run_reason", "started_at", "steps",
+                  "future", "pull_request"):
+      self.assertEqual(info[field], metadata[field])
+    self.assertEqual(info["url"], _BUILD_URL)
+    self.assertEqual(info["branch"], "master")
+    self.assertEqual(info["commit"], "source commit")
+    self.assertEqual(info["pull_request_url"], "https://github.com/example/repo/pull/1")
+    self.assertNotIn("jobs", info)
+    self.assertEqual(len(result["jobs"]), 6)
+    self.assertNotIn("unselected", [job["id"] for job in result["jobs"]])
+
+  def test_preserves_job_metadata(self):
+    job = _job(1, None, retries_count=2, parallel_group_index=0,
+               step={"label": "Pipeline upload"},
+               command="buildkite-agent pipeline upload .buildkite/first-pass.yaml",
+               started_at=None, agent_query_rules=[],
+               future={"nested": [None, [], {}, False, ""]},
+               attempt=99, url="provider URL",
+               annotated_targets=[{"target": "provider value"}])
+    job["retry"] = "provider value"
+    job["log"] = {"error": "provider value"}
+    job["log_error"] = "provider value"
+    original = copy.deepcopy(job)
+    info = buildkite.job_info(_BUILD, job, [], None)
+    self.assertEqual(job, original)
+    for field in ("command", "started_at", "agent_query_rules", "future", "step"):
+      self.assertEqual(info[field], job[field])
+    self.assertEqual(info["name"], "Pipeline upload")
+    self.assertEqual(info["parallel_job"], 0)
+    self.assertEqual(info["attempt"], 3)
+    self.assertEqual(info["url"], f"{_BUILD_URL}#{_job_id(1)}")
+    self.assertNotIn("retry", info)
+    self.assertNotIn("annotated_targets", info)
+    self.assertNotIn("log", info)
+    self.assertNotIn("log_error", info)
+
   def test_failed(self):
     self.assertEqual(
         self.failed(),
@@ -427,10 +518,16 @@ class FailedTest(unittest.TestCase):
                 "url": _BUILD_URL,
                 "state": "failed",
                 "branch": "master",
-                "message": "Title",
+                "branch_name": "master",
+                "path": "/gvisor/pipeline/builds/1",
+                "message": "Title\n\nBody",
             },
             "jobs": [
                 {
+                    "id": _job_id(1),
+                    "type": "script",
+                    "passed": False,
+                    "retried_in_job_uuid": _job_id(2),
                     "name": "Container tests",
                     "state": "finished",
                     "exit_status": 2,
@@ -443,6 +540,11 @@ class FailedTest(unittest.TestCase):
                     }],
                 },
                 {
+                    "id": _job_id(2),
+                    "type": "script",
+                    "passed": False,
+                    "retried_in_job_uuid": None,
+                    "retries_count": 1,
                     "name": "Container tests",
                     "state": "finished",
                     "exit_status": 2,
@@ -454,6 +556,11 @@ class FailedTest(unittest.TestCase):
                     }],
                 },
                 {
+                    "id": _job_id(5),
+                    "type": "script",
+                    "passed": False,
+                    "retried_in_job_uuid": _job_id(6),
+                    "exit_status": None,
                     "name": "Docker tests",
                     "state": "finished",
                     "attempt": 1,
@@ -461,6 +568,10 @@ class FailedTest(unittest.TestCase):
                     "url": f"{_BUILD_URL}#{_job_id(5)}",
                 },
                 {
+                    "id": _job_id(10),
+                    "type": "script",
+                    "passed": False,
+                    "retried_in_job_uuid": _job_id(11),
                     "name": "Go tests",
                     "state": "finished",
                     "exit_status": -1,
@@ -469,6 +580,11 @@ class FailedTest(unittest.TestCase):
                     "url": f"{_BUILD_URL}#{_job_id(10)}",
                 },
                 {
+                    "id": _job_id(3),
+                    "type": "script",
+                    "passed": False,
+                    "retried_in_job_uuid": _job_id(4),
+                    "parallel_group_index": 3,
                     "name": "Syscall tests",
                     "parallel_job": 3,
                     "state": "finished",
@@ -482,6 +598,10 @@ class FailedTest(unittest.TestCase):
                     }],
                 },
                 {
+                    "id": _job_id(8),
+                    "type": "script",
+                    "passed": False,
+                    "retried_in_job_uuid": _job_id(9),
                     "name": "Unit tests",
                     "state": "finished",
                     "exit_status": 2,
