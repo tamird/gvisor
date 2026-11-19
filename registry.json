@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-19T20:46:06.528200+00:00",
+    "updatedAt": "2026-11-19T21:03:40.118346+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -94950,8 +94950,8 @@
       "url": "https://github.com/google/gvisor/pull/17492",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-19T20:46:06.528200+00:00",
-      "summary": "The user-approved minimal amendment is published as e43439f069dca7a417d93d5d7faca311366fed59. It changes one existing script18+/6-, matches the reviewed769 tree, and carries verified normal signing and DCO. Native GitHub reports mergeable=true and mergeable_state=blocked; root follows exact-head CI and existing review. The revoked736 proposal remains unapproved.",
+      "updatedAt": "2026-11-19T21:03:40.118346+00:00",
+      "summary": "The user-approved minimal e434 amendment is published with verified signing and DCO. DCO, gazelle, lint, fileheader, label and generate all pass. Required FirstPass1974 never started an agent: exit80, started_at null, author30day360000compute-minute quota. This is an admission blocker, not a source failure. Existing review remains with the requested maintainers.",
       "evidence": [
         {
           "label": "Ten native publisher cases",
@@ -94961,19 +94961,21 @@
       "followup": {
         "sourceHead": "e43439f069dca7a417d93d5d7faca311366fed59",
         "owner": "root",
-        "nextAction": "Root follows exact publishede434 CI and existing review through completion, and verifies PR metadata refresh separately. No source approval, DCO question or conflict repair remains. Do not merge without exact authorization or rerun unchanged transaction validation.",
+        "nextAction": "Root follows actual provider admission recovery and existing review on exacte434. First Pass remains unmet until it executes; do not blindly rerun the quota-rejected job or ping CI owners. No approval, DCO, conflict or PR metadata task remains; do not merge without exact authorization.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-19T20:46:06.528200+00:00",
-        "recheckCondition": "Exact-head CI or review/import changes, PR metadata refresh, or substantive source feedback.",
+        "observedAt": "2026-11-19T21:03:40.118346+00:00",
+        "recheckCondition": "Provider admission recovery, exact-head check/review/import change or substantive source feedback.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17492",
           "https://github.com/tamird/gvisor/commit/2ca38c700a1f17a2520e456022b2840285296185",
           "https://github.com/tamird/gvisor/commit/e049cbe2f9b7dc6a868d820b6b2cbc99736b5082",
           "https://buildkite.com/gvisor/first-pass/builds/1597",
-          "https://buildkite.com/gvisor/first-pass/builds/1597#01a1eae2-d917-47f8-9341-8795c3baf72f"
+          "https://buildkite.com/gvisor/first-pass/builds/1597#01a1eae2-d917-47f8-9341-8795c3baf72f",
+          "https://github.com/gvisor/gvisor/actions/runs/44611632162",
+          "https://buildkite.com/gvisor/first-pass/builds/1974"
         ],
-        "curatedAt": "2026-11-19T20:46:06.528200+00:00",
-        "disposition": "The user-approved minimal amendment is published as e43439f069dca7a417d93d5d7faca311366fed59. It changes one existing script18+/6-, matches the reviewed769 tree, and carries verified normal signing and DCO. Native GitHub reports mergeable=true and mergeable_state=blocked; root follows exact-head CI and existing review. The revoked736 proposal remains unapproved.",
+        "curatedAt": "2026-11-19T21:03:40.118346+00:00",
+        "disposition": "The user-approved minimal e434 amendment is published with verified signing and DCO. DCO, gazelle, lint, fileheader, label and generate all pass. Required FirstPass1974 never started an agent: exit80, started_at null, author30day360000compute-minute quota. This is an admission blocker, not a source failure. Existing review remains with the requested maintainers.",
         "permanentTransactionBaseline": {
           "productionSource": "b75c76bbee31f309bd3a7bdb125a4b28e96086a1",
           "ciSource": "cbb9a918c4197ddbb9131f9482ba001987a246ce",
@@ -95021,6 +95023,16 @@
           "mergeable": true,
           "mergeableState": "blocked",
           "state": "Conflict resolved by the approved published rebase; exact-head checks and review remain for root to follow."
+        },
+        "currentCI": {
+          "source": "e43439f069dca7a417d93d5d7faca311366fed59",
+          "githubChecks": "DCO/gazelle/lint/fileheader/label/generate PASS",
+          "requiredFirstPass": 1974,
+          "exit": 80,
+          "started_at": null,
+          "stack_error_detail": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+          "sourceFailure": false,
+          "nextAction": "Await actual admission recovery; no blind retry or CI-owner ping."
         }
       },
       "dcoAmendment": {
@@ -95045,8 +95057,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Root follows exact publishede434 CI and existing review through completion, and verifies PR metadata refresh separately. No source approval, DCO question or conflict repair remains. Do not merge without exact authorization or rerun unchanged transaction validation.",
-      "recheckCondition": "Exact-head CI or review/import changes, PR metadata refresh, or substantive source feedback."
+      "nextStep": "Root follows actual provider admission recovery and existing review on exacte434. First Pass remains unmet until it executes; do not blindly rerun the quota-rejected job or ping CI owners. No approval, DCO, conflict or PR metadata task remains; do not merge without exact authorization.",
+      "recheckCondition": "Provider admission recovery, exact-head check/review/import change or substantive source feedback."
     },
     {
       "id": "branch:gazelle-public-go-repository-config",
@@ -134890,10 +134902,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-19T20:42:34.380196+00:00",
-      "summary": "The shared workflow supports standard Bazel run tools at258019304. Compilation-database candidate dabc04c653 is blocked: its pinned Linux AMD64 binary needs newer libc than maintained Ubuntu22, and default generation44607556214 failed with cause not yet established. Paired A/A execution passes functionally, but material same-source noise remains; discarded server warmup is under diagnosis. No full-performance or upstream-source qualification is claimed.",
-      "nextStep": "The compilation-database owner supplies a compatible tool and proves the actual Ubuntu22 caller, then diagnoses default generation. The benchmark owner checks A/A cause run44609912003 with warmup of the actual measured Node process and observed Redis CPU placement, establishing stability before expanded counts or candidate comparisons. Root follows the existing migration-issue publication decision; that draft remains private and unposted. Full150-leaf/n24 qualification remains open.",
-      "recheckCondition": "Actual supplier/default-generation evidence, A/A stability or warmup diagnosis, the existing issue decision, or explicit user direction.",
+      "updatedAt": "2026-11-19T21:03:40.118346+00:00",
+      "summary": "The trusted shared workflow at a9e32f7f supports run-only30minute qualification and the existing read-only GitHub token without permission changes. Compatible kiron0.21 startup passed on Ubuntu22 AMD/ARM; corrected proto materialization passed all412 paths. Production5de99a4d plus an atomic database-write fix remains under actual canonical inventory and caller gates, not ready. A/A plumbing passed; stability remains unproven.",
+      "nextStep": "The compilation-database owner verifies canonical inventory and real callers on CIf1f4d8d2, then commits/reviews the final source; do not infer readiness from startup or the tiny fixture. The benchmark owner analyzes A/A44612396815 before expanded counts or candidate comparisons. Root follows the existing private migration-issue decision. Full150-leaf/n24 performance remains open.",
+      "recheckCondition": "Actual inventory/caller results, final source/review, A/A stability evidence or the existing issue decision.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -134967,6 +134979,38 @@
         {
           "label": "Current measured-process warmup A/A cause check",
           "url": "https://github.com/tamird/gvisor/actions/runs/44609912003"
+        },
+        {
+          "label": "Shared run-only30minute and existing read-only-token support",
+          "url": "https://github.com/tamird/gvisor/commit/a9e32f7f24ea4ef384d8cd66e84e94a231d51348"
+        },
+        {
+          "label": "Compatible Ubuntu22 tool startup AMD64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44610898846"
+        },
+        {
+          "label": "Compatible Ubuntu22 tool startup ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44611401000"
+        },
+        {
+          "label": "Corrected proto materialization: all412 paths",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44612432748"
+        },
+        {
+          "label": "Actual canonical fetch/inventory gate",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44613979790"
+        },
+        {
+          "label": "Actual maintained caller gate",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44613986574"
+        },
+        {
+          "label": "A/A diagnosis plumbing passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44611513708"
+        },
+        {
+          "label": "Current A/A stability gate",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44612396815"
         }
       ],
       "followup": {
@@ -134988,12 +135032,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-19T20:42:34.380196+00:00",
-        "nextAction": "The compilation-database owner supplies a compatible tool and proves the actual Ubuntu22 caller, then diagnoses default generation. The benchmark owner checks A/A cause run44609912003 with warmup of the actual measured Node process and observed Redis CPU placement, establishing stability before expanded counts or candidate comparisons. Root follows the existing migration-issue publication decision; that draft remains private and unposted. Full150-leaf/n24 qualification remains open.",
-        "recheckCondition": "Actual supplier/default-generation evidence, A/A stability or warmup diagnosis, the existing issue decision, or explicit user direction.",
+        "curatedAt": "2026-11-19T21:03:40.118346+00:00",
+        "nextAction": "The compilation-database owner verifies canonical inventory and real callers on CIf1f4d8d2, then commits/reviews the final source; do not infer readiness from startup or the tiny fixture. The benchmark owner analyzes A/A44612396815 before expanded counts or candidate comparisons. Root follows the existing private migration-issue decision. Full150-leaf/n24 performance remains open.",
+        "recheckCondition": "Actual inventory/caller results, final source/review, A/A stability evidence or the existing issue decision.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "The shared workflow supports standard Bazel run tools at258019304. Compilation-database candidate dabc04c653 is blocked: its pinned Linux AMD64 binary needs newer libc than maintained Ubuntu22, and default generation44607556214 failed with cause not yet established. Paired A/A execution passes functionally, but material same-source noise remains; discarded server warmup is under diagnosis. No full-performance or upstream-source qualification is claimed.",
+        "disposition": "The trusted shared workflow at a9e32f7f supports run-only30minute qualification and the existing read-only GitHub token without permission changes. Compatible kiron0.21 startup passed on Ubuntu22 AMD/ARM; corrected proto materialization passed all412 paths. Production5de99a4d plus an atomic database-write fix remains under actual canonical inventory and caller gates, not ready. A/A plumbing passed; stability remains unproven.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135154,7 +135198,7 @@
             "sha256": "bf4a997a1b88d30d3f00746c5a289caae552c9ccdd8c10f4f3103777efae23bf"
           }
         },
-        "currentGateSummary": "Recorded Coverage NORMAL/RACE and static-parity gates remain qualified at their exact sources. Standard compilation-database smoke passed; Ubuntu22 tool compatibility and real default generation are blocked. A/A stability and full150/n24 controlled performance remain open.",
+        "currentGateSummary": "Recorded Coverage NORMAL/RACE and static-parity gates retain their exact evidence. Ubuntu22 kiron0.21 startup and corrected412-path proto fixture pass; canonical full inventory/real callers and A/A stability remain open. No full150/n24 qualification or new source approval is inferred.",
         "legacyParity": {
           "source": "6759f7e7bbbbea2125d89d7c9fc1a39eeb2f091d",
           "run": 44574573815,
@@ -135402,5 +135446,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-19T20:46:06.528200+00:00"
+  "updatedAt": "2026-11-19T21:03:40.118346+00:00"
 }
