@@ -163,6 +163,9 @@ go_test(
     deps = [
         "//pkg/test/testutil",
         "@com_github_docker_docker//api/types/container:go_default_library",
+        "@com_github_docker_docker//api/types/events:go_default_library",
+        "@com_github_docker_docker//api/types/filters:go_default_library",
+        "@com_github_docker_docker//api/types/image:go_default_library",
         "@com_github_docker_docker//api/types/mount:go_default_library",
         "@com_github_docker_docker//api/types/network:go_default_library",
         "@com_github_docker_docker//client:go_default_library",

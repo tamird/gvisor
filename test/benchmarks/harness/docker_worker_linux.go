@@ -41,6 +41,21 @@ import (
 // belong to this test. Its cleanup runs after container and client cleanup.
 func startDockerDaemon(t testing.TB, ctx context.Context, runsc string, bridge bool) (string, string, string) {
 	t.Helper()
+	var releases []string
+	if runsc != "" {
+		releases = append(releases, runsc)
+	}
+	host, runtimes, config := startDockerDaemons(t, ctx, releases, bridge)
+	selected := "runc"
+	if len(runtimes) != 0 {
+		selected = runtimes[0]
+	}
+	return host, selected, config
+}
+
+// startDockerDaemons registers each complete release in one owned daemon.
+func startDockerDaemons(t testing.TB, ctx context.Context, releases []string, bridge bool) (string, []string, string) {
+	t.Helper()
 	interfaces, err := net.Interfaces()
 	if err != nil {
 		t.Fatalf("list network interfaces before Docker startup: %v", err)
@@ -196,21 +211,22 @@ func startDockerDaemon(t testing.TB, ctx context.Context, runsc string, bridge b
 			t.Errorf("write daemon cleanup metadata: %v", err)
 		}
 	})
-	selectedRuntime := "runc"
-	if runsc != "" {
-		selectedRuntime = "gvisor-worker-" + strings.ToLower(rand.Text())
-		runtimeRoot := filepath.Join(root, "runsc")
+	// Each executable resolves its own adjacent opaque sidecars. A daemon-wide
+	// override would make distinct runtime releases share the same sidecars.
+	env := make([]string, 0, len(os.Environ()))
+	for _, value := range os.Environ() {
+		if !strings.HasPrefix(value, "GVISOR_SIDECAR_BINARIES_DIR=") {
+			env = append(env, value)
+		}
+	}
+	cmd.Env = env
+	var selectedRuntimes []string
+	for _, runsc := range releases {
+		selectedRuntime := "gvisor-worker-" + strings.ToLower(rand.Text())
+		runtimeRoot := filepath.Join(root, selectedRuntime)
 		if err := os.Mkdir(runtimeRoot, 0700); err != nil {
 			t.Fatal(err)
 		}
-		env := make([]string, 0, len(os.Environ())+1)
-		for _, value := range os.Environ() {
-			if !strings.HasPrefix(value, "GVISOR_SIDECAR_BINARIES_DIR=") {
-				env = append(env, value)
-			}
-		}
-		env = append(env, "GVISOR_SIDECAR_BINARIES_DIR="+filepath.Join(filepath.Dir(runsc), "gvisor-bin"))
-		cmd.Env = env
 		install := exec.CommandContext(ctx, runsc, "install", "--config_file="+configPath,
 			"--runtime="+selectedRuntime, "--clobber=false", "--download-sidecars=NEVER",
 			"--require-sidecars=ALWAYS", "--", "--platform=systrap", "--root="+runtimeRoot)
@@ -232,9 +248,10 @@ func startDockerDaemon(t testing.TB, ctx context.Context, runsc string, bridge b
 			t.Fatal(err)
 		}
 		entry, ok := installed.Runtimes[selectedRuntime]
-		if !ok || entry.Path != runsc || len(installed.Runtimes) != 1 || len(entry.Args) != 2 || entry.Args[0] != "--platform=systrap" || entry.Args[1] != "--root="+runtimeRoot {
+		if !ok || entry.Path != runsc || len(installed.Runtimes) != len(selectedRuntimes)+1 || len(entry.Args) != 2 || entry.Args[0] != "--platform=systrap" || entry.Args[1] != "--root="+runtimeRoot {
 			t.Fatalf("installed runsc configuration does not match the owned runtime: %+v", installed)
 		}
+		selectedRuntimes = append(selectedRuntimes, selectedRuntime)
 		t.Cleanup(func() {
 			cleanupCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
@@ -284,16 +301,16 @@ func startDockerDaemon(t testing.TB, ctx context.Context, runsc string, bridge b
 			t.Fatalf("owned Docker daemon readiness: %v", ctx.Err())
 		case <-ticker.C:
 			if _, err := cli.Ping(ctx); err == nil {
-				if runsc != "" {
-					info, err := cli.Info(ctx)
-					if err != nil {
-						t.Fatalf("inspect installed Docker runtime: %v", err)
-					}
-					if entry, ok := info.Runtimes[selectedRuntime]; !ok || entry.Path != runsc {
-						t.Fatalf("Docker did not load the declared runtime %q", selectedRuntime)
+				info, err := cli.Info(ctx)
+				if err != nil {
+					t.Fatalf("inspect installed Docker runtimes: %v", err)
+				}
+				for i, selected := range selectedRuntimes {
+					if entry, ok := info.Runtimes[selected]; !ok || entry.Path != releases[i] {
+						t.Fatalf("Docker did not load declared runtime %q", selected)
 					}
 				}
-				return "unix://" + socket, selectedRuntime, configPath
+				return "unix://" + socket, selectedRuntimes, configPath
 			}
 		}
 	}
