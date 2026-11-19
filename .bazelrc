@@ -81,3 +81,7 @@ build:buildbuddy --extra_execution_platforms=//tools/bazeldefs:remote_linux_amd6
 
 # Coral C/C++ tools are host files, not declared remote action inputs.
 build:buildbuddy-cache --modify_execution_info=^(Cpp.*|CcStrip)$=+no-remote
+
+test --test_arg=-test.run=^TestProxyLimitsConnections$
+test --test_arg=-test.count=50
+test --test_arg=-test.timeout=6m
