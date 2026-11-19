@@ -127,6 +127,12 @@ place of `go mod`.
 All code should comply with the [style guide](g3doc/style.md). Note that code
 may be automatically formatted per the guidelines when merged.
 
+Run the Go and Bazel formatting checks with their declared tools:
+
+```
+bazel test --keep_going //tools/lint:goimports //tools/lint:buildifier
+```
+
 As a secure runtime, we need to maintain the safety of all of code included in
 gVisor. The following rules help mitigate issues.
 

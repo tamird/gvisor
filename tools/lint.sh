@@ -55,8 +55,6 @@ declare -r CODESPELL_VERSION="2.3.0"
 declare -r CPPLINT_VERSION="1.4.0"
 declare -r CLANG_FORMAT_VERSION="23.1.1"
 declare -r CLANG_TIDY_VERSION="22.1.8"
-# Keep in sync with images/default/Dockerfile.
-declare -r BUILDIFIER_VERSION="8.5.1"
 
 # The codespell and cpplint wheels are architecture-independent.
 declare -r CODESPELL_URL="https://files.pythonhosted.org/packages/0e/20/b6019add11e84f821184234cea0ad91442373489ef7ccfa3d73a71b908fa/codespell-${CODESPELL_VERSION}-py3-none-any.whl"
@@ -66,16 +64,12 @@ declare -r CPPLINT_SHA256="5031cb9671cd5bb3dbb4d3243eebd0d42cdf76388ab49c0d276f8
 
 case "$(uname -m)" in
   x86_64|amd64)
-    declare -r BUILDIFIER_ARCH="amd64"
-    declare -r BUILDIFIER_SHA256="887377fc64d23a850f4d18a077b5db05b19913f4b99b270d193f3c7334b5a9a7"
     declare -r CLANG_FORMAT_URL="https://files.pythonhosted.org/packages/42/ef/3f8e215916e79ecd435b5bc20810443f80fce3fb8bbfe6d2783ceb775c1b/clang_format-${CLANG_FORMAT_VERSION}-py2.py3-none-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
     declare -r CLANG_FORMAT_SHA256="64900462c1203cee2fec364536c2dda708baf0619e15b52ceda926648cc82f56"
     declare -r CLANG_TIDY_URL="https://files.pythonhosted.org/packages/82/19/0f2668f8f5e2452b096a2b898f2b6bcecbceb6dd0c7f75d1755ce1f18d8b/clang_tidy-${CLANG_TIDY_VERSION}-py2.py3-none-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
     declare -r CLANG_TIDY_SHA256="1a3de07ba82d4403d8b692ae63a5520d4db5c606014c92c24bbcef9259057bf1"
     ;;
   aarch64|arm64)
-    declare -r BUILDIFIER_ARCH="arm64"
-    declare -r BUILDIFIER_SHA256="947bf6700d708026b2057b09bea09abbc3cafc15d9ecea35bb3885c4b09ccd04"
     declare -r CLANG_FORMAT_URL="https://files.pythonhosted.org/packages/0e/b6/1a162e427d912b88653a66e99a22414d798eb885b761ffddb74dbc13963f/clang_format-${CLANG_FORMAT_VERSION}-py2.py3-none-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl"
     declare -r CLANG_FORMAT_SHA256="09af54d2ef51680b34e36ed71b9f510bd399fb7b10b29a2a40843cd0e0344228"
     declare -r CLANG_TIDY_URL="https://files.pythonhosted.org/packages/ac/b7/61ed8c319f2d9ddb9762a550a6fee434bdef7bdc46d5a4b50929f1c90ec0/clang_tidy-${CLANG_TIDY_VERSION}-py2.py3-none-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl"
@@ -97,19 +91,6 @@ declare -a BAZEL_OPTIONS=()
 # run_bazel <command> [args...] runs a Bazel command with BAZEL_OPTIONS.
 run_bazel() {
   "${BAZEL[@]}" "$1" "${BAZEL_OPTIONS[@]+"${BAZEL_OPTIONS[@]}"}" "${@:2}"
-}
-
-# bazel_binary <target> builds an executable target and prints its path.
-bazel_binary() {
-  local -r target="$1"
-  # Like the Makefile's build_paths, so the binary is materialized locally.
-  run_bazel build --remote_download_outputs=toplevel "${target}" >&2
-  local execroot path
-  execroot="$(run_bazel info execution_root)"
-  # show_paths.bzl prints "<path relative to the execroot> <basename>".
-  path="$(run_bazel cquery --output=starlark \
-    --starlark:file=tools/show_paths.bzl "${target}")"
-  echo "${execroot}/${path%% *}"
 }
 
 # fetch <url> <sha256> <output> downloads a file and verifies its checksum,
@@ -134,16 +115,6 @@ fetch() {
     return 1
   fi
   mv "${tmp}" "${out}"
-}
-
-install_buildifier() {
-  local -r bin="${CACHE_DIR}/buildifier-${BUILDIFIER_VERSION}"
-  if [[ ! -x "${bin}" ]]; then
-    fetch "https://github.com/bazelbuild/buildtools/releases/download/v${BUILDIFIER_VERSION}/buildifier-linux-${BUILDIFIER_ARCH}" \
-      "${BUILDIFIER_SHA256}" "${bin}"
-    chmod +x "${bin}"
-  fi
-  echo "${bin}"
 }
 
 install_codespell() {
@@ -211,9 +182,6 @@ install_clang_tidy() {
 go_files() { git ls-files -z -- '*.go' "$@"; }
 doc_files() { git ls-files -z -- '*.md' '*.html'; }
 cc_files() { git ls-files -z -- '*.c' '*.cc' '*.h'; }
-bazel_files() {
-  git ls-files -z -- 'BUILD' '*/BUILD' '*.bzl' 'WORKSPACE' 'MODULE.bazel'
-}
 
 declare -a FAILED=()
 declare -a PASSED=()
@@ -227,27 +195,16 @@ report() {
   fi
 }
 
-# Formatting-only mode does not add or remove imports: generated packages may
-# not exist until Bazel builds them.
-check_goimports() {
-  local binary
-  binary="$(bazel_binary @org_golang_x_tools//cmd/goimports)"
-  local -ra goimports=("${binary}" -format-only)
-  # This golden output tests comment positions across merged import declarations.
-  # goimports would merge the declarations and move their comments.
-  local -r golden_outputs=':(exclude)tools/go_generics/tests/simple/output.go'
+check_bazel_lint() {
+  local -r name="$1"
   if [[ "${FIX}" -eq 1 ]]; then
-    go_files "${golden_outputs}" | xargs -0 "${goimports[@]}" -w -l
-    return
-  fi
-  local output
-  output="$(go_files "${golden_outputs}" | xargs -0 "${goimports[@]}" -d)"
-  if [[ -n "${output}" ]]; then
-    printf '%s\n' "${output}"
-    echo 'Run `make lint-fix` to reformat these files.' >&2
-    return 1
+    run_bazel run "//tools/lint:${name}_fix"
+  else
+    run_bazel test --test_output=errors "//tools/lint:${name}"
   fi
 }
+
+check_goimports() { check_bazel_lint goimports; }
 
 # The style lives in //.clang-format; clang-format finds it by walking up
 # from each file, so no style is passed here.
@@ -310,44 +267,7 @@ check_clang_tidy() {
     --jobs="$(nproc 2> /dev/null || echo 1)"
 }
 
-# Native rule loads (native-sh-test, native-sh-binary, native-proto) are
-# excluded because rules_shell / proto_library.bzl loads are not used here.
-check_buildifier() {
-  local buildifier
-  buildifier="$(install_buildifier)"
-  local -r warnings="-duplicated-name,-list-append,-native-py,-native-sh-binary,-native-sh-library,-native-sh-test,-native-proto"
-  if [[ "${FIX}" -eq 1 ]]; then
-    bazel_files | xargs -0 "${buildifier}" --mode=fix --lint=fix --warnings="${warnings}"
-    return 0
-  fi
-  local output status=0
-  output="$(bazel_files | xargs -0 "${buildifier}" --mode=check --lint=warn --warnings="${warnings}" 2>&1)" || status=$?
-  if [[ -z "${output}" ]]; then
-    return "${status}"
-  fi
-  local unformatted
-  unformatted="$(printf '%s\n' "${output}" | sed -n 's/^\(.*\) # reformat$/\1/p')"
-  local lint_warnings
-  lint_warnings="$(printf '%s\n' "${output}" | grep -v ' # reformat$' || true)"
-  local rc="${status}"
-  if [[ -n "${unformatted}" ]]; then
-    local file
-    while IFS= read -r file; do
-      # -path lets buildifier infer the file type from stdin, so the diff
-      # matches what --mode=fix would write.
-      diff -u --label "${file}" --label "${file} (formatted)" \
-        "${file}" <("${buildifier}" -path="${file}" < "${file}") || true
-    done <<< "${unformatted}"
-    echo
-    echo "Run \`make lint-fix\` to reformat these files." >&2
-    rc=1
-  fi
-  if [[ -n "${lint_warnings}" ]]; then
-    echo "${lint_warnings}" >&2
-    rc=1
-  fi
-  return "${rc}"
-}
+check_buildifier() { check_bazel_lint buildifier; }
 
 check_actions() {
   if ! command -v "${BAZEL[0]}" > /dev/null 2>&1; then
