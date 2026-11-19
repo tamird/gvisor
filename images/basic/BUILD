@@ -21,6 +21,7 @@ image_manifest(
 
 image_outputs(
     name = "alpine",
+    archive_visibility = ["//test/benchmarks/harness:__pkg__"],
     image = ":alpine",
     image_name = "basic/alpine",
 )
