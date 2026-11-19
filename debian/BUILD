@@ -1,6 +1,6 @@
 load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("//tools:arch.bzl", "select_arch")
-load("//tools:defs.bzl", "go_binary", "pkg_deb", "pkg_tar", "version")
+load("//tools:defs.bzl", "go_binary", "go_test", "pkg_deb", "pkg_tar", "version")
 load("//tools:release.bzl", "SIDECARS", "release_tars")
 
 package(
@@ -38,6 +38,15 @@ pkg_tar(
 go_binary(
     name = "changelog_tool",
     srcs = ["changelog.go"],
+    pure = True,
+)
+
+go_test(
+    name = "changelog_test",
+    size = "small",
+    srcs = ["changelog_test.go"],
+    args = ["-changelog-tool=$(rootpath :changelog_tool)"],
+    data = [":changelog_tool"],
     pure = True,
 )
 
