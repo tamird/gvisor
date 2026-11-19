@@ -1067,6 +1067,7 @@ http_archive(
     name = "benchmark_runtime_base",
     sha256 = "7d4bf0acce487ec6814fa34825c7c58c7456862a009e9fbd555ec41918da689b",
     strip_prefix = "gvisor-35767548db9c01b352ee1fdbe6344f3e80252f81",
+    type = "tar.gz",
     urls = ["https://codeload.github.com/tamird/gvisor/tar.gz/35767548db9c01b352ee1fdbe6344f3e80252f81"],
 )
 
@@ -1074,6 +1075,7 @@ http_archive(
     name = "benchmark_runtime_candidate",
     sha256 = "295a55a9e3eb6af0e20b7a741522d032cb745742fb18265a822e73078657eed8",
     strip_prefix = "gvisor-05827becd9d7cdd651ffad186ff5683d2d1bf036",
+    type = "tar.gz",
     urls = ["https://codeload.github.com/tamird/gvisor/tar.gz/05827becd9d7cdd651ffad186ff5683d2d1bf036"],
 )
 
