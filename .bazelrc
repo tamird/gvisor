@@ -83,6 +83,6 @@ build:buildbuddy --extra_execution_platforms=//tools/bazeldefs:remote_linux_amd6
 build:buildbuddy-cache --modify_execution_info=^(Cpp.*|CcStrip)$=+no-remote
 
 test --test_arg=-test.run=^TestProxyLimitsConnections$
-test --test_arg=-test.count=50
+test --test_arg=-test.count=200
 test --test_arg=-test.timeout=6m
 test --test_timeout=360
