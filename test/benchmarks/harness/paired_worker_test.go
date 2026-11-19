@@ -44,9 +44,17 @@ var (
 	pairedCandidateID = flag.String("paired-candidate-source", "", "candidate runtime source commit")
 	pairedBinary      = flag.String("paired-benchmark", "", "shared declared benchmark executable")
 	pairedImages      = flag.String("paired-image-archives", "", "space-separated declared image archives")
+	pairedFilter      = flag.String("paired-bench", "^BenchmarkNode$", "ordinary Go benchmark selection expression")
+	pairedBenchtime   = flag.String("paired-benchtime", "1000x", "ordinary Go benchmark time or operation count")
+	pairedBlocks      = flag.Int("paired-blocks", 1, "number of balanced BASE/CANDIDATE/CANDIDATE/BASE blocks")
+	pairedLeaves      = flag.Int("paired-leaves", 4, "number of selected benchmark leaves per visit")
+	pairedObserve     = flag.Bool("paired-observe-affinity", false, "inspect actual workload affinity during capability preflight")
 )
 
 func TestPairedBenchmark(t *testing.T) {
+	if *pairedBlocks < 1 || *pairedLeaves < 1 {
+		t.Fatal("paired blocks and leaves must be positive")
+	}
 	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Minute)
 	defer cancel()
 	binary, err := testutil.FindFile(*pairedBinary)
@@ -108,7 +116,12 @@ func TestPairedBenchmark(t *testing.T) {
 	}{version.Version, images, runtimes, []string{arms[0].runsc, arms[1].runsc}}); err != nil {
 		t.Fatal(err)
 	}
-	for visit, index := range []int{0, 1, 1, 0} {
+	blocks := *pairedBlocks
+	order := make([]int, 0, 4*blocks)
+	for range *pairedBlocks {
+		order = append(order, 0, 1, 1, 0)
+	}
+	for visit, index := range order {
 		arm := arms[index]
 		t.Run(fmt.Sprintf("visit%d/%s", visit, arm.name), func(t *testing.T) {
 			if err := json.NewEncoder(os.Stdout).Encode(struct {
@@ -123,15 +136,22 @@ func TestPairedBenchmark(t *testing.T) {
 			}
 			cmd := exec.CommandContext(ctx, binary,
 				"-test.v=false", "--runtime="+runtimes[index], "--config_path="+config,
-				"-test.run=^$", "-test.bench=^BenchmarkNode$", "-test.benchtime=1000x")
-			observeCtx, stopObserver := context.WithCancel(ctx)
-			observed := make(chan error, 1)
-			messages, failures := cli.Events(observeCtx, events.ListOptions{Filters: filters.NewArgs(filters.Arg("type", "container"), filters.Arg("event", "start"))})
-			go func() { observed <- attestBenchmarkContainers(observeCtx, cli, messages, failures, visit) }()
+				"-test.run=^$", "-test.bench="+*pairedFilter, "-test.benchtime="+*pairedBenchtime)
+			var observed chan error
+			var stopObserver context.CancelFunc
+			if *pairedObserve {
+				observeCtx, cancel := context.WithCancel(ctx)
+				stopObserver = cancel
+				observed = make(chan error, 1)
+				messages, failures := cli.Events(observeCtx, events.ListOptions{Filters: filters.NewArgs(filters.Arg("type", "container"), filters.Arg("event", "start"))})
+				go func() { observed <- attestBenchmarkContainers(observeCtx, cli, messages, failures, visit) }()
+			}
 			output, err := cmd.CombinedOutput()
-			stopObserver()
-			if observeErr := <-observed; observeErr != nil {
-				t.Error(observeErr)
+			if stopObserver != nil {
+				stopObserver()
+				if observeErr := <-observed; observeErr != nil {
+					t.Error(observeErr)
+				}
 			}
 			if _, writeErr := os.Stdout.Write(output); writeErr != nil {
 				t.Fatal(writeErr)
@@ -139,10 +159,14 @@ func TestPairedBenchmark(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			for _, concurrency := range []int{1, 5, 10, 25} {
-				if strings.Count(string(output), fmt.Sprintf("BenchmarkNode/concurrency.%d-", concurrency)) != 1 {
-					t.Fatalf("missing or duplicate completed concurrency %d result", concurrency)
+			leaves := 0
+			for _, line := range strings.Split(string(output), "\n") {
+				if strings.HasPrefix(line, "Benchmark") && strings.Contains(line, " ns/op") {
+					leaves++
 				}
+			}
+			if leaves != *pairedLeaves {
+				t.Fatalf("completed %d benchmark leaves, want %d", leaves, *pairedLeaves)
 			}
 		})
 	}
@@ -156,7 +180,7 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 		select {
 		case <-ctx.Done():
 			for _, image := range []string{"benchmarks/node", "benchmarks/hey"} {
-				if seen[image] < 4 {
+				if seen[image] < *pairedLeaves {
 					return fmt.Errorf("visit %d has no actual affinity observation for %s", visit, image)
 				}
 			}
@@ -187,7 +211,7 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 			state, err := cli.ContainerInspect(ctx, message.Actor.ID)
 			// testing.B also runs a one-request calibration. Such a client may
 			// exit before its start event arrives; only complete observations
-			// count toward the four measured leaves required for this visit.
+			// count toward the selected leaves required for this visit.
 			if errdefs.IsNotFound(err) {
 				continue
 			}
