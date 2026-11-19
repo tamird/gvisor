@@ -99,3 +99,13 @@ go_test(
         "@com_github_docker_docker//errdefs:go_default_library",
     ],
 )
+
+build_test(
+    name = "paired_runtime_products_test",
+    tags = ["manual"],
+    targets = [
+        "//test/benchmarks/network:node_test",
+        "@benchmark_runtime_base//:release",
+        "@benchmark_runtime_candidate//:release",
+    ],
+)
