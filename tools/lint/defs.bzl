@@ -24,19 +24,17 @@ _fix_binary, _fix_transition = with_cfg(py_binary).set("platforms", [Label("@pla
 # buildifier: disable=unused-variable
 fixer_test, _fixer_test_transition = with_cfg(py_test).set("platforms", [Label("@platforms//host")]).build()
 
-def source_lint(name, group, tool):
+def source_lint(name, group, command):
     """Declares a source check.
 
     Args:
         name: Checker name.
         group: Indexed source manifest to check.
-        tool: Declared checker executable.
+        command: Declared Aspect formatter command pair.
     """
     manifest = "@analysis_sources//:" + group + ".json"
     args = [
-        "--check=" + name,
         "--sources=$(rlocationpath %s)" % manifest,
-        "--tool=$(rlocationpath %s)" % tool,
     ]
     common = dict(
         srcs = ["runner.py"],
@@ -46,15 +44,22 @@ def source_lint(name, group, tool):
     py_test(
         name = name,
         size = "medium",
-        args = args,
-        data = [manifest, "@analysis_sources//:" + group + "_files", tool],
+        args = args + ["--command=$(rlocationpath %s.check)" % command],
+        data = [
+            manifest,
+            "@analysis_sources//:" + group + "_files",
+            command + ".check",
+        ],
         tags = ["manual"],
         **common
     )
     _fix_binary(
         name = name + "_fix",
-        args = args + ["--fix"],
-        data = [manifest, tool],
+        args = args + [
+            "--command=$(rlocationpath %s)" % command,
+            "--fix",
+        ],
+        data = [manifest, command],
         tags = ["manual"],
         **common
     )

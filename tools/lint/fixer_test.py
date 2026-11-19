@@ -40,59 +40,68 @@ def resolve(path: str) -> str:
 
 
 match sys.argv:
-  case [program, goimports_fix, goimports, buildifier_fix, buildifier, *test_args]:
-    GOIMPORTS_FIX, GOIMPORTS, BUILDIFIER_FIX, BUILDIFIER = map(
-        resolve, (goimports_fix, goimports, buildifier_fix, buildifier)
-    )
+  case [program, go_fix, bazel_fix, checker, go, build, module, bzl, *test_args]:
+    GO_FIX, BAZEL_FIX, CHECKER = map(resolve, (go_fix, bazel_fix, checker))
+    SOURCES = list(map(resolve, (go, build, module, bzl)))
     sys.argv = [program, *test_args]
   case _:
-    raise ValueError("Expected four configured formatter paths")
+    raise ValueError("Expected configured fixers, checker and four exports")
 
 
 class FixerTest(unittest.TestCase):
 
   def test_fixers(self) -> None:
     cases = (
-        ("fixture.go", "package fixture\nfunc answer( )int{return 42}\n",
-         "package fixture\n\nfunc answer() int { return 42 }\n",
-         GOIMPORTS_FIX, GOIMPORTS, ["-format-only", "-d"]),
-        ("BUILD", 'exports_files( [ "fixture.txt" ] )\n',
-         'exports_files(["fixture.txt"])\n',
-         BUILDIFIER_FIX, BUILDIFIER, ["--mode=check", "--format=json"]),
+        ("pkg/tcpip/seqnum/seqnum.go", "package seqnum", "package    seqnum", 0, GO_FIX),
+        ("tools/buildbuddy/BUILD", "name =", "name=", 1, BAZEL_FIX),
+        ("MODULE.bazel", "module(", "module( ", 2, BAZEL_FIX),
+        ("tools/lint/defs.bzl", "load(", "load( ", 3, BAZEL_FIX),
+        ("space dir/file.go", "package seqnum", "package    seqnum", 0, GO_FIX),
+        ("literal[ab].go", "package seqnum", "package    seqnum", 0, GO_FIX),
     )
-    for name, before, after, fixer, tool, flags in cases:
+    for name, before, after, source_index, fixer in cases:
       with self.subTest(name=name), tempfile.TemporaryDirectory(
-          dir=os.environ["TEST_TMPDIR"]
+          prefix="format workspace ", dir=os.environ["TEST_TMPDIR"]
       ) as directory:
         root = Path(directory)
         source = root / name
-        source.write_text(before)
+        source.parent.mkdir(parents=True, exist_ok=True)
+        original = Path(SOURCES[source_index]).read_text()
+        self.assertIn(before, original)
+        source.write_text(original.replace(before, after, 1))
+        unselected = root / "literala.go"
+        unselected.write_text("package    unselected\n")
         manifest = root / "sources.json"
         manifest.write_text(json.dumps([name]))
-        env = dict(os.environ, BUILD_WORKSPACE_DIRECTORY=directory)
+        mirrored = root / "files" / (name + ".source")
+        mirrored.parent.mkdir(parents=True, exist_ok=True)
+        subdirectory = root / "invoking subdirectory"
+        subdirectory.mkdir()
+        env = dict(os.environ, BUILD_WORKSPACE_DIRECTORY=directory,
+                   BUILD_WORKING_DIRECTORY=str(subdirectory))
 
-        def check() -> bool:
-          result = subprocess.run(
-              [tool, *flags, name], cwd=root, env=env,
-              capture_output=True, text=True, check=True,
+        def check() -> subprocess.CompletedProcess[str]:
+          mirrored.write_text(source.read_text())
+          return subprocess.run(
+              [fixer, "--sources=" + str(manifest), "--command=" + CHECKER,
+               "--no-fix"], cwd=subdirectory, env=env,
+              capture_output=True, text=True, check=False,
           )
-          if name == "BUILD":
-            match json.loads(result.stdout):
-              case {"success": bool(success)}:
-                return success
-              case unexpected:
-                self.fail(f"Invalid Buildifier response: {unexpected!r}")
-          return not result.stdout
 
-        self.assertFalse(check(), "Unformatted fixture was accepted")
+        result = check()
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(source.read_text(), original.replace(before, after, 1))
+        if fixer == BAZEL_FIX:
+          self.assertIn("(formatted)", result.stdout)
         result = subprocess.run(
-            [fixer, "--check=" + ("buildifier" if name == "BUILD" else "goimports"),
-             "--tool=" + tool, "--sources=" + str(manifest), "--fix"], env=env,
+            [fixer, "--sources=" + str(manifest)], cwd=subdirectory, env=env,
             capture_output=True, text=True, check=False,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertEqual(source.read_text(), after)
-        self.assertTrue(check(), "Fixed fixture was rejected")
+        self.assertEqual(source.read_text(), original)
+        result = check()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(unselected.read_text(), "package    unselected\n")
 
 
 if __name__ == "__main__":
