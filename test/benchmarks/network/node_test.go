@@ -14,8 +14,14 @@
 package network
 
 import (
+	"bufio"
 	"context"
+	"crypto/sha256"
+	"encoding/json"
 	"flag"
+	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -29,6 +35,7 @@ import (
 )
 
 var (
+	nodeResponseProbe = flag.Bool("node-response-probe", false, "inspect existing Node responses without timed request samples")
 	nodeWarmupRequests = flag.Int("node-warmup-requests", 0, "requests to warm each actual Node server before measurement")
 	nodeRedisCPUs      = flag.String("node-redis-cpuset", "", "explicit CPU affinity for the native Redis backend")
 )
@@ -122,6 +129,46 @@ func runNode(b *testing.B, hey *tools.Hey) {
 		Image:      "benchmarks/hey",
 		Links:      []string{nodeApp.MakeLink("node")},
 		CpusetCpus: harness.ClientCPUSet(),
+	}
+	if *nodeResponseProbe {
+		probe := clientMachine.GetNativeContainer(ctx, b)
+		defer probe.CleanUp(ctx)
+		if err := probe.Spawn(ctx, dockerutil.RunOpts{
+			Image:      "benchmarks/util",
+			Links:      opts.Links,
+			CpusetCpus: opts.CpusetCpus,
+		}, "sleep", "infinity"); err != nil {
+			b.Fatal(err)
+		}
+		for request := range 32 {
+			output, fetchErr := probe.Exec(ctx, dockerutil.ExecOpts{}, "wget", "--quiet", "--save-headers", "--output-document=-", "--timeout=5", "--tries=1", "http://node:8080")
+			response, parseErr := http.ReadResponse(bufio.NewReader(strings.NewReader(output)), nil)
+			if parseErr != nil {
+				b.Fatalf("response %d: wget error %v, parse error %v, output %q", request, fetchErr, parseErr, output)
+			}
+			body, err := io.ReadAll(response.Body)
+			response.Body.Close()
+			if err != nil {
+				b.Fatal(err)
+			}
+			fetchError := ""
+			if fetchErr != nil {
+				fetchError = fetchErr.Error()
+			}
+			record, err := json.Marshal(struct {
+				Request int    `json:"node_response_probe"`
+				Status  int    `json:"status"`
+				Error   string `json:"error"`
+				Bytes   int    `json:"body_bytes"`
+				SHA256  string `json:"body_sha256"`
+				Body    string `json:"body"`
+			}{request, response.StatusCode, fetchError, len(body), fmt.Sprintf("%x", sha256.Sum256(body)), string(body)})
+			if err != nil {
+				b.Fatal(err)
+			}
+			b.Logf("%s", record)
+		}
+		b.Skip("response consistency probe; no timed request samples")
 	}
 	warmupRequests := *nodeWarmupRequests
 	if count, fixed := strings.CutSuffix(flag.Lookup("test.benchtime").Value.String(), "x"); fixed && b.N == 1 {

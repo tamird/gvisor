@@ -40,6 +40,7 @@ import (
 )
 
 var (
+	pairedResponseProbe = flag.Bool("paired-response-probe", false, "inspect Node responses without timed request samples")
 	pairedBase        = flag.String("paired-base-runsc", "", "declared baseline release entrypoint")
 	pairedCandidate   = flag.String("paired-candidate-runsc", "", "declared candidate release entrypoint")
 	pairedBaseID      = flag.String("paired-base-source", "", "baseline runtime source commit")
@@ -183,6 +184,7 @@ func TestPairedBenchmark(t *testing.T) {
 				"-test.v=false", "--runtime="+runtimes[index], "--config_path="+config,
 				"-test.run=^$", "-test.bench="+*pairedFilter, "-test.benchtime="+*pairedBenchtime,
 				"--node-warmup-requests="+strconv.Itoa(*pairedNodeWarmup),
+				"--node-response-probe="+strconv.FormatBool(*pairedResponseProbe),
 				"--client-cpuset="+ClientCPUSet(), "--server-cpuset="+ServerCPUSet(),
 				"--node-redis-cpuset="+*pairedRedisCPUs, "--hey-phase-diagnostics")
 			var observed chan error
@@ -222,6 +224,9 @@ func TestPairedBenchmark(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			if *pairedResponseProbe {
+				return
+			}
 			leaves := 0
 			for _, line := range strings.Split(string(output), "\n") {
 				if strings.HasPrefix(line, "Benchmark") && strings.Contains(line, " ns/op") {
@@ -246,7 +251,11 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 	for {
 		select {
 		case <-ctx.Done():
-			for _, image := range []string{"benchmarks/node", "benchmarks/hey", "benchmarks/redis"} {
+			required := []string{"benchmarks/node", "benchmarks/hey", "benchmarks/redis"}
+			if *pairedResponseProbe {
+				required[1] = "benchmarks/util"
+			}
+			for _, image := range required {
 				if seen[image] < *pairedLeaves {
 					return fmt.Errorf("visit %d has no actual affinity observation for %s", visit, image)
 				}
@@ -267,7 +276,10 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 			}
 			image := message.Actor.Attributes["image"]
 			kind := ""
-			for _, candidate := range []string{"benchmarks/node", "benchmarks/hey", "benchmarks/redis"} {
+			for _, candidate := range []string{"benchmarks/node", "benchmarks/hey", "benchmarks/redis", "benchmarks/util"} {
+				if candidate == "benchmarks/util" && !*pairedResponseProbe {
+					continue
+				}
 				if strings.Contains(image, candidate) {
 					kind = candidate
 				}
@@ -291,6 +303,9 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 			if state.HostConfig == nil {
 				return fmt.Errorf("started workload %s has no host configuration", kind)
 			}
+			if kind == "benchmarks/util" && state.HostConfig.CpusetCpus == "" {
+				continue
+			}
 			status, err := os.ReadFile("/proc/" + strconv.Itoa(state.State.Pid) + "/status")
 			if os.IsNotExist(err) {
 				continue
@@ -305,7 +320,7 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 				}
 			}
 			want := ServerCPUSet()
-			if kind == "benchmarks/hey" {
+			if kind == "benchmarks/hey" || kind == "benchmarks/util" {
 				want = ClientCPUSet()
 			}
 			if kind == "benchmarks/redis" {
