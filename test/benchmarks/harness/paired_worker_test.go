@@ -177,7 +177,9 @@ func TestPairedBenchmark(t *testing.T) {
 				stopObserver = cancel
 				observed = make(chan error, 1)
 				messages, failures := cli.Events(observeCtx, events.ListOptions{Filters: filters.NewArgs(filters.Arg("type", "container"), filters.Arg("event", "start"))})
-				go func() { observed <- attestBenchmarkContainers(observeCtx, cli, messages, failures, visit, releaseProducts[index], actualHashes) }()
+				go func() {
+					observed <- attestBenchmarkContainers(observeCtx, cli, messages, failures, visit, releaseProducts[index], actualHashes)
+				}()
 			}
 			output, err := cmd.CombinedOutput()
 			if stopObserver != nil {
