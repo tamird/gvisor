@@ -1,0 +1,100 @@
+# Copyright 2026 The gVisor Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Declare indexed source inputs with their current contents."""
+
+def _git(ctx, root, args):
+    git = ctx.which("git")
+    if git == None:
+        fail("Git is required to enumerate the tracked analysis sources")
+    result = ctx.execute([git, "-C", str(root)] + args)
+    if result.return_code:
+        fail("Cannot enumerate analysis sources: " + result.stderr)
+    return result.stdout
+
+def _analysis_sources_impl(ctx):
+    root = ctx.path(ctx.attr.root).dirname
+
+    # The index owns membership, including newly staged files and removals.
+    # Watch the actual index rather than traversing checkout/output symlinks.
+    git_dir = root.get_child(".git")
+    if not git_dir.is_dir:
+        ctx.watch(git_dir)
+    index = _git(ctx, root, ["rev-parse", "--path-format=absolute", "--git-path", "index"]).strip()
+    ctx.watch(index)
+    shared_index = _git(ctx, root, ["rev-parse", "--path-format=absolute", "--shared-index-path"]).strip()
+    if shared_index:
+        ctx.watch(shared_index)
+
+    groups = {}
+    names = {}
+    for group, pathspecs in ctx.attr.groups.items():
+        selected = []
+        entries = _git(ctx, root, ["ls-files", "--stage", "-z", "--"] + pathspecs)
+        for entry in entries.split("\000"):
+            if not entry:
+                continue
+            metadata, _, name = entry.partition("\t")
+            mode, _, stage = metadata.split(" ")
+            if stage != "0" or mode not in ["100644", "100755"]:
+                fail("Selected analysis source must be an indexed regular file: " + entry)
+            source = root.get_child(name)
+
+            # Reject aliases before watching or mirroring their referents.
+            if str(source.realpath) != str(root.realpath.get_child(name)):
+                fail("Selected analysis source must not be a symlink: " + name)
+            if not source.exists or source.is_dir:
+                fail("Analysis source must be an existing file: " + name)
+            selected.append(name)
+            names[name] = True
+        if not selected:
+            fail("No tracked analysis sources selected for " + group)
+        groups[group] = selected
+    if not names:
+        fail("No analysis source groups selected")
+
+    # A suffix keeps source BUILD files from defining Bazel packages while
+    # stable paths avoid invalidating every input when membership changes.
+    mirrors = ["files/" + name + ".source" for name in sorted(names)]
+    mirror_set = {mirror: True for mirror in mirrors}
+    for name, mirror in zip(sorted(names), mirrors):
+        parts = mirror.split("/")
+        for i in range(1, len(parts)):
+            if "/".join(parts[:i]) in mirror_set:
+                fail("Source file/directory collision after adding .source: " + name)
+        source = root.get_child(name)
+        ctx.watch(source)
+        ctx.symlink(source, mirror)
+
+    exports = list(mirrors)
+    declarations = ["package(default_visibility = %s)" % repr(["//visibility:public"])]
+    for group, selected in groups.items():
+        manifest = group + ".json"
+        ctx.file(manifest, json.encode(selected))
+        exports.append(manifest)
+        declarations.append("filegroup(name = %s, srcs = %s)" % (
+            repr(group + "_files"),
+            repr(["files/" + name + ".source" for name in selected]),
+        ))
+    declarations.append("exports_files(%s)" % repr(exports))
+    ctx.file("BUILD.bazel", "\n".join(declarations) + "\n")
+
+analysis_sources = repository_rule(
+    implementation = _analysis_sources_impl,
+    attrs = {
+        "groups": attr.string_list_dict(doc = "Named subsets, selected by Git pathspecs."),
+        "root": attr.label(default = "//:MODULE.bazel", allow_single_file = True),
+    },
+    local = True,
+)
