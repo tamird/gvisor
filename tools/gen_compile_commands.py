@@ -25,7 +25,7 @@ import subprocess
 import sys
 
 
-def _bazel(bazel, options, command, *args):
+def _bazel(bazel: list[str], options: list[str], command: str, *args: str) -> str:
   """Runs a bazel command with the given options, returning its stdout."""
 
   return subprocess.run(
@@ -36,11 +36,13 @@ def _bazel(bazel, options, command, *args):
   ).stdout
 
 
-def _compile_actions(bazel, options, targets):
-  """Yields the C++ compile actions for the targets' dependencies."""
+def _compile_arguments(
+    bazel: list[str], options: list[str], targets: list[str]
+) -> list[list[str]]:
+  """Returns the compiler arguments for the targets' C++ dependencies."""
 
   query = 'mnemonic("CppCompile", deps({}))'.format(" union ".join(targets))
-  return json.loads(
+  decoded: object = json.loads(
       _bazel(
           bazel,
           options,
@@ -49,10 +51,25 @@ def _compile_actions(bazel, options, targets):
           "--noshow_progress",
           query,
       )
-  )["actions"]
+  )
+  if not isinstance(decoded, dict):
+    raise ValueError("Bazel aquery output must be an object")
+  records: object = decoded.get("actions")
+  if not isinstance(records, list):
+    raise ValueError("Bazel aquery actions must be an array")
+  commands: list[list[str]] = []
+  for record in records:
+    if not isinstance(record, dict):
+      raise ValueError("Bazel aquery action must be an object")
+    value: object = record.get("arguments")
+    if not isinstance(value, list) or not all(isinstance(arg, str) for arg in value):
+      raise ValueError("Bazel compile action arguments must be an array of strings")
+    arguments: list[str] = value
+    commands.append(arguments)
+  return commands
 
 
-def main():
+def main() -> int:
   parser = argparse.ArgumentParser(
       description="Generates compile_commands.json for gVisor's C++ code."
   )
@@ -96,8 +113,7 @@ def main():
 
   database = []
   seen = set()
-  for action in _compile_actions(bazel, options, targets):
-    arguments = action["arguments"]
+  for arguments in _compile_arguments(bazel, options, targets):
     if "-c" not in arguments:
       continue
     source = pathlib.Path(arguments[arguments.index("-c") + 1])
