@@ -9,12 +9,10 @@ def cc_pie_obj(name, srcs, outs):
         srcs = srcs,
         outs = outs,
         cmd = "$(CC)  $(CC_FLAGS)  " +
-              # The stub is page size agnostic on arm64, where the page size is
-              # only known at runtime (see sysmsg.h).
-              select_arch(
-                  amd64 = " -DPAGE_SIZE=4096 ",
-                  arm64 = " ",
-              ) +
+              select({
+                  "//tools/bazeldefs:pagesize_64k": " -DPAGE_SIZE=65536 ",
+                  "//conditions:default": " -DPAGE_SIZE=4096 ",
+              }) +
               "-Wall -Werror -Wno-unused-command-line-argument " +
               "-fpie " +
               # -01 is required for clang to avoid making use of memcpy when
@@ -40,6 +38,7 @@ def cc_pie_obj(name, srcs, outs):
               "-fno-asynchronous-unwind-tables " +
               "-fno-stack-protector " +
               "-c $$(echo $(SRCS) | tr ' ' '\n' | grep -v -E '.h$$') -o $@",
+        tags = ["no-remote"],
         toolchains = [
             ":no_pie_cc_flags",
             cc_toolchain,
