@@ -24,7 +24,7 @@ on:
         required: false
         default: test
         type: choice
-        options: [test, aquery]
+        options: [test, aquery, run]
       architecture:
         required: true
         type: choice
@@ -258,6 +258,16 @@ jobs:
                 --build_event_json_file="$results/events.json" --profile="$results/profile.gz" \
                 "${targets[@]}" 2>&1 | tee "$results/bazel.log"
               ;;
+            run)
+              test "${#targets[@]}" -eq 1
+              export PATH="$results:$PATH"
+              export QUALIFICATION_BAZEL="$results/bazel"
+              QUALIFICATION_BAZEL_OPTIONS_JSON=$(python3 -c 'import json, sys; print(json.dumps(sys.argv[1:]))' "${options[@]}")
+              export QUALIFICATION_BAZEL_OPTIONS_JSON
+              "$results/bazel" run "${options[@]}" \
+                --build_event_json_file="$results/events.json" --profile="$results/profile.gz" \
+                "${targets[0]}" 2>&1 | tee "$results/bazel.log"
+              ;;
             aquery)
               "$results/bazel" aquery "${options[@]}" --output=jsonproto \
                 "deps(set(${targets[*]}))" > "$results/actions.json"
@@ -283,6 +293,7 @@ jobs:
             ${{ runner.temp }}/bazel-qualification/actions.json
             ${{ runner.temp }}/bazel-qualification/profile.gz
             ${{ runner.temp }}/bazel-qualification/bazel.log
+            compile_commands.json
             bazel-out/*/testlogs/**/test.xml
             bazel-out/*/testlogs/**/test.log
             bazel-out/*/testlogs/**/runsc.log.*.boot.txt
