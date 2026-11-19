@@ -62,4 +62,5 @@ sh_binary(
         "devcontainer",
         "lint",
     ],
+    data = ["//tools/compile_commands"],
 )

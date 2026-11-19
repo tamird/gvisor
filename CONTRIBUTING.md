@@ -89,7 +89,7 @@ install [clangd][clangd] on the host, then generate its compilation database:
 
 ```sh
 bazel run --platforms=@platforms//host //tools/compile_commands -- \
-  --resolve --bazel-command=bazel //test/... //tools/...
+  --resolve --bazel-command=bazel //test/... //tools/... &&
 bazel build --remote_download_outputs=all \
   --aspects=//tools:cc_compile_inputs.bzl%cc_compile_inputs \
   --output_groups=cc_compile_inputs //test/... //tools/...

@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Checks failure propagation through the public lint entrypoint."""
+"""Checks developer-tool failure propagation."""
 
 import contextlib
 import json
@@ -174,6 +174,21 @@ class LintTest(unittest.TestCase):
     result = self.lint("goimports")
     self.assert_failed(result, "goimports")
     self.assertIn("bazel-build-failed", result.stderr)
+
+    self.tool(
+        self.bin / "bazel",
+        f'echo "$*" >> "{self.bazel_log}"\n'
+        'case "$*" in *"@io_bazel_rules_go//go"*) exit 0;; esac\nexit 7',
+    )
+    result = subprocess.run(
+        ["bash", str(LINT.with_name("devcontainer-init.sh"))],
+        env=self.env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    self.assertEqual(result.returncode, 7, result.stdout + result.stderr)
+    self.assertEqual(len(self.bazel_log.read_text().splitlines()), 2)
 
   def test_diagnostics_and_continuation(self) -> None:
     self.tool(
