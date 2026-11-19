@@ -205,6 +205,8 @@ func BlockingRecvMMsgUntilStopped(efd int, fd int, msgHdrs []MMsgHdr) (int, unix
 
 // BlockingPollUntilStopped polls for events on fd or until a stop is signalled
 // on the event fd efd. Returns true if stopped, i.e., efd has event POLLIN.
+// POLLHUP and POLLERR are reported as ECONNRESET. POLLRDHUP is also
+// reported as ECONNRESET if requested in events.
 func BlockingPollUntilStopped(efd int, fd int, events int16) (bool, unix.Errno) {
 	pevents := [...]PollEvent{
 		{
@@ -221,7 +223,8 @@ func BlockingPollUntilStopped(efd int, fd int, events int16) (bool, unix.Errno) 
 		return pevents[0].Revents&unix.POLLIN != 0, errno
 	}
 
-	if pevents[1].Revents&unix.POLLHUP != 0 || pevents[1].Revents&unix.POLLERR != 0 {
+	hangupEvents := int16(unix.POLLHUP|unix.POLLERR) | (events & unix.POLLRDHUP)
+	if pevents[1].Revents&hangupEvents != 0 {
 		errno = unix.ECONNRESET
 	}
 
