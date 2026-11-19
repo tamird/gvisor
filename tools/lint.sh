@@ -298,8 +298,6 @@ check_clang_tidy() {
       echo "lint: generate it with //tools/compile_commands" >&2
       return 1
     fi
-    run_bazel build --aspects=//tools:cc_compile_inputs.bzl%cc_compile_inputs \
-      --output_groups=cc_compile_inputs //test/... //tools/... >&2
     local -a generator_options=(--resolve "--bazel-command=${BAZEL[0]}")
     local i option
     for ((i = 1; i < ${#BAZEL[@]}; i++)); do
@@ -310,6 +308,8 @@ check_clang_tidy() {
     done
     run_bazel run --platforms=@platforms//host //tools/compile_commands -- \
       "${generator_options[@]}" //test/... //tools/... >&2
+    run_bazel build --aspects=//tools:cc_compile_inputs.bzl%cc_compile_inputs \
+      --output_groups=cc_compile_inputs //test/... //tools/... >&2
   fi
   local clang_tidy
   clang_tidy="$(install_clang_tidy)"

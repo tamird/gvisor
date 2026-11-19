@@ -88,15 +88,16 @@ In addition, for language server support in C++ files (e.g. the syscall tests):
 install [clangd][clangd] on the host, then generate its compilation database:
 
 ```sh
-bazel build --aspects=//tools:cc_compile_inputs.bzl%cc_compile_inputs \
-  --output_groups=cc_compile_inputs //test/... //tools/...
 bazel run --platforms=@platforms//host //tools/compile_commands -- \
   --resolve --bazel-command=bazel //test/... //tools/...
+bazel build --aspects=//tools:cc_compile_inputs.bzl%cc_compile_inputs \
+  --output_groups=cc_compile_inputs //test/... //tools/...
 ```
 
-The first command materializes generated sources and headers without compiling
-the tests. The second runs the maintained generator recommended in [Bazel's
-IDE documentation](https://bazel.build/install/ide#autocomplete-for-source-code).
+The first command runs the maintained generator recommended in [Bazel's IDE
+documentation](https://bazel.build/install/ide#autocomplete-for-source-code).
+The second materializes generated sources and headers without compiling the
+tests.
 After reloading the editor window, clangd should work.
 
 ### Other Editors

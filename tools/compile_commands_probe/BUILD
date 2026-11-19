@@ -42,3 +42,15 @@ sh_binary(
     name = "order",
     srcs = ["order.sh"],
 )
+
+sh_binary(
+    name = "caller_devcontainer",
+    srcs = ["caller.sh"],
+    args = ["devcontainer"],
+)
+
+sh_binary(
+    name = "caller_lint",
+    srcs = ["caller.sh"],
+    args = ["lint"],
+)

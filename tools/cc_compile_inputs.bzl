@@ -16,7 +16,7 @@
 
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 
-# Source extensions that end up in the compile commands database.
+# Source extensions whose generated files must be materialized.
 _CC_SRC_EXTENSIONS = (".c", ".cc", ".cpp", ".cxx", ".c++", ".S", ".s", ".inc")
 
 def _cc_compile_inputs_impl(target, ctx):
@@ -35,7 +35,7 @@ def _cc_compile_inputs_impl(target, ctx):
     # their own right; the header set above does not include them.
     inputs.append(depset([
         f
-        for f in getattr(ctx.rule.files, "srcs", [])
+        for f in getattr(ctx.rule.files, "srcs", []) + target[DefaultInfo].files.to_list()
         if not f.is_source and f.path.endswith(_CC_SRC_EXTENSIONS)
     ]))
 
