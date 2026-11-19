@@ -20,7 +20,6 @@ def benchmark_test(name, tags = [], use_for_pgo = True, **kwargs):
 
     # Requires docker and runsc at execution time, not during compilation.
     kwargs["local"] = True
-    kwargs["args"] = ["-test.v=false"] + (kwargs.pop("args", []) or [])
     go_test(
         name,
         tags = tags,

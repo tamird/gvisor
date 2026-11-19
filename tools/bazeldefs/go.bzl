@@ -184,9 +184,6 @@ def go_test(name, static = False, pure = False, library = None, **kwargs):
         "//tools:lockdep": ["lockdep"],
         "//conditions:default": [],
     })
-
-    # Passing tests need verbose output for the native rules_go XML report.
-    kwargs["args"] = ["-test.v=test2json"] + (kwargs.pop("args", []) or [])
     _go_test(
         name = name,
         **kwargs
