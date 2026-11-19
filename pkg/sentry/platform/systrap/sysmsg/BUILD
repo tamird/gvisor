@@ -78,6 +78,7 @@ genrule(
           "$(location :syshandler) $(location :sysmsg_lib) " +
           "-o $@",
     features = ["-pie"],
+    tags = ["no-remote"],
     toolchains = [
         cc_toolchain,
     ],
@@ -88,6 +89,7 @@ genrule(
     srcs = [":sighandler_object"],
     outs = ["sighandler.built-in.bin"],
     cmd = "$(OBJCOPY) -O binary $(SRCS) $@",
+    tags = ["no-remote"],
     toolchains = [
         cc_toolchain,
     ],
@@ -105,6 +107,7 @@ genrule(
     outs = ["sighandler.go.arch"],
     cmd = "bash -x $(location gen_offsets_go.sh) sighandler Sighandler " +
           "$(SRCS) \"$(NM)\" > $@",
+    tags = ["no-remote"],
     toolchains = [cc_toolchain],
     tools = ["gen_offsets_go.sh"],
 )
