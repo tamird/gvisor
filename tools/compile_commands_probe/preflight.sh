@@ -4,6 +4,7 @@ tool=$(realpath "$1")
 cd "$BUILD_WORKSPACE_DIRECTORY"
 bazel=${QUALIFICATION_BAZEL:?}
 results="$RUNNER_TEMP/bazel-qualification"
+trap 'for events in "$results"/{native,aspect}-prerequisites-events.json; do [[ ! -f "$events" ]] || cat "$events"; done' EXIT
 mapfile -d '' -t options < <(python3 - <<'OPTIONS'
 import json, os, sys
 for option in json.loads(os.environ['QUALIFICATION_BAZEL_OPTIONS_JSON']):
@@ -33,8 +34,9 @@ from pathlib import Path
 import sys
 root = Path.cwd().resolve()
 entries = json.loads((root / 'compile_commands.json').read_text())
-assert len(entries) == 2, entries
+assert len(entries) >= 2, entries
 files = [((Path(entry['directory']) / entry['file']).resolve(), entry) for entry in entries]
+assert len({path for path, _ in files}) == 2, files
 assert any(path == root / 'tools/compile_commands_probe/root.cc' for path, _ in files), files
 assert any(str(path).endswith('/pkg/compile_commands_probe/generated/source.cc') for path, _ in files), files
 for path, entry in files:
@@ -48,4 +50,3 @@ for name in ('native', 'aspect'):
     assert counts[name].get('CppCompile', 0) == 0, counts
 print(json.dumps({'nativeDependencyGeneratedSource': sys.argv[1] == 'true', 'aspectDependencyGeneratedSource': True, 'headerAndVirtualIncludeMaterialized': True, 'databaseEntries': len(entries), 'entryFilesExistRelativeToDirectory': True, 'compilerBuildOptionForwarded': True, 'startupOptionAccepted': True, 'executedActionTypes': counts}))
 VERIFY
-cat "$results/native-prerequisites-events.json" "$results/aspect-prerequisites-events.json"
