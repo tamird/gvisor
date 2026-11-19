@@ -907,15 +907,18 @@ func TestRecvMMsgEmptyPacketsStop(t *testing.T) {
 	}
 }
 
-func TestSeqpacketEOFMetadata(t *testing.T) {
+func TestSeqpacketReceiveQueue(t *testing.T) {
 	for _, test := range []struct {
-		name      string
-		send      bool
-		closePeer bool
+		name          string
+		emptyMessages int
+		payload       bool
+		closePeer     bool
 	}{
-		{"live_empty", true, false},
-		{"closed_empty", true, true},
-		{"closed_drained", false, true},
+		{"live_empty", 1, false, false},
+		{"live_empty_batches_then_payload", 2 * MaxMsgsPerRecv, true, false},
+		{"closed_empty_batches_then_payload", 2 * MaxMsgsPerRecv, true, true},
+		{"closed_empty", 1, false, true},
+		{"closed_drained", 0, false, true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET|unix.SOCK_CLOEXEC, 0)
@@ -928,8 +931,13 @@ func TestSeqpacketEOFMetadata(t *testing.T) {
 					unix.Close(fds[1])
 				}
 			}()
-			if test.send {
+			for i := 0; i < test.emptyMessages; i++ {
 				if err := unix.Sendmsg(fds[1], nil, nil, nil, 0); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if test.payload {
+				if err := unix.Sendmsg(fds[1], []byte{1, 2, 3, 4}, nil, nil, 0); err != nil {
 					t.Fatal(err)
 				}
 			}
@@ -937,13 +945,16 @@ func TestSeqpacketEOFMetadata(t *testing.T) {
 				unix.Close(fds[1])
 				fds[1] = -1
 			}
-			for _, peek := range []bool{true, false} {
-				flags := unix.MSG_DONTWAIT
-				if peek {
-					flags |= unix.MSG_PEEK
+			for i := 0; i < test.emptyMessages+2; i++ {
+				queued, err := unix.IoctlGetInt(fds[0], unix.TIOCINQ)
+				if err != nil {
+					t.Fatal(err)
 				}
-				n, oobn, flags, from, err := unix.Recvmsg(fds[0], make([]byte, 1), make([]byte, 128), flags)
-				t.Logf("peek=%v: n=%d oobn=%d flags=%#x from=%#v err=%v", peek, n, oobn, flags, from, err)
+				n, _, flags, _, err := unix.Recvmsg(fds[0], make([]byte, 8), nil, unix.MSG_DONTWAIT)
+				t.Logf("read=%d: queued=%d n=%d flags=%#x err=%v", i, queued, n, flags, err)
+				if err == unix.EAGAIN {
+					break
+				}
 				if err != nil {
 					t.Fatal(err)
 				}
