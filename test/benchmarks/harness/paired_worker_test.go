@@ -229,6 +229,7 @@ func TestPairedBenchmark(t *testing.T) {
 // adding inspection calls to the benchmark's timed request sequence.
 func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages <-chan events.Message, failures <-chan error, visit int, products, actualHashes map[string]string) error {
 	seen := make(map[string]int)
+	active := make(map[int]string)
 	for {
 		select {
 		case <-ctx.Done():
@@ -332,6 +333,12 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 				return err
 			}
 			seen[kind]++
+			active[state.State.Pid] = kind
+			if kind == "benchmarks/hey" {
+				if err := recordCPUResources(visit, kind, active, products); err != nil {
+					return err
+				}
+			}
 		}
 	}
 }
