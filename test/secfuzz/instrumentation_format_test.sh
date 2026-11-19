@@ -6,4 +6,4 @@ if [ -n "$output" ]; then
     printf '%s\n' "$output"
     exit 1
 fi
-"$2" --mode=check --lint=warn --warnings=-duplicated-name,-list-append,-native-py,-native-sh-binary,-native-sh-library,-native-sh-test,-native-proto "$5"
+"$2" --mode=diff --lint=warn --warnings=-duplicated-name,-list-append,-native-py,-native-sh-binary,-native-sh-library,-native-sh-test,-native-proto "$5"
