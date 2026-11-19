@@ -1,6 +1,8 @@
 """Defines a rule for syscall test targets."""
 
+load("@bazel_skylib//lib:shell.bzl", "shell")
 load("//tools:defs.bzl", "default_platform", "platform_capabilities", "platforms", "save_restore_platforms")
+load("//tools:release.bzl", "ReleaseInfo")
 
 # Maps platform names to a GVISOR_PLATFORM_SUPPORT environment variable consumed by platform_util.cc
 _platform_support_env_vars = {
@@ -17,6 +19,17 @@ def _runner_test_impl(ctx):
     setup = ""
     if ctx.attr.requires_atime:
         setup = "%s --require-atime " % ctx.executable._setup_container.short_path
+    runtime_setup = []
+    runtime_arg = ""
+    if ctx.attr.runtime_fileset:
+        runsc = ctx.attr.runtime_fileset[ReleaseInfo].runsc
+        runtime_setup = [
+            "selected_runsc=\"${PWD}/\"%s" % shell.quote(runsc.short_path),
+            "export GVISOR_SIDECAR_BINARIES_DIR=\"${selected_runsc%/*}/gvisor-bin\"",
+            "test -x \"${selected_runsc}\"",
+            "test -d \"${GVISOR_SIDECAR_BINARIES_DIR}\"",
+        ]
+        runtime_arg = "--runsc=\"${selected_runsc}\" "
     runner_content = "\n".join([
         "#!/bin/bash",
         "set -euf -x -o pipefail",
@@ -24,10 +37,12 @@ def _runner_test_impl(ctx):
         "  mkdir -p \"${TEST_UNDECLARED_OUTPUTS_DIR}\"",
         "  chmod a+rwx \"${TEST_UNDECLARED_OUTPUTS_DIR}\"",
         "fi",
-        "exec %s%s %s \"$@\" %s\n" % (
+    ] + runtime_setup + [
+        "exec %s%s %s \"$@\" %s%s\n" % (
             setup,
             ctx.files.runner[0].short_path,
             " ".join(ctx.attr.runner_args),
+            runtime_arg,
             ctx.files.test[0].short_path,
         ),
     ])
@@ -44,6 +59,10 @@ def _runner_test_impl(ctx):
         collect_default = True,
         collect_data = True,
     )
+    if ctx.attr.runtime_fileset:
+        runtime = ctx.attr.runtime_fileset[DefaultInfo]
+        runfiles = runfiles.merge(runtime.default_runfiles)
+        runfiles = runfiles.merge(ctx.runfiles(transitive_files = runtime.files))
     if ctx.attr.requires_atime:
         runfiles = runfiles.merge(ctx.attr._setup_container[DefaultInfo].default_runfiles)
         runfiles = runfiles.merge(ctx.runfiles(files = [ctx.executable._setup_container]))
@@ -58,6 +77,10 @@ _runner_test = rule(
             mandatory = True,
         ),
         "runner_args": attr.string_list(),
+        "runtime_fileset": attr.label(
+            doc = "Complete release fileset selected instead of the runner's default runtime.",
+            providers = [ReleaseInfo],
+        ),
         "requires_atime": attr.bool(
             doc = "Enable host-backed atime updates; requires CAP_SYS_ADMIN on noatime mounts.",
         ),
