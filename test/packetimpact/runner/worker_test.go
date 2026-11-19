@@ -28,6 +28,11 @@ import (
 )
 
 func TestWorkerRequirements(t *testing.T) {
+	var uts unix.Utsname
+	if err := unix.Uname(&uts); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("worker kernel %s/%s", unix.ByteSliceToString(uts.Release[:]), unix.ByteSliceToString(uts.Machine[:]))
 	if os.Getenv("PACKETIMPACT_WORKER_CHILD") != "1" {
 		parentNS, err := os.Readlink("/proc/self/ns/net")
 		if err != nil {
@@ -80,6 +85,8 @@ func TestWorkerRequirements(t *testing.T) {
 	for _, iptables := range []string{"/sbin/iptables-nft", "/sbin/ip6tables-nft"} {
 		cmd := exec.CommandContext(t.Context(), iptables, "-A", "INPUT", "-i", d.peerIface(), "--proto", "tcp", "-j", "DROP")
 		if output, err := cmd.CombinedOutput(); err != nil {
+			listing, listErr := exec.CommandContext(t.Context(), iptables, "-L", "-n", "-v").CombinedOutput()
+			t.Logf("%s tables: %s (%v)", iptables, listing, listErr)
 			t.Fatalf("%s: %v: %s", iptables, err, output)
 		}
 	}
