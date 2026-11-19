@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-19T08:32:44.165346+00:00",
+    "updatedAt": "2026-11-19T09:18:24.562498+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -11206,14 +11206,14 @@
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-19T08:08:23.633439+00:00",
-      "summary": "The published rebase contains one mergeable commit. The source tree is identical to 3aaa8098b. Seven Linux targets passed all 106 records, and the benchmark proxy rejected four invalid inputs and forwarded traffic in both directions. The four TCP throughput benchstat rows identify the earlier revision on which the measurements ran. The PR description also gives benchstat output for all nine address microbenchmarks. The current revision and its parent ran the same October fixture for 12 paired samples on one pinned Linux AMD64 CPU.",
+      "updatedAt": "2026-11-19T09:18:24.562498+00:00",
+      "summary": "Caller-completion egress/Nogo, state and three network owners passed; netgofer TCP-limit teardown failed while a matched parent passed once. An independently reproduced reader EOF bug now has a tested fix; linkage to that teardown and remaining ARM compiler/performance gates stay open.",
       "followup": {
         "owner": "root",
         "sourceHead": "58fb6b08096d65974497d16c020b3f8a0cd955a8",
         "observedAt": "2026-11-17T19:01:06.487079+00:00",
         "disposition": "Footer-only DCO metadata is published and green; technical source/import obligations remain. Preserve nybidari internal dependency and landing coordination.",
-        "nextAction": "Root advances the reviewed caller completion through remaining affected-owner/state-test validation and the source delivery boundary. Preserve the separate TestTruncatedStreams/wire timeout with unknown cause and nybidari internal dependency/import coordination; do not suppress diagnostics or blindly retry.",
+        "nextAction": "Root completes the independent owning EOF follow-ups and validates whether it resolves the retained netgofer teardown; do not call the original failure a flake or proven EOF manifestation. Complete remaining ARM-Nogo native-C compiler gate through its responsible mechanism. Preserve nybidari internal dependency/import coordination and original source-review boundaries; no permission, suppression or blind retry.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15730",
           "https://github.com/tamird/gvisor/commit/3aaa8098b",
@@ -11229,7 +11229,7 @@
         ],
         "mergeable": "MERGEABLE",
         "recheckCondition": "Current-head CI terminal/change, substantive technical feedback, source/import lifecycle change or an already-pending source-review decision; root remains accountable.",
-        "curatedAt": "2026-11-19T08:08:23.633439+00:00",
+        "curatedAt": "2026-11-19T09:18:24.562498+00:00",
         "priorImportNextAction": "Importing maintainer must read the original failed internal job and provide the first actionable error or correct the internal change. Root follows the exact source/import without guessing a source fix. DCO import coordination: Root coordinates #17626 at 0e17e2f614e9. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17626,
@@ -11306,14 +11306,55 @@
           }
         },
         "callerCompletion": {
-          "state": "Prepared seven-file deprecated-caller completion plus zone-policy regression; original PR head unchanged. Fresh remote egress48 named XML and Nogo wrapper covering amd64+arm64 PASS.",
+          "state": "Reviewed seven-file caller completion plus zone-policy regression; original PR head unchanged. Egress48 named cases and both-architecture Nogo PASS; remaining scoped owner results recorded separately.",
           "run": 44483900814,
           "receipt": {
             "file": "netip15730-egress-nogo-44483900814-evidence.json",
             "sha256": "7a8b2fa9c66e05254ebdc1c42c6dd35b4eea44fb61c5bf9f83180300725f96c2"
           },
-          "limits": "No native ARM execution, other changed-owner execution, state wire timeout resolution, performance or import-completion claim.",
+          "limits": "Egress/Nogo receipt scope only; other owner results are recorded separately. No native ARM execution, performance or import-completion claim.",
           "qualificationSource": "36313c5ff85080fd3649ce9e1a098e1afdff8645"
+        },
+        "affectedOwnerFunctional": {
+          "run": 44488670733,
+          "source": "95663ff42f27f4a06d851b78a62e54ac665317b6",
+          "state": "Bridge44, netfilter122 and boot90 named cases PASS without skips. Netgofer24 of25 pass; TestProxyLimitsConnections fails at the existing5s runProxyMode teardown deadline. Cause unproven.",
+          "receipt": {
+            "file": "netip15730-functional-44488670733-evidence.json",
+            "sha256": "05d3afdf93cf148239c0631f5f0d04087d7aa8e08eba22930c166ee9749ed283"
+          }
+        },
+        "stateOwnerFunctional": {
+          "run": 44488035058,
+          "state": "Fresh remote state owner11573 named cases, zero failures/errors and85 unsupported wire slice-window skips. TestTruncatedStreams/wire passed1.940s; original timeout not reproduced, without parent-control proof or flake classification.",
+          "receipt": {
+            "file": "netip15730-state-owner-44488035058-evidence.json",
+            "sha256": "8235b62a7b42eb6c994b5d1585c1ae4e270732939e55f46c0f1635b9a5a94d2b"
+          }
+        },
+        "netgoferParentControl": {
+          "run": 44490732290,
+          "source": "2a653cea7b2054a2dc9c6419337d3de8031275d6",
+          "state": "Matched original-parent25 cases PASS, including TCP-limit teardown0.020s; one parent pass does not establish candidate regression or flakiness.",
+          "receipt": {
+            "file": "netip15730-parent-netgofer-44490732290-evidence.json",
+            "sha256": "2b1a9f7eda44122a35d55c3ee78b0fc6e511b0d04cb773ba05f87c749d80dc59"
+          }
+        },
+        "independentEOFReaderFix": {
+          "source": "0509739b8c7e2b4ce0653c8497b6d7ce45685478",
+          "negativeRun": 44492493950,
+          "positiveRun": 44493737582,
+          "state": "Real preclosed SOCK_SEQPACKET negative failed RecvMMsg and passed Readv. Owning fix87 named cases and Goimports/Buildifier fresh remote PASS, preserving live-empty and mixed-batch packets. Link to the original Netip teardown remains unproven.",
+          "negativeReceipt": {
+            "file": "netgofer-peer-eof-negative-44492493950-evidence.json",
+            "sha256": "6845ddb702fce99ad35d15653b313ac3fe44e7c945eca3e4a762a23072222c62"
+          },
+          "positiveReceipt": {
+            "file": "netgofer-peer-eof-fixed-44493737582-evidence.json",
+            "sha256": "89e9977020c11a6dd72c13c0623a0fccaffdb913894e03309014ea26630021d5"
+          },
+          "remaining": "Stop-after-empty regression, obsolete netgofer TODO removal, full source review and performance before source publication."
         }
       },
       "evidence": [
@@ -38784,14 +38825,14 @@
       "url": "https://github.com/google/gvisor/pull/16507",
       "group": "bazel",
       "status": "open",
-      "summary": "First permanent Bazel NORMAL layer passes on340e test source/fa452 shared CI: actual five-configuration GoInfo selection and tiny executed protobuf report after counter clearing. Removing only the coverage patch produces the expected own/both generated-PB selection failures. This does not close full Sentry generated-position fidelity, Uname, ARM/RACE/performance or original PR conflict.",
-      "updatedAt": "2026-11-19T08:32:44.165346+00:00",
+      "summary": "Permanent Bazel AMD64 NORMAL coverage modes passed100 guest iterations each with reports-on/off and KCOV, plus current structural inventory. ARM release compilation remains blocked; RACE, current-source legacy parity and performance remain open.",
+      "updatedAt": "2026-11-19T09:18:24.562498+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
         "disposition": "First permanent Bazel NORMAL layer passes on340e test source/fa452 shared CI: actual five-configuration GoInfo selection and tiny executed protobuf report after counter clearing. Removing only the coverage patch produces the expected own/both generated-PB selection failures. This does not close full Sentry generated-position fidelity, Uname, ARM/RACE/performance or original PR conflict.",
-        "nextAction": "Root completes phase3 helper/format and actual report on/off/KCOV execution using permanent Bazel targets, retaining compiler and analysis passes independently. Current-base mechanical rebase preserves11patches; no blanket current-runtime validation claim. Original100 repetitions, normal/race/ARM/performance and actual report/runtime gates remain open.",
+        "nextAction": "Root completes the native-C toolchain mechanism fix and validates the missing ARM build/runtime and RACE matrix through permanent Bazel owners, preserving the AMD64 NORMAL100-iteration and current-inventory passes. Current-source legacy parity and controlled performance remain open; no contributor permission decision.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -39144,7 +39185,7 @@
           "proofSHA256": "8cfa9665fca33bd1625d96c7b184d3b8454523fbfe87c0b7bd9744d867d14c0b",
           "recheckCondition": "Root permanent-mechanism decision, same-operation execution-review result or actual fidelity evidence."
         },
-        "curatedAt": "2026-11-19T08:32:44.165346+00:00",
+        "curatedAt": "2026-11-19T09:18:24.562498+00:00",
         "permanentBazelFirstLayer": {
           "testSource": "340e1072aa5a3d47e01ff68dffea34f91be4a9f4",
           "ciSource": "fa452727d8d6af2399f8644f9d64a40dc5d902ae",
@@ -39247,6 +39288,39 @@
             "receipt": {
               "file": "coverage-modes-44486414095-evidence.json",
               "sha256": "a56f12bbc2b20887bf1feb3e316dab2fc9a58cabc41647b2905469ab7818aada"
+            }
+          },
+          "pinnedUserspacePair": {
+            "source": "1ee29806856e1733da62861f3f555c4b227dbf02",
+            "runs": [
+              44490487029,
+              44490490642
+            ],
+            "state": "Both declared AMD64 and ARM64 fresh remote loader/namespace preflights PASS on the pinned Ubuntu24 image. No physical executor CPU or all-pool claim.",
+            "receipt": {
+              "file": "rbe-userspace-native-pair-evidence.json",
+              "sha256": "d3fb3e3f380b8fca75b31ad1a37c08bca2c4ead1a3a684d963b9f85ec0bf7545"
+            }
+          },
+          "normalAMD64Functional": {
+            "run": 44492819687,
+            "source": "1ee29806856e1733da62861f3f555c4b227dbf02",
+            "state": "Fresh remote reports-required Uname, reports-absent Uname and KCOV each passed100 guest iterations within one sandbox per mode, zero KCOV skips; current structural inventory115852 positions including2418 protobuf positions PASS.",
+            "receipt": {
+              "file": "coverage-normal-functional-amd64-44492819687-evidence.json",
+              "sha256": "9b8128af5ca673998a278aa29d0b3e5f8b1ae773fb8e1cd33b5dec275594082e"
+            },
+            "limits": "Not100 independent sandbox lifecycles, not current-source legacy parity, not ARM/RACE/performance. Native final XML alone is not the100-iteration evidence."
+          },
+          "normalARM64Compiler": {
+            "run": 44491677691,
+            "state": "FAILED_TO_BUILD before TestRunner:three canonical host-C genrules (fdparking/prewarmer/procumounter) could not execute /usr/bin/aarch64-linux-gnu-gcc on the actual worker(exit127). Executor CPU unknown; declared ARM image independently contains that compiler, so this is not an absent-image claim.",
+            "owner": "root",
+            "technicalOwner": "systrap_regression",
+            "source": "1ee29806856e1733da62861f3f555c4b227dbf02",
+            "receipt": {
+              "file": "coverage-normal-compiler-pair-evidence.json",
+              "sha256": "19fd2ffba3c77d49faf2e945e8b980836cf4596d833edb8ccc703ed883b0807f"
             }
           }
         },
@@ -133805,5 +133879,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-19T08:32:44.165346+00:00"
+  "updatedAt": "2026-11-19T09:18:24.562498+00:00"
 }

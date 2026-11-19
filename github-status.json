@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-19T09:04:43.889610+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-19T08:32:44.165346+00:00",
+  "registryDate": "2026-11-19T09:18:24.562498+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -447388,7 +447388,7 @@
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "disposition": "First permanent Bazel NORMAL layer passes on340e test source/fa452 shared CI: actual five-configuration GoInfo selection and tiny executed protobuf report after counter clearing. Removing only the coverage patch produces the expected own/both generated-PB selection failures. This does not close full Sentry generated-position fidelity, Uname, ARM/RACE/performance or original PR conflict.",
-        "nextAction": "Root completes phase3 helper/format and actual report on/off/KCOV execution using permanent Bazel targets, retaining compiler and analysis passes independently. Current-base mechanical rebase preserves11patches; no blanket current-runtime validation claim. Original100 repetitions, normal/race/ARM/performance and actual report/runtime gates remain open."
+        "nextAction": "Root completes the native-C toolchain mechanism fix and validates the missing ARM build/runtime and RACE matrix through permanent Bazel owners, preserving the AMD64 NORMAL100-iteration and current-inventory passes. Current-source legacy parity and controlled performance remain open; no contributor permission decision."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -448427,7 +448427,7 @@
         "owner": "root",
         "sourceHead": "58fb6b08096d65974497d16c020b3f8a0cd955a8",
         "disposition": "Footer-only DCO metadata is published and green; technical source/import obligations remain. Preserve nybidari internal dependency and landing coordination.",
-        "nextAction": "Root advances the reviewed caller completion through remaining affected-owner/state-test validation and the source delivery boundary. Preserve the separate TestTruncatedStreams/wire timeout with unknown cause and nybidari internal dependency/import coordination; do not suppress diagnostics or blindly retry."
+        "nextAction": "Root completes the independent owning EOF follow-ups and validates whether it resolves the retained netgofer teardown; do not call the original failure a flake or proven EOF manifestation. Complete remaining ARM-Nogo native-C compiler gate through its responsible mechanism. Preserve nybidari internal dependency/import coordination and original source-review boundaries; no permission, suppression or blind retry."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN0QEaKw"
@@ -449056,7 +449056,7 @@
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "disposition": "First permanent Bazel NORMAL layer passes on340e test source/fa452 shared CI: actual five-configuration GoInfo selection and tiny executed protobuf report after counter clearing. Removing only the coverage patch produces the expected own/both generated-PB selection failures. This does not close full Sentry generated-position fidelity, Uname, ARM/RACE/performance or original PR conflict.",
-        "nextAction": "Root completes phase3 helper/format and actual report on/off/KCOV execution using permanent Bazel targets, retaining compiler and analysis passes independently. Current-base mechanical rebase preserves11patches; no blanket current-runtime validation claim. Original100 repetitions, normal/race/ARM/performance and actual report/runtime gates remain open."
+        "nextAction": "Root completes the native-C toolchain mechanism fix and validates the missing ARM build/runtime and RACE matrix through permanent Bazel owners, preserving the AMD64 NORMAL100-iteration and current-inventory passes. Current-source legacy parity and controlled performance remain open; no contributor permission decision."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN0DBRBA"
@@ -459101,7 +459101,7 @@
         "since": "2026-11-19T01:19:23.138983+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T08:32:44.165346+00:00"
+        "observedAt": "2026-11-19T09:18:24.562498+00:00"
       }
     },
     "pr:16453": {
@@ -463534,7 +463534,7 @@
         "since": "2026-11-19T00:15:13.095068+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T08:32:44.165346+00:00"
+        "observedAt": "2026-11-19T09:18:24.562498+00:00"
       }
     },
     "pr:bazelbuild/bazel-central-registry:11314": {
@@ -463902,7 +463902,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T08:32:44.165346+00:00"
+        "observedAt": "2026-11-19T09:18:24.562498+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -463911,7 +463911,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T08:32:44.165346+00:00"
+        "observedAt": "2026-11-19T09:18:24.562498+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -463920,7 +463920,7 @@
         "since": "2026-11-19T06:10:02.496194+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T08:32:44.165346+00:00"
+        "observedAt": "2026-11-19T09:18:24.562498+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -463929,7 +463929,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T08:32:44.165346+00:00"
+        "observedAt": "2026-11-19T09:18:24.562498+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -463938,7 +463938,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T08:32:44.165346+00:00"
+        "observedAt": "2026-11-19T09:18:24.562498+00:00"
       }
     },
     "issue:google/benchmark:1634": {
@@ -463947,7 +463947,7 @@
         "since": "2026-11-19T00:39:33.110112+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T08:32:44.165346+00:00"
+        "observedAt": "2026-11-19T09:18:24.562498+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -463956,7 +463956,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T08:32:44.165346+00:00"
+        "observedAt": "2026-11-19T09:18:24.562498+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -463965,7 +463965,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T08:32:44.165346+00:00"
+        "observedAt": "2026-11-19T09:18:24.562498+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -463974,7 +463974,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T08:32:44.165346+00:00"
+        "observedAt": "2026-11-19T09:18:24.562498+00:00"
       }
     },
     "branch:lisafs-hardlink-capability": {
@@ -463983,7 +463983,7 @@
         "since": "2026-11-19T01:19:23.138983+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T08:32:44.165346+00:00"
+        "observedAt": "2026-11-19T09:18:24.562498+00:00"
       }
     },
     "branch:native-go-test-xml": {
@@ -463992,7 +463992,7 @@
         "since": "2026-11-19T06:15:10.420783+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T08:32:44.165346+00:00"
+        "observedAt": "2026-11-19T09:18:24.562498+00:00"
       }
     }
   },
