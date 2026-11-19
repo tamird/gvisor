@@ -523,7 +523,7 @@ def parse_failures_annotation(body: str) -> tuple[dict[str, list[dict[str, str]]
       job_targets.append(entry)
   for match in re.finditer(r"<li>\s*(//[^<\s]+) \(no upload\)", body):
     unattributed.append(html.unescape(_group(match, 1)))
-  return targets, list(dict.fromkeys(unattributed))
+  return targets, list(dict[str, None].fromkeys(unattributed))
 
 
 def _annotated_targets(build: Build) -> tuple[dict[str, list[dict[str, str]]], list[str]]:
@@ -828,6 +828,7 @@ if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
   except BrokenPipeError:
     # The reader of stdout, such as head(1), exited early.
-    stdout_fd: int = sys.stdout.fileno()
+    stdout_fd: object = sys.stdout.fileno()
+    assert isinstance(stdout_fd, int), f"invalid stdout descriptor: {stdout_fd!r}"
     _ = os.dup2(os.open(os.devnull, os.O_WRONLY), stdout_fd)
     sys.exit(1)
