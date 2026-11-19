@@ -30,3 +30,10 @@ sh_binary(
     name = "workspace",
     srcs = ["workspace.sh"],
 )
+
+sh_binary(
+    name = "jammy",
+    srcs = ["jammy.sh"],
+    args = ["$(rootpath //tools/compile_commands:compile_commands)"],
+    data = ["//tools/compile_commands"],
+)

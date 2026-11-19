@@ -80,22 +80,24 @@ _COMPILE_COMMANDS_BUILD = 'licenses(["notice"])\nexports_files(["usr/bin/bazel-c
 http_archive(
     name = "bazel_compile_commands_linux_amd64",
     build_file_content = _COMPILE_COMMANDS_BUILD,
-    sha256 = "bb162adaefb282a9e4f0f399fe6223d1d2fe3740518148c1ca8f6f81db4003f6",
-    urls = ["https://github.com/kiron1/bazel-compile-commands/releases/download/bazel-compile-commands-v0.22.4/bazel-compile-commands_0.22.4-linux_amd64.zip"],
+    patch_cmds = ["tar -xf data.tar"],
+    sha256 = "e57cc545ea9ab6dfc494eb2c5913210099e8e31e947517fd0545844d06949b47",
+    urls = ["https://github.com/kiron1/bazel-compile-commands/releases/download/v0.21.0/bazel-compile-commands_0.21.0-jammy_amd64.deb"],
 )
 
 http_archive(
     name = "bazel_compile_commands_linux_arm64",
     build_file_content = _COMPILE_COMMANDS_BUILD,
-    sha256 = "c1ad5a5a1c7aaf79d8efe56201ede04b180b4031ee44cadafda1373b75029498",
-    urls = ["https://github.com/kiron1/bazel-compile-commands/releases/download/bazel-compile-commands-v0.22.4/bazel-compile-commands_0.22.4-linux_arm64.zip"],
+    patch_cmds = ["tar -xf data.tar"],
+    sha256 = "ea006e5ec7a906994bdb0580c779a21a345d864541d58021541cb6c65623c642",
+    urls = ["https://github.com/kiron1/bazel-compile-commands/releases/download/v0.21.0/bazel-compile-commands_0.21.0-jammy_arm64.deb"],
 )
 
 http_archive(
     name = "bazel_compile_commands_macos_universal",
     build_file_content = _COMPILE_COMMANDS_BUILD,
-    sha256 = "6183cbaec5d9667e4def8590e4558a4e8eb106da34e2cd8a16733f8becf1ce4e",
-    urls = ["https://github.com/kiron1/bazel-compile-commands/releases/download/bazel-compile-commands-v0.22.4/bazel-compile-commands_0.22.4-macos_universal.zip"],
+    sha256 = "b21f3bb40ac6c92158c52c81bfe1b96e57101165d580f62c32a825631e0ffd94",
+    urls = ["https://github.com/kiron1/bazel-compile-commands/releases/download/v0.21.0/bazel-compile-commands_0.21.0-macos_universal.zip"],
 )
 
 http_archive(
