@@ -37,3 +37,8 @@ sh_binary(
     args = ["$(rootpath //tools/compile_commands:compile_commands)"],
     data = ["//tools/compile_commands"],
 )
+
+sh_binary(
+    name = "order",
+    srcs = ["order.sh"],
+)
