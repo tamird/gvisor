@@ -93,3 +93,6 @@ build:buildbuddy --modify_execution_info=^(Cpp.*|CcStrip)$=-no-remote,^(Cpp.*|Cc
 # Native-image stdlib C tools are supplied by the CPU-constrained RBE image.
 # Keep ordinary/cache-only host guards and forbid local fallback here.
 build:buildbuddy --modify_execution_info=^GoStdlib(List)?$=-no-remote,^GoStdlib(List)?$=+no-local
+
+# Native-image Go links use the same CPU-constrained compiler and archiver.
+build:buildbuddy --modify_execution_info=^GoLink$=-no-remote,^GoLink$=+no-local
