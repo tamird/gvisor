@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-19T02:26:00.990622+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-19T01:19:23.138983+00:00",
+  "registryDate": "2026-11-19T02:51:50.481387+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -448599,8 +448599,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "c83396e33ae1b1b77b0d6f7d0bc88062926d3c2e",
-        "disposition": "The contributor-approved exact import-only BUILD diagnosis is posted and read back. No source amendment is needed for this failure; importing maintainers own the correction and re-export.",
-        "nextAction": "Follow the importing maintainer correction of #17664 assemble_test. Verify the corrected export head no longer embeds a go_binary, then inspect its owning analysis/tests and current required CI. Preserve the already-valid source and do not push the Copybara branch."
+        "disposition": "Source remains open; closed unmerged export has no replacement. Own same-tree DCO metadata candidate prepared locally under standing authorization; no execution rejection/new human permission or publication. Named technical/import holds remain.",
+        "nextAction": "Root reconciles exact source/base/CI/import coordination before publishing prepared same-tree DCO metadata. Preserve named maintainer/private/import holds; do not guess source repairs or treat export closure as clearance."
       },
       "conflictObservedSince": null
     },
@@ -449007,8 +449007,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "6eb3e7f3e5469c441b523c2da93feb5189cc827f",
-        "disposition": "CI #17626 at 0e17e2f614e9ba03b3aeda3b4f30a5d922d7488c: The exact public status reports a failed internal build; its original private diagnostic is unavailable. A shared gvisor/internal access probe returned HTTP403 for36754; other private builds were not redundantly requested.",
-        "nextAction": "Importing maintainer must read the original failed internal job and provide the first actionable error or correct the internal change. Root follows the exact source/import without guessing a source fix. DCO import coordination: Root coordinates #17626 at 0e17e2f614e9. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch."
+        "disposition": "Source remains open; closed unmerged export has no replacement. Own same-tree DCO metadata candidate prepared locally under standing authorization; no execution rejection/new human permission or publication. Named technical/import holds remain.",
+        "nextAction": "Root reconciles exact source/base/CI/import coordination before publishing prepared same-tree DCO metadata. Preserve named maintainer/private/import holds; do not guess source repairs or treat export closure as clearance."
       },
       "conflictObservedSince": null
     },
@@ -449269,8 +449269,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "cdf05cf3cf2c3ec196bc94dfaba9b025f437c229",
-        "disposition": "GitHub reports APPROVED and MERGEABLE and retains the ready-to-pull label. The recorded October 29 approval predates the current head’s November 4 rebase. Matching export #16966 closed without merging.",
-        "nextAction": "Monitor the existing source PR and any subsequent import through the ordinary status collector. DCO import coordination: Root coordinates #17673 at 46e2ed0d98f8. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch."
+        "disposition": "Source remains open; closed unmerged export has no replacement. Own same-tree DCO metadata candidate prepared locally under standing authorization; no execution rejection/new human permission or publication. Named technical/import holds remain.",
+        "nextAction": "Root reconciles exact source/base/CI/import coordination before publishing prepared same-tree DCO metadata. Preserve named maintainer/private/import holds; do not guess source repairs or treat export closure as clearance."
       },
       "conflictObservedSince": null
     },
@@ -449293,8 +449293,8 @@
       "recordedFollowup": {
         "owner": "tcp_conflict",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
-        "disposition": "Iperf study 44219938333 verified all eight variants with 24 samples/source, balanced order, frozen harness, same runtime path and full-release identity checks. Existing first-stream and fixed-SetBytes metric limits remain explicit; this does not establish equivalence or clear the networking gate. Nginx all-72 and all four distinct loss-mode capability pilots passed.",
-        "nextAction": "Root migrates the existing shared70-case four-runtime qualification into permanent Bazel owners and thin Actions before further execution. The same exact CI-only operation is authorized for re-review under the new standing CI grant; the historical action rejection is not a pending human decision. Do not launch the frozen per-item driver, bypass a renewed rejection, amend source PRs or infer statistical qualification."
+        "disposition": "Permanent shared-Bazel ordinary Go owner migration passed499cases per architecture on old1f/f944 inputs; historical product proofs retained. Packet capability/currentbase/race and performance scopes remain distinct.",
+        "nextAction": "Root owns the next permanent packet capability/proof and existing full performance study after functional gates; preserve source/currentbase and workload scope limits, no per-item driver or new approval question."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -449461,8 +449461,8 @@
       "recordedFollowup": {
         "owner": "coverage_security_review",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
-        "disposition": "Retention gate44254336532 fully verified PASS:600 actual iterations,zero skips/failures,two valid report arms,all six argv/sidecar audits,24 fileset checks,two nine-member runtime archives and clean source. Full symbolize inventory exposes a preservation defect:all2418 legacy generated .pb.go positions are absent from candidate;zero handwritten baseline positions lost. Pinned rules_go0.65 proto rule explicitly disables generated coverage. Original PR says keep existing exclusions; no approval to narrow coverage. Candidate7e amendment is held pending a faithful fix. Prior ARM startup+0.82%p=.006 and missing original RACE comparator remain.",
-        "nextAction": "Root carries the faithful generated-protobuf coverage gate into a permanent Bazel owner/thin Action. Same exact CI-only046 publication/dispatch may be re-reviewed under the new standing CI grant; no pending human execution decision remains. Keep frozen reviewed bytes and earlier rejection history, do not launch the per-item driver or bypass a renewed denial. Original PR amendment remains unqualified and separate."
+        "disposition": "First permanent Bazel NORMAL layer passes on340e test source/fa452 shared CI: actual five-configuration GoInfo selection and tiny executed protobuf report after counter clearing. Removing only the coverage patch produces the expected own/both generated-PB selection failures. This does not close full Sentry generated-position fidelity, Uname, ARM/RACE/performance or original PR conflict.",
+        "nextAction": "Root advances the smallest permanent full-Sentry inventory and canonical report/runtime ownership gates; retain original conflict and separate ARM/RACE/performance limits. Do not claim faithful full replacement from the tiny proof or restart046 driver."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -449557,8 +449557,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "6cb9d5004ab242aeaf73572a8ac821db598b4235",
-        "disposition": "Context-only rebase published",
-        "nextAction": "Follow the checks, maintainer review and import for the published revision. DCO import coordination: Root coordinates #17678 at 8569dbe2475f. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch."
+        "disposition": "Source remains open; closed unmerged export has no replacement. Own same-tree DCO metadata candidate prepared locally under standing authorization; no execution rejection/new human permission or publication. Named technical/import holds remain.",
+        "nextAction": "Root verifies fresh base/native required checks and exact source/ref/import coordination, then eligible metadata-only publication under existing authorization; no generic await-maintainer hold."
       },
       "conflictObservedSince": null
     },
@@ -449724,8 +449724,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "d6275511008e4970b13afec999be79bb8358fd1b",
-        "disposition": "Reviewed and opened upstream",
-        "nextAction": "Follow upstream checks and maintainer review on #16604. DCO import coordination: Root coordinates #17677 at 5371cb7c75de. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch."
+        "disposition": "Source remains open; closed unmerged export has no replacement. Own same-tree DCO metadata candidate prepared locally under standing authorization; no execution rejection/new human permission or publication. Named technical/import holds remain.",
+        "nextAction": "Root verifies fresh base/native required checks and exact source/ref/import coordination, then eligible metadata-only publication under existing authorization; no generic await-maintainer hold."
       },
       "conflictObservedSince": null
     },
@@ -449963,8 +449963,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "d5d31a74d63cfbe91e57220300601d67122dd313",
-        "disposition": "CI #16737 at d5d31a74d63cfbe91e57220300601d67122dd313: Exact current source has feedback/copybara FAILED. No public original error is linked;17169 has historical internal x_defs restriction already addressed in its published source, which does not prove the current failure cause.\n\nCI #17614 at 7eb70d3831d95ce00f558677f5cf966b0b9a7034: The exact public status reports a failed internal build; its original private diagnostic is unavailable. A shared gvisor/internal access probe returned HTTP403 for36754; other private builds were not redundantly requested.",
-        "nextAction": "Use the existing importing-maintainer channel to obtain the first original error before making source changes; preserve source head and existing reviews. For16737 track matching17614 and its private36700 failure.\nImporting maintainer must read the original failed internal job and provide the first actionable error or correct the internal change. Root follows the exact source/import without guessing a source fix. DCO import coordination: Root coordinates #17614 at 7eb70d3831d9. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch."
+        "disposition": "Source remains open; closed unmerged export has no replacement. Own same-tree DCO metadata candidate prepared locally under standing authorization; no execution rejection/new human permission or publication. Named technical/import holds remain.",
+        "nextAction": "Root reconciles exact source/base/CI/import coordination before publishing prepared same-tree DCO metadata. Preserve named maintainer/private/import holds; do not guess source repairs or treat export closure as clearance."
       },
       "conflictObservedSince": null
     },
@@ -450082,8 +450082,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "f4b8a6bd29b925f81da349195f6a14ddb2a8714c",
-        "disposition": "Carol explained that the internal change was mistakenly removed and is handling the re-import. No author action was requested.",
-        "nextAction": "Await the re-import and internal approval. DCO import coordination: Root coordinates #17590 at 7d4bf516f07f. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch."
+        "disposition": "Source remains open; closed unmerged export has no replacement. Own same-tree DCO metadata candidate prepared locally under standing authorization; no execution rejection/new human permission or publication. Named technical/import holds remain.",
+        "nextAction": "Root reconciles exact source/base/CI/import coordination before publishing prepared same-tree DCO metadata. Preserve named maintainer/private/import holds; do not guess source repairs or treat export closure as clearance."
       },
       "conflictObservedSince": null
     },
@@ -451733,8 +451733,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "3cc89424abd7e0784c8196b175217aae6e47f919",
-        "disposition": "CI #17169 at 3cc89424abd7e0784c8196b175217aae6e47f919: Exact current source has feedback/copybara FAILED. No public original error is linked;17169 has historical internal x_defs restriction already addressed in its published source, which does not prove the current failure cause.",
-        "nextAction": "Use the existing importing-maintainer channel to obtain the first original error before making source changes; preserve source head and existing reviews. For16737 track matching17614 and its private36700 failure. DCO import coordination: Root coordinates #17675 at 3a7c094984c1. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch."
+        "disposition": "Source remains open; closed unmerged export has no replacement. Own same-tree DCO metadata candidate prepared locally under standing authorization; no execution rejection/new human permission or publication. Named technical/import holds remain.",
+        "nextAction": "Root reconciles exact source/base/CI/import coordination before publishing prepared same-tree DCO metadata. Preserve named maintainer/private/import holds; do not guess source repairs or treat export closure as clearance."
       },
       "conflictObservedSince": null
     },
@@ -452284,8 +452284,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "4b33ee0095a05d342ac8fcc2a4d1889c3f55d137",
-        "disposition": "CI #17521 at 085c825cc748cad5f794b959c257e7742b92f0a3: The exact public status reports a failed internal build; its original private diagnostic is unavailable. A shared gvisor/internal access probe returned HTTP403 for36754; other private builds were not redundantly requested.",
-        "nextAction": "Importing maintainer must read the original failed internal job and provide the first actionable error or correct the internal change. Root follows the exact source/import without guessing a source fix. DCO import coordination: Root coordinates #17521 at 085c825cc748. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch."
+        "disposition": "Source remains open; closed unmerged export has no replacement. Own same-tree DCO metadata candidate prepared locally under standing authorization; no execution rejection/new human permission or publication. Named technical/import holds remain.",
+        "nextAction": "Root reconciles exact source/base/CI/import coordination before publishing prepared same-tree DCO metadata. Preserve named maintainer/private/import holds; do not guess source repairs or treat export closure as clearance."
       },
       "conflictObservedSince": null
     },
@@ -453330,9 +453330,10 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "e049cbe2f9b7dc6a868d820b6b2cbc99736b5082",
-        "nextAction": "Follow maintainer review, exact published-head checks and any matching import; handle new substantive feedback in the existing workstream. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source e049cbe2f9b7dc6a868d820b6b2cbc99736b5082; observed 2026-11-17T19:29:29.454062+00:00): build 1597 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+        "disposition": "Original e049 PGO publisher PR now conflicts with master5be. Merged17699 fixes untracked stash inclusion, but does not establish the complete concurrent-rebase/no-op transaction contract. Publisher3909 GitHubPENDING; canonical Buildkite403 leaves actual job outcome unknown.",
+        "nextAction": "Root assigned exclusive systrap writer to minimal permanent Bazel Git transaction regression and residual repair using isolated temporary Git remotes, no generation/network. Preserve current publicPR/no closure or rebase claim; actual publisher3909 outcome remains unknown."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-19T02:26:00.189263+00:00"
     },
     {
       "repo": "buildbuddy-io/buildbuddy",
@@ -455466,8 +455467,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "d5d31a74d63cfbe91e57220300601d67122dd313",
-        "disposition": "CI #16737 at d5d31a74d63cfbe91e57220300601d67122dd313: Exact current source has feedback/copybara FAILED. No public original error is linked;17169 has historical internal x_defs restriction already addressed in its published source, which does not prove the current failure cause.\n\nCI #17614 at 7eb70d3831d95ce00f558677f5cf966b0b9a7034: The exact public status reports a failed internal build; its original private diagnostic is unavailable. A shared gvisor/internal access probe returned HTTP403 for36754; other private builds were not redundantly requested.",
-        "nextAction": "Use the existing importing-maintainer channel to obtain the first original error before making source changes; preserve source head and existing reviews. For16737 track matching17614 and its private36700 failure.\nImporting maintainer must read the original failed internal job and provide the first actionable error or correct the internal change. Root follows the exact source/import without guessing a source fix. DCO import coordination: Root coordinates #17614 at 7eb70d3831d9. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch."
+        "disposition": "Source remains open; closed unmerged export has no replacement. Own same-tree DCO metadata candidate prepared locally under standing authorization; no execution rejection/new human permission or publication. Named technical/import holds remain.",
+        "nextAction": "Root reconciles exact source/base/CI/import coordination before publishing prepared same-tree DCO metadata. Preserve named maintainer/private/import holds; do not guess source repairs or treat export closure as clearance."
       }
     },
     {
@@ -457943,8 +457944,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "5ef0a9f23312c68227b1431298f13edcdd0c9a28",
-        "disposition": "Current-head First Pass1756 still fails C++ include-cleaner after three attempts:11direct-header findings in accept_bind.cc. The failed KVM fork shard passed on retry; author header changes remain due.",
-        "nextAction": "Await author fixes to the directly reported header providers, then review the actual changed source and current CI. Preserve the prior declined CI-post decision; no retry, source rewrite or duplicate acknowledgement."
+        "disposition": "Foreign source remains author-owned and unchanged; export closure is not current-source delivery or rewrite permission. Current DCO SUCCESS; author header fix remains due and declined CI post preserved.",
+        "nextAction": "Root follows foreign author and importing-maintainer disposition; no branch/DCO rewrite or new comment. Preserve declined CI-post decision and author direct-header obligation."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANznRgzA"
@@ -458526,8 +458527,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "3cc89424abd7e0784c8196b175217aae6e47f919",
-        "disposition": "CI #17169 at 3cc89424abd7e0784c8196b175217aae6e47f919: Exact current source has feedback/copybara FAILED. No public original error is linked;17169 has historical internal x_defs restriction already addressed in its published source, which does not prove the current failure cause.",
-        "nextAction": "Use the existing importing-maintainer channel to obtain the first original error before making source changes; preserve source head and existing reviews. For16737 track matching17614 and its private36700 failure. DCO import coordination: Root coordinates #17675 at 3a7c094984c1. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch."
+        "disposition": "Source remains open; closed unmerged export has no replacement. Own same-tree DCO metadata candidate prepared locally under standing authorization; no execution rejection/new human permission or publication. Named technical/import holds remain.",
+        "nextAction": "Root reconciles exact source/base/CI/import coordination before publishing prepared same-tree DCO metadata. Preserve named maintainer/private/import holds; do not guess source repairs or treat export closure as clearance."
       }
     },
     {
@@ -460790,7 +460791,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "e049cbe2f9b7dc6a868d820b6b2cbc99736b5082",
-        "nextAction": "Follow maintainer review, exact published-head checks and any matching import; handle new substantive feedback in the existing workstream. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source e049cbe2f9b7dc6a868d820b6b2cbc99736b5082; observed 2026-11-17T19:29:29.454062+00:00): build 1597 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+        "disposition": "Original e049 PGO publisher PR now conflicts with master5be. Merged17699 fixes untracked stash inclusion, but does not establish the complete concurrent-rebase/no-op transaction contract. Publisher3909 GitHubPENDING; canonical Buildkite403 leaves actual job outcome unknown.",
+        "nextAction": "Root assigned exclusive systrap writer to minimal permanent Bazel Git transaction regression and residual repair using isolated temporary Git remotes, no generation/network. Preserve current publicPR/no closure or rebase claim; actual publisher3909 outcome remains unknown."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxx-A0Q"
@@ -464832,7 +464834,7 @@
         "since": "2026-11-19T01:19:23.138983+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T01:19:23.138983+00:00"
+        "observedAt": "2026-11-19T02:51:50.481387+00:00"
       }
     },
     "pr:16453": {
@@ -469258,7 +469260,7 @@
         "since": "2026-11-19T00:15:13.095068+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T01:19:23.138983+00:00"
+        "observedAt": "2026-11-19T02:51:50.481387+00:00"
       }
     },
     "pr:bazelbuild/bazel-central-registry:11314": {
@@ -469626,7 +469628,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T01:19:23.138983+00:00"
+        "observedAt": "2026-11-19T02:51:50.481387+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -469635,7 +469637,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T01:19:23.138983+00:00"
+        "observedAt": "2026-11-19T02:51:50.481387+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -469644,7 +469646,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T01:19:23.138983+00:00"
+        "observedAt": "2026-11-19T02:51:50.481387+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -469653,7 +469655,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T01:19:23.138983+00:00"
+        "observedAt": "2026-11-19T02:51:50.481387+00:00"
       }
     },
     "issue:google/benchmark:1634": {
@@ -469662,7 +469664,7 @@
         "since": "2026-11-19T00:39:33.110112+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T01:19:23.138983+00:00"
+        "observedAt": "2026-11-19T02:51:50.481387+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -469671,7 +469673,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T01:19:23.138983+00:00"
+        "observedAt": "2026-11-19T02:51:50.481387+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -469680,7 +469682,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T01:19:23.138983+00:00"
+        "observedAt": "2026-11-19T02:51:50.481387+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -469689,7 +469691,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T01:19:23.138983+00:00"
+        "observedAt": "2026-11-19T02:51:50.481387+00:00"
       }
     },
     "branch:lisafs-hardlink-capability": {
@@ -469698,7 +469700,7 @@
         "since": "2026-11-19T01:19:23.138983+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T01:19:23.138983+00:00"
+        "observedAt": "2026-11-19T02:51:50.481387+00:00"
       }
     }
   },

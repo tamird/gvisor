@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-19T01:19:23.138983+00:00",
+    "updatedAt": "2026-11-19T02:51:50.481387+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -995,14 +995,14 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-11-17T20:13:53.813850+00:00",
+      "updatedAt": "2026-11-19T02:51:50.481387+00:00",
       "summary": "Published one commit at 45137f922. It folds the approved direct assembler invocation into the netgofer-aware export. All 16 declared archive inputs match 4ecb0b121, including netgofer and three C sidecars. The new GoExport action wrote a byte-identical 2,566-entry ZIP (6,246,266 bytes, SHA-256 6c52dca5d…). The Go-only netgofer consumer ran on the same archive bytes from 4ecb0b121.",
       "followup": {
         "owner": "root",
         "sourceHead": "c83396e33ae1b1b77b0d6f7d0bc88062926d3c2e",
         "observedAt": "2026-11-17T20:13:53.813850+00:00",
-        "disposition": "The contributor-approved exact import-only BUILD diagnosis is posted and read back. No source amendment is needed for this failure; importing maintainers own the correction and re-export.",
-        "nextAction": "Follow the importing maintainer correction of #17664 assemble_test. Verify the corrected export head no longer embeds a go_binary, then inspect its owning analysis/tests and current required CI. Preserve the already-valid source and do not push the Copybara branch.",
+        "disposition": "Source remains open; closed unmerged export has no replacement. Own same-tree DCO metadata candidate prepared locally under standing authorization; no execution rejection/new human permission or publication. Named technical/import holds remain.",
+        "nextAction": "Root reconciles exact source/base/CI/import coordination before publishing prepared same-tree DCO metadata. Preserve named maintainer/private/import holds; do not guess source repairs or treat export closure as clearance.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42849078055/artifacts/13780790760",
           "https://github.com/tamird/gvisor/compare/4ecb0b121...45137f922",
@@ -1024,7 +1024,7 @@
           "https://github.com/gvisor/gvisor/pull/17664",
           "https://github.com/gvisor/gvisor/pull/15106#issuecomment-6958934771"
         ],
-        "recheckCondition": "The importing maintainer replies, #17664 changes head or checks, or the source changes.",
+        "recheckCondition": "Exact source/fork head/base, source or import CI, maintainer first diagnostic/disposition, replacement/import event; fresh lease before any authorized write.",
         "attentionDispositions": [
           {
             "reason": "author-feedback",
@@ -1328,7 +1328,46 @@
               "sourceHead": "c83396e33ae1b1b77b0d6f7d0bc88062926d3c2e"
             }
           }
-        ]
+        ],
+        "curatedAt": "2026-11-19T02:51:50.481387+00:00",
+        "priorImportNextAction": "Follow the importing maintainer correction of #17664 assemble_test. Verify the corrected export head no longer embeds a go_binary, then inspect its owning analysis/tests and current required CI. Preserve the already-valid source and do not push the Copybara branch.",
+        "closedExportReconciliation": {
+          "export": 17664,
+          "state": "CLOSED UNMERGED bymilantracy; no statedreason/replacement",
+          "openReplacementInCompleteInventory": false,
+          "footerMatchesCurrent": true,
+          "sourceState": "OPEN unchanged",
+          "DCO": "NOT_REPORTED",
+          "sourceAPIExactHeadApprovals": [
+            {
+              "author": "zkoopmans",
+              "head": "c83396e33ae1b1b77b0d6f7d0bc88062926d3c2e"
+            }
+          ],
+          "importApprovalBinding": "Preserve canonical import binding separately from exact source API approval",
+          "namedHoldsPreserved": [
+            "Import-only assemble_test BUILD fix remains importing-maintainer responsibility; valid source has no corresponding code fix due."
+          ],
+          "closureReceipt": {
+            "file": "0223-fuse-all-eleven-export-dispositions.json",
+            "sha256": "cc8e7b9c9d5199d7a2fb843a9aeac90c588f30f79854ea6150b5c6f1fad9da0c"
+          },
+          "sourceAuthorityReceipt": {
+            "file": "export-eleven-source-authority-audit.json",
+            "sha256": "4dc58ba3f345bb408280dbc8a6d9c12050720133c38cc9637450a0525fcf2a33"
+          }
+        },
+        "localDCOCandidate": {
+          "head": "5fd1b4fb3c7dd9af907e90b20f6a0969f0e6bc1f",
+          "original": "c83396e33ae1b1b77b0d6f7d0bc88062926d3c2e",
+          "tree": "ff3d6e3baf9bbbd27945280659035f74cd9e04a0",
+          "parent": "f2504851dccd818aba925bf7c45c72a200e837cc",
+          "state": "PREPARED LOCAL ONLY; same tree/parent/rawauthor includingdate/timezone, message-only DCO metadata; no push",
+          "receipt": {
+            "file": "closed-export-dco-prepared-20261119.json",
+            "sha256": "b892396fb65988e455a29ec56ded488a351ad8a7d005f3285d340d9db7cd95f0"
+          }
+        }
       },
       "head": "c83396e33ae1b1b77b0d6f7d0bc88062926d3c2e",
       "evidence": [
@@ -3817,7 +3856,7 @@
       "title": "Stage only the current Python release archives",
       "url": "https://github.com/google/gvisor/pull/16766",
       "status": "open",
-      "updatedAt": "2026-11-13T02:20:39+00:00",
+      "updatedAt": "2026-11-19T02:51:50.481387+00:00",
       "summary": "Published the approved amendment: successive Python releases replace older gVisor archives while preserving unrelated packages and files from a previous successful build. Keep the release function brace-bodied. The build runs in a private project copy; its cd and cleanup are scoped so the all path still uploads from the caller’s relative staging directory. Four builds, failure cleanup, and the upload arguments passed. GitHub binds Carzh’s November 4 approval to the current one-commit submission. Its base and tree match the prior submission. Copybara opened #17222 for this exact revision.",
       "evidence": [
         {
@@ -3918,8 +3957,8 @@
         "sourceHead": "f4b8a6bd29b925f81da349195f6a14ddb2a8714c",
         "providerHead": "04df6c244952232769db6b4123555354f9873e9b",
         "observedAt": "2026-11-13T02:20:39+00:00",
-        "disposition": "Carol explained that the internal change was mistakenly removed and is handling the re-import. No author action was requested.",
-        "nextAction": "Await the re-import and internal approval. DCO import coordination: Root coordinates #17590 at 7d4bf516f07f. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
+        "disposition": "Source remains open; closed unmerged export has no replacement. Own same-tree DCO metadata candidate prepared locally under standing authorization; no execution rejection/new human permission or publication. Named technical/import holds remain.",
+        "nextAction": "Root reconciles exact source/base/CI/import coordination before publishing prepared same-tree DCO metadata. Preserve named maintainer/private/import holds; do not guess source repairs or treat export closure as clearance.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16766#issuecomment-6840823106",
           "https://github.com/google/gvisor/pull/16766",
@@ -3929,7 +3968,47 @@
           "https://github.com/google/gvisor/pull/16766#issuecomment-6807082318",
           "https://github.com/gvisor/gvisor/pull/17590"
         ],
-        "recheckCondition": "New substantive feedback or source/import status change. DCO coordination recheck: The listed exact import merges/closes, changes its footer source revision, or its importing maintainer explicitly confirms the source metadata rewrite can proceed. Recheck live source/fork heads immediately before any write."
+        "recheckCondition": "Exact source/fork head/base, source or import CI, maintainer first diagnostic/disposition, replacement/import event; fresh lease before any authorized write.",
+        "curatedAt": "2026-11-19T02:51:50.481387+00:00",
+        "priorImportNextAction": "Await the re-import and internal approval. DCO import coordination: Root coordinates #17590 at 7d4bf516f07f. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
+        "closedExportReconciliation": {
+          "export": 17590,
+          "state": "CLOSED UNMERGED bymilantracy; no statedreason/replacement",
+          "openReplacementInCompleteInventory": false,
+          "footerMatchesCurrent": true,
+          "sourceState": "OPEN unchanged",
+          "DCO": "NOT_REPORTED",
+          "sourceAPIExactHeadApprovals": [
+            {
+              "author": "carzh",
+              "head": "f4b8a6bd29b925f81da349195f6a14ddb2a8714c"
+            }
+          ],
+          "importApprovalBinding": false,
+          "namedHoldsPreserved": [
+            "carzh explicitly says no action needed from contributor; reimport and internal approval remain maintainer-owned.",
+            "Canonical import currentApproval=false despite source API exact-head APPROVED; not permission to clear importing-maintainer disposition."
+          ],
+          "closureReceipt": {
+            "file": "0223-fuse-all-eleven-export-dispositions.json",
+            "sha256": "cc8e7b9c9d5199d7a2fb843a9aeac90c588f30f79854ea6150b5c6f1fad9da0c"
+          },
+          "sourceAuthorityReceipt": {
+            "file": "export-eleven-source-authority-audit.json",
+            "sha256": "4dc58ba3f345bb408280dbc8a6d9c12050720133c38cc9637450a0525fcf2a33"
+          }
+        },
+        "localDCOCandidate": {
+          "head": "0cba97076a190364b6d941135b167263f01f74ba",
+          "original": "f4b8a6bd29b925f81da349195f6a14ddb2a8714c",
+          "tree": "b2b3ec48554d87a16b1dbc3a89e4f3515a59d95c",
+          "parent": "89a7d2beb0d553c3ffaff8b79478ffef09e09abc",
+          "state": "PREPARED LOCAL ONLY; same tree/parent/rawauthor includingdate/timezone, message-only DCO metadata; no push",
+          "receipt": {
+            "file": "closed-export-dco-prepared-20261119.json",
+            "sha256": "b892396fb65988e455a29ec56ded488a351ad8a7d005f3285d340d9db7cd95f0"
+          }
+        }
       },
       "reapproval": {
         "kind": "patch-preserving-rebase",
@@ -10997,14 +11076,14 @@
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-17T19:01:06.487079+00:00",
+      "updatedAt": "2026-11-19T02:51:50.481387+00:00",
       "summary": "The published rebase contains one mergeable commit. The source tree is identical to 3aaa8098b. Seven Linux targets passed all 106 records, and the benchmark proxy rejected four invalid inputs and forwarded traffic in both directions. The four TCP throughput benchstat rows identify the earlier revision on which the measurements ran. The PR description also gives benchstat output for all nine address microbenchmarks. The current revision and its parent ran the same October fixture for 12 paired samples on one pinned Linux AMD64 CPU.",
       "followup": {
         "owner": "root",
         "sourceHead": "6eb3e7f3e5469c441b523c2da93feb5189cc827f",
         "observedAt": "2026-11-17T19:01:06.487079+00:00",
-        "disposition": "CI #17626 at 0e17e2f614e9ba03b3aeda3b4f30a5d922d7488c: The exact public status reports a failed internal build; its original private diagnostic is unavailable. A shared gvisor/internal access probe returned HTTP403 for36754; other private builds were not redundantly requested.",
-        "nextAction": "Importing maintainer must read the original failed internal job and provide the first actionable error or correct the internal change. Root follows the exact source/import without guessing a source fix. DCO import coordination: Root coordinates #17626 at 0e17e2f614e9. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
+        "disposition": "Source remains open; closed unmerged export has no replacement. Own same-tree DCO metadata candidate prepared locally under standing authorization; no execution rejection/new human permission or publication. Named technical/import holds remain.",
+        "nextAction": "Root reconciles exact source/base/CI/import coordination before publishing prepared same-tree DCO metadata. Preserve named maintainer/private/import holds; do not guess source repairs or treat export closure as clearance.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15730",
           "https://github.com/tamird/gvisor/commit/3aaa8098b",
@@ -11019,7 +11098,46 @@
           "https://github.com/gvisor/gvisor/pull/17626"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "New exact-import head/check result or maintainer supplies the original failure diagnostic. DCO coordination recheck: The listed exact import merges/closes, changes its footer source revision, or its importing maintainer explicitly confirms the source metadata rewrite can proceed. Recheck live source/fork heads immediately before any write."
+        "recheckCondition": "Exact source/fork head/base, source or import CI, maintainer first diagnostic/disposition, replacement/import event; fresh lease before any authorized write.",
+        "curatedAt": "2026-11-19T02:51:50.481387+00:00",
+        "priorImportNextAction": "Importing maintainer must read the original failed internal job and provide the first actionable error or correct the internal change. Root follows the exact source/import without guessing a source fix. DCO import coordination: Root coordinates #17626 at 0e17e2f614e9. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
+        "closedExportReconciliation": {
+          "export": 17626,
+          "state": "CLOSED UNMERGED bymilantracy; no statedreason/replacement",
+          "openReplacementInCompleteInventory": false,
+          "footerMatchesCurrent": true,
+          "sourceState": "OPEN unchanged",
+          "DCO": "NOT_REPORTED",
+          "sourceAPIExactHeadApprovals": [
+            {
+              "author": "nybidari",
+              "head": "6eb3e7f3e5469c441b523c2da93feb5189cc827f"
+            }
+          ],
+          "importApprovalBinding": "Preserve canonical import binding separately from exact source API approval",
+          "namedHoldsPreserved": [
+            "nybidari owns internal dependency updates/landing; no basis to fix source from aggregate internal failure."
+          ],
+          "closureReceipt": {
+            "file": "0223-fuse-all-eleven-export-dispositions.json",
+            "sha256": "cc8e7b9c9d5199d7a2fb843a9aeac90c588f30f79854ea6150b5c6f1fad9da0c"
+          },
+          "sourceAuthorityReceipt": {
+            "file": "export-eleven-source-authority-audit.json",
+            "sha256": "4dc58ba3f345bb408280dbc8a6d9c12050720133c38cc9637450a0525fcf2a33"
+          }
+        },
+        "localDCOCandidate": {
+          "head": "58fb6b08096d65974497d16c020b3f8a0cd955a8",
+          "original": "6eb3e7f3e5469c441b523c2da93feb5189cc827f",
+          "tree": "bfc731bd74b82504fef6569caa2367459828ad32",
+          "parent": "2a653cea7b2054a2dc9c6419337d3de8031275d6",
+          "state": "PREPARED LOCAL ONLY; same tree/parent/rawauthor includingdate/timezone, message-only DCO metadata; no push",
+          "receipt": {
+            "file": "closed-export-dco-prepared-20261119.json",
+            "sha256": "b892396fb65988e455a29ec56ded488a351ad8a7d005f3285d340d9db7cd95f0"
+          }
+        }
       },
       "evidence": [
         {
@@ -34209,8 +34327,8 @@
       "followup": {
         "owner": "root",
         "sourceHead": "cdf05cf3cf2c3ec196bc94dfaba9b025f437c229",
-        "disposition": "GitHub reports APPROVED and MERGEABLE and retains the ready-to-pull label. The recorded October 29 approval predates the current head’s November 4 rebase. Matching export #16966 closed without merging.",
-        "nextAction": "Monitor the existing source PR and any subsequent import through the ordinary status collector. DCO import coordination: Root coordinates #17673 at 46e2ed0d98f8. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
+        "disposition": "Source remains open; closed unmerged export has no replacement. Own same-tree DCO metadata candidate prepared locally under standing authorization; no execution rejection/new human permission or publication. Named technical/import holds remain.",
+        "nextAction": "Root reconciles exact source/base/CI/import coordination before publishing prepared same-tree DCO metadata. Preserve named maintainer/private/import holds; do not guess source repairs or treat export closure as clearance.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16391",
           "https://github.com/tamird/gvisor/commit/056d21cee8bc662737520aca579c2bc5d5936e85",
@@ -34224,7 +34342,46 @@
           "https://github.com/gvisor/gvisor/pull/17673"
         ],
         "observedAt": "2026-11-12T04:36:35+00:00",
-        "recheckCondition": "New substantive feedback or source/import status change. DCO coordination recheck: The listed exact import merges/closes, changes its footer source revision, or its importing maintainer explicitly confirms the source metadata rewrite can proceed. Recheck live source/fork heads immediately before any write."
+        "recheckCondition": "Exact source/fork head/base, source or import CI, maintainer first diagnostic/disposition, replacement/import event; fresh lease before any authorized write.",
+        "curatedAt": "2026-11-19T02:51:50.481387+00:00",
+        "priorImportNextAction": "Monitor the existing source PR and any subsequent import through the ordinary status collector. DCO import coordination: Root coordinates #17673 at 46e2ed0d98f8. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
+        "closedExportReconciliation": {
+          "export": 17673,
+          "state": "CLOSED UNMERGED bymilantracy; no statedreason/replacement",
+          "openReplacementInCompleteInventory": false,
+          "footerMatchesCurrent": true,
+          "sourceState": "OPEN unchanged",
+          "DCO": "NOT_REPORTED",
+          "sourceAPIExactHeadApprovals": [
+            {
+              "author": "zkoopmans",
+              "head": "cdf05cf3cf2c3ec196bc94dfaba9b025f437c229"
+            }
+          ],
+          "importApprovalBinding": false,
+          "namedHoldsPreserved": [
+            "Canonical import currentApproval=false despite source API exact-head APPROVED; not permission to clear importing-maintainer disposition."
+          ],
+          "closureReceipt": {
+            "file": "0223-fuse-all-eleven-export-dispositions.json",
+            "sha256": "cc8e7b9c9d5199d7a2fb843a9aeac90c588f30f79854ea6150b5c6f1fad9da0c"
+          },
+          "sourceAuthorityReceipt": {
+            "file": "export-eleven-source-authority-audit.json",
+            "sha256": "4dc58ba3f345bb408280dbc8a6d9c12050720133c38cc9637450a0525fcf2a33"
+          }
+        },
+        "localDCOCandidate": {
+          "head": "e833a4cc951871ebcd3a4edee3f801851db7b0c3",
+          "original": "cdf05cf3cf2c3ec196bc94dfaba9b025f437c229",
+          "tree": "3ebd38d667ec601e3b4c0325e315953b8ef2d5e2",
+          "parent": "6dcadf4a84a07f69e8eb5f1ea9d7b2903bd03bd7",
+          "state": "PREPARED LOCAL ONLY; same tree/parent/rawauthor includingdate/timezone, message-only DCO metadata; no push",
+          "receipt": {
+            "file": "closed-export-dco-prepared-20261119.json",
+            "sha256": "b892396fb65988e455a29ec56ded488a351ad8a7d005f3285d340d9db7cd95f0"
+          }
+        }
       },
       "evidence": [
         {
@@ -34276,7 +34433,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/43254402928/artifacts/13960883531"
         }
       ],
-      "updatedAt": "2026-11-12T15:48:26+00:00",
+      "updatedAt": "2026-11-19T02:51:50.481387+00:00",
       "number": 16391,
       "dcoCoordination": {
         "owner": "root",
@@ -34595,14 +34752,14 @@
       "url": "https://github.com/google/gvisor/pull/16419",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-18T22:30:58.775869+00:00",
+      "updatedAt": "2026-11-19T02:51:50.481387+00:00",
       "summary": "Keep the congestion threshold across repeated timeouts without an advancing ACK and when a timeout interrupts fast recovery. Master already preserves cwnd and ssthresh on an idle zero-window probe. The amendment drops the duplicate early return and retains both TestZeroWindowSend assertions. Five original XML files contain 20 passing records with zero skips.",
       "followup": {
         "owner": "tcp_conflict",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
-        "disposition": "Iperf study 44219938333 verified all eight variants with 24 samples/source, balanced order, frozen harness, same runtime path and full-release identity checks. Existing first-stream and fixed-SetBytes metric limits remain explicit; this does not establish equivalence or clear the networking gate. Nginx all-72 and all four distinct loss-mode capability pilots passed.",
-        "nextAction": "Root migrates the existing shared70-case four-runtime qualification into permanent Bazel owners and thin Actions before further execution. The same exact CI-only operation is authorized for re-review under the new standing CI grant; the historical action rejection is not a pending human decision. Do not launch the frozen per-item driver, bypass a renewed rejection, amend source PRs or infer statistical qualification.",
+        "disposition": "Permanent shared-Bazel ordinary Go owner migration passed499cases per architecture on old1f/f944 inputs; historical product proofs retained. Packet capability/currentbase/race and performance scopes remain distinct.",
+        "nextAction": "Root owns the next permanent packet capability/proof and existing full performance study after functional gates; preserve source/currentbase and workload scope limits, no per-item driver or new approval question.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16419",
           "https://github.com/google/gvisor/pull/16419#discussion_r4504268180",
@@ -34735,7 +34892,7 @@
           ]
         },
         "remainingNetworkOutcomeOwner": "tcp_conflict",
-        "curatedAt": "2026-11-18T22:30:58.775869+00:00",
+        "curatedAt": "2026-11-19T02:51:50.481387+00:00",
         "ciExecutionAuthorization": {
           "status": "Authorized CI-only; held for permanent Bazel mechanism migration",
           "owner": "root",
@@ -34745,6 +34902,28 @@
             "file": "tcp-full-category-outcomes-publication-approval-package.json",
             "sha256": "16b649d36d3625042152615568ab55dfdbdfa68ea910e5b38f1b7a268a8b9bce"
           }
+        },
+        "permanentGoOwnerMigration": {
+          "runtimeSource": "f9446ddf973def4ce653acbb098532c2b1eb0ef0",
+          "runtimeBase": "1f33fe3003455db178b97f3b43d3a012f1611994",
+          "sharedCI": "d9845a3706d0a7c7dff3dd8743fa8d8d4d8a57af",
+          "amd64": "62preflight+437remaining=499 named cases; allGoowners freshremote/0skip/fail;4E2Eshards matchcatalog",
+          "arm64": "499named cases allGoowners freshremote/0skip/fail;4E2Eshards matchcatalog",
+          "receipts": [
+            {
+              "file": "tcp-rto-standard-44437697947-evidence.json",
+              "sha256": "4949bd855c87c39d07c07201ed67a707e0fadecaa45be7f48e1cee6f62feeff9"
+            },
+            {
+              "file": "tcp-rto-standard-44439015709-evidence.json",
+              "sha256": "e6fab56f6d2c5231886fad53c2a060b72b6bdf9bd7306487bd04f6dc5a5027ec"
+            },
+            {
+              "file": "tcp-rto-standard-44439019241-evidence.json",
+              "sha256": "23c75e78cebd96e726e8f4f7b33af337bd69a05e6d34f988673f123dd3632a83"
+            }
+          ],
+          "limits": "Oldbase inputs only. No currentbase/packet32/race/compiler/fullnetworkperformance shortcut."
         }
       },
       "evidence": [
@@ -38404,14 +38583,14 @@
       "url": "https://github.com/google/gvisor/pull/16507",
       "group": "bazel",
       "status": "open",
-      "summary": "The report/KCOV capability gate passes, but the rules_go replacement drops all 2,418 generated protobuf coverage positions present in the baseline. Handwritten positions are preserved. Amendment held while the coverage owner prepares a faithful fix.",
-      "updatedAt": "2026-11-18T22:30:58.775869+00:00",
+      "summary": "First permanent Bazel NORMAL layer passes on340e test source/fa452 shared CI: actual five-configuration GoInfo selection and tiny executed protobuf report after counter clearing. Removing only the coverage patch produces the expected own/both generated-PB selection failures. This does not close full Sentry generated-position fidelity, Uname, ARM/RACE/performance or original PR conflict.",
+      "updatedAt": "2026-11-19T02:51:50.481387+00:00",
       "followup": {
         "owner": "coverage_security_review",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
-        "disposition": "Retention gate44254336532 fully verified PASS:600 actual iterations,zero skips/failures,two valid report arms,all six argv/sidecar audits,24 fileset checks,two nine-member runtime archives and clean source. Full symbolize inventory exposes a preservation defect:all2418 legacy generated .pb.go positions are absent from candidate;zero handwritten baseline positions lost. Pinned rules_go0.65 proto rule explicitly disables generated coverage. Original PR says keep existing exclusions; no approval to narrow coverage. Candidate7e amendment is held pending a faithful fix. Prior ARM startup+0.82%p=.006 and missing original RACE comparator remain.",
-        "nextAction": "Root carries the faithful generated-protobuf coverage gate into a permanent Bazel owner/thin Action. Same exact CI-only046 publication/dispatch may be re-reviewed under the new standing CI grant; no pending human execution decision remains. Keep frozen reviewed bytes and earlier rejection history, do not launch the per-item driver or bypass a renewed denial. Original PR amendment remains unqualified and separate.",
+        "disposition": "First permanent Bazel NORMAL layer passes on340e test source/fa452 shared CI: actual five-configuration GoInfo selection and tiny executed protobuf report after counter clearing. Removing only the coverage patch produces the expected own/both generated-PB selection failures. This does not close full Sentry generated-position fidelity, Uname, ARM/RACE/performance or original PR conflict.",
+        "nextAction": "Root advances the smallest permanent full-Sentry inventory and canonical report/runtime ownership gates; retain original conflict and separate ARM/RACE/performance limits. Do not claim faithful full replacement from the tiny proof or restart046 driver.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -38730,7 +38909,7 @@
           "parent": "7eafb7afe2c0255c98392c2e701ec6aecad22b27",
           "ref": "review/coverage-generated-proto-20261118",
           "url": "https://github.com/tamird/gvisor/commit/9ddd73c541c3b73558f3a10b0f8833b5586e9bc0",
-          "state": "Technically reviewed source/frozen fidelity plan; CI-only operation authorized for re-review, held for permanent Bazel mechanism migration; no run",
+          "state": "Owning2-line prototype preserved; new permanent firstNORMAL provider/probe gates PASS, complete fidelity and product/mode matrix still open",
           "scope": "Two upstream Starlark lines: own attr+generated sources use the existing coverage selection before embed merge; proto no longer forces coverage off. MODULE binds one new patch.",
           "requiredEvidence": [
             "ordinary/selected/excluded provider sets",
@@ -38742,12 +38921,13 @@
           "preparedPlan": "046c87e012f49b26d52d1fc45f8189f3a1f0066b",
           "proofSHA256": "8cfa9665fca33bd1625d96c7b184d3b8454523fbfe87c0b7bd9744d867d14c0b",
           "planPublished": false,
-          "runCreated": false
+          "runCreated": false,
+          "permanentFirstLayerSource": "340e1072aa5a3d47e01ff68dffea34f91be4a9f4"
         },
         "executionApproval": {
-          "status": "Authorized CI-only; mechanism migration HOLD",
+          "status": "Historical046 bespoke operation held/superseded for the two now-permanent gates; no new driver needed",
           "owner": "root",
-          "reason": "New standing user grant covers non-human-perturbing CI actions. Historical automatic rejection remains recorded; same exact operation requires re-review, no alternate route. User now requests permanent Bazel owners/thin Actions instead of per-item drivers.",
+          "reason": "Permanent Bazel selection/protobuf tests now executed through shared CI. Original046 frozen payload remains historical; full remaining scopes need permanent owning tests, not a new user approval or duplicate cquery/SDK orchestration.",
           "destination": "tamird/gvisor:research/coverage-protobuf-fidelity-20261118",
           "source": "9ddd73c541c3b73558f3a10b0f8833b5586e9bc0",
           "plan": "046c87e012f49b26d52d1fc45f8189f3a1f0066b",
@@ -38763,7 +38943,46 @@
           "proofSHA256": "8cfa9665fca33bd1625d96c7b184d3b8454523fbfe87c0b7bd9744d867d14c0b",
           "recheckCondition": "Root permanent-mechanism decision, same-operation execution-review result or actual fidelity evidence."
         },
-        "curatedAt": "2026-11-18T22:30:58.775869+00:00"
+        "curatedAt": "2026-11-19T02:51:50.481387+00:00",
+        "permanentBazelFirstLayer": {
+          "testSource": "340e1072aa5a3d47e01ff68dffea34f91be4a9f4",
+          "ciSource": "fa452727d8d6af2399f8644f9d64a40dc5d902ae",
+          "analysis": {
+            "run": 44440671314,
+            "state": "PASS actual five configurations/one analysis wrapper; no Go/protoc compilation",
+            "receipt": {
+              "file": "coverage-analysis-44440671314-evidence.json",
+              "sha256": "dc16b3ad36c8243fe3f293aebac2bbaa99b036dc7f2eeeb739bf0810e96880ee"
+            }
+          },
+          "probe": {
+            "run": 44441627462,
+            "state": "PASS generated getter counter after ClearCoverageData and runtime input42; pkg/coverage excluded; declared protoc/Go actions remote",
+            "receipt": {
+              "file": "coverage-probe-44441627462-evidence.json",
+              "sha256": "508a20fd59e532ed67ba8fd52e2258473a0a10df1fec8e558e1edc7bd2ef3c34"
+            }
+          },
+          "negative": {
+            "source": "901ea90466d665e692e70830ea3b6b5932427a5e",
+            "run": 44443804449,
+            "workflowState": "FAILURE",
+            "proof": "Expected own/both generatedPB GoInfo cover mismatches only; allfiveconfigs retained, no bootstrap/compilerfailure",
+            "receipt": {
+              "file": "coverage-negative-44443804449-evidence.json",
+              "sha256": "9fb6a99c2a12b10743703b564c67423b8afc4afbb505f58dd4d31e3928642471"
+            }
+          },
+          "counterMode": "Pinned rules_go0.65 compilepkg always passes atomic coverage mode; no init-only reset loophole in declared configuration",
+          "documentationOnlyLocal": "69f6a2a5a1a5673340bca0185fef721f49ead3f1 adds README command only relative340; no publiclink or new qualification inferred",
+          "remaining": [
+            "Full115841position/2418protobuf Sentry inventory",
+            "Canonical Uname end-to-end report",
+            "ARM/RACE",
+            "Changed-instrumentation performance",
+            "Original PR conflict/currentbase integration"
+          ]
+        }
       },
       "evidence": [
         {
@@ -41227,7 +41446,7 @@
           "url": "https://github.com/tamird/gvisor/commit/6cb9d5004"
         }
       ],
-      "updatedAt": "2026-11-11T21:53:08+00:00",
+      "updatedAt": "2026-11-19T02:51:50.481387+00:00",
       "status": "open",
       "summary": "The published single commit 6cb9d5004 is mergeable. The rebase preserved all 78 changed lines. The Bazel changelog action emitted UTC midnight for a dated release and the Unix epoch for an untagged build under both UTC and Pacific/Honolulu.\n\nEarlier qualification on 8311c4cdb:\n\nThe changelog used the worker’s local clock. A release entry now uses UTC midnight on the date in the package version; an untagged build uses the Unix epoch. UTC and Hawaii produced identical 76,605,470-byte packages (SHA-256 b7b1d1d957b7c148458619211da93ecd8786ecb30d47f5bbba2429b81d5d4d18). No release or CI plumbing changes.",
       "refinement": {
@@ -41243,8 +41462,8 @@
         "owner": "root",
         "sourceHead": "6cb9d5004ab242aeaf73572a8ac821db598b4235",
         "observedAt": "2026-11-11T21:53:08+00:00",
-        "disposition": "Context-only rebase published",
-        "nextAction": "Follow the checks, maintainer review and import for the published revision. DCO import coordination: Root coordinates #17678 at 8569dbe2475f. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
+        "disposition": "Source remains open; closed unmerged export has no replacement. Own same-tree DCO metadata candidate prepared locally under standing authorization; no execution rejection/new human permission or publication. Named technical/import holds remain.",
+        "nextAction": "Root verifies fresh base/native required checks and exact source/ref/import coordination, then eligible metadata-only publication under existing authorization; no generic await-maintainer hold.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42209485090/artifacts/13498582036",
           "https://github.com/google/gvisor/pull/16587",
@@ -41254,7 +41473,44 @@
           "https://github.com/gvisor/gvisor/pull/17678"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "New substantive feedback or source/import status change. DCO coordination recheck: The listed exact import merges/closes, changes its footer source revision, or its importing maintainer explicitly confirms the source metadata rewrite can proceed. Recheck live source/fork heads immediately before any write."
+        "recheckCondition": "Exact source/fork head/base, source or import CI, maintainer first diagnostic/disposition, replacement/import event; fresh lease before any authorized write.",
+        "curatedAt": "2026-11-19T02:51:50.481387+00:00",
+        "priorImportNextAction": "Follow the checks, maintainer review and import for the published revision. DCO import coordination: Root coordinates #17678 at 8569dbe2475f. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
+        "closedExportReconciliation": {
+          "export": 17678,
+          "state": "CLOSED UNMERGED bymilantracy; no statedreason/replacement",
+          "openReplacementInCompleteInventory": false,
+          "footerMatchesCurrent": true,
+          "sourceState": "OPEN unchanged",
+          "DCO": "NOT_REPORTED",
+          "sourceAPIExactHeadApprovals": [
+            {
+              "author": "EtiennePerot",
+              "head": "6cb9d5004ab242aeaf73572a8ac821db598b4235"
+            }
+          ],
+          "importApprovalBinding": "Preserve canonical import binding separately from exact source API approval",
+          "namedHoldsPreserved": [],
+          "closureReceipt": {
+            "file": "0223-fuse-all-eleven-export-dispositions.json",
+            "sha256": "cc8e7b9c9d5199d7a2fb843a9aeac90c588f30f79854ea6150b5c6f1fad9da0c"
+          },
+          "sourceAuthorityReceipt": {
+            "file": "export-eleven-source-authority-audit.json",
+            "sha256": "4dc58ba3f345bb408280dbc8a6d9c12050720133c38cc9637450a0525fcf2a33"
+          }
+        },
+        "localDCOCandidate": {
+          "head": "7ede66919f11156bc5ede6d265bf7bfd6d7b7b05",
+          "original": "6cb9d5004ab242aeaf73572a8ac821db598b4235",
+          "tree": "01ca704ef147282115a7ed0a2f00406120f0eb09",
+          "parent": "3238f32db235efb5f8fe03d0490a07e2c53f1bf6",
+          "state": "PREPARED LOCAL ONLY; same tree/parent/rawauthor includingdate/timezone, message-only DCO metadata; no push",
+          "receipt": {
+            "file": "closed-export-dco-prepared-20261119.json",
+            "sha256": "b892396fb65988e455a29ec56ded488a351ad8a7d005f3285d340d9db7cd95f0"
+          }
+        }
       },
       "dcoCoordination": {
         "owner": "root",
@@ -43058,7 +43314,7 @@
       "url": "https://github.com/google/gvisor/pull/16604",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-08T13:23:10Z",
+      "updatedAt": "2026-11-19T02:51:50.481387+00:00",
       "summary": "The seccomp filter fuzzer compares two BPF programs. A declared Go generator replaces the shell pipeline and uses bpf.MaxInstructions for the bound. The generator splits the two 4,096-case switches into functions of 64 cases. The original fuzz-tagged filter corpus passed. With Go fuzz instrumentation, each of the 8,192 program/instruction pairs changed a counter that no other pair changed.",
       "evidence": [
         {
@@ -43102,8 +43358,8 @@
         "owner": "root",
         "sourceHead": "d6275511008e4970b13afec999be79bb8358fd1b",
         "observedAt": "2026-11-08T13:23:10Z",
-        "disposition": "Reviewed and opened upstream",
-        "nextAction": "Follow upstream checks and maintainer review on #16604. DCO import coordination: Root coordinates #17677 at 5371cb7c75de. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
+        "disposition": "Source remains open; closed unmerged export has no replacement. Own same-tree DCO metadata candidate prepared locally under standing authorization; no execution rejection/new human permission or publication. Named technical/import holds remain.",
+        "nextAction": "Root verifies fresh base/native required checks and exact source/ref/import coordination, then eligible metadata-only publication under existing authorization; no generic await-maintainer hold.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16604",
           "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...de106f647e5e2157aa3d6ac91d09727f698daca4",
@@ -43115,7 +43371,44 @@
           "https://app.buildbuddy.io/invocation/5db47752-0b5b-4d00-8857-be90ae4d4362",
           "https://github.com/gvisor/gvisor/pull/17677"
         ],
-        "recheckCondition": "New substantive feedback or source/import status change. DCO coordination recheck: The listed exact import merges/closes, changes its footer source revision, or its importing maintainer explicitly confirms the source metadata rewrite can proceed. Recheck live source/fork heads immediately before any write."
+        "recheckCondition": "Exact source/fork head/base, source or import CI, maintainer first diagnostic/disposition, replacement/import event; fresh lease before any authorized write.",
+        "curatedAt": "2026-11-19T02:51:50.481387+00:00",
+        "priorImportNextAction": "Follow upstream checks and maintainer review on #16604. DCO import coordination: Root coordinates #17677 at 5371cb7c75de. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
+        "closedExportReconciliation": {
+          "export": 17677,
+          "state": "CLOSED UNMERGED bymilantracy; no statedreason/replacement",
+          "openReplacementInCompleteInventory": false,
+          "footerMatchesCurrent": true,
+          "sourceState": "OPEN unchanged",
+          "DCO": "NOT_REPORTED",
+          "sourceAPIExactHeadApprovals": [
+            {
+              "author": "EtiennePerot",
+              "head": "d6275511008e4970b13afec999be79bb8358fd1b"
+            }
+          ],
+          "importApprovalBinding": "Preserve canonical import binding separately from exact source API approval",
+          "namedHoldsPreserved": [],
+          "closureReceipt": {
+            "file": "0223-fuse-all-eleven-export-dispositions.json",
+            "sha256": "cc8e7b9c9d5199d7a2fb843a9aeac90c588f30f79854ea6150b5c6f1fad9da0c"
+          },
+          "sourceAuthorityReceipt": {
+            "file": "export-eleven-source-authority-audit.json",
+            "sha256": "4dc58ba3f345bb408280dbc8a6d9c12050720133c38cc9637450a0525fcf2a33"
+          }
+        },
+        "localDCOCandidate": {
+          "head": "19f21ceb897c7c8b31d531f5928f231882ab1f8b",
+          "original": "d6275511008e4970b13afec999be79bb8358fd1b",
+          "tree": "19feaef3ebbf8f91066eed673ef77b91f0179bba",
+          "parent": "509ad5337346f8cbdba515cefadd542de28d6156",
+          "state": "PREPARED LOCAL ONLY; same tree/parent/rawauthor includingdate/timezone, message-only DCO metadata; no push",
+          "receipt": {
+            "file": "closed-export-dco-prepared-20261119.json",
+            "sha256": "b892396fb65988e455a29ec56ded488a351ad8a7d005f3285d340d9db7cd95f0"
+          }
+        }
       },
       "number": 16604,
       "outreachReviewClock": {
@@ -49949,7 +50242,7 @@
       "head": "d5d31a74d63cfbe91e57220300601d67122dd313",
       "url": "https://github.com/google/gvisor/pull/16737",
       "status": "open",
-      "updatedAt": "2026-11-17T19:01:06.487079+00:00",
+      "updatedAt": "2026-11-19T02:51:50.481387+00:00",
       "evidence": [
         {
           "label": "Native ARM64 state suites, AMD64 regression, owning analyzers on both architectures and finite-array comparison",
@@ -50004,12 +50297,51 @@
           "https://buildkite.com/gvisor/internal/builds/36700",
           "https://github.com/gvisor/gvisor/pull/17614"
         ],
-        "disposition": "CI #16737 at d5d31a74d63cfbe91e57220300601d67122dd313: Exact current source has feedback/copybara FAILED. No public original error is linked;17169 has historical internal x_defs restriction already addressed in its published source, which does not prove the current failure cause.\n\nCI #17614 at 7eb70d3831d95ce00f558677f5cf966b0b9a7034: The exact public status reports a failed internal build; its original private diagnostic is unavailable. A shared gvisor/internal access probe returned HTTP403 for36754; other private builds were not redundantly requested.",
-        "nextAction": "Use the existing importing-maintainer channel to obtain the first original error before making source changes; preserve source head and existing reviews. For16737 track matching17614 and its private36700 failure.\nImporting maintainer must read the original failed internal job and provide the first actionable error or correct the internal change. Root follows the exact source/import without guessing a source fix. DCO import coordination: Root coordinates #17614 at 7eb70d3831d9. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
-        "recheckCondition": "Original diagnostic, new export, or new exact-source feedback status.\nNew exact-import head/check result or maintainer supplies the original failure diagnostic. DCO coordination recheck: The listed exact import merges/closes, changes its footer source revision, or its importing maintainer explicitly confirms the source metadata rewrite can proceed. Recheck live source/fork heads immediately before any write.",
+        "disposition": "Source remains open; closed unmerged export has no replacement. Own same-tree DCO metadata candidate prepared locally under standing authorization; no execution rejection/new human permission or publication. Named technical/import holds remain.",
+        "nextAction": "Root reconciles exact source/base/CI/import coordination before publishing prepared same-tree DCO metadata. Preserve named maintainer/private/import holds; do not guess source repairs or treat export closure as clearance.",
+        "recheckCondition": "Exact source/fork head/base, source or import CI, maintainer first diagnostic/disposition, replacement/import event; fresh lease before any authorized write.",
         "owner": "root",
         "observedAt": "2026-11-17T19:01:06.487079+00:00",
-        "sourceHead": "d5d31a74d63cfbe91e57220300601d67122dd313"
+        "sourceHead": "d5d31a74d63cfbe91e57220300601d67122dd313",
+        "curatedAt": "2026-11-19T02:51:50.481387+00:00",
+        "priorImportNextAction": "Use the existing importing-maintainer channel to obtain the first original error before making source changes; preserve source head and existing reviews. For16737 track matching17614 and its private36700 failure.\nImporting maintainer must read the original failed internal job and provide the first actionable error or correct the internal change. Root follows the exact source/import without guessing a source fix. DCO import coordination: Root coordinates #17614 at 7eb70d3831d9. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
+        "closedExportReconciliation": {
+          "export": 17614,
+          "state": "CLOSED UNMERGED bymilantracy; no statedreason/replacement",
+          "openReplacementInCompleteInventory": false,
+          "footerMatchesCurrent": true,
+          "sourceState": "OPEN unchanged",
+          "DCO": "NOT_REPORTED",
+          "sourceAPIExactHeadApprovals": [
+            {
+              "author": "manninglucas",
+              "head": "d5d31a74d63cfbe91e57220300601d67122dd313"
+            }
+          ],
+          "importApprovalBinding": "Preserve canonical import binding separately from exact source API approval",
+          "namedHoldsPreserved": [
+            "Original private internal/import diagnostic remains unavailable; source/import overall statuses do not identify a source fix."
+          ],
+          "closureReceipt": {
+            "file": "0223-fuse-all-eleven-export-dispositions.json",
+            "sha256": "cc8e7b9c9d5199d7a2fb843a9aeac90c588f30f79854ea6150b5c6f1fad9da0c"
+          },
+          "sourceAuthorityReceipt": {
+            "file": "export-eleven-source-authority-audit.json",
+            "sha256": "4dc58ba3f345bb408280dbc8a6d9c12050720133c38cc9637450a0525fcf2a33"
+          }
+        },
+        "localDCOCandidate": {
+          "head": "272b3794a9344efd25e0f08877498325487b188b",
+          "original": "d5d31a74d63cfbe91e57220300601d67122dd313",
+          "tree": "e82adb0dfd45e8ae2e41b03e1476270567b65a71",
+          "parent": "6dcadf4a84a07f69e8eb5f1ea9d7b2903bd03bd7",
+          "state": "PREPARED LOCAL ONLY; same tree/parent/rawauthor includingdate/timezone, message-only DCO metadata; no push",
+          "receipt": {
+            "file": "closed-export-dco-prepared-20261119.json",
+            "sha256": "b892396fb65988e455a29ec56ded488a351ad8a7d005f3285d340d9db7cd95f0"
+          }
+        }
       },
       "dcoCoordination": {
         "owner": "root",
@@ -53152,7 +53484,7 @@
       "url": "https://github.com/google/gvisor/pull/15972",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-13T16:52:12.917441+00:00",
+      "updatedAt": "2026-11-19T02:51:50.481387+00:00",
       "summary": "Flozano rebased on master. The production changes and regression assertions match the independently tested rebase. Three test comments now include the extra 2 ms in the probe delay for multiple outstanding segments. Flozano reports that all five probe cases and the minimum-duration case passed 30 consecutive runs.",
       "evidence": [
         {
@@ -53260,8 +53592,8 @@
         "owner": "root",
         "sourceHead": "1f277200f591d460fd51232a799a7fc5e1f8511c",
         "observedAt": "2026-11-13T16:52:12.917441+00:00",
-        "disposition": "Flozano completed the requested rebase and reported the repeated tests",
-        "nextAction": "Parth has the native review request. Flozano rebased for Lucas and confirmed the first-pass check passed.",
+        "disposition": "Foreign source remains author-owned and unchanged; export closure is not current-source delivery or rewrite permission. DCO context absent, not observed failure; current exact-head source approval/FirstPass1299SUCCESS retained.",
+        "nextAction": "Root follows foreign author and importing-maintainer disposition; no branch/DCO rewrite or new comment. Follow exact current footer/source and required-check/import changes.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15972#issuecomment-6850617919",
           "https://github.com/google/gvisor/blob/1f277200f/pkg/tcpip/transport/tcp/rack_test.go#L465-L475",
@@ -53276,8 +53608,36 @@
         "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
         "providerHead": "1f277200f591d460fd51232a799a7fc5e1f8511c",
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
-        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
+        "recheckCondition": "Exact source/fork head/base, source or import CI, maintainer first diagnostic/disposition, replacement/import event; fresh lease before any authorized write.",
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
+        "curatedAt": "2026-11-19T02:51:50.481387+00:00",
+        "priorImportNextAction": "Parth has the native review request. Flozano rebased for Lucas and confirmed the first-pass check passed.",
+        "closedExportReconciliation": {
+          "export": 17704,
+          "state": "CLOSED UNMERGED bymilantracy; no statedreason/replacement",
+          "openReplacementInCompleteInventory": false,
+          "footerMatchesCurrent": true,
+          "sourceState": "OPEN unchanged",
+          "DCO": "NOT_REPORTED",
+          "sourceAPIExactHeadApprovals": [
+            {
+              "author": "manninglucas",
+              "head": "1f277200f591d460fd51232a799a7fc5e1f8511c"
+            }
+          ],
+          "importApprovalBinding": "Preserve canonical import binding separately from exact source API approval",
+          "namedHoldsPreserved": [
+            "Foreign flozano branch; existing reply/review approvals do not authorize rewriting its commits/certification. Current exact-head maintainer approval+FP1299SUCCESS; follow author/import disposition."
+          ],
+          "closureReceipt": {
+            "file": "0223-fuse-all-eleven-export-dispositions.json",
+            "sha256": "cc8e7b9c9d5199d7a2fb843a9aeac90c588f30f79854ea6150b5c6f1fad9da0c"
+          },
+          "sourceAuthorityReceipt": {
+            "file": "export-eleven-source-authority-audit.json",
+            "sha256": "4dc58ba3f345bb408280dbc8a6d9c12050720133c38cc9637450a0525fcf2a33"
+          }
+        }
       }
     },
     {
@@ -76543,7 +76903,7 @@
       "ref": "proposal/runsc-version-line",
       "head": "3cc89424abd7e0784c8196b175217aae6e47f919",
       "summary": "The reviewer reports that Google's internal go_test rule rejects x_defs, preventing the runsc package from loading. The amendment finds the declared binary with testutil.FindFile and checks its first version line. It accepts a nonempty workspace tag or build number and rejects VERSION_MISSING.",
-      "updatedAt": "2026-11-17T19:01:06.487079+00:00",
+      "updatedAt": "2026-11-19T02:51:50.481387+00:00",
       "evidence": [
         {
           "label": "Proposed amendment",
@@ -76618,15 +76978,54 @@
         "owner": "root",
         "sourceHead": "3cc89424abd7e0784c8196b175217aae6e47f919",
         "observedAt": "2026-11-17T19:01:06.487079+00:00",
-        "disposition": "CI #17169 at 3cc89424abd7e0784c8196b175217aae6e47f919: Exact current source has feedback/copybara FAILED. No public original error is linked;17169 has historical internal x_defs restriction already addressed in its published source, which does not prove the current failure cause.",
-        "nextAction": "Use the existing importing-maintainer channel to obtain the first original error before making source changes; preserve source head and existing reviews. For16737 track matching17614 and its private36700 failure. DCO import coordination: Root coordinates #17675 at 3a7c094984c1. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
+        "disposition": "Source remains open; closed unmerged export has no replacement. Own same-tree DCO metadata candidate prepared locally under standing authorization; no execution rejection/new human permission or publication. Named technical/import holds remain.",
+        "nextAction": "Root reconciles exact source/base/CI/import coordination before publishing prepared same-tree DCO metadata. Preserve named maintainer/private/import holds; do not guess source repairs or treat export closure as clearance.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17169",
           "https://github.com/tamird/gvisor/commit/3cc89424a",
           "https://github.com/google/gvisor/pull/17169#discussion_r4501609272",
           "https://github.com/gvisor/gvisor/pull/17675"
         ],
-        "recheckCondition": "Original diagnostic, new export, or new exact-source feedback status. DCO coordination recheck: The listed exact import merges/closes, changes its footer source revision, or its importing maintainer explicitly confirms the source metadata rewrite can proceed. Recheck live source/fork heads immediately before any write."
+        "recheckCondition": "Exact source/fork head/base, source or import CI, maintainer first diagnostic/disposition, replacement/import event; fresh lease before any authorized write.",
+        "curatedAt": "2026-11-19T02:51:50.481387+00:00",
+        "priorImportNextAction": "Use the existing importing-maintainer channel to obtain the first original error before making source changes; preserve source head and existing reviews. For16737 track matching17614 and its private36700 failure. DCO import coordination: Root coordinates #17675 at 3a7c094984c1. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
+        "closedExportReconciliation": {
+          "export": 17675,
+          "state": "CLOSED UNMERGED bymilantracy; no statedreason/replacement",
+          "openReplacementInCompleteInventory": false,
+          "footerMatchesCurrent": true,
+          "sourceState": "OPEN unchanged",
+          "DCO": "NOT_REPORTED",
+          "sourceAPIExactHeadApprovals": [
+            {
+              "author": "rexren-gif",
+              "head": "3cc89424abd7e0784c8196b175217aae6e47f919"
+            }
+          ],
+          "importApprovalBinding": "Preserve canonical import binding separately from exact source API approval",
+          "namedHoldsPreserved": [
+            "Original private internal/import diagnostic remains unavailable; source/import overall statuses do not identify a source fix."
+          ],
+          "closureReceipt": {
+            "file": "0223-fuse-all-eleven-export-dispositions.json",
+            "sha256": "cc8e7b9c9d5199d7a2fb843a9aeac90c588f30f79854ea6150b5c6f1fad9da0c"
+          },
+          "sourceAuthorityReceipt": {
+            "file": "export-eleven-source-authority-audit.json",
+            "sha256": "4dc58ba3f345bb408280dbc8a6d9c12050720133c38cc9637450a0525fcf2a33"
+          }
+        },
+        "localDCOCandidate": {
+          "head": "befeb49f0a05f9a5ae8c06882f1b0dc95f39b654",
+          "original": "3cc89424abd7e0784c8196b175217aae6e47f919",
+          "tree": "68ee1c5a6cd58370e3eb27f379cfc5af7639a65b",
+          "parent": "70008149cff7b8d3b858877ae9c359b9046d19c5",
+          "state": "PREPARED LOCAL ONLY; same tree/parent/rawauthor includingdate/timezone, message-only DCO metadata; no push",
+          "receipt": {
+            "file": "closed-export-dco-prepared-20261119.json",
+            "sha256": "b892396fb65988e455a29ec56ded488a351ad8a7d005f3285d340d9db7cd95f0"
+          }
+        }
       },
       "id": "pr:17169",
       "type": "pr",
@@ -85096,7 +85495,7 @@
       "url": "https://github.com/google/gvisor/pull/17242",
       "status": "open",
       "group": "tests",
-      "updatedAt": "2026-11-17T19:01:06.487079+00:00",
+      "updatedAt": "2026-11-19T02:51:50.481387+00:00",
       "summary": "The child runs the test executable with --fake-netgofer, closes stdout to signal readiness, and waits for EOF on stdin. The reaper goroutine records the actual wait4 result. Both native Linux tests passed with cat and sleep hidden. The graceful child exited with status 0. The forced child died from SIGKILL. Each PID returned ESRCH afterward.",
       "evidence": [
         {
@@ -85171,8 +85570,8 @@
         "owner": "root",
         "sourceHead": "4b33ee0095a05d342ac8fcc2a4d1889c3f55d137",
         "observedAt": "2026-11-17T19:01:06.487079+00:00",
-        "disposition": "CI #17521 at 085c825cc748cad5f794b959c257e7742b92f0a3: The exact public status reports a failed internal build; its original private diagnostic is unavailable. A shared gvisor/internal access probe returned HTTP403 for36754; other private builds were not redundantly requested.",
-        "nextAction": "Importing maintainer must read the original failed internal job and provide the first actionable error or correct the internal change. Root follows the exact source/import without guessing a source fix. DCO import coordination: Root coordinates #17521 at 085c825cc748. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
+        "disposition": "Source remains open; closed unmerged export has no replacement. Own same-tree DCO metadata candidate prepared locally under standing authorization; no execution rejection/new human permission or publication. Named technical/import holds remain.",
+        "nextAction": "Root reconciles exact source/base/CI/import coordination before publishing prepared same-tree DCO metadata. Preserve named maintainer/private/import holds; do not guess source repairs or treat export closure as clearance.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17242",
           "https://github.com/tamird/gvisor/commit/4b33ee009",
@@ -85180,7 +85579,46 @@
           "https://buildkite.com/gvisor/internal/builds/36467",
           "https://github.com/gvisor/gvisor/pull/17521"
         ],
-        "recheckCondition": "New exact-import head/check result or maintainer supplies the original failure diagnostic. DCO coordination recheck: The listed exact import merges/closes, changes its footer source revision, or its importing maintainer explicitly confirms the source metadata rewrite can proceed. Recheck live source/fork heads immediately before any write."
+        "recheckCondition": "Exact source/fork head/base, source or import CI, maintainer first diagnostic/disposition, replacement/import event; fresh lease before any authorized write.",
+        "curatedAt": "2026-11-19T02:51:50.481387+00:00",
+        "priorImportNextAction": "Importing maintainer must read the original failed internal job and provide the first actionable error or correct the internal change. Root follows the exact source/import without guessing a source fix. DCO import coordination: Root coordinates #17521 at 085c825cc748. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
+        "closedExportReconciliation": {
+          "export": 17521,
+          "state": "CLOSED UNMERGED bymilantracy; no statedreason/replacement",
+          "openReplacementInCompleteInventory": false,
+          "footerMatchesCurrent": true,
+          "sourceState": "OPEN unchanged",
+          "DCO": "NOT_REPORTED",
+          "sourceAPIExactHeadApprovals": [
+            {
+              "author": "rexren-gif",
+              "head": "4b33ee0095a05d342ac8fcc2a4d1889c3f55d137"
+            }
+          ],
+          "importApprovalBinding": "Preserve canonical import binding separately from exact source API approval",
+          "namedHoldsPreserved": [
+            "Original private internal/import diagnostic remains unavailable; source/import overall statuses do not identify a source fix."
+          ],
+          "closureReceipt": {
+            "file": "0223-fuse-all-eleven-export-dispositions.json",
+            "sha256": "cc8e7b9c9d5199d7a2fb843a9aeac90c588f30f79854ea6150b5c6f1fad9da0c"
+          },
+          "sourceAuthorityReceipt": {
+            "file": "export-eleven-source-authority-audit.json",
+            "sha256": "4dc58ba3f345bb408280dbc8a6d9c12050720133c38cc9637450a0525fcf2a33"
+          }
+        },
+        "localDCOCandidate": {
+          "head": "6dc4460f737f6846ebf3eed426591a70b41dbba5",
+          "original": "4b33ee0095a05d342ac8fcc2a4d1889c3f55d137",
+          "tree": "32d136f420f21a23e6dcd7e032ad26b22d25348a",
+          "parent": "975fb172241c7946a9f67b4f52e0349d9240589a",
+          "state": "PREPARED LOCAL ONLY; same tree/parent/rawauthor includingdate/timezone, message-only DCO metadata; no push",
+          "receipt": {
+            "file": "closed-export-dco-prepared-20261119.json",
+            "sha256": "b892396fb65988e455a29ec56ded488a351ad8a7d005f3285d340d9db7cd95f0"
+          }
+        }
       },
       "dcoCoordination": {
         "owner": "root",
@@ -93170,8 +93608,8 @@
       "url": "https://github.com/google/gvisor/pull/17492",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-17T19:05:00.391405+00:00",
-      "summary": "Commit generated PGO profiles before rebasing, so an empty stash cannot stop publication of a fresh profile directory. The ten native Git cases include an advanced master and conflicting files.",
+      "updatedAt": "2026-11-19T02:51:50.481387+00:00",
+      "summary": "Original e049 PGO publisher PR now conflicts with master5be. Merged17699 fixes untracked stash inclusion, but does not establish the complete concurrent-rebase/no-op transaction contract. Publisher3909 GitHubPENDING; canonical Buildkite403 leaves actual job outcome unknown.",
       "evidence": [
         {
           "label": "Ten native publisher cases",
@@ -93181,17 +93619,23 @@
       "followup": {
         "sourceHead": "e049cbe2f9b7dc6a868d820b6b2cbc99736b5082",
         "owner": "root",
-        "nextAction": "Follow maintainer review, exact published-head checks and any matching import; handle new substantive feedback in the existing workstream. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source e049cbe2f9b7dc6a868d820b6b2cbc99736b5082; observed 2026-11-17T19:29:29.454062+00:00): build 1597 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
-        "mergeable": "MERGEABLE",
+        "nextAction": "Root assigned exclusive systrap writer to minimal permanent Bazel Git transaction regression and residual repair using isolated temporary Git remotes, no generation/network. Preserve current publicPR/no closure or rebase claim; actual publisher3909 outcome remains unknown.",
+        "mergeable": "CONFLICTING",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "recheckCondition": "Actual permanent transaction test/source review result, publisher3909 accessible state, or source/base/maintainer change.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17492",
           "https://github.com/tamird/gvisor/commit/2ca38c700a1f17a2520e456022b2840285296185",
           "https://github.com/tamird/gvisor/commit/e049cbe2f9b7dc6a868d820b6b2cbc99736b5082",
           "https://buildkite.com/gvisor/first-pass/builds/1597",
           "https://buildkite.com/gvisor/first-pass/builds/1597#01a1eae2-d917-47f8-9341-8795c3baf72f"
-        ]
+        ],
+        "curatedAt": "2026-11-19T02:51:50.481387+00:00",
+        "disposition": "Original e049 PGO publisher PR now conflicts with master5be. Merged17699 fixes untracked stash inclusion, but does not establish the complete concurrent-rebase/no-op transaction contract. Publisher3909 GitHubPENDING; canonical Buildkite403 leaves actual job outcome unknown.",
+        "currentConflictAssessment": {
+          "file": "17492-conflict-current-assessment.json",
+          "sha256": "04cdd9bd7526fb6b29e01b7944523b7d3bab4042241963f3f377b686c4a65cd9"
+        }
       },
       "dcoAmendment": {
         "oldHead": "2ca38c700a1f17a2520e456022b2840285296185",
@@ -93847,7 +94291,7 @@
       "title": "unix: block connect(2) while the accept queue is full",
       "url": "https://github.com/google/gvisor/pull/17083",
       "status": "open",
-      "updatedAt": "2026-11-18T21:15:29.687318+00:00",
+      "updatedAt": "2026-11-19T02:51:50.481387+00:00",
       "summary": "Current-head First Pass1756 still fails C++ include-cleaner after three attempts:11direct-header findings in accept_bind.cc. The failed KVM fork shard passed on retry; author header changes remain due.",
       "evidence": [
         {
@@ -93893,13 +94337,13 @@
         "owner": "root",
         "sourceHead": "5ef0a9f23312c68227b1431298f13edcdd0c9a28",
         "observedAt": "2026-11-18T21:05:51.124797+00:00",
-        "disposition": "Current-head First Pass1756 still fails C++ include-cleaner after three attempts:11direct-header findings in accept_bind.cc. The failed KVM fork shard passed on retry; author header changes remain due.",
-        "nextAction": "Await author fixes to the directly reported header providers, then review the actual changed source and current CI. Preserve the prior declined CI-post decision; no retry, source rewrite or duplicate acknowledgement.",
+        "disposition": "Foreign source remains author-owned and unchanged; export closure is not current-source delivery or rewrite permission. Current DCO SUCCESS; author header fix remains due and declined CI post preserved.",
+        "nextAction": "Root follows foreign author and importing-maintainer disposition; no branch/DCO rewrite or new comment. Preserve declined CI-post decision and author direct-header obligation.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17552",
           "https://buildkite.com/gvisor/internal/builds/36539"
         ],
-        "recheckCondition": "Author source/reply or required CI/header fix changes.",
+        "recheckCondition": "Exact source/fork head/base, source or import CI, maintainer first diagnostic/disposition, replacement/import event; fresh lease before any authorized write.",
         "providerHead": "5ef0a9f23312c68227b1431298f13edcdd0c9a28",
         "latestSourceTriage": {
           "oldHead": "65afc4e121b577d5675faba0b77ae8edea9c5c63",
@@ -93920,7 +94364,7 @@
           "CI": "FirstPass1756 pending at direct check; no source/infra failure classification",
           "nextAction": "Author applies direct includes; preserve user's declined earlier CI post, no duplicate outreach"
         },
-        "curatedAt": "2026-11-18T21:15:29.687318+00:00",
+        "curatedAt": "2026-11-19T02:51:50.481387+00:00",
         "currentSourceCI": {
           "build": 1756,
           "head": "5ef0a9f23312c68227b1431298f13edcdd0c9a28",
@@ -93932,6 +94376,34 @@
           "findings": "accept_bind.cc direct providers for pid_t, BPF_LD/W/ABS/JMP/JEQ/K/RET, TEST_PCHECK, PR_SET_NO_NEW_PRIVS, PR_SET_SECCOMP",
           "attempts": 3,
           "otherRetry": "fork_test_runsc_kvm passed"
+        },
+        "priorImportNextAction": "Await author fixes to the directly reported header providers, then review the actual changed source and current CI. Preserve the prior declined CI-post decision; no retry, source rewrite or duplicate acknowledgement.",
+        "closedExportReconciliation": {
+          "export": 17552,
+          "state": "CLOSED UNMERGED bymilantracy; no statedreason/replacement",
+          "openReplacementInCompleteInventory": false,
+          "footerMatchesCurrent": false,
+          "sourceState": "OPEN unchanged",
+          "DCO": "SUCCESS",
+          "sourceAPIExactHeadApprovals": [
+            {
+              "author": "EtiennePerot",
+              "head": "5ef0a9f23312c68227b1431298f13edcdd0c9a28"
+            }
+          ],
+          "importApprovalBinding": false,
+          "namedHoldsPreserved": [
+            "Foreign author owns direct include/header source correction; FP1756 failed; exact earlier CI-post decision declined, preserve/no repost.",
+            "Closedexport footer65afc4e is older than current5ef0a9; closure is not current-source landing evidence."
+          ],
+          "closureReceipt": {
+            "file": "0223-fuse-all-eleven-export-dispositions.json",
+            "sha256": "cc8e7b9c9d5199d7a2fb843a9aeac90c588f30f79854ea6150b5c6f1fad9da0c"
+          },
+          "sourceAuthorityReceipt": {
+            "file": "export-eleven-source-authority-audit.json",
+            "sha256": "4dc58ba3f345bb408280dbc8a6d9c12050720133c38cc9637450a0525fcf2a33"
+          }
         }
       }
     },
@@ -132550,5 +133022,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-19T01:19:23.138983+00:00"
+  "updatedAt": "2026-11-19T02:51:50.481387+00:00"
 }
