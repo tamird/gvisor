@@ -91,13 +91,13 @@ def _link_impl(ctx):
     args = ctx.actions.args()
     args.add_all(["-pie", "-z", "noexecstack", "-T"])
     args.add(ctx.file.linker_script)
-    args.add_all(ctx.files.srcs)
+    args.add_all(ctx.files.ordered_objects)
     args.add("-o")
     args.add(ctx.outputs.out)
     ctx.actions.run(
         executable = cc.ld_executable,
         arguments = [args],
-        inputs = depset(ctx.files.srcs + [ctx.file.linker_script], transitive = [cc.all_files]),
+        inputs = depset(ctx.files.ordered_objects + [ctx.file.linker_script], transitive = [cc.all_files]),
         outputs = [ctx.outputs.out],
         mnemonic = "SysmsgLink",
         execution_requirements = _execution_requirements(ctx),
@@ -109,7 +109,7 @@ def _link_impl(ctx):
 sighandler_object = rule(
     implementation = _link_impl,
     attrs = _attrs({
-        "srcs": attr.label_list(allow_files = True),
+        "ordered_objects": attr.label_list(allow_files = True),
         "linker_script": attr.label(allow_single_file = True, mandatory = True),
         "out": attr.output(mandatory = True),
     }),

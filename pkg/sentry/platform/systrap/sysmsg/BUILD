@@ -59,14 +59,14 @@ cc_pie_obj(
 
 sighandler_object(
     name = "sighandler_object",
-    srcs = [
+    out = "sighandler.built-in.bin.o",
+    linker_script = "pie.lds.S",
+    ordered_objects = [
         ":sysrestorer",
         ":sighandler",
         ":syshandler",
         ":sysmsg_lib",
     ],
-    linker_script = "pie.lds.S",
-    out = "sighandler.built-in.bin.o",
 )
 
 sighandler_binary(
