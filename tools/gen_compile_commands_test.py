@@ -42,6 +42,14 @@ class CompileArgumentsTest(unittest.TestCase):
           run.call_args.args[-1], 'mnemonic("CppCompile", deps(//pkg:owner))'
       )
 
+  def test_no_actions(self) -> None:
+    with mock.patch.object(
+        gen_compile_commands, "_bazel", return_value='{"actions": []}'
+    ):
+      self.assertEqual(
+          gen_compile_commands._compile_arguments(["bazel"], [], ["//pkg:owner"]), []
+      )
+
   def test_invalid_arguments(self) -> None:
     for response in ([], {}, {"actions": {}}, {"actions": [None]},
                      {"actions": [{}]}, {"actions": [{"arguments": "gcc -c source.cc"}]},

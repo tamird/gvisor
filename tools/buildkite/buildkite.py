@@ -280,9 +280,10 @@ def _pull_request_branch(owner: str, repo: str, number: int) -> str:
 
   url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{number}"
   try:
-    head = _object(_object(_fetch_json(url), url).get("head"), url + ": head")
+    value = _fetch_json(url)
   except Error as e:
     raise Error(f"{e}; GitHub allows 60 API requests per hour") from e
+  head = _object(_object(value, url).get("head"), url + ": head")
   repo_value = head.get("repo")
   repo_info = _object({} if repo_value is None else repo_value, url + ": head.repo")
   if repo_info.get("full_name") == f"{owner}/{repo}":
@@ -541,15 +542,19 @@ def _annotated_targets(build: Build) -> tuple[dict[str, list[dict[str, str]]], l
 def _build_info(b: dict[str, object]) -> dict[str, object]:
   value = b.get("pull_request")
   pull_request = _object({} if value is None else value, "build.pull_request")
-  return _compact({
-      "number": b["number"],
+  fields: dict[str, object] = {
       "url": BASE_URL + _string(b.get("path"), "build.path"),
-      "state": b["state"],
       "branch": b.get("branch_name"),
       "commit": b.get("commit_id"),
-      "message": (_optional_string(b.get("message"), "build.message") or "").split("\n", 1)[0],
-      "pull_request": pull_request.get("url"),
-  })
+      "pull_request_url": pull_request.get("url"),
+  }
+  # The result owns job selection separately from build metadata.
+  info = {
+      key: value for key, value in b.items()
+      if key != "jobs" and key not in fields
+  }
+  info.update(_compact(fields))
+  return info
 
 
 def job_info(

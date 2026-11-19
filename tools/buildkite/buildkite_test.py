@@ -274,6 +274,14 @@ class ParseRefTest(unittest.TestCase):
         with self.assertRaises(buildkite.Error):
           self.parse("1", pipeline=pipeline)
 
+  def test_pull_request_schema_error(self):
+    url = "https://api.github.com/repos/someowner/gvisor/pulls/1"
+    with mock.patch.object(buildkite, "_fetch", FakeFetch({url: {"head": []}})):
+      with self.assertRaises(buildkite.Error) as error:
+        buildkite._pull_request_branch("someowner", "gvisor", 1)
+    self.assertIn("head: expected an object", str(error.exception))
+    self.assertNotIn("API requests per hour", str(error.exception))
+
 
 class FetchTest(unittest.TestCase):
 
@@ -444,6 +452,43 @@ class FailedTest(unittest.TestCase):
         self.assertIsNone(job["started_at"])
         self.assertIsNone(job["agent_assigned_at"])
 
+  def test_preserves_build_metadata(self):
+    responses = _build_responses()
+    metadata = {
+        "number": 1,
+        "path": "/gvisor/pipeline/builds/1",
+        "state": "failed",
+        "branch_name": "master",
+        "commit_id": "source commit",
+        "message": "Title\n\nDiagnostic details",
+        "account": {"job_minute_limit_reached": True},
+        "not_run_reason": None,
+        "started_at": None,
+        "steps": [],
+        "future": {"nested": [None, [], {}, False, ""]},
+        "pull_request": {"id": 1, "url": "https://github.com/example/repo/pull/1"},
+        "jobs": [{"id": "unselected", "state": "finished", "passed": True}],
+        "url": "provider URL",
+        "branch": "provider branch",
+        "commit": "provider commit",
+        "pull_request_url": "provider alias",
+    }
+    original = copy.deepcopy(metadata)
+    responses[_BUILD_URL + ".json"] = metadata
+    result = self.failed(responses)
+    info = result["build"]
+    self.assertEqual(metadata, original)
+    for field in ("message", "account", "not_run_reason", "started_at", "steps",
+                  "future", "pull_request"):
+      self.assertEqual(info[field], metadata[field])
+    self.assertEqual(info["url"], _BUILD_URL)
+    self.assertEqual(info["branch"], "master")
+    self.assertEqual(info["commit"], "source commit")
+    self.assertEqual(info["pull_request_url"], "https://github.com/example/repo/pull/1")
+    self.assertNotIn("jobs", info)
+    self.assertEqual(len(result["jobs"]), 6)
+    self.assertNotIn("unselected", [job["id"] for job in result["jobs"]])
+
   def test_preserves_job_metadata(self):
     job = _job(1, None, retries_count=2, parallel_group_index=0,
                step={"label": "Pipeline upload"},
@@ -488,7 +533,9 @@ class FailedTest(unittest.TestCase):
                 "url": _BUILD_URL,
                 "state": "failed",
                 "branch": "master",
-                "message": "Title",
+                "branch_name": "master",
+                "path": "/gvisor/pipeline/builds/1",
+                "message": "Title\n\nBody",
             },
             "jobs": [
                 {
