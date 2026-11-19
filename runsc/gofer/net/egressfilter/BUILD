@@ -12,7 +12,6 @@ go_library(
         "//runsc:__subpackages__",
     ],
     deps = [
-        "//pkg/tcpip",
         "//pkg/tcpip/header",
     ],
 )
@@ -23,7 +22,6 @@ go_test(
     srcs = ["egressfilter_test.go"],
     embed = [":egressfilter"],
     deps = [
-        "//pkg/tcpip",
         "//pkg/tcpip/header",
     ],
 )

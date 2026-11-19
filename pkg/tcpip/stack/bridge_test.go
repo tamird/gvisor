@@ -393,8 +393,8 @@ const (
 )
 
 var (
-	dispatchBridgeIP = tcpip.AddrFrom4([4]byte{192, 0, 2, 1})
-	dispatchSrcIP    = tcpip.AddrFrom4([4]byte{192, 0, 2, 2})
+	dispatchBridgeIP = netip.AddrFrom4([4]byte{192, 0, 2, 1})
+	dispatchSrcIP    = netip.AddrFrom4([4]byte{192, 0, 2, 2})
 )
 
 // dispatchTestContext is a bridge with two ports. It records the packet type

@@ -16,6 +16,7 @@ package boot
 
 import (
 	"net"
+	"net/netip"
 	"os"
 	"testing"
 	"time"
@@ -40,7 +41,7 @@ func (p *testUniqueIDProvider) UniqueID() uint64 {
 	return p.next.Add(1)
 }
 
-func buildICMPv4EchoPacket(src, dst tcpip.Address) []byte {
+func buildICMPv4EchoPacket(src, dst netip.Addr) []byte {
 	totalLen := header.IPv4MinimumSize + header.ICMPv4MinimumSize
 	buf := make([]byte, totalLen)
 	icmpPkt := header.ICMPv4(buf[header.IPv4MinimumSize:])
@@ -60,7 +61,7 @@ func buildICMPv4EchoPacket(src, dst tcpip.Address) []byte {
 	return buf
 }
 
-func buildICMPv6EchoPacket(src, dst tcpip.Address) []byte {
+func buildICMPv6EchoPacket(src, dst netip.Addr) []byte {
 	totalLen := header.IPv6MinimumSize + header.ICMPv6MinimumSize
 	buf := make([]byte, totalLen)
 	icmpPkt := header.ICMPv6(buf[header.IPv6MinimumSize:])
@@ -110,7 +111,19 @@ func TestCreateLinksAndRoutesExternalLoopback(t *testing.T) {
 	proxyIPv4 := net.IPv4(10, 0, 0, 2).To4()
 	proxyIPv6 := net.ParseIP("fd00::2").To16()
 	ethIPv4 := net.IPv4(192, 168, 1, 2).To4()
-	loopbackIPv4 := tcpip.AddrFrom4([4]byte{127, 0, 0, 11})
+	proxyAddr4, ok := netip.AddrFromSlice(proxyIPv4)
+	if !ok || !proxyAddr4.Is4() {
+		t.Fatalf("invalid proxy IPv4 address: %v", proxyIPv4)
+	}
+	proxyAddr6, ok := netip.AddrFromSlice(proxyIPv6)
+	if !ok || !proxyAddr6.Is6() {
+		t.Fatalf("invalid proxy IPv6 address: %v", proxyIPv6)
+	}
+	ethAddr4, ok := netip.AddrFromSlice(ethIPv4)
+	if !ok || !ethAddr4.Is4() {
+		t.Fatalf("invalid Ethernet IPv4 address: %v", ethIPv4)
+	}
+	loopbackIPv4 := netip.AddrFrom4([4]byte{127, 0, 0, 11})
 	ethMAC := net.HardwareAddr{0x02, 0x00, 0x00, 0x00, 0x00, 0x01}
 	peerMAC := tcpip.LinkAddress([]byte{0x02, 0x00, 0x00, 0x00, 0x00, 0x02})
 
@@ -210,7 +223,7 @@ func TestCreateLinksAndRoutesExternalLoopback(t *testing.T) {
 			// 1. IPv4 loopback-sourced packet on the proxy link.
 			beforeDelivered := delivered.Value()
 			beforeInvalidSrc := invalidSrc.Value()
-			v4ProxyPkt := buildICMPv4EchoPacket(loopbackIPv4, tcpip.AddrFromSlice(proxyIPv4))
+			v4ProxyPkt := buildICMPv4EchoPacket(loopbackIPv4, proxyAddr4)
 			if _, err := proxyPeerFile.Write(v4ProxyPkt); err != nil {
 				t.Fatalf("proxyPeerFile.Write(v4): %v", err)
 			}
@@ -229,7 +242,7 @@ func TestCreateLinksAndRoutesExternalLoopback(t *testing.T) {
 			// 2. IPv6 loopback-sourced packet on the proxy link must always be rejected.
 			beforeDelivered = delivered.Value()
 			beforeInvalidSrc = invalidSrc.Value()
-			v6ProxyPkt := buildICMPv6EchoPacket(header.IPv6Loopback, tcpip.AddrFromSlice(proxyIPv6))
+			v6ProxyPkt := buildICMPv6EchoPacket(header.IPv6Loopback, proxyAddr6)
 			if _, err := proxyPeerFile.Write(v6ProxyPkt); err != nil {
 				t.Fatalf("proxyPeerFile.Write(v6): %v", err)
 			}
@@ -245,7 +258,7 @@ func TestCreateLinksAndRoutesExternalLoopback(t *testing.T) {
 				tcpip.LinkAddress(ethMAC),
 				peerMAC,
 				header.IPv4ProtocolNumber,
-				buildICMPv4EchoPacket(loopbackIPv4, tcpip.AddrFromSlice(ethIPv4)),
+				buildICMPv4EchoPacket(loopbackIPv4, ethAddr4),
 			)
 			if _, err := ethPeerFile.Write(v4EthFrame); err != nil {
 				t.Fatalf("ethPeerFile.Write(v4): %v", err)
