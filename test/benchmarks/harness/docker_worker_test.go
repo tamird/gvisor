@@ -375,7 +375,7 @@ func startDockerDaemon(t *testing.T, ctx context.Context, runsc string) (string,
 		}
 		var installed struct {
 			Runtimes map[string]struct {
-				Path string `json:"path"`
+				Path string   `json:"path"`
 				Args []string `json:"runtimeArgs"`
 			} `json:"runtimes"`
 		}
