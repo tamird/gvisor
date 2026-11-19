@@ -93,3 +93,6 @@ build:buildbuddy --modify_execution_info=^(Cpp.*|CcStrip)$=-no-remote,^(Cpp.*|Cc
 # The two immutable runtime repositories own separate Sysmsg native-C flags.
 build:buildbuddy --@benchmark_runtime_base//tools/bazeldefs:rbe_native_c=true
 build:buildbuddy --@benchmark_runtime_candidate//tools/bazeldefs:rbe_native_c=true
+
+# Pair identity is bound to declared source archives, not the consumer Git SHA.
+build:buildbuddy --nostamp
