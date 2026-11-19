@@ -48,12 +48,17 @@ measurement, apply `--nocache_test_results` to the benchmark invocation; keep th
 build cache enabled. Controlled before/after measurements remain separate from
 the correctness suite.
 
-The current Coral C toolchain does not declare its host compiler and sysroot as
-action inputs. Native C++ actions and Go actions that can invoke absolute host C
-tools stay local and out of the remote cache. The systrap host-tool generators
-have the same restriction. Pure Go actions remain eligible for remote execution
-and caching. Remove these exceptions when the hermetic toolchain declares and
-qualifies the compiler, linker, sysroot and runtime-library inputs.
+The `buildbuddy` configuration enables `//tools/bazeldefs:rbe_native_c`. Its C
+toolchains require the target CPU and the pinned image execution environment.
+C++ and Sysmsg actions cannot fall back to the submitting host. The image binds
+the compiler and sysroot contents in the remote action key. Ordinary builds and
+`buildbuddy-cache` retain the host cross toolchains and keep these host-tool
+actions out of remote execution and caching.
+
+Coral still derives its GCC include-directory version from the submitting
+host. Its generated version must match the image's GCC 13 include directories.
+Go actions that can invoke absolute C tools retain their `no-remote` exceptions
+until their SDK execution architecture and C toolchain inputs are qualified.
 
 The initial check above exercises pure Go and the credential helper. Canonical
 action-graph inspection and the affected correctness suites must also pass

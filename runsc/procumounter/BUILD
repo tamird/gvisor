@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain", "go_test")
+load("//tools:defs.bzl", "cc_binary", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -15,38 +15,43 @@ filegroup(
 
 # gvisor-proc-umounter must remain a statically-linked, freestanding (no libc)
 # C binary that fits in a single 4KiB page. Read its comments as to why.
-genrule(
-    name = "procumounter_binary",
+cc_binary(
+    name = "gvisor-proc-umounter",
     srcs = ["procumounter.c"],
-    outs = ["gvisor-proc-umounter"],
-    cmd = "$(CC) $(CC_FLAGS) " +
-          "-Os " +
-          "-ffreestanding " +
-          "-fno-sanitize=all " +
-          "-fno-stack-protector " +
-          "-fno-asynchronous-unwind-tables " +
-          "-fno-unwind-tables " +
-          "-static " +
-          "-nostdlib " +
-          "-nostartfiles " +
-          "-Wl,--build-id=none " +
-          "-Wl,--gc-sections " +
-          "-Wl,-s " +
-          "-Wl,-n " +
-          "-o $(execpath gvisor-proc-umounter) " +
-          "$(execpath procumounter.c)",
-    executable = True,
-    features = ["-pie"],
-    toolchains = [
-        cc_toolchain,
-        ":no_pie_cc_flags",
+    copts = [
+        "-Os",
+        "-ffreestanding",
+        "-fno-sanitize=all",
+        "-fno-stack-protector",
+        "-fno-asynchronous-unwind-tables",
+        "-fno-unwind-tables",
     ],
+    features = [
+        "-coverage",
+        "-default_compile_flags",
+        "-default_link_flags",
+        "-pie",
+        "-unfiltered_compile_flags",
+    ],
+    link_extra_lib = None,
+    linkopts = [
+        "-static",
+        "-nostdlib",
+        "-nostartfiles",
+        "-Wl,--build-id=none",
+        "-Wl,--gc-sections",
+        "-Wl,-s",
+        "-Wl,-n",
+    ],
+    linkstatic = True,
+    stamp = 0,
     visibility = ["//visibility:public"],
 )
 
-cc_flags_supplier(
-    name = "no_pie_cc_flags",
-    features = ["-pie"],
+alias(
+    name = "procumounter_binary",
+    actual = ":gvisor-proc-umounter",
+    visibility = ["//visibility:public"],
 )
 
 go_test(

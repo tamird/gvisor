@@ -429,6 +429,11 @@ register_toolchains("//:cc_toolchain_k8")
 
 register_toolchains("//:cc_toolchain_aarch64")
 
+register_toolchains(
+    "//:cc_toolchain_k8_rbe",
+    "//:cc_toolchain_aarch64_rbe",
+)
+
 ### Go
 go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")
 go_sdk.from_file(
