@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-19T15:37:26.157554+00:00",
+    "updatedAt": "2026-11-19T16:16:06.726955+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10778,7 +10778,7 @@
       "url": "https://github.com/tamird/gvisor/commit/63c29f4ef205ae9a8dec3b96e4bb3e32581d6c40",
       "group": "rbe",
       "status": "Qualified source proposal published; first exact contributor review pending",
-      "updatedAt": "2026-11-19T15:37:26.157554+00:00",
+      "updatedAt": "2026-11-19T16:16:06.726955+00:00",
       "summary": "The qualified proposal declares Goimports and Buildifier tools and source inputs, migrates maintained check/fix callers, and removes duplicate native downloads and discovery. Source checks, eight caller regressions and the actual Go/BUILD fixer fixture passed their recorded remote gates. Exact source 63c29f is published with the same qualified tree; its first contributor source-review question is pending. Earlier broader fork lint/license evidence is retained separately.",
       "followup": {
         "branchRefObservation": {
@@ -10797,7 +10797,7 @@
         "recheckCondition": "Standalone extraction/review checkpoint, actual changed inputs or contributor decision.",
         "observedAt": "2026-11-17T19:58:25.300843+00:00",
         "sourceHead": "63c29f4ef205ae9a8dec3b96e4bb3e32581d6c40",
-        "curatedAt": "2026-11-19T15:37:26.157554+00:00",
+        "curatedAt": "2026-11-19T16:16:06.726955+00:00",
         "disposition": "Pinned aspect_rules_lint passed the real four-type check, reject, fix and clean preflight. Effective Bazel export names permit spaces/literal globs but already reject controls. The public library shell path needs a small fix to preserve those names, failure status and existing macOS Bash3.2 support. No maintained lines have yet been removed.",
         "permanentFormatterMilestone": {
           "source": "723486ddd865d3044c5b515865b3a43de6356fde",
@@ -11264,7 +11264,7 @@
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-19T15:37:26.157554+00:00",
+      "updatedAt": "2026-11-19T16:16:06.726955+00:00",
       "summary": "Caller-completion egress/Nogo, state and three network owners passed; netgofer TCP-limit teardown failed while a matched parent passed once. An independently reproduced reader EOF bug now has a tested fix; linkage to that teardown and remaining ARM compiler/performance gates stay open.",
       "followup": {
         "owner": "systrap_regression",
@@ -11287,7 +11287,7 @@
         ],
         "mergeable": "MERGEABLE",
         "recheckCondition": "EOF prerequisite delivery, actual remaining race/performance evidence, substantive importer feedback or source change.",
-        "curatedAt": "2026-11-19T15:37:26.157554+00:00",
+        "curatedAt": "2026-11-19T16:16:06.726955+00:00",
         "priorImportNextAction": "Importing maintainer must read the original failed internal job and provide the first actionable error or correct the internal change. Root follows the exact source/import without guessing a source fix. DCO import coordination: Root coordinates #17626 at 0e17e2f614e9. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17626,
@@ -38942,13 +38942,13 @@
       "group": "bazel",
       "status": "open",
       "summary": "Permanent Bazel AMD64 NORMAL coverage modes passed100 guest iterations each with reports-on/off and KCOV, plus current structural inventory. ARM release compilation remains blocked; RACE, current-source legacy parity and performance remain open.",
-      "updatedAt": "2026-11-19T15:37:26.157554+00:00",
+      "updatedAt": "2026-11-19T16:16:06.726955+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
         "disposition": "First permanent Bazel NORMAL layer passes on340e test source/fa452 shared CI: actual five-configuration GoInfo selection and tiny executed protobuf report after counter clearing. Removing only the coverage patch produces the expected own/both generated-PB selection failures. This does not close full Sentry generated-position fidelity, Uname, ARM/RACE/performance or original PR conflict.",
-        "nextAction": "Complete the RACE matrix, matched current-source legacy parity and controlled performance through permanent Bazel owners. Reuse valid AMD/ARM NORMAL evidence; normal coverage does not establish those remaining gates or resolve the original PR publication conflict.",
+        "nextAction": "Establish matched-current legacy parity and controlled performance. Native NORMAL/RACE compiler, functional and inventory gates pass on both CPUs; inherited-stamp inventories eliminate the demonstrated duplicate builds. Reuse these products; no blanket cache bypass.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -39301,7 +39301,7 @@
           "proofSHA256": "8cfa9665fca33bd1625d96c7b184d3b8454523fbfe87c0b7bd9744d867d14c0b",
           "recheckCondition": "Root permanent-mechanism decision, same-operation execution-review result or actual fidelity evidence."
         },
-        "curatedAt": "2026-11-19T15:37:26.157554+00:00",
+        "curatedAt": "2026-11-19T16:16:06.726955+00:00",
         "permanentBazelFirstLayer": {
           "testSource": "340e1072aa5a3d47e01ff68dffea34f91be4a9f4",
           "ciSource": "fa452727d8d6af2399f8644f9d64a40dc5d902ae",
@@ -39484,6 +39484,43 @@
             "file": "rbe-native-c-coverage-functional-44506664294-evidence.json",
             "sha256": "c917c9cc3e6ae291fea269cf5283909338f6afec79b565dc7267cbc4eb83d023"
           }
+        },
+        "raceMatrix": {
+          "source": "b3870a3da4499e49b907d8f6be14a5851f1fc1da",
+          "state": "PASS complete9-member RACE releases and all three functional modes on AMD64 and ARM64. Each selected mode executes100 iterations within one sandbox, zero skips; required reports include Sentry/generated PB, off/KCOV absent. No matched-current legacy parity or performance claim.",
+          "amdCompiler": {
+            "file": "coverage-race-amd64-supported-compiler-44545296677-evidence.json",
+            "sha256": "b1cdd377a75d1dff8f85582235a4482382160685d83ab05b40c5b626adbcb954"
+          },
+          "armCompiler": {
+            "file": "coverage-race-arm64-supported-compiler-44546681922-evidence.json",
+            "sha256": "70142930b79f52822d3b3340db35157a74bbc873c21e47ba5a8a8d41c883c5ac"
+          },
+          "amdFunctional": {
+            "file": "coverage-race-amd64-functional-44546559810-evidence.json",
+            "sha256": "f50836afbdea50f13ce9901866d72cd79fd12b7b1ff26a251700c3d8eb6d87c9"
+          },
+          "armFunctional": {
+            "file": "coverage-race-arm64-functional-44548793613-evidence.json",
+            "sha256": "43f98f2e6890442969f02b7533a52b9a9756fd278f410c5a1d03d54eaa4d960f"
+          }
+        },
+        "inventoryCacheCorrection": {
+          "source": "bd6b53053de774a9912cb2088060809f7726f153",
+          "state": "PASS actual inherited-stamp inventories on both CPUs. Config IDs match release roots; counts unchanged. No fresh GoCompilePkg/GoLink spans. Observed remote actions AMD2007 to5, ARM1871 to3; this closes demonstrated duplicate-build configuration mismatch, not statistical performance.",
+          "receipt": {
+            "file": "coverage-inventory-stamp-two-arch-evidence.json",
+            "sha256": "72d25cd4255708655c3bc1c5a850a88023e31c70430007262236491e4ad1d600"
+          }
+        },
+        "legacyParityPreflight": {
+          "source": "95629abc32932b2012f91969169eebf9140f3807",
+          "run": 44562046287,
+          "state": "PASS28.539s fresh remote tools/archive and Buildifier preflight. Both pinned archives verified; actual native GCC/tools and bootstrap Go version work. No SDK build, module fetch, Sentry comparison or action-internet proof.",
+          "receipt": {
+            "file": "coverage-legacy-tools-44562046287-evidence.json",
+            "sha256": "bf4a997a1b88d30d3f00746c5a289caae552c9ccdd8c10f4f3103777efae23bf"
+          }
         }
       },
       "evidence": [
@@ -39593,7 +39630,8 @@
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c71526cea11bd81898c588264c0940d1fb33e511"
         ]
-      }
+      },
+      "nextStep": "Establish matched-current legacy parity and controlled performance. Native NORMAL/RACE compiler, functional and inventory gates pass on both CPUs; inherited-stamp inventories eliminate the demonstrated duplicate builds. Reuse these products; no blanket cache bypass."
     },
     {
       "id": "branch:reproducible-debian-changelog",
@@ -41948,7 +41986,7 @@
           "url": "https://github.com/tamird/gvisor/commit/6cb9d5004"
         }
       ],
-      "updatedAt": "2026-11-19T15:37:26.157554+00:00",
+      "updatedAt": "2026-11-19T16:16:06.726955+00:00",
       "status": "open",
       "summary": "The approved production and tests are published as one signed DCO commit 7f37bebc. All six native checks pass. First Pass 1880 rejected pipeline upload before agent assignment because the author reached the 30-day, 360,000 compute-minute quota. Public job metadata supplies the cause despite an empty log.",
       "refinement": {
@@ -41976,7 +42014,7 @@
         ],
         "mergeable": "MERGEABLE",
         "recheckCondition": "Provider admission/check state changes, substantive review or import event.",
-        "curatedAt": "2026-11-19T15:37:26.157554+00:00",
+        "curatedAt": "2026-11-19T16:16:06.726955+00:00",
         "priorImportNextAction": "Follow the checks, maintainer review and import for the published revision. DCO import coordination: Root coordinates #17678 at 8569dbe2475f. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17678,
@@ -87926,7 +87964,7 @@
       "url": "https://github.com/google/gvisor/pull/17264",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-19T15:37:26.157554+00:00",
+      "updatedAt": "2026-11-19T16:16:06.726955+00:00",
       "summary": "At 0aa0a1abf, beforeSave records whether the cork timer is armed while holding the endpoint lock. Restore rearms it from that saved state. TestMsgMoreTimerAfterRestore covers a pending MSG_MORE. TestTruncatedWritePush checks both five-byte return values, the accepted prefix on the wire and the remaining queued data. The TCP test target passed in 48.9 seconds. Whether concurrent writes can consume more reader bytes than they accept remains unverified in the pre-existing write path.",
       "evidence": [
         {
@@ -87990,7 +88028,7 @@
           "https://github.com/google/gvisor/pull/17264"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
-        "curatedAt": "2026-11-19T15:37:26.157554+00:00",
+        "curatedAt": "2026-11-19T16:16:06.726955+00:00",
         "footerHeadReconciliation": {
           "old": "0aa0a1abf8a6586ae534f80a683f76aceb35d74a",
           "new": "92e403ef2d8cb7e24a334d37dabb248cef3b4407",
@@ -88011,7 +88049,7 @@
         "currentHeadCI": {
           "head": "92e403ef2d8cb7e24a334d37dabb248cef3b4407",
           "state": "SUCCESS",
-          "checkedAt": "2026-11-19T15:16:39.844232+00:00",
+          "checkedAt": "2026-11-19T16:09:13.797948+00:00",
           "limit": "Current provider check state only; does not supply outstanding broad workload evidence or clear source-review findings."
         }
       }
@@ -88027,7 +88065,7 @@
       "url": "https://github.com/google/gvisor/pull/17265",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-19T15:37:26.157554+00:00",
+      "updatedAt": "2026-11-19T16:16:06.726955+00:00",
       "summary": "The revised IPv4 and IPv6 test injects two adjacent 128-byte TCP segments and requires exactly one outbound reset. This replaced the application read that prompted the earlier review draft.",
       "evidence": [
         {
@@ -88049,7 +88087,7 @@
           "https://github.com/google/gvisor/pull/17265"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
-        "curatedAt": "2026-11-19T15:37:26.157554+00:00",
+        "curatedAt": "2026-11-19T16:16:06.726955+00:00",
         "footerHeadReconciliation": {
           "old": "71815c05082d0da50424737d5afbeacbd2608340",
           "new": "b90cd49da574e19ecfa51decee22213d2936d61a",
@@ -94931,7 +94969,7 @@
       "url": "https://github.com/google/gvisor/pull/17374",
       "status": "open",
       "summary": "Both prior traversal requests are addressed on 80c001d2b. Full independent source review found no further source issues and the approved COMMENTED response was delivered. Full approval still requires before/after results from an existing broad workload benchmark; no fresh tests or benchmarks were run. Earlier checkpoint measurements remain historical evidence for their tested revisions.",
-      "updatedAt": "2026-11-19T15:37:26.157554+00:00",
+      "updatedAt": "2026-11-19T16:16:06.726955+00:00",
       "evidence": [
         {
           "label": "Single tested follow-up on Botir’s current commit",
@@ -95023,7 +95061,7 @@
             "note": "Response delivered; root verified tamird absent from native requested_reviewers after submission. Source approval withheld pending broad workload benchmark."
           }
         },
-        "curatedAt": "2026-11-19T15:37:26.157554+00:00",
+        "curatedAt": "2026-11-19T16:16:06.726955+00:00",
         "footerHeadReconciliation": {
           "old": "80c001d2b316feaa887a5ee53498d6ee55799a6a",
           "new": "b04021b975f4eb1087ffaf46152dfe966bb62305",
@@ -96833,7 +96871,7 @@
       "url": "https://github.com/grpc/grpc/pull/43825",
       "group": "rbe",
       "status": "open",
-      "updatedAt": "2026-11-19T15:37:26.157554+00:00",
+      "updatedAt": "2026-11-19T16:16:06.726955+00:00",
       "summary": "The PR now uses Skylib’s copy_file rule to give each protoc plugin its public filename. Tamir pushed the revision and documented why the rule requests a symlink. The build and CLA checks passed. The PR is awaiting upstream review.",
       "evidence": [
         {
@@ -96899,7 +96937,7 @@
           "https://github.com/grpc/grpc/pull/43825"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
-        "curatedAt": "2026-11-19T15:37:26.157554+00:00",
+        "curatedAt": "2026-11-19T16:16:06.726955+00:00",
         "preparedRefresh": {
           "source": "5b5ead6b45008af7553f6c863de2f5463a2d362a",
           "base": "ec594cd42ddf60d134913a882ed9e589798e2f99",
@@ -96916,7 +96954,7 @@
           "operation": "Move tamird/grpc proposal/bazel-plugin-symlink from bbdda5b82173f102ecc83d4690f53b3c8e125969 to5b5ead6b45008af7553f6c863de2f5463a2d362a; concrete guarded human command already provided.",
           "approvalState": "User explicitly approved executing the prepared command and overriding this repository policy. Agent published exact expected ref update; no manual publication or human decision remains.",
           "state": "RESOLVED",
-          "resolvedAt": "2026-11-19T15:37:26.157554+00:00",
+          "resolvedAt": "2026-11-19T16:16:06.726955+00:00",
           "receipt": {
             "file": "grpc43825-approved-refresh-published.json",
             "sha256": "81881834f8390fd2911596f9978dc73812e5259a1f8ef6996c8ae666d0e1ffd1"
@@ -97396,7 +97434,7 @@
           "commentId": "IC_kwDOB9IlXs8AAAABno6s0A",
           "url": "https://github.com/google/gvisor/pull/16887#issuecomment-6955117776"
         },
-        "curatedAt": "2026-11-19T15:37:26.157554+00:00",
+        "curatedAt": "2026-11-19T16:16:06.726955+00:00",
         "footerHeadReconciliation": {
           "old": "1668e58d4c0cb17ecb5fcf6457389575a3c01459",
           "new": "04a4ea5bf2e111ed78ab4fdf3ce6156f185f3b8b",
@@ -97409,11 +97447,11 @@
         "currentHeadCI": {
           "head": "04a4ea5bf2e111ed78ab4fdf3ce6156f185f3b8b",
           "state": "SUCCESS",
-          "checkedAt": "2026-11-19T15:16:39.844232+00:00",
+          "checkedAt": "2026-11-19T16:09:13.797948+00:00",
           "limit": "Current provider check state only; does not supply outstanding broad workload evidence or clear source-review findings."
         }
       },
-      "updatedAt": "2026-11-19T15:37:26.157554+00:00",
+      "updatedAt": "2026-11-19T16:16:06.726955+00:00",
       "settledReviews": [
         {
           "kind": "review",
@@ -98706,7 +98744,7 @@
       "url": "https://github.com/nodejs/node/pull/67595",
       "group": "ci-flakes",
       "status": "open",
-      "updatedAt": "2026-11-19T15:37:26.157554+00:00",
+      "updatedAt": "2026-11-19T16:16:06.726955+00:00",
       "summary": "All known checks are terminal on exact15c2ed, including coverage-linux SUCCESS01:06Z; only the known Internet DNS EREFUSED failure remains. Native Linux aggregate results/member approval preserved; no named TLS-row inference. Native failed-job retry denied403 admin rights; existing public maintainer-rerun comment approval remains pending.",
       "followup": {
         "owner": "root",
@@ -98879,7 +98917,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-19T15:37:26.157554+00:00",
+        "curatedAt": "2026-11-19T16:16:06.726955+00:00",
         "internetFailure": {
           "run": 44418983458,
           "job": 135206784153,
@@ -99002,7 +99040,7 @@
       "url": "https://github.com/tamird/gvisor/commit/fed8dca3a5b49843809ae3fa70befdfe532b9e6f",
       "group": "rbe",
       "status": "Published as google/gvisor#17808",
-      "updatedAt": "2026-11-19T15:37:26.157554+00:00",
+      "updatedAt": "2026-11-19T16:16:06.726955+00:00",
       "summary": "Independent two-file permanent test fix removes stale HardLink capability guard/helper/dependency. Actual1c6 shared-Bazel run44434582095:31PASS2UDSskips, bothHardLinkPASS; Python1XMLwrapper/4underlying tests,2configurationXML and cleanup absencePASS,623cachehits9remote117s. Not VFIO/fullmatrix/performance qualification.",
       "followup": {
         "owner": "root",
@@ -99014,7 +99052,7 @@
           "file": "lisafs-hardlink-44434582095-evidence.json",
           "sha256": "769fdbbc385dbc754af46f88a68cfe6bfdb48cb55d760a8fe8ad5386212c986f"
         },
-        "curatedAt": "2026-11-19T15:37:26.157554+00:00",
+        "curatedAt": "2026-11-19T16:16:06.726955+00:00",
         "publication": {
           "file": "lisafs-hardlink-17808-published.json",
           "sha256": "3c52ec07fe74d15074d33a60cb75fed118a5126383df507dcb0f469049176f70"
@@ -99045,7 +99083,7 @@
       "url": "https://github.com/tamird/gvisor/commit/ff148876e0ccc54aa6eaa747fea5a3d1515cd26a",
       "group": "rbe",
       "status": "Qualified source extraction published; first exact contributor review pending",
-      "updatedAt": "2026-11-19T15:37:26.157554+00:00",
+      "updatedAt": "2026-11-19T16:16:06.726955+00:00",
       "summary": "Four insertions in two existing Go test macros preserve passing named cases in native XML, keep benchmark targets quiet, and preserve explicit caller overrides. Exact macro bytes match the qualified current corpus and TCP owner runs; no blanket new-base project or timing-neutrality claim. This extracts the existing shared qualification fix, without a new driver or workstream.",
       "followup": {
         "owner": "root",
@@ -99058,7 +99096,7 @@
           "file": "native-go-xml-source-proposal-20261119.json",
           "sha256": "fe81001b92b9780de3411a6052c21654d6593280d60ebaaf646ecc9526ff4db7"
         },
-        "curatedAt": "2026-11-19T15:37:26.157554+00:00",
+        "curatedAt": "2026-11-19T16:16:06.726955+00:00",
         "disposition": "Original global-macro proposal withdrawn. Existing rules_go opt-in now produces named XML in shared correctness runs, and explicit caller false still wins. Historical quiet evidence retains its narrower source binding; no quiet per-case coverage or benchmark equivalence claim.",
         "currentMechanism": {
           "dispatcher": "4480e62fd021dce45bed3fe024e1db0923c01b63",
@@ -99104,7 +99142,7 @@
       "url": "https://github.com/google/gvisor/pull/17808",
       "group": "rbe",
       "status": "open",
-      "updatedAt": "2026-11-19T15:37:26.157554+00:00",
+      "updatedAt": "2026-11-19T16:16:06.726955+00:00",
       "summary": "DELIVERED as17808 at a1ab971; exact approved patch preserved. DCO passes. First Pass1879 rejected before agent execution by 30-day compute-minute quota.",
       "followup": {
         "owner": "root",
@@ -99116,7 +99154,7 @@
           "file": "lisafs-hardlink-44434582095-evidence.json",
           "sha256": "769fdbbc385dbc754af46f88a68cfe6bfdb48cb55d760a8fe8ad5386212c986f"
         },
-        "curatedAt": "2026-11-19T15:37:26.157554+00:00",
+        "curatedAt": "2026-11-19T16:16:06.726955+00:00",
         "publication": {
           "file": "lisafs-hardlink-17808-published.json",
           "sha256": "3c52ec07fe74d15074d33a60cb75fed118a5126383df507dcb0f469049176f70"
@@ -99131,13 +99169,13 @@
       "title": "Expose Buildkite pre-agent failure details",
       "url": "https://github.com/tamird/gvisor/commit/25948ae156fc3e39cd2231c0c4c9131adb4e1ef7",
       "group": "rbe",
-      "status": "Baseline approved; metadata and typing revision in progress",
+      "status": "Revised reader and strict Python checker qualified",
       "summary": "Preserve the existing optional provider error in failed-job JSON so pre-agent rejection causes survive empty logs. The existing reader passed 30 methods remotely; formatting and independent reviews passed.",
       "followup": {
-        "owner": "fuse_full20_resume",
+        "owner": "systrap_regression",
         "sourceHead": "25948ae156fc3e39cd2231c0c4c9131adb4e1ef7",
-        "nextAction": "Complete the requested default metadata retention/object typing revision and shared Bazel type-check gate.25948 baseline is LGTM; there is no unanswered baseline approval. Present the substantive revised source only after qualification.",
-        "recheckCondition": "Actual strict checker/reader test result, revised source checkpoint or contributor feedback.",
+        "nextAction": "Prepare clean single-commit reader/checker review topics without the DCO operation rejected by automatic approval review. Present substantive revised source for review; baseline25948 and standing DCO authority remain approved. Resolve only the exact execution-policy rejection, not an invented pending certification decision.",
+        "recheckCondition": "Clean source review checkpoint, exact execution-policy resolution or substantive contributor feedback.",
         "body": "Buildkite can reject a job before assigning an agent, leaving its log empty. The public job record includes stack_error_detail, but the failed-job serializer discarded it and hid compute-quota admission failures.\n\nPreserve that optional provider detail alongside the job outcome. Cover a pre-agent failure with an empty log and keep the field absent when the provider supplies none.\n\nPrepared with assistance from OpenAI Codex under my review.\n",
         "qualification": {
           "buildkite-pre-agent-44514167163-evidence.json": {
@@ -99152,25 +99190,78 @@
         "localRef": "review/buildkite-pre-agent-errors-20261119",
         "baselineDecision": "User approved25948ae and requested broader field preservation, removal of Any and type checking for this and other Python scripts.",
         "revision": {
-          "source": "1e230fd870ae7a9e422b07925ebb34d1953ba718",
-          "state": "Prepared full public-job-record retention, explicit object boundaries and meaningful schema/retention tests; strict standard Bazel checker integration is in progress. No revised-code test/type-check PASS yet.",
-          "checkerOwner": "systrap_regression"
-        },
-        "typechecking": {
-          "source": "ddcf8c8dcff099da923a30d7e537c4c97865b406",
-          "ciSource": "97cfc4a943c2b33da6c7abdfefbcdf5941ecaa27",
-          "run": 44554924764,
-          "state": "Actual checker executes, but first gate failed before source diagnostics because implicit Bazel __init__.py changed package identity. Standard target-only legacy_create_init=False correction is applied; corrected preflight live. No program type-check PASS yet.",
-          "sourceBinding": {
-            "file": "python-typecheck-07d414-712e-source.json",
-            "sha256": "0347fb48bdd2acf5c8b33cfdeb59a8b2a79e144460fb226a0f896032152c0704"
+          "source": "a53a36a5d3facfe0f0e3e6b7011d98ab1d88207d",
+          "ciSource": "440a79a0a5c0dd382e0e48fd59900652432b21bf",
+          "state": "Full build/job records retain unknown/null/empty metadata and complete messages; only embedded jobs are excluded in favor of selected jobs and owned display aliases replace collisions. Raw pull_request remains with a URL alias. Consumed JSON fields are validated from object; no explicit Any/casts/ignores. Reader35 methods and canonical633-file Buildifier pass remotely.",
+          "functionalReceipt": {
+            "file": "python-final-44561191275-evidence.json",
+            "sha256": "5fe4ca5bd2c03d8d9d70760ab8326d3824e855c0bba59e46233a81fb5fb15f3f"
           },
-          "priorFailure": {
-            "file": "python-typecheck-44553729117-evidence.json",
-            "sha256": "059a1d65bcf19366a0ade247660b9f799e078b44f776153c52102a938299a07c"
+          "sourceBinding": {
+            "file": "python-final-a53-440-source.json",
+            "sha256": "e523a17d7e9098dc91436e8ab52a87928c536ad16bb976e78680b01e0a7c8e53"
+          },
+          "independentReview": {
+            "file": "reader-typecheck-a53-independent-review.json",
+            "sha256": "8bd730ecc8f90fb3728d64bb21537b523ad50695e40b6c07f24f14964e57cf11"
           }
         },
-        "remainingRetention": "Second build-summary allowlist also discards useful quota/queue/timing/future fields and full message. Owner prepares default-retention follow-up, excluding only owned embedded jobs, with raw PR object plus deliberate URL alias after maintained-consumer check."
+        "typechecking": {
+          "source": "a53a36a5d3facfe0f0e3e6b7011d98ab1d88207d",
+          "ciSource": "440a79a0a5c0dd382e0e48fd59900652432b21bf",
+          "run": 44561185114,
+          "state": "PASS native AMD64 and ARM64: zero strict diagnostics in all three declared production scripts. Existing maintained unit-test suite selects the standard Bazel target; other Python files/tests remain explicitly uncovered.",
+          "receipt": {
+            "file": "python-final-44561185114-evidence.json",
+            "sha256": "f7f66cc3f5734d53f46022e1b60a2ee944933e84973c42cb7998e82ef71a8020"
+          },
+          "integrationReview": {
+            "file": "python-typecheck-089-independent-integration-review.json",
+            "sha256": "8acca0c4c6eb9e996e920f3c5b36a4de82072e2b81fd7c6ac4fdc034cc44b012"
+          },
+          "priorFailures": [
+            {
+              "file": "python-typecheck-44553729117-evidence.json",
+              "sha256": "059a1d65bcf19366a0ade247660b9f799e078b44f776153c52102a938299a07c"
+            },
+            {
+              "file": "python-typecheck-44554924764-evidence.json",
+              "sha256": "4e297f2292082740232d9f1d8150eb9679ede36f55db801edf02522b53ae0cc1"
+            },
+            {
+              "file": "python-final-44559405157-evidence.json",
+              "sha256": "803e4703dcaffa50cef92da0374e56d90ecf19a385e68153fb5ddb9d93483ef7"
+            },
+            {
+              "file": "python-final-44559411881-evidence-v2.json",
+              "sha256": "50b45b2702fce6e872b13149c172b85d0a2712a07565c424cb87645807df92e8"
+            }
+          ],
+          "arm": {
+            "run": 44562143917,
+            "receipt": {
+              "file": "python-final-44562143917-evidence.json",
+              "sha256": "29f5ae27e584d37792542e72b6592699862525baaf581bfc61806c3117109f3b"
+            }
+          }
+        },
+        "remainingRetention": "None identified in current raw build/job records beyond deliberate ownership of selected jobs and normalized aliases. Future metadata is retained by default.",
+        "executionBlocker": {
+          "kind": "automatic-approval-review",
+          "operation": "Create clean review topics with Signed-off-by trailers",
+          "reason": "Automatic reviewer treats the repository prohibition on agent-added DCO trailers as binding and rejected the operation before execution, despite existing user authorization. No process/ref/commit was created by that rejected operation.",
+          "authority": "User has already authorized DCO for all owned PRs and explicitly rejected a manual sign-off requirement. This is not an unanswered human certification decision.",
+          "next": "Complete unaffected clean review topics without trailers; report exact rejected operation and seek only the minimum execution override with the concrete revised-source review."
+        },
+        "cleanTopics": {
+          "reader": "91c4167e468d8a30792aa315c59765944300eb53",
+          "checker": "6ac227c10cb966df65567317e07a6847e6984680",
+          "state": "One commit per topic, current upstream a05 parent then dependent checker. Root verified normal identity and exact final tree equality with qualified a53. No CI/native-C/formatter support; DCO omitted under actual automatic-review blocker.",
+          "receipt": {
+            "file": "python-clean-review-topics-no-dco.json",
+            "sha256": "54a05a7bbb191a4dae62d48f3fd334b881b09281abed053544466bb77c64ce05"
+          }
+        }
       },
       "contributorReview": {
         "kind": "proposal",
@@ -99181,7 +99272,9 @@
         "summary": "First concrete source-review/PR-opening question already sent; do not ask again. Thirty Python methods and all 632 Buildifier inputs passed remotely.",
         "reviewCommand": "git -C ~/code/gvisor rev-parse 25948ae156fc3e39cd2231c0c4c9131adb4e1ef7"
       },
-      "updatedAt": "2026-11-19T15:37:26.157554+00:00"
+      "updatedAt": "2026-11-19T16:16:06.726955+00:00",
+      "nextStep": "Prepare clean single-commit reader/checker review topics without the DCO operation rejected by automatic approval review. Present substantive revised source for review; baseline25948 and standing DCO authority remain approved. Resolve only the exact execution-policy rejection, not an invented pending certification decision.",
+      "recheckCondition": "Clean source review checkpoint, exact execution-policy resolution or substantive contributor feedback."
     }
   ],
   "edges": [
@@ -130093,7 +130186,7 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-19T15:37:26.157554+00:00",
+      "updatedAt": "2026-11-19T16:16:06.726955+00:00",
       "summary": "A fresh matched AMD64 failure captured proxy shutdown waiting for its active recvMMsg receiver. Applying only the already-qualified EOF production fix passed full owning suites and200 targeted repetitions. This supports the mechanism in that context; historical ARM per-read values and exhaustive absence remain unproven.",
       "findings": [
         {
@@ -130168,7 +130261,7 @@
       },
       "followup": {
         "owner": "systrap_regression",
-        "curatedAt": "2026-11-19T15:37:26.157554+00:00",
+        "curatedAt": "2026-11-19T16:16:06.726955+00:00",
         "disposition": "A fresh matched AMD64 failure captured proxy shutdown waiting for its active recvMMsg receiver. Applying only the already-qualified EOF production fix passed full owning suites and200 targeted repetitions. This supports the mechanism in that context; historical ARM per-read values and exhaustive absence remain unproven.",
         "sourceHead": "362bfd09934c5497e4a48fb97fbe1f445152f841",
         "matchedEvidence": {
@@ -134067,7 +134160,7 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-19T15:37:26.157554+00:00",
+      "updatedAt": "2026-11-19T16:16:06.726955+00:00",
       "summary": "Correctness XML controls, normal release compiler, formatter-library preflight, shared scheduler support and paired native/runsc worker execution are qualified. Prior runtime cleanup failures remain visible. No automatic execution-review block remains.",
       "nextStep": "Use the qualified permanent worker mechanism to advance existing correctness and controlled-performance obligations; add required capabilities at their responsible Bazel owner. Advance the formatter migration only after its supported filename and dependency contracts are settled.",
       "recheckCondition": "Actual permanent result/aquery/matrix evidence, source changes or genuine provider/user feedback.",
@@ -134133,7 +134226,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-19T15:37:26.157554+00:00",
+        "curatedAt": "2026-11-19T16:16:06.726955+00:00",
         "nextAction": "Use the qualified permanent worker mechanism to advance existing correctness and controlled-performance obligations; add required capabilities at their responsible Bazel owner. Advance the formatter migration only after its supported filename and dependency contracts are settled.",
         "recheckCondition": "Actual remaining RACE/parity/performance, formatter or scheduler evidence, source change or provider failure.",
         "owner": "root",
@@ -134207,7 +134300,7 @@
             "sha256": "d62f4ec53b4a1ae42ef4de26a406ca20a7ab96157325b0fcd2542241d5d69169"
           },
           "owner": "coverage_security_review",
-          "next": "Consume the actual small Cgo/reset-stdlib compiler results; then resume only the relevant missing Sentry RACE compiler/functional/parity gates, reusing valid products. No blanket cache bypass or hypothetical unsupported-mode gate.",
+          "next": "Establish matched-current legacy parity and controlled performance. Native NORMAL/RACE compiler, functional and inventory gates pass on both CPUs; inherited-stamp inventories eliminate the demonstrated duplicate builds. Reuse these products; no blanket cache bypass.",
           "candidateSource": "f4e263d3d541c03ebcd25c19c1bf12a99fe2e6a2",
           "stdlibMilestone": {
             "state": "Actual RACE runtime/cgo stdlib compilation verified remotely on both necessary CPU architectures. AMD normal/RACE and ARM pure-normal small owners passed; ARM RACE initially stopped at the retained GoLink guard.",
@@ -134288,6 +134381,15 @@
           "priorFailure": {
             "file": "docker-bridge-worker-44539373955-evidence.json",
             "sha256": "e5db06c93f88ce0b9818f775e0961f4cdb5c3820ebd3b16d7c13c9455fae55b6"
+          }
+        },
+        "legacyParityPreflight": {
+          "source": "95629abc32932b2012f91969169eebf9140f3807",
+          "run": 44562046287,
+          "state": "PASS28.539s fresh remote tools/archive and Buildifier preflight. Both pinned archives verified; actual native GCC/tools and bootstrap Go version work. No SDK build, module fetch, Sentry comparison or action-internet proof.",
+          "receipt": {
+            "file": "coverage-legacy-tools-44562046287-evidence.json",
+            "sha256": "bf4a997a1b88d30d3f00746c5a289caae552c9ccdd8c10f4f3103777efae23bf"
           }
         }
       },
@@ -134486,5 +134588,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-19T15:37:26.157554+00:00"
+  "updatedAt": "2026-11-19T16:16:06.726955+00:00"
 }
