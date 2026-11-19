@@ -306,10 +306,15 @@ check_clang_tidy() {
     for option in "${BAZEL_OPTIONS[@]+"${BAZEL_OPTIONS[@]}"}"; do
       generator_options+=("--bazelopt=${option}")
     done
+    local temporary_database
+    temporary_database="$(mktemp "${database}.XXXXXX")"
+    trap "rm -f -- $(printf '%q' "${temporary_database}")" EXIT
     run_bazel run --platforms=@platforms//host //tools/compile_commands -- \
-      "${generator_options[@]}" //test/... //tools/... >&2
+      "${generator_options[@]}" "--output=${temporary_database}" //test/... //tools/... >&2
     run_bazel build --aspects=//tools:cc_compile_inputs.bzl%cc_compile_inputs \
       --output_groups=cc_compile_inputs //test/... //tools/... >&2
+    mv "${temporary_database}" "${database}"
+    trap - EXIT
   fi
   local clang_tidy
   clang_tidy="$(install_clang_tidy)"

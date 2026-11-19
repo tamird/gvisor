@@ -151,6 +151,23 @@ class LintTest(unittest.TestCase):
     self.assertIn("--bazelsupopt=--startup=1", generate)
     self.assertIn("--bazelopt=--opt=1", generate)
     self.assertIn("--bazelopt=--opt=2", generate)
+    self.tool(
+        self.bin / "bazel",
+        f'echo "$*" >> "{self.bazel_log}"\n'
+        'case " $* " in\n'
+        '  *" run "*) for arg; do case "$arg" in --output=*) '
+        'printf generated > "${arg#--output=}";; esac; done;;\n'
+        '  *" build "*) echo materialization-stopped >&2; exit 7;;\n'
+        "esac",
+    )
+    self.bazel_log.unlink()
+    result = self.lint("clang-tidy")
+    self.assert_failed(result, "clang-tidy")
+    self.assertIn("materialization-stopped", result.stderr)
+    commands = [c.split() for c in self.bazel_log.read_text().splitlines()]
+    output = next(arg for arg in commands[0] if arg.startswith("--output="))
+    self.assertFalse(pathlib.Path(output.removeprefix("--output=")).exists())
+    self.assertFalse((LINT.parent.parent / "compile_commands.json").exists())
 
   def test_bazel_failure(self) -> None:
     self.tool(self.bin / "bazel", "echo bazel-build-failed >&2; exit 7")
