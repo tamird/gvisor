@@ -1,0 +1,17 @@
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+load("//tools:defs.bzl", "cc_library")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "root",
+    srcs = ["root.cc"],
+    deps = ["//pkg/compile_commands_probe:dep"],
+)
+
+sh_binary(
+    name = "preflight",
+    srcs = ["preflight.sh"],
+    args = ["$(rootpath @bazel_compile_commands_prebuilt//:tool)"],
+    data = ["@bazel_compile_commands_prebuilt//:tool"],
+)
