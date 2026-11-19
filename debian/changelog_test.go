@@ -21,12 +21,14 @@ import (
 	"os/exec"
 	"path/filepath"
 	"testing"
+
+	"github.com/bazelbuild/rules_go/go/runfiles"
 )
 
 var changelogTool = flag.String("changelog-tool", "", "path to the changelog binary")
 
 func TestChangelog(t *testing.T) {
-	tool, err := filepath.Abs(*changelogTool)
+	tool, err := runfiles.Rlocation(*changelogTool)
 	if err != nil {
 		t.Fatal(err)
 	}

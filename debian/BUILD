@@ -45,9 +45,10 @@ go_test(
     name = "changelog_test",
     size = "small",
     srcs = ["changelog_test.go"],
-    args = ["-changelog-tool=$(rootpath :changelog_tool)"],
+    args = ["-changelog-tool=$(rlocationpath :changelog_tool)"],
     data = [":changelog_tool"],
     pure = True,
+    deps = ["@io_bazel_rules_go//go/runfiles"],
 )
 
 run_binary(
