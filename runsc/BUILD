@@ -167,7 +167,10 @@ go_cov(
     ],
     pure = True,
     race = "off",
-    visibility = ["//debian:__pkg__"],
+    visibility = [
+        "//debian:__pkg__",
+        "//test/runner:__pkg__",
+    ],
     deps = MAIN_DEPS,
 )
 
@@ -182,6 +185,9 @@ go_cov(
     ],
     race = "on",
     static = True,
-    visibility = ["//debian:__pkg__"],
+    visibility = [
+        "//debian:__pkg__",
+        "//test/runner:__pkg__",
+    ],
     deps = MAIN_DEPS,
 )
