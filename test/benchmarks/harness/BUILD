@@ -143,7 +143,7 @@ go_test(
         "--paired-benchtime=5000x",
         "--paired-leaves=1",
         "--paired-observe-affinity=true",
-        "--paired-node-warmup-requests=5000",
+        "--paired-node-warmup-requests=20000",
         "--client-cpuset=0-1",
         "--server-cpuset=2-3",
         "--paired-redis-cpuset=4",
