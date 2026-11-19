@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "bzl_library")
+load("//tools:defs.bzl", "bzl_library", "string_flag")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -55,6 +55,27 @@ platform(
     visibility = ["//visibility:public"],
 )
 
+# Execution properties select native workers without changing target toolchains.
+platform(
+    name = "remote_linux_amd64",
+    exec_properties = {
+        "Arch": "amd64",
+        "OSFamily": "linux",
+    },
+    parents = [":linux_amd64"],
+    visibility = ["//visibility:public"],
+)
+
+platform(
+    name = "remote_linux_arm64",
+    exec_properties = {
+        "Arch": "arm64",
+        "OSFamily": "linux",
+    },
+    parents = [":linux_arm64"],
+    visibility = ["//visibility:public"],
+)
+
 config_setting(
     name = "amd64",
     constraint_values = [
@@ -87,4 +108,30 @@ genrule(
         "notap",
     ],
     visibility = ["//:sandbox"],
+)
+
+# A build setting lets individual test targets select their page size without
+# changing unrelated --define values in the same invocation.
+string_flag(
+    name = "page_size",
+    build_setting_default = "4k",
+    values = [
+        "4k",
+        "64k",
+    ],
+)
+
+# Page size configurations for ARM64
+config_setting(
+    name = "pagesize_64k",
+    flag_values = {":page_size": "64k"},
+)
+
+# Combined config: ARM64 with 64K page size
+config_setting(
+    name = "arm64_pagesize_64k",
+    constraint_values = [
+        "@platforms//cpu:aarch64",
+    ],
+    flag_values = {":page_size": "64k"},
 )

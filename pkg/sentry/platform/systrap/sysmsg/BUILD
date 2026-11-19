@@ -78,6 +78,7 @@ genrule(
           "$(location :syshandler) $(location :sysmsg_lib) " +
           "-o $@",
     features = ["-pie"],
+    tags = ["no-remote"],
     toolchains = [
         cc_toolchain,
     ],
@@ -88,6 +89,7 @@ genrule(
     srcs = [":sighandler_object"],
     outs = ["sighandler.built-in.bin"],
     cmd = "$(OBJCOPY) -O binary $(SRCS) $@",
+    tags = ["no-remote"],
     toolchains = [
         cc_toolchain,
     ],
@@ -105,6 +107,7 @@ genrule(
     outs = ["sighandler.go.arch"],
     cmd = "bash -x $(location gen_offsets_go.sh) sighandler Sighandler " +
           "$(SRCS) \"$(NM)\" > $@",
+    tags = ["no-remote"],
     toolchains = [cc_toolchain],
     tools = ["gen_offsets_go.sh"],
 )
@@ -119,10 +122,10 @@ go_library(
     name = "sysmsg",
     srcs = [
         "sysmsg.go",
+        "sysmsg_4k.go",
+        "sysmsg_64k.go",
         "sysmsg_amd64.go",
         "sysmsg_arm64.go",
-        "sysmsg_layout_amd64.go",
-        "sysmsg_layout_arm64.go",
         "sysmsg_unsafe.go",
         ":sighandler_go_arch",
     ],
