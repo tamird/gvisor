@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-19T10:46:05.107517+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-19T10:50:33.757997+00:00",
+  "registryDate": "2026-11-19T10:56:57.629184+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -456143,8 +456143,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-        "disposition": "All known checks are terminal on exact15c2ed, including coverage-linux SUCCESS01:06Z; only the known Internet DNS EREFUSED failure remains. Native Linux aggregate results/member approval preserved; no named TLS-row inference. Native failed-job retry denied403 admin rights; existing public maintainer-rerun comment approval remains pending.",
-        "nextAction": "Root follows the existing exact comment-draft decision and any maintainer Internet rerun/review/import event. No new CI/source/code approval or retry is required or inferred."
+        "disposition": "User directly posted7006993281: asks whether this is ready to land and cautiously identifies the test-internet failure as unrelated. Earlier verbose maintainer-rerun draft is superseded.",
+        "nextAction": "Follow the maintainer landing decision and actual CI/review changes; no duplicate reply, mention or rerun request."
       },
       "actionCheckIds": [
         "CR_kwDOAZ7xs88AAAAfevPMmQ"
@@ -463828,13 +463828,6 @@
         "basis": "observed",
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-19T10:45:58.331879+00:00"
-      },
-      "contributor-review": {
-        "scope": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-        "since": "2026-11-19T00:15:13.095068+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-19T10:50:33.757997+00:00"
       }
     },
     "pr:bazelbuild/bazel-central-registry:11314": {
@@ -464202,7 +464195,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T10:50:33.757997+00:00"
+        "observedAt": "2026-11-19T10:56:57.629184+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464211,7 +464204,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T10:50:33.757997+00:00"
+        "observedAt": "2026-11-19T10:56:57.629184+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464220,7 +464213,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T10:50:33.757997+00:00"
+        "observedAt": "2026-11-19T10:56:57.629184+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464229,7 +464222,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T10:50:33.757997+00:00"
+        "observedAt": "2026-11-19T10:56:57.629184+00:00"
       }
     },
     "issue:google/benchmark:1634": {
@@ -464238,7 +464231,7 @@
         "since": "2026-11-19T00:39:33.110112+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T10:50:33.757997+00:00"
+        "observedAt": "2026-11-19T10:56:57.629184+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464247,7 +464240,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T10:50:33.757997+00:00"
+        "observedAt": "2026-11-19T10:56:57.629184+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464256,7 +464249,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T10:50:33.757997+00:00"
+        "observedAt": "2026-11-19T10:56:57.629184+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464265,7 +464258,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T10:50:33.757997+00:00"
+        "observedAt": "2026-11-19T10:56:57.629184+00:00"
       }
     }
   },
