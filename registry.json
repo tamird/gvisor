@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-19T05:30:14.788590+00:00",
+    "updatedAt": "2026-11-19T05:41:03.718494+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10722,8 +10722,8 @@
       "title": "Run lint checks with declared Bazel inputs and tools",
       "url": "https://github.com/tamird/gvisor/tree/rbe-lint-integration-cleanup",
       "group": "rbe",
-      "status": "Declared formatter checks and callers pass; actual fixer fixture analysis failure remains",
-      "updatedAt": "2026-11-19T05:30:14.788590+00:00",
+      "status": "Declared formatter checks, callers and actual fixer fixture pass; final source review remains",
+      "updatedAt": "2026-11-19T05:41:03.718494+00:00",
       "summary": "All five declared lint checkers now pass together in the independently reviewed eleven-owner shared invocation at integration 11890. The maintained cleanup 31c also passes its focused Buildifier correction (outcome 210875, peer 54a59). Earlier evidence separately closes complete 488-file C/C++ formatter parity, source-packaged cpplint, declared fixers, exact checker input subsets, formatter SDK 1.27 and default compiler SDK 1.26.3. Original analysis, formatting and metadata failures remain retained. The earlier audit recovered the three lint records but still failed full Fetch/Verify on retained audit issues. The later scoped fork integration, including the exact codespell wheel record, closed canonical Fetch and Verify for 1,349 entries at a0f1a1bb, committed as rbe-license-completion@324068a710. Original audit failures remain historical evidence; no separate user policy decision is pending. Upstream extraction and contributor review remain pending.",
       "followup": {
         "branchRefObservation": {
@@ -10738,14 +10738,14 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "Root/coverage add explicit main=\"fixer_test.py\" at the owning configured py_test, then validate only the actual fixer gate with existing Bazel infrastructure. Preserve passing source/caller gates and all retained failures; final fixture qualification remains open.",
-        "recheckCondition": "Exact owning BUILD correction and actual fixture result; root controls source review/publication. No new contributor decision or workflow is required.",
+        "nextAction": "Root completes final source review and prepares the concrete declared-formatter proposal using the exact qualified 723486 candidate. Preserve the existing other-linter behavior and source/publication authority boundaries; no additional workflow or fixture rerun is required absent a relevant change.",
+        "recheckCondition": "Final source-review milestone, exact candidate/source/configuration change, or new substantive qualification/publication feedback.",
         "observedAt": "2026-11-17T19:58:25.300843+00:00",
         "sourceHead": "31c359732e108552f6af11d1ab383e48495dee4b",
-        "curatedAt": "2026-11-19T05:30:14.788590+00:00",
-        "disposition": "Permanent Goimports/Buildifier source checks and native caller regressions pass. The final actual-fixer fixture did not execute: with_cfg renamed the underlying py_test and its implicit main path was absent. This is a declared BUILD integration defect, not a formatter runtime failure or contributor decision.",
+        "curatedAt": "2026-11-19T05:41:03.718494+00:00",
+        "disposition": "Final owning BUILD correction now passed the actual configured fixer fixture, alongside fresh Buildifier source validation. Earlier alias negative, real whitespace findings, caller regressions, combined source-format passes and failed fixture analysis remain distinct retained evidence. This qualifies the named Goimports/Buildifier migration scope, not all repository lint tools.",
         "permanentFormatterMilestone": {
-          "source": "964802301303265de28e539c87b835498b21a081",
+          "source": "723486ddd865d3044c5b515865b3a43de6356fde",
           "fixtureSource": "d58ca4f42c5a5a71456cb5de34f43785a6f6670e",
           "scope": "Declared Goimports/Buildifier and source inputs; canonical format-only/exclusion behavior and native caller continuation retained. No LLVM, pip, or general framework.",
           "selectedAliasNegative": {
@@ -10781,12 +10781,15 @@
             }
           },
           "actualFixer": {
-            "run": 44464546970,
-            "state": "FAIL in analysis: implicit fixer_test_/fixer_test.py missing; no fixture execution or XML. Buildifier fresh PASS; Goimports/native regressions valid cache PASS; source and credential cleanup PASS.",
+            "run": 44466028956,
+            "source": "14b491052f7685ab85fcddba26e7c8fa91901baf",
+            "candidate": "723486ddd865d3044c5b515865b3a43de6356fde",
+            "state": "PASS: two fresh remote TestRunners; actual configured Go/BUILD fixers execute dirty-to-fixed exact-byte assertions and clean rechecks. Buildifier632 files/five JSON batches formatted/valid/no warnings. Source and credential cleanup PASS.",
             "receipt": {
-              "file": "formatter-fixer-44464546970-evidence.json",
-              "sha256": "3f0df4e1377bbaa2474979e6333670f79b2ae6b4d7fa1d81f41b541973ed33df"
-            }
+              "file": "formatter-fixer-44466028956-evidence.json",
+              "sha256": "f67a4e4581805fd5d603ca73b25077a60ab5f84593314fd7a3ac3bafb62ce1a7"
+            },
+            "resolvedFailure": "44464546970 fixture analysis failed before execution; explicit main fixes its configured py_test boundary. Prior failure remains historical evidence."
           }
         }
       }
@@ -41529,7 +41532,7 @@
           "url": "https://github.com/tamird/gvisor/commit/6cb9d5004"
         }
       ],
-      "updatedAt": "2026-11-19T05:30:14.788590+00:00",
+      "updatedAt": "2026-11-19T05:41:03.718494+00:00",
       "status": "open",
       "summary": "The published single commit 6cb9d5004 is mergeable. The rebase preserved all 78 changed lines. The Bazel changelog action emitted UTC midnight for a dated release and the Unix epoch for an untagged build under both UTC and Pacific/Honolulu.\n\nEarlier qualification on 8311c4cdb:\n\nThe changelog used the worker’s local clock. A release entry now uses UTC midnight on the date in the package version; an untagged build uses the Unix epoch. UTC and Hawaii produced identical 76,605,470-byte packages (SHA-256 b7b1d1d957b7c148458619211da93ecd8786ecb30d47f5bbba2429b81d5d4d18). No release or CI plumbing changes.",
       "refinement": {
@@ -41545,8 +41548,8 @@
         "owner": "root",
         "sourceHead": "6cb9d5004ab242aeaf73572a8ac821db598b4235",
         "observedAt": "2026-11-11T21:53:08+00:00",
-        "disposition": "Permanent changelog behavior passed fresh remote execution; the combined declared-source integration now also passes source formatting and reuses the seven-case behavior result. Exact proposal 14ee is remotely published; original source PR remains unchanged. Prior runfiles integration failure remains resolved historical evidence.",
-        "nextAction": "Root completes final source review and publication decision using the exact qualified proposal, fresh upstream/base and source/fork leases. No manual signing task or duplicate no-diff approval request.",
+        "disposition": "Production rebase and DCO mechanics remain authorized. The new permanent seven-case changelog test is qualified, and its first exact-head contributor source-review request is pending at 14ee. No approval inferred from silence; original source PR has not been amended.",
+        "nextAction": "Await the already-sent exact 14ee test-source review decision; do not ask again. On approval root rechecks source/fork/base leases and publishes the authorized amendment. Behavior and source-format results remain qualified separately from human source acceptance.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42209485090/artifacts/13498582036",
           "https://github.com/google/gvisor/pull/16587",
@@ -41556,8 +41559,8 @@
           "https://github.com/gvisor/gvisor/pull/17678"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Exact proposal/source/base or qualification changes, final review decision, source/import CI or substantive feedback; root remains accountable.",
-        "curatedAt": "2026-11-19T05:30:14.788590+00:00",
+        "recheckCondition": "Answer to the existing exact proposal, source/head/base or qualification change, or substantive source/import lifecycle feedback.",
+        "curatedAt": "2026-11-19T05:41:03.718494+00:00",
         "priorImportNextAction": "Follow the checks, maintainer review and import for the published revision. DCO import coordination: Root coordinates #17678 at 8569dbe2475f. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17678,
@@ -41687,6 +41690,11 @@
           },
           "state": "Goimports/Buildifier fresh remote PASS; unchanged Debian seven XML or secfuzz three XML passed from valid remote cache. Other HTTP targets are compile/TestMain only.",
           "limits": "No full Debian package, fuzz-counter uniqueness, full filter corpus, or timed benchmark claim."
+        },
+        "pendingTestSourceReview": {
+          "file": "16587-changelog-test-contributor-question.json",
+          "sha256": "d0ea9304ac498120eb7ac39b8cd2cadeb39b20272b55261e86f05f737c0880e2",
+          "scope": "First exact proposal for new test, represented as the PR amendment decision in the canonical tracker schema. Mechanical production rebase and DCO authority remain separate."
         }
       },
       "dcoCoordination": {
@@ -41705,6 +41713,18 @@
         "nextAction": "Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "recheckCondition": "The listed exact import merges/closes, changes its footer source revision, or its importing maintainer explicitly confirms the source metadata rewrite can proceed. Recheck live source/fork heads immediately before any write.",
         "holdsPreserved": {}
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "14ee4cb6a4d22248050c122113616c70364960cf",
+        "baseHead": "4c51f97bef8ab4452cdfaca1b6b58c92fdfb1d58",
+        "url": "https://github.com/tamird/gvisor/commit/14ee4cb6a4d22248050c122113616c70364960cf",
+        "title": "Test Debian changelog dates through the generator",
+        "summary": "First exact review request for new permanent changelog test: run declared generator for release, unreleased and invalid calendar dates under UTC and Honolulu; complete output and invalid-date no-output assertions. Production patch unchanged; behavior and combined source formatting passed. Approve including the new test in original PR amendment. Mechanical DCO/rebase remains separately authorized.",
+        "validation": "https://github.com/tamird/gvisor/actions/runs/44457519169",
+        "reviewCommand": "git -C ~/code/gvisor rev-parse 14ee4cb6a4d22248050c122113616c70364960cf",
+        "body": "First exact review request for new permanent changelog test: run declared generator for release, unreleased and invalid calendar dates under UTC and Honolulu; complete output and invalid-date no-output assertions. Production patch unchanged; behavior and combined source formatting passed. Approve including the new test in original PR amendment. Mechanical DCO/rebase remains separately authorized."
       }
     },
     {
@@ -43491,7 +43511,7 @@
       "url": "https://github.com/google/gvisor/pull/16604",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-19T05:30:14.788590+00:00",
+      "updatedAt": "2026-11-19T05:41:03.718494+00:00",
       "summary": "The seccomp filter fuzzer compares two BPF programs. A declared Go generator replaces the shell pipeline and uses bpf.MaxInstructions for the bound. The generator splits the two 4,096-case switches into functions of 64 cases. The original fuzz-tagged filter corpus passed. With Go fuzz instrumentation, each of the 8,192 program/instruction pairs changed a counter that no other pair changed.",
       "evidence": [
         {
@@ -43549,7 +43569,7 @@
           "https://github.com/gvisor/gvisor/pull/17677"
         ],
         "recheckCondition": "Exact proposal/source/base or qualification changes, final review decision, source/import CI or substantive feedback; root remains accountable.",
-        "curatedAt": "2026-11-19T05:30:14.788590+00:00",
+        "curatedAt": "2026-11-19T05:41:03.718494+00:00",
         "priorImportNextAction": "Follow upstream checks and maintainer review on #16604. DCO import coordination: Root coordinates #17677 at 5371cb7c75de. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17677,
@@ -43656,10 +43676,11 @@
         "instrumentationReuseAssessment": {
           "receipt": {
             "file": "secfuzz-original-proof-reuse-assessment.json",
-            "sha256": "73bf7141790328a96fd07dde95eee728587846fdaf946fb85de75027898f9c1f"
+            "sha256": "bc726bdd3e7cd89dbeb54d215cd2ced65329a0316e84092676ffc702ec6a9cea"
           },
           "state": "Original generated source and Go 1.27.3 SDK declaration match; actual original compiler flags and specialized checker are unavailable. Rules_go changed 0.63 to 0.65; this alone establishes neither validity nor invalidity. Filter production rules changed, so historical corpus PASS is not a current corpus proof.",
-          "nextGate": "Verify dependency-wide fuzz configuration for //runsc/boot/filter:filter_fuzz_test; consumer-only gotags cannot select its imported secfuzz implementation. Recover the original uniqueness checker/compiler inputs or migrate that checker into the owning Bazel test. Ordinary bits tests do not prove 8,192 unique instrumentation counters."
+          "nextGate": "Pinned rules_go 0.65 go_test applies go_transition: nonempty gotags updates the Go configuration tags and imported Go deps preserve that configuration. A fuzz tag on the existing filter_fuzz_test owner or the supported global tags flag can therefore select generated secfuzz code. Verify actual configured dependency selection and execute the current corpus. Recover original uniqueness checker/compiler inputs or migrate that checker into the owning Bazel test; ordinary bits tests do not prove 8,192 unique counters.",
+          "correction": "The earlier assertion that consumer-only gotags cannot propagate through imported deps was incorrect; pinned transition and dependency attrs confirm propagation. The fallback static corpus is valid BPF testing, but does not exercise generated fuzz branches."
         }
       },
       "number": 16604,
@@ -67315,7 +67336,7 @@
       "url": "https://github.com/tamird/gvisor/commit/e0c3c48c8",
       "group": "bazel",
       "status": "Delivered",
-      "updatedAt": "2026-11-18T22:30:58.775869+00:00",
+      "updatedAt": "2026-11-19T05:41:03.718494+00:00",
       "summary": "The governance and license checks use the same native Bazelisk installation. The combined change is open as #16904.",
       "evidence": [
         {
@@ -67380,8 +67401,8 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "Root verifies the recorded approved896 lineage against current e0c3/proposal2a286 and canonical published16904 before deciding any remaining source delivery. Existing authorization is preserved; provenance/alias verification is not a pending human decision and must not create a duplicate PR or approval question.",
-        "recheckCondition": "Exact policy/source/provenance verification or canonical PR feedback.",
+        "nextAction": "Follow existing #16904 review and CI after reconciling its canonical alias. The approved 2a286 amendment and earlier lineage/delivery reconciliation are complete; do not request another permission or create a duplicate PR.",
+        "recheckCondition": "Existing #16904 head, review, CI or import lifecycle changes; preserve completed delivery and prior approval receipts.",
         "qualificationHistory": [
           {
             "state": "Historical current fields before authorization reconciliation",
@@ -67411,7 +67432,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-18T22:30:58.775869+00:00"
+        "curatedAt": "2026-11-19T05:41:03.718494+00:00"
       }
     },
     {
@@ -133345,5 +133366,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-19T05:30:14.788590+00:00"
+  "updatedAt": "2026-11-19T05:41:03.718494+00:00"
 }
