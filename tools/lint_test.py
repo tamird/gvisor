@@ -27,6 +27,7 @@ import unittest
 
 LINT = pathlib.Path(sys.argv.pop(1)).absolute()
 PUBLIC_BUILDIFIER = pathlib.Path(sys.argv.pop(1)).resolve()
+SOURCE_MODULE = pathlib.Path(sys.argv.pop(1)).absolute()
 
 
 class LintTest(unittest.TestCase):
@@ -132,6 +133,9 @@ class LintTest(unittest.TestCase):
     checked = self.lint("buildifier")
     self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
     print("Public Buildifier: bare executable, no inherited runfiles, check/fix/check passed")
+    formatted = subprocess.run([str(PUBLIC_BUILDIFIER), "-mode=check", "-type=module", str(SOURCE_MODULE)], env=self.env, capture_output=True, text=True, check=False)
+    self.assertEqual(formatted.returncode, 0, formatted.stdout + formatted.stderr)
+    print("Exact source MODULE.bazel Buildifier formatting passed")
 
   def test_bazel_options(self) -> None:
     result = self.lint(

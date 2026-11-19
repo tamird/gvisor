@@ -91,10 +91,11 @@ py_test(
     name = "lint_test",
     tags = ["local"],
     srcs = ["lint_test.py"],
-    args = ["$(rootpath :lint.sh)", "$(rootpath @buildifier_prebuilt//:buildifier)"],
+    args = ["$(rootpath :lint.sh)", "$(rootpath @buildifier_prebuilt//:buildifier)", "$(rootpath :supplier_MODULE.bazel)"],
     data = [
         "lint.sh",
         "//:.clang-format",
         "@buildifier_prebuilt//:buildifier",
+        "supplier_MODULE.bazel",
     ],
 )
