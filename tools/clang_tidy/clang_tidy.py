@@ -74,6 +74,12 @@ def _analyze(clang_tidy, database_dir, config_file, workspace, source):
       errors.append(line)
     elif _FINDING.match(line):
       findings.append(line)
+  if proc.returncode != 0:
+    errors = [
+        f"{source}: clang-tidy exited with status {proc.returncode}",
+        *proc.stderr.splitlines(),
+        *proc.stdout.splitlines(),
+    ]
   return source, findings, errors
 
 
@@ -118,8 +124,7 @@ def main():
 
   if errors:
     print(
-        f"clang-tidy: {len(errors)} file(s) failed to compile; the "
-        "compilation database may be stale",
+        f"clang-tidy: {len(errors)} file(s) failed to analyze.",
         file=sys.stderr,
     )
     for source in sorted(errors):

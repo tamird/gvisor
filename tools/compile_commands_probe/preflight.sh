@@ -50,3 +50,6 @@ for name in ('native', 'aspect'):
     assert counts[name].get('CppCompile', 0) == 0, counts
 print(json.dumps({'nativeDependencyGeneratedSource': sys.argv[1] == 'true', 'aspectDependencyGeneratedSource': True, 'headerAndVirtualIncludeMaterialized': True, 'databaseEntries': len(entries), 'entryFilesExistRelativeToDirectory': True, 'compilerBuildOptionForwarded': True, 'startupOptionAccepted': True, 'executedActionTypes': counts}))
 VERIFY
+
+LINT_CACHE_DIR="$RUNNER_TEMP/bazel-qualification/lint-cache" \
+  bash tools/lint.sh --bazel="$QUALIFICATION_BAZEL" clang-tidy

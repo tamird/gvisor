@@ -169,6 +169,19 @@ class LintTest(unittest.TestCase):
     self.assertFalse(pathlib.Path(output.removeprefix("--output=")).exists())
     self.assertFalse((LINT.parent.parent / "compile_commands.json").exists())
 
+  def test_clang_tidy_process_failure(self) -> None:
+    tool = self.bin / "clang-tidy"
+    self.tool(tool, "echo driver-stdout; echo driver-stderr >&2; exit 7")
+    source = pathlib.Path("source.cc")
+    analyzed, findings, errors = clang_tidy._analyze(
+        str(tool), self.root, self.root / ".clang-tidy", self.root, source
+    )
+    self.assertEqual(analyzed, source)
+    self.assertEqual(findings, [])
+    self.assertIn("source.cc: clang-tidy exited with status 7", errors)
+    self.assertIn("driver-stdout", errors)
+    self.assertIn("driver-stderr", errors)
+
   def test_bazel_failure(self) -> None:
     self.tool(self.bin / "bazel", "echo bazel-build-failed >&2; exit 7")
     result = self.lint("goimports")
