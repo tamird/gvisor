@@ -32,9 +32,9 @@ go_test(
     size = "small",
     timeout = "moderate",
     srcs = ["docker_worker_test.go"],
-    embed = [":harness"],
     args = ["--alpine-archive=$(rootpath //images/basic:alpine_archive)"],
     data = ["//images/basic:alpine_archive"],
+    embed = [":harness"],
     exec_properties = {
         "test.init-dockerd": "false",
         "test.workload-isolation-type": "firecracker",
@@ -71,7 +71,6 @@ go_test(
     size = "small",
     timeout = "moderate",
     srcs = ["docker_worker_test.go"],
-    embed = [":harness"],
     args = [
         "--alpine-archive=$(rootpath //images/basic:alpine_archive)",
         "--worker-runtime=runsc",
@@ -82,6 +81,7 @@ go_test(
         "//:release",
         "//images/basic:alpine_archive",
     ],
+    embed = [":harness"],
     exec_properties = {
         "test.init-dockerd": "false",
         "test.workload-isolation-type": "firecracker",

@@ -21,6 +21,6 @@ import "testing"
 // StartWorker initializes an explicitly selected owned benchmark worker.
 func StartWorker(b *testing.B) {
 	if *ownedDocker {
-	 b.Fatal("owned Docker workers require Linux")
+		b.Fatal("owned Docker workers require Linux")
 	}
 }

@@ -399,7 +399,7 @@ func loadDockerImage(t testing.TB, ctx context.Context, cli *client.Client, arch
 	decoder := json.NewDecoder(loaded.Body)
 	for {
 		var message struct {
-			Error string `json:"error"`
+			Error       string `json:"error"`
 			ErrorDetail *struct {
 				Message string `json:"message"`
 			} `json:"errorDetail"`
