@@ -56,7 +56,6 @@ go_test(
     gotags = ["fuzz"],
     pure = True,
     target_compatible_with = [
-        "@platforms//cpu:x86_64",
         "@platforms//os:linux",
     ],
     deps = [
