@@ -15,7 +15,9 @@ _SOURCES = [
     "//tools:compat/realpath.py",
     "//tools:gen_compile_commands.py",
 ]
+
 _SOURCE_ARGS = ["$(rootpath %s)" % source for source in _SOURCES]
+
 _DATA = ["//:pyproject.toml"] + _SOURCES
 
 py_console_script_binary(

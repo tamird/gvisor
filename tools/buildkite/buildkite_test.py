@@ -341,6 +341,21 @@ class FetchTest(unittest.TestCase):
     self.assertEqual(len(records), buildkite._MAX_PAGES)
     self.assertIn("truncated", stderr.getvalue())
 
+  def test_invalid_record_pages(self):
+    url = "https://x/data/jobs"
+    for page, message in [
+        ([], "expected an object"),
+        ({"records": {}}, "expected an array of objects"),
+        ({"records": [7]}, "expected an object"),
+        ({"records": [], "end_cursor": 7}, "end_cursor: expected a string"),
+        ({"records": [], "has_next_page": "false"}, "expected a boolean"),
+    ]:
+      with self.subTest(page=page), mock.patch.object(
+          buildkite, "_fetch", FakeFetch({url: page})
+      ):
+        with self.assertRaisesRegex(buildkite.Error, message):
+          buildkite._fetch_records(url)
+
 
 class AnnotationTest(unittest.TestCase):
 

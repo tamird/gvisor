@@ -523,7 +523,7 @@ def parse_failures_annotation(body: str) -> tuple[dict[str, list[dict[str, str]]
       job_targets.append(entry)
   for match in re.finditer(r"<li>\s*(//[^<\s]+) \(no upload\)", body):
     unattributed.append(html.unescape(_group(match, 1)))
-  return targets, list(dict[str, None].fromkeys(unattributed))
+  return targets, list({target: None for target in unattributed})
 
 
 def _annotated_targets(build: Build) -> tuple[dict[str, list[dict[str, str]]], list[str]]:
