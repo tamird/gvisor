@@ -50,23 +50,24 @@ import (
 )
 
 var (
-	debug              = flag.Bool("debug", false, "enable debug logs")
-	collectCoverage    = flag.Bool("collect-coverage", true, "collect runsc coverage reports (disable for KCOV tests)")
-	hostNofile         = flag.Uint64("host-nofile", 0, "minimum host descriptor limit required by the test (zero preserves the inherited limit)")
-	oneSandbox         = flag.Bool("one-sandbox", false, "run all test cases in one sandbox")
-	strace             = flag.Bool("strace", false, "enable strace logs")
-	platform           = flag.String("platform", "ptrace", "platform to run on")
-	platformSupport    = flag.String("platform-support", "", "String passed to the test as GVISOR_PLATFORM_SUPPORT environment variable. Used to determine which syscall tests are expected to work with the current platform.")
-	network            = flag.String("network", "none", "network stack to run on (sandbox, host, none)")
-	limitPorts         = flag.Bool("limit-ephemeral-ports", false, "constrain the private network namespace's ephemeral port range for exhaustion tests")
-	useTmpfs           = flag.Bool("use-tmpfs", false, "mounts tmpfs for /tmp")
-	fusefs             = flag.Bool("fusefs", false, "mounts a fusefs for /tmp")
-	fileAccess         = flag.String("file-access", "exclusive", "mounts root in exclusive or shared mode")
-	overlay            = flag.Bool("overlay", false, "wrap filesystem mounts with writable tmpfs overlay")
-	container          = flag.Bool("container", false, "run tests in their own namespaces (user ns, network ns, etc), pretending to be root. Implicitly enabled if network=host, or if using network namespaces")
-	setupContainerPath = flag.String("setup-container", "", "path to setup_container binary (for use with --container)")
-	trace              = flag.Bool("trace", false, "enables all trace points")
-	directfs           = flag.Bool("directfs", false, "enables directfs (for all gofer mounts)")
+	debug               = flag.Bool("debug", false, "enable debug logs")
+	collectCoverage     = flag.Bool("collect-coverage", true, "collect runsc coverage reports (disable for KCOV tests)")
+	coverageExpectation = flag.String("coverage-report-expectation", "", "validate owned coverage reports: required or absent (empty disables validation)")
+	hostNofile          = flag.Uint64("host-nofile", 0, "minimum host descriptor limit required by the test (zero preserves the inherited limit)")
+	oneSandbox          = flag.Bool("one-sandbox", false, "run all test cases in one sandbox")
+	strace              = flag.Bool("strace", false, "enable strace logs")
+	platform            = flag.String("platform", "ptrace", "platform to run on")
+	platformSupport     = flag.String("platform-support", "", "String passed to the test as GVISOR_PLATFORM_SUPPORT environment variable. Used to determine which syscall tests are expected to work with the current platform.")
+	network             = flag.String("network", "none", "network stack to run on (sandbox, host, none)")
+	limitPorts          = flag.Bool("limit-ephemeral-ports", false, "constrain the private network namespace's ephemeral port range for exhaustion tests")
+	useTmpfs            = flag.Bool("use-tmpfs", false, "mounts tmpfs for /tmp")
+	fusefs              = flag.Bool("fusefs", false, "mounts a fusefs for /tmp")
+	fileAccess          = flag.String("file-access", "exclusive", "mounts root in exclusive or shared mode")
+	overlay             = flag.Bool("overlay", false, "wrap filesystem mounts with writable tmpfs overlay")
+	container           = flag.Bool("container", false, "run tests in their own namespaces (user ns, network ns, etc), pretending to be root. Implicitly enabled if network=host, or if using network namespaces")
+	setupContainerPath  = flag.String("setup-container", "", "path to setup_container binary (for use with --container)")
+	trace               = flag.Bool("trace", false, "enables all trace points")
+	directfs            = flag.Bool("directfs", false, "enables directfs (for all gofer mounts)")
 
 	addHostUDS       = flag.Bool("add-host-uds", false, "expose a tree of UDS to test communication with the host")
 	addHostConnector = flag.Bool("add-host-connector", false, "create goroutines that connect to bound UDS that will be created by sandbox")
@@ -321,7 +322,7 @@ func printOne(dir string, file string, html bool, postfix string) {
 	}
 	args = append(args, "--", file)
 	var stderr bytes.Buffer
-	cmd := exec.Command(specutils.ExePath, args...)
+	cmd := runscCommand(specutils.ExePath, *collectCoverage, args...)
 	cmd.Stdout = w
 	cmd.Stderr = &stderr
 	err = cmd.Run()
@@ -348,7 +349,7 @@ func prepareSave(args []string, undeclaredOutputsDir string, index int) ([]strin
 func deleteSandbox(args []string, id string) error {
 	deleteArgs := append(args, "delete", "-force=true", id)
 	log.Infof("Executing: %v", append([]string{specutils.ExePath}, deleteArgs...))
-	deleteCmd := exec.Command(specutils.ExePath, deleteArgs...)
+	deleteCmd := runscCommand(specutils.ExePath, *collectCoverage, deleteArgs...)
 	if err := deleteCmd.Run(); err != nil {
 		return fmt.Errorf("delete error: %v", err)
 	}
@@ -360,7 +361,7 @@ func deleteSandbox(args []string, id string) error {
 // runsc logs will be saved to a path in TEST_UNDECLARED_OUTPUTS_DIR.
 //
 // Returns an error if the sandboxed application exits non-zero.
-func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
+func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (result error) {
 	var extraFiles []*os.File
 	var passFDArgs []string
 
@@ -496,11 +497,26 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 	var saveArgs []string
 	var ok bool
 	undeclaredOutputsDir, ok = unix.Getenv("TEST_UNDECLARED_OUTPUTS_DIR")
+	if *coverageExpectation != "" && (!ok || !filepath.IsAbs(undeclaredOutputsDir)) {
+		return fmt.Errorf("coverage validation requires an absolute TEST_UNDECLARED_OUTPUTS_DIR")
+	}
+	var report *coverageReport
 	if ok {
 		// Create log directory dedicated for this test.
 		testLogDir = filepath.Join(undeclaredOutputsDir, strings.ReplaceAll(name, "/", "_"))
 		if err := os.MkdirAll(testLogDir, 0755); err != nil {
 			return fmt.Errorf("could not create test dir: %v", err)
+		}
+		report, err = prepareCoverageReport(undeclaredOutputsDir, name, *coverageExpectation, *collectCoverage)
+		if err != nil {
+			return err
+		}
+		if report != nil {
+			defer func() {
+				if report != nil {
+					result = report.finish(result)
+				}
+			}()
 		}
 		tmpDir, err := os.MkdirTemp(testLogDir, "runsc")
 		if err != nil {
@@ -513,6 +529,9 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 		args = append(args, "-debug-log", runscLogDir+"/")
 		if *collectCoverage {
 			runscCoverageDir := filepath.Join(tmpDir, "coverage")
+			if report != nil {
+				runscCoverageDir = report.reports
+			}
 			args = append(args, "-coverage-report", runscCoverageDir+"/")
 		}
 
@@ -567,7 +586,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 		createArgs = append(createArgs, "-pid-file", filepath.Join(testLogDir, "pid"), "--bundle", bundleDir, id)
 		defer os.Remove(filepath.Join(testLogDir, "pid"))
 		log.Infof("Executing: %v", append([]string{specutils.ExePath}, createArgs...))
-		createCmd := exec.Command(specutils.ExePath, createArgs...)
+		createCmd := runscCommand(specutils.ExePath, *collectCoverage, createArgs...)
 		createCmd.ExtraFiles = extraFiles
 		createCmd.SysProcAttr = sysProcAttr
 		if *limitPorts {
@@ -611,7 +630,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 		cmdArgs = append(cmdArgs, "--bundle", bundleDir, id)
 	}
 	log.Infof("Executing: %v", append([]string{specutils.ExePath}, cmdArgs...))
-	cmd := exec.Command(specutils.ExePath, cmdArgs...)
+	cmd := runscCommand(specutils.ExePath, *collectCoverage, cmdArgs...)
 	if *waitForPid == 0 {
 		cmd.ExtraFiles = extraFiles
 	}
@@ -639,7 +658,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 		dArgs = append(dArgs, "debug", "--stacks", id)
 		log.Infof("Executing: %v", append([]string{specutils.ExePath}, dArgs...))
 		go func(dArgs []string) {
-			debug := exec.Command(specutils.ExePath, dArgs...)
+			debug := runscCommand(specutils.ExePath, *collectCoverage, dArgs...)
 			debug.Stdout = os.Stdout
 			debug.Stderr = os.Stderr
 			debug.Run()
@@ -658,7 +677,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 			fmt.Sprintf("--signal=%d", unix.SIGTERM),
 			id)
 		log.Infof("Executing: %v", append([]string{specutils.ExePath}, dArgs...))
-		signal := exec.Command(specutils.ExePath, dArgs...)
+		signal := runscCommand(specutils.ExePath, *collectCoverage, dArgs...)
 		signal.Stdout = os.Stdout
 		signal.Stderr = os.Stderr
 		signal.Run()
@@ -705,7 +724,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 			restoreArgs = append(restoreArgs, passFDArgs...)
 			restoreArgs = append(restoreArgs, "--image-path", currentRestoreDir, "--bundle", bundleDir, id)
 			log.Infof("Executing: %v", append([]string{specutils.ExePath}, restoreArgs...))
-			restoreCmd := exec.Command(specutils.ExePath, restoreArgs...)
+			restoreCmd := runscCommand(specutils.ExePath, *collectCoverage, restoreArgs...)
 			restoreCmd.ExtraFiles = extraFiles
 			restoreCmd.SysProcAttr = sysProcAttr
 			if *container || *network == "host" || (restoreCmd.SysProcAttr.Cloneflags&unix.CLONE_NEWNET != 0) {
@@ -742,7 +761,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 			}
 			waitArgs := append(args, "wait", id)
 			log.Infof("Executing: %v", append([]string{specutils.ExePath}, waitArgs...))
-			waitCmd := exec.Command(specutils.ExePath, waitArgs...)
+			waitCmd := runscCommand(specutils.ExePath, *collectCoverage, waitArgs...)
 			waitCmd.SysProcAttr = sysProcAttr
 			waitCmd.Stderr = os.Stderr
 
@@ -781,6 +800,13 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 		}
 		if len(warningsFound) > 0 {
 			return fmt.Errorf("warnings found: %s", warningsFound)
+		}
+		if report != nil {
+			reportErr := report.finish(nil)
+			report = nil
+			if reportErr != nil {
+				return reportErr
+			}
 		}
 		// If the test passed, then we erase the log directory. This speeds up
 		// uploading logs in continuous integration & saves on disk space.
@@ -1133,24 +1159,6 @@ func runTestCaseRunsc(testBin string, tc *gtest.TestCase, args []string, t *test
 	}
 }
 
-// filterEnv returns an environment with the excluded variables removed.
-func filterEnv(env, exclude []string) []string {
-	var out []string
-	for _, kv := range env {
-		ok := true
-		for _, k := range exclude {
-			if strings.HasPrefix(kv, k+"=") {
-				ok = false
-				break
-			}
-		}
-		if ok {
-			out = append(out, kv)
-		}
-	}
-	return out
-}
-
 func fatalf(s string, args ...any) {
 	fmt.Fprintf(os.Stderr, s+"\n", args...)
 	os.Exit(1)
@@ -1162,6 +1170,12 @@ func matchString(a, b string) (bool, error) {
 
 func main() {
 	flag.Parse()
+	if err := checkCoverageExpectation(*coverageExpectation, *collectCoverage); err != nil {
+		fatalf("%v", err)
+	}
+	if *coverageExpectation != "" && *platform == "native" {
+		fatalf("coverage report validation requires a sandbox runtime")
+	}
 	if flag.NArg() != 1 {
 		fatalf("test must be provided")
 	}

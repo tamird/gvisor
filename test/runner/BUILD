@@ -22,6 +22,7 @@ release_files(
 )
 
 _RUNNER_SRCS = [
+    "coverage_report.go",
     "main.go",
     "xml.go",
 ]
@@ -72,6 +73,7 @@ go_test(
     name = "runner_test",
     size = "small",
     srcs = [
+        "coverage_report.go",
         "main.go",
         "main_test.go",
         "xml.go",
@@ -98,8 +100,19 @@ go_test(
     ],
 )
 
+go_test(
+    name = "coverage_report_test",
+    size = "small",
+    srcs = [
+        "coverage_report.go",
+        "coverage_report_test.go",
+    ],
+)
+
 # @unused
 glaze_ignore = [
+    "coverage_report.go",
+    "coverage_report_test.go",
     "main.go",
     "main_test.go",
     "xml.go",
