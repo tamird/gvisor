@@ -24,6 +24,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -238,7 +239,7 @@ func testDockerBridge(t *testing.T, ctx context.Context, cli *client.Client, ima
 			t.Errorf("Docker bridge retains endpoints: %+v, %v", bridge.Containers, err)
 		}
 	})
-	create := func(runtime, token string, links []string) string {
+	create := func(runtime, token, cpus string, links []string) string {
 		t.Helper()
 		name := "gvisor-bridge-worker-" + strings.ToLower(rand.Text())
 		if _, err := cli.ContainerInspect(ctx, name); !errdefs.IsNotFound(err) {
@@ -277,7 +278,12 @@ while :; do
   printf 'HTTP/1.1 200 OK\r\nContent-Length: %s\r\nConnection: close\r\n\r\n%s\n' "$(( ${#RESPONSE_TOKEN} + 1 ))" "$RESPONSE_TOKEN" | nc -l -p 8080 >/dev/null
 done`},
 			Labels: map[string]string{ownerLabel: name},
-		}, &container.HostConfig{Runtime: runtime, NetworkMode: "bridge", Links: links}, nil, nil, name)
+		}, &container.HostConfig{
+			Runtime:     runtime,
+			NetworkMode: "bridge",
+			Links:       links,
+			Resources:   container.Resources{CpusetCpus: cpus},
+		}, nil, nil, name)
 		if err != nil {
 			t.Fatalf("create bridge container: %v", err)
 		}
@@ -287,8 +293,11 @@ done`},
 		return name
 	}
 	serverToken, clientToken := rand.Text(), rand.Text()
-	server := create(selectedRuntime, serverToken, nil)
-	peer := create("runc", clientToken, []string{server + ":server"})
+	if ServerCPUSet() == "" || ClientCPUSet() == "" {
+		t.Fatal("bridge worker affinity preflight requires at least four CPUs")
+	}
+	server := create(selectedRuntime, serverToken, ServerCPUSet(), nil)
+	peer := create("runc", clientToken, ClientCPUSet(), []string{server + ":server"})
 	serverInfo, err := cli.ContainerInspect(ctx, server)
 	if err != nil || serverInfo.NetworkSettings == nil {
 		t.Fatalf("inspect selected bridge container: %v", err)
@@ -296,6 +305,34 @@ done`},
 	peerInfo, err := cli.ContainerInspect(ctx, peer)
 	if err != nil || peerInfo.NetworkSettings == nil {
 		t.Fatalf("inspect native bridge container: %v", err)
+	}
+	for name, want := range map[string]string{server: ServerCPUSet(), peer: ClientCPUSet()} {
+		info, err := cli.ContainerInspect(ctx, name)
+		if err != nil || info.State == nil || info.State.Pid == 0 || info.HostConfig == nil || info.HostConfig.CpusetCpus != want {
+			t.Fatalf("inspect container CPU assignment: %s, %v", name, err)
+		}
+		status, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(info.State.Pid), "status"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		got := ""
+		for _, line := range strings.Split(string(status), "\n") {
+			if value, ok := strings.CutPrefix(line, "Cpus_allowed_list:"); ok {
+				got = strings.TrimSpace(value)
+				break
+			}
+		}
+		if got != want {
+			t.Fatalf("container %s effective CPUs = %q, want %q", name, got, want)
+		}
+		if err := json.NewEncoder(os.Stdout).Encode(struct {
+			Runtime   string `json:"affinity_runtime"`
+			Image     string `json:"image"`
+			Requested string `json:"requested_cpus"`
+			Effective string `json:"effective_cpus"`
+		}{info.HostConfig.Runtime, info.Image, want, got}); err != nil {
+			t.Fatal(err)
+		}
 	}
 	serverIP, peerIP := serverInfo.NetworkSettings.IPAddress, peerInfo.NetworkSettings.IPAddress
 	if net.ParseIP(serverIP).To4() == nil || net.ParseIP(peerIP).To4() == nil || serverIP == peerIP {

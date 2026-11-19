@@ -109,3 +109,63 @@ build_test(
         "@benchmark_runtime_candidate//:release",
     ],
 )
+
+filegroup(
+    name = "paired_base_runsc",
+    srcs = ["@benchmark_runtime_base//:release"],
+    output_group = "runsc",
+)
+
+filegroup(
+    name = "paired_candidate_runsc",
+    srcs = ["@benchmark_runtime_candidate//:release"],
+    output_group = "runsc",
+)
+
+go_test(
+    name = "paired_worker_test",
+    size = "large",
+    timeout = "long",
+    srcs = [
+        "docker_worker_test.go",
+        "paired_worker_test.go",
+    ],
+    args = [
+        "--alpine-archive=$(rootpath //images/basic:alpine_archive)",
+        "--paired-base-runsc=$(rootpath :paired_base_runsc)",
+        "--paired-candidate-runsc=$(rootpath :paired_candidate_runsc)",
+        "--paired-base-source=a05ab5909d2518dd541a1eb4396057e9292f4178",
+        "--paired-candidate-source=362bfd09934c5497e4a48fb97fbe1f445152f841",
+        "--paired-benchmark=$(rootpath //test/benchmarks/network:node_test)",
+        "--paired-image-archives=$(rootpaths //test/benchmarks/network:node_worker_images)",
+        "-test.run=^TestPairedBenchmark$$",
+    ],
+    data = [
+        ":paired_base_runsc",
+        ":paired_candidate_runsc",
+        "//images/basic:alpine_archive",
+        "//test/benchmarks/network:node_test",
+        "//test/benchmarks/network:node_worker_images",
+        "@benchmark_runtime_base//:release",
+        "@benchmark_runtime_candidate//:release",
+    ],
+    embed = [":harness"],
+    exec_properties = {
+        "test.init-dockerd": "false",
+        "test.workload-isolation-type": "firecracker",
+    },
+    pure = True,
+    tags = ["manual"],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    deps = [
+        "//pkg/test/testutil",
+        "@com_github_docker_docker//api/types/container:go_default_library",
+        "@com_github_docker_docker//api/types/mount:go_default_library",
+        "@com_github_docker_docker//api/types/network:go_default_library",
+        "@com_github_docker_docker//client:go_default_library",
+        "@com_github_docker_docker//errdefs:go_default_library",
+    ],
+)
