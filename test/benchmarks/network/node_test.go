@@ -15,7 +15,6 @@ package network
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"os"
 	"strconv"
@@ -120,16 +119,6 @@ func runNode(b *testing.B, hey *tools.Hey) {
 		CpusetCpus: harness.ClientCPUSet(),
 	}
 	if *nodeWarmupRequests > 0 {
-		version, err := nodeApp.Exec(ctx, dockerutil.ExecOpts{}, "node", "--version")
-		if err != nil {
-			b.Fatalf("inspect Node version: %v", err)
-		}
-		if err := json.NewEncoder(os.Stdout).Encode(struct {
-			Version  string `json:"node_version"`
-			Requests int    `json:"node_process_warmup_requests"`
-		}{version, *nodeWarmupRequests}); err != nil {
-			b.Fatal(err)
-		}
 		warmup := *hey
 		warmup.Requests = *nodeWarmupRequests
 		warmupClient := clientMachine.GetNativeContainer(ctx, b)
@@ -137,6 +126,9 @@ func runNode(b *testing.B, hey *tools.Hey) {
 		// Warm the same server process whose requests will be measured.
 		// The final runHey resets timing and replaces the warmup metrics.
 		runHey(b, ctx, warmupClient, opts, &warmup, warmup.MakeCmd("node", port)...)
+		// ResetTimer preserves timer state; restore the running setup timer
+		// before the final runHey resets it for measured requests.
+		b.StartTimer()
 	}
 
 	// The client runs on native runc.
