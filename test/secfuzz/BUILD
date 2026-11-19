@@ -41,6 +41,7 @@ go_library(
     testonly = 1,
     srcs = ["instrumentation_probe.go"],
     gc_goopts = ["-d=libfuzzer"],
+    stateify = False,
 )
 
 go_test(
