@@ -327,6 +327,9 @@ exports_files([
 ])
 
 exports_files(
-    [".clang-format", ".clang-tidy"],
+    [
+        ".clang-format",
+        ".clang-tidy",
+    ],
     visibility = ["//tools:__pkg__"],
 )

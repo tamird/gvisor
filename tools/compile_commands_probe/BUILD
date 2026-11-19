@@ -13,7 +13,7 @@ sh_binary(
     name = "preflight",
     srcs = ["preflight.sh"],
     args = ["$(rootpath //tools/compile_commands:compile_commands)"],
-    data = ["//tools/compile_commands:compile_commands"],
+    data = ["//tools/compile_commands"],
 )
 
 sh_binary(
@@ -24,4 +24,9 @@ sh_binary(
 sh_binary(
     name = "license_metadata",
     srcs = ["license_metadata.sh"],
+)
+
+sh_binary(
+    name = "workspace",
+    srcs = ["workspace.sh"],
 )

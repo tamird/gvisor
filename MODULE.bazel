@@ -98,7 +98,6 @@ http_archive(
     urls = ["https://github.com/kiron1/bazel-compile-commands/releases/download/bazel-compile-commands-v0.22.4/bazel-compile-commands_0.22.4-macos_universal.zip"],
 )
 
-
 http_archive(
     name = "kythe_release",
     sha256 = "52a9c6e8111237043b8d0b6127637f0eb8d2ba3a776e4749b036e911ec3529ce",
