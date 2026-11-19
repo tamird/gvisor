@@ -34,8 +34,9 @@ import (
 	"gvisor.dev/gvisor/test/metricsviz"
 )
 
+var nodeResponseProbe = flag.Bool("node-response-probe", false, "inspect existing Node responses without timed request samples")
+
 var (
-	nodeResponseProbe = flag.Bool("node-response-probe", false, "inspect existing Node responses without timed request samples")
 	nodeWarmupRequests = flag.Int("node-warmup-requests", 0, "requests to warm each actual Node server before measurement")
 	nodeRedisCPUs      = flag.String("node-redis-cpuset", "", "explicit CPU affinity for the native Redis backend")
 )
@@ -167,6 +168,12 @@ func runNode(b *testing.B, hey *tools.Hey) {
 				b.Fatal(err)
 			}
 			b.Logf("%s", record)
+			if fetchErr != nil || response.StatusCode != http.StatusOK {
+				b.Errorf("response %d: wget error %v, status %d", request, fetchErr, response.StatusCode)
+			}
+		}
+		if b.Failed() {
+			b.FailNow()
 		}
 		b.Skip("response consistency probe; no timed request samples")
 	}

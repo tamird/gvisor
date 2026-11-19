@@ -39,8 +39,9 @@ import (
 	"gvisor.dev/gvisor/pkg/test/testutil"
 )
 
+var pairedResponseProbe = flag.Bool("paired-response-probe", false, "inspect Node responses without timed request samples")
+
 var (
-	pairedResponseProbe = flag.Bool("paired-response-probe", false, "inspect Node responses without timed request samples")
 	pairedBase        = flag.String("paired-base-runsc", "", "declared baseline release entrypoint")
 	pairedCandidate   = flag.String("paired-candidate-runsc", "", "declared candidate release entrypoint")
 	pairedBaseID      = flag.String("paired-base-source", "", "baseline runtime source commit")
