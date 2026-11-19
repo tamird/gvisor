@@ -31,7 +31,6 @@ cc_binary(
         "-default_compile_flags",
         "-default_link_flags",
         "-pie",
-        "-unfiltered_compile_flags",
     ],
     link_extra_lib = None,
     linkopts = [
