@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-19T18:02:14.607684+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-19T18:09:34.011835+00:00",
+  "registryDate": "2026-11-19T18:20:53.031513+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -211666,6 +211666,9 @@
           "state": "unknown"
         },
         "description": "No matching public export was found in the complete lookup."
+      },
+      "inspectedReviewHeads": {
+        "PRRC_kwDOB9IlXs8AAAABE4LP_g": "84b18c285d0be31bb58ecdf1721da2de312aee01"
       }
     },
     {
@@ -445454,26 +445457,6 @@
   "reviewerHandoff": [
     {
       "repo": "google/gvisor",
-      "number": 16098,
-      "head": "06b8ee2c46ca4f71c261da86f7b1905032e8b08f",
-      "sourceNumber": 16098,
-      "owner": "Agent",
-      "claimed": false,
-      "overdue": true,
-      "kind": "inline",
-      "id": "PRRC_kwDOB9IlXs8AAAABE1Brmw",
-      "createdAt": "2026-11-18T18:38:18Z",
-      "url": "https://github.com/google/gvisor/pull/16098#discussion_r4619004827",
-      "author": "rexren-gif",
-      "updatedAt": "2026-11-18T18:38:18Z",
-      "newOrChanged": false,
-      "awaitingAuthor": true,
-      "assigned": true,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
       "number": 16076,
       "head": "63bcfa2ad44882db0ecd5afab16df8c5e285e485",
       "sourceNumber": 16076,
@@ -445707,24 +445690,6 @@
       "url": "https://github.com/google/gvisor/pull/16868#pullrequestreview-5745730512",
       "author": "aaltinaydev",
       "updatedAt": "2026-11-03T01:11:17Z",
-      "newOrChanged": false,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 16098,
-      "head": "06b8ee2c46ca4f71c261da86f7b1905032e8b08f",
-      "sourceNumber": 16098,
-      "owner": "root",
-      "kind": "review",
-      "id": "PRR_kwDOB9IlXs8AAAABVoOlyQ",
-      "needsTriage": false,
-      "url": "https://github.com/google/gvisor/pull/16098#pullrequestreview-5746435529",
-      "author": "rexren-gif",
-      "updatedAt": "2026-11-03T02:22:58Z",
       "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
@@ -447180,24 +447145,6 @@
     },
     {
       "repo": "google/gvisor",
-      "number": 16098,
-      "head": "06b8ee2c46ca4f71c261da86f7b1905032e8b08f",
-      "sourceNumber": 16098,
-      "owner": "Agent",
-      "kind": "review",
-      "id": "PRR_kwDOB9IlXs8AAAABY2mMXQ",
-      "needsTriage": true,
-      "url": "https://github.com/google/gvisor/pull/16098#pullrequestreview-5962828893",
-      "author": "rexren-gif",
-      "updatedAt": "2026-11-18T18:38:18Z",
-      "newOrChanged": false,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
       "number": 17545,
       "head": "b268d5a615c56fe1d40014ef7807bfa0b04f0e6d",
       "sourceNumber": 17545,
@@ -447289,26 +447236,6 @@
       "threadId": null,
       "rootURL": null,
       "rootId": null,
-      "owner": "root",
-      "assigned": false,
-      "feedbackComplete": true
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 16445,
-      "head": "84b18c285d0be31bb58ecdf1721da2de312aee01",
-      "action": "Read the reply on this review and follow up on the current revision.",
-      "claimed": false,
-      "firstObservedHead": "84b18c285d0be31bb58ecdf1721da2de312aee01",
-      "reviewHead": null,
-      "kind": "inline",
-      "id": "PRRC_kwDOB9IlXs8AAAABE4LP_g",
-      "url": "https://github.com/google/gvisor/pull/16445#discussion_r4622307326",
-      "author": "parth-opensrc",
-      "updatedAt": "2026-11-19T00:26:31Z",
-      "threadId": "PRRT_kwDOB9IlXs6yvdp-",
-      "rootURL": "https://github.com/google/gvisor/pull/16445#discussion_r4444415641",
-      "rootId": "PRRC_kwDOB9IlXs8AAAABCOhmmQ",
       "owner": "root",
       "assigned": false,
       "feedbackComplete": true
@@ -464072,7 +463999,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T18:09:34.011835+00:00"
+        "observedAt": "2026-11-19T18:20:53.031513+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464081,7 +464008,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T18:09:34.011835+00:00"
+        "observedAt": "2026-11-19T18:20:53.031513+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464090,7 +464017,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T18:09:34.011835+00:00"
+        "observedAt": "2026-11-19T18:20:53.031513+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464099,7 +464026,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T18:09:34.011835+00:00"
+        "observedAt": "2026-11-19T18:20:53.031513+00:00"
       }
     },
     "issue:google/benchmark:1634": {
@@ -464108,7 +464035,7 @@
         "since": "2026-11-19T00:39:33.110112+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T18:09:34.011835+00:00"
+        "observedAt": "2026-11-19T18:20:53.031513+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464117,7 +464044,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T18:09:34.011835+00:00"
+        "observedAt": "2026-11-19T18:20:53.031513+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464126,7 +464053,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T18:09:34.011835+00:00"
+        "observedAt": "2026-11-19T18:20:53.031513+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464135,7 +464062,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T18:09:34.011835+00:00"
+        "observedAt": "2026-11-19T18:20:53.031513+00:00"
       }
     },
     "branch:buildkite-pre-agent-details": {
@@ -464144,7 +464071,7 @@
         "since": "2026-11-19T12:00:52.475051+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T18:09:34.011835+00:00"
+        "observedAt": "2026-11-19T18:20:53.031513+00:00"
       }
     }
   },

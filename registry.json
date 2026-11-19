@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-19T18:09:34.011835+00:00",
+    "updatedAt": "2026-11-19T18:20:53.031513+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10778,7 +10778,7 @@
       "url": "https://github.com/tamird/gvisor/commit/63c29f4ef205ae9a8dec3b96e4bb3e32581d6c40",
       "group": "rbe",
       "status": "Revision requested; smaller prebuilt supplier step",
-      "updatedAt": "2026-11-19T18:09:34.011835+00:00",
+      "updatedAt": "2026-11-19T18:20:53.031513+00:00",
       "summary": "The qualified proposal declares Goimports and Buildifier tools and source inputs, migrates maintained check/fix callers, and removes duplicate native downloads and discovery. Source checks, eight caller regressions and the actual Go/BUILD fixer fixture passed their recorded remote gates. Exact source 63c29f is published with the same qualified tree; its first contributor source-review question is pending. Earlier broader fork lint/license evidence is retained separately.",
       "followup": {
         "branchRefObservation": {
@@ -10797,7 +10797,7 @@
         "recheckCondition": "Small source checkpoint and actual caller/supplier validation; no repeated approval of7921.",
         "observedAt": "2026-11-17T19:58:25.300843+00:00",
         "sourceHead": "63c29f4ef205ae9a8dec3b96e4bb3e32581d6c40",
-        "curatedAt": "2026-11-19T18:09:34.011835+00:00",
+        "curatedAt": "2026-11-19T18:20:53.031513+00:00",
         "disposition": "User declined7921: excessive size and shell machinery, asks buildifier_prebuilt and removal of the host-shell compatibility test. No upstream publication or approval is inferred. Qualified Aspect-based work remains historical research only.",
         "permanentFormatterMilestone": {
           "source": "723486ddd865d3044c5b515865b3a43de6356fde",
@@ -10931,6 +10931,15 @@
           "receipt": {
             "file": "formatter-prebuilt-44577518978-evidence.json",
             "sha256": "7ba66f4266ffa00f7f589a1d2f304a7437eb2be454384e1468d2d78b3110048f"
+          }
+        },
+        "smallSupplier": {
+          "source": "c6dd46492d08c174971d46e53e2aa3e3cbb03d16",
+          "run": 44585980920,
+          "state": "Three files20insertions31deletions; actual bare public executable and existing CLI fixtures PASS on AMD Linux. Executable mode preserved. SourceMODULE formatting and independent review remain before delivery; full declared-input migration stays open.",
+          "receipt": {
+            "file": "formatter-bare-44585980920-evidence.json",
+            "sha256": "8a99c60995af23cb32ad2d020f98b128d40cf3a54a9808b9b3205839c690b696"
           }
         }
       },
@@ -11284,7 +11293,7 @@
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-19T18:09:34.011835+00:00",
+      "updatedAt": "2026-11-19T18:20:53.031513+00:00",
       "summary": "Caller-completion egress/Nogo, state and three network owners passed; netgofer TCP-limit teardown failed while a matched parent passed once. An independently reproduced reader EOF bug now has a tested fix; linkage to that teardown and remaining ARM compiler/performance gates stay open.",
       "followup": {
         "owner": "root",
@@ -11307,7 +11316,7 @@
         ],
         "mergeable": "MERGEABLE",
         "recheckCondition": "EOF prerequisite delivery, missing architecture/performance evidence or substantive importer/source feedback.",
-        "curatedAt": "2026-11-19T18:09:34.011835+00:00",
+        "curatedAt": "2026-11-19T18:20:53.031513+00:00",
         "priorImportNextAction": "Importing maintainer must read the original failed internal job and provide the first actionable error or correct the internal change. Root follows the exact source/import without guessing a source fix. DCO import coordination: Root coordinates #17626 at 0e17e2f614e9. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17626,
@@ -11500,6 +11509,26 @@
             "file": "netgofer-eof-native-race-test-44579977140-evidence.json",
             "sha256": "94e7072eb86243fdf1b928e359e69c5f6fdc0a22fab1cee035e6bd2b46e73106"
           }
+        },
+        "standaloneEOFArmCorrectness": {
+          "source": "362bfd09934c5497e4a48fb97fbe1f445152f841",
+          "normal": {
+            "run": 44584602150,
+            "state": "PASS fresh remote fdbased93/netgofer25, zero failures/errors/skips.",
+            "receipt": {
+              "file": "netgofer-eof-arm-44584602150-evidence.json",
+              "sha256": "04b1fb7c57a7d1e262e556b297eb2cbd5aef3b75674c52fd810f38d084112da8"
+            }
+          },
+          "race": {
+            "run": 44584605548,
+            "state": "PASS fresh remote fdbased93, zero failures/errors/skips/race reports. Netgofer retains explicit pure/nogotsan NORMAL policy.",
+            "receipt": {
+              "file": "netgofer-eof-arm-44584605548-evidence.json",
+              "sha256": "9c9c037a007d1dda75a36774a3d226cfa3555fcf72fddcb414284bb263faa88b"
+            }
+          },
+          "limit": "Supported ARM correctness complete; full controlled performance and public Netip/import qualification remain open."
         }
       },
       "evidence": [
@@ -26449,7 +26478,7 @@
       "url": "https://github.com/google/gvisor/pull/16098",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-19T08:32:44.165346+00:00",
+      "updatedAt": "2026-11-19T18:20:53.031513+00:00",
       "summary": "The already-approved final revision is published and its fork/PR heads verified. DCO, generate, gazelle, lint, label and fileheader passed. Exact-head First Pass1811 was rejected before an agent started because the author reached the daily36000compute-minute quota; this is not a source failure or full CI pass.",
       "followup": {
         "owner": "root",
@@ -26497,7 +26526,7 @@
           ],
           "publication": "Final metadata-only certification revision published 06b8ee2c46ca4f71c261da86f7b1905032e8b08f; qualified prepared tree unchanged"
         },
-        "curatedAt": "2026-11-19T08:32:44.165346+00:00",
+        "curatedAt": "2026-11-19T18:20:53.031513+00:00",
         "publicationConditionHistory": [
           {
             "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
@@ -26766,6 +26795,262 @@
             "sha256": "6aa886ada7d5b05ee24902dd0378cd6c9efb5e5e9ef30cac9f753fa3e7debe95"
           },
           "nextAction": "Preserve actual provider denial and existing request; no alternate endpoint, reminder, recipient, permission expansion or approval question."
+        },
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "binding": {
+              "reviewDecision": "REVIEW_REQUIRED",
+              "approvedHead": null,
+              "approvedAt": null,
+              "headCommittedAt": "2026-11-18T22:33:39Z",
+              "headIntroducedAt": "2026-11-18T22:38:49Z",
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 4,
+                "total": 4,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABoNwHTA",
+                    "url": "https://github.com/google/gvisor/pull/16098#issuecomment-6993741644",
+                    "body": "Replaced the singular rootpath/environment-variable fixture with a package-relative runfile alias. The alias uses the existing compiler-export selector, so it handles the compiler export without assuming a single DefaultInfo output or passing a workspace prefix to FindFile. The current public Bazel provider emitted flags.x; adapter/runfile analysis and the uncached TestCompilerImportIdentity passed. I have not run the private internal compiler integration.\n\nPosted by Codex on behalf of @tamird.\n",
+                    "createdAt": "2026-11-18T22:39:52Z",
+                    "updatedAt": "2026-11-18T22:39:52Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABVoOlyQ",
+                    "url": "https://github.com/google/gvisor/pull/16098#pullrequestreview-5746435529",
+                    "body": "[🤖] 3 findings: 3 Important, 0 Nit.\n\n**Important** (inline):\n- `tools/nogo/check/check_test.go:211`: Test replaces `i.cache` without holding `i.mu`, so the checklocks nogo test fails\n- `tools/nogo/defs.bzl:260`: Direct `_go_proto_compiler` traversal and removal of compiler export fallback break internal `go_proto_library` and `go_wrap_cc`\n- `tools/nogo/defs.bzl:286`: `go_package(target)` and `go_test` archive unpacking break non-`rules_go` builds\n\n---\n<sub>Automated review agent. Please address valid findings before human review, or close them with a reason.</sub>\n\n<!-- gvisor-pr-review v1 sha=ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970 round=1 fp=63fe03d531,3f70b27d88,c1c53c8472 -->",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-11-03T02:22:57Z",
+                    "updatedAt": "2026-11-03T02:22:58Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "rexren-gif",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABVvXvhA",
+                    "url": "https://github.com/google/gvisor/pull/16098#pullrequestreview-5753925508",
+                    "body": "",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-11-03T14:29:38Z",
+                    "updatedAt": "2026-11-03T14:29:38Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "cd5e5628a42fa74409864903aae50717b596f214"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABVvXyIQ",
+                    "url": "https://github.com/google/gvisor/pull/16098#pullrequestreview-5753926177",
+                    "body": "",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-11-03T14:29:41Z",
+                    "updatedAt": "2026-11-03T14:29:41Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "cd5e5628a42fa74409864903aae50717b596f214"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABVvX0mQ",
+                    "url": "https://github.com/google/gvisor/pull/16098#pullrequestreview-5753926809",
+                    "body": "",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-11-03T14:29:43Z",
+                    "updatedAt": "2026-11-03T14:29:43Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "cd5e5628a42fa74409864903aae50717b596f214"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABY2mMXQ",
+                    "url": "https://github.com/google/gvisor/pull/16098#pullrequestreview-5962828893",
+                    "body": "[🤖] From reading the new revision, the unguarded `i.cache` write is gone and the reworked aspect addresses both earlier build concerns. We have not yet run it through our internal build, so that part remains unconfirmed.\n\n1 issue found:\n\n- **[major · build-integration]** `check_test` location expansion and `FindFile` path only work with rules_go (`tools/nogo/check/BUILD:70`, inline)\n\n---\n<sub>Posted by an AI review agent on behalf of @rexren-gif. Please address valid findings before human review, or close them with a reason.</sub>\n\n<!-- gvisor-pr-review v1 sha=8f15f127381605e0d3254cbdb5818bb594db0364 round=2 fp=fdf452e6c1 -->",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-11-18T18:38:18Z",
+                    "updatedAt": "2026-11-18T18:38:18Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "rexren-gif",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "8f15f127381605e0d3254cbdb5818bb594db0364"
+                    }
+                  },
+                  {
+                    "kind": "inline",
+                    "threadId": "PRRT_kwDOB9IlXs6y9G6M",
+                    "isResolved": false,
+                    "isOutdated": true,
+                    "path": "tools/nogo/check/check_test.go",
+                    "line": null,
+                    "id": "PRRC_kwDOB9IlXs8AAAABCUF73Q",
+                    "url": "https://github.com/google/gvisor/pull/16098#discussion_r4450253789",
+                    "body": "**Important:** Test replaces `i.cache` without holding `i.mu`, so the checklocks nogo test fails\n\n`importer.cache` is annotated `+checklocks:mu`. Line 211 overwrites it without holding `i.mu`.\n\nchecklocks skips accesses only on objects it sees as freshly allocated. Here `i` is captured by the `writePackage` closure, so in SSA it lives in a heap cell. `i.cache` is then a field address on a load from that cell, not on the allocation itself, so checklocks checks this write. With no lock held, it reports `invalid field access, mu (...) must be locked when accessing cache`.\n\nnogo.yaml does not suppress that message for internal files. That makes `//tools/nogo/check:check_test_nogo`, which `make nogo-tests` runs in CI, fail. The code this PR removes held `i.mu` around its `i.cache` update.\n\nThe suggested fix takes the lock. Another option is to replace the three resets with a fresh `i = &importer{fset: i.fset, sources: ..., cache: ..., imports: ..., analyzers: analyzers}`. checklocks treats that as initialization, and it also avoids replacing `imports` (documented as protected by `importsMu`) without its lock.\n\n```suggestion\n\t\t\t\t\ti.mu.Lock()\n\t\t\t\t\ti.cache = make(map[string]*importerEntry)\n\t\t\t\t\ti.mu.Unlock()\n```",
+                    "createdAt": "2026-11-03T02:22:58Z",
+                    "updatedAt": "2026-11-03T02:22:58Z",
+                    "author": {
+                      "login": "rexren-gif",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "inline",
+                    "threadId": "PRRT_kwDOB9IlXs6y9G6M",
+                    "isResolved": false,
+                    "isOutdated": true,
+                    "path": "tools/nogo/check/check_test.go",
+                    "line": null,
+                    "id": "PRRC_kwDOB9IlXs8AAAABCZm1Tg",
+                    "url": "https://github.com/google/gvisor/pull/16098#discussion_r4456035662",
+                    "body": "The test now starts the import phase with a fresh importer. Its cache is initialized with the rest of the struct, so the test no longer assigns to the guarded field.\n\nPosted by Codex on behalf of @tamird.",
+                    "createdAt": "2026-11-03T14:29:38Z",
+                    "updatedAt": "2026-11-03T14:29:38Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "inline",
+                    "threadId": "PRRT_kwDOB9IlXs6y9G6W",
+                    "isResolved": false,
+                    "isOutdated": true,
+                    "path": "tools/nogo/defs.bzl",
+                    "line": null,
+                    "id": "PRRC_kwDOB9IlXs8AAAABCUF77Q",
+                    "url": "https://github.com/google/gvisor/pull/16098#discussion_r4450253805",
+                    "body": "**Important:** Direct `_go_proto_compiler` traversal and removal of compiler export fallback break internal `go_proto_library` and `go_wrap_cc`\n\n`_nogo_aspect_impl` directly inspects `rules_go`'s `_go_proto_compiler` rule kind and reads `ctx.rule.attr.compiler` / `ctx.rule.attr.compilers` on `go_proto_library` (lines 238-239, 257-260, 345-346), while removing `nogo_extra_proto_deps` from `tools/bazeldefs/go.bzl` and removing the `gcexportdata.NewReader` fallback in `tools/nogo/check/check.go` (lines 189-203).\n\nIn our internal build:\n- `go_proto_library` does not have `compiler` or `compilers` attributes (so `ctx.rule.attr.compiler` fails at analysis time with `No attribute 'compiler' in attr`), nor does `_go_proto_compiler` exist. Instead, `go_proto_library` wraps a `proto_library` in `deps` and compiles generated `.pb.go` files via an internal aspect whose Go protobuf runtime and transitive proto Go dependencies are not exposed as rule attributes for `nogo_aspect` to traverse—they are only exposed as compiled `.x`/`.a` export files via `nogo_extra_proto_deps`.\n- `go_wrap_cc` (included in `analyze_sources` on line 243) is an internal rule whose `ctx.rule.files.srcs` is a `.swig` file (the generated `.go` file is in `target.files`) and whose runtime dependency is on an implicit `_go_cc_dependency` attribute not listed in `attr_aspects`.\n\nPlease keep `go_proto_library` / `go_wrap_cc` dependency discovery behind a `tools/bazeldefs:go.bzl` helper and retain `gcexportdata.NewReader` fallback support in `tools/nogo/check/check.go` for precompiled export files when source-generated `NogoInfo.export` files are not available.",
+                    "createdAt": "2026-11-03T02:22:58Z",
+                    "updatedAt": "2026-11-03T02:22:58Z",
+                    "author": {
+                      "login": "rexren-gif",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "inline",
+                    "threadId": "PRRT_kwDOB9IlXs6y9G6W",
+                    "isResolved": false,
+                    "isOutdated": true,
+                    "path": "tools/nogo/defs.bzl",
+                    "line": null,
+                    "id": "PRRC_kwDOB9IlXs8AAAABCZm27w",
+                    "url": "https://github.com/google/gvisor/pull/16098#discussion_r4456036079",
+                    "body": "The aspect now uses the generated sources when the rule supplies them. For archive-only rules it reads the compiled package and the imports supplied by nogo_extra_proto_deps. It no longer traverses the protobuf compiler attributes. I exercised the archive path with two real compiler archives on AMD64 and ARM64.\n\nPosted by Codex on behalf of @tamird.",
+                    "createdAt": "2026-11-03T14:29:41Z",
+                    "updatedAt": "2026-11-03T14:29:41Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "inline",
+                    "threadId": "PRRT_kwDOB9IlXs6y9G6c",
+                    "isResolved": false,
+                    "isOutdated": true,
+                    "path": "tools/nogo/defs.bzl",
+                    "line": null,
+                    "id": "PRRC_kwDOB9IlXs8AAAABCUF78g",
+                    "url": "https://github.com/google/gvisor/pull/16098#discussion_r4450253810",
+                    "body": "**Important:** `go_package(target)` and `go_test` archive unpacking break non-`rules_go` builds\n\n`tools/nogo/defs.bzl` is shared with our internal build, which swaps in its own implementation of `//tools/bazeldefs:go.bzl` where rules do not expose `rules_go`'s `GoInfo` or `GoArchive` providers (`go_has_source(target)` is `False`).\n\n1. For non-test rules (`else` branch, lines 280-285), `go_package(target)` only receives `target` (omitting `ctx.rule`) and `_nogo_aspect_impl` removes the fallback that collects `ctx.rule.files.srcs` and `go_embed_libraries(ctx.rule)` when `go_has_source(target)` is `False`. In our internal build, `target` alone does not expose Go source files for `go_library` or `go_binary`—they are only available on `ctx.rule`. Passing `ctx.rule` (or `ctx`) into `go_package(target, ctx.rule)` is needed so the internal `go.bzl` implementation can still resolve `srcs`, `importpath`, and `archive`.\n2. For `go_test` (`is_test` branch, line 278), `_nogo_aspect_impl` directly unpacks `archive, _ = target.output_groups.compilation_outputs.to_list()` instead of going through a `tools/bazeldefs:go.bzl` helper. That 2-element list is specific to `rules_go`'s `go_test` output group; in our internal build, `compilation_outputs` on `go_test` is a `depset` containing either `[pkg.a, pkg.x]` or a single `[pkg.a]` when the test defines `main`, which fails 2-tuple unpacking. Archive extraction for `go_test` should also be delegated to a `tools/bazeldefs:go.bzl` helper.",
+                    "createdAt": "2026-11-03T02:22:58Z",
+                    "updatedAt": "2026-11-03T02:22:58Z",
+                    "author": {
+                      "login": "rexren-gif",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "inline",
+                    "threadId": "PRRT_kwDOB9IlXs6y9G6c",
+                    "isResolved": false,
+                    "isOutdated": true,
+                    "path": "tools/nogo/defs.bzl",
+                    "line": null,
+                    "id": "PRRC_kwDOB9IlXs8AAAABCZm4mg",
+                    "url": "https://github.com/google/gvisor/pull/16098#discussion_r4456036506",
+                    "body": "The shared aspect now gets sources from the rule and its embeds when the adapter has no source provider. It uses the rule’s .a or .x outputs for archives and analyzes the test package’s sources rather than its generated main. I checked this with the historical adapter on AMD64 and ARM64. The internal build still needs verification.\n\nPosted by Codex on behalf of @tamird.",
+                    "createdAt": "2026-11-03T14:29:43Z",
+                    "updatedAt": "2026-11-03T14:29:43Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "inline",
+                    "threadId": "PRRT_kwDOB9IlXs65IpVW",
+                    "isResolved": false,
+                    "isOutdated": true,
+                    "path": "tools/nogo/check/BUILD",
+                    "line": null,
+                    "id": "PRRC_kwDOB9IlXs8AAAABE1Brmw",
+                    "url": "https://github.com/google/gvisor/pull/16098#discussion_r4619004827",
+                    "body": "[🤖] **[major · build-integration] `check_test` location expansion and `FindFile` path only work with rules_go**\n\n`$(rootpath //tools/nogo/flags)` needs the `go_library` label to expand to exactly one file. In our internal build `go_library` has two default outputs (`.a` and `.x`), so `check_test` fails analysis there. The test also passes that workspace-relative path to `testutil.FindFile`, which expects a path relative to the gVisor root. **Suggested fix:** Drop `env` and call `testutil.FindFile(\"tools/nogo/flags/flags.x\")`, keeping the `data` dependency.\n\n<details><summary>Details (evidence)</summary>\n\n**Evidence:**\n`tools/nogo/check/BUILD:68-70`:\n```\n    data = [\"//tools/nogo/flags\"],\n    embed = [\":check\"],\n    env = {\"NOGO_TEST_COMPILER_EXPORT\": \"$(rootpath //tools/nogo/flags)\"},\n```\n`tools/nogo/check/check_test.go:315-319`:\n```\n\trel, ok := os.LookupEnv(\"NOGO_TEST_COMPILER_EXPORT\")\n\t...\n\tfilename, err := testutil.FindFile(rel)\n```\nBazel rejects a singular `$(rootpath ...)` whose label expands to more than one file. Our internal `go_library` returns both the archive and the export file as default outputs. Our internal `FindFile` joins its argument under the gVisor directory, which is a subdirectory of the workspace there, so a `$(rootpath)` value gets that prefix twice. `AGENTS.md` documents `FindFile` paths as rooted at `//`.\n\n</details>\n\n<sub>Posted by an AI review agent on behalf of @rexren-gif. Please address valid findings before human review, or close them with a reason.</sub>",
+                    "createdAt": "2026-11-18T18:38:18Z",
+                    "updatedAt": "2026-11-18T18:38:18Z",
+                    "author": {
+                      "login": "rexren-gif",
+                      "__typename": "User"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "06b8ee2c46ca4f71c261da86f7b1905032e8b08f"
+            },
+            "at": "2026-11-19T18:16:13.048826+00:00",
+            "owner": "root",
+            "evidence": [
+              "https://github.com/gvisor/gvisor/pull/16098#discussion_r4619004827",
+              "https://github.com/gvisor/gvisor/pull/16098#issuecomment-6993741644"
+            ],
+            "disposition": "Published06b8 fixture uses flags_compiler_export data alias and existing archive adapter; singular rootpath/environment fixture removed. User-approved substantive reply already posted. Native currenthead/thread readback verified, no newer inline reply. Private compiler integration is still unverified; current kerumeto review request retained. No duplicate reply, reviewer notification, source update or private-build success claim.",
+            "title": "Published Nogo fixture correction and approved reply verified",
+            "nextAction": "Preserve current kerumeto review request; await actual CI execution and private compiler integration evidence. No duplicate reply or source update."
+          }
+        ],
+        "feedbackReconciliation": {
+          "state": "Current published fixture fixes queued4619004827; approved reply6993741644 already posted. No new source/reply/notification required. Private compiler integration remains unverified and current kerumeto request retained.",
+          "receipt": {
+            "file": "nogo-16098-feedback-20261119-reconciled.json",
+            "sha256": "a350c733362d5deb07a5edfb762095ed0318208fd41333c3cf785e38d6a45b2f"
+          }
         }
       },
       "evidence": [
@@ -26975,7 +27260,9 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Agent"
-      }
+      },
+      "nextStep": "Root follows exact published-head maintainer review/import and actual quota recovery through the existing lifecycle sweep. No duplicate source push, approval question, acknowledgement, merge or manual CI retry. First Pass remains unmet until the provider actually executes it. Exact approved reply/body are saved; native rexren re-request returned404 despite the correct explicit API contract. Its cause is UNKNOWN; preserve existing kerumeto request and no alternate notification.",
+      "recheckCondition": "Genuine reviewer/import/source change, actual provider quota recovery or required check result."
     },
     {
       "id": "pr:16096",
@@ -38973,7 +39260,7 @@
       "group": "bazel",
       "status": "open",
       "summary": "Permanent Bazel AMD64 NORMAL coverage modes passed100 guest iterations each with reports-on/off and KCOV, plus current structural inventory. ARM release compilation remains blocked; RACE, current-source legacy parity and performance remain open.",
-      "updatedAt": "2026-11-19T18:09:34.011835+00:00",
+      "updatedAt": "2026-11-19T18:20:53.031513+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
@@ -39332,7 +39619,7 @@
           "proofSHA256": "8cfa9665fca33bd1625d96c7b184d3b8454523fbfe87c0b7bd9744d867d14c0b",
           "recheckCondition": "Root permanent-mechanism decision, same-operation execution-review result or actual fidelity evidence."
         },
-        "curatedAt": "2026-11-19T18:09:34.011835+00:00",
+        "curatedAt": "2026-11-19T18:20:53.031513+00:00",
         "permanentBazelFirstLayer": {
           "testSource": "340e1072aa5a3d47e01ff68dffea34f91be4a9f4",
           "ciSource": "fa452727d8d6af2399f8644f9d64a40dc5d902ae",
@@ -54850,7 +55137,7 @@
       "url": "https://github.com/google/gvisor/pull/16445",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-19T11:00:16.411290+00:00",
+      "updatedAt": "2026-11-19T18:20:53.031513+00:00",
       "summary": "The full current nine-file topic review found no additional source defects and confirmed the earlier accounting/setup/profile/cleanup concerns are addressed. Current native/Sentry ten-topology execution and distinct metric evidence remain necessary; approval to post the prepared COMMENTED review is pending.",
       "evidence": [
         {
@@ -54917,10 +55204,10 @@
         "providerHead": "84b18c285d0be31bb58ecdf1721da2de312aee01",
         "mergeable": "MERGEABLE",
         "sourceHead": "84b18c285d0be31bb58ecdf1721da2de312aee01",
-        "observedAt": "2026-11-18T20:06:11.890448+00:00",
-        "disposition": "Approved COMMENTED review and inline sharding finding posted on exact84b18c head; native API readback verified.",
-        "nextAction": "Follow the author response and current source/qualification evidence for the posted sharding finding and retained broad benchmark gates. No duplicate review or approval request.",
-        "recheckCondition": "Author response, source/head change, or relevant execution/performance evidence.",
+        "observedAt": "2026-11-19T18:20:53.031513+00:00",
+        "disposition": "Old accounting reply4622307326 was already handled by approved posted review5973451067. Current published head still lacks topology-level sharding gate; no response/new head on finding4627523514. Native checks and FirstPass1824 pass without establishing manual benchmark or performance evidence.",
+        "nextAction": "Await author parth-opensrc fix/reply to existing sharding thread and current topology/cancellation/profile/stability evidence. Preserve complete source review, do not duplicate replies or approval requests.",
+        "recheckCondition": "Author reply, source/head change or new relevant execution/performance evidence.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16445"
         ],
@@ -54945,7 +55232,7 @@
           "scope": "Actual rebase plus source changes, not DCO-only. False 128KiB Go MB/s removed; Iperf2 remains. No fresh measurements or complete approval inferred.",
           "CI": "Exact-head First Pass1770 SUCCESS at20:06 snapshot"
         },
-        "curatedAt": "2026-11-19T11:00:16.411290+00:00",
+        "curatedAt": "2026-11-19T18:20:53.031513+00:00",
         "currentSourceReview": {
           "head": "84b18c285d0be31bb58ecdf1721da2de312aee01",
           "finding": "namedLogger drops Skipf and bypasses DING-only topology partition selection",
@@ -55014,7 +55301,22 @@
             "sha256": "5a886a02d859bafe5600994f5e0ed65113fe136e772274c9f332945ea344919a"
           }
         }
-      }
+      },
+      "reviewWatch": {
+        "inspected": [
+          {
+            "id": "PRRC_kwDOB9IlXs8AAAABE4LP_g",
+            "url": "https://github.com/google/gvisor/pull/16445#discussion_r4622307326",
+            "updatedAt": "2026-11-19T00:26:31Z",
+            "head": "84b18c285d0be31bb58ecdf1721da2de312aee01",
+            "evidence": [
+              "https://github.com/gvisor/gvisor/pull/16445#pullrequestreview-5973451067"
+            ]
+          }
+        ]
+      },
+      "nextStep": "Await author parth-opensrc fix/reply to existing sharding thread and current topology/cancellation/profile/stability evidence. Preserve complete source review, do not duplicate replies or approval requests.",
+      "recheckCondition": "Author reply, source/head change or new relevant execution/performance evidence."
     },
     {
       "id": "branch:c-ares-config-header",
@@ -94634,7 +94936,7 @@
       "url": "https://github.com/google/gvisor/pull/17492",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-19T18:09:34.011835+00:00",
+      "updatedAt": "2026-11-19T18:20:53.031513+00:00",
       "summary": "Fresh isolated Git reproduction proves already-landed profiles break the current stash transaction. Eight-case fix qualified, but user revoked its approval because of the new publisher helper and test bloat. Public e049 remains unchanged; replacement is local-only and touches one existing script.",
       "evidence": [
         {
@@ -94656,7 +94958,7 @@
           "https://buildkite.com/gvisor/first-pass/builds/1597",
           "https://buildkite.com/gvisor/first-pass/builds/1597#01a1eae2-d917-47f8-9341-8795c3baf72f"
         ],
-        "curatedAt": "2026-11-19T18:09:34.011835+00:00",
+        "curatedAt": "2026-11-19T18:20:53.031513+00:00",
         "disposition": "Fresh isolated Git reproduction proves already-landed profiles break the current stash transaction. Eight-case fix qualified, but user revoked its approval because of the new publisher helper and test bloat. Public e049 remains unchanged; replacement is local-only and touches one existing script.",
         "currentConflictAssessment": {
           "file": "17492-conflict-current-assessment.json",
@@ -99323,7 +99625,7 @@
             "sha256": "f77ba8b9050491ca15ffb83943dbd8e0c44d41ad5c521f3cf948234c0a162c90"
           }
         },
-        "curatedAt": "2026-11-19T18:09:34.011835+00:00",
+        "curatedAt": "2026-11-19T18:20:53.031513+00:00",
         "disposition": "Old reader91c/checker6ac proposals are superseded and unapproved. First revised topic starts on original a05 reader behavior with three standard checkers; metadata retention follows separately."
       },
       "contributorReview": {
@@ -99335,7 +99637,7 @@
         "summary": "First concrete source-review/PR-opening question already sent; do not ask again. Thirty Python methods and all 632 Buildifier inputs passed remotely.",
         "reviewCommand": "git -C ~/code/gvisor rev-parse 25948ae156fc3e39cd2231c0c4c9131adb4e1ef7"
       },
-      "updatedAt": "2026-11-19T18:09:34.011835+00:00",
+      "updatedAt": "2026-11-19T18:20:53.031513+00:00",
       "nextStep": "Complete the cheap actual three-tool bootstrap/config/runtime probe, then necessary typing fixes and full three-script qualification before presenting the first topic. Use authoritative pyproject and generated lock; no requirements.in or parallel hand-maintained dependency manifest. Preserve original reader behavior until the second retention topic.",
       "recheckCondition": "Actual corrected tool probe44582127150, strict-source checkpoint, or further user feedback."
     }
@@ -130249,7 +130551,7 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-19T18:09:34.011835+00:00",
+      "updatedAt": "2026-11-19T18:20:53.031513+00:00",
       "summary": "A fresh matched AMD64 failure captured proxy shutdown waiting for its active recvMMsg receiver. Applying only the already-qualified EOF production fix passed full owning suites and200 targeted repetitions. This supports the mechanism in that context; historical ARM per-read values and exhaustive absence remain unproven.",
       "findings": [
         {
@@ -130288,7 +130590,7 @@
           ]
         }
       ],
-      "nextStep": "Preserve the captured receiver blockage and matched200-repeat EOF intervention. Complete active ARM runtime gates; netgofer race-policy rationale remains unknown, not a request to remove its exclusion. Then advance remaining architecture checks and full controlled-performance requirements; no additional diagnostic repetition or new per-item driver.",
+      "nextStep": "Advance the existing full controlled performance study through the shared native/Sentry Bazel worker. Verify runtime/image inventory and actual capability with a cheap integration preflight before balanced150-leaf/n24 measurements. Preserve valid compiler/correctness caches and opaque release inputs.",
       "evidence": [
         {
           "label": "Original ARM64 test.log from #17384, build 54448",
@@ -130316,15 +130618,15 @@
         }
       ],
       "technicalOwner": "CI flake triage",
-      "recheckCondition": "Race-policy/source evidence, missing architecture/performance gate or substantive feedback.",
+      "recheckCondition": "Shared worker capability/runtime proof, missing controlled measurements or substantive source/import feedback.",
       "lifecycleCoordination": {
         "owner": "eof_arm_resume",
-        "nextAction": "Preserve the captured receiver blockage and matched200-repeat EOF intervention. Complete active ARM runtime gates; netgofer race-policy rationale remains unknown, not a request to remove its exclusion. Then advance remaining architecture checks and full controlled-performance requirements; no additional diagnostic repetition or new per-item driver.",
-        "recheckCondition": "Race-policy/source evidence, missing architecture/performance gate or substantive feedback."
+        "nextAction": "Advance the existing full controlled performance study through the shared native/Sentry Bazel worker. Verify runtime/image inventory and actual capability with a cheap integration preflight before balanced150-leaf/n24 measurements. Preserve valid compiler/correctness caches and opaque release inputs.",
+        "recheckCondition": "Shared worker capability/runtime proof, missing controlled measurements or substantive source/import feedback."
       },
       "followup": {
         "owner": "eof_arm_resume",
-        "curatedAt": "2026-11-19T18:09:34.011835+00:00",
+        "curatedAt": "2026-11-19T18:20:53.031513+00:00",
         "disposition": "A fresh matched AMD64 failure captured proxy shutdown waiting for its active recvMMsg receiver. Applying only the already-qualified EOF production fix passed full owning suites and200 targeted repetitions. This supports the mechanism in that context; historical ARM per-read values and exhaustive absence remain unproven.",
         "sourceHead": "362bfd09934c5497e4a48fb97fbe1f445152f841",
         "matchedEvidence": {
@@ -130349,8 +130651,8 @@
           "race": "Use the shared image-backed Cgo correction; prior race failure executed no tests. Do not repeat known GLIBC/architecture setup failures.",
           "performance": "First qualify actual bridge/named-peer traffic in the permanent worker using existing declared Alpine input. Then all four existing Node workload variants with the same qualified HTTP harness on both runtime sources; full networking scope remains open."
         },
-        "nextAction": "Preserve the captured receiver blockage and matched200-repeat EOF intervention. Complete active ARM runtime gates; netgofer race-policy rationale remains unknown, not a request to remove its exclusion. Then advance remaining architecture checks and full controlled-performance requirements; no additional diagnostic repetition or new per-item driver.",
-        "recheckCondition": "Race-policy/source evidence, missing architecture/performance gate or substantive feedback.",
+        "nextAction": "Advance the existing full controlled performance study through the shared native/Sentry Bazel worker. Verify runtime/image inventory and actual capability with a cheap integration preflight before balanced150-leaf/n24 measurements. Preserve valid compiler/correctness caches and opaque release inputs.",
+        "recheckCondition": "Shared worker capability/runtime proof, missing controlled measurements or substantive source/import feedback.",
         "standaloneEOFRace": {
           "source": "362bfd09934c5497e4a48fb97fbe1f445152f841",
           "run": 44579977140,
@@ -130362,11 +130664,31 @@
         },
         "armConfiguredGraph": {
           "run": 44583074073,
-          "state": "PASS ARM action configuration only; fdbased RACE, netgofer NORMAL. Runtime gates dispatched44584602150 NORMAL both owners and44584605548 RACE fdbased only; no runtime completion claim.",
+          "state": "PASS configured graph, followed by completed runtime gates recorded in armCorrectness.",
           "receipt": {
             "file": "netgofer-eof-arm-aquery-44583074073-evidence.json",
             "sha256": "8654312f6eafcb4aa64dcae8df53312691812532427ca3c8918afc1b5c046be3"
           }
+        },
+        "armCorrectness": {
+          "source": "362bfd09934c5497e4a48fb97fbe1f445152f841",
+          "normal": {
+            "run": 44584602150,
+            "state": "PASS fresh remote fdbased93/netgofer25, zero failures/errors/skips.",
+            "receipt": {
+              "file": "netgofer-eof-arm-44584602150-evidence.json",
+              "sha256": "04b1fb7c57a7d1e262e556b297eb2cbd5aef3b75674c52fd810f38d084112da8"
+            }
+          },
+          "race": {
+            "run": 44584605548,
+            "state": "PASS fresh remote fdbased93, zero failures/errors/skips/race reports. Netgofer retains explicit pure/nogotsan NORMAL policy.",
+            "receipt": {
+              "file": "netgofer-eof-arm-44584605548-evidence.json",
+              "sha256": "9c9c037a007d1dda75a36774a3d226cfa3555fcf72fddcb414284bb263faa88b"
+            }
+          },
+          "limit": "Supported ARM correctness complete; full controlled performance and public Netip/import qualification remain open."
         }
       }
     },
@@ -134240,7 +134562,7 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-19T18:09:34.011835+00:00",
+      "updatedAt": "2026-11-19T18:20:53.031513+00:00",
       "summary": "Correctness XML controls, normal release compiler, formatter-library preflight, shared scheduler support and paired native/runsc worker execution are qualified. Prior runtime cleanup failures remain visible. No automatic execution-review block remains.",
       "nextStep": "Keep existing validation source/evidence reusable. User-directed Python and formatter revisions take current implementation priority. Then complete explicit runtime inventory, Sentry pairs and the full frozen controlled-workload scope through the shared benchmark owner.",
       "recheckCondition": "Python/formatter owner milestone, actual runtime-pair/performance evidence, or changed source/toolchain inputs.",
@@ -134306,7 +134628,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-19T18:09:34.011835+00:00",
+        "curatedAt": "2026-11-19T18:20:53.031513+00:00",
         "nextAction": "Keep existing validation source/evidence reusable. User-directed Python and formatter revisions take current implementation priority. Then complete explicit runtime inventory, Sentry pairs and the full frozen controlled-workload scope through the shared benchmark owner.",
         "recheckCondition": "Python/formatter owner milestone, actual runtime-pair/performance evidence, or changed source/toolchain inputs.",
         "owner": "root",
@@ -134498,6 +134820,16 @@
           "configuredAction": {
             "file": "node-worker-44572833145-evidence.json",
             "sha256": "1c6fe7ff881abe08385e472187ab4b91a7008116170495ba186dd41f49947926"
+          }
+        },
+        "buildbuddyReporting": {
+          "dispatcher": "199248a38b728c9d4242a610aa8f207f9bb20f33",
+          "run": 44585237126,
+          "state": "PASS authenticated BES upload. Recent qualification already used remote.buildbuddy.io execution/cache; missing BES backend omitted invocations from UI. Shared workflow now publishes exact source/repository/CI metadata. Cached test deliberately reused; no fresh execution claim.",
+          "invocation": "https://app.buildbuddy.io/invocation/b6565fa9-d756-4146-96d6-999f6dcdaa98",
+          "receipt": {
+            "file": "qualification-bes-reporting-44585237126-result.json",
+            "sha256": "d237ea673050aa922049815dd6a08b99f36f8ef86ce0ccdce03ae41545dae633"
           }
         }
       },
@@ -134696,5 +135028,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-19T18:09:34.011835+00:00"
+  "updatedAt": "2026-11-19T18:20:53.031513+00:00"
 }
