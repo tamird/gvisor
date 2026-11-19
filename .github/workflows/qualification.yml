@@ -242,7 +242,11 @@ jobs:
           test -x "$helper"
           read -r -a targets <<< "$TARGETS"
           options=(--announce_rc=false --keep_going --config=buildbuddy --config="$QUAL_CONFIG"
-            --credential_helper="remote.buildbuddy.io=$helper")
+            --credential_helper="remote.buildbuddy.io=$helper"
+            --bes_backend=grpcs://remote.buildbuddy.io
+            --bes_results_url=https://app.buildbuddy.io/invocation/
+            --build_metadata=REPO_URL=https://github.com/tamird/gvisor
+            --build_metadata=COMMIT_SHA="$SOURCE" --build_metadata=ROLE=CI)
           case "$BAZEL_RACE" in
             true) options+=(--config=race) ;;
             false) ;;
