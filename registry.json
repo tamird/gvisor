@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-19T21:03:40.118346+00:00",
+    "updatedAt": "2026-11-19T21:28:44.768286+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -44365,8 +44365,8 @@
       "url": "https://github.com/google/gvisor/pull/16604",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-19T08:32:44.165346+00:00",
-      "summary": "The seccomp filter fuzzer compares two BPF programs. A declared Go generator replaces the shell pipeline and uses bpf.MaxInstructions for the bound. The generator splits the two 4,096-case switches into functions of 64 cases. The original fuzz-tagged filter corpus passed. With Go fuzz instrumentation, each of the 8,192 program/instruction pairs changed a counter that no other pair changed.",
+      "updatedAt": "2026-11-19T21:28:44.768286+00:00",
+      "summary": "Published production7cc remains separate from the specialized instrumentation-test work. The existing coverage_security_review owner is recovering the minimal actual8192 instrumentation test. No new counter-proof, source or publication claim is made.",
       "evidence": [
         {
           "label": "Published pull request",
@@ -44406,11 +44406,11 @@
         }
       ],
       "followup": {
-        "owner": "root",
+        "owner": "coverage_security_review",
         "sourceHead": "7cc5ad9efdff3d4cfaa12eca45ea9156bd57492a",
         "observedAt": "2026-11-08T13:23:10Z",
-        "disposition": "The production-only mechanical rebase is delivered and all current-head checks pass. Earlier old-head queue admission failure is resolved by the already-landed pipeline fix. Current corpus and specialized instrumentation/new-test gates remain distinct; no new 8,192-counter or human-review claim.",
-        "nextAction": "Root advances the separate specialized counter/new-test work through permanent Bazel owners and follows genuine review/import changes. No further original-PR rebase or retry is needed absent new evidence.",
+        "disposition": "Published production7cc remains separate from the specialized instrumentation-test work. The existing coverage_security_review owner is recovering the minimal actual8192 instrumentation test. No new counter-proof, source or publication claim is made.",
+        "nextAction": "coverage_security_review recovers and remotely validates the minimal actual8192 instrumentation test using the assigned main checkout. Root follows the existing published PR review/import lifecycle. Preserve prior corpus/qualification evidence; no source publication or approval is inferred from recovery work.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16604",
           "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...de106f647e5e2157aa3d6ac91d09727f698daca4",
@@ -44422,8 +44422,8 @@
           "https://app.buildbuddy.io/invocation/5db47752-0b5b-4d00-8857-be90ae4d4362",
           "https://github.com/gvisor/gvisor/pull/17677"
         ],
-        "recheckCondition": "Current-head CI terminal/change, substantive technical feedback, source/import lifecycle change or an already-pending source-review decision; root remains accountable.",
-        "curatedAt": "2026-11-19T08:32:44.165346+00:00",
+        "recheckCondition": "Owner recovery or actual instrumentation evidence, substantive source feedback, or original-PR lifecycle change.",
+        "curatedAt": "2026-11-19T21:28:44.768286+00:00",
         "priorImportNextAction": "Follow upstream checks and maintainer review on #16604. DCO import coordination: Root coordinates #17677 at 5371cb7c75de. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17677,
@@ -44616,7 +44616,9 @@
         "nextAction": "Footer-only DCO metadata delivery is complete. Follow remaining current-head CI and the existing technical importing-maintainer disposition; do not request permission for the completed metadata operation.",
         "recheckCondition": "Current-head CI, substantive technical feedback or import lifecycle changes; named technical holds remain.",
         "holdsPreserved": {}
-      }
+      },
+      "nextStep": "coverage_security_review recovers and remotely validates the minimal actual8192 instrumentation test using the assigned main checkout. Root follows the existing published PR review/import lifecycle. Preserve prior corpus/qualification evidence; no source publication or approval is inferred from recovery work.",
+      "recheckCondition": "Owner recovery or actual instrumentation evidence, substantive source feedback, or original-PR lifecycle change."
     },
     {
       "id": "pr:16606",
@@ -55146,13 +55148,13 @@
       "repo": "google/gvisor",
       "number": 16445,
       "ref": "pr-moby-bench",
-      "head": "84b18c285d0be31bb58ecdf1721da2de312aee01",
+      "head": "7983609ee995f119b6755dc03540322af8456592",
       "title": "Docker-in-gVisor network benchmark",
       "url": "https://github.com/google/gvisor/pull/16445",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-19T18:59:24.568877+00:00",
-      "summary": "The full current nine-file topic review found no additional source defects and confirmed the earlier accounting/setup/profile/cleanup concerns are addressed. Current native/Sentry ten-topology execution and distinct metric evidence remain necessary; approval to post the prepared COMMENTED review is pending.",
+      "updatedAt": "2026-11-19T21:28:44.768286+00:00",
+      "summary": "Head7983609ee differs from the reviewed84b source only by the requested three-line ShouldRun guard before topology setup. Root verified the source and complete thread; author reply4634949016 says Added. The sharding finding is addressed. FirstPass1975 and all six native checks pass, but actual benchmark execution and before/after performance evidence remain author-owned requirements. No new reply or approval question is needed.",
       "evidence": [
         {
           "label": "15 native transfer cases with sender and receiver byte counts",
@@ -55214,16 +55216,17 @@
       ],
       "followup": {
         "owner": "root",
-        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
-        "providerHead": "84b18c285d0be31bb58ecdf1721da2de312aee01",
+        "currentStateObservedAt": "2026-11-19T21:28:44.768286+00:00",
+        "providerHead": "7983609ee995f119b6755dc03540322af8456592",
         "mergeable": "MERGEABLE",
-        "sourceHead": "84b18c285d0be31bb58ecdf1721da2de312aee01",
-        "observedAt": "2026-11-19T18:59:24.568877+00:00",
-        "disposition": "Old accounting reply4622307326 was already handled by approved posted review5973451067. Current published head still lacks topology-level sharding gate; no response/new head on finding4627523514. Native checks and FirstPass1824 pass without establishing manual benchmark or performance evidence.",
-        "nextAction": "Await author parth-opensrc fix/reply to existing sharding thread and current topology/cancellation/profile/stability evidence. Preserve complete source review, do not duplicate replies or approval requests.",
-        "recheckCondition": "Author reply, source/head change or new relevant execution/performance evidence.",
+        "sourceHead": "7983609ee995f119b6755dc03540322af8456592",
+        "observedAt": "2026-11-19T21:28:44.768286+00:00",
+        "disposition": "Head7983609ee differs from the reviewed84b source only by the requested three-line ShouldRun guard before topology setup. Root verified the source and complete thread; author reply4634949016 says Added. The sharding finding is addressed. FirstPass1975 and all six native checks pass, but actual benchmark execution and before/after performance evidence remain author-owned requirements. No new reply or approval question is needed.",
+        "nextAction": "Root has handled the current source and author reply. Await parth-opensrc actual native/Sentry topology execution and already-requested benchmark/performance evidence before full approval. Do not repeat the source fix, courtesy reply or review question.",
+        "recheckCondition": "Author supplies execution/performance evidence, changes source or conversation, or relevant current-head checks change.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16445"
+          "https://github.com/google/gvisor/pull/16445",
+          "https://github.com/google/gvisor/pull/16445#discussion_r4634949016"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
         "latestSourceTriage": {
@@ -55246,7 +55249,7 @@
           "scope": "Actual rebase plus source changes, not DCO-only. False 128KiB Go MB/s removed; Iperf2 remains. No fresh measurements or complete approval inferred.",
           "CI": "Exact-head First Pass1770 SUCCESS at20:06 snapshot"
         },
-        "curatedAt": "2026-11-19T18:59:24.568877+00:00",
+        "curatedAt": "2026-11-19T21:28:44.768286+00:00",
         "currentSourceReview": {
           "head": "84b18c285d0be31bb58ecdf1721da2de312aee01",
           "finding": "namedLogger drops Skipf and bypasses DING-only topology partition selection",
@@ -55329,8 +55332,8 @@
           }
         ]
       },
-      "nextStep": "Await author parth-opensrc fix/reply to existing sharding thread and current topology/cancellation/profile/stability evidence. Preserve complete source review, do not duplicate replies or approval requests.",
-      "recheckCondition": "Author reply, source/head change or new relevant execution/performance evidence."
+      "nextStep": "Root has handled the current source and author reply. Await parth-opensrc actual native/Sentry topology execution and already-requested benchmark/performance evidence before full approval. Do not repeat the source fix, courtesy reply or review question.",
+      "recheckCondition": "Author supplies execution/performance evidence, changes source or conversation, or relevant current-head checks change."
     },
     {
       "id": "branch:c-ares-config-header",
@@ -134902,10 +134905,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-19T21:03:40.118346+00:00",
-      "summary": "The trusted shared workflow at a9e32f7f supports run-only30minute qualification and the existing read-only GitHub token without permission changes. Compatible kiron0.21 startup passed on Ubuntu22 AMD/ARM; corrected proto materialization passed all412 paths. Production5de99a4d plus an atomic database-write fix remains under actual canonical inventory and caller gates, not ready. A/A plumbing passed; stability remains unproven.",
-      "nextStep": "The compilation-database owner verifies canonical inventory and real callers on CIf1f4d8d2, then commits/reviews the final source; do not infer readiness from startup or the tiny fixture. The benchmark owner analyzes A/A44612396815 before expanded counts or candidate comparisons. Root follows the existing private migration-issue decision. Full150-leaf/n24 performance remains open.",
-      "recheckCondition": "Actual inventory/caller results, final source/review, A/A stability evidence or the existing issue decision.",
+      "updatedAt": "2026-11-19T21:28:44.768286+00:00",
+      "summary": "The frozen fcbcee664 source passed all five canonical source-lint checks. A tiny actual upb comparison showed normal preparation missed two generated sibling C files; scoped remote_download_outputs=all during preparation materialized all368 entry files using three remote cache hits. The owner is integrating that narrow flag into three preparation commands and must rerun actual full callers; no ready or publication claim. A/A resource probe44617285723 completed functionally; stability remains open.",
+      "nextStep": "The compilation-database owner finishes the scoped preparation-output fix and verifies actual full callers and inventory before review/publication. The benchmark owner diagnoses the completed resource probe rather than repeating unchanged N5000 or expanding counts/candidate scope before A/A stability. Root follows the existing private migration-issue decision; full150/n24 remains open.",
+      "recheckCondition": "Owner result diagnosis, corrected-source full-caller/inventory results and review, A/A stability evidence, or the existing issue decision.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135011,6 +135014,18 @@
         {
           "label": "Current A/A stability gate",
           "url": "https://github.com/tamird/gvisor/actions/runs/44612396815"
+        },
+        {
+          "label": "Five canonical compilation-database source lint checks passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44615694870"
+        },
+        {
+          "label": "Tiny actual upb preparation download-mode comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44617233950"
+        },
+        {
+          "label": "Completed A/A resource probe; stability not established",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44617285723"
         }
       ],
       "followup": {
@@ -135032,12 +135047,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-19T21:03:40.118346+00:00",
-        "nextAction": "The compilation-database owner verifies canonical inventory and real callers on CIf1f4d8d2, then commits/reviews the final source; do not infer readiness from startup or the tiny fixture. The benchmark owner analyzes A/A44612396815 before expanded counts or candidate comparisons. Root follows the existing private migration-issue decision. Full150-leaf/n24 performance remains open.",
-        "recheckCondition": "Actual inventory/caller results, final source/review, A/A stability evidence or the existing issue decision.",
+        "curatedAt": "2026-11-19T21:28:44.768286+00:00",
+        "nextAction": "The compilation-database owner finishes the scoped preparation-output fix and verifies actual full callers and inventory before review/publication. The benchmark owner diagnoses the completed resource probe rather than repeating unchanged N5000 or expanding counts/candidate scope before A/A stability. Root follows the existing private migration-issue decision; full150/n24 remains open.",
+        "recheckCondition": "Owner result diagnosis, corrected-source full-caller/inventory results and review, A/A stability evidence, or the existing issue decision.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "The trusted shared workflow at a9e32f7f supports run-only30minute qualification and the existing read-only GitHub token without permission changes. Compatible kiron0.21 startup passed on Ubuntu22 AMD/ARM; corrected proto materialization passed all412 paths. Production5de99a4d plus an atomic database-write fix remains under actual canonical inventory and caller gates, not ready. A/A plumbing passed; stability remains unproven.",
+        "disposition": "The frozen fcbcee664 source passed all five canonical source-lint checks. A tiny actual upb comparison showed normal preparation missed two generated sibling C files; scoped remote_download_outputs=all during preparation materialized all368 entry files using three remote cache hits. The owner is integrating that narrow flag into three preparation commands and must rerun actual full callers; no ready or publication claim. A/A resource probe44617285723 completed functionally; stability remains open.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135198,7 +135213,7 @@
             "sha256": "bf4a997a1b88d30d3f00746c5a289caae552c9ccdd8c10f4f3103777efae23bf"
           }
         },
-        "currentGateSummary": "Recorded Coverage NORMAL/RACE and static-parity gates retain their exact evidence. Ubuntu22 kiron0.21 startup and corrected412-path proto fixture pass; canonical full inventory/real callers and A/A stability remain open. No full150/n24 qualification or new source approval is inferred.",
+        "currentGateSummary": "Recorded Coverage NORMAL/RACE and parity gates retain their exact evidence. Current compilation-database source lint and tiny scoped-download proof pass; actual corrected full callers/inventory remain pending. A/A stability and full150/n24 performance remain unproven.",
         "legacyParity": {
           "source": "6759f7e7bbbbea2125d89d7c9fc1a39eeb2f091d",
           "run": 44574573815,
@@ -135446,5 +135461,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-19T21:03:40.118346+00:00"
+  "updatedAt": "2026-11-19T21:28:44.768286+00:00"
 }

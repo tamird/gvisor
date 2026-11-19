@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-19T21:25:40.762524+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-19T21:03:40.118346+00:00",
+  "registryDate": "2026-11-19T21:28:44.768286+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -447545,8 +447545,8 @@
       "repo": "google/gvisor",
       "number": 16445,
       "head": "7983609ee995f119b6755dc03540322af8456592",
-      "action": "Read the reply on this review and follow up on the current revision.",
-      "claimed": false,
+      "action": "Root has handled the current source and author reply. Await parth-opensrc actual native/Sentry topology execution and already-requested benchmark/performance evidence before full approval. Do not repeat the source fix, courtesy reply or review question.",
+      "claimed": true,
       "firstObservedHead": "7983609ee995f119b6755dc03540322af8456592",
       "reviewHead": null,
       "kind": "inline",
@@ -464298,7 +464298,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T21:03:40.118346+00:00"
+        "observedAt": "2026-11-19T21:28:44.768286+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464307,7 +464307,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T21:03:40.118346+00:00"
+        "observedAt": "2026-11-19T21:28:44.768286+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464316,7 +464316,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T21:03:40.118346+00:00"
+        "observedAt": "2026-11-19T21:28:44.768286+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464325,7 +464325,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T21:03:40.118346+00:00"
+        "observedAt": "2026-11-19T21:28:44.768286+00:00"
       }
     },
     "issue:google/benchmark:1634": {
@@ -464334,7 +464334,7 @@
         "since": "2026-11-19T00:39:33.110112+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T21:03:40.118346+00:00"
+        "observedAt": "2026-11-19T21:28:44.768286+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464343,7 +464343,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T21:03:40.118346+00:00"
+        "observedAt": "2026-11-19T21:28:44.768286+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464352,7 +464352,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T21:03:40.118346+00:00"
+        "observedAt": "2026-11-19T21:28:44.768286+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464361,7 +464361,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-19T21:03:40.118346+00:00"
+        "observedAt": "2026-11-19T21:28:44.768286+00:00"
       }
     }
   },
