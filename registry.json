@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-19T03:26:16.447636+00:00",
+    "updatedAt": "2026-11-19T03:29:02.749166+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41446,7 +41446,7 @@
           "url": "https://github.com/tamird/gvisor/commit/6cb9d5004"
         }
       ],
-      "updatedAt": "2026-11-19T03:26:16.447636+00:00",
+      "updatedAt": "2026-11-19T03:29:02.749166+00:00",
       "status": "open",
       "summary": "The published single commit 6cb9d5004 is mergeable. The rebase preserved all 78 changed lines. The Bazel changelog action emitted UTC midnight for a dated release and the Unix epoch for an untagged build under both UTC and Pacific/Honolulu.\n\nEarlier qualification on 8311c4cdb:\n\nThe changelog used the worker’s local clock. A release entry now uses UTC midnight on the date in the package version; an untagged build uses the Unix epoch. UTC and Hawaii produced identical 76,605,470-byte packages (SHA-256 b7b1d1d957b7c148458619211da93ecd8786ecb30d47f5bbba2429b81d5d4d18). No release or CI plumbing changes.",
       "refinement": {
@@ -41462,8 +41462,8 @@
         "owner": "root",
         "sourceHead": "6cb9d5004ab242aeaf73572a8ac821db598b4235",
         "observedAt": "2026-11-11T21:53:08+00:00",
-        "disposition": "Fresh4c51 changelog build/helper preflightPASS only. Permanent6case actualbinary behavior target1907 source reviewPASS and native integration44451263805 PENDING; no fresh behavior/fullpackage success yet.",
-        "nextAction": "Root owns native behavior integration watcher; consume actual result, then source lint/reuse and finalsource/base/lease checks before authorizedpublication. No new approval question, competingpoller or fullpackage claim.",
+        "disposition": "Fresh4c51 changelog build/helper preflightPASS retained. New1907 behavior integration44451263805 FAILED before exercising datebehavior: all6subcases cannot findtool at duplicateddebian/debian runfile path, parentalsofails;7XMLfail0skip. CanonicalrunfilesAPI fix active; no productdate failure or humanapprovalblock inferred.",
+        "nextAction": "Fuse fixes owning test runfilelookup using canonicalAPI; root reviews and reruns only samepermanent //debian:changelog_test on exactnewhead through existing shared Bazel. Preserve earlier build/helper PASS and pending behavior qualification; no fullpackage success or workflow change.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42209485090/artifacts/13498582036",
           "https://github.com/google/gvisor/pull/16587",
@@ -41473,8 +41473,8 @@
           "https://github.com/gvisor/gvisor/pull/17678"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Exact source/fork head/base, source or import CI, maintainer first diagnostic/disposition, replacement/import event; fresh lease before any authorized write.",
-        "curatedAt": "2026-11-19T03:26:16.447636+00:00",
+        "recheckCondition": "Exact correctedsource/head review and next sameBazeltest actualresult; root owns remotecheck.",
+        "curatedAt": "2026-11-19T03:29:02.749166+00:00",
         "priorImportNextAction": "Follow the checks, maintainer review and import for the published revision. DCO import coordination: Root coordinates #17678 at 8569dbe2475f. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17678,
@@ -41548,9 +41548,14 @@
           "ciOverlay": "9cc2b7f62c5ae17b692cdc5bb8be051e60f8875d",
           "run": 44451263805,
           "url": "https://github.com/tamird/gvisor/actions/runs/44451263805",
-          "state": "PENDING actual native integration //debian:changelog_test",
+          "state": "FAILED actualrunfilelookup before datebehavior;7XMLfailed0skip (parent+6subcases)",
           "review": "Root+systrap independent source reviewPASS; actualbinary6cases; unchangedproduction",
-          "owner": "root"
+          "owner": "root",
+          "failureReceipt": {
+            "file": "debian-behavior-44451263805-corrective-evidence.json",
+            "sha256": "80a855b21696a04797abae2324ff086397235e24a8cabec89baa9db58b58ec46"
+          },
+          "activeFixOwner": "fuse_full20_resume"
         }
       },
       "dcoCoordination": {
@@ -133117,5 +133122,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-19T03:26:16.447636+00:00"
+  "updatedAt": "2026-11-19T03:29:02.749166+00:00"
 }
