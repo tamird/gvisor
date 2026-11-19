@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "bzl_library", "go_binary", "go_test")
+load("//tools:defs.bzl", "build_test", "bzl_library", "go_binary", "go_test")
 load("//tools:release.bzl", "RUNSC", "release_files", "sidecars")
 
 package(
@@ -19,6 +19,12 @@ release_files(
         "//conditions:default": sidecars("coverage"),
     }),
     visibility = ["//:sandbox"],
+)
+
+build_test(
+    name = "coverage_release_build_test",
+    tags = ["manual"],
+    targets = [":coverage_release"],
 )
 
 _RUNNER_SRCS = [
