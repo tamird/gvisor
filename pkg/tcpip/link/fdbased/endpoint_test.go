@@ -818,6 +818,54 @@ func TestPeerCloseStopsDispatch(t *testing.T) {
 	}
 }
 
+func TestRecvMMsgEmptyPackets(t *testing.T) {
+	for _, emptyMessages := range []int{1, MaxMsgsPerRecv} {
+		t.Run(fmt.Sprint(emptyMessages), func(t *testing.T) {
+			fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET|unix.SOCK_CLOEXEC, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer unix.Close(fds[0])
+			defer unix.Close(fds[1])
+			for i := 0; i < emptyMessages; i++ {
+				if err := unix.Sendmsg(fds[1], nil, nil, nil, 0); err != nil {
+					t.Fatal(err)
+				}
+			}
+			packet := []byte{
+				0x45, 0, 0, 24, 0, 0, 0, 0, 64, byte(header.TCPProtocolNumber), 0, 0,
+				192, 168, 0, 1, 192, 168, 0, 2, 0, 80, 0, 81,
+			}
+			if err := unix.Sendmsg(fds[1], packet, nil, nil, 0); err != nil {
+				t.Fatal(err)
+			}
+			sink := &fakeNetworkDispatcher{}
+			d, err := newRecvMMsgDispatcher(fds[0], &endpoint{dispatcher: sink}, &Options{ProcessorsPerChannel: 1})
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer d.close()
+			defer d.release()
+			defer func() {
+				for _, pkt := range sink.pkts {
+					pkt.DecRef()
+				}
+			}()
+			for i := 0; i < 2 && len(sink.pkts) == 0; i++ {
+				if ok, err := d.dispatch(); !ok || err != nil {
+					t.Fatalf("dispatch() = %v, %v; peer remains open", ok, err)
+				}
+			}
+			if len(sink.pkts) != 1 {
+				t.Fatalf("received %d packets, want 1", len(sink.pkts))
+			}
+			if got := sink.pkts[0].Data().AsRange().ToSlice(); !bytes.Equal(got, packet) {
+				t.Errorf("received %x, want %x", got, packet)
+			}
+		})
+	}
+}
+
 func TestSeqpacketEmptyMessageAndEOF(t *testing.T) {
 	fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET|unix.SOCK_CLOEXEC|unix.SOCK_NONBLOCK, 0)
 	if err != nil {
