@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"flag"
 	"io"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -178,8 +179,9 @@ test "$message" = fifo
 printf 'container\n' > /shared/output`},
 		Labels: map[string]string{ownerLabel: name},
 	}, &container.HostConfig{
-		Runtime: "runc",
-		Mounts:  []mount.Mount{{Type: mount.TypeBind, Source: dir, Target: "/shared"}},
+		Runtime:     "runc",
+		NetworkMode: "none",
+		Mounts:      []mount.Mount{{Type: mount.TypeBind, Source: dir, Target: "/shared"}},
 	}, nil, nil, name)
 	if err != nil {
 		t.Fatalf("create native container: %v", err)
@@ -213,6 +215,15 @@ printf 'container\n' > /shared/output`},
 // belong to this test. Its cleanup runs after container and client cleanup.
 func startDockerDaemon(t *testing.T, ctx context.Context) string {
 	t.Helper()
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		t.Fatalf("list network interfaces before Docker startup: %v", err)
+	}
+	for _, iface := range interfaces {
+		if iface.Name == "docker0" {
+			t.Fatal("fresh Docker worker already has a docker0 bridge")
+		}
+	}
 	root, err := os.MkdirTemp(os.Getenv("TEST_TMPDIR"), "dockerd-")
 	if err != nil {
 		t.Fatal(err)
@@ -224,10 +235,13 @@ func startDockerDaemon(t *testing.T, ctx context.Context) string {
 	}
 	configPath := filepath.Join(root, "daemon.json")
 	config, err := json.Marshal(map[string]any{
-		"hosts": []string{"unix://" + socket},
+		"hosts":     []string{"unix://" + socket},
+		"bridge":    "none",
+		"iptables":  false,
+		"ip6tables": false,
 		"data-root": filepath.Join(root, "data"),
 		"exec-root": filepath.Join(root, "exec"),
-		"pidfile": filepath.Join(root, "docker.pid"),
+		"pidfile":   filepath.Join(root, "docker.pid"),
 	})
 	if err != nil {
 		os.RemoveAll(root)
