@@ -79,22 +79,22 @@
   sha256: cadcf7ea4efe3a68728893813643cebe1185e5b1d4be5b96245f65c9a4d5ea41
   license: MIT
 - dependency: bazel_compile_commands_linux_amd64
-  version: https://github.com/kiron1/bazel-compile-commands/releases/download/bazel-compile-commands-v0.22.4/bazel-compile-commands_0.22.4-linux_amd64.zip
+  version: https://github.com/kiron1/bazel-compile-commands/releases/download/v0.21.0/bazel-compile-commands_0.21.0-jammy_amd64.deb
   retrieved: "2026-11-19"
-  commit: 14c1210b2d18b0e898faa71847e303d6ad66e0ea
-  sha256: bb162adaefb282a9e4f0f399fe6223d1d2fe3740518148c1ca8f6f81db4003f6
+  commit: bdcb3f844aa0b8197db192f50ea81b8279b842ca
+  sha256: e57cc545ea9ab6dfc494eb2c5913210099e8e31e947517fd0545844d06949b47
   license: MIT
 - dependency: bazel_compile_commands_linux_arm64
-  version: https://github.com/kiron1/bazel-compile-commands/releases/download/bazel-compile-commands-v0.22.4/bazel-compile-commands_0.22.4-linux_arm64.zip
+  version: https://github.com/kiron1/bazel-compile-commands/releases/download/v0.21.0/bazel-compile-commands_0.21.0-jammy_arm64.deb
   retrieved: "2026-11-19"
-  commit: 14c1210b2d18b0e898faa71847e303d6ad66e0ea
-  sha256: c1ad5a5a1c7aaf79d8efe56201ede04b180b4031ee44cadafda1373b75029498
+  commit: bdcb3f844aa0b8197db192f50ea81b8279b842ca
+  sha256: ea006e5ec7a906994bdb0580c779a21a345d864541d58021541cb6c65623c642
   license: MIT
 - dependency: bazel_compile_commands_macos_universal
-  version: https://github.com/kiron1/bazel-compile-commands/releases/download/bazel-compile-commands-v0.22.4/bazel-compile-commands_0.22.4-macos_universal.zip
+  version: https://github.com/kiron1/bazel-compile-commands/releases/download/v0.21.0/bazel-compile-commands_0.21.0-macos_universal.zip
   retrieved: "2026-11-19"
-  commit: 14c1210b2d18b0e898faa71847e303d6ad66e0ea
-  sha256: 6183cbaec5d9667e4def8590e4558a4e8eb106da34e2cd8a16733f8becf1ce4e
+  commit: bdcb3f844aa0b8197db192f50ea81b8279b842ca
+  sha256: b21f3bb40ac6c92158c52c81bfe1b96e57101165d580f62c32a825631e0ffd94
   license: MIT
 - dependency: bazel_lib
   version: https://github.com/bazel-contrib/bazel-lib/releases/download/v3.4.0/bazel-lib-v3.4.0.tar.gz
