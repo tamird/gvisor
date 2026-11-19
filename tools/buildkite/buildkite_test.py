@@ -263,7 +263,7 @@ class ParseRefTest(unittest.TestCase):
           self.assertEqual(
               buildkite._pull_request_branch("someowner", "gvisor", number), want
           )
-      with self.assertRaisesRegex(buildkite.Error, "60 API requests"):
+      with self.assertRaisesRegex(buildkite.Error, "/pulls/4: not found"):
         buildkite._pull_request_branch("someowner", "gvisor", 4)
 
   def test_errors(self):

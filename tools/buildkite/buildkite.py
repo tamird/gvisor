@@ -682,8 +682,14 @@ def failed(
         for e in entries
         if all_attempts or e[1].get("retry") not in ("passed", "failed")
     ]
+    def add_log(
+        entry: tuple[dict[str, object], dict[str, object], list[dict[str, str]]]
+    ) -> None:
+      job, info, annotated = entry
+      _add_log(build, job, info, annotated, excerpt_lines)
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
-      list(pool.map(lambda e: _add_log(build, *e, excerpt_lines=excerpt_lines), todo))
+      list(pool.map(add_log, todo))
   infos = [i for _, i, _ in entries]
   result: FailedResult = {"build": _build_info(b), "jobs": infos}
   if unattributed:

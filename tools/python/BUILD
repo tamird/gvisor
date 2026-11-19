@@ -11,9 +11,6 @@ exports_files(["requirements_lock.txt"])
 
 py_console_script_binary(
     name = "typecheck_test",
-    binary_rule = py_test,
-    pkg = requirement("mypy"),
-    script = "mypy",
     size = "small",
     args = [
         "--config-file=$(rootpath :mypy.ini)",
@@ -22,6 +19,7 @@ py_console_script_binary(
         "$(rootpath //tools:compat/realpath.py)",
         "$(rootpath //tools:gen_compile_commands.py)",
     ],
+    binary_rule = py_test,
     data = [
         ":mypy.ini",
         "//tools:compat/realpath.py",
@@ -29,5 +27,7 @@ py_console_script_binary(
         "//tools/buildkite:buildkite.py",
     ],
     legacy_create_init = False,
+    pkg = requirement("mypy"),
+    script = "mypy",
     target_compatible_with = ["@platforms//os:linux"],
 )
