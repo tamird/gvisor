@@ -40,8 +40,13 @@ def resolve(path: str) -> str:
 
 
 match sys.argv:
-  case [program, go_fix, bazel_fix, checker, go, build, module, bzl, *test_args]:
-    GO_FIX, BAZEL_FIX, CHECKER = map(resolve, (go_fix, bazel_fix, checker))
+  case [
+      program, go_fix, bazel_fix, checker, formatter,
+      go, build, module, bzl, *test_args,
+  ]:
+    GO_FIX, BAZEL_FIX, CHECKER, FORMATTER = map(
+        resolve, (go_fix, bazel_fix, checker, formatter)
+    )
     SOURCES = list(map(resolve, (go, build, module, bzl)))
     sys.argv = [program, *test_args]
   case _:
@@ -94,7 +99,9 @@ class FixerTest(unittest.TestCase):
         if fixer == BAZEL_FIX:
           self.assertIn("(formatted)", result.stdout + result.stderr)
         result = subprocess.run(
-            [fixer, "--sources=" + str(manifest)], cwd=subdirectory, env=env,
+            [fixer, "--command=" + FORMATTER,
+             "--sources=" + str(manifest), "--fix"],
+            cwd=subdirectory, env=env,
             capture_output=True, text=True, check=False,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -115,7 +122,8 @@ class FixerTest(unittest.TestCase):
       env = dict(os.environ, BUILD_WORKSPACE_DIRECTORY=directory,
                  BUILD_WORKING_DIRECTORY=directory)
       result = subprocess.run(
-          [GO_FIX, "--sources=" + str(manifest)], cwd=root, env=env,
+          [GO_FIX, "--command=" + FORMATTER,
+           "--sources=" + str(manifest), "--fix"], cwd=root, env=env,
           capture_output=True, text=True, check=False,
       )
       self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
