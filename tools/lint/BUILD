@@ -1,3 +1,4 @@
+load("@buildifier_prebuilt//:rules.bzl", "buildifier_binary")
 load("//tools:defs.bzl", "bzl_library")
 load(":defs.bzl", "fixer_test", "source_lint")
 
@@ -15,6 +16,10 @@ bzl_library(
     ],
 )
 
+buildifier_binary(
+    name = "buildifier_tool",
+)
+
 source_lint(
     name = "goimports",
     group = "go",
@@ -24,7 +29,7 @@ source_lint(
 source_lint(
     name = "buildifier",
     group = "bazel",
-    tool = "@com_github_bazelbuild_buildtools//buildifier",
+    tool = ":buildifier_tool",
 )
 
 fixer_test(
@@ -34,12 +39,12 @@ fixer_test(
         "$(rlocationpath :goimports_fix)",
         "$(rlocationpath @org_golang_x_tools//cmd/goimports)",
         "$(rlocationpath :buildifier_fix)",
-        "$(rlocationpath @com_github_bazelbuild_buildtools//buildifier)",
+        "$(rlocationpath :buildifier_tool)",
     ],
     data = [
         ":buildifier_fix",
+        ":buildifier_tool",
         ":goimports_fix",
-        "@com_github_bazelbuild_buildtools//buildifier",
         "@org_golang_x_tools//cmd/goimports",
     ],
     main = "fixer_test.py",
