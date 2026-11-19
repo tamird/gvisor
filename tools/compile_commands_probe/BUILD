@@ -15,3 +15,13 @@ sh_binary(
     args = ["$(rootpath //tools/compile_commands:compile_commands)"],
     data = ["//tools/compile_commands:compile_commands"],
 )
+
+sh_binary(
+    name = "format",
+    srcs = ["format.sh"],
+)
+
+sh_binary(
+    name = "license_metadata",
+    srcs = ["license_metadata.sh"],
+)
