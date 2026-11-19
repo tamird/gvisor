@@ -75,6 +75,7 @@ go_cov(
     visibility = [
         "//debian:__pkg__",
         "//test/runner:__pkg__",
+        "//tools/bazeldefs/tests/coverage:__pkg__",
     ],
     deps = [
         "//runsc/cgoextras",

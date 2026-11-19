@@ -41,12 +41,20 @@ coverage_selection_test(
     ],
 )
 
+filegroup(
+    name = "inventory_sentry",
+    srcs = select({
+        "//tools:gotsan": ["//runsc/cmd/sentry:gvisor_sentry_race_coverage"],
+        "//conditions:default": ["//runsc/cmd/sentry:gvisor_sentry_coverage"],
+    }),
+)
+
 py_test(
     name = "inventory_test",
     size = "large",
     srcs = ["inventory_test.py"],
-    args = ["$(rlocationpath //runsc/cmd/sentry:gvisor_sentry_coverage)"],
-    data = ["//runsc/cmd/sentry:gvisor_sentry_coverage"],
+    args = ["$(rlocationpath :inventory_sentry)"],
+    data = [":inventory_sentry"],
     tags = ["manual"],
     deps = ["@rules_python//python/runfiles"],
 )
