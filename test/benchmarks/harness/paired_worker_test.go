@@ -182,7 +182,7 @@ func TestPairedBenchmark(t *testing.T) {
 				t.Fatal(err)
 			}
 			cmd := exec.CommandContext(ctx, binary,
-				"-test.v=false", "--runtime="+runtimes[index], "--config_path="+config,
+				"-test.v="+strconv.FormatBool(*pairedResponseProbe), "--runtime="+runtimes[index], "--config_path="+config,
 				"-test.run=^$", "-test.bench="+*pairedFilter, "-test.benchtime="+*pairedBenchtime,
 				"--node-warmup-requests="+strconv.Itoa(*pairedNodeWarmup),
 				"--node-response-probe="+strconv.FormatBool(*pairedResponseProbe),
