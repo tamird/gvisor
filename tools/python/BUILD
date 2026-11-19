@@ -60,7 +60,7 @@ native_test(
     args = [
         "check",
         "--project=.",
-        "--output-format=json",
+        "--output-format=sarif",
     ] + _SOURCE_ARGS,
     data = _DATA,
     target_compatible_with = ["@platforms//os:linux"],

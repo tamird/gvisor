@@ -20,5 +20,5 @@ uv pip compile --group typecheck --python-version 3.11 --universal --generate-ha
 
 The generated lock includes distribution hashes. No requirements input file or
 runtime package installation is needed. Pyright uses its declared Node wheel;
-ty uses the native executable from its declared wheel. Each tool emits its
-native JSON diagnostics and exits independently.
+ty uses the native executable from its declared wheel. Mypy and Pyright emit their
+native JSON diagnostics; ty emits native SARIF JSON. Each exits independently.
