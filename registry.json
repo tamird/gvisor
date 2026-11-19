@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-19T22:31:35.101324+00:00",
+    "updatedAt": "2026-11-19T22:58:35.825500+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -44365,8 +44365,8 @@
       "url": "https://github.com/google/gvisor/pull/16604",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-19T22:31:35.101324+00:00",
-      "summary": "The real generated-source oracle workflow44628753098 completed successfully after graph audit, but its runtime/counter result still requires the instrumentation owner audit. The earlier three-byte control remains valid only in its stated scope. No8,192-pair result or new source/publication claim is inferred from workflow status.",
+      "updatedAt": "2026-11-19T22:58:35.825500+00:00",
+      "summary": "The real generated-source oracle has audited AMD64 and ARM64 runtime proofs. The AMD64 Go1.27.3 proof observed33,073 real counters and8,192 distinct exclusive witnesses; the ARM proof is separately audited. Canonical formatting recovery remains before the review handoff. These results do not imply new source publication or approval.",
       "evidence": [
         {
           "label": "Published pull request",
@@ -44409,8 +44409,8 @@
         "owner": "coverage_security_review",
         "sourceHead": "7cc5ad9efdff3d4cfaa12eca45ea9156bd57492a",
         "observedAt": "2026-11-08T13:23:10Z",
-        "disposition": "The real generated-source oracle workflow44628753098 completed successfully after graph audit, but its runtime/counter result still requires the instrumentation owner audit. The earlier three-byte control remains valid only in its stated scope. No8,192-pair result or new source/publication claim is inferred from workflow status.",
-        "nextAction": "coverage_security_review audits actual generated-source oracle44628753098 execution, counters and controls before granting8,192-pair credit. Root follows the existing published7cc PR lifecycle. Keep source qualification and any later publication decision separate.",
+        "disposition": "The real generated-source oracle has audited AMD64 and ARM64 runtime proofs. The AMD64 Go1.27.3 proof observed33,073 real counters and8,192 distinct exclusive witnesses; the ARM proof is separately audited. Canonical formatting recovery remains before the review handoff. These results do not imply new source publication or approval.",
+        "nextAction": "coverage_security_review completes canonical formatting recovery and prepares the review handoff using the audited architecture-specific oracle evidence. Preserve valid runtime products; do not repeat unchanged oracle execution or publish source before the applicable source decision. Root follows the existing published7cc PR lifecycle.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16604",
           "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...de106f647e5e2157aa3d6ac91d09727f698daca4",
@@ -44424,8 +44424,8 @@
           "https://github.com/tamird/gvisor/actions/runs/44622042580",
           "https://github.com/tamird/gvisor/actions/runs/44628753098"
         ],
-        "recheckCondition": "Owner-verified oracle runtime/count evidence or substantive source/PR feedback.",
-        "curatedAt": "2026-11-19T22:31:35.101324+00:00",
+        "recheckCondition": "Canonical formatting result and review handoff, substantive source changes or original-PR feedback.",
+        "curatedAt": "2026-11-19T22:58:35.825500+00:00",
         "priorImportNextAction": "Follow upstream checks and maintainer review on #16604. DCO import coordination: Root coordinates #17677 at 5371cb7c75de. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17677,
@@ -44619,8 +44619,8 @@
         "recheckCondition": "Current-head CI, substantive technical feedback or import lifecycle changes; named technical holds remain.",
         "holdsPreserved": {}
       },
-      "nextStep": "coverage_security_review audits actual generated-source oracle44628753098 execution, counters and controls before granting8,192-pair credit. Root follows the existing published7cc PR lifecycle. Keep source qualification and any later publication decision separate.",
-      "recheckCondition": "Owner-verified oracle runtime/count evidence or substantive source/PR feedback."
+      "nextStep": "coverage_security_review completes canonical formatting recovery and prepares the review handoff using the audited architecture-specific oracle evidence. Preserve valid runtime products; do not repeat unchanged oracle execution or publish source before the applicable source decision. Root follows the existing published7cc PR lifecycle.",
+      "recheckCondition": "Canonical formatting result and review handoff, substantive source changes or original-PR feedback."
     },
     {
       "id": "pr:16606",
@@ -134907,10 +134907,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-19T22:31:35.101324+00:00",
-      "summary": "Source6a9fd82e3ba076ce8dc82d6990af45135e5e404c has a passing direct clang-tidy preflight using the supported generator replacement option and a fail-closed consumer. Corrected full callers44627962399 and affected gates still need audit. Earlier two5593-entry databases with zero missing paths remain valid inventory evidence; success from the old wrapper is not compiler proof. Same-source A/A still fails stability; independent reading found no timer/configuration defect.",
-      "nextStep": "The compilation-database owner audits corrected full callers and affected gates before certification or source review/publication. The benchmark owner adds minimal phase visibility to diagnose the demonstrated same-source variation; do not repeat unchanged controls or expand candidate/sample scope. Root follows the existing private migration-issue decision; full150/n24 remains open.",
-      "recheckCondition": "Audited corrected-caller/compiler results, verified generated-source oracle evidence, phase-diagnostic/A/A stability evidence or the existing issue decision.",
+      "updatedAt": "2026-11-19T22:58:35.825500+00:00",
+      "summary": "Compilation-database source6a9fd82e3ba076ce8dc82d6990af45135e5e404c is qualified through real corrected callers, relevant gates and two independent reviews with no findings. Its exact fork review ref is published; one upstream-PR source decision was requested at22:53 and remains pending. No upstream PR or DCO exists yet. Phase-plumbing44630273013 passed and awaits owner audit; A/A stability and candidate comparisons remain held.",
+      "nextStep": "Root awaits the existing exact compilation-database source decision once; do not repeat the question or publish the private PR draft body. The oracle owner completes canonical formatting before handoff. The benchmark owner audits minimal phase visibility before further diagnosis; no unchanged repeat or candidate/sample expansion before A/A stability. The separate private migration-issue publication decision remains pending; full150/n24 performance stays open.",
+      "recheckCondition": "Existing source or issue decision, oracle formatting/review handoff, audited phase evidence or actual A/A stability evidence.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135048,6 +135048,14 @@
         {
           "label": "Generated-source oracle workflow; runtime/count audit pending",
           "url": "https://github.com/tamird/gvisor/actions/runs/44628753098"
+        },
+        {
+          "label": "Qualified compilation-database fork review source; existing source decision pending",
+          "url": "https://github.com/tamird/gvisor/commit/6a9fd82e3ba076ce8dc82d6990af45135e5e404c"
+        },
+        {
+          "label": "Minimal phase plumbing passed; owner audit pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44630273013"
         }
       ],
       "followup": {
@@ -135069,12 +135077,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-19T22:31:35.101324+00:00",
-        "nextAction": "The compilation-database owner audits corrected full callers and affected gates before certification or source review/publication. The benchmark owner adds minimal phase visibility to diagnose the demonstrated same-source variation; do not repeat unchanged controls or expand candidate/sample scope. Root follows the existing private migration-issue decision; full150/n24 remains open.",
-        "recheckCondition": "Audited corrected-caller/compiler results, verified generated-source oracle evidence, phase-diagnostic/A/A stability evidence or the existing issue decision.",
+        "curatedAt": "2026-11-19T22:58:35.825500+00:00",
+        "nextAction": "Root awaits the existing exact compilation-database source decision once; do not repeat the question or publish the private PR draft body. The oracle owner completes canonical formatting before handoff. The benchmark owner audits minimal phase visibility before further diagnosis; no unchanged repeat or candidate/sample expansion before A/A stability. The separate private migration-issue publication decision remains pending; full150/n24 performance stays open.",
+        "recheckCondition": "Existing source or issue decision, oracle formatting/review handoff, audited phase evidence or actual A/A stability evidence.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Source6a9fd82e3ba076ce8dc82d6990af45135e5e404c has a passing direct clang-tidy preflight using the supported generator replacement option and a fail-closed consumer. Corrected full callers44627962399 and affected gates still need audit. Earlier two5593-entry databases with zero missing paths remain valid inventory evidence; success from the old wrapper is not compiler proof. Same-source A/A still fails stability; independent reading found no timer/configuration defect.",
+        "disposition": "Compilation-database source6a9fd82e3ba076ce8dc82d6990af45135e5e404c is qualified through real corrected callers, relevant gates and two independent reviews with no findings. Its exact fork review ref is published; one upstream-PR source decision was requested at22:53 and remains pending. No upstream PR or DCO exists yet. Phase-plumbing44630273013 passed and awaits owner audit; A/A stability and candidate comparisons remain held.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135235,7 +135243,7 @@
             "sha256": "bf4a997a1b88d30d3f00746c5a289caae552c9ccdd8c10f4f3103777efae23bf"
           }
         },
-        "currentGateSummary": "Recorded Coverage NORMAL/RACE/parity and earlier complete-input inventory evidence is retained. Corrected clang-tidy preflight passes; full consumer/compiler audit is pending. Oracle workflow success awaits actual count audit. A/A still fails stability, so full150/n24 performance remains open.",
+        "currentGateSummary": "Recorded Coverage NORMAL/RACE/parity evidence is retained. Current compilation-database real-caller/compiler checks and independent reviews are qualified, with source publication awaiting the existing decision. Oracle runtime proofs are audited on both architectures; canonical formatting remains. Phase plumbing passes, but A/A stability and full150/n24 performance remain open.",
         "legacyParity": {
           "source": "6759f7e7bbbbea2125d89d7c9fc1a39eeb2f091d",
           "run": 44574573815,
@@ -135483,5 +135491,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-19T22:31:35.101324+00:00"
+  "updatedAt": "2026-11-19T22:58:35.825500+00:00"
 }
