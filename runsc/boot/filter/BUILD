@@ -59,6 +59,7 @@ go_test(
     srcs = [
         "filter_fuzz_test.go",
     ],
+    gotags = ["fuzz"],
     deps = [
         "//pkg/seccomp",
         "//pkg/sentry/platform/systrap",
