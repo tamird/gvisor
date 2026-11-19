@@ -58,6 +58,7 @@ filegroup(
     name = "runsc_entrypoint",
     srcs = ["//:release"],
     output_group = "runsc",
+    visibility = ["//test/benchmarks/network:__pkg__"],
 )
 
 build_test(

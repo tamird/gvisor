@@ -370,10 +370,33 @@ func StartWorker(b *testing.B) {
 	if err != nil {
 		b.Fatalf("list loaded Docker images: %v", err)
 	}
-	for _, loaded := range images {
-		b.Logf("loaded Docker image: ID=%s tags=%q", loaded.ID, loaded.RepoTags)
+	status, err := os.ReadFile("/proc/self/status")
+	if err != nil {
+		b.Fatal(err)
 	}
-	b.Logf("owned Docker worker: server=%s architecture=%s runtime=%s", version.Version, version.Arch, selectedRuntime)
+	allowedCPUs := ""
+	for _, line := range strings.Split(string(status), "\n") {
+		if value, ok := strings.CutPrefix(line, "Cpus_allowed_list:"); ok {
+			allowedCPUs = strings.TrimSpace(value)
+			break
+		}
+	}
+	if allowedCPUs == "" {
+		b.Fatal("worker process CPU affinity is missing")
+	}
+	if err := json.NewEncoder(os.Stdout).Encode(struct {
+		ServerVersion string          `json:"docker_server_version"`
+		Architecture  string          `json:"architecture"`
+		Runtime       string          `json:"runtime"`
+		Runsc         string          `json:"runsc_entrypoint"`
+		CPUs          int             `json:"num_cpu"`
+		AllowedCPUs   string          `json:"process_allowed_cpus"`
+		ClientCPUs    string          `json:"client_cpuset"`
+		ServerCPUs    string          `json:"server_cpuset"`
+		Images        []image.Summary `json:"images"`
+	}{version.Version, version.Arch, selectedRuntime, runsc, runtime.NumCPU(), allowedCPUs, ClientCPUSet(), ServerCPUSet(), images}); err != nil {
+		b.Fatalf("write worker inventory: %v", err)
+	}
 }
 
 // loadDockerImage loads one declared Docker-save archive into the owned daemon.
