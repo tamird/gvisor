@@ -161,6 +161,9 @@ func recordCPUResources(visit int, trigger string, active map[int]string, produc
 				cpus = strings.TrimSpace(value)
 			}
 		}
+		if *pairedLimitWorkerCPUs && (role == "paired-worker" || role == "owned-dockerd") && cpus != "0-4" {
+			return fmt.Errorf("worker process %s CPUs %q, want 0-4", role, cpus)
+		}
 		if role == "runsc-gofer" && cpus != ServerCPUSet() {
 			return fmt.Errorf("active Gofer CPUs %q, want %q", cpus, ServerCPUSet())
 		}

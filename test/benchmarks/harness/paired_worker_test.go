@@ -40,6 +40,8 @@ import (
 	"gvisor.dev/gvisor/pkg/test/testutil"
 )
 
+var pairedLimitWorkerCPUs = flag.Bool("paired-limit-worker-cpus", false, "restrict worker threads and children to the declared CPUs before Docker startup")
+
 var pairedResponseProbe = flag.Bool("paired-response-probe", false, "inspect Node responses without timed request samples")
 
 var (
@@ -73,7 +75,7 @@ func TestPairedBenchmark(t *testing.T) {
 			t.Fatalf("required worker CPU %d is unavailable; affinity: %v", cpu, available)
 		}
 	}
-	if (*pairedWorkload == "startup-empty" || *pairedWorkload == "startup") && available.Count() != 5 {
+	if (*pairedWorkload == "startup-empty" || *pairedWorkload == "startup" || *pairedLimitWorkerCPUs) && available.Count() != 5 {
 		// A worker can expose additional guest CPUs beyond its reservation.
 		// Re-exec before creating Docker so all new threads and children
 		// inherit the declared partition.
@@ -81,7 +83,7 @@ func TestPairedBenchmark(t *testing.T) {
 		for cpu := 0; cpu <= 4; cpu++ {
 			partition.Set(cpu)
 		}
-		t.Logf("restrict startup worker affinity from %v to %v before re-exec", available, partition)
+		t.Logf("restrict worker affinity from %v to %v before re-exec", available, partition)
 		runtime.LockOSThread()
 		defer runtime.UnlockOSThread()
 		if err := unix.SchedSetaffinity(0, &partition); err != nil {
@@ -160,6 +162,19 @@ func TestPairedBenchmark(t *testing.T) {
 		t.Fatal(err)
 	}
 	host, runtimes, config := startDockerDaemons(t, ctx, []string{arms[0].runsc, arms[1].runsc}, true)
+	if *pairedLimitWorkerCPUs {
+		pidBytes, err := os.ReadFile(filepath.Join(filepath.Dir(config), "docker.pid"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		pid, err := strconv.Atoi(strings.TrimSpace(string(pidBytes)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := recordCPUResources(-1, "worker-partition", map[int]string{pid: "owned-dockerd"}, allProducts); err != nil {
+			t.Fatal(err)
+		}
+	}
 	t.Setenv("DOCKER_HOST", host)
 	t.Setenv("UNSANDBOXED_RUNTIME", "runc")
 	cli, err := client.NewClientWithOpts(client.WithHost(host), client.WithAPIVersionNegotiation())
@@ -427,7 +442,7 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 			}
 			seen[kind]++
 			active[state.State.Pid] = kind
-			if kind == "benchmarks/hey" || (*pairedWorkload != "node" && kind != "benchmarks/redis" && kind != "benchmarks/util") {
+			if kind == "benchmarks/hey" || (*pairedResponseProbe && kind == "benchmarks/util") || (*pairedWorkload != "node" && kind != "benchmarks/redis" && kind != "benchmarks/util") {
 				if err := recordCPUResources(visit, kind, active, products); err != nil {
 					return err
 				}
