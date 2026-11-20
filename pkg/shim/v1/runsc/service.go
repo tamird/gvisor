@@ -578,8 +578,8 @@ func (s *runscService) Checkpoint(ctx context.Context, r *task.CheckpointTaskReq
 			return nil, fmt.Errorf("checkpoint options: %w: %v", errdefs.ErrInvalidArgument, err)
 		}
 	}
-	if options.ParentPath != "" || len(options.EmptyNamespaces) != 0 || options.CgroupsMode != "" {
-		return nil, fmt.Errorf("incremental checkpoints, empty namespaces and cgroup restore modes: %w", errdefs.ErrNotImplemented)
+	if len(options.EmptyNamespaces) != 0 || options.CgroupsMode != "" {
+		return nil, fmt.Errorf("empty namespaces and cgroup restore modes: %w", errdefs.ErrNotImplemented)
 	}
 	if r.Path == "" {
 		return nil, fmt.Errorf("checkpoint image path is empty: %w", errdefs.ErrInvalidArgument)

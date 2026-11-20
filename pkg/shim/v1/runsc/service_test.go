@@ -51,7 +51,6 @@ func TestStandardCheckpointRejectsUnsupportedOptions(t *testing.T) {
 		name string
 		options *runctypes.CheckpointOptions
 	}{
-		{"parent", &runctypes.CheckpointOptions{ParentPath: "/parent"}},
 		{"empty namespace", &runctypes.CheckpointOptions{EmptyNamespaces: []string{"network"}}},
 		{"cgroups mode", &runctypes.CheckpointOptions{CgroupsMode: "strict"}},
 	} {
