@@ -46,6 +46,7 @@ single_version_override(
     patches = [
         "//tools:rules_cgo.patch",
         "//tools:rules_go_export.patch",
+        "//tools:rules_go_host_c.patch",
     ],
     version = "0.65.0",
 )
