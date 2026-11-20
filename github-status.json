@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-20T00:41:38.762129+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-20T00:24:02.233172+00:00",
+  "registryDate": "2026-11-20T00:43:57.063788+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -446190,9 +446190,9 @@
       "number": 15064,
       "head": "acf93596eddca6ca31f652d75b207a8da544ff54",
       "sourceNumber": 15064,
-      "owner": "Agent",
-      "claimed": false,
-      "overdue": true,
+      "owner": "packet_copy_feedback",
+      "claimed": true,
+      "overdue": false,
       "kind": "inline",
       "id": "PRRC_kwDOB9IlXs8AAAABFF6qzg",
       "createdAt": "2026-11-19T23:57:13Z",
@@ -447897,10 +447897,10 @@
       "number": 15064,
       "head": "acf93596eddca6ca31f652d75b207a8da544ff54",
       "sourceNumber": 15064,
-      "owner": "Agent",
+      "owner": "packet_copy_feedback",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABZMELDg",
-      "needsTriage": true,
+      "needsTriage": false,
       "url": "https://github.com/google/gvisor/pull/15064#pullrequestreview-5985340174",
       "author": "rexren-gif",
       "updatedAt": "2026-11-19T23:57:13Z",
@@ -447922,7 +447922,7 @@
       "url": "https://github.com/google/gvisor/pull/16522#pullrequestreview-5985630854",
       "author": "rexren-gif",
       "updatedAt": "2026-11-20T00:26:22Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
       "feedbackComplete": true,
@@ -447941,7 +447941,7 @@
       "url": "https://github.com/google/gvisor/pull/17181#issuecomment-7026372055",
       "author": "EtiennePerot",
       "updatedAt": "2026-11-20T00:29:33Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
       "feedbackComplete": true,
@@ -447960,7 +447960,7 @@
       "url": "https://github.com/google/gvisor/pull/16737#issuecomment-7026378874",
       "author": "EtiennePerot",
       "updatedAt": "2026-11-20T00:29:52Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
       "feedbackComplete": true,
@@ -447978,7 +447978,7 @@
       "url": "https://github.com/google/gvisor/pull/17816#pullrequestreview-5985707150",
       "author": "milantracy",
       "updatedAt": "2026-11-20T00:34:49Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
       "feedbackComplete": true,
@@ -448333,7 +448333,7 @@
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
         "nextAction": "Follow maintainer review, exact published-head checks and any matching import; handle new substantive feedback in the existing workstream. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 2aa840f4ffe655f0c749185070fba77e676186b5; observed 2026-11-17T19:29:29.454062+00:00): build 1546 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-20T00:41:37.337032+00:00"
     },
     {
       "repo": "google/gvisor",
@@ -448639,10 +448639,10 @@
         }
       ],
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "packet_copy_feedback",
         "sourceHead": "acf93596eddca6ca31f652d75b207a8da544ff54",
-        "disposition": "Reconciled stale historical followup against actual topic changes and the complete live conversation; old approval/qualification scopes remain historical.",
-        "nextAction": "Follow exact current-head CI and the existing reviewer requests to Parth and rexren-gif. Inspection found the same ordered topic additions/removals as the legacy head across all seven files, plus no new human review request. Preserve historical qualification on its actual revisions; no new approval or blanket semantic-validation claim is made. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source acf93596eddca6ca31f652d75b207a8da544ff54; observed 2026-11-17T19:29:29.454062+00:00): build 1448 has buildkite/first-pass/pr FAILURE. Pipeline upload exits 1 because .buildkite/first-pass.yaml is absent. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Coordinate a supported source/pipeline bootstrap update with the upstream CI owner, preserving the topic and dependency requirements; validate remotely once provider capacity permits. Recheck: Exact source head gains a supported pipeline entry point and provider quota permits validation, or upstream CI changes pipeline selection."
+        "disposition": "Root read complete review5985340174 and inline4636715726 on unchanged publicacf93596. The review explicitly identifies an AI reviewer on Rex’s behalf: it is an automated finding, not a new human instruction. packet_copy_feedback owns verification of Linux/Sentry socket-family behavior; the finding remains unresolved. A31-line native syscall case is under qualification in44647566688, with the original production guard unchanged pending Linux evidence. No reply or source amendment is published.",
+        "nextAction": "packet_copy_feedback audits actual Linux/Sentry syscall evidence, then fixes the owning mechanism only if supported. Preserve publicacf93596 and existing CI/dependency requirements; root handles any eventual source-review/publication decision. No automatic acknowledgement or resolved-finding claim."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxwnK4w"
@@ -464883,7 +464883,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T00:24:02.233172+00:00"
+        "observedAt": "2026-11-20T00:43:57.063788+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464892,7 +464892,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T00:24:02.233172+00:00"
+        "observedAt": "2026-11-20T00:43:57.063788+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464901,7 +464901,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T00:24:02.233172+00:00"
+        "observedAt": "2026-11-20T00:43:57.063788+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464910,7 +464910,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T00:24:02.233172+00:00"
+        "observedAt": "2026-11-20T00:43:57.063788+00:00"
       }
     },
     "issue:google/benchmark:1634": {
@@ -464919,7 +464919,7 @@
         "since": "2026-11-19T00:39:33.110112+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T00:24:02.233172+00:00"
+        "observedAt": "2026-11-20T00:43:57.063788+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464928,7 +464928,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T00:24:02.233172+00:00"
+        "observedAt": "2026-11-20T00:43:57.063788+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464937,7 +464937,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T00:24:02.233172+00:00"
+        "observedAt": "2026-11-20T00:43:57.063788+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464946,7 +464946,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T00:24:02.233172+00:00"
+        "observedAt": "2026-11-20T00:43:57.063788+00:00"
       }
     }
   },

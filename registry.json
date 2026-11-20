@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T00:24:02.233172+00:00",
+    "updatedAt": "2026-11-20T00:43:57.063788+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1638,12 +1638,12 @@
       "group": "runtime",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-11-17T19:04:43.853615+00:00",
-      "summary": "The requested post-#16046 rebase is published at 9708dbc9f027 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe mechanical conflict refresh is published at c058cddf269f5fe81bb4e261f6356ca764bb50ca on master 4ac0fde02. The reviewed topic behavior and record are preserved, including the upstream TUN restore rollback where it intersects surrounding code. No comments or review requests were posted and no new runtime was run. Current exact-head CI and review state are shown from the snapshot.",
+      "updatedAt": "2026-11-20T00:43:57.063788+00:00",
+      "summary": "Root read complete review5985340174 and inline4636715726 on unchanged publicacf93596. The review explicitly identifies an AI reviewer on Rex’s behalf: it is an automated finding, not a new human instruction. packet_copy_feedback owns verification of Linux/Sentry socket-family behavior; the finding remains unresolved. A31-line native syscall case is under qualification in44647566688, with the original production guard unchanged pending Linux evidence. No reply or source amendment is published.",
       "followup": {
-        "disposition": "Reconciled stale historical followup against actual topic changes and the complete live conversation; old approval/qualification scopes remain historical.",
-        "owner": "root",
-        "nextAction": "Follow exact current-head CI and the existing reviewer requests to Parth and rexren-gif. Inspection found the same ordered topic additions/removals as the legacy head across all seven files, plus no new human review request. Preserve historical qualification on its actual revisions; no new approval or blanket semantic-validation claim is made. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source acf93596eddca6ca31f652d75b207a8da544ff54; observed 2026-11-17T19:29:29.454062+00:00): build 1448 has buildkite/first-pass/pr FAILURE. Pipeline upload exits 1 because .buildkite/first-pass.yaml is absent. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Coordinate a supported source/pipeline bootstrap update with the upstream CI owner, preserving the topic and dependency requirements; validate remotely once provider capacity permits. Recheck: Exact source head gains a supported pipeline entry point and provider quota permits validation, or upstream CI changes pipeline selection.",
+        "disposition": "Root read complete review5985340174 and inline4636715726 on unchanged publicacf93596. The review explicitly identifies an AI reviewer on Rex’s behalf: it is an automated finding, not a new human instruction. packet_copy_feedback owns verification of Linux/Sentry socket-family behavior; the finding remains unresolved. A31-line native syscall case is under qualification in44647566688, with the original production guard unchanged pending Linux evidence. No reply or source amendment is published.",
+        "owner": "packet_copy_feedback",
+        "nextAction": "packet_copy_feedback audits actual Linux/Sentry syscall evidence, then fixes the owning mechanism only if supported. Preserve publicacf93596 and existing CI/dependency requirements; root handles any eventual source-review/publication decision. No automatic acknowledgement or resolved-finding claim.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15064",
           "https://github.com/tamird/gvisor/commit/9708dbc9f027a6eece93b1bb9b4f1638038ff31c",
@@ -1651,12 +1651,16 @@
           "https://github.com/tamird/gvisor/commit/efa6209c33882e002d3aa0d27f9985342618d4a9",
           "https://github.com/tamird/gvisor/commit/acf93596eddca6ca31f652d75b207a8da544ff54",
           "https://buildkite.com/gvisor/first-pass/builds/1448",
-          "https://buildkite.com/gvisor/first-pass/builds/1448#01a1ead3-e466-4239-b8d9-11058e054af7"
+          "https://buildkite.com/gvisor/first-pass/builds/1448#01a1ead3-e466-4239-b8d9-11058e054af7",
+          "https://github.com/google/gvisor/pull/15064#discussion_r4636715726",
+          "https://github.com/google/gvisor/pull/15064#pullrequestreview-5985340174",
+          "https://github.com/tamird/gvisor/actions/runs/44647566688"
         ],
         "sourceHead": "acf93596eddca6ca31f652d75b207a8da544ff54",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nExact source head gains a supported pipeline entry point and provider quota permits validation, or upstream CI changes pipeline selection."
+        "observedAt": "2026-11-20T00:43:57.063788+00:00",
+        "recheckCondition": "Actual Linux/Sentry conformance result, verified production correction/review readiness, or changed current source/feedback.",
+        "curatedAt": "2026-11-20T00:43:57.063788+00:00"
       },
       "head": "acf93596eddca6ca31f652d75b207a8da544ff54",
       "evidence": [
@@ -1706,7 +1710,9 @@
           "reviewDecision": null,
           "reviewedAt": "2026-10-08T00:44:30.969242+00:00"
         }
-      }
+      },
+      "nextStep": "packet_copy_feedback audits actual Linux/Sentry syscall evidence, then fixes the owning mechanism only if supported. Preserve publicacf93596 and existing CI/dependency requirements; root handles any eventual source-review/publication decision. No automatic acknowledgement or resolved-finding claim.",
+      "recheckCondition": "Actual Linux/Sentry conformance result, verified production correction/review readiness, or changed current source/feedback."
     },
     {
       "id": "pr:15062",
@@ -134915,10 +134921,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T00:24:02.233172+00:00",
-      "summary": "Response diagnostics verified128HTTP200 responses, each4206bytes with an identical skeleton and four1024-character alphanumeric paragraphs; hashes differ only in values. This establishes no varying-size evidence or internal-work stability. No suitable existing performance worker is verified: BuildBuddy inventory returned403 and no alternative is configured; the existing host/pool information question is pending, with no further measurements. Pinned native-C RBE preflights and compiler/action-image graphs pass on AMD64 and ARM64. AMD packet44644420071 remains live. ARM host recovery demonstrated nested-network-namespace EPERM; a shared standard Bazel-options fix is in implementation, without host sysctl changes or Go re-exec. Full packet qualification and A/A stability remain open.",
-      "nextStep": "Root awaits existing host/pool information before further performance measurements. Packet owner audits AMD packet results and qualifies the shared ARM host-options correction while retaining RBE/cache for builds. Preserve qualified compdb6a9, secfuzz8c and their existing source decisions plus private issue decision; no repeated questions or draft-body publication. Full150/n24 performance remains open.",
-      "recheckCondition": "Actual packet/ARM host recovery results, existing worker information or publication decisions, or substantive source/review feedback.",
+      "updatedAt": "2026-11-20T00:43:57.063788+00:00",
+      "summary": "Full AMD TCP functional qualification44644420071 passed531cases; no race or performance claim. ARM host capabilities44647122992 and compiler/proto action-image/no-local graph pass; actual ARM packet44647609416 is running. Structured worker reporting produced contradictory PASSED/FAILED_TO_BUILD events and remains under diagnosis, so reporting is not qualified. Standard Bazel-option argv transport30b08e5d is delivered; host TestRunner recovery retains RBE/cache for builds. Performance remains held for existing worker/pool isolation information after bounded128-response proof; no new timed samples or stability claim.",
+      "nextStep": "Packet owner audits ARM packet execution and repairs contradictory structured reporting before declaring full qualification. packet_copy_feedback owns the new15064 conformance finding. Root awaits existing isolated-worker information and existing compdb/secfuzz/private-issue source decisions; no repeated questions or new decision frames. Full150/n24 performance remains open.",
+      "recheckCondition": "Audited ARM packet/reporting results, Linux/Sentry conformance evidence, substantive feedback, or answers to existing worker/publication questions.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135116,6 +135122,18 @@
         {
           "label": "ARM compiler/action-image graph passed",
           "url": "https://github.com/tamird/gvisor/actions/runs/44644616878"
+        },
+        {
+          "label": "ARM host capability recovery passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44647122992"
+        },
+        {
+          "label": "ARM compiler/proto image and no-local graph passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44647134758"
+        },
+        {
+          "label": "ARM packet qualification; execution/reporting audit pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44647609416"
         }
       ],
       "followup": {
@@ -135137,12 +135155,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T00:24:02.233172+00:00",
-        "nextAction": "Root awaits existing host/pool information before further performance measurements. Packet owner audits AMD packet results and qualifies the shared ARM host-options correction while retaining RBE/cache for builds. Preserve qualified compdb6a9, secfuzz8c and their existing source decisions plus private issue decision; no repeated questions or draft-body publication. Full150/n24 performance remains open.",
-        "recheckCondition": "Actual packet/ARM host recovery results, existing worker information or publication decisions, or substantive source/review feedback.",
+        "curatedAt": "2026-11-20T00:43:57.063788+00:00",
+        "nextAction": "Packet owner audits ARM packet execution and repairs contradictory structured reporting before declaring full qualification. packet_copy_feedback owns the new15064 conformance finding. Root awaits existing isolated-worker information and existing compdb/secfuzz/private-issue source decisions; no repeated questions or new decision frames. Full150/n24 performance remains open.",
+        "recheckCondition": "Audited ARM packet/reporting results, Linux/Sentry conformance evidence, substantive feedback, or answers to existing worker/publication questions.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Response diagnostics verified128HTTP200 responses, each4206bytes with an identical skeleton and four1024-character alphanumeric paragraphs; hashes differ only in values. This establishes no varying-size evidence or internal-work stability. No suitable existing performance worker is verified: BuildBuddy inventory returned403 and no alternative is configured; the existing host/pool information question is pending, with no further measurements. Pinned native-C RBE preflights and compiler/action-image graphs pass on AMD64 and ARM64. AMD packet44644420071 remains live. ARM host recovery demonstrated nested-network-namespace EPERM; a shared standard Bazel-options fix is in implementation, without host sysctl changes or Go re-exec. Full packet qualification and A/A stability remain open.",
+        "disposition": "Full AMD TCP functional qualification44644420071 passed531cases; no race or performance claim. ARM host capabilities44647122992 and compiler/proto action-image/no-local graph pass; actual ARM packet44647609416 is running. Structured worker reporting produced contradictory PASSED/FAILED_TO_BUILD events and remains under diagnosis, so reporting is not qualified. Standard Bazel-option argv transport30b08e5d is delivered; host TestRunner recovery retains RBE/cache for builds. Performance remains held for existing worker/pool isolation information after bounded128-response proof; no new timed samples or stability claim.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135551,5 +135569,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T00:24:02.233172+00:00"
+  "updatedAt": "2026-11-20T00:43:57.063788+00:00"
 }
