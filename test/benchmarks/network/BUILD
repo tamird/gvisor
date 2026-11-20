@@ -43,13 +43,15 @@ benchmark_test(
     srcs = [
         "node_test.go",
     ],
-    data = ["//images:benchmarks/node/index_test.js"],
+    data = [
+        "//images:benchmarks/node/index.js",
+        "//images:benchmarks/node/index_test.js",
+    ],
     embed = [":network"],
     use_for_pgo = False,
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/test/dockerutil",
-        "//pkg/test/testutil",
         "//test/benchmarks/harness",
         "//test/benchmarks/tools",
         "//test/metricsviz",
@@ -60,22 +62,23 @@ benchmark_test(
     name = "node_worker_test",
     srcs = [
         "node_test.go",
+        "node_worker_test.go",
     ],
     args = [
         "--owned-docker",
-        "--worker-image-archives=$(rootpath //images:benchmark_node_archive),$(rootpath //images:benchmark_hey_archive),$(rootpath //images:benchmark_util_archive),$(rootpath //images/basic:benchmark_redis_archive)",
-        "-test.run=^$$",
-        "-test.bench=^BenchmarkNode$$",
-        "-test.benchtime=25x",
+        "--worker-image-archives=$(rootpath //images:benchmark_node_completed_archive)",
+        "-test.run=^TestNodeProducerWithWorker$$",
+        "-test.bench=^$$",
     ],
     data = [
-        "//images:benchmark_hey_archive",
-        "//images:benchmark_node_archive",
-        "//images:benchmark_util_archive",
-        "//images/basic:benchmark_redis_archive",
+        "//images:benchmarks/node/index.js",
+        "//images:benchmarks/node/index_test.js",
+        "//images:benchmark_node_completed_archive",
     ],
     embed = [":network"],
     exec_properties = {
+        "test.EstimatedCPU": "5",
+        "test.EstimatedMemory": "500M",
         "test.init-dockerd": "false",
         "test.workload-isolation-type": "firecracker",
     },
@@ -88,7 +91,6 @@ benchmark_test(
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/test/dockerutil",
-        "//pkg/test/testutil",
         "//test/benchmarks/harness",
         "//test/benchmarks/tools",
         "//test/metricsviz",
@@ -109,6 +111,8 @@ benchmark_test(
         "-test.benchtime=25x",
     ],
     data = [
+        "//images:benchmarks/node/index.js",
+        "//images:benchmarks/node/index_test.js",
         "//:release",
         "//images:benchmark_hey_archive",
         "//images:benchmark_node_archive",
@@ -130,7 +134,6 @@ benchmark_test(
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/test/dockerutil",
-        "//pkg/test/testutil",
         "//test/benchmarks/harness",
         "//test/benchmarks/tools",
         "//test/metricsviz",

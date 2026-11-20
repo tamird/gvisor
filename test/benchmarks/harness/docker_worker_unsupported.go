@@ -19,7 +19,7 @@ package harness
 import "testing"
 
 // StartWorker initializes an explicitly selected owned benchmark worker.
-func StartWorker(b *testing.B) {
+func StartWorker(b testing.TB) {
 	if *ownedDocker {
 		b.Fatal("owned Docker workers require Linux")
 	}

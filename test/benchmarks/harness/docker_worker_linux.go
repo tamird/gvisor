@@ -317,8 +317,8 @@ func startDockerDaemons(t testing.TB, ctx context.Context, releases []string, br
 }
 
 // StartWorker initializes an explicitly selected owned benchmark worker.
-// Its cleanup belongs to the top-level benchmark, outside measured subbenchmarks.
-func StartWorker(b *testing.B) {
+// Its cleanup belongs to the caller, outside measured subbenchmarks.
+func StartWorker(b testing.TB) {
 	b.Helper()
 	if !*ownedDocker {
 		return

@@ -2,7 +2,7 @@ const assert = require('assert');
 const fs = require('fs');
 const vm = require('vm');
 
-const source = fs.readFileSync('/usr/src/app/index.js', 'utf8');
+const source = fs.readFileSync(require('path').join(__dirname, 'index.js'), 'utf8');
 function request() {
   let handler;
   const callbacks = [];
@@ -24,7 +24,7 @@ function request() {
       if (name === 'secure-random-string') return opts => 'x'.repeat(opts.length);
       return require(name);
     },
-    __dirname: '/usr/src/app',
+    __dirname,
     process: {argv: ['node', 'index.js', 'redis']},
   }, {filename: 'index.js'});
   handler({}, {render(view, locals) { rendered.push(Array.from(locals.text)); }},

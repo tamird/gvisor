@@ -10,7 +10,10 @@ package(
 )
 
 exports_files(
-    ["benchmarks/node/index_test.js"],
+    [
+        "benchmarks/node/index.js",
+        "benchmarks/node/index_test.js",
+    ],
     visibility = ["//test/benchmarks/network:__pkg__"],
 )
 

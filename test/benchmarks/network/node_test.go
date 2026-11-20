@@ -29,7 +29,6 @@ import (
 	"time"
 
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
-	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/test/benchmarks/harness"
 	"gvisor.dev/gvisor/test/benchmarks/tools"
 	"gvisor.dev/gvisor/test/metricsviz"
@@ -41,6 +40,28 @@ var (
 	nodeWarmupRequests = flag.Int("node-warmup-requests", 0, "requests to warm each actual Node server before measurement")
 	nodeRedisCPUs      = flag.String("node-redis-cpuset", "", "explicit CPU affinity for the native Redis backend")
 )
+
+func TestNodeProducer(t *testing.T) {
+	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+	defer cancel()
+	machine, err := harness.GetMachine()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer machine.CleanUp()
+	container := machine.GetNativeContainer(ctx, t)
+	defer container.CleanUp(context.WithoutCancel(ctx))
+	opts := dockerutil.RunOpts{Image: "benchmarks/node"}
+	if err := container.CopyFiles(&opts, "/node-producer-test",
+		"images/benchmarks/node/index.js", "images/benchmarks/node/index_test.js"); err != nil {
+		t.Fatal(err)
+	}
+	output, err := container.Run(ctx, opts, "node", "/node-producer-test/index_test.js")
+	if err != nil {
+		t.Fatalf("Node producer witness: %v: %s", err, output)
+	}
+	t.Logf("%s", output)
+}
 
 // BenchmarkNode runs requests using 'hey' against a Node server run on
 // 'runtime'. The server responds to requests by grabbing some data in a
@@ -133,19 +154,6 @@ func runNode(b *testing.B, hey *tools.Hey) {
 		CpusetCpus: harness.ClientCPUSet(),
 	}
 	if *nodeResponseProbe {
-		witnessPath, err := testutil.FindFile("images/benchmarks/node/index_test.js")
-		if err != nil {
-			b.Fatal(err)
-		}
-		witness, err := os.ReadFile(witnessPath)
-		if err != nil {
-			b.Fatal(err)
-		}
-		if output, err := nodeApp.Exec(ctx, dockerutil.ExecOpts{}, "node", "-e", string(witness)); err != nil {
-			b.Fatalf("Node producer witness: %v: %s", err, output)
-		} else {
-			b.Logf("Node producer witness: %s", output)
-		}
 		probe := clientMachine.GetNativeContainer(ctx, b)
 		defer probe.CleanUp(ctx)
 		if err := probe.Spawn(ctx, dockerutil.RunOpts{
