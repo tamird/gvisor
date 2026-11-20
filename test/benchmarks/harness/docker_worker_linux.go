@@ -343,7 +343,7 @@ func StartWorker(b testing.TB) {
 			b.Fatal(err)
 		}
 	}
-	host, selectedRuntime, configPath := startDockerDaemon(b, ctx, runsc, true)
+	host, selectedRuntime, configPath := startDockerDaemon(b, ctx, runsc, *workerBridge)
 	b.Setenv("DOCKER_HOST", host)
 	// Native benchmark clients must continue to use runc.
 	b.Setenv("UNSANDBOXED_RUNTIME", "runc")

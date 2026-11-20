@@ -24,6 +24,8 @@ import (
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
 )
 
+var workerBridge = flag.Bool("worker-bridge", true, "create a private network namespace and Docker bridge for the owned worker")
+
 var (
 	help           = flag.Bool("help", false, "print this usage message")
 	ownedDocker    = flag.Bool("owned-docker", false, "start a private Docker worker from declared inputs")

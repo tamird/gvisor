@@ -66,6 +66,7 @@ benchmark_test(
     ],
     args = [
         "--owned-docker",
+        "--worker-bridge=false",
         "--worker-image-archives=$(rootpath //images:benchmark_hey_archive)",
         "-test.v=test2json",
         "-test.run=^TestHeyReportInterface$$",
