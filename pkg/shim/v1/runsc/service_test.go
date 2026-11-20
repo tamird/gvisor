@@ -31,6 +31,7 @@ import (
 	task "github.com/containerd/containerd/api/runtime/task/v2"
 	runctypes "github.com/containerd/containerd/api/types/runc/options"
 	coreevents "github.com/containerd/containerd/v2/core/events"
+	"github.com/containerd/containerd/v2/core/runtime"
 	"github.com/containerd/containerd/v2/pkg/namespaces"
 	"github.com/containerd/containerd/v2/pkg/stdio"
 	"github.com/containerd/errdefs"
@@ -757,5 +758,11 @@ func TestCreateDoesNotBlockOtherContainers(t *testing.T) {
 
 	if _, err := s.getContainer("creating"); err != nil {
 		t.Errorf("getContainer(creating) after Create: %v", err)
+	}
+}
+
+func TestCheckpointEventTopic(t *testing.T) {
+	if got := getTopic(&apievents.TaskCheckpointed{}); got != runtime.TaskCheckpointedEventTopic {
+		t.Fatalf("checkpoint event topic = %q, want %q", got, runtime.TaskCheckpointedEventTopic)
 	}
 }

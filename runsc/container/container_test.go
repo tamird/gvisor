@@ -6753,3 +6753,46 @@ func TestReadFile(t *testing.T) {
 		t.Errorf("Got %q (%d bytes), want 'inux' (4 bytes)", string(content3), len(content3))
 	}
 }
+
+func TestSignalPausedSIGKILL(t *testing.T) {
+	for _, all := range []bool{false, true} {
+		t.Run(fmt.Sprintf("all=%t", all), func(t *testing.T) {
+			spec, conf := sleepSpecConf(t)
+			_, bundleDir, cleanup, err := testutil.SetupContainer(spec, conf)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer cleanup()
+			c, err := New(conf, Args{ID: testutil.RandomContainerID(), Spec: spec, BundleDir: bundleDir})
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer c.Destroy()
+			if err := c.Start(conf); err != nil {
+				t.Fatal(err)
+			}
+			if err := c.Pause(); err != nil {
+				t.Fatal(err)
+			}
+			if err := c.SignalContainer(unix.SIGTERM, all); err == nil {
+				t.Fatal("SIGTERM unexpectedly accepted for a paused container")
+			}
+			if err := c.SignalContainer(unix.SIGKILL, all); err != nil {
+				t.Fatalf("queue paused SIGKILL: %v", err)
+			}
+			if c.Status != Paused {
+				t.Fatalf("queued signal changed container state to %v", c.Status)
+			}
+			if err := c.Resume(); err != nil {
+				t.Fatalf("resume after queued SIGKILL: %v", err)
+			}
+			status, err := c.Wait()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !killedBySIGKILL(status) {
+				t.Fatalf("exit status = %v, want SIGKILL", status)
+			}
+		})
+	}
+}

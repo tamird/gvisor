@@ -842,6 +842,8 @@ func getTopic(e any) string {
 		return runtime.TaskExecAddedEventTopic
 	case *events.TaskExecStarted:
 		return runtime.TaskExecStartedEventTopic
+	case *events.TaskCheckpointed:
+		return runtime.TaskCheckpointedEventTopic
 	case *events.TaskPaused:
 		return runtime.TaskPausedEventTopic
 	case *events.TaskResumed:

@@ -963,9 +963,8 @@ func (c *Container) TarRootfsUpperLayer(outFD *os.File) error {
 	return c.Sandbox.TarRootfsUpperLayer(c.ID, outFD)
 }
 
-// SignalContainer sends the signal to the container. If all is true and signal
-// is SIGKILL, then waits for all processes to exit before returning.
-// SignalContainer returns an error if the container is already stopped.
+// SignalContainer sends sig to the container's init process, or to all
+// processes in the container if all is true.
 // TODO(b/113680494): Distinguish different error types.
 func (c *Container) SignalContainer(sig unix.Signal, all bool) error {
 	log.Debugf("Signal container, cid: %s, signal: %v (%d)", c.ID, sig, sig)
@@ -975,16 +974,19 @@ func (c *Container) SignalContainer(sig unix.Signal, all bool) error {
 	return c.signalRunning(sig, all)
 }
 
-// signalRunning delivers a signal to the processes of a Running (or Stopped)
-// container via the sandbox.
+// signalRunning delivers a signal to the container through the sandbox.
 func (c *Container) signalRunning(sig unix.Signal, all bool) error {
 	// Signaling container in Stopped state is allowed. When all=false,
 	// an error will be returned anyway; when all=true, this allows
 	// sending signal to other processes inside the container even
 	// after the init process exits. This is especially useful for
 	// container cleanup.
-	if err := c.requireStatus("signal", Running, Stopped); err != nil {
-		return err
+	// SIGKILL can be queued while paused. It remains pending until the
+	// kernel resumes, without allowing application work before delivery.
+	if c.Status != Paused || sig != unix.SIGKILL {
+		if err := c.requireStatus("signal", Running, Stopped); err != nil {
+			return err
+		}
 	}
 	if err := c.CheckSandboxRunning(); err != nil {
 		return err

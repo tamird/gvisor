@@ -2099,9 +2099,8 @@ func (s *Sandbox) reapNetgoferBackground(pid int, stopped chan struct{}) {
 	}()
 }
 
-// SignalContainer sends the signal to a container in the sandbox. If all is
-// true and signal is SIGKILL, then waits for all processes to exit before
-// returning.
+// SignalContainer sends sig to the container's init process, or queues it for
+// all processes in the container if all is true.
 func (s *Sandbox) SignalContainer(cid string, sig unix.Signal, all bool) error {
 	log.Debugf("Signal sandbox %q", s.ID)
 	if sig == unix.SIGKILL && s.IsRootContainer(cid) {
