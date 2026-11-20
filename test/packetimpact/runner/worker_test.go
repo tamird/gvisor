@@ -20,7 +20,6 @@ import (
 	"os/exec"
 	"reflect"
 	"runtime"
-	"syscall"
 	"testing"
 
 	"github.com/google/gopacket/pcapgo"
@@ -42,14 +41,17 @@ func TestWorkerRequirements(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		cmd := exec.CommandContext(t.Context(), "/proc/self/exe", "-test.run=^TestWorkerRequirements$", "-test.v")
-		cmd.Env = append(os.Environ(), "PACKETIMPACT_WORKER_CHILD=1")
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Cloneflags:  unix.CLONE_NEWUSER | unix.CLONE_NEWNET,
-			Pdeathsig:   unix.SIGTERM,
-			UidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: os.Getuid(), Size: 1}},
-			GidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: os.Getgid(), Size: 1}},
+		exe, err := os.Executable()
+		if err != nil {
+			t.Fatal(err)
 		}
+		attrs, err := userNetNSAttrs()
+		if err != nil {
+			t.Fatal(err)
+		}
+		cmd := exec.CommandContext(t.Context(), exe, "-test.run=^TestWorkerRequirements$", "-test.v")
+		cmd.Env = append(os.Environ(), "PACKETIMPACT_WORKER_CHILD=1")
+		cmd.SysProcAttr = attrs
 		output, runErr := cmd.CombinedOutput()
 		t.Logf("packet worker linux/%s: %s", runtime.GOARCH, output)
 		if runErr != nil {
@@ -65,6 +67,22 @@ func TestWorkerRequirements(t *testing.T) {
 		}
 		return
 	}
+
+	if uid, gid := os.Getuid(), os.Getgid(); uid != 0 || gid != 0 {
+		t.Fatalf("namespace identity = %d:%d, want 0:0", uid, gid)
+	}
+	for _, name := range []string{"uid_map", "gid_map"} {
+		data, err := os.ReadFile("/proc/self/" + name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("namespace %s: %s", name, data)
+	}
+	groups, err := os.Getgroups()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("namespace supplementary groups: %v", groups)
 
 	// Create the real runner's links and nested DUT namespace without starting
 	// a DUT or building its C++ RPC server.

@@ -30,6 +30,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -58,30 +59,59 @@ func (l *dutArgList) Set(value string) error {
 	return nil
 }
 
+func userNetNSAttrs() (*unix.SysProcAttr, error) {
+	uid, gid := os.Getuid(), os.Getgid()
+	var credentials *syscall.Credential
+	if uid == 0 && os.Geteuid() == 0 {
+		sudoUID, hasUID := os.LookupEnv("SUDO_UID")
+		sudoGID, hasGID := os.LookupEnv("SUDO_GID")
+		if hasUID != hasGID {
+			return nil, fmt.Errorf("SUDO_UID and SUDO_GID must be set together")
+		}
+		if hasUID {
+			// Preserve the caller's identity so its runfiles remain accessible.
+			// The privileged parent still creates the namespaces.
+			parseID := func(name, value string) (int, error) {
+				id, err := strconv.Atoi(value)
+				if err != nil || id < 0 || uint64(id) >= (1<<32)-1 {
+					return 0, fmt.Errorf("invalid %s %q", name, value)
+				}
+				return id, nil
+			}
+			var err error
+			uid, err = parseID("SUDO_UID", sudoUID)
+			if err != nil {
+				return nil, err
+			}
+			gid, err = parseID("SUDO_GID", sudoGID)
+			if err != nil {
+				return nil, err
+			}
+			// Drop sudo's supplementary groups before executing the child.
+			credentials = &syscall.Credential{Uid: 0, Gid: 0}
+		}
+	}
+	return &unix.SysProcAttr{
+		Cloneflags: unix.CLONE_NEWUSER | unix.CLONE_NEWNET,
+		Pdeathsig: unix.SIGTERM,
+		UidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: uid, Size: 1}},
+		GidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: gid, Size: 1}},
+		GidMappingsEnableSetgroups: credentials != nil,
+		Credential: credentials,
+	}, nil
+}
+
 func main() {
 	const procSelfExe = "/proc/self/exe"
 	if os.Args[0] != procSelfExe {
 		// For the first time, re-execute in a new user name space and a new
 		// network namespace.
 		cmd := exec.Command(procSelfExe, os.Args[1:]...)
-		cmd.SysProcAttr = &unix.SysProcAttr{
-			Cloneflags: unix.CLONE_NEWUSER | unix.CLONE_NEWNET,
-			Pdeathsig:  unix.SIGTERM,
-			UidMappings: []syscall.SysProcIDMap{
-				{
-					ContainerID: 0,
-					HostID:      os.Getuid(),
-					Size:        1,
-				},
-			},
-			GidMappings: []syscall.SysProcIDMap{
-				{
-					ContainerID: 0,
-					HostID:      os.Getgid(),
-					Size:        1,
-				},
-			},
+		attrs, err := userNetNSAttrs()
+		if err != nil {
+			log.Fatal(err)
 		}
+		cmd.SysProcAttr = attrs
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
