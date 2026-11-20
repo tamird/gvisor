@@ -14,10 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -euo pipefail
+
 # Running `go version` ensures that the appropriate Go binaries are downloaded.
 echo "====== Fetching Go... ======"
 bazel run @io_bazel_rules_go//go version
 
 # Generate a compile_commands.json database so clangd lsp works on C++ tests.
 echo "====== Generating compile_commands.json... ======"
-python3 tools/gen_compile_commands.py
+bazel run --platforms=@platforms//host //tools/compile_commands -- \
+  --resolve --replace=-fno-canonical-system-headers= \
+  --bazel-command=bazel //test/... //tools/...
+bazel build --remote_download_outputs=all \
+  --aspects=//tools:cc_compile_inputs.bzl%cc_compile_inputs \
+  --output_groups=cc_compile_inputs //test/... //tools/...
