@@ -450,3 +450,51 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 		}
 	}
 }
+
+func TestWorkerCounterCapability(t *testing.T) {
+	t.Logf("counter admission only: uid=%d guest_cpus=%d; counters remain disabled", os.Geteuid(), runtime.NumCPU())
+	perf, err := exec.LookPath("perf")
+	t.Logf("existing perf path=%q lookup_error=%v", perf, err)
+	for _, path := range []string{
+		"/proc/sys/kernel/perf_event_paranoid",
+		"/proc/sys/kernel/kptr_restrict",
+		"/sys/bus/event_source/devices/cpu/type",
+		"/sys/bus/event_source/devices/cpu/caps/pmu_name",
+		"/sys/bus/event_source/devices/software/type",
+	} {
+		data, err := os.ReadFile(path)
+		t.Logf("counter support path=%q value=%q read_error=%v", path, strings.TrimSpace(string(data)), err)
+	}
+	for _, counter := range []struct {
+		name   string
+		typeID uint32
+		config uint64
+	}{
+		{"cycles", unix.PERF_TYPE_HARDWARE, unix.PERF_COUNT_HW_CPU_CYCLES},
+		{"instructions", unix.PERF_TYPE_HARDWARE, unix.PERF_COUNT_HW_INSTRUCTIONS},
+		{"software_cpu_clock", unix.PERF_TYPE_SOFTWARE, unix.PERF_COUNT_SW_CPU_CLOCK},
+	} {
+		for _, userOnly := range []bool{true, false} {
+			attr := unix.PerfEventAttr{
+				Type:   counter.typeID,
+				Size:   unix.PERF_ATTR_SIZE_VER0,
+				Config: counter.config,
+				Bits:   unix.PerfBitDisabled | unix.PerfBitExcludeHv,
+			}
+			if userOnly {
+				attr.Bits |= unix.PerfBitExcludeKernel
+			}
+			fd, err := unix.PerfEventOpen(&attr, 0, -1, -1, unix.PERF_FLAG_FD_CLOEXEC)
+			errno := 0
+			if code, ok := err.(unix.Errno); ok {
+				errno = int(code)
+			}
+			t.Logf("counter=%s self_user_only=%t opened=%t errno=%d error=%v", counter.name, userOnly, err == nil, errno, err)
+			if err == nil {
+				if err := unix.Close(fd); err != nil {
+					t.Fatalf("close disabled %s counter: %v", counter.name, err)
+				}
+			}
+		}
+	}
+}

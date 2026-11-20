@@ -126,7 +126,7 @@ filegroup(
 go_test(
     name = "paired_worker_test",
     size = "large",
-    timeout = "long",
+    timeout = "short",
     srcs = [
         "docker_worker_test.go",
         "paired_observer_test.go",
@@ -150,7 +150,7 @@ go_test(
         "--server-cpuset=2-3",
         "--paired-redis-cpuset=4",
         "--paired-image-archives='$(rootpaths //test/benchmarks/network:node_worker_images)'",
-        "-test.run=^TestPairedBenchmark$$",
+        "-test.run=^TestWorkerCounterCapability$$",
     ],
     data = [
         ":paired_base_runsc",
