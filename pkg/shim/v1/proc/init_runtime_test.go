@@ -949,7 +949,7 @@ func TestTeardownDoesNotInterruptCheckpoint(t *testing.T) {
 	dir := t.TempDir()
 	marker := filepath.Join(dir, "checkpoint-started")
 	fake := filepath.Join(dir, "runsc")
-	script := "#!/bin/sh\necho started > " + strconv.Quote(marker) + "\nexec sleep 1\n"
+	script := "#!/bin/sh\nfor arg do\ncase \"$arg\" in\nstate) echo '{\"status\":\"running\"}'; exit 0;;\ncheckpoint) echo started > " + strconv.Quote(marker) + "\nexec sleep 1;;\nesac\ndone\nexit 1\n"
 	if err := os.WriteFile(fake, []byte(script), 0o755); err != nil {
 		t.Fatal(err)
 	}

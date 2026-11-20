@@ -866,6 +866,13 @@ func tscOffsetFromSnapshot(baseCycle, baseFreq, baseRealtime, curCycle, curRealt
 }
 
 func (l *Loader) save(o *controlapi.SaveOpts) error {
+	l.saveMu.Lock()
+	defer l.saveMu.Unlock()
+	if o.TaskContainerID != "" {
+		if err := l.checkTaskCheckpointScope(o.TaskContainerID); err != nil {
+			return err
+		}
+	}
 	saveOpts, err := control.ConvertToStateSaveOpts(o)
 	if err != nil {
 		l.k.OnCheckpointAttempt(err)
@@ -876,7 +883,7 @@ func (l *Loader) save(o *controlapi.SaveOpts) error {
 	}
 	defer saveOpts.Close()
 
-	return l.saveWithOpts(saveOpts, &o.ExecOpts)
+	return l.saveWithOptsLocked(saveOpts, &o.ExecOpts)
 }
 
 // saveWithOpts saves the kernel with the given options.
@@ -885,7 +892,13 @@ func (l *Loader) saveWithOpts(saveOpts *state.SaveOpts, execOpts *controlapi.Sav
 	// Loader.saveMu.
 	l.saveMu.Lock()
 	defer l.saveMu.Unlock()
+	return l.saveWithOptsLocked(saveOpts, execOpts)
+}
 
+// saveWithOptsLocked saves the kernel while container creation is serialized.
+//
+// Preconditions: l.saveMu is locked.
+func (l *Loader) saveWithOptsLocked(saveOpts *state.SaveOpts, execOpts *controlapi.SaveRestoreExecOpts) (err error) {
 	hasFSSave := saveOpts.FSSaveOpts != nil
 	defer func() {
 		// This closure is required to capture the final value of err.

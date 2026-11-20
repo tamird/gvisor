@@ -2166,8 +2166,16 @@ func (s *Sandbox) SignalProcessGroup(cid string, pgid int32, sig unix.Signal) er
 	return nil
 }
 
+// CheckTaskCheckpointScope checks whether cid has exclusive use of the sandbox.
+func (s *Sandbox) CheckTaskCheckpointScope(cid string) error {
+	return s.call(sentryapi.ContMgrCheckTaskCheckpointScope, &cid, nil)
+}
+
 // CheckpointOpts contains the options for checkpointing a sandbox.
 type CheckpointOpts struct {
+	// ContainerOnly requires cid to have exclusive use of the sandbox.
+	ContainerOnly bool
+
 	Compression               statefile.CompressionLevel
 	Resume                    bool
 	Direct                    bool
@@ -2188,7 +2196,7 @@ type CheckpointOpts struct {
 
 // Checkpoint sends the checkpoint call for a container in the sandbox.
 // The statefile will be written to f.
-func (s *Sandbox) Checkpoint(conf *config.Config, cid string, imagePath string, opts CheckpointOpts) error {
+func (s *Sandbox) Checkpoint(conf *config.Config, cid string, imagePath string, opts CheckpointOpts) (retErr error) {
 	log.Debugf("Checkpoint sandbox %q, imagePath %q, opts %+v", s.ID, imagePath, opts)
 
 	bundles, err := fscheckpoint.ParseBundlesWithDefaultPrefix(opts.SplitFSCheckpointPaths, checkpointfiles.FSCheckpointDir)
@@ -2225,7 +2233,19 @@ func (s *Sandbox) Checkpoint(conf *config.Config, cid string, imagePath string, 
 			opt.GraphEngine = &useGraph
 		}
 	}
+	if opts.ContainerOnly {
+		opt.TaskContainerID = cid
+	}
 	defer opt.FilePayload.Close()
+	defer func() {
+		if retErr != nil && opts.ContainerOnly && !opt.UseCheckpointGofer {
+			for _, f := range opt.FilePayload.Files {
+				if err := os.Remove(f.Name()); err != nil && !os.IsNotExist(err) {
+					retErr = errors.Join(retErr, fmt.Errorf("removing failed task checkpoint file: %w", err))
+				}
+			}
+		}
+	}()
 	if err := s.setCheckpointOptsFiles(conf, imagePath, opts, bundles, &opt); err != nil {
 		return err
 	}

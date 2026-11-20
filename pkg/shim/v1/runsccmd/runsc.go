@@ -296,6 +296,7 @@ func (r *Runsc) Restore(context context.Context, id string, cio runc.IO, opts *R
 
 // CheckpointOpts is a set of options to runsc.Checkpoint().
 type CheckpointOpts struct {
+	ContainerOnly             bool
 	ImagePath                 string
 	LeaveRunning              bool
 	Direct                    bool
@@ -311,6 +312,9 @@ type CheckpointOpts struct {
 
 func (o *CheckpointOpts) checkpointArgs() []string {
 	var out []string
+	if o.ContainerOnly {
+		out = append(out, "--container-only")
+	}
 	if o.ImagePath != "" {
 		out = append(out, fmt.Sprintf("--image-path=%s", o.ImagePath))
 	}

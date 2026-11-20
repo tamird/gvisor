@@ -37,6 +37,7 @@ type Checkpoint struct {
 	containerLoader
 	imagePath                 string
 	leaveRunning              bool
+	containerOnly             bool
 	compression               CheckpointCompression
 	excludeCommittedZeroPages bool
 	cudaCheckpointPath        string
@@ -72,6 +73,7 @@ func (*Checkpoint) Usage() string {
 // SetFlags implements subcommands.Command.SetFlags.
 func (c *Checkpoint) SetFlags(f *flag.FlagSet) {
 	f.StringVar(&c.imagePath, "image-path", "", "directory path to saved container image")
+	f.BoolVar(&c.containerOnly, "container-only", false, "require the container to have exclusive use of its sandbox")
 	f.BoolVar(&c.leaveRunning, "leave-running", false, "restart the container after checkpointing")
 	f.Var(newCheckpointCompressionValue(statefile.CompressionLevelDefault, &c.compression), "compression", "compress checkpoint image on disk. Values: none|flate-best-speed.")
 	f.BoolVar(&c.excludeCommittedZeroPages, "exclude-committed-zero-pages", true, "exclude committed zero-filled pages from checkpoint")
@@ -117,10 +119,6 @@ func (c *Checkpoint) Execute(_ context.Context, f *flag.FlagSet, args ...any) su
 		util.Fatalf("image-path flag must be provided")
 	}
 
-	if err := os.MkdirAll(c.imagePath, 0755); err != nil {
-		util.Fatalf("making directories at path provided: %v", err)
-	}
-
 	opts := sandbox.CheckpointOpts{
 		Compression:                c.compression.Level(),
 		Resume:                     c.leaveRunning,
@@ -135,7 +133,15 @@ func (c *Checkpoint) Execute(_ context.Context, f *flag.FlagSet, args ...any) su
 		StateEngine:                c.stateEngine.ptr(),
 	}
 
-	if err := cont.Checkpoint(conf, c.imagePath, opts); err != nil {
+	if c.containerOnly {
+		err = cont.CheckpointTask(conf, c.imagePath, opts)
+	} else {
+		if err := os.MkdirAll(c.imagePath, 0755); err != nil {
+			util.Fatalf("making directories at path provided: %v", err)
+		}
+		err = cont.Checkpoint(conf, c.imagePath, opts)
+	}
+	if err != nil {
 		util.Fatalf("checkpoint failed: %v", err)
 	}
 

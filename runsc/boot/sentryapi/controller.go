@@ -88,6 +88,10 @@ const ContMgrDestroySubcontainer = "containerManager.DestroySubcontainer"
 // ContMgrExecuteAsync executes a command in a container.
 const ContMgrExecuteAsync = "containerManager.ExecuteAsync"
 
+// ContMgrCheckTaskCheckpointScope checks whether a container has exclusive use
+// of its sandbox.
+const ContMgrCheckTaskCheckpointScope = "containerManager.CheckTaskCheckpointScope"
+
 // ContMgrCheckpoint checkpoints a container.
 const ContMgrCheckpoint = "containerManager.Checkpoint"
 

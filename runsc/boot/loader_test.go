@@ -32,6 +32,7 @@ import (
 	"gvisor.dev/gvisor/pkg/fspath"
 	"gvisor.dev/gvisor/pkg/lisafs"
 	"gvisor.dev/gvisor/pkg/log"
+	"gvisor.dev/gvisor/pkg/sentry/control/controlapi"
 	"gvisor.dev/gvisor/pkg/sentry/kernel"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
@@ -761,5 +762,37 @@ func TestSignalUnkillablePolicyMapping(t *testing.T) {
 		if got := signalUnkillablePolicy(tc.confPolicy); got != tc.kernelPolicy {
 			t.Errorf("signalUnkillablePolicy(%v) = %v, want %v", tc.confPolicy, got, tc.kernelPolicy)
 		}
+	}
+}
+
+func TestTaskCheckpointScope(t *testing.T) {
+	l := &Loader{sandboxID: "root", processes: map[execID]*execProcess{{cid: "root"}: {}}}
+	cm := &containerManager{l: l}
+	root, child := "root", "child"
+	if err := cm.CheckTaskCheckpointScope(&root, nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := cm.CheckTaskCheckpointScope(&child, nil); err == nil {
+		t.Fatal("child task accepted as a sandbox checkpoint")
+	}
+	// Exec processes belong to the root container and do not change scope.
+	l.mu.Lock()
+	l.processes[execID{cid: root, pid: 2}] = &execProcess{}
+	l.mu.Unlock()
+	if err := cm.CheckTaskCheckpointScope(&root, nil); err != nil {
+		t.Fatal(err)
+	}
+	// A child is counted as soon as it is created, before it has a thread
+	// group or its creating runtime process has published host metadata.
+	l.mu.Lock()
+	l.processes[execID{cid: child}] = &execProcess{}
+	l.mu.Unlock()
+	if err := cm.CheckTaskCheckpointScope(&root, nil); err == nil {
+		t.Fatal("checkpoint accepted a created child")
+	}
+	// Save must check again after preflight, before converting output files
+	// or attempting to pause the kernel.
+	if err := l.save(&controlapi.SaveOpts{TaskContainerID: root}); err == nil || !strings.Contains(err.Error(), "exclusive use") {
+		t.Fatalf("save after child creation = %v, want scope error", err)
 	}
 }

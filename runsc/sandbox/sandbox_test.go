@@ -686,3 +686,34 @@ func TestSentryGODEBUG(t *testing.T) {
 		})
 	}
 }
+
+func TestFailedTaskCheckpointRemovesOnlyItsFiles(t *testing.T) {
+	for _, containerOnly := range []bool{false, true} {
+		t.Run(fmt.Sprintf("container-only=%t", containerOnly), func(t *testing.T) {
+			s := &Sandbox{ID: "absent"}
+			s.SetRootDir(t.TempDir())
+			image := t.TempDir()
+			keep := filepath.Join(image, "keep")
+			if err := os.WriteFile(keep, []byte("existing"), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if err := s.Checkpoint(&config.Config{}, s.ID, image, CheckpointOpts{ContainerOnly: containerOnly, Compression: "none"}); err == nil {
+				t.Fatal("checkpoint of absent sandbox succeeded")
+			}
+			entries, err := os.ReadDir(image)
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := 4
+			if containerOnly {
+				want = 1
+			}
+			if len(entries) != want {
+				t.Fatalf("checkpoint left %d files, want %d: %v", len(entries), want, entries)
+			}
+			if data, err := os.ReadFile(keep); err != nil || string(data) != "existing" {
+				t.Fatalf("checkpoint changed existing file: %q, %v", data, err)
+			}
+		})
+	}
+}

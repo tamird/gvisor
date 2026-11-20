@@ -339,6 +339,11 @@ func (cm *containerManager) ExecuteAsync(args *control.ExecArgs, pid *int32) err
 	return nil
 }
 
+// CheckTaskCheckpointScope checks whether cid has exclusive use of the sandbox.
+func (cm *containerManager) CheckTaskCheckpointScope(cid *string, _ *struct{}) error {
+	return cm.l.checkTaskCheckpointScope(*cid)
+}
+
 // Checkpoint pauses a sandbox and saves its state.
 func (cm *containerManager) Checkpoint(o *controlapi.SaveOpts, _ *struct{}) error {
 	log.Debugf("containerManager.Checkpoint")

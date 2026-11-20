@@ -27,6 +27,10 @@ const DefaultSaveRestoreExecTimeout = 10 * time.Minute
 
 // SaveOpts contains options for the Save RPC call.
 type SaveOpts struct {
+	// TaskContainerID, if nonempty, restricts this checkpoint to a container
+	// that has exclusive use of the sandbox.
+	TaskContainerID string `json:"task_container_id,omitempty"`
+
 	// Key is used to enable state integrity check.
 	Key []byte `json:"key"`
 

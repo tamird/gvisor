@@ -279,7 +279,8 @@ type Loader struct {
 	// freeOSMemory is runtimedebug.FreeOSMemory, replaced in tests.
 	freeOSMemory func()
 
-	// saveMu serializes save operations. Saves can be requested concurrently:
+	// saveMu serializes save operations and container creation. Saves can be
+	// requested concurrently:
 	// autosave in save-resume mode is triggered by any task executing the
 	// trigger syscall, and checkpoints may be requested concurrently via the
 	// control API. Overlapping saves race: post-save cleanup
@@ -1585,6 +1586,8 @@ func (l *Loader) run() error {
 //
 // +checklocksexclude:l.mu
 func (l *Loader) createSubcontainer(cid string, tty *fd.FD) error {
+	l.saveMu.Lock()
+	defer l.saveMu.Unlock()
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -2696,6 +2699,15 @@ func (l *Loader) importFD(ctx context.Context, f *os.File) (*vfs.FileDescription
 	}
 	hostFD.Release()
 	return fd, nil
+}
+
+// checkTaskCheckpointScope checks whether cid has exclusive use of the sandbox.
+// Holding saveMu prevents new children while the checked state is used.
+func (l *Loader) checkTaskCheckpointScope(cid string) error {
+	if cid != l.sandboxID || l.containerCount() != 1 {
+		return fmt.Errorf("task checkpoints require a container with exclusive use of its sandbox")
+	}
+	return nil
 }
 
 // +checklocksexclude:l.mu

@@ -184,7 +184,24 @@ func (s *runningState) Stats(ctx context.Context, id string) (*runc.Stats, error
 }
 
 func (s *runningState) CheckpointSandbox(ctx context.Context, opts *runsccmd.CheckpointOpts) error {
-	return s.p.checkpointSandbox(ctx, opts)
+	paused := false
+	if !opts.LeaveRunning {
+		state, err := s.p.runtime.State(ctx, s.p.id)
+		if err != nil {
+			return s.p.runtimeError(err, "OCI runtime state failed")
+		}
+		paused = state.Status == "paused"
+	}
+	if err := s.p.checkpointSandbox(ctx, opts); err != nil {
+		return err
+	}
+	if paused {
+		// A successful checkpoint without LeaveRunning queues kernel exit.
+		// Release the original pause so tasks can exit; the pending exit
+		// prevents them from executing application code after the snapshot.
+		return s.p.runtime.Resume(ctx, s.p.id)
+	}
+	return nil
 }
 
 type stoppedState struct {

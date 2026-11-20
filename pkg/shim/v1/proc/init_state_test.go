@@ -16,7 +16,10 @@ package proc
 
 import (
 	"context"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"strconv"
 	"sync"
 	"testing"
 
@@ -101,5 +104,46 @@ func TestCreatedStateStartFailureSandbox(t *testing.T) {
 	}
 	if _, ok := p.initState.(*createdState); !ok {
 		t.Errorf("initState = %T, want *createdState", p.initState)
+	}
+}
+
+func TestPausedCheckpointExit(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		state        string
+		leaveRunning bool
+		fail         string
+		want         string
+		wantError    bool
+	}{
+		{name: "paused exit", state: "paused", want: "state\ncheckpoint\nresume\n"},
+		{name: "running exit", state: "running", want: "state\ncheckpoint\n"},
+		{name: "paused leave running", state: "paused", leaveRunning: true, want: "checkpoint\n"},
+		{name: "state failure", fail: "state", want: "state\n", wantError: true},
+		{name: "save failure", state: "paused", fail: "checkpoint", want: "state\ncheckpoint\n", wantError: true},
+		{name: "resume failure", state: "paused", fail: "resume", want: "state\ncheckpoint\nresume\n", wantError: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			calls := filepath.Join(dir, "calls")
+			command := filepath.Join(dir, "runsc")
+			script := "#!/bin/sh\nfor arg do\ncase \"$arg\" in state|checkpoint|resume)\nprintf '%s\\n' \"$arg\" >> " + strconv.Quote(calls) + "\nif [ \"$arg\" = " + strconv.Quote(tc.fail) + " ]; then exit 1; fi\nif [ \"$arg\" = state ]; then printf '%s\\n' " + strconv.Quote("{\"status\":\""+tc.state+"\"}") + "; fi\nexit 0\n;;\nesac\ndone\nexit 1\n"
+			if err := os.WriteFile(command, []byte(script), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			p := New("test", &runsccmd.Runsc{Command: command}, stdio.Stdio{})
+			p.initState = &runningState{p: p}
+			err := p.CheckpointSandbox(t.Context(), &runsccmd.CheckpointOpts{ImagePath: "/image", LeaveRunning: tc.leaveRunning})
+			if (err != nil) != tc.wantError {
+				t.Fatalf("CheckpointSandbox() = %v, wantError %t", err, tc.wantError)
+			}
+			got, err := os.ReadFile(calls)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(got) != tc.want {
+				t.Fatalf("runtime calls = %q, want %q", got, tc.want)
+			}
+		})
 	}
 }
