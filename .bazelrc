@@ -85,3 +85,10 @@ build:buildbuddy --extra_execution_platforms=//tools/bazeldefs:remote_linux_amd6
 
 # Coral C/C++ tools are host files, not declared remote action inputs.
 build:buildbuddy-cache --modify_execution_info=^(Cpp.*|CcStrip)$=+no-remote
+
+# Native C actions use the pinned execution image and must not fall back to host tools.
+build:buildbuddy --//tools/bazeldefs:rbe_native_c=true
+build:buildbuddy --modify_execution_info=^(Cpp.*|CcStrip)$=-no-remote,^(Cpp.*|CcStrip)$=+no-local
+
+# Cgo uses the same image-provided C tools and resolved execution CPU.
+build:buildbuddy --modify_execution_info=^(GoStdlib|GoStdlibList|GoCompilePkg|GoLink)$=-no-remote,^(GoStdlib|GoStdlibList|GoCompilePkg|GoLink)$=+no-local

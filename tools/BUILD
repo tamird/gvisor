@@ -86,6 +86,7 @@ exports_files([
     "llvm-dev-backends.patch",
     "llvm-linux-header-default.patch",
     "rules_go_host_c.patch",
+    "rules_go_proto_exec.patch",
 ])
 
 py_test(

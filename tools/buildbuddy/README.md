@@ -4,6 +4,12 @@ The optional `buildbuddy` configuration enables remote execution and a shared
 action cache. `buildbuddy-cache` enables only the shared cache. Both keep the
 repository's target toolchains and architecture configurations.
 
+The fork branch `qualification/shared-current-support-20261119` owns this
+qualification profile. Base recurring qualification integrations on that support
+branch and retain the profile when layering candidate source changes. Dispatch
+`qualification.yml` on fork `master` with the integration's exact commit as
+`source`; the workflow checks out that commit without injecting build support.
+
 Build the standard Bazel credential helper once:
 
 ```sh
@@ -28,17 +34,39 @@ bazel test --keep_going --config=buildbuddy --config=x86_64 \
 workers separately from target toolchains. A successful cross-compile alone does
 not establish native ARM64 test execution.
 
+The execution platforms pin BuildBuddy's public Ubuntu 24.04 image by its
+multi-architecture digest. Its userspace must load C/C++ binaries built on the
+Ubuntu 24.04 build workers. Check the real C++ loader and namespace operations
+before a full runtime build:
+
+```sh
+bazel test --keep_going --config=buildbuddy --config=x86_64 \
+  --credential_helper="remote.buildbuddy.io=$(realpath bazel-bin/tools/buildbuddy/credential_helper)" \
+  //runsc/specutils/safemount_test:safemount_test \
+  //test/syscalls/coverage:uname_loader_test
+```
+
+The loader check runs the maintained Uname case directly, without building a
+Sentry or release fileset. Repeat with `aarch64` for the ARM64 worker.
+
 Keep correctness results and compiled artifacts cached. For a required fresh
 measurement, apply `--nocache_test_results` to the benchmark invocation; keep the
 build cache enabled. Controlled before/after measurements remain separate from
 the correctness suite.
 
-The current Coral C toolchain does not declare its host compiler and sysroot as
-action inputs. Native C++ actions and Go actions that can invoke absolute host C
-tools stay local and out of the remote cache. The systrap host-tool generators
-have the same restriction. Pure Go actions remain eligible for remote execution
-and caching. Remove these exceptions when the hermetic toolchain declares and
-qualifies the compiler, linker, sysroot and runtime-library inputs.
+The `buildbuddy` configuration enables `//tools/bazeldefs:rbe_native_c`. Its C
+toolchains require the target CPU and the pinned image execution environment.
+C++ and Sysmsg actions cannot fall back to the submitting host. The image binds
+the compiler and sysroot contents in the remote action key. Ordinary builds and
+`buildbuddy-cache` retain the host cross toolchains and keep these host-tool
+actions out of remote execution and caching.
+
+Coral still derives its GCC include-directory version from the submitting
+host. Its generated version must match the image's GCC 13 include directories.
+The profile also executes Cgo compilation, standard-library and link actions on
+their resolved remote execution platforms. This keeps the Go SDK and native C
+tools on the same CPU, including tools built for a different CPU from the
+submitting host. Ordinary and cache-only builds retain the host-tool exception.
 
 The initial check above exercises pure Go and the credential helper. Canonical
 action-graph inspection and the affected correctness suites must also pass
