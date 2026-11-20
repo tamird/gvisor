@@ -1,0 +1,28 @@
+goos: linux
+goarch: amd64
+cpu: Intel(R) Xeon(R) 6975P-C
+
+BenchmarkGraphLoad 5 1.37906971e+08 ns/op 6.1720198e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.38772442e+08 ns/op 6.1720161e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.32626597e+08 ns/op 6.1720171e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.30914449e+08 ns/op 6.1720171e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.26498042e+08 ns/op 6.1720164e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.40002115e+08 ns/op 6.1720164e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.20855401e+08 ns/op 6.1720195e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.25683114e+08 ns/op 6.1720168e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.38214334e+08 ns/op 6.1720171e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.28090657e+08 ns/op 6.1720168e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.36812992e+08 ns/op 6.1720164e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.29026948e+08 ns/op 6.1720168e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.25908397e+08 ns/op 6.1720164e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.2452124e+08 ns/op 6.1720164e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.2037675e+08 ns/op 6.1720204e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.27548788e+08 ns/op 6.1720137e+07 B/op 444496 allocs/op
+BenchmarkGraphLoad 5 1.28114001e+08 ns/op 6.1720168e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.20219538e+08 ns/op 6.1720168e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.2338858e+08 ns/op 6.1720168e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.40082506e+08 ns/op 6.1720171e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.31328018e+08 ns/op 6.1720168e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.23671122e+08 ns/op 6.1720198e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.23821147e+08 ns/op 6.1720161e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.19242479e+08 ns/op 6.1720164e+07 B/op 444497 allocs/op
