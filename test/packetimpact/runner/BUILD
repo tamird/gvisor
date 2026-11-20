@@ -1,3 +1,4 @@
+load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 load("//tools:defs.bzl", "bzl_library", "go_binary", "go_test")
 load(":defs.bzl", "PACKETIMPACT_EXEC_PROPERTIES")
 
@@ -44,11 +45,7 @@ go_test(
     ],
     exec_properties = PACKETIMPACT_EXEC_PROPERTIES,
     pure = True,
-    # Probe the hosted ARM firewall failure on the submitting runner.
-    tags = [
-        "manual",
-        "no-remote-exec",
-    ],
+    tags = ["manual"],
     target_compatible_with = ["@platforms//os:linux"],
     deps = [
         "//test/packetimpact/dut",
@@ -61,5 +58,15 @@ go_test(
         "@com_github_vishvananda_netlink//:go_default_library",
         "@org_golang_x_sync//errgroup:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
+    ],
+)
+
+# Keep build actions remote while probing the submitting runner's kernel.
+native_test(
+    name = "worker_host_test",
+    src = ":worker_test",
+    tags = [
+        "manual",
+        "no-remote-exec",
     ],
 )
