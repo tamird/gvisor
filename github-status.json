@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-20T15:12:03.575153+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-20T14:55:02.627201+00:00",
+  "registryDate": "2026-11-20T15:15:34.980085+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -446983,9 +446983,9 @@
       "number": 17067,
       "head": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
       "sourceNumber": 17067,
-      "owner": "Agent",
-      "claimed": false,
-      "overdue": true,
+      "owner": "root",
+      "claimed": true,
+      "overdue": false,
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABotZ2Og",
       "needsTriage": false,
@@ -447079,7 +447079,7 @@
       "number": 16522,
       "head": "ce4d7247286c0bce2a9e445f5be52b81784d02fc",
       "sourceNumber": 16522,
-      "owner": "sidecar_visibility_feedback",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABUzlcsg",
       "needsTriage": false,
@@ -447302,7 +447302,7 @@
       "number": 16522,
       "head": "ce4d7247286c0bce2a9e445f5be52b81784d02fc",
       "sourceNumber": 16522,
-      "owner": "sidecar_visibility_feedback",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABVzfNxg",
       "needsTriage": false,
@@ -447446,7 +447446,7 @@
       "number": 16522,
       "head": "ce4d7247286c0bce2a9e445f5be52b81784d02fc",
       "sourceNumber": 16522,
-      "owner": "sidecar_visibility_feedback",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABWBsgww",
       "needsTriage": false,
@@ -447520,7 +447520,7 @@
       "number": 16522,
       "head": "ce4d7247286c0bce2a9e445f5be52b81784d02fc",
       "sourceNumber": 16522,
-      "owner": "sidecar_visibility_feedback",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABWS4DmQ",
       "needsTriage": false,
@@ -447666,7 +447666,7 @@
       "number": 16522,
       "head": "ce4d7247286c0bce2a9e445f5be52b81784d02fc",
       "sourceNumber": 16522,
-      "owner": "sidecar_visibility_feedback",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABWg0xZg",
       "needsTriage": false,
@@ -448139,7 +448139,7 @@
       "number": 16522,
       "head": "ce4d7247286c0bce2a9e445f5be52b81784d02fc",
       "sourceNumber": 16522,
-      "owner": "sidecar_visibility_feedback",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABXXWXNw",
       "needsTriage": false,
@@ -448431,7 +448431,7 @@
       "number": 16522,
       "head": "ce4d7247286c0bce2a9e445f5be52b81784d02fc",
       "sourceNumber": 16522,
-      "owner": "sidecar_visibility_feedback",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABXo8Hog",
       "needsTriage": false,
@@ -448710,7 +448710,7 @@
       "number": 16522,
       "head": "ce4d7247286c0bce2a9e445f5be52b81784d02fc",
       "sourceNumber": 16522,
-      "owner": "sidecar_visibility_feedback",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABZMV6hg",
       "needsTriage": false,
@@ -449161,8 +449161,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "disposition": "Final Sysmsg sourced3f23b8bbdcd1d5deab67b71b21a9f859176aeec restores AMD5824-byte product size and all18function sizes/mnemonics. Functional/compiler gates and both focused final reviews close; ARM proof is retained. Layout/diagnostic differences prevent an equivalence claim or performance waiver. Required performance categories/controls and Kubernetes-context limits remain, as does the16522 parent source/importer hold; publica3ca22af is unchanged.",
-        "nextAction": "Preserve final reviewed product and compiler/functional evidence. Complete required controlled performance and deployment-context evidence before delivery readiness; retain the16522 prerequisite/publication hold."
+        "disposition": "Public a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a is conflicting; Etienne’s comment 7026931258 Needs rebase request is genuine. Master build.bzl now selects AMD64 PAGE_SIZE=4096 and leaves ARM unset for runtime page size; public replaces build.bzl with BUILD.local_defines using old pagesize_64k selection, preventing a literal patch-equivalent rebase. Root owns a semantics-preserving resolution. Separate final d3f depends on the #16522 proposal d1ae and its explicit publication edge waits for #16522 to land; this does not prohibit preparing the current public PR’s requested rebase.",
+        "nextAction": "Root prepares requested delete/modify resolution preserving upstream ARM runtime page-size semantics through reviewed d3f/adaptor work where applicable. Distinguish public-source rebase preparation from dependent d3f publication; retain final source/performance review and explicit #16522 landing edge."
       },
       "conflictObservedSince": "2026-11-17T19:11:47.868378+00:00"
     },
@@ -449185,8 +449185,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
-        "disposition": "Current-base candidatec69a99a6cb402685e6088df4884ad53f1d4b62b5 passes IPv4 and IPv6 functional qualification44660305436/44660308694. Public base already uses iperf3:11518/15146 are not landing dependencies, and CI223 BCR tool evidence is qualification only. Copied static-image/license patches were unused; no static-image qualification is claimed. Published PR source remains unchanged; candidate delivery awaits final semantic review and user approval only.",
-        "nextAction": "Root completes final semantic review, then follows the existing source-approval boundary for candidatec69. Preserve unchanged public source and the separate downstream Go-replacement dependency; do not block this candidate on11518/15146 or infer unused static-image validation."
+        "disposition": "Root full semantic review and two independent reviews accept candidate c69a99a6cb402685e6088df4884ad53f1d4b62b5 with no findings/source changes. Exact functional and Buildifier input binding is accepted. Full canonical source/C++ lint coverage is a real remaining agent-validation gap; the original owner is closing it through existing cached/RBE workflow without repeating functional tests. This is not a pending user decision. Public 2aa840f4 remains unchanged;11518/15146 are not landing dependencies, and unused static-image patches provide no proof. Root found obsolete README recipes after code review; owner is preparing a separate doc-only correction. Automatic execution review rejected adding a sign-off to that not-yet-human-reviewed README revision; this is an execution-policy blocker, not a pending manual certification or new user decision. Local unsigned preview/source preparation remains authorized; ordinary final source-publication review still applies.",
+        "nextAction": "Owner closes canonical source/C++ gates and prepares the accepted README-only correction as a reviewable preview without the rejected trailer operation. Root integrates complete evidence and reconciles actual final source approval; do not create a DCO/manual-sign human queue."
       },
       "conflictObservedSince": "2026-11-20T00:41:37.337032+00:00"
     },
@@ -449209,8 +449209,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "237c2c5e246394424eaac57437305cdc22d62fbe",
-        "disposition": "Reviewed proposal b29c22ea preserves the fully qualified 31bb6a5e source tree and shortens only the commit subject. Initial owner runs found a dropped os/exec import required by a new upstream namespace test; the restored import passed 95 specutils cases on both architectures in 44200657043/44200662533, including all seven required cases, with no skips. The other unchanged owners retain their earlier actual passes and disclosed command-suite environment skips. Independent full-source reviews found no issue. The exact b29 amendment and matching PR title are awaiting the already-requested contributor decision; original PR is untouched.",
-        "nextAction": "Await the existing contributor decision for exact b29c22ea83f058e9ae8c859609e445d27bd14771 and title Share test processes across lifecycle tests. Reverify live source head/feedback and publish only the approved revision; do not duplicate the request."
+        "disposition": "Inactive published predecessor of17336; native current PR remains237c2c5e246394424eaac57437305cdc22d62fbe OPEN/CONFLICTING. Preserve exact predecessor and b29/31bb qualification. Old b29 request wording has no verified current decision provenance and must not reopen completed predecessor publication or be presented as a current human obligation.",
+        "nextAction": "Root verifies actual b29 request/approval provenance and current #17336 source/base before selecting an authorized conflict repair or publication. No contributor action belongs to this inactive predecessor and no old approval question is repeated."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -450875,10 +450875,10 @@
         }
       ],
       "recordedFollowup": {
-        "owner": "sidecar_visibility_feedback",
+        "owner": "root",
         "sourceHead": "ce4d7247286c0bce2a9e445f5be52b81784d02fc",
-        "disposition": "Visibility-fix candidated1ae946c2d91ebe135c217c52e051f6fb8370af0 passes complete strict C++ qualification:376child processes pass. Two final independent reviews found no issues. The existing exact amendment decision is pending; publicce4d7247286c0bce2a9e445f5be52b81784d02fc remains unchanged. Private importer behavior is unverified and the dependent17067 source hold remains. Old wrapper success is not substituted for the actual strict child results. Action equivalence covers only this visibility amendment, not original genrule-to-C-toolchain runtime equivalence.",
-        "nextAction": "Root awaits the already-asked exact amendment decision without another question or proposal frame. Preserve the current public source, private-importer uncertainty and dependent17067 hold until approved publication and actual prerequisite landing."
+        "disposition": "Visibility amendment strict validation of 376 child processes proof and final reviews remain source-bound; original genrule-to-C-toolchain runtime equivalence/private importer are unverified and #17067 dependent publication edge remains. Exact proposed source d1ae946c2d91ebe135c217c52e051f6fb8370af0 and its existing publication boundary are preserved. Prior handoffs describe a source question, but no original request/approval provenance is currently available; this is root-owned source-bound authorization reconciliation, not an asserted pending user decision, approval or refusal.",
+        "nextAction": "Root verifies original request, any approval/supersession and exact source binding before projecting a contributor queue or publishing. Preserve qualification and current public source; do not re-ask, assume approval or add a manual-DCO task."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyTpYQ"
@@ -453920,8 +453920,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "disposition": "Final Sysmsg sourced3f23b8bbdcd1d5deab67b71b21a9f859176aeec restores AMD5824-byte product size and all18function sizes/mnemonics. Functional/compiler gates and both focused final reviews close; ARM proof is retained. Layout/diagnostic differences prevent an equivalence claim or performance waiver. Required performance categories/controls and Kubernetes-context limits remain, as does the16522 parent source/importer hold; publica3ca22af is unchanged.",
-        "nextAction": "Preserve final reviewed product and compiler/functional evidence. Complete required controlled performance and deployment-context evidence before delivery readiness; retain the16522 prerequisite/publication hold."
+        "disposition": "Public a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a is conflicting; Etienne’s comment 7026931258 Needs rebase request is genuine. Master build.bzl now selects AMD64 PAGE_SIZE=4096 and leaves ARM unset for runtime page size; public replaces build.bzl with BUILD.local_defines using old pagesize_64k selection, preventing a literal patch-equivalent rebase. Root owns a semantics-preserving resolution. Separate final d3f depends on the #16522 proposal d1ae and its explicit publication edge waits for #16522 to land; this does not prohibit preparing the current public PR’s requested rebase.",
+        "nextAction": "Root prepares requested delete/modify resolution preserving upstream ARM runtime page-size semantics through reviewed d3f/adaptor work where applicable. Distinguish public-source rebase preparation from dependent d3f publication; retain final source/performance review and explicit #16522 landing edge."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN1p80gQ",
@@ -454545,8 +454545,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
-        "disposition": "Current-base candidatec69a99a6cb402685e6088df4884ad53f1d4b62b5 passes IPv4 and IPv6 functional qualification44660305436/44660308694. Public base already uses iperf3:11518/15146 are not landing dependencies, and CI223 BCR tool evidence is qualification only. Copied static-image/license patches were unused; no static-image qualification is claimed. Published PR source remains unchanged; candidate delivery awaits final semantic review and user approval only.",
-        "nextAction": "Root completes final semantic review, then follows the existing source-approval boundary for candidatec69. Preserve unchanged public source and the separate downstream Go-replacement dependency; do not block this candidate on11518/15146 or infer unused static-image validation."
+        "disposition": "Root full semantic review and two independent reviews accept candidate c69a99a6cb402685e6088df4884ad53f1d4b62b5 with no findings/source changes. Exact functional and Buildifier input binding is accepted. Full canonical source/C++ lint coverage is a real remaining agent-validation gap; the original owner is closing it through existing cached/RBE workflow without repeating functional tests. This is not a pending user decision. Public 2aa840f4 remains unchanged;11518/15146 are not landing dependencies, and unused static-image patches provide no proof. Root found obsolete README recipes after code review; owner is preparing a separate doc-only correction. Automatic execution review rejected adding a sign-off to that not-yet-human-reviewed README revision; this is an execution-policy blocker, not a pending manual certification or new user decision. Local unsigned preview/source preparation remains authorized; ordinary final source-publication review still applies.",
+        "nextAction": "Owner closes canonical source/C++ gates and prepares the accepted README-only correction as a reviewable preview without the rejected trailer operation. Root integrates complete evidence and reconciles actual final source approval; do not create a DCO/manual-sign human queue."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxz0Oqg"
@@ -457079,10 +457079,10 @@
         }
       ],
       "recordedFollowup": {
-        "owner": "pty_feedback_resume",
+        "owner": "root",
         "sourceHead": "428aaa7afcbb5cde47d965639da811061fc06ff6",
-        "disposition": "Candidatecfff closes the behavior-only comment and monotonic-deadline correction. Native16cases, systrap16cases, changed-source strict lint and final independent review all pass. Exact source/current-head verification is complete and the amendment-and-reply question has been asked once; the answer is pending. Public428aaa7 remains unchanged, no reply is posted and the public finding remains unresolved.",
-        "nextAction": "Await the existing exact amendment/reply decision once; preserve public source and unresolved finding until approved publication and actual reply readback."
+        "disposition": "Prepared PTY correction has 16 native and 16 systrap cases/strict-lint and final-review proof. Public 428aaa7 remains unchanged; the human finding and reply remain unresolved until actual authorized delivery/readback. Exact proposed source cfff4ca980ef406bf3eec85cf8b8b8921cd408bb and its existing publication boundary are preserved. Prior handoffs describe a source question, but no original request/approval provenance is currently available; this is root-owned source-bound authorization reconciliation, not an asserted pending user decision, approval or refusal.",
+        "nextAction": "Root verifies original request, any approval/supersession and exact source binding before projecting a contributor queue or publishing. Preserve qualification and current public source; do not re-ask, assume approval or add a manual-DCO task."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxx_5BA"
@@ -465639,7 +465639,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T14:55:02.627201+00:00"
+        "observedAt": "2026-11-20T15:15:34.980085+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -465648,7 +465648,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T14:55:02.627201+00:00"
+        "observedAt": "2026-11-20T15:15:34.980085+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -465657,7 +465657,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T14:55:02.627201+00:00"
+        "observedAt": "2026-11-20T15:15:34.980085+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -465666,16 +465666,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T14:55:02.627201+00:00"
-      }
-    },
-    "issue:google/benchmark:1634": {
-      "contributor-review": {
-        "scope": "e80986b5007460a9bf77c718d5e2daa247c4d841",
-        "since": "2026-11-19T00:39:33.110112+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-20T14:55:02.627201+00:00"
+        "observedAt": "2026-11-20T15:15:34.980085+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -465684,7 +465675,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T14:55:02.627201+00:00"
+        "observedAt": "2026-11-20T15:15:34.980085+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -465693,7 +465684,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T14:55:02.627201+00:00"
+        "observedAt": "2026-11-20T15:15:34.980085+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -465702,7 +465693,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T14:55:02.627201+00:00"
+        "observedAt": "2026-11-20T15:15:34.980085+00:00"
       }
     }
   },
