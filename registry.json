@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T02:52:53.923923+00:00",
+    "updatedAt": "2026-11-20T03:15:58.069646+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40537,8 +40537,8 @@
       "url": "https://github.com/google/gvisor/pull/16522",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:46.312467+00:00",
-      "summary": "The three C sidecars now use the compiler and linker flags in runsc/sidecar.bzl. The generated Go-branch README directs consumers to that file in the corresponding master commit. The shell exporter and the proposed Go exporter in #15106 produced the same 385-byte README, and the archive retained the C sources for all three sidecars.",
+      "updatedAt": "2026-11-20T03:15:58.069646+00:00",
+      "summary": "Visibility-fix candidated1ae946c2d91ebe135c217c52e051f6fb8370af0 passes complete strict C++ qualification:376child processes pass. Two final independent reviews found no issues. The existing exact amendment decision is pending; publicce4d7247286c0bce2a9e445f5be52b81784d02fc remains unchanged. Private importer behavior is unverified and the dependent17067 source hold remains. Old wrapper success is not substituted for the actual strict child results. Action equivalence covers only this visibility amendment, not original genrule-to-C-toolchain runtime equivalence.",
       "evidence": [
         {
           "label": "Latest exact-head review",
@@ -40743,21 +40743,23 @@
         }
       ],
       "followup": {
-        "owner": "root",
-        "observedAt": "2026-11-17T19:04:46.312467+00:00",
+        "owner": "sidecar_visibility_feedback",
+        "observedAt": "2026-11-20T03:15:58.069646+00:00",
         "sourceHead": "ce4d7247286c0bce2a9e445f5be52b81784d02fc",
         "mergeable": "MERGEABLE",
-        "disposition": "The experimental review on 4e034130e confirmed all review items were addressed. GitHub recorded it as COMMENTED. Formal maintainer approval is still pending.",
-        "nextAction": "Await formal maintainer review of the shared C sidecar rules. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks.",
+        "disposition": "Visibility-fix candidated1ae946c2d91ebe135c217c52e051f6fb8370af0 passes complete strict C++ qualification:376child processes pass. Two final independent reviews found no issues. The existing exact amendment decision is pending; publicce4d7247286c0bce2a9e445f5be52b81784d02fc remains unchanged. Private importer behavior is unverified and the dependent17067 source hold remains. Old wrapper success is not substituted for the actual strict child results. Action equivalence covers only this visibility amendment, not original genrule-to-C-toolchain runtime equivalence.",
+        "nextAction": "Root awaits the already-asked exact amendment decision without another question or proposal frame. Preserve the current public source, private-importer uncertainty and dependent17067 hold until approved publication and actual prerequisite landing.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16522",
           "https://github.com/tamird/gvisor/commit/4e034130e",
           "https://github.com/google/gvisor/pull/16522#pullrequestreview-5881399202",
           "https://github.com/gvisor/gvisor/pull/16522",
           "https://github.com/tamird/gvisor/commit/4e034130e26ee192130ec828c5ea135612536f26",
-          "https://github.com/tamird/gvisor/commit/ce4d7247286c0bce2a9e445f5be52b81784d02fc"
+          "https://github.com/tamird/gvisor/commit/ce4d7247286c0bce2a9e445f5be52b81784d02fc",
+          "https://github.com/google/gvisor/pull/16522#pullrequestreview-5985630854"
         ],
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change."
+        "recheckCondition": "Existing amendment answer, changed source/review, or verified importer/prerequisite state.",
+        "curatedAt": "2026-11-20T03:15:58.069646+00:00"
       },
       "dcoAmendment": {
         "oldHead": "4e034130e26ee192130ec828c5ea135612536f26",
@@ -40780,7 +40782,9 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
-      }
+      },
+      "nextStep": "Root awaits the already-asked exact amendment decision without another question or proposal frame. Preserve the current public source, private-importer uncertainty and dependent17067 hold until approved publication and actual prerequisite landing.",
+      "recheckCondition": "Existing amendment answer, changed source/review, or verified importer/prerequisite state."
     },
     {
       "id": "branch:licensecheck-native-bazel-mod",
@@ -134951,10 +134955,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T02:14:48.077247+00:00",
-      "summary": "TCP functional qualification is closed at531cases per architecture; performance remains held for existing worker/pool isolation information, with no new timed samples. Compdb6a9/secfuzz8c and private issue publication decisions remain pending. Standard configured-query supportd8a3a9a8 is delivered with fixed configured-targets.json artifact. Assigned owners continue conformance, visibility, license-manifest and import-conflict work; unresolved findings are not claimed fixed.",
-      "nextStep": "Follow existing source decisions and worker information. Assigned owners finish actual evidence and reviewable fixes; preserve functional/compiler products and avoid repeated questions or new decision frames.",
-      "recheckCondition": "Substantive feedback/qualification milestone, provider checks, or answers to existing publication/worker questions.",
+      "updatedAt": "2026-11-20T03:15:58.069646+00:00",
+      "summary": "Packet formatting-only candidatec39d937cba6a95d5751e0bd0c7d14b32716a1eca leaves publicacf93596 unchanged. AMD packet validation passes14native,14shared,14ptrace and14directfs cases plus1577Go and1477race cases, with zero failures/skips; canonical formatting passes. ARM preflight44665659420 passes, while host KVM44665681783 failed and awaits exact owner diagnosis. No full ARM, KVM or performance qualification is claimed. Performance remains held for existing worker/pool isolation information; all source and issue publication questions remain pending. Full C++, performance and final review gates remain open.",
+      "nextStep": "Packet owner audits the KVM failure and completes remaining architecture/compiler/runtime scope without discarding valid products. Root follows existing source decisions and isolated-worker information; no new timed samples, repeated questions or decision frames.",
+      "recheckCondition": "Audited host/KVM/ARM result or substantive qualification change, source feedback, or existing publication/worker answer.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135164,6 +135168,18 @@
         {
           "label": "ARM packet qualification; execution/reporting audit pending",
           "url": "https://github.com/tamird/gvisor/actions/runs/44647609416"
+        },
+        {
+          "label": "ARM capability preflight passed; full scope remains open",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44665659420"
+        },
+        {
+          "label": "Host KVM probe failed; owner diagnosis pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44665681783"
+        },
+        {
+          "label": "Packet canonical formatting passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44664391239"
         }
       ],
       "followup": {
@@ -135185,12 +135201,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T02:14:48.077247+00:00",
-        "nextAction": "Follow existing source decisions and worker information. Assigned owners finish actual evidence and reviewable fixes; preserve functional/compiler products and avoid repeated questions or new decision frames.",
-        "recheckCondition": "Substantive feedback/qualification milestone, provider checks, or answers to existing publication/worker questions.",
+        "curatedAt": "2026-11-20T03:15:58.069646+00:00",
+        "nextAction": "Packet owner audits the KVM failure and completes remaining architecture/compiler/runtime scope without discarding valid products. Root follows existing source decisions and isolated-worker information; no new timed samples, repeated questions or decision frames.",
+        "recheckCondition": "Audited host/KVM/ARM result or substantive qualification change, source feedback, or existing publication/worker answer.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "TCP functional qualification is closed at531cases per architecture; performance remains held for existing worker/pool isolation information, with no new timed samples. Compdb6a9/secfuzz8c and private issue publication decisions remain pending. Standard configured-query supportd8a3a9a8 is delivered with fixed configured-targets.json artifact. Assigned owners continue conformance, visibility, license-manifest and import-conflict work; unresolved findings are not claimed fixed.",
+        "disposition": "Packet formatting-only candidatec39d937cba6a95d5751e0bd0c7d14b32716a1eca leaves publicacf93596 unchanged. AMD packet validation passes14native,14shared,14ptrace and14directfs cases plus1577Go and1477race cases, with zero failures/skips; canonical formatting passes. ARM preflight44665659420 passes, while host KVM44665681783 failed and awaits exact owner diagnosis. No full ARM, KVM or performance qualification is claimed. Performance remains held for existing worker/pool isolation information; all source and issue publication questions remain pending. Full C++, performance and final review gates remain open.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135599,5 +135615,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T02:52:53.923923+00:00"
+  "updatedAt": "2026-11-20T03:15:58.069646+00:00"
 }
