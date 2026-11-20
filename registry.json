@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T17:52:51.752391+00:00",
+    "updatedAt": "2026-11-20T18:31:31.140104+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -79386,7 +79386,7 @@
       "url": "https://github.com/google/gvisor/pull/17184",
       "group": "tests",
       "status": "open",
-      "summary": "The user requested changes to the actual ad1 Go-amendment question, objecting to its +360-line growth (reply call_ea2fbca5537a472ca0700d87864c5687). Public2aa840f4 remains unchanged. The writer and independent design review are simplifying real-binary integration, removing the duplicate entrypoint and redundant low-level stall fixture/Accept copy while retaining all three strong live-but-stalled negatives. Prior source-bound unit/mode/compiler proofs remain historical inputs, not blanket qualification of the revision. No source approval, DCO addition or upstream prose/source update is authorized by this reply.",
+      "summary": "The user requested changes again to simplified0583208d, questioning why it remains +267 lines instead of the earlier net-negative rewrite (reply call_a40bac98a99d485ea1465d902d644e21). No current Go question or publication approval remains; public2aa840f4 is unchanged. All three actual CLI deadline/cleanup cases passed (10.14/70.17/71.30seconds, XML4 including parent, zero failures/skips), with eight fast units per architecture and two final reviewers accepting the source. Those source-bound results do not settle the requested size/design revision. The original writer is held for lean-baseline investigation after the current CI/RBE research priority.",
       "evidence": [
         {
           "label": "Published standalone benchmark correction",
@@ -79405,10 +79405,10 @@
       "followup": {
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
         "owner": "root",
-        "nextAction": "approved_rebase_queue completes the smaller owning-boundary implementation, validates actual binary/protocol behavior and all three strong negatives, and obtains focused final review before a new qualified-source handoff. Root owns the next source-publication review boundary.",
+        "nextAction": "Root prioritizes the requested current-CI/cache research and proposed issue rewrite. On resumption, approved_rebase_queue compares the earlier lean Go baseline and identifies the smallest owning mechanism while preserving required behavior and meaningful negatives. Do not repeat an approval question or publish058.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-20T17:52:51.752391+00:00",
-        "recheckCondition": "The reduced exact source and meaningful actual-binary/negative-case evidence, focused final findings or actual user guidance.",
+        "observedAt": "2026-11-20T18:31:31.140104+00:00",
+        "recheckCondition": "Completion of the prioritized read-only CI research or explicit user steering to resume the lean-baseline revision; then a materially smaller reviewable source.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17184",
           "https://github.com/tamird/gvisor/commit/9c541c3ae1cd68df1741882480d5bf184396e695",
@@ -79442,8 +79442,8 @@
           "https://github.com/tamird/gvisor/actions/runs/44660305436",
           "https://github.com/tamird/gvisor/actions/runs/44660308694"
         ],
-        "disposition": "The user requested changes to the actual ad1 Go-amendment question, objecting to its +360-line growth (reply call_ea2fbca5537a472ca0700d87864c5687). Public2aa840f4 remains unchanged. The writer and independent design review are simplifying real-binary integration, removing the duplicate entrypoint and redundant low-level stall fixture/Accept copy while retaining all three strong live-but-stalled negatives. Prior source-bound unit/mode/compiler proofs remain historical inputs, not blanket qualification of the revision. No source approval, DCO addition or upstream prose/source update is authorized by this reply.",
-        "curatedAt": "2026-11-20T17:52:51.752391+00:00",
+        "disposition": "The user requested changes again to simplified0583208d, questioning why it remains +267 lines instead of the earlier net-negative rewrite (reply call_a40bac98a99d485ea1465d902d644e21). No current Go question or publication approval remains; public2aa840f4 is unchanged. All three actual CLI deadline/cleanup cases passed (10.14/70.17/71.30seconds, XML4 including parent, zero failures/skips), with eight fast units per architecture and two final reviewers accepting the source. Those source-bound results do not settle the requested size/design revision. The original writer is held for lean-baseline investigation after the current CI/RBE research priority.",
+        "curatedAt": "2026-11-20T18:31:31.140104+00:00",
         "implementationOwner": "approved_rebase_queue"
       },
       "dcoAmendment": {
@@ -79504,9 +79504,22 @@
           "outcome": "changes-requested",
           "observedAt": "2026-11-20T17:52:51.752391+00:00",
           "note": "No approval, new DCO or upstream publication follows. This observed settlement preserves the actual reply ID without inventing the user-message timestamp."
+        },
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "head": "0583208d18c43386c6eea79e5019679ef3aceb46",
+          "baseHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
+          "url": "https://github.com/tamird/gvisor/commit/0583208d18c43386c6eea79e5019679ef3aceb46",
+          "title": "Run the TCP benchmark from Go",
+          "body": "Replace the shell coordinator with a Go binary while preserving the\nbenchmark options and output. Inspect listening sockets without consuming\niperf connections, wait for the server before starting the proxies, and\nbound both startup and the complete transfer. Parse iperf JSON to select\nthe aggregate sender rate for parallel streams.\n\nResolve declared Bazel helpers through runfiles and preserve the installed\nhelper-directory option. Keep children and network setup private to the\nbenchmark, reap helpers on failure, and retain profile shutdown time.\n\nDocument the current Go benchmark output and cover stalled live helpers,\nresult validation, and option forwarding.\n\nPrepared by Codex on behalf of @tamird.",
+          "summary": "The actual simplified-source question was tool-accepted and root confirmed it at2026-11-20T18:14:05Z; exact server request time was unavailable. The user replied changes requested to call_a40bac98a99d485ea1465d902d644e21, asking why the rewrite was still +267 when the earlier Go rewrite was net negative.",
+          "outcome": "changes-requested",
+          "observedAt": "2026-11-20T18:31:31.140104+00:00",
+          "note": "No pending question, publication approval or DCO action remains. The simplified source had valid owning gates and final review, but the user requested further reduction."
         }
       ],
-      "nextAction": "approved_rebase_queue completes the smaller owning-boundary implementation, validates actual binary/protocol behavior and all three strong negatives, and obtains focused final review before a new qualified-source handoff. Root owns the next source-publication review boundary."
+      "nextAction": "Root prioritizes the requested current-CI/cache research and proposed issue rewrite. On resumption, approved_rebase_queue compares the earlier lean Go baseline and identifies the smallest owning mechanism while preserving required behavior and meaningful negatives. Do not repeat an approval question or publish058."
     },
     {
       "id": "branch:tcp-dsack-below-ack-parity",
@@ -89248,9 +89261,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "e0cc4964a9b942dc28902ff08ed041b2608a8760",
-        "observedAt": "2026-11-20T17:52:51.752391+00:00",
-        "disposition": "Delivered e0cc4964a9b942dc28902ff08ed041b2608a8760 is native OPEN/MERGEABLE with DCO success; the conflict is resolved. Exact-lease SSH publication and notice7046533307 are verified. Two reviewers accepted preservation of upstream Nogo exclusion; paired2,540-row configured selections match in both cgroup modes, analysis-only NO_BUILD/zero actions. First Pass2118 independently reports upload exit80, stack_errored=true, agent_id=null, and \"Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes\" before tests. GitHub Gazelle/lint/fileheader pass; remaining exact-head checks are root-watched.",
-        "nextAction": "Root consumes the remaining exact-head GitHub checks and follows existing maintainer review/import and provider quota recovery. Preserve the analysis-only scope; no runtime pass, retry, source fix or extra outreach is inferred.",
+        "observedAt": "2026-11-20T18:31:31.140104+00:00",
+        "disposition": "Delivered e0cc4964a9b942dc28902ff08ed041b2608a8760 remains OPEN/MERGEABLE. All public GitHub checks and DCO now pass, including Go generation44786163947 (9m46). First Pass2118 remains independently verified pre-agent rolling30-day360,000-compute-minute quota; no project test ran in that admission failure. Paired2,540-row selection proof remains analysis-only, not runtime qualification.",
+        "nextAction": "Root follows existing maintainer review/import and evidenced provider quota recovery; no source churn, automatic retry or duplicate CI outreach.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42809893341/artifacts/13760489108",
           "https://github.com/google/gvisor/pull/17281",
@@ -89263,8 +89276,8 @@
           "https://buildkite.com/gvisor/first-pass/builds/2118#01a1fa0f-39d3-427a-8ca8-d3e98564016c"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Remaining exact-head check completion, genuine review/import change or evidenced provider quota clearance.",
-        "curatedAt": "2026-11-20T17:52:51.752391+00:00"
+        "recheckCondition": "A genuine review/import/check event or provider quota-clearance evidence.",
+        "curatedAt": "2026-11-20T18:31:31.140104+00:00"
       },
       "number": 17281,
       "refinement": {
@@ -100149,13 +100162,13 @@
       "url": "https://github.com/gvisor/gvisor/issues/17832",
       "group": "rbe",
       "status": "open",
-      "summary": "The user-requested migration proposal is published under the original authorization. Native readback verified the author, exact submitted body and two tables. Reported pipeline and single-configuration examples retain their distinct time/cache/architecture scope; they do not establish whole-pipeline or vendor-migration improvements.",
+      "summary": "Published migration proposal; root is preparing the user-requested evidence-based rewrite from current CI/cache research. No public issue edit is authorized yet.",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-11-20T16:42:47.272650+00:00",
-        "disposition": "Proposal issue delivered. This completes the requested proposal publication, not the broader Bazel qualification work.",
-        "nextAction": "Follow genuine maintainer feedback and continue the already-authorized small Bazel prerequisites. Do not adopt new infrastructure, provider, access or merge commitments from external suggestions.",
-        "recheckCondition": "A new issue comment, accepted pilot or separately authorized implementation decision.",
+        "observedAt": "2026-11-20T18:31:31.140104+00:00",
+        "disposition": "The original proposal issue is delivered. The user now requested precise current-CI/cache research and a proposed rewrite reflecting existing maintainer cache work. This authorizes read-only research and drafting, not an issue edit or new vendor/access commitment.",
+        "nextAction": "Root researches current native CI behavior and existing cache mechanisms, separates pipeline/queue/configuration scopes and drafts the proposed issue rewrite for review. Keep current numbers provisional until directly sourced; do not edit the public issue yet.",
+        "recheckCondition": "Completed source-grounded current-CI research and a concrete proposed rewrite, or actual maintainer/user feedback.",
         "evidence": [
           "https://github.com/gvisor/gvisor/issues/17832"
         ]
@@ -135100,9 +135113,9 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T17:52:51.752391+00:00",
+      "updatedAt": "2026-11-20T18:31:31.140104+00:00",
       "summary": "Compdb candidate04d67f624fad24ce7b27f5d93a2d2f90cfef3da4 preserves the original12-file scope on7397. tcp_benchmark_final_correctness is running actual maintained //tools:devcontainer-init.sh through the existing workflow/projection44766733189; this is an agent validation gap, not a user decision. Older44622300025 caller_both evidence exists, but no current minimal-source/configuration equivalence binding is established, so a fresh caller check is justified. Public source review comes only after that gap closes. Private migration-issue labels/time boundaries were updated without a new user question or public draft-body copy. Sensitive namespace/ID-map/mount investigation remains held until confirmed Daybreak; independent baseline failures are not universal prerequisites. Narrow Python holds and all real publication boundaries remain.",
-      "nextStep": "compdb_final_correctness audits actual native Windows supplier execution, then root reviews the qualified supplier source for any outbound publication boundary. tcp_benchmark_final_correctness retains the shared-helper actual-caller/boundary obligations once the supplier fix is available; no wrapper workaround.",
+      "nextStep": "Root researches the existing cache/CI mechanisms and prepares a proposed issue rewrite without public edits. compdb_final_correctness closes the supplier native Windows fixture and actual Linux/style evidence; tcp_benchmark_final_correctness retains shared-helper caller obligations behind fixed supplier availability.",
       "recheckCondition": "Audited current caller/source readiness, confirmed Daybreak availability or substantive existing publication/review/CI change.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
@@ -135578,12 +135591,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T17:52:51.752391+00:00",
-        "nextAction": "compdb_final_correctness audits actual native Windows supplier execution, then root reviews the qualified supplier source for any outbound publication boundary. tcp_benchmark_final_correctness retains the shared-helper actual-caller/boundary obligations once the supplier fix is available; no wrapper workaround.",
-        "recheckCondition": "Actual native Windows supplier artifacts, qualified fixed supplier availability, actual gVisor caller evidence or source review findings.",
+        "curatedAt": "2026-11-20T18:31:31.140104+00:00",
+        "nextAction": "Root researches the existing cache/CI mechanisms and prepares a proposed issue rewrite without public edits. compdb_final_correctness closes the supplier native Windows fixture and actual Linux/style evidence; tcp_benchmark_final_correctness retains shared-helper caller obligations behind fixed supplier availability.",
+        "recheckCondition": "Completed current-CI research, actual corrected Windows/Linux supplier artifacts or an available validated supplier fix.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "The shared-shell revision remains changes-requested/agent-owned. Candidate d894 source checks44783757367 passed; actual callers remain held on the unfixed pinned0.21 supplier. Supplier a1cab5e has four Linux owning targets and canonical style passing; two independent reviews accepted the complete pipe-I/O/Windows.exe fixture fix. Native Windows gate44787178507 is still root-watched after an ambiguous NO_BUILD preflight; do not call native Windows qualified until its actual audit. No supplier or gVisor publication question is pending. Preserve pinned archive/Debian payload, twenty-two CI projection paths and macOS15.5/runtime scope limits.",
+        "disposition": "Current priority is the user-requested precise CI/cache research and proposed rewrite of delivered issue17832. The gVisor shared-shell revision remains changes requested with actual callers held on the unfixed pinned0.21 supplier. Supplier55 extends explicit stderr handling to both info and aquery; Linux/style44790721670 is pending actual audit. Earlier native Windows44789959650 failed in0.2seconds and is under fixture diagnosis with cache preserved; corrected Windows validation is pending. No supplier/gVisor publication question, Windows qualification or RBE improvement claim is inferred.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135796,7 +135809,7 @@
             "sha256": "4f34260222d0ed9f5f245edc726d99328889d952a6b6ba4dfe7d42142af6876b"
           }
         },
-        "observedAt": "2026-11-20T17:52:51.752391+00:00",
+        "observedAt": "2026-11-20T18:31:31.140104+00:00",
         "implementationOwner": "tcp_benchmark_final_correctness"
       },
       "executionHistory": [
@@ -136009,5 +136022,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-20T17:52:51.752391+00:00"
+  "updatedAt": "2026-11-20T18:31:31.140104+00:00"
 }
