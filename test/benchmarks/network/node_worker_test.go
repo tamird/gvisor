@@ -41,6 +41,16 @@ func TestHeyReportInterface(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer machine.CleanUp()
+	ctx, cancel := context.WithTimeout(t.Context(), 20*time.Second)
+	defer cancel()
+	identityClient := machine.GetNativeContainer(ctx, t)
+	defer identityClient.CleanUp(context.WithoutCancel(ctx))
+	identity, err := identityClient.Run(ctx, dockerutil.RunOpts{Image: "benchmarks/hey", NetworkMode: "host"},
+		"sh", "-c", "command -v hey && readlink -f /bin/hey && sha256sum /usr/bin/hey /bin/hey")
+	if err != nil {
+		t.Fatalf("Hey executable identity: %v: %s", err, identity)
+	}
+	t.Logf("Hey executable identity:\n%s", identity)
 	cases := []struct {
 		name       string
 		status     int

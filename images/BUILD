@@ -140,7 +140,7 @@ image_outputs(
 
 image_layer(
     name = "benchmark_hey_read_checked_layer",
-    srcs = {"/bin/hey": "//images/benchmarks/hey:hey"},
+    srcs = {"/usr/bin/hey": "//images/benchmarks/hey:hey"},
     create_parent_directories = "enabled",
     default_metadata = file_metadata(mode = "0755"),
     include_runfiles = False,
