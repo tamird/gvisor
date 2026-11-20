@@ -24,6 +24,7 @@ function request() {
       if (name === 'secure-random-string') return opts => 'x'.repeat(opts.length);
       return require(name);
     },
+    __dirname: '/usr/src/app',
     process: {argv: ['node', 'index.js', 'redis']},
   }, {filename: 'index.js'});
   handler({}, {render(view, locals) { rendered.push(Array.from(locals.text)); }},
