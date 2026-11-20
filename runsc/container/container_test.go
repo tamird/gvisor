@@ -5880,8 +5880,6 @@ func TestSpecValidation(t *testing.T) {
 				spec.Linux = &specs.Linux{
 					Resources: &specs.LinuxResources{
 						Memory: &specs.LinuxMemory{
-							Limit:       int64Ptr(1),
-							Swap:        int64Ptr(2),
 							Reservation: int64Ptr(3),
 						},
 					},
@@ -5889,8 +5887,6 @@ func TestSpecValidation(t *testing.T) {
 				restoreSpec.Linux = &specs.Linux{
 					Resources: &specs.LinuxResources{
 						Memory: &specs.LinuxMemory{
-							Limit:       int64Ptr(1),
-							Swap:        int64Ptr(2),
 							Reservation: int64Ptr(5),
 						},
 					},

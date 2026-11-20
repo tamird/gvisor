@@ -939,6 +939,18 @@ func TestCheckpointHostinetRestoreNetworkMismatch(t *testing.T) {
 	conf := testutil.TestConfig(t)
 	conf.Network = config.NetworkHost
 	spec := testutil.NewSpecWithArgs("sleep", "1000")
+	// Keep namespace mappings equal while changing only the network mode.
+	spec.Linux = &specs.Linux{
+		Namespaces: []specs.LinuxNamespace{{Type: specs.UserNamespace}},
+	}
+	spec.Linux.UIDMappings, err = getIdentityMapping("uid_map")
+	if err != nil {
+		t.Fatalf("getting UID mappings: %v", err)
+	}
+	spec.Linux.GIDMappings, err = getIdentityMapping("gid_map")
+	if err != nil {
+		t.Fatalf("getting GID mappings: %v", err)
+	}
 	_, bundleDir, cleanup, err := testutil.SetupContainer(spec, conf)
 	if err != nil {
 		t.Fatalf("error setting up container: %v", err)
