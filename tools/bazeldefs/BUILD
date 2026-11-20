@@ -56,11 +56,14 @@ platform(
 )
 
 # Execution properties select native workers without changing target toolchains.
+_REMOTE_IMAGE = "docker://gcr.io/flame-public/rbe-ubuntu24-04@sha256:be9853fc45092d2cf2bda3abed30d22182881659a50bf35c7125161d7cfc8a75"
+
 platform(
     name = "remote_linux_amd64",
     exec_properties = {
         "Arch": "amd64",
         "OSFamily": "linux",
+        "container-image": _REMOTE_IMAGE,
     },
     parents = [":linux_amd64"],
     visibility = ["//visibility:public"],
@@ -71,6 +74,7 @@ platform(
     exec_properties = {
         "Arch": "arm64",
         "OSFamily": "linux",
+        "container-image": _REMOTE_IMAGE,
     },
     parents = [":linux_arm64"],
     visibility = ["//visibility:public"],
