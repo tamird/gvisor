@@ -29,11 +29,17 @@ func TestHeyRequestErrors(t *testing.T) {
 		{name: "success", output: []byte(`{
   "requests_per_second":1748.6965652976414,
   "average_latency_seconds":"0.0010728662499999999",
+  "responses":2,
+  "statuses":{"200":2},
+  "size_total":8412,
   "errors":{}
 }`), wantQPS: 1748.6965652976414, wantAverage: 0.0010728662499999999},
 		{name: "partialFailure", output: []byte(`{
   "requests_per_second":1.9987641301593322,
   "average_latency_seconds":"0.0007179025",
+  "responses":2,
+  "statuses":{},
+  "size_total":0,
   "errors":{"Get \"http://127.0.0.1:34035/mixed\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)":2}
 }`), wantFailure: true},
 	} {
@@ -42,7 +48,7 @@ func TestHeyRequestErrors(t *testing.T) {
 			result := testing.Benchmark(func(b *testing.B) {
 				b.StopTimer()
 				defer func() { failed = b.Failed() }()
-				hey := Hey{}
+				hey := Hey{Requests: 2, ExpectedResponseBytes: 4206}
 				hey.Report(b, tc.output)
 			})
 			if failed != tc.wantFailure {

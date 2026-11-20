@@ -81,8 +81,9 @@ func BenchmarkNode(b *testing.B) {
 		}
 		b.Run(name, func(b *testing.B) {
 			hey := &tools.Hey{
-				Requests:    b.N,
-				Concurrency: c,
+				Requests:              b.N,
+				Concurrency:           c,
+				ExpectedResponseBytes: 4206,
 			}
 			runNode(b, hey)
 		})

@@ -27,6 +27,7 @@ import (
 
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
 	"gvisor.dev/gvisor/test/benchmarks/harness"
+	"gvisor.dev/gvisor/test/benchmarks/tools"
 )
 
 func TestNodeProducerWithWorker(t *testing.T) {
@@ -77,17 +78,20 @@ func TestHeyReportInterface(t *testing.T) {
 			defer server.Close()
 			client := machine.GetNativeContainer(ctx, t)
 			defer client.CleanUp(context.WithoutCancel(ctx))
-			const template = `{"responses":{{.NumRes}},"statuses":{{jsonify .StatusCodeDist}},"size_total":{{.SizeTotal}},"errors":{{jsonify .ErrorDist}}}`
-			output, err := client.Run(ctx, dockerutil.RunOpts{Image: "benchmarks/hey", NetworkMode: "host"},
-				"hey", "-o", template, "-n", "5", "-c", "1", "-t", "2", server.URL)
+			hey := &tools.Hey{Requests: 5, Concurrency: 1, ExpectedResponseBytes: 4206}
+			command := hey.MakeCmd("unused", 0)
+			command[len(command)-1] = server.URL
+			output, err := client.Run(ctx, dockerutil.RunOpts{Image: "benchmarks/hey", NetworkMode: "host"}, command...)
 			if err != nil {
 				t.Fatalf("pinned Hey interface: %v: %s", err, output)
 			}
 			var report struct {
-				Responses *int           `json:"responses"`
-				Statuses  map[string]int `json:"statuses"`
-				SizeTotal *int64         `json:"size_total"`
-				Errors    map[string]int `json:"errors"`
+				RequestsPerSecond float64        `json:"requests_per_second"`
+				AverageLatency    string         `json:"average_latency_seconds"`
+				Responses         *int           `json:"responses"`
+				Statuses          map[string]int `json:"statuses"`
+				SizeTotal         *int64         `json:"size_total"`
+				Errors            map[string]int `json:"errors"`
 			}
 			decoder := json.NewDecoder(strings.NewReader(output))
 			decoder.DisallowUnknownFields()
@@ -105,6 +109,21 @@ func TestHeyReportInterface(t *testing.T) {
 			}
 			if tc.name == "truncated" && (len(report.Errors) != 1 || report.Errors["unexpected EOF"] != 5 || len(report.Statuses) != 0 || *report.SizeTotal != 0) {
 				t.Fatalf("truncated responses were not rejected: %s", output)
+			}
+			failed := false
+			result := testing.Benchmark(func(b *testing.B) {
+				b.StopTimer()
+				defer func() { failed = b.Failed() }()
+				hey.Report(b, []byte(output))
+			})
+			if wantFailure := tc.name != "full"; failed != wantFailure {
+				t.Fatalf("Hey.Report failed=%t, want %t for real response: %s", failed, wantFailure, output)
+			}
+			if failed && len(result.Extra) != 0 {
+				t.Fatalf("Hey.Report emitted metrics for rejected work: %v", result.Extra)
+			}
+			if !failed && result.Extra["requests_per_second.QPS"] <= 0 {
+				t.Fatalf("Hey.Report omitted successful request metrics: %v", result.Extra)
 			}
 			record, err := json.Marshal(struct {
 				Case        string          `json:"hey_interface"`

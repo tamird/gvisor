@@ -27,12 +27,18 @@ import (
 const heyOutputTemplate = `{
   "requests_per_second": {{.Rps}},
   "average_latency_seconds": "{{.Average}}",
+  "responses": {{.NumRes}},
+  "statuses": {{jsonify .StatusCodeDist}},
+  "size_total": {{.SizeTotal}},
   "errors": {{jsonify .ErrorDist}}
 }`
 
 type heyReport struct {
 	RequestsPerSecond float64        `json:"requests_per_second"`
 	AverageLatency    *float64       `json:"average_latency_seconds,string"`
+	Responses         *int           `json:"responses"`
+	Statuses          map[string]int `json:"statuses"`
+	SizeTotal         *int64         `json:"size_total"`
 	Errors            map[string]int `json:"errors"`
 }
 
@@ -41,6 +47,9 @@ type Hey struct {
 	Requests    int // Note: requests cannot be less than concurrency.
 	Concurrency int
 	Doc         string
+
+	// ExpectedResponseBytes is the required body size per response, or zero if unspecified.
+	ExpectedResponseBytes int64
 }
 
 // MakeCmd returns a 'hey' command.
@@ -72,6 +81,18 @@ func (h *Hey) Report(b *testing.B, output []byte) {
 	}
 	if report.Errors == nil || len(report.Errors) != 0 {
 		b.Fatalf("hey request error accounting is missing or reports errors: %s", output)
+	}
+	if h.Requests <= 0 || report.Responses == nil || *report.Responses != h.Requests {
+		b.Fatalf("hey response count does not match %d requests: %s", h.Requests, output)
+	}
+	if len(report.Statuses) != 1 || report.Statuses["200"] != h.Requests {
+		b.Fatalf("hey responses are not all HTTP 200: %s", output)
+	}
+	if report.SizeTotal == nil || *report.SizeTotal < 0 || h.ExpectedResponseBytes < 0 {
+		b.Fatalf("invalid hey response byte accounting: %s", output)
+	}
+	if h.ExpectedResponseBytes > 0 && (h.ExpectedResponseBytes > math.MaxInt64/int64(h.Requests) || *report.SizeTotal != int64(h.Requests)*h.ExpectedResponseBytes) {
+		b.Fatalf("hey consumed bytes do not match %d responses of %d bytes: %s", h.Requests, h.ExpectedResponseBytes, output)
 	}
 	if report.RequestsPerSecond <= 0 {
 		b.Fatalf("invalid hey request rate: %v", report.RequestsPerSecond)
