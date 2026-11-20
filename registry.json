@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T16:42:47.272650+00:00",
+    "updatedAt": "2026-11-20T17:09:53.903478+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -79386,7 +79386,7 @@
       "url": "https://github.com/google/gvisor/pull/17184",
       "group": "tests",
       "status": "open",
-      "summary": "The user requested direct Go delivery through this same PR, folding readiness, throughput validation, declared helpers and README changes into the replacement. The ee28310b shell amendment question is superseded with changes requested, not approved. Public 2aa840f4 remains unchanged. Early Go replacement e201 had unbounded listener startup and client transfer; da45d98061760122f24ee5b8a5c490d9080d7148 is the current implementation candidate, with owning tests 44775502713 and source checks 44775508730 pending actual owner audit. Early design advice is not final adversarial review.",
+      "summary": "The user’s direct-Go revision direction remains active; the superseded ee28310b shell amendment is changes requested, not approved. Public2aa840f4 is unchanged. The current Go work has audited twelve unit cases, three real coordinator negative leaves, source checks and native IPv4 proof; all remaining seven-mode and ARM callbacks succeeded, with exact artifact audit/final adversarial review still owned by approved_rebase_queue. No revised source has publication approval.",
       "evidence": [
         {
           "label": "Published standalone benchmark correction",
@@ -79405,10 +79405,10 @@
       "followup": {
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
         "owner": "root",
-        "nextAction": "approved_rebase_queue implements bounded Go startup/transfer behavior, decimal-duration compatibility, and negative cases where the owning listener/service remains alive but stalls. Validate the actual protocol integration and obtain a qualified revised-source review handoff. Root owns the eventual publication boundary; no source approval has been inferred.",
+        "nextAction": "approved_rebase_queue audits the remaining actual protocol-mode/ARM artifacts and final source, preserving bounded startup/transfer, decimal durations and alive-but-stalled negatives, then obtains final adversarial review and a qualified handoff. Root owns publication review; no interim shell PR or duplicate source question.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-20T16:42:47.272650+00:00",
-        "recheckCondition": "The current Go gates and source-bound protocol/negative-case evidence, final reviewable source, or an actual new user response.",
+        "observedAt": "2026-11-20T17:09:53.903478+00:00",
+        "recheckCondition": "Final source-bound gate audits and adversarial findings, a new reviewable Go revision, or an actual user response.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17184",
           "https://github.com/tamird/gvisor/commit/9c541c3ae1cd68df1741882480d5bf184396e695",
@@ -79442,8 +79442,8 @@
           "https://github.com/tamird/gvisor/actions/runs/44660305436",
           "https://github.com/tamird/gvisor/actions/runs/44660308694"
         ],
-        "disposition": "The user requested direct Go delivery through this same PR, folding readiness, throughput validation, declared helpers and README changes into the replacement. The ee28310b shell amendment question is superseded with changes requested, not approved. Public 2aa840f4 remains unchanged. Early Go replacement e201 had unbounded listener startup and client transfer; da45d98061760122f24ee5b8a5c490d9080d7148 is the current implementation candidate, with owning tests 44775502713 and source checks 44775508730 pending actual owner audit. Early design advice is not final adversarial review.",
-        "curatedAt": "2026-11-20T16:42:47.272650+00:00",
+        "disposition": "The user’s direct-Go revision direction remains active; the superseded ee28310b shell amendment is changes requested, not approved. Public2aa840f4 is unchanged. The current Go work has audited twelve unit cases, three real coordinator negative leaves, source checks and native IPv4 proof; all remaining seven-mode and ARM callbacks succeeded, with exact artifact audit/final adversarial review still owned by approved_rebase_queue. No revised source has publication approval.",
+        "curatedAt": "2026-11-20T17:09:53.903478+00:00",
         "implementationOwner": "approved_rebase_queue"
       },
       "dcoAmendment": {
@@ -79493,7 +79493,7 @@
           "observedAt": "2026-11-20T16:42:47.272650+00:00"
         }
       ],
-      "nextAction": "approved_rebase_queue implements bounded Go startup/transfer behavior, decimal-duration compatibility, and negative cases where the owning listener/service remains alive but stalls. Validate the actual protocol integration and obtain a qualified revised-source review handoff. Root owns the eventual publication boundary; no source approval has been inferred."
+      "nextAction": "approved_rebase_queue audits the remaining actual protocol-mode/ARM artifacts and final source, preserving bounded startup/transfer, decimal durations and alive-but-stalled negatives, then obtains final adversarial review and a qualified handoff. Root owns publication review; no interim shell PR or duplicate source question."
     },
     {
       "id": "branch:tcp-dsack-below-ack-parity",
@@ -135082,9 +135082,9 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T16:42:47.272650+00:00",
+      "updatedAt": "2026-11-20T17:09:53.903478+00:00",
       "summary": "Compdb candidate04d67f624fad24ce7b27f5d93a2d2f90cfef3da4 preserves the original12-file scope on7397. tcp_benchmark_final_correctness is running actual maintained //tools:devcontainer-init.sh through the existing workflow/projection44766733189; this is an agent validation gap, not a user decision. Older44622300025 caller_both evidence exists, but no current minimal-source/configuration equivalence binding is established, so a fresh caller check is justified. Public source review comes only after that gap closes. Private migration-issue labels/time boundaries were updated without a new user question or public draft-body copy. Sensitive namespace/ID-map/mount investigation remains held until confirmed Daybreak; independent baseline failures are not universal prerequisites. Narrow Python holds and all real publication boundaries remain.",
-      "nextStep": "Await the existing exact-source publication-review response and preserve its documented CI/macOS limits. Continue independent already-authorized Bazel prerequisites and follow public migration issue #17832; no private issue-proposal approval remains pending.",
+      "nextStep": "tcp_benchmark_final_correctness owns the shared-helper revision, code comments/docs cleanup, Debian extraction rationale and non-tautological boundary coverage. Root owns the supplier pipe defect and eventual qualified-source handoff. Reuse valid unchanged evidence; do not reopen a user question until the revised change is qualified and reviewable.",
       "recheckCondition": "Audited current caller/source readiness, confirmed Daybreak availability or substantive existing publication/review/CI change.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
@@ -135560,12 +135560,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T16:42:47.272650+00:00",
-        "nextAction": "Await the existing exact-source publication-review response and preserve its documented CI/macOS limits. Continue independent already-authorized Bazel prerequisites and follow public migration issue #17832; no private issue-proposal approval remains pending.",
-        "recheckCondition": "An actual answer to the current 3be source question, new exact-source feedback, or actual supported-platform/caller evidence.",
+        "curatedAt": "2026-11-20T17:09:53.903478+00:00",
+        "nextAction": "tcp_benchmark_final_correctness owns the shared-helper revision, code comments/docs cleanup, Debian extraction rationale and non-tautological boundary coverage. Root owns the supplier pipe defect and eventual qualified-source handoff. Reuse valid unchanged evidence; do not reopen a user question until the revised change is qualified and reviewable.",
+        "recheckCondition": "A source-bound supplier pipe fix/test, revised helper/caller evidence and final review, or actual new user guidance.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Exact signed 3be797d5cc40de992840bf3bb370acb10090d6c1 is published on the existing fork proposal ref and now has a genuine source-publication question awaiting the user. Both actual callers, owning tests/license, canonical source/377-source compiler checks, final documentation spelling and two independent reviews passed within their recorded CI configuration. Twenty-two CI projection paths add worker/toolchain support; this does not prove stock-workspace coverage. The pinned http_archive tools require macOS 15.5 or later; macOS runtime is untested. No upstream PR or new DCO trailer is published.",
+        "disposition": "The user requested changes to 3be; its pending publication question is retired without approval. Current revision 9a166b71472124cc2adb9ad1995ca767ace3dcca consolidates generation/materialization into one shared shell entrypoint and production-boundary tests. The cheap preflight passed, but audit exposed a supplier stderr-pipe hang under supported --announce_rc. Root reproduced synchronous-pipe behavior in both the pinned supplier and 0.22.4 and is preparing a bounded upstream fix; no wrapper workaround or outbound publication approval is inferred. Audited Debian members include data.tar: the AMD generic ZIP needs GLIBC2.38 while the Jammy Debian payload needs2.34. ARM runtime compatibility remains unproved. Existing current-source/configuration and macOS15.5 limits remain.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135778,7 +135778,8 @@
             "sha256": "4f34260222d0ed9f5f245edc726d99328889d952a6b6ba4dfe7d42142af6876b"
           }
         },
-        "observedAt": "2026-11-20T16:38:30Z"
+        "observedAt": "2026-11-20T17:09:53.903478+00:00",
+        "implementationOwner": "tcp_benchmark_final_correctness"
       },
       "executionHistory": [
         {
@@ -135973,17 +135974,22 @@
         },
         "limits": "One action per observed worker; user/mount namespaces only. No all-pool, physical ARM, NEWNET/procfs, Sentry startup/report or runtime100 matrix claim."
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "3be797d5cc40de992840bf3bb370acb10090d6c1",
-        "url": "https://github.com/tamird/gvisor/commit/3be797d5cc40de992840bf3bb370acb10090d6c1",
-        "title": "Use bazel-compile-commands for C++ tooling",
-        "body": "Approve opening a one-commit gVisor PR for 3be797d5cc40de992840bf3bb370acb10090d6c1, Use bazel-compile-commands for C++ tooling? Removes the 134-line converter and migrates both callers; actual devcontainer 44766733189, owning tests/license 44769360359 and 377-source analysis passed. Two independent reviews passed. CI used additional worker/toolchain configuration; macOS 15.5 or later is required and macOS runtime is untested. The PR description is in the private compile-commands-final-pr-draft.txt review file.\n\ngit range-diff 6a9fd82e^! 3be797d5^!",
-        "summary": "Root verified acceptance of the actual source-publication question at 2026-11-20T16:38:30Z. Exact server request time is unavailable; requestedAt is intentionally omitted. The signed fork proposal ref is provider-verified. This is a new qualified-source review, not a restoration of the old unproven 6a9 question. The private PR-description body is not copied here.",
-        "baseHead": "7397dd27515cd86de13145537b5b07604f7ac50b"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "3be797d5cc40de992840bf3bb370acb10090d6c1",
+          "url": "https://github.com/tamird/gvisor/commit/3be797d5cc40de992840bf3bb370acb10090d6c1",
+          "title": "Use bazel-compile-commands for C++ tooling",
+          "body": "Approve opening a one-commit gVisor PR for 3be797d5cc40de992840bf3bb370acb10090d6c1, Use bazel-compile-commands for C++ tooling? Removes the 134-line converter and migrates both callers; actual devcontainer 44766733189, owning tests/license 44769360359 and 377-source analysis passed. Two independent reviews passed. CI used additional worker/toolchain configuration; macOS 15.5 or later is required and macOS runtime is untested. The PR description is in the private compile-commands-final-pr-draft.txt review file.\n\ngit range-diff 6a9fd82e^! 3be797d5^!",
+          "summary": "Root verified acceptance of the actual source-publication question at 2026-11-20T16:38:30Z. Exact server request time is unavailable; requestedAt is intentionally omitted. The signed fork proposal ref is provider-verified. This is a new qualified-source review, not a restoration of the old unproven 6a9 question. The private PR-description body is not copied here.",
+          "baseHead": "7397dd27515cd86de13145537b5b07604f7ac50b",
+          "outcome": "changes-requested",
+          "observedAt": "2026-11-20T17:09:53.903478+00:00",
+          "note": "The actual user response requested a revision: one shared shell entrypoint replacing gen_compile_commands.py, owning-code comments, removal of documentation endorsement language, an audit of Debian payload extraction, and meaningful production-boundary tests. New standalone-PR review must show the full git diff rather than a range-diff. This records the observed settled direction, not an invented user-message timestamp or publication approval."
+        }
+      ]
     }
   ],
-  "updatedAt": "2026-11-20T16:42:47.272650+00:00"
+  "updatedAt": "2026-11-20T17:09:53.903478+00:00"
 }

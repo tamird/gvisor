@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-20T17:01:41.705090+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-20T16:42:47.272650+00:00",
+  "registryDate": "2026-11-20T17:09:53.903478+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -449335,8 +449335,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
-        "disposition": "The user requested direct Go delivery through this same PR, folding readiness, throughput validation, declared helpers and README changes into the replacement. The ee28310b shell amendment question is superseded with changes requested, not approved. Public 2aa840f4 remains unchanged. Early Go replacement e201 had unbounded listener startup and client transfer; da45d98061760122f24ee5b8a5c490d9080d7148 is the current implementation candidate, with owning tests 44775502713 and source checks 44775508730 pending actual owner audit. Early design advice is not final adversarial review.",
-        "nextAction": "approved_rebase_queue implements bounded Go startup/transfer behavior, decimal-duration compatibility, and negative cases where the owning listener/service remains alive but stalls. Validate the actual protocol integration and obtain a qualified revised-source review handoff. Root owns the eventual publication boundary; no source approval has been inferred."
+        "disposition": "The user’s direct-Go revision direction remains active; the superseded ee28310b shell amendment is changes requested, not approved. Public2aa840f4 is unchanged. The current Go work has audited twelve unit cases, three real coordinator negative leaves, source checks and native IPv4 proof; all remaining seven-mode and ARM callbacks succeeded, with exact artifact audit/final adversarial review still owned by approved_rebase_queue. No revised source has publication approval.",
+        "nextAction": "approved_rebase_queue audits the remaining actual protocol-mode/ARM artifacts and final source, preserving bounded startup/transfer, decimal durations and alive-but-stalled negatives, then obtains final adversarial review and a qualified handoff. Root owns publication review; no interim shell PR or duplicate source question."
       },
       "conflictObservedSince": "2026-11-20T00:41:37.337032+00:00"
     },
@@ -454671,8 +454671,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
-        "disposition": "The user requested direct Go delivery through this same PR, folding readiness, throughput validation, declared helpers and README changes into the replacement. The ee28310b shell amendment question is superseded with changes requested, not approved. Public 2aa840f4 remains unchanged. Early Go replacement e201 had unbounded listener startup and client transfer; da45d98061760122f24ee5b8a5c490d9080d7148 is the current implementation candidate, with owning tests 44775502713 and source checks 44775508730 pending actual owner audit. Early design advice is not final adversarial review.",
-        "nextAction": "approved_rebase_queue implements bounded Go startup/transfer behavior, decimal-duration compatibility, and negative cases where the owning listener/service remains alive but stalls. Validate the actual protocol integration and obtain a qualified revised-source review handoff. Root owns the eventual publication boundary; no source approval has been inferred."
+        "disposition": "The user’s direct-Go revision direction remains active; the superseded ee28310b shell amendment is changes requested, not approved. Public2aa840f4 is unchanged. The current Go work has audited twelve unit cases, three real coordinator negative leaves, source checks and native IPv4 proof; all remaining seven-mode and ARM callbacks succeeded, with exact artifact audit/final adversarial review still owned by approved_rebase_queue. No revised source has publication approval.",
+        "nextAction": "approved_rebase_queue audits the remaining actual protocol-mode/ARM artifacts and final source, preserving bounded startup/transfer, decimal durations and alive-but-stalled negatives, then obtains final adversarial review and a qualified handoff. Root owns publication review; no interim shell PR or duplicate source question."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxz0Oqg"
@@ -465800,7 +465800,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T16:42:47.272650+00:00"
+        "observedAt": "2026-11-20T17:09:53.903478+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -465809,7 +465809,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T16:42:47.272650+00:00"
+        "observedAt": "2026-11-20T17:09:53.903478+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -465818,7 +465818,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T16:42:47.272650+00:00"
+        "observedAt": "2026-11-20T17:09:53.903478+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -465827,7 +465827,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T16:42:47.272650+00:00"
+        "observedAt": "2026-11-20T17:09:53.903478+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -465836,7 +465836,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T16:42:47.272650+00:00"
+        "observedAt": "2026-11-20T17:09:53.903478+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -465845,7 +465845,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T16:42:47.272650+00:00"
+        "observedAt": "2026-11-20T17:09:53.903478+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -465854,16 +465854,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T16:42:47.272650+00:00"
-      }
-    },
-    "investigation:bazel-shared-qualification": {
-      "contributor-review": {
-        "scope": "3be797d5cc40de992840bf3bb370acb10090d6c1",
-        "since": "2026-11-20T16:42:47.272650+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-20T16:42:47.272650+00:00"
+        "observedAt": "2026-11-20T17:09:53.903478+00:00"
       }
     }
   },
