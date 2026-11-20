@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <sys/prctl.h>
 #include <sys/ucontext.h>
+#include <sys/user.h>
 
 #include "atomic.h"
 #include "sysmsg.h"
@@ -208,7 +209,11 @@ struct thread_context* switch_context_amd64(
     // After setting THREAD_STATE_NONE, syshandled can be interrupted by
     // SIGCHLD. In this case, we consider that the current context contains
     // the actual state and sighandler can take control on it.
+    // include-cleaner mistakes atomic.h macros for the standard library.
+    // https://github.com/llvm/llvm-project/pull/230133
+    // NOLINTNEXTLINE(misc-include-cleaner)
     atomic_store(&sysmsg->state, THREAD_STATE_NONE);
+    // NOLINTNEXTLINE(misc-include-cleaner): atomic.h macro; see LLVM #230133.
     if (atomic_load(&ctx->interrupt) != 0) {
       atomic_store(&sysmsg->state, THREAD_STATE_PREP);
       // This context got interrupted while it was waiting in the queue.
@@ -301,6 +306,8 @@ void __export_sighandler(int signo, siginfo_t* siginfo, void* _ucontext) {
     }
     ctx->err = 0;
     gregs_to_ptregs(ucontext, &ctx->ptregs);
+    // sysmsg.h declares the freestanding memcpy; see LLVM #230133.
+    // NOLINTNEXTLINE(misc-include-cleaner)
     memcpy(ctx->fpstate, (uint8_t*)ucontext->uc_mcontext.fpregs,
            __export_arch_state.fp_len);
     atomic_store(&ctx->fpstate_changed, 0);
