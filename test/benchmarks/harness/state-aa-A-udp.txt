@@ -1,0 +1,648 @@
+arm: A
+exec ${PAGER:-/usr/bin/less} "$0" || exit 1
+Executing tests from //pkg/tcpip/transport/udp:udp_test
+-----------------------------------------------------------------------------
+goos: linux
+goarch: amd64
+cpu: Intel(R) Xeon(R) 6975P-C
+=== RUN   BenchmarkUDPReceiveQueueSave
+BenchmarkUDPReceiveQueueSave
+=== RUN   BenchmarkUDPReceiveQueueSave/1
+BenchmarkUDPReceiveQueueSave/1
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   31072	     18731 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32714	     18353 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32748	     18343 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32857	     18348 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32778	     18412 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32552	     18485 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32731	     18390 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32736	     18452 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32766	     18514 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32676	     18520 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32583	     18436 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32586	     18508 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32620	     18334 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32690	     18545 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32696	     18377 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   31947	     18524 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32637	     18387 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32685	     18373 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32515	     18427 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32594	     18377 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32467	     18380 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32785	     18377 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32762	     18383 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32647	     18406 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32653	     18368 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueSave/1         	   32630	     18419 ns/op	         1.000 packets/op	      1499 wire-B/op	   16080 B/op	     191 allocs/op
+=== NAME  
+=== RUN   BenchmarkUDPReceiveQueueSave/8
+BenchmarkUDPReceiveQueueSave/8
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5956	    104827 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5174	    105119 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5822	    105497 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5904	    104857 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5836	    104709 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5952	    104899 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5959	    104562 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5800	    105181 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5962	    104987 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5925	    104716 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5870	    104914 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5970	    104733 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5941	    105081 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5917	    104371 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5947	    104638 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5913	    105347 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5877	    104592 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5919	    104323 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5922	    104594 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5827	    104557 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5918	    104464 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5851	    104874 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5913	    104596 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5932	    104576 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5938	    105337 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueSave/8         	    5890	    104556 ns/op	         8.000 packets/op	      4026 wire-B/op	   73392 B/op	     911 allocs/op
+=== NAME  
+=== RUN   BenchmarkUDPReceiveQueueSave/32
+BenchmarkUDPReceiveQueueSave/32
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1483	    400345 ns/op	        32.00 packets/op	     12690 wire-B/op	  271572 B/op	    3348 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1501	    400509 ns/op	        32.00 packets/op	     12690 wire-B/op	  271593 B/op	    3348 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1485	    399780 ns/op	        32.00 packets/op	     12690 wire-B/op	  271737 B/op	    3349 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1482	    401444 ns/op	        32.00 packets/op	     12690 wire-B/op	  271581 B/op	    3348 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1495	    403704 ns/op	        32.00 packets/op	     12690 wire-B/op	  271606 B/op	    3348 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1482	    403140 ns/op	        32.00 packets/op	     12690 wire-B/op	  271598 B/op	    3348 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1497	    403714 ns/op	        32.00 packets/op	     12690 wire-B/op	  271710 B/op	    3349 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1482	    401150 ns/op	        32.00 packets/op	     12690 wire-B/op	  271715 B/op	    3349 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1482	    403893 ns/op	        32.00 packets/op	     12690 wire-B/op	  271601 B/op	    3348 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1488	    401494 ns/op	        32.00 packets/op	     12690 wire-B/op	  271712 B/op	    3349 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1476	    402477 ns/op	        32.00 packets/op	     12690 wire-B/op	  271813 B/op	    3349 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1462	    406295 ns/op	        32.00 packets/op	     12690 wire-B/op	  271781 B/op	    3349 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1489	    400124 ns/op	        32.00 packets/op	     12690 wire-B/op	  271927 B/op	    3349 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1500	    402616 ns/op	        32.00 packets/op	     12690 wire-B/op	  271600 B/op	    3348 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1496	    399658 ns/op	        32.00 packets/op	     12690 wire-B/op	  271710 B/op	    3349 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1488	    401709 ns/op	        32.00 packets/op	     12690 wire-B/op	  271597 B/op	    3348 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1492	    401801 ns/op	        32.00 packets/op	     12690 wire-B/op	  271583 B/op	    3348 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1495	    399953 ns/op	        32.00 packets/op	     12690 wire-B/op	  271604 B/op	    3348 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1490	    401338 ns/op	        32.00 packets/op	     12690 wire-B/op	  271590 B/op	    3348 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1502	    399716 ns/op	        32.00 packets/op	     12690 wire-B/op	  271937 B/op	    3349 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1495	    405316 ns/op	        32.00 packets/op	     12690 wire-B/op	  271621 B/op	    3348 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1490	    401858 ns/op	        32.00 packets/op	     12690 wire-B/op	  271593 B/op	    3348 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1484	    401058 ns/op	        32.00 packets/op	     12690 wire-B/op	  271878 B/op	    3349 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1489	    401279 ns/op	        32.00 packets/op	     12690 wire-B/op	  271936 B/op	    3349 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1489	    401649 ns/op	        32.00 packets/op	     12690 wire-B/op	  271708 B/op	    3349 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueSave/32        	    1491	    400967 ns/op	        32.00 packets/op	     12690 wire-B/op	  271715 B/op	    3349 allocs/op
+=== NAME  
+=== RUN   BenchmarkUDPReceiveQueueLoad
+BenchmarkUDPReceiveQueueLoad
+=== RUN   BenchmarkUDPReceiveQueueLoad/1
+BenchmarkUDPReceiveQueueLoad/1
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31578	     19003 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31718	     18920 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31813	     18898 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31702	     18957 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31696	     18952 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31732	     18890 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31856	     18888 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31767	     18894 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31840	     18898 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   29764	     19369 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31688	     19134 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31664	     18976 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31609	     19266 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31627	     19342 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31701	     19005 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31611	     19016 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31540	     19013 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31776	     18938 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31750	     18953 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   30980	     19134 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31749	     18918 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31665	     19045 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31785	     19077 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31527	     19071 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31377	     19114 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+queue-wire-objects[1]: 4
+queue-wire-sha256[1]: 34a255978037bad6e9cb1ac09cc82b56af3c7052f44f001b5f672136e8df9913
+BenchmarkUDPReceiveQueueLoad/1         	   31612	     19124 ns/op	         1.000 packets/op	      1499 wire-B/op	   14867 B/op	     293 allocs/op
+=== NAME  
+=== RUN   BenchmarkUDPReceiveQueueLoad/8
+BenchmarkUDPReceiveQueueLoad/8
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6242	     92922 ns/op	         8.000 packets/op	      4026 wire-B/op	   59869 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6212	     94339 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6386	     93589 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6440	     93661 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6237	     93834 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6267	     93777 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6314	     93861 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6298	     93615 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6430	     93472 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6434	     93446 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6398	     93483 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6325	     93622 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6402	     93568 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6417	     93617 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6393	     93540 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6294	     93626 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6415	     93520 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6369	     93719 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6391	     93468 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6253	     93588 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6424	     93671 ns/op	         8.000 packets/op	      4026 wire-B/op	   59869 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6507	     93522 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6357	     93522 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6422	     93493 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6427	     93516 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+queue-wire-objects[8]: 25
+queue-wire-sha256[8]: c15cb80630c6bb5e9aec4d6a62c50aa4d8cfb04b598a5864b812a8226d6766f7
+BenchmarkUDPReceiveQueueLoad/8         	    6296	     93629 ns/op	         8.000 packets/op	      4026 wire-B/op	   59868 B/op	    1024 allocs/op
+=== NAME  
+=== RUN   BenchmarkUDPReceiveQueueLoad/32
+BenchmarkUDPReceiveQueueLoad/32
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1732	    346324 ns/op	        32.00 packets/op	     12690 wire-B/op	  214340 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1716	    346295 ns/op	        32.00 packets/op	     12690 wire-B/op	  214344 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1720	    349067 ns/op	        32.00 packets/op	     12690 wire-B/op	  214344 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1740	    346038 ns/op	        32.00 packets/op	     12690 wire-B/op	  214344 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1726	    348951 ns/op	        32.00 packets/op	     12690 wire-B/op	  214346 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1732	    345859 ns/op	        32.00 packets/op	     12690 wire-B/op	  214344 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1729	    347306 ns/op	        32.00 packets/op	     12690 wire-B/op	  214343 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1720	    347048 ns/op	        32.00 packets/op	     12690 wire-B/op	  214344 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1729	    346627 ns/op	        32.00 packets/op	     12690 wire-B/op	  214343 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1726	    347643 ns/op	        32.00 packets/op	     12690 wire-B/op	  214344 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1725	    346110 ns/op	        32.00 packets/op	     12690 wire-B/op	  214343 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1722	    346420 ns/op	        32.00 packets/op	     12690 wire-B/op	  214343 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1729	    352209 ns/op	        32.00 packets/op	     12690 wire-B/op	  214346 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1705	    346984 ns/op	        32.00 packets/op	     12690 wire-B/op	  214343 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1723	    346789 ns/op	        32.00 packets/op	     12690 wire-B/op	  214343 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1711	    345688 ns/op	        32.00 packets/op	     12690 wire-B/op	  214344 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1718	    346694 ns/op	        32.00 packets/op	     12690 wire-B/op	  214342 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1741	    347390 ns/op	        32.00 packets/op	     12690 wire-B/op	  214345 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1514	    349825 ns/op	        32.00 packets/op	     12690 wire-B/op	  214342 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1726	    347270 ns/op	        32.00 packets/op	     12690 wire-B/op	  214345 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1707	    347932 ns/op	        32.00 packets/op	     12690 wire-B/op	  214347 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1716	    351862 ns/op	        32.00 packets/op	     12690 wire-B/op	  214345 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1695	    347917 ns/op	        32.00 packets/op	     12690 wire-B/op	  214344 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1712	    352151 ns/op	        32.00 packets/op	     12690 wire-B/op	  214347 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1717	    349790 ns/op	        32.00 packets/op	     12690 wire-B/op	  214343 B/op	    3524 allocs/op
+=== NAME  
+queue-wire-objects[32]: 97
+queue-wire-sha256[32]: 04bc1fc048e66885068f0e742466ff7f43c0c74b8d89693e8102a9e037909933
+BenchmarkUDPReceiveQueueLoad/32        	    1729	    346542 ns/op	        32.00 packets/op	     12690 wire-B/op	  214343 B/op	    3524 allocs/op
+=== NAME  
+PASS

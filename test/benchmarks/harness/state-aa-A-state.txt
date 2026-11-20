@@ -1,0 +1,1740 @@
+arm: A
+exec ${PAGER:-/usr/bin/less} "$0" || exit 1
+Executing tests from //pkg/state/tests:tests_test
+-----------------------------------------------------------------------------
+goos: linux
+goarch: amd64
+cpu: Intel(R) Xeon(R) 6975P-C
+=== RUN   BenchmarkEncoding
+BenchmarkEncoding
+=== RUN   BenchmarkEncoding/adopt_captured/state
+BenchmarkEncoding/adopt_captured/state
+BenchmarkEncoding/adopt_captured/state         	     303	   1794927 ns/op	  222428 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     355	   1692696 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     355	   1690780 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     356	   1688609 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     355	   1689144 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     354	   1685077 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     360	   1686910 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     354	   1696767 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     355	   1686838 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     356	   1690912 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     355	   1686940 ns/op	  218193 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     352	   1692402 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     356	   1706744 ns/op	  218193 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     354	   1697584 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     350	   1696325 ns/op	  218193 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     357	   1695773 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     357	   1677101 ns/op	  218193 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     356	   1705917 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     352	   1691092 ns/op	  218193 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     345	   1699742 ns/op	  218193 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     355	   1704213 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     354	   1690498 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     356	   1698840 ns/op	  218193 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     360	   1690562 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     355	   1694371 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/state         	     354	   1688105 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+=== RUN   BenchmarkEncoding/adopt_captured/wire
+BenchmarkEncoding/adopt_captured/wire
+BenchmarkEncoding/adopt_captured/wire          	     597	    991756 ns/op	  728076 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     601	    997034 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     601	   1004894 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     597	    994568 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     603	    994621 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     601	    990145 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     606	    991736 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     607	    991215 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     607	    994054 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     608	    991808 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     604	    991613 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     613	    998084 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     608	    995103 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     610	    998512 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     610	    996399 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     600	    992607 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     603	    994064 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     606	    988017 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     603	    990961 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     594	   1004760 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     603	   1001181 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     597	    996388 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     608	    990300 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     613	    997229 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     608	    990929 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/wire          	     604	    989729 ns/op	  728073 B/op	    7913 allocs/op
+=== NAME  
+=== RUN   BenchmarkEncoding/adopt_captured/gob
+BenchmarkEncoding/adopt_captured/gob
+BenchmarkEncoding/adopt_captured/gob           	    5882	    105105 ns/op	   47874 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    6178	    105122 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    6168	    104555 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    6118	    105003 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    6081	    105048 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    5941	    105907 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    6108	    106241 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    6133	    105549 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    6254	    104912 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    6154	    105561 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    6158	    105046 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    5905	    105319 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    5810	    105698 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    5919	    105288 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    5940	    106028 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    6165	    105601 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    5824	    105397 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    6154	    104812 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    6164	    106427 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    5954	    105962 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    6200	    104740 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    6002	    106071 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    6223	    104968 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    6139	    104620 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    6398	    105620 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_captured/gob           	    6123	    105580 ns/op	   47872 B/op	      32 allocs/op
+=== NAME  
+=== RUN   BenchmarkEncoding/ptr/wire
+BenchmarkEncoding/ptr/wire
+BenchmarkEncoding/ptr/wire                     	     726	    825659 ns/op	  506689 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     730	    824622 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     732	    821037 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     734	    825978 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     722	    821878 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     728	    823919 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     723	    821917 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     724	    827250 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     745	    823899 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     726	    826781 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     728	    829188 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     724	    824644 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     720	    829730 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     723	    828597 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     726	    824820 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     724	    829169 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     734	    821420 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     729	    826849 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     752	    798830 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     730	    822868 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     733	    823459 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     718	    829827 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     693	    829281 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     752	    807577 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     718	    828967 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/wire                     	     721	    836239 ns/op	  506688 B/op	    5041 allocs/op
+=== NAME  
+=== RUN   BenchmarkEncoding/ptr/gob
+BenchmarkEncoding/ptr/gob
+BenchmarkEncoding/ptr/gob                      	    8122	     68293 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    8359	     67789 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    9424	     67560 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    9055	     67864 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    9280	     67756 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    8662	     68115 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    8574	     67985 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    9206	     68208 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    8703	     68296 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    8988	     68159 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    9380	     67864 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    9262	     67900 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    9313	     68315 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    9249	     68297 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    8829	     68217 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    9201	     68375 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    8530	     68427 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    9480	     68123 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    9194	     68242 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    9176	     68062 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    9284	     68275 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    9151	     68122 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    9075	     68300 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    8240	     68417 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    8275	     68246 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/gob                      	    9441	     68024 ns/op	   74752 B/op	    1043 allocs/op
+=== NAME  
+=== RUN   BenchmarkEncoding/ptr/state
+BenchmarkEncoding/ptr/state
+BenchmarkEncoding/ptr/state                    	    2875	    178092 ns/op	    8541 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3753	    170003 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3794	    167249 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3780	    167632 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3789	    167082 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3748	    167789 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3739	    171630 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3768	    167924 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3775	    167924 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3775	    168883 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3826	    167373 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3717	    171880 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3786	    167969 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3777	    168064 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3806	    173178 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3691	    168868 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3717	    172723 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3757	    172053 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3804	    169320 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3783	    168845 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3730	    167147 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3782	    167727 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3799	    167197 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3774	    167704 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3782	    167644 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/ptr/state                    	    3750	    168586 ns/op	    8224 B/op	       2 allocs/op
+=== NAME  
+=== RUN   BenchmarkEncoding/map/wire
+BenchmarkEncoding/map/wire
+BenchmarkEncoding/map/wire                     	    4282	    143158 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4263	    142058 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4060	    142781 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4225	    142714 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4243	    142398 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4083	    141586 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4066	    143525 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4190	    142955 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4165	    142713 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4202	    142261 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4209	    142697 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4238	    143267 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4239	    142589 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4184	    143025 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4035	    143339 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4203	    142903 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4212	    143205 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4249	    142071 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4212	    141502 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4257	    141623 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4212	    142588 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4281	    142293 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4225	    142349 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4218	    142335 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4045	    144166 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+BenchmarkEncoding/map/wire                     	    4243	    142823 ns/op	  124624 B/op	    1834 allocs/op
+=== NAME  
+=== RUN   BenchmarkEncoding/map/gob
+BenchmarkEncoding/map/gob
+BenchmarkEncoding/map/gob                      	    6700	     83903 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6649	     84339 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6560	     89970 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6664	     84402 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6679	     84450 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6640	     84248 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6651	     84320 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6534	     90513 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6595	     89497 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6691	     84073 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6690	     84266 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6710	     85050 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6675	     84047 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6621	     89788 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6604	     85960 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6687	     84552 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6610	     88288 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6688	     84552 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6716	     84159 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6674	     89938 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6601	     84251 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6670	     89429 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6662	     84212 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6595	     89824 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6585	     84568 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+BenchmarkEncoding/map/gob                      	    6636	     89425 ns/op	   21760 B/op	    1048 allocs/op
+=== NAME  
+=== RUN   BenchmarkEncoding/map/state
+BenchmarkEncoding/map/state
+BenchmarkEncoding/map/state                    	   15067	     40614 ns/op	     130 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15188	     39989 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15147	     39811 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15066	     40690 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15080	     40583 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15164	     39787 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15051	     40580 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15188	     39494 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15194	     39501 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15150	     39572 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15169	     39542 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15250	     39315 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15188	     39515 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15219	     39418 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15180	     39508 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15177	     39507 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15188	     39470 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15204	     39709 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15183	     39528 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15231	     39389 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15158	     39571 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15156	     39559 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15160	     39608 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15174	     39578 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15186	     39511 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+BenchmarkEncoding/map/state                    	   15110	     39679 ns/op	     128 B/op	       2 allocs/op
+=== NAME  
+=== RUN   BenchmarkEncoding/slice/state
+BenchmarkEncoding/slice/state
+BenchmarkEncoding/slice/state                  	   62505	      9773 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62503	      9757 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62611	      9675 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62349	      9803 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62446	      9778 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   61772	      9833 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62346	      9806 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62385	      9716 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62731	      9676 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62458	      9710 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62281	      9722 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62389	      9729 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62323	      9751 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62108	      9774 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62170	      9782 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62198	      9759 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62439	      9747 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62680	      9697 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62068	      9758 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   61822	      9727 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62725	      9775 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62312	      9841 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62322	      9790 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   61689	      9832 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   58455	      9874 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/state                  	   62281	      9782 ns/op	     160 B/op	       3 allocs/op
+=== NAME  
+=== RUN   BenchmarkEncoding/slice/wire
+BenchmarkEncoding/slice/wire
+BenchmarkEncoding/slice/wire                   	    7057	     82997 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7515	     83145 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7490	     83874 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7491	     82505 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7429	     83462 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7539	     81703 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7290	     83307 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7584	     81700 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7477	     82926 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7558	     82226 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7347	     82618 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7134	     81977 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7405	     83082 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7578	     82712 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7478	     82415 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7394	     83365 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7518	     82439 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7122	     83533 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7462	     82253 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7068	     83259 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    6942	     83468 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7431	     83331 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7534	     82429 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    6177	     83264 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7537	     82147 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/wire                   	    7383	     82392 ns/op	  100040 B/op	    1065 allocs/op
+=== NAME  
+=== RUN   BenchmarkEncoding/slice/gob
+BenchmarkEncoding/slice/gob
+BenchmarkEncoding/slice/gob                    	   17145	     35091 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17281	     34850 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17314	     34767 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17220	     34986 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17306	     34856 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17252	     34878 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17283	     34826 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17274	     34877 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17146	     35136 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17202	     35033 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17146	     35027 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17046	     35006 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17208	     34994 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17184	     34796 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17325	     34829 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17262	     34958 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17266	     34924 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17200	     34789 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17274	     34907 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17324	     34832 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17326	     34894 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17264	     34859 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17206	     34689 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17252	     34939 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17282	     34843 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+BenchmarkEncoding/slice/gob                    	   17222	     34929 ns/op	    4352 B/op	      21 allocs/op
+=== NAME  
+=== RUN   BenchmarkEncoding/adopt_uncaptured/state
+BenchmarkEncoding/adopt_uncaptured/state
+BenchmarkEncoding/adopt_uncaptured/state       	     390	   1538720 ns/op	  220912 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     393	   1513060 ns/op	  218193 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     397	   1533084 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     397	   1511597 ns/op	  218193 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     393	   1520844 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     396	   1523431 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     397	   1523507 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     399	   1520819 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     391	   1526843 ns/op	  218193 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     394	   1522533 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     393	   1526538 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     399	   1521016 ns/op	  218191 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     397	   1527647 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     394	   1509396 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     379	   1534478 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     397	   1506314 ns/op	  218193 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     400	   1502276 ns/op	  218194 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     396	   1526089 ns/op	  218193 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     398	   1508154 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     393	   1516143 ns/op	  218191 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     396	   1513812 ns/op	  218193 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     393	   1519230 ns/op	  218192 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     399	   1502601 ns/op	  218193 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     394	   1501814 ns/op	  218193 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     396	   1510598 ns/op	  218191 B/op	      39 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/state       	     398	   1504739 ns/op	  218193 B/op	      39 allocs/op
+=== NAME  
+=== RUN   BenchmarkEncoding/adopt_uncaptured/wire
+BenchmarkEncoding/adopt_uncaptured/wire
+BenchmarkEncoding/adopt_uncaptured/wire        	     638	    942484 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     632	    941012 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     627	    958743 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     633	    943493 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     637	    943975 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     610	    948592 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     638	    945633 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     637	    941008 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     619	    961246 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     637	    940809 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     626	    957724 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     628	    945461 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     626	    953056 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     637	    952460 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     625	    951702 ns/op	  727825 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     637	    947170 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     638	    944255 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     630	    958384 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     644	    944004 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     643	    946003 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     637	    949591 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     616	    962859 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     636	    945621 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     638	    940350 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     621	    963683 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/wire        	     636	    949049 ns/op	  727824 B/op	    7906 allocs/op
+=== NAME  
+=== RUN   BenchmarkEncoding/adopt_uncaptured/gob
+BenchmarkEncoding/adopt_uncaptured/gob
+BenchmarkEncoding/adopt_uncaptured/gob         	    6180	    104237 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6127	    103839 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    5952	    104523 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6032	    106798 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6084	    104935 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    5947	    104747 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6057	    104897 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6158	    104664 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6188	    104721 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6139	    105074 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6061	    104562 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6037	    104484 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6004	    104615 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6129	    105050 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6002	    104865 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    5983	    105039 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6205	    105748 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6054	    104489 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6220	    105271 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6163	    104495 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6049	    104995 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6135	    105307 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6259	    105257 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6153	    105314 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    6009	    105539 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+BenchmarkEncoding/adopt_uncaptured/gob         	    5721	    105612 ns/op	   47808 B/op	      31 allocs/op
+=== NAME  
+=== RUN   BenchmarkDecoding
+BenchmarkDecoding
+=== RUN   BenchmarkDecoding/ptr/wire
+BenchmarkDecoding/ptr/wire
+BenchmarkDecoding/ptr/wire                     	    1081	    539527 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1117	    535304 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1047	    538764 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1104	    540997 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1108	    537097 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1116	    537513 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1108	    536606 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1113	    535091 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1107	    535509 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1114	    535784 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1111	    536758 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1098	    538997 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1110	    539349 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1118	    538769 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1104	    534820 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1111	    538220 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1112	    533433 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1099	    538717 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1107	    535066 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1118	    539152 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1105	    540664 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1112	    534887 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1119	    533274 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1101	    534784 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1114	    534795 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/wire                     	    1105	    535460 ns/op	  315416 B/op	    5920 allocs/op
+=== NAME  
+=== RUN   BenchmarkDecoding/ptr/gob
+BenchmarkDecoding/ptr/gob
+BenchmarkDecoding/ptr/gob                      	    7231	     87650 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    7116	     88134 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    7300	     87446 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    6969	     87492 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    7322	     87440 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    6970	     87259 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    7272	     87465 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    6727	     87490 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    6733	     87896 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    7232	     88226 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    7011	     88382 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    6882	     88710 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    6972	     87887 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    6922	     88036 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    6913	     87990 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    6960	     87861 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    6948	     88337 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    6896	     88381 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    6919	     88103 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    7018	     88062 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    7246	     88001 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    6912	     88137 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    6537	     88249 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    7014	     87935 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    6654	     88809 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/gob                      	    7278	     87774 ns/op	   50296 B/op	    2204 allocs/op
+=== NAME  
+=== RUN   BenchmarkDecoding/ptr/state
+BenchmarkDecoding/ptr/state
+BenchmarkDecoding/ptr/state                    	    6169	     96929 ns/op	   14408 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5368	     95716 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    6213	     96207 ns/op	   14408 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5421	     95834 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5403	     95855 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5448	     95566 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5505	     95582 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5425	     95957 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5510	     95760 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5437	     96475 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5361	     95759 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5524	     96138 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5491	     95369 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5552	     96715 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5460	     96065 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5377	     95931 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5469	     95643 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5414	     96442 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5418	     96011 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5458	     96157 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5404	     95891 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5440	     96152 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5486	     95355 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5410	     95870 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5514	     95779 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+BenchmarkDecoding/ptr/state                    	    5379	     95777 ns/op	   14360 B/op	    1026 allocs/op
+=== NAME  
+=== RUN   BenchmarkDecoding/map/gob
+BenchmarkDecoding/map/gob
+BenchmarkDecoding/map/gob                      	    4149	    138442 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4286	    137994 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4144	    138092 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4284	    138114 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4310	    138571 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4336	    137811 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4536	    138513 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4216	    138917 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4310	    138163 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4382	    139548 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4270	    138086 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4273	    138352 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4545	    137991 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4446	    138098 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4455	    138635 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4297	    137927 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4122	    138866 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4201	    138310 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4324	    137964 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4262	    137759 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4465	    137675 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4516	    137500 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4268	    137728 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4286	    138192 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4300	    137976 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+BenchmarkDecoding/map/gob                      	    4291	    137620 ns/op	   56920 B/op	    1202 allocs/op
+=== NAME  
+=== RUN   BenchmarkDecoding/map/state
+BenchmarkDecoding/map/state
+BenchmarkDecoding/map/state                    	    7819	     83776 ns/op	   40137 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    8035	     83282 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    8040	     83397 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    7993	     83776 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    7989	     83839 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    8002	     83403 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    8090	     83315 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    8006	     84027 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    8086	     83186 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    8080	     83435 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    7994	     83523 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    8114	     83012 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    8102	     83237 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    7810	     83875 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    8040	     83760 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    8078	     84138 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    7929	     83644 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    8047	     83935 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    8044	     83195 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    8023	     83307 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    8028	     83585 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    8052	     83427 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    8038	     83630 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    8008	     83729 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    8071	     83396 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+BenchmarkDecoding/map/state                    	    7946	     83365 ns/op	   40113 B/op	      11 allocs/op
+=== NAME  
+=== RUN   BenchmarkDecoding/map/wire
+BenchmarkDecoding/map/wire
+BenchmarkDecoding/map/wire                     	    2278	    263045 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2292	    263356 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2216	    264343 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2277	    263207 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2215	    263307 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2283	    263683 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2295	    263413 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2257	    263736 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2275	    263392 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2230	    263444 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2274	    263040 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2227	    263774 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2203	    264514 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2235	    264880 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2275	    263953 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2277	    265211 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2284	    263659 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2289	    265129 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2287	    264802 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2215	    264649 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2244	    267200 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2244	    267229 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2253	    264879 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2281	    265234 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2271	    263695 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+BenchmarkDecoding/map/wire                     	    2282	    265706 ns/op	  227712 B/op	    1855 allocs/op
+=== NAME  
+=== RUN   BenchmarkDecoding/slice/state
+BenchmarkDecoding/slice/state
+BenchmarkDecoding/slice/state                  	   16406	     36778 ns/op	   10691 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16407	     36611 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16333	     36705 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16233	     36740 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16257	     36877 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16400	     36606 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16304	     36777 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16210	     36776 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16288	     36725 ns/op	   10691 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16476	     36581 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16447	     36632 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16414	     36575 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16357	     36579 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16280	     36634 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16189	     36950 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16472	     36593 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16459	     36486 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16209	     36896 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16326	     36538 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16160	     37003 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16452	     36609 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16134	     36937 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16292	     36898 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16507	     36448 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16422	     36547 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/state                  	   16284	     36633 ns/op	   10680 B/op	       5 allocs/op
+=== NAME  
+=== RUN   BenchmarkDecoding/slice/wire
+BenchmarkDecoding/slice/wire
+BenchmarkDecoding/slice/wire                   	    5055	    118249 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    5008	    118468 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    5247	    118245 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    5266	    118346 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    4986	    118280 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    5226	    118250 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    5208	    118321 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    5272	    117871 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    5223	    119000 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    5190	    118218 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    5314	    118875 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    5137	    117879 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    5304	    118157 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    4915	    118103 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    5259	    117903 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    5121	    118381 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    4918	    118416 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    4954	    117987 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    4656	    119060 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    5252	    118683 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    5269	    118743 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    5091	    119180 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    5088	    118213 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    5186	    117790 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    4918	    118219 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/wire                   	    4964	    118406 ns/op	  138144 B/op	    1063 allocs/op
+=== NAME  
+=== RUN   BenchmarkDecoding/slice/gob
+BenchmarkDecoding/slice/gob
+BenchmarkDecoding/slice/gob                    	    8907	     67064 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    9138	     67882 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    9110	     67552 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    9088	     67571 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    8954	     67881 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    9039	     67581 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    8877	     67468 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    9030	     67442 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    8929	     67705 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    8982	     67413 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    8932	     67035 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    8812	     67716 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    9033	     67567 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    9045	     67585 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    8854	     67756 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    8918	     67756 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    8857	     67391 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    9121	     67695 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    8896	     67388 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    9067	     68149 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    8862	     67965 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    8840	     67580 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    8972	     67224 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    9082	     67577 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    8758	     67654 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+BenchmarkDecoding/slice/gob                    	    8793	     68138 ns/op	   26264 B/op	    1192 allocs/op
+=== NAME  
+=== RUN   BenchmarkDecoding/adopt_uncaptured/state
+BenchmarkDecoding/adopt_uncaptured/state
+BenchmarkDecoding/adopt_uncaptured/state       	    7056	     77360 ns/op	   37509 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    7956	     77578 ns/op	   37506 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    7492	     77156 ns/op	   37508 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    8055	     77251 ns/op	   37506 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    8163	     77257 ns/op	   37506 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    7954	     77095 ns/op	   37506 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    7434	     77260 ns/op	   37508 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    8136	     76173 ns/op	   37506 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    7950	     76802 ns/op	   37506 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    7663	     76645 ns/op	   37507 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    8095	     76238 ns/op	   37506 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    7358	     76698 ns/op	   37508 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    8191	     76478 ns/op	   37505 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    7824	     77083 ns/op	   37507 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    7402	     76520 ns/op	   37508 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    7911	     77212 ns/op	   37506 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    8052	     77030 ns/op	   37506 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    8013	     76887 ns/op	   37506 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    8035	     77172 ns/op	   37506 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    8020	     76845 ns/op	   37506 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    8044	     76980 ns/op	   37506 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    8088	     76902 ns/op	   37506 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    8007	     76885 ns/op	   37506 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    7984	     77022 ns/op	   37506 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    8106	     76667 ns/op	   37506 B/op	       7 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/state       	    7632	     77315 ns/op	   37507 B/op	       7 allocs/op
+=== NAME  
+=== RUN   BenchmarkDecoding/adopt_uncaptured/wire
+BenchmarkDecoding/adopt_uncaptured/wire
+BenchmarkDecoding/adopt_uncaptured/wire        	    1592	    370888 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1597	    370518 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1591	    369881 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1608	    370229 ns/op	  250872 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1603	    372615 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1593	    372607 ns/op	  250872 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1608	    370159 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1570	    373720 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1591	    370348 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1611	    369965 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1597	    369839 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1591	    370110 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1612	    371858 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1608	    370374 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1604	    369806 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1602	    370213 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1604	    369633 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1593	    370495 ns/op	  250872 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1570	    371436 ns/op	  250872 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1598	    370590 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1587	    371376 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1576	    372324 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1588	    373033 ns/op	  250872 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1593	    371182 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1592	    371348 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/wire        	    1557	    373356 ns/op	  250873 B/op	    5703 allocs/op
+=== NAME  
+=== RUN   BenchmarkDecoding/adopt_uncaptured/gob
+BenchmarkDecoding/adopt_uncaptured/gob
+BenchmarkDecoding/adopt_uncaptured/gob         	    4862	    128867 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4795	    128245 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4831	    128674 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4729	    128557 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4869	    128447 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4809	    128799 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4706	    128636 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4741	    128514 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4690	    128785 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4917	    128788 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4762	    129819 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4794	    128671 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4868	    128567 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4785	    129544 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4819	    128332 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4809	    129052 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4843	    128364 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4857	    127986 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4916	    128233 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4922	    128423 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4896	    128333 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4816	    128063 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4844	    128301 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4874	    128341 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4900	    127975 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_uncaptured/gob         	    4774	    128573 ns/op	   63704 B/op	    1239 allocs/op
+=== NAME  
+=== RUN   BenchmarkDecoding/adopt_captured/state
+BenchmarkDecoding/adopt_captured/state
+BenchmarkDecoding/adopt_captured/state         	    7905	     77005 ns/op	   37538 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    8023	     76874 ns/op	   37538 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    7785	     76928 ns/op	   37539 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    8178	     76928 ns/op	   37537 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    8120	     76968 ns/op	   37538 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    7654	     76962 ns/op	   37539 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    7875	     76586 ns/op	   37538 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    8184	     76596 ns/op	   37537 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    8102	     76541 ns/op	   37538 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    8079	     76779 ns/op	   37538 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    7953	     77569 ns/op	   37538 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    7920	     77842 ns/op	   37538 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    8168	     77161 ns/op	   37538 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    7303	     77775 ns/op	   37540 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    7434	     77091 ns/op	   37540 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    7999	     76941 ns/op	   37538 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    7974	     76727 ns/op	   37538 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    7994	     77135 ns/op	   37538 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    8062	     77606 ns/op	   37538 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    7462	     77581 ns/op	   37540 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    8143	     77676 ns/op	   37538 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    7966	     77648 ns/op	   37538 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    7833	     77527 ns/op	   37539 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    7921	     77822 ns/op	   37538 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    7639	     77970 ns/op	   37539 B/op	       8 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/state         	    7795	     77683 ns/op	   37539 B/op	       8 allocs/op
+=== NAME  
+=== RUN   BenchmarkDecoding/adopt_captured/wire
+BenchmarkDecoding/adopt_captured/wire
+BenchmarkDecoding/adopt_captured/wire          	    1552	    377977 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1572	    376921 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1570	    380482 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1552	    378247 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1587	    381192 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1564	    377731 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1594	    378111 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1593	    377616 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1598	    375705 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1584	    376145 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1600	    376198 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1575	    375374 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1605	    375752 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1611	    376108 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1581	    376944 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1588	    376649 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1578	    376411 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1591	    376558 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1598	    375852 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1594	    376351 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1600	    377113 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1593	    378067 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1561	    376775 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1580	    376427 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1590	    376547 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/wire          	    1586	    375521 ns/op	  260664 B/op	    5711 allocs/op
+=== NAME  
+=== RUN   BenchmarkDecoding/adopt_captured/gob
+BenchmarkDecoding/adopt_captured/gob
+BenchmarkDecoding/adopt_captured/gob           	    4533	    128531 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4918	    128360 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4842	    128776 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4838	    129255 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4794	    128415 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4785	    129075 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4804	    128779 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4876	    128225 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4896	    128106 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4890	    128399 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4754	    129366 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4876	    128911 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4849	    128479 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4644	    128537 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4820	    128463 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4854	    128198 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4900	    128489 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4748	    128867 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4639	    129284 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4780	    129669 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4848	    128583 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4885	    128544 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4852	    129035 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4832	    128873 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4814	    129481 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+BenchmarkDecoding/adopt_captured/gob           	    4916	    129070 ns/op	   63768 B/op	    1241 allocs/op
+=== NAME  
+=== RUN   BenchmarkGraphSave
+BenchmarkGraphSave
+BenchmarkGraphSave                             	       2	 250454554 ns/op	   9454794 encoded-B	144928272 B/op	   46614 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 204249748 ns/op	   9454794 encoded-B	104548194 B/op	   46507 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 174793440 ns/op	   9454794 encoded-B	104548189 B/op	   46507 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 185425306 ns/op	   9454794 encoded-B	104548194 B/op	   46507 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 207719350 ns/op	   9454794 encoded-B	104548194 B/op	   46507 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 192549207 ns/op	   9454794 encoded-B	104548149 B/op	   46506 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 180340853 ns/op	   9454794 encoded-B	104548194 B/op	   46507 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 186741812 ns/op	   9454794 encoded-B	104535885 B/op	   46505 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 185946063 ns/op	   9454794 encoded-B	104548194 B/op	   46507 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 189506280 ns/op	   9454794 encoded-B	104548194 B/op	   46507 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 204452265 ns/op	   9454794 encoded-B	104548189 B/op	   46507 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 201869783 ns/op	   9454794 encoded-B	104548189 B/op	   46507 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 179322320 ns/op	   9454794 encoded-B	104548144 B/op	   46506 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 173147045 ns/op	   9454794 encoded-B	104548194 B/op	   46507 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 176961276 ns/op	   9454794 encoded-B	104548149 B/op	   46506 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 181701678 ns/op	   9454794 encoded-B	104548149 B/op	   46506 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 208671344 ns/op	   9454794 encoded-B	104548194 B/op	   46507 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 200645918 ns/op	   9454794 encoded-B	104548194 B/op	   46507 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 193195340 ns/op	   9454794 encoded-B	104535885 B/op	   46505 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 214200729 ns/op	   9454794 encoded-B	104548194 B/op	   46507 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 188007775 ns/op	   9454794 encoded-B	104523525 B/op	   46503 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 200910826 ns/op	   9454794 encoded-B	104548194 B/op	   46507 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 185273964 ns/op	   9454794 encoded-B	104548194 B/op	   46507 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 203137702 ns/op	   9454794 encoded-B	104548189 B/op	   46507 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 192262945 ns/op	   9454794 encoded-B	104548200 B/op	   46507 allocs/op
+=== NAME  
+BenchmarkGraphSave                             	       3	 178170055 ns/op	   9454794 encoded-B	104548194 B/op	   46507 allocs/op
+=== NAME  
+=== RUN   BenchmarkGraphLoad
+BenchmarkGraphLoad
+BenchmarkGraphLoad                             	       5	 112154451 ns/op	61720636 B/op	  444507 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 116307367 ns/op	61720140 B/op	  444496 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 119842734 ns/op	61720164 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       4	 129905162 ns/op	65770180 B/op	  444499 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 127010176 ns/op	61720164 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 109539503 ns/op	61720161 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 116126662 ns/op	61720171 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 112218533 ns/op	61720137 B/op	  444496 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 115630709 ns/op	61720168 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 109711937 ns/op	61720198 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 110700814 ns/op	61720198 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 108796273 ns/op	61720192 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 113930093 ns/op	61720171 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 118737299 ns/op	61720188 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 111392877 ns/op	61720171 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 119194760 ns/op	61720192 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 113104486 ns/op	61720168 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 121945601 ns/op	61720195 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 115346870 ns/op	61720195 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 117596632 ns/op	61720198 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       4	 125999207 ns/op	65770176 B/op	  444499 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 110853404 ns/op	61720195 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 128881204 ns/op	61720164 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 112960099 ns/op	61720195 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 119102658 ns/op	61720164 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad                             	       5	 128298111 ns/op	61720164 B/op	  444497 allocs/op
+=== NAME  
+PASS
