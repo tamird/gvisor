@@ -2237,17 +2237,17 @@ func (s *Sandbox) Checkpoint(conf *config.Config, cid string, imagePath string, 
 		opt.TaskContainerID = cid
 	}
 	defer opt.FilePayload.Close()
-	defer func() {
-		if retErr != nil && opts.ContainerOnly && !opt.UseCheckpointGofer {
-			for _, f := range opt.FilePayload.Files {
-				if err := os.Remove(f.Name()); err != nil && !os.IsNotExist(err) {
-					retErr = errors.Join(retErr, fmt.Errorf("removing failed task checkpoint file: %w", err))
-				}
-			}
-		}
-	}()
-	if err := s.setCheckpointOptsFiles(conf, imagePath, opts, bundles, &opt); err != nil {
+	imageDir, err := s.setCheckpointOptsFiles(conf, imagePath, opts, bundles, &opt)
+	if err != nil {
 		return err
+	}
+	if imageDir != nil {
+		defer imageDir.Close()
+		defer func() {
+			if retErr != nil && opts.ContainerOnly {
+				retErr = errors.Join(retErr, removeCheckpointFiles(int(imageDir.Fd()), imagePath, opt.FilePayload.Files))
+			}
+		}()
 	}
 
 	if err := s.switchCPULimit(cpuPhaseApp, cpuPhaseLifecycle); err != nil {
@@ -2272,10 +2272,10 @@ func (s *Sandbox) Checkpoint(conf *config.Config, cid string, imagePath string, 
 	return nil
 }
 
-func (s *Sandbox) setCheckpointOptsFiles(conf *config.Config, imagePath string, opts CheckpointOpts, bundles []fscheckpoint.Bundle, opt *controlapi.SaveOpts) error {
+func (s *Sandbox) setCheckpointOptsFiles(conf *config.Config, imagePath string, opts CheckpointOpts, bundles []fscheckpoint.Bundle, opt *controlapi.SaveOpts) (*os.File, error) {
 	clientSockFile, err := s.maybeStartCheckpointGoferAndGetSocket(conf, s.CgroupJSON.Cgroup, imagePath, "-allow-checkpoint-writes")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if clientSockFile == nil {
 		return setCheckpointOptsFilesForLocalCheckpoint(conf, imagePath, opts, bundles, opt)
@@ -2284,82 +2284,107 @@ func (s *Sandbox) setCheckpointOptsFiles(conf *config.Config, imagePath string, 
 	opt.FilePayload.Files = append(opt.FilePayload.Files, clientSockFile)
 	opt.UseCheckpointGofer = true
 	opt.HavePagesFile = opts.Compression == statefile.CompressionLevelNone
-	return nil
+	return nil, nil
 }
 
-func setCheckpointOptsFilesForLocalCheckpoint(conf *config.Config, imagePath string, opts CheckpointOpts, bundles []fscheckpoint.Bundle, opt *controlapi.SaveOpts) error {
-	files, err := createSaveFiles(imagePath, opts.Direct, opts.Compression)
-	if err != nil {
-		return err
-	}
+func setCheckpointOptsFilesForLocalCheckpoint(conf *config.Config, imagePath string, opts CheckpointOpts, bundles []fscheckpoint.Bundle, opt *controlapi.SaveOpts) (_ *os.File, retErr error) {
+	imageDir, err := openCheckpointDirectory(imagePath)
+	if err != nil { return nil, err }
+	defer func() {
+		if retErr != nil { _ = imageDir.Close() }
+	}()
+	files, err := createSaveFilesAt(int(imageDir.Fd()), imagePath, opts.Direct, opts.Compression)
+	if err != nil { return nil, err }
 	opt.FilePayload.Files = files
 	opt.HavePagesFile = len(files) > 1
 
 	if len(bundles) > 0 {
-		cleanLocalFiles := cleanup.Make(func() {
-			for _, f := range files {
-				_ = f.Close()
-				_ = os.Remove(f.Name())
-			}
-		})
-		defer cleanLocalFiles.Clean()
-
 		fsFiles, err := createFSCheckpointBundlesLocalFiles(imagePath, bundles, opts.Direct)
 		if err != nil {
-			return fmt.Errorf("creating fs checkpoint files: %w", err)
+			retErr = errors.Join(fmt.Errorf("creating fs checkpoint files: %w", err), removeCheckpointFiles(int(imageDir.Fd()), imagePath, files))
+			for _, f := range files { _ = f.Close() }
+			return nil, retErr
 		}
 		opt.FilePayload.Files = append(opt.FilePayload.Files, fsFiles...)
-		cleanLocalFiles.Release()
 	}
+	return imageDir, nil
+}
 
-	return nil
+func openCheckpointDirectory(path string) (*os.File, error) {
+	fd, err := unix.Open(path, unix.O_PATH|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+	if err != nil { return nil, fmt.Errorf("opening checkpoint directory %q: %w", path, err) }
+	return os.NewFile(uintptr(fd), path), nil
+}
+
+// removeCheckpointFiles removes created files through their pinned directory.
+// Entries whose ownership cannot be established remain in place.
+func removeCheckpointFiles(dirFD int, dirPath string, files []*os.File) error {
+	if len(files) == 0 { return nil }
+	var dirStat unix.Stat_t
+	if err := unix.Fstat(dirFD, &dirStat); err != nil { return err }
+	// An inode check followed by unlinkat is safe only while another
+	// principal cannot replace directory entries between those operations.
+	if dirStat.Uid != uint32(os.Geteuid()) || dirStat.Mode&0022 != 0 {
+		return fmt.Errorf("checkpoint directory permits replacement of created files; leaving files in place")
+	}
+	var errs []error
+	for _, f := range files {
+		name := filepath.Base(f.Name())
+		if filepath.Clean(filepath.Dir(f.Name())) != filepath.Clean(dirPath) {
+			errs = append(errs, fmt.Errorf("no pinned parent for checkpoint file %q", f.Name()))
+			continue
+		}
+		var opened, current unix.Stat_t
+		if err := unix.Fstat(int(f.Fd()), &opened); err != nil { errs = append(errs, err); continue }
+		if err := unix.Fstatat(dirFD, name, &current, unix.AT_SYMLINK_NOFOLLOW); err != nil {
+			if !errors.Is(err, unix.ENOENT) { errs = append(errs, err) }
+			continue
+		}
+		if opened.Dev != current.Dev || opened.Ino != current.Ino {
+			errs = append(errs, fmt.Errorf("checkpoint file %q was replaced; leaving it in place", f.Name()))
+			continue
+		}
+		if err := unix.Unlinkat(dirFD, name, 0); err != nil && !errors.Is(err, unix.ENOENT) { errs = append(errs, err) }
+	}
+	return errors.Join(errs...)
 }
 
 // createSaveFiles creates the files used by checkpoint to save the state. They are returned in
 // the following order: sentry state, page metadata, page file. This is the same order expected by
 // RPCs and argument passing to the sandbox.
 func createSaveFiles(path string, direct bool, compression statefile.CompressionLevel) ([]*os.File, error) {
+	dir, err := openCheckpointDirectory(path)
+	if err != nil { return nil, err }
+	defer dir.Close()
+	return createSaveFilesAt(int(dir.Fd()), path, direct, compression)
+}
+
+func createSaveFilesAt(dirFD int, path string, direct bool, compression statefile.CompressionLevel) (_ []*os.File, retErr error) {
 	var files []*os.File
-	clean := cleanup.Make(func() {
-		for _, f := range files {
-			_ = f.Close()
-			_ = os.Remove(f.Name())
-		}
-	})
-	defer clean.Clean()
-
-	stateFilePath := filepath.Join(path, checkpointfiles.StateFileName)
-	f, err := os.OpenFile(stateFilePath, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0644)
-	if err != nil {
-		return nil, fmt.Errorf("creating checkpoint state file %q: %w", stateFilePath, err)
+	open := func(name string, flags int) (*os.File, error) {
+		fd, err := unix.Openat(dirFD, name, flags|unix.O_CLOEXEC|unix.O_NOFOLLOW, 0644)
+		if err != nil { return nil, err }
+		return os.NewFile(uintptr(fd), filepath.Join(path, name)), nil
 	}
+	defer func() {
+		if retErr != nil {
+			retErr = errors.Join(retErr, removeCheckpointFiles(dirFD, path, files))
+			for _, f := range files { _ = f.Close() }
+		}
+	}()
+	f, err := open(checkpointfiles.StateFileName, unix.O_CREAT|unix.O_EXCL|unix.O_RDWR)
+	if err != nil { return nil, fmt.Errorf("creating checkpoint state file: %w", err) }
 	files = append(files, f)
-
-	// When there is no compression, MemoryFile contents are page-aligned.
-	// It is beneficial to store them separately so certain optimizations can be
-	// applied during restore. See Restore().
 	if compression == statefile.CompressionLevelNone {
-		pagesMetadataFilePath := filepath.Join(path, checkpointfiles.PagesMetadataFileName)
-		f, err = os.OpenFile(pagesMetadataFilePath, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0644)
-		if err != nil {
-			return nil, fmt.Errorf("creating checkpoint pages metadata file %q: %w", pagesMetadataFilePath, err)
-		}
+		f, err = open(checkpointfiles.PagesMetadataFileName, unix.O_CREAT|unix.O_EXCL|unix.O_RDWR)
+		if err != nil { return nil, fmt.Errorf("creating checkpoint pages metadata file: %w", err) }
 		files = append(files, f)
-
-		pagesFilePath := filepath.Join(path, checkpointfiles.PagesFileName)
-		pagesWriteFlags := os.O_CREATE | os.O_EXCL | os.O_RDWR
-		if direct {
-			// The writes will be page-aligned, so it can be opened with O_DIRECT.
-			pagesWriteFlags |= syscall.O_DIRECT
-		}
-		f, err := os.OpenFile(pagesFilePath, pagesWriteFlags, 0644)
-		if err != nil {
-			return nil, fmt.Errorf("creating checkpoint pages file %q: %w", pagesFilePath, err)
-		}
+		flags := unix.O_CREAT|unix.O_EXCL|unix.O_RDWR
+		if direct { flags |= unix.O_DIRECT }
+		f, err = open(checkpointfiles.PagesFileName, flags)
+		if err != nil { return nil, fmt.Errorf("creating checkpoint pages file: %w", err) }
 		files = append(files, f)
 	}
-
-	clean.Release()
 	return files, nil
 }
 
@@ -2612,15 +2637,17 @@ func setFSSaveArgsForLocalCheckpointFiles(conf *config.Config, imagePath string,
 // createFSCheckpointBundlesLocalFiles creates the files of the given
 // filesystem checkpoint bundles in imagePath, 4 files per bundle in bundle
 // order.
-func createFSCheckpointBundlesLocalFiles(imagePath string, bundles []fscheckpoint.Bundle, direct bool) ([]*os.File, error) {
+func createFSCheckpointBundlesLocalFiles(imagePath string, bundles []fscheckpoint.Bundle, direct bool) (_ []*os.File, retErr error) {
+	dir, err := openCheckpointDirectory(imagePath)
+	if err != nil { return nil, err }
+	defer dir.Close()
 	var allFiles []*os.File
-	cleanLocalFiles := cleanup.Make(func() {
-		for _, f := range allFiles {
-			_ = f.Close()
-			_ = os.Remove(f.Name())
+	defer func() {
+		if retErr != nil {
+			retErr = errors.Join(retErr, removeCheckpointFiles(int(dir.Fd()), imagePath, allFiles))
+			for _, f := range allFiles { _ = f.Close() }
 		}
-	})
-	defer cleanLocalFiles.Clean()
+	}()
 
 	for _, b := range bundles {
 		files, err := createFSCheckpointLocalFiles(imagePath, b.Prefix, direct)
@@ -2629,7 +2656,6 @@ func createFSCheckpointBundlesLocalFiles(imagePath string, bundles []fscheckpoin
 		}
 		allFiles = append(allFiles, files...)
 	}
-	cleanLocalFiles.Release()
 	return allFiles, nil
 }
 
@@ -2652,19 +2678,16 @@ func createFSCheckpointLocalFiles(imagePath, prefix string, direct bool) ([]*os.
 
 // openFSCheckpointLocalFiles opens the files of the filesystem checkpoint
 // with the given prefix in imagePath, relative to dirFD, an FD for imagePath.
-func openFSCheckpointLocalFiles(dirFD int, imagePath, prefix string, openFlags int, direct bool) ([]*os.File, error) {
+func openFSCheckpointLocalFiles(dirFD int, imagePath, prefix string, openFlags int, direct bool) (_ []*os.File, retErr error) {
 	var files [4]*os.File
-	closeCleanup := cleanup.Make(func() {
-		for _, f := range files {
-			if f != nil {
-				_ = f.Close()
-				if openFlags&unix.O_CREAT != 0 {
-					_ = os.Remove(f.Name())
-				}
-			}
+	defer func() {
+		if retErr != nil && openFlags&unix.O_CREAT != 0 {
+			var created []*os.File
+			for _, f := range files { if f != nil { created = append(created, f) } }
+			retErr = errors.Join(retErr, removeCheckpointFiles(dirFD, imagePath, created))
 		}
-	})
-	defer closeCleanup.Clean()
+		if retErr != nil { for _, f := range files { if f != nil { _ = f.Close() } } }
+	}()
 
 	// Use of O_DIRECT ~requires that I/O operations are aligned to some
 	// unspecified [1] granularity that (as of this writing) is, in practice,
@@ -2719,7 +2742,6 @@ func openFSCheckpointLocalFiles(dirFD int, imagePath, prefix string, openFlags i
 	}
 	files[3] = pagesFile
 
-	closeCleanup.Release()
 	return files[:], nil
 }
 

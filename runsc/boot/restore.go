@@ -868,12 +868,14 @@ func tscOffsetFromSnapshot(baseCycle, baseFreq, baseRealtime, curCycle, curRealt
 func (l *Loader) save(o *controlapi.SaveOpts) error {
 	l.saveMu.Lock()
 	defer l.saveMu.Unlock()
+	var err error
 	if o.TaskContainerID != "" {
-		if err := l.checkTaskCheckpointScope(o.TaskContainerID); err != nil {
-			return err
-		}
+		err = l.checkTaskCheckpointScope(o.TaskContainerID)
 	}
-	saveOpts, err := control.ConvertToStateSaveOpts(o)
+	var saveOpts *state.SaveOpts
+	if err == nil {
+		saveOpts, err = control.ConvertToStateSaveOpts(o)
+	}
 	if err != nil {
 		l.k.OnCheckpointAttempt(err)
 		if len(o.SplitFSCheckpointPaths) > 0 {

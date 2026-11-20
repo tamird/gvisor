@@ -21,6 +21,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -33,6 +34,7 @@ import (
 	"gvisor.dev/gvisor/pkg/lisafs"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/sentry/control/controlapi"
+	"gvisor.dev/gvisor/pkg/sentry/fscheckpoint"
 	"gvisor.dev/gvisor/pkg/sentry/kernel"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
@@ -790,9 +792,42 @@ func TestTaskCheckpointScope(t *testing.T) {
 	if err := cm.CheckTaskCheckpointScope(&root, nil); err == nil {
 		t.Fatal("checkpoint accepted a created child")
 	}
-	// Save must check again after preflight, before converting output files
-	// or attempting to pause the kernel.
-	if err := l.save(&controlapi.SaveOpts{TaskContainerID: root}); err == nil || !strings.Contains(err.Error(), "exclusive use") {
-		t.Fatalf("save after child creation = %v, want scope error", err)
+
+}
+
+func TestRejectedTaskCheckpointNotifiesWaiters(t *testing.T) {
+	for _, scope := range []bool{false, true} {
+		t.Run(fmt.Sprintf("scope-rejection=%t", scope), func(t *testing.T) {
+			l, cleanup, err := createLoader(testConfig(), testSpec())
+			if err != nil { t.Fatal(err) }
+			defer l.Destroy()
+			defer cleanup()
+			if scope {
+				l.mu.Lock()
+				l.processes[execID{cid: "child"}] = &execProcess{}
+				l.mu.Unlock()
+				defer func() { l.mu.Lock(); delete(l.processes, execID{cid: "child"}); l.mu.Unlock() }()
+			}
+			synctest.Test(t, func(t *testing.T) {
+				checkpoint, filesystem := make(chan error, 1), make(chan error, 1)
+				go func() { checkpoint <- l.k.WaitForCheckpoint() }()
+				go func() { filesystem <- l.k.WaitForFSSave() }()
+				synctest.Wait()
+				defer l.k.SignalAllCheckpointWaiters(fmt.Errorf("test complete"))
+				defer l.k.SignalAllFSSaveWaiters(fmt.Errorf("test complete"))
+				err := l.save(&controlapi.SaveOpts{TaskContainerID: l.sandboxID, SplitFSCheckpointPaths: []fscheckpoint.Bundle{{}}})
+				if err == nil { t.Fatal("save unexpectedly succeeded") }
+				if scope && !strings.Contains(err.Error(), "exclusive use") { t.Fatalf("save = %v, want scope rejection", err) }
+				synctest.Wait()
+				for name, result := range map[string]<-chan error{"checkpoint": checkpoint, "filesystem": filesystem} {
+					select {
+					case got := <-result:
+						if got != err { t.Errorf("%s waiter = %v, want %v", name, got, err) }
+					default:
+						t.Errorf("%s waiter did not complete", name)
+					}
+				}
+			})
+		})
 	}
 }
