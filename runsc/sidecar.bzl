@@ -1,6 +1,6 @@
 """C programs shipped alongside runsc that run without a C runtime."""
 
-load("//tools:defs.bzl", "cc_binary", "freestanding_executable")
+load("//tools:defs.bzl", "freestanding_cc_binary")
 
 def freestanding_sidecar(name, src, out, visibility = None):
     """Builds a static executable with its own process entry point.
@@ -11,8 +11,9 @@ def freestanding_sidecar(name, src, out, visibility = None):
       out: Filename used by runsc and the sidecar tests.
       visibility: Visibility of the sidecar target.
     """
-    cc_binary(
-        name = "_linked/" + out,
+    freestanding_cc_binary(
+        name = name,
+        out = out,
         srcs = [src],
         copts = [
             "-Os",
@@ -22,19 +23,6 @@ def freestanding_sidecar(name, src, out, visibility = None):
             "-fno-stack-protector",
             "-fno-asynchronous-unwind-tables",
             "-fno-unwind-tables",
-        ],
-        # These executables have their own entry point and use only syscalls.
-        # Do not add either toolchain's hosted libraries or startup code.
-        features = [
-            "-coverage",
-            "-default_link_flags",
-            "-default_linker_libraries",
-            "-heap_partitioning",
-            "-pie",
-            "-static_link_cpp_runtimes",
-            "-static_linking_mode",
-            "-use_header_modules",
-            "-use_pthread",
         ],
         linkopts = [
             "-static",
@@ -46,15 +34,5 @@ def freestanding_sidecar(name, src, out, visibility = None):
             "-Wl,-n",
             "-Wl,-s",
         ],
-        linkstatic = True,
-        stamp = 0,
-        tcmalloc = False,
-        tags = ["manual"],
-        visibility = ["//visibility:private"],
-    )
-    freestanding_executable(
-        name = name,
-        binary = ":_linked/" + out,
-        out = out,
         visibility = visibility,
     )
