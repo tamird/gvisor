@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T10:28:50.162885+00:00",
+    "updatedAt": "2026-11-20T10:44:03.219206+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -134963,10 +134963,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T10:28:50.162885+00:00",
-      "summary": "General, security and performance source reviewers accept checkpoint e895f0269c014116a7da62349405ec4a969ee01a with no remaining actionable source finding. Faithful CI99cb761bef04b3a0277aee359d7609a936d55a77 passes audited sandbox103 plus direct-task6 cases per architecture:218XML, zero failures/skips, terminal BEP/source guards and source linters pass. Unchanged303unit results per architecture and376-source C++ proof are retained by verified inputs. This closes the revised-source review barrier, not full owning-suite or performance qualification. Queue owner is resumed for final unfiltered AMD container+shim and runnable ARM shim; missing /dev/kvm still blocks full ARM container target. Performance remains open: stable A/A, checkpoint/child-lifecycle/broad coverage and representative nested/multiple-bundle FD pressure. No measurements or waiver, and all existing publication questions/holds remain.",
-      "nextStep": "Queue owner runs and audits final unfiltered AMD container/shim and runnable ARM shim on accepted faithful source. Preserve explicit ARM hardware blocker without incompatible worker reruns or matrix reduction. Complete required controlled performance only after verified stable controls/host context; follow existing publication decisions once, with no new frames or history copies.",
-      "recheckCondition": "Audited final owning-suite result, verified ARM KVM hardware/quiet-host evidence, substantive feedback or an existing publication answer.",
+      "updatedAt": "2026-11-20T10:44:03.219206+00:00",
+      "summary": "Final broad shim results pass61XML cases per architecture with zero failures/skips. AMD container975XML has five failure elements (parent plus four TestIDMappedMountFlags variants),13skips and two post-PASS cleanup failures; broad qualification remains open. Owner is fixing TestMountPropagation’s two unmounts and shared conf.RootDir mutation in TestSplitFSCheckpointRestoreOnlyFS, then testing mount_setattr EPERM against unchanged-production-equivalent source before any production correction. Accepted e895 source/component/lint evidence remains valid within its scope. Full ARM container still requires unavailable /dev/kvm, with no incompatible-worker retry. Controlled performance and all existing publication decisions/parent holds remain open.",
+      "nextStep": "Fixture owner closes exact test cleanup defects and establishes unchanged-production-equivalent mount_setattr behavior before deciding whether production needs a fix. Preserve passing shim/component products; only then requalify affected broad gates. Maintain full ARM hardware blocker and required stable-control/performance scope; no new source decision frames or repeated questions.",
+      "recheckCondition": "Actual cleanup/baseline-equivalent mount result and affected broad qualification, verified ARM hardware/host evidence or an existing publication answer.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135396,6 +135396,14 @@
         {
           "label": "Accepted e895 source checks passed",
           "url": "https://github.com/tamird/gvisor/actions/runs/44717993736"
+        },
+        {
+          "label": "Final ARM broad shim61XML passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44719794023"
+        },
+        {
+          "label": "Final AMD shim passed; container/cleanup failures remain",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44719789931"
         }
       ],
       "followup": {
@@ -135417,12 +135425,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T10:28:50.162885+00:00",
-        "nextAction": "Queue owner runs and audits final unfiltered AMD container/shim and runnable ARM shim on accepted faithful source. Preserve explicit ARM hardware blocker without incompatible worker reruns or matrix reduction. Complete required controlled performance only after verified stable controls/host context; follow existing publication decisions once, with no new frames or history copies.",
-        "recheckCondition": "Audited final owning-suite result, verified ARM KVM hardware/quiet-host evidence, substantive feedback or an existing publication answer.",
+        "curatedAt": "2026-11-20T10:44:03.219206+00:00",
+        "nextAction": "Fixture owner closes exact test cleanup defects and establishes unchanged-production-equivalent mount_setattr behavior before deciding whether production needs a fix. Preserve passing shim/component products; only then requalify affected broad gates. Maintain full ARM hardware blocker and required stable-control/performance scope; no new source decision frames or repeated questions.",
+        "recheckCondition": "Actual cleanup/baseline-equivalent mount result and affected broad qualification, verified ARM hardware/host evidence or an existing publication answer.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "General, security and performance source reviewers accept checkpoint e895f0269c014116a7da62349405ec4a969ee01a with no remaining actionable source finding. Faithful CI99cb761bef04b3a0277aee359d7609a936d55a77 passes audited sandbox103 plus direct-task6 cases per architecture:218XML, zero failures/skips, terminal BEP/source guards and source linters pass. Unchanged303unit results per architecture and376-source C++ proof are retained by verified inputs. This closes the revised-source review barrier, not full owning-suite or performance qualification. Queue owner is resumed for final unfiltered AMD container+shim and runnable ARM shim; missing /dev/kvm still blocks full ARM container target. Performance remains open: stable A/A, checkpoint/child-lifecycle/broad coverage and representative nested/multiple-bundle FD pressure. No measurements or waiver, and all existing publication questions/holds remain.",
+        "disposition": "Final broad shim results pass61XML cases per architecture with zero failures/skips. AMD container975XML has five failure elements (parent plus four TestIDMappedMountFlags variants),13skips and two post-PASS cleanup failures; broad qualification remains open. Owner is fixing TestMountPropagation’s two unmounts and shared conf.RootDir mutation in TestSplitFSCheckpointRestoreOnlyFS, then testing mount_setattr EPERM against unchanged-production-equivalent source before any production correction. Accepted e895 source/component/lint evidence remains valid within its scope. Full ARM container still requires unavailable /dev/kvm, with no incompatible-worker retry. Controlled performance and all existing publication decisions/parent holds remain open.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135831,5 +135839,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T10:28:50.162885+00:00"
+  "updatedAt": "2026-11-20T10:44:03.219206+00:00"
 }
