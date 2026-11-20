@@ -295,11 +295,31 @@ check_clang_tidy() {
   if [[ ! -f "${database}" ]]; then
     if ! command -v "${BAZEL[0]}" > /dev/null 2>&1; then
       echo "lint: ${database} is missing and ${BAZEL[0]} is not on PATH" >&2
-      echo "lint: run tools/gen_compile_commands.py to create it" >&2
+      echo "lint: generate it with //tools/compile_commands" >&2
       return 1
     fi
-    python3 "${REPO_DIR}/tools/gen_compile_commands.py" --bazel="${BAZEL[*]}" \
-      --bazel-options="${BAZEL_OPTIONS[*]+"${BAZEL_OPTIONS[*]}"}" >&2
+    local -a generator_options=(
+      --resolve
+      --replace=-fno-canonical-system-headers=
+      "--bazel-command=${BAZEL[0]}"
+    )
+    local i option
+    for ((i = 1; i < ${#BAZEL[@]}; i++)); do
+      generator_options+=("--bazelsupopt=${BAZEL[i]}")
+    done
+    for option in "${BAZEL_OPTIONS[@]+"${BAZEL_OPTIONS[@]}"}"; do
+      generator_options+=("--bazelopt=${option}")
+    done
+    local temporary_database
+    temporary_database="$(mktemp "${database}.XXXXXX")"
+    trap "rm -f -- $(printf '%q' "${temporary_database}")" EXIT
+    run_bazel run --platforms=@platforms//host //tools/compile_commands -- \
+      "${generator_options[@]}" "--output=${temporary_database}" //test/... //tools/... >&2
+    run_bazel build --remote_download_outputs=all \
+      --aspects=//tools:cc_compile_inputs.bzl%cc_compile_inputs \
+      --output_groups=cc_compile_inputs //test/... //tools/... >&2
+    mv "${temporary_database}" "${database}"
+    trap - EXIT
   fi
   local clang_tidy
   clang_tidy="$(install_clang_tidy)"

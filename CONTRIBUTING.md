@@ -85,9 +85,26 @@ make copy TARGETS=//:release DESTINATION=./runsc-dev
 ```
 
 In addition, for language server support in C++ files (e.g. the syscall tests):
-install [clangd][clangd] on the host, then run `tools/gen_compile_commands.py`
-to generate a `compile_commands.json`. After reloading the editor window, clangd
-should work.
+install [clangd][clangd] on the host, then generate its compilation database.
+On macOS, the prebuilt generator requires macOS 15.5 or later.
+
+```sh
+bazel run --platforms=@platforms//host //tools/compile_commands -- \
+  --resolve --replace=-fno-canonical-system-headers= \
+  --bazel-command=bazel //test/... //tools/... &&
+bazel build --remote_download_outputs=all \
+  --aspects=//tools:cc_compile_inputs.bzl%cc_compile_inputs \
+  --output_groups=cc_compile_inputs //test/... //tools/...
+```
+
+The first command runs the maintained generator recommended in [Bazel's IDE
+documentation](https://bazel.build/install/ide#autocomplete-for-source-code).
+It removes a GCC-only option that Clang does not accept.
+The second materializes generated sources and headers without compiling the
+tests. Run it last so that Bazel leaves their execution-root paths available.
+Download all outputs because a generator can produce a header and source in
+the same action.
+After reloading the editor window, clangd should work.
 
 ### Other Editors
 

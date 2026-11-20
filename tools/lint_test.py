@@ -14,8 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Checks failure propagation through the public lint entrypoint."""
+"""Checks developer-tool failure propagation."""
 
+import contextlib
+import json
 import os
 import pathlib
 import re
@@ -23,6 +25,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
+
+import clang_tidy
 
 LINT = pathlib.Path(sys.argv.pop(1)).absolute()
 
@@ -127,11 +131,77 @@ class LintTest(unittest.TestCase):
         ],
     )
 
+  def test_compile_commands_bazel_options(self) -> None:
+    self.tool(
+        self.bin / "bazel",
+        f'echo "$*" >> "{self.bazel_log}"\n'
+        'case " $* " in *" run "*) echo generator-stopped >&2; exit 7;; esac',
+    )
+    result = self.lint(
+        "--bazel=bazel --startup=1",
+        "--bazel-options=--opt=1 --opt=2",
+        "clang-tidy",
+    )
+    self.assert_failed(result, "clang-tidy")
+    self.assertIn("generator-stopped", result.stderr)
+    (generate,) = [c.split() for c in self.bazel_log.read_text().splitlines()]
+    self.assertEqual(generate[:4], ["--startup=1", "run", "--opt=1", "--opt=2"])
+    self.assertIn("--platforms=@platforms//host", generate)
+    self.assertIn("--bazel-command=bazel", generate)
+    self.assertIn("--bazelsupopt=--startup=1", generate)
+    self.assertIn("--bazelopt=--opt=1", generate)
+    self.assertIn("--bazelopt=--opt=2", generate)
+    self.tool(
+        self.bin / "bazel",
+        f'echo "$*" >> "{self.bazel_log}"\n'
+        'case " $* " in\n'
+        '  *" run "*) for arg; do case "$arg" in --output=*) '
+        'printf generated > "${arg#--output=}";; esac; done;;\n'
+        '  *" build "*) echo materialization-stopped >&2; exit 7;;\n'
+        "esac",
+    )
+    self.bazel_log.unlink()
+    result = self.lint("clang-tidy")
+    self.assert_failed(result, "clang-tidy")
+    self.assertIn("materialization-stopped", result.stderr)
+    commands = [c.split() for c in self.bazel_log.read_text().splitlines()]
+    output = next(arg for arg in commands[0] if arg.startswith("--output="))
+    self.assertFalse(pathlib.Path(output.removeprefix("--output=")).exists())
+    self.assertFalse((LINT.parent.parent / "compile_commands.json").exists())
+
+  def test_clang_tidy_process_failure(self) -> None:
+    tool = self.bin / "clang-tidy"
+    self.tool(tool, "echo driver-stdout; echo driver-stderr >&2; exit 7")
+    source = pathlib.Path("source.cc")
+    analyzed, findings, errors = clang_tidy._analyze(
+        str(tool), self.root, self.root / ".clang-tidy", self.root, source
+    )
+    self.assertEqual(analyzed, source)
+    self.assertEqual(findings, [])
+    self.assertIn("source.cc: clang-tidy exited with status 7", errors)
+    self.assertIn("driver-stdout", errors)
+    self.assertIn("driver-stderr", errors)
+
   def test_bazel_failure(self) -> None:
     self.tool(self.bin / "bazel", "echo bazel-build-failed >&2; exit 7")
     result = self.lint("goimports")
     self.assert_failed(result, "goimports")
     self.assertIn("bazel-build-failed", result.stderr)
+
+    self.tool(
+        self.bin / "bazel",
+        f'echo "$*" >> "{self.bazel_log}"\n'
+        'case "$*" in *"@io_bazel_rules_go//go"*) exit 0;; esac\nexit 7',
+    )
+    result = subprocess.run(
+        ["bash", str(LINT.with_name("devcontainer-init.sh"))],
+        env=self.env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    self.assertEqual(result.returncode, 7, result.stdout + result.stderr)
+    self.assertEqual(len(self.bazel_log.read_text().splitlines()), 2)
 
   def test_diagnostics_and_continuation(self) -> None:
     self.tool(
@@ -165,6 +235,34 @@ class LintTest(unittest.TestCase):
     (self.cache / f"codespell-{self.versions['CODESPELL']}").mkdir()
     self.tool(self.bin / "python3", "exit 0")
     self.assert_failed(self.lint("spelling"), "spelling")
+
+
+class ClangTidySourcesTest(unittest.TestCase):
+
+  def test_compilation_directory(self) -> None:
+    with tempfile.TemporaryDirectory(dir=os.environ["TEST_TMPDIR"]) as temp:
+      root = pathlib.Path(temp)
+      workspace, execroot = root / "workspace", root / "execroot"
+      workspace.mkdir()
+      execroot.mkdir()
+      relative, absolute = workspace / "relative.cc", workspace / "absolute.cc"
+      relative.touch()
+      absolute.touch()
+      (execroot / "relative.cc").symlink_to(relative)
+      outside = root / "external.cc"
+      outside.touch()
+      database = workspace / "compile_commands.json"
+      database.write_text(json.dumps([
+          {"directory": str(execroot), "file": "relative.cc"},
+          {"directory": str(execroot), "file": "relative.cc"},
+          {"directory": str(execroot), "file": str(absolute)},
+          {"directory": str(root), "file": "external.cc"},
+      ]))
+      with contextlib.chdir(root):
+        self.assertEqual(
+            clang_tidy._sources(database, workspace),
+            [pathlib.Path("absolute.cc"), pathlib.Path("relative.cc")],
+        )
 
 
 if __name__ == "__main__":
