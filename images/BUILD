@@ -7,6 +7,14 @@ package(
     licenses = ["notice"],
 )
 
+exports_files(
+    [
+        "benchmarks/node/index.js",
+        "benchmarks/node/index_test.js",
+    ],
+    visibility = ["//test/benchmarks/network:__pkg__"],
+)
+
 # Include the complete contexts, including files owned by nested packages.
 # tools/images.mk remains responsible for architecture selection and hashing.
 filegroup(

@@ -42,6 +42,10 @@ benchmark_test(
     srcs = [
         "node_test.go",
     ],
+    data = [
+        "//images:benchmarks/node/index.js",
+        "//images:benchmarks/node/index_test.js",
+    ],
     embed = [":network"],
     use_for_pgo = False,
     visibility = ["//:sandbox"],

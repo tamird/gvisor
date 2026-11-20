@@ -26,6 +26,28 @@ import (
 	"gvisor.dev/gvisor/test/metricsviz"
 )
 
+func TestNodeProducer(t *testing.T) {
+	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+	defer cancel()
+	machine, err := harness.GetMachine()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer machine.CleanUp()
+	container := machine.GetNativeContainer(ctx, t)
+	defer container.CleanUp(context.WithoutCancel(ctx))
+	opts := dockerutil.RunOpts{Image: "benchmarks/node"}
+	if err := container.CopyFiles(&opts, "/node-producer-test",
+		"images/benchmarks/node/index.js", "images/benchmarks/node/index_test.js"); err != nil {
+		t.Fatal(err)
+	}
+	output, err := container.Run(ctx, opts, "node", "/node-producer-test/index_test.js")
+	if err != nil {
+		t.Fatalf("Node producer witness: %v: %s", err, output)
+	}
+	t.Logf("%s", output)
+}
+
 // BenchmarkNode runs requests using 'hey' against a Node server run on
 // 'runtime'. The server responds to requests by grabbing some data in a
 // redis instance and returns the data in its response. The test loops through
