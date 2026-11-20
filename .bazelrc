@@ -92,3 +92,6 @@ build:buildbuddy --modify_execution_info=^(Cpp.*|CcStrip)$=-no-remote,^(Cpp.*|Cc
 
 # Cgo uses the same image-provided C tools and resolved execution CPU.
 build:buildbuddy --modify_execution_info=^(GoStdlib|GoStdlibList|GoCompilePkg|GoLink)$=-no-remote,^(GoStdlib|GoStdlibList|GoCompilePkg|GoLink)$=+no-local
+
+# CI-only runtime options supplied by the trusted qualification invocation.
+try-import %workspace%/qualification-runtime.bazelrc
