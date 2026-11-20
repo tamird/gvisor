@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-20T00:21:22.374105+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-20T00:02:04.528943+00:00",
+  "registryDate": "2026-11-20T00:24:02.233172+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -445949,14 +445949,14 @@
       "sourceNumber": 15064,
       "owner": "Agent",
       "claimed": false,
-      "overdue": false,
+      "overdue": true,
       "kind": "inline",
       "id": "PRRC_kwDOB9IlXs8AAAABFF6qzg",
       "createdAt": "2026-11-19T23:57:13Z",
       "url": "https://github.com/google/gvisor/pull/15064#discussion_r4636715726",
       "author": "rexren-gif",
       "updatedAt": "2026-11-19T23:57:13Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": true,
       "assigned": true,
       "feedbackComplete": true,
@@ -447661,7 +447661,7 @@
       "url": "https://github.com/google/gvisor/pull/15064#pullrequestreview-5985340174",
       "author": "rexren-gif",
       "updatedAt": "2026-11-19T23:57:13Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
       "feedbackComplete": true,
@@ -464466,7 +464466,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T00:02:04.528943+00:00"
+        "observedAt": "2026-11-20T00:24:02.233172+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -464475,7 +464475,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T00:02:04.528943+00:00"
+        "observedAt": "2026-11-20T00:24:02.233172+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -464484,7 +464484,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T00:02:04.528943+00:00"
+        "observedAt": "2026-11-20T00:24:02.233172+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -464493,7 +464493,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T00:02:04.528943+00:00"
+        "observedAt": "2026-11-20T00:24:02.233172+00:00"
       }
     },
     "issue:google/benchmark:1634": {
@@ -464502,7 +464502,7 @@
         "since": "2026-11-19T00:39:33.110112+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T00:02:04.528943+00:00"
+        "observedAt": "2026-11-20T00:24:02.233172+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -464511,7 +464511,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T00:02:04.528943+00:00"
+        "observedAt": "2026-11-20T00:24:02.233172+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -464520,7 +464520,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T00:02:04.528943+00:00"
+        "observedAt": "2026-11-20T00:24:02.233172+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -464529,7 +464529,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T00:02:04.528943+00:00"
+        "observedAt": "2026-11-20T00:24:02.233172+00:00"
       }
     }
   },

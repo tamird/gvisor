@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T00:02:04.528943+00:00",
+    "updatedAt": "2026-11-20T00:24:02.233172+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -99693,25 +99693,33 @@
       "title": "Run lisafs hard-link tests without capabilities",
       "url": "https://github.com/google/gvisor/pull/17808",
       "group": "rbe",
-      "status": "open",
-      "updatedAt": "2026-11-19T16:20:03.380488+00:00",
-      "summary": "DELIVERED as17808 at a1ab971; exact approved patch preserved. DCO passes. First Pass1879 rejected before agent execution by 30-day compute-minute quota.",
+      "status": "merged",
+      "updatedAt": "2026-11-20T00:24:02.233172+00:00",
+      "summary": "Merged by EtiennePerot at2026-11-20T00:02:42Z as squash9aa315eb937f35cd185bbd4ec666d86010d6569b from exactsourcea1ab97103ca123bf0593910e5b56e3864e6b02c4. All ten current checks passed, including DCO, FirstPass1999 and main55459; the old quota block is retired. No agent merge command was issued. Retain the source branch: squash ancestry and existing public-source protections still apply after the minimum seven-day retention period.",
       "followup": {
         "owner": "root",
-        "sourceHead": "fed8dca3a5b49843809ae3fa70befdfe532b9e6f",
-        "disposition": "Delivered PR17808 remains mergeable; all GitHub checks and DCO pass. First Pass 1879 failed before tests because the author reached the 30-day, 360,000 compute-minute quota. No source failure was observed.",
-        "nextAction": "Root follows the already-assigned reviewers and provider admission recovery. Do not duplicate reviewer notifications or retry the rejected build.",
-        "recheckCondition": "Substantive human response, current-head check change, quota recovery or import/landing event.",
+        "sourceHead": "a1ab97103ca123bf0593910e5b56e3864e6b02c4",
+        "disposition": "Merged by EtiennePerot at2026-11-20T00:02:42Z as squash9aa315eb937f35cd185bbd4ec666d86010d6569b from exactsourcea1ab97103ca123bf0593910e5b56e3864e6b02c4. All ten current checks passed, including DCO, FirstPass1999 and main55459; the old quota block is retired. No agent merge command was issued. Retain the source branch: squash ancestry and existing public-source protections still apply after the minimum seven-day retention period.",
+        "nextAction": "Source delivery complete. Preserve the fork source ref and evidence; recheck existing canonical cleanup eligibility no earlier than2026-11-27, requiring archive/public-source protections and squash handling before any deletion. Do not retry quota jobs or request review again.",
+        "recheckCondition": "Canonical retention/cleanup recheck on or after2026-11-27, or a substantive post-merge regression.",
         "evidenceReceipt": {
           "file": "lisafs-hardlink-44434582095-evidence.json",
           "sha256": "769fdbbc385dbc754af46f88a68cfe6bfdb48cb55d760a8fe8ad5386212c986f"
         },
-        "curatedAt": "2026-11-19T16:20:03.380488+00:00",
+        "curatedAt": "2026-11-20T00:24:02.233172+00:00",
         "publication": {
           "file": "lisafs-hardlink-17808-published.json",
           "sha256": "3c52ec07fe74d15074d33a60cb75fed118a5126383df507dcb0f469049176f70"
-        }
-      }
+        },
+        "observedAt": "2026-11-20T00:24:02.233172+00:00",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/17808",
+          "https://buildkite.com/gvisor/first-pass/builds/1999",
+          "https://buildkite.com/gvisor/pipeline/builds/55459"
+        ]
+      },
+      "nextStep": "Source delivery complete. Preserve the fork source ref and evidence; recheck existing canonical cleanup eligibility no earlier than2026-11-27, requiring archive/public-source protections and squash handling before any deletion. Do not retry quota jobs or request review again.",
+      "recheckCondition": "Canonical retention/cleanup recheck on or after2026-11-27, or a substantive post-merge regression."
     },
     {
       "id": "branch:buildkite-pre-agent-details",
@@ -134907,10 +134915,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T00:02:04.528943+00:00",
-      "summary": "Shared run-argument support6940c413 is delivered; actual canonical Goimports44641261748 and Buildifier44641333993 callers pass. TCP ordinary Go tests pass499cases per architecture; this does not establish packet qualification. AMD packet44640102308 was cancelled, with cause and partial evidence under owner audit. ARM host probe44641958412 failed; its owner diagnoses host requirements while provider13523 tracks the newer-kernel request. The cloud ARM5.10 nft failure is observed, but exact configuration cause is unproven. The20000-warmup same-source control failed stability27.705%/10.043%, apparent false mean17.479%. Response probe44641432699 passed its job but emitted zero body records because verbose benchmark output was suppressed; no response-stability evidence exists. Diagnostic-only verbose recovery44642212443 is running, without new timed samples.",
-      "nextStep": "Packet owner audits cancellation/partial AMD evidence and exact ARM host requirements before further functional qualification; preserve499case ordinary-Go passes. Benchmark owner audits diagnostic response recovery before identifying a cause; no timed candidate or sample expansion. Root awaits the existing compdb/secfuzz source and private issue publication decisions without new questions or decision frames. Full150/n24 performance remains open.",
-      "recheckCondition": "Audited diagnostic response records, actual packet/host capability recovery or cancellation evidence, substantive source/review feedback, or an answer to an existing publication decision.",
+      "updatedAt": "2026-11-20T00:24:02.233172+00:00",
+      "summary": "Response diagnostics verified128HTTP200 responses, each4206bytes with an identical skeleton and four1024-character alphanumeric paragraphs; hashes differ only in values. This establishes no varying-size evidence or internal-work stability. No suitable existing performance worker is verified: BuildBuddy inventory returned403 and no alternative is configured; the existing host/pool information question is pending, with no further measurements. Pinned native-C RBE preflights and compiler/action-image graphs pass on AMD64 and ARM64. AMD packet44644420071 remains live. ARM host recovery demonstrated nested-network-namespace EPERM; a shared standard Bazel-options fix is in implementation, without host sysctl changes or Go re-exec. Full packet qualification and A/A stability remain open.",
+      "nextStep": "Root awaits existing host/pool information before further performance measurements. Packet owner audits AMD packet results and qualifies the shared ARM host-options correction while retaining RBE/cache for builds. Preserve qualified compdb6a9, secfuzz8c and their existing source decisions plus private issue decision; no repeated questions or draft-body publication. Full150/n24 performance remains open.",
+      "recheckCondition": "Actual packet/ARM host recovery results, existing worker information or publication decisions, or substantive source/review feedback.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135096,6 +135104,18 @@
         {
           "label": "Diagnostic verbose response recovery; result pending",
           "url": "https://github.com/tamird/gvisor/actions/runs/44642212443"
+        },
+        {
+          "label": "AMD packet qualification; result pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44644420071"
+        },
+        {
+          "label": "ARM native-C RBE compiler preflight passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44644607450"
+        },
+        {
+          "label": "ARM compiler/action-image graph passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44644616878"
         }
       ],
       "followup": {
@@ -135117,12 +135137,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T00:02:04.528943+00:00",
-        "nextAction": "Packet owner audits cancellation/partial AMD evidence and exact ARM host requirements before further functional qualification; preserve499case ordinary-Go passes. Benchmark owner audits diagnostic response recovery before identifying a cause; no timed candidate or sample expansion. Root awaits the existing compdb/secfuzz source and private issue publication decisions without new questions or decision frames. Full150/n24 performance remains open.",
-        "recheckCondition": "Audited diagnostic response records, actual packet/host capability recovery or cancellation evidence, substantive source/review feedback, or an answer to an existing publication decision.",
+        "curatedAt": "2026-11-20T00:24:02.233172+00:00",
+        "nextAction": "Root awaits existing host/pool information before further performance measurements. Packet owner audits AMD packet results and qualifies the shared ARM host-options correction while retaining RBE/cache for builds. Preserve qualified compdb6a9, secfuzz8c and their existing source decisions plus private issue decision; no repeated questions or draft-body publication. Full150/n24 performance remains open.",
+        "recheckCondition": "Actual packet/ARM host recovery results, existing worker information or publication decisions, or substantive source/review feedback.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Shared run-argument support6940c413 is delivered; actual canonical Goimports44641261748 and Buildifier44641333993 callers pass. TCP ordinary Go tests pass499cases per architecture; this does not establish packet qualification. AMD packet44640102308 was cancelled, with cause and partial evidence under owner audit. ARM host probe44641958412 failed; its owner diagnoses host requirements while provider13523 tracks the newer-kernel request. The cloud ARM5.10 nft failure is observed, but exact configuration cause is unproven. The20000-warmup same-source control failed stability27.705%/10.043%, apparent false mean17.479%. Response probe44641432699 passed its job but emitted zero body records because verbose benchmark output was suppressed; no response-stability evidence exists. Diagnostic-only verbose recovery44642212443 is running, without new timed samples.",
+        "disposition": "Response diagnostics verified128HTTP200 responses, each4206bytes with an identical skeleton and four1024-character alphanumeric paragraphs; hashes differ only in values. This establishes no varying-size evidence or internal-work stability. No suitable existing performance worker is verified: BuildBuddy inventory returned403 and no alternative is configured; the existing host/pool information question is pending, with no further measurements. Pinned native-C RBE preflights and compiler/action-image graphs pass on AMD64 and ARM64. AMD packet44644420071 remains live. ARM host recovery demonstrated nested-network-namespace EPERM; a shared standard Bazel-options fix is in implementation, without host sysctl changes or Go re-exec. Full packet qualification and A/A stability remain open.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135531,5 +135551,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T00:02:04.528943+00:00"
+  "updatedAt": "2026-11-20T00:24:02.233172+00:00"
 }
