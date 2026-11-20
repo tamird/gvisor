@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T04:01:00.017169+00:00",
+    "updatedAt": "2026-11-20T04:27:00.375091+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -134955,10 +134955,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T04:01:00.017169+00:00",
-      "summary": "Full AMD KVM44670183816 is audited14/14PASS. ARM normal passes14cases in each supported variant; this is not a full ARM race or KVM claim. The shared ARM race profile passes its cheap remote recovery; the full seven-owner suite remains pending. Header-corrected strict C++44670554234 reports native workflow SUCCESS but awaits actual owner audit, so the C++ gate remains open. Focused helper/mapping reviews found no implementation findings; non-root ownership-test caller evidence is still being checked. Existing performance/worker-isolation and source-publication holds remain unchanged.",
-      "nextStep": "Packet/compiler owners audit actual strict C++ output, full ARM race suite and non-root helper evidence before closing those gates. Preserve completed AMD KVM and normal-runtime products; root follows existing source decisions and worker information without new timed samples or decision frames.",
-      "recheckCondition": "Actual C++/ARM race/helper audit or substantive qualification change, source feedback, or an existing publication/worker answer.",
+      "updatedAt": "2026-11-20T04:27:00.375091+00:00",
+      "summary": "Packet supported normal/race matrices and actual strict C++376 pass. Final source review accepted one enabled-copy/full-receive-queue syscall coverage gap; native-only observation44674329489 is running, with no new production change or completed-review claim. Optional-affinity resource preflight passes, but128-response audit found two HTTP200pages of46bytes/zero paragraphs versus126pages of4206bytes. Timed A/A is held for producer-contract investigation; no timing cause is established. Partial startup control44673064601 collected zero formal samples because the warmup observer missed Alpine, so it is not a statistical failure. Standard shim-API units and paused handshake remain under test; no caller fallback is accepted. Existing source/issue decisions remain pending.",
+      "nextStep": "Packet owner audits native queue-saturation behavior before closing the final coverage gap. Benchmark owner resolves the actual response-producer contract and observer coverage before any timed samples; shim owner validates standard API/paused handshake. Preserve qualified matrix products and existing worker/publication holds; no repeated questions or proposal frames.",
+      "recheckCondition": "Actual native queue result, verified producer/observer or shim contract evidence, substantive feedback, or an existing publication/worker answer.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135208,6 +135208,14 @@
         {
           "label": "ARM shared race-profile cheap recovery qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/44669949587"
+        },
+        {
+          "label": "Native queue-saturation observation; final coverage gap open",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44674329489"
+        },
+        {
+          "label": "Partial startup control:zero formal samples, observer failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44673064601"
         }
       ],
       "followup": {
@@ -135229,12 +135237,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T04:01:00.017169+00:00",
-        "nextAction": "Packet/compiler owners audit actual strict C++ output, full ARM race suite and non-root helper evidence before closing those gates. Preserve completed AMD KVM and normal-runtime products; root follows existing source decisions and worker information without new timed samples or decision frames.",
-        "recheckCondition": "Actual C++/ARM race/helper audit or substantive qualification change, source feedback, or an existing publication/worker answer.",
+        "curatedAt": "2026-11-20T04:27:00.375091+00:00",
+        "nextAction": "Packet owner audits native queue-saturation behavior before closing the final coverage gap. Benchmark owner resolves the actual response-producer contract and observer coverage before any timed samples; shim owner validates standard API/paused handshake. Preserve qualified matrix products and existing worker/publication holds; no repeated questions or proposal frames.",
+        "recheckCondition": "Actual native queue result, verified producer/observer or shim contract evidence, substantive feedback, or an existing publication/worker answer.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Full AMD KVM44670183816 is audited14/14PASS. ARM normal passes14cases in each supported variant; this is not a full ARM race or KVM claim. The shared ARM race profile passes its cheap remote recovery; the full seven-owner suite remains pending. Header-corrected strict C++44670554234 reports native workflow SUCCESS but awaits actual owner audit, so the C++ gate remains open. Focused helper/mapping reviews found no implementation findings; non-root ownership-test caller evidence is still being checked. Existing performance/worker-isolation and source-publication holds remain unchanged.",
+        "disposition": "Packet supported normal/race matrices and actual strict C++376 pass. Final source review accepted one enabled-copy/full-receive-queue syscall coverage gap; native-only observation44674329489 is running, with no new production change or completed-review claim. Optional-affinity resource preflight passes, but128-response audit found two HTTP200pages of46bytes/zero paragraphs versus126pages of4206bytes. Timed A/A is held for producer-contract investigation; no timing cause is established. Partial startup control44673064601 collected zero formal samples because the warmup observer missed Alpine, so it is not a statistical failure. Standard shim-API units and paused handshake remain under test; no caller fallback is accepted. Existing source/issue decisions remain pending.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135643,5 +135651,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T04:01:00.017169+00:00"
+  "updatedAt": "2026-11-20T04:27:00.375091+00:00"
 }
