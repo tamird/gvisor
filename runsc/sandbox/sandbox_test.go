@@ -728,27 +728,47 @@ func (cm *containerManager) Checkpoint(_ *controlapi.SaveOpts, _ *struct{}) erro
 func TestFailedCheckpointDirectoryReplacement(t *testing.T) {
 	base := t.TempDir()
 	image, original, foreign := filepath.Join(base, "image"), filepath.Join(base, "original"), filepath.Join(base, "foreign")
-	for _, dir := range []string{image, foreign} { if err := os.Mkdir(dir, 0700); err != nil { t.Fatal(err) } }
+	for _, dir := range []string{image, foreign} {
+		if err := os.Mkdir(dir, 0700); err != nil {
+			t.Fatal(err)
+		}
+	}
 	for _, name := range []string{checkpointfiles.StateFileName, checkpointfiles.PagesMetadataFileName, checkpointfiles.PagesFileName} {
-		if err := os.WriteFile(filepath.Join(foreign, name), []byte("foreign"), 0600); err != nil { t.Fatal(err) }
+		if err := os.WriteFile(filepath.Join(foreign, name), []byte("foreign"), 0600); err != nil {
+			t.Fatal(err)
+		}
 	}
 	socket := filepath.Join(base, "control.sock")
 	server, err := controlserver.Create(socket)
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer server.Stop(0)
 	server.Register(&containerManager{checkpoint: func() error {
-		if err := os.Rename(image, original); err != nil { return err }
-		if err := os.Symlink(foreign, image); err != nil { return err }
+		if err := os.Rename(image, original); err != nil {
+			return err
+		}
+		if err := os.Symlink(foreign, image); err != nil {
+			return err
+		}
 		return fmt.Errorf("checkpoint rejected after directory replacement")
 	}})
 	server.StartServing()
 	sandbox := &Sandbox{ID: "test", ControlSocketPath: socket}
-	if err := sandbox.Checkpoint(&config.Config{}, "test", image, CheckpointOpts{ContainerOnly: true, Compression: "none"}); err == nil || !strings.Contains(err.Error(), "checkpoint rejected") { t.Fatalf("Checkpoint = %v, want rejection", err) }
-	for _, name := range []string{checkpointfiles.StateFileName, checkpointfiles.PagesMetadataFileName, checkpointfiles.PagesFileName} {
-		if data, err := os.ReadFile(filepath.Join(foreign, name)); err != nil || string(data) != "foreign" { t.Errorf("foreign file %s = %q, %v", name, data, err) }
-		if _, err := os.Stat(filepath.Join(original, name)); !os.IsNotExist(err) { t.Errorf("owned file %s was not removed: %v", name, err) }
+	if err := sandbox.Checkpoint(&config.Config{}, "test", image, CheckpointOpts{ContainerOnly: true, Compression: "none"}); err == nil || !strings.Contains(err.Error(), "checkpoint rejected") {
+		t.Fatalf("Checkpoint = %v, want rejection", err)
 	}
-	if target, err := os.Readlink(image); err != nil || target != foreign { t.Errorf("replacement directory entry changed: %q, %v", target, err) }
+	for _, name := range []string{checkpointfiles.StateFileName, checkpointfiles.PagesMetadataFileName, checkpointfiles.PagesFileName} {
+		if data, err := os.ReadFile(filepath.Join(foreign, name)); err != nil || string(data) != "foreign" {
+			t.Errorf("foreign file %s = %q, %v", name, data, err)
+		}
+		if _, err := os.Stat(filepath.Join(original, name)); !os.IsNotExist(err) {
+			t.Errorf("owned file %s was not removed: %v", name, err)
+		}
+	}
+	if target, err := os.Readlink(image); err != nil || target != foreign {
+		t.Errorf("replacement directory entry changed: %q, %v", target, err)
+	}
 }
 
 func TestCheckpointRollbackOwnership(t *testing.T) {
@@ -756,31 +776,82 @@ func TestCheckpointRollbackOwnership(t *testing.T) {
 		t.Run(fmt.Sprintf("replacement=%t", replacement), func(t *testing.T) {
 			path := t.TempDir()
 			dir, err := openCheckpointDirectory(path)
-			if err != nil { t.Fatal(err) }
+			if err != nil {
+				t.Fatal(err)
+			}
 			defer dir.Close()
 			files, err := createSaveFilesAt(int(dir.Fd()), path, false, "none")
-			if err != nil { t.Fatal(err) }
-			defer func() { for _, f := range files { _ = f.Close() } }()
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer func() {
+				for _, f := range files {
+					_ = f.Close()
+				}
+			}()
 			name := filepath.Join(path, checkpointfiles.StateFileName)
 			if replacement {
-				if err := os.Rename(name, name+".owned"); err != nil { t.Fatal(err) }
-				if err := os.WriteFile(name, []byte("replacement"), 0600); err != nil { t.Fatal(err) }
+				if err := os.Rename(name, name+".owned"); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(name, []byte("replacement"), 0600); err != nil {
+					t.Fatal(err)
+				}
 			} else {
-				if err := os.Chmod(path, 0777); err != nil { t.Fatal(err) }
+				if err := os.Chmod(path, 0777); err != nil {
+					t.Fatal(err)
+				}
 			}
-			if err := removeCheckpointFiles(int(dir.Fd()), path, files); err == nil { t.Fatal("rollback accepted uncertain ownership") }
+			if err := removeCheckpointFiles(int(dir.Fd()), path, files); err == nil {
+				t.Fatal("rollback accepted uncertain ownership")
+			}
 			if replacement {
-				if data, err := os.ReadFile(name); err != nil || string(data) != "replacement" { t.Fatalf("replacement file changed: %q, %v", data, err) }
-			} else if _, err := os.Stat(name); err != nil { t.Fatalf("unsafe directory entry removed: %v", err) }
+				if data, err := os.ReadFile(name); err != nil || string(data) != "replacement" {
+					t.Fatalf("replacement file changed: %q, %v", data, err)
+				}
+			} else if _, err := os.Stat(name); err != nil {
+				t.Fatalf("unsafe directory entry removed: %v", err)
+			}
 		})
 	}
 }
 
 func TestPartialCheckpointCreationRollback(t *testing.T) {
-	path := t.TempDir()
+	base := t.TempDir()
+	path, original, foreign := filepath.Join(base, "image"), filepath.Join(base, "original"), filepath.Join(base, "foreign")
+	for _, dir := range []string{path, foreign} {
+		if err := os.Mkdir(dir, 0700); err != nil {
+			t.Fatal(err)
+		}
+	}
 	name := filepath.Join(path, checkpointfiles.PagesMetadataFileName)
-	if err := os.WriteFile(name, []byte("existing"), 0600); err != nil { t.Fatal(err) }
-	if _, err := createSaveFiles(path, false, "none"); err == nil { t.Fatal("creation overwrote existing checkpoint") }
-	if data, err := os.ReadFile(name); err != nil || string(data) != "existing" { t.Fatalf("existing metadata changed: %q, %v", data, err) }
-	if _, err := os.Stat(filepath.Join(path, checkpointfiles.StateFileName)); !os.IsNotExist(err) { t.Fatalf("partial checkpoint state remains: %v", err) }
+	if err := os.WriteFile(name, []byte("existing"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(foreign, checkpointfiles.StateFileName), []byte("foreign"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	dir, err := openCheckpointDirectory(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer dir.Close()
+	if err := os.Rename(path, original); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(foreign, path); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := createSaveFilesAt(int(dir.Fd()), path, false, "none"); err == nil {
+		t.Fatal("creation overwrote existing checkpoint")
+	}
+	if data, err := os.ReadFile(filepath.Join(original, checkpointfiles.PagesMetadataFileName)); err != nil || string(data) != "existing" {
+		t.Fatalf("existing metadata changed: %q, %v", data, err)
+	}
+	if _, err := os.Stat(filepath.Join(original, checkpointfiles.StateFileName)); !os.IsNotExist(err) {
+		t.Fatalf("partial checkpoint state remains: %v", err)
+	}
+	if data, err := os.ReadFile(filepath.Join(foreign, checkpointfiles.StateFileName)); err != nil || string(data) != "foreign" {
+		t.Fatalf("foreign checkpoint changed: %q, %v", data, err)
+	}
 }
