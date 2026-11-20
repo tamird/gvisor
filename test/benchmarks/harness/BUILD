@@ -209,7 +209,7 @@ go_test(
         "--paired-workload=startup-only",
         "--client-cpuset=0-4",
         "--server-cpuset=0-4",
-        "--paired-image-archives=$(rootpath //images:benchmark_alpine_archive) $(rootpath //images/benchmarks:nginx_archive) $(rootpaths //test/benchmarks/network:node_worker_images)",
+        "--paired-image-archives='$(rootpath //images:benchmark_alpine_archive) $(rootpath //images/benchmarks:nginx_archive) $(rootpaths //test/benchmarks/network:node_worker_images)'",
         "-test.run=^TestPairedBenchmark$$",
     ],
     data = [
