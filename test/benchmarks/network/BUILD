@@ -6,6 +6,13 @@ package(
     licenses = ["notice"],
 )
 
+_NODE_WORKER_IMAGES = [
+    "//images:benchmark_hey_read_checked_archive",
+    "//images:benchmark_node_completed_archive",
+    "//images:benchmark_util_archive",
+    "//images/basic:benchmark_redis_archive",
+]
+
 go_library(
     name = "network",
     testonly = 1,
@@ -107,21 +114,17 @@ benchmark_test(
     args = [
         "--owned-docker",
         "--worker-runsc=$(rootpath //test/benchmarks/harness:runsc_entrypoint)",
-        "--worker-image-archives=$(rootpath //images:benchmark_node_archive),$(rootpath //images:benchmark_hey_archive),$(rootpath //images:benchmark_util_archive),$(rootpath //images/basic:benchmark_redis_archive)",
+        "--worker-image-archives=" + ",".join(["$(rootpath %s)" % image for image in _NODE_WORKER_IMAGES]),
         "-test.run=^$$",
         "-test.bench=^BenchmarkNode$$",
         "-test.benchtime=25x",
     ],
     data = [
         "//:release",
-        "//images:benchmark_hey_archive",
-        "//images:benchmark_node_archive",
-        "//images:benchmark_util_archive",
         "//images:benchmarks/node/index.js",
         "//images:benchmarks/node/index_test.js",
-        "//images/basic:benchmark_redis_archive",
         "//test/benchmarks/harness:runsc_entrypoint",
-    ],
+    ] + _NODE_WORKER_IMAGES,
     embed = [":network"],
     exec_properties = {
         "test.init-dockerd": "false",
@@ -191,11 +194,6 @@ benchmark_test(
 
 filegroup(
     name = "node_worker_images",
-    srcs = [
-        "//images:benchmark_hey_read_checked_archive",
-        "//images:benchmark_node_completed_archive",
-        "//images:benchmark_util_archive",
-        "//images/basic:benchmark_redis_archive",
-    ],
+    srcs = _NODE_WORKER_IMAGES,
     visibility = ["//test/benchmarks/harness:__pkg__"],
 )
