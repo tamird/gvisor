@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T03:34:44.706450+00:00",
+    "updatedAt": "2026-11-20T04:01:00.017169+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -134955,10 +134955,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T03:34:44.706450+00:00",
-      "summary": "Audited ARM packet normal qualification passes14shared cases and1491aggregate cases across seven Go owners, with zero failures/skips; native ARM passes14cases. ARM race44667365701 fails before tests because an incompatible AMD64 GoStdlib tool executes locally on ARM; the shared native-C owner owns toolchain selection recovery. Native-C closure preflights now prove308C/Sysmsg actions remote, cacheable, pinned and no-local. Earlier09f blanket C++ no-remote configuration did not establish RBE C++ qualification. Hosted KVM helper44668365131 and full packet C++44668367800 remain under qualification; no full ARM matrix, KVM or performance claim. All existing source and issue decisions remain pending.",
-      "nextStep": "Shared native-C owner repairs the ARM race toolchain mechanism and audits current C++ closure; packet owner audits KVM helper/full C++ results before advancing remaining matrix gates. Preserve passing AMD/ARM normal products and existing source/worker-information holds; no new timed samples or proposal frames.",
-      "recheckCondition": "Actual ARM race recovery, audited KVM/C++ result or meaningful qualification change, substantive source feedback, or an existing publication/worker answer.",
+      "updatedAt": "2026-11-20T04:01:00.017169+00:00",
+      "summary": "Full AMD KVM44670183816 is audited14/14PASS. ARM normal passes14cases in each supported variant; this is not a full ARM race or KVM claim. The shared ARM race profile passes its cheap remote recovery; the full seven-owner suite remains pending. Header-corrected strict C++44670554234 reports native workflow SUCCESS but awaits actual owner audit, so the C++ gate remains open. Focused helper/mapping reviews found no implementation findings; non-root ownership-test caller evidence is still being checked. Existing performance/worker-isolation and source-publication holds remain unchanged.",
+      "nextStep": "Packet/compiler owners audit actual strict C++ output, full ARM race suite and non-root helper evidence before closing those gates. Preserve completed AMD KVM and normal-runtime products; root follows existing source decisions and worker information without new timed samples or decision frames.",
+      "recheckCondition": "Actual C++/ARM race/helper audit or substantive qualification change, source feedback, or an existing publication/worker answer.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135196,6 +135196,18 @@
         {
           "label": "Full packet C++ gate; audit pending",
           "url": "https://github.com/tamird/gvisor/actions/runs/44668367800"
+        },
+        {
+          "label": "AMD full KVM audited14/14PASS",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44670183816"
+        },
+        {
+          "label": "Header-corrected strict C++ workflow succeeded; actual audit pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44670554234"
+        },
+        {
+          "label": "ARM shared race-profile cheap recovery qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44669949587"
         }
       ],
       "followup": {
@@ -135217,12 +135229,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T03:34:44.706450+00:00",
-        "nextAction": "Shared native-C owner repairs the ARM race toolchain mechanism and audits current C++ closure; packet owner audits KVM helper/full C++ results before advancing remaining matrix gates. Preserve passing AMD/ARM normal products and existing source/worker-information holds; no new timed samples or proposal frames.",
-        "recheckCondition": "Actual ARM race recovery, audited KVM/C++ result or meaningful qualification change, substantive source feedback, or an existing publication/worker answer.",
+        "curatedAt": "2026-11-20T04:01:00.017169+00:00",
+        "nextAction": "Packet/compiler owners audit actual strict C++ output, full ARM race suite and non-root helper evidence before closing those gates. Preserve completed AMD KVM and normal-runtime products; root follows existing source decisions and worker information without new timed samples or decision frames.",
+        "recheckCondition": "Actual C++/ARM race/helper audit or substantive qualification change, source feedback, or an existing publication/worker answer.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Audited ARM packet normal qualification passes14shared cases and1491aggregate cases across seven Go owners, with zero failures/skips; native ARM passes14cases. ARM race44667365701 fails before tests because an incompatible AMD64 GoStdlib tool executes locally on ARM; the shared native-C owner owns toolchain selection recovery. Native-C closure preflights now prove308C/Sysmsg actions remote, cacheable, pinned and no-local. Earlier09f blanket C++ no-remote configuration did not establish RBE C++ qualification. Hosted KVM helper44668365131 and full packet C++44668367800 remain under qualification; no full ARM matrix, KVM or performance claim. All existing source and issue decisions remain pending.",
+        "disposition": "Full AMD KVM44670183816 is audited14/14PASS. ARM normal passes14cases in each supported variant; this is not a full ARM race or KVM claim. The shared ARM race profile passes its cheap remote recovery; the full seven-owner suite remains pending. Header-corrected strict C++44670554234 reports native workflow SUCCESS but awaits actual owner audit, so the C++ gate remains open. Focused helper/mapping reviews found no implementation findings; non-root ownership-test caller evidence is still being checked. Existing performance/worker-isolation and source-publication holds remain unchanged.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135631,5 +135643,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T03:34:44.706450+00:00"
+  "updatedAt": "2026-11-20T04:01:00.017169+00:00"
 }
