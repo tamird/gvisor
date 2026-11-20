@@ -1,4 +1,3 @@
-load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 load("//tools:defs.bzl", "bzl_library", "go_binary", "go_test")
 load(":defs.bzl", "PACKETIMPACT_EXEC_PROPERTIES")
 
@@ -58,15 +57,5 @@ go_test(
         "@com_github_vishvananda_netlink//:go_default_library",
         "@org_golang_x_sync//errgroup:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
-    ],
-)
-
-# Keep build actions remote while probing the submitting runner's kernel.
-native_test(
-    name = "worker_host_test",
-    src = ":worker_test",
-    tags = [
-        "manual",
-        "no-remote-exec",
     ],
 )
