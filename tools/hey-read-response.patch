@@ -1,6 +1,6 @@
-# Hey v0.1.5 ignores response-body read failures and counts advertised bytes.
-# Retain actual consumed bytes and the io.Copy error in request results.
-# Remove this patch when the pinned upstream release includes the correction.
+# Hey v0.1.5 ignores response-body read failures and discards remainder requests.
+# Retain actual consumed bytes, read errors, and the complete request count.
+# Remove this patch when the pinned upstream release includes the corrections.
 
 diff --git a/requester/requester.go b/requester/requester.go
 --- a/requester/requester.go
@@ -16,6 +16,26 @@ diff --git a/requester/requester.go b/requester/requester.go
  		resp.Body.Close()
  	}
  	t := now()
+@@ -253,12 +252,15 @@
+ 	}
+ 	client := &http.Client{Transport: tr, Timeout: time.Duration(b.Timeout) * time.Second}
+ 
+-	// Ignore the case where b.N % b.C != 0.
+ 	for i := 0; i < b.C; i++ {
+-		go func() {
+-			b.runWorker(client, b.N/b.C)
++		n := b.N / b.C
++		if i < b.N%b.C {
++			n++
++		}
++		go func(n int) {
++			b.runWorker(client, n)
+ 			wg.Done()
+-		}()
++		}(n)
+ 	}
+ 	wg.Wait()
+ }
 diff --git a/requester/requester_test.go b/requester/requester_test.go
 --- a/requester/requester_test.go
 +++ b/requester/requester_test.go
@@ -28,7 +48,47 @@ diff --git a/requester/requester_test.go b/requester/requester_test.go
  	"io"
  	"net/http"
  	"net/http/httptest"
-@@ -132,3 +134,50 @@
+@@ -26,22 +28,23 @@
+ )
+ 
+ func TestN(t *testing.T) {
+-	var count int64
+-	handler := func(w http.ResponseWriter, r *http.Request) {
+-		atomic.AddInt64(&count, int64(1))
+-	}
+-	server := httptest.NewServer(http.HandlerFunc(handler))
+-	defer server.Close()
+-
+-	req, _ := http.NewRequest("GET", server.URL, nil)
+-	w := &Work{
+-		Request: req,
+-		N:       20,
+-		C:       2,
+-	}
+-	w.Run()
+-	if count != 20 {
+-		t.Errorf("Expected to send 20 requests, found %v", count)
++	for _, tc := range []struct{ n, c int }{{20, 2}, {25, 10}} {
++		t.Run(fmt.Sprintf("N%d/C%d", tc.n, tc.c), func(t *testing.T) {
++			var count atomic.Int64
++			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++				count.Add(1)
++			}))
++			defer server.Close()
++			req, err := http.NewRequest(http.MethodGet, server.URL, nil)
++			if err != nil {
++				t.Fatal(err)
++			}
++			w := &Work{Request: req, N: tc.n, C: tc.c}
++			w.Run()
++			if got := count.Load(); got != int64(tc.n) {
++				t.Errorf("sent %d requests, want %d", got, tc.n)
++			}
++		})
+ 	}
+ }
+ 
+@@ -132,3 +135,50 @@
  		t.Errorf("Expected to work 10 times, found %v", count)
  	}
  }
