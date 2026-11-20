@@ -369,5 +369,3 @@ exports_files(
     ],
     visibility = ["//tools:__pkg__"],
 )
-
-exports_files(["bcc_audit.patch"])

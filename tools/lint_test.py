@@ -44,8 +44,6 @@ class LintTest(unittest.TestCase):
     self.execroot = self.root / "execroot"
     self.bazel_log = self.root / "bazel.log"
     self.env = dict(os.environ, LINT_CACHE_DIR=str(self.cache))
-    self.env.pop("QUALIFICATION_BAZEL", None)
-    self.env.pop("QUALIFICATION_BAZEL_OPTIONS_JSON", None)
     self.env["PATH"] = str(self.bin) + os.pathsep + self.env["PATH"]
     self.cache.mkdir()
     self.bin.mkdir()
@@ -133,39 +131,6 @@ class LintTest(unittest.TestCase):
             for command in ("build", "info", "cquery")
         ],
     )
-
-  def test_qualification_bazel_options(self) -> None:
-    qualified = self.bin / "qualified bazel"
-    self.tool(
-        qualified,
-        "python3 -c 'import json, sys; "
-        'f = open(sys.argv[1], "a"); '
-        'f.write(json.dumps(sys.argv[2:]) + "\\n")' + "' "
-        f'"{self.bazel_log}" "$@"\n'
-        'case "$1" in\n'
-        f'  info) echo "{self.execroot}" ;;\n'
-        '  cquery) echo "goimports goimports" ;;\n'
-        "esac",
-    )
-    options = ["--credential_helper=/physical/helper with spaces", "--keep_going"]
-    self.env["QUALIFICATION_BAZEL"] = str(qualified)
-    self.env["QUALIFICATION_BAZEL_OPTIONS_JSON"] = json.dumps(options)
-    result = self.lint("goimports")
-    self.assertEqual(result.returncode, 0, result.stderr)
-    commands = [json.loads(line) for line in self.bazel_log.read_text().splitlines()]
-    self.assertEqual(
-        [command[:3] for command in commands],
-        [[command, *options] for command in ("build", "info", "cquery")],
-    )
-
-  def test_invalid_qualification_bazel_options(self) -> None:
-    self.env["QUALIFICATION_BAZEL"] = str(self.bin / "bazel")
-    for options in ({}, [1], ["nul\0argument"]):
-      with self.subTest(options=options):
-        self.env["QUALIFICATION_BAZEL_OPTIONS_JSON"] = json.dumps(options)
-        result = self.lint("goimports")
-        self.assertEqual(result.returncode, 1, result.stderr)
-        self.assertFalse(self.bazel_log.exists(), result.stdout + result.stderr)
 
   def test_clang_tidy_process_failure(self) -> None:
     tool = self.bin / "clang-tidy"

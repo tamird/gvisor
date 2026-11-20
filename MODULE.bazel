@@ -81,20 +81,20 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 _COMPILE_COMMANDS_BUILD = 'licenses(["notice"])\nexports_files(["usr/bin/bazel-compile-commands"])\n'
 
 # Jammy packages support the Ubuntu 22.04 development container.
+# CI-only approved-source product; public adoption waits for supplier release.
 http_archive(
     name = "bazel_compile_commands_linux_amd64",
     build_file_content = _COMPILE_COMMANDS_BUILD,
-    patch_cmds = ["tar -xf data.tar"],
-    sha256 = "e57cc545ea9ab6dfc494eb2c5913210099e8e31e947517fd0545844d06949b47",
-    urls = ["https://github.com/kiron1/bazel-compile-commands/releases/download/v0.21.0/bazel-compile-commands_0.21.0-jammy_amd64.deb"],
+    sha256 = "07fa880b5f9ac30f44df32b4fb2d6d9ce1e20bb25ab3ad2b3b37a9b5d532b908",
+    urls = ["https://raw.githubusercontent.com/tamird/bazel-compile-commands/6e28cff32e9ad15f9a039693f50e04ddf5457658/ci-products/324cf87/linux-amd64.zip"],
 )
 
+# CI-only approved-source product; public adoption waits for supplier release.
 http_archive(
     name = "bazel_compile_commands_linux_arm64",
     build_file_content = _COMPILE_COMMANDS_BUILD,
-    patch_cmds = ["tar -xf data.tar"],
-    sha256 = "ea006e5ec7a906994bdb0580c779a21a345d864541d58021541cb6c65623c642",
-    urls = ["https://github.com/kiron1/bazel-compile-commands/releases/download/v0.21.0/bazel-compile-commands_0.21.0-jammy_arm64.deb"],
+    sha256 = "64a45b101f95b4274751ab6fea7a7550ddb700f06dbae1f6eb4cc607d777c795",
+    urls = ["https://raw.githubusercontent.com/tamird/bazel-compile-commands/6e28cff32e9ad15f9a039693f50e04ddf5457658/ci-products/324cf87/linux-arm64.zip"],
 )
 
 http_archive(
@@ -1033,15 +1033,4 @@ go_deps.gazelle_override(
         "gazelle:proto disable_global",
     ],
     path = "k8s.io/apimachinery",
-)
-
-# CI-only supplier regression qualification.
-bazel_dep(name = "bazel-compile-commands", version = "0.17.2", repo_name = "bcc_audit")
-archive_override(
-    module_name = "bazel-compile-commands",
-    urls = ["https://github.com/kiron1/bazel-compile-commands/archive/3bda0c2bc8b963c691677ce62737c85f4f6ea731.tar.gz"],
-    integrity = "sha256-avbx+j0Y+m9ctlNi8Vz8gUseWbnLkP9InwmIFMwHyNI=",
-    strip_prefix = "bazel-compile-commands-3bda0c2bc8b963c691677ce62737c85f4f6ea731",
-    patches = ["//:bcc_audit.patch"],
-    patch_strip = 1,
 )
