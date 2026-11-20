@@ -55,6 +55,27 @@ platform(
     visibility = ["//visibility:public"],
 )
 
+# Execution properties select native workers without changing target toolchains.
+platform(
+    name = "remote_linux_amd64",
+    exec_properties = {
+        "Arch": "amd64",
+        "OSFamily": "linux",
+    },
+    parents = [":linux_amd64"],
+    visibility = ["//visibility:public"],
+)
+
+platform(
+    name = "remote_linux_arm64",
+    exec_properties = {
+        "Arch": "arm64",
+        "OSFamily": "linux",
+    },
+    parents = [":linux_arm64"],
+    visibility = ["//visibility:public"],
+)
+
 config_setting(
     name = "amd64",
     constraint_values = [
