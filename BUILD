@@ -265,6 +265,7 @@ toolchain(
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
     ],
+    target_settings = ["//tools/bazeldefs:rbe_native_c_disabled"],
     toolchain = "@crosstool//:cc-compiler-k8",
     toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
 )
@@ -275,6 +276,41 @@ toolchain(
         "@platforms//os:linux",
         "@platforms//cpu:aarch64",
     ],
+    target_settings = ["//tools/bazeldefs:rbe_native_c_disabled"],
+    toolchain = "@crosstool//:cc-compiler-aarch64",
+    toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+)
+
+# Image-provided C tools execute on their native CPU under RBE. Keep the
+# unconstrained cross toolchains available for ordinary host builds.
+toolchain(
+    name = "cc_toolchain_k8_rbe",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+        "//tools/bazeldefs:rbe_ubuntu24_c",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    target_settings = ["//tools/bazeldefs:rbe_native_c_enabled"],
+    toolchain = "@crosstool//:cc-compiler-k8",
+    toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+)
+
+toolchain(
+    name = "cc_toolchain_aarch64_rbe",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+        "//tools/bazeldefs:rbe_ubuntu24_c",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+    ],
+    target_settings = ["//tools/bazeldefs:rbe_native_c_enabled"],
     toolchain = "@crosstool//:cc-compiler-aarch64",
     toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
 )
