@@ -1,0 +1,916 @@
+goos: linux
+goarch: amd64
+cpu: Intel(R) Xeon(R) 6975P-C
+
+BenchmarkDecoding/adopt_captured/gob 4842 128776 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4838 129255 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4794 128415 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4785 129075 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4804 128779 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4876 128225 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4896 128106 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4890 128399 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4754 129366 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4876 128911 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4849 128479 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4644 128537 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4820 128463 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4854 128198 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4900 128489 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4748 128867 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4639 129284 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4780 129669 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4848 128583 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4885 128544 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4852 129035 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4832 128873 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4814 129481 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/gob 4916 129070 ns/op 63768 B/op 1241 allocs/op
+BenchmarkDecoding/adopt_captured/state 7785 76928 ns/op 37539 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 8178 76928 ns/op 37537 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 8120 76968 ns/op 37538 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 7654 76962 ns/op 37539 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 7875 76586 ns/op 37538 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 8184 76596 ns/op 37537 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 8102 76541 ns/op 37538 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 8079 76779 ns/op 37538 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 7953 77569 ns/op 37538 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 7920 77842 ns/op 37538 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 8168 77161 ns/op 37538 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 7303 77775 ns/op 37540 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 7434 77091 ns/op 37540 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 7999 76941 ns/op 37538 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 7974 76727 ns/op 37538 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 7994 77135 ns/op 37538 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 8062 77606 ns/op 37538 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 7462 77581 ns/op 37540 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 8143 77676 ns/op 37538 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 7966 77648 ns/op 37538 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 7833 77527 ns/op 37539 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 7921 77822 ns/op 37538 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 7639 77970 ns/op 37539 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/state 7795 77683 ns/op 37539 B/op 8 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1570 380482 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1552 378247 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1587 381192 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1564 377731 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1594 378111 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1593 377616 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1598 375705 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1584 376145 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1600 376198 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1575 375374 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1605 375752 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1611 376108 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1581 376944 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1588 376649 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1578 376411 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1591 376558 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1598 375852 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1594 376351 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1600 377113 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1593 378067 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1561 376775 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1580 376427 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1590 376547 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_captured/wire 1586 375521 ns/op 260664 B/op 5711 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4831 128674 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4729 128557 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4869 128447 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4809 128799 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4706 128636 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4741 128514 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4690 128785 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4917 128788 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4762 129819 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4794 128671 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4868 128567 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4785 129544 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4819 128332 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4809 129052 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4843 128364 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4857 127986 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4916 128233 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4922 128423 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4896 128333 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4816 128063 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4844 128301 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4874 128341 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4900 127975 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/gob 4774 128573 ns/op 63704 B/op 1239 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 7492 77156 ns/op 37508 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 8055 77251 ns/op 37506 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 8163 77257 ns/op 37506 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 7954 77095 ns/op 37506 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 7434 77260 ns/op 37508 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 8136 76173 ns/op 37506 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 7950 76802 ns/op 37506 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 7663 76645 ns/op 37507 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 8095 76238 ns/op 37506 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 7358 76698 ns/op 37508 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 8191 76478 ns/op 37505 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 7824 77083 ns/op 37507 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 7402 76520 ns/op 37508 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 7911 77212 ns/op 37506 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 8052 77030 ns/op 37506 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 8013 76887 ns/op 37506 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 8035 77172 ns/op 37506 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 8020 76845 ns/op 37506 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 8044 76980 ns/op 37506 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 8088 76902 ns/op 37506 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 8007 76885 ns/op 37506 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 7984 77022 ns/op 37506 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 8106 76667 ns/op 37506 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/state 7632 77315 ns/op 37507 B/op 7 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1591 369881 ns/op 250873 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1608 370229 ns/op 250872 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1603 372615 ns/op 250873 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1593 372607 ns/op 250872 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1608 370159 ns/op 250873 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1570 373720 ns/op 250873 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1591 370348 ns/op 250873 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1611 369965 ns/op 250873 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1597 369839 ns/op 250873 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1591 370110 ns/op 250873 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1612 371858 ns/op 250873 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1608 370374 ns/op 250873 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1604 369806 ns/op 250873 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1602 370213 ns/op 250873 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1604 369633 ns/op 250873 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1593 370495 ns/op 250872 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1570 371436 ns/op 250872 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1598 370590 ns/op 250873 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1587 371376 ns/op 250873 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1576 372324 ns/op 250873 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1588 373033 ns/op 250872 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1593 371182 ns/op 250873 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1592 371348 ns/op 250873 B/op 5703 allocs/op
+BenchmarkDecoding/adopt_uncaptured/wire 1557 373356 ns/op 250873 B/op 5703 allocs/op
+BenchmarkDecoding/map/gob 4144 138092 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4284 138114 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4310 138571 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4336 137811 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4536 138513 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4216 138917 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4310 138163 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4382 139548 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4270 138086 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4273 138352 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4545 137991 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4446 138098 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4455 138635 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4297 137927 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4122 138866 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4201 138310 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4324 137964 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4262 137759 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4465 137675 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4516 137500 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4268 137728 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4286 138192 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4300 137976 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/gob 4291 137620 ns/op 56920 B/op 1202 allocs/op
+BenchmarkDecoding/map/state 8040 83397 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 7993 83776 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 7989 83839 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 8002 83403 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 8090 83315 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 8006 84027 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 8086 83186 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 8080 83435 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 7994 83523 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 8114 83012 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 8102 83237 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 7810 83875 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 8040 83760 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 8078 84138 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 7929 83644 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 8047 83935 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 8044 83195 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 8023 83307 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 8028 83585 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 8052 83427 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 8038 83630 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 8008 83729 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 8071 83396 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/state 7946 83365 ns/op 40113 B/op 11 allocs/op
+BenchmarkDecoding/map/wire 2216 264343 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2277 263207 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2215 263307 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2283 263683 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2295 263413 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2257 263736 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2275 263392 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2230 263444 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2274 263040 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2227 263774 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2203 264514 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2235 264880 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2275 263953 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2277 265211 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2284 263659 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2289 265129 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2287 264802 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2215 264649 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2244 267200 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2244 267229 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2253 264879 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2281 265234 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2271 263695 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/map/wire 2282 265706 ns/op 227712 B/op 1855 allocs/op
+BenchmarkDecoding/ptr/gob 7300 87446 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 6969 87492 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 7322 87440 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 6970 87259 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 7272 87465 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 6727 87490 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 6733 87896 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 7232 88226 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 7011 88382 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 6882 88710 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 6972 87887 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 6922 88036 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 6913 87990 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 6960 87861 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 6948 88337 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 6896 88381 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 6919 88103 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 7018 88062 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 7246 88001 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 6912 88137 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 6537 88249 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 7014 87935 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 6654 88809 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/gob 7278 87774 ns/op 50296 B/op 2204 allocs/op
+BenchmarkDecoding/ptr/state 6213 96207 ns/op 14408 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5421 95834 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5403 95855 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5448 95566 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5505 95582 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5425 95957 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5510 95760 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5437 96475 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5361 95759 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5524 96138 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5491 95369 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5552 96715 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5460 96065 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5377 95931 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5469 95643 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5414 96442 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5418 96011 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5458 96157 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5404 95891 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5440 96152 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5486 95355 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5410 95870 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5514 95779 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/state 5379 95777 ns/op 14360 B/op 1026 allocs/op
+BenchmarkDecoding/ptr/wire 1047 538764 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1104 540997 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1108 537097 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1116 537513 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1108 536606 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1113 535091 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1107 535509 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1114 535784 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1111 536758 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1098 538997 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1110 539349 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1118 538769 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1104 534820 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1111 538220 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1112 533433 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1099 538717 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1107 535066 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1118 539152 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1105 540664 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1112 534887 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1119 533274 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1101 534784 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1114 534795 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/ptr/wire 1105 535460 ns/op 315416 B/op 5920 allocs/op
+BenchmarkDecoding/slice/gob 9110 67552 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 9088 67571 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 8954 67881 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 9039 67581 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 8877 67468 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 9030 67442 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 8929 67705 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 8982 67413 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 8932 67035 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 8812 67716 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 9033 67567 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 9045 67585 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 8854 67756 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 8918 67756 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 8857 67391 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 9121 67695 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 8896 67388 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 9067 68149 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 8862 67965 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 8840 67580 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 8972 67224 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 9082 67577 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 8758 67654 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/gob 8793 68138 ns/op 26264 B/op 1192 allocs/op
+BenchmarkDecoding/slice/state 16333 36705 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16233 36740 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16257 36877 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16400 36606 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16304 36777 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16210 36776 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16288 36725 ns/op 10691 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16476 36581 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16447 36632 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16414 36575 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16357 36579 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16280 36634 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16189 36950 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16472 36593 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16459 36486 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16209 36896 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16326 36538 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16160 37003 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16452 36609 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16134 36937 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16292 36898 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16507 36448 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16422 36547 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/state 16284 36633 ns/op 10680 B/op 5 allocs/op
+BenchmarkDecoding/slice/wire 5247 118245 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 5266 118346 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 4986 118280 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 5226 118250 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 5208 118321 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 5272 117871 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 5223 119000 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 5190 118218 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 5314 118875 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 5137 117879 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 5304 118157 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 4915 118103 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 5259 117903 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 5121 118381 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 4918 118416 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 4954 117987 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 4656 119060 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 5252 118683 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 5269 118743 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 5091 119180 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 5088 118213 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 5186 117790 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 4918 118219 ns/op 138144 B/op 1063 allocs/op
+BenchmarkDecoding/slice/wire 4964 118406 ns/op 138144 B/op 1063 allocs/op
+BenchmarkEncoding/adopt_captured/gob 6168 104555 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 6118 105003 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 6081 105048 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 5941 105907 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 6108 106241 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 6133 105549 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 6254 104912 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 6154 105561 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 6158 105046 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 5905 105319 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 5810 105698 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 5919 105288 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 5940 106028 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 6165 105601 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 5824 105397 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 6154 104812 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 6164 106427 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 5954 105962 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 6200 104740 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 6002 106071 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 6223 104968 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 6139 104620 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 6398 105620 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/gob 6123 105580 ns/op 47872 B/op 32 allocs/op
+BenchmarkEncoding/adopt_captured/state 355 1.69078e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 356 1.688609e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 355 1.689144e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 354 1.685077e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 360 1.68691e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 354 1.696767e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 355 1.686838e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 356 1.690912e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 355 1.68694e+06 ns/op 218193 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 352 1.692402e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 356 1.706744e+06 ns/op 218193 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 354 1.697584e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 350 1.696325e+06 ns/op 218193 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 357 1.695773e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 357 1.677101e+06 ns/op 218193 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 356 1.705917e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 352 1.691092e+06 ns/op 218193 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 345 1.699742e+06 ns/op 218193 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 355 1.704213e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 354 1.690498e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 356 1.69884e+06 ns/op 218193 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 360 1.690562e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 355 1.694371e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/state 354 1.688105e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_captured/wire 601 1.004894e+06 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 597 994568 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 603 994621 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 601 990145 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 606 991736 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 607 991215 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 607 994054 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 608 991808 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 604 991613 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 613 998084 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 608 995103 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 610 998512 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 610 996399 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 600 992607 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 603 994064 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 606 988017 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 603 990961 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 594 1.00476e+06 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 603 1.001181e+06 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 597 996388 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 608 990300 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 613 997229 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 608 990929 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_captured/wire 604 989729 ns/op 728073 B/op 7913 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 5952 104523 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 6032 106798 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 6084 104935 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 5947 104747 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 6057 104897 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 6158 104664 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 6188 104721 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 6139 105074 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 6061 104562 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 6037 104484 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 6004 104615 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 6129 105050 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 6002 104865 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 5983 105039 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 6205 105748 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 6054 104489 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 6220 105271 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 6163 104495 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 6049 104995 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 6135 105307 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 6259 105257 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 6153 105314 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 6009 105539 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/gob 5721 105612 ns/op 47808 B/op 31 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 397 1.533084e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 397 1.511597e+06 ns/op 218193 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 393 1.520844e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 396 1.523431e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 397 1.523507e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 399 1.520819e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 391 1.526843e+06 ns/op 218193 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 394 1.522533e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 393 1.526538e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 399 1.521016e+06 ns/op 218191 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 397 1.527647e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 394 1.509396e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 379 1.534478e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 397 1.506314e+06 ns/op 218193 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 400 1.502276e+06 ns/op 218194 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 396 1.526089e+06 ns/op 218193 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 398 1.508154e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 393 1.516143e+06 ns/op 218191 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 396 1.513812e+06 ns/op 218193 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 393 1.51923e+06 ns/op 218192 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 399 1.502601e+06 ns/op 218193 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 394 1.501814e+06 ns/op 218193 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 396 1.510598e+06 ns/op 218191 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/state 398 1.504739e+06 ns/op 218193 B/op 39 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 627 958743 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 633 943493 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 637 943975 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 610 948592 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 638 945633 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 637 941008 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 619 961246 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 637 940809 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 626 957724 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 628 945461 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 626 953056 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 637 952460 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 625 951702 ns/op 727825 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 637 947170 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 638 944255 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 630 958384 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 644 944004 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 643 946003 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 637 949591 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 616 962859 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 636 945621 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 638 940350 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 621 963683 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/adopt_uncaptured/wire 636 949049 ns/op 727824 B/op 7906 allocs/op
+BenchmarkEncoding/map/gob 6560 89970 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6664 84402 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6679 84450 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6640 84248 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6651 84320 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6534 90513 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6595 89497 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6691 84073 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6690 84266 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6710 85050 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6675 84047 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6621 89788 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6604 85960 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6687 84552 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6610 88288 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6688 84552 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6716 84159 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6674 89938 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6601 84251 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6670 89429 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6662 84212 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6595 89824 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6585 84568 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/gob 6636 89425 ns/op 21760 B/op 1048 allocs/op
+BenchmarkEncoding/map/state 15147 39811 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15066 40690 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15080 40583 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15164 39787 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15051 40580 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15188 39494 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15194 39501 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15150 39572 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15169 39542 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15250 39315 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15188 39515 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15219 39418 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15180 39508 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15177 39507 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15188 39470 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15204 39709 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15183 39528 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15231 39389 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15158 39571 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15156 39559 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15160 39608 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15174 39578 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15186 39511 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/state 15110 39679 ns/op 128 B/op 2 allocs/op
+BenchmarkEncoding/map/wire 4060 142781 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4225 142714 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4243 142398 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4083 141586 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4066 143525 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4190 142955 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4165 142713 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4202 142261 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4209 142697 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4238 143267 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4239 142589 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4184 143025 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4035 143339 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4203 142903 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4212 143205 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4249 142071 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4212 141502 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4257 141623 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4212 142588 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4281 142293 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4225 142349 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4218 142335 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4045 144166 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/map/wire 4243 142823 ns/op 124624 B/op 1834 allocs/op
+BenchmarkEncoding/ptr/gob 9424 67560 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 9055 67864 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 9280 67756 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 8662 68115 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 8574 67985 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 9206 68208 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 8703 68296 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 8988 68159 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 9380 67864 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 9262 67900 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 9313 68315 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 9249 68297 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 8829 68217 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 9201 68375 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 8530 68427 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 9480 68123 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 9194 68242 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 9176 68062 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 9284 68275 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 9151 68122 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 9075 68300 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 8240 68417 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 8275 68246 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/gob 9441 68024 ns/op 74752 B/op 1043 allocs/op
+BenchmarkEncoding/ptr/state 3794 167249 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3780 167632 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3789 167082 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3748 167789 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3739 171630 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3768 167924 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3775 167924 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3775 168883 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3826 167373 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3717 171880 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3786 167969 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3777 168064 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3806 173178 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3691 168868 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3717 172723 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3757 172053 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3804 169320 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3783 168845 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3730 167147 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3782 167727 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3799 167197 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3774 167704 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3782 167644 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/state 3750 168586 ns/op 8224 B/op 2 allocs/op
+BenchmarkEncoding/ptr/wire 732 821037 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 734 825978 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 722 821878 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 728 823919 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 723 821917 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 724 827250 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 745 823899 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 726 826781 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 728 829188 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 724 824644 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 720 829730 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 723 828597 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 726 824820 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 724 829169 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 734 821420 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 729 826849 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 752 798830 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 730 822868 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 733 823459 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 718 829827 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 693 829281 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 752 807577 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 718 828967 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/ptr/wire 721 836239 ns/op 506688 B/op 5041 allocs/op
+BenchmarkEncoding/slice/gob 17314 34767 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17220 34986 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17306 34856 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17252 34878 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17283 34826 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17274 34877 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17146 35136 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17202 35033 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17146 35027 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17046 35006 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17208 34994 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17184 34796 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17325 34829 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17262 34958 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17266 34924 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17200 34789 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17274 34907 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17324 34832 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17326 34894 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17264 34859 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17206 34689 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17252 34939 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17282 34843 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/gob 17222 34929 ns/op 4352 B/op 21 allocs/op
+BenchmarkEncoding/slice/state 62611 9675 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 62349 9803 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 62446 9778 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 61772 9833 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 62346 9806 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 62385 9716 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 62731 9676 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 62458 9710 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 62281 9722 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 62389 9729 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 62323 9751 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 62108 9774 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 62170 9782 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 62198 9759 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 62439 9747 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 62680 9697 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 62068 9758 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 61822 9727 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 62725 9775 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 62312 9841 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 62322 9790 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 61689 9832 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 58455 9874 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/state 62281 9782 ns/op 160 B/op 3 allocs/op
+BenchmarkEncoding/slice/wire 7490 83874 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7491 82505 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7429 83462 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7539 81703 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7290 83307 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7584 81700 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7477 82926 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7558 82226 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7347 82618 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7134 81977 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7405 83082 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7578 82712 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7478 82415 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7394 83365 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7518 82439 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7122 83533 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7462 82253 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7068 83259 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 6942 83468 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7431 83331 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7534 82429 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 6177 83264 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7537 82147 ns/op 100040 B/op 1065 allocs/op
+BenchmarkEncoding/slice/wire 7383 82392 ns/op 100040 B/op 1065 allocs/op
+BenchmarkGraphLoad 5 1.19842734e+08 ns/op 6.1720164e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 4 1.29905162e+08 ns/op 6.577018e+07 B/op 444499 allocs/op
+BenchmarkGraphLoad 5 1.27010176e+08 ns/op 6.1720164e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.09539503e+08 ns/op 6.1720161e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.16126662e+08 ns/op 6.1720171e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.12218533e+08 ns/op 6.1720137e+07 B/op 444496 allocs/op
+BenchmarkGraphLoad 5 1.15630709e+08 ns/op 6.1720168e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.09711937e+08 ns/op 6.1720198e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.10700814e+08 ns/op 6.1720198e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.08796273e+08 ns/op 6.1720192e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.13930093e+08 ns/op 6.1720171e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.18737299e+08 ns/op 6.1720188e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.11392877e+08 ns/op 6.1720171e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.1919476e+08 ns/op 6.1720192e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.13104486e+08 ns/op 6.1720168e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.21945601e+08 ns/op 6.1720195e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.1534687e+08 ns/op 6.1720195e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.17596632e+08 ns/op 6.1720198e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 4 1.25999207e+08 ns/op 6.5770176e+07 B/op 444499 allocs/op
+BenchmarkGraphLoad 5 1.10853404e+08 ns/op 6.1720195e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.28881204e+08 ns/op 6.1720164e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.12960099e+08 ns/op 6.1720195e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.19102658e+08 ns/op 6.1720164e+07 B/op 444497 allocs/op
+BenchmarkGraphLoad 5 1.28298111e+08 ns/op 6.1720164e+07 B/op 444497 allocs/op
+BenchmarkGraphSave 3 1.7479344e+08 ns/op 9.454794e+06 encoded-B 1.04548189e+08 B/op 46507 allocs/op
+BenchmarkGraphSave 3 1.85425306e+08 ns/op 9.454794e+06 encoded-B 1.04548194e+08 B/op 46507 allocs/op
+BenchmarkGraphSave 3 2.0771935e+08 ns/op 9.454794e+06 encoded-B 1.04548194e+08 B/op 46507 allocs/op
+BenchmarkGraphSave 3 1.92549207e+08 ns/op 9.454794e+06 encoded-B 1.04548149e+08 B/op 46506 allocs/op
+BenchmarkGraphSave 3 1.80340853e+08 ns/op 9.454794e+06 encoded-B 1.04548194e+08 B/op 46507 allocs/op
+BenchmarkGraphSave 3 1.86741812e+08 ns/op 9.454794e+06 encoded-B 1.04535885e+08 B/op 46505 allocs/op
+BenchmarkGraphSave 3 1.85946063e+08 ns/op 9.454794e+06 encoded-B 1.04548194e+08 B/op 46507 allocs/op
+BenchmarkGraphSave 3 1.8950628e+08 ns/op 9.454794e+06 encoded-B 1.04548194e+08 B/op 46507 allocs/op
+BenchmarkGraphSave 3 2.04452265e+08 ns/op 9.454794e+06 encoded-B 1.04548189e+08 B/op 46507 allocs/op
+BenchmarkGraphSave 3 2.01869783e+08 ns/op 9.454794e+06 encoded-B 1.04548189e+08 B/op 46507 allocs/op
+BenchmarkGraphSave 3 1.7932232e+08 ns/op 9.454794e+06 encoded-B 1.04548144e+08 B/op 46506 allocs/op
+BenchmarkGraphSave 3 1.73147045e+08 ns/op 9.454794e+06 encoded-B 1.04548194e+08 B/op 46507 allocs/op
+BenchmarkGraphSave 3 1.76961276e+08 ns/op 9.454794e+06 encoded-B 1.04548149e+08 B/op 46506 allocs/op
+BenchmarkGraphSave 3 1.81701678e+08 ns/op 9.454794e+06 encoded-B 1.04548149e+08 B/op 46506 allocs/op
+BenchmarkGraphSave 3 2.08671344e+08 ns/op 9.454794e+06 encoded-B 1.04548194e+08 B/op 46507 allocs/op
+BenchmarkGraphSave 3 2.00645918e+08 ns/op 9.454794e+06 encoded-B 1.04548194e+08 B/op 46507 allocs/op
+BenchmarkGraphSave 3 1.9319534e+08 ns/op 9.454794e+06 encoded-B 1.04535885e+08 B/op 46505 allocs/op
+BenchmarkGraphSave 3 2.14200729e+08 ns/op 9.454794e+06 encoded-B 1.04548194e+08 B/op 46507 allocs/op
+BenchmarkGraphSave 3 1.88007775e+08 ns/op 9.454794e+06 encoded-B 1.04523525e+08 B/op 46503 allocs/op
+BenchmarkGraphSave 3 2.00910826e+08 ns/op 9.454794e+06 encoded-B 1.04548194e+08 B/op 46507 allocs/op
+BenchmarkGraphSave 3 1.85273964e+08 ns/op 9.454794e+06 encoded-B 1.04548194e+08 B/op 46507 allocs/op
+BenchmarkGraphSave 3 2.03137702e+08 ns/op 9.454794e+06 encoded-B 1.04548189e+08 B/op 46507 allocs/op
+BenchmarkGraphSave 3 1.92262945e+08 ns/op 9.454794e+06 encoded-B 1.045482e+08 B/op 46507 allocs/op
+BenchmarkGraphSave 3 1.78170055e+08 ns/op 9.454794e+06 encoded-B 1.04548194e+08 B/op 46507 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31813 18898 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31702 18957 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31696 18952 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31732 18890 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31856 18888 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31767 18894 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31840 18898 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 29764 19369 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31688 19134 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31664 18976 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31609 19266 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31627 19342 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31701 19005 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31611 19016 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31540 19013 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31776 18938 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31750 18953 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 30980 19134 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31749 18918 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31665 19045 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31785 19077 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31527 19071 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31377 19114 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/1 31612 19124 ns/op 1 packets/op 1499 wire-B/op 14867 B/op 293 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1720 349067 ns/op 32 packets/op 12690 wire-B/op 214344 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1740 346038 ns/op 32 packets/op 12690 wire-B/op 214344 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1726 348951 ns/op 32 packets/op 12690 wire-B/op 214346 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1732 345859 ns/op 32 packets/op 12690 wire-B/op 214344 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1729 347306 ns/op 32 packets/op 12690 wire-B/op 214343 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1720 347048 ns/op 32 packets/op 12690 wire-B/op 214344 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1729 346627 ns/op 32 packets/op 12690 wire-B/op 214343 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1726 347643 ns/op 32 packets/op 12690 wire-B/op 214344 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1725 346110 ns/op 32 packets/op 12690 wire-B/op 214343 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1722 346420 ns/op 32 packets/op 12690 wire-B/op 214343 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1729 352209 ns/op 32 packets/op 12690 wire-B/op 214346 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1705 346984 ns/op 32 packets/op 12690 wire-B/op 214343 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1723 346789 ns/op 32 packets/op 12690 wire-B/op 214343 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1711 345688 ns/op 32 packets/op 12690 wire-B/op 214344 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1718 346694 ns/op 32 packets/op 12690 wire-B/op 214342 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1741 347390 ns/op 32 packets/op 12690 wire-B/op 214345 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1514 349825 ns/op 32 packets/op 12690 wire-B/op 214342 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1726 347270 ns/op 32 packets/op 12690 wire-B/op 214345 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1707 347932 ns/op 32 packets/op 12690 wire-B/op 214347 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1716 351862 ns/op 32 packets/op 12690 wire-B/op 214345 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1695 347917 ns/op 32 packets/op 12690 wire-B/op 214344 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1712 352151 ns/op 32 packets/op 12690 wire-B/op 214347 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1717 349790 ns/op 32 packets/op 12690 wire-B/op 214343 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/32 1729 346542 ns/op 32 packets/op 12690 wire-B/op 214343 B/op 3524 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6386 93589 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6440 93661 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6237 93834 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6267 93777 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6314 93861 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6298 93615 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6430 93472 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6434 93446 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6398 93483 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6325 93622 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6402 93568 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6417 93617 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6393 93540 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6294 93626 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6415 93520 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6369 93719 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6391 93468 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6253 93588 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6424 93671 ns/op 8 packets/op 4026 wire-B/op 59869 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6507 93522 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6357 93522 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6422 93493 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6427 93516 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueLoad/8 6296 93629 ns/op 8 packets/op 4026 wire-B/op 59868 B/op 1024 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32748 18343 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32857 18348 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32778 18412 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32552 18485 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32731 18390 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32736 18452 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32766 18514 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32676 18520 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32583 18436 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32586 18508 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32620 18334 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32690 18545 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32696 18377 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 31947 18524 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32637 18387 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32685 18373 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32515 18427 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32594 18377 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32467 18380 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32785 18377 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32762 18383 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32647 18406 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32653 18368 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/1 32630 18419 ns/op 1 packets/op 1499 wire-B/op 16080 B/op 191 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1485 399780 ns/op 32 packets/op 12690 wire-B/op 271737 B/op 3349 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1482 401444 ns/op 32 packets/op 12690 wire-B/op 271581 B/op 3348 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1495 403704 ns/op 32 packets/op 12690 wire-B/op 271606 B/op 3348 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1482 403140 ns/op 32 packets/op 12690 wire-B/op 271598 B/op 3348 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1497 403714 ns/op 32 packets/op 12690 wire-B/op 271710 B/op 3349 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1482 401150 ns/op 32 packets/op 12690 wire-B/op 271715 B/op 3349 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1482 403893 ns/op 32 packets/op 12690 wire-B/op 271601 B/op 3348 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1488 401494 ns/op 32 packets/op 12690 wire-B/op 271712 B/op 3349 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1476 402477 ns/op 32 packets/op 12690 wire-B/op 271813 B/op 3349 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1462 406295 ns/op 32 packets/op 12690 wire-B/op 271781 B/op 3349 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1489 400124 ns/op 32 packets/op 12690 wire-B/op 271927 B/op 3349 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1500 402616 ns/op 32 packets/op 12690 wire-B/op 271600 B/op 3348 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1496 399658 ns/op 32 packets/op 12690 wire-B/op 271710 B/op 3349 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1488 401709 ns/op 32 packets/op 12690 wire-B/op 271597 B/op 3348 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1492 401801 ns/op 32 packets/op 12690 wire-B/op 271583 B/op 3348 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1495 399953 ns/op 32 packets/op 12690 wire-B/op 271604 B/op 3348 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1490 401338 ns/op 32 packets/op 12690 wire-B/op 271590 B/op 3348 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1502 399716 ns/op 32 packets/op 12690 wire-B/op 271937 B/op 3349 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1495 405316 ns/op 32 packets/op 12690 wire-B/op 271621 B/op 3348 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1490 401858 ns/op 32 packets/op 12690 wire-B/op 271593 B/op 3348 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1484 401058 ns/op 32 packets/op 12690 wire-B/op 271878 B/op 3349 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1489 401279 ns/op 32 packets/op 12690 wire-B/op 271936 B/op 3349 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1489 401649 ns/op 32 packets/op 12690 wire-B/op 271708 B/op 3349 allocs/op
+BenchmarkUDPReceiveQueueSave/32 1491 400967 ns/op 32 packets/op 12690 wire-B/op 271715 B/op 3349 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5822 105497 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5904 104857 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5836 104709 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5952 104899 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5959 104562 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5800 105181 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5962 104987 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5925 104716 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5870 104914 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5970 104733 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5941 105081 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5917 104371 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5947 104638 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5913 105347 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5877 104592 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5919 104323 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5922 104594 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5827 104557 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5918 104464 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5851 104874 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5913 104596 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5932 104576 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5938 105337 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
+BenchmarkUDPReceiveQueueSave/8 5890 104556 ns/op 8 packets/op 4026 wire-B/op 73392 B/op 911 allocs/op
