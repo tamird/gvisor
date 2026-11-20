@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-20T07:13:35.715834+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-20T06:55:55.554684+00:00",
+  "registryDate": "2026-11-20T07:16:31.447796+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -457282,8 +457282,8 @@
       "recordedFollowup": {
         "owner": "pty_feedback_resume",
         "sourceHead": "428aaa7afcbb5cde47d965639da811061fc06ff6",
-        "disposition": "Root read the complete current human review on428aaa7afcbb5cde47d965639da811061fc06ff6. pty_feedback_resume owns the behavior-only comment and required monotonic-deadline correction; the finding remains unresolved. Correction/reply preparation has not changed public source or posted a response.",
-        "nextAction": "Assigned owner prepares and validates the behavior/comment and monotonic-deadline correction, then submits exact source/reply for the existing publication boundary. Preserve current source and do not mark the finding resolved or post an acknowledgement."
+        "disposition": "Candidatecfff closes the behavior-only comment and monotonic-deadline correction. Native16cases, systrap16cases, changed-source strict lint and final independent review all pass. Exact source/current-head verification is complete and the amendment-and-reply question has been asked once; the answer is pending. Public428aaa7 remains unchanged, no reply is posted and the public finding remains unresolved.",
+        "nextAction": "Await the existing exact amendment/reply decision once; preserve public source and unresolved finding until approved publication and actual reply readback."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxx_5BA"
@@ -465840,7 +465840,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T06:55:55.554684+00:00"
+        "observedAt": "2026-11-20T07:16:31.447796+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -465849,7 +465849,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T06:55:55.554684+00:00"
+        "observedAt": "2026-11-20T07:16:31.447796+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -465858,7 +465858,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T06:55:55.554684+00:00"
+        "observedAt": "2026-11-20T07:16:31.447796+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -465867,7 +465867,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T06:55:55.554684+00:00"
+        "observedAt": "2026-11-20T07:16:31.447796+00:00"
       }
     },
     "issue:google/benchmark:1634": {
@@ -465876,7 +465876,7 @@
         "since": "2026-11-19T00:39:33.110112+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T06:55:55.554684+00:00"
+        "observedAt": "2026-11-20T07:16:31.447796+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -465885,7 +465885,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T06:55:55.554684+00:00"
+        "observedAt": "2026-11-20T07:16:31.447796+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -465894,7 +465894,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T06:55:55.554684+00:00"
+        "observedAt": "2026-11-20T07:16:31.447796+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -465903,7 +465903,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T06:55:55.554684+00:00"
+        "observedAt": "2026-11-20T07:16:31.447796+00:00"
       }
     }
   },
