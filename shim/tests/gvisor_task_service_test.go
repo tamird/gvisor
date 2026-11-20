@@ -27,6 +27,8 @@ import (
 	task "github.com/containerd/containerd/api/runtime/task/v2"
 	"github.com/containerd/ttrpc"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	pb "gvisor.dev/gvisor/pkg/shim/v1/taskserver/task_server_go_proto"
 	"gvisor.dev/gvisor/shim/shimutils"
 )
@@ -98,7 +100,22 @@ func TestGvisorTaskService(t *testing.T) {
 				Type:        "tmpfs",
 				Source:      "tmpfs",
 			})
-			sandbox, _ := setupSandboxWithSpec(t, containerd, spec)
+			sandbox, taskClient := setupSandboxWithSpec(t, containerd, spec)
+			defer func() {
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+				if err := killAndWaitForContainer(ctx, taskClient, sandbox.ID(), containerd); err != nil {
+					t.Error(err)
+					return
+				}
+				if _, err := taskClient.Delete(ctx, &task.DeleteRequest{ID: sandbox.ID()}); err != nil {
+					t.Error(err)
+					return
+				}
+				if _, err := taskClient.State(ctx, &task.StateRequest{ID: sandbox.ID()}); status.Code(err) != codes.NotFound {
+					t.Errorf("state after Delete = %v, want NotFound", err)
+				}
+			}()
 
 			socketPath := filepath.Join(rootTmp, sandbox.ID()+"_sandbox.sock")
 			client := getGvisorTaskClient(t, socketPath)

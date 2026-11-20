@@ -22,6 +22,7 @@ import (
 	"debug/elf"
 	"encoding/base32"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"io"
@@ -184,6 +185,109 @@ func ConfigureExePath() error {
 	return nil
 }
 
+// ConfigureRelease makes the declared release accessible to sandbox credentials.
+// The complete fileset is mounted read-only; the original Bazel products are unchanged.
+func ConfigureRelease() (func() error, error) {
+	declared, err := FindFile("release/runsc")
+	if err != nil {
+		return nil, err
+	}
+	declared, err = filepath.EvalSymlinks(declared)
+	if err != nil {
+		return nil, err
+	}
+	selected, err := filepath.EvalSymlinks(*runscPath)
+	if err != nil {
+		return nil, err
+	}
+	if selected != declared {
+		return func() error { return nil }, nil
+	}
+	parent, err := os.MkdirTemp("/tmp", "gvisor-test-release-")
+	if err != nil {
+		return nil, err
+	}
+	if err := os.Chmod(parent, 0755); err != nil {
+		os.RemoveAll(parent)
+		return nil, err
+	}
+	installed := filepath.Join(parent, "release")
+	if err := os.Mkdir(installed, 0755); err != nil {
+		os.RemoveAll(parent)
+		return nil, err
+	}
+	if err := unix.Mount(filepath.Dir(declared), installed, "", unix.MS_BIND, ""); err != nil {
+		os.RemoveAll(parent)
+		return nil, err
+	}
+	cleanup := func() error {
+		// Runtime sidecars can release their executable after the sandbox exits.
+		err := Poll(func() error {
+			err := unix.Unmount(installed, 0)
+			if err != nil && !errors.Is(err, unix.EBUSY) {
+				return backoff.Permanent(err)
+			}
+			return err
+		}, time.Second)
+		if err != nil {
+			return err
+		}
+		return os.RemoveAll(parent)
+	}
+	if err := unix.Mount("", installed, "", unix.MS_BIND|unix.MS_REMOUNT|unix.MS_RDONLY|unix.MS_NOSUID|unix.MS_NODEV, ""); err != nil {
+		return nil, errors.Join(err, cleanup())
+	}
+	*runscPath = filepath.Join(installed, "runsc")
+	specutils.ExePath = *runscPath
+	if err := os.Setenv("GVISOR_SIDECAR_BINARIES_DIR", filepath.Join(installed, "gvisor-bin")); err != nil {
+		return nil, errors.Join(err, cleanup())
+	}
+	return cleanup, nil
+}
+
+var runtimeTempDir string
+
+// ConfigureTempDirs separates guest-visible scratch from runtime state.
+// It must be called before tests start and after namespace re-execution.
+func ConfigureTempDirs() (func() error, error) {
+	original, set := os.LookupEnv("TEST_TMPDIR")
+	parent, err := os.MkdirTemp(TmpDir(), "test-dirs-")
+	if err != nil {
+		return nil, err
+	}
+	workload := filepath.Join(parent, "workload")
+	runtimeDir := filepath.Join(parent, "runtime")
+	for _, dir := range []string{workload, runtimeDir} {
+		if err := os.Mkdir(dir, 0755); err != nil {
+			os.RemoveAll(parent)
+			return nil, err
+		}
+	}
+	if err := os.Setenv("TEST_TMPDIR", workload); err != nil {
+		os.RemoveAll(parent)
+		return nil, err
+	}
+	runtimeTempDir = runtimeDir
+	return func() error {
+		runtimeTempDir = ""
+		var envErr error
+		if set {
+			envErr = os.Setenv("TEST_TMPDIR", original)
+		} else {
+			envErr = os.Unsetenv("TEST_TMPDIR")
+		}
+		return errors.Join(envErr, os.RemoveAll(parent))
+	}, nil
+}
+
+// RuntimeTempDir returns scratch that is not bound into test containers.
+func RuntimeTempDir() string {
+	if runtimeTempDir != "" {
+		return runtimeTempDir
+	}
+	return TmpDir()
+}
+
 // TmpDir returns the absolute path to a writable directory that can be used as
 // scratch by the test.
 func TmpDir() string {
@@ -285,7 +389,7 @@ func TestConfig(t *testing.T) *config.Config {
 	conf.LogPackets = true
 	conf.Network = config.NetworkNone
 	conf.Strace = true
-	conf.TestOnlyAllowRunAsCurrentUserWithoutChroot = true
+	conf.TestOnlyAllowRunAsCurrentUserWithoutChroot = os.Getuid() != 0
 	conf.WatchdogAction = "panic"
 	return conf
 }
@@ -440,7 +544,7 @@ func NewSpecWithArgs(args ...string) *specs.Spec {
 
 // SetupRootDir creates a root directory for containers.
 func SetupRootDir() (string, func(), error) {
-	rootDir, err := os.MkdirTemp(TmpDir(), "containers")
+	rootDir, err := os.MkdirTemp(RuntimeTempDir(), "containers")
 	if err != nil {
 		return "", nil, fmt.Errorf("error creating root dir: %v", err)
 	}

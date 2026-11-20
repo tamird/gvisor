@@ -32,6 +32,7 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/types/known/anypb"
+	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/shim/shimutils"
 )
 
@@ -40,7 +41,16 @@ func TestMain(m *testing.M) {
 	// testing framework.
 	typeurl.Register(&specs.Process{}, "types.containerd.io", "opencontainers/runtime-spec", "1", "Process")
 
-	os.Exit(m.Run())
+	cleanup, err := testutil.ConfigureTempDirs()
+	if err != nil {
+		panic(err)
+	}
+	code := m.Run()
+	if err := cleanup(); err != nil {
+		fmt.Fprintf(os.Stderr, "cleaning test directories: %v\n", err)
+		code = 1
+	}
+	os.Exit(code)
 }
 
 type testCase struct {

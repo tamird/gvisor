@@ -70,7 +70,24 @@ func TestMain(m *testing.M) {
 		fmt.Fprintf(os.Stderr, "Error running as root: %v", err)
 		os.Exit(123)
 	}
-	os.Exit(m.Run())
+	cleanup, err := testutil.ConfigureTempDirs()
+	if err != nil {
+		panic(err)
+	}
+	releaseCleanup, err := testutil.ConfigureRelease()
+	if err != nil {
+		panic(err)
+	}
+	code := m.Run()
+	if err := releaseCleanup(); err != nil {
+		fmt.Fprintf(os.Stderr, "cleaning test release: %v\n", err)
+		code = 1
+	}
+	if err := cleanup(); err != nil {
+		fmt.Fprintf(os.Stderr, "cleaning test directories: %v\n", err)
+		code = 1
+	}
+	os.Exit(code)
 }
 
 func execute(conf *config.Config, cont *Container, name string, arg ...string) (unix.WaitStatus, error) {
