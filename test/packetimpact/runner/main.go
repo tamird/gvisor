@@ -424,12 +424,12 @@ func newNetNS() (netNS, error) {
 	err := withSavedNetNS(func() error {
 		// Create the namespace via unshare(2).
 		if err := unix.Unshare(unix.CLONE_NEWNET); err != nil {
-			return err
+			return fmt.Errorf("unshare network namespace: %w", err)
 		}
 		// Return the created namespace.
 		fd, err := openNetNSFD()
 		if err != nil {
-			return err
+			return fmt.Errorf("open created network namespace: %w", err)
 		}
 		ns = netNS(fd)
 		return nil
@@ -501,7 +501,7 @@ func withSavedNetNS(f func() error) error {
 	// Save the current namespace.
 	saved, err := openNetNSFD()
 	if err != nil {
-		return err
+		return fmt.Errorf("open current network namespace: %w", err)
 	}
 	defer func() {
 		// Restore the namespace when we return from f.
