@@ -138,6 +138,7 @@ def packetimpact_go_test(name, expect_native_failure = False, expect_netstack_fa
         num_duts: how many DUTs are needed for the test
         **kwargs: all the other args, forwarded to packetimpact_native_test and packetimpact_netstack_test
     """
+
     # Enable namespace-local IPv6 while keeping the VM off external networks.
     kwargs.setdefault("exec_properties", {
         "test.init-dockerd": "false",
