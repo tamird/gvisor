@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T05:12:09.496686+00:00",
+    "updatedAt": "2026-11-20T05:32:10.048427+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -73055,8 +73055,8 @@
       "url": "https://github.com/google/gvisor/pull/17067",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-20T05:12:09.496686+00:00",
-      "summary": "Child qualification passes37functional cases per architecture with no failures/skips. Strict lint failed on two new Sysmsg sources; owner is separating actual missing includes from implausible diagnostics. Formatter-only candidateeabedf2 is prepared with no C edits. Publica3ca22af remains unchanged; the prerequisite16522 source/importer hold still applies.",
+      "updatedAt": "2026-11-20T05:32:10.048427+00:00",
+      "summary": "Recovery candidatea89 adds two required headers and narrowly scoped LLVM false-positive exceptions. Both architectures’ functional recovery passes; canonical six-check lint44680837609 failed and awaits diagnostic classification. Formatter-onlyeabedf2 remains historical preparation. Publica3ca22af is unchanged and the prerequisite16522 source/importer hold still applies.",
       "evidence": [
         {
           "label": "Revised #17089 source with explicit ARM64 layouts for 4 KiB and 64 KiB pages",
@@ -73192,9 +73192,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "observedAt": "2026-11-20T05:12:09.496686+00:00",
-        "disposition": "Child qualification passes37functional cases per architecture with no failures/skips. Strict lint failed on two new Sysmsg sources; owner is separating actual missing includes from implausible diagnostics. Formatter-only candidateeabedf2 is prepared with no C edits. Publica3ca22af remains unchanged; the prerequisite16522 source/importer hold still applies.",
-        "nextAction": "Assigned owner diagnoses strict lint at the owning compiler mechanism and closes formatting-only recovery. Preserve functional products and unchanged public source; do not publish the conditional child before the verified16522 prerequisite and its existing source decision permit delivery.",
+        "observedAt": "2026-11-20T05:32:10.048427+00:00",
+        "disposition": "Recovery candidatea89 adds two required headers and narrowly scoped LLVM false-positive exceptions. Both architectures’ functional recovery passes; canonical six-check lint44680837609 failed and awaits diagnostic classification. Formatter-onlyeabedf2 remains historical preparation. Publica3ca22af is unchanged and the prerequisite16522 source/importer hold still applies.",
+        "nextAction": "Assigned owner audits the canonical lint recovery and final source before any review handoff. Preserve completed both-architecture functional evidence, unchanged public source and the16522 prerequisite hold; do not publish the conditional child prematurely.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17067#discussion_r4486895273",
           "https://github.com/tamird/gvisor/commit/7f6ecfff61b465c2ae00d20ee4ebaad09d430519",
@@ -73207,10 +73207,10 @@
           "https://buildkite.com/gvisor/first-pass/builds/1613",
           "https://buildkite.com/gvisor/first-pass/builds/1613#01a1eae5-3d03-4c72-8011-b3b8ab91bcd6"
         ],
-        "recheckCondition": "Actual strict-lint diagnosis/recovery, formatting result or verified16522 source/importer/dependency change.",
+        "recheckCondition": "Actual canonical lint result, final review readiness or verified16522 source/importer/dependency change.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING",
-        "curatedAt": "2026-11-20T05:12:09.496686+00:00"
+        "curatedAt": "2026-11-20T05:32:10.048427+00:00"
       },
       "dcoAmendment": {
         "oldHead": "005743727b3d80d373085133b5da9cd906cc9d7c",
@@ -73234,8 +73234,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "root / existing Systrap native stub workstream"
       },
-      "nextStep": "Assigned owner diagnoses strict lint at the owning compiler mechanism and closes formatting-only recovery. Preserve functional products and unchanged public source; do not publish the conditional child before the verified16522 prerequisite and its existing source decision permit delivery.",
-      "recheckCondition": "Actual strict-lint diagnosis/recovery, formatting result or verified16522 source/importer/dependency change."
+      "nextStep": "Assigned owner audits the canonical lint recovery and final source before any review handoff. Preserve completed both-architecture functional evidence, unchanged public source and the16522 prerequisite hold; do not publish the conditional child prematurely.",
+      "recheckCondition": "Actual canonical lint result, final review readiness or verified16522 source/importer/dependency change."
     },
     {
       "id": "pr:bazel-contrib/buildtools:1527",
@@ -134958,10 +134958,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T05:12:09.496686+00:00",
-      "summary": "Canonical fork shared support9e4ae432d226e14a83c05946c91daefd20b87d7d is published and independently verified. Consumer44677983542 passes3tests with1030cache hits,9remote and zero local actions; focused review found no issues. No production, sidecar, compdb, master or upstream source was changed; ordinary/cache-only cross-architecture runtime is not independently established. Packet e7b9 affected native/Sentry/format/strict gates and focused review close; performance and ARM KVM remain open. Node maintained-caller XML contains2passing cases with all witness checks; Buildifier-only44679255624 remains live. Standard shim handshake/topic/paused-SIGKILL and observer integration pass; RestoreEmpty44679240015 and startup3A/A44679242556 are live, with no full performance claim. Existing publication questions remain pending.",
-      "nextStep": "Reuse published shared support within its verified scope. Packet owner advances remaining performance/ARM KVM requirements without repeating passing gates; Node owner closes canonical formatting and audits new caller evidence. Shim owner audits actual RestoreEmpty/startup results. Preserve source-publication and worker-isolation holds; no new decision frames.",
-      "recheckCondition": "Audited remaining functional/performance/formatting result, substantive feedback, or an existing publication/worker answer.",
+      "updatedAt": "2026-11-20T05:32:10.048427+00:00",
+      "summary": "Node source8bc final review, maintained caller, fixture,128-correct-response and canonical formatting proofs close; the existing explicit standalone-PR decision remains unanswered. No publication authorization is inferred. Paired-client preflight44681165541 failed and awaits owner audit; no permanent Report change or A/A is made. Shim f5 lint workflows all pass, but owning suites fail: ARM lacks canonical support for three legacy sidecar genrules, while AMD mount/cleanup failures remain under diagnosis. The already-qualified ARM closure is being added to shared support, without changing the production proposal. Performance and all existing source/issue decisions remain held. Canonical sidecar candidateb68165bc69248b59990cbc24a86e5b17b3a3d343 is in cheap ARM qualification; published shared ref remains9e4 pending review. Baseline diagnosis44681539748 is running; host remount failures do not establish an f5 regression.",
+      "nextStep": "Root awaits the existing standalone Node source decision once. Assigned owners audit paired-client failure and AMD mount/cleanup evidence, complete canonical ARM support, then rerun only affected owning gates. Preserve passing lint/caller products and source/worker holds; no repeated questions, new proposal frames or unsupported performance conclusions.",
+      "recheckCondition": "Audited preflight/suite recovery, meaningful source-review milestone or existing publication/worker answer.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135251,6 +135251,22 @@
         {
           "label": "Three-startup A/A gate; no performance conclusion",
           "url": "https://github.com/tamird/gvisor/actions/runs/44679242556"
+        },
+        {
+          "label": "Paired-client preflight failed; owner audit pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44681165541"
+        },
+        {
+          "label": "Shim strict lint workflow passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44680630692"
+        },
+        {
+          "label": "AMD owning-suite failures under diagnosis",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44680200250"
+        },
+        {
+          "label": "ARM owning suite blocked on canonical legacy sidecar support",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44680202629"
         }
       ],
       "followup": {
@@ -135272,12 +135288,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T05:12:09.496686+00:00",
-        "nextAction": "Reuse published shared support within its verified scope. Packet owner advances remaining performance/ARM KVM requirements without repeating passing gates; Node owner closes canonical formatting and audits new caller evidence. Shim owner audits actual RestoreEmpty/startup results. Preserve source-publication and worker-isolation holds; no new decision frames.",
-        "recheckCondition": "Audited remaining functional/performance/formatting result, substantive feedback, or an existing publication/worker answer.",
+        "curatedAt": "2026-11-20T05:32:10.048427+00:00",
+        "nextAction": "Root awaits the existing standalone Node source decision once. Assigned owners audit paired-client failure and AMD mount/cleanup evidence, complete canonical ARM support, then rerun only affected owning gates. Preserve passing lint/caller products and source/worker holds; no repeated questions, new proposal frames or unsupported performance conclusions.",
+        "recheckCondition": "Audited preflight/suite recovery, meaningful source-review milestone or existing publication/worker answer.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Canonical fork shared support9e4ae432d226e14a83c05946c91daefd20b87d7d is published and independently verified. Consumer44677983542 passes3tests with1030cache hits,9remote and zero local actions; focused review found no issues. No production, sidecar, compdb, master or upstream source was changed; ordinary/cache-only cross-architecture runtime is not independently established. Packet e7b9 affected native/Sentry/format/strict gates and focused review close; performance and ARM KVM remain open. Node maintained-caller XML contains2passing cases with all witness checks; Buildifier-only44679255624 remains live. Standard shim handshake/topic/paused-SIGKILL and observer integration pass; RestoreEmpty44679240015 and startup3A/A44679242556 are live, with no full performance claim. Existing publication questions remain pending.",
+        "disposition": "Node source8bc final review, maintained caller, fixture,128-correct-response and canonical formatting proofs close; the existing explicit standalone-PR decision remains unanswered. No publication authorization is inferred. Paired-client preflight44681165541 failed and awaits owner audit; no permanent Report change or A/A is made. Shim f5 lint workflows all pass, but owning suites fail: ARM lacks canonical support for three legacy sidecar genrules, while AMD mount/cleanup failures remain under diagnosis. The already-qualified ARM closure is being added to shared support, without changing the production proposal. Performance and all existing source/issue decisions remain held. Canonical sidecar candidateb68165bc69248b59990cbc24a86e5b17b3a3d343 is in cheap ARM qualification; published shared ref remains9e4 pending review. Baseline diagnosis44681539748 is running; host remount failures do not establish an f5 regression.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135686,5 +135702,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T05:12:09.496686+00:00"
+  "updatedAt": "2026-11-20T05:32:10.048427+00:00"
 }
