@@ -3346,6 +3346,10 @@ func TestIDMappedMountFile(t *testing.T) {
 				t.Fatalf("chown failed: %v", err)
 			}
 			f.Close()
+			const payload = "nested tmpfs payload"
+			if err := os.WriteFile(hostFilePath, []byte(payload), 0644); err != nil {
+				t.Fatalf("writing nested tmpfs file: %v", err)
+			}
 
 			targetFilePath := filepath.Join(dir, "target-file")
 
@@ -3386,6 +3390,22 @@ func TestIDMappedMountFile(t *testing.T) {
 			defer c.Destroy()
 			if err := c.Start(conf); err != nil {
 				t.Fatalf("error starting container: %v", err)
+			}
+
+			// Both the scratch bind and the ID-mapped bind must expose the file
+			// created after the host tmpfs was mounted.
+			for _, filename := range []string{hostFilePath, targetFilePath} {
+				out, err := executeCombinedOutput(conf, c, nil, "/bin/cat", filename)
+				if err != nil || string(out) != payload {
+					t.Fatalf("reading nested tmpfs file %q: got %q, want %q, error: %v", filename, out, payload, err)
+				}
+			}
+			var hostStat unix.Stat_t
+			if err := unix.Stat(hostFilePath, &hostStat); err != nil {
+				t.Fatalf("stat host tmpfs file: %v", err)
+			}
+			if hostStat.Uid != 0 || hostStat.Gid != 0 {
+				t.Fatalf("host file owner changed: got %d:%d, want 0:0", hostStat.Uid, hostStat.Gid)
 			}
 
 			// Verify that targetFilePath appears to be owned by nobody:nogroup
