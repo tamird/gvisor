@@ -1904,6 +1904,12 @@ func (s *sock) getSockOptIP(t *kernel.Task, ep commonEndpoint, name int, outPtr 
 
 // getSockOptPacket implements linux getsockopt(2) when the level is SOL_PACKET.
 func (s *sock) getSockOptPacket(t *kernel.Task, ep commonEndpoint, name int, outPtr hostarch.Addr, outLen int) (marshal.Marshallable, *syserr.Error) {
+	if s.family != linux.AF_PACKET {
+		if s.family == linux.AF_INET {
+			return nil, syserr.ErrNotSupported
+		}
+		return nil, syserr.ErrUnknownProtocolOption
+	}
 	if _, ok := ep.(tcpip.Endpoint); !ok {
 		log.Warningf("SOL_PACKET options not supported on endpoints other than tcpip.Endpoint: option = %d, endpoint = %T", name, ep)
 		return nil, syserr.ErrUnknownProtocolOption
@@ -2973,7 +2979,16 @@ func (s *sock) setSockOptIP(t *kernel.Task, ep commonEndpoint, name int, optVal 
 
 // setSockOptPacket implements the linux setsockopt(2) when the level is SOL_PACKET.
 func (s *sock) setSockOptPacket(t *kernel.Task, ep commonEndpoint, name int, optVal []byte) *syserr.Error {
+	if s.family != linux.AF_PACKET {
+		return syserr.ErrUnknownProtocolOption
+	}
 	switch name {
+	case linux.PACKET_COPY_THRESH:
+		if len(optVal) != sizeOfInt32 {
+			return syserr.ErrInvalidArgument
+		}
+		v := hostarch.ByteOrder.Uint32(optVal)
+		return syserr.TranslateNetstackError(ep.SetSockOptInt(tcpip.PacketMMapCopyThresholdOption, int(v)))
 	case linux.PACKET_RX_RING:
 		var tpacketReq linux.TpacketReq
 		if len(optVal) < tpacketReq.SizeBytes() {
