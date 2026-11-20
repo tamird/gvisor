@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-20T20:47:00.489131+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-20T20:28:41.528804+00:00",
+  "registryDate": "2026-11-20T20:48:41.652999+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -449645,8 +449645,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "1b9768b199524246fe8e4fa66a0b623069778780",
-        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
-        "nextAction": "Reconcile the retained three failing burst-loss seeds with separate timeout-counter fix #17113; verify current source composition before another measurement or review conclusion."
+        "disposition": "Current author-owned source now conflicts with upstream. The branch belongs to kekawia, not this contributor. Existing source-composition, review and performance evidence retains its recorded scope; the conflict does not authorize a foreign-branch push.",
+        "nextAction": "Root follows kekawia’s source refresh and re-evaluates the exact resulting source composition and retained review/performance obligations. Preserve author ownership; no foreign push, speculative fix or automatic notification."
       },
       "conflictObservedSince": "2026-11-20T20:43:54.441989+00:00"
     },
@@ -449693,8 +449693,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "cbe9181a465bf9a2db17a9494ee9ad7792977f93",
-        "disposition": "After the 400-to-800 ms fresh-SACK regression was repaired, Tamir approved marking ffac28a03 ready. The draft-to-ready transition is recorded on GitHub, with fvoznika and nybidari still requested.",
-        "nextAction": "Follow maintainer review on #16495. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source cbe9181a465bf9a2db17a9494ee9ad7792977f93; observed 2026-11-17T19:29:29.454062+00:00): build 1470 has buildkite/first-pass/pr FAILURE. Pipeline upload exits 1: Queue 'default' does not exist in the 'untrusted' cluster. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Coordinate source pipeline agent selection with the actual upstream cluster queue policy; confirm the accepted configuration before any authorized retry. Recheck: Supported source/queue configuration is confirmed and provider quota permits validation."
+        "disposition": "Our cbe9181a465bf9a2db17a9494ee9ad7792977f93 conflicts with current upstream. Root resumed approved_rebase_queue; the actual rack.DoRecovery to rack.recover transition requires a real adaptation preserving writeNext, so a patch-equivalent approved refresh is not possible. Historical source approval and repaired fresh-SACK behavior do not approve that new adaptation. No public push or current user question is authorized/inferred.",
+        "nextAction": "approved_rebase_queue prepares the smallest adaptation and validates the affected RACK/recovery behavior on the actual base, then obtains independent review and one new source-publication review only when concrete and qualified. Root retains lifecycle ownership; no stale approval transfer or premature user question."
       },
       "conflictObservedSince": "2026-11-20T20:43:54.441989+00:00"
     },
@@ -449789,8 +449789,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "413a89224efc82768c01ef8f573c0ea4cbefc656",
-        "disposition": "Verified #16596 merged028b86716. Root and independent peer compared complete old f38afb and current5f4e4 topics: only the obsolete TLP pipePrev reset and two comments changed. The merged direct loss response calls HandleLossDetected/PostRecovery without entering recovery. This is a narrow rebase assessment, not a new full approval or test result; historical #17023 interaction evidence remains on its actual revisions.",
-        "nextAction": "Do not post the withdrawn test-retention reply. Preserve the narrow current-source assessment and historical interaction limits; continue existing broader review/performance obligations on substantive source, CI or human events."
+        "disposition": "Current author-owned source now conflicts with upstream. The branch belongs to adios-404, not this contributor. Existing source-composition, review and performance evidence retains its recorded scope; the conflict does not authorize a foreign-branch push.",
+        "nextAction": "Root follows adios-404’s source refresh and re-evaluates the exact resulting source composition and retained review/performance obligations. Preserve author ownership; no foreign push, speculative fix or automatic notification."
       },
       "conflictObservedSince": "2026-11-20T20:43:56.149456+00:00"
     },
@@ -451385,8 +451385,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "cbe9181a465bf9a2db17a9494ee9ad7792977f93",
-        "disposition": "After the 400-to-800 ms fresh-SACK regression was repaired, Tamir approved marking ffac28a03 ready. The draft-to-ready transition is recorded on GitHub, with fvoznika and nybidari still requested.",
-        "nextAction": "Follow maintainer review on #16495. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source cbe9181a465bf9a2db17a9494ee9ad7792977f93; observed 2026-11-17T19:29:29.454062+00:00): build 1470 has buildkite/first-pass/pr FAILURE. Pipeline upload exits 1: Queue 'default' does not exist in the 'untrusted' cluster. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Coordinate source pipeline agent selection with the actual upstream cluster queue policy; confirm the accepted configuration before any authorized retry. Recheck: Supported source/queue configuration is confirmed and provider quota permits validation."
+        "disposition": "Our cbe9181a465bf9a2db17a9494ee9ad7792977f93 conflicts with current upstream. Root resumed approved_rebase_queue; the actual rack.DoRecovery to rack.recover transition requires a real adaptation preserving writeNext, so a patch-equivalent approved refresh is not possible. Historical source approval and repaired fresh-SACK behavior do not approve that new adaptation. No public push or current user question is authorized/inferred.",
+        "nextAction": "approved_rebase_queue prepares the smallest adaptation and validates the affected RACK/recovery behavior on the actual base, then obtains independent review and one new source-publication review only when concrete and qualified. Root retains lifecycle ownership; no stale approval transfer or premature user question."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxw_I_g"
@@ -454765,8 +454765,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "6bd31cd09cc922fb7235267e95c0d951ad1f43c8",
-        "disposition": "The current NIC correction passed functional, race, Nogo and canonical source gates, but adversarial review found quadratic empty-bridge scanning and a slice allocation while Stack.mu is held. The original writer is resumed for the responsible CoordinatorNIC/port cleanup mechanism. These source findings remain actionable; performance is still open and no publication question or approval is inferred.",
-        "nextAction": "tcp_go_final_maintainer_review fixes the CoordinatorNIC/port cleanup mechanism, revalidates the affected functional/race/source paths and obtains final review, then closes the source-bound performance obligations. Root retains publication/reply ownership; the public human threads are not claimed resolved by unlanded proofs."
+        "disposition": "The final NIC correction passed all five affected gates, including actual new tests; performance and correctness reviewers accepted the changed API. This closes the actionable source-review findings on that candidate, not elapsed-time A/A or performance qualification. Root owns the verified quiet-worker recheck. Public6bd31cd remains unchanged and no source-publication question is pending.",
+        "nextAction": "Root rechecks verified quiet-worker availability and closes the source-bound elapsed-time A/A/performance obligation. Preserve the candidate’s exact functional/race/Nogo/source evidence and obtain any eventual publication review only after required qualification."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxzdiDQ"
@@ -457840,9 +457840,9 @@
       ],
       "recordedFollowup": {
         "owner": "root",
-        "sourceHead": "428aaa7afcbb5cde47d965639da811061fc06ff6",
-        "disposition": "Milan’s new complete-thread reply4647187737 cites the documented ABI-only Linux-source rule in response to Tamir’s policy question4640750521. It adds no source requirement beyond the original behavior-only comment. Preparedcfff still has native16/systrap16/strict/final-review proof, while public428aaa remains unchanged. Root retains the existing source-approval/provenance reconciliation; no new user question, automatic acknowledgement or inferred source-publication approval. Root consumed the native citation reply; this triages communication only and retains the substantive source-publication boundary.",
-        "nextAction": "Root asks original implementation owner pty_feedback_resume for the existing exact source-question/approval provenance. Preserve cfff qualification and unchanged public428; the unresolved source request is not resolved or approved by this policy-answer triage. Do not re-ask the user without original provenance."
+        "sourceHead": "f1a42e1b95c109bbddc49003ad084a9b28ab0664",
+        "disposition": "User-approved f1a42e1b95c109bbddc49003ad084a9b28ab0664 is published by exact lease and native MERGEABLE. The approved behavior-only reply4647437580 is posted and Milan’s native review re-request persisted; no automatic merge change occurred. DCO, lint, Gazelle and file-header checks pass; Go export was pending at the last unique observation. First Pass2140 independently failed admission before agent assignment: exit80, stack_errored=true, agent_id=null, started_at=null and the author1535036 rolling30-day360,000-compute-minute quota. No project test ran. The former missing-approval/provenance obligation is retired by this actual user approval and delivery.",
+        "nextAction": "Root follows exact-head Go export and existing reviewer/import disposition. Root/operator rechecks only future quota-clearance, new-head or check events;2140 diagnosis is terminal, with no further polling, retry, CI-owner outreach or user question."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN2yqo5Q"
@@ -466401,7 +466401,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T20:28:41.528804+00:00"
+        "observedAt": "2026-11-20T20:48:41.652999+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -466410,7 +466410,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T20:28:41.528804+00:00"
+        "observedAt": "2026-11-20T20:48:41.652999+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -466419,7 +466419,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T20:28:41.528804+00:00"
+        "observedAt": "2026-11-20T20:48:41.652999+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -466428,7 +466428,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T20:28:41.528804+00:00"
+        "observedAt": "2026-11-20T20:48:41.652999+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -466437,7 +466437,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T20:28:41.528804+00:00"
+        "observedAt": "2026-11-20T20:48:41.652999+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -466446,7 +466446,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T20:28:41.528804+00:00"
+        "observedAt": "2026-11-20T20:48:41.652999+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -466455,7 +466455,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T20:28:41.528804+00:00"
+        "observedAt": "2026-11-20T20:48:41.652999+00:00"
       }
     },
     "investigation:ci-flake-dind-exec-deadline": {
@@ -466464,7 +466464,7 @@
         "since": "2026-11-20T20:28:41.528804+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T20:28:41.528804+00:00"
+        "observedAt": "2026-11-20T20:48:41.652999+00:00"
       }
     }
   },

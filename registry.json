@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T20:28:41.528804+00:00",
+    "updatedAt": "2026-11-20T20:48:41.652999+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38205,9 +38205,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "cbe9181a465bf9a2db17a9494ee9ad7792977f93",
-        "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "After the 400-to-800 ms fresh-SACK regression was repaired, Tamir approved marking ffac28a03 ready. The draft-to-ready transition is recorded on GitHub, with fvoznika and nybidari still requested.",
-        "nextAction": "Follow maintainer review on #16495. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source cbe9181a465bf9a2db17a9494ee9ad7792977f93; observed 2026-11-17T19:29:29.454062+00:00): build 1470 has buildkite/first-pass/pr FAILURE. Pipeline upload exits 1: Queue 'default' does not exist in the 'untrusted' cluster. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Coordinate source pipeline agent selection with the actual upstream cluster queue policy; confirm the accepted configuration before any authorized retry. Recheck: Supported source/queue configuration is confirmed and provider quota permits validation.",
+        "observedAt": "2026-11-20T20:48:41.652999+00:00",
+        "disposition": "Our cbe9181a465bf9a2db17a9494ee9ad7792977f93 conflicts with current upstream. Root resumed approved_rebase_queue; the actual rack.DoRecovery to rack.recover transition requires a real adaptation preserving writeNext, so a patch-equivalent approved refresh is not possible. Historical source approval and repaired fresh-SACK behavior do not approve that new adaptation. No public push or current user question is authorized/inferred.",
+        "nextAction": "approved_rebase_queue prepares the smallest adaptation and validates the affected RACK/recovery behavior on the actual base, then obtains independent review and one new source-publication review only when concrete and qualified. Root retains lifecycle ownership; no stale approval transfer or premature user question.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16495",
           "https://github.com/google/gvisor/pull/16495#event-35504395605",
@@ -38219,8 +38219,10 @@
           "https://buildkite.com/gvisor/first-pass/builds/1470",
           "https://buildkite.com/gvisor/first-pass/builds/1470#01a1eada-1d1b-4771-883c-45447a638bea"
         ],
-        "mergeable": "MERGEABLE",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nSupported source/queue configuration is confirmed and provider quota permits validation."
+        "mergeable": "CONFLICTING",
+        "recheckCondition": "The prepared equivalent refresh, affected-gate evidence or actual new maintainer/source event.",
+        "implementationOwner": "approved_rebase_queue",
+        "curatedAt": "2026-11-20T20:48:41.652999+00:00"
       },
       "dcoAmendment": {
         "oldHead": "ffac28a03554b62419747c41f389bdc9bfe303d9",
@@ -38243,7 +38245,9 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
-      }
+      },
+      "nextStep": "approved_rebase_queue prepares the smallest adaptation and validates the affected RACK/recovery behavior on the actual base, then obtains independent review and one new source-publication review only when concrete and qualified. Root retains lifecycle ownership; no stale approval transfer or premature user question.",
+      "recheckCondition": "The prepared equivalent refresh, affected-gate evidence or actual new maintainer/source event."
     },
     {
       "id": "pr:16499",
@@ -61369,9 +61373,9 @@
       "title": "Keep RACK from repeating a fresh timeout repair",
       "url": "https://github.com/google/gvisor/pull/16857",
       "group": "runtime",
-      "status": "open",
+      "status": "merged",
       "updatedAt": "2026-11-20T15:36:10.284882+00:00",
-      "summary": "Signed current-tip7397 mechanical rebasea70f8cdc56996fe14b46aaabbdfb19985f8d957c is delivered and MERGEABLE; range-diff is equivalent and original DCO retained. Exact-head DCO succeeds, resolving the former stale-DCO projection. Rebase comment7042479007 is posted and verified; no further comment or DCO decision is pending. All current public checks, including First Pass 2079, pass under the existing owner watch. Aggregate review isREVIEW_REQUIRED. Auto-merge is null; no latest-update disablement cause is inferred. rexren-gif approves the exact new head; retained qualification is62internal/23RACK/48SACK/405external cases per architecture, packet analysis only and no new race/performance claim. The exact-head public CI cohort is complete; no stale-DCO or old quota blocker remains for this source.",
+      "summary": "Exact approved a70f8cdc56996fe14b46aaabbdfb19985f8d957c merged on2026-11-20T20:34:45Z as3a7cef1082d2f7a23b753c62816e188e0fb5beb2. Native API and the canonical snapshot agree. Delivery/review/CI waiting obligations on this source are complete; existing source-bound functional and performance evidence retain their scopes.",
       "evidence": [
         {
           "label": "Approved reviewer reply published",
@@ -61462,12 +61466,12 @@
       ],
       "number": 16857,
       "followup": {
-        "owner": "approved_rebase_queue",
+        "owner": "root",
         "sourceHead": "a70f8cdc56996fe14b46aaabbdfb19985f8d957c",
         "providerHead": "a70f8cdc56996fe14b46aaabbdfb19985f8d957c",
-        "observedAt": "2026-11-20T14:55:02.627201+00:00",
-        "disposition": "Signed current-tip7397 mechanical rebasea70f8cdc56996fe14b46aaabbdfb19985f8d957c is delivered and MERGEABLE; range-diff is equivalent and original DCO retained. Exact-head DCO succeeds, resolving the former stale-DCO projection. Rebase comment7042479007 is posted and verified; no further comment or DCO decision is pending. All current public checks, including First Pass 2079, pass under the existing owner watch. Aggregate review isREVIEW_REQUIRED. Auto-merge is null; no latest-update disablement cause is inferred. rexren-gif approves the exact new head; retained qualification is62internal/23RACK/48SACK/405external cases per architecture, packet analysis only and no new race/performance claim. The exact-head public CI cohort is complete; no stale-DCO or old quota blocker remains for this source.",
-        "nextAction": "Follow existing maintainer review/import and human merge disposition on the exact delivered source. CI and rebase communication are complete; no retry, new notification, source churn or agent merge action.",
+        "observedAt": "2026-11-20T20:50:10.631852+00:00",
+        "disposition": "Exact approved a70f8cdc56996fe14b46aaabbdfb19985f8d957c merged on2026-11-20T20:34:45Z as3a7cef1082d2f7a23b753c62816e188e0fb5beb2. Native API and the canonical snapshot agree. Delivery/review/CI waiting obligations on this source are complete; existing source-bound functional and performance evidence retain their scopes.",
+        "nextAction": "Retain the fork source under the canonical seven-day and public-source protections; let normal cleanup determine actual eligibility after retention. No ad hoc deletion, new archive scheme or agent merge action. Follow only a genuine post-merge regression or dependent adoption event.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16857#discussion_r4459290531",
           "https://github.com/tamird/gvisor/commit/85b67686f3cd61965db6393190969dab98c8d5c3",
@@ -61482,8 +61486,8 @@
           "https://github.com/gvisor/gvisor/pull/16857#issuecomment-7042479007"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Current-head CI or substantive review/source change.",
-        "curatedAt": "2026-11-20T15:36:10.284882+00:00"
+        "recheckCondition": "Canonical cleanup eligibility no earlier than2026-11-27, or an actual post-merge regression/dependency event.",
+        "curatedAt": "2026-11-20T20:50:10.631852+00:00"
       },
       "dcoAmendment": {
         "oldHead": "5c2734f45e4e59a6cea8a20ddd9d2954bf1b0ad2",
@@ -61508,8 +61512,8 @@
         "priorOwner": "TCP workstream",
         "priorProviderHead": "85b67686f3cd61965db6393190969dab98c8d5c3"
       },
-      "nextStep": "Follow existing maintainer review/import and human merge disposition on the exact delivered source. CI and rebase communication are complete; no retry, new notification, source churn or agent merge action.",
-      "recheckCondition": "Current-head CI or substantive review/source change."
+      "nextStep": "Retain the fork source under the canonical seven-day and public-source protections; let normal cleanup determine actual eligibility after retention. No ad hoc deletion, new archive scheme or agent merge action. Follow only a genuine post-merge regression or dependent adoption event.",
+      "recheckCondition": "Canonical cleanup eligibility no earlier than2026-11-27, or an actual post-merge regression/dependency event."
     },
     {
       "id": "pr:16846",
@@ -71450,9 +71454,9 @@
         "owner": "root",
         "sourceHead": "413a89224efc82768c01ef8f573c0ea4cbefc656",
         "providerHead": "413a89224efc82768c01ef8f573c0ea4cbefc656",
-        "observedAt": "2026-11-18T05:17:02.746861+00:00",
-        "disposition": "Verified #16596 merged028b86716. Root and independent peer compared complete old f38afb and current5f4e4 topics: only the obsolete TLP pipePrev reset and two comments changed. The merged direct loss response calls HandleLossDetected/PostRecovery without entering recovery. This is a narrow rebase assessment, not a new full approval or test result; historical #17023 interaction evidence remains on its actual revisions.",
-        "nextAction": "Do not post the withdrawn test-retention reply. Preserve the narrow current-source assessment and historical interaction limits; continue existing broader review/performance obligations on substantive source, CI or human events.",
+        "observedAt": "2026-11-20T20:48:41.652999+00:00",
+        "disposition": "Current author-owned source now conflicts with upstream. The branch belongs to adios-404, not this contributor. Existing source-composition, review and performance evidence retains its recorded scope; the conflict does not authorize a foreign-branch push.",
+        "nextAction": "Root follows adios-404’s source refresh and re-evaluates the exact resulting source composition and retained review/performance obligations. Preserve author ownership; no foreign push, speculative fix or automatic notification.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17022#issuecomment-6850802221",
           "https://github.com/google/gvisor/pull/17022#issuecomment-6702500777",
@@ -71464,9 +71468,9 @@
           "https://github.com/google/gvisor/commit/5f4e4e2e9f036fd40891f14167f3c20ec4b099f5"
         ],
         "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
-        "mergeable": "MERGEABLE",
+        "mergeable": "CONFLICTING",
         "priorSourceHead": "f38afb60d50809b6c44618f637ebbb6e56e3a750",
-        "recheckCondition": "Author/reviewer feedback, source/CI changes, related prerequisite changes or contributor decision.",
+        "recheckCondition": "The author’s changed source/base/mergeability or substantive review/dependency evidence.",
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
         "qualificationHistory": [
           {
@@ -71477,7 +71481,7 @@
             "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery."
           }
         ],
-        "curatedAt": "2026-11-18T12:19:41.750038+00:00",
+        "curatedAt": "2026-11-20T20:48:41.652999+00:00",
         "userDecision": {
           "curatedAt": "2026-11-18T12:19:41.750038+00:00",
           "disposition": "No reply; exact pending draft withdrawn",
@@ -71494,7 +71498,9 @@
           "trailerOnly": true,
           "qualification": "Original reviews and declined draft retain their original heads; no new code review or performance approval."
         }
-      }
+      },
+      "nextStep": "Root follows adios-404’s source refresh and re-evaluates the exact resulting source composition and retained review/performance obligations. Preserve author ownership; no foreign push, speculative fix or automatic notification.",
+      "recheckCondition": "The author’s changed source/base/mergeability or substantive review/dependency evidence."
     },
     {
       "id": "branch:tcp-yield-after-queue-pass",
@@ -74829,7 +74835,7 @@
       "head": "6bd31cd09cc922fb7235267e95c0d951ad1f43c8",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:53.479529+00:00",
-      "summary": "The current NIC correction passed functional, race, Nogo and canonical source gates, but adversarial review found quadratic empty-bridge scanning and a slice allocation while Stack.mu is held. The original writer is resumed for the responsible CoordinatorNIC/port cleanup mechanism. These source findings remain actionable; performance is still open and no publication question or approval is inferred.",
+      "summary": "The final NIC correction passed all five affected gates, including actual new tests; performance and correctness reviewers accepted the changed API. This closes the actionable source-review findings on that candidate, not elapsed-time A/A or performance qualification. Root owns the verified quiet-worker recheck. Public6bd31cd remains unchanged and no source-publication question is pending.",
       "evidence": [
         {
           "label": "Uncached owner tests and both architecture analyzers",
@@ -74880,9 +74886,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "6bd31cd09cc922fb7235267e95c0d951ad1f43c8",
-        "observedAt": "2026-11-20T20:28:41.528804+00:00",
-        "disposition": "The current NIC correction passed functional, race, Nogo and canonical source gates, but adversarial review found quadratic empty-bridge scanning and a slice allocation while Stack.mu is held. The original writer is resumed for the responsible CoordinatorNIC/port cleanup mechanism. These source findings remain actionable; performance is still open and no publication question or approval is inferred.",
-        "nextAction": "tcp_go_final_maintainer_review fixes the CoordinatorNIC/port cleanup mechanism, revalidates the affected functional/race/source paths and obtains final review, then closes the source-bound performance obligations. Root retains publication/reply ownership; the public human threads are not claimed resolved by unlanded proofs.",
+        "observedAt": "2026-11-20T20:48:41.652999+00:00",
+        "disposition": "The final NIC correction passed all five affected gates, including actual new tests; performance and correctness reviewers accepted the changed API. This closes the actionable source-review findings on that candidate, not elapsed-time A/A or performance qualification. Root owns the verified quiet-worker recheck. Public6bd31cd remains unchanged and no source-publication question is pending.",
+        "nextAction": "Root rechecks verified quiet-worker availability and closes the source-bound elapsed-time A/A/performance obligation. Preserve the candidate’s exact functional/race/Nogo/source evidence and obtain any eventual publication review only after required qualification.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17103",
           "https://github.com/tamird/gvisor/actions/runs/42855947112/artifacts/13784755003",
@@ -74894,9 +74900,9 @@
           "https://github.com/gvisor/gvisor/pull/17103#pullrequestreview-5998248075"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "The corrected source mechanism and affected-gate/final-review evidence, performance results or new human feedback.",
+        "recheckCondition": "Verified quiet-worker/telemetry availability and valid source-bound performance evidence, or a changed candidate/human finding.",
         "implementationOwner": "tcp_go_final_maintainer_review",
-        "curatedAt": "2026-11-20T20:28:41.528804+00:00"
+        "curatedAt": "2026-11-20T20:48:41.652999+00:00"
       },
       "dcoAmendment": {
         "oldHead": "4931dbf1aa4c410b19efd980a3cd60b43b1c47d8",
@@ -74919,7 +74925,9 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
-      }
+      },
+      "nextStep": "Root rechecks verified quiet-worker availability and closes the source-bound elapsed-time A/A/performance obligation. Preserve the candidate’s exact functional/race/Nogo/source evidence and obtain any eventual publication review only after required qualification.",
+      "recheckCondition": "Verified quiet-worker/telemetry availability and valid source-bound performance evidence, or a changed candidate/human finding."
     },
     {
       "id": "pr:17104",
@@ -76232,17 +76240,20 @@
         "owner": "root",
         "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
         "providerHead": "1b9768b199524246fe8e4fa66a0b623069778780",
-        "mergeable": "MERGEABLE",
+        "mergeable": "CONFLICTING",
         "sourceHead": "1b9768b199524246fe8e4fa66a0b623069778780",
-        "observedAt": "2026-11-18T02:57:42.449215+00:00",
-        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
-        "nextAction": "Reconcile the retained three failing burst-loss seeds with separate timeout-counter fix #17113; verify current source composition before another measurement or review conclusion.",
-        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "observedAt": "2026-11-20T20:48:41.652999+00:00",
+        "disposition": "Current author-owned source now conflicts with upstream. The branch belongs to kekawia, not this contributor. Existing source-composition, review and performance evidence retains its recorded scope; the conflict does not authorize a foreign-branch push.",
+        "nextAction": "Root follows kekawia’s source refresh and re-evaluates the exact resulting source composition and retained review/performance obligations. Preserve author ownership; no foreign push, speculative fix or automatic notification.",
+        "recheckCondition": "The author’s changed source/base/mergeability or substantive review/dependency evidence.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16081"
         ],
-        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
-      }
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
+        "curatedAt": "2026-11-20T20:48:41.652999+00:00"
+      },
+      "nextStep": "Root follows kekawia’s source refresh and re-evaluates the exact resulting source composition and retained review/performance obligations. Preserve author ownership; no foreign push, speculative fix or automatic notification.",
+      "recheckCondition": "The author’s changed source/base/mergeability or substantive review/dependency evidence."
     },
     {
       "id": "branch:tcp-rto-retry-budget",
@@ -78923,8 +78934,8 @@
       "title": "Size workers for the memory accounting and process syscall tests",
       "url": "https://github.com/google/gvisor/pull/17181",
       "group": "tests",
-      "status": "open",
-      "summary": "Signed current-tip7397 mechanical rebasea1da8410eb9708a5e08fed9dfc95e8b98c74b1ec is delivered and MERGEABLE; range-diff is equivalent and original DCO retained. Exact-head DCO succeeds, resolving the former stale-DCO projection. Rebase comment7042476313 is posted and verified; no further comment or DCO decision is pending. All current checks, including First Pass 2077, pass under the existing owner watch. Aggregate review isAPPROVED. Auto-merge is null; no latest-update disablement cause is inferred. Existing disable events predate these updates (01:55/01:42UTC). The exact-head public CI cohort is complete; no stale-DCO or old quota blocker remains for this source.",
+      "status": "merged",
+      "summary": "Exact approved a1da8410eb9708a5e08fed9dfc95e8b98c74b1ec merged on2026-11-20T20:38:44Z asf4a3564b5bf8ed62a10a90679e49148692435405. Native API and the canonical snapshot agree. Current delivery/review/CI waits are complete; retained qualification remains source-bound.",
       "updatedAt": "2026-11-20T15:36:10.284882+00:00",
       "evidence": [
         {
@@ -78986,11 +78997,11 @@
       ],
       "head": "a1da8410eb9708a5e08fed9dfc95e8b98c74b1ec",
       "followup": {
-        "owner": "approved_rebase_queue",
+        "owner": "root",
         "sourceHead": "a1da8410eb9708a5e08fed9dfc95e8b98c74b1ec",
-        "observedAt": "2026-11-20T14:55:02.627201+00:00",
-        "disposition": "Signed current-tip7397 mechanical rebasea1da8410eb9708a5e08fed9dfc95e8b98c74b1ec is delivered and MERGEABLE; range-diff is equivalent and original DCO retained. Exact-head DCO succeeds, resolving the former stale-DCO projection. Rebase comment7042476313 is posted and verified; no further comment or DCO decision is pending. All current checks, including First Pass 2077, pass under the existing owner watch. Aggregate review isAPPROVED. Auto-merge is null; no latest-update disablement cause is inferred. Existing disable events predate these updates (01:55/01:42UTC). The exact-head public CI cohort is complete; no stale-DCO or old quota blocker remains for this source.",
-        "nextAction": "Follow existing maintainer review/import and human merge disposition on the exact delivered source. CI and rebase communication are complete; no retry, new notification, source churn or agent merge action.",
+        "observedAt": "2026-11-20T20:50:52.209685+00:00",
+        "disposition": "Exact approved a1da8410eb9708a5e08fed9dfc95e8b98c74b1ec merged on2026-11-20T20:38:44Z asf4a3564b5bf8ed62a10a90679e49148692435405. Native API and the canonical snapshot agree. Current delivery/review/CI waits are complete; retained qualification remains source-bound.",
+        "nextAction": "Retain the fork source under normal seven-day/public-source protections and let canonical cleanup establish eligibility. Follow only an actual post-merge regression or dependent adoption event; no ad hoc deletion or agent merge action.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17181",
           "https://github.com/tamird/gvisor/commit/b6294cc79",
@@ -79033,8 +79044,8 @@
           "https://github.com/gvisor/gvisor/pull/17181#issuecomment-7042476313"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Current-head CI or substantive review/source change.",
-        "curatedAt": "2026-11-20T15:36:10.284882+00:00",
+        "recheckCondition": "Canonical cleanup eligibility no earlier than2026-11-27, or actual post-merge/dependency evidence.",
+        "curatedAt": "2026-11-20T20:50:52.209685+00:00",
         "providerHead": "a1da8410eb9708a5e08fed9dfc95e8b98c74b1ec"
       },
       "settledReviews": [
@@ -79075,8 +79086,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "Follow existing maintainer review/import and human merge disposition on the exact delivered source. CI and rebase communication are complete; no retry, new notification, source churn or agent merge action.",
-      "recheckCondition": "Current-head CI or substantive review/source change."
+      "nextStep": "Retain the fork source under normal seven-day/public-source protections and let canonical cleanup establish eligibility. Follow only an actual post-merge regression or dependent adoption event; no ad hoc deletion or agent merge action.",
+      "recheckCondition": "Canonical cleanup eligibility no earlier than2026-11-27, or actual post-merge/dependency evidence."
     },
     {
       "id": "pr:17182",
@@ -97410,13 +97421,13 @@
       "repo": "google/gvisor",
       "number": 17568,
       "ref": "research/pty-flush-writable-notification-v2",
-      "head": "428aaa7afcbb5cde47d965639da811061fc06ff6",
+      "head": "f1a42e1b95c109bbddc49003ad084a9b28ab0664",
       "title": "Register the PTY writer before flushing its input",
       "url": "https://github.com/google/gvisor/pull/17568",
       "group": "ci-flakes",
       "status": "open",
       "updatedAt": "2026-11-20T15:15:34.980085+00:00",
-      "summary": "Prepared PTY correction has 16 native and 16 systrap cases/strict-lint and final-review proof. Public 428aaa7 remains unchanged; the human finding and reply remain unresolved until actual authorized delivery/readback. Exact proposed source cfff4ca980ef406bf3eec85cf8b8b8921cd408bb and its existing publication boundary are preserved. Prior handoffs describe a source question, but no original request/approval provenance is currently available; this is root-owned source-bound authorization reconciliation, not an asserted pending user decision, approval or refusal.",
+      "summary": "User-approved f1a42e1b95c109bbddc49003ad084a9b28ab0664 is published by exact lease and native MERGEABLE. The approved behavior-only reply4647437580 is posted and Milan’s native review re-request persisted; no automatic merge change occurred. DCO, lint, Gazelle and file-header checks pass; Go export was pending at the last unique observation. First Pass2140 independently failed admission before agent assignment: exit80, stack_errored=true, agent_id=null, started_at=null and the author1535036 rolling30-day360,000-compute-minute quota. No project test ran. The former missing-approval/provenance obligation is retired by this actual user approval and delivery.",
       "evidence": [
         {
           "label": "Formatter amendment",
@@ -97424,12 +97435,12 @@
         }
       ],
       "followup": {
-        "sourceHead": "428aaa7afcbb5cde47d965639da811061fc06ff6",
+        "sourceHead": "f1a42e1b95c109bbddc49003ad084a9b28ab0664",
         "owner": "root",
-        "nextAction": "Root asks original implementation owner pty_feedback_resume for the existing exact source-question/approval provenance. Preserve cfff qualification and unchanged public428; the unresolved source request is not resolved or approved by this policy-answer triage. Do not re-ask the user without original provenance.",
+        "nextAction": "Root follows exact-head Go export and existing reviewer/import disposition. Root/operator rechecks only future quota-clearance, new-head or check events;2140 diagnosis is terminal, with no further polling, retry, CI-owner outreach or user question.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-20T20:28:41.528804+00:00",
-        "recheckCondition": "Verified source-publication authorization/provenance or an actual new human/source change.",
+        "observedAt": "2026-11-20T20:48:41.652999+00:00",
+        "recheckCondition": "Exact-head check/reviewer/import change or independently evidenced provider quota clearance.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17568",
           "https://github.com/tamird/gvisor/commit/63ff9616fe4c004db00310ea45b6e06a521f803c",
@@ -97437,10 +97448,13 @@
           "https://buildkite.com/gvisor/first-pass/builds/1604",
           "https://buildkite.com/gvisor/first-pass/builds/1604#01a1eae3-d112-4ab8-8b17-6d2f1daa5da0",
           "https://github.com/google/gvisor/pull/17568#discussion_r4639197787",
-          "https://github.com/gvisor/gvisor/pull/17568#discussion_r4647187737"
+          "https://github.com/gvisor/gvisor/pull/17568#discussion_r4647187737",
+          "https://github.com/tamird/gvisor/commit/f1a42e1b95c109bbddc49003ad084a9b28ab0664",
+          "https://github.com/gvisor/gvisor/pull/17568#discussion_r4647437580",
+          "https://buildkite.com/gvisor/first-pass/builds/2140#01a1faae-cbe2-4117-b733-0f2d17c6bcdf"
         ],
-        "disposition": "Milan’s new complete-thread reply4647187737 cites the documented ABI-only Linux-source rule in response to Tamir’s policy question4640750521. It adds no source requirement beyond the original behavior-only comment. Preparedcfff still has native16/systrap16/strict/final-review proof, while public428aaa remains unchanged. Root retains the existing source-approval/provenance reconciliation; no new user question, automatic acknowledgement or inferred source-publication approval. Root consumed the native citation reply; this triages communication only and retains the substantive source-publication boundary.",
-        "curatedAt": "2026-11-20T20:28:41.528804+00:00",
+        "disposition": "User-approved f1a42e1b95c109bbddc49003ad084a9b28ab0664 is published by exact lease and native MERGEABLE. The approved behavior-only reply4647437580 is posted and Milan’s native review re-request persisted; no automatic merge change occurred. DCO, lint, Gazelle and file-header checks pass; Go export was pending at the last unique observation. First Pass2140 independently failed admission before agent assignment: exit80, stack_errored=true, agent_id=null, started_at=null and the author1535036 rolling30-day360,000-compute-minute quota. No project test ran. The former missing-approval/provenance obligation is retired by this actual user approval and delivery.",
+        "curatedAt": "2026-11-20T20:48:41.652999+00:00",
         "attentionDispositions": [
           {
             "reason": "author-feedback",
@@ -97596,8 +97610,32 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Root verifies original request, any approval/supersession and exact source binding before projecting a contributor queue or publishing. Preserve qualification and current public source; do not re-ask, assume approval or add a manual-DCO task.",
-      "recheckCondition": "Verified original request/approval provenance or substantive source/qualification change."
+      "nextStep": "Root follows exact-head Go export and existing reviewer/import disposition. Root/operator rechecks only future quota-clearance, new-head or check events;2140 diagnosis is terminal, with no further polling, retry, CI-owner outreach or user question.",
+      "recheckCondition": "Exact-head check/reviewer/import change or independently evidenced provider quota clearance.",
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "f1a42e1b95c109bbddc49003ad084a9b28ab0664",
+          "baseHead": "428aaa7afcbb5cde47d965639da811061fc06ff6",
+          "url": "https://github.com/tamird/gvisor/commit/f1a42e1b95c109bbddc49003ad084a9b28ab0664",
+          "title": "Register the PTY writer before flushing its input",
+          "outcome": "approved",
+          "observedAt": "2026-11-20T20:48:41.652999+00:00",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/17568",
+          "note": "Root verified the actual user approval of f1 plus the reply in question call_547a4ba7fa7340d697a7318a1d2daead, then completed exact-lease delivery. Approval is consumed; this observation time is not an invented user-message timestamp."
+        },
+        {
+          "kind": "reply",
+          "head": "f1a42e1b95c109bbddc49003ad084a9b28ab0664",
+          "url": "https://github.com/gvisor/gvisor/pull/17568#discussion_r4639197787",
+          "title": "Reply to Milan on observable behavior",
+          "body": "Rebased on master and updated the comment to describe observable behavior, without Linux implementation references.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "posted",
+          "observedAt": "2026-11-20T20:48:41.652999+00:00",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/17568#discussion_r4647437580",
+          "note": "The user-approved reply omits the clock sentence; root verified its actual posted body. Native review re-request for milantracy persisted alongside kerumeto under standing authorization."
+        }
+      ]
     },
     {
       "id": "pr:grpc/grpc:43825",
@@ -100208,12 +100246,12 @@
       "updatedAt": "2026-11-20T14:55:02.627201+00:00",
       "followup": {
         "owner": "root",
-        "curatedAt": "2026-11-20T20:28:41.528804+00:00",
+        "curatedAt": "2026-11-20T20:48:41.652999+00:00",
         "sourceHead": "9c2814db01620f643809f38f3f2e929ab35f4aef",
-        "observedAt": "2026-11-20T20:28:41.528804+00:00",
-        "disposition": "Delivered9c2814 remains unchanged. Etienne approved this exact head in5998746401 at20:13:34UTC; Milan’s earlier CHANGES_REQUESTED still requires reviewer disposition. GitHub source checks/DCO pass. New FirstPass2135 and main55518 statuses are PENDING, replacing2076 as the latest CI observation;2076’s independently verified rolling quota failure remains historical, not the current latest failure. Pending statuses alone do not establish actual test execution or quota clearance.",
-        "nextAction": "Root follows exact-head2135/55518 through canonical results and the existing requested reviewer disposition. Do not churn source, send duplicate review requests or infer recovery from status alone.",
-        "recheckCondition": "Actual current-build/check results, reviewer/import change or provider recovery evidence.",
+        "observedAt": "2026-11-20T20:48:41.652999+00:00",
+        "disposition": "Exact9c2814 has Etienne’s fresh approval and passing GitHub source/DCO checks; Milan’s earlier changes-requested review still awaits reviewer disposition. Root’s unique20:43 canonical observation verified First Pass2135 STARTED with its failed AMD syscall attempt subsequently passed, and main55518 STARTED with15 recovered attempts plus four pending retries (ARM Docker6 and Go runtime2/4/9, prior exits-1). No source or quota attribution follows from those interruptions; old2076 quota is historical.",
+        "nextAction": "Root consumes the next actual current-build/runtime event and existing reviewer disposition. No new poll from this metadata owner, manual retry, source churn or duplicate outreach.",
+        "recheckCondition": "A new exact-head canonical build/runtime event or reviewer/import change.",
         "delivery": {
           "source": "fb4513fe56a2a8fb94fbd6da8d6c61c827dc5688",
           "approvedSource": "f2afd9bb79190ea304d402f1063810a286c1fe2e",
@@ -100247,8 +100285,8 @@
         ]
       },
       "summary": "License-manifest correction9c2814db01620f643809f38f3f2e929ab35f4aef is delivered OPEN/MERGEABLE/BLOCKED with signature/DCO verified. GitHub Go44755227977, lint/Gazelle/file-header/generation checks pass. FirstPass2076 remains upload-only exit80 before any license test, without diagnostic log; owner is following CI. Rebase comment7042475031 is posted. Root saved and verified milantracy review re-request alongside parth-opensrc/riverafernando using the user-authorized native action. Review5985707150 remains unresolved awaiting reviewer disposition; no reply/re-request is pending human approval. Auto-merge is null and no merge action occurred.",
-      "nextStep": "buildifier_license_fix follows exact9c FirstPass admission diagnosis and current checks; root follows the saved reviewer request. Preserve actual review status until substantive response, with no duplicate comment/re-request or source churn.",
-      "recheckCondition": "Exact-head CI/provider admission evidence or substantive reviewer response."
+      "nextStep": "Root consumes the next actual current-build/runtime event and existing reviewer disposition. No new poll from this metadata owner, manual retry, source churn or duplicate outreach.",
+      "recheckCondition": "A new exact-head canonical build/runtime event or reviewer/import change."
     },
     {
       "id": "branch:python-strict-typechecking",
@@ -100331,15 +100369,17 @@
       "followup": {
         "owner": "root",
         "sourceHead": "324cf87d3065afb993520a4104720ef7c7647b0b",
-        "observedAt": "2026-11-20T20:28:41.528804+00:00",
-        "disposition": "Supplier PR#236 remains OPEN/MERGEABLE at approved324cf87. Upstream Linux and Windows tests, Style and Version pass; release-asset jobs in44807549343 remain pending. Opening approval is consumed; compatible fixed artifacts and gVisor adoption are not yet established.",
-        "nextAction": "Root consumes release-asset jobs and maintainer feedback, verifies compatible rebuilt artifacts, then hands bound inputs to the gVisor shared-helper caller owner.",
-        "recheckCondition": "Release assets/maintainer disposition or actual compatible artifact and caller evidence.",
+        "observedAt": "2026-11-20T20:48:41.652999+00:00",
+        "disposition": "Supplier #236 CI44807549343 is entirely passing at approved324. Actual generated artifacts failed adoption compatibility: AMD requires GLIBC2.38 and the macOS binary requires26.5. The gVisor owner is preparing compatible products from the existing musl/macOS15.5 paths after cheap preflights; supported floors are not raised. Source PR delivery is complete, while compatible artifact and caller qualification remain open.",
+        "nextAction": "Root follows upstream source/release disposition; tcp_benchmark_final_correctness prepares and verifies compatible fixed artifacts before actual gVisor caller qualification. Do not treat passing supplier CI as compatibility proof.",
+        "recheckCondition": "Verified compatible fixed artifacts and bound gVisor caller evidence, or upstream review/release change.",
         "evidence": [
           "https://github.com/kiron1/bazel-compile-commands/pull/236",
           "https://github.com/kiron1/bazel-compile-commands/actions/runs/44807549343"
         ]
-      }
+      },
+      "nextStep": "Root follows upstream source/release disposition; tcp_benchmark_final_correctness prepares and verifies compatible fixed artifacts before actual gVisor caller qualification. Do not treat passing supplier CI as compatibility proof.",
+      "recheckCondition": "Verified compatible fixed artifacts and bound gVisor caller evidence, or upstream review/release change."
     }
   ],
   "edges": [
@@ -136213,8 +136253,8 @@
       "group": "bazel",
       "owner": "root",
       "technicalOwner": "compdb_final_correctness",
-      "updatedAt": "2026-11-20T20:28:41.528804+00:00",
-      "summary": "Supplier PR#236 remains OPEN/MERGEABLE at approved324cf87. Upstream Linux and Windows tests, Style and Version pass; release-asset jobs in44807549343 remain pending. Opening approval is consumed; compatible fixed artifacts and gVisor adoption are not yet established.",
+      "updatedAt": "2026-11-20T20:48:41.652999+00:00",
+      "summary": "Supplier #236 CI44807549343 is entirely passing at approved324. Actual generated artifacts failed adoption compatibility: AMD requires GLIBC2.38 and the macOS binary requires26.5. The gVisor owner is preparing compatible products from the existing musl/macOS15.5 paths after cheap preflights; supported floors are not raised. Source PR delivery is complete, while compatible artifact and caller qualification remain open.",
       "findings": [
         {
           "text": "All Linux owning/style gates and all three native Windows cases passed, and two final independent reviewers found no blocker. The coordinator’s independent source-tree comparison found only .github/workflows/main.yaml different between test CI7f and intended55; this supports the exact tested-source binding, not new publication authority.",
@@ -136240,16 +136280,16 @@
           "url": "https://github.com/kiron1/bazel-compile-commands/pull/236"
         }
       ],
-      "nextStep": "Root consumes release-asset jobs and maintainer feedback, verifies compatible rebuilt artifacts, then hands bound inputs to the gVisor shared-helper caller owner.",
+      "nextStep": "Root follows upstream source/release disposition; tcp_benchmark_final_correctness prepares and verifies compatible fixed artifacts before actual gVisor caller qualification. Do not treat passing supplier CI as compatibility proof.",
       "recheckCondition": "Exact-source upstream CI/review, accepted release or compatible artifacts, then source-bound gVisor caller results.",
       "head": "324cf87d3065afb993520a4104720ef7c7647b0b",
       "followup": {
         "owner": "root",
         "implementationOwner": "compdb_final_correctness",
-        "observedAt": "2026-11-20T20:28:41.528804+00:00",
-        "disposition": "Supplier PR#236 remains OPEN/MERGEABLE at approved324cf87. Upstream Linux and Windows tests, Style and Version pass; release-asset jobs in44807549343 remain pending. Opening approval is consumed; compatible fixed artifacts and gVisor adoption are not yet established.",
-        "nextAction": "Root consumes release-asset jobs and maintainer feedback, verifies compatible rebuilt artifacts, then hands bound inputs to the gVisor shared-helper caller owner.",
-        "recheckCondition": "Release assets/maintainer disposition or actual compatible artifact and caller evidence.",
+        "observedAt": "2026-11-20T20:48:41.652999+00:00",
+        "disposition": "Supplier #236 CI44807549343 is entirely passing at approved324. Actual generated artifacts failed adoption compatibility: AMD requires GLIBC2.38 and the macOS binary requires26.5. The gVisor owner is preparing compatible products from the existing musl/macOS15.5 paths after cheap preflights; supported floors are not raised. Source PR delivery is complete, while compatible artifact and caller qualification remain open.",
+        "nextAction": "Root follows upstream source/release disposition; tcp_benchmark_final_correctness prepares and verifies compatible fixed artifacts before actual gVisor caller qualification. Do not treat passing supplier CI as compatibility proof.",
+        "recheckCondition": "Verified compatible fixed artifacts and bound gVisor caller evidence, or upstream review/release change.",
         "evidence": [
           "https://github.com/tamird/bazel-compile-commands/commit/df68514d2c922a7ecf8026f3954f615ec21251b7",
           "https://github.com/tamird/gvisor/blob/040e89ac391d29bdbc3f5a517eb2ef659055e068/registry.json"
@@ -136270,5 +136310,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-20T20:28:41.528804+00:00"
+  "updatedAt": "2026-11-20T20:48:41.652999+00:00"
 }
