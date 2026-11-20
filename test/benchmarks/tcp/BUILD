@@ -52,10 +52,13 @@ sh_binary(
         "--bazel-helpers",
         "$(rlocationpath :tcp_proxy)",
         "$(rlocationpath :nsjoin)",
+        "--iperf-binary",
+        "$(rootpath @iperf//:iperf3)",
     ],
     data = [
         ":nsjoin",
         ":tcp_proxy",
+        "@iperf//:iperf3",
     ],
     visibility = ["//:sandbox"],
 )

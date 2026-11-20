@@ -1,0 +1,10 @@
+# Expose the upstream OpenSSL license text for images that link OpenSSL.
+
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -380,3 +380,5 @@
+     },
+     visibility = ["//visibility:public"],
+ )
++
++exports_files(["LICENSE.txt"])
