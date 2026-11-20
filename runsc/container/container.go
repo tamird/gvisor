@@ -1081,8 +1081,7 @@ func (c *Container) Checkpoint(conf *config.Config, imagePath string, opts sandb
 }
 
 // CheckpointTask saves a container that has exclusive use of its sandbox.
-// It rejects shared sandboxes before creating checkpoint files.
-func (c *Container) CheckpointTask(conf *config.Config, imagePath string, opts sandbox.CheckpointOpts) (retErr error) {
+func (c *Container) CheckpointTask(conf *config.Config, imagePath string, opts sandbox.CheckpointOpts) error {
 	if !c.IsSandboxRoot() {
 		return fmt.Errorf("task checkpoints of child containers are not supported")
 	}
@@ -1092,17 +1091,8 @@ func (c *Container) CheckpointTask(conf *config.Config, imagePath string, opts s
 	if err := c.Sandbox.CheckTaskCheckpointScope(c.ID); err != nil {
 		return err
 	}
-	_, statErr := os.Stat(imagePath)
 	if err := os.MkdirAll(imagePath, 0755); err != nil {
 		return fmt.Errorf("creating checkpoint image directory: %w", err)
-	}
-	if os.IsNotExist(statErr) {
-		defer func() {
-			if retErr != nil {
-				// Only remove the new directory if it is still empty.
-				_ = os.Remove(imagePath)
-			}
-		}()
 	}
 	opts.ContainerOnly = true
 	return c.Checkpoint(conf, imagePath, opts)

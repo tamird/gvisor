@@ -27,9 +27,11 @@ import (
 	"gvisor.dev/gvisor/runsc/boot/sentryapi"
 )
 
-// containerManager supplies distinct savings pairs to concurrent exports.
+// containerManager supplies control RPCs for sandbox tests.
 // Its name matches the control RPC receiver in the sandbox process.
 type containerManager struct {
+	checkpoint func() error
+
 	entered chan<- struct{}
 	release <-chan struct{}
 

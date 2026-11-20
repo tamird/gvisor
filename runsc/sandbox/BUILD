@@ -79,6 +79,7 @@ go_test(
         "//pkg/control/server",
         "//pkg/prometheus",
         "//pkg/sentry/control/controlapi",
+        "//pkg/sentry/state/checkpointfiles",
         "//runsc/boot/sentryapi",
         "//runsc/cgroup",
         "//runsc/config",
