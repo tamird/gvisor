@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T11:05:17.621311+00:00",
+    "updatedAt": "2026-11-20T14:38:42.090235+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -26498,14 +26498,14 @@
       "url": "https://github.com/google/gvisor/pull/16098",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-19T18:59:24.568877+00:00",
-      "summary": "The already-approved final revision is published and its fork/PR heads verified. DCO, generate, gazelle, lint, label and fileheader passed. Exact-head First Pass1811 was rejected before an agent started because the author reached the daily36000compute-minute quota; this is not a source failure or full CI pass.",
+      "updatedAt": "2026-11-20T14:38:15.867463+00:00",
+      "summary": "approved_rebase_queue read complete review5985786410, old inline4619004827 and current06b8 BUILD/test source. The new review explicitly reports no findings and confirms nogo_compiler_export plus FindFile resolves the earlier rootpath/runfiles issue; its review-comments endpoint is empty. No new source fix, reply or publication is needed. Internal importer/build validation remains unverified.",
       "followup": {
         "owner": "root",
         "sourceHead": "06b8ee2c46ca4f71c261da86f7b1905032e8b08f",
-        "observedAt": "2026-11-18T20:00:58.033079+00:00",
-        "disposition": "The already-approved final revision is published and its fork/PR heads verified. DCO, generate, gazelle, lint, label and fileheader passed. Exact-head First Pass1811 was rejected before an agent started because the author reached the daily36000compute-minute quota; this is not a source failure or full CI pass.",
-        "nextAction": "Root follows exact published-head maintainer review/import and actual quota recovery through the existing lifecycle sweep. No duplicate source push, approval question, acknowledgement, merge or manual CI retry. First Pass remains unmet until the provider actually executes it. Exact approved reply/body are saved; native rexren re-request returned404 despite the correct explicit API contract. Its cause is UNKNOWN; preserve existing kerumeto request and no alternate notification.",
+        "observedAt": "2026-11-20T14:38:15.867463+00:00",
+        "disposition": "approved_rebase_queue read complete review5985786410, old inline4619004827 and current06b8 BUILD/test source. The new review explicitly reports no findings and confirms nogo_compiler_export plus FindFile resolves the earlier rootpath/runfiles issue; its review-comments endpoint is empty. No new source fix, reply or publication is needed. Internal importer/build validation remains unverified.",
+        "nextAction": "Preserve current06b8 fixture and consumed external feedback; root follows actual internal validation/importer evidence. Do not reopen the resolved fixture repair or send an automatic reply.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16098",
           "https://github.com/tamird/gvisor/commit/66eb27741",
@@ -26521,10 +26521,12 @@
           "https://github.com/tamird/gvisor/commit/8f15f127381605e0d3254cbdb5818bb594db0364",
           "https://buildkite.com/gvisor/first-pass/builds/1463",
           "https://buildkite.com/gvisor/first-pass/builds/1463#01a1ead5-9910-4de2-86ba-488c8da31450",
-          "https://buildkite.com/gvisor/first-pass/builds/1463#01a1ead5-9915-46a8-995f-da5317a484c1"
+          "https://buildkite.com/gvisor/first-pass/builds/1463#01a1ead5-9915-46a8-995f-da5317a484c1",
+          "https://github.com/google/gvisor/pull/16098#discussion_r4619004827",
+          "https://github.com/google/gvisor/pull/16098#pullrequestreview-5985786410"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Genuine reviewer/import/source change, actual provider quota recovery or required check result.",
+        "recheckCondition": "New substantive feedback/source change or actual internal validation/importer evidence.",
         "preparedRevision": {
           "head": "f09702e855ccb3a0da8708479b3563d56da82768",
           "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
@@ -26546,7 +26548,7 @@
           ],
           "publication": "Final metadata-only certification revision published 06b8ee2c46ca4f71c261da86f7b1905032e8b08f; qualified prepared tree unchanged"
         },
-        "curatedAt": "2026-11-19T18:59:24.568877+00:00",
+        "curatedAt": "2026-11-20T14:38:15.867463+00:00",
         "publicationConditionHistory": [
           {
             "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
@@ -26819,6 +26821,12 @@
         "attentionDispositions": [
           {
             "reason": "author-feedback",
+            "title": "Fixture review confirms earlier issue addressed",
+            "nextAction": "Preserve current06b8 fixture and consumed external feedback; root follows actual internal validation/importer evidence. Do not reopen the resolved fixture repair or send an automatic reply.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/16098#discussion_r4619004827",
+              "https://github.com/google/gvisor/pull/16098#pullrequestreview-5985786410"
+            ],
             "binding": {
               "reviewDecision": "REVIEW_REQUIRED",
               "approvedHead": null,
@@ -26854,7 +26862,7 @@
                     "state": "COMMENTED",
                     "submittedAt": "2026-11-03T02:22:57Z",
                     "updatedAt": "2026-11-03T02:22:58Z",
-                    "authorAssociation": "CONTRIBUTOR",
+                    "authorAssociation": "MEMBER",
                     "author": {
                       "login": "rexren-gif",
                       "__typename": "User"
@@ -26922,13 +26930,30 @@
                     "state": "COMMENTED",
                     "submittedAt": "2026-11-18T18:38:18Z",
                     "updatedAt": "2026-11-18T18:38:18Z",
-                    "authorAssociation": "CONTRIBUTOR",
+                    "authorAssociation": "MEMBER",
                     "author": {
                       "login": "rexren-gif",
                       "__typename": "User"
                     },
                     "commit": {
                       "oid": "8f15f127381605e0d3254cbdb5818bb594db0364"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABZMfaKg",
+                    "url": "https://github.com/google/gvisor/pull/16098#pullrequestreview-5985786410",
+                    "body": "[🤖] Review agent has no findings.\n\nThe new `nogo_compiler_export` rule and updated `testutil.FindFile` path resolve the `check_test` `$(rootpath)` and runfiles-path issue from the previous review. We have not yet verified the full change against our internal build.\n\n---\n<sub>Posted by an AI review agent on behalf of @rexren-gif. Please address valid findings before human review, or close them with a reason.</sub>\n\n<!-- gvisor-pr-review v1 sha=06b8ee2c46ca4f71c261da86f7b1905032e8b08f round=3 fp= -->",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-11-20T00:42:44Z",
+                    "updatedAt": "2026-11-20T00:42:44Z",
+                    "authorAssociation": "MEMBER",
+                    "author": {
+                      "login": "rexren-gif",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "06b8ee2c46ca4f71c261da86f7b1905032e8b08f"
                     }
                   },
                   {
@@ -27053,16 +27078,7 @@
                 ]
               },
               "sourceHead": "06b8ee2c46ca4f71c261da86f7b1905032e8b08f"
-            },
-            "at": "2026-11-19T18:16:13.048826+00:00",
-            "owner": "root",
-            "evidence": [
-              "https://github.com/gvisor/gvisor/pull/16098#discussion_r4619004827",
-              "https://github.com/gvisor/gvisor/pull/16098#issuecomment-6993741644"
-            ],
-            "disposition": "Published06b8 fixture uses flags_compiler_export data alias and existing archive adapter; singular rootpath/environment fixture removed. User-approved substantive reply already posted. Native currenthead/thread readback verified, no newer inline reply. Private compiler integration is still unverified; current kerumeto review request retained. No duplicate reply, reviewer notification, source update or private-build success claim.",
-            "title": "Published Nogo fixture correction and approved reply verified",
-            "nextAction": "Preserve current kerumeto review request; await actual CI execution and private compiler integration evidence. No duplicate reply or source update."
+            }
           }
         ],
         "feedbackReconciliation": {
@@ -27281,8 +27297,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Agent"
       },
-      "nextStep": "Root follows exact published-head maintainer review/import and actual quota recovery through the existing lifecycle sweep. No duplicate source push, approval question, acknowledgement, merge or manual CI retry. First Pass remains unmet until the provider actually executes it. Exact approved reply/body are saved; native rexren re-request returned404 despite the correct explicit API contract. Its cause is UNKNOWN; preserve existing kerumeto request and no alternate notification.",
-      "recheckCondition": "Genuine reviewer/import/source change, actual provider quota recovery or required check result."
+      "nextStep": "Preserve current06b8 fixture and consumed external feedback; root follows actual internal validation/importer evidence. Do not reopen the resolved fixture repair or send an automatic reply.",
+      "recheckCondition": "New substantive feedback/source change or actual internal validation/importer evidence."
     },
     {
       "id": "pr:16096",
@@ -99940,20 +99956,20 @@
       "repo": "google/gvisor",
       "number": 17816,
       "ref": "research/buildifier-prebuilt-supplier",
-      "head": "fb4513fe56a2a8fb94fbd6da8d6c61c827dc5688",
+      "head": "9c2814db01620f643809f38f3f2e929ab35f4aef",
       "title": "Use prebuilt Buildifier for native lint",
       "url": "https://github.com/google/gvisor/pull/17816",
       "group": "rbe",
       "status": "open",
-      "updatedAt": "2026-11-20T02:29:51.682749+00:00",
+      "updatedAt": "2026-11-20T14:37:40.197555+00:00",
       "followup": {
-        "owner": "root",
-        "curatedAt": "2026-11-20T02:29:51.682749+00:00",
-        "sourceHead": "fb4513fe56a2a8fb94fbd6da8d6c61c827dc5688",
-        "observedAt": "2026-11-20T02:29:51.682749+00:00",
-        "disposition": "Candidate5f28105ac374be8f9643fb3188ff71b93d51a5d7 fixes the missing buildifier_prebuilt license manifest entry. Canonical225-entry license check44659989770, ARM tests44660010646 and actual caller44660018627 pass; two independent reviews found no issues. Full make lint/lint-cc were not rerun. Publicfb4513fe remains unchanged; the existing exact amendment and specific-reply approval question is pending.",
-        "nextAction": "Await the existing exact amendment/reply decision once, preserving current public source and qualified evidence. Publish only the approved candidate/reply; no repeated question or proposal frame.",
-        "recheckCondition": "Existing amendment/reply answer, substantive source/review change, or relevant qualification failure.",
+        "owner": "buildifier_license_fix",
+        "curatedAt": "2026-11-20T14:37:40.197555+00:00",
+        "sourceHead": "9c2814db01620f643809f38f3f2e929ab35f4aef",
+        "observedAt": "2026-11-20T14:37:40.197555+00:00",
+        "disposition": "Authorized mechanical license-manifest amendment9c2814db01620f643809f38f3f2e929ab35f4aef is delivered; provider verifies head/tree/signature/DCO and exact old-head lease. The review fix is published, but the thread remains unresolved and public reply/re-review request stay with root. Etienne’s prior approval was dismissed and Milan’s CHANGES_REQUESTED remains. FirstPass2076 has one Pipeline upload failure, exit80 before tests; buildifier_license_fix owns exact CI diagnosis. GitHub source checks are running; no license regression is established.",
+        "nextAction": "buildifier_license_fix follows exact9c CI/DCO/mergeability and diagnoses FirstPass2076 admission. Root reconciles authorized public reply/re-review separately; preserve current source and do not mark review resolved before actual communication/readback.",
+        "recheckCondition": "Exact authorized amendment publication, current qualification/CI or substantive feedback, or an existing contributor decision.",
         "delivery": {
           "source": "fb4513fe56a2a8fb94fbd6da8d6c61c827dc5688",
           "approvedSource": "f2afd9bb79190ea304d402f1063810a286c1fe2e",
@@ -99979,12 +99995,13 @@
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/44659989770",
           "https://github.com/tamird/gvisor/actions/runs/44660010646",
-          "https://github.com/tamird/gvisor/actions/runs/44660018627"
+          "https://github.com/tamird/gvisor/actions/runs/44660018627",
+          "https://github.com/google/gvisor/pull/17816#pullrequestreview-5985707150"
         ]
       },
-      "summary": "Candidate5f28105ac374be8f9643fb3188ff71b93d51a5d7 fixes the missing buildifier_prebuilt license manifest entry. Canonical225-entry license check44659989770, ARM tests44660010646 and actual caller44660018627 pass; two independent reviews found no issues. Full make lint/lint-cc were not rerun. Publicfb4513fe remains unchanged; the existing exact amendment and specific-reply approval question is pending.",
-      "nextStep": "Await the existing exact amendment/reply decision once, preserving current public source and qualified evidence. Publish only the approved candidate/reply; no repeated question or proposal frame.",
-      "recheckCondition": "Existing amendment/reply answer, substantive source/review change, or relevant qualification failure."
+      "summary": "Authorized mechanical license-manifest amendment9c2814db01620f643809f38f3f2e929ab35f4aef is delivered; provider verifies head/tree/signature/DCO and exact old-head lease. The review fix is published, but the thread remains unresolved and public reply/re-review request stay with root. Etienne’s prior approval was dismissed and Milan’s CHANGES_REQUESTED remains. FirstPass2076 has one Pipeline upload failure, exit80 before tests; buildifier_license_fix owns exact CI diagnosis. GitHub source checks are running; no license regression is established.",
+      "nextStep": "buildifier_license_fix follows exact9c CI/DCO/mergeability and diagnoses FirstPass2076 admission. Root reconciles authorized public reply/re-review separately; preserve current source and do not mark review resolved before actual communication/readback.",
+      "recheckCondition": "Exact authorized amendment publication, current qualification/CI or substantive feedback, or an existing contributor decision."
     },
     {
       "id": "branch:python-strict-typechecking",
@@ -134963,10 +134980,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T11:05:17.621311+00:00",
-      "summary": "Audited cleanup44721742575 passes10XML cases with zero skips and complete terminal BEP/source guards. Unchanged-production-equivalent baseline44721745932 reproduces identical mount_setattr0x5c0b EPERM in all four ID-map variants with relevant production blobs matching public4d; accepted checkpoint e895 is not the cause. Ordering prototype44723264523 compiled/executed all four variants, but its new MountSetattr in privileged OpenMountRPC returned EPERM before descriptor transfer, so no ordering repair is established. CI-only namespace-context control44724426175 is live on795f5ca309f84b95151c74d96d8ad86858caec0e, preserving opener namespace for diagnosis and retaining all four/security assertions. No final namespace-policy change, production fix or full retry. Full shim61-case passes and accepted e895 scopes remain valid; full AMD, ARM KVM hardware, performance and all source-publication holds remain open. Fork inventory has zero registered runners.",
-      "nextStep": "Fixture owner audits namespace-context control to separate actual privilege/ordering causes before another hypothesis or production change. Preserve security assertions and passing cleanup/shim/component products; no unfiltered repeat or incompatible ARM hardware retry. Root follows existing publication/quiet-host questions without new frames or provisioning.",
-      "recheckCondition": "Audited exact-phase namespace/ordering evidence, verified ARM hardware/quiet-host context, substantive feedback or an existing publication answer.",
+      "updatedAt": "2026-11-20T14:37:40.197555+00:00",
+      "summary": "User explicitly holds sensitive namespace, ID-map and mount-attribute security investigation until Daybreak availability is actually confirmed. Root retains ownership and all existing evidence; no new experiments or edits in that scope. Expected availability tomorrow is not confirmation. Independently owned baseline ID-map failures are not universal prerequisites for unrelated patches. Accepted e895/component/full-shim and cleanup proofs remain scoped; full AMD, ARM KVM hardware and controlled performance still have their recorded gates. Fresh recovery API14:32:20 found no new feedback/source/CI semantic changes; existing non-sensitive publication, CI/conflict and contributor obligations are being advanced through their assigned owners. Existing held Python proposals and source/communication approval boundaries remain unchanged.",
+      "nextStep": "Root rechecks the sensitive investigation only on actual confirmed Daybreak availability. approved_rebase_queue consumes current non-sensitive feedback/conflicts and reconciles standing authorizations; buildifier_license_fix owns17816 mechanical amendment. Advance unrelated authorized lifecycle steps independently of the held baseline investigation. Preserve existing source/reply review boundaries and unanswered publication decisions without new questions or history copies.",
+      "recheckCondition": "Confirmed Daybreak availability for the held scope; otherwise actual non-sensitive publication/CI/review/dependency changes or answers to existing source decisions.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135441,12 +135458,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T11:05:17.621311+00:00",
-        "nextAction": "Fixture owner audits namespace-context control to separate actual privilege/ordering causes before another hypothesis or production change. Preserve security assertions and passing cleanup/shim/component products; no unfiltered repeat or incompatible ARM hardware retry. Root follows existing publication/quiet-host questions without new frames or provisioning.",
-        "recheckCondition": "Audited exact-phase namespace/ordering evidence, verified ARM hardware/quiet-host context, substantive feedback or an existing publication answer.",
+        "curatedAt": "2026-11-20T14:37:40.197555+00:00",
+        "nextAction": "Root rechecks the sensitive investigation only on actual confirmed Daybreak availability. approved_rebase_queue consumes current non-sensitive feedback/conflicts and reconciles standing authorizations; buildifier_license_fix owns17816 mechanical amendment. Advance unrelated authorized lifecycle steps independently of the held baseline investigation. Preserve existing source/reply review boundaries and unanswered publication decisions without new questions or history copies.",
+        "recheckCondition": "Confirmed Daybreak availability for the held scope; otherwise actual non-sensitive publication/CI/review/dependency changes or answers to existing source decisions.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Audited cleanup44721742575 passes10XML cases with zero skips and complete terminal BEP/source guards. Unchanged-production-equivalent baseline44721745932 reproduces identical mount_setattr0x5c0b EPERM in all four ID-map variants with relevant production blobs matching public4d; accepted checkpoint e895 is not the cause. Ordering prototype44723264523 compiled/executed all four variants, but its new MountSetattr in privileged OpenMountRPC returned EPERM before descriptor transfer, so no ordering repair is established. CI-only namespace-context control44724426175 is live on795f5ca309f84b95151c74d96d8ad86858caec0e, preserving opener namespace for diagnosis and retaining all four/security assertions. No final namespace-policy change, production fix or full retry. Full shim61-case passes and accepted e895 scopes remain valid; full AMD, ARM KVM hardware, performance and all source-publication holds remain open. Fork inventory has zero registered runners.",
+        "disposition": "User explicitly holds sensitive namespace, ID-map and mount-attribute security investigation until Daybreak availability is actually confirmed. Root retains ownership and all existing evidence; no new experiments or edits in that scope. Expected availability tomorrow is not confirmation. Independently owned baseline ID-map failures are not universal prerequisites for unrelated patches. Accepted e895/component/full-shim and cleanup proofs remain scoped; full AMD, ARM KVM hardware and controlled performance still have their recorded gates. Fresh recovery API14:32:20 found no new feedback/source/CI semantic changes; existing non-sensitive publication, CI/conflict and contributor obligations are being advanced through their assigned owners. Existing held Python proposals and source/communication approval boundaries remain unchanged.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135855,5 +135872,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T11:05:17.621311+00:00"
+  "updatedAt": "2026-11-20T14:38:42.090235+00:00"
 }

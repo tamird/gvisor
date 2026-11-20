@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-20T14:32:20.114509+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-20T11:05:17.621311+00:00",
+  "registryDate": "2026-11-20T14:38:42.090235+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -447067,26 +447067,6 @@
   "reviewerHandoff": [
     {
       "repo": "google/gvisor",
-      "number": 16098,
-      "head": "06b8ee2c46ca4f71c261da86f7b1905032e8b08f",
-      "sourceNumber": 16098,
-      "owner": "Agent",
-      "claimed": false,
-      "overdue": true,
-      "kind": "inline",
-      "id": "PRRC_kwDOB9IlXs8AAAABE1Brmw",
-      "createdAt": "2026-11-18T18:38:18Z",
-      "url": "https://github.com/google/gvisor/pull/16098#discussion_r4619004827",
-      "author": "rexren-gif",
-      "updatedAt": "2026-11-18T18:38:18Z",
-      "newOrChanged": false,
-      "awaitingAuthor": true,
-      "assigned": true,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
       "number": 15064,
       "head": "acf93596eddca6ca31f652d75b207a8da544ff54",
       "sourceNumber": 15064,
@@ -448893,10 +448873,10 @@
       "number": 17816,
       "head": "fb4513fe56a2a8fb94fbd6da8d6c61c827dc5688",
       "sourceNumber": 17816,
-      "owner": "Agent",
+      "owner": "buildifier_license_fix",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABZMakjg",
-      "needsTriage": true,
+      "needsTriage": false,
       "url": "https://github.com/google/gvisor/pull/17816#pullrequestreview-5985707150",
       "author": "milantracy",
       "updatedAt": "2026-11-20T00:34:49Z",
@@ -448918,24 +448898,6 @@
       "url": "https://github.com/google/gvisor/pull/16857#pullrequestreview-5985785807",
       "author": "rexren-gif",
       "updatedAt": "2026-11-20T00:42:40Z",
-      "newOrChanged": false,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 16098,
-      "head": "06b8ee2c46ca4f71c261da86f7b1905032e8b08f",
-      "sourceNumber": 16098,
-      "owner": "Agent",
-      "kind": "review",
-      "id": "PRR_kwDOB9IlXs8AAAABZMfaKg",
-      "needsTriage": true,
-      "url": "https://github.com/google/gvisor/pull/16098#pullrequestreview-5985786410",
-      "author": "rexren-gif",
-      "updatedAt": "2026-11-20T00:42:44Z",
       "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
@@ -450476,8 +450438,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "06b8ee2c46ca4f71c261da86f7b1905032e8b08f",
-        "disposition": "The already-approved final revision is published and its fork/PR heads verified. DCO, generate, gazelle, lint, label and fileheader passed. Exact-head First Pass1811 was rejected before an agent started because the author reached the daily36000compute-minute quota; this is not a source failure or full CI pass.",
-        "nextAction": "Root follows exact published-head maintainer review/import and actual quota recovery through the existing lifecycle sweep. No duplicate source push, approval question, acknowledgement, merge or manual CI retry. First Pass remains unmet until the provider actually executes it. Exact approved reply/body are saved; native rexren re-request returned404 despite the correct explicit API contract. Its cause is UNKNOWN; preserve existing kerumeto request and no alternate notification."
+        "disposition": "approved_rebase_queue read complete review5985786410, old inline4619004827 and current06b8 BUILD/test source. The new review explicitly reports no findings and confirms nogo_compiler_export plus FindFile resolves the earlier rootpath/runfiles issue; its review-comments endpoint is empty. No new source fix, reply or publication is needed. Internal importer/build validation remains unverified.",
+        "nextAction": "Preserve current06b8 fixture and consumed external feedback; root follows actual internal validation/importer evidence. Do not reopen the resolved fixture repair or send an automatic reply."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANzyYWiw"
@@ -457485,10 +457447,10 @@
         }
       ],
       "recordedFollowup": {
-        "owner": "root",
-        "sourceHead": "fb4513fe56a2a8fb94fbd6da8d6c61c827dc5688",
-        "disposition": "Candidate5f28105ac374be8f9643fb3188ff71b93d51a5d7 fixes the missing buildifier_prebuilt license manifest entry. Canonical225-entry license check44659989770, ARM tests44660010646 and actual caller44660018627 pass; two independent reviews found no issues. Full make lint/lint-cc were not rerun. Publicfb4513fe remains unchanged; the existing exact amendment and specific-reply approval question is pending.",
-        "nextAction": "Await the existing exact amendment/reply decision once, preserving current public source and qualified evidence. Publish only the approved candidate/reply; no repeated question or proposal frame."
+        "owner": "buildifier_license_fix",
+        "sourceHead": "9c2814db01620f643809f38f3f2e929ab35f4aef",
+        "disposition": "Authorized mechanical license-manifest amendment9c2814db01620f643809f38f3f2e929ab35f4aef is delivered; provider verifies head/tree/signature/DCO and exact old-head lease. The review fix is published, but the thread remains unresolved and public reply/re-review request stay with root. Etienne’s prior approval was dismissed and Milan’s CHANGES_REQUESTED remains. FirstPass2076 has one Pipeline upload failure, exit80 before tests; buildifier_license_fix owns exact CI diagnosis. GitHub source checks are running; no license regression is established.",
+        "nextAction": "buildifier_license_fix follows exact9c CI/DCO/mergeability and diagnoses FirstPass2076 admission. Root reconciles authorized public reply/re-review separately; preserve current source and do not mark review resolved before actual communication/readback."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN1gSgrw"
@@ -465885,7 +465847,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T11:05:17.621311+00:00"
+        "observedAt": "2026-11-20T14:38:42.090235+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -465894,7 +465856,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T11:05:17.621311+00:00"
+        "observedAt": "2026-11-20T14:38:42.090235+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -465903,7 +465865,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T11:05:17.621311+00:00"
+        "observedAt": "2026-11-20T14:38:42.090235+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -465912,7 +465874,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T11:05:17.621311+00:00"
+        "observedAt": "2026-11-20T14:38:42.090235+00:00"
       }
     },
     "issue:google/benchmark:1634": {
@@ -465921,7 +465883,7 @@
         "since": "2026-11-19T00:39:33.110112+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T11:05:17.621311+00:00"
+        "observedAt": "2026-11-20T14:38:42.090235+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -465930,7 +465892,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T11:05:17.621311+00:00"
+        "observedAt": "2026-11-20T14:38:42.090235+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -465939,7 +465901,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T11:05:17.621311+00:00"
+        "observedAt": "2026-11-20T14:38:42.090235+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -465948,7 +465910,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T11:05:17.621311+00:00"
+        "observedAt": "2026-11-20T14:38:42.090235+00:00"
       }
     }
   },
