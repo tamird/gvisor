@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain", "go_test")
+load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain", "go_test", "select_arch")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -37,6 +37,10 @@ genrule(
           "-Wl,-s " +
           "-o $(execpath runsc-fd-parking) " +
           "$(execpath fdparking.c)",
+    exec_compatible_with = select_arch(
+        amd64 = ["@platforms//cpu:x86_64"],
+        arm64 = ["@platforms//cpu:aarch64"],
+    ),
     executable = True,
     features = ["-pie"],
     toolchains = [
