@@ -2,6 +2,7 @@
 # Retain actual consumed bytes and the io.Copy error in request results.
 # Remove this patch when the pinned upstream release includes the correction.
 
+diff --git a/requester/requester.go b/requester/requester.go
 --- a/requester/requester.go
 +++ b/requester/requester.go
 @@ -183,9 +183,8 @@
@@ -15,6 +16,7 @@
  		resp.Body.Close()
  	}
  	t := now()
+diff --git a/requester/requester_test.go b/requester/requester_test.go
 --- a/requester/requester_test.go
 +++ b/requester/requester_test.go
 @@ -16,6 +16,8 @@
