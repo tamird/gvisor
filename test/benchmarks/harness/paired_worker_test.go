@@ -31,6 +31,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
@@ -248,8 +249,36 @@ func TestPairedBenchmark(t *testing.T) {
 					// starts after this watermark so the first short-lived
 					// workload is observed even while the request connects.
 					eventOptions.Since = time.Now().Format(time.RFC3339Nano)
+					eventOptions.Filters.Add("event", "create")
 				}
 				messages, failures := cli.Events(observeCtx, eventOptions)
+				if *pairedWorkload != "node" {
+					// A create event acknowledges the subscription without
+					// starting a process or changing the timed workload.
+					marker, err := cli.ContainerCreate(ctx, &container.Config{Image: "gvisor.dev/images/benchmarks/alpine:latest"}, &container.HostConfig{Runtime: "runc"}, nil, nil, "")
+					if err != nil { t.Fatal(err) }
+					t.Cleanup(func() {
+						cancel()
+						cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 5*time.Second)
+						defer cleanupCancel()
+						if err := cli.ContainerRemove(cleanupCtx, marker.ID, container.RemoveOptions{}); err != nil && !errdefs.IsNotFound(err) { t.Error(err) }
+					})
+					ready := time.NewTimer(5*time.Second)
+					defer ready.Stop()
+				readyLoop:
+					for {
+						select {
+						case message := <-messages:
+							if message.Actor.ID == marker.ID && message.Action == "create" { break readyLoop }
+						case err, ok := <-failures:
+							if !ok { failures = nil; continue }
+							if err != nil { t.Fatal(err) }
+						case <-ready.C: t.Fatal("startup event subscription did not acknowledge its readiness marker")
+						}
+					}
+					if err := cli.ContainerRemove(ctx, marker.ID, container.RemoveOptions{}); err != nil { t.Fatal(err) }
+					t.Log("startup event subscription acknowledged before benchmark launch")
+				}
 				go func() {
 					observed <- attestBenchmarkContainers(observeCtx, cli, messages, failures, visit, releaseProducts[index], actualHashes, runtimes[index])
 				}()
@@ -303,6 +332,7 @@ func TestPairedBenchmark(t *testing.T) {
 // adding inspection calls to the benchmark's timed request sequence.
 func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages <-chan events.Message, failures <-chan error, visit int, products, actualHashes map[string]string, selectedRuntime string) error {
 	seen := make(map[string]int)
+	skipped := make(map[string]int)
 	active := make(map[int]string)
 	required := map[string]int{"benchmarks/node": *pairedLeaves, "benchmarks/hey": *pairedLeaves, "benchmarks/redis": *pairedLeaves}
 	if *pairedResponseProbe {
@@ -322,7 +352,7 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 		case <-ctx.Done():
 			for image, count := range required {
 				if seen[image] < count {
-					return fmt.Errorf("visit %d has no actual affinity observation for %s", visit, image)
+					return fmt.Errorf("visit %d has no actual affinity observation for %s; skipped stages: %v", visit, image, skipped)
 				}
 			}
 			return nil
@@ -339,6 +369,7 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 				messages = nil
 				continue
 			}
+			if *pairedWorkload != "node" && message.Action != "start" { continue }
 			image := message.Actor.Attributes["image"]
 			kind := ""
 			for candidate := range required {
@@ -354,12 +385,14 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 			// exit before its start event arrives; only complete observations
 			// count toward the selected leaves required for this visit.
 			if errdefs.IsNotFound(err) {
+				skipped[kind+":inspect-not-found"]++
 				continue
 			}
 			if err != nil {
 				return fmt.Errorf("inspect started workload %s: %w", kind, err)
 			}
 			if state.State == nil || !state.State.Running || state.State.Pid <= 0 {
+				skipped[kind+":not-running"]++
 				continue
 			}
 			if state.HostConfig == nil {
@@ -370,6 +403,7 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 			}
 			status, err := os.ReadFile("/proc/" + strconv.Itoa(state.State.Pid) + "/status")
 			if os.IsNotExist(err) {
+				skipped[kind+":process-gone"]++
 				continue
 			}
 			if err != nil {
@@ -406,6 +440,7 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 			executable := "/proc/" + strconv.Itoa(state.State.Pid) + "/exe"
 			exe, err := os.Readlink(executable)
 			if os.IsNotExist(err) {
+				skipped[kind+":process-gone"]++
 				continue
 			}
 			if err != nil {
@@ -415,6 +450,7 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 			if !ok {
 				digest, err = executableDigest(executable)
 				if os.IsNotExist(err) {
+					skipped[kind+":digest-process-gone"]++
 					continue
 				}
 				if err != nil {
