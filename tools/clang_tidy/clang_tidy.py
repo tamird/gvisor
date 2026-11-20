@@ -38,7 +38,7 @@ def _sources(database, workspace):
   out = []
   seen = set()
   for entry in entries:
-    path = pathlib.Path(os.path.realpath(entry["file"]))
+    path = pathlib.Path(entry["directory"], entry["file"]).resolve()
     try:
       relative = path.relative_to(workspace)
     except ValueError:
@@ -74,6 +74,12 @@ def _analyze(clang_tidy, database_dir, config_file, workspace, source):
       errors.append(line)
     elif _FINDING.match(line):
       findings.append(line)
+  if proc.returncode != 0:
+    errors = [
+        f"{source}: clang-tidy exited with status {proc.returncode}",
+        *proc.stderr.splitlines(),
+        *proc.stdout.splitlines(),
+    ]
   return source, findings, errors
 
 
@@ -117,11 +123,7 @@ def main():
         errors[source] = failed
 
   if errors:
-    print(
-        f"clang-tidy: {len(errors)} file(s) failed to compile; the "
-        "compilation database may be stale",
-        file=sys.stderr,
-    )
+    print(f"clang-tidy: {len(errors)} file(s) failed to analyze.", file=sys.stderr)
     for source in sorted(errors):
       for line in errors[source][:5]:
         print(f"  {line}", file=sys.stderr)
