@@ -85,7 +85,8 @@ make copy TARGETS=//:release DESTINATION=./runsc-dev
 ```
 
 In addition, for language server support in C++ files (e.g. the syscall tests):
-install [clangd][clangd] on the host, then generate its compilation database:
+install [clangd][clangd] on the host, then generate its compilation database.
+On macOS, the prebuilt generator requires macOS 15.5 or later.
 
 ```sh
 bazel run --platforms=@platforms//host //tools/compile_commands -- \
