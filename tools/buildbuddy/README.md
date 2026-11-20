@@ -57,8 +57,10 @@ actions out of remote execution and caching.
 
 Coral still derives its GCC include-directory version from the submitting
 host. Its generated version must match the image's GCC 13 include directories.
-Go actions that can invoke absolute C tools retain their `no-remote` exceptions
-until their SDK execution architecture and C toolchain inputs are qualified.
+The profile also executes Cgo compilation, standard-library and link actions on
+their resolved remote execution platforms. This keeps the Go SDK and native C
+tools on the same CPU, including tools built for a different CPU from the
+submitting host. Ordinary and cache-only builds retain the host-tool exception.
 
 The initial check above exercises pure Go and the credential helper. Canonical
 action-graph inspection and the affected correctness suites must also pass
