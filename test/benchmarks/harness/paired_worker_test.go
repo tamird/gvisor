@@ -24,6 +24,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 
 	"strings"
@@ -72,6 +73,27 @@ func TestPairedBenchmark(t *testing.T) {
 			t.Fatalf("required worker CPU %d is unavailable; affinity: %v", cpu, available)
 		}
 	}
+	if (*pairedWorkload == "startup-empty" || *pairedWorkload == "startup") && available.Count() != 5 {
+		// A worker can expose additional guest CPUs beyond its reservation.
+		// Re-exec before creating Docker so all new threads and children
+		// inherit the declared partition.
+		var partition unix.CPUSet
+		for cpu := 0; cpu <= 4; cpu++ {
+			partition.Set(cpu)
+		}
+		t.Logf("restrict startup worker affinity from %v to %v before re-exec", available, partition)
+		runtime.LockOSThread()
+		defer runtime.UnlockOSThread()
+		if err := unix.SchedSetaffinity(0, &partition); err != nil {
+			t.Fatal(err)
+		}
+		binary, err := os.Executable()
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Fatal(unix.Exec(binary, os.Args, os.Environ()))
+	}
+
 	switch *pairedWorkload {
 	case "node":
 	case "startup-empty", "startup":
