@@ -76,7 +76,7 @@ func TestPairedBenchmark(t *testing.T) {
 	case "node":
 	case "startup-empty", "startup":
 		if *pairedResponseProbe || !*pairedObserve || available.Count() != 5 || ClientCPUSet() != "0-4" || ServerCPUSet() != "0-4" {
-			t.Fatal("startup requires affinity observation on the declared five-CPU worker with matching 0-4 partitions")
+			t.Fatalf("startup requires affinity observation on the declared five-CPU worker with matching 0-4 partitions: available=%v count=%d response_probe=%t observe=%t client=%q server=%q", available, available.Count(), *pairedResponseProbe, *pairedObserve, ClientCPUSet(), ServerCPUSet())
 		}
 		if (*pairedWorkload == "startup-empty" && *pairedLeaves != 1) || (*pairedWorkload == "startup" && *pairedLeaves != 5) {
 			t.Fatal("startup workload leaf count does not match its image contract")
