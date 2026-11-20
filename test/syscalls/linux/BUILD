@@ -69,6 +69,12 @@ cc_binary(
 )
 
 cc_binary(
+    name = "exec_large_stack_workload",
+    testonly = 1,
+    srcs = ["exec_large_stack_workload.cc"],
+)
+
+cc_binary(
     name = "exec_check_creds",
     testonly = 1,
     srcs = [
@@ -944,6 +950,7 @@ cc_binary(
         ":exec_basic_workload",
         ":exec_check_creds",
         ":exec_etxtbsy_workload",
+        ":exec_large_stack_workload",
         ":exec_proc_exe_workload",
         ":exec_state_workload",
         ":exit_script",
@@ -1814,6 +1821,7 @@ cc_binary(
         "//test/util:temp_path",
         "//test/util:test_main",
         "//test/util:test_util",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -2580,12 +2588,15 @@ cc_binary(
     deps = select_gtest() + [
         "//test/util:file_descriptor",
         "//test/util:fs_util",
+        "//test/util:logging",
         "//test/util:memory_util",
+        "//test/util:multiprocess_util",
         "//test/util:posix_error",
         "//test/util:proc_util",
         "//test/util:temp_path",
         "//test/util:test_main",
         "//test/util:test_util",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
@@ -3155,7 +3166,6 @@ cc_binary(
         "//test/util:test_main",
         "//test/util:test_util",
         "//test/util:thread_util",
-        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
@@ -5786,7 +5796,6 @@ cc_binary(
         "//test/util:test_main",
         "//test/util:test_util",
         "//test/util:thread_util",
-        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
     ],

@@ -44,7 +44,8 @@ quality, and maintainability. **AI should augment your abilities, not replace
 your critical judgment.** Contributors should ensure their work meets a high
 standard before seeking review, respecting maintainers' time, and must be
 **prepared to discuss and justify their contributions** during the review
-process.
+process. AI tools must not add `Signed-off-by` lines: only a human can certify
+the [Developer Certificate of Origin](#developer-certificate-of-origin).
 
 ## Editor Setup
 
@@ -178,14 +179,12 @@ Before sending code reviews, run `bazel test ...` to ensure tests are passing.
 
 Code changes are accepted via [pull request][github].
 
-When iterating on a pull request, please amend your commit rather than creating
-new commits on the same branch. Our merge bot applies all commits from the
-branch to master and does not yet support squash merging. If you'd like to
-submit a pull request with multiple commits, please ensure they are independent,
-logical units of work that can be applied separately.
+A pull request can contain multiple commits. To update a pull request, push new
+commits to its branch. You do not need to amend or squash them.
 
-When approved, the change will be submitted by a team member and automatically
-merged into the repository.
+When the pull request is approved, a maintainer merges it into master with
+"Squash and merge". The pull request title and description are the default
+commit message, so keep the title and description accurate.
 
 ## Presubmit checks
 
@@ -232,7 +231,7 @@ bazel run //:gazelle -- update-repos -from_file=go.mod
 ```
 
 [dco]: https://developercertificate.org/
-[github]: https://github.com/google/gvisor/compare
+[github]: https://github.com/gvisor/gvisor/compare
 [cncf-slack-invite]: https://slack.cncf.io/
 [slack-gvisor-dev]: https://cloud-native.slack.com/archives/C0CCZ4S4V62
 [gvisor-dev-list]: https://groups.google.com/forum/#!forum/gvisor-dev
