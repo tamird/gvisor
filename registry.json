@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T07:36:30.146248+00:00",
+    "updatedAt": "2026-11-20T07:57:26.689244+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -134963,10 +134963,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T07:36:30.146248+00:00",
-      "summary": "Canonical runner support413257f1ff0a0d7bd19bc289dc9ed4be18ec5a84 is delivered and provider-verified after explicit UID/GID1001 caller proof and focused review; owners received the reuse handoff. RootIO299 three-shape tests on both architectures, all source checks and security/general reviews close, but activated standalone pidfd performance and full owning suites remain open. TaskService owned-teardown44692023719 workflow passes while full-scope audit continues. Hey40e actual caller/interface/review is closed; A/A stability still fails. Grouped-counter usability44695742636 failed; exact setup/read/coverage/cleanup classification is under owner audit, with no cause or application-profile claim. Existing17568 amendment/reply, Node8bc and other source/issue decisions remain pending.",
-      "nextStep": "Reuse canonical413 support without duplicate copies. Owners finish RootIO standalone performance/full-suite and TaskService trace audit, then assess actual grouped-counter usability before any profiling or performance expansion. Preserve qualified source products and all existing publication/worker holds; no new questions or frames.",
-      "recheckCondition": "Actual owning-suite/performance/counter audit or meaningful source-feedback milestone, or an existing publication/worker answer.",
+      "updatedAt": "2026-11-20T07:57:26.689244+00:00",
+      "summary": "Same-guest counter matrix44696871380 proves thread opens succeed while owned-cgroup opens return ENOENT for software/cycles/instructions; cleanup passes. Counter development is stopped: no all-thread profiler, application profile or repeated A/A. Corrected Node work is valid but stability fails the5%bar; cause remains unknown. Existing quiet-host/pool context information remains unanswered. Full unfiltered owning suites44697115525/44697118625 are running on composite0e1 plus canonical413; they do not qualify pure f5. Existing code/review/source-check closures remain scoped, with performance/parent holds open.17568cfff amendment/reply, Node8bc and other publication decisions remain pending.",
+      "nextStep": "Recheck performance only after verified existing quiet-host/pool/provider telemetry or an evidence-backed environment change; do not repeat the host-information question or develop counters/profilers. Runtime owners audit full composite-suite outputs and retain source-specific limits before declaring closure. Root follows existing publication decisions once.",
+      "recheckCondition": "Actual unfiltered-suite result, verified existing isolation/telemetry or environment evidence, substantive feedback, or an existing publication decision.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135316,6 +135316,18 @@
         {
           "label": "Grouped-counter usability gate; no application profile",
           "url": "https://github.com/tamird/gvisor/actions/runs/44695742636"
+        },
+        {
+          "label": "Same-guest counter scope limitation; cleanup passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44696871380"
+        },
+        {
+          "label": "Composite0e1+413 full owning suite; result pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44697115525"
+        },
+        {
+          "label": "Composite0e1+413 full owning suite; result pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44697118625"
         }
       ],
       "followup": {
@@ -135337,12 +135349,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T07:36:30.146248+00:00",
-        "nextAction": "Reuse canonical413 support without duplicate copies. Owners finish RootIO standalone performance/full-suite and TaskService trace audit, then assess actual grouped-counter usability before any profiling or performance expansion. Preserve qualified source products and all existing publication/worker holds; no new questions or frames.",
-        "recheckCondition": "Actual owning-suite/performance/counter audit or meaningful source-feedback milestone, or an existing publication/worker answer.",
+        "curatedAt": "2026-11-20T07:57:26.689244+00:00",
+        "nextAction": "Recheck performance only after verified existing quiet-host/pool/provider telemetry or an evidence-backed environment change; do not repeat the host-information question or develop counters/profilers. Runtime owners audit full composite-suite outputs and retain source-specific limits before declaring closure. Root follows existing publication decisions once.",
+        "recheckCondition": "Actual unfiltered-suite result, verified existing isolation/telemetry or environment evidence, substantive feedback, or an existing publication decision.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Canonical runner support413257f1ff0a0d7bd19bc289dc9ed4be18ec5a84 is delivered and provider-verified after explicit UID/GID1001 caller proof and focused review; owners received the reuse handoff. RootIO299 three-shape tests on both architectures, all source checks and security/general reviews close, but activated standalone pidfd performance and full owning suites remain open. TaskService owned-teardown44692023719 workflow passes while full-scope audit continues. Hey40e actual caller/interface/review is closed; A/A stability still fails. Grouped-counter usability44695742636 failed; exact setup/read/coverage/cleanup classification is under owner audit, with no cause or application-profile claim. Existing17568 amendment/reply, Node8bc and other source/issue decisions remain pending.",
+        "disposition": "Same-guest counter matrix44696871380 proves thread opens succeed while owned-cgroup opens return ENOENT for software/cycles/instructions; cleanup passes. Counter development is stopped: no all-thread profiler, application profile or repeated A/A. Corrected Node work is valid but stability fails the5%bar; cause remains unknown. Existing quiet-host/pool context information remains unanswered. Full unfiltered owning suites44697115525/44697118625 are running on composite0e1 plus canonical413; they do not qualify pure f5. Existing code/review/source-check closures remain scoped, with performance/parent holds open.17568cfff amendment/reply, Node8bc and other publication decisions remain pending.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135751,5 +135763,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T07:36:30.146248+00:00"
+  "updatedAt": "2026-11-20T07:57:26.689244+00:00"
 }
