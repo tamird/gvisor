@@ -24,7 +24,7 @@ on:
         required: false
         default: test
         type: choice
-        options: [test, aquery, run]
+        options: [test, aquery, cquery, run]
       run_arguments:
         description: JSON string array passed to the tool when command is run
         required: false
@@ -296,6 +296,10 @@ jobs:
           os.execv(sys.argv[1], sys.argv[1:] + ['--', *arguments])
           PY
               ;;
+            cquery)
+              "$results/bazel" cquery "${options[@]}" --output=jsonproto \
+                "set(${targets[*]})" > "$results/configured-targets.json"
+              ;;
             aquery)
               "$results/bazel" aquery "${options[@]}" --output=jsonproto \
                 "deps(set(${targets[*]}))" > "$results/actions.json"
@@ -319,6 +323,7 @@ jobs:
           path: |
             ${{ runner.temp }}/bazel-qualification/events.json
             ${{ runner.temp }}/bazel-qualification/actions.json
+            ${{ runner.temp }}/bazel-qualification/configured-targets.json
             ${{ runner.temp }}/bazel-qualification/profile.gz
             ${{ runner.temp }}/bazel-qualification/bazel.log
             ${{ runner.temp }}/bazel-qualification/dependencies.yaml
