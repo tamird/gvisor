@@ -33,8 +33,8 @@ import (
 	"github.com/BurntSushi/toml"
 	eventtypes "github.com/containerd/containerd/api/events"
 	task "github.com/containerd/containerd/api/runtime/task/v2"
-	tasktype "github.com/containerd/containerd/api/types/task"
 	events "github.com/containerd/containerd/api/services/ttrpc/events/v1"
+	tasktype "github.com/containerd/containerd/api/types/task"
 	ttrpc "github.com/containerd/ttrpc"
 	typeurl "github.com/containerd/typeurl/v2"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -239,8 +239,8 @@ func (s *dummyEventsServer) clearEvents() {
 // MockContainerd plays the role of containerd to test the shim. It creates
 // the necessary directory structure and files for the shim to run and sends requests to the shim.
 type MockContainerd struct {
-	t testing.TB
-	ownedIDs []string
+	t             testing.TB
+	ownedIDs      []string
 	wd            string
 	runtimeRoot   string
 	shim          *exec.Cmd
@@ -283,7 +283,7 @@ func NewMockContainerdWithSuffix(t testing.TB, suffix string, shimArgsOverrides,
 func newMockContainerdWithSuffix(t testing.TB, suffix string, shimArgsOverrides, runscArgsOverrides map[string]any, benchMode bool) *MockContainerd {
 	s := &MockContainerd{
 		benchMode: benchMode,
-		t: t,
+		t:         t,
 	}
 	// Create working directory.
 	name := t.Name()
