@@ -18,12 +18,15 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <poll.h>
+#include <sched.h>
 #include <signal.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <algorithm>
+#include <array>
 #include <cerrno>
 #include <cstdint>
 #include <cstring>
@@ -62,6 +65,37 @@ PosixErrorOr<void*> MakePacketMmapRing(int fd, const sockaddr* bind_addr,
   RETURN_ERROR_IF_SYSCALL_FAIL(bind(fd, bind_addr, bind_addr_size));
   uint32_t sz = req->tp_block_size * req->tp_block_nr;
   return mmap(0, sz, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+}
+
+TEST(PacketMmapTest, NonPacketSocketsRejectPacketOptions) {
+  const std::array<socklen_t, 4> lengths = {0, sizeof(int) - 1, sizeof(int),
+                                            sizeof(int) + 1};
+  for (int family : {AF_INET, AF_INET6}) {
+    SCOPED_TRACE(family);
+    for (int type : {SOCK_STREAM, SOCK_DGRAM}) {
+      SCOPED_TRACE(type);
+      FileDescriptor sock = ASSERT_NO_ERRNO_AND_VALUE(Socket(family, type, 0));
+      for (int option : {PACKET_COPY_THRESH, PACKET_VERSION, PACKET_RESERVE,
+                         PACKET_AUXDATA}) {
+        SCOPED_TRACE(option);
+        for (socklen_t length : lengths) {
+          SCOPED_TRACE(length);
+          const std::array<int, 2> value = {1, 0};
+          EXPECT_THAT(
+              setsockopt(sock.get(), SOL_PACKET, option, value.data(), length),
+              SyscallFailsWithErrno(ENOPROTOOPT));
+        }
+      }
+      const int get_errno = family == AF_INET ? EOPNOTSUPP : ENOPROTOOPT;
+      for (socklen_t length : lengths) {
+        SCOPED_TRACE(length);
+        std::array<int, 2> value = {TPACKET_V1, 0};
+        EXPECT_THAT(getsockopt(sock.get(), SOL_PACKET, PACKET_HDRLEN,
+                               value.data(), &length),
+                    SyscallFailsWithErrno(get_errno));
+      }
+    }
+  }
 }
 
 // Tests that setting the RX ring works and fails if constraints are not met.
@@ -460,29 +494,136 @@ TEST(PacketMmapTest, MmapCopy) {
     ASSERT_THAT(munmap(ring, tp_block_size * tp_block_nr), SyscallSucceeds());
   });
 
-  std::string kMessage = "123abc" + std::string(1000, '*');
-  ASSERT_THAT(
-      sendto(mmap_sock.get(), kMessage.c_str(), kMessage.size(), 0 /* flags */,
-             reinterpret_cast<const sockaddr*>(&bind_addr), sizeof(bind_addr)),
-      SyscallSucceeds());
+  // Copying is disabled by default and can be changed after the ring is mapped.
+  // Linux treats any nonzero PACKET_COPY_THRESH value as enabling full copies.
+  const std::array<int, 4> thresholds = {0, 1, 0, -1};
+  ASSERT_THAT(setsockopt(mmap_sock.get(), SOL_PACKET, PACKET_COPY_THRESH,
+                         thresholds.data(), sizeof(int) - 1),
+              SyscallFailsWithErrno(EINVAL));
+  ASSERT_THAT(setsockopt(mmap_sock.get(), SOL_PACKET, PACKET_COPY_THRESH,
+                         thresholds.data(), sizeof(int) + 1),
+              SyscallFailsWithErrno(EINVAL));
+  const std::string kMessage = "123abc" + std::string(1000, '*');
+  for (size_t i = 0; i < thresholds.size(); ++i) {
+    SCOPED_TRACE(i);
+    const int threshold = thresholds[i];
+    if (i != 0) {
+      ASSERT_THAT(setsockopt(mmap_sock.get(), SOL_PACKET, PACKET_COPY_THRESH,
+                             &threshold, sizeof(threshold)),
+                  SyscallSucceeds());
+    }
+    ASSERT_THAT(
+        sendto(mmap_sock.get(), kMessage.c_str(), kMessage.size(),
+               0 /* flags */, reinterpret_cast<const sockaddr*>(&bind_addr),
+               sizeof(bind_addr)),
+        SyscallSucceedsWithValue(kMessage.size()));
 
-  // Wait for the packet to become available on both sockets.
-  struct pollfd pfd = {};
-  pfd.fd = mmap_sock.get();
-  pfd.revents = 0;
-  pfd.events = POLLIN | POLLRDNORM | POLLERR;
-  ASSERT_THAT(poll(&pfd, 1, -1), SyscallSucceeds());
+    struct pollfd pfd = {};
+    pfd.fd = mmap_sock.get();
+    pfd.events = POLLIN | POLLRDNORM | POLLERR;
+    ASSERT_THAT(poll(&pfd, 1, 10000), SyscallSucceedsWithValue(1));
+    ASSERT_NE(pfd.revents & POLLIN, 0);
 
-  char buf[1024];
-  socklen_t src_len = sizeof(kMessage);
-  EXPECT_THAT(recvfrom(mmap_sock.get(), buf, sizeof(buf), 0,
-                       reinterpret_cast<sockaddr*>(&bind_addr), &src_len),
-              SyscallSucceedsWithValue(kMessage.size()));
+    auto* hdr = reinterpret_cast<tpacket_hdr*>(static_cast<char*>(ring) +
+                                               i * tp_frame_size);
+    EXPECT_EQ(hdr->tp_status & (TP_STATUS_USER | TP_STATUS_COPY),
+              TP_STATUS_USER | (threshold != 0 ? TP_STATUS_COPY : 0));
+    EXPECT_EQ(hdr->tp_len, kMessage.size());
+    ASSERT_LE(hdr->tp_mac, tp_frame_size);
+    ASSERT_EQ(hdr->tp_snaplen, tp_frame_size - hdr->tp_mac);
+    EXPECT_EQ(memcmp(reinterpret_cast<char*>(hdr) + hdr->tp_mac,
+                     kMessage.data(), hdr->tp_snaplen),
+              0);
 
-  tpacket_hdr* hdr = reinterpret_cast<tpacket_hdr*>(ring);
-  EXPECT_EQ(hdr->tp_status & (TP_STATUS_USER | TP_STATUS_COPY),
-            TP_STATUS_USER | TP_STATUS_COPY);
-  EXPECT_EQ(hdr->tp_snaplen, tp_frame_size - hdr->tp_mac);
+    // Ring readiness does not imply that a full copy was queued. Never block
+    // here, so a missing copy produces a failure instead of hanging the suite.
+    char buf[1024];
+    sockaddr_ll source = {};
+    socklen_t source_len = sizeof(source);
+    const ssize_t received =
+        recvfrom(mmap_sock.get(), buf, sizeof(buf), MSG_DONTWAIT,
+                 reinterpret_cast<sockaddr*>(&source), &source_len);
+    if (threshold != 0) {
+      ASSERT_THAT(received, SyscallSucceedsWithValue(kMessage.size()));
+      EXPECT_EQ(memcmp(buf, kMessage.data(), kMessage.size()), 0);
+    } else {
+      ASSERT_THAT(received, SyscallFailsWithErrno(EAGAIN));
+    }
+    hdr->tp_status = TP_STATUS_KERNEL;
+  }
+
+  // Fill the ordinary receive queue without stopping mmap ring consumption.
+  const int receive_buffer = 1024;
+  ASSERT_THAT(setsockopt(mmap_sock.get(), SOL_SOCKET, SO_RCVBUF,
+                         &receive_buffer, sizeof(receive_buffer)),
+              SyscallSucceeds());
+  int actual_receive_buffer = 0;
+  socklen_t receive_buffer_length = sizeof(actual_receive_buffer);
+  ASSERT_THAT(getsockopt(mmap_sock.get(), SOL_SOCKET, SO_RCVBUF,
+                         &actual_receive_buffer, &receive_buffer_length),
+              SyscallSucceeds());
+  constexpr size_t kPackets = 32;
+  ASSERT_LT(actual_receive_buffer, kPackets * kMessage.size());
+  ASSERT_LT(thresholds.size() + kPackets, tp_frame_nr);
+  std::array<bool, kPackets> copy_flags = {};
+  std::array<bool, kPackets> queued = {};
+  size_t copies = 0;
+  for (size_t i = 0; i <= kPackets; ++i) {
+    SCOPED_TRACE(i);
+    if (i == kPackets) {
+      // Drain only after every saturation packet has reached the ring.
+      char buffer[1024];
+      for (size_t j = 0; j <= kPackets; ++j) {
+        const ssize_t received =
+            recv(mmap_sock.get(), buffer, sizeof(buffer), MSG_DONTWAIT);
+        if (received == -1) {
+          ASSERT_EQ(errno, EAGAIN);
+          break;
+        }
+        ASSERT_EQ(received, kMessage.size());
+        const size_t packet = static_cast<unsigned char>(buffer[0]);
+        ASSERT_LT(packet, kPackets);
+        ASSERT_FALSE(queued[packet]);
+        EXPECT_EQ(memcmp(buffer + 1, kMessage.data() + 1, kMessage.size() - 1),
+                  0);
+        queued[packet] = true;
+        ++copies;
+      }
+      ASSERT_GT(copies, 0);
+      ASSERT_LT(copies, kPackets);
+      for (size_t packet = 0; packet < kPackets; ++packet) {
+        EXPECT_EQ(copy_flags[packet], queued[packet]) << "packet " << packet;
+      }
+    }
+
+    std::string message = kMessage;
+    message[0] = static_cast<char>(i);
+    ASSERT_THAT(sendto(mmap_sock.get(), message.data(), message.size(), 0,
+                       reinterpret_cast<const sockaddr*>(&bind_addr),
+                       sizeof(bind_addr)),
+                SyscallSucceedsWithValue(message.size()));
+    auto* hdr = reinterpret_cast<tpacket_hdr*>(
+        static_cast<char*>(ring) + (thresholds.size() + i) * tp_frame_size);
+    const absl::Time deadline = absl::Now() + absl::Seconds(10);
+    while ((__atomic_load_n(&hdr->tp_status, __ATOMIC_ACQUIRE) &
+            TP_STATUS_USER) == 0) {
+      ASSERT_LT(absl::Now(), deadline);
+      sched_yield();
+    }
+    ASSERT_EQ(hdr->tp_len, message.size());
+    ASSERT_LT(hdr->tp_snaplen, hdr->tp_len);
+    if (i < kPackets) {
+      copy_flags[i] = (hdr->tp_status & TP_STATUS_COPY) != 0;
+    } else {
+      EXPECT_NE(hdr->tp_status & TP_STATUS_COPY, 0);
+      char buffer[1024];
+      const ssize_t received =
+          recv(mmap_sock.get(), buffer, sizeof(buffer), MSG_DONTWAIT);
+      ASSERT_THAT(received, SyscallSucceedsWithValue(message.size()));
+      EXPECT_EQ(memcmp(buffer, message.data(), message.size()), 0);
+    }
+    __atomic_store_n(&hdr->tp_status, TP_STATUS_KERNEL, __ATOMIC_RELEASE);
+  }
 }
 
 TEST(PacketMmapTest, SetVersion) {
