@@ -1123,6 +1123,155 @@ func TestRemoveUnknownNIC(t *testing.T) {
 	}
 }
 
+type drainingLink struct {
+	stack.LinkEndpoint
+	drain func(string)
+}
+
+func (e *drainingLink) Attach(dispatcher stack.NetworkDispatcher) {
+	if dispatcher == nil {
+		e.drain("detach")
+	}
+	e.LinkEndpoint.Attach(dispatcher)
+}
+
+func (e *drainingLink) Wait() {
+	e.drain("wait")
+	e.LinkEndpoint.Wait()
+}
+
+func (e *drainingLink) Close() {
+	e.drain("close")
+	e.LinkEndpoint.Close()
+}
+
+func TestNICRemovalAllowsReceiveLookup(t *testing.T) {
+	for _, method := range []string{"Wait", "RemoveNIC", "SetNICStack"} {
+		t.Run(method, func(t *testing.T) {
+			s := stack.New(stack.Options{})
+			defer s.Close()
+			peer := stack.New(stack.Options{})
+			defer peer.Close()
+
+			want := map[string]int{"detach": 1, "close": 1}
+			if method == "Wait" {
+				want = map[string]int{"detach": 2, "wait": 2, "close": 2}
+			} else if method == "SetNICStack" {
+				want = map[string]int{"detach": 1}
+			}
+			calls := make(map[string]int)
+			for i := range want["detach"] {
+				id := tcpip.NICID(i + 1)
+				ep := &drainingLink{
+					LinkEndpoint: channel.New(0, defaultMTU, ""),
+					drain: func(phase string) {
+						calls[phase]++
+						if phase == "close" {
+							if calls["detach"] != want["detach"] || calls["wait"] != want["wait"] {
+								t.Errorf("closed NIC %d before links drained: %v", id, calls)
+							}
+							return
+						}
+						// A link waits for a worker finishing a packet's NIC lookup.
+						done := make(chan struct{})
+						go func() {
+							s.FindNICNameFromID(id)
+							close(done)
+						}()
+						select {
+						case <-done:
+						case <-time.After(3 * time.Second):
+							t.Errorf("receive worker blocked on NIC lookup during %s", phase)
+						}
+					},
+				}
+				if err := s.CreateNIC(id, ep); err != nil {
+					t.Fatal(err)
+				}
+			}
+			switch method {
+			case "Wait":
+				s.Wait()
+			case "RemoveNIC":
+				if err := s.RemoveNIC(1); err != nil {
+					t.Fatal(err)
+				}
+			case "SetNICStack":
+				if _, err := s.SetNICStack(1, peer); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if diff := cmp.Diff(want, calls); diff != "" {
+				t.Errorf("link teardown calls (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+type detachingBridge struct {
+	*stack.BridgeEndpoint
+	detach func()
+}
+
+func (e *detachingBridge) Attach(dispatcher stack.NetworkDispatcher) {
+	if dispatcher == nil {
+		e.detach()
+	}
+	e.BridgeEndpoint.Attach(dispatcher)
+}
+
+func TestRemoveBridgeReleasesPortsBeforeDetach(t *testing.T) {
+	for _, reassign := range []string{"before removal", "during detach"} {
+		t.Run(reassign, func(t *testing.T) {
+			s := stack.New(stack.Options{})
+			defer s.Close()
+			const portID, bridgeID, nextBridgeID = 1, 2, 3
+			if err := s.CreateNIC(portID, channel.New(0, defaultMTU, "")); err != nil {
+				t.Fatal(err)
+			}
+			ep := &detachingBridge{
+				BridgeEndpoint: stack.NewBridgeEndpoint(defaultMTU),
+				detach: func() {
+					want := tcpip.NICID(0)
+					if reassign == "before removal" {
+						want = nextBridgeID
+					}
+					if id, ok := s.GetNICCoordinatorID(portID); id != want || ok != (want != 0) {
+						t.Errorf("port coordinator before detach = (%d, %t), want (%d, %t)", id, ok, want, want != 0)
+					}
+					// Reassignment can precede removal or happen while the old
+					// bridge finishes detaching without the stack mutex.
+					if reassign == "during detach" {
+						if err := s.SetNICCoordinator(portID, nextBridgeID); err != nil {
+							t.Fatal(err)
+						}
+					}
+				},
+			}
+			if err := s.CreateNIC(bridgeID, ep); err != nil {
+				t.Fatal(err)
+			}
+			if err := s.CreateNIC(nextBridgeID, stack.NewBridgeEndpoint(defaultMTU)); err != nil {
+				t.Fatal(err)
+			}
+			if err := s.SetNICCoordinator(portID, bridgeID); err != nil {
+				t.Fatal(err)
+			}
+			if reassign == "before removal" {
+				if err := s.SetNICCoordinator(portID, nextBridgeID); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := s.RemoveNIC(bridgeID); err != nil {
+				t.Fatal(err)
+			}
+			if id, ok := s.GetNICCoordinatorID(portID); !ok || id != nextBridgeID {
+				t.Errorf("port coordinator after detach = (%d, %t), want (%d, true)", id, ok, nextBridgeID)
+			}
+		})
+	}
+}
+
 func TestRemoveNIC(t *testing.T) {
 	for _, tt := range []struct {
 		name   string

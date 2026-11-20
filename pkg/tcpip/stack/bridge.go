@@ -21,6 +21,7 @@ import (
 )
 
 var _ NetworkLinkEndpoint = (*BridgeEndpoint)(nil)
+var _ CoordinatorNIC = (*BridgeEndpoint)(nil)
 
 // +stateify savable
 type bridgePort struct {
@@ -269,6 +270,17 @@ func (b *BridgeEndpoint) DelNIC(nic *nic) tcpip.Error {
 	return nil
 }
 
+// ReleaseNICs implements CoordinatorNIC.ReleaseNICs.
+func (b *BridgeEndpoint) ReleaseNICs(coordinator *nic) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	for _, p := range b.ports {
+		if p.nic.Primary == coordinator {
+			p.nic.Primary = nil
+		}
+	}
+}
+
 // MTU implements stack.LinkEndpoint.MTU.
 func (b *BridgeEndpoint) MTU() uint32 {
 	b.mu.RLock()
@@ -314,9 +326,6 @@ func (b *BridgeEndpoint) Capabilities() LinkEndpointCapabilities {
 func (b *BridgeEndpoint) Attach(dispatcher NetworkDispatcher) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	for _, p := range b.ports {
-		p.nic.Primary = nil
-	}
 	b.dispatcher = dispatcher
 	b.ports = make(map[tcpip.NICID]*bridgePort)
 	b.localAddrs = make(map[tcpip.LinkAddress]int)
