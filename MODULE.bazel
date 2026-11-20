@@ -80,10 +80,12 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 # Build-time compilation database generator.
 _COMPILE_COMMANDS_BUILD = 'licenses(["notice"])\nexports_files(["usr/bin/bazel-compile-commands"])\n'
 
-# Jammy packages support the Ubuntu 22.04 development container.
+# Jammy packages support the Ubuntu 22.04 development container. The generic
+# AMD64 ZIP requires glibc 2.38, compared with 2.34 for the Jammy package.
 http_archive(
     name = "bazel_compile_commands_linux_amd64",
     build_file_content = _COMPILE_COMMANDS_BUILD,
+    # Bazel extracts the outer Debian ar archive; data.tar contains usr/bin.
     patch_cmds = ["tar -xf data.tar"],
     sha256 = "e57cc545ea9ab6dfc494eb2c5913210099e8e31e947517fd0545844d06949b47",
     urls = ["https://github.com/kiron1/bazel-compile-commands/releases/download/v0.21.0/bazel-compile-commands_0.21.0-jammy_amd64.deb"],
