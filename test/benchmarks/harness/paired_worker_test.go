@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -451,50 +452,109 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 	}
 }
 
-func TestWorkerCounterCapability(t *testing.T) {
-	t.Logf("counter admission only: uid=%d guest_cpus=%d; counters remain disabled", os.Geteuid(), runtime.NumCPU())
-	perf, err := exec.LookPath("perf")
-	t.Logf("existing perf path=%q lookup_error=%v", perf, err)
-	for _, path := range []string{
-		"/proc/sys/kernel/perf_event_paranoid",
-		"/proc/sys/kernel/kptr_restrict",
-		"/sys/bus/event_source/devices/cpu/type",
-		"/sys/bus/event_source/devices/cpu/caps/pmu_name",
-		"/sys/bus/event_source/devices/software/type",
-	} {
-		data, err := os.ReadFile(path)
-		t.Logf("counter support path=%q value=%q read_error=%v", path, strings.TrimSpace(string(data)), err)
+func TestWorkerCounterUsability(t *testing.T) {
+	membership, err := os.ReadFile("/proc/self/cgroup")
+	if err != nil {
+		t.Fatal(err)
 	}
-	for _, counter := range []struct {
-		name   string
-		typeID uint32
-		config uint64
-	}{
-		{"cycles", unix.PERF_TYPE_HARDWARE, unix.PERF_COUNT_HW_CPU_CYCLES},
-		{"instructions", unix.PERF_TYPE_HARDWARE, unix.PERF_COUNT_HW_INSTRUCTIONS},
-		{"software_cpu_clock", unix.PERF_TYPE_SOFTWARE, unix.PERF_COUNT_SW_CPU_CLOCK},
-	} {
-		for _, userOnly := range []bool{true, false} {
-			attr := unix.PerfEventAttr{
-				Type:   counter.typeID,
-				Size:   unix.PERF_ATTR_SIZE_VER0,
-				Config: counter.config,
-				Bits:   unix.PerfBitDisabled | unix.PerfBitExcludeHv,
-			}
-			if userOnly {
-				attr.Bits |= unix.PerfBitExcludeKernel
-			}
-			fd, err := unix.PerfEventOpen(&attr, 0, -1, -1, unix.PERF_FLAG_FD_CLOEXEC)
-			errno := 0
-			if code, ok := err.(unix.Errno); ok {
-				errno = int(code)
-			}
-			t.Logf("counter=%s self_user_only=%t opened=%t errno=%d error=%v", counter.name, userOnly, err == nil, errno, err)
-			if err == nil {
-				if err := unix.Close(fd); err != nil {
-					t.Fatalf("close disabled %s counter: %v", counter.name, err)
-				}
+	group := strings.TrimSpace(string(membership))
+	if !strings.HasPrefix(group, "0::/") || strings.ContainsAny(group, "\n.") {
+		t.Fatalf("unsupported own cgroup membership %q", group)
+	}
+	parent := filepath.Join("/sys/fs/cgroup", strings.TrimPrefix(group, "0::/"))
+	owned := filepath.Join(parent, "gvisor-counter-"+rand.Text())
+	if err := os.Mkdir(owned, 0700); err != nil {
+		t.Fatalf("create owned counter cgroup: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := os.Remove(owned); err != nil {
+			t.Errorf("remove owned counter cgroup: %v", err)
+		} else {
+			t.Log("owned counter cgroup removed")
+		}
+	})
+	pid := []byte(strconv.Itoa(os.Getpid()))
+	if err := os.WriteFile(filepath.Join(owned, "cgroup.procs"), pid, 0600); err != nil {
+		t.Fatalf("move own process into owned counter cgroup: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := os.WriteFile(filepath.Join(parent, "cgroup.procs"), pid, 0600); err != nil {
+			t.Errorf("restore own process cgroup: %v", err)
+		} else {
+			t.Log("own process cgroup restored")
+		}
+	})
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	var original, selected unix.CPUSet
+	if err := unix.SchedGetaffinity(0, &original); err != nil {
+		t.Fatal(err)
+	}
+	if !original.IsSet(2) {
+		t.Fatal("required existing worker CPU2 is unavailable")
+	}
+	selected.Set(2)
+	if err := unix.SchedSetaffinity(0, &selected); err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := unix.SchedSetaffinity(0, &original); err != nil {
+			t.Errorf("restore own thread affinity: %v", err)
+		}
+	}()
+	groupFD, err := unix.Open(owned, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fds := []int{groupFD}
+	defer func() {
+		for i := len(fds) - 1; i >= 0; i-- {
+			if err := unix.Close(fds[i]); err != nil {
+				t.Errorf("close owned counter fd: %v", err)
 			}
 		}
+	}()
+	attr := unix.PerfEventAttr{
+		Type:        unix.PERF_TYPE_HARDWARE,
+		Size:        unix.PERF_ATTR_SIZE_VER0,
+		Config:      unix.PERF_COUNT_HW_CPU_CYCLES,
+		Read_format: unix.PERF_FORMAT_GROUP | unix.PERF_FORMAT_TOTAL_TIME_ENABLED | unix.PERF_FORMAT_TOTAL_TIME_RUNNING,
+		Bits:        unix.PerfBitDisabled | unix.PerfBitExcludeHv,
+	}
+	cycles, err := unix.PerfEventOpen(&attr, groupFD, 2, -1, unix.PERF_FLAG_PID_CGROUP|unix.PERF_FLAG_FD_CLOEXEC)
+	if err != nil {
+		t.Fatalf("open disabled cgroup cycles on CPU2: %v", err)
+	}
+	fds = append(fds, cycles)
+	attr.Config = unix.PERF_COUNT_HW_INSTRUCTIONS
+	attr.Bits &^= unix.PerfBitDisabled
+	instructions, err := unix.PerfEventOpen(&attr, groupFD, 2, cycles, unix.PERF_FLAG_PID_CGROUP|unix.PERF_FLAG_FD_CLOEXEC)
+	if err != nil {
+		t.Fatalf("group cgroup instructions with cycles on CPU2: %v", err)
+	}
+	fds = append(fds, instructions)
+	if err := unix.IoctlSetInt(cycles, unix.PERF_EVENT_IOC_ENABLE, unix.PERF_IOC_FLAG_GROUP); err != nil {
+		t.Fatalf("enable owned counter group: %v", err)
+	}
+	state := uint64(1)
+	for i := uint64(0); i < 100000; i++ {
+		state = state*1664525 + 1013904223
+		state ^= i
+	}
+	if err := unix.IoctlSetInt(cycles, unix.PERF_EVENT_IOC_DISABLE, unix.PERF_IOC_FLAG_GROUP); err != nil {
+		t.Fatalf("disable owned counter group: %v", err)
+	}
+	var data [40]byte
+	n, err := unix.Read(cycles, data[:])
+	if err != nil || n != len(data) {
+		t.Fatalf("read owned counter group: bytes=%d want=%d error=%v", n, len(data), err)
+	}
+	var values [5]uint64
+	for i := range values {
+		values[i] = binary.NativeEndian.Uint64(data[8*i:])
+	}
+	t.Logf("cgroup CPU2 deterministic counter smoke: result=%d group_size=%d enabled_ns=%d running_ns=%d cycles=%d instructions=%d", state, values[0], values[1], values[2], values[3], values[4])
+	if values[0] != 2 || values[1] == 0 || values[1] != values[2] || values[3] == 0 || values[4] == 0 {
+		t.Fatal("owned counter group lacks two nonzero values with full enabled/running coverage")
 	}
 }
