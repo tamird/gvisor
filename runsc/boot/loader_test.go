@@ -799,7 +799,9 @@ func TestRejectedTaskCheckpointNotifiesWaiters(t *testing.T) {
 	for _, scope := range []bool{false, true} {
 		t.Run(fmt.Sprintf("scope-rejection=%t", scope), func(t *testing.T) {
 			l, cleanup, err := createLoader(testConfig(), testSpec())
-			if err != nil { t.Fatal(err) }
+			if err != nil {
+				t.Fatal(err)
+			}
 			defer l.Destroy()
 			defer cleanup()
 			if scope {
@@ -816,13 +818,19 @@ func TestRejectedTaskCheckpointNotifiesWaiters(t *testing.T) {
 				defer l.k.SignalAllCheckpointWaiters(fmt.Errorf("test complete"))
 				defer l.k.SignalAllFSSaveWaiters(fmt.Errorf("test complete"))
 				err := l.save(&controlapi.SaveOpts{TaskContainerID: l.sandboxID, SplitFSCheckpointPaths: []fscheckpoint.Bundle{{}}})
-				if err == nil { t.Fatal("save unexpectedly succeeded") }
-				if scope && !strings.Contains(err.Error(), "exclusive use") { t.Fatalf("save = %v, want scope rejection", err) }
+				if err == nil {
+					t.Fatal("save unexpectedly succeeded")
+				}
+				if scope && !strings.Contains(err.Error(), "exclusive use") {
+					t.Fatalf("save = %v, want scope rejection", err)
+				}
 				synctest.Wait()
 				for name, result := range map[string]<-chan error{"checkpoint": checkpoint, "filesystem": filesystem} {
 					select {
 					case got := <-result:
-						if got != err { t.Errorf("%s waiter = %v, want %v", name, got, err) }
+						if got != err {
+							t.Errorf("%s waiter = %v, want %v", name, got, err)
+						}
 					default:
 						t.Errorf("%s waiter did not complete", name)
 					}
