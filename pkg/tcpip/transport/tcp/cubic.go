@@ -314,8 +314,7 @@ func (c *cubicState) HandleLossDetected() {
 //
 // +checklocks:c.s.ep.mu
 func (c *cubicState) HandleRTOExpired(reduceThreshold bool) {
-	// Linux cubictcp_state() resets the epoch on every TCP_CA_Loss, but
-	// tcp_enter_loss() calls cubictcp_recalc_ssthresh() only for a new loss.
+	// Restart the epoch on every timeout, even when the threshold stays unchanged.
 	c.T = c.s.ep.stack.Clock().NowMonotonic()
 	c.numCongestionEvents = 0
 	if !reduceThreshold {
