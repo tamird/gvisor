@@ -21,6 +21,7 @@ import json
 import os
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -166,77 +167,37 @@ class LintTest(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stderr)
         self.assertFalse(self.bazel_log.exists(), result.stdout + result.stderr)
 
-  def test_compile_commands_bazel_options(self) -> None:
-    self.tool(
-        self.bin / "bazel",
-        f'echo "$*" >> "{self.bazel_log}"\n'
-        'case " $* " in *" run "*) echo generator-stopped >&2; exit 7;; esac',
-    )
-    result = self.lint(
-        "--bazel=bazel --startup=1",
-        "--bazel-options=--opt=1 --opt=2",
-        "clang-tidy",
-    )
-    self.assert_failed(result, "clang-tidy")
-    self.assertIn("generator-stopped", result.stderr)
-    (generate,) = [c.split() for c in self.bazel_log.read_text().splitlines()]
-    self.assertEqual(generate[:4], ["--startup=1", "run", "--opt=1", "--opt=2"])
-    self.assertIn("--platforms=@platforms//host", generate)
-    self.assertIn("--bazel-command=bazel", generate)
-    self.assertIn("--bazelsupopt=--startup=1", generate)
-    self.assertIn("--bazelopt=--opt=1", generate)
-    self.assertIn("--bazelopt=--opt=2", generate)
-    self.tool(
-        self.bin / "bazel",
-        f'echo "$*" >> "{self.bazel_log}"\n'
-        'case " $* " in\n'
-        '  *" run "*) for arg; do case "$arg" in --output=*) '
-        'printf generated > "${arg#--output=}";; esac; done;;\n'
-        '  *" build "*) echo materialization-stopped >&2; exit 7;;\n'
-        "esac",
-    )
-    self.bazel_log.unlink()
-    result = self.lint("clang-tidy")
-    self.assert_failed(result, "clang-tidy")
-    self.assertIn("materialization-stopped", result.stderr)
-    commands = [c.split() for c in self.bazel_log.read_text().splitlines()]
-    output = next(arg for arg in commands[0] if arg.startswith("--output="))
-    self.assertFalse(pathlib.Path(output.removeprefix("--output=")).exists())
-    self.assertFalse((LINT.parent.parent / "compile_commands.json").exists())
-
   def test_clang_tidy_process_failure(self) -> None:
     tool = self.bin / "clang-tidy"
     self.tool(tool, "echo driver-stdout; echo driver-stderr >&2; exit 7")
-    source = pathlib.Path("source.cc")
-    analyzed, findings, errors = clang_tidy._analyze(
-        str(tool), self.root, self.root / ".clang-tidy", self.root, source
+    source = self.root / "source.cc"
+    source.touch()
+    database = self.root / "compile_commands.json"
+    database.write_text(json.dumps([
+        {"directory": str(self.root), "file": str(source)},
+    ]))
+    result = subprocess.run(
+        [
+            sys.executable,
+            clang_tidy.__file__,
+            f"--clang-tidy={tool}",
+            f"--config-file={self.root / '.clang-tidy'}",
+            f"--database={database}",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
     )
-    self.assertEqual(analyzed, source)
-    self.assertEqual(findings, [])
-    self.assertIn("source.cc: clang-tidy exited with status 7", errors)
-    self.assertIn("driver-stdout", errors)
-    self.assertIn("driver-stderr", errors)
+    self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+    self.assertIn("clang-tidy exited with status 7", result.stderr)
+    self.assertIn("driver-stdout", result.stderr)
+    self.assertIn("driver-stderr", result.stderr)
 
   def test_bazel_failure(self) -> None:
     self.tool(self.bin / "bazel", "echo bazel-build-failed >&2; exit 7")
     result = self.lint("goimports")
     self.assert_failed(result, "goimports")
     self.assertIn("bazel-build-failed", result.stderr)
-
-    self.tool(
-        self.bin / "bazel",
-        f'echo "$*" >> "{self.bazel_log}"\n'
-        'case "$*" in *"@io_bazel_rules_go//go"*) exit 0;; esac\nexit 7',
-    )
-    result = subprocess.run(
-        ["bash", str(LINT.with_name("devcontainer-init.sh"))],
-        env=self.env,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    self.assertEqual(result.returncode, 7, result.stdout + result.stderr)
-    self.assertEqual(len(self.bazel_log.read_text().splitlines()), 2)
 
   def test_diagnostics_and_continuation(self) -> None:
     self.tool(
@@ -270,6 +231,56 @@ class LintTest(unittest.TestCase):
     (self.cache / f"codespell-{self.versions['CODESPELL']}").mkdir()
     self.tool(self.bin / "python3", "exit 0")
     self.assert_failed(self.lint("spelling"), "spelling")
+
+
+class CompileCommandsTest(unittest.TestCase):
+
+  def test_database_publication(self) -> None:
+    with tempfile.TemporaryDirectory(dir=os.environ["TEST_TMPDIR"]) as temp:
+      workspace = pathlib.Path(temp)
+      tools = workspace / "tools"
+      tools.mkdir()
+      generator = tools / "gen_compile_commands.sh"
+      shutil.copyfile(LINT.with_name("gen_compile_commands.sh"), generator)
+      bazel = workspace / "selected bazel"
+      bazel.write_text("""#!/bin/sh
+case "$1" in
+  run)
+    for arg; do
+      case "$arg" in --output=*) printf generated > "${arg#--output=}";; esac
+    done
+    if [ "$FAIL_STEP" = run ]; then echo generation-failed >&2; exit 7; fi
+    ;;
+  build)
+    # Preparation must see the previous database and the newly generated file.
+    test "$(cat compile_commands.json)" = previous || exit 8
+    set -- compile_commands.json.*
+    test -f "$1" && test "$(cat "$1")" = generated || exit 8
+    if [ "$FAIL_STEP" = build ]; then echo preparation-failed >&2; exit 7; fi
+    ;;
+  *) exit 8;;
+esac
+""")
+      bazel.chmod(0o755)
+      database = workspace / "compile_commands.json"
+      for fail_step in ("run", "build", ""):
+        with self.subTest(fail_step=fail_step):
+          database.write_text("previous")
+          result = subprocess.run(
+              ["bash", str(generator), str(bazel)],
+              env=dict(os.environ, FAIL_STEP=fail_step),
+              capture_output=True,
+              text=True,
+              check=False,
+          )
+          self.assertEqual(
+              result.returncode, 7 if fail_step else 0,
+              result.stdout + result.stderr,
+          )
+          self.assertEqual(
+              database.read_text(), "previous" if fail_step else "generated"
+          )
+          self.assertEqual(list(workspace.glob("compile_commands.json.*")), [])
 
 
 class ClangTidySourcesTest(unittest.TestCase):

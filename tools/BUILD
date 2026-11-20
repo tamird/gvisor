@@ -101,7 +101,7 @@ py_test(
     srcs = ["lint_test.py"],
     args = ["$(rootpath :lint.sh)"],
     data = [
-        "devcontainer-init.sh",
+        "gen_compile_commands.sh",
         "lint.sh",
         "//:.clang-format",
         "//:.clang-tidy",

@@ -22,9 +22,4 @@ bazel run @io_bazel_rules_go//go version
 
 # Generate a compile_commands.json database so clangd lsp works on C++ tests.
 echo "====== Generating compile_commands.json... ======"
-bazel run --platforms=@platforms//host //tools/compile_commands -- \
-  --resolve --replace=-fno-canonical-system-headers= \
-  --bazel-command=bazel //test/... //tools/...
-bazel build --remote_download_outputs=all \
-  --aspects=//tools:cc_compile_inputs.bzl%cc_compile_inputs \
-  --output_groups=cc_compile_inputs //test/... //tools/...
+exec "$(dirname "$0")/gen_compile_commands.sh"
