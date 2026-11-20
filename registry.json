@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T00:43:57.063788+00:00",
+    "updatedAt": "2026-11-20T02:14:48.077247+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -51426,13 +51426,13 @@
       "repo": "google/gvisor",
       "number": 16737,
       "title": "Preserve signaling NaNs in legacy checkpoints",
-      "summary": "The legacy checkpoint regression selects the legacy engine and restores the previous setting afterward. It reproduced the changed signaling NaN bits on stock and passed normally and under the race detector with the fix. The maintainer approval was on the preceding head.",
+      "summary": "Approved mechanical rebase is published to the original fork branch at6362b2f9b469c6a7d36256448274a7d35d0307e6 and natively verified OPEN/MERGEABLE. Existing approval scope and own DCO are retained. DCO2 reports an obsolete upstream commit range despite the current one-commit source having valid sign-off; this provider projection issue remains under investigation.",
       "group": "runtime",
       "ref": "review/state-signaling-nan",
-      "head": "272b3794a9344efd25e0f08877498325487b188b",
+      "head": "6362b2f9b469c6a7d36256448274a7d35d0307e6",
       "url": "https://github.com/google/gvisor/pull/16737",
       "status": "open",
-      "updatedAt": "2026-11-19T07:47:10.548489+00:00",
+      "updatedAt": "2026-11-20T02:14:48.077247+00:00",
       "evidence": [
         {
           "label": "Native ARM64 state suites, AMD64 regression, owning analyzers on both architectures and finite-array comparison",
@@ -51485,15 +51485,16 @@
           "https://github.com/google/gvisor/pull/16737",
           "https://github.com/google/gvisor/pull/17614",
           "https://buildkite.com/gvisor/internal/builds/36700",
-          "https://github.com/gvisor/gvisor/pull/17614"
+          "https://github.com/gvisor/gvisor/pull/17614",
+          "https://github.com/google/gvisor/pull/16737#issuecomment-7026378874"
         ],
-        "disposition": "Footer-only DCO metadata is published and green; technical source/import obligations remain. Obtain the unavailable importing-owner Copybara first diagnostic before proposing a source fix.",
-        "nextAction": "Root investigates the demonstrated legacy coverage-build bottleneck through the existing permanent coverage migration, preserving NaN/source and private importing-owner evidence separately. Do not alter the NaN fix or blindly retry from a job deadline alone.",
-        "recheckCondition": "Current-head CI terminal/change, substantive technical feedback, source/import lifecycle change or an already-pending source-review decision; root remains accountable.",
+        "disposition": "Approved mechanical rebase is published to the original fork branch at6362b2f9b469c6a7d36256448274a7d35d0307e6 and natively verified OPEN/MERGEABLE. Existing approval scope and own DCO are retained. DCO2 reports an obsolete upstream commit range despite the current one-commit source having valid sign-off; this provider projection issue remains under investigation.",
+        "nextAction": "Root follows exact-head checks and supported DCO self-service. Preserve valid source and sign-off; no foreign sign-offs, override, commit churn or repeated rebase reply.",
+        "recheckCondition": "DCO projection/current checks recover, or source/substantive feedback changes.",
         "owner": "root",
-        "observedAt": "2026-11-17T19:01:06.487079+00:00",
-        "sourceHead": "272b3794a9344efd25e0f08877498325487b188b",
-        "curatedAt": "2026-11-19T07:47:10.548489+00:00",
+        "observedAt": "2026-11-20T02:14:48.077247+00:00",
+        "sourceHead": "6362b2f9b469c6a7d36256448274a7d35d0307e6",
+        "curatedAt": "2026-11-20T02:14:48.077247+00:00",
         "priorImportNextAction": "Use the existing importing-maintainer channel to obtain the first original error before making source changes; preserve source head and existing reviews. For16737 track matching17614 and its private36700 failure.\nImporting maintainer must read the original failed internal job and provide the first actionable error or correct the internal change. Root follows the exact source/import without guessing a source fix. DCO import coordination: Root coordinates #17614 at 7eb70d3831d9. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17614,
@@ -51581,7 +51582,9 @@
         "nextAction": "Footer-only DCO metadata delivery is complete. Follow remaining current-head CI and the existing technical importing-maintainer disposition; do not request permission for the completed metadata operation.",
         "recheckCondition": "Current-head CI, substantive technical feedback or import lifecycle changes; named technical holds remain.",
         "holdsPreserved": {}
-      }
+      },
+      "nextStep": "Root follows exact-head checks and supported DCO self-service. Preserve valid source and sign-off; no foreign sign-offs, override, commit churn or repeated rebase reply.",
+      "recheckCondition": "DCO projection/current checks recover, or source/substantive feedback changes."
     },
     {
       "id": "pr:16728",
@@ -55160,9 +55163,9 @@
       "title": "Docker-in-gVisor network benchmark",
       "url": "https://github.com/google/gvisor/pull/16445",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-11-19T23:21:48.031196+00:00",
-      "summary": "Root inspected current1910e8b against7983609: only three setup comments were added; executable benchmark and setup code are unchanged. The unchanged Added reply4634949016 and requested sharding fix are handled on this head. Kerumeto and EtiennePerot approve current1910; FirstPass1992/main55456 remain pending at this inspection. Actual native/Sentry benchmark execution and broad before/after performance evidence remain author-owned requirements.",
+      "status": "merged",
+      "updatedAt": "2026-11-20T02:14:48.077247+00:00",
+      "summary": "Merged at2026-11-20T00:49:48Z asb65d8f07bd7f472d433d3e76a15b2c237215b4b8 from1910e8b. Sharding finding and Added reply were handled before landing. Historical missing broad benchmark execution/performance evidence remains a review limit; no measurements are inferred.",
       "evidence": [
         {
           "label": "15 native transfer cases with sender and receiver byte counts",
@@ -55228,10 +55231,10 @@
         "providerHead": "1910e8b0ee325bcf578c40ea7f8401040501b332",
         "mergeable": "MERGEABLE",
         "sourceHead": "1910e8b0ee325bcf578c40ea7f8401040501b332",
-        "observedAt": "2026-11-19T23:21:48.031196+00:00",
-        "disposition": "Root inspected current1910e8b against7983609: only three setup comments were added; executable benchmark and setup code are unchanged. The unchanged Added reply4634949016 and requested sharding fix are handled on this head. Kerumeto and EtiennePerot approve current1910; FirstPass1992/main55456 remain pending at this inspection. Actual native/Sentry benchmark execution and broad before/after performance evidence remain author-owned requirements.",
-        "nextAction": "Await parth-opensrc actual native/Sentry topology execution and already-requested benchmark/performance evidence before full approval; root follows current-head CI and evidence. Do not repeat the source fix, courtesy reply or review question.",
-        "recheckCondition": "Author supplies execution/performance evidence, changes source or conversation, or relevant current-head checks change.",
+        "observedAt": "2026-11-20T02:14:48.077247+00:00",
+        "disposition": "Merged at2026-11-20T00:49:48Z asb65d8f07bd7f472d433d3e76a15b2c237215b4b8 from1910e8b. Sharding finding and Added reply were handled before landing. Historical missing broad benchmark execution/performance evidence remains a review limit; no measurements are inferred.",
+        "nextAction": "Source lifecycle complete. Preserve history and foreign-owned branch; no courtesy reply, approval request or cleanup.",
+        "recheckCondition": "Substantive post-merge regression or evidence discrepancy.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16445",
           "https://github.com/google/gvisor/pull/16445#discussion_r4634949016"
@@ -55257,7 +55260,7 @@
           "scope": "Actual rebase plus source changes, not DCO-only. False 128KiB Go MB/s removed; Iperf2 remains. No fresh measurements or complete approval inferred.",
           "CI": "Exact-head First Pass1770 SUCCESS at20:06 snapshot"
         },
-        "curatedAt": "2026-11-19T23:21:48.031196+00:00",
+        "curatedAt": "2026-11-20T02:14:48.077247+00:00",
         "currentSourceReview": {
           "head": "84b18c285d0be31bb58ecdf1721da2de312aee01",
           "finding": "namedLogger drops Skipf and bypasses DING-only topology partition selection",
@@ -55340,8 +55343,8 @@
           }
         ]
       },
-      "nextStep": "Await parth-opensrc actual native/Sentry topology execution and already-requested benchmark/performance evidence before full approval; root follows current-head CI and evidence. Do not repeat the source fix, courtesy reply or review question.",
-      "recheckCondition": "Author supplies execution/performance evidence, changes source or conversation, or relevant current-head checks change."
+      "nextStep": "Source lifecycle complete. Preserve history and foreign-owned branch; no courtesy reply, approval request or cleanup.",
+      "recheckCondition": "Substantive post-merge regression or evidence discrepancy."
     },
     {
       "id": "branch:c-ares-config-header",
@@ -61350,13 +61353,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/tcp-rack-fresh-timeout-head",
-      "head": "32638d2e4994d2cdc0f6448d453a0a1d071620e8",
+      "head": "3c5e60bfccfb2a1859e2c8c2e2c295d1907df48d",
       "title": "Keep RACK from repeating a fresh timeout repair",
       "url": "https://github.com/google/gvisor/pull/16857",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:51.199074+00:00",
-      "summary": "After a retransmission timeout, a SACK can reveal a hole beyond the freshly retransmitted head. The published amendment leaves ordinary sends at the first unsent segment so RACK can repair those holes without replaying the tail. The wire regression and separate controlled-clock check passed, and the approved reply is posted on the original review thread.",
+      "updatedAt": "2026-11-20T02:14:48.077247+00:00",
+      "summary": "Mechanical rebase3c5e60bf is published OPEN/MERGEABLE with original DCO retained; DCO2 succeeds. Both architectures pass62internal,23RACK,48SACK and405external TCP cases with zero errors/skips; lint passes. Packet scope is analysis only, with no packet-runtime, race or performance claim.",
       "evidence": [
         {
           "label": "Approved reviewer reply published",
@@ -61448,11 +61451,11 @@
       "number": 16857,
       "followup": {
         "owner": "root",
-        "sourceHead": "32638d2e4994d2cdc0f6448d453a0a1d071620e8",
+        "sourceHead": "3c5e60bfccfb2a1859e2c8c2e2c295d1907df48d",
         "providerHead": "32638d2e4994d2cdc0f6448d453a0a1d071620e8",
-        "observedAt": "2026-11-17T19:04:51.199074+00:00",
-        "disposition": "Approved amendment and reviewer reply published",
-        "nextAction": "Follow current-head checks and substantive reviewer responses. No contributor decision or outgoing reply remains. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks.",
+        "observedAt": "2026-11-20T02:14:48.077247+00:00",
+        "disposition": "Mechanical rebase3c5e60bf is published OPEN/MERGEABLE with original DCO retained; DCO2 succeeds. Both architectures pass62internal,23RACK,48SACK and405external TCP cases with zero errors/skips; lint passes. Packet scope is analysis only, with no packet-runtime, race or performance claim.",
+        "nextAction": "Follow exact published-head CI and existing review; requested mechanical rebase is delivered. Preserve scope and do not repeat notifications.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16857#discussion_r4459290531",
           "https://github.com/tamird/gvisor/commit/85b67686f3cd61965db6393190969dab98c8d5c3",
@@ -61461,10 +61464,12 @@
           "https://github.com/google/gvisor/pull/16857#discussion_r4460678584",
           "https://github.com/gvisor/gvisor/pull/16857",
           "https://github.com/tamird/gvisor/commit/5c2734f45e4e59a6cea8a20ddd9d2954bf1b0ad2",
-          "https://github.com/tamird/gvisor/commit/32638d2e4994d2cdc0f6448d453a0a1d071620e8"
+          "https://github.com/tamird/gvisor/commit/32638d2e4994d2cdc0f6448d453a0a1d071620e8",
+          "https://github.com/google/gvisor/pull/16857#issuecomment-7026939975"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change."
+        "recheckCondition": "Current-head CI/review or source changes.",
+        "curatedAt": "2026-11-20T02:14:48.077247+00:00"
       },
       "dcoAmendment": {
         "oldHead": "5c2734f45e4e59a6cea8a20ddd9d2954bf1b0ad2",
@@ -61488,7 +61493,9 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "TCP workstream",
         "priorProviderHead": "85b67686f3cd61965db6393190969dab98c8d5c3"
-      }
+      },
+      "nextStep": "Follow exact published-head CI and existing review; requested mechanical rebase is delivered. Preserve scope and do not repeat notifications.",
+      "recheckCondition": "Current-head CI/review or source changes."
     },
     {
       "id": "pr:16846",
@@ -78850,8 +78857,8 @@
       "url": "https://github.com/google/gvisor/pull/17181",
       "group": "tests",
       "status": "open",
-      "summary": "The accounting test touches 524,288 KiB. A default large worker reported 475,728 KiB total and no swap. Both save and save/resume passed on enormous workers. The ptrace process suite ran all seven cases on a large worker, including the 1,000-thread case. A separate medium worker reported a system-wide cap of 1,821 threads. All nine cases ran uncached on the declared LLVM integration with the same size patch. The control measured default worker capacity without launching a workload too large for it.\n\nBuildifier reported two formatting differences on the approved head. Applying the pinned formatter to 31d5b49f3 reproduced the complete tree of the published revision b6294cc79. Upstream lint passed on that revision.",
-      "updatedAt": "2026-11-17T19:04:53.479529+00:00",
+      "summary": "Approved mechanical rebase is published to the original fork branch ate8bd01cec6e060dc86485b77b580f5f5f79c9d68 and natively verified OPEN/MERGEABLE. Existing approval scope and own DCO are retained. DCO2 reports an obsolete upstream commit range despite the current one-commit source having valid sign-off; this provider projection issue remains under investigation.",
+      "updatedAt": "2026-11-20T02:14:48.077247+00:00",
       "evidence": [
         {
           "label": "Upstream lint passed on b6294cc79",
@@ -78910,13 +78917,13 @@
           "url": "https://github.com/google/gvisor/pull/17181"
         }
       ],
-      "head": "5b515217684ae165b48cc75eff40cefdf11c8424",
+      "head": "e8bd01cec6e060dc86485b77b580f5f5f79c9d68",
       "followup": {
         "owner": "root",
-        "sourceHead": "5b515217684ae165b48cc75eff40cefdf11c8424",
-        "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "The formatting-only correction is published on #17181. Upstream lint passed on b6294cc79.",
-        "nextAction": "Follow #17181 for maintainer review and import on the corrected head. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 5b515217684ae165b48cc75eff40cefdf11c8424; observed 2026-11-17T19:29:29.454062+00:00): build 1545 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "sourceHead": "e8bd01cec6e060dc86485b77b580f5f5f79c9d68",
+        "observedAt": "2026-11-20T02:14:48.077247+00:00",
+        "disposition": "Approved mechanical rebase is published to the original fork branch ate8bd01cec6e060dc86485b77b580f5f5f79c9d68 and natively verified OPEN/MERGEABLE. Existing approval scope and own DCO are retained. DCO2 reports an obsolete upstream commit range despite the current one-commit source having valid sign-off; this provider projection issue remains under investigation.",
+        "nextAction": "Root follows exact-head checks and supported DCO self-service. Preserve valid source and sign-off; no foreign sign-offs, override, commit churn or repeated rebase reply.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17181",
           "https://github.com/tamird/gvisor/commit/b6294cc79",
@@ -78954,10 +78961,12 @@
           "https://buildkite.com/gvisor/first-pass/builds/1545#01a1eadd-3b44-48f7-8136-b424b323f329",
           "https://buildkite.com/gvisor/first-pass/builds/1545#01a1eadd-3b44-45ab-b82d-14a2564513b6",
           "https://buildkite.com/gvisor/first-pass/builds/1545#01a1eadd-3b45-46bd-80e1-bf0c7cc2fbb9",
-          "https://buildkite.com/gvisor/first-pass/builds/1545#01a1eadd-3b45-4425-9fde-c0d3954d5284"
+          "https://buildkite.com/gvisor/first-pass/builds/1545#01a1eadd-3b45-4425-9fde-c0d3954d5284",
+          "https://github.com/google/gvisor/pull/17181#issuecomment-7026372055"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+        "recheckCondition": "DCO projection/current checks recover, or source/substantive feedback changes.",
+        "curatedAt": "2026-11-20T02:14:48.077247+00:00"
       },
       "settledReviews": [
         {
@@ -78996,7 +79005,9 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
-      }
+      },
+      "nextStep": "Root follows exact-head checks and supported DCO self-service. Preserve valid source and sign-off; no foreign sign-offs, override, commit churn or repeated rebase reply.",
+      "recheckCondition": "DCO projection/current checks recover, or source/substantive feedback changes."
     },
     {
       "id": "pr:17182",
@@ -99195,14 +99206,14 @@
       "url": "https://github.com/nodejs/node/pull/67595",
       "group": "ci-flakes",
       "status": "open",
-      "updatedAt": "2026-11-19T19:51:39.905270+00:00",
-      "summary": "Internet44418983458 attempt2 passed on exact15c2ed. The approved full-CI request7012503607 already addresses maintainer instruction7009949471. Full Jenkins CI and landing remain a maintainer dependency; private Jenkins visibility is not established.",
+      "updatedAt": "2026-11-20T02:14:48.077247+00:00",
+      "summary": "Exact15c2edb full Jenkins79320 is running; GitHub Linux/Windows statuses are pending and the other native statuses green. Existing full-CI request progressed to execution; no new outreach is needed.",
       "followup": {
         "owner": "root",
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-        "disposition": "Internet44418983458 attempt2 passed on exact15c2ed. The approved full-CI request7012503607 already addresses maintainer instruction7009949471. Full Jenkins CI and landing remain a maintainer dependency; private Jenkins visibility is not established.",
-        "nextAction": "Root follows the already-requested maintainer full CI and landing response. Preserve the posted request and exact source; do not repeat the ping or infer the private full-CI gate from GitHub Actions.",
-        "recheckCondition": "Actual full-CI event, substantive maintainer response, source/review change or landing.",
+        "disposition": "Exact15c2edb full Jenkins79320 is running; GitHub Linux/Windows statuses are pending and the other native statuses green. Existing full-CI request progressed to execution; no new outreach is needed.",
+        "nextAction": "Follow current Jenkins/platform results; diagnose terminal failure from available evidence without another CI request.",
+        "recheckCondition": "Current Jenkins/platform result or substantive feedback changes.",
         "publishedDelivery": {
           "base": "b7df44bf9c85a6104b9158b616999e3d2c58be5d",
           "head": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
@@ -99413,7 +99424,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-19T19:51:39.905270+00:00",
+        "curatedAt": "2026-11-20T02:14:48.077247+00:00",
         "memberReview": {
           "author": "bnb",
           "association": "MEMBER",
@@ -99562,7 +99573,10 @@
             }
           }
         ],
-        "observedAt": "2026-11-19T19:51:39.905270+00:00"
+        "observedAt": "2026-11-20T02:14:48.077247+00:00",
+        "evidence": [
+          "https://github.com/nodejs/node/pull/67595#issuecomment-7026664983"
+        ]
       },
       "evidence": [
         {
@@ -99584,8 +99598,8 @@
           "note": "User posted a shorter landing-status question directly; do not post the verbose rerun draft or ask again."
         }
       ],
-      "nextStep": "Root follows the already-requested maintainer full CI and landing response. Preserve the posted request and exact source; do not repeat the ping or infer the private full-CI gate from GitHub Actions.",
-      "recheckCondition": "Actual full-CI event, substantive maintainer response, source/review change or landing."
+      "nextStep": "Follow current Jenkins/platform results; diagnose terminal failure from available evidence without another CI request.",
+      "recheckCondition": "Current Jenkins/platform result or substantive feedback changes."
     },
     {
       "id": "branch:lisafs-hardlink-capability",
@@ -134921,10 +134935,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T00:43:57.063788+00:00",
-      "summary": "Full AMD TCP functional qualification44644420071 passed531cases; no race or performance claim. ARM host capabilities44647122992 and compiler/proto action-image/no-local graph pass; actual ARM packet44647609416 is running. Structured worker reporting produced contradictory PASSED/FAILED_TO_BUILD events and remains under diagnosis, so reporting is not qualified. Standard Bazel-option argv transport30b08e5d is delivered; host TestRunner recovery retains RBE/cache for builds. Performance remains held for existing worker/pool isolation information after bounded128-response proof; no new timed samples or stability claim.",
-      "nextStep": "Packet owner audits ARM packet execution and repairs contradictory structured reporting before declaring full qualification. packet_copy_feedback owns the new15064 conformance finding. Root awaits existing isolated-worker information and existing compdb/secfuzz/private-issue source decisions; no repeated questions or new decision frames. Full150/n24 performance remains open.",
-      "recheckCondition": "Audited ARM packet/reporting results, Linux/Sentry conformance evidence, substantive feedback, or answers to existing worker/publication questions.",
+      "updatedAt": "2026-11-20T02:14:48.077247+00:00",
+      "summary": "TCP functional qualification is closed at531cases per architecture; performance remains held for existing worker/pool isolation information, with no new timed samples. Compdb6a9/secfuzz8c and private issue publication decisions remain pending. Standard configured-query supportd8a3a9a8 is delivered with fixed configured-targets.json artifact. Assigned owners continue conformance, visibility, license-manifest and import-conflict work; unresolved findings are not claimed fixed.",
+      "nextStep": "Follow existing source decisions and worker information. Assigned owners finish actual evidence and reviewable fixes; preserve functional/compiler products and avoid repeated questions or new decision frames.",
+      "recheckCondition": "Substantive feedback/qualification milestone, provider checks, or answers to existing publication/worker questions.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135155,12 +135169,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T00:43:57.063788+00:00",
-        "nextAction": "Packet owner audits ARM packet execution and repairs contradictory structured reporting before declaring full qualification. packet_copy_feedback owns the new15064 conformance finding. Root awaits existing isolated-worker information and existing compdb/secfuzz/private-issue source decisions; no repeated questions or new decision frames. Full150/n24 performance remains open.",
-        "recheckCondition": "Audited ARM packet/reporting results, Linux/Sentry conformance evidence, substantive feedback, or answers to existing worker/publication questions.",
+        "curatedAt": "2026-11-20T02:14:48.077247+00:00",
+        "nextAction": "Follow existing source decisions and worker information. Assigned owners finish actual evidence and reviewable fixes; preserve functional/compiler products and avoid repeated questions or new decision frames.",
+        "recheckCondition": "Substantive feedback/qualification milestone, provider checks, or answers to existing publication/worker questions.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Full AMD TCP functional qualification44644420071 passed531cases; no race or performance claim. ARM host capabilities44647122992 and compiler/proto action-image/no-local graph pass; actual ARM packet44647609416 is running. Structured worker reporting produced contradictory PASSED/FAILED_TO_BUILD events and remains under diagnosis, so reporting is not qualified. Standard Bazel-option argv transport30b08e5d is delivered; host TestRunner recovery retains RBE/cache for builds. Performance remains held for existing worker/pool isolation information after bounded128-response proof; no new timed samples or stability claim.",
+        "disposition": "TCP functional qualification is closed at531cases per architecture; performance remains held for existing worker/pool isolation information, with no new timed samples. Compdb6a9/secfuzz8c and private issue publication decisions remain pending. Standard configured-query supportd8a3a9a8 is delivered with fixed configured-targets.json artifact. Assigned owners continue conformance, visibility, license-manifest and import-conflict work; unresolved findings are not claimed fixed.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135569,5 +135583,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T00:43:57.063788+00:00"
+  "updatedAt": "2026-11-20T02:14:48.077247+00:00"
 }
