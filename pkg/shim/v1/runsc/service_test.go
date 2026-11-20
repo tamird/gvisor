@@ -29,6 +29,7 @@ import (
 	"github.com/containerd/console"
 	apievents "github.com/containerd/containerd/api/events"
 	task "github.com/containerd/containerd/api/runtime/task/v2"
+	runctypes "github.com/containerd/containerd/api/types/runc/options"
 	coreevents "github.com/containerd/containerd/v2/core/events"
 	"github.com/containerd/containerd/v2/pkg/namespaces"
 	"github.com/containerd/containerd/v2/pkg/stdio"
@@ -36,6 +37,7 @@ import (
 	typeurl "github.com/containerd/typeurl/v2"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sys/unix"
+	"gvisor.dev/gvisor/pkg/shim/v1/extension"
 	"gvisor.dev/gvisor/pkg/shim/v1/proc"
 	"gvisor.dev/gvisor/pkg/shim/v1/runsccmd"
 	"gvisor.dev/gvisor/pkg/shim/v1/runtimeoptions"
@@ -43,6 +45,81 @@ import (
 	"gvisor.dev/gvisor/pkg/shim/v1/utils"
 	"gvisor.dev/gvisor/runsc/specutils"
 )
+
+func TestStandardCheckpointRejectsUnsupportedOptions(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		options *runctypes.CheckpointOptions
+	}{
+		{"parent", &runctypes.CheckpointOptions{ParentPath: "/parent"}},
+		{"empty namespace", &runctypes.CheckpointOptions{EmptyNamespaces: []string{"network"}}},
+		{"cgroups mode", &runctypes.CheckpointOptions{CgroupsMode: "strict"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			options, err := typeurl.MarshalAnyToProto(tc.options)
+			if err != nil {
+				t.Fatal(err)
+			}
+			s := &runscService{events: make(chan any, 1)}
+			if _, err := s.Checkpoint(t.Context(), &task.CheckpointTaskRequest{ID: "absent", Path: "/image", Options: options}); !errors.Is(err, errdefs.ErrNotImplemented) {
+				t.Fatalf("Checkpoint() = %v, want not implemented", err)
+			}
+			if len(s.events) != 0 {
+				t.Fatal("failed checkpoint emitted an event")
+			}
+		})
+	}
+}
+
+func TestStandardCheckpointRequiresRunningContainer(t *testing.T) {
+	p := proc.New("test", &runsccmd.Runsc{Command: "/nonexistent-runsc"}, stdio.Stdio{})
+	c := &Container{ID: "test", task: p}
+	s := &runscService{containers: map[string]*Container{"test": c}, events: make(chan any, 1)}
+	if _, err := s.Checkpoint(t.Context(), &task.CheckpointTaskRequest{ID: "test", Path: "/image"}); err == nil || !strings.Contains(err.Error(), "not running") {
+		t.Fatalf("Checkpoint() = %v, want created-state error", err)
+	}
+	if len(s.events) != 0 {
+		t.Fatal("failed checkpoint emitted an event")
+	}
+}
+
+func TestContainerStartCheckpointDispatch(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		checkpoint string
+		execID string
+		command string
+	}{
+		{"ordinary init", "", "", "start"},
+		{"restored init", "/checkpoint with spaces", "", "restore"},
+		{"exec in restored container", "/checkpoint", "exec", "start"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			argsPath := filepath.Join(dir, "args")
+			command := filepath.Join(dir, "runsc")
+			if err := os.WriteFile(command, []byte("#!/bin/sh\nprintf '%s\\n' \"$@\" > "+strconv.Quote(argsPath)+"\nexit 1\n"), 0755); err != nil {
+				t.Fatal(err)
+			}
+			p := proc.New("test", &runsccmd.Runsc{Command: command}, stdio.Stdio{})
+			p.Sandbox = true
+			c := &Container{ID: "test", task: p, restoreImagePath: tc.checkpoint, processes: map[string]extension.Process{"exec": p}}
+			if _, err := c.Start(t.Context(), &task.StartRequest{ID: "test", ExecID: tc.execID}); err == nil {
+				t.Fatal("Start() succeeded despite runtime failure")
+			}
+			args, err := os.ReadFile(argsPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains("\n"+string(args), "\n"+tc.command+"\n") {
+				t.Fatalf("runtime arguments %q do not select %s", args, tc.command)
+			}
+			if tc.command == "restore" && !strings.Contains(string(args), "--image-path="+tc.checkpoint+"\n") {
+				t.Fatalf("restore lost checkpoint path: %q", args)
+			}
+		})
+	}
+}
 
 func TestCheckpointAPISerializesRuntimeCalls(t *testing.T) {
 	for _, filesystem := range []bool{false, true} {

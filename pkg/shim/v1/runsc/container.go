@@ -64,6 +64,10 @@ type Container struct {
 	// task is the main process that is running the container.
 	task *proc.Init
 
+	// restoreImagePath selects restore instead of start for the init process.
+	// It is immutable after the container is created.
+	restoreImagePath string
+
 	// processes maps ExecId to processes running through exec.
 	//
 	// +checklocks:mu
@@ -85,6 +89,7 @@ type ContainerConfig struct {
 	Stderr             string
 	FSRestoreImagePath string
 	FSRestoreDirect    bool
+	CheckpointPath     string
 }
 
 // NewContainer returns a new runsc container
@@ -221,6 +226,7 @@ func NewContainer(ctx context.Context, platform stdio.Platform, conf *ContainerC
 		ID:        conf.ID,
 		Bundle:    conf.Bundle,
 		task:      process,
+		restoreImagePath: conf.CheckpointPath,
 		cgroup:    cgroupMode,
 		processes: make(map[string]extension.Process),
 	}
@@ -299,8 +305,17 @@ func (c *Container) Start(ctx context.Context, r *task.StartRequest) (extension.
 	if err != nil {
 		return nil, err
 	}
-	if err := p.Start(ctx); err != nil {
-		return nil, err
+	var startErr error
+	if r.ExecID == "" && c.restoreImagePath != "" {
+		startErr = c.task.Restore(ctx, &extension.RestoreConfig{
+			ImagePath: c.restoreImagePath,
+			Background: true,
+		})
+	} else {
+		startErr = p.Start(ctx)
+	}
+	if startErr != nil {
+		return nil, startErr
 	}
 	return p, nil
 }

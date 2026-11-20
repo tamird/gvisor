@@ -78,6 +78,7 @@ go_test(
     ],
     embed = [":runsc"],
     deps = [
+        "//pkg/shim/v1/extension",
         "//pkg/shim/v1/proc",
         "//pkg/shim/v1/runsccmd",
         "//pkg/shim/v1/runtimeoptions",
@@ -89,6 +90,7 @@ go_test(
         "@com_github_containerd_console//:go_default_library",
         "@com_github_containerd_containerd_api//events:go_default_library",
         "@com_github_containerd_containerd_api//runtime/task/v2:go_default_library",
+        "@com_github_containerd_containerd_api//types/runc/options:go_default_library",
         "@com_github_containerd_containerd_v2//core/events:go_default_library",
         "@com_github_containerd_containerd_v2//core/runtime:go_default_library",
         "@com_github_containerd_containerd_v2//pkg/namespaces:go_default_library",

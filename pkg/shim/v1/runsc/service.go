@@ -258,6 +258,9 @@ func hasPodCgroupParent(bundle, cgPath string) bool {
 //
 // +checklocksexclude:s.mu
 func (s *runscService) CreateWithFSRestore(ctx context.Context, rfs *extension.CreateWithFSRestoreRequest) (*task.CreateTaskResponse, error) {
+	if rfs.Create.ParentCheckpoint != "" {
+		return nil, fmt.Errorf("parent checkpoints: %w", errdefs.ErrNotImplemented)
+	}
 	c, err := NewContainer(ctx, s.platform, &ContainerConfig{
 		ID:                 rfs.Create.ID,
 		Bundle:             rfs.Create.Bundle,
@@ -269,6 +272,7 @@ func (s *runscService) CreateWithFSRestore(ctx context.Context, rfs *extension.C
 		Stderr:             rfs.Create.Stderr,
 		FSRestoreImagePath: rfs.Conf.ImagePath,
 		FSRestoreDirect:    rfs.Conf.Direct,
+		CheckpointPath:     rfs.Create.Checkpoint,
 	})
 	if err != nil {
 		return nil, err
@@ -568,7 +572,31 @@ func (s *runscService) CloseIO(ctx context.Context, r *task.CloseIORequest) (*ty
 
 // Checkpoint checkpoints the container.
 func (s *runscService) Checkpoint(ctx context.Context, r *task.CheckpointTaskRequest) (*types.Empty, error) {
-	return empty, errdefs.ErrNotImplemented
+	options := &runctypes.CheckpointOptions{}
+	if r.Options != nil {
+		if err := typeurl.UnmarshalTo(r.Options, options); err != nil {
+			return nil, fmt.Errorf("checkpoint options: %w: %v", errdefs.ErrInvalidArgument, err)
+		}
+	}
+	if options.ParentPath != "" || len(options.EmptyNamespaces) != 0 || options.CgroupsMode != "" {
+		return nil, fmt.Errorf("incremental checkpoints, empty namespaces and cgroup restore modes: %w", errdefs.ErrNotImplemented)
+	}
+	if r.Path == "" {
+		return nil, fmt.Errorf("checkpoint image path is empty: %w", errdefs.ErrInvalidArgument)
+	}
+	c, err := s.getContainer(r.ID)
+	if err != nil {
+		return nil, err
+	}
+	if err := c.CheckpointSandbox(ctx, &runsccmd.CheckpointOpts{
+		ImagePath: r.Path,
+		LeaveRunning: !options.Exit,
+		WorkPath: options.WorkPath,
+	}); err != nil {
+		return nil, err
+	}
+	s.send(&events.TaskCheckpointed{ContainerID: r.ID, Checkpoint: r.Path})
+	return empty, nil
 }
 
 // Restore restores the container.
