@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T09:20:39.782356+00:00",
+    "updatedAt": "2026-11-20T09:41:38.610272+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -134963,10 +134963,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T09:20:39.782356+00:00",
-      "summary": "Faithful checkpoint intended sourcedd60dcc61674afa1e391e0c2b7e5d473351648a5 on CI63f2bf78bb64fe799e87926d727ab03b12598255 passes audited sandbox93, direct-task6 and unit300XML cases with zero failures/skips. Canonical lint/C++, independent final review and performance remain open; this is not final qualification. The faulty broad overlay is retired; faithful composite6fbfe1dc1e51b61478e1f60b9184a9f623e47454 restores12upstream files, so older drifted-tree evidence remains limited. Both full faithful suites pass61shim cases per architecture with zero skips. Container results remain failing: AMD974XML/84failure elements/13skips, ARM952/262/13 including128missing-KVM leaf errors. Shared fixture has bundle placement inside guest workload and excessive socket paths; owner is fixing the boundary, with ARM hardware qualification separate. All publication/performance/parent holds remain.",
-      "nextStep": "Checkpoint owner closes actual canonical lint/C++, independent review and required performance on faithful source. Fixture owner fixes shared short workload/runtime paths and moves bundle setup under runtime, then proves cheap representatives before any full cohort repeat. Preserve full-suite failure and hardware distinctions; no readiness expansion or new decision frames.",
-      "recheckCondition": "Actual faithful-source lint/review or fixture representative recovery, verified ARM KVM hardware evidence, substantive feedback or an existing publication/host answer.",
+      "updatedAt": "2026-11-20T09:41:38.610272+00:00",
+      "summary": "Checkpoint final reviews accepted three findings: missing waiter notifications on late scope rejection, an output-directory replacement cleanup race, and an overbroad comment. Original writer is fixing them with focused security recheck; dd60 is not final-ready. Its audited399functional XML cases and canonical five-check/376-source strict lint remain historical source-bound proof, not coverage of the revised source. Formatting recovery has zero diff. Nested-mount probe44711325438 passes five XML cases with zero failures/skips: actual tmpfs payload is visible through ordinary and ID-mapped guest paths, guest mapped owner65534 and host owner0. Hostinet restore test unintentionally varies UID mappings; fixture owner is isolating only its intended network mismatch without production change. Full container, ARM KVM hardware and controlled performance gates remain open; existing publication decisions remain pending.",
+      "nextStep": "Checkpoint writer fixes accepted findings, reruns affected canonical/focused tests and obtains security recheck before final readiness. Fixture owner preserves the passing nested ownership contract and removes the unrelated UID-mapping confound from the hostinet test, then proves cheap representatives before broad retry. Preserve all measurement, parent and source-publication holds; no duplicate questions or evidence histories.",
+      "recheckCondition": "Reviewed corrected checkpoint source with actual affected results, isolated hostinet behavior, verified hardware/host context or an existing publication answer.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135364,6 +135364,18 @@
         {
           "label": "Faithful ARM full suite:shim pass, container/hardware failures",
           "url": "https://github.com/tamird/gvisor/actions/runs/44708231555"
+        },
+        {
+          "label": "Nested tmpfs/ID-mapped fixture:fiveXMLPASS",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44711325438"
+        },
+        {
+          "label": "Historical dd60 strict lint:376sources passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44709585119"
+        },
+        {
+          "label": "Historical formatting recovery:zero diff",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44710366503"
         }
       ],
       "followup": {
@@ -135385,12 +135397,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T09:20:39.782356+00:00",
-        "nextAction": "Checkpoint owner closes actual canonical lint/C++, independent review and required performance on faithful source. Fixture owner fixes shared short workload/runtime paths and moves bundle setup under runtime, then proves cheap representatives before any full cohort repeat. Preserve full-suite failure and hardware distinctions; no readiness expansion or new decision frames.",
-        "recheckCondition": "Actual faithful-source lint/review or fixture representative recovery, verified ARM KVM hardware evidence, substantive feedback or an existing publication/host answer.",
+        "curatedAt": "2026-11-20T09:41:38.610272+00:00",
+        "nextAction": "Checkpoint writer fixes accepted findings, reruns affected canonical/focused tests and obtains security recheck before final readiness. Fixture owner preserves the passing nested ownership contract and removes the unrelated UID-mapping confound from the hostinet test, then proves cheap representatives before broad retry. Preserve all measurement, parent and source-publication holds; no duplicate questions or evidence histories.",
+        "recheckCondition": "Reviewed corrected checkpoint source with actual affected results, isolated hostinet behavior, verified hardware/host context or an existing publication answer.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Faithful checkpoint intended sourcedd60dcc61674afa1e391e0c2b7e5d473351648a5 on CI63f2bf78bb64fe799e87926d727ab03b12598255 passes audited sandbox93, direct-task6 and unit300XML cases with zero failures/skips. Canonical lint/C++, independent final review and performance remain open; this is not final qualification. The faulty broad overlay is retired; faithful composite6fbfe1dc1e51b61478e1f60b9184a9f623e47454 restores12upstream files, so older drifted-tree evidence remains limited. Both full faithful suites pass61shim cases per architecture with zero skips. Container results remain failing: AMD974XML/84failure elements/13skips, ARM952/262/13 including128missing-KVM leaf errors. Shared fixture has bundle placement inside guest workload and excessive socket paths; owner is fixing the boundary, with ARM hardware qualification separate. All publication/performance/parent holds remain.",
+        "disposition": "Checkpoint final reviews accepted three findings: missing waiter notifications on late scope rejection, an output-directory replacement cleanup race, and an overbroad comment. Original writer is fixing them with focused security recheck; dd60 is not final-ready. Its audited399functional XML cases and canonical five-check/376-source strict lint remain historical source-bound proof, not coverage of the revised source. Formatting recovery has zero diff. Nested-mount probe44711325438 passes five XML cases with zero failures/skips: actual tmpfs payload is visible through ordinary and ID-mapped guest paths, guest mapped owner65534 and host owner0. Hostinet restore test unintentionally varies UID mappings; fixture owner is isolating only its intended network mismatch without production change. Full container, ARM KVM hardware and controlled performance gates remain open; existing publication decisions remain pending.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135799,5 +135811,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T09:20:39.782356+00:00"
+  "updatedAt": "2026-11-20T09:41:38.610272+00:00"
 }
