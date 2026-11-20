@@ -198,7 +198,7 @@ jobs:
       TARGETS: ${{ inputs.targets }}
       BAZEL_COMMAND: ${{ inputs.command }}
       BAZEL_RUN_ARGUMENTS: ${{ inputs.run_arguments || '[]' }}
-      BAZEL_OPTIONS: ${{ inputs.bazel_options || '[]' }}
+      QUALIFICATION_INPUT_BAZEL_OPTIONS_JSON: ${{ inputs.bazel_options || '[]' }}
       BAZEL_RACE: ${{ inputs.race }}
       PLAN: ${{ inputs.plan }}
       QUAL_ARCH: ${{ inputs.architecture }}
@@ -256,7 +256,7 @@ jobs:
           read -r -a targets <<< "$TARGETS"
           python3 - <<'PY' > "$results/bazel-options"
           import json, os, sys
-          options = json.loads(os.environ['BAZEL_OPTIONS'])
+          options = json.loads(os.environ['QUALIFICATION_INPUT_BAZEL_OPTIONS_JSON'])
           if not isinstance(options, list) or any(not isinstance(value, str) or not value.startswith('--') or value == '--' or '\0' in value for value in options):
               raise SystemExit('bazel_options must be a JSON array of --flag[=value] strings without NUL characters')
           sys.stdout.buffer.write(b''.join(value.encode() + b'\0' for value in options))
