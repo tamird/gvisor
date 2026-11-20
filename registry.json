@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T02:29:51.682749+00:00",
+    "updatedAt": "2026-11-20T02:52:53.923923+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -51426,13 +51426,13 @@
       "repo": "google/gvisor",
       "number": 16737,
       "title": "Preserve signaling NaNs in legacy checkpoints",
-      "summary": "Approved mechanical rebase is published to the original fork branch at6362b2f9b469c6a7d36256448274a7d35d0307e6 and natively verified OPEN/MERGEABLE. Existing approval scope and own DCO are retained. DCO2 reports an obsolete upstream commit range despite the current one-commit source having valid sign-off; this provider projection issue remains under investigation.",
+      "summary": "Approved mechanical rebase is published to the original fork branch at6362b2f9b469c6a7d36256448274a7d35d0307e6 and natively verified OPEN/MERGEABLE. Existing approval scope and own DCO are retained. DCO2 reports an obsolete upstream commit range despite the current one-commit source having valid sign-off; this provider projection issue remains under investigation. Current6362 remains MERGEABLE/APPROVED; FirstPass2024 is running and stale DCO2 range remains unresolved.",
       "group": "runtime",
       "ref": "review/state-signaling-nan",
       "head": "6362b2f9b469c6a7d36256448274a7d35d0307e6",
       "url": "https://github.com/google/gvisor/pull/16737",
       "status": "open",
-      "updatedAt": "2026-11-20T02:14:48.077247+00:00",
+      "updatedAt": "2026-11-20T02:52:53.923923+00:00",
       "evidence": [
         {
           "label": "Native ARM64 state suites, AMD64 regression, owning analyzers on both architectures and finite-array comparison",
@@ -51488,13 +51488,13 @@
           "https://github.com/gvisor/gvisor/pull/17614",
           "https://github.com/google/gvisor/pull/16737#issuecomment-7026378874"
         ],
-        "disposition": "Approved mechanical rebase is published to the original fork branch at6362b2f9b469c6a7d36256448274a7d35d0307e6 and natively verified OPEN/MERGEABLE. Existing approval scope and own DCO are retained. DCO2 reports an obsolete upstream commit range despite the current one-commit source having valid sign-off; this provider projection issue remains under investigation.",
+        "disposition": "Approved mechanical rebase is published to the original fork branch at6362b2f9b469c6a7d36256448274a7d35d0307e6 and natively verified OPEN/MERGEABLE. Existing approval scope and own DCO are retained. DCO2 reports an obsolete upstream commit range despite the current one-commit source having valid sign-off; this provider projection issue remains under investigation. Current6362 remains MERGEABLE/APPROVED; FirstPass2024 is running and stale DCO2 range remains unresolved.",
         "nextAction": "Root follows exact-head checks and supported DCO self-service. Preserve valid source and sign-off; no foreign sign-offs, override, commit churn or repeated rebase reply.",
         "recheckCondition": "DCO projection/current checks recover, or source/substantive feedback changes.",
         "owner": "root",
-        "observedAt": "2026-11-20T02:14:48.077247+00:00",
+        "observedAt": "2026-11-20T02:52:53.923923+00:00",
         "sourceHead": "6362b2f9b469c6a7d36256448274a7d35d0307e6",
-        "curatedAt": "2026-11-20T02:14:48.077247+00:00",
+        "curatedAt": "2026-11-20T02:52:53.923923+00:00",
         "priorImportNextAction": "Use the existing importing-maintainer channel to obtain the first original error before making source changes; preserve source head and existing reviews. For16737 track matching17614 and its private36700 failure.\nImporting maintainer must read the original failed internal job and provide the first actionable error or correct the internal change. Root follows the exact source/import without guessing a source fix. DCO import coordination: Root coordinates #17614 at 7eb70d3831d9. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17614,
@@ -61358,8 +61358,8 @@
       "url": "https://github.com/google/gvisor/pull/16857",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-20T02:14:48.077247+00:00",
-      "summary": "Mechanical rebase3c5e60bf is published OPEN/MERGEABLE with original DCO retained; DCO2 succeeds. Both architectures pass62internal,23RACK,48SACK and405external TCP cases with zero errors/skips; lint passes. Packet scope is analysis only, with no packet-runtime, race or performance claim.",
+      "updatedAt": "2026-11-20T02:52:53.923923+00:00",
+      "summary": "Mechanical rebase3c5e60bf is published OPEN/MERGEABLE with original DCO retained; DCO2 succeeds. Both architectures pass62internal,23RACK,48SACK and405external TCP cases with zero errors/skips; lint passes. Packet scope is analysis only, with no packet-runtime, race or performance claim. Current exact-head native verification is MERGEABLE/REVIEW_REQUIRED; FirstPass2027 passes.",
       "evidence": [
         {
           "label": "Approved reviewer reply published",
@@ -61453,9 +61453,9 @@
         "owner": "root",
         "sourceHead": "3c5e60bfccfb2a1859e2c8c2e2c295d1907df48d",
         "providerHead": "32638d2e4994d2cdc0f6448d453a0a1d071620e8",
-        "observedAt": "2026-11-20T02:29:51.682749+00:00",
-        "disposition": "Mechanical rebase3c5e60bf is published OPEN/MERGEABLE with original DCO retained; DCO2 succeeds. Both architectures pass62internal,23RACK,48SACK and405external TCP cases with zero errors/skips; lint passes. Packet scope is analysis only, with no packet-runtime, race or performance claim. Owner inspected automated review5985785807: no findings and earlier fixes acknowledged; it requests no source action. Existing broad performance evidence requirement remains open.",
-        "nextAction": "Follow exact published-head CI and existing review; requested mechanical rebase is delivered. Preserve scope and do not repeat notifications.",
+        "observedAt": "2026-11-20T02:52:53.923923+00:00",
+        "disposition": "Mechanical rebase3c5e60bf is published OPEN/MERGEABLE with original DCO retained; DCO2 succeeds. Both architectures pass62internal,23RACK,48SACK and405external TCP cases with zero errors/skips; lint passes. Packet scope is analysis only, with no packet-runtime, race or performance claim. Current exact-head native verification is MERGEABLE/REVIEW_REQUIRED; FirstPass2027 passes.",
+        "nextAction": "Follow exact-head checks, existing maintainer review and any outstanding provider DCO projection. Preserve delivered source and existing qualification scope; no repeated rebase notifications.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16857#discussion_r4459290531",
           "https://github.com/tamird/gvisor/commit/85b67686f3cd61965db6393190969dab98c8d5c3",
@@ -61469,8 +61469,8 @@
           "https://github.com/google/gvisor/pull/16857#pullrequestreview-5985785807"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Current-head CI/review or source changes.",
-        "curatedAt": "2026-11-20T02:29:51.682749+00:00"
+        "recheckCondition": "Exact-head check/review or substantive source change.",
+        "curatedAt": "2026-11-20T02:52:53.923923+00:00"
       },
       "dcoAmendment": {
         "oldHead": "5c2734f45e4e59a6cea8a20ddd9d2954bf1b0ad2",
@@ -61495,8 +61495,8 @@
         "priorOwner": "TCP workstream",
         "priorProviderHead": "85b67686f3cd61965db6393190969dab98c8d5c3"
       },
-      "nextStep": "Follow exact published-head CI and existing review; requested mechanical rebase is delivered. Preserve scope and do not repeat notifications.",
-      "recheckCondition": "Current-head CI/review or source changes."
+      "nextStep": "Follow exact-head checks, existing maintainer review and any outstanding provider DCO projection. Preserve delivered source and existing qualification scope; no repeated rebase notifications.",
+      "recheckCondition": "Exact-head check/review or substantive source change."
     },
     {
       "id": "pr:16846",
@@ -78858,8 +78858,8 @@
       "url": "https://github.com/google/gvisor/pull/17181",
       "group": "tests",
       "status": "open",
-      "summary": "Approved mechanical rebase is published to the original fork branch ate8bd01cec6e060dc86485b77b580f5f5f79c9d68 and natively verified OPEN/MERGEABLE. Existing approval scope and own DCO are retained. DCO2 reports an obsolete upstream commit range despite the current one-commit source having valid sign-off; this provider projection issue remains under investigation.",
-      "updatedAt": "2026-11-20T02:14:48.077247+00:00",
+      "summary": "Delivered mechanical e8bd01cec6e060dc86485b77b580f5f5f79c9d68 is OPEN/MERGEABLE/APPROVED; FirstPass2025 passes. Own sign-off is valid, while the previously observed stale DCO2 upstream-range projection remains a separate provider issue; no foreign sign-offs or source churn.",
+      "updatedAt": "2026-11-20T02:52:53.923923+00:00",
       "evidence": [
         {
           "label": "Upstream lint passed on b6294cc79",
@@ -78922,9 +78922,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "e8bd01cec6e060dc86485b77b580f5f5f79c9d68",
-        "observedAt": "2026-11-20T02:14:48.077247+00:00",
-        "disposition": "Approved mechanical rebase is published to the original fork branch ate8bd01cec6e060dc86485b77b580f5f5f79c9d68 and natively verified OPEN/MERGEABLE. Existing approval scope and own DCO are retained. DCO2 reports an obsolete upstream commit range despite the current one-commit source having valid sign-off; this provider projection issue remains under investigation.",
-        "nextAction": "Root follows exact-head checks and supported DCO self-service. Preserve valid source and sign-off; no foreign sign-offs, override, commit churn or repeated rebase reply.",
+        "observedAt": "2026-11-20T02:52:53.923923+00:00",
+        "disposition": "Delivered mechanical e8bd01cec6e060dc86485b77b580f5f5f79c9d68 is OPEN/MERGEABLE/APPROVED; FirstPass2025 passes. Own sign-off is valid, while the previously observed stale DCO2 upstream-range projection remains a separate provider issue; no foreign sign-offs or source churn.",
+        "nextAction": "Follow exact-head checks, existing maintainer review and any outstanding provider DCO projection. Preserve delivered source and existing qualification scope; no repeated rebase notifications.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17181",
           "https://github.com/tamird/gvisor/commit/b6294cc79",
@@ -78966,8 +78966,8 @@
           "https://github.com/google/gvisor/pull/17181#issuecomment-7026372055"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "DCO projection/current checks recover, or source/substantive feedback changes.",
-        "curatedAt": "2026-11-20T02:14:48.077247+00:00"
+        "recheckCondition": "Exact-head check/review or substantive source change.",
+        "curatedAt": "2026-11-20T02:52:53.923923+00:00"
       },
       "settledReviews": [
         {
@@ -79007,8 +79007,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "Root follows exact-head checks and supported DCO self-service. Preserve valid source and sign-off; no foreign sign-offs, override, commit churn or repeated rebase reply.",
-      "recheckCondition": "DCO projection/current checks recover, or source/substantive feedback changes."
+      "nextStep": "Follow exact-head checks, existing maintainer review and any outstanding provider DCO projection. Preserve delivered source and existing qualification scope; no repeated rebase notifications.",
+      "recheckCondition": "Exact-head check/review or substantive source change."
     },
     {
       "id": "pr:17182",
@@ -86779,13 +86779,13 @@
       "repo": "google/gvisor",
       "number": 17242,
       "ref": "fixes/netgofer-shutdown-pipes",
-      "head": "6dc4460f737f6846ebf3eed426591a70b41dbba5",
+      "head": "7bf0d7d679f793fb12913c9e9f7aaa5f1d14a77c",
       "title": "Exercise netgofer shutdown with the test binary",
       "url": "https://github.com/google/gvisor/pull/17242",
       "status": "open",
       "group": "tests",
-      "updatedAt": "2026-11-19T08:32:44.165346+00:00",
-      "summary": "The child runs the test executable with --fake-netgofer, closes stdout to signal readiness, and waits for EOF on stdin. The reaper goroutine records the actual wait4 result. Both native Linux tests passed with cat and sleep hidden. The graceful child exited with status 0. The forced child died from SIGKILL. Each PID returned ESRCH afterward.",
+      "updatedAt": "2026-11-20T02:52:53.923923+00:00",
+      "summary": "Approved pure rebase7bf0d7d679f793fb12913c9e9f7aaa5f1d14a77c is delivered OPEN/MERGEABLE with DCO2 passing; existing fvoznika review request is preserved. Both architectures run87PASS/3FAIL/0SKIP; the same three route failures reproduce on master44661918915. FirstPass2028 exits80 before any target runs: author1535036 reached rolling30-day360000compute-minute quota, stack_errored=true. The pipeline explicitly disables retry; no route failure is attributed to that admission rejection. Separate combined route-fix qualification passes90/90 on both architectures with zero skips, but that fix is not in public7bf and has no performance qualification.",
       "evidence": [
         {
           "label": "Original missing executables and both Linux child exit statuses",
@@ -86857,19 +86857,21 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "6dc4460f737f6846ebf3eed426591a70b41dbba5",
-        "observedAt": "2026-11-17T19:01:06.487079+00:00",
-        "disposition": "Footer-only DCO metadata is published and green; technical source/import obligations remain. Preserve the importing-owner/private-diagnostic hold; no source fix inferred from export closure.",
-        "nextAction": "Root follows genuine current-head maintainer review/import changes. All checks pass; preserve the initial NVIDIA-download EOF failure and successful provider retry as source-bound history. No source edit, manual retry or new review request.",
+        "sourceHead": "7bf0d7d679f793fb12913c9e9f7aaa5f1d14a77c",
+        "observedAt": "2026-11-20T02:52:53.923923+00:00",
+        "disposition": "Approved pure rebase7bf0d7d679f793fb12913c9e9f7aaa5f1d14a77c is delivered OPEN/MERGEABLE with DCO2 passing; existing fvoznika review request is preserved. Both architectures run87PASS/3FAIL/0SKIP; the same three route failures reproduce on master44661918915. FirstPass2028 exits80 before any target runs: author1535036 reached rolling30-day360000compute-minute quota, stack_errored=true. The pipeline explicitly disables retry; no route failure is attributed to that admission rejection. Separate combined route-fix qualification passes90/90 on both architectures with zero skips, but that fix is not in public7bf and has no performance qualification.",
+        "nextAction": "Follow current maintainer review and provider quota recovery without retry, duplicate CI-owner outreach or source churn. Keep the separate route fix outside the published pure rebase until its own review/approval.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17242",
           "https://github.com/tamird/gvisor/commit/4b33ee009",
           "https://github.com/google/gvisor/pull/17521",
           "https://buildkite.com/gvisor/internal/builds/36467",
-          "https://github.com/gvisor/gvisor/pull/17521"
+          "https://github.com/gvisor/gvisor/pull/17521",
+          "https://buildkite.com/gvisor/first-pass/builds/2028",
+          "https://github.com/tamird/gvisor/actions/runs/44661918915"
         ],
-        "recheckCondition": "Current-head CI terminal/change, substantive technical feedback, source/import lifecycle change or an already-pending source-review decision; root remains accountable.",
-        "curatedAt": "2026-11-19T08:32:44.165346+00:00",
+        "recheckCondition": "Provider admission/current checks or maintainer feedback changes; separate route-fix review readiness.",
+        "curatedAt": "2026-11-20T02:52:53.923923+00:00",
         "priorImportNextAction": "Importing maintainer must read the original failed internal job and provide the first actionable error or correct the internal change. Root follows the exact source/import without guessing a source fix. DCO import coordination: Root coordinates #17521 at 085c825cc748. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17521,
@@ -86957,7 +86959,9 @@
         "nextAction": "Footer-only DCO metadata delivery is complete. Follow remaining current-head CI and the existing technical importing-maintainer disposition; do not request permission for the completed metadata operation.",
         "recheckCondition": "Current-head CI, substantive technical feedback or import lifecycle changes; named technical holds remain.",
         "holdsPreserved": {}
-      }
+      },
+      "nextStep": "Follow current maintainer review and provider quota recovery without retry, duplicate CI-owner outreach or source churn. Keep the separate route fix outside the published pure rebase until its own review/approval.",
+      "recheckCondition": "Provider admission/current checks or maintainer feedback changes; separate route-fix review readiness."
     },
     {
       "id": "branch:native-dependency-checks",
@@ -135595,5 +135599,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T02:29:51.682749+00:00"
+  "updatedAt": "2026-11-20T02:52:53.923923+00:00"
 }
