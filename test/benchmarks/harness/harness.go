@@ -16,15 +16,20 @@
 package harness
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
+	"time"
 
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
+	"gvisor.dev/gvisor/pkg/test/testutil"
 )
 
 var (
+	containerObservationDir = flag.String("container-observation-dir", "", "wait outside benchmark timing for live container attestation")
 	help           = flag.Bool("help", false, "print this usage message")
 	ownedDocker    = flag.Bool("owned-docker", false, "start a private Docker worker from declared inputs")
 	workerRunsc    = flag.String("worker-runsc", "", "entrypoint in the declared complete runsc release; empty selects native runc")
@@ -88,4 +93,24 @@ func ServerCPUSet() string {
 		return "2-3"
 	}
 	return ""
+}
+
+// AwaitContainerObservation keeps the container alive until its current process
+// has been inspected. It must be called with the benchmark timer stopped.
+func AwaitContainerObservation(ctx context.Context, c *dockerutil.Container) error {
+	if *containerObservationDir == "" {
+		return nil
+	}
+	state, err := c.Status(ctx)
+	if err != nil {
+		return err
+	}
+	if !state.Running || state.Pid <= 0 {
+		return fmt.Errorf("container %s has no live process to attest", c.ID())
+	}
+	ack := filepath.Join(*containerObservationDir, fmt.Sprintf("%s-%d", c.ID(), state.Pid))
+	return testutil.Poll(func() error {
+		_, err := os.Stat(ack)
+		return err
+	}, 5*time.Second)
 }

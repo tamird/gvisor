@@ -233,7 +233,11 @@ func TestPairedBenchmark(t *testing.T) {
 					"--node-response-probe="+strconv.FormatBool(*pairedResponseProbe),
 					"--client-cpuset="+ClientCPUSet(), "--server-cpuset="+ServerCPUSet(),
 					"--node-redis-cpuset="+*pairedRedisCPUs, "--hey-phase-diagnostics")
-			} else {
+			}
+			observationDir := ""
+			if *pairedWorkload != "node" {
+				observationDir = t.TempDir()
+				args = append(args, "--container-observation-dir="+observationDir)
 				t.Logf("startup benchmark argv: %q", args)
 			}
 			cmd := exec.CommandContext(ctx, binary, args...)
@@ -280,7 +284,7 @@ func TestPairedBenchmark(t *testing.T) {
 					t.Log("startup event subscription acknowledged before benchmark launch")
 				}
 				go func() {
-					observed <- attestBenchmarkContainers(observeCtx, cli, messages, failures, visit, releaseProducts[index], actualHashes, runtimes[index])
+					observed <- attestBenchmarkContainers(observeCtx, cli, messages, failures, visit, releaseProducts[index], actualHashes, runtimes[index], observationDir)
 				}()
 			}
 			output, err := cmd.CombinedOutput()
@@ -330,7 +334,7 @@ func TestPairedBenchmark(t *testing.T) {
 
 // attestBenchmarkContainers observes the actual workload containers without
 // adding inspection calls to the benchmark's timed request sequence.
-func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages <-chan events.Message, failures <-chan error, visit int, products, actualHashes map[string]string, selectedRuntime string) error {
+func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages <-chan events.Message, failures <-chan error, visit int, products, actualHashes map[string]string, selectedRuntime, observationDir string) error {
 	seen := make(map[string]int)
 	skipped := make(map[string]int)
 	active := make(map[int]string)
@@ -477,6 +481,12 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 			active[state.State.Pid] = kind
 			if kind == "benchmarks/hey" || (*pairedWorkload != "node" && kind != "benchmarks/redis" && kind != "benchmarks/util") {
 				if err := recordCPUResources(visit, kind, active, products); err != nil {
+					return err
+				}
+			}
+			if observationDir != "" && (kind == "benchmarks/alpine" || kind == "benchmarks/nginx" || kind == "benchmarks/node") {
+				ack := filepath.Join(observationDir, fmt.Sprintf("%s-%d", message.Actor.ID, state.State.Pid))
+				if err := os.WriteFile(ack, nil, 0600); err != nil {
 					return err
 				}
 			}

@@ -49,6 +49,10 @@ func BenchmarkStartupEmpty(b *testing.B) {
 			b.Fatalf("failed to start container: %v", err)
 		}
 		b.StopTimer()
+		if err := harness.AwaitContainerObservation(ctx, container); err != nil {
+			container.CleanUp(ctx)
+			b.Fatal(err)
+		}
 		if i == 0 {
 			metricsviz.FromContainerLogs(ctx, b, container)
 		}
@@ -119,6 +123,9 @@ func runServerWorkload(ctx context.Context, b *testing.B, args base.ServerArgs) 
 			server := args.Machine.GetContainer(ctx, b)
 			defer func() {
 				b.StopTimer()
+				if err := harness.AwaitContainerObservation(ctx, server); err != nil {
+					b.Error(err)
+				}
 				metricsviz.FromContainerLogs(ctx, b, server)
 				// Cleanup servers as we run so that we can go indefinitely.
 				server.CleanUp(ctx)
@@ -232,6 +239,9 @@ func BenchmarkRestoreEmpty(b *testing.B) {
 				b.Fatalf("failed to restore container: %v", err)
 			}
 			b.StopTimer()
+			if err := harness.AwaitContainerObservation(ctx, container); err != nil {
+				b.Fatal(err)
+			}
 		}()
 	}
 }
@@ -342,6 +352,9 @@ func runRestoreServerWorkload(b *testing.B, name string, port int) {
 				b.Fatalf("failed to wait for %s serving after restore: %v", name, err)
 			}
 			b.StopTimer()
+			if err := harness.AwaitContainerObservation(ctx, server); err != nil {
+				b.Fatal(err)
+			}
 		}()
 	}
 }
