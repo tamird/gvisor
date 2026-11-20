@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-20T19:19:27.507507+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-20T19:01:59.833649+00:00",
+  "registryDate": "2026-11-20T19:23:23.396733+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -447220,7 +447220,7 @@
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
       "sourceNumber": 16419,
-      "owner": "tcp_conflict",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABUTON0A",
       "needsTriage": false,
@@ -447479,7 +447479,7 @@
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
       "sourceNumber": 16419,
-      "owner": "tcp_conflict",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABVzsOnQ",
       "needsTriage": false,
@@ -448424,7 +448424,7 @@
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
       "sourceNumber": 16419,
-      "owner": "tcp_conflict",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABXbKd7w",
       "needsTriage": false,
@@ -449174,10 +449174,10 @@
       "owner": "Agent",
       "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
       "recordedFollowup": {
-        "owner": "tcp_conflict",
+        "owner": "root",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
-        "disposition": "Permanent shared-Bazel ordinary Go owner migration passed499cases per architecture on old1f/f944 inputs; historical product proofs retained. Packet capability/currentbase/race and performance scopes remain distinct.",
-        "nextAction": "Root owns the next permanent packet capability/proof and existing full performance study after functional gates; preserve source/currentbase and workload scope limits, no per-item driver or new approval question."
+        "disposition": "Two AMD64 worker prerequisites passed: isolated user/net namespaces, IPv4/IPv6 veth+nft and raw-socket capability preflight44799409827; and actual GoClone entrypoint44800271769 on f6c2 (old d984 inputs plus exactly the two qualified shared sudo files). The latter used native /usr/bin/true with zero DUT actions. Neither is a project PacketImpact case, current-base qualification, ARM proof or performance result. Historical ordinary-Go product evidence retains its original scope.",
+        "nextAction": "The existing packet owner advances the actual native/netstack sixteen-case functional gate, with architecture/source binding explicit. Preserve existing private-import and performance holds; reuse valid products and do not count worker probes as project tests."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -454098,8 +454098,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "b9aadcf1b8a629ebc7659f7af38d8e88dfa3ba65",
-        "disposition": "The author added DCO without changing the preceding published source tree or parent. Exact b9aadcf1 First Pass1724 and DCO passed. Existing technical review and performance limitations remain separate; no new approval or source change by this agent.",
-        "nextAction": "Follow existing reviewer obligations and technical/performance gaps on the author-owned head; required First Pass1724 and author DCO are complete. Do not rewrite their source or duplicate acknowledgement."
+        "disposition": "Exact b9aadcf1b8a629ebc7659f7af38d8e88dfa3ba65 now has failed main pipeline55505. The canonical reader confirms exactly one unrecovered terminal failure: ARM Docker shard7 attempt4, //test/image:image_test TIMEOUT900.2s with a15-minute Go timeout. The shard’s four other targets passed; other failed attempts have subsequent retries. This is not an attributed delayed-ACK source defect. Historical First Pass1724/DCO success and outstanding source/performance review remain separate.",
+        "nextAction": "Root routes the exact image-test log and HTTP timeout stack for source-versus-environment diagnosis against relevant baseline/runtime evidence. Do not rewrite the author-owned source, launch a blind retry or post a status-only reply."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN2qiRGA"
@@ -465858,7 +465858,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:01:59.833649+00:00"
+        "observedAt": "2026-11-20T19:23:23.396733+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -465867,7 +465867,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:01:59.833649+00:00"
+        "observedAt": "2026-11-20T19:23:23.396733+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -465876,7 +465876,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:01:59.833649+00:00"
+        "observedAt": "2026-11-20T19:23:23.396733+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -465885,7 +465885,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:01:59.833649+00:00"
+        "observedAt": "2026-11-20T19:23:23.396733+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -465894,7 +465894,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:01:59.833649+00:00"
+        "observedAt": "2026-11-20T19:23:23.396733+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -465903,7 +465903,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:01:59.833649+00:00"
+        "observedAt": "2026-11-20T19:23:23.396733+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -465912,16 +465912,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:01:59.833649+00:00"
-      }
-    },
-    "investigation:bazel-compile-commands-pipes": {
-      "contributor-review": {
-        "scope": "55c679b18d864444a9a0a91e1dca57c092470ca5",
-        "since": "2026-11-20T19:01:59.833649+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-20T19:01:59.833649+00:00"
+        "observedAt": "2026-11-20T19:23:23.396733+00:00"
       }
     }
   },
