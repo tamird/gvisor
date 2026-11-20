@@ -2095,6 +2095,7 @@ cc_binary(
         "//test/util:socket_util",
         "//test/util:test_util",
         "//test/util:thread_util",
+        "//test/util:timer_util",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
