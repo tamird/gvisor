@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T08:18:32.521952+00:00",
+    "updatedAt": "2026-11-20T08:40:27.312524+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -134963,10 +134963,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T08:18:32.521952+00:00",
-      "summary": "Independent source review confirms two real f5 contract defects: task checkpoint calls sandbox-global save/Exit and affects siblings; paused Exit=true does not complete while an external pause is held. checkpoint_api_security_review owns implementation, followed by independent review. Prior default leave-running plus explicit-kill proof covers neither contract. Full AMD/ARM owning suites were cancelled at15minutes after actual containers failed around1minute (mostly TMP bind EINVAL),55shim XML cases with12failures and post-failure owned-sandbox stall/no BEP. This does not establish15minutes of required runtime. Generic owned-cleanup/caller-mount diagnostic44701267575 is live; no cohort rerun or timeout expansion. RootIO299 and Sysmsgd3f source products retain their scoped closures, full-suite/performance/parent gates remain open, counters stay stopped and source-publication decisions remain pending.",
-      "nextStep": "checkpoint_api_security_review fixes sibling isolation and externally-paused Exit contracts, then obtains independent review and actual focused proof. Runtime owner repairs only owned cleanup and diagnoses caller/mount failures before any full-suite retry; retain original source scope and passing products. Recheck performance only on verified existing-host/environment evidence; no new publication frames or questions.",
-      "recheckCondition": "Reviewed contract correction with actual focused results, audited owned-cleanup/caller diagnosis, substantive source feedback or an existing publication/host answer.",
+      "updatedAt": "2026-11-20T08:40:27.312524+00:00",
+      "summary": "Canonical TEST_TMPDIR guest/runtime sibling-layout44703254628 succeeds after placement contrast showed original44702118304FAIL versus isolated44702121182PASS with identical namespaces, mounts and assertions. Fixture owner is auditing this product and separately resolving directfs=false prewarmer UID65534 EACCES; no unfiltered-suite retry or timeout expansion. Checkpoint API owner is replacing the flawed service guard with authoritative runtime/root locking and orphan-aware membership. Provisional7398 formatting/unit attempts failed setup/compilation and do not qualify the contract correction. Real sibling-isolation and externally-paused Exit findings remain open.17492 approved reduced e434 plus DCO is already delivered, not a pending decision. Other publication/performance/parent holds remain unchanged.",
+      "nextStep": "Fixture owner consumes sibling-layout proof, fixes the separate prewarmer permission contract and obtains actual focused evidence before cohort retry. checkpoint_api_security_review finishes the authoritative contract mechanism and independent validation; retain production source scope and prior scoped products. Root follows existing unanswered source decisions only.",
+      "recheckCondition": "Actual prewarmer/owned-cleanup or checkpoint-contract correction evidence, substantive feedback, or an existing publication/host answer.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135332,6 +135332,18 @@
         {
           "label": "Generic owned-cleanup/caller-mount diagnosis; result pending",
           "url": "https://github.com/tamird/gvisor/actions/runs/44701267575"
+        },
+        {
+          "label": "Canonical guest/runtime sibling layout succeeded; owner audit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44703254628"
+        },
+        {
+          "label": "Original placement contrast failed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44702118304"
+        },
+        {
+          "label": "Isolated placement contrast passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44702121182"
         }
       ],
       "followup": {
@@ -135353,12 +135365,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T08:18:32.521952+00:00",
-        "nextAction": "checkpoint_api_security_review fixes sibling isolation and externally-paused Exit contracts, then obtains independent review and actual focused proof. Runtime owner repairs only owned cleanup and diagnoses caller/mount failures before any full-suite retry; retain original source scope and passing products. Recheck performance only on verified existing-host/environment evidence; no new publication frames or questions.",
-        "recheckCondition": "Reviewed contract correction with actual focused results, audited owned-cleanup/caller diagnosis, substantive source feedback or an existing publication/host answer.",
+        "curatedAt": "2026-11-20T08:40:27.312524+00:00",
+        "nextAction": "Fixture owner consumes sibling-layout proof, fixes the separate prewarmer permission contract and obtains actual focused evidence before cohort retry. checkpoint_api_security_review finishes the authoritative contract mechanism and independent validation; retain production source scope and prior scoped products. Root follows existing unanswered source decisions only.",
+        "recheckCondition": "Actual prewarmer/owned-cleanup or checkpoint-contract correction evidence, substantive feedback, or an existing publication/host answer.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Independent source review confirms two real f5 contract defects: task checkpoint calls sandbox-global save/Exit and affects siblings; paused Exit=true does not complete while an external pause is held. checkpoint_api_security_review owns implementation, followed by independent review. Prior default leave-running plus explicit-kill proof covers neither contract. Full AMD/ARM owning suites were cancelled at15minutes after actual containers failed around1minute (mostly TMP bind EINVAL),55shim XML cases with12failures and post-failure owned-sandbox stall/no BEP. This does not establish15minutes of required runtime. Generic owned-cleanup/caller-mount diagnostic44701267575 is live; no cohort rerun or timeout expansion. RootIO299 and Sysmsgd3f source products retain their scoped closures, full-suite/performance/parent gates remain open, counters stay stopped and source-publication decisions remain pending.",
+        "disposition": "Canonical TEST_TMPDIR guest/runtime sibling-layout44703254628 succeeds after placement contrast showed original44702118304FAIL versus isolated44702121182PASS with identical namespaces, mounts and assertions. Fixture owner is auditing this product and separately resolving directfs=false prewarmer UID65534 EACCES; no unfiltered-suite retry or timeout expansion. Checkpoint API owner is replacing the flawed service guard with authoritative runtime/root locking and orphan-aware membership. Provisional7398 formatting/unit attempts failed setup/compilation and do not qualify the contract correction. Real sibling-isolation and externally-paused Exit findings remain open.17492 approved reduced e434 plus DCO is already delivered, not a pending decision. Other publication/performance/parent holds remain unchanged.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135767,5 +135779,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T08:18:32.521952+00:00"
+  "updatedAt": "2026-11-20T08:40:27.312524+00:00"
 }
