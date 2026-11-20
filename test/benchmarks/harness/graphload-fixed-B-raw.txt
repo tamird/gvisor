@@ -1,0 +1,62 @@
+arm: B
+exec ${PAGER:-/usr/bin/less} "$0" || exit 1
+Executing tests from //pkg/state/tests:tests_test
+-----------------------------------------------------------------------------
+goos: linux
+goarch: amd64
+cpu: Intel(R) Xeon(R) 6975P-C
+=== RUN   BenchmarkGraphLoad
+BenchmarkGraphLoad
+BenchmarkGraphLoad 	       5	 133512484 ns/op	61720548 B/op	  444506 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 124149579 ns/op	61720168 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 127288408 ns/op	61720168 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 123482383 ns/op	61720168 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 132879782 ns/op	61720168 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 120358419 ns/op	61720161 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 130667324 ns/op	61720188 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 130519025 ns/op	61720171 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 123338791 ns/op	61720134 B/op	  444496 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 125669341 ns/op	61720195 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 128539371 ns/op	61720168 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 130847029 ns/op	61720171 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 135306301 ns/op	61720164 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 121469062 ns/op	61720198 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 127307710 ns/op	61720168 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 127215279 ns/op	61720164 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 121547962 ns/op	61720192 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 125000810 ns/op	61720164 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 135198774 ns/op	61720171 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 119050651 ns/op	61720134 B/op	  444496 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 125849950 ns/op	61720164 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 126123436 ns/op	61720168 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 113062666 ns/op	61720161 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 132364703 ns/op	61720171 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 138281258 ns/op	61720168 B/op	  444497 allocs/op
+=== NAME  
+BenchmarkGraphLoad 	       5	 137469825 ns/op	61720168 B/op	  444497 allocs/op
+=== NAME  
+PASS
