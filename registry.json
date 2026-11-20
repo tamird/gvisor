@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T15:15:34.980085+00:00",
+    "updatedAt": "2026-11-20T15:36:10.284882+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -51439,13 +51439,13 @@
       "repo": "google/gvisor",
       "number": 16737,
       "title": "Preserve signaling NaNs in legacy checkpoints",
-      "summary": "Signed current-tip7397 mechanical rebase30093b47e846cf89b693fa6b5676e2de5839b10c is delivered and MERGEABLE; range-diff is equivalent and original DCO retained. Exact-head DCO succeeds, resolving the former stale-DCO projection. Rebase comment7042477621 is posted and verified; no further comment or DCO decision is pending. FirstPass2078 is pending under the existing owner watch. Aggregate review isAPPROVED. Auto-merge is null; no latest-update disablement cause is inferred. Existing disable events predate these updates (01:55/01:42UTC).",
+      "summary": "Signed current-tip7397 mechanical rebase30093b47e846cf89b693fa6b5676e2de5839b10c is delivered and MERGEABLE; range-diff is equivalent and original DCO retained. Exact-head DCO succeeds, resolving the former stale-DCO projection. Rebase comment7042477621 is posted and verified; no further comment or DCO decision is pending. All current public checks, including First Pass 2078, pass under the existing owner watch. Aggregate review isAPPROVED. Auto-merge is null; no latest-update disablement cause is inferred. Existing disable events predate these updates (01:55/01:42UTC). The exact-head public CI cohort is complete; no stale-DCO or old quota blocker remains for this source.",
       "group": "runtime",
       "ref": "review/state-signaling-nan",
       "head": "30093b47e846cf89b693fa6b5676e2de5839b10c",
       "url": "https://github.com/google/gvisor/pull/16737",
       "status": "open",
-      "updatedAt": "2026-11-20T14:55:02.627201+00:00",
+      "updatedAt": "2026-11-20T15:36:10.284882+00:00",
       "evidence": [
         {
           "label": "Native ARM64 state suites, AMD64 regression, owning analyzers on both architectures and finite-array comparison",
@@ -51502,13 +51502,13 @@
           "https://github.com/google/gvisor/pull/16737#issuecomment-7026378874",
           "https://github.com/gvisor/gvisor/pull/16737#issuecomment-7042477621"
         ],
-        "disposition": "Signed current-tip7397 mechanical rebase30093b47e846cf89b693fa6b5676e2de5839b10c is delivered and MERGEABLE; range-diff is equivalent and original DCO retained. Exact-head DCO succeeds, resolving the former stale-DCO projection. Rebase comment7042477621 is posted and verified; no further comment or DCO decision is pending. FirstPass2078 is pending under the existing owner watch. Aggregate review isAPPROVED. Auto-merge is null; no latest-update disablement cause is inferred. Existing disable events predate these updates (01:55/01:42UTC).",
-        "nextAction": "approved_rebase_queue follows exact-head native/FirstPass checks and existing maintainer review. Preserve signed source/original DCO and existing qualification limits; rebase communication is complete, no merge action or duplicate notification.",
+        "disposition": "Signed current-tip7397 mechanical rebase30093b47e846cf89b693fa6b5676e2de5839b10c is delivered and MERGEABLE; range-diff is equivalent and original DCO retained. Exact-head DCO succeeds, resolving the former stale-DCO projection. Rebase comment7042477621 is posted and verified; no further comment or DCO decision is pending. All current public checks, including First Pass 2078, pass under the existing owner watch. Aggregate review isAPPROVED. Auto-merge is null; no latest-update disablement cause is inferred. Existing disable events predate these updates (01:55/01:42UTC). The exact-head public CI cohort is complete; no stale-DCO or old quota blocker remains for this source.",
+        "nextAction": "Follow existing maintainer review/import and human merge disposition on the exact delivered source. CI and rebase communication are complete; no retry, new notification, source churn or agent merge action.",
         "recheckCondition": "Current-head CI or substantive review/source change.",
         "owner": "approved_rebase_queue",
         "observedAt": "2026-11-20T14:55:02.627201+00:00",
         "sourceHead": "30093b47e846cf89b693fa6b5676e2de5839b10c",
-        "curatedAt": "2026-11-20T14:55:02.627201+00:00",
+        "curatedAt": "2026-11-20T15:36:10.284882+00:00",
         "priorImportNextAction": "Use the existing importing-maintainer channel to obtain the first original error before making source changes; preserve source head and existing reviews. For16737 track matching17614 and its private36700 failure.\nImporting maintainer must read the original failed internal job and provide the first actionable error or correct the internal change. Root follows the exact source/import without guessing a source fix. DCO import coordination: Root coordinates #17614 at 7eb70d3831d9. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17614,
@@ -51555,17 +51555,17 @@
         },
         "currentPublishedChecks": {
           "head": "30093b47e846cf89b693fa6b5676e2de5839b10c",
-          "state": "PENDING",
-          "checkedAt": "2026-11-20T14:55:02.627201+00:00",
+          "state": "SUCCESS",
+          "checkedAt": "2026-11-20T15:36:10.284882+00:00",
           "DCO": "SUCCESS",
           "reviewDecision": "APPROVED",
           "scope": "Exact delivered current-tip source; previous stale-DCO range is resolved."
         },
         "activePublicCIBlock": {
           "build": 2078,
-          "state": "PENDING",
+          "state": "SUCCESS",
           "source": "30093b47e846cf89b693fa6b5676e2de5839b10c",
-          "diagnosis": "Current FirstPass pending; older source CI failures are historical and do not block this head.",
+          "diagnosis": "First Pass 2078 and all current public checks passed; no active CI blocker on exact 30093b47 source.",
           "owner": "approved_rebase_queue"
         },
         "providerHead": "30093b47e846cf89b693fa6b5676e2de5839b10c",
@@ -51589,7 +51589,7 @@
         "recheckCondition": "Current-head CI, substantive technical feedback or import lifecycle changes; named technical holds remain.",
         "holdsPreserved": {}
       },
-      "nextStep": "approved_rebase_queue follows exact-head native/FirstPass checks and existing maintainer review. Preserve signed source/original DCO and existing qualification limits; rebase communication is complete, no merge action or duplicate notification.",
+      "nextStep": "Follow existing maintainer review/import and human merge disposition on the exact delivered source. CI and rebase communication are complete; no retry, new notification, source churn or agent merge action.",
       "recheckCondition": "Current-head CI or substantive review/source change."
     },
     {
@@ -61364,8 +61364,8 @@
       "url": "https://github.com/google/gvisor/pull/16857",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-20T14:55:02.627201+00:00",
-      "summary": "Signed current-tip7397 mechanical rebasea70f8cdc56996fe14b46aaabbdfb19985f8d957c is delivered and MERGEABLE; range-diff is equivalent and original DCO retained. Exact-head DCO succeeds, resolving the former stale-DCO projection. Rebase comment7042479007 is posted and verified; no further comment or DCO decision is pending. FirstPass2079 is pending under the existing owner watch. Aggregate review isREVIEW_REQUIRED. Auto-merge is null; no latest-update disablement cause is inferred. rexren-gif approves the exact new head; retained qualification is62internal/23RACK/48SACK/405external cases per architecture, packet analysis only and no new race/performance claim.",
+      "updatedAt": "2026-11-20T15:36:10.284882+00:00",
+      "summary": "Signed current-tip7397 mechanical rebasea70f8cdc56996fe14b46aaabbdfb19985f8d957c is delivered and MERGEABLE; range-diff is equivalent and original DCO retained. Exact-head DCO succeeds, resolving the former stale-DCO projection. Rebase comment7042479007 is posted and verified; no further comment or DCO decision is pending. All current public checks, including First Pass 2079, pass under the existing owner watch. Aggregate review isREVIEW_REQUIRED. Auto-merge is null; no latest-update disablement cause is inferred. rexren-gif approves the exact new head; retained qualification is62internal/23RACK/48SACK/405external cases per architecture, packet analysis only and no new race/performance claim. The exact-head public CI cohort is complete; no stale-DCO or old quota blocker remains for this source.",
       "evidence": [
         {
           "label": "Approved reviewer reply published",
@@ -61460,8 +61460,8 @@
         "sourceHead": "a70f8cdc56996fe14b46aaabbdfb19985f8d957c",
         "providerHead": "a70f8cdc56996fe14b46aaabbdfb19985f8d957c",
         "observedAt": "2026-11-20T14:55:02.627201+00:00",
-        "disposition": "Signed current-tip7397 mechanical rebasea70f8cdc56996fe14b46aaabbdfb19985f8d957c is delivered and MERGEABLE; range-diff is equivalent and original DCO retained. Exact-head DCO succeeds, resolving the former stale-DCO projection. Rebase comment7042479007 is posted and verified; no further comment or DCO decision is pending. FirstPass2079 is pending under the existing owner watch. Aggregate review isREVIEW_REQUIRED. Auto-merge is null; no latest-update disablement cause is inferred. rexren-gif approves the exact new head; retained qualification is62internal/23RACK/48SACK/405external cases per architecture, packet analysis only and no new race/performance claim.",
-        "nextAction": "approved_rebase_queue follows exact-head native/FirstPass checks and existing maintainer review. Preserve signed source/original DCO and existing qualification limits; rebase communication is complete, no merge action or duplicate notification.",
+        "disposition": "Signed current-tip7397 mechanical rebasea70f8cdc56996fe14b46aaabbdfb19985f8d957c is delivered and MERGEABLE; range-diff is equivalent and original DCO retained. Exact-head DCO succeeds, resolving the former stale-DCO projection. Rebase comment7042479007 is posted and verified; no further comment or DCO decision is pending. All current public checks, including First Pass 2079, pass under the existing owner watch. Aggregate review isREVIEW_REQUIRED. Auto-merge is null; no latest-update disablement cause is inferred. rexren-gif approves the exact new head; retained qualification is62internal/23RACK/48SACK/405external cases per architecture, packet analysis only and no new race/performance claim. The exact-head public CI cohort is complete; no stale-DCO or old quota blocker remains for this source.",
+        "nextAction": "Follow existing maintainer review/import and human merge disposition on the exact delivered source. CI and rebase communication are complete; no retry, new notification, source churn or agent merge action.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16857#discussion_r4459290531",
           "https://github.com/tamird/gvisor/commit/85b67686f3cd61965db6393190969dab98c8d5c3",
@@ -61477,7 +61477,7 @@
         ],
         "mergeable": "MERGEABLE",
         "recheckCondition": "Current-head CI or substantive review/source change.",
-        "curatedAt": "2026-11-20T14:55:02.627201+00:00"
+        "curatedAt": "2026-11-20T15:36:10.284882+00:00"
       },
       "dcoAmendment": {
         "oldHead": "5c2734f45e4e59a6cea8a20ddd9d2954bf1b0ad2",
@@ -61502,7 +61502,7 @@
         "priorOwner": "TCP workstream",
         "priorProviderHead": "85b67686f3cd61965db6393190969dab98c8d5c3"
       },
-      "nextStep": "approved_rebase_queue follows exact-head native/FirstPass checks and existing maintainer review. Preserve signed source/original DCO and existing qualification limits; rebase communication is complete, no merge action or duplicate notification.",
+      "nextStep": "Follow existing maintainer review/import and human merge disposition on the exact delivered source. CI and rebase communication are complete; no retry, new notification, source churn or agent merge action.",
       "recheckCondition": "Current-head CI or substantive review/source change."
     },
     {
@@ -78869,8 +78869,8 @@
       "url": "https://github.com/google/gvisor/pull/17181",
       "group": "tests",
       "status": "open",
-      "summary": "Signed current-tip7397 mechanical rebasea1da8410eb9708a5e08fed9dfc95e8b98c74b1ec is delivered and MERGEABLE; range-diff is equivalent and original DCO retained. Exact-head DCO succeeds, resolving the former stale-DCO projection. Rebase comment7042476313 is posted and verified; no further comment or DCO decision is pending. All current checks, including First Pass 2077, pass under the existing owner watch. Aggregate review isAPPROVED. Auto-merge is null; no latest-update disablement cause is inferred. Existing disable events predate these updates (01:55/01:42UTC).",
-      "updatedAt": "2026-11-20T14:55:02.627201+00:00",
+      "summary": "Signed current-tip7397 mechanical rebasea1da8410eb9708a5e08fed9dfc95e8b98c74b1ec is delivered and MERGEABLE; range-diff is equivalent and original DCO retained. Exact-head DCO succeeds, resolving the former stale-DCO projection. Rebase comment7042476313 is posted and verified; no further comment or DCO decision is pending. All current checks, including First Pass 2077, pass under the existing owner watch. Aggregate review isAPPROVED. Auto-merge is null; no latest-update disablement cause is inferred. Existing disable events predate these updates (01:55/01:42UTC). The exact-head public CI cohort is complete; no stale-DCO or old quota blocker remains for this source.",
+      "updatedAt": "2026-11-20T15:36:10.284882+00:00",
       "evidence": [
         {
           "label": "Upstream lint passed on b6294cc79",
@@ -78934,8 +78934,8 @@
         "owner": "approved_rebase_queue",
         "sourceHead": "a1da8410eb9708a5e08fed9dfc95e8b98c74b1ec",
         "observedAt": "2026-11-20T14:55:02.627201+00:00",
-        "disposition": "Signed current-tip7397 mechanical rebasea1da8410eb9708a5e08fed9dfc95e8b98c74b1ec is delivered and MERGEABLE; range-diff is equivalent and original DCO retained. Exact-head DCO succeeds, resolving the former stale-DCO projection. Rebase comment7042476313 is posted and verified; no further comment or DCO decision is pending. All current checks, including First Pass 2077, pass under the existing owner watch. Aggregate review isAPPROVED. Auto-merge is null; no latest-update disablement cause is inferred. Existing disable events predate these updates (01:55/01:42UTC).",
-        "nextAction": "approved_rebase_queue follows exact-head native/FirstPass checks and existing maintainer review. Preserve signed source/original DCO and existing qualification limits; rebase communication is complete, no merge action or duplicate notification.",
+        "disposition": "Signed current-tip7397 mechanical rebasea1da8410eb9708a5e08fed9dfc95e8b98c74b1ec is delivered and MERGEABLE; range-diff is equivalent and original DCO retained. Exact-head DCO succeeds, resolving the former stale-DCO projection. Rebase comment7042476313 is posted and verified; no further comment or DCO decision is pending. All current checks, including First Pass 2077, pass under the existing owner watch. Aggregate review isAPPROVED. Auto-merge is null; no latest-update disablement cause is inferred. Existing disable events predate these updates (01:55/01:42UTC). The exact-head public CI cohort is complete; no stale-DCO or old quota blocker remains for this source.",
+        "nextAction": "Follow existing maintainer review/import and human merge disposition on the exact delivered source. CI and rebase communication are complete; no retry, new notification, source churn or agent merge action.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17181",
           "https://github.com/tamird/gvisor/commit/b6294cc79",
@@ -78979,7 +78979,7 @@
         ],
         "mergeable": "MERGEABLE",
         "recheckCondition": "Current-head CI or substantive review/source change.",
-        "curatedAt": "2026-11-20T14:55:02.627201+00:00",
+        "curatedAt": "2026-11-20T15:36:10.284882+00:00",
         "providerHead": "a1da8410eb9708a5e08fed9dfc95e8b98c74b1ec"
       },
       "settledReviews": [
@@ -79020,7 +79020,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "approved_rebase_queue follows exact-head native/FirstPass checks and existing maintainer review. Preserve signed source/original DCO and existing qualification limits; rebase communication is complete, no merge action or duplicate notification.",
+      "nextStep": "Follow existing maintainer review/import and human merge disposition on the exact delivered source. CI and rebase communication are complete; no retry, new notification, source churn or agent merge action.",
       "recheckCondition": "Current-head CI or substantive review/source change."
     },
     {
@@ -79341,7 +79341,7 @@
       "url": "https://github.com/google/gvisor/pull/17184",
       "group": "tests",
       "status": "open",
-      "summary": "Root full semantic review and two independent reviews accept candidate c69a99a6cb402685e6088df4884ad53f1d4b62b5 with no findings/source changes. Exact functional and Buildifier input binding is accepted. Full canonical source/C++ lint coverage is a real remaining agent-validation gap; the original owner is closing it through existing cached/RBE workflow without repeating functional tests. This is not a pending user decision. Public 2aa840f4 remains unchanged;11518/15146 are not landing dependencies, and unused static-image patches provide no proof. Root found obsolete README recipes after code review; owner is preparing a separate doc-only correction. Automatic execution review rejected adding a sign-off to that not-yet-human-reviewed README revision; this is an execution-policy blocker, not a pending manual certification or new user decision. Local unsigned preview/source preparation remains authorized; ordinary final source-publication review still applies.",
+      "summary": "Exact ee28310b amendment and proposed description now have a verified current source-review question awaiting the user answer. Root confirmed tool acceptance at15:33:01UTC; exact request time is unknown. All four source/C++/IPv4/IPv6 gates and independent reviews pass. Public2aa840f4 is unchanged. Proposed title is retained; description is the verbatim linked commit-message body plus the standard delegated-attribution footer. No separate manual-DCO task or additional prose question is pending.",
       "evidence": [
         {
           "label": "Published standalone benchmark correction",
@@ -79356,14 +79356,14 @@
           "url": "https://github.com/tamird/gvisor/blob/208cd127d/.github/qualification/tcp_benchmark_go.result.json"
         }
       ],
-      "updatedAt": "2026-11-20T15:00:40.305787+00:00",
+      "updatedAt": "2026-11-20T15:36:10.284882+00:00",
       "followup": {
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
         "owner": "root",
-        "nextAction": "Owner closes canonical source/C++ gates and prepares the accepted README-only correction as a reviewable preview without the rejected trailer operation. Root integrates complete evidence and reconciles actual final source approval; do not create a DCO/manual-sign human queue.",
+        "nextAction": "Await the existing actual ee28310b amendment decision once. On approval, root completes authorized sign-off/publication and ordinary verified rebase communication; preserve exact body/source binding and do not repeat the question.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-20T02:29:24.570365+00:00",
-        "recheckCondition": "Verified qualification/readiness and actual authorization provenance, or substantive source/feedback change.",
+        "observedAt": "2026-11-20T15:33:01Z",
+        "recheckCondition": "User answer to this actual question or substantive source/qualification change.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17184",
           "https://github.com/tamird/gvisor/commit/9c541c3ae1cd68df1741882480d5bf184396e695",
@@ -79397,8 +79397,8 @@
           "https://github.com/tamird/gvisor/actions/runs/44660305436",
           "https://github.com/tamird/gvisor/actions/runs/44660308694"
         ],
-        "disposition": "Root full semantic review and two independent reviews accept candidate c69a99a6cb402685e6088df4884ad53f1d4b62b5 with no findings/source changes. Exact functional and Buildifier input binding is accepted. Full canonical source/C++ lint coverage is a real remaining agent-validation gap; the original owner is closing it through existing cached/RBE workflow without repeating functional tests. This is not a pending user decision. Public 2aa840f4 remains unchanged;11518/15146 are not landing dependencies, and unused static-image patches provide no proof. Root found obsolete README recipes after code review; owner is preparing a separate doc-only correction. Automatic execution review rejected adding a sign-off to that not-yet-human-reviewed README revision; this is an execution-policy blocker, not a pending manual certification or new user decision. Local unsigned preview/source preparation remains authorized; ordinary final source-publication review still applies.",
-        "curatedAt": "2026-11-20T15:00:40.305787+00:00"
+        "disposition": "Exact ee28310b amendment and proposed description now have a verified current source-review question awaiting the user answer. Root confirmed tool acceptance at15:33:01UTC; exact request time is unknown. All four source/C++/IPv4/IPv6 gates and independent reviews pass. Public2aa840f4 is unchanged. Proposed title is retained; description is the verbatim linked commit-message body plus the standard delegated-attribution footer. No separate manual-DCO task or additional prose question is pending.",
+        "curatedAt": "2026-11-20T15:36:10.284882+00:00"
       },
       "dcoAmendment": {
         "oldHead": "9c541c3ae1cd68df1741882480d5bf184396e695",
@@ -79422,8 +79422,26 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Owner closes canonical source/C++ gates and prepares the accepted README-only correction as a reviewable preview without the rejected trailer operation. Root integrates complete evidence and reconciles actual final source approval; do not create a DCO/manual-sign human queue.",
-      "recheckCondition": "Verified qualification/readiness and actual authorization provenance, or substantive source/feedback change."
+      "nextStep": "Await the existing actual ee28310b amendment decision once. On approval, root completes authorized sign-off/publication and ordinary verified rebase communication; preserve exact body/source binding and do not repeat the question.",
+      "recheckCondition": "User answer to this actual question or substantive source/qualification change.",
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "ee28310b9391ccbc599c667facaaa0d7fde0f790",
+        "baseHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
+        "url": "https://github.com/tamird/gvisor/commit/ee28310b9391ccbc599c667facaaa0d7fde0f790",
+        "title": "Wait for the TCP benchmark proxy and verify the sender rate",
+        "body": "Wait for the client proxy listener without consuming the connection\nreserved for iperf. Bound readiness checks by the existing startup\ndeadline and stop if a service exits. Keep the client execution timeout\nand status checks.\n\nRequire a numeric final sender rate and the aggregate sender row for\nparallel streams.\n\nPass the two declared helper executable paths from the Bazel target.\nResolve them in its runfiles tree instead of assuming flat sibling\noutputs. Preserve the helper directory override for standalone callers.\n\nDocument the Go benchmark output and remove CSV recipes that assume\nthree numeric fields.\n\nPrepared by Codex on behalf of @tamird.",
+        "summary": "Approve amending #17184 to ee28310b9391ccbc599c667facaaa0d7fde0f790? It preserves upstream timeouts, waits for the proxy listener, validates aggregate throughput, declares helper paths, and removes obsolete CSV recipes. Source44762274166/377-sourceCpp44762277768/IPv444762792395/IPv644762796435 passed; independentreviews passed.\n\nRoot confirmed the accepted request_user_input_async question at 2026-11-20T15:33:01Z. Exact server request time is unavailable and no request ID was returned; requestedAt is intentionally omitted. This is a new actual question, not a restoration of earlier unproven prose.\n\ngit range-diff --creation-factor=100 2aa840f4^! ee28310b^!"
+      },
+      "refinement": {
+        "before": {
+          "head": "2aa840f4ffe655f0c749185070fba77e676186b5"
+        },
+        "after": {
+          "head": "ee28310b9391ccbc599c667facaaa0d7fde0f790"
+        }
+      }
     },
     {
       "id": "branch:tcp-dsack-below-ack-parity",
@@ -83455,12 +83473,12 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/shared-testprocess-systrap-wait",
-      "head": "237c2c5e246394424eaac57437305cdc22d62fbe",
+      "head": "daa14d03eb6e7fc312496fb740bdae0a00a02312",
       "title": "Use one test process for shim timeouts and runsc lifecycle tests",
       "url": "https://github.com/tamird/gvisor/commit/122b98abd",
       "group": "tests",
       "status": "Published",
-      "summary": "Inactive published predecessor of17336; native current PR remains237c2c5e246394424eaac57437305cdc22d62fbe OPEN/CONFLICTING. Preserve exact predecessor and b29/31bb qualification. Old b29 request wording has no verified current decision provenance and must not reopen completed predecessor publication or be presented as a current human obligation.",
+      "summary": "Authorized patch-equivalent current-tip refresh is delivered to public17336 and its original fork branch at daa14d03eb6e7fc312496fb740bdae0a00a02312. Exact old-head lease, native MERGEABLE and DCO success are verified; rebase comment7043294523 is posted and read back. The old b29 provenance obligation is complete, with no current source-decision question. Lint, Gazelle and file headers pass; Go44762536771 remains under the existing native watch. First Pass2080 has one Pipeline upload exit80 with empty logs before tests, cause unproven. Auto-merge was null before and after; existing two reviewer requests are preserved and no extra outreach occurred.",
       "evidence": [
         {
           "label": "All ten cases on a pidfs-capable worker",
@@ -83535,7 +83553,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42438330780/artifacts/13600169275"
         }
       ],
-      "updatedAt": "2026-11-20T15:00:40.305787+00:00",
+      "updatedAt": "2026-11-20T15:36:10.284882+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -83594,11 +83612,11 @@
         }
       },
       "followup": {
-        "owner": "root",
-        "sourceHead": "237c2c5e246394424eaac57437305cdc22d62fbe",
-        "observedAt": "2026-11-17T18:16:01.120596+00:00",
-        "disposition": "Inactive published predecessor of17336; native current PR remains237c2c5e246394424eaac57437305cdc22d62fbe OPEN/CONFLICTING. Preserve exact predecessor and b29/31bb qualification. Old b29 request wording has no verified current decision provenance and must not reopen completed predecessor publication or be presented as a current human obligation.",
-        "nextAction": "Root verifies actual b29 request/approval provenance and current #17336 source/base before selecting an authorized conflict repair or publication. No contributor action belongs to this inactive predecessor and no old approval question is repeated.",
+        "owner": "buildifier_license_fix",
+        "sourceHead": "daa14d03eb6e7fc312496fb740bdae0a00a02312",
+        "observedAt": "2026-11-20T15:36:10.284882+00:00",
+        "disposition": "Authorized patch-equivalent current-tip refresh is delivered to public17336 and its original fork branch at daa14d03eb6e7fc312496fb740bdae0a00a02312. Exact old-head lease, native MERGEABLE and DCO success are verified; rebase comment7043294523 is posted and read back. The old b29 provenance obligation is complete, with no current source-decision question. Lint, Gazelle and file headers pass; Go44762536771 remains under the existing native watch. First Pass2080 has one Pipeline upload exit80 with empty logs before tests, cause unproven. Auto-merge was null before and after; existing two reviewer requests are preserved and no extra outreach occurred.",
+        "nextAction": "buildifier_license_fix follows exact daa GitHub generation and First Pass2080 upload diagnosis; root follows existing maintainer review. Preserve retained equivalent-source qualification; no new source approval, manual DCO, duplicate rebase comment or merge action.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42899668212/artifacts/13801594393",
           "https://github.com/tamird/gvisor/actions/runs/42897501213/artifacts/13800339730",
@@ -83610,11 +83628,13 @@
           "https://github.com/tamird/gvisor/actions/runs/44197675555",
           "https://github.com/tamird/gvisor/actions/runs/44197681132",
           "https://github.com/tamird/gvisor/actions/runs/44200657043",
-          "https://github.com/tamird/gvisor/actions/runs/44200662533"
+          "https://github.com/tamird/gvisor/actions/runs/44200662533",
+          "https://github.com/gvisor/gvisor/pull/17336#issuecomment-7043294523",
+          "https://buildkite.com/gvisor/first-pass/builds/2080"
         ],
-        "recheckCondition": "Verified decision provenance or substantive active17336 source/review change.",
+        "recheckCondition": "Exact-head CI/provider evidence or substantive reviewer/source change.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
-        "mergeable": "CONFLICTING",
+        "mergeable": "MERGEABLE",
         "qualificationHistory": [
           {
             "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
@@ -83637,7 +83657,7 @@
             "sourceBase": "1f33fe3003455db178b97f3b43d3a012f1611994"
           }
         },
-        "curatedAt": "2026-11-20T15:00:40.305787+00:00"
+        "curatedAt": "2026-11-20T15:36:10.284882+00:00"
       },
       "inactive": true,
       "dcoAmendment": {
@@ -83654,8 +83674,8 @@
           "https://github.com/tamird/gvisor/commit/237c2c5e246394424eaac57437305cdc22d62fbe"
         ]
       },
-      "nextStep": "Root verifies actual b29 request/approval provenance and current #17336 source/base before selecting an authorized conflict repair or publication. No contributor action belongs to this inactive predecessor and no old approval question is repeated.",
-      "recheckCondition": "Verified decision provenance or substantive active #17336 source/review change."
+      "nextStep": "buildifier_license_fix follows exact daa GitHub generation and First Pass2080 upload diagnosis; root follows existing maintainer review. Preserve retained equivalent-source qualification; no new source approval, manual DCO, duplicate rebase comment or merge action.",
+      "recheckCondition": "Exact-head CI/provider evidence or substantive reviewer/source change."
     },
     {
       "id": "branch:netgofer-shutdown-test",
@@ -135873,5 +135893,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T15:15:34.980085+00:00"
+  "updatedAt": "2026-11-20T15:36:10.284882+00:00"
 }

@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-20T15:33:09.982106+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-20T15:15:34.980085+00:00",
+  "registryDate": "2026-11-20T15:36:10.284882+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -449303,8 +449303,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
-        "disposition": "Root full semantic review and two independent reviews accept candidate c69a99a6cb402685e6088df4884ad53f1d4b62b5 with no findings/source changes. Exact functional and Buildifier input binding is accepted. Full canonical source/C++ lint coverage is a real remaining agent-validation gap; the original owner is closing it through existing cached/RBE workflow without repeating functional tests. This is not a pending user decision. Public 2aa840f4 remains unchanged;11518/15146 are not landing dependencies, and unused static-image patches provide no proof. Root found obsolete README recipes after code review; owner is preparing a separate doc-only correction. Automatic execution review rejected adding a sign-off to that not-yet-human-reviewed README revision; this is an execution-policy blocker, not a pending manual certification or new user decision. Local unsigned preview/source preparation remains authorized; ordinary final source-publication review still applies.",
-        "nextAction": "Owner closes canonical source/C++ gates and prepares the accepted README-only correction as a reviewable preview without the rejected trailer operation. Root integrates complete evidence and reconciles actual final source approval; do not create a DCO/manual-sign human queue."
+        "disposition": "Exact ee28310b amendment and proposed description now have a verified current source-review question awaiting the user answer. Root confirmed tool acceptance at15:33:01UTC; exact request time is unknown. All four source/C++/IPv4/IPv6 gates and independent reviews pass. Public2aa840f4 is unchanged. Proposed title is retained; description is the verbatim linked commit-message body plus the standard delegated-attribution footer. No separate manual-DCO task or additional prose question is pending.",
+        "nextAction": "Await the existing actual ee28310b amendment decision once. On approval, root completes authorized sign-off/publication and ordinary verified rebase communication; preserve exact body/source binding and do not repeat the question."
       },
       "conflictObservedSince": "2026-11-20T00:41:37.337032+00:00"
     },
@@ -454639,8 +454639,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
-        "disposition": "Root full semantic review and two independent reviews accept candidate c69a99a6cb402685e6088df4884ad53f1d4b62b5 with no findings/source changes. Exact functional and Buildifier input binding is accepted. Full canonical source/C++ lint coverage is a real remaining agent-validation gap; the original owner is closing it through existing cached/RBE workflow without repeating functional tests. This is not a pending user decision. Public 2aa840f4 remains unchanged;11518/15146 are not landing dependencies, and unused static-image patches provide no proof. Root found obsolete README recipes after code review; owner is preparing a separate doc-only correction. Automatic execution review rejected adding a sign-off to that not-yet-human-reviewed README revision; this is an execution-policy blocker, not a pending manual certification or new user decision. Local unsigned preview/source preparation remains authorized; ordinary final source-publication review still applies.",
-        "nextAction": "Owner closes canonical source/C++ gates and prepares the accepted README-only correction as a reviewable preview without the rejected trailer operation. Root integrates complete evidence and reconciles actual final source approval; do not create a DCO/manual-sign human queue."
+        "disposition": "Exact ee28310b amendment and proposed description now have a verified current source-review question awaiting the user answer. Root confirmed tool acceptance at15:33:01UTC; exact request time is unknown. All four source/C++/IPv4/IPv6 gates and independent reviews pass. Public2aa840f4 is unchanged. Proposed title is retained; description is the verbatim linked commit-message body plus the standard delegated-attribution footer. No separate manual-DCO task or additional prose question is pending.",
+        "nextAction": "Await the existing actual ee28310b amendment decision once. On approval, root completes authorized sign-off/publication and ordinary verified rebase communication; preserve exact body/source binding and do not repeat the question."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxz0Oqg"
@@ -456186,7 +456186,12 @@
           "purpose": "validation"
         }
       ],
-      "recordedFollowup": {},
+      "recordedFollowup": {
+        "owner": "buildifier_license_fix",
+        "sourceHead": "daa14d03eb6e7fc312496fb740bdae0a00a02312",
+        "disposition": "Authorized patch-equivalent current-tip refresh is delivered to public17336 and its original fork branch at daa14d03eb6e7fc312496fb740bdae0a00a02312. Exact old-head lease, native MERGEABLE and DCO success are verified; rebase comment7043294523 is posted and read back. The old b29 provenance obligation is complete, with no current source-decision question. Lint, Gazelle and file headers pass; Go44762536771 remains under the existing native watch. First Pass2080 has one Pipeline upload exit80 with empty logs before tests, cause unproven. Auto-merge was null before and after; existing two reviewer requests are preserved and no extra outreach occurred.",
+        "nextAction": "buildifier_license_fix follows exact daa GitHub generation and First Pass2080 upload diagnosis; root follows existing maintainer review. Preserve retained equivalent-source qualification; no new source approval, manual DCO, duplicate rebase comment or merge action."
+      },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN2YEcGg"
       ],
@@ -463775,6 +463780,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-20T15:32:28.999538+00:00"
+      },
+      "contributor-review": {
+        "scope": "ee28310b9391ccbc599c667facaaa0d7fde0f790",
+        "since": "2026-11-20T15:36:10.284882+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-20T15:36:10.284882+00:00"
       }
     },
     "pr:17191": {
@@ -465770,7 +465782,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:15:34.980085+00:00"
+        "observedAt": "2026-11-20T15:36:10.284882+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -465779,7 +465791,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:15:34.980085+00:00"
+        "observedAt": "2026-11-20T15:36:10.284882+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -465788,7 +465800,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:15:34.980085+00:00"
+        "observedAt": "2026-11-20T15:36:10.284882+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -465797,7 +465809,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:15:34.980085+00:00"
+        "observedAt": "2026-11-20T15:36:10.284882+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -465806,7 +465818,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:15:34.980085+00:00"
+        "observedAt": "2026-11-20T15:36:10.284882+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -465815,7 +465827,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:15:34.980085+00:00"
+        "observedAt": "2026-11-20T15:36:10.284882+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -465824,7 +465836,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:15:34.980085+00:00"
+        "observedAt": "2026-11-20T15:36:10.284882+00:00"
       }
     }
   },
