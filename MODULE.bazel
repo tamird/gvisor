@@ -80,13 +80,12 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 # Build-time compilation database generator.
 _COMPILE_COMMANDS_BUILD = 'licenses(["notice"])\nexports_files(["usr/bin/bazel-compile-commands"])\n'
 
-# Jammy packages support the Ubuntu 22.04 development container.
-# CI-only approved-source product; public adoption waits for supplier release.
+# CI-only qualified LLVM product; public adoption waits for supplier release.
 http_archive(
     name = "bazel_compile_commands_linux_amd64",
     build_file_content = _COMPILE_COMMANDS_BUILD,
-    sha256 = "07fa880b5f9ac30f44df32b4fb2d6d9ce1e20bb25ab3ad2b3b37a9b5d532b908",
-    urls = ["https://raw.githubusercontent.com/tamird/bazel-compile-commands/6e28cff32e9ad15f9a039693f50e04ddf5457658/ci-products/324cf87/linux-amd64.zip"],
+    sha256 = "cc0bfae201106808544e210a4d2623ee61d4c1ca5bdb3108b157a72d95c83bcb",
+    urls = ["https://raw.githubusercontent.com/tamird/bazel-compile-commands/66db4f871b46f8dd7889dcf8e5f18b2fa29bbdb6/ci-products/llvm-0.8.26/linux-amd64.zip"],
 )
 
 # CI-only approved-source product; public adoption waits for supplier release.
