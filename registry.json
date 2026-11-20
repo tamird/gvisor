@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-19T23:42:55.136002+00:00",
+    "updatedAt": "2026-11-20T00:02:04.528943+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -134907,10 +134907,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-19T23:42:55.136002+00:00",
-      "summary": "Compilation-database source6a9fd82 remains qualified on its fork review ref; existing source and migration-issue decisions remain pending, with no upstream publication or DCO. Recovered N5000 same-source control44638386463 passed correctness, product identity and cleanup but failed stability: within-arm spans5.335%/9.253%, apparent same-source difference−2.115%; no cause is established. Warmup-only20000 sensitivity control44639617368 is running with four measuredN5000 visits unchanged. Packet worker recovery44639155098 passed one actual case with zero skips and cleanup after declaring required IPv6 capability; this is not full TCP qualification.",
-      "nextStep": "Benchmark owner audits warmup-only sensitivity control before another cause action; candidate/sample expansion stays held. Packet owner qualifies actual functional gates on mechanical current-base candidate0599e3ee48269fe406553488d229732cf0134d09. Root awaits existing compdb/secfuzz source decisions and private issue decision without repeated questions or publishing draft bodies. Full150/n24 performance remains open.",
-      "recheckCondition": "Audited sensitivity-control or actual packet-functional results, substantive source/review feedback, or an answer to an existing publication decision.",
+      "updatedAt": "2026-11-20T00:02:04.528943+00:00",
+      "summary": "Shared run-argument support6940c413 is delivered; actual canonical Goimports44641261748 and Buildifier44641333993 callers pass. TCP ordinary Go tests pass499cases per architecture; this does not establish packet qualification. AMD packet44640102308 was cancelled, with cause and partial evidence under owner audit. ARM host probe44641958412 failed; its owner diagnoses host requirements while provider13523 tracks the newer-kernel request. The cloud ARM5.10 nft failure is observed, but exact configuration cause is unproven. The20000-warmup same-source control failed stability27.705%/10.043%, apparent false mean17.479%. Response probe44641432699 passed its job but emitted zero body records because verbose benchmark output was suppressed; no response-stability evidence exists. Diagnostic-only verbose recovery44642212443 is running, without new timed samples.",
+      "nextStep": "Packet owner audits cancellation/partial AMD evidence and exact ARM host requirements before further functional qualification; preserve499case ordinary-Go passes. Benchmark owner audits diagnostic response recovery before identifying a cause; no timed candidate or sample expansion. Root awaits the existing compdb/secfuzz source and private issue publication decisions without new questions or decision frames. Full150/n24 performance remains open.",
+      "recheckCondition": "Audited diagnostic response records, actual packet/host capability recovery or cancellation evidence, substantive source/review feedback, or an answer to an existing publication decision.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135072,6 +135072,30 @@
         {
           "label": "Actual IPv6-enabled packet worker: one case, zero skips",
           "url": "https://github.com/tamird/gvisor/actions/runs/44639155098"
+        },
+        {
+          "label": "Canonical Goimports caller passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44641261748"
+        },
+        {
+          "label": "Canonical Buildifier caller passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44641333993"
+        },
+        {
+          "label": "AMD packet job cancelled; owner auditing cause and partial evidence",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44640102308"
+        },
+        {
+          "label": "ARM host probe failed; exact host requirements under diagnosis",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44641958412"
+        },
+        {
+          "label": "Response probe job passed but emitted zero body records",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44641432699"
+        },
+        {
+          "label": "Diagnostic verbose response recovery; result pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44642212443"
         }
       ],
       "followup": {
@@ -135093,12 +135117,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-19T23:42:55.136002+00:00",
-        "nextAction": "Benchmark owner audits warmup-only sensitivity control before another cause action; candidate/sample expansion stays held. Packet owner qualifies actual functional gates on mechanical current-base candidate0599e3ee48269fe406553488d229732cf0134d09. Root awaits existing compdb/secfuzz source decisions and private issue decision without repeated questions or publishing draft bodies. Full150/n24 performance remains open.",
-        "recheckCondition": "Audited sensitivity-control or actual packet-functional results, substantive source/review feedback, or an answer to an existing publication decision.",
+        "curatedAt": "2026-11-20T00:02:04.528943+00:00",
+        "nextAction": "Packet owner audits cancellation/partial AMD evidence and exact ARM host requirements before further functional qualification; preserve499case ordinary-Go passes. Benchmark owner audits diagnostic response recovery before identifying a cause; no timed candidate or sample expansion. Root awaits the existing compdb/secfuzz source and private issue publication decisions without new questions or decision frames. Full150/n24 performance remains open.",
+        "recheckCondition": "Audited diagnostic response records, actual packet/host capability recovery or cancellation evidence, substantive source/review feedback, or an answer to an existing publication decision.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Compilation-database source6a9fd82 remains qualified on its fork review ref; existing source and migration-issue decisions remain pending, with no upstream publication or DCO. Recovered N5000 same-source control44638386463 passed correctness, product identity and cleanup but failed stability: within-arm spans5.335%/9.253%, apparent same-source difference−2.115%; no cause is established. Warmup-only20000 sensitivity control44639617368 is running with four measuredN5000 visits unchanged. Packet worker recovery44639155098 passed one actual case with zero skips and cleanup after declaring required IPv6 capability; this is not full TCP qualification.",
+        "disposition": "Shared run-argument support6940c413 is delivered; actual canonical Goimports44641261748 and Buildifier44641333993 callers pass. TCP ordinary Go tests pass499cases per architecture; this does not establish packet qualification. AMD packet44640102308 was cancelled, with cause and partial evidence under owner audit. ARM host probe44641958412 failed; its owner diagnoses host requirements while provider13523 tracks the newer-kernel request. The cloud ARM5.10 nft failure is observed, but exact configuration cause is unproven. The20000-warmup same-source control failed stability27.705%/10.043%, apparent false mean17.479%. Response probe44641432699 passed its job but emitted zero body records because verbose benchmark output was suppressed; no response-stability evidence exists. Diagnostic-only verbose recovery44642212443 is running, without new timed samples.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135507,5 +135531,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-19T23:42:55.136002+00:00"
+  "updatedAt": "2026-11-20T00:02:04.528943+00:00"
 }
