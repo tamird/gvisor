@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T21:38:17.837349+00:00",
+    "updatedAt": "2026-11-20T21:52:37.720614+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35462,13 +35462,13 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-19T02:51:50.481387+00:00",
-      "summary": "Keep the congestion threshold across repeated timeouts without an advancing ACK and when a timeout interrupts fast recovery. Master already preserves cwnd and ssthresh on an idle zero-window probe. The amendment drops the duplicate early return and retains both TestZeroWindowSend assertions. Five original XML files contain 20 passing records with zero skips.",
+      "summary": "The native Linux PacketImpact control remains closed:16 expected XML records, zero failures/errors/skips. Netstack run44823129245 has one watch/audit owner, tcp_go_final_contract_review, which also owns current-base preparation. No netstack/ARM/current-base or performance pass is inferred here.",
       "followup": {
         "owner": "root",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
-        "observedAt": "2026-11-20T21:38:17.837349+00:00",
-        "disposition": "Native Linux control44820776849 passed all16 expected XML records, including parent/subtests and all named RTO cases, with zero failures/errors/skips. Remote execution took12.87s with4,471 cache hits. This closes only that native control: netstack, ARM, current-base binding and performance qualification remain open. Earlier EACCES/preflight/compiler evidence retains its original scope.",
-        "nextAction": "The existing packet owner advances the separate netstack and ARM/current-base functional obligations on supported workers, reusing validated products. Root retains the explicit performance/private-import holds; do not call the native control full project qualification.",
+        "observedAt": "2026-11-20T21:52:37.720614+00:00",
+        "disposition": "The native Linux PacketImpact control remains closed:16 expected XML records, zero failures/errors/skips. Netstack run44823129245 has one watch/audit owner, tcp_go_final_contract_review, which also owns current-base preparation. No netstack/ARM/current-base or performance pass is inferred here.",
+        "nextAction": "tcp_go_final_contract_review consumes its owned netstack result and advances the bound current-base/architecture preparation. Preserve native-only scope, performance/private-import holds and single-observer ownership; no mirrored CI reads.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16419",
           "https://github.com/google/gvisor/pull/16419#discussion_r4504268180",
@@ -35494,7 +35494,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44800271769",
           "https://github.com/tamird/gvisor/actions/runs/44820776849"
         ],
-        "recheckCondition": "Actual separate netstack/architecture/current-base evidence or a changed supported-worker prerequisite.",
+        "recheckCondition": "The owner’s netstack/current-base/architecture audit or actual supported-worker evidence.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING",
         "qualificationHistory": [
@@ -35604,7 +35604,7 @@
           ]
         },
         "remainingNetworkOutcomeOwner": "tcp_conflict",
-        "curatedAt": "2026-11-20T21:38:17.837349+00:00",
+        "curatedAt": "2026-11-20T21:52:37.720614+00:00",
         "ciExecutionAuthorization": {
           "status": "Authorized CI-only; held for permanent Bazel mechanism migration",
           "owner": "root",
@@ -35636,7 +35636,8 @@
             }
           ],
           "limits": "Oldbase inputs only. No currentbase/packet32/race/compiler/fullnetworkperformance shortcut."
-        }
+        },
+        "implementationOwner": "tcp_go_final_contract_review"
       },
       "evidence": [
         {
@@ -35843,8 +35844,8 @@
           "https://github.com/tamird/gvisor/commit/0ae405ec7d1ace5894645c28910c69605c0de20e"
         ]
       },
-      "nextStep": "The existing packet owner advances the separate netstack and ARM/current-base functional obligations on supported workers, reusing validated products. Root retains the explicit performance/private-import holds; do not call the native control full project qualification.",
-      "recheckCondition": "Actual separate netstack/architecture/current-base evidence or a changed supported-worker prerequisite."
+      "nextStep": "tcp_go_final_contract_review consumes its owned netstack result and advances the bound current-base/architecture preparation. Preserve native-only scope, performance/private-import holds and single-observer ownership; no mirrored CI reads.",
+      "recheckCondition": "The owner’s netstack/current-base/architecture audit or actual supported-worker evidence."
     },
     {
       "id": "pr:17114",
@@ -93797,7 +93798,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-17T19:05:00.391405+00:00",
-      "summary": "The approved legacy checkpoint encoder change is published as #17472 after #16718 merged. The range-diff from dffb3d3c3 is empty. Native AMD64 reported 11,574 ordinary passes and 85 existing skips, and 31 focused cases passed under the race detector.",
+      "summary": "Adaptation35195 passed state/race/Nogo/source gates and fresh strict C++ analysis over377 sources. Legacy --state-engine=wire remains production-supported, while maintained benchmarks default to graph. These functional/compiler proofs do not cover wire performance or waive broad A/A. Publicb08 remains unchanged; no source-publication question is pending.",
       "evidence": [
         {
           "label": "Published single-commit PR #17472",
@@ -93811,10 +93812,10 @@
       "followup": {
         "sourceHead": "b08bf67a0996f2732d82ad5b35949048cc2139f0",
         "owner": "root",
-        "nextAction": "approved_rebase_queue consumes its owned adaptation gates and obtains proportional final source review. Root reconciles actual source approval before publication if the real adaptation changes the approved topic; do not mirror the owner’s CI watches or transfer stale approval automatically.",
+        "nextAction": "approved_rebase_queue adds state-only wire variants to the maintained benchmark coverage, then closes the broad suite and same-source A/A controls before candidate comparisons. Preserve supported wire semantics and exact functional evidence; do not infer stability from unrelated EOF controls.",
         "mergeable": "CONFLICTING",
-        "observedAt": "2026-11-20T21:38:17.837349+00:00",
-        "recheckCondition": "The owner’s qualified adapted source/final review or actual new maintainer/head/base event.",
+        "observedAt": "2026-11-20T21:52:37.720614+00:00",
+        "recheckCondition": "Source-bound wire/graph benchmark coverage and valid broad/A-A evidence, or actual new source guidance.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17472",
           "https://github.com/tamird/gvisor/commit/6827c2cfbc7102549d4ea74eb602516db2635a16",
@@ -93823,8 +93824,8 @@
           "https://buildkite.com/gvisor/first-pass/builds/1584#01a1eae1-b374-4300-951e-d506a17dbb07"
         ],
         "implementationOwner": "approved_rebase_queue",
-        "curatedAt": "2026-11-20T21:38:17.837349+00:00",
-        "disposition": "Our publishedb08bf67a0996f2732d82ad5b35949048cc2139f0 conflicts with current upstream. approved_rebase_queue owns real adaptation35195 and its state/race/Nogo/source qualification cohort. No candidate publication or new current user question is inferred. Historical1584 daily-quota evidence is separate from this source conflict."
+        "curatedAt": "2026-11-20T21:52:37.720614+00:00",
+        "disposition": "Adaptation35195 passed state/race/Nogo/source gates and fresh strict C++ analysis over377 sources. Legacy --state-engine=wire remains production-supported, while maintained benchmarks default to graph. These functional/compiler proofs do not cover wire performance or waive broad A/A. Publicb08 remains unchanged; no source-publication question is pending."
       },
       "dcoAmendment": {
         "oldHead": "6827c2cfbc7102549d4ea74eb602516db2635a16",
@@ -93848,8 +93849,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "approved_rebase_queue consumes its owned adaptation gates and obtains proportional final source review. Root reconciles actual source approval before publication if the real adaptation changes the approved topic; do not mirror the owner’s CI watches or transfer stale approval automatically.",
-      "recheckCondition": "The owner’s qualified adapted source/final review or actual new maintainer/head/base event."
+      "nextStep": "approved_rebase_queue adds state-only wire variants to the maintained benchmark coverage, then closes the broad suite and same-source A/A controls before candidate comparisons. Preserve supported wire semantics and exact functional evidence; do not infer stability from unrelated EOF controls.",
+      "recheckCondition": "Source-bound wire/graph benchmark coverage and valid broad/A-A evidence, or actual new source guidance."
     },
     {
       "id": "pr:bazel-contrib/bazel-gazelle:2513",
@@ -100373,21 +100374,21 @@
       "url": "https://github.com/kiron1/bazel-compile-commands/pull/236",
       "group": "bazel",
       "status": "open",
-      "summary": "The approved reduced supplier correction is delivered as #236; exact-source upstream CI and review remain open. Fixed release/artifacts and gVisor caller adoption remain separate obligations.",
+      "summary": "Supplier #236 source delivery is complete with passing CI. The remaining dependency is a compatible upstream release including both #236 and local producer proposal f611. Linux/Mac package checks pass with hashes identical to qualified portable products; producer independent review is next. This does not approve f611 publication or make the old release defaults usable.",
       "followup": {
         "owner": "root",
         "sourceHead": "324cf87d3065afb993520a4104720ef7c7647b0b",
-        "observedAt": "2026-11-20T21:38:17.837349+00:00",
-        "disposition": "Supplier #236 remains delivered with passing upstream CI. Compatible portable products now pass AMD64/ARM64 Jammy/Bookworm startup and audited compatibility metadata, while the accepted upstream release pin and final gVisor caller audits remain open. No supported-floor increase or final adoption claim follows.",
-        "nextAction": "Root follows upstream review/releases; compdb_final_correctness finishes the exact portable product/pin and caller binding. Preserve source-approval consumption and avoid new publication questions for already delivered #236.",
-        "recheckCondition": "Accepted compatible release pin, actual final caller audit or upstream review/release change.",
+        "observedAt": "2026-11-20T21:52:37.720614+00:00",
+        "disposition": "Supplier #236 source delivery is complete with passing CI. The remaining dependency is a compatible upstream release including both #236 and local producer proposal f611. Linux/Mac package checks pass with hashes identical to qualified portable products; producer independent review is next. This does not approve f611 publication or make the old release defaults usable.",
+        "nextAction": "Root and compdb_final_correctness complete producer independent review and the actual compatible release/pin handoff, reusing valid product evidence. No new human question exists until a qualified source proposal is ready.",
+        "recheckCondition": "Producer review/source publication authority, upstream release acceptance or a changed product/pin.",
         "evidence": [
           "https://github.com/kiron1/bazel-compile-commands/pull/236",
           "https://github.com/kiron1/bazel-compile-commands/actions/runs/44807549343"
         ]
       },
-      "nextStep": "Root follows upstream review/releases; compdb_final_correctness finishes the exact portable product/pin and caller binding. Preserve source-approval consumption and avoid new publication questions for already delivered #236.",
-      "recheckCondition": "Accepted compatible release pin, actual final caller audit or upstream review/release change."
+      "nextStep": "Root and compdb_final_correctness complete producer independent review and the actual compatible release/pin handoff, reusing valid product evidence. No new human question exists until a qualified source proposal is ready.",
+      "recheckCondition": "Producer review/source publication authority, upstream release acceptance or a changed product/pin."
     },
     {
       "id": "pr:17836",
@@ -135381,10 +135382,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T21:38:17.837349+00:00",
-      "summary": "Portable supplier products passed actual AMD64/ARM64 startup on Jammy and Bookworm; compatibility metadata for all three portable products is audited without raising the macOS15.5 floor. AMD lint44819711585 and ARM devcontainer44820577688 workflows succeeded, but the owning artifact/caller audit is still in progress. Mac warm-cache44819279858 is owner-watched; upstream release pin remains held. This is not final gVisor adoption or stock-platform/runtime qualification. The private CI/RBE issue draft and explicit Go revision hold remain unchanged.",
-      "nextStep": "compdb_final_correctness consumes its own caller/artifact audits and Mac warm-cache gate, then closes exact compatible product/pin and current-source caller bindings. Root retains source-publication and private-draft boundaries; no duplicated watches, new source question or platform-floor increase.",
-      "recheckCondition": "The owner’s exact artifact/caller/Mac audit and acceptable release pin, or actual user direction.",
+      "updatedAt": "2026-11-20T21:52:37.720614+00:00",
+      "summary": "Current compDB caller proof is closed: AMD377-source tidy44819711585, ARM devcontainer44820577688 and nine owning tests44821566361 passed. All three portable products are compatibility-audited. GVisor d894 adoption still requires an upstream compatible release containing #236 plus the producer change; the old default release is insufficient. Producer f611 is local, five files (+215/-2:192 vendor COPYRIGHT lines and23 config/package lines), with Linux/Mac package checks passing and binary hashes identical to qualified products. Independent review is next; no new source question or upstream publication is approved.",
+      "nextStep": "compdb_final_correctness obtains independent producer review and closes the upstream compatible-release/pin dependency before gVisor publication review. Reuse unchanged binary/caller proofs. Package proof used unchanged CI with equivalent inline flags; no access expansion or new workflow grant is required.",
+      "recheckCondition": "Accepted producer source/review and a compatible upstream release/pin, or an actual source/product change.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135859,12 +135860,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T21:38:17.837349+00:00",
-        "nextAction": "compdb_final_correctness consumes its own caller/artifact audits and Mac warm-cache gate, then closes exact compatible product/pin and current-source caller bindings. Root retains source-publication and private-draft boundaries; no duplicated watches, new source question or platform-floor increase.",
-        "recheckCondition": "The owner’s exact artifact/caller/Mac audit and acceptable release pin, or actual user direction.",
+        "curatedAt": "2026-11-20T21:52:37.720614+00:00",
+        "nextAction": "compdb_final_correctness obtains independent producer review and closes the upstream compatible-release/pin dependency before gVisor publication review. Reuse unchanged binary/caller proofs. Package proof used unchanged CI with equivalent inline flags; no access expansion or new workflow grant is required.",
+        "recheckCondition": "Accepted producer source/review and a compatible upstream release/pin, or an actual source/product change.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Portable supplier products passed actual AMD64/ARM64 startup on Jammy and Bookworm; compatibility metadata for all three portable products is audited without raising the macOS15.5 floor. AMD lint44819711585 and ARM devcontainer44820577688 workflows succeeded, but the owning artifact/caller audit is still in progress. Mac warm-cache44819279858 is owner-watched; upstream release pin remains held. This is not final gVisor adoption or stock-platform/runtime qualification. The private CI/RBE issue draft and explicit Go revision hold remain unchanged.",
+        "disposition": "Current compDB caller proof is closed: AMD377-source tidy44819711585, ARM devcontainer44820577688 and nine owning tests44821566361 passed. All three portable products are compatibility-audited. GVisor d894 adoption still requires an upstream compatible release containing #236 plus the producer change; the old default release is insufficient. Producer f611 is local, five files (+215/-2:192 vendor COPYRIGHT lines and23 config/package lines), with Linux/Mac package checks passing and binary hashes identical to qualified products. Independent review is next; no new source question or upstream publication is approved.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -136077,8 +136078,13 @@
             "sha256": "4f34260222d0ed9f5f245edc726d99328889d952a6b6ba4dfe7d42142af6876b"
           }
         },
-        "observedAt": "2026-11-20T21:38:17.837349+00:00",
-        "implementationOwner": "compdb_final_correctness"
+        "observedAt": "2026-11-20T21:52:37.720614+00:00",
+        "implementationOwner": "compdb_final_correctness",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/44819711585",
+          "https://github.com/tamird/gvisor/actions/runs/44820577688",
+          "https://github.com/tamird/gvisor/actions/runs/44821566361"
+        ]
       },
       "executionHistory": [
         {
@@ -136297,8 +136303,8 @@
       "group": "bazel",
       "owner": "root",
       "technicalOwner": "compdb_final_correctness",
-      "updatedAt": "2026-11-20T20:48:41.652999+00:00",
-      "summary": "Supplier #236 remains delivered with passing upstream CI. Compatible portable products now pass AMD64/ARM64 Jammy/Bookworm startup and audited compatibility metadata, while the accepted upstream release pin and final gVisor caller audits remain open. No supported-floor increase or final adoption claim follows.",
+      "updatedAt": "2026-11-20T21:52:37.720614+00:00",
+      "summary": "Supplier #236 source delivery is complete with passing CI. The remaining dependency is a compatible upstream release including both #236 and local producer proposal f611. Linux/Mac package checks pass with hashes identical to qualified portable products; producer independent review is next. This does not approve f611 publication or make the old release defaults usable.",
       "findings": [
         {
           "text": "All Linux owning/style gates and all three native Windows cases passed, and two final independent reviewers found no blocker. The coordinator’s independent source-tree comparison found only .github/workflows/main.yaml different between test CI7f and intended55; this supports the exact tested-source binding, not new publication authority.",
@@ -136324,21 +136330,22 @@
           "url": "https://github.com/kiron1/bazel-compile-commands/pull/236"
         }
       ],
-      "nextStep": "Root follows upstream review/releases; compdb_final_correctness finishes the exact portable product/pin and caller binding. Preserve source-approval consumption and avoid new publication questions for already delivered #236.",
-      "recheckCondition": "Accepted compatible release pin, actual final caller audit or upstream review/release change.",
+      "nextStep": "Root and compdb_final_correctness complete producer independent review and the actual compatible release/pin handoff, reusing valid product evidence. No new human question exists until a qualified source proposal is ready.",
+      "recheckCondition": "Producer review/source publication authority, upstream release acceptance or a changed product/pin.",
       "head": "324cf87d3065afb993520a4104720ef7c7647b0b",
       "followup": {
         "owner": "root",
         "implementationOwner": "compdb_final_correctness",
-        "observedAt": "2026-11-20T21:38:17.837349+00:00",
-        "disposition": "Supplier #236 remains delivered with passing upstream CI. Compatible portable products now pass AMD64/ARM64 Jammy/Bookworm startup and audited compatibility metadata, while the accepted upstream release pin and final gVisor caller audits remain open. No supported-floor increase or final adoption claim follows.",
-        "nextAction": "Root follows upstream review/releases; compdb_final_correctness finishes the exact portable product/pin and caller binding. Preserve source-approval consumption and avoid new publication questions for already delivered #236.",
-        "recheckCondition": "Accepted compatible release pin, actual final caller audit or upstream review/release change.",
+        "observedAt": "2026-11-20T21:52:37.720614+00:00",
+        "disposition": "Supplier #236 source delivery is complete with passing CI. The remaining dependency is a compatible upstream release including both #236 and local producer proposal f611. Linux/Mac package checks pass with hashes identical to qualified portable products; producer independent review is next. This does not approve f611 publication or make the old release defaults usable.",
+        "nextAction": "Root and compdb_final_correctness complete producer independent review and the actual compatible release/pin handoff, reusing valid product evidence. No new human question exists until a qualified source proposal is ready.",
+        "recheckCondition": "Producer review/source publication authority, upstream release acceptance or a changed product/pin.",
         "evidence": [
           "https://github.com/tamird/bazel-compile-commands/commit/df68514d2c922a7ecf8026f3954f615ec21251b7",
           "https://github.com/tamird/gvisor/blob/040e89ac391d29bdbc3f5a517eb2ef659055e068/registry.json"
         ],
-        "publicationQuestionStatus": "Superseded by readiness withdrawal; the immutable earlier record preserves the actual question. No direct user response or settled human decision is inferred."
+        "publicationQuestionStatus": "Superseded by readiness withdrawal; the immutable earlier record preserves the actual question. No direct user response or settled human decision is inferred.",
+        "curatedAt": "2026-11-20T21:52:37.720614+00:00"
       },
       "settledReviews": [
         {
@@ -136354,5 +136361,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-20T21:38:17.837349+00:00"
+  "updatedAt": "2026-11-20T21:52:37.720614+00:00"
 }
