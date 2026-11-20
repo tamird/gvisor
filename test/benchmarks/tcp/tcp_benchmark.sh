@@ -501,32 +501,34 @@ client_pid=\$!
 # Allow failure from this point.
 set +e
 
-# Run the benchmark, recording the results file. Retry connection refusal while
-# the proxies finish starting (at most 600 tries or 60s), stopping immediately
-# if any service exits. Bound each client attempt to ${client_timeout}s so a
-# stalled transfer fails promptly.
-connect_attempts=0
+# The client proxy listens only after connecting to the server proxy.
+# Probing it with a connection would consume the socket reserved for iperf.
+client_ready=false
 connect_deadline=\$((SECONDS + 60))
-client_rc=0
-while true; do
-  ${nsjoin_binary} /tmp/client.netns timeout --kill-after=10 "${client_timeout}" \\
-      ${iperf_binary_name} ${iperf_version_arg} -p ${proxy_port} -c ${client_addr} \\
-      -t ${duration} -f m -P ${num_client_threads} >"\${results_file}" 2>&1
-  client_rc=\$?
-  if (( client_rc == 0 || client_rc == 124 || client_rc == 137 )); then
-    break
-  fi
+for ((i = 0; i < 600; i++)); do
   if ! kill -0 "\${client_pid}" 2>/dev/null || ! kill -0 "\${server_pid}" 2>/dev/null || ! kill -0 "\${iperf_pid}" 2>/dev/null; then
     break
   fi
-  if ! grep -qE "connect failed|unable to connect to server" "\${results_file}"; then
+  listeners=\$("${nsjoin_binary}" /tmp/client.netns ss -Hltn "sport = :${proxy_port}") || exit 1
+  if [[ -n "\${listeners}" ]]; then
+    client_ready=true
     break
   fi
-  if (( ++connect_attempts >= 600 || SECONDS >= connect_deadline )); then
+  if (( SECONDS >= connect_deadline )); then
     break
   fi
-  sleep 0.1 # Wait for all services.
+  sleep 0.1
 done
+if [[ "\${client_ready}" != "true" ]]; then
+  echo "client proxy failed to listen on port ${proxy_port}" >&2
+  exit 1
+fi
+
+# Bound the client run so a stalled transfer fails promptly.
+${nsjoin_binary} /tmp/client.netns timeout --kill-after=10 "${client_timeout}" \\
+    ${iperf_binary_name} ${iperf_version_arg} -p ${proxy_port} -c ${client_addr} \\
+    -t ${duration} -f m -P ${num_client_threads} >"\${results_file}" 2>&1
+client_rc=\$?
 
 # Emit raw results.
 cat "\${results_file}" >&2
@@ -540,18 +542,23 @@ if (( client_rc != 0 )); then
   exit 1
 fi
 
-# Emit a useful result (final throughput). For multi-stream runs (-P > 1),
-# iperf3 prints per-stream sender lines followed by a [SUM] sender line.
-mbits=\$(awk '\$NF == "sender" {
-  for (i = 2; i <= NF; i++) {
-    if (\$i == "Mbits/sec") {
-      val = \$(i - 1)
+# The final sender row is the aggregate when iperf runs parallel streams.
+if ! mbits=\$(awk -v streams="${num_client_threads}" '
+  \$NF == "sender" {
+    rate = ""
+    if (streams > 1 && \$1 != "[SUM]") next
+    for (i = 2; i < NF; i++) {
+      if (\$i == "Mbits/sec") {
+        rate = \$(i - 1)
+        break
+      }
     }
   }
-}
-END { print val }' "\${results_file}")
-if [[ -z "\${mbits}" ]]; then
-  echo "iperf client did not report sender throughput" >&2
+  END {
+    if (rate !~ /^[0-9]+([.][0-9]+)?$/) exit 1
+    print rate
+  }' "\${results_file}"); then
+  echo "iperf did not report a sender rate in Mbits/sec" >&2
   exit 1
 fi
 client_cpu_ticks=\$(cat /proc/\$client_pid/stat \\
