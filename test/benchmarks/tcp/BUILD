@@ -1,5 +1,4 @@
-load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
-load("//tools:defs.bzl", "cc_binary", "go_binary")
+load("//tools:defs.bzl", "cc_binary", "go_binary", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -45,12 +44,62 @@ cc_binary(
     visibility = ["//:sandbox"],
 )
 
-sh_binary(
+go_binary(
     name = "tcp_benchmark",
-    srcs = ["tcp_benchmark.sh"],
+    srcs = [
+        "benchmark/benchmark.go",
+        "benchmark/main.go",
+        "benchmark/network.go",
+    ],
+    args = [
+        "--nsjoin=$(rlocationpath :nsjoin)",
+        "--tcp-proxy=$(rlocationpath :tcp_proxy)",
+    ],
     data = [
         ":nsjoin",
         ":tcp_proxy",
     ],
     visibility = ["//:sandbox"],
+    deps = [
+        "//pkg/abi/linux",
+        "@io_bazel_rules_go//go/runfiles",
+        "@org_golang_x_sys//unix:go_default_library",
+    ],
+)
+
+go_test(
+    name = "benchmark_test",
+    srcs = [
+        "benchmark/benchmark.go",
+        "benchmark/benchmark_test.go",
+        "benchmark/main.go",
+        "benchmark/network.go",
+    ],
+    deps = [
+        "//pkg/abi/linux",
+        "@io_bazel_rules_go//go/runfiles",
+        "@org_golang_x_sys//unix:go_default_library",
+    ],
+)
+
+go_test(
+    name = "benchmark_integration_test",
+    size = "medium",
+    srcs = [
+        "benchmark/integration_test.go",
+    ],
+    args = [
+        "--test-benchmark=$(rlocationpath :tcp_benchmark)",
+        "--test-nsjoin=$(rlocationpath :nsjoin)",
+        "--test-proxy=$(rlocationpath :tcp_proxy)",
+    ],
+    data = [
+        ":nsjoin",
+        ":tcp_benchmark",
+        ":tcp_proxy",
+    ],
+    tags = ["requires-root"],
+    deps = [
+        "@io_bazel_rules_go//go/runfiles",
+    ],
 )
