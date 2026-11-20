@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T07:57:26.689244+00:00",
+    "updatedAt": "2026-11-20T08:18:32.521952+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -134963,10 +134963,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T07:57:26.689244+00:00",
-      "summary": "Same-guest counter matrix44696871380 proves thread opens succeed while owned-cgroup opens return ENOENT for software/cycles/instructions; cleanup passes. Counter development is stopped: no all-thread profiler, application profile or repeated A/A. Corrected Node work is valid but stability fails the5%bar; cause remains unknown. Existing quiet-host/pool context information remains unanswered. Full unfiltered owning suites44697115525/44697118625 are running on composite0e1 plus canonical413; they do not qualify pure f5. Existing code/review/source-check closures remain scoped, with performance/parent holds open.17568cfff amendment/reply, Node8bc and other publication decisions remain pending.",
-      "nextStep": "Recheck performance only after verified existing quiet-host/pool/provider telemetry or an evidence-backed environment change; do not repeat the host-information question or develop counters/profilers. Runtime owners audit full composite-suite outputs and retain source-specific limits before declaring closure. Root follows existing publication decisions once.",
-      "recheckCondition": "Actual unfiltered-suite result, verified existing isolation/telemetry or environment evidence, substantive feedback, or an existing publication decision.",
+      "updatedAt": "2026-11-20T08:18:32.521952+00:00",
+      "summary": "Independent source review confirms two real f5 contract defects: task checkpoint calls sandbox-global save/Exit and affects siblings; paused Exit=true does not complete while an external pause is held. checkpoint_api_security_review owns implementation, followed by independent review. Prior default leave-running plus explicit-kill proof covers neither contract. Full AMD/ARM owning suites were cancelled at15minutes after actual containers failed around1minute (mostly TMP bind EINVAL),55shim XML cases with12failures and post-failure owned-sandbox stall/no BEP. This does not establish15minutes of required runtime. Generic owned-cleanup/caller-mount diagnostic44701267575 is live; no cohort rerun or timeout expansion. RootIO299 and Sysmsgd3f source products retain their scoped closures, full-suite/performance/parent gates remain open, counters stay stopped and source-publication decisions remain pending.",
+      "nextStep": "checkpoint_api_security_review fixes sibling isolation and externally-paused Exit contracts, then obtains independent review and actual focused proof. Runtime owner repairs only owned cleanup and diagnoses caller/mount failures before any full-suite retry; retain original source scope and passing products. Recheck performance only on verified existing-host/environment evidence; no new publication frames or questions.",
+      "recheckCondition": "Reviewed contract correction with actual focused results, audited owned-cleanup/caller diagnosis, substantive source feedback or an existing publication/host answer.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135328,6 +135328,10 @@
         {
           "label": "Composite0e1+413 full owning suite; result pending",
           "url": "https://github.com/tamird/gvisor/actions/runs/44697118625"
+        },
+        {
+          "label": "Generic owned-cleanup/caller-mount diagnosis; result pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44701267575"
         }
       ],
       "followup": {
@@ -135349,12 +135353,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T07:57:26.689244+00:00",
-        "nextAction": "Recheck performance only after verified existing quiet-host/pool/provider telemetry or an evidence-backed environment change; do not repeat the host-information question or develop counters/profilers. Runtime owners audit full composite-suite outputs and retain source-specific limits before declaring closure. Root follows existing publication decisions once.",
-        "recheckCondition": "Actual unfiltered-suite result, verified existing isolation/telemetry or environment evidence, substantive feedback, or an existing publication decision.",
+        "curatedAt": "2026-11-20T08:18:32.521952+00:00",
+        "nextAction": "checkpoint_api_security_review fixes sibling isolation and externally-paused Exit contracts, then obtains independent review and actual focused proof. Runtime owner repairs only owned cleanup and diagnoses caller/mount failures before any full-suite retry; retain original source scope and passing products. Recheck performance only on verified existing-host/environment evidence; no new publication frames or questions.",
+        "recheckCondition": "Reviewed contract correction with actual focused results, audited owned-cleanup/caller diagnosis, substantive source feedback or an existing publication/host answer.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Same-guest counter matrix44696871380 proves thread opens succeed while owned-cgroup opens return ENOENT for software/cycles/instructions; cleanup passes. Counter development is stopped: no all-thread profiler, application profile or repeated A/A. Corrected Node work is valid but stability fails the5%bar; cause remains unknown. Existing quiet-host/pool context information remains unanswered. Full unfiltered owning suites44697115525/44697118625 are running on composite0e1 plus canonical413; they do not qualify pure f5. Existing code/review/source-check closures remain scoped, with performance/parent holds open.17568cfff amendment/reply, Node8bc and other publication decisions remain pending.",
+        "disposition": "Independent source review confirms two real f5 contract defects: task checkpoint calls sandbox-global save/Exit and affects siblings; paused Exit=true does not complete while an external pause is held. checkpoint_api_security_review owns implementation, followed by independent review. Prior default leave-running plus explicit-kill proof covers neither contract. Full AMD/ARM owning suites were cancelled at15minutes after actual containers failed around1minute (mostly TMP bind EINVAL),55shim XML cases with12failures and post-failure owned-sandbox stall/no BEP. This does not establish15minutes of required runtime. Generic owned-cleanup/caller-mount diagnostic44701267575 is live; no cohort rerun or timeout expansion. RootIO299 and Sysmsgd3f source products retain their scoped closures, full-suite/performance/parent gates remain open, counters stay stopped and source-publication decisions remain pending.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135763,5 +135767,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T07:57:26.689244+00:00"
+  "updatedAt": "2026-11-20T08:18:32.521952+00:00"
 }
