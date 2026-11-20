@@ -56,6 +56,7 @@ var (
 	pairedNodeWarmup  = flag.Int("paired-node-warmup-requests", 0, "warmup requests for each actual Node server process")
 	pairedWarmups     = flag.Int("paired-warmup-pairs", 0, "unmeasured warmup visits for each runtime before balanced blocks")
 	pairedObserve     = flag.Bool("paired-observe-affinity", false, "inspect actual workload affinity during capability preflight")
+	pairedWorkload    = flag.String("paired-workload", "node", "workload contract: node, startup-empty, or startup")
 )
 
 func TestPairedBenchmark(t *testing.T) {
@@ -70,6 +71,18 @@ func TestPairedBenchmark(t *testing.T) {
 		if !available.IsSet(cpu) {
 			t.Fatalf("required worker CPU %d is unavailable; affinity: %v", cpu, available)
 		}
+	}
+	switch *pairedWorkload {
+	case "node":
+	case "startup-empty", "startup":
+		if *pairedResponseProbe || !*pairedObserve || available.Count() != 5 || ClientCPUSet() != "0-4" || ServerCPUSet() != "0-4" {
+			t.Fatal("startup requires affinity observation on the declared five-CPU worker with matching 0-4 partitions")
+		}
+		if (*pairedWorkload == "startup-empty" && *pairedLeaves != 1) || (*pairedWorkload == "startup" && *pairedLeaves != 5) {
+			t.Fatal("startup workload leaf count does not match its image contract")
+		}
+	default:
+		t.Fatalf("unknown paired workload %q", *pairedWorkload)
 	}
 	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Minute)
 	defer cancel()
@@ -139,6 +152,9 @@ func TestPairedBenchmark(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if *pairedWorkload != "node" {
+		t.Logf("startup Docker experimental mode: %t", version.Experimental)
+	}
 	images, err := cli.ImageList(ctx, image.ListOptions{})
 	if err != nil {
 		t.Fatal(err)
@@ -181,13 +197,20 @@ func TestPairedBenchmark(t *testing.T) {
 			}{visit, workerID, block, warmup, arm.name, arm.source, os.Getpid(), arm.digest, binarySHA}); err != nil {
 				t.Fatal(err)
 			}
-			cmd := exec.CommandContext(ctx, binary,
+			args := []string{
 				"-test.v="+strconv.FormatBool(*pairedResponseProbe), "--runtime="+runtimes[index], "--config_path="+config,
 				"-test.run=^$", "-test.bench="+*pairedFilter, "-test.benchtime="+*pairedBenchtime,
-				"--node-warmup-requests="+strconv.Itoa(*pairedNodeWarmup),
-				"--node-response-probe="+strconv.FormatBool(*pairedResponseProbe),
-				"--client-cpuset="+ClientCPUSet(), "--server-cpuset="+ServerCPUSet(),
-				"--node-redis-cpuset="+*pairedRedisCPUs, "--hey-phase-diagnostics")
+			}
+			if *pairedWorkload == "node" {
+				args = append(args,
+					"--node-warmup-requests="+strconv.Itoa(*pairedNodeWarmup),
+					"--node-response-probe="+strconv.FormatBool(*pairedResponseProbe),
+					"--client-cpuset="+ClientCPUSet(), "--server-cpuset="+ServerCPUSet(),
+					"--node-redis-cpuset="+*pairedRedisCPUs, "--hey-phase-diagnostics")
+			} else {
+				t.Logf("startup benchmark argv: %q", args)
+			}
+			cmd := exec.CommandContext(ctx, binary, args...)
 			var observed chan error
 			var stopObserver context.CancelFunc
 			if *pairedObserve {
@@ -196,7 +219,7 @@ func TestPairedBenchmark(t *testing.T) {
 				observed = make(chan error, 1)
 				messages, failures := cli.Events(observeCtx, events.ListOptions{Filters: filters.NewArgs(filters.Arg("type", "container"), filters.Arg("event", "start"))})
 				go func() {
-					observed <- attestBenchmarkContainers(observeCtx, cli, messages, failures, visit, releaseProducts[index], actualHashes)
+					observed <- attestBenchmarkContainers(observeCtx, cli, messages, failures, visit, releaseProducts[index], actualHashes, runtimes[index])
 				}()
 			}
 			output, err := cmd.CombinedOutput()
@@ -246,18 +269,25 @@ func TestPairedBenchmark(t *testing.T) {
 
 // attestBenchmarkContainers observes the actual workload containers without
 // adding inspection calls to the benchmark's timed request sequence.
-func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages <-chan events.Message, failures <-chan error, visit int, products, actualHashes map[string]string) error {
+func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages <-chan events.Message, failures <-chan error, visit int, products, actualHashes map[string]string, selectedRuntime string) error {
 	seen := make(map[string]int)
 	active := make(map[int]string)
+	required := map[string]int{"benchmarks/node": *pairedLeaves, "benchmarks/hey": *pairedLeaves, "benchmarks/redis": *pairedLeaves}
+	if *pairedResponseProbe {
+		delete(required, "benchmarks/hey")
+		required["benchmarks/util"] = *pairedLeaves
+	}
+	switch *pairedWorkload {
+	case "startup-empty":
+		required = map[string]int{"benchmarks/alpine": 1}
+	case "startup":
+		required = map[string]int{"benchmarks/alpine": 2, "benchmarks/nginx": 2, "benchmarks/node": 1, "benchmarks/redis": 1, "benchmarks/util": 1}
+	}
 	for {
 		select {
 		case <-ctx.Done():
-			required := []string{"benchmarks/node", "benchmarks/hey", "benchmarks/redis"}
-			if *pairedResponseProbe {
-				required[1] = "benchmarks/util"
-			}
-			for _, image := range required {
-				if seen[image] < *pairedLeaves {
+			for image, count := range required {
+				if seen[image] < count {
 					return fmt.Errorf("visit %d has no actual affinity observation for %s", visit, image)
 				}
 			}
@@ -277,10 +307,7 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 			}
 			image := message.Actor.Attributes["image"]
 			kind := ""
-			for _, candidate := range []string{"benchmarks/node", "benchmarks/hey", "benchmarks/redis", "benchmarks/util"} {
-				if candidate == "benchmarks/util" && !*pairedResponseProbe {
-					continue
-				}
+			for candidate := range required {
 				if strings.Contains(image, candidate) {
 					kind = candidate
 				}
@@ -304,7 +331,7 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 			if state.HostConfig == nil {
 				return fmt.Errorf("started workload %s has no host configuration", kind)
 			}
-			if kind == "benchmarks/util" && state.HostConfig.CpusetCpus == "" {
+			if *pairedWorkload == "node" && kind == "benchmarks/util" && state.HostConfig.CpusetCpus == "" {
 				continue
 			}
 			status, err := os.ReadFile("/proc/" + strconv.Itoa(state.State.Pid) + "/status")
@@ -327,7 +354,19 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 			if kind == "benchmarks/redis" {
 				want = *pairedRedisCPUs
 			}
-			if (kind != "benchmarks/redis" || want != "") && (want == "" || state.HostConfig.CpusetCpus != want || effective != want) {
+			if *pairedWorkload != "node" {
+				want = ServerCPUSet()
+				if (state.HostConfig.CpusetCpus != "" && state.HostConfig.CpusetCpus != want) || effective != want {
+					return fmt.Errorf("startup workload %s requested CPUs %q, effective %q, want %q", kind, state.HostConfig.CpusetCpus, effective, want)
+				}
+				wantRuntime := selectedRuntime
+				if kind == "benchmarks/redis" || kind == "benchmarks/util" {
+					wantRuntime = "runc"
+				}
+				if state.HostConfig.Runtime != wantRuntime {
+					return fmt.Errorf("startup workload %s runtime %q, want %q", kind, state.HostConfig.Runtime, wantRuntime)
+				}
+			} else if (kind != "benchmarks/redis" || want != "") && (want == "" || state.HostConfig.CpusetCpus != want || effective != want) {
 				return fmt.Errorf("workload %s requested CPUs %q, effective %q, want %q", kind, state.HostConfig.CpusetCpus, effective, want)
 			}
 			executable := "/proc/" + strconv.Itoa(state.State.Pid) + "/exe"
@@ -349,7 +388,7 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 				}
 				actualHashes[exe] = digest
 			}
-			if kind == "benchmarks/node" && products[exe] != digest {
+			if (kind == "benchmarks/node" || kind == "benchmarks/alpine" || kind == "benchmarks/nginx") && products[exe] != digest {
 				return fmt.Errorf("actual server executable %q (%s) is outside the selected complete release", exe, digest)
 			}
 			if err := json.NewEncoder(os.Stdout).Encode(struct {
@@ -366,7 +405,7 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 			}
 			seen[kind]++
 			active[state.State.Pid] = kind
-			if kind == "benchmarks/hey" {
+			if kind == "benchmarks/hey" || (*pairedWorkload != "node" && kind != "benchmarks/redis" && kind != "benchmarks/util") {
 				if err := recordCPUResources(visit, kind, active, products); err != nil {
 					return err
 				}
