@@ -1034,3 +1034,14 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+# CI-only supplier regression qualification.
+bazel_dep(name = "bazel-compile-commands", version = "0.17.2", repo_name = "bcc_audit")
+archive_override(
+    module_name = "bazel-compile-commands",
+    urls = ["https://github.com/kiron1/bazel-compile-commands/archive/3bda0c2bc8b963c691677ce62737c85f4f6ea731.tar.gz"],
+    integrity = "sha256-avbx+j0Y+m9ctlNi8Vz8gUseWbnLkP9InwmIFMwHyNI=",
+    strip_prefix = "bazel-compile-commands-3bda0c2bc8b963c691677ce62737c85f4f6ea731",
+    patches = ["//:bcc_audit.patch"],
+    patch_strip = 1,
+)
