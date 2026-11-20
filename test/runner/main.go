@@ -28,6 +28,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -270,6 +271,48 @@ func runTestCaseNative(testBin string, tc *gtest.TestCase, args []string, t *tes
 	if err := cmd.Run(); err != nil {
 		t.Errorf("test %q failed: %v", tc.FullName(), err)
 	}
+}
+
+// addSudoCallerMappings keeps caller-owned runfiles accessible to a root test's
+// user namespace without removing its existing root mapping.
+func addSudoCallerMappings(attrs *unix.SysProcAttr) error {
+	if os.Getuid() != 0 || os.Geteuid() != 0 {
+		return nil
+	}
+	uidText, hasUID := os.LookupEnv("SUDO_UID")
+	gidText, hasGID := os.LookupEnv("SUDO_GID")
+	if hasUID != hasGID {
+		return fmt.Errorf("SUDO_UID and SUDO_GID must be set together")
+	}
+	if !hasUID {
+		return nil
+	}
+	parseMapping := func(name, value string, existing []syscall.SysProcIDMap) ([]syscall.SysProcIDMap, error) {
+		id, err := strconv.ParseUint(value, 10, 32)
+		if err != nil || id == (1<<32)-1 {
+			return nil, fmt.Errorf("invalid %s %q", name, value)
+		}
+		if id == 0 {
+			return nil, nil
+		}
+		for _, mapping := range existing {
+			if mapping.ContainerID == int(id) || mapping.HostID == int(id) {
+				return nil, fmt.Errorf("%s %q duplicates a namespace mapping", name, value)
+			}
+		}
+		return []syscall.SysProcIDMap{{ContainerID: int(id), HostID: int(id), Size: 1}}, nil
+	}
+	uid, err := parseMapping("SUDO_UID", uidText, attrs.UidMappings)
+	if err != nil {
+		return err
+	}
+	gid, err := parseMapping("SUDO_GID", gidText, attrs.GidMappings)
+	if err != nil {
+		return err
+	}
+	attrs.UidMappings = append(attrs.UidMappings, uid...)
+	attrs.GidMappings = append(attrs.GidMappings, gid...)
+	return nil
 }
 
 func deleteIfEmptyCheckpointDir(dir string) (bool, error) {
@@ -556,6 +599,9 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 			Uid: 0,
 			Gid: 0,
 		},
+	}
+	if err := addSudoCallerMappings(sysProcAttr); err != nil {
+		return err
 	}
 
 	var cmdArgs []string
