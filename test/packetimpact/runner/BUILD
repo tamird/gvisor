@@ -44,11 +44,11 @@ go_test(
     ],
     exec_properties = PACKETIMPACT_EXEC_PROPERTIES,
     pure = True,
-    # Hosted ARM VMs lack the required nftables support (BuildBuddy #13523).
-    tags = ["manual"] + select({
-        "//tools/bazeldefs:arm64": ["no-remote-exec"],
-        "//conditions:default": [],
-    }),
+    # Probe the hosted ARM firewall failure on the submitting runner.
+    tags = [
+        "manual",
+        "no-remote-exec",
+    ],
     target_compatible_with = ["@platforms//os:linux"],
     deps = [
         "//test/packetimpact/dut",
