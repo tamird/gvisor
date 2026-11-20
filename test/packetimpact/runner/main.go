@@ -92,12 +92,12 @@ func userNetNSAttrs() (*unix.SysProcAttr, error) {
 		}
 	}
 	return &unix.SysProcAttr{
-		Cloneflags: unix.CLONE_NEWUSER | unix.CLONE_NEWNET,
-		Pdeathsig: unix.SIGTERM,
-		UidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: uid, Size: 1}},
-		GidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: gid, Size: 1}},
+		Cloneflags:                 unix.CLONE_NEWUSER | unix.CLONE_NEWNET,
+		Pdeathsig:                  unix.SIGTERM,
+		UidMappings:                []syscall.SysProcIDMap{{ContainerID: 0, HostID: uid, Size: 1}},
+		GidMappings:                []syscall.SysProcIDMap{{ContainerID: 0, HostID: gid, Size: 1}},
 		GidMappingsEnableSetgroups: credentials != nil,
-		Credential: credentials,
+		Credential:                 credentials,
 	}, nil
 }
 
