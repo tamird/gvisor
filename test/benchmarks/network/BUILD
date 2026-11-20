@@ -67,13 +67,13 @@ benchmark_test(
     args = [
         "--owned-docker",
         "--worker-bridge=false",
-        "--worker-image-archives=$(rootpath //images:benchmark_hey_archive)",
+        "--worker-image-archives=$(rootpath //images:benchmark_hey_read_checked_archive)",
         "-test.v=test2json",
         "-test.run=^TestHeyReportInterface$$",
         "-test.bench=^$$",
     ],
     data = [
-        "//images:benchmark_hey_archive",
+        "//images:benchmark_hey_read_checked_archive",
         "//images:benchmarks/node/index.js",
         "//images:benchmarks/node/index_test.js",
     ],

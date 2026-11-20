@@ -67,17 +67,17 @@ func TestHeyReportInterface(t *testing.T) {
 			defer server.Close()
 			client := machine.GetNativeContainer(ctx, t)
 			defer client.CleanUp(context.WithoutCancel(ctx))
-			const template = `{"responses":{{.NumRes}},"statuses":{{jsonify .StatusCodeDist}},"advertised_bytes":{{.SizeTotal}},"errors":{{jsonify .ErrorDist}}}`
+			const template = `{"responses":{{.NumRes}},"statuses":{{jsonify .StatusCodeDist}},"size_total":{{.SizeTotal}},"errors":{{jsonify .ErrorDist}}}`
 			output, err := client.Run(ctx, dockerutil.RunOpts{Image: "benchmarks/hey", NetworkMode: "host"},
 				"hey", "-o", template, "-n", "5", "-c", "1", "-t", "2", server.URL)
 			if err != nil {
 				t.Fatalf("pinned Hey interface: %v: %s", err, output)
 			}
 			var report struct {
-				Responses       *int           `json:"responses"`
-				Statuses        map[string]int `json:"statuses"`
-				AdvertisedBytes *int64         `json:"advertised_bytes"`
-				Errors          map[string]int `json:"errors"`
+				Responses *int           `json:"responses"`
+				Statuses  map[string]int `json:"statuses"`
+				SizeTotal *int64         `json:"size_total"`
+				Errors    map[string]int `json:"errors"`
 			}
 			decoder := json.NewDecoder(strings.NewReader(output))
 			decoder.DisallowUnknownFields()
@@ -87,11 +87,14 @@ func TestHeyReportInterface(t *testing.T) {
 			if err := decoder.Decode(new(any)); err != io.EOF {
 				t.Fatalf("trailing pinned Hey output: %s", output)
 			}
-			if report.Responses == nil || *report.Responses != 5 || report.AdvertisedBytes == nil || report.Errors == nil || served.Load() != 5 || written.Load() != 5*int64(tc.written) {
+			if report.Responses == nil || *report.Responses != 5 || report.SizeTotal == nil || report.Errors == nil || served.Load() != 5 || written.Load() != 5*int64(tc.written) {
 				t.Fatalf("incomplete interface accounting: served=%d written=%d report=%s", served.Load(), written.Load(), output)
 			}
-			if tc.name != "truncated" && (len(report.Errors) != 0 || len(report.Statuses) != 1 || report.Statuses[fmt.Sprint(tc.status)] != 5 || *report.AdvertisedBytes != 5*int64(tc.advertised)) {
+			if tc.name != "truncated" && (len(report.Errors) != 0 || len(report.Statuses) != 1 || report.Statuses[fmt.Sprint(tc.status)] != 5 || *report.SizeTotal != 5*int64(tc.advertised)) {
 				t.Fatalf("unexpected pinned Hey accounting: %s", output)
+			}
+			if tc.name == "truncated" && (len(report.Errors) != 1 || report.Errors["unexpected EOF"] != 5 || len(report.Statuses) != 0 || *report.SizeTotal != 0) {
+				t.Fatalf("truncated responses were not rejected: %s", output)
 			}
 			record, err := json.Marshal(struct {
 				Case        string          `json:"hey_interface"`

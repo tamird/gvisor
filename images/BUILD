@@ -138,6 +138,28 @@ image_outputs(
     image_name = "benchmarks/hey",
 )
 
+image_layer(
+    name = "benchmark_hey_read_checked_layer",
+    srcs = {"/bin/hey": "//images/benchmarks/hey:hey"},
+    create_parent_directories = "enabled",
+    default_metadata = file_metadata(mode = "0755"),
+    include_runfiles = False,
+)
+
+image_manifest(
+    name = "benchmark_hey_read_checked",
+    base = "@benchmark_hey_amd64",
+    layers = [":benchmark_hey_read_checked_layer"],
+    tags = ["manual"],
+)
+
+image_outputs(
+    name = "benchmark_hey_read_checked",
+    archive_visibility = ["//test/benchmarks/network:__pkg__"],
+    image = ":benchmark_hey_read_checked",
+    image_name = "benchmarks/hey",
+)
+
 image_outputs(
     name = "benchmark_util",
     archive_visibility = ["//test/benchmarks/network:__pkg__"],
