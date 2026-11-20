@@ -235,8 +235,8 @@ func TestPairedBenchmark(t *testing.T) {
 				t.Fatal(err)
 			}
 			args := []string{
-				"-test.v="+strconv.FormatBool(*pairedResponseProbe), "--runtime="+runtimes[index], "--config_path="+config,
-				"-test.run=^$", "-test.bench="+*pairedFilter, "-test.benchtime="+*pairedBenchtime,
+				"-test.v=" + strconv.FormatBool(*pairedResponseProbe), "--runtime=" + runtimes[index], "--config_path=" + config,
+				"-test.run=^$", "-test.bench=" + *pairedFilter, "-test.benchtime=" + *pairedBenchtime,
 			}
 			if *pairedWorkload == "node" {
 				args = append(args,
