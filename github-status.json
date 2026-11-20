@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-20T20:24:06.988010+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-20T20:07:03.122181+00:00",
+  "registryDate": "2026-11-20T20:28:41.528804+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -447645,26 +447645,6 @@
     },
     {
       "repo": "google/gvisor",
-      "number": 17568,
-      "head": "428aaa7afcbb5cde47d965639da811061fc06ff6",
-      "sourceNumber": 17568,
-      "owner": "Agent",
-      "claimed": false,
-      "overdue": false,
-      "kind": "inline",
-      "id": "PRRC_kwDOB9IlXs8AAAABFP51GQ",
-      "createdAt": "2026-11-20T20:14:22Z",
-      "url": "https://github.com/google/gvisor/pull/17568#discussion_r4647187737",
-      "author": "milantracy",
-      "updatedAt": "2026-11-20T20:14:22Z",
-      "newOrChanged": true,
-      "awaitingAuthor": true,
-      "assigned": true,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
       "number": 16076,
       "head": "63bcfa2ad44882db0ecd5afab16df8c5e285e485",
       "sourceNumber": 16076,
@@ -454728,8 +454708,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "6bd31cd09cc922fb7235267e95c0d951ad1f43c8",
-        "disposition": "New human CHANGES_REQUESTED review5998248075 on exact6bd31cd identifies a reported bridge-NIC race: BridgeEndpoint.Attach(nil) writes port Primary after detachment moved outside Stack.mu, while coordinator readers hold that lock. The reviewer reports a race-detector reproducer. A second complete thread requests RemoveNIC deadlock coverage because the new test covers only Stack.Wait; RemoveNIC and SetNICStack also used the old locked callback. Both findings remain unresolved and are assigned to tcp_go_final_maintainer_review; no automatic reply or source publication is authorized.",
-        "nextAction": "tcp_go_final_maintainer_review audits the current ab0 source gates on CI3c/d256 (native, race and canonical source checks) and verifies the causal fix and RemoveNIC coverage before final review. Root retains publication/reply ownership; current public findings stay unresolved until actual delivery."
+        "disposition": "The current NIC correction passed functional, race, Nogo and canonical source gates, but adversarial review found quadratic empty-bridge scanning and a slice allocation while Stack.mu is held. The original writer is resumed for the responsible CoordinatorNIC/port cleanup mechanism. These source findings remain actionable; performance is still open and no publication question or approval is inferred.",
+        "nextAction": "tcp_go_final_maintainer_review fixes the CoordinatorNIC/port cleanup mechanism, revalidates the affected functional/race/source paths and obtains final review, then closes the source-bound performance obligations. Root retains publication/reply ownership; the public human threads are not claimed resolved by unlanded proofs."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxzdiDQ"
@@ -457804,8 +457784,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "428aaa7afcbb5cde47d965639da811061fc06ff6",
-        "disposition": "Prepared PTY correction has 16 native and 16 systrap cases/strict-lint and final-review proof. Public 428aaa7 remains unchanged; the human finding and reply remain unresolved until actual authorized delivery/readback. Exact proposed source cfff4ca980ef406bf3eec85cf8b8b8921cd408bb and its existing publication boundary are preserved. Prior handoffs describe a source question, but no original request/approval provenance is currently available; this is root-owned source-bound authorization reconciliation, not an asserted pending user decision, approval or refusal.",
-        "nextAction": "Root verifies original request, any approval/supersession and exact source binding before projecting a contributor queue or publishing. Preserve qualification and current public source; do not re-ask, assume approval or add a manual-DCO task."
+        "disposition": "Milan’s new complete-thread reply4647187737 cites the documented ABI-only Linux-source rule in response to Tamir’s policy question4640750521. It adds no source requirement beyond the original behavior-only comment. Preparedcfff still has native16/systrap16/strict/final-review proof, while public428aaa remains unchanged. Root retains the existing source-approval/provenance reconciliation; no new user question, automatic acknowledgement or inferred source-publication approval. Root consumed the native citation reply; this triages communication only and retains the substantive source-publication boundary.",
+        "nextAction": "Root asks original implementation owner pty_feedback_resume for the existing exact source-question/approval provenance. Preserve cfff qualification and unchanged public428; the unresolved source request is not resolved or approved by this policy-answer triage. Do not re-ask the user without original provenance."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxx_5BA"
@@ -466357,7 +466337,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T20:07:03.122181+00:00"
+        "observedAt": "2026-11-20T20:28:41.528804+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -466366,7 +466346,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T20:07:03.122181+00:00"
+        "observedAt": "2026-11-20T20:28:41.528804+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -466375,7 +466355,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T20:07:03.122181+00:00"
+        "observedAt": "2026-11-20T20:28:41.528804+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -466384,7 +466364,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T20:07:03.122181+00:00"
+        "observedAt": "2026-11-20T20:28:41.528804+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -466393,7 +466373,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T20:07:03.122181+00:00"
+        "observedAt": "2026-11-20T20:28:41.528804+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -466402,7 +466382,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T20:07:03.122181+00:00"
+        "observedAt": "2026-11-20T20:28:41.528804+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -466411,7 +466391,16 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T20:07:03.122181+00:00"
+        "observedAt": "2026-11-20T20:28:41.528804+00:00"
+      }
+    },
+    "investigation:ci-flake-dind-exec-deadline": {
+      "contributor-review": {
+        "scope": "88dbafa67ab9bc06e679de608385e126c00e6cc9",
+        "since": "2026-11-20T20:28:41.528804+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-20T20:28:41.528804+00:00"
       }
     }
   },
