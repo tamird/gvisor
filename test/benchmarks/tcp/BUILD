@@ -48,6 +48,11 @@ cc_binary(
 sh_binary(
     name = "tcp_benchmark",
     srcs = ["tcp_benchmark.sh"],
+    args = [
+        "--bazel-helpers",
+        "$(rlocationpath :tcp_proxy)",
+        "$(rlocationpath :nsjoin)",
+    ],
     data = [
         ":nsjoin",
         ":tcp_proxy",
