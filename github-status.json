@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-20T16:16:09.766501+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-20T15:52:49.020424+00:00",
+  "registryDate": "2026-11-20T16:20:16.754185+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -451774,8 +451774,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "0cba97076a190364b6d941135b167263f01f74ba",
-        "disposition": "Current 0cba97076a190364b6d941135b167263f01f74ba is OPEN/MERGEABLE/REVIEW_REQUIRED. Carzh explicitly says no contributor action is needed; internal approval/re-import remains his coordination, and the earlier removal request is implemented/resolved. First Pass 1863 has three compiler/build deadlines while compiling protobuf/grpc/LLVM; no Python-release assertion or attributable source failure is established.",
-        "nextAction": "Root continues the existing compiler/setup-cost investigation and watches Carzh’s internal approval/re-import. Preserve the explicit no-code-action note and source-specific CI history; do not rerun or rewrite the Python release change because of this feedback audit."
+        "disposition": "Carzh explicitly requires no contributor code action and owns internal approval/re-import. All three First Pass 1863 compiler jobs reached their 55-minute caps while compilation/analysis progressed; setup took three to four minutes, with no proven source defect or OOM. Root closed the bounded compiler investigation to an external re-import wait. Current-master Nogo evidence uses newer toolchains/cache and is not a matched performance comparison or proof of an RBE repair.",
+        "nextAction": "Await Carzh’s new import head and inspect its exact-head CI. Do not rerun or alter source solely for historical 1863. If the same cap recurs, the CI owner needs per-action BEP plus memory/cache telemetry."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN0PgSGw"
@@ -463786,7 +463786,7 @@
         "since": "2026-11-20T15:36:10.284882+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:52:49.020424+00:00"
+        "observedAt": "2026-11-20T16:20:16.754185+00:00"
       }
     },
     "pr:17191": {
@@ -465775,7 +465775,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:52:49.020424+00:00"
+        "observedAt": "2026-11-20T16:20:16.754185+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -465784,7 +465784,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:52:49.020424+00:00"
+        "observedAt": "2026-11-20T16:20:16.754185+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -465793,7 +465793,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:52:49.020424+00:00"
+        "observedAt": "2026-11-20T16:20:16.754185+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -465802,7 +465802,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:52:49.020424+00:00"
+        "observedAt": "2026-11-20T16:20:16.754185+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -465811,7 +465811,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:52:49.020424+00:00"
+        "observedAt": "2026-11-20T16:20:16.754185+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -465820,7 +465820,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:52:49.020424+00:00"
+        "observedAt": "2026-11-20T16:20:16.754185+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -465829,7 +465829,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:52:49.020424+00:00"
+        "observedAt": "2026-11-20T16:20:16.754185+00:00"
       }
     }
   },

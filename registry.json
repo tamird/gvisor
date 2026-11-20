@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T15:52:49.020424+00:00",
+    "updatedAt": "2026-11-20T16:20:16.754185+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3984,9 +3984,9 @@
         "owner": "root",
         "sourceHead": "0cba97076a190364b6d941135b167263f01f74ba",
         "providerHead": "04df6c244952232769db6b4123555354f9873e9b",
-        "observedAt": "2026-11-20T15:52:49.020424+00:00",
-        "disposition": "Current 0cba97076a190364b6d941135b167263f01f74ba is OPEN/MERGEABLE/REVIEW_REQUIRED. Carzh explicitly says no contributor action is needed; internal approval/re-import remains his coordination, and the earlier removal request is implemented/resolved. First Pass 1863 has three compiler/build deadlines while compiling protobuf/grpc/LLVM; no Python-release assertion or attributable source failure is established.",
-        "nextAction": "Root continues the existing compiler/setup-cost investigation and watches Carzh’s internal approval/re-import. Preserve the explicit no-code-action note and source-specific CI history; do not rerun or rewrite the Python release change because of this feedback audit.",
+        "observedAt": "2026-11-20T16:20:16.754185+00:00",
+        "disposition": "Carzh explicitly requires no contributor code action and owns internal approval/re-import. All three First Pass 1863 compiler jobs reached their 55-minute caps while compilation/analysis progressed; setup took three to four minutes, with no proven source defect or OOM. Root closed the bounded compiler investigation to an external re-import wait. Current-master Nogo evidence uses newer toolchains/cache and is not a matched performance comparison or proof of an RBE repair.",
+        "nextAction": "Await Carzh’s new import head and inspect its exact-head CI. Do not rerun or alter source solely for historical 1863. If the same cap recurs, the CI owner needs per-action BEP plus memory/cache telemetry.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16766#issuecomment-6840823106",
           "https://github.com/google/gvisor/pull/16766",
@@ -3996,8 +3996,8 @@
           "https://github.com/google/gvisor/pull/16766#issuecomment-6807082318",
           "https://github.com/gvisor/gvisor/pull/17590"
         ],
-        "recheckCondition": "Actual compiler/setup evidence, current-head CI or importing-maintainer disposition changes.",
-        "curatedAt": "2026-11-20T15:52:49.020424+00:00",
+        "recheckCondition": "A new re-import head or exact-head recurrence with attributable compiler/cache/memory evidence.",
+        "curatedAt": "2026-11-20T16:20:16.754185+00:00",
         "priorImportNextAction": "Await the re-import and internal approval. DCO import coordination: Root coordinates #17590 at 7d4bf516f07f. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17590,
@@ -69747,8 +69747,8 @@
       "title": "Review SACK accounting outside recovery",
       "url": "https://github.com/google/gvisor/pull/14101",
       "group": "runtime",
-      "status": "open",
-      "summary": "Posted the approved measured suggestion on the SACK candidate loop. The candidate loop can skip allocations and scoreboard lookups for segments ending before the new SACK block. A single late SACK on a 128-segment queue took 3.60 µs at the PR head and 0.94 µs with the overlap check.",
+      "status": "closed",
+      "summary": "Closed and superseded by #17684. The posted SACK overlap optimization is incorporated in successor head 4f0ab86d1c9b64189999379507e2dcdeb2230c4c: only segments ending after the new block start reach append/scoreboard lookup. The author explicitly credited the suggestion; no old author response or courtesy reply remains due.",
       "updatedAt": "2026-11-04T11:24:11Z",
       "evidence": [
         {
@@ -69776,15 +69776,20 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
-        "observedAt": "2026-11-04T11:24:11Z",
-        "disposition": "Approved review posted",
-        "nextAction": "Follow the author's response to the measured SACK candidate-loop review.",
+        "owner": "root",
+        "observedAt": "2026-11-20T16:20:16.754185+00:00",
+        "disposition": "Closed and superseded by #17684. The posted SACK overlap optimization is incorporated in successor head 4f0ab86d1c9b64189999379507e2dcdeb2230c4c: only segments ending after the new block start reach append/scoreboard lookup. The author explicitly credited the suggestion; no old author response or courtesy reply remains due.",
+        "nextAction": "Root and the existing TCP review owner follow the actual successor source and outstanding performance evidence; retain the original measured review as historical evidence.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/14101#discussion_r4466825146"
+          "https://github.com/google/gvisor/pull/14101#discussion_r4466825146",
+          "https://github.com/gvisor/gvisor/pull/17684",
+          "https://github.com/gvisor/gvisor/pull/14101#issuecomment-6899395773",
+          "https://github.com/gvisor/gvisor/pull/14101#issuecomment-6920450214"
         ],
         "sourceHead": "df000e6d7a2ca32aea30416c12cf257c79806c50",
-        "providerHead": "df000e6d7a2ca32aea30416c12cf257c79806c50"
+        "providerHead": "df000e6d7a2ca32aea30416c12cf257c79806c50",
+        "curatedAt": "2026-11-20T16:20:16.754185+00:00",
+        "recheckCondition": "A changed #17684 source/review or actual benchmark evidence."
       }
     },
     {
@@ -74762,9 +74767,9 @@
       "url": "https://github.com/google/gvisor/pull/17102",
       "group": "runtime",
       "head": "93305f85d83ce534321bb231e0d09af6dd4bf8b5",
-      "status": "open",
+      "status": "merged",
       "updatedAt": "2026-11-06T13:13:00.663Z",
-      "summary": "BenchmarkDecoding supplied the object it had just encoded as the destination. Gob reused the original slice and its 1,024 pointers. Clearing the destination made Gob allocate new storage, raising its measured slice decode time from 34.95 to 75.66 µs. The graph decoder allocated fresh storage in both cases. The change is confined to the benchmark fixture.",
+      "summary": "The benchmark-fixture correction merged on 2026-11-14 as d513e9f40702050a15f971567425b09a3eba062b, with explicit Lucas LGTM. Delivery and source-feedback follow-through are complete.",
       "evidence": [
         {
           "label": "Full benchstat output for all six benchmark cases",
@@ -74796,7 +74801,16 @@
           "note": "Published as #17102.",
           "postedURL": "https://github.com/google/gvisor/pull/17102"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-11-20T16:20:16.754185+00:00",
+        "curatedAt": "2026-11-20T16:20:16.754185+00:00",
+        "disposition": "The benchmark-fixture correction merged on 2026-11-14 as d513e9f40702050a15f971567425b09a3eba062b, with explicit Lucas LGTM. Delivery and source-feedback follow-through are complete.",
+        "nextAction": "Preserve landed fixture evidence; no further contributor action or review notification.",
+        "recheckCondition": "A separately evidenced post-merge fixture regression.",
+        "evidence": []
+      }
     },
     {
       "id": "pr:17103",
@@ -78847,9 +78861,9 @@
       "title": "Upgrade firecracker arm64 guest kernel to v6.1",
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/11090",
       "group": "buildbuddy",
-      "status": "open",
+      "status": "closed",
       "updatedAt": "2026-11-07T11:53:44+00:00",
-      "summary": "The draft upgrades BuildBuddy’s ARM64 Firecracker guest kernel to 6.1. In isolated QEMU guests, its published image reported a synchronized filter on both test threads. The published 5.10 image and a shared 5.10.0 ARM64 Firecracker worker reported it only on the installing thread. Both threads enforced the filter in all three tests.",
+      "summary": "Closed in favor of Tyler’s Linux 6.18 kernel work, as confirmed by bduffany. The prior ARM64 6.1 candidate and its isolated TSYNC evidence remain historical; no 6.1 delivery wait remains.",
       "evidence": [
         {
           "label": "Published comparison and request to roll out the ARM64 fix",
@@ -78878,7 +78892,18 @@
           "at": "2026-11-07T11:53:00+00:00",
           "postedURL": "https://github.com/buildbuddy-io/buildbuddy/pull/11090#issuecomment-6706591708"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-11-20T16:20:16.754185+00:00",
+        "curatedAt": "2026-11-20T16:20:16.754185+00:00",
+        "disposition": "Closed in favor of Tyler’s Linux 6.18 kernel work, as confirmed by bduffany. The prior ARM64 6.1 candidate and its isolated TSYNC evidence remain historical; no 6.1 delivery wait remains.",
+        "nextAction": "Root follows the actual provider replacement/adoption outcome only when needed by an owned qualification obligation; no source refresh or duplicate outreach on this closed PR.",
+        "recheckCondition": "A provider replacement release or newly evidenced worker requirement.",
+        "evidence": [
+          "https://github.com/buildbuddy-io/buildbuddy/pull/11090#issuecomment-6863946436"
+        ]
+      }
     },
     {
       "id": "pr:17181",
@@ -124679,8 +124704,8 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-13T03:29:25.014380+00:00",
-      "lastReviewedAt": "2026-11-13T03:29:25.014380+00:00",
+      "updatedAt": "2026-11-20T16:20:16.754185+00:00",
+      "lastReviewedAt": "2026-11-20T15:54:04.733842+00:00",
       "summary": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning’s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
       "findings": [
         {
@@ -125178,7 +125203,7 @@
           ]
         }
       ],
-      "nextStep": "Check the current upstream head and merge state immediately before pushing. For Lucas’s cleanup requests, use a separate follow-up only if the original merged without the change. Honor existing explicit holds and review decisions; check the queue daily.",
+      "nextStep": "Consume newly changed feedback daily and route source-bound actions to existing owners. Preserve all unclosed technical obligations and the explicit uninspected Daybreak carryforward; do not infer approval or new validation from this reconciliation.",
       "evidence": [
         {
           "label": "TCP review map",
@@ -125204,6 +125229,14 @@
         "owner": "root",
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+      },
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-11-20T15:54:04.733842+00:00",
+        "curatedAt": "2026-11-20T16:20:16.754185+00:00",
+        "disposition": "Root accepted the complete feedback reconciliation of 466 changed entries: 246 PR entries (201 with no post-cutoff external body and 45 with complete feedback reconciled), 206 branches (160 exact-source owned actions, seven genuine stored source questions and 39 published/CI aliases), and 14 historical aliases. Later canonical human-feedback queues remained unchanged through this verified source boundary. This closes feedback accounting only; it does not certify technical validation or approve held source. Sensitive namespace, ID-map and mount production/diagnostic work remains uninspected and explicitly held by the user until confirmed Daybreak availability. Existing source gates, broad workload/performance/hardware obligations, exact pending questions and narrow checker/reader holds remain with their recorded owners; the latter do not hold Flit packaging.",
+        "nextAction": "Consume newly changed feedback daily and route source-bound actions to existing owners. Preserve all unclosed technical obligations and the explicit uninspected Daybreak carryforward; do not infer approval or new validation from this reconciliation.",
+        "recheckCondition": "A new source-bound human/automated finding or review/import change, the daily queue check, or actual confirmed Daybreak availability for the separately held work."
       }
     },
     {
@@ -135023,7 +135056,7 @@
       "technicalOwner": "root",
       "updatedAt": "2026-11-20T15:57:44.777329+00:00",
       "summary": "Compdb candidate04d67f624fad24ce7b27f5d93a2d2f90cfef3da4 preserves the original12-file scope on7397. tcp_benchmark_final_correctness is running actual maintained //tools:devcontainer-init.sh through the existing workflow/projection44766733189; this is an agent validation gap, not a user decision. Older44622300025 caller_both evidence exists, but no current minimal-source/configuration equivalence binding is established, so a fresh caller check is justified. Public source review comes only after that gap closes. Private migration-issue labels/time boundaries were updated without a new user question or public draft-body copy. Sensitive namespace/ID-map/mount investigation remains held until confirmed Daybreak; independent baseline failures are not universal prerequisites. Narrow Python holds and all real publication boundaries remain.",
-      "nextStep": "tcp_benchmark_final_correctness audits the current actual devcontainer caller and closes any responsible integration defect; root reviews the resulting qualified source before publication. Preserve narrow checker/reader holds and existing performance/hardware obligations. Root owns the private migration proposal and its actual publication boundary.",
+      "nextStep": "Root audits final spelling and the exact documented source/configuration boundary before an actual source-publication review. Preserve the existing code/caller evidence without rerunning unchanged gates, narrow checker/reader holds, and remaining performance/hardware obligations.",
       "recheckCondition": "Audited current caller/source readiness, confirmed Daybreak availability or substantive existing publication/review/CI change.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
@@ -135500,11 +135533,11 @@
           }
         ],
         "curatedAt": "2026-11-20T15:57:44.777329+00:00",
-        "nextAction": "tcp_benchmark_final_correctness audits the current actual devcontainer caller and closes any responsible integration defect; root reviews the resulting qualified source before publication. Preserve narrow checker/reader holds and existing performance/hardware obligations. Root owns the private migration proposal and its actual publication boundary.",
+        "nextAction": "Root audits final spelling and the exact documented source/configuration boundary before an actual source-publication review. Preserve the existing code/caller evidence without rerunning unchanged gates, narrow checker/reader holds, and remaining performance/hardware obligations.",
         "recheckCondition": "The current caller gate and exact-source artifact audit, actual new feedback, or confirmed Daybreak availability for the separately held sensitive work.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Current compilation-database candidate 04d67f624fad24ce7b27f5d93a2d2f90cfef3da4 contains the original twelve-file scope on 7397. The actual maintained devcontainer-init caller is being checked in 44766733189 by tcp_benchmark_final_correctness. Older caller_both evidence 44622300025 exists, but its source/configuration equivalence to the current minimal candidate is not established. This is an agent validation obligation, not an unanswered contributor decision. The private migration-issue draft is being fact-checked; no actual new issue-publication question exists. Sensitive namespace/ID-map work remains held by the user until confirmed Daybreak availability; independent baseline failures do not block unrelated patches.",
+        "disposition": "Current compilation-database candidate 3be797d5cc40de992840bf3bb370acb10090d6c1 adds only the macOS 15.5 minimum documentation and commit message to the already tested twelve-file 04d source on 7397. Actual maintained devcontainer and owning tests passed; two independent reviews found no remaining source issue. Final spelling 44772224402 is pending. Three archives are pinned http_archive inputs, not a BCR module. The macOS minimum is statically verified for both architectures; macOS runtime is untested, and older Jammy startup proof retains its original scope. Root is finishing the exact qualified handoff; no new source-publication question exists. The migration-issue draft remains private. Sensitive namespace/ID-map work remains held until confirmed Daybreak availability, independently of unrelated patch validation.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135914,5 +135947,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T15:52:49.020424+00:00"
+  "updatedAt": "2026-11-20T16:20:16.754185+00:00"
 }
