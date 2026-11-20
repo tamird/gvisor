@@ -290,6 +290,58 @@ func TestRTOInterruptsCubicRecovery(t *testing.T) {
 	}
 }
 
+// TestRepeatedZeroWindowProbeThreshold leaves sent data unacknowledged while
+// the peer keeps its window closed across repeated probes.
+func TestRepeatedZeroWindowProbeThreshold(t *testing.T) {
+	for _, cc := range []string{"reno", "cubic"} {
+		t.Run(cc, func(t *testing.T) {
+			dut, conn, fd, mss := createSACKConnection(t)
+			dut.SetSockOpt(t, fd, unix.IPPROTO_TCP, unix.TCP_CONGESTION, []byte(cc))
+			sendAndReceive(t, dut, conn, numPktsForRTT, fd, mss, true)
+			first := *conn.RemoteSeqNum(t)
+			sendAndReceive(t, dut, conn, 8, fd, mss, false)
+
+			// Reading the byte proves the window update was processed without
+			// acknowledging any of the outstanding flight.
+			conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(first)), WindowSize: testbench.Uint16(0)}, &testbench.Payload{Bytes: []byte{'x'}})
+			if got := dut.Recv(t, fd, 1, 0); string(got) != "x" {
+				t.Fatalf("received %q, want byte carried by window update", got)
+			}
+			if got, want := dut.Send(t, fd, make([]byte, mss), 0), int32(mss); got != want {
+				t.Fatalf("queued write = %d, want %d", got, want)
+			}
+			before := dut.GetSockOptTCPInfo(t, fd)
+			probe := func() linux.TCPInfo {
+				t.Helper()
+				info := dut.GetSockOptTCPInfo(t, fd)
+				deadline := time.Now().Add(3*time.Duration(info.RTO)*time.Microsecond + time.Second)
+				for {
+					frame, err := conn.ExpectData(t, &testbench.TCP{}, &testbench.Payload{}, time.Until(deadline))
+					if err != nil {
+						t.Fatalf("zero-window probe with outstanding data: %v", err)
+					}
+					seq := seqnum.Value(*frame[2].(*testbench.TCP).SeqNum)
+					if seq != first && seq != first-1 {
+						continue
+					}
+					info = dut.GetSockOptTCPInfo(t, fd)
+					t.Logf("probe offset=%d cwnd=%d ssthresh=%d state=%d RTO=%d unacked=%d", int32(seq-first), info.SndCwnd, info.SndSsthresh, info.CaState, info.RTO, info.Unacked)
+					return info
+				}
+			}
+			firstProbe := probe()
+			if firstProbe.SndSsthresh <= 2 {
+				t.Fatalf("first probe threshold = %d, need >2 to distinguish another reduction", firstProbe.SndSsthresh)
+			}
+			secondProbe := probe()
+			t.Logf("thresholds before/first/second probe: %d/%d/%d", before.SndSsthresh, firstProbe.SndSsthresh, secondProbe.SndSsthresh)
+			if got, want := secondProbe.SndSsthresh, firstProbe.SndSsthresh; got != want {
+				t.Errorf("threshold after repeated zero-window probe = %d, want %d", got, want)
+			}
+		})
+	}
+}
+
 // TestRACKTLPAllPacketsLost tests TLP when an entire flight of data is lost.
 func TestRACKTLPAllPacketsLost(t *testing.T) {
 	dut, conn, acceptFd, payloadSize := createSACKConnection(t)
