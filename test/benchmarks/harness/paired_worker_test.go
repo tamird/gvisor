@@ -159,7 +159,7 @@ func TestPairedBenchmark(t *testing.T) {
 	}{releaseProducts}); err != nil {
 		t.Fatal(err)
 	}
-	host, runtimes, config := startDockerDaemons(t, ctx, []string{arms[0].runsc, arms[1].runsc}, true)
+	host, runtimes, config := startDockerDaemons(t, ctx, []string{arms[0].runsc, arms[1].runsc}, true, *pairedWorkload != "node")
 	t.Setenv("DOCKER_HOST", host)
 	t.Setenv("UNSANDBOXED_RUNTIME", "runc")
 	cli, err := client.NewClientWithOpts(client.WithHost(host), client.WithAPIVersionNegotiation())
@@ -176,6 +176,9 @@ func TestPairedBenchmark(t *testing.T) {
 	}
 	if *pairedWorkload != "node" {
 		t.Logf("startup Docker experimental mode: %t", version.Experimental)
+		if !version.Experimental {
+			t.Fatal("startup/restore qualification requires Docker experimental checkpoint support")
+		}
 	}
 	images, err := cli.ImageList(ctx, image.ListOptions{})
 	if err != nil {

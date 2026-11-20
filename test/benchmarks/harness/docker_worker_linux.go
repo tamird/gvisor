@@ -45,7 +45,7 @@ func startDockerDaemon(t testing.TB, ctx context.Context, runsc string, bridge b
 	if runsc != "" {
 		releases = append(releases, runsc)
 	}
-	host, runtimes, config := startDockerDaemons(t, ctx, releases, bridge)
+	host, runtimes, config := startDockerDaemons(t, ctx, releases, bridge, false)
 	selected := "runc"
 	if len(runtimes) != 0 {
 		selected = runtimes[0]
@@ -54,7 +54,7 @@ func startDockerDaemon(t testing.TB, ctx context.Context, runsc string, bridge b
 }
 
 // startDockerDaemons registers each complete release in one owned daemon.
-func startDockerDaemons(t testing.TB, ctx context.Context, releases []string, bridge bool) (string, []string, string) {
+func startDockerDaemons(t testing.TB, ctx context.Context, releases []string, bridge, experimental bool) (string, []string, string) {
 	t.Helper()
 	interfaces, err := net.Interfaces()
 	if err != nil {
@@ -103,6 +103,9 @@ func startDockerDaemons(t testing.TB, ctx context.Context, releases []string, br
 		"data-root": dataRoot,
 		"exec-root": execRoot,
 		"pidfile":   filepath.Join(root, "docker.pid"),
+	}
+	if experimental {
+		settings["experimental"] = true
 	}
 	if bridge {
 		delete(settings, "bridge")
