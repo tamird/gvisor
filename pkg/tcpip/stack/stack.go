@@ -1254,14 +1254,6 @@ func (s *Stack) removeNICLocked(id tcpip.NICID, closeLinkEndpoint bool) (*nic, t
 	delete(s.nics, id)
 	delete(s.preservedNICs, id)
 
-	if _, ok := nic.NetworkLinkEndpoint.(CoordinatorNIC); ok {
-		for _, port := range s.nics {
-			if port.Primary == nic {
-				port.Primary = nil
-			}
-		}
-	}
-
 	if nic.Primary != nil {
 		b := nic.Primary.NetworkLinkEndpoint.(CoordinatorNIC)
 		if err := b.DelNIC(nic); err != nil {

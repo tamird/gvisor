@@ -314,6 +314,9 @@ func (b *BridgeEndpoint) Capabilities() LinkEndpointCapabilities {
 func (b *BridgeEndpoint) Attach(dispatcher NetworkDispatcher) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
+	for _, p := range b.ports {
+		p.nic.Primary = nil
+	}
 	b.dispatcher = dispatcher
 	b.ports = make(map[tcpip.NICID]*bridgePort)
 	b.localAddrs = make(map[tcpip.LinkAddress]int)
