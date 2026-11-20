@@ -24,6 +24,7 @@
 
 #include "atomic.h"
 #include "sysmsg.h"
+#include "sysmsg_offsets.h"
 
 // __export_deep_sleep_timeout is the timeout after which the stub thread stops
 // polling and fall asleep.
@@ -68,6 +69,9 @@ struct context_queue* __export_context_queue_addr;
 // LINT.ThenChange(../context_queue.go)
 
 uint32_t is_empty(struct context_queue* queue) {
+  // include-cleaner mistakes atomic.h macros for the standard library.
+  // https://github.com/llvm/llvm-project/pull/230133
+  // NOLINTNEXTLINE(misc-include-cleaner)
   return atomic_load(&queue->start) == atomic_load(&queue->end);
 }
 
@@ -103,11 +107,15 @@ static struct thread_context* thread_context_addr(uint32_t tcid) {
                                       ALLOCATED_SIZEOF_THREAD_CONTEXT_STRUCT);
 }
 
+// include-cleaner mistakes this freestanding definition and its locals for
+// libc. https://github.com/llvm/llvm-project/issues/93335
+// NOLINTBEGIN(misc-include-cleaner)
 void memcpy(uint8_t* dest, uint8_t* src, size_t n) {
   for (size_t i = 0; i < n; i += 1) {
     dest[i] = src[i];
   }
 }
+// NOLINTEND(misc-include-cleaner)
 
 // The spinning queue is a queue of spinning threads. It solves the
 // fragmentation problem. The idea is to minimize the number of threads
@@ -158,6 +166,7 @@ static bool spinning_queue_push(uint8_t re_enqueue_times) {
   end = atomic_add(&queue->end, 1);
 
   idx = end - 1;
+  // NOLINTNEXTLINE(misc-include-cleaner): atomic.h macro; see LLVM #230133.
   atomic_store(&queue->num_times_re_enqueued[idx % SPINNING_QUEUE_SIZE],
                re_enqueue_times);
   atomic_store(&queue->start_times[idx % SPINNING_QUEUE_SIZE], rdtsc());
