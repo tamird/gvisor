@@ -30,6 +30,11 @@ on:
         required: false
         default: '[]'
         type: string
+      bazel_options:
+        description: JSON string array of Bazel flags before required qualification options
+        required: false
+        default: '[]'
+        type: string
       architecture:
         required: true
         type: choice
@@ -193,6 +198,7 @@ jobs:
       TARGETS: ${{ inputs.targets }}
       BAZEL_COMMAND: ${{ inputs.command }}
       BAZEL_RUN_ARGUMENTS: ${{ inputs.run_arguments || '[]' }}
+      BAZEL_OPTIONS: ${{ inputs.bazel_options || '[]' }}
       BAZEL_RACE: ${{ inputs.race }}
       PLAN: ${{ inputs.plan }}
       QUAL_ARCH: ${{ inputs.architecture }}
@@ -241,14 +247,23 @@ jobs:
           credentials="$results/credentials"
           mkdir -m 700 "$credentials"
           export BUILDBUDDY_API_KEY_FILE="$credentials/key"
-          trap 'rm -f "$BUILDBUDDY_API_KEY_FILE"; rmdir "$credentials"' EXIT
+          trap 'rm -f "$BUILDBUDDY_API_KEY_FILE" "$results/bazel-options"; rmdir "$credentials"' EXIT
           umask 077
           printf '%s' "$BUILDBUDDY_API_KEY" > "$BUILDBUDDY_API_KEY_FILE"
           unset BUILDBUDDY_API_KEY
           helper=$(realpath bazel-bin/tools/buildbuddy/credential_helper)
           test -x "$helper"
           read -r -a targets <<< "$TARGETS"
-          options=(--announce_rc=false --keep_going --config=buildbuddy --config="$QUAL_CONFIG"
+          python3 - <<'PY' > "$results/bazel-options"
+          import json, os, sys
+          options = json.loads(os.environ['BAZEL_OPTIONS'])
+          if not isinstance(options, list) or any(not isinstance(value, str) or not value.startswith('--') or value == '--' or '\0' in value for value in options):
+              raise SystemExit('bazel_options must be a JSON array of --flag[=value] strings without NUL characters')
+          sys.stdout.buffer.write(b''.join(value.encode() + b'\0' for value in options))
+          PY
+          mapfile -d '' -t options < "$results/bazel-options"
+          rm "$results/bazel-options"
+          options+=(--announce_rc=false --keep_going --config=buildbuddy --config="$QUAL_CONFIG"
             --credential_helper="remote.buildbuddy.io=$helper"
             --bes_backend=grpcs://remote.buildbuddy.io
             --bes_results_url=https://app.buildbuddy.io/invocation/
