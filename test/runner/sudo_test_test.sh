@@ -15,6 +15,9 @@
 # limitations under the License.
 
 set -euo pipefail
+printf 'sudo test caller uid=%s gid=%s\n' "$(id -u)" "$(id -g)"
+[[ "$(id -u)" != 0 ]]
+sudo -n true
 helper="$(realpath "$1")"
 scratch="$(mktemp -d "$TEST_TMPDIR/sudo-test.XXXXXX")"
 trap 'rm -rf "$scratch"' EXIT
