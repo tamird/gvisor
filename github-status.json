@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-20T20:04:18.923035+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-20T19:52:11.578324+00:00",
+  "registryDate": "2026-11-20T20:07:03.122181+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -444650,6 +444650,143 @@
         },
         "description": "No matching public export was found in the complete lookup."
       }
+    },
+    {
+      "number": 236,
+      "repo": "kiron1/bazel-compile-commands",
+      "title": "Preserve Bazel diagnostics without blocked pipes",
+      "url": "https://github.com/kiron1/bazel-compile-commands/pull/236",
+      "status": "open",
+      "ref": "fix-bazel-info-pipes",
+      "head": "324cf87d3065afb993520a4104720ef7c7647b0b",
+      "base": "3bda0c2bc8b963c691677ce62737c85f4f6ea731",
+      "branchHead": "324cf87d3065afb993520a4104720ef7c7647b0b",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
+      "mergeabilityCheckedAt": "2026-11-20T20:07:04.716993+00:00",
+      "headCommittedAt": "2026-11-20T19:26:32Z",
+      "headHistoryComplete": true,
+      "headRebasedFrom": null,
+      "headIntroducedAt": null,
+      "headOwner": "tamird",
+      "headRepo": "tamird/bazel-compile-commands",
+      "authorLogin": "tamird",
+      "updatedAt": "2026-11-20T20:01:24Z",
+      "createdAt": "2026-11-20T20:01:24Z",
+      "mergedAt": null,
+      "closedAt": null,
+      "mergeCommit": null,
+      "githubReviewDecision": null,
+      "reviewsComplete": true,
+      "commentsComplete": true,
+      "reviewDismissals": {
+        "complete": true,
+        "items": []
+      },
+      "reviewRequests": [],
+      "codeOwnerRequests": [],
+      "reviewRequestsComplete": true,
+      "labels": [],
+      "labelsComplete": true,
+      "labelHistory": {
+        "complete": true,
+        "items": []
+      },
+      "threads": {
+        "unresolved": 0,
+        "total": 0,
+        "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
+      },
+      "checks": {
+        "state": "PENDING",
+        "total": 4,
+        "reportedTotal": 4,
+        "supersededContexts": [],
+        "complete": true,
+        "contexts": [
+          {
+            "id": "CR_kwDOGtjTaM8AAAAfyiSj8Q",
+            "name": "Build and test (linux)",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/kiron1/bazel-compile-commands/actions/runs/44807549343/job/136535385073",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "main",
+            "workflowId": "W_kwDOGtjTaM4BHkxi",
+            "runNumber": 759,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOGtjTaM8AAAAfyiSnqA",
+            "name": "Build and test (windows)",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/kiron1/bazel-compile-commands/actions/runs/44807549343/job/136535386024",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "main",
+            "workflowId": "W_kwDOGtjTaM4BHkxi",
+            "runNumber": 759,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOGtjTaM8AAAAfyiSjFg",
+            "name": "Version",
+            "state": "SUCCESS",
+            "url": "https://github.com/kiron1/bazel-compile-commands/actions/runs/44807549343/job/136535384854",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "main",
+            "workflowId": "W_kwDOGtjTaM4BHkxi",
+            "runNumber": 759,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOGtjTaM8AAAAfyiSlSg",
+            "name": "Style check",
+            "state": "SUCCESS",
+            "url": "https://github.com/kiron1/bazel-compile-commands/actions/runs/44807549343/job/136535385418",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "main",
+            "workflowId": "W_kwDOGtjTaM4BHkxi",
+            "runNumber": 759,
+            "runAttempt": 1,
+            "purpose": "validation"
+          }
+        ]
+      },
+      "crossReferences": {
+        "complete": true,
+        "items": []
+      },
+      "reviewDecision": null,
+      "approvedHead": null,
+      "approvedAt": null,
+      "checkedAt": "2026-11-20T20:07:04.718812+00:00",
+      "mergeabilityObservation": {
+        "state": "MERGEABLE",
+        "head": "324cf87d3065afb993520a4104720ef7c7647b0b",
+        "base": "3bda0c2bc8b963c691677ce62737c85f4f6ea731",
+        "checkedAt": "2026-11-20T20:07:04.716993+00:00"
+      },
+      "importsComplete": true,
+      "importPolicy": "none",
+      "imports": []
     }
   ],
   "issues": {
@@ -449294,8 +449431,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
-        "disposition": "Worker capability and GoClone entrypoint prerequisites are proved within their old-source scope. Native sixteen-case recovery44805938474 is active on the exact4f55 profile; no project-case result is yet claimed. A compiler-only gate completed its Genrule remotely in8.065s with expected NO_TESTS_FOUND, which is not a functional test pass. Preserve historical product, architecture, import and performance limits.",
-        "nextAction": "The existing packet owner audits actual terminal BEP/XML from native44805938474, then advances separate netstack/architecture gates only on supported workers. Do not infer functional, current-base or performance qualification from the compiler/preflight actions."
+        "disposition": "Native packet recovery44807309176 failed at newNetNS with EACCES before any actual project case ran. The exact failing operation is not yet attributed. Worker/GoClone/compiler prerequisites retain their narrow source-bound proofs, but no native sixteen-case or current-base/architecture/performance pass follows.",
+        "nextAction": "The existing packet owner retains the exact source/log evidence and diagnoses the responsible EACCES operation only within the current authorized diagnostic scope. Diagnostics are held rather than mislabeled a missing human approval; preserve Daybreak-sensitive boundaries and do not repeat the full gate without a demonstrated prerequisite repair."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -454343,7 +454480,7 @@
         "owner": "root",
         "sourceHead": "6bd31cd09cc922fb7235267e95c0d951ad1f43c8",
         "disposition": "New human CHANGES_REQUESTED review5998248075 on exact6bd31cd identifies a reported bridge-NIC race: BridgeEndpoint.Attach(nil) writes port Primary after detachment moved outside Stack.mu, while coordinator readers hold that lock. The reviewer reports a race-detector reproducer. A second complete thread requests RemoveNIC deadlock coverage because the new test covers only Stack.Wait; RemoveNIC and SetNICStack also used the old locked callback. Both findings remain unresolved and are assigned to tcp_go_final_maintainer_review; no automatic reply or source publication is authorized.",
-        "nextAction": "tcp_go_final_maintainer_review consumes the complete source/thread context, reproduces the race and missing RemoveNIC behavior, and prepares the smallest responsible locking/callback fix with focused race/deadlock coverage. Root retains final review/publication ownership and the existing performance obligations."
+        "nextAction": "tcp_go_final_maintainer_review audits the current ab0 source gates on CI3c/d256 (native, race and canonical source checks) and verifies the causal fix and RemoveNIC coverage before final review. Root retains publication/reply ownership; current public findings stay unresolved until actual delivery."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxzdiDQ"
@@ -465977,13 +466114,29 @@
         "observedAt": "2026-11-20T20:04:06.087689+00:00"
       }
     },
+    "pr:kiron1/bazel-compile-commands:236": {
+      "checks-pending": {
+        "scope": "236:324cf87d3065afb993520a4104720ef7c7647b0b",
+        "since": "2026-11-20T20:07:04.718812+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-20T20:07:04.718812+00:00"
+      },
+      "maintainer-review": {
+        "scope": "324cf87d3065afb993520a4104720ef7c7647b0b",
+        "since": "2026-11-20T20:07:04.718812+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-20T20:07:04.718812+00:00"
+      }
+    },
     "branch:bazel-python-release": {
       "contributor-review": {
         "scope": "be90b48140bff63fd99eebd1f1cfa14c1fab7024",
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:52:11.578324+00:00"
+        "observedAt": "2026-11-20T20:07:03.122181+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -465992,7 +466145,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:52:11.578324+00:00"
+        "observedAt": "2026-11-20T20:07:03.122181+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -466001,7 +466154,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:52:11.578324+00:00"
+        "observedAt": "2026-11-20T20:07:03.122181+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -466010,7 +466163,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:52:11.578324+00:00"
+        "observedAt": "2026-11-20T20:07:03.122181+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -466019,7 +466172,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:52:11.578324+00:00"
+        "observedAt": "2026-11-20T20:07:03.122181+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -466028,7 +466181,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:52:11.578324+00:00"
+        "observedAt": "2026-11-20T20:07:03.122181+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -466037,7 +466190,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:52:11.578324+00:00"
+        "observedAt": "2026-11-20T20:07:03.122181+00:00"
       }
     }
   },

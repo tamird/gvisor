@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T19:52:11.578324+00:00",
+    "updatedAt": "2026-11-20T20:07:03.122181+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35466,9 +35466,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
-        "observedAt": "2026-11-20T19:52:11.578324+00:00",
-        "disposition": "Worker capability and GoClone entrypoint prerequisites are proved within their old-source scope. Native sixteen-case recovery44805938474 is active on the exact4f55 profile; no project-case result is yet claimed. A compiler-only gate completed its Genrule remotely in8.065s with expected NO_TESTS_FOUND, which is not a functional test pass. Preserve historical product, architecture, import and performance limits.",
-        "nextAction": "The existing packet owner audits actual terminal BEP/XML from native44805938474, then advances separate netstack/architecture gates only on supported workers. Do not infer functional, current-base or performance qualification from the compiler/preflight actions.",
+        "observedAt": "2026-11-20T20:07:03.122181+00:00",
+        "disposition": "Native packet recovery44807309176 failed at newNetNS with EACCES before any actual project case ran. The exact failing operation is not yet attributed. Worker/GoClone/compiler prerequisites retain their narrow source-bound proofs, but no native sixteen-case or current-base/architecture/performance pass follows.",
+        "nextAction": "The existing packet owner retains the exact source/log evidence and diagnoses the responsible EACCES operation only within the current authorized diagnostic scope. Diagnostics are held rather than mislabeled a missing human approval; preserve Daybreak-sensitive boundaries and do not repeat the full gate without a demonstrated prerequisite repair.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16419",
           "https://github.com/google/gvisor/pull/16419#discussion_r4504268180",
@@ -35493,7 +35493,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44799409827",
           "https://github.com/tamird/gvisor/actions/runs/44800271769"
         ],
-        "recheckCondition": "Actual native project-case results and the separate netstack/architecture gates, or new worker evidence.",
+        "recheckCondition": "An attributable EACCES operation and authorized prerequisite repair, actual diagnostic-scope change, or supported worker evidence.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING",
         "qualificationHistory": [
@@ -35603,7 +35603,7 @@
           ]
         },
         "remainingNetworkOutcomeOwner": "tcp_conflict",
-        "curatedAt": "2026-11-20T19:52:11.578324+00:00",
+        "curatedAt": "2026-11-20T20:07:03.122181+00:00",
         "ciExecutionAuthorization": {
           "status": "Authorized CI-only; held for permanent Bazel mechanism migration",
           "owner": "root",
@@ -74882,7 +74882,7 @@
         "sourceHead": "6bd31cd09cc922fb7235267e95c0d951ad1f43c8",
         "observedAt": "2026-11-20T19:52:11.578324+00:00",
         "disposition": "New human CHANGES_REQUESTED review5998248075 on exact6bd31cd identifies a reported bridge-NIC race: BridgeEndpoint.Attach(nil) writes port Primary after detachment moved outside Stack.mu, while coordinator readers hold that lock. The reviewer reports a race-detector reproducer. A second complete thread requests RemoveNIC deadlock coverage because the new test covers only Stack.Wait; RemoveNIC and SetNICStack also used the old locked callback. Both findings remain unresolved and are assigned to tcp_go_final_maintainer_review; no automatic reply or source publication is authorized.",
-        "nextAction": "tcp_go_final_maintainer_review consumes the complete source/thread context, reproduces the race and missing RemoveNIC behavior, and prepares the smallest responsible locking/callback fix with focused race/deadlock coverage. Root retains final review/publication ownership and the existing performance obligations.",
+        "nextAction": "tcp_go_final_maintainer_review audits the current ab0 source gates on CI3c/d256 (native, race and canonical source checks) and verifies the causal fix and RemoveNIC coverage before final review. Root retains publication/reply ownership; current public findings stay unresolved until actual delivery.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17103",
           "https://github.com/tamird/gvisor/actions/runs/42855947112/artifacts/13784755003",
@@ -100181,6 +100181,30 @@
         "recheckCondition": "Completed source-grounded current-CI research and a concrete proposed rewrite, or actual maintainer/user feedback.",
         "evidence": [
           "https://github.com/gvisor/gvisor/issues/17832"
+        ]
+      }
+    },
+    {
+      "id": "pr:kiron1/bazel-compile-commands:236",
+      "type": "pr",
+      "repo": "kiron1/bazel-compile-commands",
+      "number": 236,
+      "head": "324cf87d3065afb993520a4104720ef7c7647b0b",
+      "title": "Preserve Bazel diagnostics without blocked pipes",
+      "url": "https://github.com/kiron1/bazel-compile-commands/pull/236",
+      "group": "bazel",
+      "status": "open",
+      "summary": "The approved reduced supplier correction is delivered as #236; exact-source upstream CI and review remain open. Fixed release/artifacts and gVisor caller adoption remain separate obligations.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "324cf87d3065afb993520a4104720ef7c7647b0b",
+        "observedAt": "2026-11-20T20:07:03.122181+00:00",
+        "disposition": "User-approved opening is complete; native source is OPEN/MERGEABLE. Upstream CI44807549343 is pending. No release or gVisor adoption is yet established.",
+        "nextAction": "Root consumes upstream CI and maintainer feedback through delivery, then verifies compatible fixed artifacts before the existing gVisor helper/caller qualification. No merge, access or additional publication commitment is inferred.",
+        "recheckCondition": "Exact-head CI/review change, merge/release event or compatible rebuilt artifact evidence.",
+        "evidence": [
+          "https://github.com/kiron1/bazel-compile-commands/pull/236",
+          "https://github.com/kiron1/bazel-compile-commands/actions/runs/44807549343"
         ]
       }
     }
@@ -135123,9 +135147,9 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T19:52:11.578324+00:00",
+      "updatedAt": "2026-11-20T20:07:03.122181+00:00",
       "summary": "Compdb candidate04d67f624fad24ce7b27f5d93a2d2f90cfef3da4 preserves the original12-file scope on7397. tcp_benchmark_final_correctness is running actual maintained //tools:devcontainer-init.sh through the existing workflow/projection44766733189; this is an agent validation gap, not a user decision. Older44622300025 caller_both evidence exists, but no current minimal-source/configuration equivalence binding is established, so a fresh caller check is justified. Public source review comes only after that gap closes. Private migration-issue labels/time boundaries were updated without a new user question or public draft-body copy. Sensitive namespace/ID-map/mount investigation remains held until confirmed Daybreak; independent baseline failures are not universal prerequisites. Narrow Python holds and all real publication boundaries remain.",
-      "nextStep": "Root returns the reduced supplier rationale to the quality coordinator; compdb_final_correctness retains the smallest supplier fix and tcp_benchmark_final_correctness retains gVisor caller obligations after a validated available supplier. Preserve source publication and private-draft boundaries.",
+      "nextStep": "Root follows supplier #236 delivery and compatible artifact availability; tcp_benchmark_final_correctness then advances actual gVisor helper/caller qualification on bound inputs. Preserve the separate Go revision hold and private issue-draft boundary.",
       "recheckCondition": "Audited current caller/source readiness, confirmed Daybreak availability or substantive existing publication/review/CI change.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
@@ -135601,12 +135625,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T19:52:11.578324+00:00",
-        "nextAction": "Root returns the reduced supplier rationale to the quality coordinator; compdb_final_correctness retains the smallest supplier fix and tcp_benchmark_final_correctness retains gVisor caller obligations after a validated available supplier. Preserve source publication and private-draft boundaries.",
-        "recheckCondition": "Reduced-source quality acceptance, available fixed supplier artifacts, or actual user direction on the private draft.",
+        "curatedAt": "2026-11-20T20:07:03.122181+00:00",
+        "nextAction": "Root follows supplier #236 delivery and compatible artifact availability; tcp_benchmark_final_correctness then advances actual gVisor helper/caller qualification on bound inputs. Preserve the separate Go revision hold and private issue-draft boundary.",
+        "recheckCondition": "Supplier exact-head CI/review/releases, compatible fixed artifacts or actual caller evidence.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Reduced supplier324cf87 passed existing-fixture Linux/Windows qualification, but its earlier readiness/publication question remains withdrawn pending quality/minimality acceptance. This is not a new supplier or gVisor approval. The shared-shell revision remains changes requested and released0.21 artifacts remain unfixed. The proposed CI/RBE paper rewrite is still a private user-held draft; public17832 is unchanged.",
+        "disposition": "Reduced supplier324cf87 is delivered in upstream #236 after actual user approval; root owns its CI/review/releases. The old55 question is not pending and the324 approval is consumed. The gVisor shared-shell revision remains changes requested and adoption is still blocked on compatible rebuilt fixed artifacts plus actual caller qualification. The CI/RBE paper remains a private user-held draft and public17832 is unchanged.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135819,7 +135843,7 @@
             "sha256": "4f34260222d0ed9f5f245edc726d99328889d952a6b6ba4dfe7d42142af6876b"
           }
         },
-        "observedAt": "2026-11-20T19:52:11.578324+00:00",
+        "observedAt": "2026-11-20T20:07:03.122181+00:00",
         "implementationOwner": "tcp_benchmark_final_correctness"
       },
       "executionHistory": [
@@ -136039,8 +136063,8 @@
       "group": "bazel",
       "owner": "root",
       "technicalOwner": "compdb_final_correctness",
-      "updatedAt": "2026-11-20T19:52:11.578324+00:00",
-      "summary": "Reduced supplier324cf87d3065afb993520a4104720ef7c7647b0b passed existing-fixture Linux and Windows qualification in four files (+24/-16). The earlier55 readiness assessment and publication question remain withdrawn; passing reduced fixtures does not restore publication approval or create a new user question. Root returns the reduced-source rationale to the quality coordinator for necessity/minimality assessment.",
+      "updatedAt": "2026-11-20T20:07:03.122181+00:00",
+      "summary": "The user approved opening the reduced324cf87 supplier PR at20:00:22UTC, and root published #236 at20:01. Native readback confirms OPEN/MERGEABLE at the approved exact source; upstream CI44807549343 is pending. The earlier55 readiness question remains withdrawn, while the324 approval is consumed by actual delivery. No supplier release or gVisor adoption result is inferred.",
       "findings": [
         {
           "text": "All Linux owning/style gates and all three native Windows cases passed, and two final independent reviewers found no blocker. The coordinator’s independent source-tree comparison found only .github/workflows/main.yaml different between test CI7f and intended55; this supports the exact tested-source binding, not new publication authority.",
@@ -136060,25 +136084,41 @@
         {
           "label": "Earlier actual publication question, now superseded",
           "url": "https://github.com/tamird/gvisor/blob/040e89ac391d29bdbc3f5a517eb2ef659055e068/registry.json"
+        },
+        {
+          "label": "Delivered upstream supplier PR",
+          "url": "https://github.com/kiron1/bazel-compile-commands/pull/236"
         }
       ],
-      "nextStep": "Root and the quality coordinator assess the reduced existing-fixture rationale and source size; compdb_final_correctness retains implementation ownership. No upstream PR or repeated source question until the revised handoff is accepted.",
-      "recheckCondition": "Quality/minimality acceptance of the reduced source and an actual new publication-review boundary.",
+      "nextStep": "Root follows actual upstream CI/review and release or compatible rebuilt artifact availability. The gVisor shared-helper adoption remains blocked on available fixed artifacts and actual caller qualification.",
+      "recheckCondition": "Exact-source upstream CI/review, accepted release or compatible artifacts, then source-bound gVisor caller results.",
       "head": "324cf87d3065afb993520a4104720ef7c7647b0b",
       "followup": {
         "owner": "root",
         "implementationOwner": "compdb_final_correctness",
-        "observedAt": "2026-11-20T19:52:11.578324+00:00",
-        "disposition": "Reduced supplier324cf87d3065afb993520a4104720ef7c7647b0b passed existing-fixture Linux and Windows qualification in four files (+24/-16). The earlier55 readiness assessment and publication question remain withdrawn; passing reduced fixtures does not restore publication approval or create a new user question. Root returns the reduced-source rationale to the quality coordinator for necessity/minimality assessment.",
-        "nextAction": "Root and the quality coordinator assess the reduced existing-fixture rationale and source size; compdb_final_correctness retains implementation ownership. No upstream PR or repeated source question until the revised handoff is accepted.",
-        "recheckCondition": "Quality/minimality acceptance of the reduced source and an actual new publication-review boundary.",
+        "observedAt": "2026-11-20T20:07:03.122181+00:00",
+        "disposition": "The user approved opening the reduced324cf87 supplier PR at20:00:22UTC, and root published #236 at20:01. Native readback confirms OPEN/MERGEABLE at the approved exact source; upstream CI44807549343 is pending. The earlier55 readiness question remains withdrawn, while the324 approval is consumed by actual delivery. No supplier release or gVisor adoption result is inferred.",
+        "nextAction": "Root follows actual upstream CI/review and release or compatible rebuilt artifact availability. The gVisor shared-helper adoption remains blocked on available fixed artifacts and actual caller qualification.",
+        "recheckCondition": "Exact-source upstream CI/review, accepted release or compatible artifacts, then source-bound gVisor caller results.",
         "evidence": [
           "https://github.com/tamird/bazel-compile-commands/commit/df68514d2c922a7ecf8026f3954f615ec21251b7",
           "https://github.com/tamird/gvisor/blob/040e89ac391d29bdbc3f5a517eb2ef659055e068/registry.json"
         ],
         "publicationQuestionStatus": "Superseded by readiness withdrawal; the immutable earlier record preserves the actual question. No direct user response or settled human decision is inferred."
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "324cf87d3065afb993520a4104720ef7c7647b0b",
+          "url": "https://github.com/tamird/bazel-compile-commands/commit/324cf87d3065afb993520a4104720ef7c7647b0b",
+          "title": "Preserve Bazel diagnostics without blocked pipes",
+          "outcome": "approved",
+          "at": "2026-11-20T20:00:22Z",
+          "postedURL": "https://github.com/kiron1/bazel-compile-commands/pull/236",
+          "note": "Root verified the actual user approval and consumed it by opening #236. This does not revive the withdrawn55 question or approve gVisor adoption."
+        }
+      ]
     }
   ],
-  "updatedAt": "2026-11-20T19:52:11.578324+00:00"
+  "updatedAt": "2026-11-20T20:07:03.122181+00:00"
 }
