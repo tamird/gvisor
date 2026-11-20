@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T04:49:08.876058+00:00",
+    "updatedAt": "2026-11-20T05:12:09.496686+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -73055,8 +73055,8 @@
       "url": "https://github.com/google/gvisor/pull/17067",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-17T19:05:02.369627+00:00",
-      "summary": "Published as #17067 at 005743727, the approved dfd4d4774 patch rebased without changes onto da95e9bce. On an AMD64 worker, GNU compiled and linked both target stubs. The two raw blobs matched their ELF sections, and the existing nm-based generator produced all 10 AMD64 and 11 ARM64 offsets with their exact ELF values. The job built both consumers; it ran no tests or guest. #16516 is not a prerequisite for this PR.\n\nThe review on the published head reports an implicit allocator and internal toolchain features that do not suit a freestanding stub. Fork amendment 7f6ecfff6 reuses #16522’s freestanding adapter at 244010f9c and disables the x86 medium code model. It has not been applied to the public PR and must wait for #16522 to land. #16516 remains independent.\n\nIn the GNU control, a forced allocator made the published stub fail to link; enabling the named x86 medium-model feature produced a 60-byte .lbss outside .crblob. The amendment built all three sidecars and both stub architectures with those settings. Both raw blobs and all 10 AMD64 / 11 ARM64 offsets matched the published baseline. The configured-option reporter failed after those builds; the initial raw option values were not retained, so its exact comparison failure is unknown. A separate readback ran three successful cqueries and no builds: both the direct wrapper edge and prior filter selected the private producer with allocator None, while an ordinary target retained the forced allocator. The private toolchain has not been tested.\n\n#17089 would remove the pagesize_64k setting used by the current #17067 source. Fork integration c157b4d8f applied the native C rule to #17089’s runtime page-size layout and removed the obsolete local_defines selection. On one x86_64 GNU builder with 4 KiB pages, the generator reproduced all 10 AMD64 and 13 ARM64 export offsets from the linked stubs. Each embedded blob matched its own ELF section. All offsets moved relative to the shell build, and the full blobs differed. This cross-build included no guest boot.\n\nA subsequent runtime test on c157b4d8f booted the same ARM64 Sentry and release manifest in two QEMU TCG guests on an AMD64 host. Each fresh test ran a systrap workload as PID 1. On the 4 KiB guest, the kernel page size, AT_PAGESZ and sysconf all reported 4,096 bytes. On the 64 KiB guest, all three reported 65,536 bytes. Both exited successfully. The Sentry contained the same signal stub verified in the GNU cross-build.\n\nThe same two-file native stub patch applied cleanly to the revised #17089 at 6340d3672. The only change within the integrated systrap source tree was the ARM64 layout file. Its seven explicit fields for each page size match all fourteen values from the formula used in the earlier guest boots. This comparison checked source only.\n\nOn the updated integration 2aaaeb4b2, LLVM cross-built all nine ARM64 release ELFs. All four configured stub compilations used Clang for aarch64-linux-gnu without a PAGE_SIZE define. The Sentry contained the raw stub exactly once. The GNU guest probe matched the previously verified probe byte for byte. The locked guest retry used the same release manifest. Bazel timed out downloading the pinned qemu-system-arm 6.2 package from Ubuntu’s snapshot archive before either guest produced a test result. With all 202 pinned package archives available, the same LLVM-built Sentry (SHA-256 prefix be8778419) booted the probe as PID 1 under systrap in both ARM64 QEMU guests. On kernel 7.3.0-070300rc3-generic, AT_PAGESZ and sysconf returned 4,096. On 6.8.0-138-generic-64k both returned 65,536. Both tests ran uncached and exited 0.\n\nOn the same integration, the declared Clang driver compiled and clang++ linked a static aarch64-linux-musl probe (SHA-256 prefix c49fb618f). The probe had no interpreter or shared-library dependencies. All nine release files matched the preceding run byte for byte. The same probe and Sentry be8778419 ran as PID 1 under systrap in two uncached QEMU tests. AT_PAGESZ and sysconf returned 4,096 bytes on the 7.3.0-070300rc3-generic kernel and 65,536 on 6.8.0-138-generic-64k. This run also removed the GNU cross-compiler installation used to build the earlier probe.",
+      "updatedAt": "2026-11-20T05:12:09.496686+00:00",
+      "summary": "Child qualification passes37functional cases per architecture with no failures/skips. Strict lint failed on two new Sysmsg sources; owner is separating actual missing includes from implausible diagnostics. Formatter-only candidateeabedf2 is prepared with no C edits. Publica3ca22af remains unchanged; the prerequisite16522 source/importer hold still applies.",
       "evidence": [
         {
           "label": "Revised #17089 source with explicit ARM64 layouts for 4 KiB and 64 KiB pages",
@@ -73192,9 +73192,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Approved 7f6ecfff6 amendment explicitly waits for #16522, verified OPEN/MERGEABLE.",
-        "nextAction": "Retain approved amendment and integration evidence; after #16522 actually lands, rebase and qualify the approved freestanding adapter amendment, including current runtime page-size layout. Internal toolchain check belongs to import. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a; observed 2026-11-17T19:29:29.454062+00:00): build 1613 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "observedAt": "2026-11-20T05:12:09.496686+00:00",
+        "disposition": "Child qualification passes37functional cases per architecture with no failures/skips. Strict lint failed on two new Sysmsg sources; owner is separating actual missing includes from implausible diagnostics. Formatter-only candidateeabedf2 is prepared with no C edits. Publica3ca22af remains unchanged; the prerequisite16522 source/importer hold still applies.",
+        "nextAction": "Assigned owner diagnoses strict lint at the owning compiler mechanism and closes formatting-only recovery. Preserve functional products and unchanged public source; do not publish the conditional child before the verified16522 prerequisite and its existing source decision permit delivery.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17067#discussion_r4486895273",
           "https://github.com/tamird/gvisor/commit/7f6ecfff61b465c2ae00d20ee4ebaad09d430519",
@@ -73207,9 +73207,10 @@
           "https://buildkite.com/gvisor/first-pass/builds/1613",
           "https://buildkite.com/gvisor/first-pass/builds/1613#01a1eae5-3d03-4c72-8011-b3b8ab91bcd6"
         ],
-        "recheckCondition": "#16522 merges, then verify source revision, prerequisite ancestry and exact amendment equivalence. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "recheckCondition": "Actual strict-lint diagnosis/recovery, formatting result or verified16522 source/importer/dependency change.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
-        "mergeable": "CONFLICTING"
+        "mergeable": "CONFLICTING",
+        "curatedAt": "2026-11-20T05:12:09.496686+00:00"
       },
       "dcoAmendment": {
         "oldHead": "005743727b3d80d373085133b5da9cd906cc9d7c",
@@ -73232,7 +73233,9 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "root / existing Systrap native stub workstream"
-      }
+      },
+      "nextStep": "Assigned owner diagnoses strict lint at the owning compiler mechanism and closes formatting-only recovery. Preserve functional products and unchanged public source; do not publish the conditional child before the verified16522 prerequisite and its existing source decision permit delivery.",
+      "recheckCondition": "Actual strict-lint diagnosis/recovery, formatting result or verified16522 source/importer/dependency change."
     },
     {
       "id": "pr:bazel-contrib/buildtools:1527",
@@ -134955,10 +134958,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T04:49:08.876058+00:00",
-      "summary": "Packet final native and Sentry queue-saturation assertions pass; source-bound audit, affected gates and final review remain before delivery. Formatting-only recovery source8b0f9f725587b48a15898bfb755cb2d9458a88af is under qualification44676775283; retained strict C++44676317477 evidence is separate. No production publication or completed-source-review claim. Corrected untimed Node image44676418942 is running. Startup A/A collected eleven complete blocks before an observer race, so no formal performance pass or stability conclusion is established. Existing source/issue publication questions and worker-isolation holds remain unchanged.",
-      "nextStep": "Packet owner audits final source-bound native/Sentry/strict products, closes affected formatting gates and completes final review. Node owner audits untimed producer recovery and startup observer race before formal performance qualification. Preserve already-valid products and all existing publication/worker holds; no new decision frames or duplicate questions.",
-      "recheckCondition": "Audited final packet gates/review readiness, verified untimed producer/observer recovery, substantive feedback, or an existing publication/worker answer.",
+      "updatedAt": "2026-11-20T05:12:09.496686+00:00",
+      "summary": "Canonical fork shared support9e4ae432d226e14a83c05946c91daefd20b87d7d is published and independently verified. Consumer44677983542 passes3tests with1030cache hits,9remote and zero local actions; focused review found no issues. No production, sidecar, compdb, master or upstream source was changed; ordinary/cache-only cross-architecture runtime is not independently established. Packet e7b9 affected native/Sentry/format/strict gates and focused review close; performance and ARM KVM remain open. Node maintained-caller XML contains2passing cases with all witness checks; Buildifier-only44679255624 remains live. Standard shim handshake/topic/paused-SIGKILL and observer integration pass; RestoreEmpty44679240015 and startup3A/A44679242556 are live, with no full performance claim. Existing publication questions remain pending.",
+      "nextStep": "Reuse published shared support within its verified scope. Packet owner advances remaining performance/ARM KVM requirements without repeating passing gates; Node owner closes canonical formatting and audits new caller evidence. Shim owner audits actual RestoreEmpty/startup results. Preserve source-publication and worker-isolation holds; no new decision frames.",
+      "recheckCondition": "Audited remaining functional/performance/formatting result, substantive feedback, or an existing publication/worker answer.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135232,6 +135235,22 @@
         {
           "label": "Corrected untimed Node image; audit pending",
           "url": "https://github.com/tamird/gvisor/actions/runs/44676418942"
+        },
+        {
+          "label": "Published shared-support actual consumer:3testsPASS",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44677983542"
+        },
+        {
+          "label": "Node maintained-caller canonical Buildifier gate",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44679255624"
+        },
+        {
+          "label": "Shim RestoreEmpty cheap contract gate; audit pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44679240015"
+        },
+        {
+          "label": "Three-startup A/A gate; no performance conclusion",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44679242556"
         }
       ],
       "followup": {
@@ -135253,12 +135272,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T04:49:08.876058+00:00",
-        "nextAction": "Packet owner audits final source-bound native/Sentry/strict products, closes affected formatting gates and completes final review. Node owner audits untimed producer recovery and startup observer race before formal performance qualification. Preserve already-valid products and all existing publication/worker holds; no new decision frames or duplicate questions.",
-        "recheckCondition": "Audited final packet gates/review readiness, verified untimed producer/observer recovery, substantive feedback, or an existing publication/worker answer.",
+        "curatedAt": "2026-11-20T05:12:09.496686+00:00",
+        "nextAction": "Reuse published shared support within its verified scope. Packet owner advances remaining performance/ARM KVM requirements without repeating passing gates; Node owner closes canonical formatting and audits new caller evidence. Shim owner audits actual RestoreEmpty/startup results. Preserve source-publication and worker-isolation holds; no new decision frames.",
+        "recheckCondition": "Audited remaining functional/performance/formatting result, substantive feedback, or an existing publication/worker answer.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Packet final native and Sentry queue-saturation assertions pass; source-bound audit, affected gates and final review remain before delivery. Formatting-only recovery source8b0f9f725587b48a15898bfb755cb2d9458a88af is under qualification44676775283; retained strict C++44676317477 evidence is separate. No production publication or completed-source-review claim. Corrected untimed Node image44676418942 is running. Startup A/A collected eleven complete blocks before an observer race, so no formal performance pass or stability conclusion is established. Existing source/issue publication questions and worker-isolation holds remain unchanged.",
+        "disposition": "Canonical fork shared support9e4ae432d226e14a83c05946c91daefd20b87d7d is published and independently verified. Consumer44677983542 passes3tests with1030cache hits,9remote and zero local actions; focused review found no issues. No production, sidecar, compdb, master or upstream source was changed; ordinary/cache-only cross-architecture runtime is not independently established. Packet e7b9 affected native/Sentry/format/strict gates and focused review close; performance and ARM KVM remain open. Node maintained-caller XML contains2passing cases with all witness checks; Buildifier-only44679255624 remains live. Standard shim handshake/topic/paused-SIGKILL and observer integration pass; RestoreEmpty44679240015 and startup3A/A44679242556 are live, with no full performance claim. Existing publication questions remain pending.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135667,5 +135686,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T04:49:08.876058+00:00"
+  "updatedAt": "2026-11-20T05:12:09.496686+00:00"
 }
