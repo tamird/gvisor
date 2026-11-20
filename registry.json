@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T03:15:58.069646+00:00",
+    "updatedAt": "2026-11-20T03:34:44.706450+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -134955,10 +134955,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T03:15:58.069646+00:00",
-      "summary": "Packet formatting-only candidatec39d937cba6a95d5751e0bd0c7d14b32716a1eca leaves publicacf93596 unchanged. AMD packet validation passes14native,14shared,14ptrace and14directfs cases plus1577Go and1477race cases, with zero failures/skips; canonical formatting passes. ARM preflight44665659420 passes, while host KVM44665681783 failed and awaits exact owner diagnosis. No full ARM, KVM or performance qualification is claimed. Performance remains held for existing worker/pool isolation information; all source and issue publication questions remain pending. Full C++, performance and final review gates remain open.",
-      "nextStep": "Packet owner audits the KVM failure and completes remaining architecture/compiler/runtime scope without discarding valid products. Root follows existing source decisions and isolated-worker information; no new timed samples, repeated questions or decision frames.",
-      "recheckCondition": "Audited host/KVM/ARM result or substantive qualification change, source feedback, or existing publication/worker answer.",
+      "updatedAt": "2026-11-20T03:34:44.706450+00:00",
+      "summary": "Audited ARM packet normal qualification passes14shared cases and1491aggregate cases across seven Go owners, with zero failures/skips; native ARM passes14cases. ARM race44667365701 fails before tests because an incompatible AMD64 GoStdlib tool executes locally on ARM; the shared native-C owner owns toolchain selection recovery. Native-C closure preflights now prove308C/Sysmsg actions remote, cacheable, pinned and no-local. Earlier09f blanket C++ no-remote configuration did not establish RBE C++ qualification. Hosted KVM helper44668365131 and full packet C++44668367800 remain under qualification; no full ARM matrix, KVM or performance claim. All existing source and issue decisions remain pending.",
+      "nextStep": "Shared native-C owner repairs the ARM race toolchain mechanism and audits current C++ closure; packet owner audits KVM helper/full C++ results before advancing remaining matrix gates. Preserve passing AMD/ARM normal products and existing source/worker-information holds; no new timed samples or proposal frames.",
+      "recheckCondition": "Actual ARM race recovery, audited KVM/C++ result or meaningful qualification change, substantive source feedback, or an existing publication/worker answer.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135180,6 +135180,22 @@
         {
           "label": "Packet canonical formatting passed",
           "url": "https://github.com/tamird/gvisor/actions/runs/44664391239"
+        },
+        {
+          "label": "ARM normal shared and Go owners passed; audited scope",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44667304030"
+        },
+        {
+          "label": "ARM race fails before tests: incompatible local Go tool",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44667365701"
+        },
+        {
+          "label": "Hosted KVM helper gate; audit pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44668365131"
+        },
+        {
+          "label": "Full packet C++ gate; audit pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44668367800"
         }
       ],
       "followup": {
@@ -135201,12 +135217,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T03:15:58.069646+00:00",
-        "nextAction": "Packet owner audits the KVM failure and completes remaining architecture/compiler/runtime scope without discarding valid products. Root follows existing source decisions and isolated-worker information; no new timed samples, repeated questions or decision frames.",
-        "recheckCondition": "Audited host/KVM/ARM result or substantive qualification change, source feedback, or existing publication/worker answer.",
+        "curatedAt": "2026-11-20T03:34:44.706450+00:00",
+        "nextAction": "Shared native-C owner repairs the ARM race toolchain mechanism and audits current C++ closure; packet owner audits KVM helper/full C++ results before advancing remaining matrix gates. Preserve passing AMD/ARM normal products and existing source/worker-information holds; no new timed samples or proposal frames.",
+        "recheckCondition": "Actual ARM race recovery, audited KVM/C++ result or meaningful qualification change, substantive source feedback, or an existing publication/worker answer.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Packet formatting-only candidatec39d937cba6a95d5751e0bd0c7d14b32716a1eca leaves publicacf93596 unchanged. AMD packet validation passes14native,14shared,14ptrace and14directfs cases plus1577Go and1477race cases, with zero failures/skips; canonical formatting passes. ARM preflight44665659420 passes, while host KVM44665681783 failed and awaits exact owner diagnosis. No full ARM, KVM or performance qualification is claimed. Performance remains held for existing worker/pool isolation information; all source and issue publication questions remain pending. Full C++, performance and final review gates remain open.",
+        "disposition": "Audited ARM packet normal qualification passes14shared cases and1491aggregate cases across seven Go owners, with zero failures/skips; native ARM passes14cases. ARM race44667365701 fails before tests because an incompatible AMD64 GoStdlib tool executes locally on ARM; the shared native-C owner owns toolchain selection recovery. Native-C closure preflights now prove308C/Sysmsg actions remote, cacheable, pinned and no-local. Earlier09f blanket C++ no-remote configuration did not establish RBE C++ qualification. Hosted KVM helper44668365131 and full packet C++44668367800 remain under qualification; no full ARM matrix, KVM or performance claim. All existing source and issue decisions remain pending.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135615,5 +135631,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T03:15:58.069646+00:00"
+  "updatedAt": "2026-11-20T03:34:44.706450+00:00"
 }
