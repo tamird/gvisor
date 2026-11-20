@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-20T14:51:37.635108+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-20T14:38:42.090235+00:00",
+  "registryDate": "2026-11-20T14:55:02.627201+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -447267,7 +447267,7 @@
       "number": 16857,
       "head": "a70f8cdc56996fe14b46aaabbdfb19985f8d957c",
       "sourceNumber": 16857,
-      "owner": "root",
+      "owner": "approved_rebase_queue",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABVzUEtw",
       "needsTriage": false,
@@ -448711,7 +448711,7 @@
       "number": 17181,
       "head": "a1da8410eb9708a5e08fed9dfc95e8b98c74b1ec",
       "sourceNumber": 17181,
-      "owner": "root",
+      "owner": "approved_rebase_queue",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABos3t1w",
       "needsTriage": false,
@@ -448730,7 +448730,7 @@
       "number": 16737,
       "head": "30093b47e846cf89b693fa6b5676e2de5839b10c",
       "sourceNumber": 16737,
-      "owner": "root",
+      "owner": "approved_rebase_queue",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABos4Ieg",
       "needsTriage": false,
@@ -448767,7 +448767,7 @@
       "number": 16857,
       "head": "a70f8cdc56996fe14b46aaabbdfb19985f8d957c",
       "sourceNumber": 16857,
-      "owner": "root",
+      "owner": "approved_rebase_queue",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABZMfXzw",
       "needsTriage": false,
@@ -457231,8 +457231,8 @@
       "recordedFollowup": {
         "owner": "buildifier_license_fix",
         "sourceHead": "9c2814db01620f643809f38f3f2e929ab35f4aef",
-        "disposition": "Authorized mechanical license-manifest amendment9c2814db01620f643809f38f3f2e929ab35f4aef is delivered; provider verifies head/tree/signature/DCO and exact old-head lease. The review fix is published, but the thread remains unresolved and public reply/re-review request stay with root. Etienne’s prior approval was dismissed and Milan’s CHANGES_REQUESTED remains. FirstPass2076 has one Pipeline upload failure, exit80 before tests; buildifier_license_fix owns exact CI diagnosis. GitHub source checks are running; no license regression is established.",
-        "nextAction": "buildifier_license_fix follows exact9c CI/DCO/mergeability and diagnoses FirstPass2076 admission. Root reconciles authorized public reply/re-review separately; preserve current source and do not mark review resolved before actual communication/readback."
+        "disposition": "License-manifest correction9c2814db01620f643809f38f3f2e929ab35f4aef is delivered OPEN/MERGEABLE/BLOCKED with signature/DCO verified. GitHub Go44755227977, lint/Gazelle/file-header/generation checks pass. FirstPass2076 remains upload-only exit80 before any license test, without diagnostic log; owner is following CI. Rebase comment7042475031 is posted. Root saved and verified milantracy review re-request alongside parth-opensrc/riverafernando using the user-authorized native action. Review5985707150 remains unresolved awaiting reviewer disposition; no reply/re-request is pending human approval. Auto-merge is null and no merge action occurred.",
+        "nextAction": "buildifier_license_fix follows exact9c FirstPass admission diagnosis and current checks; root follows the saved reviewer request. Preserve actual review status until substantive response, with no duplicate comment/re-request or source churn."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN2UL2Pw"
@@ -465643,7 +465643,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T14:38:42.090235+00:00"
+        "observedAt": "2026-11-20T14:55:02.627201+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -465652,7 +465652,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T14:38:42.090235+00:00"
+        "observedAt": "2026-11-20T14:55:02.627201+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -465661,7 +465661,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T14:38:42.090235+00:00"
+        "observedAt": "2026-11-20T14:55:02.627201+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -465670,7 +465670,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T14:38:42.090235+00:00"
+        "observedAt": "2026-11-20T14:55:02.627201+00:00"
       }
     },
     "issue:google/benchmark:1634": {
@@ -465679,7 +465679,7 @@
         "since": "2026-11-19T00:39:33.110112+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T14:38:42.090235+00:00"
+        "observedAt": "2026-11-20T14:55:02.627201+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -465688,7 +465688,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T14:38:42.090235+00:00"
+        "observedAt": "2026-11-20T14:55:02.627201+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -465697,7 +465697,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T14:38:42.090235+00:00"
+        "observedAt": "2026-11-20T14:55:02.627201+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -465706,7 +465706,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T14:38:42.090235+00:00"
+        "observedAt": "2026-11-20T14:55:02.627201+00:00"
       }
     }
   },
