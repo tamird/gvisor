@@ -242,7 +242,14 @@ func TestPairedBenchmark(t *testing.T) {
 				observeCtx, cancel := context.WithCancel(ctx)
 				stopObserver = cancel
 				observed = make(chan error, 1)
-				messages, failures := cli.Events(observeCtx, events.ListOptions{Filters: filters.NewArgs(filters.Arg("type", "container"), filters.Arg("event", "start"))})
+				eventOptions := events.ListOptions{Filters: filters.NewArgs(filters.Arg("type", "container"), filters.Arg("event", "start"))}
+				if *pairedWorkload != "node" {
+					// Events establishes its subscription asynchronously. Replay
+					// starts after this watermark so the first short-lived
+					// workload is observed even while the request connects.
+					eventOptions.Since = time.Now().Format(time.RFC3339Nano)
+				}
+				messages, failures := cli.Events(observeCtx, eventOptions)
 				go func() {
 					observed <- attestBenchmarkContainers(observeCtx, cli, messages, failures, visit, releaseProducts[index], actualHashes, runtimes[index])
 				}()
