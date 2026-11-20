@@ -19,18 +19,24 @@ set -uo pipefail
 [[ $# -gt 0 ]] || exit 2
 
 caller="$(id -u):$(id -g)"
-for output in "${XML_OUTPUT_FILE-}" "${TEST_UNDECLARED_OUTPUTS_DIR-}"; do
+for variable in XML_OUTPUT_FILE TEST_UNDECLARED_OUTPUTS_DIR; do
+  output="${!variable-}"
   case "$output" in
     "") ;;
     /|*/../*|*/..) echo "Invalid declared test output: $output" >&2; exit 1 ;;
-    /*) ;;
+    /*)
+      output="$(realpath --canonicalize-missing --no-symlinks -- "$output")" || exit 1
+      [[ "$output" != / ]] || { echo "Invalid declared test output: $output" >&2; exit 1; }
+      printf -v "$variable" '%s' "$output"
+      ;;
     *) echo "Declared test output must be absolute: $output" >&2; exit 1 ;;
   esac
 done
 
 restore_outputs() {
   result=$?
-  trap - EXIT HUP INT TERM
+  trap - EXIT
+  trap '' HUP INT TERM
   cleanup_failed=0
   if [[ -n "${XML_OUTPUT_FILE-}" && ( -e "$XML_OUTPUT_FILE" || -L "$XML_OUTPUT_FILE" ) ]]; then
     sudo -n chown --no-dereference -- "$caller" "$XML_OUTPUT_FILE" || cleanup_failed=1
@@ -42,8 +48,23 @@ restore_outputs() {
   exit "$result"
 }
 trap restore_outputs EXIT
-trap 'exit 129' HUP
-trap 'exit 130' INT
-trap 'exit 143' TERM
 
-sudo -n -E "$@"
+forward_signal() {
+  trap '' HUP INT TERM
+  sudo -n kill -s "$1" -- "$child" 2>/dev/null || true
+  wait "$child"
+  exit "$2"
+}
+pending_signal=""
+pending_status=0
+trap 'pending_signal=HUP; pending_status=129' HUP
+trap 'pending_signal=INT; pending_status=130' INT
+trap 'pending_signal=TERM; pending_status=143' TERM
+
+sudo -n -E "$@" &
+child=$!
+trap 'forward_signal HUP 129' HUP
+trap 'forward_signal INT 130' INT
+trap 'forward_signal TERM 143' TERM
+if [[ -n "$pending_signal" ]]; then forward_signal "$pending_signal" "$pending_status"; fi
+wait "$child"

@@ -19,8 +19,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 
+	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/sentry/limits"
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/state/statefile"
@@ -28,6 +30,56 @@ import (
 
 	_ "gvisor.dev/gvisor/runsc/cli/sentrycli"
 )
+
+func TestSudoCallerMappings(t *testing.T) {
+	if os.Getuid() != 0 || os.Geteuid() != 0 {
+		t.Skip("requires the privileged test runner")
+	}
+	for _, tc := range []struct {
+		name      string
+		uid       string
+		gid       string
+		wantMaps  int
+		wantError bool
+	}{
+		{name: "caller", uid: "1001", gid: "1001", wantMaps: 2},
+		{name: "root", uid: "0", gid: "0", wantMaps: 1},
+		{name: "negative", uid: "-1", gid: "1001", wantError: true},
+		{name: "reserved", uid: "1001", gid: "4294967295", wantError: true},
+		{name: "overflow", uid: "4294967296", gid: "1001", wantError: true},
+		{name: "invalid", uid: "1001", gid: "bad", wantError: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("SUDO_UID", tc.uid)
+			t.Setenv("SUDO_GID", tc.gid)
+			attrs := &unix.SysProcAttr{
+				UidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: 0, Size: 1}},
+				GidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: 0, Size: 1}},
+			}
+			err := addSudoCallerMappings(attrs)
+			if (err != nil) != tc.wantError {
+				t.Fatalf("addSudoCallerMappings: %v, wantError=%t", err, tc.wantError)
+			}
+			if tc.wantError {
+				if len(attrs.UidMappings) != 1 || len(attrs.GidMappings) != 1 {
+					t.Fatal("invalid input changed namespace mappings")
+				}
+				return
+			}
+			if len(attrs.UidMappings) != tc.wantMaps || len(attrs.GidMappings) != tc.wantMaps {
+				t.Fatalf("mappings: uid=%v gid=%v, want %d each", attrs.UidMappings, attrs.GidMappings, tc.wantMaps)
+			}
+			if attrs.UidMappings[0].HostID != 0 || attrs.GidMappings[0].HostID != 0 {
+				t.Fatal("root mapping changed")
+			}
+			if tc.wantMaps == 2 {
+				if err := addSudoCallerMappings(attrs); err == nil {
+					t.Fatal("duplicate caller mapping accepted")
+				}
+			}
+		})
+	}
+}
 
 func TestPrintCheckpointDir(t *testing.T) {
 	if err := testutil.ConfigureExePath(); err != nil {
