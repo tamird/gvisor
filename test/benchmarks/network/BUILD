@@ -188,7 +188,7 @@ filegroup(
     name = "node_worker_images",
     srcs = [
         "//images:benchmark_hey_archive",
-        "//images:benchmark_node_archive",
+        "//images:benchmark_node_completed_archive",
         "//images:benchmark_util_archive",
         "//images/basic:benchmark_redis_archive",
     ],

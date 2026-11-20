@@ -1,3 +1,5 @@
+load("@rules_img//img:image.bzl", "image_manifest")
+load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
 load("//images:img.bzl", "image_outputs")
 load("//tools:defs.bzl", "go_binary", "pkg_tar")
@@ -100,6 +102,28 @@ image_outputs(
     name = "benchmark_node",
     archive_visibility = ["//test/benchmarks/network:__pkg__"],
     image = "@benchmark_node_amd64",
+    image_name = "benchmarks/node",
+)
+
+image_layer(
+    name = "benchmark_node_completion_layer",
+    srcs = {"/usr/src/app/index.js": "benchmarks/node/index.js"},
+    create_parent_directories = "enabled",
+    default_metadata = file_metadata(mode = "0644"),
+    include_runfiles = False,
+)
+
+image_manifest(
+    name = "benchmark_node_completed",
+    base = "@benchmark_node_amd64",
+    layers = [":benchmark_node_completion_layer"],
+    tags = ["manual"],
+)
+
+image_outputs(
+    name = "benchmark_node_completed",
+    archive_visibility = ["//test/benchmarks/network:__pkg__"],
+    image = ":benchmark_node_completed",
     image_name = "benchmarks/node",
 )
 
