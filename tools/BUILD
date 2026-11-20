@@ -1,4 +1,5 @@
 load("@bazel_skylib//rules:common_settings.bzl", "bool_setting")
+load("@rules_python//python:py_library.bzl", "py_library")
 load("@rules_python//python:py_test.bzl", "py_test")
 load("//tools:defs.bzl", "bzl_library", "gotsan_flag_values", "gotsan_values")
 
@@ -85,14 +86,25 @@ exports_files([
     "go-allow-internal.patch",
     "llvm-dev-backends.patch",
     "llvm-linux-header-default.patch",
+    "rules_go_host_c.patch",
+    "rules_go_proto_exec.patch",
 ])
+
+py_library(
+    name = "clang_tidy",
+    srcs = ["clang_tidy/clang_tidy.py"],
+    imports = ["clang_tidy"],
+)
 
 py_test(
     name = "lint_test",
     srcs = ["lint_test.py"],
     args = ["$(rootpath :lint.sh)"],
     data = [
+        "devcontainer-init.sh",
         "lint.sh",
         "//:.clang-format",
+        "//:.clang-tidy",
     ],
+    deps = [":clang_tidy"],
 )

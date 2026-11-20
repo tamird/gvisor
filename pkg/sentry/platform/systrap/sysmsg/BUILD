@@ -1,15 +1,10 @@
 load("//tools:arch.bzl", "arch_genrule", "select_arch")
-load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain", "go_library")
-load("build.bzl", "cc_pie_obj")
+load("//tools:defs.bzl", "build_test", "go_library")
+load("build.bzl", "cc_pie_obj", "sighandler_binary", "sighandler_go", "sighandler_object")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
-)
-
-cc_flags_supplier(
-    name = "no_pie_cc_flags",
-    features = ["-pie"],
 )
 
 cc_pie_obj(
@@ -62,35 +57,22 @@ cc_pie_obj(
     outs = ["syshandler.o"],
 )
 
-genrule(
+sighandler_object(
     name = "sighandler_object",
-    srcs = [
-        "pie.lds.S",
+    out = "sighandler.built-in.bin.o",
+    linker_script = "pie.lds.S",
+    ordered_objects = [
+        ":sysrestorer",
         ":sighandler",
         ":syshandler",
-        ":sysrestorer",
         ":sysmsg_lib",
-    ],
-    outs = ["sighandler.built-in.bin.o"],
-    cmd = "$(LD) " +
-          "-pie -z noexecstack -T $(location pie.lds.S) " +
-          "$(location :sysrestorer) $(location :sighandler) " +
-          "$(location :syshandler) $(location :sysmsg_lib) " +
-          "-o $@",
-    features = ["-pie"],
-    toolchains = [
-        cc_toolchain,
     ],
 )
 
-genrule(
+sighandler_binary(
     name = "sighandler_binary",
-    srcs = [":sighandler_object"],
-    outs = ["sighandler.built-in.bin"],
-    cmd = "$(OBJCOPY) -O binary $(SRCS) $@",
-    toolchains = [
-        cc_toolchain,
-    ],
+    src = ":sighandler_object",
+    out = "sighandler.built-in.bin",
 )
 
 arch_genrule(
@@ -99,14 +81,10 @@ arch_genrule(
     template = "sighandler.built-in.%s.bin",
 )
 
-genrule(
+sighandler_go(
     name = "sighandler_go",
-    srcs = [":sighandler_object"],
-    outs = ["sighandler.go.arch"],
-    cmd = "bash -x $(location gen_offsets_go.sh) sighandler Sighandler " +
-          "$(SRCS) \"$(NM)\" > $@",
-    toolchains = [cc_toolchain],
-    tools = ["gen_offsets_go.sh"],
+    src = ":sighandler_object",
+    out = "sighandler.go.arch",
 )
 
 arch_genrule(
@@ -137,5 +115,13 @@ go_library(
         "//pkg/hostsyscall",
         "//pkg/sentry/platform",
         "@org_golang_x_sys//unix:go_default_library",
+    ],
+)
+
+build_test(
+    name = "sysmsg_products_test",
+    targets = [
+        ":sighandler_binary",
+        ":sighandler_go",
     ],
 )
