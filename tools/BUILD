@@ -81,6 +81,7 @@ bzl_library(
 
 exports_files([
     "benchmark-umbrella-exports.patch",
+    "hey-read-response.patch",
     "llvm-dev-backends.patch",
     "llvm-linux-header-default.patch",
     "rules_go_host_c.patch",

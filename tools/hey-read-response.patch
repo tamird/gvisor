@@ -1,0 +1,79 @@
+# Hey v0.1.5 ignores response-body read failures and counts advertised bytes.
+# Retain actual consumed bytes and the io.Copy error in request results.
+# Remove this patch when the pinned upstream release includes the correction.
+
+--- a/requester/requester.go
++++ b/requester/requester.go
+@@ -183,9 +183,8 @@
+ 	req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
+ 	resp, err := c.Do(req)
+ 	if err == nil {
+-		size = resp.ContentLength
+ 		code = resp.StatusCode
+-		io.Copy(io.Discard, resp.Body)
++		size, err = io.Copy(io.Discard, resp.Body)
+ 		resp.Body.Close()
+ 	}
+ 	t := now()
+--- a/requester/requester_test.go
++++ b/requester/requester_test.go
+@@ -16,6 +16,8 @@
+ 
+ import (
+ 	"bytes"
++	"errors"
++	"fmt"
+ 	"io"
+ 	"net/http"
+ 	"net/http/httptest"
+@@ -132,3 +134,50 @@
+ 		t.Errorf("Expected to work 10 times, found %v", count)
+ 	}
+ }
++
++func TestResponseBodyAccounting(t *testing.T) {
++	for _, tc := range []struct {
++		name       string
++		advertised int
++		bodyBytes  int
++		wantErr    error
++	}{
++		{"full", 4206, 4206, nil},
++		{"chunked", -1, 4206, nil},
++		{"truncated", 4206, 46, io.ErrUnexpectedEOF},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++				if tc.advertised >= 0 {
++					w.Header().Set("Content-Length", fmt.Sprint(tc.advertised))
++				} else {
++					w.(http.Flusher).Flush()
++				}
++				if _, err := w.Write(bytes.Repeat([]byte{'x'}, tc.bodyBytes)); err != nil {
++					t.Errorf("write response: %v", err)
++				}
++			}))
++			defer server.Close()
++			req, err := http.NewRequest(http.MethodGet, server.URL, nil)
++			if err != nil {
++				t.Fatal(err)
++			}
++			work := &Work{
++				Request: req,
++				results: make(chan *result, 1),
++				start:   now(),
++			}
++			work.makeRequest(server.Client())
++			got := <-work.results
++			if !errors.Is(got.err, tc.wantErr) {
++				t.Errorf("read error = %v, want %v", got.err, tc.wantErr)
++			}
++			if got.contentLength != int64(tc.bodyBytes) {
++				t.Errorf("consumed bytes = %d, want %d", got.contentLength, tc.bodyBytes)
++			}
++			if got.statusCode != http.StatusOK {
++				t.Errorf("status = %d, want %d", got.statusCode, http.StatusOK)
++			}
++		})
++	}
++}
