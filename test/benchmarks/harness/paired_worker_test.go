@@ -57,7 +57,7 @@ var (
 	pairedNodeWarmup  = flag.Int("paired-node-warmup-requests", 0, "warmup requests for each actual Node server process")
 	pairedWarmups     = flag.Int("paired-warmup-pairs", 0, "unmeasured warmup visits for each runtime before balanced blocks")
 	pairedObserve     = flag.Bool("paired-observe-affinity", false, "inspect actual workload affinity during capability preflight")
-	pairedWorkload    = flag.String("paired-workload", "node", "workload contract: node, startup-empty, or startup")
+	pairedWorkload    = flag.String("paired-workload", "node", "workload contract: node, startup-empty, startup-only, or startup")
 )
 
 func TestPairedBenchmark(t *testing.T) {
@@ -73,7 +73,7 @@ func TestPairedBenchmark(t *testing.T) {
 			t.Fatalf("required worker CPU %d is unavailable; affinity: %v", cpu, available)
 		}
 	}
-	if (*pairedWorkload == "startup-empty" || *pairedWorkload == "startup") && available.Count() != 5 {
+	if (*pairedWorkload == "startup-empty" || *pairedWorkload == "startup-only" || *pairedWorkload == "startup") && available.Count() != 5 {
 		// A worker can expose additional guest CPUs beyond its reservation.
 		// Re-exec before creating Docker so all new threads and children
 		// inherit the declared partition.
@@ -96,11 +96,11 @@ func TestPairedBenchmark(t *testing.T) {
 
 	switch *pairedWorkload {
 	case "node":
-	case "startup-empty", "startup":
+	case "startup-empty", "startup-only", "startup":
 		if *pairedResponseProbe || !*pairedObserve || available.Count() != 5 || ClientCPUSet() != "0-4" || ServerCPUSet() != "0-4" {
 			t.Fatalf("startup requires affinity observation on the declared five-CPU worker with matching 0-4 partitions: available=%v count=%d response_probe=%t observe=%t client=%q server=%q", available, available.Count(), *pairedResponseProbe, *pairedObserve, ClientCPUSet(), ServerCPUSet())
 		}
-		if (*pairedWorkload == "startup-empty" && *pairedLeaves != 1) || (*pairedWorkload == "startup" && *pairedLeaves != 5) {
+		if (*pairedWorkload == "startup-empty" && *pairedLeaves != 1) || (*pairedWorkload == "startup-only" && *pairedLeaves != 3) || (*pairedWorkload == "startup" && *pairedLeaves != 5) {
 			t.Fatal("startup workload leaf count does not match its image contract")
 		}
 	default:
@@ -305,6 +305,8 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 	switch *pairedWorkload {
 	case "startup-empty":
 		required = map[string]int{"benchmarks/alpine": 1}
+	case "startup-only":
+		required = map[string]int{"benchmarks/alpine": 1, "benchmarks/nginx": 1, "benchmarks/node": 1, "benchmarks/redis": 1, "benchmarks/util": 1}
 	case "startup":
 		required = map[string]int{"benchmarks/alpine": 2, "benchmarks/nginx": 2, "benchmarks/node": 1, "benchmarks/redis": 1, "benchmarks/util": 1}
 	}
