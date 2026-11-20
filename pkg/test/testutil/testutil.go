@@ -251,21 +251,38 @@ var runtimeTempDir string
 // It must be called before tests start and after namespace re-execution.
 func ConfigureTempDirs() (func() error, error) {
 	original, set := os.LookupEnv("TEST_TMPDIR")
-	parent, err := os.MkdirTemp(TmpDir(), "test-dirs-")
-	if err != nil {
-		return nil, err
-	}
-	workload := filepath.Join(parent, "workload")
-	runtimeDir := filepath.Join(parent, "runtime")
-	for _, dir := range []string{workload, runtimeDir} {
-		if err := os.Mkdir(dir, 0755); err != nil {
-			os.RemoveAll(parent)
+	parent := TmpDir()
+	ownsParent := !set || original == ""
+	if ownsParent {
+		var err error
+		parent, err = os.MkdirTemp(os.TempDir(), "gvisor-test-")
+		if err != nil {
 			return nil, err
 		}
 	}
-	if err := os.Setenv("TEST_TMPDIR", workload); err != nil {
-		os.RemoveAll(parent)
+	workload := filepath.Join(parent, "w")
+	runtimeDir := filepath.Join(parent, "r")
+	if err := os.Mkdir(workload, 0755); err != nil {
+		if ownsParent {
+			os.RemoveAll(parent)
+		}
 		return nil, err
+	}
+	if err := os.Mkdir(runtimeDir, 0755); err != nil {
+		os.RemoveAll(workload)
+		if ownsParent {
+			os.RemoveAll(parent)
+		}
+		return nil, err
+	}
+	cleanupDirs := func() error {
+		if ownsParent {
+			return os.RemoveAll(parent)
+		}
+		return errors.Join(os.RemoveAll(runtimeDir), os.RemoveAll(workload))
+	}
+	if err := os.Setenv("TEST_TMPDIR", workload); err != nil {
+		return nil, errors.Join(err, cleanupDirs())
 	}
 	runtimeTempDir = runtimeDir
 	return func() error {
@@ -276,7 +293,7 @@ func ConfigureTempDirs() (func() error, error) {
 		} else {
 			envErr = os.Unsetenv("TEST_TMPDIR")
 		}
-		return errors.Join(envErr, os.RemoveAll(parent))
+		return errors.Join(envErr, cleanupDirs())
 	}, nil
 }
 
@@ -527,13 +544,15 @@ func NewSpecWithArgs(args ...string) *specs.Spec {
 				Destination: "/etc",
 			},
 			// Root is readonly, but many tests want to write to tmpdir.
-			// This creates a writable mount inside the root. Also, when tmpdir points
+			// Include nested mounts created by tests in the writable scratch mount.
+			// Also, when tmpdir points
 			// to "/tmp", it makes the actual /tmp to be mounted and not a tmpfs
 			// inside the sentry.
 			{
 				Type:        "bind",
 				Destination: TmpDir(),
 				Source:      TmpDir(),
+				Options:     []string{"rbind"},
 			},
 		},
 		Hostname:    "runsc-test-hostname",
@@ -575,7 +594,7 @@ func SetupContainer(spec *specs.Spec, conf *config.Config) (rootDir, bundleDir s
 
 // SetupBundleDir creates a bundle dir and writes the spec to config.json.
 func SetupBundleDir(spec *specs.Spec) (string, func(), error) {
-	bundleDir, err := os.MkdirTemp(TmpDir(), "bundle")
+	bundleDir, err := os.MkdirTemp(RuntimeTempDir(), "bundle")
 	if err != nil {
 		return "", nil, fmt.Errorf("error creating bundle dir: %v", err)
 	}
