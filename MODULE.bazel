@@ -85,23 +85,23 @@ http_archive(
     name = "bazel_compile_commands_linux_amd64",
     build_file_content = _COMPILE_COMMANDS_BUILD,
     sha256 = "cc0bfae201106808544e210a4d2623ee61d4c1ca5bdb3108b157a72d95c83bcb",
-    urls = ["https://raw.githubusercontent.com/tamird/bazel-compile-commands/66db4f871b46f8dd7889dcf8e5f18b2fa29bbdb6/ci-products/llvm-0.8.26/linux-amd64.zip"],
+    urls = ["https://raw.githubusercontent.com/tamird/bazel-compile-commands/695b449a1767f6e156987e7b5377b136af5adfa9/ci-products/llvm-0.8.26/linux-amd64.zip"],
 )
 
 # CI-only approved-source product; public adoption waits for supplier release.
 http_archive(
     name = "bazel_compile_commands_linux_arm64",
     build_file_content = _COMPILE_COMMANDS_BUILD,
-    sha256 = "64a45b101f95b4274751ab6fea7a7550ddb700f06dbae1f6eb4cc607d777c795",
-    urls = ["https://raw.githubusercontent.com/tamird/bazel-compile-commands/6e28cff32e9ad15f9a039693f50e04ddf5457658/ci-products/324cf87/linux-arm64.zip"],
+    sha256 = "1c598cf13d1509186a1a1476c3862e814e1d17778e326867564350920480abd5",
+    urls = ["https://raw.githubusercontent.com/tamird/bazel-compile-commands/695b449a1767f6e156987e7b5377b136af5adfa9/ci-products/llvm-0.8.26/linux-arm64.zip"],
 )
 
 # CI-only approved-source product preserving the existing macOS15.5 floor.
 http_archive(
     name = "bazel_compile_commands_macos_universal",
     build_file_content = _COMPILE_COMMANDS_BUILD,
-    sha256 = "273f93222e4d36bbffc87836eb99db5fe0f28323670ae5413d412f8356fd4af1",
-    urls = ["https://raw.githubusercontent.com/tamird/bazel-compile-commands/101aa94da2846d98b1d683f8e51083a7bf90bea6/ci-products/324cf87/macos-universal.zip"],
+    sha256 = "cb3ad2b60ffa672a8d94b6ecb0ac5a354ac214e80fc3d0f92726b698f4bb2c6d",
+    urls = ["https://raw.githubusercontent.com/tamird/bazel-compile-commands/695b449a1767f6e156987e7b5377b136af5adfa9/ci-products/llvm-0.8.26/macos-universal.zip"],
 )
 
 http_archive(
