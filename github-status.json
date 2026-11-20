@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-20T02:26:57.289016+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-20T02:14:48.077247+00:00",
+  "registryDate": "2026-11-20T02:29:51.682749+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -448712,10 +448712,10 @@
       "number": 16857,
       "head": "3c5e60bfccfb2a1859e2c8c2e2c295d1907df48d",
       "sourceNumber": 16857,
-      "owner": "Agent",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABZMfXzw",
-      "needsTriage": true,
+      "needsTriage": false,
       "url": "https://github.com/google/gvisor/pull/16857#pullrequestreview-5985785807",
       "author": "rexren-gif",
       "updatedAt": "2026-11-20T00:42:40Z",
@@ -449107,7 +449107,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
-        "nextAction": "Follow maintainer review, exact published-head checks and any matching import; handle new substantive feedback in the existing workstream. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 2aa840f4ffe655f0c749185070fba77e676186b5; observed 2026-11-17T19:29:29.454062+00:00): build 1546 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+        "disposition": "Current-base candidatec69a99a6cb402685e6088df4884ad53f1d4b62b5 passes IPv4 and IPv6 functional qualification44660305436/44660308694. Public base already uses iperf3:11518/15146 are not landing dependencies, and CI223 BCR tool evidence is qualification only. Copied static-image/license patches were unused; no static-image qualification is claimed. Published PR source remains unchanged; candidate delivery awaits final semantic review and user approval only.",
+        "nextAction": "Root completes final semantic review, then follows the existing source-approval boundary for candidatec69. Preserve unchanged public source and the separate downstream Go-replacement dependency; do not block this candidate on11518/15146 or infer unused static-image validation."
       },
       "conflictObservedSince": "2026-11-20T00:41:37.337032+00:00"
     },
@@ -454584,7 +454585,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
-        "nextAction": "Follow maintainer review, exact published-head checks and any matching import; handle new substantive feedback in the existing workstream. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 2aa840f4ffe655f0c749185070fba77e676186b5; observed 2026-11-17T19:29:29.454062+00:00): build 1546 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+        "disposition": "Current-base candidatec69a99a6cb402685e6088df4884ad53f1d4b62b5 passes IPv4 and IPv6 functional qualification44660305436/44660308694. Public base already uses iperf3:11518/15146 are not landing dependencies, and CI223 BCR tool evidence is qualification only. Copied static-image/license patches were unused; no static-image qualification is claimed. Published PR source remains unchanged; candidate delivery awaits final semantic review and user approval only.",
+        "nextAction": "Root completes final semantic review, then follows the existing source-approval boundary for candidatec69. Preserve unchanged public source and the separate downstream Go-replacement dependency; do not block this candidate on11518/15146 or infer unused static-image validation."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxz0Oqg"
@@ -457243,8 +457245,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "fb4513fe56a2a8fb94fbd6da8d6c61c827dc5688",
-        "disposition": "Delivered approved supplier step: exact certifiedheadfb451, onecommit/threefiles, mergeable; DCO andallnativechecks includinggenerate pass. Automatic reviewrequestsriverafernando/parth-opensrc present. FirstPass1935 remains pre-agent30-day360000compute-minute quota failure.",
-        "nextAction": "Await existing maintainer review and actual Buildkite admission recovery; native validation is complete. Consume substantive new feedback without duplicate reviewer notifications or blind CI retries."
+        "disposition": "Candidate5f28105ac374be8f9643fb3188ff71b93d51a5d7 fixes the missing buildifier_prebuilt license manifest entry. Canonical225-entry license check44659989770, ARM tests44660010646 and actual caller44660018627 pass; two independent reviews found no issues. Full make lint/lint-cc were not rerun. Publicfb4513fe remains unchanged; the existing exact amendment and specific-reply approval question is pending.",
+        "nextAction": "Await the existing exact amendment/reply decision once, preserving current public source and qualified evidence. Publish only the approved candidate/reply; no repeated question or proposal frame."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN1gSgrw"
@@ -465648,7 +465650,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T02:14:48.077247+00:00"
+        "observedAt": "2026-11-20T02:29:51.682749+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -465657,7 +465659,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T02:14:48.077247+00:00"
+        "observedAt": "2026-11-20T02:29:51.682749+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -465666,7 +465668,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T02:14:48.077247+00:00"
+        "observedAt": "2026-11-20T02:29:51.682749+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -465675,7 +465677,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T02:14:48.077247+00:00"
+        "observedAt": "2026-11-20T02:29:51.682749+00:00"
       }
     },
     "issue:google/benchmark:1634": {
@@ -465684,7 +465686,7 @@
         "since": "2026-11-19T00:39:33.110112+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T02:14:48.077247+00:00"
+        "observedAt": "2026-11-20T02:29:51.682749+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -465693,7 +465695,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T02:14:48.077247+00:00"
+        "observedAt": "2026-11-20T02:29:51.682749+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -465702,7 +465704,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T02:14:48.077247+00:00"
+        "observedAt": "2026-11-20T02:29:51.682749+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -465711,7 +465713,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T02:14:48.077247+00:00"
+        "observedAt": "2026-11-20T02:29:51.682749+00:00"
       }
     }
   },

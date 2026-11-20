@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T02:14:48.077247+00:00",
+    "updatedAt": "2026-11-20T02:29:51.682749+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -61453,8 +61453,8 @@
         "owner": "root",
         "sourceHead": "3c5e60bfccfb2a1859e2c8c2e2c295d1907df48d",
         "providerHead": "32638d2e4994d2cdc0f6448d453a0a1d071620e8",
-        "observedAt": "2026-11-20T02:14:48.077247+00:00",
-        "disposition": "Mechanical rebase3c5e60bf is published OPEN/MERGEABLE with original DCO retained; DCO2 succeeds. Both architectures pass62internal,23RACK,48SACK and405external TCP cases with zero errors/skips; lint passes. Packet scope is analysis only, with no packet-runtime, race or performance claim.",
+        "observedAt": "2026-11-20T02:29:51.682749+00:00",
+        "disposition": "Mechanical rebase3c5e60bf is published OPEN/MERGEABLE with original DCO retained; DCO2 succeeds. Both architectures pass62internal,23RACK,48SACK and405external TCP cases with zero errors/skips; lint passes. Packet scope is analysis only, with no packet-runtime, race or performance claim. Owner inspected automated review5985785807: no findings and earlier fixes acknowledged; it requests no source action. Existing broad performance evidence requirement remains open.",
         "nextAction": "Follow exact published-head CI and existing review; requested mechanical rebase is delivered. Preserve scope and do not repeat notifications.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16857#discussion_r4459290531",
@@ -61465,11 +61465,12 @@
           "https://github.com/gvisor/gvisor/pull/16857",
           "https://github.com/tamird/gvisor/commit/5c2734f45e4e59a6cea8a20ddd9d2954bf1b0ad2",
           "https://github.com/tamird/gvisor/commit/32638d2e4994d2cdc0f6448d453a0a1d071620e8",
-          "https://github.com/google/gvisor/pull/16857#issuecomment-7026939975"
+          "https://github.com/google/gvisor/pull/16857#issuecomment-7026939975",
+          "https://github.com/google/gvisor/pull/16857#pullrequestreview-5985785807"
         ],
         "mergeable": "MERGEABLE",
         "recheckCondition": "Current-head CI/review or source changes.",
-        "curatedAt": "2026-11-20T02:14:48.077247+00:00"
+        "curatedAt": "2026-11-20T02:29:51.682749+00:00"
       },
       "dcoAmendment": {
         "oldHead": "5c2734f45e4e59a6cea8a20ddd9d2954bf1b0ad2",
@@ -79327,7 +79328,7 @@
       "url": "https://github.com/google/gvisor/pull/17184",
       "group": "tests",
       "status": "open",
-      "summary": "The approved fix waits for the benchmark listener, propagates iperf3 errors and validates the sender rate. The separate Go rewrite passed native qualification and is awaiting contributor review for submission after this PR lands.",
+      "summary": "Current-base candidatec69a99a6cb402685e6088df4884ad53f1d4b62b5 passes IPv4 and IPv6 functional qualification44660305436/44660308694. Public base already uses iperf3:11518/15146 are not landing dependencies, and CI223 BCR tool evidence is qualification only. Copied static-image/license patches were unused; no static-image qualification is claimed. Published PR source remains unchanged; candidate delivery awaits final semantic review and user approval only.",
       "evidence": [
         {
           "label": "Published standalone benchmark correction",
@@ -79342,14 +79343,14 @@
           "url": "https://github.com/tamird/gvisor/blob/208cd127d/.github/qualification/tcp_benchmark_go.result.json"
         }
       ],
-      "updatedAt": "2026-11-17T19:04:53.479529+00:00",
+      "updatedAt": "2026-11-20T02:29:24.570365+00:00",
       "followup": {
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
         "owner": "root",
-        "nextAction": "Follow maintainer review, exact published-head checks and any matching import; handle new substantive feedback in the existing workstream. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 2aa840f4ffe655f0c749185070fba77e676186b5; observed 2026-11-17T19:29:29.454062+00:00): build 1546 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "nextAction": "Root completes final semantic review, then follows the existing source-approval boundary for candidatec69. Preserve unchanged public source and the separate downstream Go-replacement dependency; do not block this candidate on11518/15146 or infer unused static-image validation.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "observedAt": "2026-11-20T02:29:24.570365+00:00",
+        "recheckCondition": "Final semantic review or exact user source decision, substantive current source/feedback or qualification changes.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17184",
           "https://github.com/tamird/gvisor/commit/9c541c3ae1cd68df1741882480d5bf184396e695",
@@ -79379,8 +79380,12 @@
           "https://buildkite.com/gvisor/first-pass/builds/1546#01a1ead9-87ab-4e3f-9552-4e1661290d08",
           "https://buildkite.com/gvisor/first-pass/builds/1546#01a1ead9-87ab-41a6-8eb7-be0e12b70c5f",
           "https://buildkite.com/gvisor/first-pass/builds/1546#01a1ead9-87ab-4a69-ad0a-6540f18e4c4b",
-          "https://buildkite.com/gvisor/first-pass/builds/1546#01a1ead9-87ac-452f-bb57-c63ce81511e4"
-        ]
+          "https://buildkite.com/gvisor/first-pass/builds/1546#01a1ead9-87ac-452f-bb57-c63ce81511e4",
+          "https://github.com/tamird/gvisor/actions/runs/44660305436",
+          "https://github.com/tamird/gvisor/actions/runs/44660308694"
+        ],
+        "disposition": "Current-base candidatec69a99a6cb402685e6088df4884ad53f1d4b62b5 passes IPv4 and IPv6 functional qualification44660305436/44660308694. Public base already uses iperf3:11518/15146 are not landing dependencies, and CI223 BCR tool evidence is qualification only. Copied static-image/license patches were unused; no static-image qualification is claimed. Published PR source remains unchanged; candidate delivery awaits final semantic review and user approval only.",
+        "curatedAt": "2026-11-20T02:29:24.570365+00:00"
       },
       "dcoAmendment": {
         "oldHead": "9c541c3ae1cd68df1741882480d5bf184396e695",
@@ -79403,7 +79408,9 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
-      }
+      },
+      "nextStep": "Root completes final semantic review, then follows the existing source-approval boundary for candidatec69. Preserve unchanged public source and the separate downstream Go-replacement dependency; do not block this candidate on11518/15146 or infer unused static-image validation.",
+      "recheckCondition": "Final semantic review or exact user source decision, substantive current source/feedback or qualification changes."
     },
     {
       "id": "branch:tcp-dsack-below-ack-parity",
@@ -99922,15 +99929,15 @@
       "url": "https://github.com/google/gvisor/pull/17816",
       "group": "rbe",
       "status": "open",
-      "updatedAt": "2026-11-19T18:59:24.568877+00:00",
+      "updatedAt": "2026-11-20T02:29:51.682749+00:00",
       "followup": {
         "owner": "root",
-        "curatedAt": "2026-11-19T18:59:24.568877+00:00",
+        "curatedAt": "2026-11-20T02:29:51.682749+00:00",
         "sourceHead": "fb4513fe56a2a8fb94fbd6da8d6c61c827dc5688",
-        "observedAt": "2026-11-19T18:59:24.568877+00:00",
-        "disposition": "Delivered approved supplier step: exact certifiedheadfb451, onecommit/threefiles, mergeable; DCO andallnativechecks includinggenerate pass. Automatic reviewrequestsriverafernando/parth-opensrc present. FirstPass1935 remains pre-agent30-day360000compute-minute quota failure.",
-        "nextAction": "Await existing maintainer review and actual Buildkite admission recovery; native validation is complete. Consume substantive new feedback without duplicate reviewer notifications or blind CI retries.",
-        "recheckCondition": "Human review, head/import/mergeability change or actual provider admission recovery.",
+        "observedAt": "2026-11-20T02:29:51.682749+00:00",
+        "disposition": "Candidate5f28105ac374be8f9643fb3188ff71b93d51a5d7 fixes the missing buildifier_prebuilt license manifest entry. Canonical225-entry license check44659989770, ARM tests44660010646 and actual caller44660018627 pass; two independent reviews found no issues. Full make lint/lint-cc were not rerun. Publicfb4513fe remains unchanged; the existing exact amendment and specific-reply approval question is pending.",
+        "nextAction": "Await the existing exact amendment/reply decision once, preserving current public source and qualified evidence. Publish only the approved candidate/reply; no repeated question or proposal frame.",
+        "recheckCondition": "Existing amendment/reply answer, substantive source/review change, or relevant qualification failure.",
         "delivery": {
           "source": "fb4513fe56a2a8fb94fbd6da8d6c61c827dc5688",
           "approvedSource": "f2afd9bb79190ea304d402f1063810a286c1fe2e",
@@ -99952,11 +99959,16 @@
             "file": "formatter-supplier-firstpass-1935-admission.json",
             "sha256": "bf1d87f5bfb405ba924960043ecd7ecf811012e7b213f624f389bf15ba5186a8"
           }
-        }
+        },
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/44659989770",
+          "https://github.com/tamird/gvisor/actions/runs/44660010646",
+          "https://github.com/tamird/gvisor/actions/runs/44660018627"
+        ]
       },
-      "summary": "Delivered approved supplier step: exact certifiedheadfb451, onecommit/threefiles, mergeable; DCO andallnativechecks includinggenerate pass. Automatic reviewrequestsriverafernando/parth-opensrc present. FirstPass1935 remains pre-agent30-day360000compute-minute quota failure.",
-      "nextStep": "Await existing maintainer review and actual Buildkite admission recovery; native validation is complete. Consume substantive new feedback without duplicate reviewer notifications or blind CI retries.",
-      "recheckCondition": "Human review, head/import/mergeability change or actual provider admission recovery."
+      "summary": "Candidate5f28105ac374be8f9643fb3188ff71b93d51a5d7 fixes the missing buildifier_prebuilt license manifest entry. Canonical225-entry license check44659989770, ARM tests44660010646 and actual caller44660018627 pass; two independent reviews found no issues. Full make lint/lint-cc were not rerun. Publicfb4513fe remains unchanged; the existing exact amendment and specific-reply approval question is pending.",
+      "nextStep": "Await the existing exact amendment/reply decision once, preserving current public source and qualified evidence. Publish only the approved candidate/reply; no repeated question or proposal frame.",
+      "recheckCondition": "Existing amendment/reply answer, substantive source/review change, or relevant qualification failure."
     },
     {
       "id": "branch:python-strict-typechecking",
@@ -135583,5 +135595,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T02:14:48.077247+00:00"
+  "updatedAt": "2026-11-20T02:29:51.682749+00:00"
 }
