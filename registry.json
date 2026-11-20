@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T15:36:10.284882+00:00",
+    "updatedAt": "2026-11-20T15:52:49.020424+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3884,8 +3884,8 @@
       "title": "Stage only the current Python release archives",
       "url": "https://github.com/google/gvisor/pull/16766",
       "status": "open",
-      "updatedAt": "2026-11-19T08:08:23.633439+00:00",
-      "summary": "Published the approved amendment: successive Python releases replace older gVisor archives while preserving unrelated packages and files from a previous successful build. Keep the release function brace-bodied. The build runs in a private project copy; its cd and cleanup are scoped so the all path still uploads from the caller’s relative staging directory. Four builds, failure cleanup, and the upload arguments passed. GitHub binds Carzh’s November 4 approval to the current one-commit submission. Its base and tree match the prior submission. Copybara opened #17222 for this exact revision.",
+      "updatedAt": "2026-11-20T15:52:49.020424+00:00",
+      "summary": "Current0cba97076a190364b6d941135b167263f01f74ba is OPEN/MERGEABLE/REVIEW_REQUIRED. Carzh explicitly says no contributor action is needed; internal approval/re-import remains his coordination, and the earlier removal request is implemented/resolved. First Pass1863 has three compiler/build deadlines while compiling protobuf/grpc/LLVM; no Python-release assertion or attributable source failure is established.",
       "evidence": [
         {
           "label": "Remote verification for the submitted change",
@@ -3984,9 +3984,9 @@
         "owner": "root",
         "sourceHead": "0cba97076a190364b6d941135b167263f01f74ba",
         "providerHead": "04df6c244952232769db6b4123555354f9873e9b",
-        "observedAt": "2026-11-13T02:20:39+00:00",
-        "disposition": "Footer-only DCO metadata is published and green; technical source/import obligations remain. Preserve carzh’s explicit no-code-action-needed import/internal-approval coordination; no source-code rewrite inferred.",
-        "nextAction": "Root owns the three compiler job deadlines and investigates their actual producer/setup cost through existing permanent qualification mechanisms. Preserve carzh import/internal-approval coordination and the explicit no-code-action-needed note; no Python regression or import completion is inferred.",
+        "observedAt": "2026-11-20T15:52:49.020424+00:00",
+        "disposition": "Current 0cba97076a190364b6d941135b167263f01f74ba is OPEN/MERGEABLE/REVIEW_REQUIRED. Carzh explicitly says no contributor action is needed; internal approval/re-import remains his coordination, and the earlier removal request is implemented/resolved. First Pass 1863 has three compiler/build deadlines while compiling protobuf/grpc/LLVM; no Python-release assertion or attributable source failure is established.",
+        "nextAction": "Root continues the existing compiler/setup-cost investigation and watches Carzh’s internal approval/re-import. Preserve the explicit no-code-action note and source-specific CI history; do not rerun or rewrite the Python release change because of this feedback audit.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16766#issuecomment-6840823106",
           "https://github.com/google/gvisor/pull/16766",
@@ -3996,8 +3996,8 @@
           "https://github.com/google/gvisor/pull/16766#issuecomment-6807082318",
           "https://github.com/gvisor/gvisor/pull/17590"
         ],
-        "recheckCondition": "Current-head CI terminal/change, substantive technical feedback, source/import lifecycle change or an already-pending source-review decision; root remains accountable.",
-        "curatedAt": "2026-11-19T08:08:23.633439+00:00",
+        "recheckCondition": "Actual compiler/setup evidence, current-head CI or importing-maintainer disposition changes.",
+        "curatedAt": "2026-11-20T15:52:49.020424+00:00",
         "priorImportNextAction": "Await the re-import and internal approval. DCO import coordination: Root coordinates #17590 at 7d4bf516f07f. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17590,
@@ -4107,7 +4107,9 @@
             "head": "f4b8a6bd29b925f81da349195f6a14ddb2a8714c"
           }
         }
-      }
+      },
+      "nextStep": "Root continues the existing compiler/setup-cost investigation and watches Carzh’s internal approval/re-import. Preserve the explicit no-code-action note and source-specific CI history; do not rerun or rewrite the Python release change because of this feedback audit.",
+      "recheckCondition": "Actual compiler/setup evidence, current-head CI or importing-maintainer disposition changes."
     },
     {
       "id": "branch:bazel-clang-tidy-llvm",
@@ -64902,8 +64904,8 @@
       "url": "https://github.com/google/gvisor/pull/16804",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:48.755399+00:00",
-      "summary": "Importing gVisor into an external Bazel project failed because gVisor tried to configure a Linux header extension that only its own root patches. After rebasing on LLVM 0.8.26, the same consumer read the 6.18.33 header map without inheriting gVisor’s default. Building with gVisor as the root selected Linux 6.18. A local Bazel 9.3.1 consumer of #17641 (5b433add4, llvm 0.8.27) still failed to read the header map: “Only the root module may configure the default Linux headers version”. With only this PR’s MODULE.bazel change applied, the same query passed. With no consumer selection the generated default was None; with the consumer selecting 6.12 the map resolved it to 6.12.91. The external AF_XDP build also needed gVisor’s Go overrides scoped to the root (#17555). With both changes, released Gazelle 0.51.3 loaded the target and Clang compiled it using the consumer’s Linux 6.12.91 headers.",
+      "updatedAt": "2026-11-20T15:52:49.020424+00:00",
+      "summary": "Current c4ba49a4cca1db20a8914c2f2ea29c3b94b615ed is OPEN/MERGEABLE/REVIEW_REQUIRED. Ryan’s earlier approval was dismissed, and Ryan (relkochta) is already requested alongside parth-opensrc and zkoopmans; dismissal itself notified him. Exact source changes retain the reviewed nine MODULE lines with contextual/toolchain-message and same-tree DCO updates. First Pass1492 failure retains its historical36,000-minute daily-quota attribution; this is not evidence of the later rolling30-day limit or a new source request.",
       "evidence": [
         {
           "label": "Downstream C controls isolate the vDSO and ARM platform package imports",
@@ -64990,9 +64992,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "c4ba49a4cca1db20a8914c2f2ea29c3b94b615ed",
-        "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "The rebased source is mergeable. Ryan approved the same nine added and removed lines at b01b6c0c7. Copybara’s open #17420 still exports that older commit and conflicts with master.",
-        "nextAction": "Watch for reapproval of df7f8f67a and an import that includes it. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source c4ba49a4cca1db20a8914c2f2ea29c3b94b615ed; observed 2026-11-17T19:29:29.454062+00:00): build 1492 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller. Job metadata still includes pending outcomes; this is a classification of the latest failed attempts, not a claim that every job has terminated.",
+        "observedAt": "2026-11-20T15:52:49.020424+00:00",
+        "disposition": "Current c4ba49a4cca1db20a8914c2f2ea29c3b94b615ed is OPEN/MERGEABLE/REVIEW_REQUIRED. Ryan’s earlier approval was dismissed, and Ryan (relkochta) is already requested alongside parth-opensrc and zkoopmans; dismissal itself notified him. Exact source changes retain the reviewed nine MODULE lines with contextual/toolchain-message and same-tree DCO updates. First Pass 1492 failure retains its historical 36,000-minute daily-quota attribution; this is not evidence of the later rolling 30-day limit or a new source request.",
+        "nextAction": "Follow Ryan’s existing requested review and import of exact c4ba49a4, with 1492 admission/CI tracked separately. Replace the stale df7f next-action binding; no duplicate notification or new contributor decision.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/df7f8f67a",
           "https://github.com/google/gvisor/pull/16804",
@@ -65005,7 +65007,8 @@
           "https://buildkite.com/gvisor/first-pass/builds/1492#01a1ead5-b9a2-4491-9972-11c2b21474d1"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+        "recheckCondition": "Substantive requested-review/import response or exact-head CI/admission change.",
+        "curatedAt": "2026-11-20T15:52:49.020424+00:00"
       },
       "links": [
         {
@@ -65045,7 +65048,9 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
-      }
+      },
+      "nextStep": "Follow Ryan’s existing requested review and import of exact c4ba49a4, with1492 admission/CI tracked separately. Replace the stale df7f next-action binding; no duplicate notification or new contributor decision.",
+      "recheckCondition": "Substantive requested-review/import response or exact-head CI/admission change."
     },
     {
       "id": "pr:bazelbuild/bazel-central-registry:11518",
@@ -73251,9 +73256,9 @@
       "title": "Format trailing commas consistently",
       "url": "https://github.com/bazel-contrib/buildtools/pull/1527",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-11-06T06:07:33.401634Z",
-      "summary": "Tamir asked Fabian whether Buildifier can preserve a trailing comma after **kwargs so the closing parenthesis can go on its own line. The PR is waiting for a response on that formatting policy.",
+      "status": "merged",
+      "updatedAt": "2026-11-20T15:52:49.020424+00:00",
+      "summary": "Exact dae95786d45322bf0dba3c7e69936d01f1ea26c5 was approved and merged on2026-11-15T21:01:13Z as9361c679a7b3f341be2fd7421f04774e4b054075. The generic-empty-def finding was addressed by Tamir’s reply and the final source/tests. Later kwargs-policy discussion is historical, not a current delivery blocker or pending contributor question.",
       "evidence": [
         {
           "label": "Question about the last argument",
@@ -73277,7 +73282,22 @@
           "at": "2026-11-05T23:47:57Z",
           "url": "https://github.com/bazel-contrib/buildtools/pull/1527#issuecomment-6672580185"
         }
-      ]
+      ],
+      "nextStep": "Delivery complete. Preserve merged source/review history; no new source fix, policy-response request or outreach.",
+      "recheckCondition": "A separately evidenced post-merge regression or adoption issue.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "dae95786d45322bf0dba3c7e69936d01f1ea26c5",
+        "disposition": "Exact dae95786d45322bf0dba3c7e69936d01f1ea26c5 was approved and merged on 2026-11-15T21:01:13Z as 9361c679a7b3f341be2fd7421f04774e4b054075. The generic-empty-def finding was addressed by Tamir’s reply and the final source/tests. Later kwargs-policy discussion is historical, not a current delivery blocker or pending contributor question.",
+        "nextAction": "Delivery complete. Preserve merged source/review history; no new source fix, policy-response request or outreach.",
+        "recheckCondition": "A separately evidenced post-merge regression or adoption issue.",
+        "observedAt": "2026-11-20T15:52:49.020424+00:00",
+        "curatedAt": "2026-11-20T15:52:49.020424+00:00",
+        "evidence": [
+          "https://github.com/bazel-contrib/buildtools/pull/1527",
+          "https://github.com/bazel-contrib/buildtools/pull/1527#issuecomment-6445314614"
+        ]
+      }
     },
     {
       "id": "pr:17060",
@@ -83478,7 +83498,7 @@
       "url": "https://github.com/tamird/gvisor/commit/122b98abd",
       "group": "tests",
       "status": "Published",
-      "summary": "Authorized patch-equivalent current-tip refresh is delivered to public17336 and its original fork branch at daa14d03eb6e7fc312496fb740bdae0a00a02312. Exact old-head lease, native MERGEABLE and DCO success are verified; rebase comment7043294523 is posted and read back. The old b29 provenance obligation is complete, with no current source-decision question. Lint, Gazelle and file headers pass; Go44762536771 remains under the existing native watch. First Pass2080 has one Pipeline upload exit80 with empty logs before tests, cause unproven. Auto-merge was null before and after; existing two reviewer requests are preserved and no extra outreach occurred.",
+      "summary": "Authorized equivalent rebase daa14d03eb6e7fc312496fb740bdae0a00a02312 is delivered on public17336 and its fork branch, OPEN/MERGEABLE/BLOCKED with DCO success. All current GitHub Go, lint, Gazelle, file-header and label checks pass; build/push are intentionally skipped. First Pass2080 remains an upload-only exit80 before tests with empty logs and unknown cause, separate from17816’s2076. Rebase comment7043294523 is posted, two existing review requests remain and auto-merge is null; no new disablement or outreach is inferred. Old b29 authorization/provenance work is complete.",
       "evidence": [
         {
           "label": "All ten cases on a pidfs-capable worker",
@@ -83553,7 +83573,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42438330780/artifacts/13600169275"
         }
       ],
-      "updatedAt": "2026-11-20T15:36:10.284882+00:00",
+      "updatedAt": "2026-11-20T15:52:49.020424+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -83612,11 +83632,11 @@
         }
       },
       "followup": {
-        "owner": "buildifier_license_fix",
+        "owner": "root",
         "sourceHead": "daa14d03eb6e7fc312496fb740bdae0a00a02312",
-        "observedAt": "2026-11-20T15:36:10.284882+00:00",
-        "disposition": "Authorized patch-equivalent current-tip refresh is delivered to public17336 and its original fork branch at daa14d03eb6e7fc312496fb740bdae0a00a02312. Exact old-head lease, native MERGEABLE and DCO success are verified; rebase comment7043294523 is posted and read back. The old b29 provenance obligation is complete, with no current source-decision question. Lint, Gazelle and file headers pass; Go44762536771 remains under the existing native watch. First Pass2080 has one Pipeline upload exit80 with empty logs before tests, cause unproven. Auto-merge was null before and after; existing two reviewer requests are preserved and no extra outreach occurred.",
-        "nextAction": "buildifier_license_fix follows exact daa GitHub generation and First Pass2080 upload diagnosis; root follows existing maintainer review. Preserve retained equivalent-source qualification; no new source approval, manual DCO, duplicate rebase comment or merge action.",
+        "observedAt": "2026-11-20T15:52:49.020424+00:00",
+        "disposition": "Authorized equivalent rebase daa14d03eb6e7fc312496fb740bdae0a00a02312 is delivered on public #17336 and its fork branch, OPEN/MERGEABLE/BLOCKED with DCO success. All current GitHub Go, lint, Gazelle, file-header and label checks pass; build/push are intentionally skipped. First Pass 2080 remains an upload-only exit80 before tests with empty logs and unknown cause, separate from #17816’s 2076. Rebase comment 7043294523 is posted, two existing review requests remain and auto-merge is null; no new disablement or outreach is inferred. Old b29 authorization/provenance work is complete.",
+        "nextAction": "Root follows exact-source First Pass admission evidence and existing reviewer/import disposition; preserve the equivalent-source evidence and current DCO. No source churn, repeated comment/review request or agent merge action.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42899668212/artifacts/13801594393",
           "https://github.com/tamird/gvisor/actions/runs/42897501213/artifacts/13800339730",
@@ -83632,7 +83652,7 @@
           "https://github.com/gvisor/gvisor/pull/17336#issuecomment-7043294523",
           "https://buildkite.com/gvisor/first-pass/builds/2080"
         ],
-        "recheckCondition": "Exact-head CI/provider evidence or substantive reviewer/source change.",
+        "recheckCondition": "Provider admission diagnostics/current checks or substantive reviewer/source change.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "MERGEABLE",
         "qualificationHistory": [
@@ -83657,7 +83677,7 @@
             "sourceBase": "1f33fe3003455db178b97f3b43d3a012f1611994"
           }
         },
-        "curatedAt": "2026-11-20T15:36:10.284882+00:00"
+        "curatedAt": "2026-11-20T15:52:49.020424+00:00"
       },
       "inactive": true,
       "dcoAmendment": {
@@ -83674,8 +83694,8 @@
           "https://github.com/tamird/gvisor/commit/237c2c5e246394424eaac57437305cdc22d62fbe"
         ]
       },
-      "nextStep": "buildifier_license_fix follows exact daa GitHub generation and First Pass2080 upload diagnosis; root follows existing maintainer review. Preserve retained equivalent-source qualification; no new source approval, manual DCO, duplicate rebase comment or merge action.",
-      "recheckCondition": "Exact-head CI/provider evidence or substantive reviewer/source change."
+      "nextStep": "Root follows exact-source First Pass admission evidence and existing reviewer/import disposition; preserve the equivalent-source evidence and current DCO. No source churn, repeated comment/review request or agent merge action.",
+      "recheckCondition": "Provider admission diagnostics/current checks or substantive reviewer/source change."
     },
     {
       "id": "branch:netgofer-shutdown-test",
@@ -135001,10 +135021,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T14:37:40.197555+00:00",
-      "summary": "User holds sensitive namespace/ID-map/mount-attribute investigation until actual confirmed Daybreak availability; expected tomorrow is not enablement. Root retains owner/evidence, with no new experiments. Independently owned baseline failures are not universal prerequisites for unrelated patches. Root is reconciling original request/approval provenance for exact compdb 6a9fd82e3ba076ce8dc82d6990af45135e5e404c, counter oracle 8c5ce1e2b4ca0d53d2face2afa95f556831d2ac3, Node producer 8bc43bbbd15e967ac7327c5c89ed356b14bfa03a and the unposted migration issue draft. Existing qualification and publication boundaries remain; handoff assertions alone do not establish pending user decisions, approvals or refusals. Held Python checker/reader 830/dae remain held; non-sensitive authorized delivery continues independently.",
-      "nextStep": "Root verifies exact original request/approval provenance and completes already-authorized non-sensitive lifecycle steps without re-asking or assuming approval. Recheck the sensitive investigation only on confirmed Daybreak availability. Preserve all existing evidence, source/reply boundaries, hardware/performance limits and the narrow Python holds.",
-      "recheckCondition": "Confirmed Daybreak availability for the held scope; otherwise actual non-sensitive publication/CI/review/dependency changes or answers to existing source decisions.",
+      "updatedAt": "2026-11-20T15:57:44.777329+00:00",
+      "summary": "Compdb candidate04d67f624fad24ce7b27f5d93a2d2f90cfef3da4 preserves the original12-file scope on7397. tcp_benchmark_final_correctness is running actual maintained //tools:devcontainer-init.sh through the existing workflow/projection44766733189; this is an agent validation gap, not a user decision. Older44622300025 caller_both evidence exists, but no current minimal-source/configuration equivalence binding is established, so a fresh caller check is justified. Public source review comes only after that gap closes. Private migration-issue labels/time boundaries were updated without a new user question or public draft-body copy. Sensitive namespace/ID-map/mount investigation remains held until confirmed Daybreak; independent baseline failures are not universal prerequisites. Narrow Python holds and all real publication boundaries remain.",
+      "nextStep": "tcp_benchmark_final_correctness audits the current actual devcontainer caller and closes any responsible integration defect; root reviews the resulting qualified source before publication. Preserve narrow checker/reader holds and existing performance/hardware obligations. Root owns the private migration proposal and its actual publication boundary.",
+      "recheckCondition": "Audited current caller/source readiness, confirmed Daybreak availability or substantive existing publication/review/CI change.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135479,12 +135499,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T15:15:34.980085+00:00",
-        "nextAction": "Root verifies exact original request/approval provenance and completes already-authorized non-sensitive lifecycle steps without re-asking or assuming approval. Recheck the sensitive investigation only on confirmed Daybreak availability. Preserve all existing evidence, source/reply boundaries, hardware/performance limits and the narrow Python holds.",
-        "recheckCondition": "Confirmed Daybreak availability for the held scope; otherwise actual non-sensitive publication/CI/review/dependency changes or answers to existing source decisions.",
+        "curatedAt": "2026-11-20T15:57:44.777329+00:00",
+        "nextAction": "tcp_benchmark_final_correctness audits the current actual devcontainer caller and closes any responsible integration defect; root reviews the resulting qualified source before publication. Preserve narrow checker/reader holds and existing performance/hardware obligations. Root owns the private migration proposal and its actual publication boundary.",
+        "recheckCondition": "The current caller gate and exact-source artifact audit, actual new feedback, or confirmed Daybreak availability for the separately held sensitive work.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "User holds sensitive namespace/ID-map/mount-attribute investigation until actual confirmed Daybreak availability; expected tomorrow is not enablement. Root retains owner/evidence, with no new experiments. Independently owned baseline failures are not universal prerequisites for unrelated patches. Root is reconciling original request/approval provenance for exact compdb 6a9fd82e3ba076ce8dc82d6990af45135e5e404c, counter oracle 8c5ce1e2b4ca0d53d2face2afa95f556831d2ac3, Node producer 8bc43bbbd15e967ac7327c5c89ed356b14bfa03a and the unposted migration issue draft. Existing qualification and publication boundaries remain; handoff assertions alone do not establish pending user decisions, approvals or refusals. Held Python checker/reader 830/dae remain held; non-sensitive authorized delivery continues independently.",
+        "disposition": "Current compilation-database candidate 04d67f624fad24ce7b27f5d93a2d2f90cfef3da4 contains the original twelve-file scope on 7397. The actual maintained devcontainer-init caller is being checked in 44766733189 by tcp_benchmark_final_correctness. Older caller_both evidence 44622300025 exists, but its source/configuration equivalence to the current minimal candidate is not established. This is an agent validation obligation, not an unanswered contributor decision. The private migration-issue draft is being fact-checked; no actual new issue-publication question exists. Sensitive namespace/ID-map work remains held by the user until confirmed Daybreak availability; independent baseline failures do not block unrelated patches.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135696,7 +135716,8 @@
             "file": "node-worker-runtime-inventory-44588576355-evidence.json",
             "sha256": "4f34260222d0ed9f5f245edc726d99328889d952a6b6ba4dfe7d42142af6876b"
           }
-        }
+        },
+        "observedAt": "2026-11-20T15:57:44.777329+00:00"
       },
       "executionHistory": [
         {
@@ -135893,5 +135914,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T15:36:10.284882+00:00"
+  "updatedAt": "2026-11-20T15:52:49.020424+00:00"
 }

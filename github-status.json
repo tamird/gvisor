@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-20T15:54:04.733842+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-20T15:36:10.284882+00:00",
+  "registryDate": "2026-11-20T15:52:49.020424+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -451774,8 +451774,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "0cba97076a190364b6d941135b167263f01f74ba",
-        "disposition": "Footer-only DCO metadata is published and green; technical source/import obligations remain. Preserve carzh’s explicit no-code-action-needed import/internal-approval coordination; no source-code rewrite inferred.",
-        "nextAction": "Root owns the three compiler job deadlines and investigates their actual producer/setup cost through existing permanent qualification mechanisms. Preserve carzh import/internal-approval coordination and the explicit no-code-action-needed note; no Python regression or import completion is inferred."
+        "disposition": "Current 0cba97076a190364b6d941135b167263f01f74ba is OPEN/MERGEABLE/REVIEW_REQUIRED. Carzh explicitly says no contributor action is needed; internal approval/re-import remains his coordination, and the earlier removal request is implemented/resolved. First Pass 1863 has three compiler/build deadlines while compiling protobuf/grpc/LLVM; no Python-release assertion or attributable source failure is established.",
+        "nextAction": "Root continues the existing compiler/setup-cost investigation and watches Carzh’s internal approval/re-import. Preserve the explicit no-code-action note and source-specific CI history; do not rerun or rewrite the Python release change because of this feedback audit."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN0PgSGw"
@@ -452107,8 +452107,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "c4ba49a4cca1db20a8914c2f2ea29c3b94b615ed",
-        "disposition": "The rebased source is mergeable. Ryan approved the same nine added and removed lines at b01b6c0c7. Copybara’s open #17420 still exports that older commit and conflicts with master.",
-        "nextAction": "Watch for reapproval of df7f8f67a and an import that includes it. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source c4ba49a4cca1db20a8914c2f2ea29c3b94b615ed; observed 2026-11-17T19:29:29.454062+00:00): build 1492 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller. Job metadata still includes pending outcomes; this is a classification of the latest failed attempts, not a claim that every job has terminated."
+        "disposition": "Current c4ba49a4cca1db20a8914c2f2ea29c3b94b615ed is OPEN/MERGEABLE/REVIEW_REQUIRED. Ryan’s earlier approval was dismissed, and Ryan (relkochta) is already requested alongside parth-opensrc and zkoopmans; dismissal itself notified him. Exact source changes retain the reviewed nine MODULE lines with contextual/toolchain-message and same-tree DCO updates. First Pass 1492 failure retains its historical 36,000-minute daily-quota attribution; this is not evidence of the later rolling 30-day limit or a new source request.",
+        "nextAction": "Follow Ryan’s existing requested review and import of exact c4ba49a4, with 1492 admission/CI tracked separately. Replace the stale df7f next-action binding; no duplicate notification or new contributor decision."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyHWCg"
@@ -456187,10 +456187,10 @@
         }
       ],
       "recordedFollowup": {
-        "owner": "buildifier_license_fix",
+        "owner": "root",
         "sourceHead": "daa14d03eb6e7fc312496fb740bdae0a00a02312",
-        "disposition": "Authorized patch-equivalent current-tip refresh is delivered to public17336 and its original fork branch at daa14d03eb6e7fc312496fb740bdae0a00a02312. Exact old-head lease, native MERGEABLE and DCO success are verified; rebase comment7043294523 is posted and read back. The old b29 provenance obligation is complete, with no current source-decision question. Lint, Gazelle and file headers pass; Go44762536771 remains under the existing native watch. First Pass2080 has one Pipeline upload exit80 with empty logs before tests, cause unproven. Auto-merge was null before and after; existing two reviewer requests are preserved and no extra outreach occurred.",
-        "nextAction": "buildifier_license_fix follows exact daa GitHub generation and First Pass2080 upload diagnosis; root follows existing maintainer review. Preserve retained equivalent-source qualification; no new source approval, manual DCO, duplicate rebase comment or merge action."
+        "disposition": "Authorized equivalent rebase daa14d03eb6e7fc312496fb740bdae0a00a02312 is delivered on public #17336 and its fork branch, OPEN/MERGEABLE/BLOCKED with DCO success. All current GitHub Go, lint, Gazelle, file-header and label checks pass; build/push are intentionally skipped. First Pass 2080 remains an upload-only exit80 before tests with empty logs and unknown cause, separate from #17816’s 2076. Rebase comment 7043294523 is posted, two existing review requests remain and auto-merge is null; no new disablement or outreach is inferred. Old b29 authorization/provenance work is complete.",
+        "nextAction": "Root follows exact-source First Pass admission evidence and existing reviewer/import disposition; preserve the equivalent-source evidence and current DCO. No source churn, repeated comment/review request or agent merge action."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN2YEcGg"
@@ -463786,7 +463786,7 @@
         "since": "2026-11-20T15:36:10.284882+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:36:10.284882+00:00"
+        "observedAt": "2026-11-20T15:52:49.020424+00:00"
       }
     },
     "pr:17191": {
@@ -465775,7 +465775,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:36:10.284882+00:00"
+        "observedAt": "2026-11-20T15:52:49.020424+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -465784,7 +465784,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:36:10.284882+00:00"
+        "observedAt": "2026-11-20T15:52:49.020424+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -465793,7 +465793,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:36:10.284882+00:00"
+        "observedAt": "2026-11-20T15:52:49.020424+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -465802,7 +465802,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:36:10.284882+00:00"
+        "observedAt": "2026-11-20T15:52:49.020424+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -465811,7 +465811,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:36:10.284882+00:00"
+        "observedAt": "2026-11-20T15:52:49.020424+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -465820,7 +465820,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:36:10.284882+00:00"
+        "observedAt": "2026-11-20T15:52:49.020424+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -465829,7 +465829,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T15:36:10.284882+00:00"
+        "observedAt": "2026-11-20T15:52:49.020424+00:00"
       }
     }
   },
