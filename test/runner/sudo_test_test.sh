@@ -44,3 +44,40 @@ for result in 0 7 143; do
   [[ "$(stat -c %u "$outside")" == 0 ]]
   [[ -L "$outputs/link" ]]
 done
+
+for invalid in / // /./ ////././ /tmp/../; do
+  for variable in XML_OUTPUT_FILE TEST_UNDECLARED_OUTPUTS_DIR; do
+    set +e
+    env "$variable=$invalid" "$helper" touch "$scratch/invalid-ran"
+    actual=$?
+    set -e
+    [[ "$actual" == 1 && ! -e "$scratch/invalid-ran" ]]
+  done
+done
+
+mkfifo "$scratch/ready" "$scratch/signalled" "$scratch/release" "$scratch/block"
+XML_OUTPUT_FILE="$scratch/signal.xml" TEST_UNDECLARED_OUTPUTS_DIR="$scratch/signal.outputs" \
+  "$helper" bash -c '
+    umask 077
+    mkdir -p "$TEST_UNDECLARED_OUTPUTS_DIR/private"
+    trap '\''
+      echo signalled > "$1/signalled"
+      read -r release < "$1/release"
+      touch "$TEST_UNDECLARED_OUTPUTS_DIR/private/after-signal"
+      exit 143
+    '\'' TERM
+    echo ready > "$1/ready"
+    read -r block < "$1/block"
+  ' _ "$scratch" &
+wrapper=$!
+read -r ready < "$scratch/ready"
+kill -TERM "$wrapper"
+read -r signalled < "$scratch/signalled"
+kill -0 "$wrapper"
+echo release > "$scratch/release"
+set +e
+wait "$wrapper"
+actual=$?
+set -e
+[[ "$actual" == 143 ]]
+[[ "$(stat -c %u "$scratch/signal.outputs/private/after-signal")" == "$(id -u)" ]]
