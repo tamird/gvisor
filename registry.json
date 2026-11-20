@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T18:31:31.140104+00:00",
+    "updatedAt": "2026-11-20T19:01:59.833649+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -24,7 +24,8 @@
       "bazel-contrib/buildtools": "none",
       "fmeum/with_cfg.bzl": "none",
       "bazelbuild/bazel-skylib": "none",
-      "keith/buildifier-prebuilt": "none"
+      "keith/buildifier-prebuilt": "none",
+      "kiron1/bazel-compile-commands": "none"
     },
     "registeredOnlyRepositories": [
       "nodejs/node",
@@ -40,7 +41,8 @@
       "bazel-contrib/buildtools",
       "fmeum/with_cfg.bzl",
       "bazelbuild/bazel-skylib",
-      "keith/buildifier-prebuilt"
+      "keith/buildifier-prebuilt",
+      "kiron1/bazel-compile-commands"
     ],
     "registryDate": "2026-11-01",
     "branchCleanup": {
@@ -135113,9 +135115,9 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T18:31:31.140104+00:00",
+      "updatedAt": "2026-11-20T19:01:59.833649+00:00",
       "summary": "Compdb candidate04d67f624fad24ce7b27f5d93a2d2f90cfef3da4 preserves the original12-file scope on7397. tcp_benchmark_final_correctness is running actual maintained //tools:devcontainer-init.sh through the existing workflow/projection44766733189; this is an agent validation gap, not a user decision. Older44622300025 caller_both evidence exists, but no current minimal-source/configuration equivalence binding is established, so a fresh caller check is justified. Public source review comes only after that gap closes. Private migration-issue labels/time boundaries were updated without a new user question or public draft-body copy. Sensitive namespace/ID-map/mount investigation remains held until confirmed Daybreak; independent baseline failures are not universal prerequisites. Narrow Python holds and all real publication boundaries remain.",
-      "nextStep": "Root researches the existing cache/CI mechanisms and prepares a proposed issue rewrite without public edits. compdb_final_correctness closes the supplier native Windows fixture and actual Linux/style evidence; tcp_benchmark_final_correctness retains shared-helper caller obligations behind fixed supplier availability.",
+      "nextStep": "Root follows the existing supplier-publication question and user direction on the proposed issue rewrite. tcp_benchmark_final_correctness retains the gVisor shared-helper actual-caller/boundary obligations after an available validated fixed supplier; no repeated questions or public draft edits.",
       "recheckCondition": "Audited current caller/source readiness, confirmed Daybreak availability or substantive existing publication/review/CI change.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
@@ -135591,12 +135593,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T18:31:31.140104+00:00",
-        "nextAction": "Root researches the existing cache/CI mechanisms and prepares a proposed issue rewrite without public edits. compdb_final_correctness closes the supplier native Windows fixture and actual Linux/style evidence; tcp_benchmark_final_correctness retains shared-helper caller obligations behind fixed supplier availability.",
-        "recheckCondition": "Completed current-CI research, actual corrected Windows/Linux supplier artifacts or an available validated supplier fix.",
+        "curatedAt": "2026-11-20T19:01:59.833649+00:00",
+        "nextAction": "Root follows the existing supplier-publication question and user direction on the proposed issue rewrite. tcp_benchmark_final_correctness retains the gVisor shared-helper actual-caller/boundary obligations after an available validated fixed supplier; no repeated questions or public draft edits.",
+        "recheckCondition": "An actual supplier-question answer, available fixed release/artifact, user direction on the issue rewrite, or exact-source caller evidence.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Current priority is the user-requested precise CI/cache research and proposed rewrite of delivered issue17832. The gVisor shared-shell revision remains changes requested with actual callers held on the unfixed pinned0.21 supplier. Supplier55 extends explicit stderr handling to both info and aquery; Linux/style44790721670 is pending actual audit. Earlier native Windows44789959650 failed in0.2seconds and is under fixture diagnosis with cache preserved; corrected Windows validation is pending. No supplier/gVisor publication question, Windows qualification or RBE improvement claim is inferred.",
+        "disposition": "The user-requested current-CI/cache research and proposed17832 rewrite is delivered as a private draft; the public issue and comments remain unchanged while awaiting user direction on that draft. The shared-shell gVisor source remains changes requested, and actual callers remain held on released0.21 artifacts without the pipe fix. Supplier55 now has complete Linux/style, three actual Windows cases and final independent acceptance; its genuine existing supplier-publication question is tracked separately in investigation:bazel-compile-commands-pipes. No gVisor publication question is pending. Preserve all archive, Debian-payload, twenty-two CI projection paths and macOS15.5/runtime limits.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135809,7 +135811,7 @@
             "sha256": "4f34260222d0ed9f5f245edc726d99328889d952a6b6ba4dfe7d42142af6876b"
           }
         },
-        "observedAt": "2026-11-20T18:31:31.140104+00:00",
+        "observedAt": "2026-11-20T19:01:59.833649+00:00",
         "implementationOwner": "tcp_benchmark_final_correctness"
       },
       "executionHistory": [
@@ -136020,7 +136022,47 @@
           "note": "The actual user response requested a revision: one shared shell entrypoint replacing gen_compile_commands.py, owning-code comments, removal of documentation endorsement language, an audit of Debian payload extraction, and meaningful production-boundary tests. New standalone-PR review must show the full git diff rather than a range-diff. This records the observed settled direction, not an invented user-message timestamp or publication approval."
         }
       ]
+    },
+    {
+      "id": "investigation:bazel-compile-commands-pipes",
+      "repo": "kiron1/bazel-compile-commands",
+      "title": "Preserve Bazel diagnostics without blocked pipes",
+      "status": "active",
+      "group": "bazel",
+      "owner": "root",
+      "technicalOwner": "compdb_final_correctness",
+      "updatedAt": "2026-11-20T19:01:59.833649+00:00",
+      "summary": "The qualified supplier pipe-I/O correction has an actual source-publication question awaiting the user. This is distinct from the changes-requested gVisor shared-shell revision; no supplier PR or approval is inferred.",
+      "findings": [
+        {
+          "text": "All Linux owning/style gates and all three native Windows cases passed, and two final independent reviewers found no blocker. The coordinator’s independent source-tree comparison found only .github/workflows/main.yaml different between test CI7f and intended55; this supports the exact tested-source binding, not new publication authority.",
+          "evidence": [
+            {
+              "label": "Reviewable exact supplier source",
+              "url": "https://github.com/tamird/bazel-compile-commands/commit/55c679b18d864444a9a0a91e1dca57c092470ca5"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Exact supplier source",
+          "url": "https://github.com/tamird/bazel-compile-commands/commit/55c679b18d864444a9a0a91e1dca57c092470ca5"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "55c679b18d864444a9a0a91e1dca57c092470ca5",
+        "baseHead": "3bda0c2bc8b963c691677ce62737c85f4f6ea731",
+        "url": "https://github.com/tamird/bazel-compile-commands/commit/55c679b18d864444a9a0a91e1dca57c092470ca5",
+        "title": "Preserve Bazel diagnostics without blocked pipes",
+        "body": "Open a kiron1/bazel-compile-commands pull request for source55c679b, titled “Preserve Bazel diagnostics without blocked pipes”? The full source diff and commit body are reviewable at the linked commit. Linux owning/style checks and all three native Windows cases passed; two final independent reviews found no blockers.\n\ngit -C ~/code/bazel-compile-commands diff 55c679b^ 55c679b",
+        "summary": "Root confirmed the actual async source-publication question was tool-accepted during the observed18:42–18:44UTC interval on2026-11-20. No exact server request timestamp or question ID is available, so requestedAt is intentionally omitted. No answer or upstream PR is recorded; this question does not approve the gVisor revision."
+      },
+      "nextStep": "Await the existing exact-source supplier-publication question response. Root owns any eventual upstream PR; retain Linux/Windows source-binding evidence and do not repeat the question.",
+      "recheckCondition": "An actual response to this existing question or new exact-source review evidence."
     }
   ],
-  "updatedAt": "2026-11-20T18:31:31.140104+00:00"
+  "updatedAt": "2026-11-20T19:01:59.833649+00:00"
 }
