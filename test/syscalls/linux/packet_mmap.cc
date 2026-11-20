@@ -18,6 +18,7 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <poll.h>
+#include <sched.h>
 #include <signal.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
@@ -549,6 +550,77 @@ TEST(PacketMmapTest, MmapCopy) {
       ASSERT_THAT(received, SyscallFailsWithErrno(EAGAIN));
     }
     hdr->tp_status = TP_STATUS_KERNEL;
+  }
+
+  // Fill the ordinary receive queue without stopping mmap ring consumption.
+  const int receive_buffer = 1024;
+  ASSERT_THAT(setsockopt(mmap_sock.get(), SOL_SOCKET, SO_RCVBUF, &receive_buffer,
+                        sizeof(receive_buffer)),
+              SyscallSucceeds());
+  int actual_receive_buffer = 0;
+  socklen_t receive_buffer_length = sizeof(actual_receive_buffer);
+  ASSERT_THAT(getsockopt(mmap_sock.get(), SOL_SOCKET, SO_RCVBUF,
+                        &actual_receive_buffer, &receive_buffer_length),
+              SyscallSucceeds());
+  constexpr size_t kPackets = 32;
+  ASSERT_LT(actual_receive_buffer, kPackets * kMessage.size());
+  ASSERT_LT(thresholds.size() + kPackets, tp_frame_nr);
+  std::array<bool, kPackets> copy_flags = {};
+  std::array<bool, kPackets> queued = {};
+  std::string observed_flags;
+  size_t copies = 0;
+  for (size_t i = 0; i <= kPackets; ++i) {
+    SCOPED_TRACE(i);
+    if (i == kPackets) {
+      // Drain only after every saturation packet has reached the ring.
+      char buffer[1024];
+      for (size_t j = 0; j <= kPackets; ++j) {
+        const ssize_t received =
+            recv(mmap_sock.get(), buffer, sizeof(buffer), MSG_DONTWAIT);
+        if (received == -1) {
+          ASSERT_EQ(errno, EAGAIN);
+          break;
+        }
+        ASSERT_EQ(received, kMessage.size());
+        const size_t packet = static_cast<unsigned char>(buffer[0]);
+        ASSERT_LT(packet, kPackets);
+        ASSERT_FALSE(queued[packet]);
+        queued[packet] = true;
+        ++copies;
+      }
+      GTEST_LOG_(INFO) << "copy flags=" << observed_flags
+                       << " queued=" << copies
+                       << " receive buffer=" << actual_receive_buffer;
+    }
+
+    std::string message = kMessage;
+    message[0] = static_cast<char>(i);
+    ASSERT_THAT(sendto(mmap_sock.get(), message.data(), message.size(), 0,
+                       reinterpret_cast<const sockaddr*>(&bind_addr),
+                       sizeof(bind_addr)),
+                SyscallSucceedsWithValue(message.size()));
+    auto* hdr = reinterpret_cast<tpacket_hdr*>(
+        static_cast<char*>(ring) + (thresholds.size() + i) * tp_frame_size);
+    const absl::Time deadline = absl::Now() + absl::Seconds(10);
+    while ((__atomic_load_n(&hdr->tp_status, __ATOMIC_ACQUIRE) & TP_STATUS_USER) ==
+           0) {
+      ASSERT_LT(absl::Now(), deadline);
+      sched_yield();
+    }
+    ASSERT_EQ(hdr->tp_len, message.size());
+    ASSERT_LT(hdr->tp_snaplen, hdr->tp_len);
+    if (i < kPackets) {
+      copy_flags[i] = (hdr->tp_status & TP_STATUS_COPY) != 0;
+      observed_flags.push_back(copy_flags[i] ? '1' : '0');
+    } else {
+      char buffer[1024];
+      const ssize_t received =
+          recv(mmap_sock.get(), buffer, sizeof(buffer), MSG_DONTWAIT);
+      GTEST_LOG_(INFO) << "recovered copy flag="
+                       << ((hdr->tp_status & TP_STATUS_COPY) != 0)
+                       << " received=" << received;
+    }
+    __atomic_store_n(&hdr->tp_status, TP_STATUS_KERNEL, __ATOMIC_RELEASE);
   }
 }
 
