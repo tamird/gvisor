@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T04:27:00.375091+00:00",
+    "updatedAt": "2026-11-20T04:49:08.876058+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -134955,10 +134955,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T04:27:00.375091+00:00",
-      "summary": "Packet supported normal/race matrices and actual strict C++376 pass. Final source review accepted one enabled-copy/full-receive-queue syscall coverage gap; native-only observation44674329489 is running, with no new production change or completed-review claim. Optional-affinity resource preflight passes, but128-response audit found two HTTP200pages of46bytes/zero paragraphs versus126pages of4206bytes. Timed A/A is held for producer-contract investigation; no timing cause is established. Partial startup control44673064601 collected zero formal samples because the warmup observer missed Alpine, so it is not a statistical failure. Standard shim-API units and paused handshake remain under test; no caller fallback is accepted. Existing source/issue decisions remain pending.",
-      "nextStep": "Packet owner audits native queue-saturation behavior before closing the final coverage gap. Benchmark owner resolves the actual response-producer contract and observer coverage before any timed samples; shim owner validates standard API/paused handshake. Preserve qualified matrix products and existing worker/publication holds; no repeated questions or proposal frames.",
-      "recheckCondition": "Actual native queue result, verified producer/observer or shim contract evidence, substantive feedback, or an existing publication/worker answer.",
+      "updatedAt": "2026-11-20T04:49:08.876058+00:00",
+      "summary": "Packet final native and Sentry queue-saturation assertions pass; source-bound audit, affected gates and final review remain before delivery. Formatting-only recovery source8b0f9f725587b48a15898bfb755cb2d9458a88af is under qualification44676775283; retained strict C++44676317477 evidence is separate. No production publication or completed-source-review claim. Corrected untimed Node image44676418942 is running. Startup A/A collected eleven complete blocks before an observer race, so no formal performance pass or stability conclusion is established. Existing source/issue publication questions and worker-isolation holds remain unchanged.",
+      "nextStep": "Packet owner audits final source-bound native/Sentry/strict products, closes affected formatting gates and completes final review. Node owner audits untimed producer recovery and startup observer race before formal performance qualification. Preserve already-valid products and all existing publication/worker holds; no new decision frames or duplicate questions.",
+      "recheckCondition": "Audited final packet gates/review readiness, verified untimed producer/observer recovery, substantive feedback, or an existing publication/worker answer.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135216,6 +135216,22 @@
         {
           "label": "Partial startup control:zero formal samples, observer failure",
           "url": "https://github.com/tamird/gvisor/actions/runs/44673064601"
+        },
+        {
+          "label": "Final Sentry assertions passed; source audit remains",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44675375037"
+        },
+        {
+          "label": "Packet formatting-only recovery; result pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44676775283"
+        },
+        {
+          "label": "Retained strict C++ qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44676317477"
+        },
+        {
+          "label": "Corrected untimed Node image; audit pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44676418942"
         }
       ],
       "followup": {
@@ -135237,12 +135253,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T04:27:00.375091+00:00",
-        "nextAction": "Packet owner audits native queue-saturation behavior before closing the final coverage gap. Benchmark owner resolves the actual response-producer contract and observer coverage before any timed samples; shim owner validates standard API/paused handshake. Preserve qualified matrix products and existing worker/publication holds; no repeated questions or proposal frames.",
-        "recheckCondition": "Actual native queue result, verified producer/observer or shim contract evidence, substantive feedback, or an existing publication/worker answer.",
+        "curatedAt": "2026-11-20T04:49:08.876058+00:00",
+        "nextAction": "Packet owner audits final source-bound native/Sentry/strict products, closes affected formatting gates and completes final review. Node owner audits untimed producer recovery and startup observer race before formal performance qualification. Preserve already-valid products and all existing publication/worker holds; no new decision frames or duplicate questions.",
+        "recheckCondition": "Audited final packet gates/review readiness, verified untimed producer/observer recovery, substantive feedback, or an existing publication/worker answer.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Packet supported normal/race matrices and actual strict C++376 pass. Final source review accepted one enabled-copy/full-receive-queue syscall coverage gap; native-only observation44674329489 is running, with no new production change or completed-review claim. Optional-affinity resource preflight passes, but128-response audit found two HTTP200pages of46bytes/zero paragraphs versus126pages of4206bytes. Timed A/A is held for producer-contract investigation; no timing cause is established. Partial startup control44673064601 collected zero formal samples because the warmup observer missed Alpine, so it is not a statistical failure. Standard shim-API units and paused handshake remain under test; no caller fallback is accepted. Existing source/issue decisions remain pending.",
+        "disposition": "Packet final native and Sentry queue-saturation assertions pass; source-bound audit, affected gates and final review remain before delivery. Formatting-only recovery source8b0f9f725587b48a15898bfb755cb2d9458a88af is under qualification44676775283; retained strict C++44676317477 evidence is separate. No production publication or completed-source-review claim. Corrected untimed Node image44676418942 is running. Startup A/A collected eleven complete blocks before an observer race, so no formal performance pass or stability conclusion is established. Existing source/issue publication questions and worker-isolation holds remain unchanged.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135651,5 +135667,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T04:27:00.375091+00:00"
+  "updatedAt": "2026-11-20T04:49:08.876058+00:00"
 }
