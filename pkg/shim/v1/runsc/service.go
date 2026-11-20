@@ -589,9 +589,9 @@ func (s *runscService) Checkpoint(ctx context.Context, r *task.CheckpointTaskReq
 		return nil, err
 	}
 	if err := c.CheckpointSandbox(ctx, &runsccmd.CheckpointOpts{
-		ImagePath: r.Path,
+		ImagePath:    r.Path,
 		LeaveRunning: !options.Exit,
-		WorkPath: options.WorkPath,
+		WorkPath:     options.WorkPath,
 	}); err != nil {
 		return nil, err
 	}

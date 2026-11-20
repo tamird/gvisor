@@ -48,7 +48,7 @@ import (
 
 func TestStandardCheckpointRejectsUnsupportedOptions(t *testing.T) {
 	for _, tc := range []struct {
-		name string
+		name    string
 		options *runctypes.CheckpointOptions
 	}{
 		{"empty namespace", &runctypes.CheckpointOptions{EmptyNamespaces: []string{"network"}}},
@@ -84,10 +84,10 @@ func TestStandardCheckpointRequiresRunningContainer(t *testing.T) {
 
 func TestContainerStartCheckpointDispatch(t *testing.T) {
 	for _, tc := range []struct {
-		name string
+		name       string
 		checkpoint string
-		execID string
-		command string
+		execID     string
+		command    string
 	}{
 		{"ordinary init", "", "", "start"},
 		{"restored init", "/checkpoint with spaces", "", "restore"},

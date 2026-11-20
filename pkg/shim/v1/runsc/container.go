@@ -223,12 +223,12 @@ func NewContainer(ctx context.Context, platform stdio.Platform, conf *ContainerC
 	// Success
 	cu.Release()
 	c := Container{
-		ID:        conf.ID,
-		Bundle:    conf.Bundle,
-		task:      process,
+		ID:               conf.ID,
+		Bundle:           conf.Bundle,
+		task:             process,
 		restoreImagePath: conf.CheckpointPath,
-		cgroup:    cgroupMode,
-		processes: make(map[string]extension.Process),
+		cgroup:           cgroupMode,
+		processes:        make(map[string]extension.Process),
 	}
 	return &c, nil
 }
@@ -308,7 +308,7 @@ func (c *Container) Start(ctx context.Context, r *task.StartRequest) (extension.
 	var startErr error
 	if r.ExecID == "" && c.restoreImagePath != "" {
 		startErr = c.task.Restore(ctx, &extension.RestoreConfig{
-			ImagePath: c.restoreImagePath,
+			ImagePath:  c.restoreImagePath,
 			Background: true,
 		})
 	} else {
