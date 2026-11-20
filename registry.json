@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T10:44:03.219206+00:00",
+    "updatedAt": "2026-11-20T11:05:17.621311+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -134963,10 +134963,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T10:44:03.219206+00:00",
-      "summary": "Final broad shim results pass61XML cases per architecture with zero failures/skips. AMD container975XML has five failure elements (parent plus four TestIDMappedMountFlags variants),13skips and two post-PASS cleanup failures; broad qualification remains open. Owner is fixing TestMountPropagation’s two unmounts and shared conf.RootDir mutation in TestSplitFSCheckpointRestoreOnlyFS, then testing mount_setattr EPERM against unchanged-production-equivalent source before any production correction. Accepted e895 source/component/lint evidence remains valid within its scope. Full ARM container still requires unavailable /dev/kvm, with no incompatible-worker retry. Controlled performance and all existing publication decisions/parent holds remain open.",
-      "nextStep": "Fixture owner closes exact test cleanup defects and establishes unchanged-production-equivalent mount_setattr behavior before deciding whether production needs a fix. Preserve passing shim/component products; only then requalify affected broad gates. Maintain full ARM hardware blocker and required stable-control/performance scope; no new source decision frames or repeated questions.",
-      "recheckCondition": "Actual cleanup/baseline-equivalent mount result and affected broad qualification, verified ARM hardware/host evidence or an existing publication answer.",
+      "updatedAt": "2026-11-20T11:05:17.621311+00:00",
+      "summary": "Audited cleanup44721742575 passes10XML cases with zero skips and complete terminal BEP/source guards. Unchanged-production-equivalent baseline44721745932 reproduces identical mount_setattr0x5c0b EPERM in all four ID-map variants with relevant production blobs matching public4d; accepted checkpoint e895 is not the cause. Ordering prototype44723264523 compiled/executed all four variants, but its new MountSetattr in privileged OpenMountRPC returned EPERM before descriptor transfer, so no ordering repair is established. CI-only namespace-context control44724426175 is live on795f5ca309f84b95151c74d96d8ad86858caec0e, preserving opener namespace for diagnosis and retaining all four/security assertions. No final namespace-policy change, production fix or full retry. Full shim61-case passes and accepted e895 scopes remain valid; full AMD, ARM KVM hardware, performance and all source-publication holds remain open. Fork inventory has zero registered runners.",
+      "nextStep": "Fixture owner audits namespace-context control to separate actual privilege/ordering causes before another hypothesis or production change. Preserve security assertions and passing cleanup/shim/component products; no unfiltered repeat or incompatible ARM hardware retry. Root follows existing publication/quiet-host questions without new frames or provisioning.",
+      "recheckCondition": "Audited exact-phase namespace/ordering evidence, verified ARM hardware/quiet-host context, substantive feedback or an existing publication answer.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135404,6 +135404,22 @@
         {
           "label": "Final AMD shim passed; container/cleanup failures remain",
           "url": "https://github.com/tamird/gvisor/actions/runs/44719789931"
+        },
+        {
+          "label": "Audited cleanup10XML passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44721742575"
+        },
+        {
+          "label": "Production-equivalent ID-map EPERM reproduced",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44721745932"
+        },
+        {
+          "label": "Ordering prototype:MountSetattrEPERM beforeFDtransfer",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44723264523"
+        },
+        {
+          "label": "CI-only opener-namespace diagnostic; audit pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44724426175"
         }
       ],
       "followup": {
@@ -135425,12 +135441,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T10:44:03.219206+00:00",
-        "nextAction": "Fixture owner closes exact test cleanup defects and establishes unchanged-production-equivalent mount_setattr behavior before deciding whether production needs a fix. Preserve passing shim/component products; only then requalify affected broad gates. Maintain full ARM hardware blocker and required stable-control/performance scope; no new source decision frames or repeated questions.",
-        "recheckCondition": "Actual cleanup/baseline-equivalent mount result and affected broad qualification, verified ARM hardware/host evidence or an existing publication answer.",
+        "curatedAt": "2026-11-20T11:05:17.621311+00:00",
+        "nextAction": "Fixture owner audits namespace-context control to separate actual privilege/ordering causes before another hypothesis or production change. Preserve security assertions and passing cleanup/shim/component products; no unfiltered repeat or incompatible ARM hardware retry. Root follows existing publication/quiet-host questions without new frames or provisioning.",
+        "recheckCondition": "Audited exact-phase namespace/ordering evidence, verified ARM hardware/quiet-host context, substantive feedback or an existing publication answer.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Final broad shim results pass61XML cases per architecture with zero failures/skips. AMD container975XML has five failure elements (parent plus four TestIDMappedMountFlags variants),13skips and two post-PASS cleanup failures; broad qualification remains open. Owner is fixing TestMountPropagation’s two unmounts and shared conf.RootDir mutation in TestSplitFSCheckpointRestoreOnlyFS, then testing mount_setattr EPERM against unchanged-production-equivalent source before any production correction. Accepted e895 source/component/lint evidence remains valid within its scope. Full ARM container still requires unavailable /dev/kvm, with no incompatible-worker retry. Controlled performance and all existing publication decisions/parent holds remain open.",
+        "disposition": "Audited cleanup44721742575 passes10XML cases with zero skips and complete terminal BEP/source guards. Unchanged-production-equivalent baseline44721745932 reproduces identical mount_setattr0x5c0b EPERM in all four ID-map variants with relevant production blobs matching public4d; accepted checkpoint e895 is not the cause. Ordering prototype44723264523 compiled/executed all four variants, but its new MountSetattr in privileged OpenMountRPC returned EPERM before descriptor transfer, so no ordering repair is established. CI-only namespace-context control44724426175 is live on795f5ca309f84b95151c74d96d8ad86858caec0e, preserving opener namespace for diagnosis and retaining all four/security assertions. No final namespace-policy change, production fix or full retry. Full shim61-case passes and accepted e895 scopes remain valid; full AMD, ARM KVM hardware, performance and all source-publication holds remain open. Fork inventory has zero registered runners.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135839,5 +135855,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T10:44:03.219206+00:00"
+  "updatedAt": "2026-11-20T11:05:17.621311+00:00"
 }
