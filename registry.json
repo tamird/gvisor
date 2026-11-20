@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T19:23:23.396733+00:00",
+    "updatedAt": "2026-11-20T19:52:11.578324+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35466,9 +35466,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
-        "observedAt": "2026-11-20T19:23:23.396733+00:00",
-        "disposition": "Two AMD64 worker prerequisites passed: isolated user/net namespaces, IPv4/IPv6 veth+nft and raw-socket capability preflight44799409827; and actual GoClone entrypoint44800271769 on f6c2 (old d984 inputs plus exactly the two qualified shared sudo files). The latter used native /usr/bin/true with zero DUT actions. Neither is a project PacketImpact case, current-base qualification, ARM proof or performance result. Historical ordinary-Go product evidence retains its original scope.",
-        "nextAction": "The existing packet owner advances the actual native/netstack sixteen-case functional gate, with architecture/source binding explicit. Preserve existing private-import and performance holds; reuse valid products and do not count worker probes as project tests.",
+        "observedAt": "2026-11-20T19:52:11.578324+00:00",
+        "disposition": "Worker capability and GoClone entrypoint prerequisites are proved within their old-source scope. Native sixteen-case recovery44805938474 is active on the exact4f55 profile; no project-case result is yet claimed. A compiler-only gate completed its Genrule remotely in8.065s with expected NO_TESTS_FOUND, which is not a functional test pass. Preserve historical product, architecture, import and performance limits.",
+        "nextAction": "The existing packet owner audits actual terminal BEP/XML from native44805938474, then advances separate netstack/architecture gates only on supported workers. Do not infer functional, current-base or performance qualification from the compiler/preflight actions.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16419",
           "https://github.com/google/gvisor/pull/16419#discussion_r4504268180",
@@ -35493,7 +35493,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44799409827",
           "https://github.com/tamird/gvisor/actions/runs/44800271769"
         ],
-        "recheckCondition": "Actual source-bound native/netstack project-case results and the separate architecture gate, or a changed worker prerequisite.",
+        "recheckCondition": "Actual native project-case results and the separate netstack/architecture gates, or new worker evidence.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING",
         "qualificationHistory": [
@@ -35603,7 +35603,7 @@
           ]
         },
         "remainingNetworkOutcomeOwner": "tcp_conflict",
-        "curatedAt": "2026-11-20T19:23:23.396733+00:00",
+        "curatedAt": "2026-11-20T19:52:11.578324+00:00",
         "ciExecutionAuthorization": {
           "status": "Authorized CI-only; held for permanent Bazel mechanism migration",
           "owner": "root",
@@ -74829,7 +74829,7 @@
       "head": "6bd31cd09cc922fb7235267e95c0d951ad1f43c8",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:53.479529+00:00",
-      "summary": "Published as one commit at 4931dbf1a. The context-only rebase preserves the approved stack change. All 587 stack test records passed without skips. The owning analyzers passed on AMD64 and ARM64.",
+      "summary": "New human CHANGES_REQUESTED review5998248075 on exact6bd31cd identifies a reported bridge-NIC race: BridgeEndpoint.Attach(nil) writes port Primary after detachment moved outside Stack.mu, while coordinator readers hold that lock. The reviewer reports a race-detector reproducer. A second complete thread requests RemoveNIC deadlock coverage because the new test covers only Stack.Wait; RemoveNIC and SetNICStack also used the old locked callback. Both findings remain unresolved and are assigned to tcp_go_final_maintainer_review; no automatic reply or source publication is authorized.",
       "evidence": [
         {
           "label": "Uncached owner tests and both architecture analyzers",
@@ -74880,18 +74880,23 @@
       "followup": {
         "owner": "root",
         "sourceHead": "6bd31cd09cc922fb7235267e95c0d951ad1f43c8",
-        "observedAt": "2026-11-17T19:04:53.479529+00:00",
-        "disposition": "Published as one commit at 4931dbf1a. The context-only rebase preserves the approved stack change. All 587 stack test records passed without skips. The owning analyzers passed on AMD64 and ARM64.",
-        "nextAction": "Follow upstream review on #17103. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks.",
+        "observedAt": "2026-11-20T19:52:11.578324+00:00",
+        "disposition": "New human CHANGES_REQUESTED review5998248075 on exact6bd31cd identifies a reported bridge-NIC race: BridgeEndpoint.Attach(nil) writes port Primary after detachment moved outside Stack.mu, while coordinator readers hold that lock. The reviewer reports a race-detector reproducer. A second complete thread requests RemoveNIC deadlock coverage because the new test covers only Stack.Wait; RemoveNIC and SetNICStack also used the old locked callback. Both findings remain unresolved and are assigned to tcp_go_final_maintainer_review; no automatic reply or source publication is authorized.",
+        "nextAction": "tcp_go_final_maintainer_review consumes the complete source/thread context, reproduces the race and missing RemoveNIC behavior, and prepares the smallest responsible locking/callback fix with focused race/deadlock coverage. Root retains final review/publication ownership and the existing performance obligations.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17103",
           "https://github.com/tamird/gvisor/actions/runs/42855947112/artifacts/13784755003",
           "https://github.com/gvisor/gvisor/pull/17103",
           "https://github.com/tamird/gvisor/commit/4931dbf1aa4c410b19efd980a3cd60b43b1c47d8",
-          "https://github.com/tamird/gvisor/commit/6bd31cd09cc922fb7235267e95c0d951ad1f43c8"
+          "https://github.com/tamird/gvisor/commit/6bd31cd09cc922fb7235267e95c0d951ad1f43c8",
+          "https://github.com/gvisor/gvisor/pull/17103#discussion_r4646778691",
+          "https://github.com/gvisor/gvisor/pull/17103#discussion_r4646840075",
+          "https://github.com/gvisor/gvisor/pull/17103#pullrequestreview-5998248075"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change."
+        "recheckCondition": "The assigned owner’s causal reproduction, source-bound corrected behavior and focused review, or new human feedback.",
+        "implementationOwner": "tcp_go_final_maintainer_review",
+        "curatedAt": "2026-11-20T19:52:11.578324+00:00"
       },
       "dcoAmendment": {
         "oldHead": "4931dbf1aa4c410b19efd980a3cd60b43b1c47d8",
@@ -135118,9 +135123,9 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T19:23:23.396733+00:00",
+      "updatedAt": "2026-11-20T19:52:11.578324+00:00",
       "summary": "Compdb candidate04d67f624fad24ce7b27f5d93a2d2f90cfef3da4 preserves the original12-file scope on7397. tcp_benchmark_final_correctness is running actual maintained //tools:devcontainer-init.sh through the existing workflow/projection44766733189; this is an agent validation gap, not a user decision. Older44622300025 caller_both evidence exists, but no current minimal-source/configuration equivalence binding is established, so a fresh caller check is justified. Public source review comes only after that gap closes. Private migration-issue labels/time boundaries were updated without a new user question or public draft-body copy. Sensitive namespace/ID-map/mount investigation remains held until confirmed Daybreak; independent baseline failures are not universal prerequisites. Narrow Python holds and all real publication boundaries remain.",
-      "nextStep": "compdb_final_correctness owns reduced existing-fixture qualification and minimality review; tcp_benchmark_final_correctness retains the gVisor helper/caller obligations after a validated fixed supplier. Root owns source review and the user-held issue-draft boundary.",
+      "nextStep": "Root returns the reduced supplier rationale to the quality coordinator; compdb_final_correctness retains the smallest supplier fix and tcp_benchmark_final_correctness retains gVisor caller obligations after a validated available supplier. Preserve source publication and private-draft boundaries.",
       "recheckCondition": "Audited current caller/source readiness, confirmed Daybreak availability or substantive existing publication/review/CI change.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
@@ -135596,12 +135601,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T19:23:23.396733+00:00",
-        "nextAction": "compdb_final_correctness owns reduced existing-fixture qualification and minimality review; tcp_benchmark_final_correctness retains the gVisor helper/caller obligations after a validated fixed supplier. Root owns source review and the user-held issue-draft boundary.",
-        "recheckCondition": "Actual reduced supplier qualification/minimality acceptance, available validated artifacts, or explicit user guidance on the private issue draft.",
+        "curatedAt": "2026-11-20T19:52:11.578324+00:00",
+        "nextAction": "Root returns the reduced supplier rationale to the quality coordinator; compdb_final_correctness retains the smallest supplier fix and tcp_benchmark_final_correctness retains gVisor caller obligations after a validated available supplier. Preserve source publication and private-draft boundaries.",
+        "recheckCondition": "Reduced-source quality acceptance, available fixed supplier artifacts, or actual user direction on the private draft.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "The supplier55 readiness assessment and old publication question are withdrawn for revision after the quality coordinator reported Tamir’s test-size/necessity challenge. Reduced supplier df68514d has production identical to55 but smaller existing-fixture coverage; Linux44801312931 and Windows44801318660 are pending actual audit. No direct user answer, new publication question or ready-source status is inferred. The gVisor shared-shell revision remains changes requested with callers held on unfixed released0.21 artifacts. The proposed CI/RBE paper rewrite remains a private user-held draft; public issue17832 is unchanged.",
+        "disposition": "Reduced supplier324cf87 passed existing-fixture Linux/Windows qualification, but its earlier readiness/publication question remains withdrawn pending quality/minimality acceptance. This is not a new supplier or gVisor approval. The shared-shell revision remains changes requested and released0.21 artifacts remain unfixed. The proposed CI/RBE paper rewrite is still a private user-held draft; public17832 is unchanged.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135814,7 +135819,7 @@
             "sha256": "4f34260222d0ed9f5f245edc726d99328889d952a6b6ba4dfe7d42142af6876b"
           }
         },
-        "observedAt": "2026-11-20T19:23:23.396733+00:00",
+        "observedAt": "2026-11-20T19:52:11.578324+00:00",
         "implementationOwner": "tcp_benchmark_final_correctness"
       },
       "executionHistory": [
@@ -136034,8 +136039,8 @@
       "group": "bazel",
       "owner": "root",
       "technicalOwner": "compdb_final_correctness",
-      "updatedAt": "2026-11-20T19:23:23.396733+00:00",
-      "summary": "The earlier supplier readiness assessment and publication question are withdrawn for revision after the quality coordinator reported Tamir’s challenge to test necessity and size. This is not a direct user answer or approval. Reduced source df68514d2c922a7ecf8026f3954f615ec21251b7 changes three files (+21/-13), with production identical to55 and no new BUILD/helper/targets. Existing-fixture Linux and Windows qualification is pending.",
+      "updatedAt": "2026-11-20T19:52:11.578324+00:00",
+      "summary": "Reduced supplier324cf87d3065afb993520a4104720ef7c7647b0b passed existing-fixture Linux and Windows qualification in four files (+24/-16). The earlier55 readiness assessment and publication question remain withdrawn; passing reduced fixtures does not restore publication approval or create a new user question. Root returns the reduced-source rationale to the quality coordinator for necessity/minimality assessment.",
       "findings": [
         {
           "text": "All Linux owning/style gates and all three native Windows cases passed, and two final independent reviewers found no blocker. The coordinator’s independent source-tree comparison found only .github/workflows/main.yaml different between test CI7f and intended55; this supports the exact tested-source binding, not new publication authority.",
@@ -136057,16 +136062,16 @@
           "url": "https://github.com/tamird/gvisor/blob/040e89ac391d29bdbc3f5a517eb2ef659055e068/registry.json"
         }
       ],
-      "nextStep": "compdb_final_correctness completes the baseline-fixture/minimality review and audits the reduced source through existing Linux/Windows cases. Root owns the eventual qualified source-publication boundary; do not re-ask the superseded question or presume replacement tests.",
-      "recheckCondition": "Actual reduced-source fixture results and minimality acceptance, followed by a reviewable final source.",
-      "head": "df68514d2c922a7ecf8026f3954f615ec21251b7",
+      "nextStep": "Root and the quality coordinator assess the reduced existing-fixture rationale and source size; compdb_final_correctness retains implementation ownership. No upstream PR or repeated source question until the revised handoff is accepted.",
+      "recheckCondition": "Quality/minimality acceptance of the reduced source and an actual new publication-review boundary.",
+      "head": "324cf87d3065afb993520a4104720ef7c7647b0b",
       "followup": {
         "owner": "root",
         "implementationOwner": "compdb_final_correctness",
-        "observedAt": "2026-11-20T19:23:23.396733+00:00",
-        "disposition": "The earlier supplier readiness assessment and publication question are withdrawn for revision after the quality coordinator reported Tamir’s challenge to test necessity and size. This is not a direct user answer or approval. Reduced source df68514d2c922a7ecf8026f3954f615ec21251b7 changes three files (+21/-13), with production identical to55 and no new BUILD/helper/targets. Existing-fixture Linux and Windows qualification is pending.",
-        "nextAction": "compdb_final_correctness completes the baseline-fixture/minimality review and audits the reduced source through existing Linux/Windows cases. Root owns the eventual qualified source-publication boundary; do not re-ask the superseded question or presume replacement tests.",
-        "recheckCondition": "Actual reduced-source fixture results and minimality acceptance, followed by a reviewable final source.",
+        "observedAt": "2026-11-20T19:52:11.578324+00:00",
+        "disposition": "Reduced supplier324cf87d3065afb993520a4104720ef7c7647b0b passed existing-fixture Linux and Windows qualification in four files (+24/-16). The earlier55 readiness assessment and publication question remain withdrawn; passing reduced fixtures does not restore publication approval or create a new user question. Root returns the reduced-source rationale to the quality coordinator for necessity/minimality assessment.",
+        "nextAction": "Root and the quality coordinator assess the reduced existing-fixture rationale and source size; compdb_final_correctness retains implementation ownership. No upstream PR or repeated source question until the revised handoff is accepted.",
+        "recheckCondition": "Quality/minimality acceptance of the reduced source and an actual new publication-review boundary.",
         "evidence": [
           "https://github.com/tamird/bazel-compile-commands/commit/df68514d2c922a7ecf8026f3954f615ec21251b7",
           "https://github.com/tamird/gvisor/blob/040e89ac391d29bdbc3f5a517eb2ef659055e068/registry.json"
@@ -136075,5 +136080,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T19:23:23.396733+00:00"
+  "updatedAt": "2026-11-20T19:52:11.578324+00:00"
 }

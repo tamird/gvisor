@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-20T19:43:59.559675+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-20T19:23:23.396733+00:00",
+  "registryDate": "2026-11-20T19:52:11.578324+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -447216,14 +447216,14 @@
       "sourceNumber": 17103,
       "owner": "Agent",
       "claimed": false,
-      "overdue": false,
+      "overdue": true,
       "kind": "inline",
       "id": "PRRC_kwDOB9IlXs8AAAABFPg3Qw",
       "createdAt": "2026-11-20T19:29:50Z",
       "url": "https://github.com/google/gvisor/pull/17103#discussion_r4646778691",
       "author": "shailend-g",
       "updatedAt": "2026-11-20T19:36:46Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": true,
       "assigned": true,
       "feedbackComplete": true,
@@ -447236,14 +447236,14 @@
       "sourceNumber": 17103,
       "owner": "Agent",
       "claimed": false,
-      "overdue": false,
+      "overdue": true,
       "kind": "inline",
       "id": "PRRC_kwDOB9IlXs8AAAABFPknCw",
       "createdAt": "2026-11-20T19:36:29Z",
       "url": "https://github.com/google/gvisor/pull/17103#discussion_r4646840075",
       "author": "shailend-g",
       "updatedAt": "2026-11-20T19:36:46Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": true,
       "assigned": true,
       "feedbackComplete": true,
@@ -449266,8 +449266,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
-        "disposition": "Two AMD64 worker prerequisites passed: isolated user/net namespaces, IPv4/IPv6 veth+nft and raw-socket capability preflight44799409827; and actual GoClone entrypoint44800271769 on f6c2 (old d984 inputs plus exactly the two qualified shared sudo files). The latter used native /usr/bin/true with zero DUT actions. Neither is a project PacketImpact case, current-base qualification, ARM proof or performance result. Historical ordinary-Go product evidence retains its original scope.",
-        "nextAction": "The existing packet owner advances the actual native/netstack sixteen-case functional gate, with architecture/source binding explicit. Preserve existing private-import and performance holds; reuse valid products and do not count worker probes as project tests."
+        "disposition": "Worker capability and GoClone entrypoint prerequisites are proved within their old-source scope. Native sixteen-case recovery44805938474 is active on the exact4f55 profile; no project-case result is yet claimed. A compiler-only gate completed its Genrule remotely in8.065s with expected NO_TESTS_FOUND, which is not a functional test pass. Preserve historical product, architecture, import and performance limits.",
+        "nextAction": "The existing packet owner audits actual terminal BEP/XML from native44805938474, then advances separate netstack/architecture gates only on supported workers. Do not infer functional, current-base or performance qualification from the compiler/preflight actions."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -454314,8 +454314,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "6bd31cd09cc922fb7235267e95c0d951ad1f43c8",
-        "disposition": "Published as one commit at 4931dbf1a. The context-only rebase preserves the approved stack change. All 587 stack test records passed without skips. The owning analyzers passed on AMD64 and ARM64.",
-        "nextAction": "Follow upstream review on #17103. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks."
+        "disposition": "New human CHANGES_REQUESTED review5998248075 on exact6bd31cd identifies a reported bridge-NIC race: BridgeEndpoint.Attach(nil) writes port Primary after detachment moved outside Stack.mu, while coordinator readers hold that lock. The reviewer reports a race-detector reproducer. A second complete thread requests RemoveNIC deadlock coverage because the new test covers only Stack.Wait; RemoveNIC and SetNICStack also used the old locked callback. Both findings remain unresolved and are assigned to tcp_go_final_maintainer_review; no automatic reply or source publication is authorized.",
+        "nextAction": "tcp_go_final_maintainer_review consumes the complete source/thread context, reproduces the race and missing RemoveNIC behavior, and prepares the smallest responsible locking/callback fix with focused race/deadlock coverage. Root retains final review/publication ownership and the existing performance obligations."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxzdiDQ"
@@ -465948,7 +465948,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:23:23.396733+00:00"
+        "observedAt": "2026-11-20T19:52:11.578324+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -465957,7 +465957,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:23:23.396733+00:00"
+        "observedAt": "2026-11-20T19:52:11.578324+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -465966,7 +465966,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:23:23.396733+00:00"
+        "observedAt": "2026-11-20T19:52:11.578324+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -465975,7 +465975,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:23:23.396733+00:00"
+        "observedAt": "2026-11-20T19:52:11.578324+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -465984,7 +465984,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:23:23.396733+00:00"
+        "observedAt": "2026-11-20T19:52:11.578324+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -465993,7 +465993,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:23:23.396733+00:00"
+        "observedAt": "2026-11-20T19:52:11.578324+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -466002,7 +466002,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T19:23:23.396733+00:00"
+        "observedAt": "2026-11-20T19:52:11.578324+00:00"
       }
     }
   },
