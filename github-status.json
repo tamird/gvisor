@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-20T22:29:25.818740+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-20T21:52:37.720614+00:00",
+  "registryDate": "2026-11-20T22:36:05.105044+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -449945,8 +449945,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
-        "disposition": "The native Linux PacketImpact control remains closed:16 expected XML records, zero failures/errors/skips. Netstack run44823129245 has one watch/audit owner, tcp_go_final_contract_review, which also owns current-base preparation. No netstack/ARM/current-base or performance pass is inferred here.",
-        "nextAction": "tcp_go_final_contract_review consumes its owned netstack result and advances the bound current-base/architecture preparation. Preserve native-only scope, performance/private-import holds and single-observer ownership; no mirrored CI reads."
+        "disposition": "AMD native and netstack PacketImpact controls each passed16 named XML records with zero failures/skips, remotely with IPv6 enabled and private-VM networking disabled. These controls retain their exact source/profile binding. Current-base027 clean-source preparation, AMD preflight and ARM work are owned by tcp_go_final_contract_review; public source is unchanged and current-base/ARM/performance qualification remains open.",
+        "nextAction": "tcp_go_final_contract_review consumes its current-base AMD/ARM preparation and validates the actual project gates on bound sources. Preserve the closed two-profile AMD controls, private-import/performance holds and single-observer CI ownership."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -450185,8 +450185,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "b08bf67a0996f2732d82ad5b35949048cc2139f0",
-        "disposition": "Adaptation35195 passed state/race/Nogo/source gates and fresh strict C++ analysis over377 sources. Legacy --state-engine=wire remains production-supported, while maintained benchmarks default to graph. These functional/compiler proofs do not cover wire performance or waive broad A/A. Publicb08 remains unchanged; no source-publication question is pending.",
-        "nextAction": "approved_rebase_queue adds state-only wire variants to the maintained benchmark coverage, then closes the broad suite and same-source A/A controls before candidate comparisons. Preserve supported wire semantics and exact functional evidence; do not infer stability from unrelated EOF controls."
+        "disposition": "Adaptation35195 retains state/race/Nogo/source and fresh377-source C++ passes. Production wire serialization is supported alongside graph-default benchmarks. Same-source A/A44829018964 is owned by approved_rebase_queue for terminal audit on resumption; no stability result or candidate comparison is recorded. Four broad checkpoint/restore cases remain required.",
+        "nextAction": "approved_rebase_queue audits the owned same-source A/A and wire/graph benchmark coverage, then closes the four broad checkpoint/restore obligations before candidate comparisons. Reuse valid unchanged proofs and preserve source-publication ownership; no mirrored CI watch or global EOF stability inference."
       },
       "conflictObservedSince": "2026-11-20T21:07:20.274292+00:00"
     },
@@ -451853,8 +451853,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "ce4d7247286c0bce2a9e445f5be52b81784d02fc",
-        "disposition": "Visibility amendment strict validation of 376 child processes proof and final reviews remain source-bound; original genrule-to-C-toolchain runtime equivalence/private importer are unverified and #17067 dependent publication edge remains. Exact proposed source d1ae946c2d91ebe135c217c52e051f6fb8370af0 and its existing publication boundary are preserved. Prior handoffs describe a source question, but no original request/approval provenance is currently available; this is root-owned source-bound authorization reconciliation, not an asserted pending user decision, approval or refusal.",
-        "nextAction": "Root verifies original request, any approval/supersession and exact source binding before projecting a contributor queue or publishing. Preserve qualification and current public source; do not re-ask, assume approval or add a manual-DCO task."
+        "disposition": "New review5999913653/inline4648158685 on publicce4d7247 explicitly identifies itself as experimental automated review assisted by Gemini Carbon. It alleges that freestanding_sidecar must disable ThinLTO to avoid undefined libc references, and repeats visibility/private-adapter reminders. This is an automated source finding to verify, not a new human instruction or proof of the review’s claimed local test passes. The prepared visibility candidate and historical qualification retain their inputs; no publication approval or private-import success is inferred.",
+        "nextAction": "The existing sidecar owner is investigating the automated ThinLTO finding on the responsible macro and actual configuration. Root retains source/reply review and the private-adapter limitation; preserve visibility-candidate evidence and do not infer local test passes from the automated review."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyTpYQ"
@@ -457584,8 +457584,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "b08bf67a0996f2732d82ad5b35949048cc2139f0",
-        "disposition": "Adaptation35195 passed state/race/Nogo/source gates and fresh strict C++ analysis over377 sources. Legacy --state-engine=wire remains production-supported, while maintained benchmarks default to graph. These functional/compiler proofs do not cover wire performance or waive broad A/A. Publicb08 remains unchanged; no source-publication question is pending.",
-        "nextAction": "approved_rebase_queue adds state-only wire variants to the maintained benchmark coverage, then closes the broad suite and same-source A/A controls before candidate comparisons. Preserve supported wire semantics and exact functional evidence; do not infer stability from unrelated EOF controls."
+        "disposition": "Adaptation35195 retains state/race/Nogo/source and fresh377-source C++ passes. Production wire serialization is supported alongside graph-default benchmarks. Same-source A/A44829018964 is owned by approved_rebase_queue for terminal audit on resumption; no stability result or candidate comparison is recorded. Four broad checkpoint/restore cases remain required.",
+        "nextAction": "approved_rebase_queue audits the owned same-source A/A and wire/graph benchmark coverage, then closes the four broad checkpoint/restore obligations before candidate comparisons. Reuse valid unchanged proofs and preserve source-publication ownership; no mirrored CI watch or global EOF stability inference."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxx6rRg"
@@ -466746,7 +466746,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T21:52:37.720614+00:00"
+        "observedAt": "2026-11-20T22:36:05.105044+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -466755,7 +466755,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T21:52:37.720614+00:00"
+        "observedAt": "2026-11-20T22:36:05.105044+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -466764,7 +466764,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T21:52:37.720614+00:00"
+        "observedAt": "2026-11-20T22:36:05.105044+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -466773,7 +466773,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T21:52:37.720614+00:00"
+        "observedAt": "2026-11-20T22:36:05.105044+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -466782,7 +466782,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T21:52:37.720614+00:00"
+        "observedAt": "2026-11-20T22:36:05.105044+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -466791,7 +466791,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T21:52:37.720614+00:00"
+        "observedAt": "2026-11-20T22:36:05.105044+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -466800,7 +466800,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T21:52:37.720614+00:00"
+        "observedAt": "2026-11-20T22:36:05.105044+00:00"
       }
     }
   },

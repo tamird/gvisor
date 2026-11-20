@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T21:52:37.720614+00:00",
+    "updatedAt": "2026-11-20T22:36:05.105044+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35462,13 +35462,13 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-19T02:51:50.481387+00:00",
-      "summary": "The native Linux PacketImpact control remains closed:16 expected XML records, zero failures/errors/skips. Netstack run44823129245 has one watch/audit owner, tcp_go_final_contract_review, which also owns current-base preparation. No netstack/ARM/current-base or performance pass is inferred here.",
+      "summary": "AMD native and netstack PacketImpact controls each passed16 named XML records with zero failures/skips, remotely with IPv6 enabled and private-VM networking disabled. These controls retain their exact source/profile binding. Current-base027 clean-source preparation, AMD preflight and ARM work are owned by tcp_go_final_contract_review; public source is unchanged and current-base/ARM/performance qualification remains open.",
       "followup": {
         "owner": "root",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
-        "observedAt": "2026-11-20T21:52:37.720614+00:00",
-        "disposition": "The native Linux PacketImpact control remains closed:16 expected XML records, zero failures/errors/skips. Netstack run44823129245 has one watch/audit owner, tcp_go_final_contract_review, which also owns current-base preparation. No netstack/ARM/current-base or performance pass is inferred here.",
-        "nextAction": "tcp_go_final_contract_review consumes its owned netstack result and advances the bound current-base/architecture preparation. Preserve native-only scope, performance/private-import holds and single-observer ownership; no mirrored CI reads.",
+        "observedAt": "2026-11-20T22:17:49.761453+00:00",
+        "disposition": "AMD native and netstack PacketImpact controls each passed16 named XML records with zero failures/skips, remotely with IPv6 enabled and private-VM networking disabled. These controls retain their exact source/profile binding. Current-base027 clean-source preparation, AMD preflight and ARM work are owned by tcp_go_final_contract_review; public source is unchanged and current-base/ARM/performance qualification remains open.",
+        "nextAction": "tcp_go_final_contract_review consumes its current-base AMD/ARM preparation and validates the actual project gates on bound sources. Preserve the closed two-profile AMD controls, private-import/performance holds and single-observer CI ownership.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16419",
           "https://github.com/google/gvisor/pull/16419#discussion_r4504268180",
@@ -35494,7 +35494,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44800271769",
           "https://github.com/tamird/gvisor/actions/runs/44820776849"
         ],
-        "recheckCondition": "The owner’s netstack/current-base/architecture audit or actual supported-worker evidence.",
+        "recheckCondition": "The owner’s actual current-base/ARM evidence, new supported-worker information or source changes.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING",
         "qualificationHistory": [
@@ -35604,7 +35604,7 @@
           ]
         },
         "remainingNetworkOutcomeOwner": "tcp_conflict",
-        "curatedAt": "2026-11-20T21:52:37.720614+00:00",
+        "curatedAt": "2026-11-20T22:17:49.761453+00:00",
         "ciExecutionAuthorization": {
           "status": "Authorized CI-only; held for permanent Bazel mechanism migration",
           "owner": "root",
@@ -35844,8 +35844,8 @@
           "https://github.com/tamird/gvisor/commit/0ae405ec7d1ace5894645c28910c69605c0de20e"
         ]
       },
-      "nextStep": "tcp_go_final_contract_review consumes its owned netstack result and advances the bound current-base/architecture preparation. Preserve native-only scope, performance/private-import holds and single-observer ownership; no mirrored CI reads.",
-      "recheckCondition": "The owner’s netstack/current-base/architecture audit or actual supported-worker evidence."
+      "nextStep": "tcp_go_final_contract_review consumes its current-base AMD/ARM preparation and validates the actual project gates on bound sources. Preserve the closed two-profile AMD controls, private-import/performance holds and single-observer CI ownership.",
+      "recheckCondition": "The owner’s actual current-base/ARM evidence, new supported-worker information or source changes."
     },
     {
       "id": "pr:17114",
@@ -40561,7 +40561,7 @@
       "group": "release",
       "status": "open",
       "updatedAt": "2026-11-20T15:15:34.980085+00:00",
-      "summary": "Visibility amendment strict validation of 376 child processes proof and final reviews remain source-bound; original genrule-to-C-toolchain runtime equivalence/private importer are unverified and #17067 dependent publication edge remains. Exact proposed source d1ae946c2d91ebe135c217c52e051f6fb8370af0 and its existing publication boundary are preserved. Prior handoffs describe a source question, but no original request/approval provenance is currently available; this is root-owned source-bound authorization reconciliation, not an asserted pending user decision, approval or refusal.",
+      "summary": "New review5999913653/inline4648158685 on publicce4d7247 explicitly identifies itself as experimental automated review assisted by Gemini Carbon. It alleges that freestanding_sidecar must disable ThinLTO to avoid undefined libc references, and repeats visibility/private-adapter reminders. This is an automated source finding to verify, not a new human instruction or proof of the review’s claimed local test passes. The prepared visibility candidate and historical qualification retain their inputs; no publication approval or private-import success is inferred.",
       "evidence": [
         {
           "label": "Latest exact-head review",
@@ -40767,11 +40767,11 @@
       ],
       "followup": {
         "owner": "root",
-        "observedAt": "2026-11-20T03:15:58.069646+00:00",
+        "observedAt": "2026-11-20T22:36:05.105044+00:00",
         "sourceHead": "ce4d7247286c0bce2a9e445f5be52b81784d02fc",
         "mergeable": "MERGEABLE",
-        "disposition": "Visibility amendment strict validation of 376 child processes proof and final reviews remain source-bound; original genrule-to-C-toolchain runtime equivalence/private importer are unverified and #17067 dependent publication edge remains. Exact proposed source d1ae946c2d91ebe135c217c52e051f6fb8370af0 and its existing publication boundary are preserved. Prior handoffs describe a source question, but no original request/approval provenance is currently available; this is root-owned source-bound authorization reconciliation, not an asserted pending user decision, approval or refusal.",
-        "nextAction": "Root verifies original request, any approval/supersession and exact source binding before projecting a contributor queue or publishing. Preserve qualification and current public source; do not re-ask, assume approval or add a manual-DCO task.",
+        "disposition": "New review5999913653/inline4648158685 on publicce4d7247 explicitly identifies itself as experimental automated review assisted by Gemini Carbon. It alleges that freestanding_sidecar must disable ThinLTO to avoid undefined libc references, and repeats visibility/private-adapter reminders. This is an automated source finding to verify, not a new human instruction or proof of the review’s claimed local test passes. The prepared visibility candidate and historical qualification retain their inputs; no publication approval or private-import success is inferred.",
+        "nextAction": "The existing sidecar owner is investigating the automated ThinLTO finding on the responsible macro and actual configuration. Root retains source/reply review and the private-adapter limitation; preserve visibility-candidate evidence and do not infer local test passes from the automated review.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16522",
           "https://github.com/tamird/gvisor/commit/4e034130e",
@@ -40779,10 +40779,13 @@
           "https://github.com/gvisor/gvisor/pull/16522",
           "https://github.com/tamird/gvisor/commit/4e034130e26ee192130ec828c5ea135612536f26",
           "https://github.com/tamird/gvisor/commit/ce4d7247286c0bce2a9e445f5be52b81784d02fc",
-          "https://github.com/google/gvisor/pull/16522#pullrequestreview-5985630854"
+          "https://github.com/google/gvisor/pull/16522#pullrequestreview-5985630854",
+          "https://github.com/gvisor/gvisor/pull/16522#pullrequestreview-5999913653",
+          "https://github.com/gvisor/gvisor/pull/16522#discussion_r4648158685"
         ],
-        "recheckCondition": "Verified original request/approval provenance or substantive source/qualification change.",
-        "curatedAt": "2026-11-20T15:15:34.980085+00:00"
+        "recheckCondition": "The assigned owner’s actual ThinLTO/configuration evidence and corrected source, or substantive new human/source feedback.",
+        "curatedAt": "2026-11-20T22:36:05.105044+00:00",
+        "implementationOwner": "sidecar_visibility_feedback"
       },
       "dcoAmendment": {
         "oldHead": "4e034130e26ee192130ec828c5ea135612536f26",
@@ -40806,8 +40809,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
       },
-      "nextStep": "Root verifies original request, any approval/supersession and exact source binding before projecting a contributor queue or publishing. Preserve qualification and current public source; do not re-ask, assume approval or add a manual-DCO task.",
-      "recheckCondition": "Verified original request/approval provenance or substantive source/qualification change."
+      "nextStep": "The existing sidecar owner is investigating the automated ThinLTO finding on the responsible macro and actual configuration. Root retains source/reply review and the private-adapter limitation; preserve visibility-candidate evidence and do not infer local test passes from the automated review.",
+      "recheckCondition": "The assigned owner’s actual ThinLTO/configuration evidence and corrected source, or substantive new human/source feedback."
     },
     {
       "id": "branch:licensecheck-native-bazel-mod",
@@ -93798,7 +93801,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-17T19:05:00.391405+00:00",
-      "summary": "Adaptation35195 passed state/race/Nogo/source gates and fresh strict C++ analysis over377 sources. Legacy --state-engine=wire remains production-supported, while maintained benchmarks default to graph. These functional/compiler proofs do not cover wire performance or waive broad A/A. Publicb08 remains unchanged; no source-publication question is pending.",
+      "summary": "Adaptation35195 retains state/race/Nogo/source and fresh377-source C++ passes. Production wire serialization is supported alongside graph-default benchmarks. Same-source A/A44829018964 is owned by approved_rebase_queue for terminal audit on resumption; no stability result or candidate comparison is recorded. Four broad checkpoint/restore cases remain required.",
       "evidence": [
         {
           "label": "Published single-commit PR #17472",
@@ -93812,10 +93815,10 @@
       "followup": {
         "sourceHead": "b08bf67a0996f2732d82ad5b35949048cc2139f0",
         "owner": "root",
-        "nextAction": "approved_rebase_queue adds state-only wire variants to the maintained benchmark coverage, then closes the broad suite and same-source A/A controls before candidate comparisons. Preserve supported wire semantics and exact functional evidence; do not infer stability from unrelated EOF controls.",
+        "nextAction": "approved_rebase_queue audits the owned same-source A/A and wire/graph benchmark coverage, then closes the four broad checkpoint/restore obligations before candidate comparisons. Reuse valid unchanged proofs and preserve source-publication ownership; no mirrored CI watch or global EOF stability inference.",
         "mergeable": "CONFLICTING",
-        "observedAt": "2026-11-20T21:52:37.720614+00:00",
-        "recheckCondition": "Source-bound wire/graph benchmark coverage and valid broad/A-A evidence, or actual new source guidance.",
+        "observedAt": "2026-11-20T22:36:05.105044+00:00",
+        "recheckCondition": "The owner’s actual baseline A/A audit and broad workload evidence, or source guidance.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17472",
           "https://github.com/tamird/gvisor/commit/6827c2cfbc7102549d4ea74eb602516db2635a16",
@@ -93824,8 +93827,8 @@
           "https://buildkite.com/gvisor/first-pass/builds/1584#01a1eae1-b374-4300-951e-d506a17dbb07"
         ],
         "implementationOwner": "approved_rebase_queue",
-        "curatedAt": "2026-11-20T21:52:37.720614+00:00",
-        "disposition": "Adaptation35195 passed state/race/Nogo/source gates and fresh strict C++ analysis over377 sources. Legacy --state-engine=wire remains production-supported, while maintained benchmarks default to graph. These functional/compiler proofs do not cover wire performance or waive broad A/A. Publicb08 remains unchanged; no source-publication question is pending."
+        "curatedAt": "2026-11-20T22:36:05.105044+00:00",
+        "disposition": "Adaptation35195 retains state/race/Nogo/source and fresh377-source C++ passes. Production wire serialization is supported alongside graph-default benchmarks. Same-source A/A44829018964 is owned by approved_rebase_queue for terminal audit on resumption; no stability result or candidate comparison is recorded. Four broad checkpoint/restore cases remain required."
       },
       "dcoAmendment": {
         "oldHead": "6827c2cfbc7102549d4ea74eb602516db2635a16",
@@ -93849,8 +93852,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "approved_rebase_queue adds state-only wire variants to the maintained benchmark coverage, then closes the broad suite and same-source A/A controls before candidate comparisons. Preserve supported wire semantics and exact functional evidence; do not infer stability from unrelated EOF controls.",
-      "recheckCondition": "Source-bound wire/graph benchmark coverage and valid broad/A-A evidence, or actual new source guidance."
+      "nextStep": "approved_rebase_queue audits the owned same-source A/A and wire/graph benchmark coverage, then closes the four broad checkpoint/restore obligations before candidate comparisons. Reuse valid unchanged proofs and preserve source-publication ownership; no mirrored CI watch or global EOF stability inference.",
+      "recheckCondition": "The owner’s actual baseline A/A audit and broad workload evidence, or source guidance."
     },
     {
       "id": "pr:bazel-contrib/bazel-gazelle:2513",
@@ -100374,21 +100377,21 @@
       "url": "https://github.com/kiron1/bazel-compile-commands/pull/236",
       "group": "bazel",
       "status": "open",
-      "summary": "Supplier #236 source delivery is complete with passing CI. The remaining dependency is a compatible upstream release including both #236 and local producer proposal f611. Linux/Mac package checks pass with hashes identical to qualified portable products; producer independent review is next. This does not approve f611 publication or make the old release defaults usable.",
+      "summary": "PR#236 remains OPEN/MERGEABLE with passing CI and no reported comments/reviews. The separate producer question is now superseded/HOLD for the user-requested LLVM/musl investigation. GVisor adoption still needs a compatible upstream release; the current completed caller/product proof is musl-baseline evidence, not LLVM qualification.",
       "followup": {
         "owner": "root",
         "sourceHead": "324cf87d3065afb993520a4104720ef7c7647b0b",
-        "observedAt": "2026-11-20T21:52:37.720614+00:00",
-        "disposition": "Supplier #236 source delivery is complete with passing CI. The remaining dependency is a compatible upstream release including both #236 and local producer proposal f611. Linux/Mac package checks pass with hashes identical to qualified portable products; producer independent review is next. This does not approve f611 publication or make the old release defaults usable.",
-        "nextAction": "Root and compdb_final_correctness complete producer independent review and the actual compatible release/pin handoff, reusing valid product evidence. No new human question exists until a qualified source proposal is ready.",
-        "recheckCondition": "Producer review/source publication authority, upstream release acceptance or a changed product/pin.",
+        "observedAt": "2026-11-20T22:36:05.105044+00:00",
+        "disposition": "PR#236 remains OPEN/MERGEABLE with passing CI and no reported comments/reviews. The separate producer question is now superseded/HOLD for the user-requested LLVM/musl investigation. GVisor adoption still needs a compatible upstream release; the current completed caller/product proof is musl-baseline evidence, not LLVM qualification.",
+        "nextAction": "Root follows #236’s actual maintainer/release events while investigating the producer toolchain choice. No merge command, producer PR, new publication question or permanent fork pin is authorized by this hold.",
+        "recheckCondition": "Actual #236 maintainer/release change or evidence-based producer direction.",
         "evidence": [
           "https://github.com/kiron1/bazel-compile-commands/pull/236",
           "https://github.com/kiron1/bazel-compile-commands/actions/runs/44807549343"
         ]
       },
-      "nextStep": "Root and compdb_final_correctness complete producer independent review and the actual compatible release/pin handoff, reusing valid product evidence. No new human question exists until a qualified source proposal is ready.",
-      "recheckCondition": "Producer review/source publication authority, upstream release acceptance or a changed product/pin."
+      "nextStep": "Root follows #236’s actual maintainer/release events while investigating the producer toolchain choice. No merge command, producer PR, new publication question or permanent fork pin is authorized by this hold.",
+      "recheckCondition": "Actual #236 maintainer/release change or evidence-based producer direction."
     },
     {
       "id": "pr:17836",
@@ -135382,10 +135385,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T21:52:37.720614+00:00",
-      "summary": "Current compDB caller proof is closed: AMD377-source tidy44819711585, ARM devcontainer44820577688 and nine owning tests44821566361 passed. All three portable products are compatibility-audited. GVisor d894 adoption still requires an upstream compatible release containing #236 plus the producer change; the old default release is insufficient. Producer f611 is local, five files (+215/-2:192 vendor COPYRIGHT lines and23 config/package lines), with Linux/Mac package checks passing and binary hashes identical to qualified products. Independent review is next; no new source question or upstream publication is approved.",
-      "nextStep": "compdb_final_correctness obtains independent producer review and closes the upstream compatible-release/pin dependency before gVisor publication review. Reuse unchanged binary/caller proofs. Package proof used unchanged CI with equivalent inline flags; no access expansion or new workflow grant is required.",
-      "recheckCondition": "Accepted producer source/review and a compatible upstream release/pin, or an actual source/product change.",
+      "updatedAt": "2026-11-20T22:36:05.105044+00:00",
+      "summary": "Producer f611b9a07aeb262daf01c0cfdc53b7e9ce4b41b3 is fork-readable and both independent reviews are clear. Its genuine first publication question proposed a NEW one-commit supplier PR after #236 lands; the user then challenged musl versus hermetic-llvm and dependency consolidation. That question is superseded/HOLD, with no pending approval or publication. Completed Linux/caller/package proofs cover the musl baseline, not LLVM. The proposal has five files:22 logic lines plus193 notice lines; both Mac slices declare15.5, with startup tested only on26.7.3.",
+      "nextStep": "Root investigates the existing LLVM experience, supplier toolchains and possible dependency consolidation before revising or reaffirming the producer. Preserve the completed musl-baseline evidence and compatible-upstream-release dependency; do not open f611’s PR or ask another publication question now.",
+      "recheckCondition": "Actual LLVM/musl/consolidation findings and explicit revised source direction, then a qualified compatible upstream release/pin.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135839,6 +135842,10 @@
         {
           "label": "CI-only opener-namespace diagnostic; audit pending",
           "url": "https://github.com/tamird/gvisor/actions/runs/44724426175"
+        },
+        {
+          "label": "Held producer proposal; musl baseline evidence only",
+          "url": "https://github.com/tamird/bazel-compile-commands/commit/f611b9a07aeb262daf01c0cfdc53b7e9ce4b41b3"
         }
       ],
       "followup": {
@@ -135860,12 +135867,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T21:52:37.720614+00:00",
-        "nextAction": "compdb_final_correctness obtains independent producer review and closes the upstream compatible-release/pin dependency before gVisor publication review. Reuse unchanged binary/caller proofs. Package proof used unchanged CI with equivalent inline flags; no access expansion or new workflow grant is required.",
-        "recheckCondition": "Accepted producer source/review and a compatible upstream release/pin, or an actual source/product change.",
+        "curatedAt": "2026-11-20T22:36:05.105044+00:00",
+        "nextAction": "Root investigates the existing LLVM experience, supplier toolchains and possible dependency consolidation before revising or reaffirming the producer. Preserve the completed musl-baseline evidence and compatible-upstream-release dependency; do not open f611’s PR or ask another publication question now.",
+        "recheckCondition": "Actual LLVM/musl/consolidation findings and explicit revised source direction, then a qualified compatible upstream release/pin.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Current compDB caller proof is closed: AMD377-source tidy44819711585, ARM devcontainer44820577688 and nine owning tests44821566361 passed. All three portable products are compatibility-audited. GVisor d894 adoption still requires an upstream compatible release containing #236 plus the producer change; the old default release is insufficient. Producer f611 is local, five files (+215/-2:192 vendor COPYRIGHT lines and23 config/package lines), with Linux/Mac package checks passing and binary hashes identical to qualified products. Independent review is next; no new source question or upstream publication is approved.",
+        "disposition": "Producer f611b9a07aeb262daf01c0cfdc53b7e9ce4b41b3 is fork-readable and both independent reviews are clear. Its genuine first publication question proposed a NEW one-commit supplier PR after #236 lands; the user then challenged musl versus hermetic-llvm and dependency consolidation. That question is superseded/HOLD, with no pending approval or publication. Completed Linux/caller/package proofs cover the musl baseline, not LLVM. The proposal has five files:22 logic lines plus193 notice lines; both Mac slices declare15.5, with startup tested only on26.7.3.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -136078,8 +136085,8 @@
             "sha256": "4f34260222d0ed9f5f245edc726d99328889d952a6b6ba4dfe7d42142af6876b"
           }
         },
-        "observedAt": "2026-11-20T21:52:37.720614+00:00",
-        "implementationOwner": "compdb_final_correctness",
+        "observedAt": "2026-11-20T22:36:05.105044+00:00",
+        "implementationOwner": "root",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/44819711585",
           "https://github.com/tamird/gvisor/actions/runs/44820577688",
@@ -136303,8 +136310,8 @@
       "group": "bazel",
       "owner": "root",
       "technicalOwner": "compdb_final_correctness",
-      "updatedAt": "2026-11-20T21:52:37.720614+00:00",
-      "summary": "Supplier #236 source delivery is complete with passing CI. The remaining dependency is a compatible upstream release including both #236 and local producer proposal f611. Linux/Mac package checks pass with hashes identical to qualified portable products; producer independent review is next. This does not approve f611 publication or make the old release defaults usable.",
+      "updatedAt": "2026-11-20T22:36:05.105044+00:00",
+      "summary": "Producer f611b9a07aeb262daf01c0cfdc53b7e9ce4b41b3 is fork-readable and both independent reviews are clear. Its genuine first publication question proposed a NEW one-commit supplier PR after #236 lands; the user then challenged musl versus hermetic-llvm and dependency consolidation. That question is superseded/HOLD, with no pending approval or publication. Completed Linux/caller/package proofs cover the musl baseline, not LLVM. The proposal has five files:22 logic lines plus193 notice lines; both Mac slices declare15.5, with startup tested only on26.7.3.",
       "findings": [
         {
           "text": "All Linux owning/style gates and all three native Windows cases passed, and two final independent reviewers found no blocker. The coordinator’s independent source-tree comparison found only .github/workflows/main.yaml different between test CI7f and intended55; this supports the exact tested-source binding, not new publication authority.",
@@ -136328,24 +136335,28 @@
         {
           "label": "Delivered upstream supplier PR",
           "url": "https://github.com/kiron1/bazel-compile-commands/pull/236"
+        },
+        {
+          "label": "Held producer proposal; musl baseline evidence only",
+          "url": "https://github.com/tamird/bazel-compile-commands/commit/f611b9a07aeb262daf01c0cfdc53b7e9ce4b41b3"
         }
       ],
-      "nextStep": "Root and compdb_final_correctness complete producer independent review and the actual compatible release/pin handoff, reusing valid product evidence. No new human question exists until a qualified source proposal is ready.",
-      "recheckCondition": "Producer review/source publication authority, upstream release acceptance or a changed product/pin.",
+      "nextStep": "Root investigates the existing LLVM experience, supplier toolchains and possible dependency consolidation before revising or reaffirming the producer. Preserve the completed musl-baseline evidence and compatible-upstream-release dependency; do not open f611’s PR or ask another publication question now.",
+      "recheckCondition": "Actual LLVM/musl/consolidation findings and explicit revised source direction, then a qualified compatible upstream release/pin.",
       "head": "324cf87d3065afb993520a4104720ef7c7647b0b",
       "followup": {
         "owner": "root",
-        "implementationOwner": "compdb_final_correctness",
-        "observedAt": "2026-11-20T21:52:37.720614+00:00",
-        "disposition": "Supplier #236 source delivery is complete with passing CI. The remaining dependency is a compatible upstream release including both #236 and local producer proposal f611. Linux/Mac package checks pass with hashes identical to qualified portable products; producer independent review is next. This does not approve f611 publication or make the old release defaults usable.",
-        "nextAction": "Root and compdb_final_correctness complete producer independent review and the actual compatible release/pin handoff, reusing valid product evidence. No new human question exists until a qualified source proposal is ready.",
-        "recheckCondition": "Producer review/source publication authority, upstream release acceptance or a changed product/pin.",
+        "implementationOwner": "root",
+        "observedAt": "2026-11-20T22:36:05.105044+00:00",
+        "disposition": "Producer f611b9a07aeb262daf01c0cfdc53b7e9ce4b41b3 is fork-readable and both independent reviews are clear. Its genuine first publication question proposed a NEW one-commit supplier PR after #236 lands; the user then challenged musl versus hermetic-llvm and dependency consolidation. That question is superseded/HOLD, with no pending approval or publication. Completed Linux/caller/package proofs cover the musl baseline, not LLVM. The proposal has five files:22 logic lines plus193 notice lines; both Mac slices declare15.5, with startup tested only on26.7.3.",
+        "nextAction": "Root investigates the existing LLVM experience, supplier toolchains and possible dependency consolidation before revising or reaffirming the producer. Preserve the completed musl-baseline evidence and compatible-upstream-release dependency; do not open f611’s PR or ask another publication question now.",
+        "recheckCondition": "Actual LLVM/musl/consolidation findings and explicit revised source direction, then a qualified compatible upstream release/pin.",
         "evidence": [
           "https://github.com/tamird/bazel-compile-commands/commit/df68514d2c922a7ecf8026f3954f615ec21251b7",
           "https://github.com/tamird/gvisor/blob/040e89ac391d29bdbc3f5a517eb2ef659055e068/registry.json"
         ],
         "publicationQuestionStatus": "Superseded by readiness withdrawal; the immutable earlier record preserves the actual question. No direct user response or settled human decision is inferred.",
-        "curatedAt": "2026-11-20T21:52:37.720614+00:00"
+        "curatedAt": "2026-11-20T22:36:05.105044+00:00"
       },
       "settledReviews": [
         {
@@ -136361,5 +136372,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-20T21:52:37.720614+00:00"
+  "updatedAt": "2026-11-20T22:36:05.105044+00:00"
 }
