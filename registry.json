@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T06:12:39.574151+00:00",
+    "updatedAt": "2026-11-20T06:55:55.554684+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -73055,8 +73055,8 @@
       "url": "https://github.com/google/gvisor/pull/17067",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-20T06:12:39.574151+00:00",
-      "summary": "Actual child product comparison found an unintended AMD frame-pointer/default change; ARM layout differs. Preserving-flags candidate9690631986687aee10c704d36ade29557ec8155c changes only four AMD actions and leaves the entire ARM action graph identical. Corrected AMD product44685952445, functional44685961612 and lint44685969740 are running; no corrected-product or performance qualification is inferred yet. Publica3ca22af and the16522 prerequisite hold remain unchanged.",
+      "updatedAt": "2026-11-20T06:55:55.554684+00:00",
+      "summary": "Final Sysmsg sourced3f23b8bbdcd1d5deab67b71b21a9f859176aeec restores AMD5824-byte product size and all18function sizes/mnemonics. Functional/compiler gates and both focused final reviews close; ARM proof is retained. Layout/diagnostic differences prevent an equivalence claim or performance waiver. Required performance categories/controls and Kubernetes-context limits remain, as does the16522 parent source/importer hold; publica3ca22af is unchanged.",
       "evidence": [
         {
           "label": "Revised #17089 source with explicit ARM64 layouts for 4 KiB and 64 KiB pages",
@@ -73192,9 +73192,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "observedAt": "2026-11-20T06:12:39.574151+00:00",
-        "disposition": "Actual child product comparison found an unintended AMD frame-pointer/default change; ARM layout differs. Preserving-flags candidate9690631986687aee10c704d36ade29557ec8155c changes only four AMD actions and leaves the entire ARM action graph identical. Corrected AMD product44685952445, functional44685961612 and lint44685969740 are running; no corrected-product or performance qualification is inferred yet. Publica3ca22af and the16522 prerequisite hold remain unchanged.",
-        "nextAction": "Assigned owner audits the corrected actual AMD product and affected functional/lint gates, then closes actual-ELF review and required performance evidence. Preserve identical ARM graph products and the16522 source/importer hold; no source regression claim, performance waiver or premature child publication.",
+        "observedAt": "2026-11-20T06:55:55.554684+00:00",
+        "disposition": "Final Sysmsg sourced3f23b8bbdcd1d5deab67b71b21a9f859176aeec restores AMD5824-byte product size and all18function sizes/mnemonics. Functional/compiler gates and both focused final reviews close; ARM proof is retained. Layout/diagnostic differences prevent an equivalence claim or performance waiver. Required performance categories/controls and Kubernetes-context limits remain, as does the16522 parent source/importer hold; publica3ca22af is unchanged.",
+        "nextAction": "Preserve final reviewed product and compiler/functional evidence. Complete required controlled performance and deployment-context evidence before delivery readiness; retain the16522 prerequisite/publication hold.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17067#discussion_r4486895273",
           "https://github.com/tamird/gvisor/commit/7f6ecfff61b465c2ae00d20ee4ebaad09d430519",
@@ -73207,10 +73207,10 @@
           "https://buildkite.com/gvisor/first-pass/builds/1613",
           "https://buildkite.com/gvisor/first-pass/builds/1613#01a1eae5-3d03-4c72-8011-b3b8ab91bcd6"
         ],
-        "recheckCondition": "Actual corrected-product/functional/lint result, ELF/performance evidence or verified16522 dependency change.",
+        "recheckCondition": "Actual controlled performance/context evidence, parent dependency change or substantive feedback.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING",
-        "curatedAt": "2026-11-20T06:12:39.574151+00:00"
+        "curatedAt": "2026-11-20T06:55:55.554684+00:00"
       },
       "dcoAmendment": {
         "oldHead": "005743727b3d80d373085133b5da9cd906cc9d7c",
@@ -73234,8 +73234,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "root / existing Systrap native stub workstream"
       },
-      "nextStep": "Assigned owner audits the corrected actual AMD product and affected functional/lint gates, then closes actual-ELF review and required performance evidence. Preserve identical ARM graph products and the16522 source/importer hold; no source regression claim, performance waiver or premature child publication.",
-      "recheckCondition": "Actual corrected-product/functional/lint result, ELF/performance evidence or verified16522 dependency change."
+      "nextStep": "Preserve final reviewed product and compiler/functional evidence. Complete required controlled performance and deployment-context evidence before delivery readiness; retain the16522 prerequisite/publication hold.",
+      "recheckCondition": "Actual controlled performance/context evidence, parent dependency change or substantive feedback."
     },
     {
       "id": "pr:bazel-contrib/buildtools:1527",
@@ -97294,8 +97294,8 @@
       "url": "https://github.com/google/gvisor/pull/17568",
       "group": "ci-flakes",
       "status": "open",
-      "updatedAt": "2026-11-17T19:05:00.391405+00:00",
-      "summary": "The published test registers the PTY writer before flushing input. The latest amendment wraps a test comment to match clang-format 23.1.1.",
+      "updatedAt": "2026-11-20T06:55:55.554684+00:00",
+      "summary": "Root read the complete current human review on428aaa7afcbb5cde47d965639da811061fc06ff6. pty_feedback_resume owns the behavior-only comment and required monotonic-deadline correction; the finding remains unresolved. Correction/reply preparation has not changed public source or posted a response.",
       "evidence": [
         {
           "label": "Formatter amendment",
@@ -97304,18 +97304,21 @@
       ],
       "followup": {
         "sourceHead": "428aaa7afcbb5cde47d965639da811061fc06ff6",
-        "owner": "root",
-        "nextAction": "Follow maintainer review, exact published-head checks and any matching import; handle new substantive feedback in the existing workstream. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 428aaa7afcbb5cde47d965639da811061fc06ff6; observed 2026-11-17T19:29:29.454062+00:00): build 1604 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "owner": "pty_feedback_resume",
+        "nextAction": "Assigned owner prepares and validates the behavior/comment and monotonic-deadline correction, then submits exact source/reply for the existing publication boundary. Preserve current source and do not mark the finding resolved or post an acknowledgement.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "observedAt": "2026-11-20T06:55:55.554684+00:00",
+        "recheckCondition": "Validated correction/review readiness, source change or new human feedback.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17568",
           "https://github.com/tamird/gvisor/commit/63ff9616fe4c004db00310ea45b6e06a521f803c",
           "https://github.com/tamird/gvisor/commit/428aaa7afcbb5cde47d965639da811061fc06ff6",
           "https://buildkite.com/gvisor/first-pass/builds/1604",
-          "https://buildkite.com/gvisor/first-pass/builds/1604#01a1eae3-d112-4ab8-8b17-6d2f1daa5da0"
-        ]
+          "https://buildkite.com/gvisor/first-pass/builds/1604#01a1eae3-d112-4ab8-8b17-6d2f1daa5da0",
+          "https://github.com/google/gvisor/pull/17568#discussion_r4639197787"
+        ],
+        "disposition": "Root read the complete current human review on428aaa7afcbb5cde47d965639da811061fc06ff6. pty_feedback_resume owns the behavior-only comment and required monotonic-deadline correction; the finding remains unresolved. Correction/reply preparation has not changed public source or posted a response.",
+        "curatedAt": "2026-11-20T06:55:55.554684+00:00"
       },
       "dcoAmendment": {
         "oldHead": "63ff9616fe4c004db00310ea45b6e06a521f803c",
@@ -97338,7 +97341,9 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
-      }
+      },
+      "nextStep": "Assigned owner prepares and validates the behavior/comment and monotonic-deadline correction, then submits exact source/reply for the existing publication boundary. Preserve current source and do not mark the finding resolved or post an acknowledgement.",
+      "recheckCondition": "Validated correction/review readiness, source change or new human feedback."
     },
     {
       "id": "pr:grpc/grpc:43825",
@@ -134958,10 +134963,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T06:12:39.574151+00:00",
-      "summary": "Patched Hey image44685612703 workflow passes; owner still audits canonical path, actual hash and read-success behavior before a minimal measurement guard. No new measurement or Report claim. Isolated Nginx15-second log/state probe44685530544 passes as diagnosis only; application exit/readiness cause remains under audit, with no complete visit or stability result. Shim single-waiter harness44684725290 remains live, so full owning suites are not declared passing. Canonical sharedb681 remains delivered; Node8bc standalone-publication decision and all other source holds remain unanswered.",
-      "nextStep": "Owners finish actual Hey image/client attestation and Nginx/harness diagnosis before resuming any measured workload. Preserve passing contract tests and published shared support; root follows existing publication decisions without new questions or frames.",
-      "recheckCondition": "Audited actual client/image/harness result, meaningful source feedback or an existing publication/worker answer.",
+      "updatedAt": "2026-11-20T06:55:55.554684+00:00",
+      "summary": "Maintained Hey caller44689741095 failed and awaits owner recovery. The actual four-visit control passes functional checks but fails stability with12–23%spread; cause remains unknown and no expansion is justified. RootIO source299026ca passes three shapes on both architectures, while canonical checks fail. TaskService boundary gate was cancelled and exact traces remain under audit; no full suite or lifecycle closure. Node8bc standalone-publication decision and all existing source/issue holds remain unanswered.",
+      "nextStep": "Assigned owners diagnose actual Hey caller failure and RootIO canonical-check/TaskService traces before retrying only affected gates. Preserve shape/functional products; no unsupported stability conclusion, cancelled-as-pass claim, new decision frames or duplicate publication questions.",
+      "recheckCondition": "Audited caller/check/cancellation recovery, meaningful source feedback or an existing publication/worker answer.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135295,6 +135300,10 @@
         {
           "label": "Single-waiter harness diagnostic; result pending",
           "url": "https://github.com/tamird/gvisor/actions/runs/44684725290"
+        },
+        {
+          "label": "Maintained Hey caller failed; recovery owner assigned",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44689741095"
         }
       ],
       "followup": {
@@ -135316,12 +135325,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T06:12:39.574151+00:00",
-        "nextAction": "Owners finish actual Hey image/client attestation and Nginx/harness diagnosis before resuming any measured workload. Preserve passing contract tests and published shared support; root follows existing publication decisions without new questions or frames.",
-        "recheckCondition": "Audited actual client/image/harness result, meaningful source feedback or an existing publication/worker answer.",
+        "curatedAt": "2026-11-20T06:55:55.554684+00:00",
+        "nextAction": "Assigned owners diagnose actual Hey caller failure and RootIO canonical-check/TaskService traces before retrying only affected gates. Preserve shape/functional products; no unsupported stability conclusion, cancelled-as-pass claim, new decision frames or duplicate publication questions.",
+        "recheckCondition": "Audited caller/check/cancellation recovery, meaningful source feedback or an existing publication/worker answer.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Patched Hey image44685612703 workflow passes; owner still audits canonical path, actual hash and read-success behavior before a minimal measurement guard. No new measurement or Report claim. Isolated Nginx15-second log/state probe44685530544 passes as diagnosis only; application exit/readiness cause remains under audit, with no complete visit or stability result. Shim single-waiter harness44684725290 remains live, so full owning suites are not declared passing. Canonical sharedb681 remains delivered; Node8bc standalone-publication decision and all other source holds remain unanswered.",
+        "disposition": "Maintained Hey caller44689741095 failed and awaits owner recovery. The actual four-visit control passes functional checks but fails stability with12–23%spread; cause remains unknown and no expansion is justified. RootIO source299026ca passes three shapes on both architectures, while canonical checks fail. TaskService boundary gate was cancelled and exact traces remain under audit; no full suite or lifecycle closure. Node8bc standalone-publication decision and all existing source/issue holds remain unanswered.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135730,5 +135739,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T06:12:39.574151+00:00"
+  "updatedAt": "2026-11-20T06:55:55.554684+00:00"
 }
