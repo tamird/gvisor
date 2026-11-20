@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-20T09:41:38.610272+00:00",
+    "updatedAt": "2026-11-20T10:28:50.162885+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -134963,10 +134963,10 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T09:41:38.610272+00:00",
-      "summary": "Checkpoint final reviews accepted three findings: missing waiter notifications on late scope rejection, an output-directory replacement cleanup race, and an overbroad comment. Original writer is fixing them with focused security recheck; dd60 is not final-ready. Its audited399functional XML cases and canonical five-check/376-source strict lint remain historical source-bound proof, not coverage of the revised source. Formatting recovery has zero diff. Nested-mount probe44711325438 passes five XML cases with zero failures/skips: actual tmpfs payload is visible through ordinary and ID-mapped guest paths, guest mapped owner65534 and host owner0. Hostinet restore test unintentionally varies UID mappings; fixture owner is isolating only its intended network mismatch without production change. Full container, ARM KVM hardware and controlled performance gates remain open; existing publication decisions remain pending.",
-      "nextStep": "Checkpoint writer fixes accepted findings, reruns affected canonical/focused tests and obtains security recheck before final readiness. Fixture owner preserves the passing nested ownership contract and removes the unrelated UID-mapping confound from the hostinet test, then proves cheap representatives before broad retry. Preserve all measurement, parent and source-publication holds; no duplicate questions or evidence histories.",
-      "recheckCondition": "Reviewed corrected checkpoint source with actual affected results, isolated hostinet behavior, verified hardware/host context or an existing publication answer.",
+      "updatedAt": "2026-11-20T10:28:50.162885+00:00",
+      "summary": "General, security and performance source reviewers accept checkpoint e895f0269c014116a7da62349405ec4a969ee01a with no remaining actionable source finding. Faithful CI99cb761bef04b3a0277aee359d7609a936d55a77 passes audited sandbox103 plus direct-task6 cases per architecture:218XML, zero failures/skips, terminal BEP/source guards and source linters pass. Unchanged303unit results per architecture and376-source C++ proof are retained by verified inputs. This closes the revised-source review barrier, not full owning-suite or performance qualification. Queue owner is resumed for final unfiltered AMD container+shim and runnable ARM shim; missing /dev/kvm still blocks full ARM container target. Performance remains open: stable A/A, checkpoint/child-lifecycle/broad coverage and representative nested/multiple-bundle FD pressure. No measurements or waiver, and all existing publication questions/holds remain.",
+      "nextStep": "Queue owner runs and audits final unfiltered AMD container/shim and runnable ARM shim on accepted faithful source. Preserve explicit ARM hardware blocker without incompatible worker reruns or matrix reduction. Complete required controlled performance only after verified stable controls/host context; follow existing publication decisions once, with no new frames or history copies.",
+      "recheckCondition": "Audited final owning-suite result, verified ARM KVM hardware/quiet-host evidence, substantive feedback or an existing publication answer.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
         "parent": "8b3ccc9dc9104c412e819190452b413e0949e652",
@@ -135376,6 +135376,26 @@
         {
           "label": "Historical formatting recovery:zero diff",
           "url": "https://github.com/tamird/gvisor/actions/runs/44710366503"
+        },
+        {
+          "label": "Accepted e895 AMD sandbox103XML passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44717981229"
+        },
+        {
+          "label": "Accepted e895 AMD task6XML passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44717984311"
+        },
+        {
+          "label": "Accepted e895 ARM sandbox103XML passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44717987639"
+        },
+        {
+          "label": "Accepted e895 ARM task6XML passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44717990906"
+        },
+        {
+          "label": "Accepted e895 source checks passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44717993736"
         }
       ],
       "followup": {
@@ -135397,12 +135417,12 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T09:41:38.610272+00:00",
-        "nextAction": "Checkpoint writer fixes accepted findings, reruns affected canonical/focused tests and obtains security recheck before final readiness. Fixture owner preserves the passing nested ownership contract and removes the unrelated UID-mapping confound from the hostinet test, then proves cheap representatives before broad retry. Preserve all measurement, parent and source-publication holds; no duplicate questions or evidence histories.",
-        "recheckCondition": "Reviewed corrected checkpoint source with actual affected results, isolated hostinet behavior, verified hardware/host context or an existing publication answer.",
+        "curatedAt": "2026-11-20T10:28:50.162885+00:00",
+        "nextAction": "Queue owner runs and audits final unfiltered AMD container/shim and runnable ARM shim on accepted faithful source. Preserve explicit ARM hardware blocker without incompatible worker reruns or matrix reduction. Complete required controlled performance only after verified stable controls/host context; follow existing publication decisions once, with no new frames or history copies.",
+        "recheckCondition": "Audited final owning-suite result, verified ARM KVM hardware/quiet-host evidence, substantive feedback or an existing publication answer.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "Checkpoint final reviews accepted three findings: missing waiter notifications on late scope rejection, an output-directory replacement cleanup race, and an overbroad comment. Original writer is fixing them with focused security recheck; dd60 is not final-ready. Its audited399functional XML cases and canonical five-check/376-source strict lint remain historical source-bound proof, not coverage of the revised source. Formatting recovery has zero diff. Nested-mount probe44711325438 passes five XML cases with zero failures/skips: actual tmpfs payload is visible through ordinary and ID-mapped guest paths, guest mapped owner65534 and host owner0. Hostinet restore test unintentionally varies UID mappings; fixture owner is isolating only its intended network mismatch without production change. Full container, ARM KVM hardware and controlled performance gates remain open; existing publication decisions remain pending.",
+        "disposition": "General, security and performance source reviewers accept checkpoint e895f0269c014116a7da62349405ec4a969ee01a with no remaining actionable source finding. Faithful CI99cb761bef04b3a0277aee359d7609a936d55a77 passes audited sandbox103 plus direct-task6 cases per architecture:218XML, zero failures/skips, terminal BEP/source guards and source linters pass. Unchanged303unit results per architecture and376-source C++ proof are retained by verified inputs. This closes the revised-source review barrier, not full owning-suite or performance qualification. Queue owner is resumed for final unfiltered AMD container+shim and runnable ARM shim; missing /dev/kvm still blocks full ARM container target. Performance remains open: stable A/A, checkpoint/child-lifecycle/broad coverage and representative nested/multiple-bundle FD pressure. No measurements or waiver, and all existing publication questions/holds remain.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -135811,5 +135831,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-20T09:41:38.610272+00:00"
+  "updatedAt": "2026-11-20T10:28:50.162885+00:00"
 }
