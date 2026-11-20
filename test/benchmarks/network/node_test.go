@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
+	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/test/benchmarks/harness"
 	"gvisor.dev/gvisor/test/benchmarks/tools"
 	"gvisor.dev/gvisor/test/metricsviz"
@@ -132,6 +133,19 @@ func runNode(b *testing.B, hey *tools.Hey) {
 		CpusetCpus: harness.ClientCPUSet(),
 	}
 	if *nodeResponseProbe {
+		witnessPath, err := testutil.FindFile("images/benchmarks/node/index_test.js")
+		if err != nil {
+			b.Fatal(err)
+		}
+		witness, err := os.ReadFile(witnessPath)
+		if err != nil {
+			b.Fatal(err)
+		}
+		if output, err := nodeApp.Exec(ctx, dockerutil.ExecOpts{}, "node", "-e", string(witness)); err != nil {
+			b.Fatalf("Node producer witness: %v: %s", err, output)
+		} else {
+			b.Logf("Node producer witness: %s", output)
+		}
 		probe := clientMachine.GetNativeContainer(ctx, b)
 		defer probe.CleanUp(ctx)
 		if err := probe.Spawn(ctx, dockerutil.RunOpts{
@@ -168,6 +182,9 @@ func runNode(b *testing.B, hey *tools.Hey) {
 				b.Fatal(err)
 			}
 			b.Logf("%s", record)
+			if len(body) != 4206 || strings.Count(string(body), "<p>") != 4 {
+				b.Errorf("response %d has %d bytes and %d paragraphs, want four complete Redis values", request, len(body), strings.Count(string(body), "<p>"))
+			}
 			if fetchErr != nil || response.StatusCode != http.StatusOK {
 				b.Errorf("response %d: wget error %v, status %d", request, fetchErr, response.StatusCode)
 			}

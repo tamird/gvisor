@@ -11,15 +11,26 @@ var client = redis.createClient({host: host_name, detect_buffers: true});
 app.set('views', __dirname);
 app.set('view engine', 'hbs');
 
-app.get('/', (req, res) => {
-  var tmp = [];
+app.get('/', (req, res, next) => {
+  const tmp = [];
+  let failed = false;
   /* Pull four random keys from the redis server. */
-  for (i = 0; i < 4; i++) {
+  for (let i = 0; i < 4; i++) {
     client.get(Math.floor(Math.random() * (100)), function(err, reply) {
+      if (failed) {
+        return;
+      }
+      if (err || reply === null) {
+        failed = true;
+        next(err || new Error('Redis key has no value'));
+        return;
+      }
       tmp.push(reply.toString());
+      if (tmp.length === 4) {
+        res.render('index', {text: tmp});
+      }
     });
   }
-  res.render('index', {text: tmp});
 });
 
 /**

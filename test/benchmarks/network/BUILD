@@ -43,11 +43,13 @@ benchmark_test(
     srcs = [
         "node_test.go",
     ],
+    data = ["//images:benchmarks/node/index_test.js"],
     embed = [":network"],
     use_for_pgo = False,
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/test/dockerutil",
+        "//pkg/test/testutil",
         "//test/benchmarks/harness",
         "//test/benchmarks/tools",
         "//test/metricsviz",
@@ -86,6 +88,7 @@ benchmark_test(
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/test/dockerutil",
+        "//pkg/test/testutil",
         "//test/benchmarks/harness",
         "//test/benchmarks/tools",
         "//test/metricsviz",
@@ -127,6 +130,7 @@ benchmark_test(
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/test/dockerutil",
+        "//pkg/test/testutil",
         "//test/benchmarks/harness",
         "//test/benchmarks/tools",
         "//test/metricsviz",
