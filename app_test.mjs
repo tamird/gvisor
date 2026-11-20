@@ -2256,6 +2256,46 @@ test('a bound infrastructure diagnosis names the retry and expires on new failur
   assert.equal(vm.runInContext('attentionReasons(nodeInput, "tamird")[0].id', context), 'maintainer-import-checks');
 });
 
+test('source infrastructure dispositions bind the head and failed checks without rewriting failures', () => {
+  const context = client(), node = attentionNode(17838);
+  node.repo = 'google/gvisor'; node.head = node.github.head;
+  node.github.checks = { complete: true, state: 'FAILURE', total: 2, contexts: [
+    { ...serviceStatus('buildkite/first-pass/pr', 'FAILURE'), id: 'admission', url: 'https://buildkite.com/gvisor/first-pass/builds/2166' },
+    { id: 'export', name: 'generate', kind: 'check-run', purpose: 'validation', state: 'IN_PROGRESS' },
+  ] };
+  context.nodeInput = node;
+  node.followup = { attentionDispositions: [{ reason: 'author-public-checks', action: 'ci-infrastructure-retry',
+    title: 'Provider quota before execution', nextAction: 'Recheck evidenced admission recovery; do not rerun automatically.',
+    evidence: ['https://buildkite.com/gvisor/first-pass/builds/2166'],
+    binding: vm.runInContext('attentionDispositionEvidence(nodeInput, "author-public-checks")', context) }] };
+  context.registryInput = { ...context.registryInput, nodes: [node], groups: [], edges: [] };
+  vm.runInContext('validateRegistry(registryInput)', context);
+  const raw = JSON.stringify(node.github), reason = reasonsFor(node).find(item => item.id === 'maintainer-ci-infrastructure');
+  assert.equal(reason.title, 'CI infrastructure retry');
+  assert.match(reason.detail, /do not rerun automatically/);
+  assert.ok(!idsFor(node).includes('author-public-checks'));
+  assert.equal(JSON.stringify(node.github), raw);
+  node.github.checks.contexts[1].state = 'SUCCESS';
+  assert.ok(idsFor(node).includes('maintainer-ci-infrastructure'));
+  const feedback = { kind: 'comment', id: 'new-comment', url: `${node.url}#issuecomment-1`, body: 'Please fix the new source issue.',
+    author: { login: 'reviewer', __typename: 'User' }, updatedAt: '2026-10-13T10:00:00Z' };
+  node.github.feedback.items.push(feedback);
+  node.followup.owner = 'root';
+  node.followup.actionableComment = { head: node.github.head, commentId: feedback.id, url: feedback.url };
+  vm.runInContext('validateRegistry(registryInput)', context);
+  assert.ok(idsFor(node).includes('author-feedback'));
+  assert.ok(idsFor(node).includes('maintainer-ci-infrastructure'));
+  for (const mutate of [
+    other => { other.head = other.github.head = 'b'.repeat(40); },
+    other => { other.github.checks.contexts[0].id = 'new-admission'; },
+    other => { other.github.checks.contexts.push({ ...serviceStatus('lint', 'FAILURE'), id: 'new-failure', url: 'https://example.com/lint' }); other.github.checks.total++; },
+  ]) {
+    const other = structuredClone(node); mutate(other);
+    assert.ok(idsFor(other).includes('author-public-checks'), mutate.toString());
+    assert.ok(!idsFor(other).includes('maintainer-ci-infrastructure'), mutate.toString());
+  }
+});
+
 function sourceAuthenticationFailure() {
   const node = attentionNode(13849);
   node.repo = 'buildbuddy-io/buildbuddy'; node.id = 'pr:buildbuddy-io/buildbuddy:13849';

@@ -447,7 +447,7 @@ function sourceFixRecovery(node, nodes = model?.nodes || []) {
   return { state: "ready", remedy: recovery.remedy, mergedAt: remedy.mergedAt, sourceHead: pr.head,
     detail: `CI remedy #${remedy.number} merged as ${recovery.fixCommit.slice(0, 9)}. Verified ancestry shows ${pr.head.slice(0, 9)} lacks it; rebase this source branch and verify its new checks. Existing failures and review holds remain visible.` };
 }
-const TRIAGED_REASONS = new Set(["author-feedback", "maintainer-import-checks", "author-conflicts", "maintainer-review"]);
+const TRIAGED_REASONS = new Set(["author-feedback", "author-public-checks", "maintainer-import-checks", "author-conflicts", "maintainer-review"]);
 function evidenceJSON(value, ignoredKey) {
   // Object key order is not evidence; array order is retained from the snapshot.
   if (Array.isArray(value)) return `[${value.map(item => evidenceJSON(item, ignoredKey)).join(",")}]`;
@@ -457,7 +457,15 @@ function evidenceJSON(value, ignoredKey) {
 function attentionDispositionEvidence(node, reason, replacementId, nodes = model?.nodes || []) {
   const pr = node.github;
   if (!TRIAGED_REASONS.has(reason) || !pr || pr.status !== "open" || pr.revisionChanged
-      || !pr.head || node.head && node.head !== pr.head || pr.reviewsComplete !== true
+      || !pr.head || node.head && node.head !== pr.head) return null;
+  if (reason === "author-public-checks") {
+    if (!completeChecks(pr)) return null;
+    const checks = failedValidationChecks(pr).filter(check => !isPrivateBuildkiteCheck(pr, check));
+    if (!checks.length || checks.some(check => typeof check.id !== "string" || !check.id || !safeURL(check.url))) return null;
+    return { sourceHead: pr.head, checks: checks.map(({ id, name, state, url, kind }) => ({ id, name, state, url, kind }))
+      .sort((a, b) => a.id.localeCompare(b.id)) };
+  }
+  if (pr.reviewsComplete !== true
       || pr.threads?.complete !== true || pr.feedback?.complete !== true || !Array.isArray(pr.feedback.items)
       || actionableComment(node)) return null;
   const evidence = { sourceHead: pr.head, reviewDecision: pr.reviewDecision,
@@ -2419,7 +2427,7 @@ function validateRegistry(candidate, { allowRetiredExecution = false } = {}) {
           || !item.binding || !/^[a-f0-9]{40}$/.test(item.binding.sourceHead)
           || item.reason === "maintainer-review" && !(item.action === "prefer-alternative" && item.replacement
             && item.binding.replacement?.id === item.replacement && item.evidence.includes(item.binding.replacement?.endorsement?.url))
-          || item.action !== undefined && !(item.action === "ci-infrastructure-retry" && item.reason === "maintainer-import-checks"
+          || item.action !== undefined && !(item.action === "ci-infrastructure-retry" && ["author-public-checks", "maintainer-import-checks"].includes(item.reason)
             || item.action === "prefer-alternative" && item.reason === "maintainer-review"
             || item.action === "batch-cleanup" && item.reason === "author-feedback" && item.binding.reviewDecision === "APPROVED"
             && item.binding.approvedHead === item.binding.sourceHead)
