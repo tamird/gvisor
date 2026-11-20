@@ -1,3 +1,31 @@
+diff --git a/bcc/BUILD.bazel b/bcc/BUILD.bazel
+index 1696904..122eee4 100644
+--- a/bcc/BUILD.bazel
++++ b/bcc/BUILD.bazel
+@@ -189,3 +189,21 @@ cc_test(
+         "@com_google_googletest//:gtest_main",
+     ],
+ )
++
++cc_binary(
++    name = "bazel_info_test_helper",
++    testonly = True,
++    srcs = ["bazel_info_test_helper.cpp"],
++)
++
++cc_test(
++    name = "bazel_test",
++    size = "small",
++    srcs = ["bazel_test.cpp"],
++    data = [":bazel_info_test_helper"],
++    deps = [
++        ":bazel",
++        "@bazel_tools//tools/cpp/runfiles",
++        "@com_google_googletest//:gtest_main",
++    ],
++)
+diff --git a/bcc/bazel.cpp b/bcc/bazel.cpp
+index 084baec..5203e1d 100644
 --- a/bcc/bazel.cpp
 +++ b/bcc/bazel.cpp
 @@ -4,6 +4,7 @@
@@ -8,7 +36,7 @@
  #include <sstream>
  #include <string>
  #include <string_view>
-@@ -30,18 +31,16 @@
+@@ -30,18 +31,16 @@ bazel_info(std::filesystem::path const& bazel_path,
    args.insert(args.end(), bazel_flags.begin(), bazel_flags.end());
    args.push_back(location);
    boost::process::ipstream outs;
@@ -31,30 +59,9 @@
    }
    return std::filesystem::path(line);
  }
---- a/bcc/BUILD.bazel
-+++ b/bcc/BUILD.bazel
-@@ -189,3 +189,21 @@
-         "@com_google_googletest//:gtest_main",
-     ],
- )
-+
-+cc_binary(
-+    name = "bazel_info_test_helper",
-+    testonly = True,
-+    srcs = ["bazel_info_test_helper.cpp"],
-+)
-+
-+cc_test(
-+    name = "bazel_test",
-+    size = "small",
-+    srcs = ["bazel_test.cpp"],
-+    data = [":bazel_info_test_helper"],
-+    deps = [
-+        ":bazel",
-+        "@bazel_tools//tools/cpp/runfiles",
-+        "@com_google_googletest//:gtest_main",
-+    ],
-+)
+diff --git a/bcc/bazel_info_test_helper.cpp b/bcc/bazel_info_test_helper.cpp
+new file mode 100644
+index 0000000..f768b23
 --- /dev/null
 +++ b/bcc/bazel_info_test_helper.cpp
 @@ -0,0 +1,17 @@
@@ -75,6 +82,9 @@
 +  std::cout << noise << std::endl;
 +  return std::find(argv + 1, argv + argc, std::string_view("--fail")) != argv + argc ? 7 : 0;
 +}
+diff --git a/bcc/bazel_test.cpp b/bcc/bazel_test.cpp
+new file mode 100644
+index 0000000..2213043
 --- /dev/null
 +++ b/bcc/bazel_test.cpp
 @@ -0,0 +1,61 @@
