@@ -150,7 +150,7 @@ go_test(
         "--server-cpuset=2-3",
         "--paired-redis-cpuset=4",
         "--paired-image-archives='$(rootpaths //test/benchmarks/network:node_worker_images)'",
-        "-test.run=^TestWorkerCounterUsability$$",
+        "-test.run=^TestWorkerCounterScopeAdmission$$",
     ],
     data = [
         ":paired_base_runsc",

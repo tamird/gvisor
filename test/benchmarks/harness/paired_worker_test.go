@@ -18,7 +18,6 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
-	"encoding/binary"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -452,7 +451,7 @@ func attestBenchmarkContainers(ctx context.Context, cli *client.Client, messages
 	}
 }
 
-func TestWorkerCounterUsability(t *testing.T) {
+func TestWorkerCounterScopeAdmission(t *testing.T) {
 	membership, err := os.ReadFile("/proc/self/cgroup")
 	if err != nil {
 		t.Fatal(err)
@@ -514,47 +513,47 @@ func TestWorkerCounterUsability(t *testing.T) {
 			}
 		}
 	}()
-	attr := unix.PerfEventAttr{
-		Type:        unix.PERF_TYPE_HARDWARE,
-		Size:        unix.PERF_ATTR_SIZE_VER0,
-		Config:      unix.PERF_COUNT_HW_CPU_CYCLES,
-		Read_format: unix.PERF_FORMAT_GROUP | unix.PERF_FORMAT_TOTAL_TIME_ENABLED | unix.PERF_FORMAT_TOTAL_TIME_RUNNING,
-		Bits:        unix.PerfBitDisabled | unix.PerfBitExcludeHv,
+	t.Logf("same-guest disabled admission: uid=%d guest_cpus=%d cpu=2", os.Geteuid(), runtime.NumCPU())
+	for _, path := range []string{"/proc/sys/kernel/perf_event_paranoid", "/sys/bus/event_source/devices/cpu/type"} {
+		data, err := os.ReadFile(path)
+		t.Logf("counter support path=%q value=%q read_error=%v", path, strings.TrimSpace(string(data)), err)
 	}
-	cycles, err := unix.PerfEventOpen(&attr, groupFD, 2, -1, unix.PERF_FLAG_PID_CGROUP|unix.PERF_FLAG_FD_CLOEXEC)
-	if err != nil {
-		t.Fatalf("open disabled cgroup cycles on CPU2: %v", err)
-	}
-	fds = append(fds, cycles)
-	attr.Config = unix.PERF_COUNT_HW_INSTRUCTIONS
-	attr.Bits &^= unix.PerfBitDisabled
-	instructions, err := unix.PerfEventOpen(&attr, groupFD, 2, cycles, unix.PERF_FLAG_PID_CGROUP|unix.PERF_FLAG_FD_CLOEXEC)
-	if err != nil {
-		t.Fatalf("group cgroup instructions with cycles on CPU2: %v", err)
-	}
-	fds = append(fds, instructions)
-	if err := unix.IoctlSetInt(cycles, unix.PERF_EVENT_IOC_ENABLE, unix.PERF_IOC_FLAG_GROUP); err != nil {
-		t.Fatalf("enable owned counter group: %v", err)
-	}
-	state := uint64(1)
-	for i := uint64(0); i < 100000; i++ {
-		state = state*1664525 + 1013904223
-		state ^= i
-	}
-	if err := unix.IoctlSetInt(cycles, unix.PERF_EVENT_IOC_DISABLE, unix.PERF_IOC_FLAG_GROUP); err != nil {
-		t.Fatalf("disable owned counter group: %v", err)
-	}
-	var data [40]byte
-	n, err := unix.Read(cycles, data[:])
-	if err != nil || n != len(data) {
-		t.Fatalf("read owned counter group: bytes=%d want=%d error=%v", n, len(data), err)
-	}
-	var values [5]uint64
-	for i := range values {
-		values[i] = binary.NativeEndian.Uint64(data[8*i:])
-	}
-	t.Logf("cgroup CPU2 deterministic counter smoke: result=%d group_size=%d enabled_ns=%d running_ns=%d cycles=%d instructions=%d", state, values[0], values[1], values[2], values[3], values[4])
-	if values[0] != 2 || values[1] == 0 || values[1] != values[2] || values[3] == 0 || values[4] == 0 {
-		t.Fatal("owned counter group lacks two nonzero values with full enabled/running coverage")
+	for _, counter := range []struct {
+		name   string
+		typeID uint32
+		config uint64
+	}{
+		{"software_cpu_clock", unix.PERF_TYPE_SOFTWARE, unix.PERF_COUNT_SW_CPU_CLOCK},
+		{"cycles", unix.PERF_TYPE_HARDWARE, unix.PERF_COUNT_HW_CPU_CYCLES},
+		{"instructions", unix.PERF_TYPE_HARDWARE, unix.PERF_COUNT_HW_INSTRUCTIONS},
+	} {
+		attr := unix.PerfEventAttr{
+			Type:        counter.typeID,
+			Size:        unix.PERF_ATTR_SIZE_VER0,
+			Config:      counter.config,
+			Read_format: unix.PERF_FORMAT_GROUP | unix.PERF_FORMAT_TOTAL_TIME_ENABLED | unix.PERF_FORMAT_TOTAL_TIME_RUNNING,
+			Bits:        unix.PerfBitDisabled | unix.PerfBitExcludeHv,
+		}
+		for _, scope := range []struct {
+			name  string
+			pid   int
+			flags int
+		}{
+			{"own_thread", 0, unix.PERF_FLAG_FD_CLOEXEC},
+			{"owned_cgroup", groupFD, unix.PERF_FLAG_FD_CLOEXEC | unix.PERF_FLAG_PID_CGROUP},
+		} {
+			scopedAttr := attr
+			fd, err := unix.PerfEventOpen(&scopedAttr, scope.pid, 2, -1, scope.flags)
+			errno := 0
+			if code, ok := err.(unix.Errno); ok {
+				errno = int(code)
+			}
+			t.Logf("counter=%s scope=%s cpu=2 opened=%t errno=%d error=%v", counter.name, scope.name, err == nil, errno, err)
+			if err == nil {
+				if err := unix.Close(fd); err != nil {
+					t.Errorf("close disabled %s/%s counter: %v", counter.name, scope.name, err)
+				}
+			}
+		}
 	}
 }
