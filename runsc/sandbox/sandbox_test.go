@@ -28,6 +28,7 @@ import (
 	"golang.org/x/sys/unix"
 	controlserver "gvisor.dev/gvisor/pkg/control/server"
 	"gvisor.dev/gvisor/pkg/sentry/control/controlapi"
+	"gvisor.dev/gvisor/pkg/sentry/fscheckpoint"
 	"gvisor.dev/gvisor/pkg/sentry/state/checkpointfiles"
 	"gvisor.dev/gvisor/runsc/cgroup"
 	"gvisor.dev/gvisor/runsc/config"
@@ -853,5 +854,122 @@ func TestPartialCheckpointCreationRollback(t *testing.T) {
 	}
 	if data, err := os.ReadFile(filepath.Join(foreign, checkpointfiles.StateFileName)); err != nil || string(data) != "foreign" {
 		t.Fatalf("foreign checkpoint changed: %q, %v", data, err)
+	}
+}
+
+func TestNestedCheckpointPartialRollback(t *testing.T) {
+	for _, prefix := range []string{"nested/fs", "nested/"} {
+		t.Run(prefix, func(t *testing.T) {
+			dir := t.TempDir()
+			if err := os.Mkdir(filepath.Join(dir, "nested"), 0700); err != nil {
+				t.Fatal(err)
+			}
+			conflict := filepath.Join(dir, checkpointfiles.PrefixFileName(prefix, checkpointfiles.FSCheckpointMultiTarFileName))
+			if err := os.WriteFile(conflict, []byte("existing"), 0600); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := createFSCheckpointLocalFiles(dir, prefix, false); err == nil {
+				t.Fatal("creation replaced an existing file")
+			}
+			manifest := filepath.Join(dir, checkpointfiles.PrefixFileName(prefix, checkpointfiles.FSCheckpointManifestFileName))
+			if _, err := os.Stat(manifest); !os.IsNotExist(err) {
+				t.Fatalf("partial manifest remains: %v", err)
+			}
+			if data, err := os.ReadFile(conflict); err != nil || string(data) != "existing" {
+				t.Fatalf("existing file changed: %q, %v", data, err)
+			}
+			if err := os.Remove(conflict); err != nil {
+				t.Fatal(err)
+			}
+			files, err := createFSCheckpointLocalFiles(dir, prefix, false)
+			if err != nil {
+				t.Fatalf("retry after partial rollback: %v", err)
+			}
+			for _, f := range files {
+				_ = f.Close()
+			}
+		})
+	}
+}
+
+func TestNestedCheckpointLaterBundleRollback(t *testing.T) {
+	dir := t.TempDir()
+	for _, parent := range []string{"first", "second"} {
+		if err := os.Mkdir(filepath.Join(dir, parent), 0700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	conflict := filepath.Join(dir, "second", "fs_multitar.img")
+	if err := os.WriteFile(conflict, []byte("existing"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	bundles := []fscheckpoint.Bundle{{Prefix: "first/fs"}, {Prefix: "second/fs"}}
+	if _, err := createFSCheckpointBundlesLocalFiles(dir, bundles, false); err == nil {
+		t.Fatal("creation replaced an existing file")
+	}
+	entries, err := os.ReadDir(filepath.Join(dir, "first"))
+	if err != nil || len(entries) != 0 {
+		t.Fatalf("earlier bundle rollback = %v, %v", entries, err)
+	}
+	entries, err = os.ReadDir(filepath.Join(dir, "second"))
+	if err != nil || len(entries) != 1 || entries[0].Name() != "fs_multitar.img" {
+		t.Fatalf("later bundle rollback = %v, %v", entries, err)
+	}
+	if data, err := os.ReadFile(conflict); err != nil || string(data) != "existing" {
+		t.Fatalf("existing file changed: %q, %v", data, err)
+	}
+	if err := os.Remove(conflict); err != nil {
+		t.Fatal(err)
+	}
+	files, err := createFSCheckpointBundlesLocalFiles(dir, bundles, false)
+	if err != nil {
+		t.Fatalf("retry after multi-bundle rollback: %v", err)
+	}
+	for _, f := range files {
+		_ = f.Close()
+	}
+}
+
+func TestNestedCheckpointParentReplacement(t *testing.T) {
+	dir := t.TempDir()
+	groups, err := createFSCheckpointFileGroups(dir, []fscheckpoint.Bundle{{Prefix: "nested/fs"}}, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		for _, group := range groups {
+			for _, f := range group.files {
+				_ = f.Close()
+			}
+			_ = group.dir.Close()
+		}
+	}()
+	original, foreign := filepath.Join(dir, "original"), filepath.Join(dir, "foreign")
+	if err := os.Rename(filepath.Join(dir, "nested"), original); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(foreign, 0700); err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range groups[0].files {
+		if err := os.WriteFile(filepath.Join(foreign, filepath.Base(f.Name())), []byte("foreign"), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.Symlink(foreign, filepath.Join(dir, "nested")); err != nil {
+		t.Fatal(err)
+	}
+	if err := groups[0].remove(); err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range groups[0].files {
+		name := filepath.Base(f.Name())
+		if data, err := os.ReadFile(filepath.Join(foreign, name)); err != nil || string(data) != "foreign" {
+			t.Errorf("replacement file changed: %q, %v", data, err)
+		}
+	}
+	entries, err := os.ReadDir(original)
+	if err != nil || len(entries) != 0 {
+		t.Fatalf("pinned parent rollback = %v, %v", entries, err)
 	}
 }

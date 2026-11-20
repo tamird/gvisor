@@ -2237,18 +2237,18 @@ func (s *Sandbox) Checkpoint(conf *config.Config, cid string, imagePath string, 
 		opt.TaskContainerID = cid
 	}
 	defer opt.FilePayload.Close()
-	imageDir, err := s.setCheckpointOptsFiles(conf, imagePath, opts, bundles, &opt)
+	groups, err := s.setCheckpointOptsFiles(conf, imagePath, opts, bundles, &opt)
 	if err != nil {
 		return err
 	}
-	if imageDir != nil {
-		defer imageDir.Close()
-		defer func() {
+	defer func() {
+		for _, group := range groups {
 			if retErr != nil && opts.ContainerOnly {
-				retErr = errors.Join(retErr, removeCheckpointFiles(int(imageDir.Fd()), imagePath, opt.FilePayload.Files))
+				retErr = errors.Join(retErr, group.remove())
 			}
-		}()
-	}
+			_ = group.dir.Close()
+		}
+	}()
 
 	if err := s.switchCPULimit(cpuPhaseApp, cpuPhaseLifecycle); err != nil {
 		log.Warningf("[Lifecycle CPU] Checkpoint will run under the application CPU limit: %v. This slows down gVisor checkpointing speed.", err)
@@ -2272,7 +2272,7 @@ func (s *Sandbox) Checkpoint(conf *config.Config, cid string, imagePath string, 
 	return nil
 }
 
-func (s *Sandbox) setCheckpointOptsFiles(conf *config.Config, imagePath string, opts CheckpointOpts, bundles []fscheckpoint.Bundle, opt *controlapi.SaveOpts) (*os.File, error) {
+func (s *Sandbox) setCheckpointOptsFiles(conf *config.Config, imagePath string, opts CheckpointOpts, bundles []fscheckpoint.Bundle, opt *controlapi.SaveOpts) ([]checkpointFileGroup, error) {
 	clientSockFile, err := s.maybeStartCheckpointGoferAndGetSocket(conf, s.CgroupJSON.Cgroup, imagePath, "-allow-checkpoint-writes")
 	if err != nil {
 		return nil, err
@@ -2287,35 +2287,50 @@ func (s *Sandbox) setCheckpointOptsFiles(conf *config.Config, imagePath string, 
 	return nil, nil
 }
 
-func setCheckpointOptsFilesForLocalCheckpoint(conf *config.Config, imagePath string, opts CheckpointOpts, bundles []fscheckpoint.Bundle, opt *controlapi.SaveOpts) (_ *os.File, retErr error) {
+// checkpointFileGroup binds created files to their opened parent directory.
+type checkpointFileGroup struct {
+	dir   *os.File
+	files []*os.File
+}
+
+func (g checkpointFileGroup) remove() error {
+	return removeCheckpointFiles(int(g.dir.Fd()), g.dir.Name(), g.files)
+}
+
+func setCheckpointOptsFilesForLocalCheckpoint(conf *config.Config, imagePath string, opts CheckpointOpts, bundles []fscheckpoint.Bundle, opt *controlapi.SaveOpts) (_ []checkpointFileGroup, retErr error) {
 	imageDir, err := openCheckpointDirectory(imagePath)
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		if retErr != nil {
-			_ = imageDir.Close()
-		}
-	}()
 	files, err := createSaveFilesAt(int(imageDir.Fd()), imagePath, opts.Direct, opts.Compression)
 	if err != nil {
+		_ = imageDir.Close()
 		return nil, err
 	}
+	groups := make([]checkpointFileGroup, 1, 1+len(bundles))
+	groups[0] = checkpointFileGroup{dir: imageDir, files: files}
+	defer func() {
+		if retErr != nil {
+			for _, group := range groups {
+				retErr = errors.Join(retErr, group.remove())
+				for _, f := range group.files {
+					_ = f.Close()
+				}
+				_ = group.dir.Close()
+			}
+		}
+	}()
 	opt.FilePayload.Files = files
 	opt.HavePagesFile = len(files) > 1
-
-	if len(bundles) > 0 {
-		fsFiles, err := createFSCheckpointBundlesLocalFiles(imagePath, bundles, opts.Direct)
-		if err != nil {
-			retErr = errors.Join(fmt.Errorf("creating fs checkpoint files: %w", err), removeCheckpointFiles(int(imageDir.Fd()), imagePath, files))
-			for _, f := range files {
-				_ = f.Close()
-			}
-			return nil, retErr
-		}
-		opt.FilePayload.Files = append(opt.FilePayload.Files, fsFiles...)
+	fsGroups, err := createFSCheckpointFileGroups(imagePath, bundles, opts.Direct)
+	if err != nil {
+		return nil, fmt.Errorf("creating fs checkpoint files: %w", err)
 	}
-	return imageDir, nil
+	groups = append(groups, fsGroups...)
+	for _, group := range fsGroups {
+		opt.FilePayload.Files = append(opt.FilePayload.Files, group.files...)
+	}
+	return groups, nil
 }
 
 func openCheckpointDirectory(path string) (*os.File, error) {
@@ -2673,50 +2688,88 @@ func setFSSaveArgsForLocalCheckpointFiles(conf *config.Config, imagePath string,
 // createFSCheckpointBundlesLocalFiles creates the files of the given
 // filesystem checkpoint bundles in imagePath, 4 files per bundle in bundle
 // order.
-func createFSCheckpointBundlesLocalFiles(imagePath string, bundles []fscheckpoint.Bundle, direct bool) (_ []*os.File, retErr error) {
-	if len(bundles) == 0 {
-		return nil, nil
-	}
-	dir, err := openCheckpointDirectory(imagePath)
+func createFSCheckpointBundlesLocalFiles(imagePath string, bundles []fscheckpoint.Bundle, direct bool) ([]*os.File, error) {
+	groups, err := createFSCheckpointFileGroups(imagePath, bundles, direct)
 	if err != nil {
 		return nil, err
 	}
-	defer dir.Close()
-	var allFiles []*os.File
+	if len(groups) == 0 {
+		return nil, nil
+	}
+	files := make([]*os.File, 0, 4*len(groups))
+	for _, group := range groups {
+		files = append(files, group.files...)
+		_ = group.dir.Close()
+	}
+	return files, nil
+}
+
+func createFSCheckpointFileGroups(imagePath string, bundles []fscheckpoint.Bundle, direct bool) (_ []checkpointFileGroup, retErr error) {
+	if len(bundles) == 0 {
+		return nil, nil
+	}
+	groups := make([]checkpointFileGroup, 0, len(bundles))
 	defer func() {
 		if retErr != nil {
-			retErr = errors.Join(retErr, removeCheckpointFiles(int(dir.Fd()), imagePath, allFiles))
-			for _, f := range allFiles {
-				_ = f.Close()
+			for _, group := range groups {
+				retErr = errors.Join(retErr, group.remove())
+				for _, f := range group.files {
+					_ = f.Close()
+				}
+				_ = group.dir.Close()
 			}
 		}
 	}()
-
-	for _, b := range bundles {
-		files, err := createFSCheckpointLocalFiles(imagePath, b.Prefix, direct)
+	for _, bundle := range bundles {
+		group, err := createFSCheckpointFileGroup(imagePath, bundle.Prefix, direct)
 		if err != nil {
 			return nil, err
 		}
-		allFiles = append(allFiles, files...)
+		groups = append(groups, group)
 	}
-	return allFiles, nil
+	return groups, nil
 }
 
 // createFSCheckpointLocalFiles creates the files of the filesystem checkpoint
 // with the given prefix in imagePath.
 func createFSCheckpointLocalFiles(imagePath, prefix string, direct bool) ([]*os.File, error) {
-	if strings.Contains(prefix, "/") {
-		subDir := filepath.Dir(filepath.Join(imagePath, checkpointfiles.PrefixFileName(prefix, checkpointfiles.FSCheckpointManifestFileName)))
-		if err := os.MkdirAll(subDir, 0755); err != nil {
-			return nil, fmt.Errorf("creating fs checkpoint directory %q: %w", subDir, err)
+	group, err := createFSCheckpointFileGroup(imagePath, prefix, direct)
+	if err != nil {
+		return nil, err
+	}
+	defer group.dir.Close()
+	return group.files, nil
+}
+
+func createFSCheckpointFileGroup(imagePath, prefix string, direct bool) (checkpointFileGroup, error) {
+	manifestName := checkpointfiles.PrefixFileName(prefix, checkpointfiles.FSCheckpointManifestFileName)
+	parent := filepath.Dir(manifestName)
+	if parent != "." {
+		if err := os.MkdirAll(filepath.Join(imagePath, parent), 0755); err != nil {
+			return checkpointFileGroup{}, fmt.Errorf("creating fs checkpoint directory: %w", err)
 		}
 	}
-	dirFD, err := unix.Open(imagePath, unix.O_PATH|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+	dir, err := openCheckpointDirectory(imagePath)
 	if err != nil {
-		return nil, fmt.Errorf("opening fs checkpoint directory %q failed: %w", imagePath, err)
+		return checkpointFileGroup{}, err
 	}
-	defer unix.Close(dirFD)
-	return openFSCheckpointLocalFiles(dirFD, imagePath, prefix, unix.O_CREAT|unix.O_EXCL|unix.O_RDWR, direct)
+	if parent != "." {
+		parentDir, err := openCheckpointFile(int(dir.Fd()), imagePath, parent, unix.O_PATH|unix.O_DIRECTORY)
+		_ = dir.Close()
+		if err != nil {
+			return checkpointFileGroup{}, err
+		}
+		dir = parentDir
+	}
+	// All files in a bundle share this parent. Strip its path component so
+	// both creation and rollback operate directly through the same FD.
+	leafPrefix := strings.TrimSuffix(strings.TrimSuffix(filepath.Base(manifestName), checkpointfiles.FSCheckpointManifestFileName), "_")
+	files, err := openFSCheckpointLocalFiles(int(dir.Fd()), dir.Name(), leafPrefix, unix.O_CREAT|unix.O_EXCL|unix.O_RDWR, direct)
+	if err != nil {
+		_ = dir.Close()
+		return checkpointFileGroup{}, err
+	}
+	return checkpointFileGroup{dir: dir, files: files}, nil
 }
 
 // openFSCheckpointLocalFiles opens the files of the filesystem checkpoint
