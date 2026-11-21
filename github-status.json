@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T05:23:18.400567+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T05:04:12.012561+00:00",
+  "registryDate": "2026-11-21T05:25:56.229637+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -451054,8 +451054,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "47d14a74e781ae01f7b68a306d16752da43daec4",
-        "disposition": "Public47d14a74e781ae01f7b68a306d16752da43daec4 still conflicts. Unpublished current-base candidate8cab980c14e1011e7855955944adc66b1b2554c4 is under qualification. Corrected Go graph checks pass; the earlier nonexistent-target selection was an orchestration error, not an established source bug. Actual two-architecture Go compiler gates remain owned by the rebase owner; no terminal pass or publication is inferred.",
-        "nextAction": "The existing owner consumes actual compiler gates44868371666/44868373531 and closes source/context qualification before root publication review. Preserve original source-bound evidence and separate open performance obligations."
+        "disposition": "Public47d14a74e781ae01f7b68a306d16752da43daec4 remains conflicting. The unpublished8cab980c14e1011e7855955944adc66b1b2554c4 version patch is unchanged; normal Go1.27.4 compiler gates pass on both architectures and AMD coverage passes. ARM coverage selected an x86 worker in the upstream nativego_cov route. Distinct permanent Bazel worker-constraint candidate5427ddbaa81cd2e3cc9317168568ef911f32ea71 is under qualification, not an approved/mechanical Go amendment or an approved upstream proposal. CI107f combines its explicit helper prerequisite with Go8cab and existing support; its results do not yet establish standalone readiness.",
+        "nextAction": "The existing source owner/root audit the five-caller platform proofs44870353935/44870355487 and source gate44870357054, then finish independent review of the permanent worker mechanism before any new source-publication proposal. Keep Go8cab and helper5427 distinct, public47d unchanged, and all candidate performance obligations open."
       },
       "conflictObservedSince": "2026-11-21T04:40:29.427360+00:00"
     },
@@ -458133,8 +458133,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "47d14a74e781ae01f7b68a306d16752da43daec4",
-        "disposition": "Public47d14a74e781ae01f7b68a306d16752da43daec4 still conflicts. Unpublished current-base candidate8cab980c14e1011e7855955944adc66b1b2554c4 is under qualification. Corrected Go graph checks pass; the earlier nonexistent-target selection was an orchestration error, not an established source bug. Actual two-architecture Go compiler gates remain owned by the rebase owner; no terminal pass or publication is inferred.",
-        "nextAction": "The existing owner consumes actual compiler gates44868371666/44868373531 and closes source/context qualification before root publication review. Preserve original source-bound evidence and separate open performance obligations."
+        "disposition": "Public47d14a74e781ae01f7b68a306d16752da43daec4 remains conflicting. The unpublished8cab980c14e1011e7855955944adc66b1b2554c4 version patch is unchanged; normal Go1.27.4 compiler gates pass on both architectures and AMD coverage passes. ARM coverage selected an x86 worker in the upstream nativego_cov route. Distinct permanent Bazel worker-constraint candidate5427ddbaa81cd2e3cc9317168568ef911f32ea71 is under qualification, not an approved/mechanical Go amendment or an approved upstream proposal. CI107f combines its explicit helper prerequisite with Go8cab and existing support; its results do not yet establish standalone readiness.",
+        "nextAction": "The existing source owner/root audit the five-caller platform proofs44870353935/44870355487 and source gate44870357054, then finish independent review of the permanent worker mechanism before any new source-publication proposal. Keep Go8cab and helper5427 distinct, public47d unchanged, and all candidate performance obligations open."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxx8kCQ"
@@ -459083,9 +459083,9 @@
       ],
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
-        "sourceHead": "1692a9405af5de11203c7cd913ead169f8f06936",
-        "disposition": "Public1692a9405af5de11203c7cd913ead169f8f06936 still conflicts. Unpublished current-base candidate3810f2bbe2a84d9b7e90a4ecf2535e4691874648 is under parser and strict-C++ qualification; no new source approval, terminal pass or publication is inferred. Earlier published-source checks and reviews retain their original scope.",
-        "nextAction": "The existing owner/root consume parser gates44868196273/44868197611 and strict gate44868199165, then reconcile source/context review and remaining performance requirements before publication."
+        "sourceHead": "3810f2bbe2a84d9b7e90a4ecf2535e4691874648",
+        "disposition": "LLVM conflict refresh3810f2bbe2a84d9b7e90a4ecf2535e4691874648 is delivered OPEN/MERGEABLE with DCO success and notice7057781276. Kerumeto’s existing request and REVIEW_REQUIRED remain unchanged; auto-merge remains unset. Both architecture parser cases, all five source checks,377-source strict C++ analysis and two independent context reviews pass at their recorded scopes. Broad runtime/performance qualification remains open. New exact-head First Pass2228 independently rejected admission before any agent/start: exit80, stack_errored, author1535036 rolling30-day360000-compute-minute quota, zero tests. Older55359 evidence is not applied to this revision.",
+        "nextAction": "Follow remaining current-head GitHub/export checks, the existing kerumeto review/import request and actual provider recovery. Preserve the separate broad runtime/performance obligation and original dependency/backport scope. The mechanical refresh and rebase notice are delivered; no duplicate notification, blind retry or new source-approval question."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3K6UxA"
@@ -466642,7 +466642,7 @@
         "since": "2026-11-21T05:04:12.012561+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:04:12.012561+00:00"
+        "observedAt": "2026-11-21T05:25:56.229637+00:00"
       }
     },
     "pr:17471": {
@@ -467690,7 +467690,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:04:12.012561+00:00"
+        "observedAt": "2026-11-21T05:25:56.229637+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -467699,7 +467699,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:04:12.012561+00:00"
+        "observedAt": "2026-11-21T05:25:56.229637+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -467708,7 +467708,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:04:12.012561+00:00"
+        "observedAt": "2026-11-21T05:25:56.229637+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -467717,7 +467717,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:04:12.012561+00:00"
+        "observedAt": "2026-11-21T05:25:56.229637+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -467726,7 +467726,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:04:12.012561+00:00"
+        "observedAt": "2026-11-21T05:25:56.229637+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -467735,7 +467735,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:04:12.012561+00:00"
+        "observedAt": "2026-11-21T05:25:56.229637+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -467744,7 +467744,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:04:12.012561+00:00"
+        "observedAt": "2026-11-21T05:25:56.229637+00:00"
       }
     }
   },
