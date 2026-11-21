@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T03:15:14.927530+00:00",
+    "updatedAt": "2026-11-21T03:47:46.202347+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -73488,11 +73488,11 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "413a89224efc82768c01ef8f573c0ea4cbefc656",
-        "providerHead": "413a89224efc82768c01ef8f573c0ea4cbefc656",
-        "observedAt": "2026-11-20T20:48:41.652999+00:00",
-        "disposition": "Current author-owned source now conflicts with upstream. The branch belongs to adios-404, not this contributor. Existing source-composition, review and performance evidence retains its recorded scope; the conflict does not authorize a foreign-branch push.",
-        "nextAction": "Root follows adios-404’s source refresh and re-evaluates the exact resulting source composition and retained review/performance obligations. Preserve author ownership; no foreign push, speculative fix or automatic notification.",
+        "sourceHead": "c890e891f753f5cb51f8c23a63e7342ae670a7aa",
+        "providerHead": "c890e891f753f5cb51f8c23a63e7342ae670a7aa",
+        "observedAt": "2026-11-21T03:42:31.212198+00:00",
+        "disposition": "Author-owned c890e891f753f5cb51f8c23a63e7342ae670a7aa is MERGEABLE after merging413a8922 with masterb16cad13. The484 added TCP SACK test lines are unchanged, but recovery source changed; this is not a mechanically equivalent refresh. Current-source semantic review is held until confirmed Daybreak availability. No bug, approval or test result is asserted. Earlier5f4e4e2e and other source-bound review/performance evidence retain their original provenance; prior reactions do not approve this revision.",
+        "nextAction": "Root resumes the existing current-source TCP-recovery review only after Daybreak availability is actually confirmed, or reconciles a new author revision against the same hold. Preserve author ownership and the user’s no-reply instruction; no foreign push, comment, new contributor question or source experiment.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17022#issuecomment-6850802221",
           "https://github.com/google/gvisor/pull/17022#issuecomment-6702500777",
@@ -73501,12 +73501,13 @@
           "https://github.com/google/gvisor/issues/16670",
           "https://github.com/google/gvisor/pull/17022",
           "https://github.com/google/gvisor/pull/17022#issuecomment-6879199871",
-          "https://github.com/google/gvisor/commit/5f4e4e2e9f036fd40891f14167f3c20ec4b099f5"
+          "https://github.com/google/gvisor/commit/5f4e4e2e9f036fd40891f14167f3c20ec4b099f5",
+          "https://github.com/gvisor/gvisor/commit/c890e891f753f5cb51f8c23a63e7342ae670a7aa"
         ],
-        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
-        "mergeable": "CONFLICTING",
+        "currentStateObservedAt": "2026-11-21T03:42:31.212198+00:00",
+        "mergeable": "MERGEABLE",
         "priorSourceHead": "f38afb60d50809b6c44618f637ebbb6e56e3a750",
-        "recheckCondition": "The author’s changed source/base/mergeability or substantive review/dependency evidence.",
+        "recheckCondition": "Actual confirmed Daybreak availability or a new author source revision.",
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
         "qualificationHistory": [
           {
@@ -73517,7 +73518,7 @@
             "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery."
           }
         ],
-        "curatedAt": "2026-11-20T20:48:41.652999+00:00",
+        "curatedAt": "2026-11-21T03:47:46.202347+00:00",
         "userDecision": {
           "curatedAt": "2026-11-18T12:19:41.750038+00:00",
           "disposition": "No reply; exact pending draft withdrawn",
