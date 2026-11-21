@@ -1,3 +1,6 @@
+# Aspect 2.9.1 splits explicit paths on whitespace and hides discovery failures.
+# Remove this patch when upstream preserves those paths and propagates failures.
+
 --- a/format/private/format.sh
 +++ b/format/private/format.sh
 @@ -232,14 +232,12 @@
