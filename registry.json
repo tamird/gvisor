@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T04:12:33.507810+00:00",
+    "updatedAt": "2026-11-21T04:15:55.596839+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -103732,21 +103732,24 @@
       "title": "Reject Hey client error reports",
       "url": "https://github.com/tamird/gvisor/commit/ca0536a0e",
       "group": "bazel",
-      "status": "Remote qualification running",
-      "updatedAt": "2026-11-18T06:58:20.703035+00:00",
-      "summary": "Actual BASE HTTPD output reported finite QPS with hundreds of timed-out requests. The minimal shared Report correction rejects an Error distribution section before publishing metrics, preserving intentional HTTP404 workloads. Public Report tests use captured success/404/timeout output and an old-helper negative control. No upstream PR or runtime performance result is claimed.",
+      "status": "Superseded by delivered #17780",
+      "updatedAt": "2026-11-21T04:15:55.596839+00:00",
+      "summary": "Historical text-parser predecessor superseded by the user-reviewed HTTP benchmark revision delivered through #17780. Keep ca0536a0 and its exact qualification evidence at their original scope; current strict-JSON reporting and upstream lifecycle belong to the existing pr:17780 record.",
       "followup": {
-        "owner": "tcp_conflict",
+        "owner": "root",
         "sourceHead": "ca0536a0eb74b24e306098f6bfb8ee1f1c60742f",
         "observedAt": "2026-11-18T06:58:20.703035+00:00",
-        "disposition": "Exact fork source and test-only old-helper control68c88a5 are verified. Parent is latest upstreamb29c8320. Source/test and executable peer reviews found no issues; root read the complete two-file patch. Qualifier44254674522 is dispatched, not yet qualified.",
-        "nextAction": "Consume exact remote owner/negative-control/build/lint results, finish independent review and prepare a reviewable publication integrated with existing benchmark reliability work. Keep the approved/pending46ec source and all failed runtime evidence distinct.",
-        "recheckCondition": "Exact run terminal outcome, review findings or contributor publication decision.",
+        "disposition": "Historical qualifier44254674522 completed SUCCESS on 2026-11-18 at07:10Z. Control68c88a5 fails timeout and empty-error-section Report cases while success/404 pass; ca0536a0 passes all four, owning tools test/build and all five source checks. Historical clang-tidy analyzed373 sources; no modern fail-closed coverage is inferred. Later user revisions superseded this text-parser implementation; approved5d3c5b90 was delivered as #17780 and current published source is5c8a182619525e77d210a31a9b9ff575251165f3.",
+        "nextAction": "Follow the existing root-owned pr:17780 review/import/check lifecycle. This predecessor has no separate implementation, approval, qualification-consumption or rerun obligation.",
+        "recheckCondition": "A canonical #17780 lifecycle change that requires revisiting this historical source evidence.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/44254674522",
-          "https://github.com/tamird/gvisor/actions/runs/44250351891"
-        ]
-      }
+          "https://github.com/tamird/gvisor/actions/runs/44250351891",
+          "https://github.com/gvisor/gvisor/pull/17780"
+        ],
+        "curatedAt": "2026-11-21T04:15:55.596839+00:00"
+      },
+      "inactive": true
     },
     {
       "id": "pr:nodejs/node:67595",
