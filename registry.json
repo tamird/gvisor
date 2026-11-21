@@ -58353,7 +58353,7 @@
         "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
         "observedAt": "2026-11-02T17:47:05.918366+00:00",
         "disposition": "AMD44954024607 and ARM44954393599 passed actual package/license, JSON, all eight native benchmark rows, cleanup and source guards. Reverse-transfer stock overshoot remains explicit at +25%/+37.5%. Unconditional exact-byte equality was an unsupported stricter diagnostic: original approved676 permits stock overshoot, so root withdrew that gate and the producer-fork assignment. New Ubuntu24 source dce280f99add0a1319970674a57e237e9473c666 is one DCO commit on eb263, pending final review and current source checks; old676 approval does not approve this revision. No timing-stability claim follows.",
-        "nextAction": "benchmark_measurement_review hands the new Ubuntu24 source to root for final review after sourcechecks44955092779 complete. Preserve both architecture functional proofs and actual overshoot; no producer fork or unconditional equality gate. BCR11518/license15146 prerequisites and any eventual source-publication review remain independent.",
+        "nextAction": "benchmark_measurement_review audits independent Sentry admission44961875897 and diagnoses failed sourcechecks44961877715 before final source review. No failure cause is guessed, no Moby build or statistics ran, and the explicit Moby/Bazel-only exception remains unanswered. Preserve both native architecture/functionality proofs and stock overshoot, old676 approval and independent BCR/verifier delivery prerequisites.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
@@ -58367,7 +58367,9 @@
           "https://github.com/tamird/gvisor/actions/runs/44953581420",
           "https://github.com/tamird/gvisor/actions/runs/44954024607",
           "https://github.com/tamird/gvisor/actions/runs/44954393599",
-          "https://github.com/tamird/gvisor/actions/runs/44955092779"
+          "https://github.com/tamird/gvisor/actions/runs/44955092779",
+          "https://github.com/tamird/gvisor/actions/runs/44961875897",
+          "https://github.com/tamird/gvisor/actions/runs/44961877715"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -58381,7 +58383,7 @@
           "owner": "root"
         },
         "technicalOwner": "Build and release",
-        "recheckCondition": "Actual final source-check/review result and genuine user publication response or prerequisite landing/release evidence; no new approval is inferred.",
+        "recheckCondition": "Owner-audited Sentry admission and actual source-check diagnosis/correction, or the real user operational/source decision; no new approval is inferred.",
         "curatedAt": "2026-11-21T14:40:26.293073+00:00"
       },
       "refinement": {
@@ -67128,14 +67130,23 @@
         "owner": "benchmark_measurement_review / root",
         "sourceHead": "fe25c8ed035077d6f3afe56d9b0d0411a6455b99",
         "observedAt": "2026-11-17T22:31:20.170000+00:00",
-        "disposition": "BCR11518 remains OPEN/MERGEABLE with all CI green, but no human review or reviewer request sinceNov2. The bot notified module maintainer kgreenek. One open Copilot compatibility finding alleges missing bazel_compatibility>=7.2.1; this is an unverified automated allegation, not an accepted source-change instruction.",
-        "nextAction": "benchmark_measurement_review verifies current source/rules with primary evidence and prepares the smallest correction or evidence-backed disposition plus the existing reviewer path. No source amendment or outreach is authorized yet; retain this as the existing Iperf3 release prerequisite.",
-        "recheckCondition": "Owner source/rule verification and a concrete reviewer/disposition path, or actual human review/release change.",
+        "disposition": "The open Copilot summary was stale: discussion_r4444832725 is resolved and outdated. Both currentfe25 MODULE files already declare bazel_compatibility>=7.2.1, and the overlay checksum matches. No source defect, test or reply is needed for that finding. Actual blocker: module-maintainer human review, with kgreenek named in metadata and no reviewer request/review sinceNov2.",
+        "nextAction": "Root awaits the actual accepted question to post the exact concise kgreenek review request. No outreach or source amendment is authorized before the answer; preserve this existing Iperf3 release prerequisite.",
+        "recheckCondition": "Actual outreach decision or genuine maintainer review/release change; do not reopen the resolved bot finding.",
         "evidence": [
           "https://github.com/bazelbuild/bazel-central-registry/pull/11518#issuecomment-6582183969",
           "https://github.com/bazelbuild/bazel-central-registry/pull/11518#discussion_r4444832725"
         ],
         "curatedAt": "2026-11-21T14:40:26.293073+00:00"
+      },
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "fe25c8ed035077d6f3afe56d9b0d0411a6455b99",
+        "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11518",
+        "title": "Request module-maintainer review of the license export",
+        "summary": "Root confirms the actual async question to post this concise review request was accepted and remains unanswered. No source amendment or new commitment is included; no precise request timestamp or ID was returned.",
+        "body": "@kgreenek, could you review this release exporting `LICENSE`? Presubmit is green.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -141922,10 +141933,10 @@
       "group": "bazel",
       "title": "Declare C/C++ formatting inputs in Bazel",
       "owner": "root",
-      "head": "d039802d8437f08d27b0282485709cc5f1b464ba",
+      "head": "be47f724fb92fa604dfb998fc9fb6f2b01d364b1",
       "updatedAt": "2026-11-21T14:00:19.559771+00:00",
-      "summary": "The original d039 LGTM remains recorded; the substantive Git-free revision is not approved for publication. Current finalsource4c924483260e118107da626783fec13499b380ef has tree444648297790d6015b8d2609f4ab645670f9d97b. Exact492-source/two-config membership and special-filename/safety proofs passed. Full final lint44960221545 is solely owner-observed and remains pending; no broad formatter completion or new source approval is inferred.",
-      "nextStep": "The existing formatter owner completes full final lint and source review for4c924483, then hands the concrete revision through the remaining publication boundary. Preserve exact membership/safety proof without repeated actor reads or transferring old d039 approval to unseen source.",
+      "summary": "The actual new one-commit publication question for be47 is pending. The immutable source has normal identity/DCO, all full and final-cleanup checks passed, and two independent reviews found no blocking issue. It replaces the host-Git/index design; the old d039 approval does not approve this revision. No upstream PR is open. Preview ref creation is provider-blocked after bounded ordinary SSH/HTTPS attempts; the exact commit is remotely reviewable, with no new permission gap.",
+      "nextStep": "Root awaits the existing be47 source-review answer. Preserve the exact supplied PR description, prior d039 approval and qualified source boundaries; no duplicate question, preview-ref retry or approval inference.",
       "evidence": [
         {
           "label": "Actual reviewable clean source",
@@ -141974,7 +141985,17 @@
           "summary": "Direct user LGTM for d039 included a substantive host-Git/index hermeticity concern. Approval is recorded; publication remains held for responsible correction and qualified review, not another unanswered d039 question.",
           "outcome": "APPROVED"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "be47f724fb92fa604dfb998fc9fb6f2b01d364b1",
+        "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+        "url": "https://github.com/tamird/gvisor/commit/be47f724fb92fa604dfb998fc9fb6f2b01d364b1",
+        "title": "Declare clang-format inputs in Bazel",
+        "body": "clang-format currently selects files through Git and downloads a separate tool. Declare its sources and configuration in Bazel and use the existing LLVM tool, preserving the lint check/fix commands and validating workspace paths before fixing.\n\nPackage globs include new matching files without Git staging. Other linters retain their existing input discovery.\n\nPosted by Codex on behalf of @tamird.\n",
+        "summary": "Root confirms the actual accepted question to open one commit as a PR is unanswered. Comparison from d039 is net+80 lines. No precise request timestamp or question ID was supplied; source approval is separate from the provider-blocked preview ref."
+      }
     },
     {
       "id": "investigation:iperf-aggregate-reporting",

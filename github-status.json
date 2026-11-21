@@ -470210,6 +470210,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-21T23:29:03.206038+00:00"
+      },
+      "contributor-review": {
+        "scope": "fe25c8ed035077d6f3afe56d9b0d0411a6455b99",
+        "since": "2026-11-21T15:42:31.456870+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-21T15:42:31.456870+00:00"
       }
     },
     "pr:bazelbuild/bazel-central-registry:11519": {
@@ -470619,6 +470626,15 @@
     "investigation:unit-test-worker-requirements": {
       "contributor-review": {
         "scope": "775768695aa792ea6bf2369d9e3900fb289aaf00",
+        "since": "2026-11-21T15:42:31.456870+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-21T15:42:31.456870+00:00"
+      }
+    },
+    "investigation:cc-format-declared-inputs": {
+      "contributor-review": {
+        "scope": "be47f724fb92fa604dfb998fc9fb6f2b01d364b1",
         "since": "2026-11-21T15:42:31.456870+00:00",
         "basis": "observed",
         "qualifier": null,
