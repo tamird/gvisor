@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools:defs.bzl", "go_library", "go_test", "requires_cap_sys_admin")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -75,6 +75,7 @@ go_test(
         "sandbox_test.go",
     ],
     embed = [":sandbox"],
+    exec_properties = requires_cap_sys_admin(ipv6 = True),
     deps = [
         "//pkg/control/server",
         "//pkg/prometheus",

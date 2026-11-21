@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain", "go_binary", "go_test")
+load("//tools:defs.bzl", "cc_binary", "go_binary", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -16,38 +16,42 @@ filegroup(
 # single-threaded C binary that fits in a single 4KiB page.
 # Do NOT rewrite it in Go; it must be single-threaded.
 # Read its comments as to why.
-genrule(
-    name = "prewarmer_binary",
+cc_binary(
+    name = "gvisor-sentry-prewarmer",
     srcs = ["prewarmer.c"],
-    outs = ["gvisor-sentry-prewarmer"],
-    cmd = "$(CC) $(CC_FLAGS) " +
-          "-Os " +
-          "-ffreestanding " +
-          "-fno-sanitize=all " +
-          "-fno-stack-protector " +
-          "-fno-asynchronous-unwind-tables " +
-          "-fno-unwind-tables " +
-          "-static " +
-          "-nostdlib " +
-          "-nostartfiles " +
-          "-Wl,--build-id=none " +
-          "-Wl,--gc-sections " +
-          "-Wl,-s " +
-          "-Wl,-n " +
-          "-o $(execpath gvisor-sentry-prewarmer) " +
-          "$(execpath prewarmer.c)",
-    executable = True,
-    features = ["-pie"],
-    toolchains = [
-        cc_toolchain,
-        ":no_pie_cc_flags",
+    copts = [
+        "-Os",
+        "-ffreestanding",
+        "-fno-sanitize=all",
+        "-fno-stack-protector",
+        "-fno-asynchronous-unwind-tables",
+        "-fno-unwind-tables",
     ],
+    features = [
+        "-coverage",
+        "-default_compile_flags",
+        "-default_link_flags",
+        "-pie",
+    ],
+    link_extra_lib = None,
+    linkopts = [
+        "-static",
+        "-nostdlib",
+        "-nostartfiles",
+        "-Wl,--build-id=none",
+        "-Wl,--gc-sections",
+        "-Wl,-s",
+        "-Wl,-n",
+    ],
+    linkstatic = True,
+    stamp = 0,
     visibility = ["//visibility:public"],
 )
 
-cc_flags_supplier(
-    name = "no_pie_cc_flags",
-    features = ["-pie"],
+alias(
+    name = "prewarmer_binary",
+    actual = ":gvisor-sentry-prewarmer",
+    visibility = ["//visibility:public"],
 )
 
 go_test(
