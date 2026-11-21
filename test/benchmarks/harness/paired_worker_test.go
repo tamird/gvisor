@@ -49,6 +49,7 @@ var (
 	pairedBlocks		= flag.Int("paired-blocks", 1, "number of balanced BASE/CONTROL/CONTROL/BASE blocks")
 	pairedLeaves		= flag.Int("paired-leaves", 0, "number of selected benchmark leaves per visit")
 	pairedWarmups		= flag.Int("paired-warmup-pairs", 0, "unmeasured warmup visits for each runtime before balanced blocks")
+	pairedNative		= flag.Bool("paired-native-control", false, "use the existing native runc runtime for one diagnostic arm")
 )
 
 func TestPairedBenchmark(t *testing.T) {
@@ -147,6 +148,32 @@ func TestPairedBenchmark(t *testing.T) {
 		t.Fatal(err)
 	}
 	host, runtimes, config := startDockerDaemons(t, ctx, []string{arms[0].runsc, arms[1].runsc}, true)
+	releaseEntrypoints := []string{arms[0].runsc, arms[1].runsc}
+	if *pairedNative {
+		nativePath, err := exec.LookPath("runc")
+		if err != nil {
+			t.Fatal(err)
+		}
+		nativePath, err = filepath.EvalSymlinks(nativePath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		nativeDigest, err := executableDigest(nativePath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		version, err := exec.CommandContext(ctx, nativePath, "--version").CombinedOutput()
+		if err != nil {
+			t.Fatalf("native runtime identity failed: %v: %s", err, version)
+		}
+		t.Logf("native runtime %s sha256=%s version=%q", nativePath, nativeDigest, strings.TrimSpace(string(version)))
+		arms[0].name = "SENTRY"
+		arms[1].name = "NATIVE"
+		arms[1].source = "native-runc:" + nativeDigest
+		arms[1].digest = ""
+		runtimes[1] = "runc"
+		releaseEntrypoints[1] = ""
+	}
 	t.Setenv("DOCKER_HOST", host)
 	t.Setenv("UNSANDBOXED_RUNTIME", "runc")
 	cli, err := client.NewClientWithOpts(client.WithHost(host), client.WithAPIVersionNegotiation())
@@ -170,7 +197,7 @@ func TestPairedBenchmark(t *testing.T) {
 		Images   []image.Summary `json:"images"`
 		Runtimes []string        `json:"registered_runtimes"`
 		Releases []string        `json:"release_entrypoints"`
-	}{version.Version, images, runtimes, []string{arms[0].runsc, arms[1].runsc}}); err != nil {
+	}{version.Version, images, runtimes, releaseEntrypoints}); err != nil {
 		t.Fatal(err)
 	}
 	blocks := *pairedBlocks
