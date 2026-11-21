@@ -1,3 +1,4 @@
+load("//tools:defs.bzl", "requires_cap_sys_admin")
 load("@rules_python//python:py_library.bzl", "py_library")
 load("@rules_python//python:py_test.bzl", "py_test")
 
@@ -25,16 +26,7 @@ py_test(
     name = "sandbox_py_test",
     srcs = ["tests/sandbox_test.py"],
     data = ["//:release"],
-    # Use BuildBuddy's microVM runner for sandbox creation:
-    # https://www.buildbuddy.io/docs/rbe-microvms/
-    # Its default OCI runner omits CAP_SYS_ADMIN:
-    # https://github.com/buildbuddy-io/buildbuddy/blob/168813c94525e5106459531fb629429d5fe2fb60/enterprise/server/remote_execution/containers/ociruntime/ociruntime.go#L157-L173
-    # Disable external networking, which Firecracker enables by default:
-    # https://www.buildbuddy.io/docs/rbe-platforms/#runner-container-support
-    exec_properties = {
-        "test.network": "off",
-        "test.workload-isolation-type": "firecracker",
-    },
+    exec_properties = requires_cap_sys_admin(),
     main = "tests/sandbox_test.py",
     tags = ["nogotsan"],
     deps = [

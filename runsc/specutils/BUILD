@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools:defs.bzl", "go_library", "go_test", "requires_cap_sys_admin")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -47,16 +47,7 @@ go_test(
         "specutils_test.go",
     ],
     embed = [":specutils"],
-    # Use BuildBuddy's microVM runner for namespace operations:
-    # https://www.buildbuddy.io/docs/rbe-microvms/
-    # Its default OCI runner omits CAP_SYS_ADMIN:
-    # https://github.com/buildbuddy-io/buildbuddy/blob/168813c94525e5106459531fb629429d5fe2fb60/enterprise/server/remote_execution/containers/ociruntime/ociruntime.go#L157-L173
-    # Disable external networking, which Firecracker enables by default:
-    # https://www.buildbuddy.io/docs/rbe-platforms/#runner-container-support
-    exec_properties = {
-        "test.network": "off",
-        "test.workload-isolation-type": "firecracker",
-    },
+    exec_properties = requires_cap_sys_admin(),
     deps = [
         "//pkg/sentry/devices/nvproxy/nvconf",
         "//runsc/config",
