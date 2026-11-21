@@ -108,7 +108,6 @@ go_test(
     ],
 )
 
-
 # Each category runs the shared-daemon ABBA loop with its full leaf set.
 # Benchtime must be supplied before selecting the paired test.
 _PAIRED_BENCHMARKS = [
@@ -213,10 +212,10 @@ _PAIRED_BENCHMARKS = [
         ],
         deps = [
             "//pkg/test/testutil",
-            "@org_golang_x_sys//unix:go_default_library",
             "@com_github_docker_docker//api/types/container:go_default_library",
             "@com_github_docker_docker//api/types/image:go_default_library",
             "@com_github_docker_docker//client:go_default_library",
+            "@org_golang_x_sys//unix:go_default_library",
         ],
     )
     for category, binary, leaves, archives in _PAIRED_BENCHMARKS
