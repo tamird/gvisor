@@ -58303,15 +58303,18 @@
         "owner": "root",
         "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
         "observedAt": "2026-11-02T17:47:05.918366+00:00",
-        "disposition": "The approved Iperf3 image remains the separate delivery vehicle. Its equivalent current-base refresh 17fbfc6718 on eb263 has scoped Go-interface proof: AMD and ARM each passed 16 tools cases; the network target compiled and started with zero test cases, and source checks passed without a diff. Full BCR graph, image and current endpoint qualification remain blocked by BCR11518 and license15146. No new timing or publication is inferred.",
-        "nextAction": "benchmark_measurement_review owns currentness/dependency recovery for the existing approved Iperf3 vehicle. Follow BCR11518 and license15146, then qualify the released graph, image and endpoints before delivery. Preserve the distinct held Iperf2 reporter and payload-metric scope; no more timing.",
+        "disposition": "The approved Iperf3 image remains the separate vehicle. Qualification used a standard main-first immutable fe25 registry fallback for the pending BCR version; bootstrap and all four license/image/context cquery targets passed in44951039467. AMD44951363677 and ARM44951365506 canonical image/archive/context builds are workflow-successful, with product/runtime audits pending. BCR11518 remains a delivery prerequisite. License15146 supplies required verifier features/landing (BSD-3-Clause-LBNL/HPND), not an image compiler dependency. No endpoint, performance or publication claim follows.",
+        "nextAction": "benchmark_measurement_review audits both architecture products and runtime behavior using the qualified registry fallback, then reconciles the actual release/delivery prerequisites. Preserve the approved vehicle and separate license-verifier dependency, held Iperf2 source and no-more-timing boundary.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034547712",
           "https://github.com/tamird/gvisor/actions/runs/44934293367",
           "https://github.com/tamird/gvisor/actions/runs/44934296448",
-          "https://github.com/tamird/gvisor/actions/runs/44934299304"
+          "https://github.com/tamird/gvisor/actions/runs/44934299304",
+          "https://github.com/tamird/gvisor/actions/runs/44951039467",
+          "https://github.com/tamird/gvisor/actions/runs/44951363677",
+          "https://github.com/tamird/gvisor/actions/runs/44951365506"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -58325,7 +58328,7 @@
           "owner": "root"
         },
         "technicalOwner": "Build and release",
-        "recheckCondition": "Actual prerequisite landing or material current graph/image/endpoint evidence; no approval transfer or additional timing.",
+        "recheckCondition": "Audited product/runtime outputs or actual BCR/verifier landing/release evidence; workflow success alone does not close functional qualification.",
         "curatedAt": "2026-11-21T14:40:26.293073+00:00"
       },
       "refinement": {
