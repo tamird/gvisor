@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T09:29:55.483326+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T09:33:07.303823+00:00",
+  "registryDate": "2026-11-21T09:34:58.657617+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -452941,8 +452941,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "24c1b39e498eb0f4635694e8a9b1ebe179257fb6",
-        "disposition": "Delivered source-equivalent rebase 24c1b39e with strict range-diff = and original author/date/trailers preserved. Native head is mergeable and DCO passes; review requests are preserved and auto-merge was absent before and after. Shared five source checks and checkpoint compile/startup gates passed with zero tests. FirstPass2261 and new GitHub checks are pending, not completed. The notice requests maintainer ready-to-test reapplication for main CI.",
-        "nextAction": "approved_rebase_queue follows new-head GitHub/FirstPass results and the maintainer main-CI trigger requested in the saved notice. Main validation is not established by FirstPass; do not bind old-head failures or infer a new failure cause."
+        "disposition": "Delivered source-equivalent rebase 24c1b39e with strict range-diff = and original author/date/trailers preserved. Native head is mergeable and DCO passes; review requests are preserved and auto-merge was absent before and after. Shared five source checks and checkpoint compile/startup gates passed with zero tests. Fresh Etienne approval6004401925 is verified on the delivered head. The maintainer label handoff is satisfied: main55599 and current FirstPass2264 have started/pending contexts; these supersede the initial admission contexts. DCO/gazelle/fileheader/lint pass; Go export is live. Current main infrastructure attempts hit apt/dpkg locks or interrupted ARM clones with automatic retries pending; no final source-failure conclusion.",
+        "nextAction": "approved_rebase_queue follows the existing automatic retries, Go export, exact-head main/FirstPass and review/import lifecycle. The maintainer label request is fulfilled. Do not retry manually, repeat outreach or reuse old bootstrap/quota diagnoses."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3QedTw",
@@ -463741,7 +463741,7 @@
         "since": "2026-11-21T07:28:18.199633+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:33:07.303823+00:00"
+        "observedAt": "2026-11-21T09:34:58.657617+00:00"
       }
     },
     "pr:16664": {
@@ -466908,7 +466908,7 @@
         "since": "2026-11-21T05:04:12.012561+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:33:07.303823+00:00"
+        "observedAt": "2026-11-21T09:34:58.657617+00:00"
       }
     },
     "pr:17471": {
@@ -467949,7 +467949,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:33:07.303823+00:00"
+        "observedAt": "2026-11-21T09:34:58.657617+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -467958,7 +467958,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:33:07.303823+00:00"
+        "observedAt": "2026-11-21T09:34:58.657617+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -467967,7 +467967,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:33:07.303823+00:00"
+        "observedAt": "2026-11-21T09:34:58.657617+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -467976,7 +467976,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:33:07.303823+00:00"
+        "observedAt": "2026-11-21T09:34:58.657617+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -467985,7 +467985,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:33:07.303823+00:00"
+        "observedAt": "2026-11-21T09:34:58.657617+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -467994,7 +467994,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:33:07.303823+00:00"
+        "observedAt": "2026-11-21T09:34:58.657617+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -468003,7 +468003,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:33:07.303823+00:00"
+        "observedAt": "2026-11-21T09:34:58.657617+00:00"
       }
     },
     "investigation:coverage-worker-cpu": {
@@ -468012,7 +468012,7 @@
         "since": "2026-11-21T06:15:32.375526+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:33:07.303823+00:00"
+        "observedAt": "2026-11-21T09:34:58.657617+00:00"
       }
     },
     "investigation:unit-test-worker-requirements": {
@@ -468021,7 +468021,7 @@
         "since": "2026-11-21T09:19:34.135838+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:33:07.303823+00:00"
+        "observedAt": "2026-11-21T09:34:58.657617+00:00"
       }
     }
   },
