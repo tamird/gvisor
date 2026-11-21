@@ -981,8 +981,13 @@ func routesForIface(iface net.Interface, disableIPv6 bool) ([]sentryapi.Route, *
 	for _, r := range rs {
 		mtu := uint32(r.MTU)
 
-		// Is it a default route?
-		if r.Dst == nil {
+		// A default route may omit its destination or have an explicit /0.
+		isDefault := r.Dst == nil
+		if !isDefault {
+			ones, bits := r.Dst.Mask.Size()
+			isDefault = ones == 0 && bits != 0
+		}
+		if isDefault {
 			if r.Gw == nil {
 				return nil, nil, nil, fmt.Errorf("default route with no gateway %q: %+v", iface.Name, r)
 			}
