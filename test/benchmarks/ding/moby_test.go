@@ -87,7 +87,7 @@ func (t *topology) cleanUp(ctx context.Context) {
 }
 
 func waitForIperfServer(ctx context.Context, fetchLogs func(context.Context) (string, error)) error {
-	wantLog := fmt.Sprintf("Server listening on TCP port %d", iperfPort)
+	wantLog := fmt.Sprintf("Server listening on %d", iperfPort)
 	pollCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	return testutil.PollContext(pollCtx, func() error {
@@ -112,10 +112,10 @@ func (t *topology) newHost(ctx context.Context) (*node, error) {
 			mobyutil.CleanUpContainer(ctx, c)
 		}
 	}()
-	if err := c.Spawn(ctx, dockerutil.RunOpts{Image: "moby"}, "iperf", "-s", "-p", strconv.Itoa(iperfPort)); err != nil {
+	if err := c.Spawn(ctx, dockerutil.RunOpts{Image: "moby"}, "iperf3", "--server", "--port", strconv.Itoa(iperfPort), "--forceflush"); err != nil {
 		return nil, fmt.Errorf("failed to spawn host container: %w", err)
 	}
-	if out, err := c.WaitForOutput(ctx, fmt.Sprintf("Server listening on TCP port %d", iperfPort), 10*time.Second); err != nil {
+	if out, err := c.WaitForOutput(ctx, fmt.Sprintf("Server listening on %d", iperfPort), 10*time.Second); err != nil {
 		return nil, fmt.Errorf("failed to wait for host iperf server: %w (%s)", err, out)
 	}
 	ip, err := c.FindIP(ctx, false /* ipv6 */)
@@ -162,7 +162,7 @@ func (t *topology) newDING(ctx context.Context) (*dingNode, error) {
 	}
 	// Start a background iperf server on DING itself and wait until it listens.
 	const iperfLogPath = "/tmp/iperf.log"
-	iperfCmd := fmt.Sprintf("iperf -s -p %d </dev/null >%s 2>&1 &", iperfPort, iperfLogPath)
+	iperfCmd := fmt.Sprintf("iperf3 --server --port %d --forceflush </dev/null >%s 2>&1 &", iperfPort, iperfLogPath)
 	if out, err := d.Exec(ctx, dockerutil.ExecOpts{}, "sh", "-c", iperfCmd); err != nil {
 		return nil, fmt.Errorf("failed to start DING iperf server: %w (%s)", err, out)
 	}
@@ -213,21 +213,21 @@ func (d *dingNode) createNetwork(ctx context.Context, netName string) (string, e
 func (d *dingNode) newSubContainer(ctx context.Context, name, netName, portMap string) (*node, error) {
 	// `docker run` arguments:
 	// - `-d --name <name> --network <net>`: run detached on the target bridge.
-	// - `-v /usr/bin/iperf`, `-v /usr/lib`, `-v /lib`: busybox:latest does not
-	//   include iperf, so bind-mount DING's iperf binary and shared libraries
+	// - `-v /usr/bin/iperf3`, `-v /usr/lib`, `-v /lib`: busybox:latest does not
+	//   include iperf3, so bind-mount DING's iperf3 binary and shared libraries
 	//   read-only into the sub-container.
 	args := []string{
 		"docker", "run", "-d",
 		"--name", name,
 		"--network", netName,
-		"-v", "/usr/bin/iperf:/usr/bin/iperf:ro",
+		"-v", "/usr/bin/iperf3:/usr/bin/iperf3:ro",
 		"-v", "/usr/lib:/usr/lib:ro",
 		"-v", "/lib:/lib:ro",
 	}
 	if portMap != "" {
 		args = append(args, "--publish", portMap)
 	}
-	args = append(args, "busybox:latest", "iperf", "-s", "--port", strconv.Itoa(iperfPort))
+	args = append(args, "busybox:latest", "iperf3", "--server", "--port", strconv.Itoa(iperfPort), "--forceflush")
 	if out, err := d.runCmd(ctx, args...); err != nil {
 		return nil, fmt.Errorf("docker run %s failed: %w (%s)", name, err, out)
 	}
@@ -492,7 +492,7 @@ func BenchmarkDockerNetwork(b *testing.B) {
 				b.Fatalf("failed to set up topology: %v", err)
 			}
 			iperf := tools.Iperf{
-				Num: b.N, // KB.
+				Num: b.N, // Total KiB.
 			}
 			cmd := iperf.MakeCmd(targetIP, tc.port)
 
