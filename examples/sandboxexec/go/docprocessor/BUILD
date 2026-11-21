@@ -18,6 +18,7 @@ go_test(
     data = ["//:release"],
     embed = [":docprocessor"],
     exec_properties = {
+        "test.network": "off",
         "test.workload-isolation-type": "firecracker",
     },
     tags = ["nogotsan"],

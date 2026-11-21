@@ -49,6 +49,7 @@ go_test(
     ],
     embed = [":sandboxsetup"],
     exec_properties = {
+        "test.network": "off",
         "test.workload-isolation-type": "firecracker",
     },
     deps = [

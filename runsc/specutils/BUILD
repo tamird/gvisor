@@ -48,6 +48,7 @@ go_test(
     ],
     embed = [":specutils"],
     exec_properties = {
+        "test.network": "off",
         "test.workload-isolation-type": "firecracker",
     },
     deps = [

@@ -35,6 +35,7 @@ go_test(
     ],
     data = ["//:release"],
     exec_properties = {
+        "test.network": "off",
         "test.workload-isolation-type": "firecracker",
     },
     tags = ["nogotsan"],
