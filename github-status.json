@@ -452948,8 +452948,8 @@
       "recordedFollowup": {
         "owner": "benchmark_measurement_review / root",
         "sourceHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "disposition": "Diagnostic 44945433117 executed successfully, but canonical Verify(seed) exited0, Fetch exited0 and reported GPL-2.0 / GPL-2.0-or-later, then Verify exited1 against the GPL-2.0-only exception. Real QEMU policy compatibility therefore fails. Prior fake-fixture/CLI proof and reviews retain their original scope; attribution to 427 versus published afd is unresolved. Source and clarification remain unpublished, and the upstream internal-exception hold is separate.",
-        "nextAction": "benchmark_measurement_review compares the real QEMU boundary against published afd before source changes or any publication step. Root retains the existing upstream hold and unanswered question history; no policy approval, user rejection or DCO task is inferred."
+        "disposition": "Real QEMU Fetch-to-policy reproduction 44945433117 fails against the unchanged GPL-2.0-only exception. Comparison establishes that the classifier is identical to published afd; original QEMU artifacts differed and lacked license_source. This is current bound-notice incompatibility, with no demonstrated binding defect, 427-caused regression or policy change. Source amendment and upstream hold remain in place; only the exact new clarification comment is awaiting posting approval.",
+        "nextAction": "Root awaits the existing comment-only question’s answer before posting its exact body. benchmark_measurement_review retains the source/policy compatibility recovery; do not publish 427 or infer a reply to its historical source-amendment question."
       },
       "conflictObservedSince": "2026-11-06T02:35:04.797881+00:00"
     },
@@ -452972,8 +452972,8 @@
       "recordedFollowup": {
         "owner": "benchmark_measurement_review / root",
         "sourceHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "disposition": "Diagnostic 44945433117 executed successfully, but canonical Verify(seed) exited0, Fetch exited0 and reported GPL-2.0 / GPL-2.0-or-later, then Verify exited1 against the GPL-2.0-only exception. Real QEMU policy compatibility therefore fails. Prior fake-fixture/CLI proof and reviews retain their original scope; attribution to 427 versus published afd is unresolved. Source and clarification remain unpublished, and the upstream internal-exception hold is separate.",
-        "nextAction": "benchmark_measurement_review compares the real QEMU boundary against published afd before source changes or any publication step. Root retains the existing upstream hold and unanswered question history; no policy approval, user rejection or DCO task is inferred."
+        "disposition": "Real QEMU Fetch-to-policy reproduction 44945433117 fails against the unchanged GPL-2.0-only exception. Comparison establishes that the classifier is identical to published afd; original QEMU artifacts differed and lacked license_source. This is current bound-notice incompatibility, with no demonstrated binding defect, 427-caused regression or policy change. Source amendment and upstream hold remain in place; only the exact new clarification comment is awaiting posting approval.",
+        "nextAction": "Root awaits the existing comment-only question’s answer before posting its exact body. benchmark_measurement_review retains the source/policy compatibility recovery; do not publish 427 or infer a reply to its historical source-amendment question."
       },
       "conflictObservedSince": null
     },
@@ -462462,6 +462462,13 @@
         "basis": "observed",
         "qualifier": "#17126: open, validation checks passed, conflicts",
         "observedAt": "2026-11-21T20:20:10.559682+00:00"
+      },
+      "contributor-review": {
+        "scope": "afd34241a1b7e38e196e5d173632f658b7e5defc",
+        "since": "2026-11-21T15:42:31.456870+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-21T15:42:31.456870+00:00"
       }
     },
     "pr:15147": {

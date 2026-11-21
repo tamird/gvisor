@@ -213,11 +213,11 @@
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
       "updatedAt": "2026-11-17T18:16:01.120596+00:00",
-      "summary": "Prepared 427 is not ready for publication: the real QEMU Fetch-to-policy diagnostic fails compatibility. Attribution versus public afd34241 is still under comparison, so this is not an established 427-caused regression. Public afd remains conflicting under the separate upstream maintainer hold. The unanswered source/comment question is preserved in immutable history; no user rejection or approval is inferred.",
+      "summary": "One actual comment-posting question is pending; source amendment 427 remains held and its earlier unanswered question is preserved in immutable history. The classifier is identical to published afd; original QEMU artifacts differed and lacked license_source. The current bound-notice incompatibility is not a proven 427 regression or binding defect. The upstream internal-exception hold remains separate.",
       "followup": {
-        "disposition": "Diagnostic 44945433117 executed successfully, but canonical Verify(seed) exited0, Fetch exited0 and reported GPL-2.0 / GPL-2.0-or-later, then Verify exited1 against the GPL-2.0-only exception. Real QEMU policy compatibility therefore fails. Prior fake-fixture/CLI proof and reviews retain their original scope; attribution to 427 versus published afd is unresolved. Source and clarification remain unpublished, and the upstream internal-exception hold is separate.",
+        "disposition": "Real QEMU Fetch-to-policy reproduction 44945433117 fails against the unchanged GPL-2.0-only exception. Comparison establishes that the classifier is identical to published afd; original QEMU artifacts differed and lacked license_source. This is current bound-notice incompatibility, with no demonstrated binding defect, 427-caused regression or policy change. Source amendment and upstream hold remain in place; only the exact new clarification comment is awaiting posting approval.",
         "owner": "benchmark_measurement_review / root",
-        "nextAction": "benchmark_measurement_review compares the real QEMU boundary against published afd before source changes or any publication step. Root retains the existing upstream hold and unanswered question history; no policy approval, user rejection or DCO task is inferred.",
+        "nextAction": "Root awaits the existing comment-only question’s answer before posting its exact body. benchmark_measurement_review retains the source/policy compatibility recovery; do not publish 427 or infer a reply to its historical source-amendment question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/23b8ddf0a",
           "https://github.com/tamird/gvisor/actions/runs/43014384411",
@@ -249,7 +249,7 @@
         "mergeable": "CONFLICTING",
         "observedAt": "2026-11-17T18:16:01.120596+00:00",
         "providerHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "recheckCondition": "Owner-audited published/source comparison and an actual resolved compatibility boundary; upstream hold confirmation remains separate.",
+        "recheckCondition": "Actual comment-posting decision or maintainer response and source-bound compatibility evidence; source amendment and upstream hold remain independent.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "curatedAt": "2026-11-21T15:01:28.141765+00:00"
       },
@@ -406,6 +406,15 @@
             "evidence": "https://github.com/google/gvisor/pull/15146#pullrequestreview-5399508571"
           }
         }
+      },
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "afd34241a1b7e38e196e5d173632f658b7e5defc",
+        "url": "https://github.com/google/gvisor/pull/15146",
+        "title": "Post the QEMU regeneration and internal-hold clarification",
+        "summary": "Root confirms an actual accepted, unanswered comment-posting question with options Approve posting / Keep the reply held. This approves only the exact comment, not the held source amendment. No precise submission timestamp or question ID was supplied.",
+        "body": "On the [prepared rebase](https://github.com/tamird/gvisor/commit/427a8de7470d18956964b5ef71a21fab92440039), fetching QEMU’s pinned COPYING reports `GPL-2.0, GPL-2.0-or-later`; Verify rejects the existing `GPL-2.0-only` exception ([reproduction](https://github.com/tamird/gvisor/actions/runs/44945433117)). The audited entry and policy are unchanged. Is this regeneration failure acceptable, and does the internal-exception hold still apply?\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
