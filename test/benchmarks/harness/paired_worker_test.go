@@ -122,7 +122,7 @@ func TestPairedBenchmark(t *testing.T) {
 			t.Fatal(err)
 		}
 		arm.digest = fmt.Sprintf("%x", sha256.Sum256(contents))
-		arm.runsc, err = filepath.Abs(path)
+		arm.runsc, err = filepath.EvalSymlinks(path)
 		if err != nil {
 			t.Fatal(err)
 		}
