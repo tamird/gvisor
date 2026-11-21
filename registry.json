@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T12:21:26.616528+00:00",
+    "updatedAt": "2026-11-21T12:43:00.701524+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4896,9 +4896,11 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "Preserve contributor-approved 0be5c425 and wait for the declared compiler prerequisite; recheck its landing before proposing delivery.",
+        "nextAction": "Root and worker_requirements_citations validate the responsible global network default together with the worker helper, preserving local-Bazel versus REAPI distinctions and the compiler prerequisite. Retain the original approval; do not publish the changed revision or invent a new decision.",
         "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings.",
-        "observedAt": "2026-11-17T19:58:24.544895+00:00"
+        "observedAt": "2026-11-17T19:58:24.544895+00:00",
+        "curatedAt": "2026-11-21T12:43:00.701524+00:00",
+        "disposition": "Original contributor-approved RBE source 0be5c425a5705e43b043c3d9aefef7839ececa3c still depends on approved compiler 8178e3fe. Separate proposed network-off default 775768695aa792ea6bf2369d9e3900fb289aaf00 changes that source and is not approved or published; no authority transfers from 0be5 to the revision."
       },
       "updatedAt": "2026-11-17T20:32:28.027492+00:00"
     },
@@ -10988,12 +10990,12 @@
           "recheckCondition": "Proposal decision or exact current ref/head, source/base or qualification change."
         },
         "owner": "declared_formatting_resume / root",
-        "nextAction": "declared_formatting_resume closes the smallest separate C/C++ inventory extraction while preserving the approved ad173 API. No global 588 migration, new declaration framework or completed inventory is implied.",
-        "recheckCondition": "Concrete current-source C/C++ inventory and format qualification.",
+        "nextAction": "declared_formatting_resume consumes the existing final check and completes integrated review/qualification of the smallest C/C++ inventory. No source-publication question has been asked; preserve the approvedad API and all unchanged migration boundaries.",
+        "recheckCondition": "Terminal final check and qualified/reviewed integrated C/C++ source.",
         "observedAt": "2026-11-17T19:58:25.300843+00:00",
         "sourceHead": "63c29f4ef205ae9a8dec3b96e4bb3e32581d6c40",
-        "curatedAt": "2026-11-21T12:20:58.751348+00:00",
-        "disposition": "Formatting ownership 44901598173 passed all four contracts. The approved ad173 clang-format API needs a bounded 492 C/C++ input inventory plus root style across 24 packages. This is smaller than a full 588-package Go/Buildifier migration; complete C/C++ extraction is still being implemented on current eb263e1.",
+        "curatedAt": "2026-11-21T12:43:00.701524+00:00",
+        "disposition": "Current C/C++ inventory extraction source 9986376d9afd3c75b1735c2f9eb62d440452b4af is six files, 184 additions/90 deletions. Bounded integration 44903716923 passed membership/style/fix/rejections and existing caller tests; full 492-input/archive analysis 44904179479 passed. Final Buildifier 44904909577 remains with the original owner. This is a bounded C/C++ prerequisite for approved ad173, not a global 588-package migration or publication-approved new source.",
         "permanentFormatterMilestone": {
           "source": "723486ddd865d3044c5b515865b3a43de6356fde",
           "fixtureSource": "d58ca4f42c5a5a71456cb5de34f43785a6f6670e",
@@ -11156,7 +11158,10 @@
           "https://github.com/tamird/gvisor/actions/runs/44864322388",
           "https://github.com/tamird/gvisor/actions/runs/44896658488",
           "https://github.com/tamird/gvisor/actions/runs/44897643688",
-          "https://github.com/tamird/gvisor/actions/runs/44901598173"
+          "https://github.com/tamird/gvisor/actions/runs/44901598173",
+          "https://github.com/tamird/gvisor/actions/runs/44903716923",
+          "https://github.com/tamird/gvisor/actions/runs/44904179479",
+          "https://github.com/tamird/gvisor/actions/runs/44904909577"
         ]
       },
       "settledReviews": [
@@ -75761,11 +75766,11 @@
         }
       ],
       "followup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
         "observedAt": "2026-11-20T15:00:40.305787+00:00",
-        "disposition": "Public a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a is conflicting; Etienne\u2019s comment 7026931258 Needs rebase request is genuine. Master build.bzl now selects AMD64 PAGE_SIZE=4096 and leaves ARM unset for runtime page size; public replaces build.bzl with BUILD.local_defines using old pagesize_64k selection, preventing a literal patch-equivalent rebase. Root owns a semantics-preserving resolution. Separate final d3f depends on the #16522 proposal d1ae and its explicit publication edge waits for #16522 to land; this does not prohibit preparing the current public PR\u2019s requested rebase.",
-        "nextAction": "Root prepares requested delete/modify resolution preserving upstream ARM runtime page-size semantics through reviewed d3f/adaptor work where applicable. Distinguish public-source rebase preparation from dependent d3f publication; retain final source/performance review and explicit #16522 landing edge.",
+        "disposition": "Public source a3ca22af remains conflicting. The real author promise in discussion_r4488483371 gates its update on 16522 landing; 16522 is still open. Private candidate 157806d0 prepares a minimal ARM-safe conflict recovery, not adoption of the separate d3f runtime proposal. ARM aquery 44904831168 passed; the source owner must consume the AMD/format batch. Existing approved predecessor 7f6 and source/performance boundaries remain scoped.",
+        "nextAction": "approved_rebase_queue completes the private conflict/prerequisite handoff and root reviews its exact source boundary. Honor the public 16522 landing promise before publication; no age-only campaign, new approval question or runtime-performance waiver.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17067#discussion_r4486895273",
           "https://github.com/tamird/gvisor/commit/7f6ecfff61b465c2ae00d20ee4ebaad09d430519",
@@ -75777,12 +75782,16 @@
           "https://github.com/tamird/gvisor/commit/a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
           "https://buildkite.com/gvisor/first-pass/builds/1613",
           "https://buildkite.com/gvisor/first-pass/builds/1613#01a1eae5-3d03-4c72-8011-b3b8ab91bcd6",
-          "https://github.com/google/gvisor/pull/17067#issuecomment-7026931258"
+          "https://github.com/google/gvisor/pull/17067#issuecomment-7026931258",
+          "https://github.com/gvisor/gvisor/pull/17067#discussion_r4488483371",
+          "https://github.com/tamird/gvisor/actions/runs/44904831168",
+          "https://github.com/tamird/gvisor/actions/runs/44904829232",
+          "https://github.com/tamird/gvisor/actions/runs/44904833110"
         ],
-        "recheckCondition": "Reviewable current-base resolution or actual16522 landing/source approval/performance evidence.",
+        "recheckCondition": "Owned candidate qualification/review, actual 16522 landing or exact public source/feedback change.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING",
-        "curatedAt": "2026-11-20T15:00:40.305787+00:00"
+        "curatedAt": "2026-11-21T12:43:00.701524+00:00"
       },
       "dcoAmendment": {
         "oldHead": "005743727b3d80d373085133b5da9cd906cc9d7c",
@@ -141444,10 +141453,10 @@
       "group": "bazel",
       "title": "Declare unit test worker requirements",
       "owner": "root",
-      "head": "1189d9f09100ec7674b624f4dae531ab6bde1e98",
-      "updatedAt": "2026-11-21T12:20:58.751348+00:00",
-      "summary": "The actual revised 1189 source-publication question has been asked and is pending, with no returned question ID or exact request timestamp available. Primary citations and two independent reviews are complete. AMD and ARM each executed90XML with the same three baseline route failures; AMD has one RDMA skip, ARM has RDMA and OpenReadOnlyTree skips. Buildifier passed. This is not publication approval or complete green qualification.",
-      "nextStep": "Root awaits the existing revised 1189 publication reply. worker_requirements_citations separately qualifies recovered route repair 4525a395; no new question or approval for that production source is inferred.",
+      "head": "e5601c9ebe4ab30accc194fab8a1bf951bb11ee6",
+      "updatedAt": "2026-11-21T12:43:00.701524+00:00",
+      "summary": "The user returned 1189 for revision. Current worker source e5601c9 and separate global-default 775768695aa792ea6bf2369d9e3900fb289aaf00 are unapproved. Aquery 44904594388 proves all six TestRunners request network-off, Firecracker and guest root; only sandbox requests IPv6. The 8133 non-TestRunner actions have no microVM/root/IPv6 property leaks, and 5693 remote-process actions inherit network-off. Buildifier 44904810745 passed. These are action-property proofs, not service/runtime validation.",
+      "nextStep": "worker_requirements_citations and root verify actual service interpretation with the existing capability test on both architectures, then complete review of the revised sources. No publication or new human question is pending yet. Keep the standalone production route/performance boundary separate.",
       "evidence": [
         {
           "label": "Reviewable source",
@@ -141476,6 +141485,14 @@
         {
           "label": "Route repair AMD qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/44902704070"
+        },
+        {
+          "label": "Scoped action-property proof",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44904594388"
+        },
+        {
+          "label": "Current Buildifier",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44904810745"
         }
       ],
       "findings": [
@@ -141495,18 +141512,19 @@
           "summary": "The user requested comment revision with primary BuildBuddy citations for each provider property; old384 source is not publication-approved.",
           "body": "Tests that create sandboxes or inspect namespaces need kernel features\nthat ordinary remote containers cannot provide. Select the isolated\nworker for those tests and keep its external network disabled.\n\nKeep the sandbox routing test local because it also needs IPv6 support.\nIts caller must provide root execution. Compiler actions remain eligible\nfor remote execution.\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
           "outcome": "CHANGES-REQUESTED"
+        },
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "1189d9f09100ec7674b624f4dae531ab6bde1e98",
+          "baseHead": "574094148cae18e739634382c0a28d60520c319a",
+          "url": "https://github.com/tamird/gvisor/commit/1189d9f09100ec7674b624f4dae531ab6bde1e98",
+          "title": "Declare unit test worker requirements",
+          "body": "Run sandbox, mount, and namespace tests in BuildBuddy microVMs [1].\nBuildBuddy's default OCI capability set omits CAP_SYS_ADMIN [2]. Keep\nexternal networking disabled while retaining localhost access [3].\nRequest guest IPv6 for the sandbox routing tests through BuildBuddy's\nopt-in property [4]. Apply these properties only to test actions so\ncompilation can use ordinary remote workers.\n\n[1]: https://www.buildbuddy.io/docs/rbe-microvms/\n[2]: https://github.com/buildbuddy-io/buildbuddy/blob/168813c94525e5106459531fb629429d5fe2fb60/enterprise/server/remote_execution/containers/ociruntime/ociruntime.go#L157-L173\n[3]: https://www.buildbuddy.io/docs/rbe-platforms/#runner-container-support\n[4]: https://github.com/buildbuddy-io/buildbuddy/pull/11585\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
+          "summary": "The user requested revision, not publication approval: put the global network default at the responsible RBE owner, distinguish local Bazel from REAPI networking, name the shared helper for CAP_SYS_ADMIN, and cite IPv6 commit 4e518df00. No request/reply timestamp is invented.",
+          "outcome": "CHANGES-REQUESTED"
         }
-      ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "1189d9f09100ec7674b624f4dae531ab6bde1e98",
-        "baseHead": "574094148cae18e739634382c0a28d60520c319a",
-        "url": "https://github.com/tamird/gvisor/commit/1189d9f09100ec7674b624f4dae531ab6bde1e98",
-        "title": "Declare unit test worker requirements",
-        "body": "Run sandbox, mount, and namespace tests in BuildBuddy microVMs [1].\nBuildBuddy's default OCI capability set omits CAP_SYS_ADMIN [2]. Keep\nexternal networking disabled while retaining localhost access [3].\nRequest guest IPv6 for the sandbox routing tests through BuildBuddy's\nopt-in property [4]. Apply these properties only to test actions so\ncompilation can use ordinary remote workers.\n\n[1]: https://www.buildbuddy.io/docs/rbe-microvms/\n[2]: https://github.com/buildbuddy-io/buildbuddy/blob/168813c94525e5106459531fb629429d5fe2fb60/enterprise/server/remote_execution/containers/ociruntime/ociruntime.go#L157-L173\n[3]: https://www.buildbuddy.io/docs/rbe-platforms/#runner-container-support\n[4]: https://github.com/buildbuddy-io/buildbuddy/pull/11585\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
-        "summary": "Actual async publication question accepted in this conversation; no response or fabricated request metadata. The disclosed three baseline failures/skips remain in scope."
-      }
+      ]
     },
     {
       "id": "investigation:iperf-cpu-affinity",

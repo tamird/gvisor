@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T12:37:27.836569+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T12:21:26.616528+00:00",
+  "registryDate": "2026-11-21T12:43:00.701524+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -451125,7 +451125,7 @@
       "number": 17067,
       "head": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
       "sourceNumber": 17067,
-      "owner": "root",
+      "owner": "approved_rebase_queue / root",
       "claimed": true,
       "overdue": false,
       "kind": "comment",
@@ -451729,7 +451729,7 @@
       "number": 17067,
       "head": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
       "sourceNumber": 17067,
-      "owner": "root",
+      "owner": "approved_rebase_queue / root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABWUw6YQ",
       "needsTriage": false,
@@ -453236,10 +453236,10 @@
       "owner": "Agent",
       "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "disposition": "Public a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a is conflicting; Etienne’s comment 7026931258 Needs rebase request is genuine. Master build.bzl now selects AMD64 PAGE_SIZE=4096 and leaves ARM unset for runtime page size; public replaces build.bzl with BUILD.local_defines using old pagesize_64k selection, preventing a literal patch-equivalent rebase. Root owns a semantics-preserving resolution. Separate final d3f depends on the #16522 proposal d1ae and its explicit publication edge waits for #16522 to land; this does not prohibit preparing the current public PR’s requested rebase.",
-        "nextAction": "Root prepares requested delete/modify resolution preserving upstream ARM runtime page-size semantics through reviewed d3f/adaptor work where applicable. Distinguish public-source rebase preparation from dependent d3f publication; retain final source/performance review and explicit #16522 landing edge."
+        "disposition": "Public source a3ca22af remains conflicting. The real author promise in discussion_r4488483371 gates its update on 16522 landing; 16522 is still open. Private candidate 157806d0 prepares a minimal ARM-safe conflict recovery, not adoption of the separate d3f runtime proposal. ARM aquery 44904831168 passed; the source owner must consume the AMD/format batch. Existing approved predecessor 7f6 and source/performance boundaries remain scoped.",
+        "nextAction": "approved_rebase_queue completes the private conflict/prerequisite handoff and root reviews its exact source boundary. Honor the public 16522 landing promise before publication; no age-only campaign, new approval question or runtime-performance waiver."
       },
       "conflictObservedSince": "2026-11-17T19:11:47.868378+00:00"
     },
@@ -457877,10 +457877,10 @@
         }
       ],
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "disposition": "Public a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a is conflicting; Etienne’s comment 7026931258 Needs rebase request is genuine. Master build.bzl now selects AMD64 PAGE_SIZE=4096 and leaves ARM unset for runtime page size; public replaces build.bzl with BUILD.local_defines using old pagesize_64k selection, preventing a literal patch-equivalent rebase. Root owns a semantics-preserving resolution. Separate final d3f depends on the #16522 proposal d1ae and its explicit publication edge waits for #16522 to land; this does not prohibit preparing the current public PR’s requested rebase.",
-        "nextAction": "Root prepares requested delete/modify resolution preserving upstream ARM runtime page-size semantics through reviewed d3f/adaptor work where applicable. Distinguish public-source rebase preparation from dependent d3f publication; retain final source/performance review and explicit #16522 landing edge."
+        "disposition": "Public source a3ca22af remains conflicting. The real author promise in discussion_r4488483371 gates its update on 16522 landing; 16522 is still open. Private candidate 157806d0 prepares a minimal ARM-safe conflict recovery, not adoption of the separate d3f runtime proposal. ARM aquery 44904831168 passed; the source owner must consume the AMD/format batch. Existing approved predecessor 7f6 and source/performance boundaries remain scoped.",
+        "nextAction": "approved_rebase_queue completes the private conflict/prerequisite handoff and root reviews its exact source boundary. Honor the public 16522 landing promise before publication; no age-only campaign, new approval question or runtime-performance waiver."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN1p80gQ",
@@ -469918,7 +469918,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:21:26.616528+00:00"
+        "observedAt": "2026-11-21T12:43:00.701524+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -469927,7 +469927,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:21:26.616528+00:00"
+        "observedAt": "2026-11-21T12:43:00.701524+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -469936,7 +469936,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:21:26.616528+00:00"
+        "observedAt": "2026-11-21T12:43:00.701524+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -469945,7 +469945,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:21:26.616528+00:00"
+        "observedAt": "2026-11-21T12:43:00.701524+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -469954,7 +469954,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:21:26.616528+00:00"
+        "observedAt": "2026-11-21T12:43:00.701524+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -469963,16 +469963,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:21:26.616528+00:00"
-      }
-    },
-    "investigation:unit-test-worker-requirements": {
-      "contributor-review": {
-        "scope": "1189d9f09100ec7674b624f4dae531ab6bde1e98",
-        "since": "2026-11-21T12:20:58.751348+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-21T12:21:26.616528+00:00"
+        "observedAt": "2026-11-21T12:43:00.701524+00:00"
       }
     }
   },
