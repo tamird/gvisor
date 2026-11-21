@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools:defs.bzl", "go_library", "go_test", "requires_cap_sys_admin")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -48,6 +48,7 @@ go_test(
         "gofer_mount_test.go",
     ],
     embed = [":sandboxsetup"],
+    exec_properties = requires_cap_sys_admin(),
     deps = [
         "//runsc/config",
         "//runsc/specutils",
