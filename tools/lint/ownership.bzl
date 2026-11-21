@@ -7,7 +7,7 @@ def format_sources():
     package = native.package_name()
     parts = package.split("/") if package else []
     children = native.subpackages(
-        ["**"],
+        include = ["**"],
         exclude = ["bazel-*", "bazel-*/**"],
     )
     native.filegroup(
