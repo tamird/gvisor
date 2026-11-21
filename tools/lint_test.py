@@ -65,7 +65,7 @@ class LintTest(unittest.TestCase):
         '    esac ;;\n'
         "esac",
     )
-    for name in ("goimports", "clang-format", "buildifier"):
+    for name in ("goimports", "buildifier"):
       self.tool(self.formatter(name), "exit 0")
 
   def tool(self, path: pathlib.Path, body: str) -> None:
@@ -73,10 +73,7 @@ class LintTest(unittest.TestCase):
     path.chmod(0o755)
 
   def formatter(self, name: str) -> pathlib.Path:
-    if name in ("goimports", "buildifier"):
-      return self.execroot / name
-    version = self.versions[name.upper().replace("-", "_")]
-    return self.cache / f"{name}-{version}"
+    return self.bin / "bazel" if name == "clang-format" else self.execroot / name
 
   def lint(self, *args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
@@ -106,13 +103,16 @@ class LintTest(unittest.TestCase):
         ("clang-format",),
         ("buildifier",),
         ("--fix", "goimports"),
+        ("--fix", "clang-format"),
         ("--fix", "buildifier"),
     ):
       name = args[-1]
       with self.subTest(args=args):
-        self.tool(self.formatter(name), "exit 7")
+        path = self.formatter(name)
+        original = path.read_text()
+        self.tool(path, "exit 7")
         self.assert_failed(self.lint(*args), name)
-        self.tool(self.formatter(name), "exit 0")
+        path.write_text(original)
 
   def test_bazel_options(self) -> None:
     result = self.lint(
@@ -131,6 +131,13 @@ class LintTest(unittest.TestCase):
         ],
     )
 
+  def test_clang_bazel_options(self) -> None:
+    for action, command, target in (((), "build", "clang_format"), (("--fix",), "run", "format_clang")):
+      self.bazel_log.unlink(missing_ok=True)
+      result = self.lint("--bazel=bazel --startup=1", "--bazel-options=--opt=1", *action, "clang-format")
+      self.assertEqual(result.returncode, 0, result.stderr)
+      self.assertEqual(self.bazel_log.read_text().split(), ["--startup=1", command, "--opt=1", "//tools/lint:" + target])
+
   def test_bazel_failure(self) -> None:
     self.tool(self.bin / "bazel", "echo bazel-build-failed >&2; exit 7")
     result = self.lint("goimports")
@@ -139,7 +146,8 @@ class LintTest(unittest.TestCase):
 
   def test_diagnostics_and_continuation(self) -> None:
     self.tool(
-        self.formatter("clang-format"), "echo formatter-crashed >&2; exit 7"
+        self.bin / "bazel",
+        'case "$*" in *clang_format*) echo formatter-crashed >&2; exit 7;; esac',
     )
     result = self.lint("clang-format", "buildifier")
     self.assert_failed(result, "clang-format")
@@ -147,17 +155,14 @@ class LintTest(unittest.TestCase):
     self.assertIn("PASS  buildifier", result.stderr)
 
   def test_installer_failure(self) -> None:
-    # The remaining native formatter must not make a stale cache executable
-    # after an installer failure in a command substitution.
-    self.formatter("clang-format").chmod(0o644)
-    result = self.lint("clang-format")
-    self.assert_failed(result, "clang-format")
+    # Codespell still downloads its wheel; never use an incomplete cache.
+    result = self.lint("spelling")
+    self.assert_failed(result, "spelling")
     self.assertIn("unexpected-download", result.stderr)
-    self.assertEqual(self.formatter("clang-format").stat().st_mode & 0o111, 0)
-    # A failed temporary-file allocation must not be masked by local assignment.
+    self.assertFalse((self.cache / f"codespell-{self.versions['CODESPELL']}").exists())
     self.tool(self.bin / "mktemp", "echo temporary-file-failed >&2; exit 7")
-    result = self.lint("clang-format", "goimports")
-    self.assert_failed(result, "clang-format")
+    result = self.lint("spelling", "goimports")
+    self.assert_failed(result, "spelling")
     self.assertIn("temporary-file-failed", result.stderr)
     self.assertNotIn("unexpected-download", result.stderr)
     self.assertIn("PASS  goimports", result.stderr)
