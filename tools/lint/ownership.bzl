@@ -9,12 +9,14 @@ def format_sources():
     children = native.subpackages(
         include = ["**"],
         exclude = ["bazel-*", "bazel-*/**"],
+        allow_empty = True,
     )
     native.filegroup(
         name = "format_sources",
         srcs = native.glob(
             ["**/*.go", "**/*.bzl", "BUILD", "BUILD.bazel", "MODULE.bazel", "WORKSPACE"],
             exclude = ["bazel-*/**"],
+            allow_empty = True,
         ) + [
             "//{}:format_sources".format("/".join([part for part in [package, child] if part]))
             for child in children
