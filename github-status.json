@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T13:17:02.935412+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T13:01:37.342918+00:00",
+  "registryDate": "2026-11-21T13:24:07.659680+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -453238,8 +453238,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "disposition": "Public a3ca22af is unchanged and remains behind the real 16522 landing promise. Private formatted candidate e80ddbe9e766fd2d61a05149febf751eac832817 is under matched baseline/candidate raw-stub and generated-offset compilation gates. No runtime digest identity, d3f adoption, performance qualification or new source approval is established; approved predecessor 7f6 remains source-bound.",
-        "nextAction": "approved_rebase_queue consumes the existing matched compile/format gates and exact product digests, then root reviews the minimal ARM-safe recovery. Preserve the public 16522 hold, internal validation and performance boundaries before publication."
+        "disposition": "Private e80 compile-product gates succeeded with expected compile-only NO_TESTS_FOUND 4, not runtime tests. Raw stub and exported offset products differ from baseline on both architectures. Baseline action queries prove the same GNU compiler with AMD O2/ARM O1 and no frame-pointer override; candidate adds fno-omit and a different object link order. AMD-only 5026ce5 diagnostic adds fomit and remains under the existing root product watch. No product identity or performance closure is established. Public a3 and the real 16522 landing promise remain unchanged.",
+        "nextAction": "approved_rebase_queue consumes the existing frame-pointer diagnostic and corrected configured-signal queries before any causal or product-equivalence claim. The old wrong-package queries ran zero tests; upstream sigaltstack wrapper is disabled. Preserve public 16522, source-review and performance boundaries; no runtime C/link-order change or public push is implied."
       },
       "conflictObservedSince": "2026-11-17T19:11:47.868378+00:00"
     },
@@ -457879,8 +457879,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "disposition": "Public a3ca22af is unchanged and remains behind the real 16522 landing promise. Private formatted candidate e80ddbe9e766fd2d61a05149febf751eac832817 is under matched baseline/candidate raw-stub and generated-offset compilation gates. No runtime digest identity, d3f adoption, performance qualification or new source approval is established; approved predecessor 7f6 remains source-bound.",
-        "nextAction": "approved_rebase_queue consumes the existing matched compile/format gates and exact product digests, then root reviews the minimal ARM-safe recovery. Preserve the public 16522 hold, internal validation and performance boundaries before publication."
+        "disposition": "Private e80 compile-product gates succeeded with expected compile-only NO_TESTS_FOUND 4, not runtime tests. Raw stub and exported offset products differ from baseline on both architectures. Baseline action queries prove the same GNU compiler with AMD O2/ARM O1 and no frame-pointer override; candidate adds fno-omit and a different object link order. AMD-only 5026ce5 diagnostic adds fomit and remains under the existing root product watch. No product identity or performance closure is established. Public a3 and the real 16522 landing promise remain unchanged.",
+        "nextAction": "approved_rebase_queue consumes the existing frame-pointer diagnostic and corrected configured-signal queries before any causal or product-equivalence claim. The old wrong-package queries ran zero tests; upstream sigaltstack wrapper is disabled. Preserve public 16522, source-review and performance boundaries; no runtime C/link-order change or public push is implied."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN1p80gQ",
@@ -469918,7 +469918,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T13:01:37.342918+00:00"
+        "observedAt": "2026-11-21T13:24:07.659680+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -469927,7 +469927,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T13:01:37.342918+00:00"
+        "observedAt": "2026-11-21T13:24:07.659680+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -469936,7 +469936,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T13:01:37.342918+00:00"
+        "observedAt": "2026-11-21T13:24:07.659680+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -469945,7 +469945,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T13:01:37.342918+00:00"
+        "observedAt": "2026-11-21T13:24:07.659680+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -469954,7 +469954,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T13:01:37.342918+00:00"
+        "observedAt": "2026-11-21T13:24:07.659680+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -469963,7 +469963,16 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T13:01:37.342918+00:00"
+        "observedAt": "2026-11-21T13:24:07.659680+00:00"
+      }
+    },
+    "investigation:unit-test-worker-requirements": {
+      "contributor-review": {
+        "scope": "4026f169cc4e65cd02a6af18a32b5995515cbb20",
+        "since": "2026-11-21T13:24:07.659680+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-21T13:24:07.659680+00:00"
       }
     }
   },

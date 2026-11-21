@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T13:01:37.342918+00:00",
+    "updatedAt": "2026-11-21T13:24:07.659680+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4896,11 +4896,11 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "Root and worker_requirements_citations validate the responsible global network default together with the worker helper, preserving local-Bazel versus REAPI distinctions and the compiler prerequisite. Retain the original approval; do not publish the changed revision or invent a new decision.",
+        "nextAction": "Root awaits the existing paired 4026+775 reply. Preserve the original 0be5 approval without transferring it to the revision; do not create another question or treat local sandbox controls as REAPI settings.",
         "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings.",
         "observedAt": "2026-11-17T19:58:24.544895+00:00",
-        "curatedAt": "2026-11-21T12:43:00.701524+00:00",
-        "disposition": "Original contributor-approved RBE source 0be5c425a5705e43b043c3d9aefef7839ececa3c still depends on approved compiler 8178e3fe. Separate proposed network-off default 775768695aa792ea6bf2369d9e3900fb289aaf00 changes that source and is not approved or published; no authority transfers from 0be5 to the revision."
+        "curatedAt": "2026-11-21T13:24:07.659680+00:00",
+        "disposition": "The original 0be5 approval and compiler prerequisite remain source-bound. Changed global-default 77576869 is fork-verified and covered by the one current paired question on investigation:unit-test-worker-requirements; it is not approved or published upstream."
       },
       "updatedAt": "2026-11-17T20:32:28.027492+00:00"
     },
@@ -10990,12 +10990,12 @@
           "recheckCondition": "Proposal decision or exact current ref/head, source/base or qualification change."
         },
         "owner": "declared_formatting_resume / root",
-        "nextAction": "declared_formatting_resume reproduces the mismatch, implements the smallest agreed guard/boundary and requalifies it with the existing caller tests. Keep the approved ad173 API and bounded C/C++ scope; no new framework, bulk migration or source-publication question.",
-        "recheckCondition": "Owned mismatch reproduction and corrected source qualification/review.",
+        "nextAction": "Root verifies the reviewable d039 preview and final source boundary before asking a new publication question. Preserve the approved ad173 API without transferring approval to this new inventory extraction; no bulk 588 migration or framework expansion.",
+        "recheckCondition": "Verified final preview/reviewable source and actual source-publication question.",
         "observedAt": "2026-11-17T19:58:25.300843+00:00",
         "sourceHead": "63c29f4ef205ae9a8dec3b96e4bb3e32581d6c40",
-        "curatedAt": "2026-11-21T13:01:37.342918+00:00",
-        "disposition": "Independent review of 9986376 found real check/fix drift when configuration is untracked. Earlier integration/full 492-input/archive passes do not close this parity defect. Owner and original reviewer agreed on an exact known-ancestor configuration guard plus indexed root-ignore boundary; focused old-source mismatch reproduction 44906149981 is live. No new guard candidate is qualified yet.",
+        "curatedAt": "2026-11-21T13:24:07.659680+00:00",
+        "disposition": "Corrected source 37fd1432 passed 44907032493: all three unindexed-configuration guards, indexed recovery, root-ignore boundary, normal 492-input/full formatting and Buildifier. Both changed-input reviewers cleared the original check/fix drift without new findings. Squashed d039802d8437f08d27b0282485709cc5f1b464ba has the exact tested tree; only commit message/DCO metadata changed. Fork preview is next; no upstream PR, actual source question or publication approval exists.",
         "permanentFormatterMilestone": {
           "source": "723486ddd865d3044c5b515865b3a43de6356fde",
           "fixtureSource": "d58ca4f42c5a5a71456cb5de34f43785a6f6670e",
@@ -11162,7 +11162,8 @@
           "https://github.com/tamird/gvisor/actions/runs/44903716923",
           "https://github.com/tamird/gvisor/actions/runs/44904179479",
           "https://github.com/tamird/gvisor/actions/runs/44904909577",
-          "https://github.com/tamird/gvisor/actions/runs/44906149981"
+          "https://github.com/tamird/gvisor/actions/runs/44906149981",
+          "https://github.com/tamird/gvisor/actions/runs/44907032493"
         ]
       },
       "settledReviews": [
@@ -75770,8 +75771,8 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
         "observedAt": "2026-11-20T15:00:40.305787+00:00",
-        "disposition": "Public a3ca22af is unchanged and remains behind the real 16522 landing promise. Private formatted candidate e80ddbe9e766fd2d61a05149febf751eac832817 is under matched baseline/candidate raw-stub and generated-offset compilation gates. No runtime digest identity, d3f adoption, performance qualification or new source approval is established; approved predecessor 7f6 remains source-bound.",
-        "nextAction": "approved_rebase_queue consumes the existing matched compile/format gates and exact product digests, then root reviews the minimal ARM-safe recovery. Preserve the public 16522 hold, internal validation and performance boundaries before publication.",
+        "disposition": "Private e80 compile-product gates succeeded with expected compile-only NO_TESTS_FOUND 4, not runtime tests. Raw stub and exported offset products differ from baseline on both architectures. Baseline action queries prove the same GNU compiler with AMD O2/ARM O1 and no frame-pointer override; candidate adds fno-omit and a different object link order. AMD-only 5026ce5 diagnostic adds fomit and remains under the existing root product watch. No product identity or performance closure is established. Public a3 and the real 16522 landing promise remain unchanged.",
+        "nextAction": "approved_rebase_queue consumes the existing frame-pointer diagnostic and corrected configured-signal queries before any causal or product-equivalence claim. The old wrong-package queries ran zero tests; upstream sigaltstack wrapper is disabled. Preserve public 16522, source-review and performance boundaries; no runtime C/link-order change or public push is implied.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17067#discussion_r4486895273",
           "https://github.com/tamird/gvisor/commit/7f6ecfff61b465c2ae00d20ee4ebaad09d430519",
@@ -75792,12 +75793,16 @@
           "https://github.com/tamird/gvisor/actions/runs/44906317677",
           "https://github.com/tamird/gvisor/actions/runs/44906319375",
           "https://github.com/tamird/gvisor/actions/runs/44906321119",
-          "https://github.com/tamird/gvisor/actions/runs/44906322768"
+          "https://github.com/tamird/gvisor/actions/runs/44906322768",
+          "https://github.com/tamird/gvisor/actions/runs/44907687849",
+          "https://github.com/tamird/gvisor/actions/runs/44907689594",
+          "https://github.com/tamird/gvisor/actions/runs/44907598692",
+          "https://github.com/tamird/gvisor/actions/runs/44907600599"
         ],
-        "recheckCondition": "Actual matched product/source results, exact review or 16522 landing.",
+        "recheckCondition": "Actual diagnostic product/action evidence, exact source review or 16522 landing.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING",
-        "curatedAt": "2026-11-21T13:01:37.342918+00:00"
+        "curatedAt": "2026-11-21T13:24:07.659680+00:00"
       },
       "dcoAmendment": {
         "oldHead": "005743727b3d80d373085133b5da9cd906cc9d7c",
@@ -141457,12 +141462,12 @@
       "repo": "google/gvisor",
       "status": "active",
       "group": "bazel",
-      "title": "Declare unit test worker requirements",
+      "title": "Declare unit test capability requirements",
       "owner": "root",
-      "head": "e5601c9ebe4ab30accc194fab8a1bf951bb11ee6",
-      "updatedAt": "2026-11-21T13:01:37.342918+00:00",
-      "summary": "Worker e5601c9 and the separate global-default 775 revision remain unapproved. Correctness and maintainer reviews are complete with no findings; the exact IPv6 citation caveat is closed. AMD namespace 44905173511 passed 95 cases without skips; ARM44905178697 passed 94 with one pidfs skip, with TestApplyNSRestoresThreadNamespace unskipped on both and all guards passing. Commit 4026f169cc4e65cd02a6af18a32b5995515cbb20 changes only message wrapping and has the same tree as e560. Fork preview publication is in progress, not yet provider-verified; no upstream delivery or new approval question is recorded.",
-      "nextStep": "Root verifies the existing atomic fork preview and then presents the exact revised sources for publication review. Preserve original 1189 changes-requested provenance and the separate unapproved global default; no production 4525 composition or approval is inferred.",
+      "head": "4026f169cc4e65cd02a6af18a32b5995515cbb20",
+      "updatedAt": "2026-11-21T13:24:07.659680+00:00",
+      "summary": "One actual async publication question covers both fork-verified sources: worker 4026f169 and shared global-default 77576869. Neither is approved. The worker tree is identical to reviewed e560; only commit-message wrapping changed. The helper names CAP_SYS_ADMIN, shared REAPI network-off is distinct from local Bazel controls, and the IPv6 commit citation, both-architecture namespace gates and independent reviews are complete. Compiler/RBE prerequisites remain explicit.",
+      "nextStep": "Root awaits the reply to the existing paired question. Keep one decision for both exact sources, not separate reasks; no upstream publication or approval transfer from the rejected 1189 or older approved RBE source.",
       "evidence": [
         {
           "label": "Reviewable source",
@@ -141507,6 +141512,14 @@
         {
           "label": "Actual ARM namespace capability",
           "url": "https://github.com/tamird/gvisor/actions/runs/44905178697"
+        },
+        {
+          "label": "Verified worker preview",
+          "url": "https://github.com/tamird/gvisor/commit/4026f169cc4e65cd02a6af18a32b5995515cbb20"
+        },
+        {
+          "label": "Verified paired RBE default preview",
+          "url": "https://github.com/tamird/gvisor/commit/775768695aa792ea6bf2369d9e3900fb289aaf00"
         }
       ],
       "findings": [
@@ -141538,7 +141551,17 @@
           "summary": "The user requested revision, not publication approval: put the global network default at the responsible RBE owner, distinguish local Bazel from REAPI networking, name the shared helper for CAP_SYS_ADMIN, and cite IPv6 commit 4e518df00. No request/reply timestamp is invented.",
           "outcome": "CHANGES-REQUESTED"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "4026f169cc4e65cd02a6af18a32b5995515cbb20",
+        "baseHead": "574094148cae18e739634382c0a28d60520c319a",
+        "url": "https://github.com/tamird/gvisor/commit/4026f169cc4e65cd02a6af18a32b5995515cbb20",
+        "title": "Declare unit test capability requirements",
+        "summary": "Actual accepted async question explicitly covers both worker 4026f169cc4e65cd02a6af18a32b5995515cbb20 and global-default 775768695aa792ea6bf2369d9e3900fb289aaf00. No returned question ID, exact request timestamp or user reply is available.",
+        "body": "Paired source-publication review: https://github.com/tamird/gvisor/commit/4026f169cc4e65cd02a6af18a32b5995515cbb20 and https://github.com/tamird/gvisor/commit/775768695aa792ea6bf2369d9e3900fb289aaf00.\n\nThe worker source uses the capability-named helper and exact IPv6 commit citation. The RBE source sets one shared network-off default, preserving the distinction between local Bazel and REAPI networking. Both-architecture namespace gates and independent reviews passed; compiler/RBE prerequisites remain. The actual question covers this pair; neither source is approved."
+      }
     },
     {
       "id": "investigation:iperf-cpu-affinity",
