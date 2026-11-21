@@ -323,6 +323,7 @@ gazelle(
 exports_files([
     "go.sum",
     "go.mod",
+    "MODULE.bazel",
 ])
 
 exports_files(
