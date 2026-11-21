@@ -24,6 +24,9 @@ bazel_dep(name = "grpc", version = "1.84.0", repo_name = "com_github_grpc_grpc")
 # Select gRPC's c-ares configuration header without a shell.
 bazel_dep(name = "c-ares", version = "1.34.9.bcr.1", repo_name = None)
 
+bazel_dep(name = "iperf", version = "3.18.0.bcr.1", dev_dependency = True)
+bazel_dep(name = "openssl", version = "3.3.1.bcr.11", dev_dependency = True)
+
 # gRPC's older minimum imports a removed Google APIs extension repository.
 bazel_dep(name = "envoy_api", version = "0.0.0-20260130-84e8436")
 bazel_dep(name = "protobuf", version = "35.1", repo_name = "com_google_protobuf")
@@ -391,6 +394,20 @@ img_pull(
     registries = DOCKER_HUB_REGISTRIES,
     repository = "library/redis",
     tag = "7.0.12",
+)
+
+# Debian-compatible benchmarks use the C runtime from the published Ubuntu image.
+img_pull(
+    name = "benchmark_ubuntu",
+    digest = "sha256:076e7bf82319619f28dd0aa9c02ab34b055ad37100395b4f49a2ffba04fb5e11",
+    layer_handling = "eager",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+    registries = DOCKER_HUB_REGISTRIES,
+    repository = "library/ubuntu",
+    tag = "22.04",
 )
 
 ### Toolchains
