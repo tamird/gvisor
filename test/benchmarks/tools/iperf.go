@@ -15,30 +15,24 @@
 package tools
 
 import (
+	"encoding/json"
 	"fmt"
-	"regexp"
-	"strconv"
 	"testing"
 )
 
-// Iperf is for the client side of `iperf`.
+// Iperf is for the client side of iperf3.
 type Iperf struct {
 	Num      int // Requested transfer size across all streams, in KiB.
-	Parallel int // Number of parallel threads.
+	Parallel int // Number of parallel TCP streams.
 }
 
-// MakeCmd returns a iperf client command.
+// MakeCmd returns an iperf3 client command.
 func (i *Iperf) MakeCmd(host string, port int) []string {
-	cmd := []string{"iperf"}
-	cmd = append(cmd, "--format", "K") // Output in KBytes.
-	cmd = append(cmd, "--realtime")    // Measured in realtime.
-	cmd = append(cmd, "--len", "128K") // Length of data buffer per request.
-	n := i.Num
-	if i.Parallel > 0 {
-		// Must be at least 1, otherwise iperf will complain about having nothing to transmit.
-		n = max(i.Num/i.Parallel, 1)
-	}
-	cmd = append(cmd, "--num", fmt.Sprintf("%dK", n)) // Number of requests to send.
+	cmd := []string{"iperf3"}
+	cmd = append(cmd, "--json")           // Report aggregate sender throughput.
+	cmd = append(cmd, "--length", "128K") // Data buffer size per write.
+	n := max(i.Num, 1)                    // iperf3 requires a positive total across all streams.
+	cmd = append(cmd, "--bytes", fmt.Sprintf("%dK", n))
 	cmd = append(cmd, "--client", host)
 	cmd = append(cmd, "--port", fmt.Sprintf("%d", port))
 	if i.Parallel > 0 {
@@ -47,33 +41,36 @@ func (i *Iperf) MakeCmd(host string, port int) []string {
 	return cmd
 }
 
-// Report records iperf's client-reported bandwidth.
+// Report parses output from iperf3 and reports aggregate sender throughput.
 func (i *Iperf) Report(b *testing.B, output string) {
 	b.Helper()
 	b.Logf("Iperf N=%d elapsed before cleanup=%s; producer output=%q", b.N, b.Elapsed(), output)
-	// Parse bandwidth and report it.
-	bW, err := i.bandwidth(output)
+	bandwidth, err := i.bandwidth(output)
 	if err != nil {
-		b.Fatalf("failed to parse bandwitdth from %s: %v", output, err)
+		b.Fatalf("failed to parse bandwidth from %s: %v", output, err)
 	}
-	ReportCustomMetric(b, bW*1024, "bandwidth" /*metric name*/, "bytes_per_second" /*unit*/)
+	ReportCustomMetric(b, bandwidth, "bandwidth" /*metric name*/, "bytes_per_second" /*unit*/)
 }
 
-// bandwidth returns the client's final reported rate in KBytes/sec.
-// Parallel transfers use the producer's aggregate summary.
+// bandwidth returns aggregate sender throughput in bytes per second.
 func (i *Iperf) bandwidth(data string) (float64, error) {
-	id := `\s*\d+`
-	if i.Parallel > 1 {
-		id = `SUM`
+	var result struct {
+		Error string `json:"error"`
+		End   struct {
+			Sent *struct {
+				Bytes         uint64  `json:"bytes"`
+				BitsPerSecond float64 `json:"bits_per_second"`
+			} `json:"sum_sent"`
+		} `json:"end"`
 	}
-	rows := regexp.MustCompile(`(?m)^\[`+id+`\][^\n]*$`).FindAllString(data, -1)
-	if len(rows) == 0 {
-		return 0, fmt.Errorf("missing iperf bandwidth summary: %s", data)
+	if err := json.Unmarshal([]byte(data), &result); err != nil {
+		return 0, fmt.Errorf("invalid iperf3 result: %w", err)
 	}
-	summary := rows[len(rows)-1]
-	match := regexp.MustCompile(`\s+(\d+\.?\d*)\s+KBytes/sec(?:\s|$)`).FindStringSubmatch(summary)
-	if len(match) == 0 {
-		return 0, fmt.Errorf("invalid iperf bandwidth summary: %s", summary)
+	if result.Error != "" {
+		return 0, fmt.Errorf("iperf3 failed: %s", result.Error)
 	}
-	return strconv.ParseFloat(match[1], 64)
+	if result.End.Sent == nil || result.End.Sent.Bytes == 0 || result.End.Sent.BitsPerSecond <= 0 {
+		return 0, fmt.Errorf("missing positive iperf3 sender summary")
+	}
+	return result.End.Sent.BitsPerSecond / 8, nil
 }

@@ -14,6 +14,7 @@ filegroup(
     srcs = glob(["**"]) + [
         "//images/basic:sources",
         "//images/benchmarks/bun-spawn:sources",
+        "//images/benchmarks/iperf:sources",
         "//images/compatibility:sources",
         "//images/gpu/ollama/client:sources",
     ],
@@ -93,7 +94,7 @@ image_outputs(
 image_outputs(
     name = "benchmark_iperf",
     archive_visibility = ["//test/benchmarks/harness:__pkg__"],
-    image = "@benchmark_iperf_amd64",
+    image = "//images/benchmarks/iperf:iperf_image",
     image_name = "benchmarks/iperf",
 )
 

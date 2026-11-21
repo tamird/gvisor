@@ -92,3 +92,7 @@ build:buildbuddy --modify_execution_info=^(Cpp.*|CcStrip)$=-no-remote,^(Cpp.*|Cc
 
 # Cgo uses the same image-provided C tools and resolved execution CPU.
 build:buildbuddy --modify_execution_info=^(GoStdlib|GoStdlibList|GoCompilePkg|GoLink)$=-no-remote,^(GoStdlib|GoStdlibList|GoCompilePkg|GoLink)$=+no-local
+
+# Use the same registries for bootstrap and the pending image dependency.
+common --registry=https://bcr.bazel.build
+common --registry=https://raw.githubusercontent.com/tamird/bazel-central-registry/fe25c8ed035077d6f3afe56d9b0d0411a6455b99

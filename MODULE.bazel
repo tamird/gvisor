@@ -21,6 +21,9 @@ bazel_dep(name = "rules_qemu", version = "0.3.0")
 bazel_dep(name = "rules_foreign_cc", version = "0.16.0")
 bazel_dep(name = "grpc", version = "1.84.0", repo_name = "com_github_grpc_grpc")
 
+bazel_dep(name = "iperf", version = "3.18.0.bcr.1", dev_dependency = True)
+bazel_dep(name = "openssl", version = "3.3.1.bcr.11", dev_dependency = True)
+
 # Select gRPC's c-ares configuration header without a shell.
 bazel_dep(name = "c-ares", version = "1.34.9.bcr.1", repo_name = None)
 
@@ -1038,11 +1041,16 @@ go_deps.gazelle_override(
 )
 
 img_pull(
-    name = "benchmark_iperf_amd64",
-    digest = "sha256:09f17d4c701a4d09b78be8754105c216174f7c90f44a5a215a7f48aea998d66c",
+    name = "benchmark_ubuntu",
+    digest = "sha256:9c7f200c07e3d4a03e7249d2c16bf66a51120fb876aa2242cf31451412543289",
     layer_handling = "eager",
-    registries = ["us-central1-docker.pkg.dev"],
-    repository = "gvisor-presubmit/gvisor-presubmit-images/benchmarks/iperf_x86_64",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+    registries = DOCKER_HUB_REGISTRIES,
+    repository = "library/ubuntu",
+    tag = "24.04",
 )
 
 img_pull(
