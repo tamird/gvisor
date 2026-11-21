@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T13:24:07.659680+00:00",
+    "updatedAt": "2026-11-21T13:42:33.012085+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10990,12 +10990,12 @@
           "recheckCondition": "Proposal decision or exact current ref/head, source/base or qualification change."
         },
         "owner": "declared_formatting_resume / root",
-        "nextAction": "Root verifies the reviewable d039 preview and final source boundary before asking a new publication question. Preserve the approved ad173 API without transferring approval to this new inventory extraction; no bulk 588 migration or framework expansion.",
-        "recheckCondition": "Verified final preview/reviewable source and actual source-publication question.",
+        "nextAction": "declared_formatting_resume runs the existing maintained ALL-check entrypoint without new code or suite, then root completes the final reviewable handoff. Preserve the bounded C/C++ inventory scope and approved ad173 API; no bulk migration or source-publication approval transfer.",
+        "recheckCondition": "Actual maintained ALL-check result and final source handoff.",
         "observedAt": "2026-11-17T19:58:25.300843+00:00",
         "sourceHead": "63c29f4ef205ae9a8dec3b96e4bb3e32581d6c40",
-        "curatedAt": "2026-11-21T13:24:07.659680+00:00",
-        "disposition": "Corrected source 37fd1432 passed 44907032493: all three unindexed-configuration guards, indexed recovery, root-ignore boundary, normal 492-input/full formatting and Buildifier. Both changed-input reviewers cleared the original check/fix drift without new findings. Squashed d039802d8437f08d27b0282485709cc5f1b464ba has the exact tested tree; only commit message/DCO metadata changed. Fork preview is next; no upstream PR, actual source question or publication approval exists.",
+        "curatedAt": "2026-11-21T13:42:33.012085+00:00",
+        "disposition": "Clean fork preview d039802d8437f08d27b0282485709cc5f1b464ba is provider-verified. Ordinary Git ref publication resolved the transient timeout with unchanged credentials/permissions and no workflow delta or API-ref bypass. Exact-source native ARM 44908942436 passed: aarch64 host/fixer ELF under a cross-x86 target configuration, LLVM 23.1.2, configuration-boundary cases, full C++ check, Buildifier and caller tests. Both final reviews are complete. One required maintained ALL-check lint entrypoint remains with the owner on the normal index; no source-publication question or approval exists.",
         "permanentFormatterMilestone": {
           "source": "723486ddd865d3044c5b515865b3a43de6356fde",
           "fixtureSource": "d58ca4f42c5a5a71456cb5de34f43785a6f6670e",
@@ -11163,7 +11163,9 @@
           "https://github.com/tamird/gvisor/actions/runs/44904179479",
           "https://github.com/tamird/gvisor/actions/runs/44904909577",
           "https://github.com/tamird/gvisor/actions/runs/44906149981",
-          "https://github.com/tamird/gvisor/actions/runs/44907032493"
+          "https://github.com/tamird/gvisor/actions/runs/44907032493",
+          "https://github.com/tamird/gvisor/commit/d039802d8437f08d27b0282485709cc5f1b464ba",
+          "https://github.com/tamird/gvisor/actions/runs/44908942436"
         ]
       },
       "settledReviews": [
@@ -75771,8 +75773,8 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
         "observedAt": "2026-11-20T15:00:40.305787+00:00",
-        "disposition": "Private e80 compile-product gates succeeded with expected compile-only NO_TESTS_FOUND 4, not runtime tests. Raw stub and exported offset products differ from baseline on both architectures. Baseline action queries prove the same GNU compiler with AMD O2/ARM O1 and no frame-pointer override; candidate adds fno-omit and a different object link order. AMD-only 5026ce5 diagnostic adds fomit and remains under the existing root product watch. No product identity or performance closure is established. Public a3 and the real 16522 landing promise remain unchanged.",
-        "nextAction": "approved_rebase_queue consumes the existing frame-pointer diagnostic and corrected configured-signal queries before any causal or product-equivalence claim. The old wrong-package queries ran zero tests; upstream sigaltstack wrapper is disabled. Preserve public 16522, source-review and performance boundaries; no runtime C/link-order change or public push is implied.",
+        "disposition": "AMD-only fomit diagnostic 5026ce5 removes the 192-byte product growth but does not restore stub bytes or exported-offset identity. Expected compile-only exit 4 is not a runtime test pass. Owning AMD 44909621601/ARM 44909623519 signal+systrap gates and source checks 44909625537 remain live under the existing source owner; no performance/runtime success is claimed. Public a3 and the real 16522 landing promise remain unchanged.",
+        "nextAction": "approved_rebase_queue audits the existing owning gates and diagnostic products before source/product conclusions. Retain internal validation, final source-review and broad performance obligations; no runtime/link-order edit, public push or waiver is implied.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17067#discussion_r4486895273",
           "https://github.com/tamird/gvisor/commit/7f6ecfff61b465c2ae00d20ee4ebaad09d430519",
@@ -75797,12 +75799,15 @@
           "https://github.com/tamird/gvisor/actions/runs/44907687849",
           "https://github.com/tamird/gvisor/actions/runs/44907689594",
           "https://github.com/tamird/gvisor/actions/runs/44907598692",
-          "https://github.com/tamird/gvisor/actions/runs/44907600599"
+          "https://github.com/tamird/gvisor/actions/runs/44907600599",
+          "https://github.com/tamird/gvisor/actions/runs/44909621601",
+          "https://github.com/tamird/gvisor/actions/runs/44909623519",
+          "https://github.com/tamird/gvisor/actions/runs/44909625537"
         ],
-        "recheckCondition": "Actual diagnostic product/action evidence, exact source review or 16522 landing.",
+        "recheckCondition": "Actual owning test/source results, exact product/source review or 16522 landing.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING",
-        "curatedAt": "2026-11-21T13:24:07.659680+00:00"
+        "curatedAt": "2026-11-21T13:42:33.012085+00:00"
       },
       "dcoAmendment": {
         "oldHead": "005743727b3d80d373085133b5da9cd906cc9d7c",
