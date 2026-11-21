@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T09:10:22.353451+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T08:33:04.123552+00:00",
+  "registryDate": "2026-11-21T09:19:34.135838+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -449297,7 +449297,7 @@
       "sourceNumber": 17492,
       "owner": "Agent",
       "claimed": false,
-      "overdue": false,
+      "overdue": true,
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABZeJSDg",
       "needsTriage": false,
@@ -449305,7 +449305,7 @@
       "url": "https://github.com/google/gvisor/pull/17492#pullrequestreview-6004298254",
       "author": "EtiennePerot",
       "updatedAt": "2026-11-21T09:04:42Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": true,
       "assigned": true,
       "feedbackComplete": true,
@@ -450538,25 +450538,6 @@
     },
     {
       "repo": "google/gvisor",
-      "number": 16490,
-      "head": "fea73e24f61c5b09e21e5ea292b471b1f3f24ca3",
-      "sourceNumber": 16490,
-      "owner": "root",
-      "kind": "comment",
-      "id": "IC_kwDOB9IlXs8AAAABlh1FqA",
-      "needsTriage": false,
-      "createdAt": "2026-11-12T03:25:53Z",
-      "url": "https://github.com/google/gvisor/pull/16490#issuecomment-6813468072",
-      "author": "EtiennePerot",
-      "updatedAt": "2026-11-12T03:25:53Z",
-      "newOrChanged": false,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
       "number": 16458,
       "head": "303aee0fb294bcf676c2579d24b6821d0578a603",
       "sourceNumber": 16458,
@@ -450709,7 +450690,7 @@
       "number": 16843,
       "head": "d9072b5ca4ffcb18acffd6e4d3afba8e4143f235",
       "sourceNumber": 16843,
-      "owner": "root",
+      "owner": "buildifier_license_fix / root",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABm2zwgQ",
       "needsTriage": false,
@@ -450747,7 +450728,7 @@
       "number": 17456,
       "head": "b0f308f6547907a11d07fff7805be7e01df05143",
       "sourceNumber": 17456,
-      "owner": "root",
+      "owner": "buildifier_license_fix / root",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABn8aVpQ",
       "needsTriage": false,
@@ -450854,25 +450835,6 @@
       "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
     },
     {
-      "repo": "nodejs/node",
-      "number": 67595,
-      "head": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-      "sourceNumber": 67595,
-      "owner": "root",
-      "kind": "comment",
-      "id": "IC_kwDOAZ7xs88AAAABotJmFw",
-      "needsTriage": false,
-      "createdAt": "2026-11-20T00:43:18Z",
-      "url": "https://github.com/nodejs/node/pull/67595#issuecomment-7026664983",
-      "author": "nodejs-github-bot",
-      "updatedAt": "2026-11-20T00:43:18Z",
-      "newOrChanged": false,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
       "repo": "google/gvisor",
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
@@ -450884,79 +450846,6 @@
       "url": "https://github.com/google/gvisor/pull/16419#pullrequestreview-6000448132",
       "author": "manninglucas",
       "updatedAt": "2026-11-20T22:52:24Z",
-      "newOrChanged": false,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 16254,
-      "head": "e794622247027309e4f983d2e9426c5d944159ae",
-      "sourceNumber": 16254,
-      "owner": "Agent",
-      "kind": "review",
-      "id": "PRR_kwDOB9IlXs8AAAABZeAqig",
-      "needsTriage": true,
-      "url": "https://github.com/google/gvisor/pull/16254#pullrequestreview-6004157066",
-      "author": "EtiennePerot",
-      "updatedAt": "2026-11-21T08:31:06Z",
-      "newOrChanged": false,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "nodejs/node",
-      "number": 67595,
-      "head": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-      "sourceNumber": 67595,
-      "owner": "Agent",
-      "kind": "comment",
-      "id": "IC_kwDOAZ7xs88AAAABpM5z1Q",
-      "needsTriage": true,
-      "createdAt": "2026-11-21T08:31:06Z",
-      "url": "https://github.com/nodejs/node/pull/67595#issuecomment-7059960789",
-      "author": "jakecastelli",
-      "updatedAt": "2026-11-21T08:31:06Z",
-      "newOrChanged": false,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 16490,
-      "head": "fea73e24f61c5b09e21e5ea292b471b1f3f24ca3",
-      "sourceNumber": 16490,
-      "owner": "Agent",
-      "kind": "review",
-      "id": "PRR_kwDOB9IlXs8AAAABZeBAAg",
-      "needsTriage": true,
-      "url": "https://github.com/google/gvisor/pull/16490#pullrequestreview-6004162562",
-      "author": "EtiennePerot",
-      "updatedAt": "2026-11-21T08:32:45Z",
-      "newOrChanged": false,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 16904,
-      "head": "2a2862327306d9b0bc53dfffaa6e649837352e8d",
-      "sourceNumber": 16904,
-      "owner": "Agent",
-      "kind": "review",
-      "id": "PRR_kwDOB9IlXs8AAAABZeBm0Q",
-      "needsTriage": true,
-      "url": "https://github.com/google/gvisor/pull/16904#pullrequestreview-6004172497",
-      "author": "EtiennePerot",
-      "updatedAt": "2026-11-21T08:35:19Z",
       "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
@@ -452478,9 +452367,10 @@
         }
       ],
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "buildifier_license_fix / root",
         "sourceHead": "f37c3976c59a4199189dad8ccd81868bc779c1b7",
-        "nextAction": "Follow maintainer review, exact published-head checks and any matching import; handle new substantive feedback in the existing workstream. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks."
+        "disposition": "Main55594 failed all three upload attempts before any Bazel target: the obsolete pre-command hook fetches tamird:branch from upstream and cannot find remote ref tamird. The exact fork branch exists. Current master already contains the merged hook fix; this is bootstrap failure, not a target failure or quota diagnosis.",
+        "nextAction": "Prepare and qualify the source-equivalent base refresh importing the existing bootstrap fix, then reconcile publication authority and new-head CI. Do not retry the unchanged failed head or claim delivery before verification."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3QikYQ"
@@ -452646,8 +452536,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "e794622247027309e4f983d2e9426c5d944159ae",
-        "disposition": "Awaiting the referred reviewer or a stable Protobuf release",
-        "nextAction": "Follow Etienne’s review. When stable Protobuf 37 reaches BCR, evaluate the stable pin and retest the four gRPC targets against it. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source e794622247027309e4f983d2e9426c5d944159ae; observed 2026-11-17T19:29:29.454062+00:00): build 1610 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+        "disposition": "Etienne review6004157066 requests waiting for stable Protobuf37. The official release API still identifies37.0-rc3 as prerelease and36.2 as latest stable; the existing Protobuf/Rust dependency hold remains.",
+        "nextAction": "Wait for stable Protobuf37 before evaluating the stable pin and rerunning the existing four gRPC targets. Preserve independent CI and source obligations; no new source question or reply."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyGJnw"
@@ -452938,10 +452828,10 @@
         }
       ],
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "buildifier_license_fix / root",
         "sourceHead": "fea73e24f61c5b09e21e5ea292b471b1f3f24ca3",
-        "disposition": "Approved source rebased and published",
-        "nextAction": "Follow the current PR checks and import. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source fea73e24f61c5b09e21e5ea292b471b1f3f24ca3; observed 2026-11-17T19:29:29.454062+00:00): build 1468 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+        "disposition": "Main55586 failed all three upload attempts before any Bazel target: the obsolete pre-command hook fetches tamird:branch from upstream and cannot find remote ref tamird. The exact fork branch exists. Current master already contains the merged hook fix; this is bootstrap failure, not a target failure or quota diagnosis. Etienne approval6004162562 raises a nonblocking value concern; root reviewed the concurrent architecture graph and six-to-one invocation reduction without claiming a measured speedup.",
+        "nextAction": "Prepare and qualify the source-equivalent base refresh importing the existing bootstrap fix, then reconcile publication authority and new-head CI. Do not retry the unchanged failed head or claim delivery before verification."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3QInJw"
@@ -453074,10 +452964,10 @@
         }
       ],
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "51eff0cf714b64ab0d5823dcfa9cdca03201a382",
-        "disposition": "Approved amendment published to existing PR",
-        "nextAction": "Follow checks, fresh review of 0e53bb437a, and import on #16508. The earlier approval covered the previous 2552104f3c head. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 51eff0cf714b64ab0d5823dcfa9cdca03201a382; observed 2026-11-17T19:29:29.454062+00:00): build 1473 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller. Earlier inspected execution also failed (pipeline-queue-rejection); preserve that separate failure and coordinate its prerequisite before retrying."
+        "disposition": "Main55587 failed all three upload attempts before any Bazel target: the obsolete pre-command hook fetches tamird:branch from upstream and cannot find remote ref tamird. The exact fork branch exists. Current master already contains the merged hook fix; this is bootstrap failure, not a target failure or quota diagnosis. FirstPass2246 separately rejects the absent default queue; the fresh base contains the untrusted-queue rename.",
+        "nextAction": "Prepare and qualify the source-equivalent base refresh importing the existing bootstrap fix, then reconcile publication authority and new-head CI. Do not retry the unchanged failed head or claim delivery before verification."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3QedTw",
@@ -454936,10 +454826,10 @@
         }
       ],
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "buildifier_license_fix / root",
         "sourceHead": "d9072b5ca4ffcb18acffd6e4d3afba8e4143f235",
-        "disposition": "Qualified two-hook rebase published on the existing PR.",
-        "nextAction": "Follow checks and review on 5580eac32 and watch for an import of the remaining change. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source d9072b5ca4ffcb18acffd6e4d3afba8e4143f235; observed 2026-11-17T19:29:29.454062+00:00): build 1609 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+        "disposition": "Main55588 failed all three upload attempts before any Bazel target: the obsolete pre-command hook fetches tamird:branch from upstream and cannot find remote ref tamird. The exact fork branch exists. Current master already contains the merged hook fix; this is bootstrap failure, not a target failure or quota diagnosis.",
+        "nextAction": "Prepare and qualify the source-equivalent base refresh importing the existing bootstrap fix, then reconcile publication authority and new-head CI. Do not retry the unchanged failed head or claim delivery before verification."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3QK2_g"
@@ -458683,10 +458573,10 @@
         }
       ],
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "buildifier_license_fix / root",
         "sourceHead": "b0f308f6547907a11d07fff7805be7e01df05143",
-        "disposition": "The maintainer closed the old exact export and requested source DCO certification. The standing-authorized sign-off amendment is published with identical tree, parents, original author/date and original message body. DCO passes on the exact new source head. First Pass and Go generation are still running; no terminal source failure was observed in the bounded check. Exact-head First Pass and GitHub/DCO checks now pass; the PR remains open, mergeable and unmerged. Earlier failed automatic attempts remain recorded in currentCI.",
-        "nextAction": "Follow existing human review and import obligations; exact-head First Pass and GitHub/DCO checks passed. Preserve the recorded failed automatic attempts and their passing retries; no merge, new approval or performance waiver is implied."
+        "disposition": "Main55592 failed all three upload attempts before any Bazel target: the obsolete pre-command hook fetches tamird:branch from upstream and cannot find remote ref tamird. The exact fork branch exists. Current master already contains the merged hook fix; this is bootstrap failure, not a target failure or quota diagnosis. Current source is approved and FirstPass2253 passed on the untrusted queue.",
+        "nextAction": "Prepare and qualify the source-equivalent base refresh importing the existing bootstrap fix, then reconcile publication authority and new-head CI. Do not retry the unchanged failed head or claim delivery before verification."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3QWMow"
@@ -463876,7 +463766,7 @@
         "since": "2026-11-21T07:28:18.199633+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T08:33:04.123552+00:00"
+        "observedAt": "2026-11-21T09:19:34.135838+00:00"
       }
     },
     "pr:16664": {
@@ -467050,7 +466940,7 @@
         "since": "2026-11-21T05:04:12.012561+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T08:33:04.123552+00:00"
+        "observedAt": "2026-11-21T09:19:34.135838+00:00"
       }
     },
     "pr:17471": {
@@ -468091,7 +467981,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T08:33:04.123552+00:00"
+        "observedAt": "2026-11-21T09:19:34.135838+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -468100,7 +467990,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T08:33:04.123552+00:00"
+        "observedAt": "2026-11-21T09:19:34.135838+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -468109,7 +467999,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T08:33:04.123552+00:00"
+        "observedAt": "2026-11-21T09:19:34.135838+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -468118,7 +468008,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T08:33:04.123552+00:00"
+        "observedAt": "2026-11-21T09:19:34.135838+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -468127,7 +468017,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T08:33:04.123552+00:00"
+        "observedAt": "2026-11-21T09:19:34.135838+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -468136,7 +468026,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T08:33:04.123552+00:00"
+        "observedAt": "2026-11-21T09:19:34.135838+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -468145,7 +468035,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T08:33:04.123552+00:00"
+        "observedAt": "2026-11-21T09:19:34.135838+00:00"
       }
     },
     "investigation:coverage-worker-cpu": {
@@ -468154,7 +468044,16 @@
         "since": "2026-11-21T06:15:32.375526+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T08:33:04.123552+00:00"
+        "observedAt": "2026-11-21T09:19:34.135838+00:00"
+      }
+    },
+    "investigation:unit-test-worker-requirements": {
+      "contributor-review": {
+        "scope": "384aea8100efba722a07e3bf89185e2bfe089e17",
+        "since": "2026-11-21T09:19:34.135838+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-21T09:19:34.135838+00:00"
       }
     }
   },

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T08:33:04.123552+00:00",
+    "updatedAt": "2026-11-21T09:19:34.135838+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -25503,16 +25503,19 @@
       ],
       "followup": {
         "sourceHead": "f37c3976c59a4199189dad8ccd81868bc779c1b7",
-        "owner": "root",
-        "nextAction": "Follow maintainer review, exact published-head checks and any matching import; handle new substantive feedback in the existing workstream. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks.",
+        "owner": "buildifier_license_fix / root",
+        "nextAction": "Prepare and qualify the source-equivalent base refresh importing the existing bootstrap fix, then reconcile publication authority and new-head CI. Do not retry the unchanged failed head or claim delivery before verification.",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-17T19:04:43.853615+00:00",
         "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/16051",
           "https://github.com/tamird/gvisor/commit/62d7054b7f5b5b22521e7346ed84f533c49f081e",
-          "https://github.com/tamird/gvisor/commit/f37c3976c59a4199189dad8ccd81868bc779c1b7"
-        ]
+          "https://github.com/tamird/gvisor/commit/f37c3976c59a4199189dad8ccd81868bc779c1b7",
+          "https://buildkite.com/gvisor/pipeline/builds/55594"
+        ],
+        "disposition": "Main55594 failed all three upload attempts before any Bazel target: the obsolete pre-command hook fetches tamird:branch from upstream and cannot find remote ref tamird. The exact fork branch exists. Current master already contains the merged hook fix; this is bootstrap failure, not a target failure or quota diagnosis.",
+        "curatedAt": "2026-11-21T09:19:34.135838+00:00"
       },
       "dcoAmendment": {
         "oldHead": "62d7054b7f5b5b22521e7346ed84f533c49f081e",
@@ -30614,8 +30617,8 @@
         "owner": "root",
         "sourceHead": "e794622247027309e4f983d2e9426c5d944159ae",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Awaiting the referred reviewer or a stable Protobuf release",
-        "nextAction": "Follow Etienne\u2019s review. When stable Protobuf 37 reaches BCR, evaluate the stable pin and retest the four gRPC targets against it. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source e794622247027309e4f983d2e9426c5d944159ae; observed 2026-11-17T19:29:29.454062+00:00): build 1610 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "disposition": "Etienne review6004157066 requests waiting for stable Protobuf37. The official release API still identifies37.0-rc3 as prerelease and36.2 as latest stable; the existing Protobuf/Rust dependency hold remains.",
+        "nextAction": "Wait for stable Protobuf37 before evaluating the stable pin and rerunning the existing four gRPC targets. Preserve independent CI and source obligations; no new source question or reply.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16254#issuecomment-6382233256",
           "https://app.buildbuddy.io/invocation/b2b6fa55-f597-4060-8af1-39eae50d1ad3",
@@ -30629,19 +30632,45 @@
           "https://github.com/tamird/gvisor/commit/94e8c3760f27577ab466bb750a3479531bb7a676",
           "https://github.com/tamird/gvisor/commit/e794622247027309e4f983d2e9426c5d944159ae",
           "https://buildkite.com/gvisor/first-pass/builds/1610",
-          "https://buildkite.com/gvisor/first-pass/builds/1610#01a1eae5-3c15-428d-badf-dec9b5062826"
+          "https://buildkite.com/gvisor/first-pass/builds/1610#01a1eae5-3c15-428d-badf-dec9b5062826",
+          "https://github.com/google/gvisor/pull/16254#pullrequestreview-6004157066",
+          "https://api.github.com/repos/protocolbuffers/protobuf/releases/latest"
         ],
         "attentionDispositions": [
           {
-            "reason": "author-feedback",
-            "title": "Reply and description update completed",
-            "nextAction": "Await new maintainer feedback; the existing response decision is fulfilled.",
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "First Pass 1610: existing exact-source daily-quota admission diagnosis",
+            "nextAction": "Root and the existing provider owner recheck actual admission recovery or a new source/check event. No automatic retry, repeated diagnosis or CI-owner outreach.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/1610#01a1eae5-3c15-428d-badf-dec9b5062826"
+            ],
             "binding": {
-              "reviewDecision": null,
+              "sourceHead": "e794622247027309e4f983d2e9426c5d944159ae",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAANxyGJnw",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/1610",
+                  "kind": "status"
+                }
+              ]
+            }
+          },
+          {
+            "reason": "author-feedback",
+            "title": "Current maintainer feedback reconciled",
+            "nextAction": "Wait for stable Protobuf37 before evaluating the stable pin and rerunning the existing four gRPC targets. Preserve independent CI and source obligations; no new source question or reply.",
+            "evidence": [
+              "https://api.github.com/repos/protocolbuffers/protobuf/releases/latest"
+            ],
+            "binding": {
+              "reviewDecision": "REVIEW_REQUIRED",
               "approvedHead": null,
               "approvedAt": null,
-              "headCommittedAt": "2026-10-23T13:10:12Z",
-              "headIntroducedAt": null,
+              "headCommittedAt": "2026-11-17T19:03:26Z",
+              "headIntroducedAt": "2026-11-17T19:04:10Z",
               "headHistoryComplete": true,
               "threads": {
                 "unresolved": 0,
@@ -30686,40 +30715,45 @@
                       "login": "tamird",
                       "__typename": "User"
                     }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABkruR9w",
+                    "url": "https://github.com/google/gvisor/pull/16254#issuecomment-6756733431",
+                    "body": "@relkochta, could you review the Protobuf upgrade and its small gRPC compatibility patch? The Rust image needs rules_rs, and its license audit evaluates the Protobuf module extensions too.\n\nPosted by Codex on behalf of @tamird.\n\n<!-- gvisor-review-outreach 16254:94e8c3760f27577ab466bb750a3479531bb7a676:relkochta -->",
+                    "createdAt": "2026-11-10T01:55:48Z",
+                    "updatedAt": "2026-11-10T01:55:48Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABZeAqig",
+                    "url": "https://github.com/google/gvisor/pull/16254#pullrequestreview-6004157066",
+                    "body": "Let's wait for 0.37, they're now up to -rc3 :)",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-11-21T08:31:06Z",
+                    "updatedAt": "2026-11-21T08:31:06Z",
+                    "authorAssociation": "MEMBER",
+                    "author": {
+                      "login": "EtiennePerot",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "e794622247027309e4f983d2e9426c5d944159ae"
+                    }
                   }
                 ]
               },
-              "sourceHead": "5eb5b76e2bbaf671ffa52e4a01afee4d7ee3e9be"
-            },
-            "evidence": [
-              "https://github.com/google/gvisor/pull/16254#issuecomment-6382759967",
-              "https://github.com/google/gvisor/pull/16254#issuecomment-6383277087"
-            ]
-          },
-          {
-            "reason": "author-public-checks",
-            "action": "ci-infrastructure-retry",
-            "title": "First Pass 1610: existing exact-source daily-quota admission diagnosis",
-            "nextAction": "Root and the existing provider owner recheck actual admission recovery or a new source/check event. No automatic retry, repeated diagnosis or CI-owner outreach.",
-            "evidence": [
-              "https://buildkite.com/gvisor/first-pass/builds/1610#01a1eae5-3c15-428d-badf-dec9b5062826"
-            ],
-            "binding": {
-              "sourceHead": "e794622247027309e4f983d2e9426c5d944159ae",
-              "checks": [
-                {
-                  "id": "SC_kwDOB9IlXs8AAAANxyGJnw",
-                  "name": "buildkite/first-pass/pr",
-                  "state": "FAILURE",
-                  "url": "https://buildkite.com/gvisor/first-pass/builds/1610",
-                  "kind": "status"
-                }
-              ]
+              "sourceHead": "e794622247027309e4f983d2e9426c5d944159ae"
             }
           }
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "curatedAt": "2026-11-21T09:19:34.135838+00:00"
       },
       "updatedAt": "2026-11-17T19:05:02.369627+00:00",
       "refinement": {
@@ -39257,11 +39291,11 @@
       ],
       "number": 16490,
       "followup": {
-        "owner": "root",
+        "owner": "buildifier_license_fix / root",
         "sourceHead": "fea73e24f61c5b09e21e5ea292b471b1f3f24ca3",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Approved source rebased and published",
-        "nextAction": "Follow the current PR checks and import. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source fea73e24f61c5b09e21e5ea292b471b1f3f24ca3; observed 2026-11-17T19:29:29.454062+00:00): build 1468 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "disposition": "Main55586 failed all three upload attempts before any Bazel target: the obsolete pre-command hook fetches tamird:branch from upstream and cannot find remote ref tamird. The exact fork branch exists. Current master already contains the merged hook fix; this is bootstrap failure, not a target failure or quota diagnosis. Etienne approval6004162562 raises a nonblocking value concern; root reviewed the concurrent architecture graph and six-to-one invocation reduction without claiming a measured speedup.",
+        "nextAction": "Prepare and qualify the source-equivalent base refresh importing the existing bootstrap fix, then reconcile publication authority and new-head CI. Do not retry the unchanged failed head or claim delivery before verification.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16490",
           "https://github.com/tamird/gvisor/commit/eb2460d8185ff3b3bfd2a25a48a027e61458d3b9",
@@ -39301,7 +39335,8 @@
           "https://buildkite.com/gvisor/first-pass/builds/1468#01a1ead6-8b36-4de0-9557-d443bb632d8e",
           "https://buildkite.com/gvisor/first-pass/builds/1468#01a1ead6-8b36-494d-8a41-145714b1c5a6",
           "https://buildkite.com/gvisor/first-pass/builds/1468#01a1ead6-8b36-402a-84b7-9fa8cf5002d5",
-          "https://buildkite.com/gvisor/first-pass/builds/1468#01a1ead6-8b37-494b-870d-f78eae609f38"
+          "https://buildkite.com/gvisor/first-pass/builds/1468#01a1ead6-8b37-494b-870d-f78eae609f38",
+          "https://buildkite.com/gvisor/pipeline/builds/55586"
         ],
         "mergeable": "MERGEABLE",
         "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
@@ -39351,8 +39386,82 @@
                 }
               ]
             }
+          },
+          {
+            "reason": "author-feedback",
+            "title": "Current maintainer feedback reconciled",
+            "nextAction": "Prepare and qualify the source-equivalent base refresh importing the existing bootstrap fix, then reconcile publication authority and new-head CI. Do not retry the unchanged failed head or claim delivery before verification.",
+            "evidence": [
+              "https://buildkite.com/gvisor/pipeline/builds/55586"
+            ],
+            "binding": {
+              "reviewDecision": "REVIEW_REQUIRED",
+              "approvedHead": null,
+              "approvedAt": null,
+              "headCommittedAt": "2026-11-17T18:41:59Z",
+              "headIntroducedAt": "2026-11-17T18:42:05Z",
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 0,
+                "total": 0,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABlh1FqA",
+                    "url": "https://github.com/google/gvisor/pull/16490#issuecomment-6813468072",
+                    "body": "[\ud83e\udd16] Invalidating approval due to rebase as a means to notify @relkochta to re-review. Current diff looks different from pre-rebase diff.",
+                    "createdAt": "2026-11-12T03:25:53Z",
+                    "updatedAt": "2026-11-12T03:25:53Z",
+                    "author": {
+                      "login": "EtiennePerot",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABWlvjLQ",
+                    "url": "https://github.com/google/gvisor/pull/16490#pullrequestreview-5810938669",
+                    "body": "",
+                    "state": "DISMISSED",
+                    "submittedAt": "2026-11-07T08:03:17Z",
+                    "updatedAt": "2026-11-12T03:25:49Z",
+                    "authorAssociation": "MEMBER",
+                    "author": {
+                      "login": "relkochta",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "30df99de8b2e89c1f02c0e3e3ec80095902e41ad"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABZeBAAg",
+                    "url": "https://github.com/google/gvisor/pull/16490#pullrequestreview-6004162562",
+                    "body": "Seems fine but I don't really understand the value.",
+                    "state": "APPROVED",
+                    "submittedAt": "2026-11-21T08:32:45Z",
+                    "updatedAt": "2026-11-21T08:32:45Z",
+                    "authorAssociation": "MEMBER",
+                    "author": {
+                      "login": "EtiennePerot",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "fea73e24f61c5b09e21e5ea292b471b1f3f24ca3"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "fea73e24f61c5b09e21e5ea292b471b1f3f24ca3"
+            }
           }
-        ]
+        ],
+        "curatedAt": "2026-11-21T09:19:34.135838+00:00"
       },
       "dcoAmendment": {
         "oldHead": "86947e250a0b280c20f498dba9576b1b6380bacc",
@@ -40667,11 +40776,11 @@
       "updatedAt": "2026-11-17T19:04:46.312467+00:00",
       "summary": "The amended EncodeStatefile benchmark preserves the raw modes, uses the input checkpoint\u2019s metadata and compression, and reloads the final output after timing stops. An AMD64 Nginx checkpoint run decoded a 296,028-byte state file and reloaded the 296,018-byte output. #16508 is open; this checks one iteration, not a speedup.",
       "followup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "51eff0cf714b64ab0d5823dcfa9cdca03201a382",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Approved amendment published to existing PR",
-        "nextAction": "Follow checks, fresh review of 0e53bb437a, and import on #16508. The earlier approval covered the previous 2552104f3c head. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 51eff0cf714b64ab0d5823dcfa9cdca03201a382; observed 2026-11-17T19:29:29.454062+00:00): build 1473 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller. Earlier inspected execution also failed (pipeline-queue-rejection); preserve that separate failure and coordinate its prerequisite before retrying.",
+        "disposition": "Main55587 failed all three upload attempts before any Bazel target: the obsolete pre-command hook fetches tamird:branch from upstream and cannot find remote ref tamird. The exact fork branch exists. Current master already contains the merged hook fix; this is bootstrap failure, not a target failure or quota diagnosis. FirstPass2246 separately rejects the absent default queue; the fresh base contains the untrusted-queue rename.",
+        "nextAction": "Prepare and qualify the source-equivalent base refresh importing the existing bootstrap fix, then reconcile publication authority and new-head CI. Do not retry the unchanged failed head or claim delivery before verification.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16508",
           "https://app.buildbuddy.io/invocation/7cd3432a-9763-4eb0-91d6-2a59ea477f9e",
@@ -40682,7 +40791,8 @@
           "https://github.com/tamird/gvisor/commit/51eff0cf714b64ab0d5823dcfa9cdca03201a382",
           "https://buildkite.com/gvisor/first-pass/builds/1473",
           "https://buildkite.com/gvisor/first-pass/builds/1473#01a1eae3-fed9-45a6-a9cd-05fa30a2df6a",
-          "https://buildkite.com/gvisor/first-pass/builds/1473#01a1ead5-8958-46ce-ac79-7c39f77b7144"
+          "https://buildkite.com/gvisor/first-pass/builds/1473#01a1ead5-8958-46ce-ac79-7c39f77b7144",
+          "https://buildkite.com/gvisor/pipeline/builds/55587"
         ],
         "mergeable": "MERGEABLE",
         "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
@@ -40709,7 +40819,8 @@
               ]
             }
           }
-        ]
+        ],
+        "curatedAt": "2026-11-21T09:19:34.135838+00:00"
       },
       "evidence": [
         {
@@ -61356,11 +61467,11 @@
       ],
       "number": 16843,
       "followup": {
-        "owner": "root",
+        "owner": "buildifier_license_fix / root",
         "sourceHead": "d9072b5ca4ffcb18acffd6e4d3afba8e4143f235",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Qualified two-hook rebase published on the existing PR.",
-        "nextAction": "Follow checks and review on 5580eac32 and watch for an import of the remaining change. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source d9072b5ca4ffcb18acffd6e4d3afba8e4143f235; observed 2026-11-17T19:29:29.454062+00:00): build 1609 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "disposition": "Main55588 failed all three upload attempts before any Bazel target: the obsolete pre-command hook fetches tamird:branch from upstream and cannot find remote ref tamird. The exact fork branch exists. Current master already contains the merged hook fix; this is bootstrap failure, not a target failure or quota diagnosis.",
+        "nextAction": "Prepare and qualify the source-equivalent base refresh importing the existing bootstrap fix, then reconcile publication authority and new-head CI. Do not retry the unchanged failed head or claim delivery before verification.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16843#issuecomment-6798604323",
           "https://github.com/tamird/gvisor/commit/a6e06bb65",
@@ -61373,7 +61484,8 @@
           "https://github.com/tamird/gvisor/commit/5580eac32b0141ea984fae122d52fc30cb13ded7",
           "https://github.com/tamird/gvisor/commit/d9072b5ca4ffcb18acffd6e4d3afba8e4143f235",
           "https://buildkite.com/gvisor/first-pass/builds/1609",
-          "https://buildkite.com/gvisor/first-pass/builds/1609#01a1eae5-3bef-48b8-89c5-29570ed3ed40"
+          "https://buildkite.com/gvisor/first-pass/builds/1609#01a1eae5-3bef-48b8-89c5-29570ed3ed40",
+          "https://buildkite.com/gvisor/pipeline/builds/55588"
         ],
         "mergeable": "MERGEABLE",
         "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
@@ -61399,7 +61511,8 @@
               ]
             }
           }
-        ]
+        ],
+        "curatedAt": "2026-11-21T09:19:34.135838+00:00"
       },
       "refinement": {
         "before": {
@@ -70569,15 +70682,15 @@
         "owner": "root",
         "sourceHead": "2a2862327306d9b0bc53dfffaa6e649837352e8d",
         "observedAt": "2026-11-18T05:24:21.084067+00:00",
-        "disposition": "Exact2a286232 remains OPEN/MERGEABLE, GitHub checks and DCO pass. First Pass1619 did not receive an agent: explicit provider stack_error_detail says author daily36000-minute quota was reached. No retry is pending or recorded. The job is retryable, but the public provider session is anonymous and cannot retry; no existing Buildkite API token is available. Required Etienne/relkochta reviews remain pending and no human feedback is present.",
-        "nextAction": "Keep source unchanged and follow the existing reviewer requests. CI needs an authenticated Buildkite maintainer retry of First Pass1619 when admission is available; current tooling cannot perform it. Do not manufacture a source commit, bypass checks, or duplicate the declined CI-owner outreach. Reconcile any real retry and full-pipeline result at exact2a286232.",
+        "disposition": "Etienne approved exact2a286232 in review6004172497 (Whoo). No reply or new source action is required. Existing provider/main-CI and import obligations remain separate.",
+        "nextAction": "Follow the existing current-head CI and import lifecycle, preserving the new approval and prior source-bound qualification. Do not duplicate reviewer outreach.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16904",
           "https://github.com/tamird/gvisor/commit/d51e6c370",
           "https://github.com/gvisor/gvisor/pull/16904",
           "https://github.com/tamird/gvisor/commit/2a28623273",
           "https://github.com/tamird/gvisor/actions/runs/44151120232",
-          "https://github.com/gvisor/gvisor/pull/16904"
+          "https://github.com/google/gvisor/pull/16904#pullrequestreview-6004172497"
         ],
         "recheckCondition": "Authenticated Buildkite retry capability, a provider retry/new admission result, review/CI/head change or contributor instruction.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
@@ -70589,6 +70702,53 @@
             "disposition": "Published the contributor-approved validated rebase with an exact old-head lease. GitHub confirms head 2a28623273 is mergeable and DCO passes. Native license/governance checks, both lint targets and two independent reviews passed. Required upstream first-pass remains failed and Pipeline validation is not established.",
             "nextAction": "Follow exact current-head required CI and maintainer review/import. Diagnose the new first-pass failure through its original provider result; do not retry during quota admission failure or infer missing Pipeline success. Preserve all required gates.",
             "recheckCondition": "Current-head CI changes, CI operator clarifies admission/queue/trigger policy, maintainer feedback arrives, or upstream/source heads change."
+          }
+        ],
+        "curatedAt": "2026-11-21T09:19:34.135838+00:00",
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "title": "Current maintainer feedback reconciled",
+            "nextAction": "Follow the existing current-head CI and import lifecycle, preserving the new approval and prior source-bound qualification. Do not duplicate reviewer outreach.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/16904#pullrequestreview-6004172497"
+            ],
+            "binding": {
+              "reviewDecision": "REVIEW_REQUIRED",
+              "approvedHead": null,
+              "approvedAt": null,
+              "headCommittedAt": "2026-11-17T18:43:56Z",
+              "headIntroducedAt": "2026-11-17T19:42:56Z",
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 0,
+                "total": 0,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABZeBm0Q",
+                    "url": "https://github.com/google/gvisor/pull/16904#pullrequestreview-6004172497",
+                    "body": "Whoo",
+                    "state": "APPROVED",
+                    "submittedAt": "2026-11-21T08:35:19Z",
+                    "updatedAt": "2026-11-21T08:35:19Z",
+                    "authorAssociation": "MEMBER",
+                    "author": {
+                      "login": "EtiennePerot",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "2a2862327306d9b0bc53dfffaa6e649837352e8d"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "2a2862327306d9b0bc53dfffaa6e649837352e8d"
+            }
           }
         ]
       },
@@ -97348,16 +97508,17 @@
         }
       ],
       "followup": {
-        "owner": "root",
+        "owner": "buildifier_license_fix / root",
         "sourceHead": "b0f308f6547907a11d07fff7805be7e01df05143",
-        "nextAction": "Follow existing human review and import obligations; exact-head First Pass and GitHub/DCO checks passed. Preserve the recorded failed automatic attempts and their passing retries; no merge, new approval or performance waiver is implied.",
+        "nextAction": "Prepare and qualify the source-equivalent base refresh importing the existing bootstrap fix, then reconcile publication authority and new-head CI. Do not retry the unchanged failed head or claim delivery before verification.",
         "recheckCondition": "Current-head CI changes or becomes terminal, maintainer integration/new feedback, an actual new import, source movement or acknowledgement approval.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17562",
           "https://github.com/google/gvisor/pull/17456#issuecomment-6975559077",
           "https://github.com/tamird/gvisor/commit/b0f308f6547907a11d07fff7805be7e01df05143",
           "https://buildkite.com/gvisor/first-pass/builds/1686",
-          "https://github.com/gvisor/gvisor/actions/runs/44286108631"
+          "https://github.com/gvisor/gvisor/actions/runs/44286108631",
+          "https://buildkite.com/gvisor/pipeline/builds/55592"
         ],
         "dcoCoordinationHistory": [
           {
@@ -97368,7 +97529,7 @@
           }
         ],
         "observedAt": "2026-11-18T10:42:43.629789+00:00",
-        "disposition": "The maintainer closed the old exact export and requested source DCO certification. The standing-authorized sign-off amendment is published with identical tree, parents, original author/date and original message body. DCO passes on the exact new source head. First Pass and Go generation are still running; no terminal source failure was observed in the bounded check. Exact-head First Pass and GitHub/DCO checks now pass; the PR remains open, mergeable and unmerged. Earlier failed automatic attempts remain recorded in currentCI.",
+        "disposition": "Main55592 failed all three upload attempts before any Bazel target: the obsolete pre-command hook fetches tamird:branch from upstream and cannot find remote ref tamird. The exact fork branch exists. Current master already contains the merged hook fix; this is bootstrap failure, not a target failure or quota diagnosis. Current source is approved and FirstPass2253 passed on the untrusted queue.",
         "currentCI": {
           "observedAt": "2026-11-18T12:12:59.828888+00:00",
           "pr": 17456,
@@ -97403,7 +97564,7 @@
           "humanRequestURL": "https://github.com/google/gvisor/pull/17456#issuecomment-6975559077",
           "posted": false
         },
-        "curatedAt": "2026-11-18T12:19:41.750038+00:00",
+        "curatedAt": "2026-11-21T09:19:34.135838+00:00",
         "ciHistory": [
           {
             "owner": "tcp_conflict",
@@ -103892,8 +104053,8 @@
       "followup": {
         "owner": "root",
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-        "disposition": "Exact15c2edb5708cf8ac75b01360cff2372ecee0be23 remains approved and mergeable. GitHub reports node-test-commit94371, alpine-last-latest-x64 child74753 and aggregate79320 PENDING; the other platform statuses are successful. Canonical Jenkins79320 /api/json returns403, so pending status does not establish live Jenkins execution. Tamir already asked about the elapsed CI time in7053905845; no repeat outreach is needed.",
-        "nextAction": "Root follows accessible GitHub status changes and the maintainer response to the existing elapsed-CI question. Preserve current approval and source-bound validation. No repeated CI request, manual retry, access workaround or new contributor decision.",
+        "disposition": "Maintainer jakecastelli reports that CI passed and the pending statuses are a reporting glitch (7059960789). Exact15c2edb remains approved and mergeable; GitHub still exposes three pending Jenkins contexts. Reported pass is not machine-status completion, and Jenkins403 does not prove live execution.",
+        "nextAction": "Follow accessible current-head statuses or a further maintainer update. No source fix, retry or repeated outreach is required.",
         "recheckCondition": "Accessible current-head status or maintainer response changes.",
         "publishedDelivery": {
           "base": "b7df44bf9c85a6104b9158b616999e3d2c58be5d",
@@ -104105,7 +104266,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-21T04:22:28.091102+00:00",
+        "curatedAt": "2026-11-21T09:19:34.135838+00:00",
         "memberReview": {
           "author": "bnb",
           "association": "MEMBER",
@@ -104161,12 +104322,10 @@
         "attentionDispositions": [
           {
             "reason": "author-feedback",
-            "title": "Awaiting maintainer full CI",
-            "nextAction": "Root follows the already-requested maintainer full CI and landing response. Preserve the posted request and exact source; do not repeat the ping or infer the private full-CI gate from GitHub Actions.",
+            "title": "Current maintainer feedback reconciled",
+            "nextAction": "Follow accessible current-head statuses or a further maintainer update. No source fix, retry or repeated outreach is required.",
             "evidence": [
-              "https://github.com/nodejs/node/pull/67595#issuecomment-7009949471",
-              "https://github.com/nodejs/node/pull/67595#issuecomment-7012503607",
-              "https://github.com/nodejs/node/actions/runs/44418983458"
+              "https://github.com/nodejs/node/pull/67595#issuecomment-7059960789"
             ],
             "binding": {
               "reviewDecision": "APPROVED",
@@ -104187,9 +104346,9 @@
                     "kind": "comment",
                     "id": "IC_kwDOAZ7xs88AAAABoQXNCw",
                     "url": "https://github.com/nodejs/node/pull/67595#issuecomment-6996479243",
-                    "body": "## [Codecov](https://app.codecov.io/gh/nodejs/node/pull/67595?dropdown=coverage&src=pr&el=h1&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nodejs) Report\n:white_check_mark: All modified and coverable lines are covered by tests.\n:white_check_mark: Project coverage is 90.70%. Comparing base ([`b7df44b`](https://app.codecov.io/gh/nodejs/node/commit/b7df44bf9c85a6104b9158b616999e3d2c58be5d?dropdown=coverage&el=desc&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nodejs)) to head ([`15c2edb`](https://app.codecov.io/gh/nodejs/node/commit/15c2edb5708cf8ac75b01360cff2372ecee0be23?dropdown=coverage&el=desc&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nodejs)).\n\n<details><summary>Additional details and impacted files</summary>\n\n\n\n```diff\n@@            Coverage Diff             @@\n##             main   #67595      +/-   ##\n==========================================\n- Coverage   90.73%   90.70%   -0.03%     \n==========================================\n  Files         801      801              \n  Lines      280787   280787              \n  Branches    54221    54202      -19     \n==========================================\n- Hits       254765   254700      -65     \n- Misses      16203    16261      +58     \n- Partials     9819     9826       +7     \n```\n[see 40 files with indirect coverage changes](https://app.codecov.io/gh/nodejs/node/pull/67595/indirect-changes?src=pr&el=tree-more&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nodejs)\n</details>\n<details><summary> :rocket: New features to boost your workflow: </summary>\n\n- :snowflake: [Test Analytics](https://docs.codecov.com/docs/test-analytics): Detect flaky tests, report on failures, and find test suite problems.\n- :package: [JS Bundle Analysis](https://docs.codecov.com/docs/javascript-bundle-analysis): Save yourself from yourself by tracking and limiting bundle sizes in JS merges.\n</details>",
+                    "body": "## [Codecov](https://app.codecov.io/gh/nodejs/node/pull/67595?dropdown=coverage&src=pr&el=h1&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nodejs) Report\n:white_check_mark: All modified and coverable lines are covered by tests.\n:white_check_mark: Project coverage is 90.70%. Comparing base ([`b7df44b`](https://app.codecov.io/gh/nodejs/node/commit/b7df44bf9c85a6104b9158b616999e3d2c58be5d?dropdown=coverage&el=desc&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nodejs)) to head ([`15c2edb`](https://app.codecov.io/gh/nodejs/node/commit/15c2edb5708cf8ac75b01360cff2372ecee0be23?dropdown=coverage&el=desc&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nodejs)).\n:warning: Report is 57 commits behind head on main.\n\n<details><summary>Additional details and impacted files</summary>\n\n\n\n```diff\n@@            Coverage Diff             @@\n##             main   #67595      +/-   ##\n==========================================\n- Coverage   90.73%   90.70%   -0.03%     \n==========================================\n  Files         801      801              \n  Lines      280787   280787              \n  Branches    54221    54202      -19     \n==========================================\n- Hits       254765   254700      -65     \n- Misses      16203    16261      +58     \n- Partials     9819     9826       +7     \n```\n[see 40 files with indirect coverage changes](https://app.codecov.io/gh/nodejs/node/pull/67595/indirect-changes?src=pr&el=tree-more&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nodejs)\n</details>\n<details><summary> :rocket: New features to boost your workflow: </summary>\n\n- :snowflake: [Test Analytics](https://docs.codecov.com/docs/test-analytics): Detect flaky tests, report on failures, and find test suite problems.\n- :package: [JS Bundle Analysis](https://docs.codecov.com/docs/javascript-bundle-analysis): Save yourself from yourself by tracking and limiting bundle sizes in JS merges.\n</details>",
                     "createdAt": "2026-11-19T01:06:34Z",
-                    "updatedAt": "2026-11-19T01:06:34Z",
+                    "updatedAt": "2026-11-21T08:31:26Z",
                     "author": {
                       "login": "codecov",
                       "__typename": "Bot"
@@ -104232,6 +104391,42 @@
                     }
                   },
                   {
+                    "kind": "comment",
+                    "id": "IC_kwDOAZ7xs88AAAABotJmFw",
+                    "url": "https://github.com/nodejs/node/pull/67595#issuecomment-7026664983",
+                    "body": "CI: https://ci.nodejs.org/job/node-test-pull-request/79320/",
+                    "createdAt": "2026-11-20T00:43:18Z",
+                    "updatedAt": "2026-11-20T00:43:18Z",
+                    "author": {
+                      "login": "nodejs-github-bot",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOAZ7xs88AAAABpHIPtQ",
+                    "url": "https://github.com/nodejs/node/pull/67595#issuecomment-7053905845",
+                    "body": "Is it normal for CI to take over a day?",
+                    "createdAt": "2026-11-21T00:14:45Z",
+                    "updatedAt": "2026-11-21T00:14:45Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOAZ7xs88AAAABpM5z1Q",
+                    "url": "https://github.com/nodejs/node/pull/67595#issuecomment-7059960789",
+                    "body": "CI actually passed - it was just a glitch with the reporting to Github",
+                    "createdAt": "2026-11-21T08:31:06Z",
+                    "updatedAt": "2026-11-21T08:31:06Z",
+                    "author": {
+                      "login": "jakecastelli",
+                      "__typename": "User"
+                    }
+                  },
+                  {
                     "kind": "review",
                     "id": "PRR_kwDOAZ7xs88AAAABY6iWEA",
                     "url": "https://github.com/nodejs/node/pull/67595#pullrequestreview-5966960144",
@@ -104257,7 +104452,8 @@
         "observedAt": "2026-11-21T04:20:03.935701+00:00",
         "evidence": [
           "https://github.com/nodejs/node/pull/67595#issuecomment-7026664983",
-          "https://github.com/nodejs/node/pull/67595#issuecomment-7053905845"
+          "https://github.com/nodejs/node/pull/67595#issuecomment-7053905845",
+          "https://github.com/nodejs/node/pull/67595#issuecomment-7059960789"
         ]
       },
       "evidence": [
@@ -140870,6 +141066,52 @@
         "title": "Run coverage builds on their required CPU",
         "summary": "Actual pending decision: open one standalone upstream helper PR. It is not approval of the Go amendment, fork CI or a manual DCO action.",
         "body": "Approve opening a standalone upstream gVisor PR for https://github.com/tamird/gvisor/commit/e33f30605e080fd02cc53bd20950e99d31c171fc, \u201cRun coverage builds on their required CPU\u201d?\n\nThree files, 41 additions/1 deletion. Bazel toolchain metadata makes the five native coverage actions select a worker matching the target CPU. Previously ARM coverage selected x86_64 and failed. Commands, inputs and output labels stay intact.\n\nBoth architecture/SDK action checks, source checks and two final reviews passed. The ARM coverage product built with Go 1.27.4; https://github.com/tamird/gvisor/actions/runs/44872095577 exits with expected NO_TESTS_FOUND because this was a compile-only target. DCO will be added under your standing authorization before publication."
+      }
+    },
+    {
+      "id": "investigation:unit-test-worker-requirements",
+      "repo": "google/gvisor",
+      "status": "active",
+      "group": "bazel",
+      "title": "Declare unit test worker requirements",
+      "owner": "root",
+      "head": "384aea8100efba722a07e3bf89185e2bfe089e17",
+      "updatedAt": "2026-11-21T09:19:34.135838+00:00",
+      "summary": "Actual standalone upstream PR publication question is pending. Verified branch review/unit-test-worker-requirements-20261121 holds six BUILD files with22 additions. DCO is included; the earlier execution rejection is resolved. No upstream PR or publication approval is implied.",
+      "nextStep": "Await the reply to the existing source publication question. Preserve the remote result-cache, root/IPv6 caller and three sandbox baseline-failure limits; do not re-ask.",
+      "evidence": [
+        {
+          "label": "Reviewable source",
+          "url": "https://github.com/tamird/gvisor/commit/384aea8100efba722a07e3bf89185e2bfe089e17"
+        },
+        {
+          "label": "AMD worker matrix",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44886172896"
+        },
+        {
+          "label": "ARM worker matrix",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44886174499"
+        },
+        {
+          "label": "Formatting",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44886171178"
+        }
+      ],
+      "findings": [
+        {
+          "text": "Both five-target network-off matrices and formatting passed; two final reviewers acknowledged the qualified source. DCO-only commit preserves tree05295470415da1b6d42daea41feb56d4233df270. Local sandbox still requires root/IPv6 and retains the three proven baseline failures.",
+          "evidence": []
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "384aea8100efba722a07e3bf89185e2bfe089e17",
+        "baseHead": "574094148cae18e739634382c0a28d60520c319a",
+        "url": "https://github.com/tamird/gvisor/commit/384aea8100efba722a07e3bf89185e2bfe089e17",
+        "title": "Declare unit test worker requirements",
+        "summary": "Root confirms the actual standalone-PR question was asked in this conversation. No returned question ID or exact request timestamp is available; publication is awaiting the user reply. DCO is already included.",
+        "body": "Tests that create sandboxes or inspect namespaces need kernel features\nthat ordinary remote containers cannot provide. Select the isolated\nworker for those tests and keep its external network disabled.\n\nKeep the sandbox routing test local because it also needs IPv6 support.\nIts caller must provide root execution. Compiler actions remain eligible\nfor remote execution.\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>"
       }
     }
   ],
