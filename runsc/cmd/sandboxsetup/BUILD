@@ -48,6 +48,10 @@ go_test(
         "gofer_mount_test.go",
     ],
     embed = [":sandboxsetup"],
+    exec_properties = {
+        "test.init-dockerd": "false",
+        "test.workload-isolation-type": "firecracker",
+    },
     deps = [
         "//runsc/config",
         "//runsc/specutils",

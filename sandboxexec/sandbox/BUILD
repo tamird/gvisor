@@ -35,6 +35,10 @@ go_test(
     ],
     data = ["//:release"],
     tags = ["nogotsan"],
+    exec_properties = {
+        "test.init-dockerd": "false",
+        "test.workload-isolation-type": "firecracker",
+    },
     deps = [
         ":sandbox",
         "//pkg/test/testutil",

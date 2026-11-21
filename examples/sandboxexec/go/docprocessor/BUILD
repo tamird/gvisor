@@ -18,5 +18,9 @@ go_test(
     data = ["//:release"],
     embed = [":docprocessor"],
     tags = ["nogotsan"],
+    exec_properties = {
+        "test.init-dockerd": "false",
+        "test.workload-isolation-type": "firecracker",
+    },
     deps = ["//pkg/test/testutil"],
 )

@@ -27,6 +27,10 @@ py_test(
     data = ["//:release"],
     main = "tests/sandbox_test.py",
     tags = ["nogotsan"],
+    exec_properties = {
+        "test.init-dockerd": "false",
+        "test.workload-isolation-type": "firecracker",
+    },
     deps = [
         ":sandbox_py",
     ],

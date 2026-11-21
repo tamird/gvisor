@@ -47,6 +47,10 @@ go_test(
         "specutils_test.go",
     ],
     embed = [":specutils"],
+    exec_properties = {
+        "test.init-dockerd": "false",
+        "test.workload-isolation-type": "firecracker",
+    },
     deps = [
         "//pkg/sentry/devices/nvproxy/nvconf",
         "//runsc/config",
