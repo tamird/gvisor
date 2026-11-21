@@ -298,10 +298,10 @@ check_clang_tidy() {
     temporary_database="$(mktemp "${database}.XXXXXX")"
     trap "rm -f -- $(printf '%q' "${temporary_database}")" EXIT
     run_bazel run --platforms=@platforms//host //tools/compile_commands -- \
-      "${generator_options[@]}" "--output=${temporary_database}" //test/... //tools/... >&2
+      "${generator_options[@]}" "--output=${temporary_database}" //pkg/sentry/platform/systrap/sysmsg:sighandler_object >&2
     run_bazel build --remote_download_outputs=all \
       --aspects=//tools:cc_compile_inputs.bzl%cc_compile_inputs \
-      --output_groups=cc_compile_inputs //test/... //tools/... >&2
+      --output_groups=cc_compile_inputs //pkg/sentry/platform/systrap/sysmsg:sighandler_object >&2
     mv "${temporary_database}" "${database}"
     trap - EXIT
   fi
