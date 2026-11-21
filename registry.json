@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T12:02:56.484187+00:00",
+    "updatedAt": "2026-11-21T12:21:26.616528+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10988,12 +10988,12 @@
           "recheckCondition": "Proposal decision or exact current ref/head, source/base or qualification change."
         },
         "owner": "declared_formatting_resume / root",
-        "nextAction": "declared_formatting_resume assesses package-local glob ownership in existing wrappers before any migration. Root reviews the smaller integrated design; no bulk migration, catalog/exporter framework or new source-publication question is authorized by this prototype.",
-        "recheckCondition": "Concrete package-local ownership design and source-bound integrated qualification.",
+        "nextAction": "declared_formatting_resume closes the smallest separate C/C++ inventory extraction while preserving the approved ad173 API. No global 588 migration, new declaration framework or completed inventory is implied.",
+        "recheckCondition": "Concrete current-source C/C++ inventory and format qualification.",
         "observedAt": "2026-11-17T19:58:25.300843+00:00",
         "sourceHead": "63c29f4ef205ae9a8dec3b96e4bb3e32581d6c40",
-        "curatedAt": "2026-11-21T11:38:47.075228+00:00",
-        "disposition": "Changed contract44897643688 passed filenames containing spaces and missing-input failure propagation. Prototype f13dbac88d4f29a32df6e7379fe839ce53218ff2 includes the patch rationale. Exact equality to Git-index selection was an inferred constraint, not an established user/repository requirement; the existing Git filter excludes build output. Full declared-source inventory and integrated source qualification remain open.",
+        "curatedAt": "2026-11-21T12:20:58.751348+00:00",
+        "disposition": "Formatting ownership 44901598173 passed all four contracts. The approved ad173 clang-format API needs a bounded 492 C/C++ input inventory plus root style across 24 packages. This is smaller than a full 588-package Go/Buildifier migration; complete C/C++ extraction is still being implemented on current eb263e1.",
         "permanentFormatterMilestone": {
           "source": "723486ddd865d3044c5b515865b3a43de6356fde",
           "fixtureSource": "d58ca4f42c5a5a71456cb5de34f43785a6f6670e",
@@ -11155,7 +11155,8 @@
           "https://github.com/tamird/gvisor/actions/runs/44862512173",
           "https://github.com/tamird/gvisor/actions/runs/44864322388",
           "https://github.com/tamird/gvisor/actions/runs/44896658488",
-          "https://github.com/tamird/gvisor/actions/runs/44897643688"
+          "https://github.com/tamird/gvisor/actions/runs/44897643688",
+          "https://github.com/tamird/gvisor/actions/runs/44901598173"
         ]
       },
       "settledReviews": [
@@ -49100,8 +49101,8 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "651437132bf0054f1742ab2dce694f28a9ee0dc4",
         "observedAt": "2026-11-21T06:54:13.036908+00:00",
-        "disposition": "The exact user-approved narrow651 amendment and PR description are published; native head is mergeable and DCO passes. FirstPass failed and approved_rebase_queue owns canonical diagnosis. The existing discussion reply is saved; review-request404 remains under bounded provider diagnosis. Full declared-input migration is still separate and open.",
-        "nextAction": "approved_rebase_queue follows current CI/provider/review lifecycle. Do not restore the superseded broader16663 source or treat this executable-only amendment as the inventory prerequisite.",
+        "disposition": "Published user-approved source remains mergeable. All GitHub-native execution checks and DCO pass in the canonical snapshot. FirstPass 2283 independently failed before agent assignment: exit 80, null agent_id/started_at, stack_errored, author 1535036 rolling 30-day quota of 360,000 compute minutes. No Bazel target ran; main admission and maintainer review remain distinct.",
+        "nextAction": "Existing source/provider owner rechecks evidenced admission recovery or an actual source/check event. No manual retry, quota-owner outreach, source change or additional polling is implied. approved_rebase_queue retains the review/import lifecycle. The original-thread reply and supported milantracy re-request are saved alongside existing xinzhong; the generic404 was an operation mismatch, not a remaining permission or human-decision blocker. Full declared-source inventory remains separate.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16663",
           "https://github.com/google/gvisor/pull/17612",
@@ -49118,14 +49119,38 @@
           "https://github.com/tamird/gvisor/actions/runs/44877570553",
           "https://github.com/tamird/gvisor/actions/runs/44877654051",
           "https://github.com/tamird/gvisor/actions/runs/44877743052",
-          "https://github.com/gvisor/gvisor/pull/16663#discussion_r4652347786"
+          "https://github.com/gvisor/gvisor/pull/16663#discussion_r4652347786",
+          "https://buildkite.com/gvisor/first-pass/builds/2283#01a1fdf5-8c9a-463e-8fff-f20336d0edac"
         ],
         "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
         "providerHead": "6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
         "mergeable": "MERGEABLE",
         "recheckCondition": "Actual reply to the pending amendment question or a source/qualification change.",
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
-        "curatedAt": "2026-11-21T12:02:56.484187+00:00"
+        "curatedAt": "2026-11-21T12:20:58.751348+00:00",
+        "attentionDispositions": [
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "FirstPass 2283: verified provider admission quota",
+            "nextAction": "Existing source/provider owner rechecks evidenced admission recovery or an actual source/check event. No manual retry, quota-owner outreach, source change or additional polling is implied.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/2283#01a1fdf5-8c9a-463e-8fff-f20336d0edac"
+            ],
+            "binding": {
+              "sourceHead": "651437132bf0054f1742ab2dce694f28a9ee0dc4",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN3VVv1w",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/2283",
+                  "kind": "status"
+                }
+              ]
+            }
+          }
+        ]
       },
       "nextStep": "Await the reply to the existing exact651 amendment question. Root publishes only after that decision, preserving the reviewed title/description and the broader input-migration boundary. No repeat question, mechanical-approval inference or source-head advance.",
       "recheckCondition": "Actual reply to the pending amendment question or a source/qualification change."
@@ -105157,13 +105182,37 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "3e39c3a0c85601525990460f46d124bb66c927f7",
         "mergeable": "MERGEABLE",
-        "disposition": "Native delivered head3e39c3a0 remains mergeable and DCO successful. FirstPass failed; approved_rebase_queue owns canonical exact-source diagnosis. No cause or green CI is inferred.",
-        "nextAction": "Follow exact-head CI and maintainer review; diagnose only actual new failures, no duplicate monitoring or merge action.",
+        "disposition": "Published user-approved source remains mergeable. All GitHub-native execution checks and DCO pass in the canonical snapshot. FirstPass 2284 independently failed before agent assignment: exit 80, null agent_id/started_at, stack_errored, author 1535036 rolling 30-day quota of 360,000 compute minutes. No Bazel target ran; main admission and maintainer review remain distinct.",
+        "nextAction": "Existing source/provider owner rechecks evidenced admission recovery or an actual source/check event. No manual retry, quota-owner outreach, source change or additional polling is implied. approved_rebase_queue retains the review/import lifecycle.",
         "recheckCondition": "Exact-head checks, substantive review or import/merge event.",
         "evidence": [
-          "https://github.com/gvisor/gvisor/pull/17853"
+          "https://github.com/gvisor/gvisor/pull/17853",
+          "https://buildkite.com/gvisor/first-pass/builds/2284#01a1fdf6-a447-4ae0-a11b-c92ed46f78bc"
         ],
-        "curatedAt": "2026-11-21T12:02:56.484187+00:00"
+        "curatedAt": "2026-11-21T12:20:58.751348+00:00",
+        "attentionDispositions": [
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "FirstPass 2284: verified provider admission quota",
+            "nextAction": "Existing source/provider owner rechecks evidenced admission recovery or an actual source/check event. No manual retry, quota-owner outreach, source change or additional polling is implied.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/2284#01a1fdf6-a447-4ae0-a11b-c92ed46f78bc"
+            ],
+            "binding": {
+              "sourceHead": "3e39c3a0c85601525990460f46d124bb66c927f7",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN3VX0TQ",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/2284",
+                  "kind": "status"
+                }
+              ]
+            }
+          }
+        ]
       }
     },
     {
@@ -105182,12 +105231,37 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "b64c59c1b06d72919b250766609b328d87a05076",
         "mergeable": "MERGEABLE",
-        "disposition": "Published and provider-verified; FirstPass failure is under canonical exact-source diagnosis, not classified as source failure or quota without evidence.",
-        "nextAction": "approved_rebase_queue owns exact-head CI, substantive review and import through delivery. No duplicate observation, manual retry or merge action.",
+        "disposition": "Published user-approved source remains mergeable. All GitHub-native execution checks and DCO pass in the canonical snapshot. FirstPass 2285 independently failed before agent assignment: exit 80, null agent_id/started_at, stack_errored, author 1535036 rolling 30-day quota of 360,000 compute minutes. No Bazel target ran; main admission and maintainer review remain distinct.",
+        "nextAction": "Existing source/provider owner rechecks evidenced admission recovery or an actual source/check event. No manual retry, quota-owner outreach, source change or additional polling is implied. approved_rebase_queue retains the review/import lifecycle.",
         "recheckCondition": "Canonical failure diagnosis or exact-head CI/review/import event.",
         "evidence": [
-          "https://github.com/gvisor/gvisor/pull/17854"
-        ]
+          "https://github.com/gvisor/gvisor/pull/17854",
+          "https://buildkite.com/gvisor/first-pass/builds/2285#01a1fdf7-c201-49b6-beb5-06067deda5b0"
+        ],
+        "attentionDispositions": [
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "FirstPass 2285: verified provider admission quota",
+            "nextAction": "Existing source/provider owner rechecks evidenced admission recovery or an actual source/check event. No manual retry, quota-owner outreach, source change or additional polling is implied.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/2285#01a1fdf7-c201-49b6-beb5-06067deda5b0"
+            ],
+            "binding": {
+              "sourceHead": "b64c59c1b06d72919b250766609b328d87a05076",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN3VZqJw",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/2285",
+                  "kind": "status"
+                }
+              ]
+            }
+          }
+        ],
+        "curatedAt": "2026-11-21T12:20:58.751348+00:00"
       }
     },
     {
@@ -105206,12 +105280,37 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "5ad44c8892f6d9ce773e448357a83917b3c79b5b",
         "mergeable": "MERGEABLE",
-        "disposition": "Published and provider-verified; FirstPass failure is under canonical exact-source diagnosis, not classified as source failure or quota without evidence.",
-        "nextAction": "approved_rebase_queue owns exact-head CI, substantive review and import through delivery. No duplicate observation, manual retry or merge action.",
+        "disposition": "Published user-approved source remains mergeable. All GitHub-native execution checks and DCO pass in the canonical snapshot. FirstPass 2286 independently failed before agent assignment: exit 80, null agent_id/started_at, stack_errored, author 1535036 rolling 30-day quota of 360,000 compute minutes. No Bazel target ran; main admission and maintainer review remain distinct.",
+        "nextAction": "Existing source/provider owner rechecks evidenced admission recovery or an actual source/check event. No manual retry, quota-owner outreach, source change or additional polling is implied. approved_rebase_queue retains the review/import lifecycle.",
         "recheckCondition": "Canonical failure diagnosis or exact-head CI/review/import event.",
         "evidence": [
-          "https://github.com/gvisor/gvisor/pull/17855"
-        ]
+          "https://github.com/gvisor/gvisor/pull/17855",
+          "https://buildkite.com/gvisor/first-pass/builds/2286#01a1fdf7-c92c-42e2-babc-75c2e4761a74"
+        ],
+        "attentionDispositions": [
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "FirstPass 2286: verified provider admission quota",
+            "nextAction": "Existing source/provider owner rechecks evidenced admission recovery or an actual source/check event. No manual retry, quota-owner outreach, source change or additional polling is implied.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/2286#01a1fdf7-c92c-42e2-babc-75c2e4761a74"
+            ],
+            "binding": {
+              "sourceHead": "5ad44c8892f6d9ce773e448357a83917b3c79b5b",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN3VZq5g",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/2286",
+                  "kind": "status"
+                }
+              ]
+            }
+          }
+        ],
+        "curatedAt": "2026-11-21T12:20:58.751348+00:00"
       }
     },
     {
@@ -105230,11 +105329,57 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "2022728765e5e2a6a436272b09b13e5f04292826",
         "mergeable": "MERGEABLE",
-        "disposition": "Published and provider-verified; FirstPass failure is under canonical exact-source diagnosis, not classified as source failure or quota without evidence.",
-        "nextAction": "approved_rebase_queue owns exact-head CI, substantive review and import through delivery. No duplicate observation, manual retry or merge action.",
+        "disposition": "Published user-approved source remains mergeable. All GitHub-native execution checks and DCO pass in the canonical snapshot. FirstPass 2287 independently failed before agent assignment: exit 80, null agent_id/started_at, stack_errored, author 1535036 rolling 30-day quota of 360,000 compute minutes. No Bazel target ran; main admission and maintainer review remain distinct.",
+        "nextAction": "Existing source/provider owner rechecks evidenced admission recovery or an actual source/check event. No manual retry, quota-owner outreach, source change or additional polling is implied. approved_rebase_queue retains the review/import lifecycle.",
         "recheckCondition": "Canonical failure diagnosis or exact-head CI/review/import event.",
         "evidence": [
-          "https://github.com/gvisor/gvisor/pull/17856"
+          "https://github.com/gvisor/gvisor/pull/17856",
+          "https://buildkite.com/gvisor/first-pass/builds/2287#01a1fdf7-cf4a-4ed5-8881-2af81f4ce2da"
+        ],
+        "attentionDispositions": [
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "FirstPass 2287: verified provider admission quota",
+            "nextAction": "Existing source/provider owner rechecks evidenced admission recovery or an actual source/check event. No manual retry, quota-owner outreach, source change or additional polling is implied.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/2287#01a1fdf7-cf4a-4ed5-8881-2af81f4ce2da"
+            ],
+            "binding": {
+              "sourceHead": "2022728765e5e2a6a436272b09b13e5f04292826",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN3VZsPw",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/2287",
+                  "kind": "status"
+                }
+              ]
+            }
+          }
+        ],
+        "curatedAt": "2026-11-21T12:20:58.751348+00:00"
+      }
+    },
+    {
+      "id": "issue:cncf/dco2:126",
+      "type": "issue",
+      "repo": "cncf/dco2",
+      "number": 126,
+      "group": "analysis",
+      "status": "open",
+      "title": "DCO check includes commits already on the PR base branch",
+      "url": "https://github.com/cncf/dco2/issues/126",
+      "updatedAt": "2026-11-21T12:20:58.751348+00:00",
+      "summary": "The user-approved bug-only DCO range report is published and natively verified OPEN with zero comments at readback. It does not request operator/clickops actions. No further posting approval remains.",
+      "followup": {
+        "owner": "root",
+        "disposition": "Published report-only issue; no maintainer feedback is present at the current native readback.",
+        "nextAction": "Root consumes genuine issue comments/state changes through the existing canonical issue collection. Keep affected PR DCO checks independently source-bound; no operator request, duplicate report, manual sign-off or source churn.",
+        "recheckCondition": "New issue feedback/state change or evidenced DCO provider range correction.",
+        "evidence": [
+          "https://github.com/cncf/dco2/issues/126"
         ]
       }
     }
@@ -134836,8 +134981,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-21T12:02:56.484187+00:00",
-      "summary": "User-approved source is delivered as gVisor#17855 at exact 5ad44c88, native mergeable and DCO successful. FirstPass failed; the assigned source owner is diagnosing the exact provider cause. Existing functional/product scope remains unchanged.",
+      "updatedAt": "2026-11-21T12:20:58.751348+00:00",
+      "summary": "Exact user-approved source is delivered as gVisor#17855. GitHub-native checks and DCO pass; independently verified FirstPass2286 is pre-agent quota-blocked. No source approval remains; existing qualification scope and review/import boundaries stay intact.",
       "findings": [
         {
           "text": "Both AMD64 jobs on build 54543 reached 900 seconds in TestDockerWithVFS/docker_run_bridge_network_privileged. On each platform, the preceding host-network docker run completed apk add curl and apk info with exit status 0. The privileged bridge run then began mount setup on the same Alpine image and produced no exit status. Removing a completed container leaves the image available for the next run. The logs do not locate the wait inside the bridge command. The uncached retries passed in 127.3 seconds on systrap and 50 seconds on KVM.",
@@ -134972,7 +135117,7 @@
           ]
         }
       ],
-      "nextStep": "Follow the existing approved_rebase_queue lifecycle at pr:17855; no source approval or metadata-publication task remains. No green CI or merge claim.",
+      "nextStep": "Follow canonical pr:17855 through its existing source/provider owner; no duplicate monitoring, manual retry or quota outreach.",
       "evidence": [
         {
           "label": "Third attempt, privileged container",
@@ -137939,8 +138084,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-21T12:02:56.484187+00:00",
-      "summary": "User-approved source is delivered as gVisor#17854 at exact b64c59c1, native mergeable and DCO successful. FirstPass failed; the assigned source owner is diagnosing the exact provider cause. Existing functional/product scope remains unchanged.",
+      "updatedAt": "2026-11-21T12:20:58.751348+00:00",
+      "summary": "Exact user-approved source is delivered as gVisor#17854. GitHub-native checks and DCO pass; independently verified FirstPass2285 is pre-agent quota-blocked. No source approval remains; existing qualification scope and review/import boundaries stay intact.",
       "findings": [
         {
           "text": "The original job logged 623 lock refusals from 07:37:14 through 08:35:58 UTC, each naming unattended-upgr PID 3661. The worker ran apt-get update again on each turn.",
@@ -137982,7 +138127,7 @@
           ]
         }
       ],
-      "nextStep": "Follow the existing approved_rebase_queue lifecycle at pr:17854; no source approval or metadata-publication task remains. No green CI or merge claim.",
+      "nextStep": "Follow canonical pr:17854 through its existing source/provider owner; no duplicate monitoring, manual retry or quota outreach.",
       "evidence": [
         {
           "label": "Release #7761 \u00b7 pre-command timed out before the CUDA test",
@@ -141254,9 +141399,9 @@
       "title": "Run coverage builds on their required CPU",
       "owner": "root",
       "head": "e33f30605e080fd02cc53bd20950e99d31c171fc",
-      "updatedAt": "2026-11-21T12:00:06.633567+00:00",
-      "summary": "User-approved e33 source was delivered as gVisor17853 at signed DCO-only3e39c3a0c85601525990460f46d124bb66c927f7. Native verification confirms one commit and mergeable. No source approval remains.",
-      "nextStep": "approved_rebase_queue owns17853 resulting CI/review through delivery. Preserve compile-product/runtime scope; do not merge or infer new check results.",
+      "updatedAt": "2026-11-21T12:20:58.751348+00:00",
+      "summary": "Exact user-approved source is delivered as gVisor#17853. GitHub-native checks and DCO pass; independently verified FirstPass2284 is pre-agent quota-blocked. No source approval remains; existing qualification scope and review/import boundaries stay intact.",
+      "nextStep": "Follow canonical pr:17853 through its existing source/provider owner; no duplicate monitoring, manual retry or quota outreach.",
       "evidence": [
         {
           "label": "Actual reviewable helper commit",
@@ -141300,9 +141445,9 @@
       "title": "Declare unit test worker requirements",
       "owner": "root",
       "head": "1189d9f09100ec7674b624f4dae531ab6bde1e98",
-      "updatedAt": "2026-11-21T12:02:56.484187+00:00",
-      "summary": "The user-requested provider-citation revision1189d9 is still under qualification/review, not approved or published. AMD44901481027 executed remotely and produced90XML: the three retained default-route failures and one RDMA hardware skip remain; no namespace/IPv6 setup failure occurred. ARM44901710528 and Buildifier44901764634 remain live under their existing owners.",
-      "nextStep": "worker_requirements_citations closes the revised qualification/review before a new source question. Root accepts technical ownership of the three existing route failures after active publication recovery, using retained baseline44661918915/artifact14595922735; this is not a new Daybreak hold or quiet-worker prerequisite.",
+      "updatedAt": "2026-11-21T12:20:58.751348+00:00",
+      "summary": "The actual revised 1189 source-publication question has been asked and is pending, with no returned question ID or exact request timestamp available. Primary citations and two independent reviews are complete. AMD and ARM each executed90XML with the same three baseline route failures; AMD has one RDMA skip, ARM has RDMA and OpenReadOnlyTree skips. Buildifier passed. This is not publication approval or complete green qualification.",
+      "nextStep": "Root awaits the existing revised 1189 publication reply. worker_requirements_citations separately qualifies recovered route repair 4525a395; no new question or approval for that production source is inferred.",
       "evidence": [
         {
           "label": "Reviewable source",
@@ -141327,11 +141472,15 @@
         {
           "label": "Retained route baseline",
           "url": "https://github.com/tamird/gvisor/actions/runs/44661918915/artifacts/14595922735"
+        },
+        {
+          "label": "Route repair AMD qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44902704070"
         }
       ],
       "findings": [
         {
-          "text": "Both five-target network-off matrices and formatting passed; two final reviewers acknowledged the qualified source. DCO-only commit preserves tree05295470415da1b6d42daea41feb56d4233df270. Local sandbox still requires root/IPv6 and retains the three proven baseline failures.",
+          "text": "Recovered route repair 4525a3950fae5d92036dd69135910d8d4f322bd1 is separate production work, not publication-approved. Fresh AMD 44902704070 has 89 pass/0 fail/1 RDMA skip; ARM 44903071377 has 88 pass/0 fail/2 skips (RDMA and OpenReadOnlyTree), with 90 XML each. All five source checks 44903077659 pass; owner watches are closed. No benchmark evidence, final production adversarial review or demonstrated application connectivity regression is established. Broad workload/statistical gates and the existing quiet-worker information request remain open; correctness does not establish performance qualification.",
           "evidence": []
         }
       ],
@@ -141347,7 +141496,17 @@
           "body": "Tests that create sandboxes or inspect namespaces need kernel features\nthat ordinary remote containers cannot provide. Select the isolated\nworker for those tests and keep its external network disabled.\n\nKeep the sandbox routing test local because it also needs IPv6 support.\nIts caller must provide root execution. Compiler actions remain eligible\nfor remote execution.\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
           "outcome": "CHANGES-REQUESTED"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "1189d9f09100ec7674b624f4dae531ab6bde1e98",
+        "baseHead": "574094148cae18e739634382c0a28d60520c319a",
+        "url": "https://github.com/tamird/gvisor/commit/1189d9f09100ec7674b624f4dae531ab6bde1e98",
+        "title": "Declare unit test worker requirements",
+        "body": "Run sandbox, mount, and namespace tests in BuildBuddy microVMs [1].\nBuildBuddy's default OCI capability set omits CAP_SYS_ADMIN [2]. Keep\nexternal networking disabled while retaining localhost access [3].\nRequest guest IPv6 for the sandbox routing tests through BuildBuddy's\nopt-in property [4]. Apply these properties only to test actions so\ncompilation can use ordinary remote workers.\n\n[1]: https://www.buildbuddy.io/docs/rbe-microvms/\n[2]: https://github.com/buildbuddy-io/buildbuddy/blob/168813c94525e5106459531fb629429d5fe2fb60/enterprise/server/remote_execution/containers/ociruntime/ociruntime.go#L157-L173\n[3]: https://www.buildbuddy.io/docs/rbe-platforms/#runner-container-support\n[4]: https://github.com/buildbuddy-io/buildbuddy/pull/11585\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
+        "summary": "Actual async publication question accepted in this conversation; no response or fabricated request metadata. The disclosed three baseline failures/skips remain in scope."
+      }
     },
     {
       "id": "investigation:iperf-cpu-affinity",
@@ -141357,9 +141516,9 @@
       "title": "Honor Iperf client and server CPU affinity",
       "owner": "root",
       "head": "2022728765e5e2a6a436272b09b13e5f04292826",
-      "updatedAt": "2026-11-21T12:02:56.484187+00:00",
-      "summary": "User-approved source is delivered as gVisor#17856 at exact 20227287, native mergeable and DCO successful. FirstPass failed; the assigned source owner is diagnosing the exact provider cause. Existing functional/product scope remains unchanged.",
-      "nextStep": "Follow the existing approved_rebase_queue lifecycle at pr:17856; no source approval or metadata-publication task remains. No green CI or merge claim.",
+      "updatedAt": "2026-11-21T12:20:58.751348+00:00",
+      "summary": "Exact user-approved source is delivered as gVisor#17856. GitHub-native checks and DCO pass; independently verified FirstPass2287 is pre-agent quota-blocked. No source approval remains; existing qualification scope and review/import boundaries stay intact.",
+      "nextStep": "Follow canonical pr:17856 through its existing source/provider owner; no duplicate monitoring, manual retry or quota outreach.",
       "evidence": [
         {
           "label": "Actual reviewable source",

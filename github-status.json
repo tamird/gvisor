@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T12:16:58.786333+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T12:02:56.484187+00:00",
+  "registryDate": "2026-11-21T12:21:26.616528+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -449489,6 +449489,18 @@
       ],
       "olderComments": false,
       "issueFeedback": []
+    },
+    "issue:cncf/dco2:126": {
+      "githubState": "open",
+      "githubStateReason": null,
+      "githubURL": "https://github.com/cncf/dco2/issues/126",
+      "authorLogin": "tamird",
+      "closedAt": null,
+      "updatedAt": "2026-11-21T11:56:00Z",
+      "checkedAt": "2026-11-21T12:22:49.668584+00:00",
+      "comments": [],
+      "olderComments": false,
+      "issueFeedback": []
     }
   },
   "issueInventoryVersion": 2,
@@ -455292,8 +455304,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "651437132bf0054f1742ab2dce694f28a9ee0dc4",
-        "disposition": "The exact user-approved narrow651 amendment and PR description are published; native head is mergeable and DCO passes. FirstPass failed and approved_rebase_queue owns canonical diagnosis. The existing discussion reply is saved; review-request404 remains under bounded provider diagnosis. Full declared-input migration is still separate and open.",
-        "nextAction": "approved_rebase_queue follows current CI/provider/review lifecycle. Do not restore the superseded broader16663 source or treat this executable-only amendment as the inventory prerequisite."
+        "disposition": "Published user-approved source remains mergeable. All GitHub-native execution checks and DCO pass in the canonical snapshot. FirstPass 2283 independently failed before agent assignment: exit 80, null agent_id/started_at, stack_errored, author 1535036 rolling 30-day quota of 360,000 compute minutes. No Bazel target ran; main admission and maintainer review remain distinct.",
+        "nextAction": "Existing source/provider owner rechecks evidenced admission recovery or an actual source/check event. No manual retry, quota-owner outreach, source change or additional polling is implied. approved_rebase_queue retains the review/import lifecycle. The original-thread reply and supported milantracy re-request are saved alongside existing xinzhong; the generic404 was an operation mismatch, not a remaining permission or human-decision blocker. Full declared-source inventory remains separate."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3VVv1w"
@@ -461291,8 +461303,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "3e39c3a0c85601525990460f46d124bb66c927f7",
-        "disposition": "Native delivered head3e39c3a0 remains mergeable and DCO successful. FirstPass failed; approved_rebase_queue owns canonical exact-source diagnosis. No cause or green CI is inferred.",
-        "nextAction": "Follow exact-head CI and maintainer review; diagnose only actual new failures, no duplicate monitoring or merge action."
+        "disposition": "Published user-approved source remains mergeable. All GitHub-native execution checks and DCO pass in the canonical snapshot. FirstPass 2284 independently failed before agent assignment: exit 80, null agent_id/started_at, stack_errored, author 1535036 rolling 30-day quota of 360,000 compute minutes. No Bazel target ran; main admission and maintainer review remain distinct.",
+        "nextAction": "Existing source/provider owner rechecks evidenced admission recovery or an actual source/check event. No manual retry, quota-owner outreach, source change or additional polling is implied. approved_rebase_queue retains the review/import lifecycle."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3VX0TQ"
@@ -461333,8 +461345,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "b64c59c1b06d72919b250766609b328d87a05076",
-        "disposition": "Published and provider-verified; FirstPass failure is under canonical exact-source diagnosis, not classified as source failure or quota without evidence.",
-        "nextAction": "approved_rebase_queue owns exact-head CI, substantive review and import through delivery. No duplicate observation, manual retry or merge action."
+        "disposition": "Published user-approved source remains mergeable. All GitHub-native execution checks and DCO pass in the canonical snapshot. FirstPass 2285 independently failed before agent assignment: exit 80, null agent_id/started_at, stack_errored, author 1535036 rolling 30-day quota of 360,000 compute minutes. No Bazel target ran; main admission and maintainer review remain distinct.",
+        "nextAction": "Existing source/provider owner rechecks evidenced admission recovery or an actual source/check event. No manual retry, quota-owner outreach, source change or additional polling is implied. approved_rebase_queue retains the review/import lifecycle."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3VZqJw"
@@ -461375,8 +461387,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "5ad44c8892f6d9ce773e448357a83917b3c79b5b",
-        "disposition": "Published and provider-verified; FirstPass failure is under canonical exact-source diagnosis, not classified as source failure or quota without evidence.",
-        "nextAction": "approved_rebase_queue owns exact-head CI, substantive review and import through delivery. No duplicate observation, manual retry or merge action."
+        "disposition": "Published user-approved source remains mergeable. All GitHub-native execution checks and DCO pass in the canonical snapshot. FirstPass 2286 independently failed before agent assignment: exit 80, null agent_id/started_at, stack_errored, author 1535036 rolling 30-day quota of 360,000 compute minutes. No Bazel target ran; main admission and maintainer review remain distinct.",
+        "nextAction": "Existing source/provider owner rechecks evidenced admission recovery or an actual source/check event. No manual retry, quota-owner outreach, source change or additional polling is implied. approved_rebase_queue retains the review/import lifecycle."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3VZq5g"
@@ -461417,8 +461429,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "2022728765e5e2a6a436272b09b13e5f04292826",
-        "disposition": "Published and provider-verified; FirstPass failure is under canonical exact-source diagnosis, not classified as source failure or quota without evidence.",
-        "nextAction": "approved_rebase_queue owns exact-head CI, substantive review and import through delivery. No duplicate observation, manual retry or merge action."
+        "disposition": "Published user-approved source remains mergeable. All GitHub-native execution checks and DCO pass in the canonical snapshot. FirstPass 2287 independently failed before agent assignment: exit 80, null agent_id/started_at, stack_errored, author 1535036 rolling 30-day quota of 360,000 compute minutes. No Bazel target ran; main admission and maintainer review remain distinct.",
+        "nextAction": "Existing source/provider owner rechecks evidenced admission recovery or an actual source/check event. No manual retry, quota-owner outreach, source change or additional polling is implied. approved_rebase_queue retains the review/import lifecycle."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3VZsPw"
@@ -469906,7 +469918,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:02:56.484187+00:00"
+        "observedAt": "2026-11-21T12:21:26.616528+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -469915,7 +469927,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:02:56.484187+00:00"
+        "observedAt": "2026-11-21T12:21:26.616528+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -469924,7 +469936,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:02:56.484187+00:00"
+        "observedAt": "2026-11-21T12:21:26.616528+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -469933,7 +469945,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:02:56.484187+00:00"
+        "observedAt": "2026-11-21T12:21:26.616528+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -469942,7 +469954,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:02:56.484187+00:00"
+        "observedAt": "2026-11-21T12:21:26.616528+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -469951,7 +469963,16 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:02:56.484187+00:00"
+        "observedAt": "2026-11-21T12:21:26.616528+00:00"
+      }
+    },
+    "investigation:unit-test-worker-requirements": {
+      "contributor-review": {
+        "scope": "1189d9f09100ec7674b624f4dae531ab6bde1e98",
+        "since": "2026-11-21T12:20:58.751348+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-21T12:21:26.616528+00:00"
       }
     }
   },
