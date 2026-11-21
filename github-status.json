@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T14:56:27.629019+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T14:41:42.118636+00:00",
+  "registryDate": "2026-11-21T15:01:28.141765+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -452927,8 +452927,8 @@
       "recordedFollowup": {
         "owner": "benchmark_measurement_review / root",
         "sourceHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "disposition": "Public afd34241 and its original maintainer internal license-exception/review hold are preserved. Private conflict proposal 79d66d4f7fec8ebd5cd6fbcba35678cfdde5b916 is under preflight 44914763587. The standing-DCO execution rejection was resolved under the direct user grant; no human DCO decision remains. Historical internal check passes do not release the maintainer hold or qualify the new source.",
-        "nextAction": "benchmark_measurement_review audits the existing preflight and prepares the exact-source handoff; root reconciles the retained review/authority boundary before any publication. No new source approval is projected."
+        "disposition": "Private 427a8de passed 45 tests 44916177555 and all five source checks 44916179600; canonical CLI 44915539209 verified 230 dependencies, with unchanged library/catalog inputs after the last fake-fixture-only edit. Both final independent reviewers found no issues. Actual QEMU Fetch-to-GPL policy compatibility is not proven by the fake MIT-route fixture/CLI checks. Public afd34241 remains OPEN/CONFLICTING/CHANGES_REQUESTED, with the original upstream hold and no human reply since Oct18. One actual source-amendment plus exact hold-clarification question is now pending; no source or comment has been published.",
+        "nextAction": "Root awaits the existing paired user decision for 427 and the exact top-level clarification. Retain the upstream hold pending confirmation; previous-head internal checks do not release it. The resolved standing-DCO execution rejection is not a human decision or remaining blocker."
       },
       "conflictObservedSince": "2026-11-06T02:35:04.797881+00:00"
     },
@@ -452951,8 +452951,8 @@
       "recordedFollowup": {
         "owner": "benchmark_measurement_review / root",
         "sourceHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "disposition": "Public afd34241 and its original maintainer internal license-exception/review hold are preserved. Private conflict proposal 79d66d4f7fec8ebd5cd6fbcba35678cfdde5b916 is under preflight 44914763587. The standing-DCO execution rejection was resolved under the direct user grant; no human DCO decision remains. Historical internal check passes do not release the maintainer hold or qualify the new source.",
-        "nextAction": "benchmark_measurement_review audits the existing preflight and prepares the exact-source handoff; root reconciles the retained review/authority boundary before any publication. No new source approval is projected."
+        "disposition": "Private 427a8de passed 45 tests 44916177555 and all five source checks 44916179600; canonical CLI 44915539209 verified 230 dependencies, with unchanged library/catalog inputs after the last fake-fixture-only edit. Both final independent reviewers found no issues. Actual QEMU Fetch-to-GPL policy compatibility is not proven by the fake MIT-route fixture/CLI checks. Public afd34241 remains OPEN/CONFLICTING/CHANGES_REQUESTED, with the original upstream hold and no human reply since Oct18. One actual source-amendment plus exact hold-clarification question is now pending; no source or comment has been published.",
+        "nextAction": "Root awaits the existing paired user decision for 427 and the exact top-level clarification. Retain the upstream hold pending confirmation; previous-head internal checks do not release it. The resolved standing-DCO execution rejection is not a human decision or remaining blocker."
       },
       "conflictObservedSince": null
     },
@@ -462441,6 +462441,13 @@
         "basis": "observed",
         "qualifier": "#17126: open, validation checks passed, conflicts",
         "observedAt": "2026-11-21T14:55:54.490616+00:00"
+      },
+      "contributor-review": {
+        "scope": "427a8de7470d18956964b5ef71a21fab92440039",
+        "since": "2026-11-21T15:01:28.141765+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-21T15:01:28.141765+00:00"
       }
     },
     "pr:15147": {
@@ -469919,7 +469926,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:41:42.118636+00:00"
+        "observedAt": "2026-11-21T15:01:28.141765+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -469928,7 +469935,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:41:42.118636+00:00"
+        "observedAt": "2026-11-21T15:01:28.141765+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -469937,7 +469944,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:41:42.118636+00:00"
+        "observedAt": "2026-11-21T15:01:28.141765+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -469946,7 +469953,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:41:42.118636+00:00"
+        "observedAt": "2026-11-21T15:01:28.141765+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -469955,7 +469962,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:41:42.118636+00:00"
+        "observedAt": "2026-11-21T15:01:28.141765+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -469964,7 +469971,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:41:42.118636+00:00"
+        "observedAt": "2026-11-21T15:01:28.141765+00:00"
       }
     },
     "investigation:unit-test-worker-requirements": {
@@ -469973,7 +469980,7 @@
         "since": "2026-11-21T13:24:07.659680+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:41:42.118636+00:00"
+        "observedAt": "2026-11-21T15:01:28.141765+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -469982,7 +469989,7 @@
         "since": "2026-11-21T14:00:19.559771+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:41:42.118636+00:00"
+        "observedAt": "2026-11-21T15:01:28.141765+00:00"
       }
     }
   },

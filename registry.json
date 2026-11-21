@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T14:41:42.118636+00:00",
+    "updatedAt": "2026-11-21T15:01:28.141765+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -215,9 +215,9 @@
       "updatedAt": "2026-11-17T18:16:01.120596+00:00",
       "summary": "Tamir reports that the maintainer hold concerns adding google/licensecheck. The existing checker already verifies the compiler migration with the current catalog and policy. The hold remains on this classifier PR. Its fork revision now includes the go-digest catalog entry and policy exception.\n\nThe fork rebase repairs three stale GPL constants introduced by 61088c907 and makes the mock HTTP notice state an actual GPL-v2-only grant. All 41 owning tests pass on 0ea1ef528. Fresh catalog verification still reports 20 QEMU mismatches, one LTP mismatch and one go-digest mismatch. In particular, QEMU\u2019s license appendix contains an example grant. The project\u2019s LICENSE identifies the terms for the emulator. The upstream October hold remains.\n\nThe source conflict is repaired at afd34241a1. Complete path, mode and added/removed lines match the previously approved or reviewed patch; range-diff changes only adjacent upstream LTP context. Existing source review requirements remain; this equivalent rebase does not request another approval. Etienne\u2019s existing hold and CHANGES_REQUESTED remain.\n\nEarlier source-specific record:\n\nThe current-master equivalent rebase is published at bec06589fb on 30ace3e2a9. Independent review verified unchanged executable, test and policy bytes; the Kythe catalog hunk preserves the newly landed libbpf/LLVM entries. The provider confirms the source is mergeable. Etienne\u2019s existing hold and CHANGES_REQUESTED remain; this is not a new approval or an internal import success.\n\nEarlier source records:\n\nThe requested post-#16046 rebase is published at 04108da6a3cf on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at f7f7cd707c. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at f7f7cd707c453855ccbe5de562a27f5ad18b74c3 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it. Current-head Gazelle fails only because merged parent760b retains an unused //pkg/zip dependency on production tools/nogo/check:check. Exact failed logs request that single deletion. The correction is already present in open, all-green import16031, assigned to Etienne; follow that shared import without duplicating a fix or public report. These failed checks remain visible until the correction lands and current checks confirm it.\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it.\n\nCurrent head554623136dadd13e0bae2a83ccc5224609b56d5d is CONFLICTING/DIRTY after the latest public merge. This is a new mechanical maintenance item for root; the explicit internal license-exception hold and existing changes-requested review remain unchanged.\n\nThe published mechanical rebase is at 554623136dad on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe conflict is resolved by a patch-equivalent rebase at b4e336c68. Both current upstream QEMU license records are preserved; all classifier additions and deletions match the previously reviewed patch. GitHub confirms the new head is mergeable. The changes-requested review and unresolved internal exception status remain. An authorized follow-up now asks Etienne whether the internal exceptions for both #15145 and #15146 have propagated; the existing holds remain unchanged.\n\nEarlier record:\n\nEtienne\u2019s requested one-week hold elapsed on October 10 at 07:17:45 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. The authorized follow-up is now posted on #15146, asking Etienne whether the internal exceptions for both #15145 and #15146 have propagated. The response and existing changes-requested review remain pending; neither hold is cleared.\n\nThe current head conflicts with 2552c6787 in governance/licensing.yaml. The existing maintainer hold remains in force.\n\nThe plain rebase 5c080a5cf failed to compile three gpl2 references. The fork revision 23b8ddf0a restores the earlier GPL fixture changes. The package test target passed and the verifier checked all 224 entries in the existing catalog. Earlier source-notice discovery differences remain open.",
       "followup": {
-        "disposition": "Public afd34241 and its original maintainer internal license-exception/review hold are preserved. Private conflict proposal 79d66d4f7fec8ebd5cd6fbcba35678cfdde5b916 is under preflight 44914763587. The standing-DCO execution rejection was resolved under the direct user grant; no human DCO decision remains. Historical internal check passes do not release the maintainer hold or qualify the new source.",
+        "disposition": "Private 427a8de passed 45 tests 44916177555 and all five source checks 44916179600; canonical CLI 44915539209 verified 230 dependencies, with unchanged library/catalog inputs after the last fake-fixture-only edit. Both final independent reviewers found no issues. Actual QEMU Fetch-to-GPL policy compatibility is not proven by the fake MIT-route fixture/CLI checks. Public afd34241 remains OPEN/CONFLICTING/CHANGES_REQUESTED, with the original upstream hold and no human reply since Oct18. One actual source-amendment plus exact hold-clarification question is now pending; no source or comment has been published.",
         "owner": "benchmark_measurement_review / root",
-        "nextAction": "benchmark_measurement_review audits the existing preflight and prepares the exact-source handoff; root reconciles the retained review/authority boundary before any publication. No new source approval is projected.",
+        "nextAction": "Root awaits the existing paired user decision for 427 and the exact top-level clarification. Retain the upstream hold pending confirmation; previous-head internal checks do not release it. The resolved standing-DCO execution rejection is not a human decision or remaining blocker.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/23b8ddf0a",
           "https://github.com/tamird/gvisor/actions/runs/43014384411",
@@ -236,7 +236,10 @@
           "https://github.com/google/gvisor/commit/2552c6787",
           "https://github.com/gvisor/gvisor/pull/15146",
           "https://github.com/gvisor/gvisor/pull/17126",
-          "https://github.com/tamird/gvisor/actions/runs/44914763587"
+          "https://github.com/tamird/gvisor/actions/runs/44914763587",
+          "https://github.com/tamird/gvisor/actions/runs/44916177555",
+          "https://github.com/tamird/gvisor/actions/runs/44916179600",
+          "https://github.com/tamird/gvisor/actions/runs/44915539209"
         ],
         "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
         "sourceHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
@@ -244,9 +247,9 @@
         "mergeable": "CONFLICTING",
         "observedAt": "2026-11-17T18:16:01.120596+00:00",
         "providerHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "recheckCondition": "Owned qualification/review result and actual maintainer/authority clarification.",
+        "recheckCondition": "Actual paired user reply or upstream maintainer hold clarification.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
-        "curatedAt": "2026-11-21T14:40:26.293073+00:00"
+        "curatedAt": "2026-11-21T15:01:28.141765+00:00"
       },
       "head": "afd34241a1b7e38e196e5d173632f658b7e5defc",
       "evidence": [
@@ -397,6 +400,16 @@
             "evidence": "https://github.com/google/gvisor/pull/15146#pullrequestreview-5399508571"
           }
         }
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "427a8de7470d18956964b5ef71a21fab92440039",
+        "baseHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
+        "url": "https://github.com/tamird/gvisor/commit/427a8de7470d18956964b5ef71a21fab92440039",
+        "title": "Recognize complete dependency license texts",
+        "body": "Replace phrase-based classification with complete license-text matching\nto avoid combining independent notices. The old matcher combined Arrow's\nBSD terms and OpenSSL's advertising clause into BSD-4-Clause [1].\n\nDelegate text matching and identifier ownership to google/licensecheck\n[2], configured with the complete LLVM exception [3]. References alone\ndo not establish a license grant. Keep the scanner's identifiers literal\nso policy review sees the distinctions the detector can establish.\n\nAdd the classifier dependency to the catalog and recognize Kythe's legacy\nUniversity of Illinois/NCSA grant [4], previously reported as MIT. Scope\nthe corresponding exception to Kythe and record its redistribution terms.\nRetain the current audited LLVM and other dependency identities and policy.\n\n[1]: https://github.com/apache/arrow/blob/e03105efc/go/LICENSE.txt\n[2]: https://github.com/google/licensecheck/blob/16aaea366/scan.go\n[3]: https://github.com/llvm/llvm-project/blob/85ac56026/LICENSE.TXT\n[4]: https://github.com/kythe/kythe/blob/a182743b6/LICENSE#L205-L251\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
+        "summary": "One actual async question was accepted and remains unanswered; it covers the prepared 427 source revision and this exact top-level clarification for https://github.com/gvisor/gvisor/pull/15146. No returned question ID or exact request timestamp is available. The upstream hold is retained pending confirmation.\n\nProposed clarification:\n\nRebased the proposal while preserving the current LLVM license catalog. Internal checks passed on the previous head. Does the internal-exception hold still apply?\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
