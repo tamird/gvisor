@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T06:09:02.651784+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T05:50:48.981201+00:00",
+  "registryDate": "2026-11-21T06:15:32.375526+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -451054,9 +451054,9 @@
       "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
-        "sourceHead": "47d14a74e781ae01f7b68a306d16752da43daec4",
-        "disposition": "Public47d14a74e781ae01f7b68a306d16752da43daec4 remains conflicting; prepared8cab980c14e1011e7855955944adc66b1b2554c4 version patch is unchanged and unpublished. The distinct permanent worker proposal e33f30605e080fd02cc53bd20950e99d31c171fc closes all five caller platform/actual SDK CPU proofs on AMD/ARM in explicit CIc46. ARM coverage product44872095577 has targetCompleted.success=true and executes the SDK on aarch64 with go_arch=host_go_arch=arm64, Go1.27.4; its exit4 is expected NO_TESTS_FOUND for a compile-only target, not a runtime-case pass. Buildifier44872097434 passes; unchanged source checks and original normal1XML/architecture plus AMD coverage evidence retain their verified scope. Final independent review remains; no helper upstream PR or human-publication question/approval exists. Candidate performance is open.",
-        "nextAction": "Root completes final independent review of the separate permanent worker proposal. Keep public47d, mechanical Go8cab and helper e33f publication boundaries distinct; no runtime proof remains pending on the closed compile-only gate, and no new contributor decision is inferred."
+        "sourceHead": "8cab980c14e1011e7855955944adc66b1b2554c4",
+        "disposition": "Mechanical Go rebase8cab980c14e1011e7855955944adc66b1b2554c4 is delivered and was independently verified OPEN/MERGEABLE/REVIEW_REQUIRED at06:11:22Z, after the canonical06:09 snapshot cutoff. Existing fvoznika/rivera requests, original source approvals and unset auto-merge are preserved; notice7058409582 is posted. Normal1XML/architecture and AMD coverage pass; the ARM compile-product proof used the separately proposed e33 worker overlay, not a fresh full-runtime/performance result. New First Pass2235 independently rejected admission: attempt1 exit80, no agent/start, stack_errored, author1535036 rolling30-day360000-compute-minute quota, zero tests. Old1586 is not applied to this head. Main CI remains a distinct unmet gate.",
+        "nextAction": "The existing owner follows remaining actual GitHub checks, maintainer review/import, separate main-CI requirements and evidenced provider recovery. Publication under the standing mechanical grant is complete. On the next natural canonical8cab snapshot, bind the already diagnosed2235 failure using its actual StatusContext ID; current retained output lacks that ID, so no old1586 identity is reused. The e33 standalone-helper posting decision belongs to its separate proposal."
       },
       "conflictObservedSince": "2026-11-21T04:40:29.427360+00:00"
     },
@@ -458133,9 +458133,9 @@
       ],
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
-        "sourceHead": "47d14a74e781ae01f7b68a306d16752da43daec4",
-        "disposition": "Public47d14a74e781ae01f7b68a306d16752da43daec4 remains conflicting; prepared8cab980c14e1011e7855955944adc66b1b2554c4 version patch is unchanged and unpublished. The distinct permanent worker proposal e33f30605e080fd02cc53bd20950e99d31c171fc closes all five caller platform/actual SDK CPU proofs on AMD/ARM in explicit CIc46. ARM coverage product44872095577 has targetCompleted.success=true and executes the SDK on aarch64 with go_arch=host_go_arch=arm64, Go1.27.4; its exit4 is expected NO_TESTS_FOUND for a compile-only target, not a runtime-case pass. Buildifier44872097434 passes; unchanged source checks and original normal1XML/architecture plus AMD coverage evidence retain their verified scope. Final independent review remains; no helper upstream PR or human-publication question/approval exists. Candidate performance is open.",
-        "nextAction": "Root completes final independent review of the separate permanent worker proposal. Keep public47d, mechanical Go8cab and helper e33f publication boundaries distinct; no runtime proof remains pending on the closed compile-only gate, and no new contributor decision is inferred."
+        "sourceHead": "8cab980c14e1011e7855955944adc66b1b2554c4",
+        "disposition": "Mechanical Go rebase8cab980c14e1011e7855955944adc66b1b2554c4 is delivered and was independently verified OPEN/MERGEABLE/REVIEW_REQUIRED at06:11:22Z, after the canonical06:09 snapshot cutoff. Existing fvoznika/rivera requests, original source approvals and unset auto-merge are preserved; notice7058409582 is posted. Normal1XML/architecture and AMD coverage pass; the ARM compile-product proof used the separately proposed e33 worker overlay, not a fresh full-runtime/performance result. New First Pass2235 independently rejected admission: attempt1 exit80, no agent/start, stack_errored, author1535036 rolling30-day360000-compute-minute quota, zero tests. Old1586 is not applied to this head. Main CI remains a distinct unmet gate.",
+        "nextAction": "The existing owner follows remaining actual GitHub checks, maintainer review/import, separate main-CI requirements and evidenced provider recovery. Publication under the standing mechanical grant is complete. On the next natural canonical8cab snapshot, bind the already diagnosed2235 failure using its actual StatusContext ID; current retained output lacks that ID, so no old1586 identity is reused. The e33 standalone-helper posting decision belongs to its separate proposal."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxx8kCQ"
@@ -466643,7 +466643,7 @@
         "since": "2026-11-21T05:04:12.012561+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:50:48.981201+00:00"
+        "observedAt": "2026-11-21T06:15:32.375526+00:00"
       }
     },
     "pr:17471": {
@@ -467684,7 +467684,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:50:48.981201+00:00"
+        "observedAt": "2026-11-21T06:15:32.375526+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -467693,7 +467693,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:50:48.981201+00:00"
+        "observedAt": "2026-11-21T06:15:32.375526+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -467702,7 +467702,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:50:48.981201+00:00"
+        "observedAt": "2026-11-21T06:15:32.375526+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -467711,7 +467711,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:50:48.981201+00:00"
+        "observedAt": "2026-11-21T06:15:32.375526+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -467720,7 +467720,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:50:48.981201+00:00"
+        "observedAt": "2026-11-21T06:15:32.375526+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -467729,7 +467729,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:50:48.981201+00:00"
+        "observedAt": "2026-11-21T06:15:32.375526+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -467738,7 +467738,16 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:50:48.981201+00:00"
+        "observedAt": "2026-11-21T06:15:32.375526+00:00"
+      }
+    },
+    "investigation:coverage-worker-cpu": {
+      "contributor-review": {
+        "scope": "e33f30605e080fd02cc53bd20950e99d31c171fc",
+        "since": "2026-11-21T06:15:32.375526+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-21T06:15:32.375526+00:00"
       }
     }
   },
