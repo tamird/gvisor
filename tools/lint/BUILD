@@ -6,8 +6,8 @@ format_test(
     name = "declared_formatting_preflight",
     srcs = [
         "//:MODULE.bazel",
-        "//pkg/tcpip/seqnum:seqnum.go",
-        "//tools/buildkite:BUILD",
+        "//pkg/tcpip/seqnum:format_srcs",
+        "//tools/buildkite:format_srcs",
     ],
     disable_git_attribute_checks = True,
     go = "@org_golang_x_tools//cmd/goimports",

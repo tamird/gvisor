@@ -24,3 +24,9 @@ py_test(
     data = [":buildkite"],
     deps = [":buildkite_lib"],
 )
+
+filegroup(
+    name = "format_srcs",
+    srcs = ["BUILD"],
+    visibility = ["//tools/lint:__pkg__"],
+)

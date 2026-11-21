@@ -11,3 +11,9 @@ go_library(
     importpath = "gvisor.dev/gvisor/pkg/tcpip/seqnum",
     visibility = ["//visibility:public"],
 )
+
+filegroup(
+    name = "format_srcs",
+    srcs = ["seqnum.go"],
+    visibility = ["//tools/lint:__pkg__"],
+)
