@@ -461284,8 +461284,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "5c8a182619525e77d210a31a9b9ff575251165f3",
-        "disposition": "Published 5c8a1826 and its lifecycle remain intact. HTTPD has valid nine-leaf request-contract outcomes, AMD compilation and all five maintained linters; shared strict C++ checks cover 374 first-party sources. Final ARM build44947661419 is workflow-successful but its artifact audit is pending. Prepared e383b2ac6d7a0424395b031ee57b30f60d94d40a adds only DCO metadata to the unchanged bfcd tree. Root final adversarial review has not run; no source approval or publication is inferred.",
-        "nextAction": "httpd_functional_resume audits the ARM artifact and hands the exact one-setting source to root for final adversarial review before any publication question. Preserve the original workload and source boundaries; do not rerun reconciled C++/configuration checks."
+        "disposition": "Published 5c8a1826 and its lifecycle remain intact. The separate one-setting HTTPD source e383 has completed AMD/ARM builds, full maintained source/strict checks, nine-leaf functional contracts and both final reviews. Its actual standalone publication question is tracked separately; no source approval or PR opening is inferred.",
+        "nextAction": "Root follows the existing canonical17780 lifecycle and the distinct investigation:httpd-client-capacity source question. Do not keep completed ARM artifact/final-review gates pending or duplicate the source decision."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANzyZv5g"
@@ -470009,6 +470009,15 @@
       "contributor-review": {
         "scope": "d039802d8437f08d27b0282485709cc5f1b464ba",
         "since": "2026-11-21T14:00:19.559771+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-21T15:42:31.456870+00:00"
+      }
+    },
+    "investigation:httpd-client-capacity": {
+      "contributor-review": {
+        "scope": "e383b2ac6d7a0424395b031ee57b30f60d94d40a",
+        "since": "2026-11-21T15:42:31.456870+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-21T15:42:31.456870+00:00"

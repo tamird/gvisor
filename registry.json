@@ -103126,9 +103126,9 @@
         "owner": "root",
         "sourceHead": "5c8a182619525e77d210a31a9b9ff575251165f3",
         "observedAt": "2026-11-18T20:06:11.890448+00:00",
-        "disposition": "Published 5c8a1826 and its lifecycle remain intact. HTTPD has valid nine-leaf request-contract outcomes, AMD compilation and all five maintained linters; shared strict C++ checks cover 374 first-party sources. Final ARM build44947661419 is workflow-successful but its artifact audit is pending. Prepared e383b2ac6d7a0424395b031ee57b30f60d94d40a adds only DCO metadata to the unchanged bfcd tree. Root final adversarial review has not run; no source approval or publication is inferred.",
-        "nextAction": "httpd_functional_resume audits the ARM artifact and hands the exact one-setting source to root for final adversarial review before any publication question. Preserve the original workload and source boundaries; do not rerun reconciled C++/configuration checks.",
-        "recheckCondition": "Owner-audited final ARM artifact and root final review, followed by an actual publication question/decision; existing PR lifecycle stays separate.",
+        "disposition": "Published 5c8a1826 and its lifecycle remain intact. The separate one-setting HTTPD source e383 has completed AMD/ARM builds, full maintained source/strict checks, nine-leaf functional contracts and both final reviews. Its actual standalone publication question is tracked separately; no source approval or PR opening is inferred.",
+        "nextAction": "Root follows the existing canonical17780 lifecycle and the distinct investigation:httpd-client-capacity source question. Do not keep completed ARM artifact/final-review gates pending or duplicate the source decision.",
+        "recheckCondition": "Actual source-publication reply or genuine17780 maintainer/import/provider change.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/44231839538",
           "https://github.com/tamird/gvisor/actions/runs/44231202091",
@@ -120804,8 +120804,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-21T15:42:31.456870+00:00",
-      "summary": "One authorized disable/enable sequence for existing workflow 378998679 was accepted; finally-enable restored verified active state, registration updated_at 15:32:11, with default master and workflow bytes/cron/permissions unchanged. The intermediate disabled-state read did not confirm a transition. The post-15:38 native check still lists 08:46:44 as the latest schedule event; no recovered triggering is established and ordinary provider delay remains possible. Manual fallback 44919894578 succeeded and sampled at 15:37:20. No cause or permanent scheduler repair is claimed.",
+      "updatedAt": "2026-11-21T21:09:14.524994+00:00",
+      "summary": "Actual native event=schedule run44949501220 on master fc8a0f4 completed successfully and sampled the API at21:06:15.542043 UTC. This proves one scheduled delivery after the single registration reset; sustained cadence and causality from that reset remain unproven. No cron, source, credentials, permissions or further registration changes were made.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -121048,7 +121048,7 @@
           ]
         }
       ],
-      "nextStep": "Keep the existing manual freshness guard at 15:54:20 (deadline 16:02:20) and check for an actual post-reset schedule event before any fallback. One future event must be observed, not inferred from active state or updated_at. No second toggle, source/cron rewrite, new monitor or permission change.",
+      "nextStep": "At each existing freshness lead derived from the actual API timestamp, check for a newer or live native scheduled run before using the existing snapshot-only fallback. Observe subsequent scheduled deliveries before claiming sustained recovery. Preserve the one-reset boundary; no new monitor or source/cron rewrite.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -121121,6 +121121,10 @@
         {
           "label": "Existing manual fallback after the single reset",
           "url": "https://github.com/tamird/gvisor/actions/runs/44919894578"
+        },
+        {
+          "label": "First verified post-reset scheduled collection",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44949501220"
         }
       ],
       "technicalOwner": "Codex",
@@ -121131,22 +121135,22 @@
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
       },
       "currentHealth": {
-        "observedAt": "2026-11-21T15:42:31.456870+00:00",
+        "observedAt": "2026-11-21T21:09:14.524994+00:00",
         "owner": "root",
         "workflowState": "active",
         "actionsEnabled": true,
         "defaultWorkflowHead": "fc8a0f4298cb4b48dd2109ed3c8029f1f0c4871d",
         "cron": "7,17,27,37,47,57 * * * *",
-        "latestNativeScheduleRun": 44886461540,
-        "latestNativeScheduleAt": "2026-11-21T08:46:44Z",
+        "latestNativeScheduleRun": 44949501220,
+        "latestNativeScheduleAt": "2026-11-21T21:03:18Z",
         "latestNativeScheduleConclusion": "success",
-        "currentManualSweep": 44919894578,
-        "currentSnapshotAt": "2026-11-21T15:37:20.047371+00:00",
+        "currentManualSweep": 44949159952,
+        "currentSnapshotAt": "2026-11-21T21:06:15.542043+00:00",
         "currentManualConclusion": "success",
-        "cause": "No post-reset event observed at the after 15:38 native check; latest actual schedule remains 08:46:44. Provider/registration cause is unproven. One public GitHub Status read (page updated 12:29:23.505) reports no incident; it does not exclude a repo-specific issue.",
-        "nextAction": "Keep the existing manual freshness guard at 15:54:20 (deadline 16:02:20) and check for an actual post-reset schedule event before any fallback. One future event must be observed, not inferred from active state or updated_at. No second toggle, source/cron rewrite, new monitor or permission change.",
-        "recheckCondition": "Actual post-reset scheduled event/completion or existing manual freshness lead; preserve the one-reset boundary.",
-        "currentSnapshotSource": "Verified snapshot-only manual 44919894578"
+        "cause": "One successful scheduled event is verified; neither sustained cadence nor causality from the earlier reset is established.",
+        "nextAction": "At each existing freshness lead derived from the actual API timestamp, check for a newer or live native scheduled run before using the existing snapshot-only fallback. Observe subsequent scheduled deliveries before claiming sustained recovery. Preserve the one-reset boundary; no new monitor or source/cron rewrite.",
+        "recheckCondition": "Next actual scheduled delivery or existing timestamp-derived manual freshness lead; no second reset.",
+        "currentSnapshotSource": "Verified scheduled run44949501220"
       }
     },
     {
@@ -141807,6 +141811,51 @@
         }
       ],
       "findings": []
+    },
+    {
+      "id": "investigation:httpd-client-capacity",
+      "repo": "google/gvisor",
+      "status": "active",
+      "group": "analysis",
+      "title": "Allow HTTPD's maximum client concurrency",
+      "owner": "root",
+      "head": "e383b2ac6d7a0424395b031ee57b30f60d94d40a",
+      "updatedAt": "2026-11-21T21:04:48.775519+00:00",
+      "summary": "One actual standalone-PR source-publication question is pending for e383: one file, three additions/one deletion, all required gates and two final reviews complete. Same-image event/25-thread evidence is resolved and DCO is included. Source is remotely reviewable by exact commit, but the requested preview ref is absent; no PR is open.",
+      "nextStep": "Root awaits the source-publication answer. The separate accepted request to check/unlock the existing SSH agent concerns environment availability: normal SSH timed out and HTTPS/API ref writes failed, while existing push grants remain valid. Do not treat this as a permission override or approval. Recheck actual agent availability and ordinary transport after a response; do not invent a published preview ref.",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "e383b2ac6d7a0424395b031ee57b30f60d94d40a",
+        "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+        "url": "https://github.com/tamird/gvisor/commit/e383b2ac6d7a0424395b031ee57b30f60d94d40a",
+        "title": "Allow HTTPD's maximum client concurrency",
+        "body": "The HTTPD fixture's default allowance of at most 75 connections can fill with idle keep-alive connections before it reaches the declared concurrency of 1,000. Set AsyncRequestWorkerFactor to 40 for the existing event worker: 25 idle threads then allow 1,025 connections. Baseline and candidate measurements must use the same fixture configuration.\n\nValidation: [AMD64](https://github.com/tamird/gvisor/actions/runs/44944409882) and [ARM64](https://github.com/tamird/gvisor/actions/runs/44947661419) builds, [full source checks](https://github.com/tamird/gvisor/actions/runs/44944414491), and [C++ lint](https://github.com/tamird/gvisor/actions/runs/44945623947) passed; the C++ result is reused because its inputs and configuration are unchanged. [Nine formerly failing cases](https://github.com/tamird/gvisor/actions/runs/44942653690) produced 9,000 expected HTTP 200/404 statuses with zero reported client errors.\n\nPosted by Codex on behalf of @tamird.\n",
+        "summary": "Root confirms the actual standalone publication question was accepted and remains unanswered. All required gates and two final reviews cleared; DCO is included. No precise submission timestamp or question ID was returned. The independent SSH-agent availability request does not approve this source."
+      },
+      "findings": [],
+      "evidence": [
+        {
+          "label": "Exact reviewable source",
+          "url": "https://github.com/tamird/gvisor/commit/e383b2ac6d7a0424395b031ee57b30f60d94d40a"
+        },
+        {
+          "label": "Nine functional cases, 9000 expected statuses",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44942653690"
+        },
+        {
+          "label": "ARM64 build",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44947661419"
+        },
+        {
+          "label": "Full source checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44944414491"
+        },
+        {
+          "label": "Unchanged-input strict C++ proof",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44945623947"
+        }
+      ]
     }
   ],
   "updatedAt": "2026-11-20T23:41:26.383263+00:00"
