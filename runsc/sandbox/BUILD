@@ -75,10 +75,11 @@ go_test(
         "sandbox_test.go",
     ],
     embed = [":sandbox"],
-    exec_properties = {
-        "test.init-dockerd": "false",
-        "test.workload-isolation-type": "firecracker",
-    },
+    local = True,
+    tags = [
+        "requires-net:ipv6",
+        "requires-root",
+    ],
     deps = [
         "//pkg/control/server",
         "//pkg/prometheus",
