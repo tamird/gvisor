@@ -461283,8 +461283,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "5c8a182619525e77d210a31a9b9ff575251165f3",
-        "disposition": "Published source 5c8a1826 and its existing review/provider lifecycle remain intact. HTTPD functional recovery is not complete: native N=1000 run 44933566292 passed count/status/error assertions; Sentry run 44932779374 had 481 HTTP200 responses and 519 timeouts. Trace 44934752057 retained useful artifacts despite output-tree validation failure. The cause remains unknown; no response-body, performance or source-fix conclusion follows.",
-        "nextAction": "httpd_functional_resume owns isolating Apache accept gating and the native/Sentry difference using the approved CI-only ConnLats diagnostic. No server/workload change, extra retry or source publication is authorized by these results. Root retains the canonical PR review/import/provider lifecycle separately."
+        "disposition": "Published source 5c8a1826 and its review/provider lifecycle remain intact. Native HTTPD diagnostic 44936022233 recorded 1000 HTTP200 responses and zero errors, with 1000 ConnLats entries (33 zero, 967 positive); this rejects the small-reuse-pool hypothesis. Sentry’s retained N=1000 result remains 481 HTTP200 responses and 519 timeouts. The cause is unknown; no body, performance or source-fix conclusion follows.",
+        "nextAction": "httpd_functional_resume owns one native standard-tool lifecycle diagnostic after strace6.8 attach preflight 44936709265 passed cleanup. Preserve the existing server/workload and unknown cause; no further timing or source publication follows from the preflight. Root retains canonical PR review/import/provider ownership."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANzyZv5g"
