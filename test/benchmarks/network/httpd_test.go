@@ -72,6 +72,9 @@ func benchmarkHttpdDocSize(b *testing.B) {
 					Concurrency: c,
 					Doc:         filename,
 				}
+				if size == "notfound" {
+					hey.ExpectedStatus = 404
+				}
 				runHttpd(b, hey)
 			})
 		}

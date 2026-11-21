@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"net/http"
 	"testing"
 )
 
@@ -27,10 +28,14 @@ import (
 const heyOutputTemplate = `{
   "requests_per_second": {{.Rps}},
   "average_latency_seconds": "{{.Average}}",
+  "results": {{.NumRes}},
+  "status_codes": {{jsonify .StatusCodeDist}},
   "errors": {{jsonify .ErrorDist}}
 }`
 
 type heyReport struct {
+	Results           int            `json:"results"`
+	StatusCodes       map[int]int    `json:"status_codes"`
 	RequestsPerSecond float64        `json:"requests_per_second"`
 	AverageLatency    *float64       `json:"average_latency_seconds,string"`
 	Errors            map[string]int `json:"errors"`
@@ -38,17 +43,15 @@ type heyReport struct {
 
 // Hey is for the client application 'hey'.
 type Hey struct {
-	Requests    int // Note: requests cannot be less than concurrency.
-	Concurrency int
-	Doc         string
+	Requests       int
+	Concurrency    int
+	Doc            string
+	ExpectedStatus int // Zero selects HTTP 200.
 }
 
 // MakeCmd returns a 'hey' command.
 func (h *Hey) MakeCmd(host string, port int) []string {
-	c := h.Concurrency
-	if c > h.Requests {
-		c = h.Requests
-	}
+	c := min(h.Concurrency, h.Requests)
 	return []string{
 		"hey",
 		"-o", heyOutputTemplate,
@@ -61,6 +64,7 @@ func (h *Hey) MakeCmd(host string, port int) []string {
 // Report reports metrics from the output of heyOutputTemplate.
 func (h *Hey) Report(b *testing.B, output []byte) {
 	b.Helper()
+	b.Logf("Hey requested=%d concurrency=%d elapsed before cleanup=%s; producer output=%s", h.Requests, min(h.Concurrency, h.Requests), b.Elapsed(), output)
 	var report heyReport
 	decoder := json.NewDecoder(bytes.NewReader(output))
 	decoder.DisallowUnknownFields()
@@ -72,6 +76,26 @@ func (h *Hey) Report(b *testing.B, output []byte) {
 	}
 	if report.Errors == nil || len(report.Errors) != 0 {
 		b.Fatalf("hey request error accounting is missing or reports errors: %s", output)
+	}
+	c := min(h.Concurrency, h.Requests)
+	if c <= 0 {
+		b.Fatalf("invalid hey request count or concurrency: %d, %d", h.Requests, h.Concurrency)
+	}
+	// Hey v0.1.5 runs N/C requests per worker and drops the remainder.
+	requests := h.Requests / c * c
+	if report.Results != requests {
+		b.Fatalf("hey completed %d results, want %d: %s", report.Results, requests, output)
+	}
+	expectedStatus := h.ExpectedStatus
+	if expectedStatus == 0 {
+		expectedStatus = http.StatusOK
+	}
+	// Hey v0.1.5 retains statuses for at most one million successful results.
+	// Larger runs check a sample, not the status of every response.
+	// https://github.com/rakyll/hey/blob/v0.1.5/requester/report.go
+	statusCount := min(requests, 1000000)
+	if len(report.StatusCodes) != 1 || report.StatusCodes[expectedStatus] != statusCount {
+		b.Fatalf("hey status counts %v, want %d HTTP %d responses: %s", report.StatusCodes, statusCount, expectedStatus, output)
 	}
 	if report.RequestsPerSecond <= 0 {
 		b.Fatalf("invalid hey request rate: %v", report.RequestsPerSecond)

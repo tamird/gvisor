@@ -92,6 +92,9 @@ func benchmarkNginxDocSize(b *testing.B, tmpfs bool) {
 					Concurrency: c,
 					Doc:         filename,
 				}
+				if size == "notfound" {
+					hey.ExpectedStatus = 404
+				}
 				runNginx(b, hey, tmpfs)
 			})
 		}
