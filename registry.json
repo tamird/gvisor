@@ -93564,7 +93564,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:58.120129+00:00",
-      "summary": "Current public f069808da1b9876130c7a853fe2fbb9f815d8519 is conflicting. Root assigns the existing rebase owner to assess the current-base conflict; no new source or publication is inferred. Historical proof on the published patch: 298 ordered source/file lines matched its approved predecessor, native AMD64 had 61 TCP and 48 SACK records pass, and TestKeepaliveReenable passed on Linux and gVisor. These results do not qualify a future conflict adaptation.\n\nThe timer now consumes each clock wake under the endpoint lock before calling a TCP handler. It discards canceled wakes, rearms early ones, and invokes the handler only for a due timer. This replaces the old handler-side predicate that also changed timer state.\n\nThree packet tests observed one, one, and two probes. All 60 package records, eight selected end-to-end records, and both architecture analyzers passed on ad55e4137. The proposed source differs by two comment lines. The median allocation counts were 26, 168, and 171 in both arms.\n\nAllocation size in six paired AMD64 samples:\n                                   │    stock     │               fixed                │\n                                   │     B/op     │     B/op      vs base              │\nWildcardBindClose-2                  4.844Ki ± 0%   4.852Ki ± 0%  +0.16% (p=0.002 n=6)\nKeepaliveHandshake/enabled=false-2   18.03Ki ± 1%   18.12Ki ± 1%  +0.49% (p=0.041 n=6)",
+      "summary": "Current public f069808da1b9876130c7a853fe2fbb9f815d8519 is conflicting. Timer source access, adaptation and retry remain explicitly held until Daybreak availability is actually confirmed; no confirmation exists. Historical approved-patch tests remain scoped to their original source and do not qualify a future conflict adaptation.\n\nThe timer now consumes each clock wake under the endpoint lock before calling a TCP handler. It discards canceled wakes, rearms early ones, and invokes the handler only for a due timer. This replaces the old handler-side predicate that also changed timer state.\n\nThree packet tests observed one, one, and two probes. All 60 package records, eight selected end-to-end records, and both architecture analyzers passed on ad55e4137. The proposed source differs by two comment lines. The median allocation counts were 26, 168, and 171 in both arms.\n\nAllocation size in six paired AMD64 samples:\n                                   │    stock     │               fixed                │\n                                   │     B/op     │     B/op      vs base              │\nWildcardBindClose-2                  4.844Ki ± 0%   4.852Ki ± 0%  +0.16% (p=0.002 n=6)\nKeepaliveHandshake/enabled=false-2   18.03Ki ± 1%   18.12Ki ± 1%  +0.49% (p=0.041 n=6)",
       "evidence": [
         {
           "label": "Published TCP timer wakeup fix",
@@ -93599,8 +93599,8 @@
         "owner": "root",
         "sourceHead": "f069808da1b9876130c7a853fe2fbb9f815d8519",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Current public f069808da1b9876130c7a853fe2fbb9f815d8519 is conflicting. Root assigns the existing rebase owner to assess the current-base conflict; no new source or publication is inferred. Historical proof on the published patch: 298 ordered source/file lines matched its approved predecessor, native AMD64 had 61 TCP and 48 SACK records pass, and TestKeepaliveReenable passed on Linux and gVisor. These results do not qualify a future conflict adaptation.",
-        "nextAction": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations.",
+        "disposition": "Current public f069808da1b9876130c7a853fe2fbb9f815d8519 is conflicting. Timer source access, adaptation and retry remain explicitly held until Daybreak availability is actually confirmed; no confirmation exists. Historical approved-patch tests remain scoped to their original source and do not qualify a future conflict adaptation.",
+        "nextAction": "Preserve the explicit Daybreak hold: no timer source read, adaptation or retry until actual availability is confirmed. Root and the existing owner recheck that condition; this is not a pending user approval.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17286",
           "https://github.com/tamird/gvisor/commit/97e5ddeb6",
@@ -93613,7 +93613,7 @@
           "https://buildkite.com/gvisor/first-pass/builds/1576#01a1eae4-1974-4a9c-99ad-20ab069b9703"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "A source-bound conflict assessment or new source/base state.",
+        "recheckCondition": "Actual confirmed Daybreak availability, preserving the existing source/publication boundaries.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -93706,7 +93706,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations."
+      "nextStep": "Preserve the explicit Daybreak hold: no timer source read, adaptation or retry until actual availability is confirmed. Root and the existing owner recheck that condition; this is not a pending user approval."
     },
     {
       "id": "pr:17287",

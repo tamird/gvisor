@@ -453331,8 +453331,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "f069808da1b9876130c7a853fe2fbb9f815d8519",
-        "disposition": "Current public f069808da1b9876130c7a853fe2fbb9f815d8519 is conflicting. Root assigns the existing rebase owner to assess the current-base conflict; no new source or publication is inferred. Historical proof on the published patch: 298 ordered source/file lines matched its approved predecessor, native AMD64 had 61 TCP and 48 SACK records pass, and TestKeepaliveReenable passed on Linux and gVisor. These results do not qualify a future conflict adaptation.",
-        "nextAction": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations."
+        "disposition": "Current public f069808da1b9876130c7a853fe2fbb9f815d8519 is conflicting. Timer source access, adaptation and retry remain explicitly held until Daybreak availability is actually confirmed; no confirmation exists. Historical approved-patch tests remain scoped to their original source and do not qualify a future conflict adaptation.",
+        "nextAction": "Preserve the explicit Daybreak hold: no timer source read, adaptation or retry until actual availability is confirmed. Root and the existing owner recheck that condition; this is not a pending user approval."
       },
       "conflictObservedSince": "2026-11-20T23:52:55.787276+00:00"
     },
@@ -459743,8 +459743,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "f069808da1b9876130c7a853fe2fbb9f815d8519",
-        "disposition": "Current public f069808da1b9876130c7a853fe2fbb9f815d8519 is conflicting. Root assigns the existing rebase owner to assess the current-base conflict; no new source or publication is inferred. Historical proof on the published patch: 298 ordered source/file lines matched its approved predecessor, native AMD64 had 61 TCP and 48 SACK records pass, and TestKeepaliveReenable passed on Linux and gVisor. These results do not qualify a future conflict adaptation.",
-        "nextAction": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations."
+        "disposition": "Current public f069808da1b9876130c7a853fe2fbb9f815d8519 is conflicting. Timer source access, adaptation and retry remain explicitly held until Daybreak availability is actually confirmed; no confirmation exists. Historical approved-patch tests remain scoped to their original source and do not qualify a future conflict adaptation.",
+        "nextAction": "Preserve the explicit Daybreak hold: no timer source read, adaptation or retry until actual availability is confirmed. Root and the existing owner recheck that condition; this is not a pending user approval."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxx_jeg"
