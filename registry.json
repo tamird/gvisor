@@ -103125,9 +103125,9 @@
         "owner": "root",
         "sourceHead": "5c8a182619525e77d210a31a9b9ff575251165f3",
         "observedAt": "2026-11-18T20:06:11.890448+00:00",
-        "disposition": "Published source 5c8a1826 and its review/provider lifecycle remain intact. Recovered native trace shows Apache explicitly removes the listener and pauses 4.7s, as in the retained Sentry trace; this does not exonerate Sentry or establish the timeout cause. The CI capacity-isolation run 44941850928 is workflow-successful but its actual case/output audit is pending. No permanent fix, performance or source-publication conclusion follows.",
-        "nextAction": "httpd_functional_resume audits the existing capacity isolation while preserving -X, 25 threads, keepalive, deadlines, request count/concurrency, payload and runtime. Root retains canonical PR lifecycle ownership; await actual case/response/cleanup evidence before any further conclusion.",
-        "recheckCondition": "Owner-audited capacity-isolation evidence or a material source/review/provider change; no inferred cause or new source approval.",
+        "disposition": "Published 5c8a1826 and its review/provider lifecycle remain intact. HTTPD capacity isolation passed request/status/error contracts across nine leaves, including 404, and nine calibrations, using unchanged images, nine runtime products and cleanup. Independent one-setting source bfcd258166ec1c9b028a67c390d163bc42320476 still requires its standalone build and current full lint/lint-cc gate reconciliation. It is not publication-ready; no performance, permanent-fix or Sentry-cause conclusion follows.",
+        "nextAction": "httpd_functional_resume closes the required current gates and source review for the one-setting proposal. Preserve existing runtime/workload scope and upstream source approval boundaries; root retains canonical PR review/import/provider ownership.",
+        "recheckCondition": "Audited standalone build, maintained lint/lint-cc and final review evidence, or material source/review/provider change; no new approval has been inferred.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/44231839538",
           "https://github.com/tamird/gvisor/actions/runs/44231202091",
@@ -130636,9 +130636,9 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-21T19:42:11.849660+00:00",
+      "updatedAt": "2026-11-21T20:02:17.048994+00:00",
       "group": "analysis",
-      "summary": "Released golang.org/x/tools v0.53.0 contains the required goimports fix (588ada / CL858482). The old full-lint-on-empty design is held, and no current //tools/lint:check target exists. Root assigned buildifier_license_fix a contained dependency refresh and checks of the maintained formatter/analyzer entry points; this does not establish full lint completion.",
+      "summary": "Released x/tools v0.53.0 contains the required goimports fix. Candidate 36e passed maintained formatting, 24 analyzer cases, all five source checks and 225 license entries, but changes shared production x/sys, x/net and crypto dependencies. It is held pending proper runtime compatibility/performance qualification. The standard development-only isolation route requires a disabled experimental flag; no alternative graph was built. The old full-lint-on-empty architecture remains held.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -131010,7 +131010,7 @@
           ]
         }
       ],
-      "nextStep": "buildifier_license_fix prepares and validates the contained dependency refresh on current upstream using actual maintained checks. Preserve the held architecture and existing source-approval boundary; do not revive the absent aggregate target or introduce a new framework.",
+      "nextStep": "buildifier_license_fix audits actual lint-cc failure 44942966193 without assuming a source regression or cause, and resolves the dependency scope before any publication review. Preserve valid existing checks; no experimental flag, fork, framework or revived aggregate target is authorized.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -131091,6 +131091,10 @@
         {
           "label": "Mixed test and ARM64 build commands",
           "url": "https://github.com/tamird/gvisor/blob/cd5b2a5a2/.buildkite/pipeline.yaml#L360-L371"
+        },
+        {
+          "label": "Current lint-cc failure under owner audit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44942966193"
         }
       ],
       "reviewWatch": {
