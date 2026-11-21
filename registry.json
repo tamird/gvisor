@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T07:01:57.557943+00:00",
+    "updatedAt": "2026-11-21T07:28:18.199633+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -48629,7 +48629,7 @@
       "title": "Run Buildifier and cpplint as Bazel actions",
       "url": "https://github.com/google/gvisor/pull/16663",
       "group": "analysis",
-      "summary": "Public6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef remains conflicting. buildifier_license_fix owns a four-file tool-only candidate (+16/-24), replacing the legacy patch/mirror path with BCR Cpplint2.0.2. The version change from1.4 is semantic and needs its own publication review; maintained Aspect2.9.1 has no Cpplint API. AMD/ARM maintained-caller validation, source guards/tests,226-entry license audit, MODULE formatting and actual negative-error proof are complete at their recorded scopes. The owner is adding an explicit version note and correcting a stale comment before final adversarial review. No new source-publication question or approval exists; the broader source-input migration remains open.",
+      "summary": "Public6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef remains conflicting. Qualified replacement651437132bf0054f1742ab2dce694f28a9ee0dc4 is now in an actual pending amendment question: four files (+19/-25), Cpplint1.4.0 to maintained BCR2.0.2, wheel installer removed and development-dependency boundary preserved. AMD/ARM492-input callers, unit/license/negative/status checks, final formatting and independent reviews passed at their recorded scopes. Dependency-boundary controls behaved as expected; whole-graph analysis is blocked by the unchanged LLVM extension and is not claimed green. Declared source-input actions remain separate unfinished work. DCO is included; no publication has occurred.",
       "evidence": [
         {
           "label": "Posted question to Ryan about the Buildkite clang-tidy target",
@@ -48841,7 +48841,7 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-21T07:01:57.557943+00:00",
+      "updatedAt": "2026-11-21T07:28:18.199633+00:00",
       "refinement": {
         "before": {
           "head": "54a734f173ae271dbb6aecbcc61dd3c615a09a6b"
@@ -48929,28 +48929,47 @@
         }
       ],
       "followup": {
-        "owner": "buildifier_license_fix / root",
+        "owner": "root / buildifier_license_fix",
         "sourceHead": "6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
         "observedAt": "2026-11-21T06:54:13.036908+00:00",
-        "disposition": "Public6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef remains conflicting. buildifier_license_fix owns a four-file tool-only candidate (+16/-24), replacing the legacy patch/mirror path with BCR Cpplint2.0.2. The version change from1.4 is semantic and needs its own publication review; maintained Aspect2.9.1 has no Cpplint API. AMD/ARM maintained-caller validation, source guards/tests,226-entry license audit, MODULE formatting and actual negative-error proof are complete at their recorded scopes. The owner is adding an explicit version note and correcting a stale comment before final adversarial review. No new source-publication question or approval exists; the broader source-input migration remains open.",
-        "nextAction": "buildifier_license_fix finishes the version-message/comment correction and final independent/semantic review, then prepares an exact qualified source proposal for the ordinary publication boundary. Keep public6e4 unchanged; do not treat the semantic supplier upgrade as an already-authorized mechanical revival or repeat the earlier repair-command reply.",
+        "disposition": "Public6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef remains conflicting. Qualified replacement651437132bf0054f1742ab2dce694f28a9ee0dc4 is now in an actual pending amendment question: four files (+19/-25), Cpplint1.4.0 to maintained BCR2.0.2, wheel installer removed and development-dependency boundary preserved. AMD/ARM492-input callers, unit/license/negative/status checks, final formatting and independent reviews passed at their recorded scopes. Dependency-boundary controls behaved as expected; whole-graph analysis is blocked by the unchanged LLVM extension and is not claimed green. Declared source-input actions remain separate unfinished work. DCO is included; no publication has occurred.",
+        "nextAction": "Await the reply to the existing exact651 amendment question. Root publishes only after that decision, preserving the reviewed title/description and the broader input-migration boundary. No repeat question, mechanical-approval inference or source-head advance.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16663",
           "https://github.com/google/gvisor/pull/17612",
           "https://github.com/tamird/gvisor/commit/cfb38adfa3c60dbfd6f4f234cae63f03c76477bf",
           "https://github.com/tamird/gvisor/actions/runs/44125058497",
           "https://github.com/tamird/gvisor/commit/6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
-          "https://github.com/tamird/gvisor/actions/runs/44877255242"
+          "https://github.com/tamird/gvisor/actions/runs/44877255242",
+          "https://github.com/tamird/gvisor/commit/651437132bf0054f1742ab2dce694f28a9ee0dc4",
+          "https://github.com/tamird/gvisor/actions/runs/44879972776",
+          "https://github.com/tamird/gvisor/actions/runs/44879577102",
+          "https://github.com/tamird/gvisor/actions/runs/44879970579",
+          "https://github.com/tamird/gvisor/actions/runs/44877568049",
+          "https://github.com/tamird/gvisor/actions/runs/44877773647",
+          "https://github.com/tamird/gvisor/actions/runs/44877570553",
+          "https://github.com/tamird/gvisor/actions/runs/44877654051",
+          "https://github.com/tamird/gvisor/actions/runs/44877743052"
         ],
         "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
         "providerHead": "6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Final exact-source/review milestone, actual public source change or a source-input owner/design change.",
+        "recheckCondition": "Actual reply to the pending amendment question or a source/qualification change.",
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
-        "curatedAt": "2026-11-21T07:01:57.557943+00:00"
+        "curatedAt": "2026-11-21T07:28:18.199633+00:00"
       },
-      "nextStep": "buildifier_license_fix finishes the version-message/comment correction and final independent/semantic review, then prepares an exact qualified source proposal for the ordinary publication boundary. Keep public6e4 unchanged; do not treat the semantic supplier upgrade as an already-authorized mechanical revival or repeat the earlier repair-command reply.",
-      "recheckCondition": "Final exact-source/review milestone, actual public source change or a source-input owner/design change."
+      "nextStep": "Await the reply to the existing exact651 amendment question. Root publishes only after that decision, preserving the reviewed title/description and the broader input-migration boundary. No repeat question, mechanical-approval inference or source-head advance.",
+      "recheckCondition": "Actual reply to the pending amendment question or a source/qualification change.",
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "651437132bf0054f1742ab2dce694f28a9ee0dc4",
+        "baseHead": "6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
+        "url": "https://github.com/tamird/gvisor/commit/651437132bf0054f1742ab2dce694f28a9ee0dc4",
+        "title": "Use Cpplint from Bazel for source lint",
+        "summary": "Actual pending amendment: replace the conflicting broader proposal with the qualified four-file Cpplint supplier change (+19/-25), upgrading1.4.0 to2.0.2. The recorded492/architecture, negative/status, license/dependency checks and independent reviews passed. DCO is included; full declared-input actions remain unfinished.",
+        "body": "Source lint installed Cpplint 1.4.0 from a wheel and ran it with the host Python interpreter. Use the maintained BCR Cpplint 2.0.2 executable and its declared Python runtime, and remove the wheel installer.\n\nKeep Git-index input selection, checker flags, parallel batches, and failure propagation. Declare Cpplint as a development dependency so importing gVisor does not add the lint tool.\n\nThis upgrades the checker and can change diagnostics even with the same flags. Moving the checks into Bazel actions with declared source inputs remains separate work.\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "pr:16664",
