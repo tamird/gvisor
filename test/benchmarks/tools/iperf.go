@@ -50,7 +50,7 @@ func (i *Iperf) MakeCmd(host string, port int) []string {
 // Report parses output from iperf client and reports metrics.
 func (i *Iperf) Report(b *testing.B, output string) {
 	b.Helper()
-	b.Logf("Iperf N=%d elapsed before cleanup=%s; producer output:\n%s", b.N, b.Elapsed(), output)
+	b.Logf("Iperf N=%d elapsed before cleanup=%s; producer output=%q", b.N, b.Elapsed(), output)
 	// Parse bandwidth and report it.
 	bW, err := i.bandwidth(output)
 	if err != nil {
