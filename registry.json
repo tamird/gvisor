@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T04:42:53.815540+00:00",
+    "updatedAt": "2026-11-21T05:04:12.012561+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -69696,13 +69696,13 @@
       "repo": "google/gvisor",
       "number": 16834,
       "ref": "proposal/gazelle-native-environment-one-map",
-      "head": "afa202f537c8e49da38030e0aac48a681d42b435",
+      "head": "bec09fb06c6ca5924a5001dca1cb43be2ea71e26",
       "title": "Use Bazel to clear Gazelle repository environments",
       "url": "https://github.com/google/gvisor/pull/16834",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:48.755399+00:00",
-      "summary": "Gazelle can run repository commands on a client without a host env executable. The gVisor module declares its Bazel 8 minimum.\n\nWith registry LLVM 0.8.24, Gazelle required a host env executable to configure either release. Applying #16834 let Bazel configure the optimized AMD64 and ARM64 releases and their x/sys/unix dependency. Both system binary directories stayed empty. These four configuration queries ran no build actions.",
+      "updatedAt": "2026-11-21T05:04:12.012561+00:00",
+      "summary": "Gazelle rebasebec09fb06c6ca5924a5001dca1cb43be2ea71e26 is delivered OPEN/MERGEABLE with DCO success and notice7057566026. The43-line topic is preserved; current preflights/source checks and two context reviews passed, with earlier controls/strict C++ results retained only by verified inputs. Historical CHANGES_REQUESTED, pending trantoji review and the upstream2499 wait remain unchanged. New exact-head First Pass2224 independently rejected admission before agent/start: exit80, author1535036 rolling30-day360000-compute-minute quota, zero tests. Old1502 is not reused.",
       "evidence": [
         {
           "label": "Both target configurations with empty system binary directories",
@@ -69744,16 +69744,44 @@
         ]
       },
       "followup": {
-        "sourceHead": "afa202f537c8e49da38030e0aac48a681d42b435",
-        "owner": "root",
-        "nextAction": "Follow maintainer review, exact published-head checks and any matching import; handle new substantive feedback in the existing workstream. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks.",
+        "sourceHead": "bec09fb06c6ca5924a5001dca1cb43be2ea71e26",
+        "owner": "approved_rebase_queue / root",
+        "nextAction": "Follow actual remaining GitHub checks, the existing trantoji review/upstream2499 disposition and evidenced provider admission recovery. The rebase and notice are delivered; no duplicate outreach or retry.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-17T19:04:48.755399+00:00",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.",
+        "observedAt": "2026-11-21T05:00:23.960289+00:00",
+        "recheckCondition": "Exact-head check/review/import change or independently evidenced provider recovery.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/16834",
           "https://github.com/tamird/gvisor/commit/3f09760978f08d3dfba28a63885c0533f2b03a02",
-          "https://github.com/tamird/gvisor/commit/afa202f537c8e49da38030e0aac48a681d42b435"
+          "https://github.com/tamird/gvisor/commit/afa202f537c8e49da38030e0aac48a681d42b435",
+          "https://github.com/tamird/gvisor/commit/bec09fb06c6ca5924a5001dca1cb43be2ea71e26",
+          "https://github.com/gvisor/gvisor/pull/16834#issuecomment-7057566026",
+          "https://buildkite.com/gvisor/first-pass/builds/2224#01a1fc74-b1f4-453a-9c05-d1e441bd386e"
+        ],
+        "disposition": "Gazelle rebasebec09fb06c6ca5924a5001dca1cb43be2ea71e26 is delivered OPEN/MERGEABLE with DCO success and notice7057566026. The43-line topic is preserved; current preflights/source checks and two context reviews passed, with earlier controls/strict C++ results retained only by verified inputs. Historical CHANGES_REQUESTED, pending trantoji review and the upstream2499 wait remain unchanged. New exact-head First Pass2224 independently rejected admission before agent/start: exit80, author1535036 rolling30-day360000-compute-minute quota, zero tests. Old1502 is not reused.",
+        "curatedAt": "2026-11-21T05:04:12.012561+00:00",
+        "attentionDispositions": [
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "First Pass2224: independently diagnosed rolling30-day quota admission failure",
+            "nextAction": "Follow actual remaining GitHub checks, the existing trantoji review/upstream2499 disposition and evidenced provider admission recovery. The rebase and notice are delivered; no duplicate outreach or retry.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/2224#01a1fc74-b1f4-453a-9c05-d1e441bd386e"
+            ],
+            "binding": {
+              "sourceHead": "bec09fb06c6ca5924a5001dca1cb43be2ea71e26",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN3KXFNQ",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/2224",
+                  "kind": "status"
+                }
+              ]
+            }
+          }
         ]
       },
       "dcoAmendment": {
@@ -69777,7 +69805,9 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
-      }
+      },
+      "nextStep": "Follow actual remaining GitHub checks, the existing trantoji review/upstream2499 disposition and evidenced provider admission recovery. The rebase and notice are delivered; no duplicate outreach or retry.",
+      "recheckCondition": "Exact-head check/review/import change or independently evidenced provider recovery."
     },
     {
       "id": "pr:16868",
@@ -95800,8 +95830,8 @@
       "url": "https://github.com/google/gvisor/pull/17378",
       "head": "47d14a74e781ae01f7b68a306d16752da43daec4",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:58.120129+00:00",
-      "summary": "Published as #17378 after the normal and patched-coverage Linux runsc binaries both ran with Go 1.27.4 and both Bazel tests passed. The coverage PR (#16507) deletes the script changed by this upgrade. The combined version builds both coverage binaries with the SDK from go.mod and passes KcovTest.Kcov on AMD64.",
+      "updatedAt": "2026-11-21T05:04:12.012561+00:00",
+      "summary": "Public47d14a74e781ae01f7b68a306d16752da43daec4 still conflicts. Unpublished current-base candidate8cab980c14e1011e7855955944adc66b1b2554c4 is under qualification. Corrected Go graph checks pass; the earlier nonexistent-target selection was an orchestration error, not an established source bug. Actual two-architecture Go compiler gates remain owned by the rebase owner; no terminal pass or publication is inferred.",
       "evidence": [
         {
           "label": "Go release notes",
@@ -95833,11 +95863,11 @@
         }
       ],
       "followup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "47d14a74e781ae01f7b68a306d16752da43daec4",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "The published one-commit PR now includes all three Go 1.27.4 updates. The rebuilt AMD64 GCS fixture reported the new compiler in both its CLI and executable metadata.",
-        "nextAction": "Follow upstream review and import of the published Go 1.27.4 update. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 47d14a74e781ae01f7b68a306d16752da43daec4; observed 2026-11-17T19:29:29.454062+00:00): build 1586 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "disposition": "Public47d14a74e781ae01f7b68a306d16752da43daec4 still conflicts. Unpublished current-base candidate8cab980c14e1011e7855955944adc66b1b2554c4 is under qualification. Corrected Go graph checks pass; the earlier nonexistent-target selection was an orchestration error, not an established source bug. Actual two-architecture Go compiler gates remain owned by the rebase owner; no terminal pass or publication is inferred.",
+        "nextAction": "The existing owner consumes actual compiler gates44868371666/44868373531 and closes source/context qualification before root publication review. Preserve original source-bound evidence and separate open performance obligations.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17378",
           "https://github.com/tamird/gvisor/commit/3349d4ca3",
@@ -95850,7 +95880,7 @@
           "https://buildkite.com/gvisor/first-pass/builds/1586#01a1eae1-b3eb-4216-9973-6cc1dfd28869"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "recheckCondition": "Audited candidate gate/review completion or actual public source change.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -95873,7 +95903,8 @@
               ]
             }
           }
-        ]
+        ],
+        "curatedAt": "2026-11-21T05:04:12.012561+00:00"
       },
       "refinement": {
         "before": {
@@ -95920,7 +95951,9 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
-      }
+      },
+      "nextStep": "The existing owner consumes actual compiler gates44868371666/44868373531 and closes source/context qualification before root publication review. Preserve original source-bound evidence and separate open performance obligations.",
+      "recheckCondition": "Audited candidate gate/review completion or actual public source change."
     },
     {
       "id": "pr:17394",
@@ -97523,8 +97556,8 @@
       "url": "https://github.com/google/gvisor/pull/17470",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-11-21T04:42:53.815540+00:00",
-      "summary": "Equivalent rebasebc55ab6327453ed38e289b2b1b1f7197b38087e8 is delivered OPEN/MERGEABLE/APPROVED with notice7057355062 and both existing reviews retained. Scoped two-architecture library, source and377-source strict C++ gates plus two independent context reviews passed; original PHP controls retain their input-bound scope, without a fresh full-runtime claim. GitHub disabled xinzhong’s auto-merge after the push; it is not re-enabled. New DCO check136732232020 reports55 commits/27 invalid upstream commits despite the actual one-commit PR and valid topic sign-off. The check re-request returned404; this requires provider/app reconciliation, not source churn or upstream sign-offs. Current source/export CI and First Pass2223 remain pending.",
+      "updatedAt": "2026-11-21T05:04:12.012561+00:00",
+      "summary": "Deliveredbc55ab6327453ed38e289b2b1b1f7197b38087e8 retains its existing approvals. First Pass2223 and all reported non-DCO validation checks pass, but no current-head main-pipeline result exists: canonical main55576 belongs to old3ee54. Root verified and updated notice7057355062 at05:02:43Z to request a maintainer reapply ready to test. DCO136732232020 still reports the wrong55-versus-one commit range; the topic sign-off is valid. Its external cncf/dco2 report has a separate actual pending posting decision, not a source-amendment or manual-sign-off requirement.",
       "evidence": [
         {
           "label": "Published diagnostic change",
@@ -97550,10 +97583,10 @@
       "followup": {
         "sourceHead": "bc55ab6327453ed38e289b2b1b1f7197b38087e8",
         "owner": "approved_rebase_queue / root",
-        "nextAction": "The existing rebase owner and root follow actual CI results and the supported DCO app/maintainer refresh, preserving the valid topic sign-off, retained reviews and disabled auto-merge. Publication under the standing mechanical grant is complete; no new user decision or source change is pending.",
+        "nextAction": "Root follows the maintainer response/current-head main trigger already requested in the rebase notice, the DCO app refresh and the existing external-report posting decision. Keep main validation open until an actual bc55 build is observed; no repeated outreach, source churn or upstream sign-offs.",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-21T04:40:29.431125+00:00",
-        "recheckCondition": "New exact-head CI/DCO provider result or supported maintainer/app refresh, substantive review or source/import change.",
+        "recheckCondition": "Exact-bc55 main status/build or maintainer-trigger event, DCO app result, or reply to the existing external-report posting question.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17470",
           "https://github.com/tamird/gvisor/commit/60ec8592c1c5fcec63846664b77a1bec5018b97c",
@@ -97591,8 +97624,8 @@
             }
           ]
         },
-        "curatedAt": "2026-11-21T04:42:53.815540+00:00",
-        "disposition": "Equivalent rebasebc55ab6327453ed38e289b2b1b1f7197b38087e8 is delivered OPEN/MERGEABLE/APPROVED with notice7057355062 and both existing reviews retained. Scoped two-architecture library, source and377-source strict C++ gates plus two independent context reviews passed; original PHP controls retain their input-bound scope, without a fresh full-runtime claim. GitHub disabled xinzhong’s auto-merge after the push; it is not re-enabled. New DCO check136732232020 reports55 commits/27 invalid upstream commits despite the actual one-commit PR and valid topic sign-off. The check re-request returned404; this requires provider/app reconciliation, not source churn or upstream sign-offs. Current source/export CI and First Pass2223 remain pending."
+        "curatedAt": "2026-11-21T05:04:12.012561+00:00",
+        "disposition": "Deliveredbc55ab6327453ed38e289b2b1b1f7197b38087e8 retains its existing approvals. First Pass2223 and all reported non-DCO validation checks pass, but no current-head main-pipeline result exists: canonical main55576 belongs to old3ee54. Root verified and updated notice7057355062 at05:02:43Z to request a maintainer reapply ready to test. DCO136732232020 still reports the wrong55-versus-one commit range; the topic sign-off is valid. Its external cncf/dco2 report has a separate actual pending posting decision, not a source-amendment or manual-sign-off requirement."
       },
       "dcoAmendment": {
         "oldHead": "60ec8592c1c5fcec63846664b77a1bec5018b97c",
@@ -97616,8 +97649,17 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "The existing rebase owner and root follow actual CI results and the supported DCO app/maintainer refresh, preserving the valid topic sign-off, retained reviews and disabled auto-merge. Publication under the standing mechanical grant is complete; no new user decision or source change is pending.",
-      "recheckCondition": "New exact-head CI/DCO provider result or supported maintainer/app refresh, substantive review or source/import change."
+      "nextStep": "Root follows the maintainer response/current-head main trigger already requested in the rebase notice, the DCO app refresh and the existing external-report posting decision. Keep main validation open until an actual bc55 build is observed; no repeated outreach, source churn or upstream sign-offs.",
+      "recheckCondition": "Exact-bc55 main status/build or maintainer-trigger event, DCO app result, or reply to the existing external-report posting question.",
+      "contributorReview": {
+        "kind": "issue",
+        "status": "pending",
+        "head": "bc55ab6327453ed38e289b2b1b1f7197b38087e8",
+        "url": "https://github.com/cncf/dco2/issues/new",
+        "title": "DCO check includes upstream commits outside the current PR range",
+        "summary": "Approve opening this bug report in cncf/dco2? This is a new external report; the existing authorization covered the PR rebase.",
+        "body": "On https://github.com/gvisor/gvisor/pull/17470, check 136732232020 for bc55ab6327453ed38e289b2b1b1f7197b38087e8 lists 55 commits and 27 sign-off failures. It accepts that commit’s sign-off. GitHub’s current PR range contains only that commit. The standard re-request returned HTTP 404.\n\nThe inspected event handler uses the webhook’s base/head and ignores re-request events: https://github.com/cncf/dco2/blob/cd8272fff227aab9eeb5ffac398f1abd88508d73/dco2/src/dco/event/mod.rs . The deployed revision and original webhook base are unknown.\n\nCould the app operator recompute the check from the current PR range and investigate the range-refresh and re-request handling?\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "pr:17471",
@@ -102132,8 +102174,8 @@
       "head": "1692a9405af5de11203c7cd913ead169f8f06936",
       "group": "bazel",
       "status": "open",
-      "summary": "First Pass1771 passed on the exact published1692head. The latest approval observation remains distinct from GitHub REVIEW_REQUIRED; older provider failures are historical, not the current CI blocker.",
-      "updatedAt": "2026-11-18T21:15:29.687318+00:00",
+      "summary": "Public1692a9405af5de11203c7cd913ead169f8f06936 still conflicts. Unpublished current-base candidate3810f2bbe2a84d9b7e90a4ecf2535e4691874648 is under parser and strict-C++ qualification; no new source approval, terminal pass or publication is inferred. Earlier published-source checks and reviews retain their original scope.",
+      "updatedAt": "2026-11-21T05:04:12.012561+00:00",
       "evidence": [
         {
           "label": "Upstream PR #17641",
@@ -102169,11 +102211,11 @@
         }
       ],
       "followup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "1692a9405af5de11203c7cd913ead169f8f06936",
         "observedAt": "2026-11-18T21:05:51.124797+00:00",
-        "disposition": "First Pass1771 passed on the exact published1692head. The latest approval observation remains distinct from GitHub REVIEW_REQUIRED; older provider failures are historical, not the current CI blocker.",
-        "nextAction": "Follow required human review and any matching import on exact published1692. Preserve previous failure/automatic retry history; no new source change, outreach or merge.",
+        "disposition": "Public1692a9405af5de11203c7cd913ead169f8f06936 still conflicts. Unpublished current-base candidate3810f2bbe2a84d9b7e90a4ecf2535e4691874648 is under parser and strict-C++ qualification; no new source approval, terminal pass or publication is inferred. Earlier published-source checks and reviews retain their original scope.",
+        "nextAction": "The existing owner/root consume parser gates44868196273/44868197611 and strict gate44868199165, then reconcile source/context review and remaining performance requirements before publication.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17641",
           "https://github.com/tamird/gvisor/actions/runs/43452602601/artifacts/14053568098",
@@ -102184,7 +102226,7 @@
           "https://buildkite.com/gvisor/first-pass/builds/1606#01a1eae3-d160-41f8-aad9-b411cfc9ff16"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Review/import, current source/head/base or required-check changes.",
+        "recheckCondition": "Audited candidate gate/review completion or actual public source change.",
         "latestReviewObservation": {
           "checkedAt": "2026-11-18T19:22:58.577211+00:00",
           "head": "1692a9405af5de11203c7cd913ead169f8f06936",
@@ -102209,7 +102251,7 @@
             }
           ]
         },
-        "curatedAt": "2026-11-18T21:15:29.687318+00:00",
+        "curatedAt": "2026-11-21T05:04:12.012561+00:00",
         "ciHistory": [
           {}
         ],
@@ -102242,7 +102284,9 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
-      }
+      },
+      "nextStep": "The existing owner/root consume parser gates44868196273/44868197611 and strict gate44868199165, then reconcile source/context review and remaining performance requirements before publication.",
+      "recheckCondition": "Audited candidate gate/review completion or actual public source change."
     },
     {
       "id": "pr:buildbuddy-io/buildbuddy:13938",
