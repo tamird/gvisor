@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T00:13:38.686046+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-20T23:41:26.383263+00:00",
+  "registryDate": "2026-11-21T00:26:41.755Z",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -450491,7 +450491,7 @@
         "owner": "root",
         "sourceHead": "5292190ed8d36179f1df5f590a43f78164e0aecf",
         "disposition": "Contributor-approved change published",
-        "nextAction": "Follow maintainer review, checks and import on #16666. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 5292190ed8d36179f1df5f590a43f78164e0aecf; observed 2026-11-17T19:29:29.454062+00:00): build 1481 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller. Earlier inspected execution also failed (pipeline-queue-rejection); preserve that separate failure and coordinate its prerequisite before retrying."
+        "nextAction": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations."
       },
       "conflictObservedSince": "2026-11-20T23:52:53.376358+00:00"
     },
@@ -450563,7 +450563,7 @@
         "owner": "root",
         "sourceHead": "24e57c9889cfafbd8cd8eb44f4a02b38bdfd0c54",
         "disposition": "Published the reviewed source citation and answered both of Lucas’s original threads. Current Linux accepts a FIN byte beyond the window when the payload fits. The existing wire tests use a data probe.",
-        "nextAction": "Follow Lucas’s review of the current commit. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks."
+        "nextAction": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations."
       },
       "conflictObservedSince": "2026-11-20T23:52:53.376358+00:00"
     },
@@ -450683,7 +450683,7 @@
         "owner": "root",
         "sourceHead": "6e81862c424cbcfba5ffefbe1ae6123566acdcd8",
         "disposition": "Published as one commit at 98e6e5430. The rebased fd package matches the approved code. All 82 race-enabled fd test records passed without skips. The owning analyzers passed on AMD64 and ARM64.",
-        "nextAction": "Follow upstream review on #17131. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks."
+        "nextAction": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations."
       },
       "conflictObservedSince": "2026-11-20T23:52:55.787276+00:00"
     },
@@ -450755,7 +450755,7 @@
         "owner": "root",
         "sourceHead": "f069808da1b9876130c7a853fe2fbb9f815d8519",
         "disposition": "The published rebase is one mergeable commit. The 298 ordered source and file lines match the previously approved patch. On native AMD64 Linux all 61 TCP and 48 SACK test records passed. TestKeepaliveReenable passed on Linux in 4.08 seconds and on gVisor in 4.06 seconds.",
-        "nextAction": "Follow upstream review and import of the published rebase. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source f069808da1b9876130c7a853fe2fbb9f815d8519; observed 2026-11-17T19:29:29.454062+00:00): build 1576 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller. Job metadata still includes pending outcomes; this is a classification of the latest failed attempts, not a claim that every job has terminated."
+        "nextAction": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations."
       },
       "conflictObservedSince": "2026-11-20T23:52:55.787276+00:00"
     },
@@ -452916,7 +452916,7 @@
         "owner": "root",
         "sourceHead": "5292190ed8d36179f1df5f590a43f78164e0aecf",
         "disposition": "Contributor-approved change published",
-        "nextAction": "Follow maintainer review, checks and import on #16666. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 5292190ed8d36179f1df5f590a43f78164e0aecf; observed 2026-11-17T19:29:29.454062+00:00): build 1481 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller. Earlier inspected execution also failed (pipeline-queue-rejection); preserve that separate failure and coordinate its prerequisite before retrying."
+        "nextAction": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxyDnDQ"
@@ -453333,7 +453333,7 @@
         "owner": "root",
         "sourceHead": "24e57c9889cfafbd8cd8eb44f4a02b38bdfd0c54",
         "disposition": "Published the reviewed source citation and answered both of Lucas’s original threads. Current Linux accepts a FIN byte beyond the window when the payload fits. The existing wire tests use a data probe.",
-        "nextAction": "Follow Lucas’s review of the current commit. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks."
+        "nextAction": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxy1skg"
@@ -455990,7 +455990,7 @@
         "owner": "root",
         "sourceHead": "6e81862c424cbcfba5ffefbe1ae6123566acdcd8",
         "disposition": "Published as one commit at 98e6e5430. The rebased fd package matches the approved code. All 82 race-enabled fd test records passed without skips. The owning analyzers passed on AMD64 and ARM64.",
-        "nextAction": "Follow upstream review on #17131. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks."
+        "nextAction": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxybzNQ"
@@ -457333,7 +457333,7 @@
         "owner": "root",
         "sourceHead": "f069808da1b9876130c7a853fe2fbb9f815d8519",
         "disposition": "The published rebase is one mergeable commit. The 298 ordered source and file lines match the previously approved patch. On native AMD64 Linux all 61 TCP and 48 SACK test records passed. TestKeepaliveReenable passed on Linux in 4.08 seconds and on gVisor in 4.06 seconds.",
-        "nextAction": "Follow upstream review and import of the published rebase. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source f069808da1b9876130c7a853fe2fbb9f815d8519; observed 2026-11-17T19:29:29.454062+00:00): build 1576 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller. Job metadata still includes pending outcomes; this is a classification of the latest failed attempts, not a claim that every job has terminated."
+        "nextAction": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxx_jeg"
@@ -457664,8 +457664,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "daa14d03eb6e7fc312496fb740bdae0a00a02312",
-        "disposition": "Exact publisheddaa14d03eb6e7fc312496fb740bdae0a00a02312 remains OPEN/MERGEABLE. First Pass2080 is now independently diagnosed from its own provider upload record: exit80, stack_errored=true, agent_id=null, stack_error_detail=\"Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes\". Canonical job logs are empty; no test job ran. This resolves the prior unknown cause without inferring it from another build. All current GitHub source checks and DCO pass; existing reviewer/import obligations remain.",
-        "nextAction": "Root follows the existing provider/operator recovery and reviewer/import disposition. Recheck evidenced quota clearance or a new head/import/check event; no code churn, automatic retry or duplicate CI-owner outreach."
+        "disposition": "Publication, rebase notice7043294523 and DCO are delivered; no contributor approval remains. The exact admission failure remains an external CI prerequisite.",
+        "nextAction": "Root follows existing reviewer/import events and actual provider admission recovery; no duplicate notification or retry."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN2YEcGg"
@@ -458610,8 +458610,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "f3c485cd64fe2d802cbec5891f537f797e76a3c1",
-        "disposition": "Published fresh f3 integrates the landed obsolete-hook removal through base5be and passes current-head First Pass1849 plus all six GitHub checks. Earlier old-head hook failure is resolved by the fresh base; provider retry history retained. Review/import/merge authority holds remain.",
-        "nextAction": "Root follows substantive review/import lifecycle changes. After this independent PR lands or imports, rebase #17780 and remove only its redundant readiness commit while preserving these detailed errors and the timing, buffers and Hey work. No closure, merge, notification or new prerequisite is implied."
+        "disposition": "Current f3c485cd64fe2d802cbec5891f537f797e76a3c1 main55544 fails only ARM Docker image_test: attempt4 job01a1fb56-d49f-4494-abb8-7c88eb0f8006 times out at 900.2s with the 15-minute test panic. Four other Docker/e2e targets pass. The canonical log does not establish an HTTP-benchmark source regression or quota cause.",
+        "nextAction": "Root assigns the existing image/runtime-test owner the exact timed-out image-test stack and causal diagnosis, preserving #17836 cancellation mitigation scope. No blind retry or benchmark-source edit."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3ABsnA"
@@ -467446,7 +467446,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T23:41:26.383263+00:00"
+        "observedAt": "2026-11-21T00:26:41.755Z"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -467455,7 +467455,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T23:41:26.383263+00:00"
+        "observedAt": "2026-11-21T00:26:41.755Z"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -467464,7 +467464,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T23:41:26.383263+00:00"
+        "observedAt": "2026-11-21T00:26:41.755Z"
       }
     },
     "branch:rules-img-rust": {
@@ -467473,7 +467473,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T23:41:26.383263+00:00"
+        "observedAt": "2026-11-21T00:26:41.755Z"
       }
     },
     "branch:package-clang-format": {
@@ -467482,7 +467482,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T23:41:26.383263+00:00"
+        "observedAt": "2026-11-21T00:26:41.755Z"
       }
     },
     "branch:staged-release-tag": {
@@ -467491,7 +467491,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T23:41:26.383263+00:00"
+        "observedAt": "2026-11-21T00:26:41.755Z"
       }
     },
     "branch:staged-release-publication": {
@@ -467500,7 +467500,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-20T23:41:26.383263+00:00"
+        "observedAt": "2026-11-21T00:26:41.755Z"
       }
     }
   },
