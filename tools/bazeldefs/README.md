@@ -41,6 +41,10 @@ bb remote test --config=rbe-arm64 --config=aarch64 \
   //pkg/atomicbitops:atomicbitops_test
 ```
 
+Remote actions have localhost access but no external network access. This
+policy is set on the execution platforms because Bazel's local sandbox network
+settings do not configure remote workers.
+
 Compilation and ordinary tests use OCI workers. Native, ptrace and systrap
 syscall tests request root inside a Firecracker VM with IPv6 enabled. Explicit
 test execution properties take precedence over these defaults. KVM and slimvm

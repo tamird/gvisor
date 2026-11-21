@@ -12,6 +12,10 @@ package(
 _RBE_EXEC_PROPERTIES = {
     "OSFamily": "linux",
     "container-image": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+    # The remote server controls networking, outside Bazel's local sandbox.
+    # Firecracker otherwise permits external access; keep localhost only:
+    # https://www.buildbuddy.io/docs/rbe-platforms/#runner-container-support
+    "network": "off",
     "workload-isolation-type": "oci",
 }
 
