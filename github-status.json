@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T10:47:22.254281+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T10:34:19.635593+00:00",
+  "registryDate": "2026-11-21T10:53:48.994925+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -464258,7 +464258,7 @@
         "since": "2026-11-21T07:28:18.199633+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T10:34:19.635593+00:00"
+        "observedAt": "2026-11-21T10:53:48.994925+00:00"
       }
     },
     "pr:16664": {
@@ -467411,7 +467411,7 @@
         "since": "2026-11-21T05:04:12.012561+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T10:34:19.635593+00:00"
+        "observedAt": "2026-11-21T10:53:48.994925+00:00"
       }
     },
     "pr:17471": {
@@ -468445,7 +468445,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T10:34:19.635593+00:00"
+        "observedAt": "2026-11-21T10:53:48.994925+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -468454,7 +468454,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T10:34:19.635593+00:00"
+        "observedAt": "2026-11-21T10:53:48.994925+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -468463,7 +468463,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T10:34:19.635593+00:00"
+        "observedAt": "2026-11-21T10:53:48.994925+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -468472,7 +468472,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T10:34:19.635593+00:00"
+        "observedAt": "2026-11-21T10:53:48.994925+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -468481,7 +468481,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T10:34:19.635593+00:00"
+        "observedAt": "2026-11-21T10:53:48.994925+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -468490,7 +468490,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T10:34:19.635593+00:00"
+        "observedAt": "2026-11-21T10:53:48.994925+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -468499,7 +468499,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T10:34:19.635593+00:00"
+        "observedAt": "2026-11-21T10:53:48.994925+00:00"
       }
     },
     "investigation:ci-flake-dind-bridge": {
@@ -468508,7 +468508,16 @@
         "since": "2026-11-21T10:32:39.486361+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T10:34:19.635593+00:00"
+        "observedAt": "2026-11-21T10:53:48.994925+00:00"
+      }
+    },
+    "investigation:ci-buildkite-apt-lock": {
+      "contributor-review": {
+        "scope": "b64c59c1b06d72919b250766609b328d87a05076",
+        "since": "2026-11-21T10:53:48.994925+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-21T10:53:48.994925+00:00"
       }
     },
     "investigation:bazel-compile-commands-pipes": {
@@ -468517,7 +468526,7 @@
         "since": "2026-11-21T10:32:39.486361+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T10:34:19.635593+00:00"
+        "observedAt": "2026-11-21T10:53:48.994925+00:00"
       }
     },
     "investigation:coverage-worker-cpu": {
@@ -468526,7 +468535,7 @@
         "since": "2026-11-21T06:15:32.375526+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T10:34:19.635593+00:00"
+        "observedAt": "2026-11-21T10:53:48.994925+00:00"
       }
     },
     "investigation:unit-test-worker-requirements": {
@@ -468535,7 +468544,7 @@
         "since": "2026-11-21T09:19:34.135838+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T10:34:19.635593+00:00"
+        "observedAt": "2026-11-21T10:53:48.994925+00:00"
       }
     },
     "investigation:iperf-cpu-affinity": {
@@ -468544,7 +468553,7 @@
         "since": "2026-11-21T09:51:58.918740+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T10:34:19.635593+00:00"
+        "observedAt": "2026-11-21T10:53:48.994925+00:00"
       }
     }
   },

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T10:34:19.635593+00:00",
+    "updatedAt": "2026-11-21T10:53:48.994925+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40803,8 +40803,8 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "24c1b39e498eb0f4635694e8a9b1ebe179257fb6",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Delivered source-equivalent rebase 24c1b39e with strict range-diff = and original author/date/trailers preserved. Native head is mergeable and DCO passes; review requests are preserved and auto-merge was absent before and after. Shared five source checks and checkpoint compile/startup gates passed with zero tests. Fresh Etienne approval6004401925 is verified on the delivered head. The maintainer label handoff is satisfied: main55599 and current FirstPass2264 have started/pending contexts; these supersede the initial admission contexts. All GitHub-native checks and DCO now pass, including Go export44889765204. FirstPass2264 is scheduled. Main55599 remains running with automatic retries; recovered checkout/apt attempts do not establish terminal success or a source failure.",
-        "nextAction": "approved_rebase_queue follows the existing automatic retries, Go export, exact-head main/FirstPass and review/import lifecycle. The maintainer label request is fulfilled. Do not retry manually, repeat outreach or reuse old bootstrap/quota diagnoses.",
+        "disposition": "Exact delivered 24c1b39e has canonical main 55599 and FirstPass 2264 PASSED; all GitHub-native checks and DCO pass. Automatic retries recovered the infrastructure attempts without manual reruns. Existing review/import requirements remain; no merge or auto-merge action is inferred.",
+        "nextAction": "Root follows existing maintainer review/import and merge events. Source CI is terminal; no execution watch, repeated outreach or further retry remains.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16508",
           "https://app.buildbuddy.io/invocation/7cd3432a-9763-4eb0-91d6-2a59ea477f9e",
@@ -40826,7 +40826,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44889765204"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Exact-head terminal retry/check result, new review or import event.",
+        "recheckCondition": "New substantive feedback, import or merge event.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -40851,15 +40851,15 @@
             }
           }
         ],
-        "curatedAt": "2026-11-21T09:51:58.918740+00:00",
+        "curatedAt": "2026-11-21T10:53:48.994925+00:00",
         "currentCI": {
           "source": "24c1b39e498eb0f4635694e8a9b1ebe179257fb6",
           "requiredFirstPass": 2264,
           "mainPipeline": 55599,
           "githubChecks": "All GitHub-native checks and DCO SUCCESS",
-          "mainDisposition": "Running with automatic retries; no final source-failure classification",
-          "nextAction": "approved_rebase_queue follows the existing automatic retries, Go export, exact-head main/FirstPass and review/import lifecycle. The maintainer label request is fulfilled. Do not retry manually, repeat outreach or reuse old bootstrap/quota diagnoses.",
-          "firstPassState": "SCHEDULED"
+          "mainDisposition": "PASSED",
+          "nextAction": "Root follows existing maintainer review/import and merge events. Source CI is terminal; no execution watch, repeated outreach or further retry remains.",
+          "firstPassState": "PASSED"
         }
       },
       "evidence": [
@@ -99453,10 +99453,10 @@
       "followup": {
         "sourceHead": "a4b0381bb2b121ec576780dbd65d881b50d837db",
         "owner": "approved_rebase_queue / root",
-        "nextAction": "approved_rebase_queue follows the existing automatic retries, Go export, exact-head main/FirstPass and review/import lifecycle. The maintainer label request is fulfilled. Do not retry manually, repeat outreach or reuse old bootstrap/quota diagnoses.",
+        "nextAction": "Root follows existing maintainer review/import and merge events. Source CI is terminal; no execution watch, repeated outreach or further retry remains.",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-19T21:03:40.118346+00:00",
-        "recheckCondition": "Exact-head terminal retry/check result, new review or import event.",
+        "recheckCondition": "New substantive feedback, import or merge event.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17492",
           "https://github.com/tamird/gvisor/commit/2ca38c700a1f17a2520e456022b2840285296185",
@@ -99473,8 +99473,8 @@
           "https://buildkite.com/gvisor/pipeline/builds/55598",
           "https://github.com/tamird/gvisor/actions/runs/44889765892"
         ],
-        "curatedAt": "2026-11-21T09:51:58.918740+00:00",
-        "disposition": "Delivered source-equivalent rebase a4b0381b with strict range-diff = and original author/date/trailers preserved. Native head is mergeable and DCO passes; review requests are preserved and auto-merge was absent before and after. Shared five source checks and checkpoint compile/startup gates passed with zero tests. Fresh Etienne approval6004399761 is verified on the delivered head. The maintainer label handoff is satisfied: main55598 and current FirstPass2263 have started/pending contexts; these supersede the initial admission contexts. All GitHub-native checks and DCO now pass, including Go export44889765892. FirstPass2263 passed. Main55598 remains running with automatic retries; recovered checkout/apt attempts do not establish terminal success or a source failure.",
+        "curatedAt": "2026-11-21T10:53:48.994925+00:00",
+        "disposition": "Exact delivered a4b0381b has canonical main 55598 and FirstPass 2263 PASSED; all GitHub-native checks and DCO pass. Automatic retries recovered the infrastructure attempts without manual reruns. Existing review/import requirements remain; no merge or auto-merge action is inferred.",
         "permanentTransactionBaseline": {
           "productionSource": "b75c76bbee31f309bd3a7bdb125a4b28e96086a1",
           "ciSource": "cbb9a918c4197ddbb9131f9482ba001987a246ce",
@@ -99528,8 +99528,8 @@
           "requiredFirstPass": 2263,
           "mainPipeline": 55598,
           "githubChecks": "All GitHub-native checks and DCO SUCCESS",
-          "mainDisposition": "Running with automatic retries; no final source-failure classification",
-          "nextAction": "approved_rebase_queue follows the existing automatic retries, Go export, exact-head main/FirstPass and review/import lifecycle. The maintainer label request is fulfilled. Do not retry manually, repeat outreach or reuse old bootstrap/quota diagnoses.",
+          "mainDisposition": "PASSED",
+          "nextAction": "Root follows existing maintainer review/import and merge events. Source CI is terminal; no execution watch, repeated outreach or further retry remains.",
           "firstPassState": "PASSED"
         },
         "attentionDispositions": [
@@ -99578,7 +99578,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "approved_rebase_queue follows the existing automatic retries, Go export, exact-head main/FirstPass and review/import lifecycle. The maintainer label request is fulfilled. Do not retry manually, repeat outreach or reuse old bootstrap/quota diagnoses.",
+      "nextStep": "Root follows existing maintainer review/import and merge events. Source CI is terminal; no execution watch, repeated outreach or further retry remains.",
       "recheckCondition": "Provider admission recovery, exact-head check/review/import change or substantive source feedback."
     },
     {
@@ -137820,8 +137820,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-13T15:45:28+00:00",
-      "summary": "An Ubuntu release worker spent 59 minutes updating package indexes and attempting to install the same packages. The dpkg frontend lock stayed with unattended-upgrades. The job timed out before its CUDA test started and the automatic retry passed.",
+      "updatedAt": "2026-11-21T10:53:48.994925+00:00",
+      "summary": "The actual standalone APT source-publication question is pending. One pre-command hook changes16 additions/7 deletions to skip setup only when required host-architecture packages and running-kernel headers are installed. It retains installed versions rather than upgrading per job; missing/broken-package setup remains unchanged. DCO is included. No upstream publication approval is inferred.",
       "findings": [
         {
           "text": "The original job logged 623 lock refusals from 07:37:14 through 08:35:58 UTC, each naming unattended-upgr PID 3661. The worker ran apt-get update again on each turn.",
@@ -137863,7 +137863,7 @@
           ]
         }
       ],
-      "nextStep": "Follow the review and checks on #17554.",
+      "nextStep": "Root awaits the existing source-publication reply. Preserve the disposable-package-database validation scope; no live Buildkite image or complete contention-fix claim, new permission request or permanent test harness.",
       "evidence": [
         {
           "label": "Release #7761 \u00b7 pre-command timed out before the CUDA test",
@@ -137880,10 +137880,18 @@
         {
           "label": "Submitted one-commit Buildkite hook correction",
           "url": "https://github.com/google/gvisor/pull/17554"
+        },
+        {
+          "label": "Actual pending source",
+          "url": "https://github.com/tamird/gvisor/commit/b64c59c1b06d72919b250766609b328d87a05076"
+        },
+        {
+          "label": "Disposable package-database qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44895286543"
         }
       ],
       "repo": "google/gvisor",
-      "head": "fdf95a111903ab4ba7d37dfd2f8083d8ff228b75",
+      "head": "b64c59c1b06d72919b250766609b328d87a05076",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -137907,6 +137915,16 @@
         "owner": "root",
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "b64c59c1b06d72919b250766609b328d87a05076",
+        "baseHead": "8b8f23f943dfc65f995db92f73878fbdc88f1893",
+        "url": "https://github.com/tamird/gvisor/commit/b64c59c1b06d72919b250766609b328d87a05076",
+        "title": "Skip installed Buildkite package setup",
+        "body": "The pre-command hook refreshed and installed its packages before every\njob. A GSO job waited for unattended-upgrades, found every requested\npackage already installed, then failed on APT's separate archive lock.\n\nAvoid APT when all required packages and the running kernel headers are\ninstalled for the host architecture. Keep the existing package discovery\nand bounded installation for agents that still need setup. Already\ninstalled packages retain their current versions during job setup.\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
+        "summary": "Root confirms the actual standalone PR question was asked; no returned question ID or exact request timestamp is available. Bazel44895286543 and two review roles passed using a disposable package database. The CI-only certification rejection was resolved by a no-DCO validation child; no human execution-permission decision remains."
       }
     },
     {
