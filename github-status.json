@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T01:03:19.304590+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T00:26:41.755Z",
+  "registryDate": "2026-11-21T01:10:25.460Z",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -452936,9 +452936,9 @@
       ],
       "recordedFollowup": {
         "owner": "root",
-        "sourceHead": "5292190ed8d36179f1df5f590a43f78164e0aecf",
-        "disposition": "Contributor-approved change published",
-        "nextAction": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations."
+        "sourceHead": "718e0616e8fb5295b88691f7d2a9171bd4a2c9df",
+        "disposition": "The approved current-base rebase 718e0616e8fb5295b88691f7d2a9171bd4a2c9df is published by exact lease; native source is OPEN/MERGEABLE and DCO passes. Rebase notice7054651074 is posted. First Pass2187 is independently diagnosed as pre-agent admission rejection: exit80, stack_errored=true, agent_id=null and author1535036 rolling30-day360,000-compute-minute quota. No target ran. Lint, Gazelle and file-header checks pass; Go generation44847099663 is successful. Existing source/runtime/performance limits remain separate.",
+        "nextAction": "Follow the existing exact-head reviewer/import and actor-owned CI watches. Recheck admission only after actual provider recovery or a new source/check event; no retry, duplicate notification or automatic merge."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3Cbxvw"
@@ -453353,9 +453353,9 @@
       ],
       "recordedFollowup": {
         "owner": "root",
-        "sourceHead": "24e57c9889cfafbd8cd8eb44f4a02b38bdfd0c54",
-        "disposition": "Published the reviewed source citation and answered both of Lucas’s original threads. Current Linux accepts a FIN byte beyond the window when the payload fits. The existing wire tests use a data probe.",
-        "nextAction": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations."
+        "sourceHead": "9979fae516482553fd5042632a9ca2878ef9830e",
+        "disposition": "The approved current-base rebase 9979fae516482553fd5042632a9ca2878ef9830e is published by exact lease; native source is OPEN/MERGEABLE and DCO passes. Rebase notice7054668052 is posted. First Pass2188 is independently diagnosed as pre-agent admission rejection: exit80, stack_errored=true, agent_id=null and author1535036 rolling30-day360,000-compute-minute quota. No target ran. Lint, Gazelle and file-header checks pass; the original rebase owner retains the remaining Go-generation watch. Existing source/runtime/performance limits remain separate.",
+        "nextAction": "Follow the existing exact-head reviewer/import and actor-owned CI watches. Recheck admission only after actual provider recovery or a new source/check event; no retry, duplicate notification or automatic merge."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3Cfg4Q"
@@ -456010,9 +456010,9 @@
       ],
       "recordedFollowup": {
         "owner": "root",
-        "sourceHead": "6e81862c424cbcfba5ffefbe1ae6123566acdcd8",
-        "disposition": "Published as one commit at 98e6e5430. The rebased fd package matches the approved code. All 82 race-enabled fd test records passed without skips. The owning analyzers passed on AMD64 and ARM64.",
-        "nextAction": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations."
+        "sourceHead": "32fd9c26abba8ceb7d68c6aacfd565bda81f839a",
+        "disposition": "The approved current-base rebase 32fd9c26abba8ceb7d68c6aacfd565bda81f839a is published by exact lease; native source is OPEN/MERGEABLE and DCO passes. Rebase notice7054668856 is posted. First Pass2189 is independently diagnosed as pre-agent admission rejection: exit80, stack_errored=true, agent_id=null and author1535036 rolling30-day360,000-compute-minute quota. No target ran. Lint, Gazelle and file-header checks pass; the original rebase owner retains the remaining Go-generation watch. Existing source/runtime/performance limits remain separate.",
+        "nextAction": "Follow the existing exact-head reviewer/import and actor-owned CI watches. Recheck admission only after actual provider recovery or a new source/check event; no retry, duplicate notification or automatic merge."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3Cgv8A"
@@ -467461,7 +467461,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T00:26:41.755Z"
+        "observedAt": "2026-11-21T01:10:25.460Z"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -467470,7 +467470,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T00:26:41.755Z"
+        "observedAt": "2026-11-21T01:10:25.460Z"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -467479,7 +467479,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T00:26:41.755Z"
+        "observedAt": "2026-11-21T01:10:25.460Z"
       }
     },
     "branch:rules-img-rust": {
@@ -467488,7 +467488,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T00:26:41.755Z"
+        "observedAt": "2026-11-21T01:10:25.460Z"
       }
     },
     "branch:package-clang-format": {
@@ -467497,7 +467497,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T00:26:41.755Z"
+        "observedAt": "2026-11-21T01:10:25.460Z"
       }
     },
     "branch:staged-release-tag": {
@@ -467506,7 +467506,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T00:26:41.755Z"
+        "observedAt": "2026-11-21T01:10:25.460Z"
       }
     },
     "branch:staged-release-publication": {
@@ -467515,7 +467515,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T00:26:41.755Z"
+        "observedAt": "2026-11-21T01:10:25.460Z"
       }
     }
   },

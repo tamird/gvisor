@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T00:26:41.755Z",
+    "updatedAt": "2026-11-21T01:10:25.460Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35094,13 +35094,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "fix/tcp-unread-fin-window",
-      "head": "24e57c9889cfafbd8cd8eb44f4a02b38bdfd0c54",
+      "head": "9979fae516482553fd5042632a9ca2878ef9830e",
       "title": "tcp: ACK window overruns while FIN is unread",
       "url": "https://github.com/google/gvisor/pull/16770",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:48.755399+00:00",
-      "summary": "With a FIN or its last data byte unread, Linux and netstack ACK a probe at the receive-window edge; both stop after the application drains the queue. All 56 netstack cases and 54 of 56 on Linux 7.0 passed. Two unchanged established-state cases expected silence and received an ACK.",
+      "updatedAt": "2026-11-21T01:10:25.460Z",
+      "summary": "The approved current-base rebase 9979fae516482553fd5042632a9ca2878ef9830e is published by exact lease; native source is OPEN/MERGEABLE and DCO passes. Rebase notice7054668052 is posted. First Pass2188 is independently diagnosed as pre-agent admission rejection: exit80, stack_errored=true, agent_id=null and author1535036 rolling30-day360,000-compute-minute quota. No target ran. Lint, Gazelle and file-header checks pass; the original rebase owner retains the remaining Go-generation watch. Existing source/runtime/performance limits remain separate.",
       "evidence": [
         {
           "label": "112 Linux and netstack wire cases: all closing cases passed",
@@ -35192,10 +35192,10 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "24e57c9889cfafbd8cd8eb44f4a02b38bdfd0c54",
-        "observedAt": "2026-11-17T19:04:48.755399+00:00",
-        "disposition": "Published the reviewed source citation and answered both of Lucas’s original threads. Current Linux accepts a FIN byte beyond the window when the payload fits. The existing wire tests use a data probe.",
-        "nextAction": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations.",
+        "sourceHead": "9979fae516482553fd5042632a9ca2878ef9830e",
+        "observedAt": "2026-11-21T01:03:19.304590+00:00",
+        "disposition": "The approved current-base rebase 9979fae516482553fd5042632a9ca2878ef9830e is published by exact lease; native source is OPEN/MERGEABLE and DCO passes. Rebase notice7054668052 is posted. First Pass2188 is independently diagnosed as pre-agent admission rejection: exit80, stack_errored=true, agent_id=null and author1535036 rolling30-day360,000-compute-minute quota. No target ran. Lint, Gazelle and file-header checks pass; the original rebase owner retains the remaining Go-generation watch. Existing source/runtime/performance limits remain separate.",
+        "nextAction": "Follow the existing exact-head reviewer/import and actor-owned CI watches. Recheck admission only after actual provider recovery or a new source/check event; no retry, duplicate notification or automatic merge.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16770#discussion_r4544575279",
           "https://github.com/google/gvisor/pull/16770#discussion_r4544575285",
@@ -35207,10 +35207,36 @@
           "https://github.com/google/gvisor/pull/16770#pullrequestreview-5866956863",
           "https://github.com/gvisor/gvisor/pull/16770",
           "https://github.com/tamird/gvisor/commit/a4edcc73eed1eea4cfb7b88fdf2f1deb89952415",
-          "https://github.com/tamird/gvisor/commit/24e57c9889cfafbd8cd8eb44f4a02b38bdfd0c54"
+          "https://github.com/tamird/gvisor/commit/24e57c9889cfafbd8cd8eb44f4a02b38bdfd0c54",
+          "https://github.com/gvisor/gvisor/pull/16770#issuecomment-7054668052",
+          "https://buildkite.com/gvisor/first-pass/builds/2188#01a1fb9c-1562-4d5f-aba0-899362af4b14"
         ],
-        "mergeable": "CONFLICTING",
-        "recheckCondition": "A source-bound conflict assessment or new source/base state."
+        "mergeable": "MERGEABLE",
+        "recheckCondition": "Genuine exact-head review/import/check change or independently evidenced quota clearance.",
+        "curatedAt": "2026-11-21T01:10:25.460Z",
+        "attentionDispositions": [
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "First Pass2188: independently diagnosed rolling30-day quota admission failure",
+            "nextAction": "Follow the existing exact-head reviewer/import and actor-owned CI watches. Recheck admission only after actual provider recovery or a new source/check event; no retry, duplicate notification or automatic merge.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/2188#01a1fb9c-1562-4d5f-aba0-899362af4b14"
+            ],
+            "binding": {
+              "sourceHead": "9979fae516482553fd5042632a9ca2878ef9830e",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN3Cfg4Q",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/2188",
+                  "kind": "status"
+                }
+              ]
+            }
+          }
+        ]
       },
       "dcoAmendment": {
         "oldHead": "a4edcc73eed1eea4cfb7b88fdf2f1deb89952415",
@@ -35234,7 +35260,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations."
+      "nextStep": "Follow the existing exact-head reviewer/import and actor-owned CI watches. Recheck admission only after actual provider recovery or a new source/check event; no retry, duplicate notification or automatic merge.",
+      "recheckCondition": "Genuine exact-head review/import/check change or independently evidenced quota clearance."
     },
     {
       "id": "branch:nft-compat-inet-autoload",
@@ -49968,11 +49995,11 @@
       "repo": "google/gvisor",
       "number": 16666,
       "ref": "review/tcp-restore-gso-route",
-      "head": "5292190ed8d36179f1df5f590a43f78164e0aecf",
+      "head": "718e0616e8fb5295b88691f7d2a9171bd4a2c9df",
       "title": "Restore TCP segmentation settings for the new route",
       "url": "https://github.com/google/gvisor/pull/16666",
       "group": "runtime",
-      "summary": "After checkpoint restore, a connection with queued data could divide by zero on its first send. Rebuild segmentation settings from the new route and retain the negotiated segment size even when the MTU is unchanged.",
+      "summary": "The approved current-base rebase 718e0616e8fb5295b88691f7d2a9171bd4a2c9df is published by exact lease; native source is OPEN/MERGEABLE and DCO passes. Rebase notice7054651074 is posted. First Pass2187 is independently diagnosed as pre-agent admission rejection: exit80, stack_errored=true, agent_id=null and author1535036 rolling30-day360,000-compute-minute quota. No target ran. Lint, Gazelle and file-header checks pass; Go generation44847099663 is successful. Existing source/runtime/performance limits remain separate.",
       "evidence": [
         {
           "label": "Stock: the first post-restore send divides by zero",
@@ -50000,13 +50027,13 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:46.312467+00:00",
+      "updatedAt": "2026-11-21T01:10:25.460Z",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "sourceHead": "5292190ed8d36179f1df5f590a43f78164e0aecf",
-        "disposition": "Contributor-approved change published",
-        "nextAction": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations.",
+        "observedAt": "2026-11-21T01:03:19.304590+00:00",
+        "sourceHead": "718e0616e8fb5295b88691f7d2a9171bd4a2c9df",
+        "disposition": "The approved current-base rebase 718e0616e8fb5295b88691f7d2a9171bd4a2c9df is published by exact lease; native source is OPEN/MERGEABLE and DCO passes. Rebase notice7054651074 is posted. First Pass2187 is independently diagnosed as pre-agent admission rejection: exit80, stack_errored=true, agent_id=null and author1535036 rolling30-day360,000-compute-minute quota. No target ran. Lint, Gazelle and file-header checks pass; Go generation44847099663 is successful. Existing source/runtime/performance limits remain separate.",
+        "nextAction": "Follow the existing exact-head reviewer/import and actor-owned CI watches. Recheck admission only after actual provider recovery or a new source/check event; no retry, duplicate notification or automatic merge.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16666",
           "https://github.com/tamird/gvisor/commit/5edf5d13c7a6749df466add29d8811260edb4cda",
@@ -50014,34 +50041,36 @@
           "https://github.com/tamird/gvisor/commit/5292190ed8d36179f1df5f590a43f78164e0aecf",
           "https://buildkite.com/gvisor/first-pass/builds/1481",
           "https://buildkite.com/gvisor/first-pass/builds/1481#01a1ead5-9b9d-422b-9cbe-b174b47993e9",
-          "https://buildkite.com/gvisor/first-pass/builds/1481#01a1ead1-ddf5-454c-be0b-03d900e80c2a"
+          "https://buildkite.com/gvisor/first-pass/builds/1481#01a1ead1-ddf5-454c-be0b-03d900e80c2a",
+          "https://github.com/gvisor/gvisor/pull/16666#issuecomment-7054651074",
+          "https://buildkite.com/gvisor/first-pass/builds/2187#01a1fb9a-ec9a-465d-ab9a-99b4cb720cae"
         ],
-        "mergeable": "CONFLICTING",
-        "recheckCondition": "A source-bound conflict assessment or new source/base state.",
+        "mergeable": "MERGEABLE",
+        "recheckCondition": "Genuine exact-head review/import/check change or independently evidenced quota clearance.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
             "action": "ci-infrastructure-retry",
-            "title": "First Pass 1481: existing exact-source daily-quota admission diagnosis",
-            "nextAction": "Root and the existing provider owner recheck actual admission recovery or a new source/check event. No automatic retry, repeated diagnosis or CI-owner outreach.",
+            "title": "First Pass2187: independently diagnosed rolling30-day quota admission failure",
+            "nextAction": "Follow the existing exact-head reviewer/import and actor-owned CI watches. Recheck admission only after actual provider recovery or a new source/check event; no retry, duplicate notification or automatic merge.",
             "evidence": [
-              "https://buildkite.com/gvisor/first-pass/builds/1481#01a1ead5-9b9d-422b-9cbe-b174b47993e9",
-              "https://buildkite.com/gvisor/first-pass/builds/1481#01a1ead1-ddf5-454c-be0b-03d900e80c2a"
+              "https://buildkite.com/gvisor/first-pass/builds/2187#01a1fb9a-ec9a-465d-ab9a-99b4cb720cae"
             ],
             "binding": {
-              "sourceHead": "5292190ed8d36179f1df5f590a43f78164e0aecf",
+              "sourceHead": "718e0616e8fb5295b88691f7d2a9171bd4a2c9df",
               "checks": [
                 {
-                  "id": "SC_kwDOB9IlXs8AAAANxyDnDQ",
+                  "id": "SC_kwDOB9IlXs8AAAAN3Cbxvw",
                   "name": "buildkite/first-pass/pr",
                   "state": "FAILURE",
-                  "url": "https://buildkite.com/gvisor/first-pass/builds/1481",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/2187",
                   "kind": "status"
                 }
               ]
             }
           }
-        ]
+        ],
+        "curatedAt": "2026-11-21T01:10:25.460Z"
       },
       "dcoAmendment": {
         "oldHead": "5edf5d13c7a6749df466add29d8811260edb4cda",
@@ -50064,7 +50093,8 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted."
       },
-      "nextStep": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations."
+      "nextStep": "Follow the existing exact-head reviewer/import and actor-owned CI watches. Recheck admission only after actual provider recovery or a new source/check event; no retry, duplicate notification or automatic merge.",
+      "recheckCondition": "Genuine exact-head review/import/check change or independently evidenced quota clearance."
     },
     {
       "id": "pr:16667",
@@ -79609,13 +79639,13 @@
       "repo": "google/gvisor",
       "number": 17131,
       "ref": "research/fdbased-attached-workers-wg-go",
-      "head": "6e81862c424cbcfba5ffefbe1ae6123566acdcd8",
+      "head": "32fd9c26abba8ceb7d68c6aacfd565bda81f839a",
       "title": "fdbased: start packet processors when a receiver attaches",
       "url": "https://github.com/google/gvisor/pull/17131",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:53.479529+00:00",
-      "summary": "Published as one commit at 98e6e5430. The rebased fd package matches the approved code. All 82 race-enabled fd test records passed without skips. The owning analyzers passed on AMD64 and ARM64.",
+      "updatedAt": "2026-11-21T01:10:25.460Z",
+      "summary": "The approved current-base rebase 32fd9c26abba8ceb7d68c6aacfd565bda81f839a is published by exact lease; native source is OPEN/MERGEABLE and DCO passes. Rebase notice7054668856 is posted. First Pass2189 is independently diagnosed as pre-agent admission rejection: exit80, stack_errored=true, agent_id=null and author1535036 rolling30-day360,000-compute-minute quota. No target ran. Lint, Gazelle and file-header checks pass; the original rebase owner retains the remaining Go-generation watch. Existing source/runtime/performance limits remain separate.",
       "evidence": [
         {
           "label": "Uncached owner tests and both architecture analyzers",
@@ -79759,19 +79789,45 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "6e81862c424cbcfba5ffefbe1ae6123566acdcd8",
-        "observedAt": "2026-11-17T19:04:53.479529+00:00",
-        "disposition": "Published as one commit at 98e6e5430. The rebased fd package matches the approved code. All 82 race-enabled fd test records passed without skips. The owning analyzers passed on AMD64 and ARM64.",
-        "nextAction": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations.",
+        "sourceHead": "32fd9c26abba8ceb7d68c6aacfd565bda81f839a",
+        "observedAt": "2026-11-21T01:03:19.304590+00:00",
+        "disposition": "The approved current-base rebase 32fd9c26abba8ceb7d68c6aacfd565bda81f839a is published by exact lease; native source is OPEN/MERGEABLE and DCO passes. Rebase notice7054668856 is posted. First Pass2189 is independently diagnosed as pre-agent admission rejection: exit80, stack_errored=true, agent_id=null and author1535036 rolling30-day360,000-compute-minute quota. No target ran. Lint, Gazelle and file-header checks pass; the original rebase owner retains the remaining Go-generation watch. Existing source/runtime/performance limits remain separate.",
+        "nextAction": "Follow the existing exact-head reviewer/import and actor-owned CI watches. Recheck admission only after actual provider recovery or a new source/check event; no retry, duplicate notification or automatic merge.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17131",
           "https://github.com/tamird/gvisor/actions/runs/42855947112/artifacts/13784755003",
           "https://github.com/gvisor/gvisor/pull/17131",
           "https://github.com/tamird/gvisor/commit/98e6e5430c348b8078a6627b227ab342f5388493",
-          "https://github.com/tamird/gvisor/commit/6e81862c424cbcfba5ffefbe1ae6123566acdcd8"
+          "https://github.com/tamird/gvisor/commit/6e81862c424cbcfba5ffefbe1ae6123566acdcd8",
+          "https://github.com/gvisor/gvisor/pull/17131#issuecomment-7054668856",
+          "https://buildkite.com/gvisor/first-pass/builds/2189#01a1fb9c-740f-439f-a041-9e54b5dab32b"
         ],
-        "mergeable": "CONFLICTING",
-        "recheckCondition": "A source-bound conflict assessment or new source/base state."
+        "mergeable": "MERGEABLE",
+        "recheckCondition": "Genuine exact-head review/import/check change or independently evidenced quota clearance.",
+        "curatedAt": "2026-11-21T01:10:25.460Z",
+        "attentionDispositions": [
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "First Pass2189: independently diagnosed rolling30-day quota admission failure",
+            "nextAction": "Follow the existing exact-head reviewer/import and actor-owned CI watches. Recheck admission only after actual provider recovery or a new source/check event; no retry, duplicate notification or automatic merge.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/2189#01a1fb9c-740f-439f-a041-9e54b5dab32b"
+            ],
+            "binding": {
+              "sourceHead": "32fd9c26abba8ceb7d68c6aacfd565bda81f839a",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN3Cgv8A",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/2189",
+                  "kind": "status"
+                }
+              ]
+            }
+          }
+        ]
       },
       "dcoAmendment": {
         "oldHead": "98e6e5430c348b8078a6627b227ab342f5388493",
@@ -79795,7 +79851,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations."
+      "nextStep": "Follow the existing exact-head reviewer/import and actor-owned CI watches. Recheck admission only after actual provider recovery or a new source/check event; no retry, duplicate notification or automatic merge.",
+      "recheckCondition": "Genuine exact-head review/import/check change or independently evidenced quota clearance."
     },
     {
       "id": "pr:17118",
