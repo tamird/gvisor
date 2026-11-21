@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T09:34:58.657617+00:00",
+    "updatedAt": "2026-11-21T09:51:58.918740+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -25390,13 +25390,13 @@
       "repo": "google/gvisor",
       "number": 16051,
       "ref": "fix/license-manual-artifacts",
-      "head": "f37c3976c59a4199189dad8ccd81868bc779c1b7",
+      "head": "c0c76ca28a6ee79682e22dab6cf0d8b2327e3ea7",
       "title": "Preserve LicenseRef audits for pinned artifacts",
       "url": "https://github.com/google/gvisor/pull/16051",
       "group": "release",
       "status": "open",
       "summary": "Keep audited license terms while the URL and SHA256 of a binary artifact match. An invalid local reference cannot cause automatic discovery to overwrite a reviewed entry.",
-      "updatedAt": "2026-11-17T19:04:43.853615+00:00",
+      "updatedAt": "2026-11-21T09:45:00.751471+00:00",
       "evidence": [
         {
           "label": "Exact revision: all 46 checker cases",
@@ -25502,20 +25502,30 @@
         }
       ],
       "followup": {
-        "sourceHead": "f37c3976c59a4199189dad8ccd81868bc779c1b7",
+        "sourceHead": "c0c76ca28a6ee79682e22dab6cf0d8b2327e3ea7",
         "owner": "buildifier_license_fix / root",
-        "nextAction": "Prepare and qualify the source-equivalent base refresh importing the existing bootstrap fix, then reconcile publication authority and new-head CI. Do not retry the unchanged failed head or claim delivery before verification.",
+        "nextAction": "buildifier_license_fix follows exact-head Go export, FirstPass/main and maintainer review/import results. Preserve current failure identities; do not apply old-head bootstrap/quota diagnoses or retry unchanged old heads.",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-17T19:04:43.853615+00:00",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.",
+        "recheckCondition": "Exact-head terminal checks, maintainer main trigger or substantive review/import change.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/16051",
           "https://github.com/tamird/gvisor/commit/62d7054b7f5b5b22521e7346ed84f533c49f081e",
           "https://github.com/tamird/gvisor/commit/f37c3976c59a4199189dad8ccd81868bc779c1b7",
-          "https://buildkite.com/gvisor/pipeline/builds/55594"
+          "https://buildkite.com/gvisor/pipeline/builds/55594",
+          "https://github.com/google/gvisor/pull/16051#issuecomment-7060694543",
+          "https://buildkite.com/gvisor/first-pass/builds/2272"
         ],
-        "disposition": "Main55594 failed all three upload attempts before any Bazel target: the obsolete pre-command hook fetches tamird:branch from upstream and cannot find remote ref tamird. The exact fork branch exists. Current master already contains the merged hook fix; this is bootstrap failure, not a target failure or quota diagnosis.",
-        "curatedAt": "2026-11-21T09:19:34.135838+00:00"
+        "disposition": "Delivered source-equivalent bootstrap rebase with strict range-diff =, targeted gates and two independent reviews clear. Native fork/PR heads are mergeable; lint/Gazelle/fileheaders pass and Go export is live. Exact-head main55604/FirstPass2272 have been triggered; the maintainer label handoff is satisfied. DCO passes. Fresh Etienne approval is retained; aggregate review remains required for the other existing requests.",
+        "curatedAt": "2026-11-21T09:45:00.751471+00:00",
+        "currentCI": {
+          "source": "c0c76ca28a6ee79682e22dab6cf0d8b2327e3ea7",
+          "requiredFirstPass": 2272,
+          "mainPipeline": 55604,
+          "githubChecks": "Lint/Gazelle/fileheaders PASS; Go export live",
+          "dco": "SUCCESS",
+          "nextAction": "buildifier_license_fix follows exact-head Go export, FirstPass/main and maintainer review/import results. Preserve current failure identities; do not apply old-head bootstrap/quota diagnoses or retry unchanged old heads."
+        }
       },
       "dcoAmendment": {
         "oldHead": "62d7054b7f5b5b22521e7346ed84f533c49f081e",
@@ -39236,12 +39246,12 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "qualification/release-mixed-presubmit",
-      "head": "fea73e24f61c5b09e21e5ea292b471b1f3f24ca3",
+      "head": "28a5f72059346d1c74e1146c17e42a7ca388518f",
       "title": "Build both release architectures in one Bazel invocation",
       "url": "https://github.com/google/gvisor/pull/16490",
       "group": "rbe",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:46.312467+00:00",
+      "updatedAt": "2026-11-21T09:45:00.751471+00:00",
       "summary": "The published one-commit rebase keeps #17191\u2019s release_tars implementation. Bazel cquery and aquery selected the six expected release outputs and the six matching architecture-specific package inputs for their symlinks. The approved patch retains its original changes with the import spelling used by current master. GitHub reports approved and mergeable.",
       "evidence": [
         {
@@ -39292,10 +39302,10 @@
       "number": 16490,
       "followup": {
         "owner": "buildifier_license_fix / root",
-        "sourceHead": "fea73e24f61c5b09e21e5ea292b471b1f3f24ca3",
+        "sourceHead": "28a5f72059346d1c74e1146c17e42a7ca388518f",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Main55586 failed all three upload attempts before any Bazel target: the obsolete pre-command hook fetches tamird:branch from upstream and cannot find remote ref tamird. The exact fork branch exists. Current master already contains the merged hook fix; this is bootstrap failure, not a target failure or quota diagnosis. Etienne approval6004162562 raises a nonblocking value concern; root reviewed the concurrent architecture graph and six-to-one invocation reduction without claiming a measured speedup.",
-        "nextAction": "Prepare and qualify the source-equivalent base refresh importing the existing bootstrap fix, then reconcile publication authority and new-head CI. Do not retry the unchanged failed head or claim delivery before verification.",
+        "disposition": "Delivered source-equivalent bootstrap rebase with strict range-diff =, targeted gates and two independent reviews clear. Native fork/PR heads are mergeable; lint/Gazelle/fileheaders pass and Go export is live. FirstPass2267 is pending; main still needs the maintainer ready-to-test handoff requested in the existing notice. DCO passes.",
+        "nextAction": "buildifier_license_fix follows exact-head Go export, FirstPass/main and maintainer review/import results. Preserve current failure identities; do not apply old-head bootstrap/quota diagnoses or retry unchanged old heads.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16490",
           "https://github.com/tamird/gvisor/commit/eb2460d8185ff3b3bfd2a25a48a027e61458d3b9",
@@ -39336,10 +39346,12 @@
           "https://buildkite.com/gvisor/first-pass/builds/1468#01a1ead6-8b36-494d-8a41-145714b1c5a6",
           "https://buildkite.com/gvisor/first-pass/builds/1468#01a1ead6-8b36-402a-84b7-9fa8cf5002d5",
           "https://buildkite.com/gvisor/first-pass/builds/1468#01a1ead6-8b37-494b-870d-f78eae609f38",
-          "https://buildkite.com/gvisor/pipeline/builds/55586"
+          "https://buildkite.com/gvisor/pipeline/builds/55586",
+          "https://github.com/google/gvisor/pull/16490#issuecomment-7060695022",
+          "https://buildkite.com/gvisor/first-pass/builds/2267"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "recheckCondition": "Exact-head terminal checks, maintainer main trigger or substantive review/import change.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -39461,7 +39473,15 @@
             }
           }
         ],
-        "curatedAt": "2026-11-21T09:19:34.135838+00:00"
+        "curatedAt": "2026-11-21T09:45:00.751471+00:00",
+        "currentCI": {
+          "source": "28a5f72059346d1c74e1146c17e42a7ca388518f",
+          "requiredFirstPass": 2267,
+          "mainPipeline": null,
+          "githubChecks": "Lint/Gazelle/fileheaders PASS; Go export live",
+          "dco": "SUCCESS",
+          "nextAction": "buildifier_license_fix follows exact-head Go export, FirstPass/main and maintainer review/import results. Preserve current failure identities; do not apply old-head bootstrap/quota diagnoses or retry unchanged old heads."
+        }
       },
       "dcoAmendment": {
         "oldHead": "86947e250a0b280c20f498dba9576b1b6380bacc",
@@ -40779,7 +40799,7 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "24c1b39e498eb0f4635694e8a9b1ebe179257fb6",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Delivered source-equivalent rebase 24c1b39e with strict range-diff = and original author/date/trailers preserved. Native head is mergeable and DCO passes; review requests are preserved and auto-merge was absent before and after. Shared five source checks and checkpoint compile/startup gates passed with zero tests. Fresh Etienne approval6004401925 is verified on the delivered head. The maintainer label handoff is satisfied: main55599 and current FirstPass2264 have started/pending contexts; these supersede the initial admission contexts. DCO/gazelle/fileheader/lint pass; Go export is live. Current main infrastructure attempts hit apt/dpkg locks or interrupted ARM clones with automatic retries pending; no final source-failure conclusion.",
+        "disposition": "Delivered source-equivalent rebase 24c1b39e with strict range-diff = and original author/date/trailers preserved. Native head is mergeable and DCO passes; review requests are preserved and auto-merge was absent before and after. Shared five source checks and checkpoint compile/startup gates passed with zero tests. Fresh Etienne approval6004401925 is verified on the delivered head. The maintainer label handoff is satisfied: main55599 and current FirstPass2264 have started/pending contexts; these supersede the initial admission contexts. All GitHub-native checks and DCO now pass, including Go export44889765204. FirstPass2264 is scheduled. Main55599 remains running with automatic retries; recovered checkout/apt attempts do not establish terminal success or a source failure.",
         "nextAction": "approved_rebase_queue follows the existing automatic retries, Go export, exact-head main/FirstPass and review/import lifecycle. The maintainer label request is fulfilled. Do not retry manually, repeat outreach or reuse old bootstrap/quota diagnoses.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16508",
@@ -40798,7 +40818,8 @@
           "https://github.com/tamird/gvisor/actions/runs/44889317107",
           "https://github.com/tamird/gvisor/actions/runs/44889319061",
           "https://github.com/google/gvisor/pull/16508#pullrequestreview-6004401925",
-          "https://buildkite.com/gvisor/pipeline/builds/55599"
+          "https://buildkite.com/gvisor/pipeline/builds/55599",
+          "https://github.com/tamird/gvisor/actions/runs/44889765204"
         ],
         "mergeable": "MERGEABLE",
         "recheckCondition": "Exact-head terminal retry/check result, new review or import event.",
@@ -40826,14 +40847,15 @@
             }
           }
         ],
-        "curatedAt": "2026-11-21T09:34:58.657617+00:00",
+        "curatedAt": "2026-11-21T09:51:58.918740+00:00",
         "currentCI": {
           "source": "24c1b39e498eb0f4635694e8a9b1ebe179257fb6",
           "requiredFirstPass": 2264,
           "mainPipeline": 55599,
-          "githubChecks": "DCO/gazelle/fileheader/lint PASS; Go export live at source-owner handoff",
-          "mainDisposition": "Infrastructure attempts have automatic retries pending; no final source failure",
-          "nextAction": "approved_rebase_queue follows the existing automatic retries, Go export, exact-head main/FirstPass and review/import lifecycle. The maintainer label request is fulfilled. Do not retry manually, repeat outreach or reuse old bootstrap/quota diagnoses."
+          "githubChecks": "All GitHub-native checks and DCO SUCCESS",
+          "mainDisposition": "Running with automatic retries; no final source-failure classification",
+          "nextAction": "approved_rebase_queue follows the existing automatic retries, Go export, exact-head main/FirstPass and review/import lifecycle. The maintainer label request is fulfilled. Do not retry manually, repeat outreach or reuse old bootstrap/quota diagnoses.",
+          "firstPassState": "SCHEDULED"
         }
       },
       "evidence": [
@@ -61338,12 +61360,12 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/buildkite-source-release-staging",
-      "head": "d9072b5ca4ffcb18acffd6e4d3afba8e4143f235",
+      "head": "91b4fc2a2b3fe4a64a4d2769f982b6b381ec83d0",
       "title": "Install the release tarball in Buildkite source CI",
       "url": "https://github.com/google/gvisor/pull/16843",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-17T19:05:02.369627+00:00",
+      "updatedAt": "2026-11-21T09:45:00.751471+00:00",
       "summary": "The earlier export #17179 landed at e18c358d6. The remaining release-tarball installation change is published as one mergeable commit, 5580eac32. The native test verified the names, modes and hashes of all nine files from both the source-built bzip2 archive and the staged gzip archive. Both installed runtimes started a guest that exited 0. The post-hooks deregistered runsc, kept the source tree and cleaned the staged directory.",
       "evidence": [
         {
@@ -61482,10 +61504,10 @@
       "number": 16843,
       "followup": {
         "owner": "buildifier_license_fix / root",
-        "sourceHead": "d9072b5ca4ffcb18acffd6e4d3afba8e4143f235",
+        "sourceHead": "91b4fc2a2b3fe4a64a4d2769f982b6b381ec83d0",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Main55588 failed all three upload attempts before any Bazel target: the obsolete pre-command hook fetches tamird:branch from upstream and cannot find remote ref tamird. The exact fork branch exists. Current master already contains the merged hook fix; this is bootstrap failure, not a target failure or quota diagnosis.",
-        "nextAction": "Prepare and qualify the source-equivalent base refresh importing the existing bootstrap fix, then reconcile publication authority and new-head CI. Do not retry the unchanged failed head or claim delivery before verification.",
+        "disposition": "Delivered source-equivalent bootstrap rebase with strict range-diff =, targeted gates and two independent reviews clear. Native fork/PR heads are mergeable; lint/Gazelle/fileheaders pass and Go export is live. FirstPass2266 is pending; main still needs the maintainer ready-to-test handoff requested in the existing notice. DCO passes.",
+        "nextAction": "buildifier_license_fix follows exact-head Go export, FirstPass/main and maintainer review/import results. Preserve current failure identities; do not apply old-head bootstrap/quota diagnoses or retry unchanged old heads.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16843#issuecomment-6798604323",
           "https://github.com/tamird/gvisor/commit/a6e06bb65",
@@ -61499,10 +61521,12 @@
           "https://github.com/tamird/gvisor/commit/d9072b5ca4ffcb18acffd6e4d3afba8e4143f235",
           "https://buildkite.com/gvisor/first-pass/builds/1609",
           "https://buildkite.com/gvisor/first-pass/builds/1609#01a1eae5-3bef-48b8-89c5-29570ed3ed40",
-          "https://buildkite.com/gvisor/pipeline/builds/55588"
+          "https://buildkite.com/gvisor/pipeline/builds/55588",
+          "https://github.com/google/gvisor/pull/16843#issuecomment-7060695371",
+          "https://buildkite.com/gvisor/first-pass/builds/2266"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "recheckCondition": "Exact-head terminal checks, maintainer main trigger or substantive review/import change.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -61526,7 +61550,15 @@
             }
           }
         ],
-        "curatedAt": "2026-11-21T09:19:34.135838+00:00"
+        "curatedAt": "2026-11-21T09:45:00.751471+00:00",
+        "currentCI": {
+          "source": "91b4fc2a2b3fe4a64a4d2769f982b6b381ec83d0",
+          "requiredFirstPass": 2266,
+          "mainPipeline": null,
+          "githubChecks": "Lint/Gazelle/fileheaders PASS; Go export live",
+          "dco": "SUCCESS",
+          "nextAction": "buildifier_license_fix follows exact-head Go export, FirstPass/main and maintainer review/import results. Preserve current failure identities; do not apply old-head bootstrap/quota diagnoses or retry unchanged old heads."
+        }
       },
       "refinement": {
         "before": {
@@ -97436,12 +97468,12 @@
       "repo": "google/gvisor",
       "number": 17456,
       "ref": "ci-bazel-release",
-      "head": "b0f308f6547907a11d07fff7805be7e01df05143",
+      "head": "4b845306c75b9ad0d09d31cdb86d68dc64171fe9",
       "title": "Build the GitHub Actions release directly with Bazel",
       "url": "https://github.com/google/gvisor/pull/17456",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-18T12:19:41.750038+00:00",
+      "updatedAt": "2026-11-21T09:45:00.751471+00:00",
       "summary": "Merged architecture selection #16753 made the native runner sufficient for //:release. The approved workflow patch was applied to master with every added and removed line intact. The workflow keeps upstream's actions/upload-artifact 7.0.2. The earlier archive check verified nine executables, their paths, modes and bytes.\n\nThe standard GitHub workflow built //:release on c3aab1bce. The parent Make archive and the new Bazel archive each contain runsc, containerd-shim-runsc-v1 and seven files under gvisor-bin: checkpointgofer, gvisor-proc-umounter, gvisor-sentry-prewarmer, gvisor_sentry, runsc-fd-parking, runsc-metric-server and runsc-netgofer. All nine paths have mode 0555 and ELF machine X86-64 in both ZIPs. Each executable has no PT_INTERP or DT_NEEDED entry. The shim is byte-identical. The other eight differ. The three small C helpers have different .text and compiler comments identifying GCC 11.4.0 and 15.2.0 respectively. The Sentry also has different .text. For runsc, checkpointgofer, metric-server and netgofer the differing sections are .rodata and the GNU and Go build-ID notes.",
       "evidence": [
         {
@@ -97523,16 +97555,18 @@
       ],
       "followup": {
         "owner": "buildifier_license_fix / root",
-        "sourceHead": "b0f308f6547907a11d07fff7805be7e01df05143",
-        "nextAction": "Prepare and qualify the source-equivalent base refresh importing the existing bootstrap fix, then reconcile publication authority and new-head CI. Do not retry the unchanged failed head or claim delivery before verification.",
-        "recheckCondition": "Current-head CI changes or becomes terminal, maintainer integration/new feedback, an actual new import, source movement or acknowledgement approval.",
+        "sourceHead": "4b845306c75b9ad0d09d31cdb86d68dc64171fe9",
+        "nextAction": "buildifier_license_fix follows exact-head Go export, FirstPass/main and maintainer review/import results. Preserve current failure identities; do not apply old-head bootstrap/quota diagnoses or retry unchanged old heads. Carry the wrong-range DCO case into the existing17470 external-report decision; no new user question or sign-off changes.",
+        "recheckCondition": "Exact-head terminal checks, maintainer main trigger or substantive review/import change.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17562",
           "https://github.com/google/gvisor/pull/17456#issuecomment-6975559077",
           "https://github.com/tamird/gvisor/commit/b0f308f6547907a11d07fff7805be7e01df05143",
           "https://buildkite.com/gvisor/first-pass/builds/1686",
           "https://github.com/gvisor/gvisor/actions/runs/44286108631",
-          "https://buildkite.com/gvisor/pipeline/builds/55592"
+          "https://buildkite.com/gvisor/pipeline/builds/55592",
+          "https://github.com/google/gvisor/pull/17456#issuecomment-7060695802",
+          "https://buildkite.com/gvisor/first-pass/builds/2273"
         ],
         "dcoCoordinationHistory": [
           {
@@ -97543,33 +97577,14 @@
           }
         ],
         "observedAt": "2026-11-18T10:42:43.629789+00:00",
-        "disposition": "Main55592 failed all three upload attempts before any Bazel target: the obsolete pre-command hook fetches tamird:branch from upstream and cannot find remote ref tamird. The exact fork branch exists. Current master already contains the merged hook fix; this is bootstrap failure, not a target failure or quota diagnosis. Current source is approved and FirstPass2253 passed on the untrusted queue.",
+        "disposition": "Delivered source-equivalent bootstrap rebase with strict range-diff =, targeted gates and two independent reviews clear. Native fork/PR heads are mergeable; lint/Gazelle/fileheaders pass and Go export is live. Exact-head main55605/FirstPass2273 have been triggered; the maintainer label handoff is satisfied. DCO136804177496 uses the wrong56-commit range, although its own4b commit is valid and the native PR range has one topic commit. This is the existing provider issue, not a certification/source defect. GitHub reset auto-merge after the push; Etienne independently reenabled it at09:38:28 and freshly approved4b. The agent did not enable it.",
         "currentCI": {
-          "observedAt": "2026-11-18T12:12:59.828888+00:00",
-          "pr": 17456,
-          "exactHead": "b0f308f6547907a11d07fff7805be7e01df05143",
-          "state": "open",
-          "mergeable": true,
-          "merged": false,
-          "mergedAt": null,
-          "feedbackSince": "2026-11-18T10:53:50Z",
-          "newFeedback": [],
-          "DCO": "SUCCESS",
-          "firstPass": {
-            "build": 1686,
-            "state": "passed",
-            "failedAttempts": [
-              {
-                "job": "01a1ee37-71ff-4530-9f86-57af493913ac",
-                "target": "//test/syscalls:socket_ip_tcp_loopback_test_runsc_systrap_hostnet",
-                "actualFailure": "Watchdog.Start() not called within30s",
-                "retry": "passed"
-              }
-            ],
-            "sourceHeadVerifiedByHelper": true
-          },
-          "GitHubChecks": "all SUCCESS",
-          "receipt": "own-dco-and-15181-20261118T121259Z.json"
+          "source": "4b845306c75b9ad0d09d31cdb86d68dc64171fe9",
+          "requiredFirstPass": 2273,
+          "mainPipeline": 55605,
+          "githubChecks": "Lint/Gazelle/fileheaders PASS; Go export live",
+          "dco": "wrong-range provider issue; own commit valid",
+          "nextAction": "buildifier_license_fix follows exact-head Go export, FirstPass/main and maintainer review/import results. Preserve current failure identities; do not apply old-head bootstrap/quota diagnoses or retry unchanged old heads. Carry the wrong-range DCO case into the existing17470 external-report decision; no new user question or sign-off changes."
         },
         "pendingAcknowledgement": {
           "state": "awaiting contributor approval",
@@ -97578,7 +97593,7 @@
           "humanRequestURL": "https://github.com/google/gvisor/pull/17456#issuecomment-6975559077",
           "posted": false
         },
-        "curatedAt": "2026-11-21T09:19:34.135838+00:00",
+        "curatedAt": "2026-11-21T09:45:00.751471+00:00",
         "ciHistory": [
           {
             "owner": "tcp_conflict",
@@ -97593,7 +97608,8 @@
             "goGenerateState": "running",
             "limits": "No full CI clearance; additional failures remain possible."
           }
-        ]
+        ],
+        "mergeable": "MERGEABLE"
       },
       "dcoCoordination": {
         "owner": "root",
@@ -99443,10 +99459,11 @@
           "https://github.com/tamird/gvisor/actions/runs/44889317107",
           "https://github.com/tamird/gvisor/actions/runs/44889319061",
           "https://github.com/google/gvisor/pull/17492#pullrequestreview-6004399761",
-          "https://buildkite.com/gvisor/pipeline/builds/55598"
+          "https://buildkite.com/gvisor/pipeline/builds/55598",
+          "https://github.com/tamird/gvisor/actions/runs/44889765892"
         ],
-        "curatedAt": "2026-11-21T09:34:58.657617+00:00",
-        "disposition": "Delivered source-equivalent rebase a4b0381b with strict range-diff = and original author/date/trailers preserved. Native head is mergeable and DCO passes; review requests are preserved and auto-merge was absent before and after. Shared five source checks and checkpoint compile/startup gates passed with zero tests. Fresh Etienne approval6004399761 is verified on the delivered head. The maintainer label handoff is satisfied: main55598 and current FirstPass2263 have started/pending contexts; these supersede the initial admission contexts. DCO/gazelle/fileheader/lint pass; Go export is live. Current main infrastructure attempts hit apt/dpkg locks or interrupted ARM clones with automatic retries pending; no final source-failure conclusion.",
+        "curatedAt": "2026-11-21T09:51:58.918740+00:00",
+        "disposition": "Delivered source-equivalent rebase a4b0381b with strict range-diff = and original author/date/trailers preserved. Native head is mergeable and DCO passes; review requests are preserved and auto-merge was absent before and after. Shared five source checks and checkpoint compile/startup gates passed with zero tests. Fresh Etienne approval6004399761 is verified on the delivered head. The maintainer label handoff is satisfied: main55598 and current FirstPass2263 have started/pending contexts; these supersede the initial admission contexts. All GitHub-native checks and DCO now pass, including Go export44889765892. FirstPass2263 passed. Main55598 remains running with automatic retries; recovered checkout/apt attempts do not establish terminal success or a source failure.",
         "permanentTransactionBaseline": {
           "productionSource": "b75c76bbee31f309bd3a7bdb125a4b28e96086a1",
           "ciSource": "cbb9a918c4197ddbb9131f9482ba001987a246ce",
@@ -99499,9 +99516,10 @@
           "source": "a4b0381bb2b121ec576780dbd65d881b50d837db",
           "requiredFirstPass": 2263,
           "mainPipeline": 55598,
-          "githubChecks": "DCO/gazelle/fileheader/lint PASS; Go export live at source-owner handoff",
-          "mainDisposition": "Infrastructure attempts have automatic retries pending; no final source failure",
-          "nextAction": "approved_rebase_queue follows the existing automatic retries, Go export, exact-head main/FirstPass and review/import lifecycle. The maintainer label request is fulfilled. Do not retry manually, repeat outreach or reuse old bootstrap/quota diagnoses."
+          "githubChecks": "All GitHub-native checks and DCO SUCCESS",
+          "mainDisposition": "Running with automatic retries; no final source-failure classification",
+          "nextAction": "approved_rebase_queue follows the existing automatic retries, Go export, exact-head main/FirstPass and review/import lifecycle. The maintainer label request is fulfilled. Do not retry manually, repeat outreach or reuse old bootstrap/quota diagnoses.",
+          "firstPassState": "PASSED"
         },
         "attentionDispositions": [
           {
@@ -141130,6 +141148,56 @@
         "title": "Declare unit test worker requirements",
         "summary": "Root confirms the actual standalone-PR question was asked in this conversation. No returned question ID or exact request timestamp is available; publication is awaiting the user reply. DCO is already included.",
         "body": "Tests that create sandboxes or inspect namespaces need kernel features\nthat ordinary remote containers cannot provide. Select the isolated\nworker for those tests and keep its external network disabled.\n\nKeep the sandbox routing test local because it also needs IPv6 support.\nIts caller must provide root execution. Compiler actions remain eligible\nfor remote execution.\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>"
+      }
+    },
+    {
+      "id": "investigation:iperf-cpu-affinity",
+      "repo": "google/gvisor",
+      "status": "active",
+      "group": "analysis",
+      "title": "Honor Iperf client and server CPU affinity",
+      "owner": "root",
+      "head": "2022728765e5e2a6a436272b09b13e5f04292826",
+      "updatedAt": "2026-11-21T09:45:00.751471+00:00",
+      "summary": "Actual standalone upstream PR question is pending for branch ci/iperf-affinity-source-20261121. One Go file changes four fields,8 additions/6 deletions. DCO is included; treee61958edbfe9eefe1b1269e27819d0954bfeaf2a matches the reviewed source. No publication approval is inferred.",
+      "nextStep": "Await the existing publication-question reply. Preserve functional-only scope and independent failed A/A gate; do not repeat the question.",
+      "evidence": [
+        {
+          "label": "Actual reviewable source",
+          "url": "https://github.com/tamird/gvisor/commit/2022728765e5e2a6a436272b09b13e5f04292826"
+        },
+        {
+          "label": "AMD64 HostConfig checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44888395385"
+        },
+        {
+          "label": "Goimports",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44890013809"
+        },
+        {
+          "label": "AMD startup",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44889682832"
+        },
+        {
+          "label": "ARM startup",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44889684427"
+        }
+      ],
+      "findings": [
+        {
+          "text": "All eight leaves/64 actual HostConfig checks, formatting and both-architecture startup passed; two independent reviewers found no blocking findings. Upstream affinity comes from NumCPU-derived helpers, not CLI affinity flags (those flags are CI-only). Functional inspections cover the controlled split AMD configuration only, without default-selection, physical/exclusive CPU, speed or stability claims. A/A remains failed.",
+          "evidence": []
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "2022728765e5e2a6a436272b09b13e5f04292826",
+        "baseHead": "574094148cae18e739634382c0a28d60520c319a",
+        "url": "https://github.com/tamird/gvisor/commit/2022728765e5e2a6a436272b09b13e5f04292826",
+        "title": "Honor Iperf client and server CPU affinity",
+        "summary": "Root confirms the standalone source publication question was actually asked in this conversation. No returned question ID or exact request timestamp is available; DCO is included and publication awaits the reply.",
+        "body": "Iperf containers did not use the benchmark harness CPU affinity\nsettings. Apply the server and client CPU sets in both connection\nvariants, as the other network benchmarks do.\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>"
       }
     }
   ],

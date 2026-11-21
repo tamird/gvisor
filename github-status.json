@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T09:48:57.445718+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T09:34:58.657617+00:00",
+  "registryDate": "2026-11-21T09:51:58.918740+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -451510,7 +451510,7 @@
       "url": "https://github.com/google/gvisor/pull/16508#pullrequestreview-6004164648",
       "author": "EtiennePerot",
       "updatedAt": "2026-11-21T09:28:41Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
       "feedbackComplete": true,
@@ -451528,7 +451528,7 @@
       "url": "https://github.com/google/gvisor/pull/16490#pullrequestreview-6004162562",
       "author": "EtiennePerot",
       "updatedAt": "2026-11-21T09:34:14Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
       "feedbackComplete": true,
@@ -451547,7 +451547,7 @@
       "url": "https://github.com/google/gvisor/pull/17456#issuecomment-7060709622",
       "author": "EtiennePerot",
       "updatedAt": "2026-11-21T09:38:09Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
       "feedbackComplete": true,
@@ -459101,9 +459101,9 @@
       ],
       "recordedFollowup": {
         "owner": "buildifier_license_fix / root",
-        "sourceHead": "b0f308f6547907a11d07fff7805be7e01df05143",
-        "disposition": "Main55592 failed all three upload attempts before any Bazel target: the obsolete pre-command hook fetches tamird:branch from upstream and cannot find remote ref tamird. The exact fork branch exists. Current master already contains the merged hook fix; this is bootstrap failure, not a target failure or quota diagnosis. Current source is approved and FirstPass2253 passed on the untrusted queue.",
-        "nextAction": "Prepare and qualify the source-equivalent base refresh importing the existing bootstrap fix, then reconcile publication authority and new-head CI. Do not retry the unchanged failed head or claim delivery before verification."
+        "sourceHead": "4b845306c75b9ad0d09d31cdb86d68dc64171fe9",
+        "disposition": "Delivered source-equivalent bootstrap rebase with strict range-diff =, targeted gates and two independent reviews clear. Native fork/PR heads are mergeable; lint/Gazelle/fileheaders pass and Go export is live. Exact-head main55605/FirstPass2273 have been triggered; the maintainer label handoff is satisfied. DCO136804177496 uses the wrong56-commit range, although its own4b commit is valid and the native PR range has one topic commit. This is the existing provider issue, not a certification/source defect. GitHub reset auto-merge after the push; Etienne independently reenabled it at09:38:28 and freshly approved4b. The agent did not enable it.",
+        "nextAction": "buildifier_license_fix follows exact-head Go export, FirstPass/main and maintainer review/import results. Preserve current failure identities; do not apply old-head bootstrap/quota diagnoses or retry unchanged old heads. Carry the wrong-range DCO case into the existing17470 external-report decision; no new user question or sign-off changes."
       },
       "actionCheckIds": [
         "CR_kwDOB9IlXs8AAAAf2ioWWA"
@@ -464279,7 +464279,7 @@
         "since": "2026-11-21T07:28:18.199633+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:34:58.657617+00:00"
+        "observedAt": "2026-11-21T09:51:58.918740+00:00"
       }
     },
     "pr:16664": {
@@ -467446,7 +467446,7 @@
         "since": "2026-11-21T05:04:12.012561+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:34:58.657617+00:00"
+        "observedAt": "2026-11-21T09:51:58.918740+00:00"
       }
     },
     "pr:17471": {
@@ -468487,7 +468487,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:34:58.657617+00:00"
+        "observedAt": "2026-11-21T09:51:58.918740+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -468496,7 +468496,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:34:58.657617+00:00"
+        "observedAt": "2026-11-21T09:51:58.918740+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -468505,7 +468505,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:34:58.657617+00:00"
+        "observedAt": "2026-11-21T09:51:58.918740+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -468514,7 +468514,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:34:58.657617+00:00"
+        "observedAt": "2026-11-21T09:51:58.918740+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -468523,7 +468523,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:34:58.657617+00:00"
+        "observedAt": "2026-11-21T09:51:58.918740+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -468532,7 +468532,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:34:58.657617+00:00"
+        "observedAt": "2026-11-21T09:51:58.918740+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -468541,7 +468541,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:34:58.657617+00:00"
+        "observedAt": "2026-11-21T09:51:58.918740+00:00"
       }
     },
     "investigation:coverage-worker-cpu": {
@@ -468550,7 +468550,7 @@
         "since": "2026-11-21T06:15:32.375526+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:34:58.657617+00:00"
+        "observedAt": "2026-11-21T09:51:58.918740+00:00"
       }
     },
     "investigation:unit-test-worker-requirements": {
@@ -468559,7 +468559,16 @@
         "since": "2026-11-21T09:19:34.135838+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:34:58.657617+00:00"
+        "observedAt": "2026-11-21T09:51:58.918740+00:00"
+      }
+    },
+    "investigation:iperf-cpu-affinity": {
+      "contributor-review": {
+        "scope": "2022728765e5e2a6a436272b09b13e5f04292826",
+        "since": "2026-11-21T09:51:58.918740+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-21T09:51:58.918740+00:00"
       }
     }
   },
