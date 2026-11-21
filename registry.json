@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T11:39:23.196920+00:00",
+    "updatedAt": "2026-11-21T12:00:06.633567+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -48193,8 +48193,8 @@
       "url": "https://github.com/tamird/gvisor/commit/ad1733f2d",
       "head": "ad1733f2db32e45107eff7390c13df112d248f4b",
       "group": "analysis",
-      "updatedAt": "2026-11-17T20:32:28.027492+00:00",
-      "status": "Awaiting contributor review; submit after #16663 lands",
+      "updatedAt": "2026-11-21T12:00:06.633567+00:00",
+      "status": "Approved; declared-input prerequisite remains open",
       "summary": "The shell-free Linux worker checked all 486 C and C++ files. It rejected a malformed file in a new directory, then rejected it again after the directory was deleted and recreated. The client repair applied the directory's style, and the worker accepted all 487 files. The macOS client also applied the fix from a subdirectory with a Linux build target selected.",
       "evidence": [
         {
@@ -48237,14 +48237,26 @@
           "outcome": "approved",
           "at": "2026-11-11T19:07:18+00:00",
           "note": "Approved for publication after the shared source inventory in #16663 lands."
+        },
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "ad1733f2db32e45107eff7390c13df112d248f4b",
+          "baseHead": "54a734f173ae271dbb6aecbcc61dd3c615a09a6b",
+          "url": "https://github.com/tamird/gvisor/commit/ad1733f2d",
+          "title": "Check C and C++ formatting with the declared LLVM tool",
+          "body": "The lint script downloads a clang-format wheel and unpacks it in a host cache. Run LLVM's declared formatter on the same sources as cpplint so the Bazel check can run on a worker without a shell. Preserve each source's path and its local style and ignore files.\n\nUse bazel run //tools/lint:format_clang to apply the fixes in the checkout. The existing //tools/lint:format command still runs Buildifier. make lint-fix applies both.\n\nThe Linux worker checked 486 sources, flagged a malformed file in a new directory, and passed after the client applied that directory's style. The combined check and the lint script's tests also passed [1].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/43362610809/artifacts/14008489594",
+          "summary": "The user explicitly approved this exact source in the current conversation; no request timestamp or new publication is inferred.",
+          "requestedAt": "2026-11-13T04:09:52+00:00",
+          "outcome": "APPROVED"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "ad1733f2db32e45107eff7390c13df112d248f4b",
         "observedAt": "2026-11-13T04:09:52+00:00",
-        "disposition": "The revised proposal uses the source inventory already in #16663. Its Buildifier command stays in place and clang-format runs directly on the client. The earlier approval covers c5d0232e4.",
-        "nextAction": "Review the two direct Bazel fix commands now that #16663 provides a single repository-wide cpplint check. After approval, open the clang-format PR when #16663 lands.",
+        "disposition": "The user approved exactad1733f2db32e45107eff7390c13df112d248f4b. Publication remains blocked by the full declared-source inventory, not satisfied by the narrower651 Cpplint amendment.",
+        "nextAction": "Root retains the approved source and closes the existing declared-inventory prerequisite before publication; do not re-ask or infer delivered source.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ad1733f2d",
           "https://github.com/tamird/gvisor/actions/runs/43362610809/artifacts/14008489594",
@@ -48262,18 +48274,8 @@
           "owner": "root"
         },
         "technicalOwner": "Agent",
-        "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings."
-      },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "ad1733f2db32e45107eff7390c13df112d248f4b",
-        "baseHead": "54a734f173ae271dbb6aecbcc61dd3c615a09a6b",
-        "url": "https://github.com/tamird/gvisor/commit/ad1733f2d",
-        "title": "Check C and C++ formatting with the declared LLVM tool",
-        "body": "The lint script downloads a clang-format wheel and unpacks it in a host cache. Run LLVM's declared formatter on the same sources as cpplint so the Bazel check can run on a worker without a shell. Preserve each source's path and its local style and ignore files.\n\nUse bazel run //tools/lint:format_clang to apply the fixes in the checkout. The existing //tools/lint:format command still runs Buildifier. make lint-fix applies both.\n\nThe Linux worker checked 486 sources, flagged a malformed file in a new directory, and passed after the client applied that directory's style. The combined check and the lint script's tests also passed [1].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/43362610809/artifacts/14008489594",
-        "summary": "Review the two direct Bazel fix commands now that #16663 provides a single repository-wide cpplint check. After approval, open the clang-format PR when #16663 lands.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 c5d0232e4^! ad1733f2d^!",
-        "requestedAt": "2026-11-13T04:09:52+00:00"
+        "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings.",
+        "curatedAt": "2026-11-21T12:00:06.633567+00:00"
       }
     },
     {
@@ -48996,7 +48998,7 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-21T07:28:18.199633+00:00",
+      "updatedAt": "2026-11-21T12:00:06.633567+00:00",
       "refinement": {
         "before": {
           "head": "54a734f173ae271dbb6aecbcc61dd3c615a09a6b"
@@ -49081,14 +49083,25 @@
           "at": "2026-11-13T16:16:01.404510+00:00",
           "note": "Published after #17612 landed as cfb38adfa3; range-diff verifies the rebased patch is unchanged. Added the authorized DCO sign-off as 6e4ccf0109; the source tree is identical to the tested cfb38adfa3.",
           "postedURL": "https://github.com/google/gvisor/pull/16663"
+        },
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "head": "651437132bf0054f1742ab2dce694f28a9ee0dc4",
+          "baseHead": "6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
+          "url": "https://github.com/tamird/gvisor/commit/651437132bf0054f1742ab2dce694f28a9ee0dc4",
+          "title": "Use Cpplint from Bazel for source lint",
+          "summary": "The user explicitly approved this exact source in the current conversation; no request timestamp or new publication is inferred.",
+          "body": "Source lint installed Cpplint 1.4.0 from a wheel and ran it with the host Python interpreter. Use the maintained BCR Cpplint 2.0.2 executable and its declared Python runtime, and remove the wheel installer.\n\nKeep Git-index input selection, checker flags, parallel batches, and failure propagation. Declare Cpplint as a development dependency so importing gVisor does not add the lint tool.\n\nThis upgrades the checker and can change diagnostics even with the same flags. Moving the checks into Bazel actions with declared source inputs remains separate work.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "APPROVED"
         }
       ],
       "followup": {
-        "owner": "root / buildifier_license_fix",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
         "observedAt": "2026-11-21T06:54:13.036908+00:00",
-        "disposition": "Public6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef remains conflicting. Qualified replacement651437132bf0054f1742ab2dce694f28a9ee0dc4 is now in an actual pending amendment question: four files (+19/-25), Cpplint1.4.0 to maintained BCR2.0.2, wheel installer removed and development-dependency boundary preserved. AMD/ARM492-input callers, unit/license/negative/status checks, final formatting and independent reviews passed at their recorded scopes. Dependency-boundary controls behaved as expected; whole-graph analysis is blocked by the unchanged LLVM extension and is not claimed green. Declared source-input actions remain separate unfinished work. DCO is included; no publication has occurred.",
-        "nextAction": "Await the reply to the existing exact651 amendment question. Root publishes only after that decision, preserving the reviewed title/description and the broader input-migration boundary. No repeat question, mechanical-approval inference or source-head advance. The narrower651 tool-ownership amendment does not supply the full declared-input inventory; the clang-format prerequisite remains with branch:rbe-declared-lint-tools.",
+        "disposition": "The user approved exact651437132bf0054f1742ab2dce694f28a9ee0dc4. The publication owner has published the approved branch and is completing PR title/body/readback. The narrower tool-ownership amendment does not supply the complete source inventory.",
+        "nextAction": "approved_rebase_queue completes16663 metadata/readback and owns new-head CI. Preserve the separate full-inventory/clang-format dependency; no repeated approval request or broad migration.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16663",
           "https://github.com/google/gvisor/pull/17612",
@@ -49111,20 +49124,10 @@
         "mergeable": "CONFLICTING",
         "recheckCondition": "Actual reply to the pending amendment question or a source/qualification change.",
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
-        "curatedAt": "2026-11-21T10:31:47.375254+00:00"
+        "curatedAt": "2026-11-21T12:00:06.633567+00:00"
       },
       "nextStep": "Await the reply to the existing exact651 amendment question. Root publishes only after that decision, preserving the reviewed title/description and the broader input-migration boundary. No repeat question, mechanical-approval inference or source-head advance.",
-      "recheckCondition": "Actual reply to the pending amendment question or a source/qualification change.",
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "651437132bf0054f1742ab2dce694f28a9ee0dc4",
-        "baseHead": "6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
-        "url": "https://github.com/tamird/gvisor/commit/651437132bf0054f1742ab2dce694f28a9ee0dc4",
-        "title": "Use Cpplint from Bazel for source lint",
-        "summary": "Actual pending amendment: replace the conflicting broader proposal with the qualified four-file Cpplint supplier change (+19/-25), upgrading1.4.0 to2.0.2. The recorded492/architecture, negative/status, license/dependency checks and independent reviews passed. DCO is included; full declared-input actions remain unfinished.",
-        "body": "Source lint installed Cpplint 1.4.0 from a wheel and ran it with the host Python interpreter. Use the maintained BCR Cpplint 2.0.2 executable and its declared Python runtime, and remove the wheel installer.\n\nKeep Git-index input selection, checker flags, parallel batches, and failure propagation. Declare Cpplint as a development dependency so importing gVisor does not add the lint tool.\n\nThis upgrades the checker and can change diagnostics even with the same flags. Moving the checks into Bazel actions with declared source inputs remains separate work.\n\nPosted by Codex on behalf of @tamird."
-      }
+      "recheckCondition": "Actual reply to the pending amendment question or a source/qualification change."
     },
     {
       "id": "pr:16664",
@@ -97805,7 +97808,7 @@
       "url": "https://github.com/google/gvisor/pull/17470",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-11-21T05:04:12.012561+00:00",
+      "updatedAt": "2026-11-21T12:00:06.633567+00:00",
       "summary": "Deliveredbc55ab6327453ed38e289b2b1b1f7197b38087e8 retains its existing approvals. First Pass2223 and all reported non-DCO validation checks pass, but no current-head main-pipeline result exists: canonical main55576 belongs to old3ee54. Root verified and updated notice7057355062 at05:02:43Z to request a maintainer reapply ready to test. DCO136732232020 still reports the wrong55-versus-one commit range; the topic sign-off is valid. Its external cncf/dco2 report has a separate actual pending posting decision, not a source-amendment or manual-sign-off requirement.",
       "evidence": [
         {
@@ -97832,7 +97835,7 @@
       "followup": {
         "sourceHead": "bc55ab6327453ed38e289b2b1b1f7197b38087e8",
         "owner": "approved_rebase_queue / root",
-        "nextAction": "Root follows the maintainer response/current-head main trigger already requested in the rebase notice, the DCO app refresh and the existing external-report posting decision. Keep main validation open until an actual bc55 build is observed; no repeated outreach, source churn or upstream sign-offs.",
+        "nextAction": "Root follows genuine feedback on the published cncf/dco2#126 bug report and current PR17470 provider/review lifecycle. No operator/clickops request, repeated issue question, manual DCO action or source churn is authorized.",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-21T04:40:29.431125+00:00",
         "recheckCondition": "Exact-bc55 main status/build or maintainer-trigger event, DCO app result, or reply to the existing external-report posting question.",
@@ -97873,8 +97876,8 @@
             }
           ]
         },
-        "curatedAt": "2026-11-21T05:04:12.012561+00:00",
-        "disposition": "Deliveredbc55ab6327453ed38e289b2b1b1f7197b38087e8 retains its existing approvals. First Pass2223 and all reported non-DCO validation checks pass, but no current-head main-pipeline result exists: canonical main55576 belongs to old3ee54. Root verified and updated notice7057355062 at05:02:43Z to request a maintainer reapply ready to test. DCO136732232020 still reports the wrong55-versus-one commit range; the topic sign-off is valid. Its external cncf/dco2 report has a separate actual pending posting decision, not a source-amendment or manual-sign-off requirement."
+        "curatedAt": "2026-11-21T12:00:06.633567+00:00",
+        "disposition": "The source remains delivered with its independent wrong-range DCO provider blocker. The user-approved report-only revision is published as cncf/dco2#126; the prior external-report question is consumed. No operator/clickops request was published."
       },
       "dcoAmendment": {
         "oldHead": "60ec8592c1c5fcec63846664b77a1bec5018b97c",
@@ -97900,15 +97903,19 @@
       },
       "nextStep": "Root follows the maintainer response/current-head main trigger already requested in the rebase notice, the DCO app refresh and the existing external-report posting decision. Keep main validation open until an actual bc55 build is observed; no repeated outreach, source churn or upstream sign-offs.",
       "recheckCondition": "Exact-bc55 main status/build or maintainer-trigger event, DCO app result, or reply to the existing external-report posting question.",
-      "contributorReview": {
-        "kind": "issue",
-        "status": "pending",
-        "head": "bc55ab6327453ed38e289b2b1b1f7197b38087e8",
-        "url": "https://github.com/cncf/dco2/issues/new",
-        "title": "DCO check includes upstream commits outside the current PR range",
-        "summary": "Approve opening this bug report in cncf/dco2? This is a new external report; the existing authorization covered the PR rebase.",
-        "body": "On https://github.com/gvisor/gvisor/pull/17470, check 136732232020 for bc55ab6327453ed38e289b2b1b1f7197b38087e8 lists 55 commits and 27 sign-off failures. It accepts that commit\u2019s sign-off. GitHub\u2019s current PR range contains only that commit. The standard re-request returned HTTP 404.\n\nThe inspected event handler uses the webhook\u2019s base/head and ignores re-request events: https://github.com/cncf/dco2/blob/cd8272fff227aab9eeb5ffac398f1abd88508d73/dco2/src/dco/event/mod.rs . The deployed revision and original webhook base are unknown.\n\nCould the app operator recompute the check from the current PR range and investigate the range-refresh and re-request handling?\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "issue",
+          "status": "settled",
+          "head": "bc55ab6327453ed38e289b2b1b1f7197b38087e8",
+          "url": "https://github.com/cncf/dco2/issues/new",
+          "title": "DCO check includes upstream commits outside the current PR range",
+          "summary": "The user approved a bug report only, removing operator/clickops requests from this earlier draft. Root published the revised report as cncf/dco2#126 and verified its saved body; this is not approval of the earlier operator-request wording.",
+          "body": "On https://github.com/gvisor/gvisor/pull/17470, check 136732232020 for bc55ab6327453ed38e289b2b1b1f7197b38087e8 lists 55 commits and 27 sign-off failures. It accepts that commit\u2019s sign-off. GitHub\u2019s current PR range contains only that commit. The standard re-request returned HTTP 404.\n\nThe inspected event handler uses the webhook\u2019s base/head and ignores re-request events: https://github.com/cncf/dco2/blob/cd8272fff227aab9eeb5ffac398f1abd88508d73/dco2/src/dco/event/mod.rs . The deployed revision and original webhook base are unknown.\n\nCould the app operator recompute the check from the current PR range and investigate the range-refresh and re-request handling?\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "SUPERSEDED",
+          "postedURL": "https://github.com/cncf/dco2/issues/126"
+        }
+      ]
     },
     {
       "id": "pr:17471",
@@ -105130,6 +105137,30 @@
               ]
             }
           }
+        ]
+      }
+    },
+    {
+      "id": "pr:17853",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17853,
+      "group": "bazel",
+      "head": "3e39c3a0c85601525990460f46d124bb66c927f7",
+      "title": "Run coverage builds on their required CPU",
+      "url": "https://github.com/google/gvisor/pull/17853",
+      "status": "open",
+      "updatedAt": "2026-11-21T12:00:06.633567+00:00",
+      "summary": "Delivered user-approved standalone coverage-worker CPU requirement. DCO-only signed metadata preserves reviewed e33 source; one commit is natively mergeable. Existing compile-product/SDK CPU proof does not claim runtime or performance validation.",
+      "followup": {
+        "owner": "approved_rebase_queue / root",
+        "sourceHead": "3e39c3a0c85601525990460f46d124bb66c927f7",
+        "mergeable": "MERGEABLE",
+        "disposition": "Published and provider-verified; resulting CI/review follow-through belongs to the existing source owner.",
+        "nextAction": "Follow exact-head CI and maintainer review; diagnose only actual new failures, no duplicate monitoring or merge action.",
+        "recheckCondition": "Exact-head checks, substantive review or import/merge event.",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/17853"
         ]
       }
     }
@@ -129722,7 +129753,7 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-21T10:31:47.375254+00:00",
+      "updatedAt": "2026-11-21T12:00:06.633567+00:00",
       "lastReviewedAt": "2026-11-20T15:54:04.733842+00:00",
       "summary": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning\u2019s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
       "findings": [
@@ -130221,7 +130252,7 @@
           ]
         }
       ],
-      "nextStep": "Consume newly changed feedback daily and route source-bound actions to existing owners. Preserve all unclosed technical obligations and the explicit uninspected Daybreak carryforward; do not infer approval or new validation from this reconciliation. Root also owns the actual pending operational-policy question about removing the five-hour age-only rebase rule. This is not a source approval or authority for an age-based campaign; retain existing source/review/hold boundaries until the actual reply.",
+      "nextStep": "Consume newly changed feedback and preserve unclosed technical obligations/Daybreak holds. The user approved removing the five-hour age-only rule, and the personal delivery skill is updated: rebase only for a verified conflict, necessary merged prerequisite, actual integration failure or explicit user request. This closes the operational policy question without changing publication/merge permissions.",
       "evidence": [
         {
           "label": "TCP review map",
@@ -134731,8 +134762,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-21T10:32:39.486361+00:00",
-      "summary": "The actual standalone publication question for dockerd-log retention5ad44c8 is pending. The exact source is readable through GitHub commit API despite prior ref/transport limitations. No upstream PR or source-publication approval is inferred; the underlying nested-Docker stall remains unexplained.",
+      "updatedAt": "2026-11-21T12:00:06.633567+00:00",
+      "summary": "Exact source is user-approved. The assigned publication owner has atomically published the approved source branches and is completing PR metadata/readback; no unverified PR number or completed metadata claim is recorded.",
       "findings": [
         {
           "text": "Both AMD64 jobs on build 54543 reached 900 seconds in TestDockerWithVFS/docker_run_bridge_network_privileged. On each platform, the preceding host-network docker run completed apk add curl and apk info with exit status 0. The privileged bridge run then began mount setup on the same Alpine image and produced no exit status. Removing a completed container leaves the image available for the next run. The logs do not locate the wait inside the bridge command. The uncached retries passed in 127.3 seconds on systrap and 50 seconds on KVM.",
@@ -134867,7 +134898,7 @@
           ]
         }
       ],
-      "nextStep": "Root awaits the existing actual publication-question reply. Do not re-ask, publish, infer approval or repeat closed qualification work. Preserve source and scope boundaries.",
+      "nextStep": "approved_rebase_queue owns publication/readback and resulting CI/review lifecycle. No human approval remains for this exact source; wait for its concrete delivery receipt.",
       "evidence": [
         {
           "label": "Third attempt, privileged container",
@@ -134914,16 +134945,19 @@
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
       },
       "head": "5ad44c8892f6d9ce773e448357a83917b3c79b5b",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "5ad44c8892f6d9ce773e448357a83917b3c79b5b",
-        "baseHead": "d09b876ee227fa76fb4c6b0c50d0550a0a89d4b3",
-        "url": "https://github.com/tamird/gvisor/commit/5ad44c8892f6d9ce773e448357a83917b3c79b5b",
-        "title": "Retain dockerd logs for failed Buildkite tests",
-        "body": "Include dockerd_*.log in the existing failed-test artifact upload loop. Docker image tests already stream these daemon logs into undeclared outputs, but retained Buildkite artifacts omit them. This improves retained evidence; it does not establish the cause of the nested command stall.",
-        "summary": "Root confirms this actual source-publication question was asked in the conversation. No returned question ID or exact request timestamp is available; no reply/approval is inferred."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "5ad44c8892f6d9ce773e448357a83917b3c79b5b",
+          "baseHead": "d09b876ee227fa76fb4c6b0c50d0550a0a89d4b3",
+          "url": "https://github.com/tamird/gvisor/commit/5ad44c8892f6d9ce773e448357a83917b3c79b5b",
+          "title": "Retain dockerd logs for failed Buildkite tests",
+          "body": "Include dockerd_*.log in the existing failed-test artifact upload loop. Docker image tests already stream these daemon logs into undeclared outputs, but retained Buildkite artifacts omit them. This improves retained evidence; it does not establish the cause of the nested command stall.",
+          "summary": "The user explicitly approved this exact source in the current conversation. Publication and prerequisites remain separate; no request/approval timestamp is invented.",
+          "outcome": "APPROVED"
+        }
+      ]
     },
     {
       "id": "investigation:ci-flake-containerd-runp",
@@ -137830,8 +137864,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-21T10:53:48.994925+00:00",
-      "summary": "The actual standalone APT source-publication question is pending. One pre-command hook changes16 additions/7 deletions to skip setup only when required host-architecture packages and running-kernel headers are installed. It retains installed versions rather than upgrading per job; missing/broken-package setup remains unchanged. DCO is included. No upstream publication approval is inferred.",
+      "updatedAt": "2026-11-21T12:00:06.633567+00:00",
+      "summary": "Exact source is user-approved. The assigned publication owner has atomically published the approved source branches and is completing PR metadata/readback; no unverified PR number or completed metadata claim is recorded.",
       "findings": [
         {
           "text": "The original job logged 623 lock refusals from 07:37:14 through 08:35:58 UTC, each naming unattended-upgr PID 3661. The worker ran apt-get update again on each turn.",
@@ -137873,7 +137907,7 @@
           ]
         }
       ],
-      "nextStep": "Root awaits the existing source-publication reply. Preserve the disposable-package-database validation scope; no live Buildkite image or complete contention-fix claim, new permission request or permanent test harness.",
+      "nextStep": "approved_rebase_queue owns publication/readback and resulting CI/review lifecycle. No human approval remains for this exact source; wait for its concrete delivery receipt.",
       "evidence": [
         {
           "label": "Release #7761 \u00b7 pre-command timed out before the CUDA test",
@@ -137917,6 +137951,17 @@
           "postedURL": "https://github.com/google/gvisor/pull/17554",
           "at": "2026-11-12T15:50:34+00:00",
           "note": "The contributor approved the one-commit change, published as #17554."
+        },
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "b64c59c1b06d72919b250766609b328d87a05076",
+          "baseHead": "8b8f23f943dfc65f995db92f73878fbdc88f1893",
+          "url": "https://github.com/tamird/gvisor/commit/b64c59c1b06d72919b250766609b328d87a05076",
+          "title": "Skip installed Buildkite package setup",
+          "body": "The pre-command hook refreshed and installed its packages before every\njob. A GSO job waited for unattended-upgrades, found every requested\npackage already installed, then failed on APT's separate archive lock.\n\nAvoid APT when all required packages and the running kernel headers are\ninstalled for the host architecture. Keep the existing package discovery\nand bounded installation for agents that still need setup. Already\ninstalled packages retain their current versions during job setup.\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
+          "summary": "The user explicitly approved this exact source in the current conversation. Publication and prerequisites remain separate; no request/approval timestamp is invented.",
+          "outcome": "APPROVED"
         }
       ],
       "technicalOwner": "CI flake triage",
@@ -137925,16 +137970,6 @@
         "owner": "root",
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
-      },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "b64c59c1b06d72919b250766609b328d87a05076",
-        "baseHead": "8b8f23f943dfc65f995db92f73878fbdc88f1893",
-        "url": "https://github.com/tamird/gvisor/commit/b64c59c1b06d72919b250766609b328d87a05076",
-        "title": "Skip installed Buildkite package setup",
-        "body": "The pre-command hook refreshed and installed its packages before every\njob. A GSO job waited for unattended-upgrades, found every requested\npackage already installed, then failed on APT's separate archive lock.\n\nAvoid APT when all required packages and the running kernel headers are\ninstalled for the host architecture. Keep the existing package discovery\nand bounded installation for agents that still need setup. Already\ninstalled packages retain their current versions during job setup.\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
-        "summary": "Root confirms the actual standalone PR question was asked; no returned question ID or exact request timestamp is available. Bazel44895286543 and two review roles passed using a disposable package database. The CI-only certification rejection was resolved by a no-DCO validation child; no human execution-permission decision remains."
       }
     },
     {
@@ -140130,9 +140165,9 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-20T23:41:26.383263+00:00",
-      "summary": "The user\u2019s musl-versus-hermetic-LLVM challenge keeps f611 publication superseded/HOLD. Local LLVM producer447 has passing product gates, while startup and actual caller qualification are still ongoing under compdb_final_correctness; it is not review-ready or approved for publication. Prior completed musl/caller proofs remain scoped to that baseline and do not qualify LLVM. Compatible upstream producer/release adoption remains open.",
-      "nextStep": "compdb_final_correctness closes the LLVM startup/caller and source review boundary before any new proposal. Root retains the user\u2019s toolchain/consolidation direction and actual publication authority; do not reopen f611\u2019s superseded question or infer a permanent fork pin.",
+      "updatedAt": "2026-11-21T12:00:06.633567+00:00",
+      "summary": "The reviewed fork qualification workflow was published normally over SSH from24b tofc8a0f4; the former signing/SSH/workflow-publication blocker is closed. Build-only44900572165 passed with BEP command build, successful target, source guard and artifact. It used12 internal actions; configured cache/RBE does not establish a remote execution or test outputs.zip retention proof.",
+      "nextStep": "Root follows concrete owning build/test uses of the delivered shared workflow. Preserve existing qualification scope and pending outputs.zip/remote-action evidence rather than reopening the resolved SSH blocker or supplier hold.",
       "recheckCondition": "Actual LLVM startup/caller/source-review evidence and user direction, followed by a compatible upstream release/pin.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
@@ -140591,6 +140626,10 @@
         {
           "label": "Held producer proposal; musl baseline evidence only",
           "url": "https://github.com/tamird/bazel-compile-commands/commit/f611b9a07aeb262daf01c0cfdc53b7e9ce4b41b3"
+        },
+        {
+          "label": "Delivered build-only qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44900572165"
         }
       ],
       "followup": {
@@ -141055,8 +141094,8 @@
       "group": "bazel",
       "owner": "root",
       "technicalOwner": "compdb_final_correctness",
-      "updatedAt": "2026-11-21T10:34:19.635593+00:00",
-      "summary": "The actual supplier LLVM producer-publication question for44774d5 is pending, not a missing qualification review. Earlierf611 musl publication is superseded/held. Preserve completed scoped producer/caller/product evidence without interpreting it as source-publication approval or gVisor adoption approval. Publication also depends on upstream kiron1/bazel-compile-commands#236 landing; native readback at10:33:18 confirms it is still OPEN at324cf87d3065afb993520a4104720ef7c7647b0b, with mergedAt null.",
+      "updatedAt": "2026-11-21T12:00:06.633567+00:00",
+      "summary": "Exact LLVM producer44774d5c6b106d09460c5bb85ac64506a712c35b is user-approved. Supplier parent PR236 remains OPEN, so publication is still prerequisite-blocked; no upstream producer PR or gVisor adoption approval is inferred. Scoped product/caller proof remains valid.",
       "findings": [
         {
           "text": "All Linux owning/style gates and all three native Windows cases passed, and two final independent reviewers found no blocker. The coordinator\u2019s independent source-tree comparison found only .github/workflows/main.yaml different between test CI7f and intended55; this supports the exact tested-source binding, not new publication authority.",
@@ -141090,7 +141129,7 @@
           "url": "https://github.com/tamird/bazel-compile-commands/commit/44774d5c6b106d09460c5bb85ac64506a712c35b"
         }
       ],
-      "nextStep": "Root awaits the existing actual LLVM source-publication reply and upstream#236 landing. Neither is permission to publish now. Preserve qualification scope and gVisor adoption/caller boundaries; do not repeat the question.",
+      "nextStep": "Root waits for upstream236 landing, then performs the authorized one-commit producer publication and follows compatible release/adoption. No repeated approval question or permanent fork pin.",
       "recheckCondition": "Actual LLVM startup/caller/source-review evidence and user direction, followed by a compatible upstream release/pin.",
       "head": "44774d5c6b106d09460c5bb85ac64506a712c35b",
       "followup": {
@@ -141117,18 +141156,19 @@
           "at": "2026-11-20T20:00:22Z",
           "postedURL": "https://github.com/kiron1/bazel-compile-commands/pull/236",
           "note": "Root verified the actual user approval and consumed it by opening #236. This does not revive the withdrawn55 question or approve gVisor adoption."
+        },
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "44774d5c6b106d09460c5bb85ac64506a712c35b",
+          "baseHead": "324cf87d3065afb993520a4104720ef7c7647b0b",
+          "url": "https://github.com/tamird/bazel-compile-commands/commit/44774d5c6b106d09460c5bb85ac64506a712c35b",
+          "title": "fix: build portable releases with LLVM",
+          "body": "Select hermetic-llvm for Linux and Mac producers, with musl constraints on Linux, macOS15.5 deployment target and packaged runtime notices. Retain native MSVC on Windows.",
+          "summary": "The user explicitly approved this exact source in the current conversation. Publication and prerequisites remain separate; no request/approval timestamp is invented.",
+          "outcome": "APPROVED"
         }
-      ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "44774d5c6b106d09460c5bb85ac64506a712c35b",
-        "baseHead": "324cf87d3065afb993520a4104720ef7c7647b0b",
-        "url": "https://github.com/tamird/bazel-compile-commands/commit/44774d5c6b106d09460c5bb85ac64506a712c35b",
-        "title": "fix: build portable releases with LLVM",
-        "body": "Select hermetic-llvm for Linux and Mac producers, with musl constraints on Linux, macOS15.5 deployment target and packaged runtime notices. Retain native MSVC on Windows.",
-        "summary": "Root confirms this actual source-publication question was asked in the conversation. No returned question ID or exact request timestamp is available; no reply/approval is inferred."
-      }
+      ]
     },
     {
       "id": "investigation:coverage-worker-cpu",
@@ -141138,9 +141178,9 @@
       "title": "Run coverage builds on their required CPU",
       "owner": "root",
       "head": "e33f30605e080fd02cc53bd20950e99d31c171fc",
-      "updatedAt": "2026-11-21T06:15:32.375526+00:00",
-      "summary": "Separate qualified permanent worker-constraint proposal. The actual standalone-upstream-PR publication question is pending; this is distinct from the delivered mechanical Go rebase. No topic branch or upstream PR has been created.",
-      "nextStep": "Await the reply to the existing e33 standalone helper-publication question. Preserve source, qualification scope and separate Go delivery; do not re-ask or infer approval.",
+      "updatedAt": "2026-11-21T12:00:06.633567+00:00",
+      "summary": "User-approved e33 source was delivered as gVisor17853 at signed DCO-only3e39c3a0c85601525990460f46d124bb66c927f7. Native verification confirms one commit and mergeable. No source approval remains.",
+      "nextStep": "approved_rebase_queue owns17853 resulting CI/review through delivery. Preserve compile-product/runtime scope; do not merge or infer new check results.",
       "evidence": [
         {
           "label": "Actual reviewable helper commit",
@@ -141161,16 +141201,20 @@
           "evidence": []
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "e33f30605e080fd02cc53bd20950e99d31c171fc",
-        "baseHead": "e50582f1801aec027ccbc427d34ecae10d393bf9",
-        "url": "https://github.com/tamird/gvisor/commit/e33f30605e080fd02cc53bd20950e99d31c171fc",
-        "title": "Run coverage builds on their required CPU",
-        "summary": "Actual pending decision: open one standalone upstream helper PR. It is not approval of the Go amendment, fork CI or a manual DCO action.",
-        "body": "Approve opening a standalone upstream gVisor PR for https://github.com/tamird/gvisor/commit/e33f30605e080fd02cc53bd20950e99d31c171fc, \u201cRun coverage builds on their required CPU\u201d?\n\nThree files, 41 additions/1 deletion. Bazel toolchain metadata makes the five native coverage actions select a worker matching the target CPU. Previously ARM coverage selected x86_64 and failed. Commands, inputs and output labels stay intact.\n\nBoth architecture/SDK action checks, source checks and two final reviews passed. The ARM coverage product built with Go 1.27.4; https://github.com/tamird/gvisor/actions/runs/44872095577 exits with expected NO_TESTS_FOUND because this was a compile-only target. DCO will be added under your standing authorization before publication."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "e33f30605e080fd02cc53bd20950e99d31c171fc",
+          "baseHead": "e50582f1801aec027ccbc427d34ecae10d393bf9",
+          "url": "https://github.com/tamird/gvisor/commit/e33f30605e080fd02cc53bd20950e99d31c171fc",
+          "title": "Run coverage builds on their required CPU",
+          "summary": "The user explicitly approved this exact source in the current conversation. Publication and prerequisites remain separate; no request/approval timestamp is invented.",
+          "body": "Approve opening a standalone upstream gVisor PR for https://github.com/tamird/gvisor/commit/e33f30605e080fd02cc53bd20950e99d31c171fc, \u201cRun coverage builds on their required CPU\u201d?\n\nThree files, 41 additions/1 deletion. Bazel toolchain metadata makes the five native coverage actions select a worker matching the target CPU. Previously ARM coverage selected x86_64 and failed. Commands, inputs and output labels stay intact.\n\nBoth architecture/SDK action checks, source checks and two final reviews passed. The ARM coverage product built with Go 1.27.4; https://github.com/tamird/gvisor/actions/runs/44872095577 exits with expected NO_TESTS_FOUND because this was a compile-only target. DCO will be added under your standing authorization before publication.",
+          "outcome": "APPROVED",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/17853"
+        }
+      ]
     },
     {
       "id": "investigation:unit-test-worker-requirements",
@@ -141179,10 +141223,10 @@
       "group": "bazel",
       "title": "Declare unit test worker requirements",
       "owner": "root",
-      "head": "384aea8100efba722a07e3bf89185e2bfe089e17",
-      "updatedAt": "2026-11-21T09:19:34.135838+00:00",
-      "summary": "Actual standalone upstream PR publication question is pending. Verified branch review/unit-test-worker-requirements-20261121 holds six BUILD files with22 additions. DCO is included; the earlier execution rejection is resolved. No upstream PR or publication approval is implied.",
-      "nextStep": "Await the reply to the existing source publication question. Preserve the remote result-cache, root/IPv6 caller and three sandbox baseline-failure limits; do not re-ask.",
+      "head": "1189d9f09100ec7674b624f4dae531ab6bde1e98",
+      "updatedAt": "2026-11-21T12:00:06.633567+00:00",
+      "summary": "Existing384 proposal returned for cited provider-property comments. Revised1189d9f cites official docs, default-capability source and BuildBuddy11585, and requests IPv6 Firecracker instead of local execution. Remote gate44901481027 is still running; no new source-publication question or approval exists.",
+      "nextStep": "worker_requirements_citations owns qualification of1189 and the reviewable revised handoff. Root owns the single existing remote gate; do not duplicate it or revive384 approval.",
       "evidence": [
         {
           "label": "Reviewable source",
@@ -141207,16 +141251,19 @@
           "evidence": []
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "384aea8100efba722a07e3bf89185e2bfe089e17",
-        "baseHead": "574094148cae18e739634382c0a28d60520c319a",
-        "url": "https://github.com/tamird/gvisor/commit/384aea8100efba722a07e3bf89185e2bfe089e17",
-        "title": "Declare unit test worker requirements",
-        "summary": "Root confirms the actual standalone-PR question was asked in this conversation. No returned question ID or exact request timestamp is available; publication is awaiting the user reply. DCO is already included.",
-        "body": "Tests that create sandboxes or inspect namespaces need kernel features\nthat ordinary remote containers cannot provide. Select the isolated\nworker for those tests and keep its external network disabled.\n\nKeep the sandbox routing test local because it also needs IPv6 support.\nIts caller must provide root execution. Compiler actions remain eligible\nfor remote execution.\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "384aea8100efba722a07e3bf89185e2bfe089e17",
+          "baseHead": "574094148cae18e739634382c0a28d60520c319a",
+          "url": "https://github.com/tamird/gvisor/commit/384aea8100efba722a07e3bf89185e2bfe089e17",
+          "title": "Declare unit test worker requirements",
+          "summary": "The user requested comment revision with primary BuildBuddy citations for each provider property; old384 source is not publication-approved.",
+          "body": "Tests that create sandboxes or inspect namespaces need kernel features\nthat ordinary remote containers cannot provide. Select the isolated\nworker for those tests and keep its external network disabled.\n\nKeep the sandbox routing test local because it also needs IPv6 support.\nIts caller must provide root execution. Compiler actions remain eligible\nfor remote execution.\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
+          "outcome": "CHANGES-REQUESTED"
+        }
+      ]
     },
     {
       "id": "investigation:iperf-cpu-affinity",
@@ -141226,9 +141273,9 @@
       "title": "Honor Iperf client and server CPU affinity",
       "owner": "root",
       "head": "2022728765e5e2a6a436272b09b13e5f04292826",
-      "updatedAt": "2026-11-21T09:45:00.751471+00:00",
-      "summary": "Actual standalone upstream PR question is pending for branch ci/iperf-affinity-source-20261121. One Go file changes four fields,8 additions/6 deletions. DCO is included; treee61958edbfe9eefe1b1269e27819d0954bfeaf2a matches the reviewed source. No publication approval is inferred.",
-      "nextStep": "Await the existing publication-question reply. Preserve functional-only scope and independent failed A/A gate; do not repeat the question.",
+      "updatedAt": "2026-11-21T12:00:06.633567+00:00",
+      "summary": "Exact source is user-approved. The assigned publication owner has atomically published the approved source branches and is completing PR metadata/readback; no unverified PR number or completed metadata claim is recorded.",
+      "nextStep": "approved_rebase_queue owns publication/readback and resulting CI/review lifecycle. No human approval remains for this exact source; wait for its concrete delivery receipt.",
       "evidence": [
         {
           "label": "Actual reviewable source",
@@ -141257,16 +141304,19 @@
           "evidence": []
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "2022728765e5e2a6a436272b09b13e5f04292826",
-        "baseHead": "574094148cae18e739634382c0a28d60520c319a",
-        "url": "https://github.com/tamird/gvisor/commit/2022728765e5e2a6a436272b09b13e5f04292826",
-        "title": "Honor Iperf client and server CPU affinity",
-        "summary": "Root confirms the standalone source publication question was actually asked in this conversation. No returned question ID or exact request timestamp is available; DCO is included and publication awaits the reply.",
-        "body": "Iperf containers did not use the benchmark harness CPU affinity\nsettings. Apply the server and client CPU sets in both connection\nvariants, as the other network benchmarks do.\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "2022728765e5e2a6a436272b09b13e5f04292826",
+          "baseHead": "574094148cae18e739634382c0a28d60520c319a",
+          "url": "https://github.com/tamird/gvisor/commit/2022728765e5e2a6a436272b09b13e5f04292826",
+          "title": "Honor Iperf client and server CPU affinity",
+          "summary": "The user explicitly approved this exact source in the current conversation. Publication and prerequisites remain separate; no request/approval timestamp is invented.",
+          "body": "Iperf containers did not use the benchmark harness CPU affinity\nsettings. Apply the server and client CPU sets in both connection\nvariants, as the other network benchmarks do.\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
+          "outcome": "APPROVED"
+        }
+      ]
     }
   ],
   "updatedAt": "2026-11-20T23:41:26.383263+00:00"

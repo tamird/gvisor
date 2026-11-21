@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T11:56:05.903830+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T11:39:23.196920+00:00",
+  "registryDate": "2026-11-21T12:00:06.633567+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -451896,10 +451896,10 @@
       "owner": "Agent",
       "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
       "recordedFollowup": {
-        "owner": "root / buildifier_license_fix",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
-        "disposition": "Public6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef remains conflicting. Qualified replacement651437132bf0054f1742ab2dce694f28a9ee0dc4 is now in an actual pending amendment question: four files (+19/-25), Cpplint1.4.0 to maintained BCR2.0.2, wheel installer removed and development-dependency boundary preserved. AMD/ARM492-input callers, unit/license/negative/status checks, final formatting and independent reviews passed at their recorded scopes. Dependency-boundary controls behaved as expected; whole-graph analysis is blocked by the unchanged LLVM extension and is not claimed green. Declared source-input actions remain separate unfinished work. DCO is included; no publication has occurred.",
-        "nextAction": "Await the reply to the existing exact651 amendment question. Root publishes only after that decision, preserving the reviewed title/description and the broader input-migration boundary. No repeat question, mechanical-approval inference or source-head advance. The narrower651 tool-ownership amendment does not supply the full declared-input inventory; the clang-format prerequisite remains with branch:rbe-declared-lint-tools."
+        "disposition": "The user approved exact651437132bf0054f1742ab2dce694f28a9ee0dc4. The publication owner has published the approved branch and is completing PR title/body/readback. The narrower tool-ownership amendment does not supply the complete source inventory.",
+        "nextAction": "approved_rebase_queue completes16663 metadata/readback and owns new-head CI. Preserve the separate full-inventory/clang-format dependency; no repeated approval request or broad migration."
       },
       "conflictObservedSince": "2026-11-21T06:31:43.667696+00:00"
     },
@@ -459233,8 +459233,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "bc55ab6327453ed38e289b2b1b1f7197b38087e8",
-        "disposition": "Deliveredbc55ab6327453ed38e289b2b1b1f7197b38087e8 retains its existing approvals. First Pass2223 and all reported non-DCO validation checks pass, but no current-head main-pipeline result exists: canonical main55576 belongs to old3ee54. Root verified and updated notice7057355062 at05:02:43Z to request a maintainer reapply ready to test. DCO136732232020 still reports the wrong55-versus-one commit range; the topic sign-off is valid. Its external cncf/dco2 report has a separate actual pending posting decision, not a source-amendment or manual-sign-off requirement.",
-        "nextAction": "Root follows the maintainer response/current-head main trigger already requested in the rebase notice, the DCO app refresh and the existing external-report posting decision. Keep main validation open until an actual bc55 build is observed; no repeated outreach, source churn or upstream sign-offs."
+        "disposition": "The source remains delivered with its independent wrong-range DCO provider blocker. The user-approved report-only revision is published as cncf/dco2#126; the prior external-report question is consumed. No operator/clickops request was published.",
+        "nextAction": "Root follows genuine feedback on the published cncf/dco2#126 bug report and current PR17470 provider/review lifecycle. No operator/clickops request, repeated issue question, manual DCO action or source churn is authorized."
       },
       "actionCheckIds": [
         "CR_kwDOB9IlXs8AAAAf1eBJVA"
@@ -464252,13 +464252,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-21T11:55:36.751858+00:00"
-      },
-      "contributor-review": {
-        "scope": "651437132bf0054f1742ab2dce694f28a9ee0dc4",
-        "since": "2026-11-21T07:28:18.199633+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-21T11:39:23.196920+00:00"
       }
     },
     "pr:16664": {
@@ -467405,13 +467398,6 @@
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
         "observedAt": "2026-11-21T11:55:36.751858+00:00"
-      },
-      "contributor-review": {
-        "scope": "bc55ab6327453ed38e289b2b1b1f7197b38087e8",
-        "since": "2026-11-21T05:04:12.012561+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-21T11:39:23.196920+00:00"
       }
     },
     "pr:17471": {
@@ -468438,7 +468424,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T11:39:23.196920+00:00"
+        "observedAt": "2026-11-21T12:00:06.633567+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -468447,7 +468433,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T11:39:23.196920+00:00"
+        "observedAt": "2026-11-21T12:00:06.633567+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -468456,7 +468442,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T11:39:23.196920+00:00"
+        "observedAt": "2026-11-21T12:00:06.633567+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -468465,16 +468451,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T11:39:23.196920+00:00"
-      }
-    },
-    "branch:package-clang-format": {
-      "contributor-review": {
-        "scope": "ad1733f2db32e45107eff7390c13df112d248f4b",
-        "since": "2026-11-13T04:09:52+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-21T11:39:23.196920+00:00"
+        "observedAt": "2026-11-21T12:00:06.633567+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -468483,7 +468460,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T11:39:23.196920+00:00"
+        "observedAt": "2026-11-21T12:00:06.633567+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -468492,61 +468469,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T11:39:23.196920+00:00"
-      }
-    },
-    "investigation:ci-flake-dind-bridge": {
-      "contributor-review": {
-        "scope": "5ad44c8892f6d9ce773e448357a83917b3c79b5b",
-        "since": "2026-11-21T10:32:39.486361+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-21T11:39:23.196920+00:00"
-      }
-    },
-    "investigation:ci-buildkite-apt-lock": {
-      "contributor-review": {
-        "scope": "b64c59c1b06d72919b250766609b328d87a05076",
-        "since": "2026-11-21T10:53:48.994925+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-21T11:39:23.196920+00:00"
-      }
-    },
-    "investigation:bazel-compile-commands-pipes": {
-      "contributor-review": {
-        "scope": "44774d5c6b106d09460c5bb85ac64506a712c35b",
-        "since": "2026-11-21T10:32:39.486361+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-21T11:39:23.196920+00:00"
-      }
-    },
-    "investigation:coverage-worker-cpu": {
-      "contributor-review": {
-        "scope": "e33f30605e080fd02cc53bd20950e99d31c171fc",
-        "since": "2026-11-21T06:15:32.375526+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-21T11:39:23.196920+00:00"
-      }
-    },
-    "investigation:unit-test-worker-requirements": {
-      "contributor-review": {
-        "scope": "384aea8100efba722a07e3bf89185e2bfe089e17",
-        "since": "2026-11-21T09:19:34.135838+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-21T11:39:23.196920+00:00"
-      }
-    },
-    "investigation:iperf-cpu-affinity": {
-      "contributor-review": {
-        "scope": "2022728765e5e2a6a436272b09b13e5f04292826",
-        "since": "2026-11-21T09:51:58.918740+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-21T11:39:23.196920+00:00"
+        "observedAt": "2026-11-21T12:00:06.633567+00:00"
       }
     }
   },
