@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain", "go_test")
+load("//tools:defs.bzl", "cc_binary", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -16,39 +16,43 @@ filegroup(
 # runsc-fd-parking must remain a statically-linked, freestanding
 # (no libc) C binary. It exists for the lifetime of each sandbox just to hold
 # some FDs, so its runtime memory footprint *must* stay absolutely minimal.
-genrule(
-    name = "fdparking_binary",
+cc_binary(
+    name = "runsc-fd-parking",
     srcs = ["fdparking.c"],
-    outs = ["runsc-fd-parking"],
-    cmd = "$(CC) $(CC_FLAGS) " +
-          "-Os " +
-          "-fno-pie " +
-          "-ffreestanding " +
-          "-fno-sanitize=all " +
-          "-fno-stack-protector " +
-          "-fno-asynchronous-unwind-tables " +
-          "-fno-unwind-tables " +
-          "-static " +
-          "-nostdlib " +
-          "-nostartfiles " +
-          "-Wl,--build-id=none " +
-          "-Wl,--gc-sections " +
-          "-Wl,-n " +
-          "-Wl,-s " +
-          "-o $(execpath runsc-fd-parking) " +
-          "$(execpath fdparking.c)",
-    executable = True,
-    features = ["-pie"],
-    toolchains = [
-        cc_toolchain,
-        ":no_pie_cc_flags",
+    copts = [
+        "-Os",
+        "-fno-pie",
+        "-ffreestanding",
+        "-fno-sanitize=all",
+        "-fno-stack-protector",
+        "-fno-asynchronous-unwind-tables",
+        "-fno-unwind-tables",
     ],
+    features = [
+        "-coverage",
+        "-default_compile_flags",
+        "-default_link_flags",
+        "-pie",
+    ],
+    link_extra_lib = None,
+    linkopts = [
+        "-static",
+        "-nostdlib",
+        "-nostartfiles",
+        "-Wl,--build-id=none",
+        "-Wl,--gc-sections",
+        "-Wl,-n",
+        "-Wl,-s",
+    ],
+    linkstatic = True,
+    stamp = 0,
     visibility = ["//visibility:public"],
 )
 
-cc_flags_supplier(
-    name = "no_pie_cc_flags",
-    features = ["-pie"],
+alias(
+    name = "fdparking_binary",
+    actual = ":runsc-fd-parking",
+    visibility = ["//visibility:public"],
 )
 
 go_test(
