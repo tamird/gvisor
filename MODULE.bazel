@@ -16,6 +16,7 @@ bazel_dep(name = "rules_cc", version = "0.2.25")
 bazel_dep(name = "llvm", version = "0.8.26")
 bazel_dep(name = "libbpf", version = "1.7.0.bcr.1")
 bazel_dep(name = "rules_shell", version = "0.8.0")
+bazel_dep(name = "rules_proto", version = "7.1.0")
 bazel_dep(name = "rules_qemu", version = "0.3.0")
 bazel_dep(name = "rules_foreign_cc", version = "0.16.0")
 bazel_dep(name = "grpc", version = "1.84.0", repo_name = "com_github_grpc_grpc")
@@ -46,6 +47,8 @@ single_version_override(
     patches = [
         "//tools:rules_cgo.patch",
         "//tools:rules_go_export.patch",
+        "//tools:rules_go_host_c.patch",
+        "//tools:rules_go_proto_exec.patch",
     ],
     version = "0.65.0",
 )
@@ -73,6 +76,33 @@ llvm_source = use_extension("@llvm//extensions:llvm.bzl", "llvm")
 use_repo(llvm_source, "llvm-project")
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# Build-time compilation database generator recommended by Bazel.
+_COMPILE_COMMANDS_BUILD = 'licenses(["notice"])\nexports_files(["usr/bin/bazel-compile-commands"])\n'
+
+# Jammy packages support the Ubuntu 22.04 development container.
+http_archive(
+    name = "bazel_compile_commands_linux_amd64",
+    build_file_content = _COMPILE_COMMANDS_BUILD,
+    patch_cmds = ["tar -xf data.tar"],
+    sha256 = "e57cc545ea9ab6dfc494eb2c5913210099e8e31e947517fd0545844d06949b47",
+    urls = ["https://github.com/kiron1/bazel-compile-commands/releases/download/v0.21.0/bazel-compile-commands_0.21.0-jammy_amd64.deb"],
+)
+
+http_archive(
+    name = "bazel_compile_commands_linux_arm64",
+    build_file_content = _COMPILE_COMMANDS_BUILD,
+    patch_cmds = ["tar -xf data.tar"],
+    sha256 = "ea006e5ec7a906994bdb0580c779a21a345d864541d58021541cb6c65623c642",
+    urls = ["https://github.com/kiron1/bazel-compile-commands/releases/download/v0.21.0/bazel-compile-commands_0.21.0-jammy_arm64.deb"],
+)
+
+http_archive(
+    name = "bazel_compile_commands_macos_universal",
+    build_file_content = _COMPILE_COMMANDS_BUILD,
+    sha256 = "b21f3bb40ac6c92158c52c81bfe1b96e57101165d580f62c32a825631e0ffd94",
+    urls = ["https://github.com/kiron1/bazel-compile-commands/releases/download/v0.21.0/bazel-compile-commands_0.21.0-macos_universal.zip"],
+)
 
 http_archive(
     name = "kythe_release",
@@ -396,6 +426,11 @@ img_pull(
 register_toolchains("//:cc_toolchain_k8")
 
 register_toolchains("//:cc_toolchain_aarch64")
+
+register_toolchains(
+    "//:cc_toolchain_k8_rbe",
+    "//:cc_toolchain_aarch64_rbe",
+)
 
 ### Go
 go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")
