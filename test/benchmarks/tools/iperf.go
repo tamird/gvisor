@@ -23,7 +23,7 @@ import (
 
 // Iperf is for the client side of `iperf`.
 type Iperf struct {
-	Num      int // Number of bytes to send in KB.
+	Num      int // Requested transfer size across all streams, in KiB.
 	Parallel int // Number of parallel threads.
 }
 
@@ -47,7 +47,7 @@ func (i *Iperf) MakeCmd(host string, port int) []string {
 	return cmd
 }
 
-// Report parses output from iperf client and reports metrics.
+// Report records iperf's client-reported bandwidth.
 func (i *Iperf) Report(b *testing.B, output string) {
 	b.Helper()
 	// Parse bandwidth and report it.
@@ -58,12 +58,21 @@ func (i *Iperf) Report(b *testing.B, output string) {
 	ReportCustomMetric(b, bW*1024, "bandwidth" /*metric name*/, "bytes_per_second" /*unit*/)
 }
 
-// bandwidth parses the Bandwidth number from an iperf report. A sample is below.
+// bandwidth returns the client's final reported rate in KBytes/sec.
+// Parallel transfers use the producer's aggregate summary.
 func (i *Iperf) bandwidth(data string) (float64, error) {
-	re := regexp.MustCompile(`\[\s*\d+\][^\n]+\s+(\d+\.?\d*)\s+KBytes/sec`)
-	match := re.FindStringSubmatch(data)
-	if len(match) < 1 {
-		return 0, fmt.Errorf("failed get bandwidth: %s", data)
+	id := `\s*\d+`
+	if i.Parallel > 1 {
+		id = `SUM`
+	}
+	rows := regexp.MustCompile(`(?m)^\[`+id+`\][^\n]*$`).FindAllString(data, -1)
+	if len(rows) == 0 {
+		return 0, fmt.Errorf("missing iperf bandwidth summary: %s", data)
+	}
+	summary := rows[len(rows)-1]
+	match := regexp.MustCompile(`\s+(\d+\.?\d*)\s+KBytes/sec(?:\s|$)`).FindStringSubmatch(summary)
+	if len(match) == 0 {
+		return 0, fmt.Errorf("invalid iperf bandwidth summary: %s", summary)
 	}
 	return strconv.ParseFloat(match[1], 64)
 }
