@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T04:25:10.734501+00:00",
+    "updatedAt": "2026-11-21T04:42:53.815540+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -97518,13 +97518,13 @@
       "repo": "google/gvisor",
       "number": 17470,
       "ref": "proposal/php-runtime-failure-diffs",
-      "head": "3ee54fafb7fdd73fbd7750f58bd2a1253b4386c9",
+      "head": "bc55ab6327453ed38e289b2b1b1f7197b38087e8",
       "title": "Show output differences for failing PHP runtime tests",
       "url": "https://github.com/google/gvisor/pull/17470",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-11-17T19:05:00.391405+00:00",
-      "summary": "The PHP runner displays expected and actual output when a test in a multi-test batch fails. Successful batches retain their usual output. The original intermittent upload failure remains under investigation.",
+      "updatedAt": "2026-11-21T04:42:53.815540+00:00",
+      "summary": "Equivalent rebasebc55ab6327453ed38e289b2b1b1f7197b38087e8 is delivered OPEN/MERGEABLE/APPROVED with notice7057355062 and both existing reviews retained. Scoped two-architecture library, source and377-source strict C++ gates plus two independent context reviews passed; original PHP controls retain their input-bound scope, without a fresh full-runtime claim. GitHub disabled xinzhong’s auto-merge after the push; it is not re-enabled. New DCO check136732232020 reports55 commits/27 invalid upstream commits despite the actual one-commit PR and valid topic sign-off. The check re-request returned404; this requires provider/app reconciliation, not source churn or upstream sign-offs. Current source/export CI and First Pass2223 remain pending.",
       "evidence": [
         {
           "label": "Published diagnostic change",
@@ -97548,12 +97548,12 @@
         }
       ],
       "followup": {
-        "sourceHead": "3ee54fafb7fdd73fbd7750f58bd2a1253b4386c9",
+        "sourceHead": "bc55ab6327453ed38e289b2b1b1f7197b38087e8",
         "owner": "approved_rebase_queue / root",
-        "nextAction": "approved_rebase_queue qualifies the equivalent current-base recovery; root reviews publication before replacing public3ee54. Reconcile terminal candidate evidence and current reviews first. No retry of unchanged3ee54, foreign mutation, new user question or claim that bc55 is published.",
+        "nextAction": "The existing rebase owner and root follow actual CI results and the supported DCO app/maintainer refresh, preserving the valid topic sign-off, retained reviews and disabled auto-merge. Publication under the standing mechanical grant is complete; no new user decision or source change is pending.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "recheckCondition": "Terminal candidate qualification and root publication review, or a new public source/provider result.",
+        "observedAt": "2026-11-21T04:40:29.431125+00:00",
+        "recheckCondition": "New exact-head CI/DCO provider result or supported maintainer/app refresh, substantive review or source/import change.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17470",
           "https://github.com/tamird/gvisor/commit/60ec8592c1c5fcec63846664b77a1bec5018b97c",
@@ -97561,7 +97561,11 @@
           "https://buildkite.com/gvisor/first-pass/builds/1587",
           "https://buildkite.com/gvisor/first-pass/builds/1587#01a1eae1-b40d-4b62-bb80-fddf4d659f0b",
           "https://buildkite.com/gvisor/pipeline/builds/55576#01a1fc52-5a5a-4f88-b20b-7a8a71c74659",
-          "https://github.com/gvisor/gvisor/pull/17735"
+          "https://github.com/gvisor/gvisor/pull/17735",
+          "https://github.com/tamird/gvisor/commit/bc55ab6327453ed38e289b2b1b1f7197b38087e8",
+          "https://github.com/gvisor/gvisor/pull/17470#issuecomment-7057355062",
+          "https://github.com/cncf/dco2",
+          "https://buildkite.com/gvisor/first-pass/builds/2223"
         ],
         "latestReviewObservation": {
           "checkedAt": "2026-11-18T19:22:58.577211+00:00",
@@ -97587,8 +97591,8 @@
             }
           ]
         },
-        "curatedAt": "2026-11-21T04:25:10.734501+00:00",
-        "disposition": "Public source remains3ee54fafb7fdd73fbd7750f58bd2a1253b4386c9. Main55576 fails all three pipeline-upload attempts before tests: its obsolete pre-command hook fetches origin tamird:proposal/php-runtime-failure-diffs and Git cannot find remote ref tamird. The fork branch still exists at the exact public head; this is not a deleted branch, PHP test regression or quota rejection. Merged #17735 removes the hook. Equivalent local rebasebc55ab6327453ed38e289b2b1b1f7197b38087e8 is unpublished and under qualification; current exact-head approvals and source-bound results remain historical/current at their recorded revisions."
+        "curatedAt": "2026-11-21T04:42:53.815540+00:00",
+        "disposition": "Equivalent rebasebc55ab6327453ed38e289b2b1b1f7197b38087e8 is delivered OPEN/MERGEABLE/APPROVED with notice7057355062 and both existing reviews retained. Scoped two-architecture library, source and377-source strict C++ gates plus two independent context reviews passed; original PHP controls retain their input-bound scope, without a fresh full-runtime claim. GitHub disabled xinzhong’s auto-merge after the push; it is not re-enabled. New DCO check136732232020 reports55 commits/27 invalid upstream commits despite the actual one-commit PR and valid topic sign-off. The check re-request returned404; this requires provider/app reconciliation, not source churn or upstream sign-offs. Current source/export CI and First Pass2223 remain pending."
       },
       "dcoAmendment": {
         "oldHead": "60ec8592c1c5fcec63846664b77a1bec5018b97c",
@@ -97611,7 +97615,9 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
-      }
+      },
+      "nextStep": "The existing rebase owner and root follow actual CI results and the supported DCO app/maintainer refresh, preserving the valid topic sign-off, retained reviews and disabled auto-merge. Publication under the standing mechanical grant is complete; no new user decision or source change is pending.",
+      "recheckCondition": "New exact-head CI/DCO provider result or supported maintainer/app refresh, substantive review or source/import change."
     },
     {
       "id": "pr:17471",

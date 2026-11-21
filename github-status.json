@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T04:40:29.431125+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T04:25:10.734501+00:00",
+  "registryDate": "2026-11-21T04:42:53.815540+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -450858,7 +450858,7 @@
         "sourceHead": "afa202f537c8e49da38030e0aac48a681d42b435",
         "nextAction": "Follow maintainer review, exact published-head checks and any matching import; handle new substantive feedback in the existing workstream. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-21T04:40:26.721202+00:00"
     },
     {
       "repo": "google/gvisor",
@@ -451026,7 +451026,7 @@
         "disposition": "The published one-commit PR now includes all three Go 1.27.4 updates. The rebuilt AMD64 GCS fixture reported the new compiler in both its CLI and executable metadata.",
         "nextAction": "Follow upstream review and import of the published Go 1.27.4 update. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 47d14a74e781ae01f7b68a306d16752da43daec4; observed 2026-11-17T19:29:29.454062+00:00): build 1586 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-21T04:40:29.427360+00:00"
     },
     {
       "repo": "google/gvisor",
@@ -451074,7 +451074,7 @@
         "disposition": "First Pass1771 passed on the exact published1692head. The latest approval observation remains distinct from GitHub REVIEW_REQUIRED; older provider failures are historical, not the current CI blocker.",
         "nextAction": "Follow required human review and any matching import on exact published1692. Preserve previous failure/automatic retry history; no new source change, outreach or merge."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-21T04:40:29.427360+00:00"
     },
     {
       "repo": "buildbuddy-io/buildbuddy",
@@ -458350,9 +458350,9 @@
       ],
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
-        "sourceHead": "3ee54fafb7fdd73fbd7750f58bd2a1253b4386c9",
-        "disposition": "Public source remains3ee54fafb7fdd73fbd7750f58bd2a1253b4386c9. Main55576 fails all three pipeline-upload attempts before tests: its obsolete pre-command hook fetches origin tamird:proposal/php-runtime-failure-diffs and Git cannot find remote ref tamird. The fork branch still exists at the exact public head; this is not a deleted branch, PHP test regression or quota rejection. Merged #17735 removes the hook. Equivalent local rebasebc55ab6327453ed38e289b2b1b1f7197b38087e8 is unpublished and under qualification; current exact-head approvals and source-bound results remain historical/current at their recorded revisions.",
-        "nextAction": "approved_rebase_queue qualifies the equivalent current-base recovery; root reviews publication before replacing public3ee54. Reconcile terminal candidate evidence and current reviews first. No retry of unchanged3ee54, foreign mutation, new user question or claim that bc55 is published."
+        "sourceHead": "bc55ab6327453ed38e289b2b1b1f7197b38087e8",
+        "disposition": "Equivalent rebasebc55ab6327453ed38e289b2b1b1f7197b38087e8 is delivered OPEN/MERGEABLE/APPROVED with notice7057355062 and both existing reviews retained. Scoped two-architecture library, source and377-source strict C++ gates plus two independent context reviews passed; original PHP controls retain their input-bound scope, without a fresh full-runtime claim. GitHub disabled xinzhong’s auto-merge after the push; it is not re-enabled. New DCO check136732232020 reports55 commits/27 invalid upstream commits despite the actual one-commit PR and valid topic sign-off. The check re-request returned404; this requires provider/app reconciliation, not source churn or upstream sign-offs. Current source/export CI and First Pass2223 remain pending.",
+        "nextAction": "The existing rebase owner and root follow actual CI results and the supported DCO app/maintainer refresh, preserving the valid topic sign-off, retained reviews and disabled auto-merge. Publication under the standing mechanical grant is complete; no new user decision or source change is pending."
       },
       "actionCheckIds": [
         "CR_kwDOB9IlXs8AAAAf1eBJVA"
@@ -467689,7 +467689,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T04:25:10.734501+00:00"
+        "observedAt": "2026-11-21T04:42:53.815540+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -467698,7 +467698,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T04:25:10.734501+00:00"
+        "observedAt": "2026-11-21T04:42:53.815540+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -467707,7 +467707,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T04:25:10.734501+00:00"
+        "observedAt": "2026-11-21T04:42:53.815540+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -467716,7 +467716,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T04:25:10.734501+00:00"
+        "observedAt": "2026-11-21T04:42:53.815540+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -467725,7 +467725,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T04:25:10.734501+00:00"
+        "observedAt": "2026-11-21T04:42:53.815540+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -467734,7 +467734,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T04:25:10.734501+00:00"
+        "observedAt": "2026-11-21T04:42:53.815540+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -467743,7 +467743,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T04:25:10.734501+00:00"
+        "observedAt": "2026-11-21T04:42:53.815540+00:00"
       }
     }
   },
