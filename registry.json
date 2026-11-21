@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T02:33:33.655Z",
+    "updatedAt": "2026-11-21T03:00:40.369481+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -59870,8 +59870,8 @@
         "owner": "root",
         "sourceHead": "caf171bbc9fd32876201d73523bcb9d3482e5d68",
         "observedAt": "2026-11-17T19:04:51.199074+00:00",
-        "disposition": "The published single-commit rebase 658fc8bc5 applies to deb6b3ea1 and GitHub reports it is mergeable.",
-        "nextAction": "Review the rebased checkpoint page-write error fix. Both independent pgalloc tests stay in the patch. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks.",
+        "disposition": "Published as #16869 at caf171bbc9fd32876201d73523bcb9d3482e5d68. Preserve the existing contributor approval of04c66b4d at its recorded source and time, the published658fc8bc rebase, and its documented trailer-only DCO replacement. The former instruction to review the already-published rebase is stale; no new approval or qualification is inferred.",
+        "nextAction": "Root follows upstream review, exact published-head checks and any matching import on #16869. No contributor review request remains from the stale rebase-review instruction. Preserve both independent pgalloc tests and all source-bound qualification and approval records; do not request reapproval or reclassify historical CI without new evidence.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/658fc8bc5",
           "https://github.com/google/gvisor/pull/16869",
@@ -59900,7 +59900,8 @@
           "nextAction": "Reverify this exact ref before delivery; follow the canonical PR alias where present.",
           "recheckCondition": "Exact ref/head change, canonical PR feedback/check/import or terminal-state change, dependency landing or contributor decision.",
           "owner": "root"
-        }
+        },
+        "curatedAt": "2026-11-21T03:00:40.369481+00:00"
       },
       "refinement": {
         "before": {
