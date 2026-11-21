@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T15:16:45.378346+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T15:01:28.141765+00:00",
+  "registryDate": "2026-11-21T15:21:17.931599+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -452846,7 +452846,7 @@
       "repo": "google/gvisor",
       "number": 17374,
       "head": "b04021b975f4eb1087ffaf46152dfe966bb62305",
-      "action": "Follow provider package-repository recovery and the existing maintainer review. Preserve completed source review and the outstanding broad before/after workload requirement. No source rewrite, courtesy reply or blind retry.",
+      "action": "Root awaits the author’s broad before/after workload evidence before full approval, while retaining separate current CI/import obligations. No duplicate review, tests, courtesy reply or outreach; re-review only substantive source or evidence changes.",
       "claimed": true,
       "firstObservedHead": "80c001d2b316feaa887a5ee53498d6ee55799a6a",
       "reviewHead": null,
@@ -452866,7 +452866,7 @@
       "repo": "google/gvisor",
       "number": 16887,
       "head": "04a4ea5bf2e111ed78ab4fdf3ce6156f185f3b8b",
-      "action": "Await before/after results from an existing broad network benchmark before full approval. Do not substitute the reported component samples. Re-review changed source or new author evidence while preserving Botir's source ownership.",
+      "action": "Root awaits the author’s broad before/after workload evidence before full approval, while retaining separate current CI/import obligations. No duplicate review, tests, courtesy reply or outreach; re-review only substantive source or evidence changes.",
       "claimed": true,
       "firstObservedHead": "1668e58d4c0cb17ecb5fcf6457389575a3c01459",
       "reviewHead": null,
@@ -460139,8 +460139,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "b04021b975f4eb1087ffaf46152dfe966bb62305",
-        "disposition": "Full source review completed and exact COMMENTED response delivered at the current head. This answers the invitation with a response, not source approval. Root verified tamird absent from the native requested_reviewers response after submission; our formal native request was consumed.",
-        "nextAction": "Follow provider package-repository recovery and the existing maintainer review. Preserve completed source review and the outstanding broad before/after workload requirement. No source rewrite, courtesy reply or blind retry."
+        "disposition": "Current b04021b9 and actually reviewed 80c001d2 have identical parent 5f7e73a and complete 9-file blob/mode sets. Current source is already reviewed by this equivalence, not a substantive source change or rebase. Preserve the delivered COMMENTED response at its actual reviewed head; it is not source approval. No later feedback supplies the required broad workload evidence.",
+        "nextAction": "Root awaits the author’s broad before/after workload evidence before full approval, while retaining separate current CI/import obligations. No duplicate review, tests, courtesy reply or outreach; re-review only substantive source or evidence changes."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN0jfjpg"
@@ -460496,8 +460496,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "bc55ab6327453ed38e289b2b1b1f7197b38087e8",
-        "disposition": "The source remains delivered with its independent wrong-range DCO provider blocker. The user-approved report-only revision is published as cncf/dco2#126; the prior external-report question is consumed. No operator/clickops request was published.",
-        "nextAction": "Root follows genuine feedback on the published cncf/dco2#126 bug report and current PR17470 provider/review lifecycle. No operator/clickops request, repeated issue question, manual DCO action or source churn is authorized."
+        "disposition": "Native DCO 136732232020 accepts sole topic bc55ab63 but evaluates 55 commits/27 invalid sign-offs. Rejected 9ad3ba91 is already an ancestor of actual PR base e50582f1 (ahead 52/behind 0): this is the proven base-commit inclusion bug reported in delivered cncf/dco2#126. No source/sign-off amendment, report approval or retry is needed; exact-head main-trigger/review obligations remain independent.",
+        "nextAction": "Root follows genuine feedback/provider correction through existing issue:cncf/dco2:126 and the already-requested bc55 main-trigger/review lifecycle. No new report, operator/clickops request, external post, manual sign-off, source churn or duplicate outreach."
       },
       "actionCheckIds": [
         "CR_kwDOB9IlXs8AAAAf1eBJVA"
@@ -462447,7 +462447,7 @@
         "since": "2026-11-21T15:01:28.141765+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T15:01:28.141765+00:00"
+        "observedAt": "2026-11-21T15:21:17.931599+00:00"
       }
     },
     "pr:15147": {
@@ -469926,7 +469926,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T15:01:28.141765+00:00"
+        "observedAt": "2026-11-21T15:21:17.931599+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -469935,7 +469935,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T15:01:28.141765+00:00"
+        "observedAt": "2026-11-21T15:21:17.931599+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -469944,7 +469944,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T15:01:28.141765+00:00"
+        "observedAt": "2026-11-21T15:21:17.931599+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -469953,7 +469953,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T15:01:28.141765+00:00"
+        "observedAt": "2026-11-21T15:21:17.931599+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -469962,7 +469962,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T15:01:28.141765+00:00"
+        "observedAt": "2026-11-21T15:21:17.931599+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -469971,7 +469971,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T15:01:28.141765+00:00"
+        "observedAt": "2026-11-21T15:21:17.931599+00:00"
       }
     },
     "investigation:unit-test-worker-requirements": {
@@ -469980,7 +469980,7 @@
         "since": "2026-11-21T13:24:07.659680+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T15:01:28.141765+00:00"
+        "observedAt": "2026-11-21T15:21:17.931599+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -469989,7 +469989,7 @@
         "since": "2026-11-21T14:00:19.559771+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T15:01:28.141765+00:00"
+        "observedAt": "2026-11-21T15:21:17.931599+00:00"
       }
     }
   },

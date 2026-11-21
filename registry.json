@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T15:01:28.141765+00:00",
+    "updatedAt": "2026-11-21T15:21:17.931599+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -213,7 +213,7 @@
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
       "updatedAt": "2026-11-17T18:16:01.120596+00:00",
-      "summary": "Tamir reports that the maintainer hold concerns adding google/licensecheck. The existing checker already verifies the compiler migration with the current catalog and policy. The hold remains on this classifier PR. Its fork revision now includes the go-digest catalog entry and policy exception.\n\nThe fork rebase repairs three stale GPL constants introduced by 61088c907 and makes the mock HTTP notice state an actual GPL-v2-only grant. All 41 owning tests pass on 0ea1ef528. Fresh catalog verification still reports 20 QEMU mismatches, one LTP mismatch and one go-digest mismatch. In particular, QEMU\u2019s license appendix contains an example grant. The project\u2019s LICENSE identifies the terms for the emulator. The upstream October hold remains.\n\nThe source conflict is repaired at afd34241a1. Complete path, mode and added/removed lines match the previously approved or reviewed patch; range-diff changes only adjacent upstream LTP context. Existing source review requirements remain; this equivalent rebase does not request another approval. Etienne\u2019s existing hold and CHANGES_REQUESTED remain.\n\nEarlier source-specific record:\n\nThe current-master equivalent rebase is published at bec06589fb on 30ace3e2a9. Independent review verified unchanged executable, test and policy bytes; the Kythe catalog hunk preserves the newly landed libbpf/LLVM entries. The provider confirms the source is mergeable. Etienne\u2019s existing hold and CHANGES_REQUESTED remain; this is not a new approval or an internal import success.\n\nEarlier source records:\n\nThe requested post-#16046 rebase is published at 04108da6a3cf on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at f7f7cd707c. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at f7f7cd707c453855ccbe5de562a27f5ad18b74c3 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it. Current-head Gazelle fails only because merged parent760b retains an unused //pkg/zip dependency on production tools/nogo/check:check. Exact failed logs request that single deletion. The correction is already present in open, all-green import16031, assigned to Etienne; follow that shared import without duplicating a fix or public report. These failed checks remain visible until the correction lands and current checks confirm it.\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it.\n\nCurrent head554623136dadd13e0bae2a83ccc5224609b56d5d is CONFLICTING/DIRTY after the latest public merge. This is a new mechanical maintenance item for root; the explicit internal license-exception hold and existing changes-requested review remain unchanged.\n\nThe published mechanical rebase is at 554623136dad on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe conflict is resolved by a patch-equivalent rebase at b4e336c68. Both current upstream QEMU license records are preserved; all classifier additions and deletions match the previously reviewed patch. GitHub confirms the new head is mergeable. The changes-requested review and unresolved internal exception status remain. An authorized follow-up now asks Etienne whether the internal exceptions for both #15145 and #15146 have propagated; the existing holds remain unchanged.\n\nEarlier record:\n\nEtienne\u2019s requested one-week hold elapsed on October 10 at 07:17:45 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. The authorized follow-up is now posted on #15146, asking Etienne whether the internal exceptions for both #15145 and #15146 have propagated. The response and existing changes-requested review remain pending; neither hold is cleared.\n\nThe current head conflicts with 2552c6787 in governance/licensing.yaml. The existing maintainer hold remains in force.\n\nThe plain rebase 5c080a5cf failed to compile three gpl2 references. The fork revision 23b8ddf0a restores the earlier GPL fixture changes. The package test target passed and the verifier checked all 224 entries in the existing catalog. Earlier source-notice discovery differences remain open.",
+      "summary": "Prepared 427a8de is qualified and independently reviewed; the actual amendment-plus-hold-clarification question remains unanswered. Public afd34241 is conflicting with the original maintainer hold still in place. The real QEMU Fetch-to-GPL-policy path is not established by the fake-fixture/CLI checks. Earlier narrative remains available in the immutable registry evidence link.",
       "followup": {
         "disposition": "Private 427a8de passed 45 tests 44916177555 and all five source checks 44916179600; canonical CLI 44915539209 verified 230 dependencies, with unchanged library/catalog inputs after the last fake-fixture-only edit. Both final independent reviewers found no issues. Actual QEMU Fetch-to-GPL policy compatibility is not proven by the fake MIT-route fixture/CLI checks. Public afd34241 remains OPEN/CONFLICTING/CHANGES_REQUESTED, with the original upstream hold and no human reply since Oct18. One actual source-amendment plus exact hold-clarification question is now pending; no source or comment has been published.",
         "owner": "benchmark_measurement_review / root",
@@ -348,6 +348,10 @@
         {
           "label": "The rebased fixture passed all 41 package cases. The missing Nogo target ran on both architectures in the compiler integration.",
           "url": "https://github.com/tamird/gvisor/actions/runs/41362557174/artifacts/13105094040"
+        },
+        {
+          "label": "Historical narrative and source context (immutable21a88 registry)",
+          "url": "https://github.com/tamird/gvisor/blob/21a88f1910b86639d53a70fd2a113fab369fd4d6/registry.json"
         }
       ],
       "ciRecovery": {
@@ -5383,8 +5387,8 @@
         "owner": "root",
         "sourceHead": "f84b27e5f16607463fa034034acf84ff867438be",
         "observedAt": "2026-11-18T21:05:51.124797+00:00",
-        "disposition": "The latest assisted review reports no findings on the unchanged published head. Required human review remains outstanding; existing exact-head CI and qualification limits are preserved.",
-        "nextAction": "Follow the existing human review request and exact-head checks/import. The informational assisted review needs no reply, source change or technical-approval claim.",
+        "disposition": "Unchanged f84b27e5 is currently mergeable with human review required. Ayush\u2019s rebase request after 17214 was completed and Tamir\u2019s existing reply confirms it; the latest three automated reviews have no findings. Retained conflict/repair evidence describes earlier history, not a current source task.",
+        "nextAction": "Root follows the existing human review and exact-head CI/import lifecycle. No source edit, new build, repeated rebase, reply or additional outreach is needed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15181#issuecomment-6798720709",
           "https://github.com/tamird/gvisor/actions/runs/43007012855",
@@ -5397,7 +5401,7 @@
         ],
         "recheckCondition": "Substantive human feedback, source/import/check change.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
-        "mergeable": "CONFLICTING",
+        "mergeable": "MERGEABLE",
         "qualificationHistory": [
           {
             "observedAt": "2026-11-17T21:09:15.022997+00:00",
@@ -5419,7 +5423,7 @@
             "qualifiedCodeHead": "7dfa385ef0dd6286eaff54ee1c988db289f4f044"
           }
         },
-        "curatedAt": "2026-11-18T21:15:29.687318+00:00",
+        "curatedAt": "2026-11-21T15:21:17.931599+00:00",
         "publicationReceipt": {
           "number": 15181,
           "old": "ff86663d7c1077d1d2c0d3e4b51d0613cd95685c",
@@ -97883,7 +97887,7 @@
       "group": "tests",
       "status": "open",
       "updatedAt": "2026-11-21T12:00:06.633567+00:00",
-      "summary": "Deliveredbc55ab6327453ed38e289b2b1b1f7197b38087e8 retains its existing approvals. First Pass2223 and all reported non-DCO validation checks pass, but no current-head main-pipeline result exists: canonical main55576 belongs to old3ee54. Root verified and updated notice7057355062 at05:02:43Z to request a maintainer reapply ready to test. DCO136732232020 still reports the wrong55-versus-one commit range; the topic sign-off is valid. Its external cncf/dco2 report has a separate actual pending posting decision, not a source-amendment or manual-sign-off requirement.",
+      "summary": "Deliveredbc55ab6327453ed38e289b2b1b1f7197b38087e8 retains its existing approvals. First Pass2223 and all reported non-DCO validation checks pass, but no current-head main-pipeline result exists: canonical main55576 belongs to old3ee54. Root verified and updated notice7057355062 at05:02:43Z to request a maintainer reapply ready to test. DCO 136732232020 still reports the wrong55-versus-one commit range; the topic sign-off is valid. The user-approved bug-only report is delivered as cncf/dco2#126; no posting decision remains.",
       "evidence": [
         {
           "label": "Published diagnostic change",
@@ -97909,10 +97913,10 @@
       "followup": {
         "sourceHead": "bc55ab6327453ed38e289b2b1b1f7197b38087e8",
         "owner": "approved_rebase_queue / root",
-        "nextAction": "Root follows genuine feedback on the published cncf/dco2#126 bug report and current PR17470 provider/review lifecycle. No operator/clickops request, repeated issue question, manual DCO action or source churn is authorized.",
+        "nextAction": "Root follows genuine feedback/provider correction through existing issue:cncf/dco2:126 and the already-requested bc55 main-trigger/review lifecycle. No new report, operator/clickops request, external post, manual sign-off, source churn or duplicate outreach.",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-21T04:40:29.431125+00:00",
-        "recheckCondition": "Exact-bc55 main status/build or maintainer-trigger event, DCO app result, or reply to the existing external-report posting question.",
+        "recheckCondition": "Actual DCO range correction, issue126 feedback or exact-bc55 main/maintainer-trigger event.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17470",
           "https://github.com/tamird/gvisor/commit/60ec8592c1c5fcec63846664b77a1bec5018b97c",
@@ -97924,7 +97928,9 @@
           "https://github.com/tamird/gvisor/commit/bc55ab6327453ed38e289b2b1b1f7197b38087e8",
           "https://github.com/gvisor/gvisor/pull/17470#issuecomment-7057355062",
           "https://github.com/cncf/dco2",
-          "https://buildkite.com/gvisor/first-pass/builds/2223"
+          "https://buildkite.com/gvisor/first-pass/builds/2223",
+          "https://github.com/gvisor/gvisor/runs/136732232020",
+          "https://github.com/cncf/dco2/issues/126"
         ],
         "latestReviewObservation": {
           "checkedAt": "2026-11-18T19:22:58.577211+00:00",
@@ -97950,8 +97956,8 @@
             }
           ]
         },
-        "curatedAt": "2026-11-21T12:00:06.633567+00:00",
-        "disposition": "The source remains delivered with its independent wrong-range DCO provider blocker. The user-approved report-only revision is published as cncf/dco2#126; the prior external-report question is consumed. No operator/clickops request was published."
+        "curatedAt": "2026-11-21T15:21:17.931599+00:00",
+        "disposition": "Native DCO 136732232020 accepts sole topic bc55ab63 but evaluates 55 commits/27 invalid sign-offs. Rejected 9ad3ba91 is already an ancestor of actual PR base e50582f1 (ahead 52/behind 0): this is the proven base-commit inclusion bug reported in delivered cncf/dco2#126. No source/sign-off amendment, report approval or retry is needed; exact-head main-trigger/review obligations remain independent."
       },
       "dcoAmendment": {
         "oldHead": "60ec8592c1c5fcec63846664b77a1bec5018b97c",
@@ -97975,7 +97981,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Root follows the maintainer response/current-head main trigger already requested in the rebase notice, the DCO app refresh and the existing external-report posting decision. Keep main validation open until an actual bc55 build is observed; no repeated outreach, source churn or upstream sign-offs.",
+      "nextStep": "Root follows the maintainer response/current-head main trigger already requested in the rebase notice, the DCO app refresh and feedback on the delivered cncf/dco2#126 bug report. Keep main validation open until an actual bc55 build is observed; no repeated outreach, source churn or upstream sign-offs.",
       "recheckCondition": "Exact-bc55 main status/build or maintainer-trigger event, DCO app result, or reply to the existing external-report posting question.",
       "settledReviews": [
         {
@@ -100082,15 +100088,17 @@
         "owner": "root",
         "sourceHead": "b04021b975f4eb1087ffaf46152dfe966bb62305",
         "observedAt": "2026-11-17T20:37:04.433680+00:00",
-        "disposition": "Full source review completed and exact COMMENTED response delivered at the current head. This answers the invitation with a response, not source approval. Root verified tamird absent from the native requested_reviewers response after submission; our formal native request was consumed.",
-        "nextAction": "Follow provider package-repository recovery and the existing maintainer review. Preserve completed source review and the outstanding broad before/after workload requirement. No source rewrite, courtesy reply or blind retry.",
+        "disposition": "Current b04021b9 and actually reviewed 80c001d2 have identical parent 5f7e73a and complete 9-file blob/mode sets. Current source is already reviewed by this equivalence, not a substantive source change or rebase. Preserve the delivered COMMENTED response at its actual reviewed head; it is not source approval. No later feedback supplies the required broad workload evidence.",
+        "nextAction": "Root awaits the author\u2019s broad before/after workload evidence before full approval, while retaining separate current CI/import obligations. No duplicate review, tests, courtesy reply or outreach; re-review only substantive source or evidence changes.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17374#discussion_r4545607204",
           "https://github.com/google/gvisor/pull/17374#discussion_r4576254625",
           "https://github.com/gvisor/gvisor/blob/80c001d2b316feaa887a5ee53498d6ee55799a6a/pkg/sentry/pgalloc/save_restore.go#L135",
-          "https://github.com/gvisor/gvisor/pull/17374#pullrequestreview-5946597005"
+          "https://github.com/gvisor/gvisor/pull/17374#pullrequestreview-5946597005",
+          "https://github.com/gvisor/gvisor/commit/b04021b975f4eb1087ffaf46152dfe966bb62305",
+          "https://github.com/gvisor/gvisor/commit/80c001d2b316feaa887a5ee53498d6ee55799a6a"
         ],
-        "recheckCondition": "Current-head CI/provider recovery, substantive human feedback or broad benchmark evidence.",
+        "recheckCondition": "New broad author workload evidence or substantive source/feedback change.",
         "incomingReview": {
           "repo": "google/gvisor",
           "number": 17374,
@@ -100114,7 +100122,7 @@
             "note": "Response delivered; root verified tamird absent from native requested_reviewers after submission. Source approval withheld pending broad workload benchmark."
           }
         },
-        "curatedAt": "2026-11-19T16:20:03.380488+00:00",
+        "curatedAt": "2026-11-21T15:21:17.931599+00:00",
         "footerHeadReconciliation": {
           "old": "80c001d2b316feaa887a5ee53498d6ee55799a6a",
           "new": "b04021b975f4eb1087ffaf46152dfe966bb62305",
@@ -102827,9 +102835,9 @@
         "sourceNumber": 16887,
         "sourceHead": "04a4ea5bf2e111ed78ab4fdf3ce6156f185f3b8b",
         "observedAt": "2026-11-17T20:12:30.472399+00:00",
-        "disposition": "Approved exact COMMENTED response posted and verified at 1668e58d4c0cb17ecb5fcf6457389575a3c01459. The author request has received a response; source approval remains withheld pending an existing broad network benchmark baseline. No fresh runtime validation claimed.",
-        "nextAction": "Await before/after results from an existing broad network benchmark before full approval. Do not substitute the reported component samples. Re-review changed source or new author evidence while preserving Botir's source ownership.",
-        "recheckCondition": "Author supplies the broad network benchmark baseline, changes source or conversation, or current required checks produce new results. Posted response does not grant source approval.",
+        "disposition": "Current 04a4ea5b and actually reviewed 1668e58d have identical parent 451b928 and complete 3-file blob/mode sets. Current source is already reviewed by this equivalence, not a substantive source change or rebase. Preserve the delivered COMMENTED response at its actual reviewed head; it is not source approval. No later feedback supplies the required broad workload evidence.",
+        "nextAction": "Root awaits the author\u2019s broad before/after workload evidence before full approval, while retaining separate current CI/import obligations. No duplicate review, tests, courtesy reply or outreach; re-review only substantive source or evidence changes.",
+        "recheckCondition": "New broad author workload evidence or substantive source/feedback change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16887#issuecomment-6955117776",
           "https://github.com/gvisor/gvisor/blob/1668e58d4c0cb17ecb5fcf6457389575a3c01459/pkg/tcpip/link/fdbased/endpoint.go#L588",
@@ -102838,7 +102846,9 @@
           "https://github.com/gvisor/gvisor/blob/1668e58d4c0cb17ecb5fcf6457389575a3c01459/pkg/tcpip/link/fdbased/endpoint_test.go#L904",
           "https://github.com/google/gvisor/pull/16887#discussion_r4457983215",
           "https://github.com/google/gvisor/pull/16887#discussion_r4493780726",
-          "https://github.com/gvisor/gvisor/pull/16887#pullrequestreview-5946565652"
+          "https://github.com/gvisor/gvisor/pull/16887#pullrequestreview-5946565652",
+          "https://github.com/gvisor/gvisor/commit/04a4ea5bf2e111ed78ab4fdf3ce6156f185f3b8b",
+          "https://github.com/gvisor/gvisor/commit/1668e58d4c0cb17ecb5fcf6457389575a3c01459"
         ],
         "ciObservation": "Observed context buildkite/first-pass (unsuffixed) failed as build #906. No current buildkite/first-pass/pr or buildkite/pipeline/pr result appeared in the queried contexts. This is not a claim of passing required CI; current /pr requirements remain separate.",
         "actionableComment": {
@@ -102847,7 +102857,7 @@
           "commentId": "IC_kwDOB9IlXs8AAAABno6s0A",
           "url": "https://github.com/google/gvisor/pull/16887#issuecomment-6955117776"
         },
-        "curatedAt": "2026-11-19T16:20:03.380488+00:00",
+        "curatedAt": "2026-11-21T15:21:17.931599+00:00",
         "footerHeadReconciliation": {
           "old": "1668e58d4c0cb17ecb5fcf6457389575a3c01459",
           "new": "04a4ea5bf2e111ed78ab4fdf3ce6156f185f3b8b",
