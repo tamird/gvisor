@@ -213,11 +213,11 @@
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
       "updatedAt": "2026-11-17T18:16:01.120596+00:00",
-      "summary": "Prepared 427a8de is qualified and independently reviewed; the actual amendment-plus-hold-clarification question remains unanswered. Public afd34241 is conflicting with the original maintainer hold still in place. The real QEMU Fetch-to-GPL-policy path is not established by the fake-fixture/CLI checks. Earlier narrative remains available in the immutable registry evidence link.",
+      "summary": "Prepared 427 is not ready for publication: the real QEMU Fetch-to-policy diagnostic fails compatibility. Attribution versus public afd34241 is still under comparison, so this is not an established 427-caused regression. Public afd remains conflicting under the separate upstream maintainer hold. The unanswered source/comment question is preserved in immutable history; no user rejection or approval is inferred.",
       "followup": {
-        "disposition": "Private 427a8de passed 45 tests 44916177555 and all five source checks 44916179600; canonical CLI 44915539209 verified 230 dependencies, with unchanged library/catalog inputs after the last fake-fixture-only edit. Both final independent reviewers found no issues. Actual QEMU Fetch-to-GPL policy compatibility is not proven by the fake MIT-route fixture/CLI checks. Public afd34241 remains OPEN/CONFLICTING/CHANGES_REQUESTED, with the original upstream hold and no human reply since Oct18. One actual source-amendment plus exact hold-clarification question is now pending; no source or comment has been published.",
+        "disposition": "Diagnostic 44945433117 executed successfully, but canonical Verify(seed) exited0, Fetch exited0 and reported GPL-2.0 / GPL-2.0-or-later, then Verify exited1 against the GPL-2.0-only exception. Real QEMU policy compatibility therefore fails. Prior fake-fixture/CLI proof and reviews retain their original scope; attribution to 427 versus published afd is unresolved. Source and clarification remain unpublished, and the upstream internal-exception hold is separate.",
         "owner": "benchmark_measurement_review / root",
-        "nextAction": "Root awaits the existing paired user decision for 427 and the exact top-level clarification. Retain the upstream hold pending confirmation; previous-head internal checks do not release it. The resolved standing-DCO execution rejection is not a human decision or remaining blocker.",
+        "nextAction": "benchmark_measurement_review compares the real QEMU boundary against published afd before source changes or any publication step. Root retains the existing upstream hold and unanswered question history; no policy approval, user rejection or DCO task is inferred.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/23b8ddf0a",
           "https://github.com/tamird/gvisor/actions/runs/43014384411",
@@ -239,7 +239,9 @@
           "https://github.com/tamird/gvisor/actions/runs/44914763587",
           "https://github.com/tamird/gvisor/actions/runs/44916177555",
           "https://github.com/tamird/gvisor/actions/runs/44916179600",
-          "https://github.com/tamird/gvisor/actions/runs/44915539209"
+          "https://github.com/tamird/gvisor/actions/runs/44915539209",
+          "https://github.com/tamird/gvisor/actions/runs/44945433117",
+          "https://github.com/tamird/gvisor/blob/e0a38c9195a36b5d18c30011e6a193aac4bad47b/registry.json"
         ],
         "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
         "sourceHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
@@ -247,7 +249,7 @@
         "mergeable": "CONFLICTING",
         "observedAt": "2026-11-17T18:16:01.120596+00:00",
         "providerHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "recheckCondition": "Actual paired user reply or upstream maintainer hold clarification.",
+        "recheckCondition": "Owner-audited published/source comparison and an actual resolved compatibility boundary; upstream hold confirmation remains separate.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "curatedAt": "2026-11-21T15:01:28.141765+00:00"
       },
@@ -404,16 +406,6 @@
             "evidence": "https://github.com/google/gvisor/pull/15146#pullrequestreview-5399508571"
           }
         }
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "427a8de7470d18956964b5ef71a21fab92440039",
-        "baseHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "url": "https://github.com/tamird/gvisor/commit/427a8de7470d18956964b5ef71a21fab92440039",
-        "title": "Recognize complete dependency license texts",
-        "body": "Replace phrase-based classification with complete license-text matching\nto avoid combining independent notices. The old matcher combined Arrow's\nBSD terms and OpenSSL's advertising clause into BSD-4-Clause [1].\n\nDelegate text matching and identifier ownership to google/licensecheck\n[2], configured with the complete LLVM exception [3]. References alone\ndo not establish a license grant. Keep the scanner's identifiers literal\nso policy review sees the distinctions the detector can establish.\n\nAdd the classifier dependency to the catalog and recognize Kythe's legacy\nUniversity of Illinois/NCSA grant [4], previously reported as MIT. Scope\nthe corresponding exception to Kythe and record its redistribution terms.\nRetain the current audited LLVM and other dependency identities and policy.\n\n[1]: https://github.com/apache/arrow/blob/e03105efc/go/LICENSE.txt\n[2]: https://github.com/google/licensecheck/blob/16aaea366/scan.go\n[3]: https://github.com/llvm/llvm-project/blob/85ac56026/LICENSE.TXT\n[4]: https://github.com/kythe/kythe/blob/a182743b6/LICENSE#L205-L251\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
-        "summary": "One actual async question was accepted and remains unanswered; it covers the prepared 427 source revision and this exact top-level clarification for https://github.com/gvisor/gvisor/pull/15146. No returned question ID or exact request timestamp is available. The upstream hold is retained pending confirmation.\n\nProposed clarification:\n\nRebased the proposal while preserving the current LLVM license catalog. Internal checks passed on the previous head. Does the internal-exception hold still apply?\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -103125,9 +103117,9 @@
         "owner": "root",
         "sourceHead": "5c8a182619525e77d210a31a9b9ff575251165f3",
         "observedAt": "2026-11-18T20:06:11.890448+00:00",
-        "disposition": "Published 5c8a1826 and its review/provider lifecycle remain intact. HTTPD capacity isolation passed request/status/error contracts across nine leaves, including 404, and nine calibrations, using unchanged images, nine runtime products and cleanup. Independent one-setting source bfcd258166ec1c9b028a67c390d163bc42320476 still requires its standalone build and current full lint/lint-cc gate reconciliation. It is not publication-ready; no performance, permanent-fix or Sentry-cause conclusion follows.",
-        "nextAction": "httpd_functional_resume closes the required current gates and source review for the one-setting proposal. Preserve existing runtime/workload scope and upstream source approval boundaries; root retains canonical PR review/import/provider ownership.",
-        "recheckCondition": "Audited standalone build, maintained lint/lint-cc and final review evidence, or material source/review/provider change; no new approval has been inferred.",
+        "disposition": "Published 5c8a1826 and its lifecycle remain intact. Nine HTTPD leaves and calibrations passed request contracts on unchanged images/runtime products. Independent one-setting source bfcd258166ec1c9b028a67c390d163bc42320476 has AMD compilation and all five maintained source checks complete; ARM compilation still needs the existing shared profile repair for a missing local x86_64 GCC. No permanent fix, performance or cause claim follows.",
+        "nextAction": "httpd_functional_resume composes the minimal existing ten-path support on independent bfcd and closes missing ARM compilation/current lint-cc before final source review. Preserve the measured workload and original source/publication boundary.",
+        "recheckCondition": "Actual repaired ARM build and full maintained lint-cc plus final review, or genuine PR lifecycle change.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/44231839538",
           "https://github.com/tamird/gvisor/actions/runs/44231202091",
@@ -130636,9 +130628,9 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-21T20:02:17.048994+00:00",
+      "updatedAt": "2026-11-21T20:24:12.963090+00:00",
       "group": "analysis",
-      "summary": "Released x/tools v0.53.0 contains the required goimports fix. Candidate 36e passed maintained formatting, 24 analyzer cases, all five source checks and 225 license entries, but changes shared production x/sys, x/net and crypto dependencies. It is held pending proper runtime compatibility/performance qualification. The standard development-only isolation route requires a disabled experimental flag; no alternative graph was built. The old full-lint-on-empty architecture remains held.",
+      "summary": "The x/tools36e global refresh remains held for shared production dependency/runtime coupling; no isolated graph is implemented. A repaired profile has 288 actual remote C/C++ processes, with the original LLVM/protobuf actions selecting Ubuntu24/glibc2.39; ARM generator admission also passed matching ELF/runtime. Full maintained AMD lint-cc44945623947 is still live, so no strict-completion or regression claim is made.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -131010,7 +131002,7 @@
           ]
         }
       ],
-      "nextStep": "buildifier_license_fix audits actual lint-cc failure 44942966193 without assuming a source regression or cause, and resolves the dependency scope before any publication review. Preserve valid existing checks; no experimental flag, fork, framework or revived aggregate target is authorized.",
+      "nextStep": "buildifier_license_fix audits the live full lint-cc result under the existing repaired profile, preserving valid formatter/analyzer/source/license proof and the held dependency boundary. No experimental isolation flag, fork, framework or revived old aggregate architecture.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -131095,6 +131087,10 @@
         {
           "label": "Current lint-cc failure under owner audit",
           "url": "https://github.com/tamird/gvisor/actions/runs/44942966193"
+        },
+        {
+          "label": "Current maintained AMD lint-cc, result pending owner audit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44945623947"
         }
       ],
       "reviewWatch": {

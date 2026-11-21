@@ -452948,8 +452948,8 @@
       "recordedFollowup": {
         "owner": "benchmark_measurement_review / root",
         "sourceHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "disposition": "Private 427a8de passed 45 tests 44916177555 and all five source checks 44916179600; canonical CLI 44915539209 verified 230 dependencies, with unchanged library/catalog inputs after the last fake-fixture-only edit. Both final independent reviewers found no issues. Actual QEMU Fetch-to-GPL policy compatibility is not proven by the fake MIT-route fixture/CLI checks. Public afd34241 remains OPEN/CONFLICTING/CHANGES_REQUESTED, with the original upstream hold and no human reply since Oct18. One actual source-amendment plus exact hold-clarification question is now pending; no source or comment has been published.",
-        "nextAction": "Root awaits the existing paired user decision for 427 and the exact top-level clarification. Retain the upstream hold pending confirmation; previous-head internal checks do not release it. The resolved standing-DCO execution rejection is not a human decision or remaining blocker."
+        "disposition": "Diagnostic 44945433117 executed successfully, but canonical Verify(seed) exited0, Fetch exited0 and reported GPL-2.0 / GPL-2.0-or-later, then Verify exited1 against the GPL-2.0-only exception. Real QEMU policy compatibility therefore fails. Prior fake-fixture/CLI proof and reviews retain their original scope; attribution to 427 versus published afd is unresolved. Source and clarification remain unpublished, and the upstream internal-exception hold is separate.",
+        "nextAction": "benchmark_measurement_review compares the real QEMU boundary against published afd before source changes or any publication step. Root retains the existing upstream hold and unanswered question history; no policy approval, user rejection or DCO task is inferred."
       },
       "conflictObservedSince": "2026-11-06T02:35:04.797881+00:00"
     },
@@ -452972,8 +452972,8 @@
       "recordedFollowup": {
         "owner": "benchmark_measurement_review / root",
         "sourceHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "disposition": "Private 427a8de passed 45 tests 44916177555 and all five source checks 44916179600; canonical CLI 44915539209 verified 230 dependencies, with unchanged library/catalog inputs after the last fake-fixture-only edit. Both final independent reviewers found no issues. Actual QEMU Fetch-to-GPL policy compatibility is not proven by the fake MIT-route fixture/CLI checks. Public afd34241 remains OPEN/CONFLICTING/CHANGES_REQUESTED, with the original upstream hold and no human reply since Oct18. One actual source-amendment plus exact hold-clarification question is now pending; no source or comment has been published.",
-        "nextAction": "Root awaits the existing paired user decision for 427 and the exact top-level clarification. Retain the upstream hold pending confirmation; previous-head internal checks do not release it. The resolved standing-DCO execution rejection is not a human decision or remaining blocker."
+        "disposition": "Diagnostic 44945433117 executed successfully, but canonical Verify(seed) exited0, Fetch exited0 and reported GPL-2.0 / GPL-2.0-or-later, then Verify exited1 against the GPL-2.0-only exception. Real QEMU policy compatibility therefore fails. Prior fake-fixture/CLI proof and reviews retain their original scope; attribution to 427 versus published afd is unresolved. Source and clarification remain unpublished, and the upstream internal-exception hold is separate.",
+        "nextAction": "benchmark_measurement_review compares the real QEMU boundary against published afd before source changes or any publication step. Root retains the existing upstream hold and unanswered question history; no policy approval, user rejection or DCO task is inferred."
       },
       "conflictObservedSince": null
     },
@@ -461283,8 +461283,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "5c8a182619525e77d210a31a9b9ff575251165f3",
-        "disposition": "Published 5c8a1826 and its review/provider lifecycle remain intact. HTTPD capacity isolation passed request/status/error contracts across nine leaves, including 404, and nine calibrations, using unchanged images, nine runtime products and cleanup. Independent one-setting source bfcd258166ec1c9b028a67c390d163bc42320476 still requires its standalone build and current full lint/lint-cc gate reconciliation. It is not publication-ready; no performance, permanent-fix or Sentry-cause conclusion follows.",
-        "nextAction": "httpd_functional_resume closes the required current gates and source review for the one-setting proposal. Preserve existing runtime/workload scope and upstream source approval boundaries; root retains canonical PR review/import/provider ownership."
+        "disposition": "Published 5c8a1826 and its lifecycle remain intact. Nine HTTPD leaves and calibrations passed request contracts on unchanged images/runtime products. Independent one-setting source bfcd258166ec1c9b028a67c390d163bc42320476 has AMD compilation and all five maintained source checks complete; ARM compilation still needs the existing shared profile repair for a missing local x86_64 GCC. No permanent fix, performance or cause claim follows.",
+        "nextAction": "httpd_functional_resume composes the minimal existing ten-path support on independent bfcd and closes missing ARM compilation/current lint-cc before final source review. Preserve the measured workload and original source/publication boundary."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANzyZv5g"
@@ -462462,13 +462462,6 @@
         "basis": "observed",
         "qualifier": "#17126: open, validation checks passed, conflicts",
         "observedAt": "2026-11-21T20:20:10.559682+00:00"
-      },
-      "contributor-review": {
-        "scope": "427a8de7470d18956964b5ef71a21fab92440039",
-        "since": "2026-11-21T15:01:28.141765+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-21T15:42:31.456870+00:00"
       }
     },
     "pr:15147": {
