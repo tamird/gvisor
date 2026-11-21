@@ -41098,14 +41098,14 @@
       "url": "https://github.com/google/gvisor/pull/16516",
       "group": "bazel",
       "status": "open",
-      "summary": "The user-requested equivalent rebase is delivered at a9594385 on eb263; complete patch bytes match and range-diff is equal. Current AMD/ARM tool, offset producer and owning-library builds passed all three targets per architecture, and all five source checks passed. Native head is mergeable/DCO-successful with no auto-merge; notice7070264567 is saved. FirstPass2303 actually admitted and executed checkout/hooks, not a test pass or global quota clearance. Go export/main CI remain separate.",
+      "summary": "User-requested equivalent rebasea959 is delivered, OPEN/MERGEABLE with all native GitHub checks and DCO complete PASS; export/exported-tree build44957331290 passed. FirstPass2303 actually executed and passed smoke/race/lint/C++/Nogo/unit/container jobs. One hostnet systrap loopback syscall attempt had1455/1456 targets pass and a Watchdog.Start30s warning; its automatic retry is live, cause unclassified. This is not a terminal source failure or global quota clearance.",
       "updatedAt": "2026-11-17T17:42:43.236533Z",
       "followup": {
         "owner": "root",
         "sourceHead": "a9594385d15d2e17e5dd7491be94d774f47fa80e",
         "observedAt": "2026-11-17T17:20:44.991697Z",
-        "disposition": "The user-requested equivalent rebase is delivered at a9594385 on eb263; complete patch bytes match and range-diff is equal. Current AMD/ARM tool, offset producer and owning-library builds passed all three targets per architecture, and all five source checks passed. Native head is mergeable/DCO-successful with no auto-merge; notice7070264567 is saved. FirstPass2303 actually admitted and executed checkout/hooks, not a test pass or global quota clearance. Go export/main CI remain separate.",
-        "nextAction": "approved_rebase_queue owns the current admitted2303 and Go44957331290 follow-through, preserving existing reviewer requests and independent main/landing obligations. Do not bind historical1564 failure to the new source.",
+        "disposition": "User-requested equivalent rebasea959 is delivered, OPEN/MERGEABLE with all native GitHub checks and DCO complete PASS; export/exported-tree build44957331290 passed. FirstPass2303 actually executed and passed smoke/race/lint/C++/Nogo/unit/container jobs. One hostnet systrap loopback syscall attempt had1455/1456 targets pass and a Watchdog.Start30s warning; its automatic retry is live, cause unclassified. This is not a terminal source failure or global quota clearance.",
+        "nextAction": "approved_rebase_queue retains the sole existing CI watch for the already-running automatic retry and final2303 result. Main CI, review and landing remain independent; no duplicate observer, manual retry or source change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16516#pullrequestreview-5895770949",
           "https://github.com/gvisor/gvisor/pull/16516#pullrequestreview-5943223023",
@@ -41114,7 +41114,8 @@
           "https://github.com/gvisor/gvisor/pull/16516#issuecomment-7070264567",
           "https://github.com/tamird/gvisor/actions/runs/44956730500",
           "https://github.com/tamird/gvisor/actions/runs/44956732064",
-          "https://github.com/tamird/gvisor/actions/runs/44956733840"
+          "https://github.com/tamird/gvisor/actions/runs/44956733840",
+          "https://buildkite.com/gvisor/first-pass/builds/2303#01a2003f-e1ce-4a4c-acb9-5a30df33af5d"
         ],
         "nativeReviewRequest": {
           "reviewer": "manninglucas",
@@ -105528,12 +105529,12 @@
       "url": "https://github.com/google/gvisor/pull/17861",
       "status": "open",
       "updatedAt": "2026-11-21T22:39:02.228805+00:00",
-      "summary": "User-approved source and requested narrow edits are delivered, OPEN/MERGEABLE with DCO success and no auto-merge. FirstPass2301 independently failed before agent assignment: exit80, null agent/start, actual author1535036 rolling30-day360000compute-minute quota; no Bazel target ran. Go generation remains owner-followed; other GitHub-native checks passed. Main CI and human review/import remain separate.",
+      "summary": "Approved worker source8e869b906 is delivered, OPEN/MERGEABLE with all native GitHub checks and DCO complete PASS, including actual export/exported-tree build44956442687. FirstPass2301 remains independently diagnosed pre-agent rolling30-day360000compute-minute quota, with no targets run. Global775 remains unapproved and separate.",
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "8e869b906e5a651a377178f1cf3621a798042397",
         "mergeable": "MERGEABLE",
-        "disposition": "User-approved source and requested narrow edits are delivered, OPEN/MERGEABLE with DCO success and no auto-merge. FirstPass2301 independently failed before agent assignment: exit80, null agent/start, actual author1535036 rolling30-day360000compute-minute quota; no Bazel target ran. Go generation remains owner-followed; other GitHub-native checks passed. Main CI and human review/import remain separate.",
+        "disposition": "Approved worker source8e869b906 is delivered, OPEN/MERGEABLE with all native GitHub checks and DCO complete PASS, including actual export/exported-tree build44956442687. FirstPass2301 remains independently diagnosed pre-agent rolling30-day360000compute-minute quota, with no targets run. Global775 remains unapproved and separate.",
         "nextAction": "approved_rebase_queue owns the current published CI/review/import follow-through; recheck admission/head/check changes without duplicate monitoring, manual retry or outreach.",
         "recheckCondition": "Actual current-head provider/check or maintainer/import event.",
         "evidence": [
@@ -141923,8 +141924,8 @@
       "owner": "root",
       "head": "d039802d8437f08d27b0282485709cc5f1b464ba",
       "updatedAt": "2026-11-21T14:00:19.559771+00:00",
-      "summary": "The user gave d039 LGTM while raising a substantive nonhermetic host-Git/index dependency. Publication is held for that actual source correction; owner comparison44956213076 is underway. The approved original source and validation remain preserved, but no upstream PR or approval of an unseen correction is inferred.",
-      "nextStep": "The assigned owner implements native package groups after492/492 declared-ownership proof to resolve the actual host-Git/index hermeticity concern. Preserve d039 LGTM, qualify/review the concrete correction before publication, and do not manufacture a repeated unanswered source question.",
+      "summary": "The user’s d039 LGTM is retained, while publication remains held for the substantive host-Git/index hermeticity correction. Candidate b5a7416792aa230f0ac0b1c6deafd5a067cfac7c removes Git discovery and passed actual bounded no-Git/workspace fix/config/alias admission44958030600. Mechanical Buildifier generation44958384597 is owner-observed; full492-membership, formatter and lint gates remain pending. No approval of this new revision is inferred.",
+      "nextStep": "The existing formatter owner alone completes Buildifier generation and full492-membership/formatter/lint checks, then hands the concrete Git-free revision through final review before publication. Preserve the original d039 approval and actual source boundary; no duplicate question or broad-result claim.",
       "evidence": [
         {
           "label": "Actual reviewable clean source",
@@ -141941,6 +141942,14 @@
         {
           "label": "Corrected configuration boundary proof",
           "url": "https://github.com/tamird/gvisor/actions/runs/44907032493"
+        },
+        {
+          "label": "Git-free formatter admission or generation gate",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44958030600"
+        },
+        {
+          "label": "Git-free formatter admission or generation gate",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44958384597"
         }
       ],
       "findings": [

@@ -462019,7 +462019,7 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "8e869b906e5a651a377178f1cf3621a798042397",
-        "disposition": "User-approved source and requested narrow edits are delivered, OPEN/MERGEABLE with DCO success and no auto-merge. FirstPass2301 independently failed before agent assignment: exit80, null agent/start, actual author1535036 rolling30-day360000compute-minute quota; no Bazel target ran. Go generation remains owner-followed; other GitHub-native checks passed. Main CI and human review/import remain separate.",
+        "disposition": "Approved worker source8e869b906 is delivered, OPEN/MERGEABLE with all native GitHub checks and DCO complete PASS, including actual export/exported-tree build44956442687. FirstPass2301 remains independently diagnosed pre-agent rolling30-day360000compute-minute quota, with no targets run. Global775 remains unapproved and separate.",
         "nextAction": "approved_rebase_queue owns the current published CI/review/import follow-through; recheck admission/head/check changes without duplicate monitoring, manual retry or outreach."
       },
       "actionCheckIds": [
