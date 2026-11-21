@@ -451975,7 +451975,7 @@
       "number": 11518,
       "head": "fe25c8ed035077d6f3afe56d9b0d0411a6455b99",
       "sourceNumber": 11518,
-      "owner": "root",
+      "owner": "benchmark_measurement_review / root",
       "kind": "comment",
       "id": "IC_kwDOElfRPs8AAAABiFQoIQ",
       "needsTriage": false,
@@ -462020,7 +462020,7 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "8e869b906e5a651a377178f1cf3621a798042397",
         "disposition": "Approved worker source8e869b906 is delivered, OPEN/MERGEABLE with all native GitHub checks and DCO complete PASS, including actual export/exported-tree build44956442687. FirstPass2301 remains independently diagnosed pre-agent rolling30-day360000compute-minute quota, with no targets run. Global775 remains unapproved and separate.",
-        "nextAction": "approved_rebase_queue owns the current published CI/review/import follow-through; recheck admission/head/check changes without duplicate monitoring, manual retry or outreach."
+        "nextAction": "Root retains internal ownership; the unchanged pre-agent FirstPass2301 failure now depends on a native Buildkite operator retry. The bounded capability check found no retained authenticated retry interface/credential or installed CLI; the canonical reader is read-only. Do not request new access, repeat declined quota outreach, or treat later2303 admission as global recovery."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3oL-tA"
