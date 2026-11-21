@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T11:11:31.167949+00:00",
+    "updatedAt": "2026-11-21T11:39:23.196920+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10988,12 +10988,12 @@
           "recheckCondition": "Proposal decision or exact current ref/head, source/base or qualification change."
         },
         "owner": "declared_formatting_resume / root",
-        "nextAction": "declared_formatting_resume audits the already-running supplier correction against the space-filename contract and retains complete input-selection/parity obligations. Root reviews a materially smaller integrated design before any new source-publication question; do not revive the broader catalog/exporter route or infer full inventory completion.",
-        "recheckCondition": "Terminal changed-contract result and concrete integrated source/inventory evidence.",
+        "nextAction": "declared_formatting_resume assesses package-local glob ownership in existing wrappers before any migration. Root reviews the smaller integrated design; no bulk migration, catalog/exporter framework or new source-publication question is authorized by this prototype.",
+        "recheckCondition": "Concrete package-local ownership design and source-bound integrated qualification.",
         "observedAt": "2026-11-17T19:58:25.300843+00:00",
         "sourceHead": "63c29f4ef205ae9a8dec3b96e4bb3e32581d6c40",
-        "curatedAt": "2026-11-21T11:11:31.167949+00:00",
-        "disposition": "Actual declared-format tests in44896658488 passed ordinary Go/BUILD fix/check behavior, but a filename containing spaces fails because the Aspect command splits words. Minimal supplier correction185ad896 is under changed-contract qualification44897643688; this is not a completed full source inventory or an approved source proposal. Existing Cpplint executable ownership and the full declared-input migration remain distinct.",
+        "curatedAt": "2026-11-21T11:38:47.075228+00:00",
+        "disposition": "Changed contract44897643688 passed filenames containing spaces and missing-input failure propagation. Prototype f13dbac88d4f29a32df6e7379fe839ce53218ff2 includes the patch rationale. Exact equality to Git-index selection was an inferred constraint, not an established user/repository requirement; the existing Git filter excludes build output. Full declared-source inventory and integrated source qualification remain open.",
         "permanentFormatterMilestone": {
           "source": "723486ddd865d3044c5b515865b3a43de6356fde",
           "fixtureSource": "d58ca4f42c5a5a71456cb5de34f43785a6f6670e",
@@ -57833,8 +57833,8 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "8b4856bbd7f5e8daf209246b2fe211a4df36327f",
         "observedAt": "2026-11-11T19:23:26+00:00",
-        "disposition": "The merged rules_go prerequisite is satisfied. Standard Debian/default tar producers use default-flavor binaries; separate coverage archives are outside this proposal\u2019s explicit standard-installation promise, so their omitted label is not a required coverage correction. Historical checkpoint case PASS is distinct from the XML-wrapper failure. Public proposal remains 8b4856bbd7f5e8daf209246b2fe211a4df36327f with its genuine pending Nov11 review. Equivalent current-base candidate 981be663 is unpublished; labeled CLI preflight44897243557 passed with version release-20261121.0. Named/unnamed producers and ARM qualification remain live under the existing owner.",
-        "nextAction": "approved_rebase_queue audits the already-running standard producer/ARM jobs, then root reviews the equivalent source and its release-contract scope. Preserve historical receipts and the genuine pending user publication decision; do not publish or call the source final-ready.",
+        "disposition": "Standard producer qualification is complete for equivalent refresh981be6635cb0fd3e0c06977379ab182a12544320 on8b8f23f9 (CIc9bad2ab). Native named CLI on both architectures reports release-20261121.0; unnamed CLI reports (devel). Package producers yield exactly 20261121.0 and 0~devel plus newline, with matching BEP digests and two TestVersion cases without failure/skip. All five canonical source checks and guards pass; no producer correction is required. Coverage archives are excluded scope; the old checkpoint pass/XML-wrapper limitation stays historical. Original public proposal8b4856bb and its genuine pending approval remain unchanged.",
+        "nextAction": "Root awaits the existing original-source publication decision and preserves the verified equivalent refresh. No new question, source-ref update, upstream PR or running qualification watch remains; do not infer approval.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/8b4856bbd",
           "https://github.com/tamird/gvisor/actions/runs/43078670798/artifacts/13883378238",
@@ -57857,7 +57857,11 @@
           "https://github.com/tamird/gvisor/actions/runs/44897243557",
           "https://github.com/tamird/gvisor/actions/runs/44897718792",
           "https://github.com/tamird/gvisor/actions/runs/44897720350",
-          "https://github.com/tamird/gvisor/actions/runs/44897721863"
+          "https://github.com/tamird/gvisor/actions/runs/44897721863",
+          "https://github.com/tamird/gvisor/actions/runs/44899707256",
+          "https://github.com/tamird/gvisor/actions/runs/44899708892",
+          "https://github.com/tamird/gvisor/actions/runs/44899710690",
+          "https://github.com/tamird/gvisor/commit/981be6635cb0fd3e0c06977379ab182a12544320"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -57871,8 +57875,8 @@
           "owner": "root"
         },
         "technicalOwner": "approved_rebase_queue",
-        "recheckCondition": "Terminal source-bound producer/ARM qualification, root final review, changed source or actual contributor reply.",
-        "curatedAt": "2026-11-21T11:11:31.167949+00:00"
+        "recheckCondition": "Actual contributor publication reply or changed source/equivalence boundary.",
+        "curatedAt": "2026-11-21T11:39:23.196920+00:00"
       },
       "contributorReview": {
         "kind": "proposal",
