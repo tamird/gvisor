@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T14:36:31.436198+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T14:18:57.104253+00:00",
+  "registryDate": "2026-11-21T14:41:42.118636+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -452925,10 +452925,10 @@
       "owner": "root",
       "action": "Keep the tested fork repair available while awaiting confirmation of the existing maintainer hold.",
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "benchmark_measurement_review / root",
         "sourceHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "disposition": "Existing maintainer internal license-exception hold and CHANGES_REQUESTED remain recorded.",
-        "nextAction": "Keep the tested fork repair available while awaiting confirmation of the existing maintainer hold. The matching Copybara export #17126 also conflicts; its importing maintainer owns any internal refresh and re-export. Do not push its branch. DCO import coordination: Root coordinates #17126 at 23d5f125f2bb. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch."
+        "disposition": "Public afd34241 and its original maintainer internal license-exception/review hold are preserved. Private conflict proposal 79d66d4f7fec8ebd5cd6fbcba35678cfdde5b916 is under preflight 44914763587. The standing-DCO execution rejection was resolved under the direct user grant; no human DCO decision remains. Historical internal check passes do not release the maintainer hold or qualify the new source.",
+        "nextAction": "benchmark_measurement_review audits the existing preflight and prepares the exact-source handoff; root reconciles the retained review/authority boundary before any publication. No new source approval is projected."
       },
       "conflictObservedSince": "2026-11-06T02:35:04.797881+00:00"
     },
@@ -452946,13 +452946,13 @@
       "checkedAt": "2026-11-21T14:35:54.711757+00:00",
       "mergeabilityCheckedAt": "2026-11-21T14:35:50.349491+00:00",
       "sourceBranchMismatch": false,
-      "owner": "root",
+      "owner": "benchmark_measurement_review / root",
       "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "benchmark_measurement_review / root",
         "sourceHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "disposition": "Existing maintainer internal license-exception hold and CHANGES_REQUESTED remain recorded.",
-        "nextAction": "Keep the tested fork repair available while awaiting confirmation of the existing maintainer hold. The matching Copybara export #17126 also conflicts; its importing maintainer owns any internal refresh and re-export. Do not push its branch. DCO import coordination: Root coordinates #17126 at 23d5f125f2bb. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch."
+        "disposition": "Public afd34241 and its original maintainer internal license-exception/review hold are preserved. Private conflict proposal 79d66d4f7fec8ebd5cd6fbcba35678cfdde5b916 is under preflight 44914763587. The standing-DCO execution rejection was resolved under the direct user grant; no human DCO decision remains. Historical internal check passes do not release the maintainer hold or qualify the new source.",
+        "nextAction": "benchmark_measurement_review audits the existing preflight and prepares the exact-source handoff; root reconciles the retained review/authority boundary before any publication. No new source approval is projected."
       },
       "conflictObservedSince": null
     },
@@ -453239,8 +453239,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "disposition": "Actual strict runs 44912116517/44912118433 analyzed two C translation units per architecture and failed closed on include-cleaner. Reports mix potentially real direct-include hygiene with local-variable/macro diagnostics; some requested declarations/includes already exist. No path cause is established and no source edits or suppressions were made. Earlier CI executable-mode failures occurred before analysis and are not product failures. One-TU source-identity diagnostic 44912955198 is live with the owning agent; it is diagnostic, not a strict pass. Source 5026, 57 passing functional cases and five source-linter passes remain source-bound; product nonidentity/performance and 16522/internal/public holds remain.",
-        "nextAction": "approved_rebase_queue audits the single existing workspace-versus-execroot source-identity diagnostic using the actual DB/flags and pinned checker 22.1.8. Preserve the existing checker/converter and fail-closed contract; do not guess a path cause, edit C for impossible reports, suppress checks or repeat valid compile-product proofs."
+        "disposition": "Strict AMD 44914203382/ARM 44914205072 passed two C entries/sources per architecture with zero findings/errors only under CI 6af8011bbf3b343d496faf18866585503bca3dc6, which composes exact approved 17446 C/header blobs. DB JSON/argv match the raw 5026 strict failures 44912116517/44912118433; no checker change or suppression occurred. This closes strict only with 17446 as a prerequisite, not raw 5026. Original 57-case/five-linter CI 568 evidence remains separate; no combined runtime proof is asserted. Product bytes/offsets remain nonidentical and performance, root review, 16522/17446 landing and internal import remain open.",
+        "nextAction": "Root reviews exact source/authority and combined-validation bounds. approved_rebase_queue preserves the explicit 17446 strict prerequisite and original source evidence; no public update or runtime/performance identity is inferred."
       },
       "conflictObservedSince": "2026-11-17T19:11:47.868378+00:00"
     },
@@ -453333,10 +453333,10 @@
       "owner": "Agent",
       "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "b08bf67a0996f2732d82ad5b35949048cc2139f0",
-        "disposition": "Same-source A/A 44829018964 fixed-gate result is 31/38 PASS and 7 INCONCLUSIVE. The inconclusive graph-allocation drift has no established cause; this is not a stability pass or candidate comparison. Functional/compiler proof remains valid, and four broad checkpoint/restore workloads remain required.",
-        "nextAction": "approved_rebase_queue diagnoses the observed graph-allocation drift using the existing benchmark boundary, closes the required broad controls and only then evaluates candidates. Preserve the exact baseline result without unchanged reruns or global EOF stability inference."
+        "disposition": "Same-source controls remain 31/38 within the fixed ±2% criterion and 7 INCONCLUSIVE, with no candidate comparison. GraphLoad’s adaptive N4/5 allocation discrepancy is resolved in existing fixed 5x control: both arms have 61,720,168B/op and 444,497allocs/op, but latency remains inconclusive. GraphSave’s allocated/encoded bytes and allocation counts were stable despite 13.79% time drift. No allocator, pool/map or quiet-host latency cause is established. Four CheckpointEmpty/Nginx and RestoreEmpty/Nginx broad controls remain unqualified.",
+        "nextAction": "Root and approved_rebase_queue await actual authorized quiet/controlled-route information already requested. Recheck a real route/configuration change with same-source controls first; no source repair, unchanged repeat, N inflation or candidate comparison is justified."
       },
       "conflictObservedSince": "2026-11-20T21:07:20.274292+00:00"
     },
@@ -457880,8 +457880,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "disposition": "Actual strict runs 44912116517/44912118433 analyzed two C translation units per architecture and failed closed on include-cleaner. Reports mix potentially real direct-include hygiene with local-variable/macro diagnostics; some requested declarations/includes already exist. No path cause is established and no source edits or suppressions were made. Earlier CI executable-mode failures occurred before analysis and are not product failures. One-TU source-identity diagnostic 44912955198 is live with the owning agent; it is diagnostic, not a strict pass. Source 5026, 57 passing functional cases and five source-linter passes remain source-bound; product nonidentity/performance and 16522/internal/public holds remain.",
-        "nextAction": "approved_rebase_queue audits the single existing workspace-versus-execroot source-identity diagnostic using the actual DB/flags and pinned checker 22.1.8. Preserve the existing checker/converter and fail-closed contract; do not guess a path cause, edit C for impossible reports, suppress checks or repeat valid compile-product proofs."
+        "disposition": "Strict AMD 44914203382/ARM 44914205072 passed two C entries/sources per architecture with zero findings/errors only under CI 6af8011bbf3b343d496faf18866585503bca3dc6, which composes exact approved 17446 C/header blobs. DB JSON/argv match the raw 5026 strict failures 44912116517/44912118433; no checker change or suppression occurred. This closes strict only with 17446 as a prerequisite, not raw 5026. Original 57-case/five-linter CI 568 evidence remains separate; no combined runtime proof is asserted. Product bytes/offsets remain nonidentical and performance, root review, 16522/17446 landing and internal import remain open.",
+        "nextAction": "Root reviews exact source/authority and combined-validation bounds. approved_rebase_queue preserves the explicit 17446 strict prerequisite and original source evidence; no public update or runtime/performance identity is inferred."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN1p80gQ",
@@ -460577,10 +460577,10 @@
         }
       ],
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "b08bf67a0996f2732d82ad5b35949048cc2139f0",
-        "disposition": "Same-source A/A 44829018964 fixed-gate result is 31/38 PASS and 7 INCONCLUSIVE. The inconclusive graph-allocation drift has no established cause; this is not a stability pass or candidate comparison. Functional/compiler proof remains valid, and four broad checkpoint/restore workloads remain required.",
-        "nextAction": "approved_rebase_queue diagnoses the observed graph-allocation drift using the existing benchmark boundary, closes the required broad controls and only then evaluates candidates. Preserve the exact baseline result without unchanged reruns or global EOF stability inference."
+        "disposition": "Same-source controls remain 31/38 within the fixed ±2% criterion and 7 INCONCLUSIVE, with no candidate comparison. GraphLoad’s adaptive N4/5 allocation discrepancy is resolved in existing fixed 5x control: both arms have 61,720,168B/op and 444,497allocs/op, but latency remains inconclusive. GraphSave’s allocated/encoded bytes and allocation counts were stable despite 13.79% time drift. No allocator, pool/map or quiet-host latency cause is established. Four CheckpointEmpty/Nginx and RestoreEmpty/Nginx broad controls remain unqualified.",
+        "nextAction": "Root and approved_rebase_queue await actual authorized quiet/controlled-route information already requested. Recheck a real route/configuration change with same-source controls first; no source repair, unchanged repeat, N inflation or candidate comparison is justified."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxx6rRg"
@@ -461012,8 +461012,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "f3c485cd64fe2d802cbec5891f537f797e76a3c1",
-        "disposition": "Current f3c485cd64fe2d802cbec5891f537f797e76a3c1 main55544 fails only ARM Docker image_test: attempt4 job01a1fb56-d49f-4494-abb8-7c88eb0f8006 times out at 900.2s with the 15-minute test panic. Four other Docker/e2e targets pass. The canonical log does not establish an HTTP-benchmark source regression or quota cause.",
-        "nextAction": "Root assigns the existing image/runtime-test owner the exact timed-out image-test stack and causal diagnosis, preserving #17836 cancellation mitigation scope. No blind retry or benchmark-source edit."
+        "disposition": "The same attached-output cancellation repair is already delivered in OPEN 17836 at 29ff3968 (blob identical to reviewed 88db); the duplicate local edit was removed with no push or run. Main 55568 passed all eight ARM Docker partitions; the nested image test took 169.9s. This validates the existing mitigation’s CI, not the cause of the original 55544 bridge/apk stall. Log-retention 17855 is OPEN/quota-blocked and is not deployed upstream; no old-netns cause or new source fix is established.",
+        "nextAction": "Root follows 17836 and 17855 landing. Recheck a natural recurrence after both are applied, then consume bounded output plus the retained daemon journal. No active duplicate source investigation, manual retry or new proposal is needed."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3ABsnA"
@@ -469919,7 +469919,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:18:57.104253+00:00"
+        "observedAt": "2026-11-21T14:41:42.118636+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -469928,7 +469928,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:18:57.104253+00:00"
+        "observedAt": "2026-11-21T14:41:42.118636+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -469937,7 +469937,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:18:57.104253+00:00"
+        "observedAt": "2026-11-21T14:41:42.118636+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -469946,7 +469946,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:18:57.104253+00:00"
+        "observedAt": "2026-11-21T14:41:42.118636+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -469955,7 +469955,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:18:57.104253+00:00"
+        "observedAt": "2026-11-21T14:41:42.118636+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -469964,7 +469964,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:18:57.104253+00:00"
+        "observedAt": "2026-11-21T14:41:42.118636+00:00"
       }
     },
     "investigation:unit-test-worker-requirements": {
@@ -469973,7 +469973,7 @@
         "since": "2026-11-21T13:24:07.659680+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:18:57.104253+00:00"
+        "observedAt": "2026-11-21T14:41:42.118636+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -469982,7 +469982,7 @@
         "since": "2026-11-21T14:00:19.559771+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:18:57.104253+00:00"
+        "observedAt": "2026-11-21T14:41:42.118636+00:00"
       }
     }
   },
