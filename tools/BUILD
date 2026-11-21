@@ -1,4 +1,5 @@
 load("@bazel_skylib//rules:common_settings.bzl", "bool_setting")
+load("@rules_python//python:py_library.bzl", "py_library")
 load("@rules_python//python:py_test.bzl", "py_test")
 load("//tools:defs.bzl", "bzl_library", "go_cov", "gotsan_flag_values", "gotsan_values", "select_goarch")
 
@@ -82,6 +83,8 @@ bzl_library(
 exports_files([
     "benchmark-umbrella-exports.patch",
     "build_cover.sh",
+    "rules_go_host_c.patch",
+    "rules_go_proto_exec.patch",
 ])
 
 # Go toolchain patched to allow imports of internal packages for coverage
@@ -111,12 +114,21 @@ go_cov(
     ],
 )
 
+py_library(
+    name = "clang_tidy",
+    srcs = ["clang_tidy/clang_tidy.py"],
+    imports = ["clang_tidy"],
+)
+
 py_test(
     name = "lint_test",
     srcs = ["lint_test.py"],
     args = ["$(rootpath :lint.sh)"],
     data = [
+        "devcontainer-init.sh",
         "lint.sh",
         "//:.clang-format",
+        "//:.clang-tidy",
     ],
+    deps = [":clang_tidy"],
 )
