@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T14:16:15.453292+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T14:00:19.559771+00:00",
+  "registryDate": "2026-11-21T14:18:57.104253+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -453239,8 +453239,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "disposition": "Private 5026 functional qualification passed: AMD 31 and ARM 26 XML cases, zero failures/skips, all ten TestRunners remotely executed without test-result-cache reuse; all five source checks passed. Products remain byte/offset-nonidentical after AMD size growth was removed, so performance is open. Affected strict-C proof remains pending. The existing cbcd typed-options adapter was already present in CI 568; earlier environment/missing-sysmsg claims were corrected before source edits, not fixed by new code. Public a3, final root review and 16522/internal landing hold remain unchanged.",
-        "nextAction": "approved_rebase_queue scopes only the existing strict-check invocation target lists, preserving the standard BCR tool, fail-closed checker and RBE flags. Audit the actual strict result before final source/authority review; no adapter rewrite, public amendment, runtime identity or performance waiver is implied."
+        "disposition": "Actual strict runs 44912116517/44912118433 analyzed two C translation units per architecture and failed closed on include-cleaner. Reports mix potentially real direct-include hygiene with local-variable/macro diagnostics; some requested declarations/includes already exist. No path cause is established and no source edits or suppressions were made. Earlier CI executable-mode failures occurred before analysis and are not product failures. One-TU source-identity diagnostic 44912955198 is live with the owning agent; it is diagnostic, not a strict pass. Source 5026, 57 passing functional cases and five source-linter passes remain source-bound; product nonidentity/performance and 16522/internal/public holds remain.",
+        "nextAction": "approved_rebase_queue audits the single existing workspace-versus-execroot source-identity diagnostic using the actual DB/flags and pinned checker 22.1.8. Preserve the existing checker/converter and fail-closed contract; do not guess a path cause, edit C for impossible reports, suppress checks or repeat valid compile-product proofs."
       },
       "conflictObservedSince": "2026-11-17T19:11:47.868378+00:00"
     },
@@ -457880,8 +457880,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "disposition": "Private 5026 functional qualification passed: AMD 31 and ARM 26 XML cases, zero failures/skips, all ten TestRunners remotely executed without test-result-cache reuse; all five source checks passed. Products remain byte/offset-nonidentical after AMD size growth was removed, so performance is open. Affected strict-C proof remains pending. The existing cbcd typed-options adapter was already present in CI 568; earlier environment/missing-sysmsg claims were corrected before source edits, not fixed by new code. Public a3, final root review and 16522/internal landing hold remain unchanged.",
-        "nextAction": "approved_rebase_queue scopes only the existing strict-check invocation target lists, preserving the standard BCR tool, fail-closed checker and RBE flags. Audit the actual strict result before final source/authority review; no adapter rewrite, public amendment, runtime identity or performance waiver is implied."
+        "disposition": "Actual strict runs 44912116517/44912118433 analyzed two C translation units per architecture and failed closed on include-cleaner. Reports mix potentially real direct-include hygiene with local-variable/macro diagnostics; some requested declarations/includes already exist. No path cause is established and no source edits or suppressions were made. Earlier CI executable-mode failures occurred before analysis and are not product failures. One-TU source-identity diagnostic 44912955198 is live with the owning agent; it is diagnostic, not a strict pass. Source 5026, 57 passing functional cases and five source-linter passes remain source-bound; product nonidentity/performance and 16522/internal/public holds remain.",
+        "nextAction": "approved_rebase_queue audits the single existing workspace-versus-execroot source-identity diagnostic using the actual DB/flags and pinned checker 22.1.8. Preserve the existing checker/converter and fail-closed contract; do not guess a path cause, edit C for impossible reports, suppress checks or repeat valid compile-product proofs."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN1p80gQ",
@@ -469919,7 +469919,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:00:19.559771+00:00"
+        "observedAt": "2026-11-21T14:18:57.104253+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -469928,7 +469928,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:00:19.559771+00:00"
+        "observedAt": "2026-11-21T14:18:57.104253+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -469937,7 +469937,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:00:19.559771+00:00"
+        "observedAt": "2026-11-21T14:18:57.104253+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -469946,7 +469946,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:00:19.559771+00:00"
+        "observedAt": "2026-11-21T14:18:57.104253+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -469955,7 +469955,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:00:19.559771+00:00"
+        "observedAt": "2026-11-21T14:18:57.104253+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -469964,7 +469964,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:00:19.559771+00:00"
+        "observedAt": "2026-11-21T14:18:57.104253+00:00"
       }
     },
     "investigation:unit-test-worker-requirements": {
@@ -469973,7 +469973,7 @@
         "since": "2026-11-21T13:24:07.659680+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:00:19.559771+00:00"
+        "observedAt": "2026-11-21T14:18:57.104253+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -469982,7 +469982,7 @@
         "since": "2026-11-21T14:00:19.559771+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T14:00:19.559771+00:00"
+        "observedAt": "2026-11-21T14:18:57.104253+00:00"
       }
     }
   },
