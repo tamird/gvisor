@@ -213,11 +213,11 @@
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
       "updatedAt": "2026-11-17T18:16:01.120596+00:00",
-      "summary": "One actual comment-posting question is pending; source amendment 427 remains held and its earlier unanswered question is preserved in immutable history. The classifier is identical to published afd; original QEMU artifacts differed and lacked license_source. The current bound-notice incompatibility is not a proven 427 regression or binding defect. The upstream internal-exception hold remains separate.",
+      "summary": "User-approved427 and the approved clarification7070045072 are delivered in the required push-first order. All native GitHub checks and DCO now pass. FirstPass2300 independently failed pre-agent on author1535036 rolling30-day360000compute-minute quota; no tests started. Upstream internal-exception/QEMU acceptance remain landing decisions, not pending source or posting approvals.",
       "followup": {
-        "disposition": "Real QEMU Fetch-to-policy reproduction 44945433117 fails against the unchanged GPL-2.0-only exception. Comparison establishes that the classifier is identical to published afd; original QEMU artifacts differed and lacked license_source. This is current bound-notice incompatibility, with no demonstrated binding defect, 427-caused regression or policy change. Source amendment and upstream hold remain in place; only the exact new clarification comment is awaiting posting approval.",
+        "disposition": "User-approved427 and the approved clarification7070045072 are delivered in the required push-first order. All native GitHub checks and DCO now pass. FirstPass2300 independently failed pre-agent on author1535036 rolling30-day360000compute-minute quota; no tests started. Upstream internal-exception/QEMU acceptance remain landing decisions, not pending source or posting approvals.",
         "owner": "benchmark_measurement_review / root",
-        "nextAction": "Root awaits the existing comment-only question’s answer before posting its exact body. benchmark_measurement_review retains the source/policy compatibility recovery; do not publish 427 or infer a reply to its historical source-amendment question.",
+        "nextAction": "Root follows maintainer response and actual admission/current-head events. Preserve the independent internal-exception/QEMU landing hold; no retry, quota outreach or repeated source/comment approval.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/23b8ddf0a",
           "https://github.com/tamird/gvisor/actions/runs/43014384411",
@@ -241,19 +241,45 @@
           "https://github.com/tamird/gvisor/actions/runs/44916179600",
           "https://github.com/tamird/gvisor/actions/runs/44915539209",
           "https://github.com/tamird/gvisor/actions/runs/44945433117",
-          "https://github.com/tamird/gvisor/blob/e0a38c9195a36b5d18c30011e6a193aac4bad47b/registry.json"
+          "https://github.com/tamird/gvisor/blob/e0a38c9195a36b5d18c30011e6a193aac4bad47b/registry.json",
+          "https://github.com/gvisor/gvisor/pull/15146#issuecomment-7070045072",
+          "https://github.com/tamird/gvisor/actions/runs/44955678692",
+          "https://buildkite.com/gvisor/first-pass/builds/2300#01a2002c-8092-4cc1-8ab7-eb0653355824"
         ],
         "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
-        "sourceHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
+        "sourceHead": "427a8de7470d18956964b5ef71a21fab92440039",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "CONFLICTING",
+        "mergeable": "MERGEABLE",
         "observedAt": "2026-11-17T18:16:01.120596+00:00",
         "providerHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "recheckCondition": "Actual comment-posting decision or maintainer response and source-bound compatibility evidence; source amendment and upstream hold remain independent.",
+        "recheckCondition": "Actual current-head CI result or maintainer acceptance/hold response; publication/reply approvals are consumed.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
-        "curatedAt": "2026-11-21T15:01:28.141765+00:00"
+        "curatedAt": "2026-11-21T15:01:28.141765+00:00",
+        "attentionDispositions": [
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "FirstPass 2300: verified pre-agent quota admission",
+            "nextAction": "Existing owner rechecks actual admission recovery or a new source/check event; no retry or quota outreach.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/2300#01a2002c-8092-4cc1-8ab7-eb0653355824"
+            ],
+            "binding": {
+              "sourceHead": "427a8de7470d18956964b5ef71a21fab92440039",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN3n_CVg",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/2300",
+                  "kind": "status"
+                }
+              ]
+            }
+          }
+        ]
       },
-      "head": "afd34241a1b7e38e196e5d173632f658b7e5defc",
+      "head": "427a8de7470d18956964b5ef71a21fab92440039",
       "evidence": [
         {
           "label": "Tested fork repair on current master",
@@ -407,15 +433,31 @@
           }
         }
       },
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "url": "https://github.com/google/gvisor/pull/15146",
-        "title": "Post the QEMU regeneration and internal-hold clarification",
-        "summary": "Root confirms an actual accepted, unanswered comment-posting question with options Approve posting / Keep the reply held. This approves only the exact comment, not the held source amendment. No precise submission timestamp or question ID was supplied.",
-        "body": "On the [prepared rebase](https://github.com/tamird/gvisor/commit/427a8de7470d18956964b5ef71a21fab92440039), fetching QEMU’s pinned COPYING reports `GPL-2.0, GPL-2.0-or-later`; Verify rejects the existing `GPL-2.0-only` exception ([reproduction](https://github.com/tamird/gvisor/actions/runs/44945433117)). The audited entry and policy are unchanged. Is this regeneration failure acceptable, and does the internal-exception hold still apply?\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "status": "settled",
+          "head": "afd34241a1b7e38e196e5d173632f658b7e5defc",
+          "url": "https://github.com/google/gvisor/pull/15146",
+          "title": "Post the QEMU regeneration and internal-hold clarification",
+          "summary": "The user approved this exact comment and explicitly required the rebase push first. Root posted it after delivering427; source approval and comment posting are consumed.",
+          "body": "On the [prepared rebase](https://github.com/tamird/gvisor/commit/427a8de7470d18956964b5ef71a21fab92440039), fetching QEMU’s pinned COPYING reports `GPL-2.0, GPL-2.0-or-later`; Verify rejects the existing `GPL-2.0-only` exception ([reproduction](https://github.com/tamird/gvisor/actions/runs/44945433117)). The audited entry and policy are unchanged. Is this regeneration failure acceptable, and does the internal-exception hold still apply?\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "APPROVED",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/15146#issuecomment-7070045072"
+        },
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "head": "427a8de7470d18956964b5ef71a21fab92440039",
+          "baseHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
+          "url": "https://github.com/tamird/gvisor/commit/427a8de7470d18956964b5ef71a21fab92440039",
+          "title": "Recognize complete dependency license texts",
+          "body": "Replace phrase-based classification with complete license-text matching\nto avoid combining independent notices. The old matcher combined Arrow's\nBSD terms and OpenSSL's advertising clause into BSD-4-Clause [1].\n\nDelegate text matching and identifier ownership to google/licensecheck\n[2], configured with the complete LLVM exception [3]. References alone\ndo not establish a license grant. Keep the scanner's identifiers literal\nso policy review sees the distinctions the detector can establish.\n\nAdd the classifier dependency to the catalog and recognize Kythe's legacy\nUniversity of Illinois/NCSA grant [4], previously reported as MIT. Scope\nthe corresponding exception to Kythe and record its redistribution terms.\nRetain the current audited LLVM and other dependency identities and policy.\n\n[1]: https://github.com/apache/arrow/blob/e03105efc/go/LICENSE.txt\n[2]: https://github.com/google/licensecheck/blob/16aaea366/scan.go\n[3]: https://github.com/llvm/llvm-project/blob/85ac56026/LICENSE.TXT\n[4]: https://github.com/kythe/kythe/blob/a182743b6/LICENSE#L205-L251\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
+          "summary": "Direct user LGTM for427 was followed by the explicitly requested push-before-comment delivery. No source publication question remains pending.",
+          "outcome": "APPROVED",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/15146"
+        }
+      ]
     },
     {
       "id": "pr:15145",
@@ -41051,24 +41093,28 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/systrap-elf-offsets",
-      "head": "4c529a8079409c05cd8a5c16133683a94fc991ba",
+      "head": "a9594385d15d2e17e5dd7491be94d774f47fa80e",
       "title": "Generate systrap stub offsets from the linked ELF",
       "url": "https://github.com/google/gvisor/pull/16516",
       "group": "bazel",
       "status": "open",
-      "summary": "Moved the unchanged ELF offset generator into //tools/systrap_offsets:gen_offsets in response to Lucas’s review. The contributor approved the amendment and reply, and both are published. Hosted AMD64/ARM64 builds, equality of every exported offset, source lint and C++ lint passed. Independent review found no substantive issues. The separately approved raw stub extraction still waits for #16516 to land.",
+      "summary": "The user-requested equivalent rebase is delivered at a9594385 on eb263; complete patch bytes match and range-diff is equal. Current AMD/ARM tool, offset producer and owning-library builds passed all three targets per architecture, and all five source checks passed. Native head is mergeable/DCO-successful with no auto-merge; notice7070264567 is saved. FirstPass2303 actually admitted and executed checkout/hooks, not a test pass or global quota clearance. Go export/main CI remain separate.",
       "updatedAt": "2026-11-17T17:42:43.236533Z",
       "followup": {
         "owner": "root",
-        "sourceHead": "4c529a8079409c05cd8a5c16133683a94fc991ba",
+        "sourceHead": "a9594385d15d2e17e5dd7491be94d774f47fa80e",
         "observedAt": "2026-11-17T17:20:44.991697Z",
-        "disposition": "Published the contributor-approved generator relocation and exact reply to Lucas. The original Go source blob is unchanged. GitHub confirms the published head is mergeable. Remote builds and offset parity on AMD64/ARM64, source lint and C++ lint pass; all required independent review roles found no substantive issues. The native re-request to Lucas is now delivered and read back using the documented /requested_reviewers/rerequest endpoint; the earlier /requested_reviewers attempt returned 404.",
-        "nextAction": "Follow Lucas’s requested review and current upstream checks on the published head. Submit the separately approved raw-stub extraction after #16516 lands.",
+        "disposition": "The user-requested equivalent rebase is delivered at a9594385 on eb263; complete patch bytes match and range-diff is equal. Current AMD/ARM tool, offset producer and owning-library builds passed all three targets per architecture, and all five source checks passed. Native head is mergeable/DCO-successful with no auto-merge; notice7070264567 is saved. FirstPass2303 actually admitted and executed checkout/hooks, not a test pass or global quota clearance. Go export/main CI remain separate.",
+        "nextAction": "approved_rebase_queue owns the current admitted2303 and Go44957331290 follow-through, preserving existing reviewer requests and independent main/landing obligations. Do not bind historical1564 failure to the new source.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16516#pullrequestreview-5895770949",
           "https://github.com/gvisor/gvisor/pull/16516#pullrequestreview-5943223023",
           "https://github.com/tamird/gvisor/actions/runs/44131524229",
-          "https://github.com/tamird/gvisor/commit/4c529a8079409c05cd8a5c16133683a94fc991ba"
+          "https://github.com/tamird/gvisor/commit/4c529a8079409c05cd8a5c16133683a94fc991ba",
+          "https://github.com/gvisor/gvisor/pull/16516#issuecomment-7070264567",
+          "https://github.com/tamird/gvisor/actions/runs/44956730500",
+          "https://github.com/tamird/gvisor/actions/runs/44956732064",
+          "https://github.com/tamird/gvisor/actions/runs/44956733840"
         ],
         "nativeReviewRequest": {
           "reviewer": "manninglucas",
@@ -41077,7 +41123,9 @@
           "delivered": true,
           "endpoint": "/repos/gvisor/gvisor/pulls/16516/requested_reviewers/rerequest"
         },
-        "recheckCondition": "Lucas submits a new review, current-head checks change, the source head changes, or #16516 lands."
+        "recheckCondition": "Actual current-head CI/review/import event; no old-head failure reuse.",
+        "mergeable": "MERGEABLE",
+        "attentionDispositions": []
       },
       "evidence": [
         {
@@ -103134,7 +103182,7 @@
         "sourceHead": "5c8a182619525e77d210a31a9b9ff575251165f3",
         "observedAt": "2026-11-18T20:06:11.890448+00:00",
         "disposition": "Published 5c8a1826 and its lifecycle remain intact. The separate one-setting HTTPD source e383 has completed AMD/ARM builds, full maintained source/strict checks, nine-leaf functional contracts and both final reviews. Its actual standalone publication question is tracked separately; no source approval or PR opening is inferred.",
-        "nextAction": "Root follows the existing canonical17780 lifecycle and the distinct investigation:httpd-client-capacity source question. Do not keep completed ARM artifact/final-review gates pending or duplicate the source decision.",
+        "nextAction": "Root follows canonical17780 review/import/provider lifecycle; the separately approved HTTPD correction is delivered as17862 under approved_rebase_queue, with no duplicate publication question.",
         "recheckCondition": "Actual source-publication reply or genuine17780 maintainer/import/provider change.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/44231839538",
@@ -105466,6 +105514,102 @@
         "recheckCondition": "New issue feedback/state change or evidenced DCO provider range correction.",
         "evidence": [
           "https://github.com/cncf/dco2/issues/126"
+        ]
+      }
+    },
+    {
+      "id": "pr:17861",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17861,
+      "group": "analysis",
+      "head": "8e869b906e5a651a377178f1cf3621a798042397",
+      "title": "Declare unit test capability requirements",
+      "url": "https://github.com/google/gvisor/pull/17861",
+      "status": "open",
+      "updatedAt": "2026-11-21T22:39:02.228805+00:00",
+      "summary": "User-approved source and requested narrow edits are delivered, OPEN/MERGEABLE with DCO success and no auto-merge. FirstPass2301 independently failed before agent assignment: exit80, null agent/start, actual author1535036 rolling30-day360000compute-minute quota; no Bazel target ran. Go generation remains owner-followed; other GitHub-native checks passed. Main CI and human review/import remain separate.",
+      "followup": {
+        "owner": "approved_rebase_queue / root",
+        "sourceHead": "8e869b906e5a651a377178f1cf3621a798042397",
+        "mergeable": "MERGEABLE",
+        "disposition": "User-approved source and requested narrow edits are delivered, OPEN/MERGEABLE with DCO success and no auto-merge. FirstPass2301 independently failed before agent assignment: exit80, null agent/start, actual author1535036 rolling30-day360000compute-minute quota; no Bazel target ran. Go generation remains owner-followed; other GitHub-native checks passed. Main CI and human review/import remain separate.",
+        "nextAction": "approved_rebase_queue owns the current published CI/review/import follow-through; recheck admission/head/check changes without duplicate monitoring, manual retry or outreach.",
+        "recheckCondition": "Actual current-head provider/check or maintainer/import event.",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/17861",
+          "https://buildkite.com/gvisor/first-pass/builds/2301#01a20034-61d8-4402-8dfe-b2c59fb8e7a3"
+        ],
+        "attentionDispositions": [
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "FirstPass 2301: verified pre-agent quota admission",
+            "nextAction": "Existing owner rechecks actual admission recovery or a new source/check event; no retry or quota outreach.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/2301#01a20034-61d8-4402-8dfe-b2c59fb8e7a3"
+            ],
+            "binding": {
+              "sourceHead": "8e869b906e5a651a377178f1cf3621a798042397",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN3oL-tA",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/2301",
+                  "kind": "status"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "pr:17862",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17862,
+      "group": "analysis",
+      "head": "57691bada17528444d5137569d164234536009fa",
+      "title": "Allow HTTPD's maximum client concurrency",
+      "url": "https://github.com/google/gvisor/pull/17862",
+      "status": "open",
+      "updatedAt": "2026-11-21T22:39:02.228805+00:00",
+      "summary": "User-approved source and requested narrow edits are delivered, OPEN/MERGEABLE with DCO success and no auto-merge. FirstPass2302 independently failed before agent assignment: exit80, null agent/start, actual author1535036 rolling30-day360000compute-minute quota; no Bazel target ran. All GitHub-native checks are complete PASS. Main CI and human review/import remain separate.",
+      "followup": {
+        "owner": "approved_rebase_queue / root",
+        "sourceHead": "57691bada17528444d5137569d164234536009fa",
+        "mergeable": "MERGEABLE",
+        "disposition": "User-approved source and requested narrow edits are delivered, OPEN/MERGEABLE with DCO success and no auto-merge. FirstPass2302 independently failed before agent assignment: exit80, null agent/start, actual author1535036 rolling30-day360000compute-minute quota; no Bazel target ran. All GitHub-native checks are complete PASS. Main CI and human review/import remain separate.",
+        "nextAction": "approved_rebase_queue owns the current published CI/review/import follow-through; recheck admission/head/check changes without duplicate monitoring, manual retry or outreach.",
+        "recheckCondition": "Actual current-head provider/check or maintainer/import event.",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/17862",
+          "https://buildkite.com/gvisor/first-pass/builds/2302#01a20034-67c3-44f5-aa12-41cc6c0a9a9e"
+        ],
+        "attentionDispositions": [
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "FirstPass 2302: verified pre-agent quota admission",
+            "nextAction": "Existing owner rechecks actual admission recovery or a new source/check event; no retry or quota outreach.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/2302#01a20034-67c3-44f5-aa12-41cc6c0a9a9e"
+            ],
+            "binding": {
+              "sourceHead": "57691bada17528444d5137569d164234536009fa",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN3oL-hw",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/2302",
+                  "kind": "status"
+                }
+              ]
+            }
+          }
         ]
       }
     }
@@ -122555,7 +122699,7 @@
           ]
         }
       ],
-      "nextStep": "The 24-per-arm same-leaf diagnostic44930399362 is complete and failed; visit28 demonstrated producer SUM interval10.7154s versus longest stream11.3312s. The earlier n=2 diagnostic and literal SUM-parser correction do not repair that producer flaw or qualify stability. benchmark_measurement_review advances the existing approved Iperf3 vehicle through ABI and current functional checks, with BCR11518/license15146 prerequisites intact; no further Iperf2 timing or candidate comparison. Other workload/performance gates and the quiet-executor information request remain separate.",
+      "nextStep": "benchmark_measurement_review retains Iperf3/DING functional recovery. Package/protocol/cleanup44956385628 passed its actual assertions before an unrelated wrapper-cwd startup failure; corrected startup44956762450 is workflow-successful with owner audit pending. Root holds one actual unanswered operational question: permit a single remote canonical make rebuild-moby ARCH=x86_64 DOCKER_BUILD=false on ce1634b4a, capped30minutes with no image publication, as an explicit exception to the Bazel-only rule. No approval exists; generic CI grants do not answer it. Recheck the actual user response before that command. No producer build, timing or framework follows; other workload/quiet-route gates stay separate.",
       "evidence": [
         {
           "label": "Merged Nginx restore-benchmark HTTP readiness change",
@@ -122620,6 +122764,14 @@
         {
           "label": "Completed N24 diagnostic demonstrating producer interval mismatch",
           "url": "https://github.com/tamird/gvisor/actions/runs/44930399362"
+        },
+        {
+          "label": "DING package/protocol or corrected startup boundary",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44956385628"
+        },
+        {
+          "label": "DING package/protocol or corrected startup boundary",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44956762450"
         }
       ],
       "comparisons": [
@@ -141593,10 +141745,10 @@
       "group": "bazel",
       "title": "Declare unit test capability requirements",
       "owner": "root",
-      "head": "4026f169cc4e65cd02a6af18a32b5995515cbb20",
+      "head": "8e869b906e5a651a377178f1cf3621a798042397",
       "updatedAt": "2026-11-21T13:24:07.659680+00:00",
-      "summary": "One actual async publication question covers both fork-verified sources: worker 4026f169 and shared global-default 77576869. Neither is approved. The worker tree is identical to reviewed e560; only commit-message wrapping changed. The helper names CAP_SYS_ADMIN, shared REAPI network-off is distinct from local Bazel controls, and the IPv6 commit citation, both-architecture namespace gates and independent reviews are complete. Compiler/RBE prerequisites remain explicit.",
-      "nextStep": "Root awaits the reply to the existing paired question. Keep one decision for both exact sources, not separate reasks; no upstream publication or approval transfer from the rejected 1189 or older approved RBE source.",
+      "summary": "Worker4026 approval and requested narrow edits are delivered as#17861 at8e869b906. Native head is mergeable/DCO-successful; FirstPass admission quota and current CI are owned by approved_rebase_queue. No publication approval remains. Global775 remains pending and was not included in worker approval.",
+      "nextStep": "Follow canonical pr:17861 under approved_rebase_queue; no duplicate source/CI question. Root retains the separate existing global775 decision.",
       "evidence": [
         {
           "label": "Reviewable source",
@@ -141649,6 +141801,10 @@
         {
           "label": "Verified paired RBE default preview",
           "url": "https://github.com/tamird/gvisor/commit/775768695aa792ea6bf2369d9e3900fb289aaf00"
+        },
+        {
+          "label": "Immutable original paired question before partial approval",
+          "url": "https://github.com/tamird/gvisor/blob/a0fd7d044f3046e7e03c49f91081d9c2762f3d58/registry.json"
         }
       ],
       "findings": [
@@ -141679,17 +141835,29 @@
           "body": "Run sandbox, mount, and namespace tests in BuildBuddy microVMs [1].\nBuildBuddy's default OCI capability set omits CAP_SYS_ADMIN [2]. Keep\nexternal networking disabled while retaining localhost access [3].\nRequest guest IPv6 for the sandbox routing tests through BuildBuddy's\nopt-in property [4]. Apply these properties only to test actions so\ncompilation can use ordinary remote workers.\n\n[1]: https://www.buildbuddy.io/docs/rbe-microvms/\n[2]: https://github.com/buildbuddy-io/buildbuddy/blob/168813c94525e5106459531fb629429d5fe2fb60/enterprise/server/remote_execution/containers/ociruntime/ociruntime.go#L157-L173\n[3]: https://www.buildbuddy.io/docs/rbe-platforms/#runner-container-support\n[4]: https://github.com/buildbuddy-io/buildbuddy/pull/11585\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
           "summary": "The user requested revision, not publication approval: put the global network default at the responsible RBE owner, distinguish local Bazel from REAPI networking, name the shared helper for CAP_SYS_ADMIN, and cite IPv6 commit 4e518df00. No request/reply timestamp is invented.",
           "outcome": "CHANGES-REQUESTED"
+        },
+        {
+          "kind": "proposal",
+          "head": "4026f169cc4e65cd02a6af18a32b5995515cbb20",
+          "baseHead": "574094148cae18e739634382c0a28d60520c319a",
+          "url": "https://github.com/tamird/gvisor/commit/4026f169cc4e65cd02a6af18a32b5995515cbb20",
+          "title": "Declare unit test capability requirements",
+          "body": "Direct user LGTM for worker4026 only, with linked commit SHAs shortened to nine characters. Global-default775 is not included in that approval.",
+          "status": "settled",
+          "outcome": "APPROVED",
+          "summary": "The direct user approved worker4026 only and requested nine-character linked SHAs. The old paired question is preserved in immutable history; global775 remains unanswered.",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/17861"
         }
       ],
       "contributorReview": {
         "kind": "proposal",
         "status": "pending",
-        "head": "4026f169cc4e65cd02a6af18a32b5995515cbb20",
-        "baseHead": "574094148cae18e739634382c0a28d60520c319a",
-        "url": "https://github.com/tamird/gvisor/commit/4026f169cc4e65cd02a6af18a32b5995515cbb20",
-        "title": "Declare unit test capability requirements",
-        "summary": "Actual accepted async question explicitly covers both worker 4026f169cc4e65cd02a6af18a32b5995515cbb20 and global-default 775768695aa792ea6bf2369d9e3900fb289aaf00. No returned question ID, exact request timestamp or user reply is available.",
-        "body": "Paired source-publication review: https://github.com/tamird/gvisor/commit/4026f169cc4e65cd02a6af18a32b5995515cbb20 and https://github.com/tamird/gvisor/commit/775768695aa792ea6bf2369d9e3900fb289aaf00.\n\nThe worker source uses the capability-named helper and exact IPv6 commit citation. The RBE source sets one shared network-off default, preserving the distinction between local Bazel and REAPI networking. Both-architecture namespace gates and independent reviews passed; compiler/RBE prerequisites remain. The actual question covers this pair; neither source is approved."
+        "head": "775768695aa792ea6bf2369d9e3900fb289aaf00",
+        "baseHead": "0be5c425a5705e43b043c3d9aefef7839ececa3c",
+        "url": "https://github.com/tamird/gvisor/commit/775768695aa792ea6bf2369d9e3900fb289aaf00",
+        "title": "Set the shared RBE network default",
+        "body": "Remaining scope of the already-asked paired source question: global-default775 sets one shared REAPI network-off default, distinct from local Bazel networking. Worker4026 was approved separately; this global source remains unanswered. Compiler/RBE prerequisites remain.",
+        "summary": "This is the surviving global775 part of the actual prior paired question, not a new ask. Direct user LGTM covered4026 only. No question ID or request timestamp is invented."
       }
     },
     {
@@ -141755,8 +141923,8 @@
       "owner": "root",
       "head": "d039802d8437f08d27b0282485709cc5f1b464ba",
       "updatedAt": "2026-11-21T14:00:19.559771+00:00",
-      "summary": "The actual one-PR publication question for d039 is pending, proposing replacement of the earlier approved ad173 formatter proposal with the inventory included. Source is one clean DCO commit, seven files, 197 additions/90 deletions, on verified fork preview qualification/cc-format-source-d039802d. This new source is not approved by the predecessor approval.",
-      "nextStep": "Root awaits the reply to the existing d039 question. Preserve the separate paired worker/RBE decision and do not publish or repeat this question.",
+      "summary": "The user gave d039 LGTM while raising a substantive nonhermetic host-Git/index dependency. Publication is held for that actual source correction; owner comparison44956213076 is underway. The approved original source and validation remain preserved, but no upstream PR or approval of an unseen correction is inferred.",
+      "nextStep": "The assigned owner implements native package groups after492/492 declared-ownership proof to resolve the actual host-Git/index hermeticity concern. Preserve d039 LGTM, qualify/review the concrete correction before publication, and do not manufacture a repeated unanswered source question.",
       "evidence": [
         {
           "label": "Actual reviewable clean source",
@@ -141781,16 +141949,19 @@
           "evidence": []
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "d039802d8437f08d27b0282485709cc5f1b464ba",
-        "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
-        "url": "https://github.com/tamird/gvisor/commit/d039802d8437f08d27b0282485709cc5f1b464ba",
-        "title": "Declare C/C++ formatting inputs in Bazel",
-        "body": "Source review: https://github.com/tamird/gvisor/commit/d039802d8437f08d27b0282485709cc5f1b464ba\n\nSource lint downloaded a clang-format wheel and selected its files in\nshell. Run the declared LLVM formatter with indexed C/C++ files and\nadjacent configuration as Bazel action inputs. Keep the existing check\nand fix entry points, selecting the client tool for checkout fixes.\n\nKeep the input repository lazy and development-only. Source lint needs\na Git checkout with regular indexed files and indexed formatter\nconfiguration. Reject unindexed configuration before checks or fixes,\nand bound ignore discovery at the repository root so both use the same\nconfiguration.\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
-        "summary": "Root confirms the actual async question to open one PR replacing ad173 with the inventory included was asked and accepted by the tool. No returned question ID, exact request timestamp or reply is available."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "d039802d8437f08d27b0282485709cc5f1b464ba",
+          "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+          "url": "https://github.com/tamird/gvisor/commit/d039802d8437f08d27b0282485709cc5f1b464ba",
+          "title": "Declare C/C++ formatting inputs in Bazel",
+          "body": "Source review: https://github.com/tamird/gvisor/commit/d039802d8437f08d27b0282485709cc5f1b464ba\n\nSource lint downloaded a clang-format wheel and selected its files in\nshell. Run the declared LLVM formatter with indexed C/C++ files and\nadjacent configuration as Bazel action inputs. Keep the existing check\nand fix entry points, selecting the client tool for checkout fixes.\n\nKeep the input repository lazy and development-only. Source lint needs\na Git checkout with regular indexed files and indexed formatter\nconfiguration. Reject unindexed configuration before checks or fixes,\nand bound ignore discovery at the repository root so both use the same\nconfiguration.\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
+          "summary": "Direct user LGTM for d039 included a substantive host-Git/index hermeticity concern. Approval is recorded; publication remains held for responsible correction and qualified review, not another unanswered d039 question.",
+          "outcome": "APPROVED"
+        }
+      ]
     },
     {
       "id": "investigation:iperf-aggregate-reporting",
@@ -141830,20 +142001,10 @@
       "group": "analysis",
       "title": "Allow HTTPD's maximum client concurrency",
       "owner": "root",
-      "head": "e383b2ac6d7a0424395b031ee57b30f60d94d40a",
+      "head": "57691bada17528444d5137569d164234536009fa",
       "updatedAt": "2026-11-21T21:04:48.775519+00:00",
-      "summary": "One actual standalone-PR source-publication question is pending for e383: one file, three additions/one deletion, all required gates and two final reviews complete. Same-image event/25-thread evidence is resolved and DCO is included. Source is remotely reviewable by exact commit, but the requested preview ref is absent; no PR is open.",
-      "nextStep": "Root awaits the source-publication answer. The separate accepted request to check/unlock the existing SSH agent concerns environment availability: normal SSH timed out and HTTPS/API ref writes failed, while existing push grants remain valid. Do not treat this as a permission override or approval. Recheck actual agent availability and ordinary transport after a response; do not invent a published preview ref.",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "e383b2ac6d7a0424395b031ee57b30f60d94d40a",
-        "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
-        "url": "https://github.com/tamird/gvisor/commit/e383b2ac6d7a0424395b031ee57b30f60d94d40a",
-        "title": "Allow HTTPD's maximum client concurrency",
-        "body": "The HTTPD fixture's default allowance of at most 75 connections can fill with idle keep-alive connections before it reaches the declared concurrency of 1,000. Set AsyncRequestWorkerFactor to 40 for the existing event worker: 25 idle threads then allow 1,025 connections. Baseline and candidate measurements must use the same fixture configuration.\n\nValidation: [AMD64](https://github.com/tamird/gvisor/actions/runs/44944409882) and [ARM64](https://github.com/tamird/gvisor/actions/runs/44947661419) builds, [full source checks](https://github.com/tamird/gvisor/actions/runs/44944414491), and [C++ lint](https://github.com/tamird/gvisor/actions/runs/44945623947) passed; the C++ result is reused because its inputs and configuration are unchanged. [Nine formerly failing cases](https://github.com/tamird/gvisor/actions/runs/44942653690) produced 9,000 expected HTTP 200/404 statuses with zero reported client errors.\n\nPosted by Codex on behalf of @tamird.\n",
-        "summary": "Root confirms the actual standalone publication question was accepted and remains unanswered. All required gates and two final reviews cleared; DCO is included. No precise submission timestamp or question ID was returned. The independent SSH-agent availability request does not approve this source."
-      },
+      "summary": "HTTPD e383 approval and requested narrow edits are delivered as#17862 at57691bada. Native head is mergeable/DCO-successful; FirstPass admission quota and current CI are owned by approved_rebase_queue. No publication approval remains. Normal SSH delivery now works; the old availability request is closed without a permission override.",
+      "nextStep": "Follow canonical pr:17862 under approved_rebase_queue; no duplicate source/CI question. No source or SSH-unlock question remains pending.",
       "findings": [],
       "evidence": [
         {
@@ -141865,6 +142026,20 @@
         {
           "label": "Unchanged-input strict C++ proof",
           "url": "https://github.com/tamird/gvisor/actions/runs/44945623947"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "e383b2ac6d7a0424395b031ee57b30f60d94d40a",
+          "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+          "url": "https://github.com/tamird/gvisor/commit/e383b2ac6d7a0424395b031ee57b30f60d94d40a",
+          "title": "Allow HTTPD's maximum client concurrency",
+          "body": "The HTTPD fixture's default allowance of at most 75 connections can fill with idle keep-alive connections before it reaches the declared concurrency of 1,000. Set AsyncRequestWorkerFactor to 40 for the existing event worker: 25 idle threads then allow 1,025 connections. Baseline and candidate measurements must use the same fixture configuration.\n\nValidation: [AMD64](https://github.com/tamird/gvisor/actions/runs/44944409882) and [ARM64](https://github.com/tamird/gvisor/actions/runs/44947661419) builds, [full source checks](https://github.com/tamird/gvisor/actions/runs/44944414491), and [C++ lint](https://github.com/tamird/gvisor/actions/runs/44945623947) passed; the C++ result is reused because its inputs and configuration are unchanged. [Nine formerly failing cases](https://github.com/tamird/gvisor/actions/runs/44942653690) produced 9,000 expected HTTP 200/404 statuses with zero reported client errors.\n\nPosted by Codex on behalf of @tamird.\n",
+          "summary": "Direct user LGTM for e383 requested a multiline command and comment anchor. The owner signed/pushed conditional57691bada; validation/publication follow-through remains, no PR open.",
+          "outcome": "APPROVED",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/17862"
         }
       ]
     }

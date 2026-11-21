@@ -454247,9 +454247,9 @@
       ],
       "recordedFollowup": {
         "owner": "benchmark_measurement_review / root",
-        "sourceHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "disposition": "Real QEMU Fetch-to-policy reproduction 44945433117 fails against the unchanged GPL-2.0-only exception. Comparison establishes that the classifier is identical to published afd; original QEMU artifacts differed and lacked license_source. This is current bound-notice incompatibility, with no demonstrated binding defect, 427-caused regression or policy change. Source amendment and upstream hold remain in place; only the exact new clarification comment is awaiting posting approval.",
-        "nextAction": "Root awaits the existing comment-only question’s answer before posting its exact body. benchmark_measurement_review retains the source/policy compatibility recovery; do not publish 427 or infer a reply to its historical source-amendment question."
+        "sourceHead": "427a8de7470d18956964b5ef71a21fab92440039",
+        "disposition": "User-approved427 and the approved clarification7070045072 are delivered in the required push-first order. All native GitHub checks and DCO now pass. FirstPass2300 independently failed pre-agent on author1535036 rolling30-day360000compute-minute quota; no tests started. Upstream internal-exception/QEMU acceptance remain landing decisions, not pending source or posting approvals.",
+        "nextAction": "Root follows maintainer response and actual admission/current-head events. Preserve the independent internal-exception/QEMU landing hold; no retry, quota outreach or repeated source/comment approval."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3n_CVg"
@@ -455335,9 +455335,9 @@
       ],
       "recordedFollowup": {
         "owner": "root",
-        "sourceHead": "4c529a8079409c05cd8a5c16133683a94fc991ba",
-        "disposition": "Published the contributor-approved generator relocation and exact reply to Lucas. The original Go source blob is unchanged. GitHub confirms the published head is mergeable. Remote builds and offset parity on AMD64/ARM64, source lint and C++ lint pass; all required independent review roles found no substantive issues. The native re-request to Lucas is now delivered and read back using the documented /requested_reviewers/rerequest endpoint; the earlier /requested_reviewers attempt returned 404.",
-        "nextAction": "Follow Lucas’s requested review and current upstream checks on the published head. Submit the separately approved raw-stub extraction after #16516 lands."
+        "sourceHead": "a9594385d15d2e17e5dd7491be94d774f47fa80e",
+        "disposition": "The user-requested equivalent rebase is delivered at a9594385 on eb263; complete patch bytes match and range-diff is equal. Current AMD/ARM tool, offset producer and owning-library builds passed all three targets per architecture, and all five source checks passed. Native head is mergeable/DCO-successful with no auto-merge; notice7070264567 is saved. FirstPass2303 actually admitted and executed checkout/hooks, not a test pass or global quota clearance. Go export/main CI remain separate.",
+        "nextAction": "approved_rebase_queue owns the current admitted2303 and Go44957331290 follow-through, preserving existing reviewer requests and independent main/landing obligations. Do not bind historical1564 failure to the new source."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxx4c0Q"
@@ -461763,7 +461763,7 @@
         "owner": "root",
         "sourceHead": "5c8a182619525e77d210a31a9b9ff575251165f3",
         "disposition": "Published 5c8a1826 and its lifecycle remain intact. The separate one-setting HTTPD source e383 has completed AMD/ARM builds, full maintained source/strict checks, nine-leaf functional contracts and both final reviews. Its actual standalone publication question is tracked separately; no source approval or PR opening is inferred.",
-        "nextAction": "Root follows the existing canonical17780 lifecycle and the distinct investigation:httpd-client-capacity source question. Do not keep completed ARM artifact/final-review gates pending or duplicate the source decision."
+        "nextAction": "Root follows canonical17780 review/import/provider lifecycle; the separately approved HTTPD correction is delivered as17862 under approved_rebase_queue, with no duplicate publication question."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANzyZv5g"
@@ -461969,7 +461969,12 @@
           "purpose": "validation"
         }
       ],
-      "recordedFollowup": {},
+      "recordedFollowup": {
+        "owner": "approved_rebase_queue / root",
+        "sourceHead": "8e869b906e5a651a377178f1cf3621a798042397",
+        "disposition": "User-approved source and requested narrow edits are delivered, OPEN/MERGEABLE with DCO success and no auto-merge. FirstPass2301 independently failed before agent assignment: exit80, null agent/start, actual author1535036 rolling30-day360000compute-minute quota; no Bazel target ran. Go generation remains owner-followed; other GitHub-native checks passed. Main CI and human review/import remain separate.",
+        "nextAction": "approved_rebase_queue owns the current published CI/review/import follow-through; recheck admission/head/check changes without duplicate monitoring, manual retry or outreach."
+      },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3oL-tA"
       ],
@@ -462006,7 +462011,12 @@
           "purpose": "validation"
         }
       ],
-      "recordedFollowup": {},
+      "recordedFollowup": {
+        "owner": "approved_rebase_queue / root",
+        "sourceHead": "57691bada17528444d5137569d164234536009fa",
+        "disposition": "User-approved source and requested narrow edits are delivered, OPEN/MERGEABLE with DCO success and no auto-merge. FirstPass2302 independently failed before agent assignment: exit80, null agent/start, actual author1535036 rolling30-day360000compute-minute quota; no Bazel target ran. All GitHub-native checks are complete PASS. Main CI and human review/import remain separate.",
+        "nextAction": "approved_rebase_queue owns the current published CI/review/import follow-through; recheck admission/head/check changes without duplicate monitoring, manual retry or outreach."
+      },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3oL-hw"
       ],
@@ -463015,13 +463025,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-21T22:27:00.879986+00:00"
-      },
-      "contributor-review": {
-        "scope": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "since": "2026-11-21T15:42:31.456870+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-21T15:42:31.456870+00:00"
       }
     },
     "pr:15147": {
@@ -470596,25 +470599,7 @@
     },
     "investigation:unit-test-worker-requirements": {
       "contributor-review": {
-        "scope": "4026f169cc4e65cd02a6af18a32b5995515cbb20",
-        "since": "2026-11-21T13:24:07.659680+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-21T15:42:31.456870+00:00"
-      }
-    },
-    "investigation:cc-format-declared-inputs": {
-      "contributor-review": {
-        "scope": "d039802d8437f08d27b0282485709cc5f1b464ba",
-        "since": "2026-11-21T14:00:19.559771+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-21T15:42:31.456870+00:00"
-      }
-    },
-    "investigation:httpd-client-capacity": {
-      "contributor-review": {
-        "scope": "e383b2ac6d7a0424395b031ee57b30f60d94d40a",
+        "scope": "775768695aa792ea6bf2369d9e3900fb289aaf00",
         "since": "2026-11-21T15:42:31.456870+00:00",
         "basis": "observed",
         "qualifier": null,
