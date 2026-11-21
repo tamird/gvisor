@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T05:48:16.754217+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T05:25:56.229637+00:00",
+  "registryDate": "2026-11-21T05:50:48.981201+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -451054,8 +451054,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "47d14a74e781ae01f7b68a306d16752da43daec4",
-        "disposition": "Public47d14a74e781ae01f7b68a306d16752da43daec4 remains conflicting. The unpublished8cab980c14e1011e7855955944adc66b1b2554c4 version patch is unchanged; normal Go1.27.4 compiler gates pass on both architectures and AMD coverage passes. ARM coverage selected an x86 worker in the upstream nativego_cov route. Distinct permanent Bazel worker-constraint candidate5427ddbaa81cd2e3cc9317168568ef911f32ea71 is under qualification, not an approved/mechanical Go amendment or an approved upstream proposal. CI107f combines its explicit helper prerequisite with Go8cab and existing support; its results do not yet establish standalone readiness.",
-        "nextAction": "The existing source owner/root audit the five-caller platform proofs44870353935/44870355487 and source gate44870357054, then finish independent review of the permanent worker mechanism before any new source-publication proposal. Keep Go8cab and helper5427 distinct, public47d unchanged, and all candidate performance obligations open."
+        "disposition": "Public47d14a74e781ae01f7b68a306d16752da43daec4 remains conflicting; prepared8cab980c14e1011e7855955944adc66b1b2554c4 version patch is unchanged and unpublished. The distinct permanent worker proposal e33f30605e080fd02cc53bd20950e99d31c171fc closes all five caller platform/actual SDK CPU proofs on AMD/ARM in explicit CIc46. ARM coverage product44872095577 has targetCompleted.success=true and executes the SDK on aarch64 with go_arch=host_go_arch=arm64, Go1.27.4; its exit4 is expected NO_TESTS_FOUND for a compile-only target, not a runtime-case pass. Buildifier44872097434 passes; unchanged source checks and original normal1XML/architecture plus AMD coverage evidence retain their verified scope. Final independent review remains; no helper upstream PR or human-publication question/approval exists. Candidate performance is open.",
+        "nextAction": "Root completes final independent review of the separate permanent worker proposal. Keep public47d, mechanical Go8cab and helper e33f publication boundaries distinct; no runtime proof remains pending on the closed compile-only gate, and no new contributor decision is inferred."
       },
       "conflictObservedSince": "2026-11-21T04:40:29.427360+00:00"
     },
@@ -458133,8 +458133,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "47d14a74e781ae01f7b68a306d16752da43daec4",
-        "disposition": "Public47d14a74e781ae01f7b68a306d16752da43daec4 remains conflicting. The unpublished8cab980c14e1011e7855955944adc66b1b2554c4 version patch is unchanged; normal Go1.27.4 compiler gates pass on both architectures and AMD coverage passes. ARM coverage selected an x86 worker in the upstream nativego_cov route. Distinct permanent Bazel worker-constraint candidate5427ddbaa81cd2e3cc9317168568ef911f32ea71 is under qualification, not an approved/mechanical Go amendment or an approved upstream proposal. CI107f combines its explicit helper prerequisite with Go8cab and existing support; its results do not yet establish standalone readiness.",
-        "nextAction": "The existing source owner/root audit the five-caller platform proofs44870353935/44870355487 and source gate44870357054, then finish independent review of the permanent worker mechanism before any new source-publication proposal. Keep Go8cab and helper5427 distinct, public47d unchanged, and all candidate performance obligations open."
+        "disposition": "Public47d14a74e781ae01f7b68a306d16752da43daec4 remains conflicting; prepared8cab980c14e1011e7855955944adc66b1b2554c4 version patch is unchanged and unpublished. The distinct permanent worker proposal e33f30605e080fd02cc53bd20950e99d31c171fc closes all five caller platform/actual SDK CPU proofs on AMD/ARM in explicit CIc46. ARM coverage product44872095577 has targetCompleted.success=true and executes the SDK on aarch64 with go_arch=host_go_arch=arm64, Go1.27.4; its exit4 is expected NO_TESTS_FOUND for a compile-only target, not a runtime-case pass. Buildifier44872097434 passes; unchanged source checks and original normal1XML/architecture plus AMD coverage evidence retain their verified scope. Final independent review remains; no helper upstream PR or human-publication question/approval exists. Candidate performance is open.",
+        "nextAction": "Root completes final independent review of the separate permanent worker proposal. Keep public47d, mechanical Go8cab and helper e33f publication boundaries distinct; no runtime proof remains pending on the closed compile-only gate, and no new contributor decision is inferred."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxx8kCQ"
@@ -466642,7 +466642,7 @@
         "since": "2026-11-21T05:04:12.012561+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:25:56.229637+00:00"
+        "observedAt": "2026-11-21T05:50:48.981201+00:00"
       }
     },
     "pr:17471": {
@@ -467683,7 +467683,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:25:56.229637+00:00"
+        "observedAt": "2026-11-21T05:50:48.981201+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -467692,7 +467692,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:25:56.229637+00:00"
+        "observedAt": "2026-11-21T05:50:48.981201+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -467701,7 +467701,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:25:56.229637+00:00"
+        "observedAt": "2026-11-21T05:50:48.981201+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -467710,7 +467710,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:25:56.229637+00:00"
+        "observedAt": "2026-11-21T05:50:48.981201+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -467719,7 +467719,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:25:56.229637+00:00"
+        "observedAt": "2026-11-21T05:50:48.981201+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -467728,7 +467728,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:25:56.229637+00:00"
+        "observedAt": "2026-11-21T05:50:48.981201+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -467737,7 +467737,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T05:25:56.229637+00:00"
+        "observedAt": "2026-11-21T05:50:48.981201+00:00"
       }
     }
   },

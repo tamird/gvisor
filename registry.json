@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T05:25:56.229637+00:00",
+    "updatedAt": "2026-11-21T05:50:48.981201+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -95830,8 +95830,8 @@
       "url": "https://github.com/google/gvisor/pull/17378",
       "head": "47d14a74e781ae01f7b68a306d16752da43daec4",
       "status": "open",
-      "updatedAt": "2026-11-21T05:25:56.229637+00:00",
-      "summary": "Public47d14a74e781ae01f7b68a306d16752da43daec4 remains conflicting. The unpublished8cab980c14e1011e7855955944adc66b1b2554c4 version patch is unchanged; normal Go1.27.4 compiler gates pass on both architectures and AMD coverage passes. ARM coverage selected an x86 worker in the upstream nativego_cov route. Distinct permanent Bazel worker-constraint candidate5427ddbaa81cd2e3cc9317168568ef911f32ea71 is under qualification, not an approved/mechanical Go amendment or an approved upstream proposal. CI107f combines its explicit helper prerequisite with Go8cab and existing support; its results do not yet establish standalone readiness.",
+      "updatedAt": "2026-11-21T05:50:48.981201+00:00",
+      "summary": "Public47d14a74e781ae01f7b68a306d16752da43daec4 remains conflicting; prepared8cab980c14e1011e7855955944adc66b1b2554c4 version patch is unchanged and unpublished. The distinct permanent worker proposal e33f30605e080fd02cc53bd20950e99d31c171fc closes all five caller platform/actual SDK CPU proofs on AMD/ARM in explicit CIc46. ARM coverage product44872095577 has targetCompleted.success=true and executes the SDK on aarch64 with go_arch=host_go_arch=arm64, Go1.27.4; its exit4 is expected NO_TESTS_FOUND for a compile-only target, not a runtime-case pass. Buildifier44872097434 passes; unchanged source checks and original normal1XML/architecture plus AMD coverage evidence retain their verified scope. Final independent review remains; no helper upstream PR or human-publication question/approval exists. Candidate performance is open.",
       "evidence": [
         {
           "label": "Go release notes",
@@ -95866,8 +95866,8 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "47d14a74e781ae01f7b68a306d16752da43daec4",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Public47d14a74e781ae01f7b68a306d16752da43daec4 remains conflicting. The unpublished8cab980c14e1011e7855955944adc66b1b2554c4 version patch is unchanged; normal Go1.27.4 compiler gates pass on both architectures and AMD coverage passes. ARM coverage selected an x86 worker in the upstream nativego_cov route. Distinct permanent Bazel worker-constraint candidate5427ddbaa81cd2e3cc9317168568ef911f32ea71 is under qualification, not an approved/mechanical Go amendment or an approved upstream proposal. CI107f combines its explicit helper prerequisite with Go8cab and existing support; its results do not yet establish standalone readiness.",
-        "nextAction": "The existing source owner/root audit the five-caller platform proofs44870353935/44870355487 and source gate44870357054, then finish independent review of the permanent worker mechanism before any new source-publication proposal. Keep Go8cab and helper5427 distinct, public47d unchanged, and all candidate performance obligations open.",
+        "disposition": "Public47d14a74e781ae01f7b68a306d16752da43daec4 remains conflicting; prepared8cab980c14e1011e7855955944adc66b1b2554c4 version patch is unchanged and unpublished. The distinct permanent worker proposal e33f30605e080fd02cc53bd20950e99d31c171fc closes all five caller platform/actual SDK CPU proofs on AMD/ARM in explicit CIc46. ARM coverage product44872095577 has targetCompleted.success=true and executes the SDK on aarch64 with go_arch=host_go_arch=arm64, Go1.27.4; its exit4 is expected NO_TESTS_FOUND for a compile-only target, not a runtime-case pass. Buildifier44872097434 passes; unchanged source checks and original normal1XML/architecture plus AMD coverage evidence retain their verified scope. Final independent review remains; no helper upstream PR or human-publication question/approval exists. Candidate performance is open.",
+        "nextAction": "Root completes final independent review of the separate permanent worker proposal. Keep public47d, mechanical Go8cab and helper e33f publication boundaries distinct; no runtime proof remains pending on the closed compile-only gate, and no new contributor decision is inferred.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17378",
           "https://github.com/tamird/gvisor/commit/3349d4ca3",
@@ -95877,10 +95877,12 @@
           "https://github.com/tamird/gvisor/commit/3349d4ca3588b079322e8836942e16dc17843efb",
           "https://github.com/tamird/gvisor/commit/47d14a74e781ae01f7b68a306d16752da43daec4",
           "https://buildkite.com/gvisor/first-pass/builds/1586",
-          "https://buildkite.com/gvisor/first-pass/builds/1586#01a1eae1-b3eb-4216-9973-6cc1dfd28869"
+          "https://buildkite.com/gvisor/first-pass/builds/1586#01a1eae1-b3eb-4216-9973-6cc1dfd28869",
+          "https://github.com/tamird/gvisor/actions/runs/44872095577",
+          "https://github.com/tamird/gvisor/actions/runs/44872097434"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Audited worker/caller gates and final source review, a real publication decision for the new helper, or actual public source change.",
+        "recheckCondition": "Final independent source review, an actual helper publication question or a public source change.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -95904,7 +95906,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-21T05:25:56.229637+00:00"
+        "curatedAt": "2026-11-21T05:50:48.981201+00:00"
       },
       "refinement": {
         "before": {
@@ -95952,8 +95954,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "The existing source owner/root audit the five-caller platform proofs44870353935/44870355487 and source gate44870357054, then finish independent review of the permanent worker mechanism before any new source-publication proposal. Keep Go8cab and helper5427 distinct, public47d unchanged, and all candidate performance obligations open.",
-      "recheckCondition": "Audited worker/caller gates and final source review, a real publication decision for the new helper, or actual public source change."
+      "nextStep": "Root completes final independent review of the separate permanent worker proposal. Keep public47d, mechanical Go8cab and helper e33f publication boundaries distinct; no runtime proof remains pending on the closed compile-only gate, and no new contributor decision is inferred.",
+      "recheckCondition": "Final independent source review, an actual helper publication question or a public source change."
     },
     {
       "id": "pr:17394",
