@@ -75,11 +75,8 @@ go_test(
         "sandbox_test.go",
     ],
     embed = [":sandbox"],
+    # Network namespace tests require root and IPv6 support.
     local = True,
-    tags = [
-        "requires-net:ipv6",
-        "requires-root",
-    ],
     deps = [
         "//pkg/control/server",
         "//pkg/prometheus",

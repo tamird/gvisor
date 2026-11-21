@@ -26,11 +26,10 @@ py_test(
     srcs = ["tests/sandbox_test.py"],
     data = ["//:release"],
     main = "tests/sandbox_test.py",
-    tags = ["nogotsan"],
     exec_properties = {
-        "test.init-dockerd": "false",
         "test.workload-isolation-type": "firecracker",
     },
+    tags = ["nogotsan"],
     deps = [
         ":sandbox_py",
     ],

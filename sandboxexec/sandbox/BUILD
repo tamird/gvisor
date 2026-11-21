@@ -34,11 +34,10 @@ go_test(
         "storage_test.go",
     ],
     data = ["//:release"],
-    tags = ["nogotsan"],
     exec_properties = {
-        "test.init-dockerd": "false",
         "test.workload-isolation-type": "firecracker",
     },
+    tags = ["nogotsan"],
     deps = [
         ":sandbox",
         "//pkg/test/testutil",

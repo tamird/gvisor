@@ -48,7 +48,6 @@ go_test(
     ],
     embed = [":specutils"],
     exec_properties = {
-        "test.init-dockerd": "false",
         "test.workload-isolation-type": "firecracker",
     },
     deps = [

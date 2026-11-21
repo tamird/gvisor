@@ -49,7 +49,6 @@ go_test(
     ],
     embed = [":sandboxsetup"],
     exec_properties = {
-        "test.init-dockerd": "false",
         "test.workload-isolation-type": "firecracker",
     },
     deps = [
