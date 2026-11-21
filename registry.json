@@ -58302,12 +58302,15 @@
         "owner": "root",
         "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
         "observedAt": "2026-11-02T17:47:05.918366+00:00",
-        "disposition": "Approved67601a14 Iperf3 JSON image remains the separate delivery vehicle and reports aggregate sum_sent bandwidth. BCR 11518 at fe25 and gVisor 15146 at afd34241 are both still OPEN; those real prerequisites remain. This source does not include ead577 reported-payload parsing.",
-        "nextAction": "Root waits for BCR 11518 and 15146 landing, verifies the released module against the qualified registry entry, then delivers the already-approved image. Reconcile any distinct reported-payload requirement separately; no duplicate question or source fix.",
+        "disposition": "The approved Iperf3 image remains the separate delivery vehicle. Its equivalent current-base refresh 17fbfc6718 on eb263 has scoped Go-interface proof: AMD and ARM each passed 16 tools cases; the network target compiled and started with zero test cases, and source checks passed without a diff. Full BCR graph, image and current endpoint qualification remain blocked by BCR11518 and license15146. No new timing or publication is inferred.",
+        "nextAction": "benchmark_measurement_review owns currentness/dependency recovery for the existing approved Iperf3 vehicle. Follow BCR11518 and license15146, then qualify the released graph, image and endpoints before delivery. Preserve the distinct held Iperf2 reporter and payload-metric scope; no more timing.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
-          "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034547712"
+          "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034547712",
+          "https://github.com/tamird/gvisor/actions/runs/44934293367",
+          "https://github.com/tamird/gvisor/actions/runs/44934296448",
+          "https://github.com/tamird/gvisor/actions/runs/44934299304"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -58321,7 +58324,7 @@
           "owner": "root"
         },
         "technicalOwner": "Build and release",
-        "recheckCondition": "Actual prerequisite landing or source/metric-scope change.",
+        "recheckCondition": "Actual prerequisite landing or material current graph/image/endpoint evidence; no approval transfer or additional timing.",
         "curatedAt": "2026-11-21T14:40:26.293073+00:00"
       },
       "refinement": {
@@ -103122,9 +103125,9 @@
         "owner": "root",
         "sourceHead": "5c8a182619525e77d210a31a9b9ff575251165f3",
         "observedAt": "2026-11-18T20:06:11.890448+00:00",
-        "disposition": "The already-approved final revision is published and its fork/PR heads verified. DCO, generate, gazelle, lint, label and fileheader passed. Exact-head First Pass1812 was rejected before an agent started because the author reached the daily36000compute-minute quota; this is not a source failure or full CI pass.",
-        "nextAction": "Root follows exact published-head maintainer review/import and actual quota recovery through the existing lifecycle sweep. No duplicate source push, approval question, acknowledgement, merge or manual CI retry. First Pass remains unmet until the provider actually executes it.",
-        "recheckCondition": "Genuine reviewer/import/source change, actual provider quota recovery or required check result.",
+        "disposition": "Published source 5c8a1826 and its existing review/provider lifecycle remain intact. HTTPD functional recovery is not complete: native N=1000 run 44933566292 passed count/status/error assertions; Sentry run 44932779374 had 481 HTTP200 responses and 519 timeouts. Trace 44934752057 retained useful artifacts despite output-tree validation failure. The cause remains unknown; no response-body, performance or source-fix conclusion follows.",
+        "nextAction": "httpd_functional_resume owns isolating Apache accept gating and the native/Sentry difference using the approved CI-only ConnLats diagnostic. No server/workload change, extra retry or source publication is authorized by these results. Root retains the canonical PR review/import/provider lifecycle separately.",
+        "recheckCondition": "Owner-audited diagnostic evidence or actual source/review/provider change; preserve unknown causality and existing publication boundaries.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/44231839538",
           "https://github.com/tamird/gvisor/actions/runs/44231202091",
@@ -103136,7 +103139,10 @@
           "https://github.com/tamird/gvisor/actions/runs/44333507177",
           "https://github.com/tamird/gvisor/actions/runs/44337126320",
           "https://github.com/google/gvisor/pull/17780",
-          "https://github.com/tamird/gvisor/actions/runs/44379968874"
+          "https://github.com/tamird/gvisor/actions/runs/44379968874",
+          "https://github.com/tamird/gvisor/actions/runs/44933566292",
+          "https://github.com/tamird/gvisor/actions/runs/44932779374",
+          "https://github.com/tamird/gvisor/actions/runs/44934752057"
         ],
         "qualificationHistory": [
           {

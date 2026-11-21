@@ -461282,8 +461282,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "5c8a182619525e77d210a31a9b9ff575251165f3",
-        "disposition": "The already-approved final revision is published and its fork/PR heads verified. DCO, generate, gazelle, lint, label and fileheader passed. Exact-head First Pass1812 was rejected before an agent started because the author reached the daily36000compute-minute quota; this is not a source failure or full CI pass.",
-        "nextAction": "Root follows exact published-head maintainer review/import and actual quota recovery through the existing lifecycle sweep. No duplicate source push, approval question, acknowledgement, merge or manual CI retry. First Pass remains unmet until the provider actually executes it."
+        "disposition": "Published source 5c8a1826 and its existing review/provider lifecycle remain intact. HTTPD functional recovery is not complete: native N=1000 run 44933566292 passed count/status/error assertions; Sentry run 44932779374 had 481 HTTP200 responses and 519 timeouts. Trace 44934752057 retained useful artifacts despite output-tree validation failure. The cause remains unknown; no response-body, performance or source-fix conclusion follows.",
+        "nextAction": "httpd_functional_resume owns isolating Apache accept gating and the native/Sentry difference using the approved CI-only ConnLats diagnostic. No server/workload change, extra retry or source publication is authorized by these results. Root retains the canonical PR review/import/provider lifecycle separately."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANzyZv5g"
