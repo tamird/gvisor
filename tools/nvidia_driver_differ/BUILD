@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "cc_binary", "go_binary", "go_test")
+load("//tools/lint:defs.bzl", "clang_format_inputs")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -55,3 +56,5 @@ go_binary(
         "//tools/nvidia_driver_differ/parser",
     ],
 )
+
+clang_format_inputs(name = "clang_format_srcs")

@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "cc_binary")
+load("//tools/lint:defs.bzl", "clang_format_inputs")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -17,3 +18,5 @@ cc_binary(
         "@com_google_protobuf//:protobuf",
     ],
 )
+
+clang_format_inputs(name = "clang_format_srcs")

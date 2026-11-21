@@ -11,6 +11,7 @@ filegroup(
     name = "ignore_srcs",
     srcs = ["procumounter.c"],
     tags = ["ignore_srcs"],
+    visibility = ["//tools/lint:__pkg__"],
 )
 
 # gvisor-proc-umounter must remain a statically-linked, freestanding (no libc)

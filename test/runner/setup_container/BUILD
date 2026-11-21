@@ -2,6 +2,7 @@
 # for syscall tests with container=True.
 
 load("//tools:defs.bzl", "cc_binary")
+load("//tools/lint:defs.bzl", "clang_format_inputs")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -21,3 +22,5 @@ cc_binary(
         "//test/util:socket_util",
     ],
 )
+
+clang_format_inputs(name = "clang_format_srcs")

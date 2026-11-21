@@ -1,6 +1,7 @@
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
 load("//images:img.bzl", "image_outputs")
 load("//tools:defs.bzl", "go_binary", "pkg_tar")
+load("//tools/lint:defs.bzl", "clang_format_inputs")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -89,3 +90,5 @@ image_outputs(
     }),
     image_name = "benchmarks/alpine",
 )
+
+clang_format_inputs(name = "clang_format_srcs")

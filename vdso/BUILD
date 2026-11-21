@@ -6,6 +6,7 @@
 load("@rules_python//python:py_test.bzl", "py_test")
 load("//tools:arch.bzl", "select_arch")
 load("//tools:defs.bzl", "cc_binary")
+load("//tools/lint:defs.bzl", "clang_format_inputs")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -87,3 +88,5 @@ py_test(
     data = [":vdso"],
     main = "check_vdso.py",
 )
+
+clang_format_inputs(name = "clang_format_srcs")

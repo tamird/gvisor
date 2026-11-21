@@ -1,5 +1,6 @@
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("//tools:defs.bzl", "cc_binary", "go_binary")
+load("//tools/lint:defs.bzl", "clang_format_inputs")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -54,3 +55,5 @@ sh_binary(
     ],
     visibility = ["//:sandbox"],
 )
+
+clang_format_inputs(name = "clang_format_srcs")

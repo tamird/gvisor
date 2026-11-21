@@ -10,6 +10,7 @@ filegroup(
     name = "ignore_srcs",
     srcs = ["prewarmer.c"],
     tags = ["ignore_srcs"],
+    visibility = ["//tools/lint:__pkg__"],
 )
 
 # gvisor-sentry-prewarmer must remain a statically-linked, freestanding (no libc),

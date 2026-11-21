@@ -329,3 +329,12 @@ exports_files(
     [".clang-format"],
     visibility = ["//tools:__pkg__"],
 )
+
+filegroup(
+    name = "clang_format_config",
+    srcs = [
+        ".clang-format",
+        ".clang-format-ignore",
+    ],
+    visibility = ["//tools/lint:__pkg__"],
+)

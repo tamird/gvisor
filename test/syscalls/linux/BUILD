@@ -1,6 +1,7 @@
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("//tools:arch.bzl", "select_arch")
 load("//tools:defs.bzl", "cc_binary", "cc_library", "gbenchmark", "select_gtest", "select_system")
+load("//tools/lint:defs.bzl", "clang_format_inputs")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -5800,3 +5801,5 @@ cc_binary(
         "@com_google_absl//absl/time",
     ],
 )
+
+clang_format_inputs(name = "clang_format_srcs")
