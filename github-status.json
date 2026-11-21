@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T08:11:49.734766+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T07:55:45.574036+00:00",
+  "registryDate": "2026-11-21T08:16:39.289913+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -458131,8 +458131,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "8cab980c14e1011e7855955944adc66b1b2554c4",
-        "disposition": "Delivered8cab remains OPEN/MERGEABLE/REVIEW_REQUIRED with reported GitHub/DCO checks passing and FirstPass2235’s known pre-agent quota rejection. Full-unit diagnostic CI53e7f189c9759c30eb136705a25f6a22c8f75882 combines Go8cab, e33, the declared25-file RBE/lint projection and the approved canonical17281 unit profile; it is not raw public8cab. Each architecture reports369 owners:362PASS/7FAIL with preservation/upload guards passing. One lint failure was a missing projection blob; exact-blob recovery CI19648d190379a8f10836c5575febe3b2117f51d8/run44882242022 passes11 maintained Python cases through valid remote cache. Six same worker-dependent failures remain per architecture: three read-only-cgroup sandboxexec consumers, netns EPERM in sandbox/specutils, and overlay-fixture sandbox setup. Full units, main integration, syscall and performance gates remain open.",
-        "nextAction": "approved_rebase_queue reuses existing maintained TestDockerWorker/Firecracker metadata for a cheap same-case capability preflight before recovering the six failed targets. Preserve the complete required matrix; no exclusions or security-policy changes. Root retains provider/main-CI follow-through and the helper’s separate pending publication decision; no broad gate is green."
+        "disposition": "The original full-unit CI53e diagnostic remains362PASS/7FAIL per architecture. Recovery CI41c4c9e03487d77d2cfedd15dc84d8229f952de2 preserves public Go8cab production code and adds the exact devcontainer projection correction plus six BUILD-only Firecracker mappings. It reports5PASS/1FAIL target results on both architectures: docprocessor, sandboxsetup, specutils and both sandboxexec callers pass; known ARM pidfs/nonroot skips retain their original scopes, including prior ProcessIdentity pass and pre-existing OpenReadOnlyTree skips. Full sandbox still reports90XML/7FAIL per architecture. Separate hosted CI fb02099173da25e138094491c9116d7e96cd75ed adds only the already-qualified sudo helper/minimal BUILD target and awaits its own audit. No e71/runtime change, full-suite green or main/syscall/performance closure is inferred.",
+        "nextAction": "The existing source owner/root audit hosted full-sandbox44883708766/44883710577 when terminal, preserving all required cases and prior source-bound successes/skips. Do not rerun or wait from this tracker task. Keep main/provider, broad performance and the helper’s separate pending publication decision open."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3MYi6w"
@@ -459080,10 +459080,10 @@
         }
       ],
       "recordedFollowup": {
-        "owner": "approved_rebase_queue / root",
+        "owner": "benchmark_measurement_review / root",
         "sourceHead": "3810f2bbe2a84d9b7e90a4ecf2535e4691874648",
-        "disposition": "LLVM conflict refresh3810f2bbe2a84d9b7e90a4ecf2535e4691874648 is delivered OPEN/MERGEABLE with DCO success and notice7057781276. Kerumeto’s existing request and REVIEW_REQUIRED remain unchanged; auto-merge remains unset. Both architecture parser cases, all five source checks,377-source strict C++ analysis and two independent context reviews pass at their recorded scopes. Broad runtime/performance qualification remains open. New exact-head First Pass2228 independently rejected admission before any agent/start: exit80, stack_errored, author1535036 rolling30-day360000-compute-minute quota, zero tests. Older55359 evidence is not applied to this revision.",
-        "nextAction": "Follow remaining current-head GitHub/export checks, the existing kerumeto review/import request and actual provider recovery. Preserve the separate broad runtime/performance obligation and original dependency/backport scope. The mechanical refresh and rebase notice are delivered; no duplicate notification, blind retry or new source-approval question."
+        "disposition": "Published3810 retains its scoped parser/source/strict qualification, successful GitHub/DCO checks and separately diagnosed FirstPass2228 quota failure. The native-ARM production BPF payload identity gap is now closed for af_xdp_ebpf.o (952B) and tunnel_veth_ebpf.o (960B): LLVM0.8.26/0.8.27 outputs match each other and prior AMD products. Aqueries prove arm64 workers/ARM clang paths; builds44882199441/44882201299 each report two remote actions and successful targetCompleted events. Expected compile-only workflow exit4 is not a runtime/test pass. This does not establish whole-release, all-input, default-build or performance equivalence; five standalone XDP tools are outside release/runsc. Generic compiler-performance and independent workload A/A obligations remain open.",
+        "nextAction": "benchmark_measurement_review/root finish the actual changed-runtime-product assessment before choosing required measurements. Preserve exact native-ARM two-consumer identity proof and earlier AMD-exec target-config scope; do not infer broad equivalence or repeat builds/measurements from this tracker task. Existing review/provider obligations remain."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3K6UxA"
@@ -463487,7 +463487,7 @@
         "since": "2026-11-21T07:28:18.199633+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T07:55:45.574036+00:00"
+        "observedAt": "2026-11-21T08:16:39.289913+00:00"
       }
     },
     "pr:16664": {
@@ -466647,7 +466647,7 @@
         "since": "2026-11-21T05:04:12.012561+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T07:55:45.574036+00:00"
+        "observedAt": "2026-11-21T08:16:39.289913+00:00"
       }
     },
     "pr:17471": {
@@ -467688,7 +467688,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T07:55:45.574036+00:00"
+        "observedAt": "2026-11-21T08:16:39.289913+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -467697,7 +467697,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T07:55:45.574036+00:00"
+        "observedAt": "2026-11-21T08:16:39.289913+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -467706,7 +467706,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T07:55:45.574036+00:00"
+        "observedAt": "2026-11-21T08:16:39.289913+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -467715,7 +467715,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T07:55:45.574036+00:00"
+        "observedAt": "2026-11-21T08:16:39.289913+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -467724,7 +467724,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T07:55:45.574036+00:00"
+        "observedAt": "2026-11-21T08:16:39.289913+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -467733,7 +467733,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T07:55:45.574036+00:00"
+        "observedAt": "2026-11-21T08:16:39.289913+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -467742,7 +467742,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T07:55:45.574036+00:00"
+        "observedAt": "2026-11-21T08:16:39.289913+00:00"
       }
     },
     "investigation:coverage-worker-cpu": {
@@ -467751,7 +467751,7 @@
         "since": "2026-11-21T06:15:32.375526+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T07:55:45.574036+00:00"
+        "observedAt": "2026-11-21T08:16:39.289913+00:00"
       }
     }
   },

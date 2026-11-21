@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T07:55:45.574036+00:00",
+    "updatedAt": "2026-11-21T08:16:39.289913+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -95852,8 +95852,8 @@
       "url": "https://github.com/google/gvisor/pull/17378",
       "head": "8cab980c14e1011e7855955944adc66b1b2554c4",
       "status": "open",
-      "updatedAt": "2026-11-21T07:55:45.574036+00:00",
-      "summary": "Delivered8cab remains OPEN/MERGEABLE/REVIEW_REQUIRED with reported GitHub/DCO checks passing and FirstPass2235’s known pre-agent quota rejection. Full-unit diagnostic CI53e7f189c9759c30eb136705a25f6a22c8f75882 combines Go8cab, e33, the declared25-file RBE/lint projection and the approved canonical17281 unit profile; it is not raw public8cab. Each architecture reports369 owners:362PASS/7FAIL with preservation/upload guards passing. One lint failure was a missing projection blob; exact-blob recovery CI19648d190379a8f10836c5575febe3b2117f51d8/run44882242022 passes11 maintained Python cases through valid remote cache. Six same worker-dependent failures remain per architecture: three read-only-cgroup sandboxexec consumers, netns EPERM in sandbox/specutils, and overlay-fixture sandbox setup. Full units, main integration, syscall and performance gates remain open.",
+      "updatedAt": "2026-11-21T08:16:39.289913+00:00",
+      "summary": "The original full-unit CI53e diagnostic remains362PASS/7FAIL per architecture. Recovery CI41c4c9e03487d77d2cfedd15dc84d8229f952de2 preserves public Go8cab production code and adds the exact devcontainer projection correction plus six BUILD-only Firecracker mappings. It reports5PASS/1FAIL target results on both architectures: docprocessor, sandboxsetup, specutils and both sandboxexec callers pass; known ARM pidfs/nonroot skips retain their original scopes, including prior ProcessIdentity pass and pre-existing OpenReadOnlyTree skips. Full sandbox still reports90XML/7FAIL per architecture. Separate hosted CI fb02099173da25e138094491c9116d7e96cd75ed adds only the already-qualified sudo helper/minimal BUILD target and awaits its own audit. No e71/runtime change, full-suite green or main/syscall/performance closure is inferred.",
       "evidence": [
         {
           "label": "Go release notes",
@@ -95887,9 +95887,9 @@
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "8cab980c14e1011e7855955944adc66b1b2554c4",
-        "observedAt": "2026-11-21T07:51:55.545237+00:00",
-        "disposition": "Delivered8cab remains OPEN/MERGEABLE/REVIEW_REQUIRED with reported GitHub/DCO checks passing and FirstPass2235’s known pre-agent quota rejection. Full-unit diagnostic CI53e7f189c9759c30eb136705a25f6a22c8f75882 combines Go8cab, e33, the declared25-file RBE/lint projection and the approved canonical17281 unit profile; it is not raw public8cab. Each architecture reports369 owners:362PASS/7FAIL with preservation/upload guards passing. One lint failure was a missing projection blob; exact-blob recovery CI19648d190379a8f10836c5575febe3b2117f51d8/run44882242022 passes11 maintained Python cases through valid remote cache. Six same worker-dependent failures remain per architecture: three read-only-cgroup sandboxexec consumers, netns EPERM in sandbox/specutils, and overlay-fixture sandbox setup. Full units, main integration, syscall and performance gates remain open.",
-        "nextAction": "approved_rebase_queue reuses existing maintained TestDockerWorker/Firecracker metadata for a cheap same-case capability preflight before recovering the six failed targets. Preserve the complete required matrix; no exclusions or security-policy changes. Root retains provider/main-CI follow-through and the helper’s separate pending publication decision; no broad gate is green.",
+        "observedAt": "2026-11-21T08:11:49.734766+00:00",
+        "disposition": "The original full-unit CI53e diagnostic remains362PASS/7FAIL per architecture. Recovery CI41c4c9e03487d77d2cfedd15dc84d8229f952de2 preserves public Go8cab production code and adds the exact devcontainer projection correction plus six BUILD-only Firecracker mappings. It reports5PASS/1FAIL target results on both architectures: docprocessor, sandboxsetup, specutils and both sandboxexec callers pass; known ARM pidfs/nonroot skips retain their original scopes, including prior ProcessIdentity pass and pre-existing OpenReadOnlyTree skips. Full sandbox still reports90XML/7FAIL per architecture. Separate hosted CI fb02099173da25e138094491c9116d7e96cd75ed adds only the already-qualified sudo helper/minimal BUILD target and awaits its own audit. No e71/runtime change, full-suite green or main/syscall/performance closure is inferred.",
+        "nextAction": "The existing source owner/root audit hosted full-sandbox44883708766/44883710577 when terminal, preserving all required cases and prior source-bound successes/skips. Do not rerun or wait from this tracker task. Keep main/provider, broad performance and the helper’s separate pending publication decision open.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17378",
           "https://github.com/tamird/gvisor/commit/3349d4ca3",
@@ -95907,10 +95907,14 @@
           "https://buildkite.com/gvisor/first-pass/builds/2235#01a1fcb8-ec47-40ed-a501-8aa4f7b3cb1f",
           "https://github.com/tamird/gvisor/actions/runs/44878322802",
           "https://github.com/tamird/gvisor/actions/runs/44878324545",
-          "https://github.com/tamird/gvisor/actions/runs/44882242022"
+          "https://github.com/tamird/gvisor/actions/runs/44882242022",
+          "https://github.com/tamird/gvisor/actions/runs/44882814235",
+          "https://github.com/tamird/gvisor/actions/runs/44882815977",
+          "https://github.com/tamird/gvisor/actions/runs/44883708766",
+          "https://github.com/tamird/gvisor/actions/runs/44883710577"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Actual scoped capability/preflight and six-target recovery evidence, a current-head main/provider event or reply to the separate helper proposal.",
+        "recheckCondition": "Audited hosted full-sandbox result, new current-head provider/main evidence or a reply to the separate helper proposal.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -95934,7 +95938,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-21T07:55:45.574036+00:00",
+        "curatedAt": "2026-11-21T08:16:39.289913+00:00",
         "providerHead": "8cab980c14e1011e7855955944adc66b1b2554c4"
       },
       "refinement": {
@@ -95983,8 +95987,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "approved_rebase_queue reuses existing maintained TestDockerWorker/Firecracker metadata for a cheap same-case capability preflight before recovering the six failed targets. Preserve the complete required matrix; no exclusions or security-policy changes. Root retains provider/main-CI follow-through and the helper’s separate pending publication decision; no broad gate is green.",
-      "recheckCondition": "Actual scoped capability/preflight and six-target recovery evidence, a current-head main/provider event or reply to the separate helper proposal."
+      "nextStep": "The existing source owner/root audit hosted full-sandbox44883708766/44883710577 when terminal, preserving all required cases and prior source-bound successes/skips. Do not rerun or wait from this tracker task. Keep main/provider, broad performance and the helper’s separate pending publication decision open.",
+      "recheckCondition": "Audited hosted full-sandbox result, new current-head provider/main evidence or a reply to the separate helper proposal."
     },
     {
       "id": "pr:17394",
@@ -102205,8 +102209,8 @@
       "head": "3810f2bbe2a84d9b7e90a4ecf2535e4691874648",
       "group": "bazel",
       "status": "open",
-      "summary": "LLVM conflict refresh3810f2bbe2a84d9b7e90a4ecf2535e4691874648 is delivered OPEN/MERGEABLE with DCO success and notice7057781276. Kerumeto’s existing request and REVIEW_REQUIRED remain unchanged; auto-merge remains unset. Both architecture parser cases, all five source checks,377-source strict C++ analysis and two independent context reviews pass at their recorded scopes. Broad runtime/performance qualification remains open. New exact-head First Pass2228 independently rejected admission before any agent/start: exit80, stack_errored, author1535036 rolling30-day360000-compute-minute quota, zero tests. Older55359 evidence is not applied to this revision.",
-      "updatedAt": "2026-11-21T05:25:56.229637+00:00",
+      "summary": "Published3810 retains its scoped parser/source/strict qualification, successful GitHub/DCO checks and separately diagnosed FirstPass2228 quota failure. The native-ARM production BPF payload identity gap is now closed for af_xdp_ebpf.o (952B) and tunnel_veth_ebpf.o (960B): LLVM0.8.26/0.8.27 outputs match each other and prior AMD products. Aqueries prove arm64 workers/ARM clang paths; builds44882199441/44882201299 each report two remote actions and successful targetCompleted events. Expected compile-only workflow exit4 is not a runtime/test pass. This does not establish whole-release, all-input, default-build or performance equivalence; five standalone XDP tools are outside release/runsc. Generic compiler-performance and independent workload A/A obligations remain open.",
+      "updatedAt": "2026-11-21T08:16:39.289913+00:00",
       "evidence": [
         {
           "label": "Upstream PR #17641",
@@ -102242,11 +102246,11 @@
         }
       ],
       "followup": {
-        "owner": "approved_rebase_queue / root",
+        "owner": "benchmark_measurement_review / root",
         "sourceHead": "3810f2bbe2a84d9b7e90a4ecf2535e4691874648",
-        "observedAt": "2026-11-21T05:23:18.400567+00:00",
-        "disposition": "LLVM conflict refresh3810f2bbe2a84d9b7e90a4ecf2535e4691874648 is delivered OPEN/MERGEABLE with DCO success and notice7057781276. Kerumeto’s existing request and REVIEW_REQUIRED remain unchanged; auto-merge remains unset. Both architecture parser cases, all five source checks,377-source strict C++ analysis and two independent context reviews pass at their recorded scopes. Broad runtime/performance qualification remains open. New exact-head First Pass2228 independently rejected admission before any agent/start: exit80, stack_errored, author1535036 rolling30-day360000-compute-minute quota, zero tests. Older55359 evidence is not applied to this revision.",
-        "nextAction": "Follow remaining current-head GitHub/export checks, the existing kerumeto review/import request and actual provider recovery. Preserve the separate broad runtime/performance obligation and original dependency/backport scope. The mechanical refresh and rebase notice are delivered; no duplicate notification, blind retry or new source-approval question.",
+        "observedAt": "2026-11-21T08:11:49.734766+00:00",
+        "disposition": "Published3810 retains its scoped parser/source/strict qualification, successful GitHub/DCO checks and separately diagnosed FirstPass2228 quota failure. The native-ARM production BPF payload identity gap is now closed for af_xdp_ebpf.o (952B) and tunnel_veth_ebpf.o (960B): LLVM0.8.26/0.8.27 outputs match each other and prior AMD products. Aqueries prove arm64 workers/ARM clang paths; builds44882199441/44882201299 each report two remote actions and successful targetCompleted events. Expected compile-only workflow exit4 is not a runtime/test pass. This does not establish whole-release, all-input, default-build or performance equivalence; five standalone XDP tools are outside release/runsc. Generic compiler-performance and independent workload A/A obligations remain open.",
+        "nextAction": "benchmark_measurement_review/root finish the actual changed-runtime-product assessment before choosing required measurements. Preserve exact native-ARM two-consumer identity proof and earlier AMD-exec target-config scope; do not infer broad equivalence or repeat builds/measurements from this tracker task. Existing review/provider obligations remain.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17641",
           "https://github.com/tamird/gvisor/actions/runs/43452602601/artifacts/14053568098",
@@ -102260,10 +102264,14 @@
           "https://buildkite.com/gvisor/first-pass/builds/2228#01a1fc86-7ba8-4f3a-a492-ecce1f86fc62",
           "https://github.com/tamird/gvisor/actions/runs/44868196273",
           "https://github.com/tamird/gvisor/actions/runs/44868197611",
-          "https://github.com/tamird/gvisor/actions/runs/44868199165"
+          "https://github.com/tamird/gvisor/actions/runs/44868199165",
+          "https://github.com/tamird/gvisor/actions/runs/44880401946",
+          "https://github.com/tamird/gvisor/actions/runs/44880403589",
+          "https://github.com/tamird/gvisor/actions/runs/44882199441",
+          "https://github.com/tamird/gvisor/actions/runs/44882201299"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Genuine exact-head check/review/import event, evidenced provider admission recovery or new required runtime/performance evidence.",
+        "recheckCondition": "Audited remaining runtime-product assessment, valid required workload controls/measurement evidence or actual source/review/provider change.",
         "latestReviewObservation": {
           "checkedAt": "2026-11-18T19:22:58.577211+00:00",
           "head": "1692a9405af5de11203c7cd913ead169f8f06936",
@@ -102288,7 +102296,7 @@
             }
           ]
         },
-        "curatedAt": "2026-11-21T05:25:56.229637+00:00",
+        "curatedAt": "2026-11-21T08:16:39.289913+00:00",
         "ciHistory": [
           {}
         ],
@@ -102345,8 +102353,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "Follow remaining current-head GitHub/export checks, the existing kerumeto review/import request and actual provider recovery. Preserve the separate broad runtime/performance obligation and original dependency/backport scope. The mechanical refresh and rebase notice are delivered; no duplicate notification, blind retry or new source-approval question.",
-      "recheckCondition": "Genuine exact-head check/review/import event, evidenced provider admission recovery or new required runtime/performance evidence."
+      "nextStep": "benchmark_measurement_review/root finish the actual changed-runtime-product assessment before choosing required measurements. Preserve exact native-ARM two-consumer identity proof and earlier AMD-exec target-config scope; do not infer broad equivalence or repeat builds/measurements from this tracker task. Existing review/provider obligations remain.",
+      "recheckCondition": "Audited remaining runtime-product assessment, valid required workload controls/measurement evidence or actual source/review/provider change."
     },
     {
       "id": "pr:buildbuddy-io/buildbuddy:13938",
