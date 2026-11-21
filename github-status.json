@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T08:30:40.733285+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T08:16:39.289913+00:00",
+  "registryDate": "2026-11-21T08:33:04.123552+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -458133,8 +458133,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "8cab980c14e1011e7855955944adc66b1b2554c4",
-        "disposition": "The original full-unit CI53e diagnostic remains362PASS/7FAIL per architecture. Recovery CI41c4c9e03487d77d2cfedd15dc84d8229f952de2 preserves public Go8cab production code and adds the exact devcontainer projection correction plus six BUILD-only Firecracker mappings. It reports5PASS/1FAIL target results on both architectures: docprocessor, sandboxsetup, specutils and both sandboxexec callers pass; known ARM pidfs/nonroot skips retain their original scopes, including prior ProcessIdentity pass and pre-existing OpenReadOnlyTree skips. Full sandbox still reports90XML/7FAIL per architecture. Separate hosted CI fb02099173da25e138094491c9116d7e96cd75ed adds only the already-qualified sudo helper/minimal BUILD target and awaits its own audit. No e71/runtime change, full-suite green or main/syscall/performance closure is inferred.",
-        "nextAction": "The existing source owner/root audit hosted full-sandbox44883708766/44883710577 when terminal, preserving all required cases and prior source-bound successes/skips. Do not rerun or wait from this tracker task. Keep main/provider, broad performance and the helper’s separate pending publication decision open."
+        "disposition": "Retained source-bound qualification accounts for368 passing owners per architecture after ARM lint44884366660 passed11 tests. One sandbox owner remains: hosted CI fb02099173da25e138094491c9116d7e96cd75ed reports90XML=87PASS/3FAIL/0SKIP on AMD and ARM. The exact three network cases independently match master baseline44661918915/artifact14595922735 with identical network.go/network_test.go blobs. No new Go SDK regression is established, and the full suite is not green. Earlier projection, worker-recovery and known-skip scopes remain intact. Main integration, syscall and broad workload/performance obligations stay separate and open.",
+        "nextAction": "Close the worker/lint recovery bookkeeping using the retained per-architecture proofs. Carry the three proven baseline failures as a separate owned obligation rather than silently changing Go or calling369 owners green. Root follows actual main/provider/review and workload/performance gates; the e33 helper publication decision remains separate."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3MYi6w"
@@ -459082,10 +459082,10 @@
         }
       ],
       "recordedFollowup": {
-        "owner": "benchmark_measurement_review / root",
+        "owner": "root",
         "sourceHead": "3810f2bbe2a84d9b7e90a4ecf2535e4691874648",
-        "disposition": "Published3810 retains its scoped parser/source/strict qualification, successful GitHub/DCO checks and separately diagnosed FirstPass2228 quota failure. The native-ARM production BPF payload identity gap is now closed for af_xdp_ebpf.o (952B) and tunnel_veth_ebpf.o (960B): LLVM0.8.26/0.8.27 outputs match each other and prior AMD products. Aqueries prove arm64 workers/ARM clang paths; builds44882199441/44882201299 each report two remote actions and successful targetCompleted events. Expected compile-only workflow exit4 is not a runtime/test pass. This does not establish whole-release, all-input, default-build or performance equivalence; five standalone XDP tools are outside release/runsc. Generic compiler-performance and independent workload A/A obligations remain open.",
-        "nextAction": "benchmark_measurement_review/root finish the actual changed-runtime-product assessment before choosing required measurements. Preserve exact native-ARM two-consumer identity proof and earlier AMD-exec target-config scope; do not infer broad equivalence or repeat builds/measurements from this tracker task. Existing review/provider obligations remain."
+        "disposition": "The reviewed controlled LLVM runtime comparison is complete: default AMD64 //:release under RBE Go1.27.3, pinned image and --nostamp produces the identical nine-file name/digest/length map for LLVM0.8.26 and0.8.27. Both release targets completed successfully in the same50604b7e configuration; expected compile-only NO_TESTS_FOUND exit4 is not a test failure. The separately proved native-ARM changed-consumer BPF payloads also match. Retire this configuration’s generic compiler/runtime-performance hold. This does not establish raw-default, all-flavor, all-input or all-ARM-binary equivalence. The actual general C compiler remains Coral/GCC; independent Go runtime/full150 workload A/A remains failed/open. Existing main-CI/review/provider obligations remain.",
+        "nextAction": "Root follows existing main-CI/provider and maintainer review obligations for3810. No further generic compiler/runtime comparison is required for the reviewed controlled configuration; reopen only for a changed product/configuration/platform/input scope. Keep independent workload/performance gates owned and open."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3K6UxA"
@@ -463489,7 +463489,7 @@
         "since": "2026-11-21T07:28:18.199633+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T08:16:39.289913+00:00"
+        "observedAt": "2026-11-21T08:33:04.123552+00:00"
       }
     },
     "pr:16664": {
@@ -466649,7 +466649,7 @@
         "since": "2026-11-21T05:04:12.012561+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T08:16:39.289913+00:00"
+        "observedAt": "2026-11-21T08:33:04.123552+00:00"
       }
     },
     "pr:17471": {
@@ -467690,7 +467690,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T08:16:39.289913+00:00"
+        "observedAt": "2026-11-21T08:33:04.123552+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -467699,7 +467699,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T08:16:39.289913+00:00"
+        "observedAt": "2026-11-21T08:33:04.123552+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -467708,7 +467708,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T08:16:39.289913+00:00"
+        "observedAt": "2026-11-21T08:33:04.123552+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -467717,7 +467717,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T08:16:39.289913+00:00"
+        "observedAt": "2026-11-21T08:33:04.123552+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -467726,7 +467726,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T08:16:39.289913+00:00"
+        "observedAt": "2026-11-21T08:33:04.123552+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -467735,7 +467735,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T08:16:39.289913+00:00"
+        "observedAt": "2026-11-21T08:33:04.123552+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -467744,7 +467744,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T08:16:39.289913+00:00"
+        "observedAt": "2026-11-21T08:33:04.123552+00:00"
       }
     },
     "investigation:coverage-worker-cpu": {
@@ -467753,7 +467753,7 @@
         "since": "2026-11-21T06:15:32.375526+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T08:16:39.289913+00:00"
+        "observedAt": "2026-11-21T08:33:04.123552+00:00"
       }
     }
   },
