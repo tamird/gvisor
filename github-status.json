@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T09:29:55.483326+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T09:19:34.135838+00:00",
+  "registryDate": "2026-11-21T09:33:07.303823+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -449272,7 +449272,7 @@
       "sourceNumber": 17492,
       "owner": "Agent",
       "claimed": false,
-      "overdue": false,
+      "overdue": true,
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABZeJSDg",
       "needsTriage": false,
@@ -449280,7 +449280,7 @@
       "url": "https://github.com/google/gvisor/pull/17492#pullrequestreview-6004298254",
       "author": "EtiennePerot",
       "updatedAt": "2026-11-21T09:28:42Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": true,
       "assigned": true,
       "feedbackComplete": true,
@@ -452940,9 +452940,9 @@
       ],
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
-        "sourceHead": "51eff0cf714b64ab0d5823dcfa9cdca03201a382",
-        "disposition": "Main55587 failed all three upload attempts before any Bazel target: the obsolete pre-command hook fetches tamird:branch from upstream and cannot find remote ref tamird. The exact fork branch exists. Current master already contains the merged hook fix; this is bootstrap failure, not a target failure or quota diagnosis. FirstPass2246 separately rejects the absent default queue; the fresh base contains the untrusted-queue rename.",
-        "nextAction": "Prepare and qualify the source-equivalent base refresh importing the existing bootstrap fix, then reconcile publication authority and new-head CI. Do not retry the unchanged failed head or claim delivery before verification."
+        "sourceHead": "24c1b39e498eb0f4635694e8a9b1ebe179257fb6",
+        "disposition": "Delivered source-equivalent rebase 24c1b39e with strict range-diff = and original author/date/trailers preserved. Native head is mergeable and DCO passes; review requests are preserved and auto-merge was absent before and after. Shared five source checks and checkpoint compile/startup gates passed with zero tests. FirstPass2261 and new GitHub checks are pending, not completed. The notice requests maintainer ready-to-test reapplication for main CI.",
+        "nextAction": "approved_rebase_queue follows new-head GitHub/FirstPass results and the maintainer main-CI trigger requested in the saved notice. Main validation is not established by FirstPass; do not bind old-head failures or infer a new failure cause."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3QedTw",
@@ -463741,7 +463741,7 @@
         "since": "2026-11-21T07:28:18.199633+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:19:34.135838+00:00"
+        "observedAt": "2026-11-21T09:33:07.303823+00:00"
       }
     },
     "pr:16664": {
@@ -466908,7 +466908,7 @@
         "since": "2026-11-21T05:04:12.012561+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:19:34.135838+00:00"
+        "observedAt": "2026-11-21T09:33:07.303823+00:00"
       }
     },
     "pr:17471": {
@@ -467949,7 +467949,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:19:34.135838+00:00"
+        "observedAt": "2026-11-21T09:33:07.303823+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -467958,7 +467958,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:19:34.135838+00:00"
+        "observedAt": "2026-11-21T09:33:07.303823+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -467967,7 +467967,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:19:34.135838+00:00"
+        "observedAt": "2026-11-21T09:33:07.303823+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -467976,7 +467976,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:19:34.135838+00:00"
+        "observedAt": "2026-11-21T09:33:07.303823+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -467985,7 +467985,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:19:34.135838+00:00"
+        "observedAt": "2026-11-21T09:33:07.303823+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -467994,7 +467994,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:19:34.135838+00:00"
+        "observedAt": "2026-11-21T09:33:07.303823+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -468003,7 +468003,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:19:34.135838+00:00"
+        "observedAt": "2026-11-21T09:33:07.303823+00:00"
       }
     },
     "investigation:coverage-worker-cpu": {
@@ -468012,7 +468012,7 @@
         "since": "2026-11-21T06:15:32.375526+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:19:34.135838+00:00"
+        "observedAt": "2026-11-21T09:33:07.303823+00:00"
       }
     },
     "investigation:unit-test-worker-requirements": {
@@ -468021,7 +468021,7 @@
         "since": "2026-11-21T09:19:34.135838+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T09:19:34.135838+00:00"
+        "observedAt": "2026-11-21T09:33:07.303823+00:00"
       }
     }
   },

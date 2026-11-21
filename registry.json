@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T09:19:34.135838+00:00",
+    "updatedAt": "2026-11-21T09:33:07.303823+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40768,19 +40768,19 @@
       "repo": "google/gvisor",
       "number": 16508,
       "ref": "review/checkpointfile-statefile-writer",
-      "head": "51eff0cf714b64ab0d5823dcfa9cdca03201a382",
+      "head": "24c1b39e498eb0f4635694e8a9b1ebe179257fb6",
       "title": "Reload the state file produced by the EncodeStatefile benchmark",
       "url": "https://github.com/google/gvisor/pull/16508",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:46.312467+00:00",
+      "updatedAt": "2026-11-21T09:33:07.303823+00:00",
       "summary": "The amended EncodeStatefile benchmark preserves the raw modes, uses the input checkpoint\u2019s metadata and compression, and reloads the final output after timing stops. An AMD64 Nginx checkpoint run decoded a 296,028-byte state file and reloaded the 296,018-byte output. #16508 is open; this checks one iteration, not a speedup.",
       "followup": {
         "owner": "approved_rebase_queue / root",
-        "sourceHead": "51eff0cf714b64ab0d5823dcfa9cdca03201a382",
+        "sourceHead": "24c1b39e498eb0f4635694e8a9b1ebe179257fb6",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Main55587 failed all three upload attempts before any Bazel target: the obsolete pre-command hook fetches tamird:branch from upstream and cannot find remote ref tamird. The exact fork branch exists. Current master already contains the merged hook fix; this is bootstrap failure, not a target failure or quota diagnosis. FirstPass2246 separately rejects the absent default queue; the fresh base contains the untrusted-queue rename.",
-        "nextAction": "Prepare and qualify the source-equivalent base refresh importing the existing bootstrap fix, then reconcile publication authority and new-head CI. Do not retry the unchanged failed head or claim delivery before verification.",
+        "disposition": "Delivered source-equivalent rebase 24c1b39e with strict range-diff = and original author/date/trailers preserved. Native head is mergeable and DCO passes; review requests are preserved and auto-merge was absent before and after. Shared five source checks and checkpoint compile/startup gates passed with zero tests. FirstPass2261 and new GitHub checks are pending, not completed. The notice requests maintainer ready-to-test reapplication for main CI.",
+        "nextAction": "approved_rebase_queue follows new-head GitHub/FirstPass results and the maintainer main-CI trigger requested in the saved notice. Main validation is not established by FirstPass; do not bind old-head failures or infer a new failure cause.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16508",
           "https://app.buildbuddy.io/invocation/7cd3432a-9763-4eb0-91d6-2a59ea477f9e",
@@ -40792,10 +40792,14 @@
           "https://buildkite.com/gvisor/first-pass/builds/1473",
           "https://buildkite.com/gvisor/first-pass/builds/1473#01a1eae3-fed9-45a6-a9cd-05fa30a2df6a",
           "https://buildkite.com/gvisor/first-pass/builds/1473#01a1ead5-8958-46ce-ac79-7c39f77b7144",
-          "https://buildkite.com/gvisor/pipeline/builds/55587"
+          "https://buildkite.com/gvisor/pipeline/builds/55587",
+          "https://github.com/google/gvisor/pull/16508#issuecomment-7060606298",
+          "https://github.com/tamird/gvisor/actions/runs/44889315323",
+          "https://github.com/tamird/gvisor/actions/runs/44889317107",
+          "https://github.com/tamird/gvisor/actions/runs/44889319061"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "recheckCondition": "New exact-head check/review event or maintainer main-CI trigger.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -40820,7 +40824,14 @@
             }
           }
         ],
-        "curatedAt": "2026-11-21T09:19:34.135838+00:00"
+        "curatedAt": "2026-11-21T09:33:07.303823+00:00",
+        "currentCI": {
+          "source": "24c1b39e498eb0f4635694e8a9b1ebe179257fb6",
+          "requiredFirstPass": 2261,
+          "githubChecks": "DCO SUCCESS; remaining new-head checks pending at source-owner handoff",
+          "mainPipeline": "Requires maintainer ready-to-test reapplication, requested in existing notice",
+          "nextAction": "approved_rebase_queue follows new-head GitHub/FirstPass results and the maintainer main-CI trigger requested in the saved notice. Main validation is not established by FirstPass; do not bind old-head failures or infer a new failure cause."
+        }
       },
       "evidence": [
         {
@@ -99396,12 +99407,12 @@
       "repo": "google/gvisor",
       "number": 17492,
       "ref": "research/pgo-commit-before-rebase",
-      "head": "e43439f069dca7a417d93d5d7faca311366fed59",
+      "head": "a4b0381bb2b121ec576780dbd65d881b50d837db",
       "title": "pgo: commit newly generated profiles before rebasing",
       "url": "https://github.com/google/gvisor/pull/17492",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-19T21:03:40.118346+00:00",
+      "updatedAt": "2026-11-21T09:33:07.303823+00:00",
       "summary": "The user-approved minimal e434 amendment is published with verified signing and DCO. DCO, gazelle, lint, fileheader, label and generate all pass. Required FirstPass1974 never started an agent: exit80, started_at null, author30day360000compute-minute quota. This is an admission blocker, not a source failure. Existing review remains with the requested maintainers.",
       "evidence": [
         {
@@ -99410,12 +99421,12 @@
         }
       ],
       "followup": {
-        "sourceHead": "e43439f069dca7a417d93d5d7faca311366fed59",
-        "owner": "root",
-        "nextAction": "Root follows actual provider admission recovery and existing review on exacte434. First Pass remains unmet until it executes; do not blindly rerun the quota-rejected job or ping CI owners. No approval, DCO, conflict or PR metadata task remains; do not merge without exact authorization.",
+        "sourceHead": "a4b0381bb2b121ec576780dbd65d881b50d837db",
+        "owner": "approved_rebase_queue / root",
+        "nextAction": "approved_rebase_queue follows new-head GitHub/FirstPass results and the maintainer main-CI trigger requested in the saved notice. Main validation is not established by FirstPass; do not bind old-head failures or infer a new failure cause.",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-19T21:03:40.118346+00:00",
-        "recheckCondition": "Provider admission recovery, exact-head check/review/import change or substantive source feedback.",
+        "recheckCondition": "New exact-head check/review event or maintainer main-CI trigger.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17492",
           "https://github.com/tamird/gvisor/commit/2ca38c700a1f17a2520e456022b2840285296185",
@@ -99423,10 +99434,14 @@
           "https://buildkite.com/gvisor/first-pass/builds/1597",
           "https://buildkite.com/gvisor/first-pass/builds/1597#01a1eae2-d917-47f8-9341-8795c3baf72f",
           "https://github.com/gvisor/gvisor/actions/runs/44611632162",
-          "https://buildkite.com/gvisor/first-pass/builds/1974"
+          "https://buildkite.com/gvisor/first-pass/builds/1974",
+          "https://github.com/google/gvisor/pull/17492#issuecomment-7060606102",
+          "https://github.com/tamird/gvisor/actions/runs/44889315323",
+          "https://github.com/tamird/gvisor/actions/runs/44889317107",
+          "https://github.com/tamird/gvisor/actions/runs/44889319061"
         ],
-        "curatedAt": "2026-11-19T21:03:40.118346+00:00",
-        "disposition": "The user-approved minimal e434 amendment is published with verified signing and DCO. DCO, gazelle, lint, fileheader, label and generate all pass. Required FirstPass1974 never started an agent: exit80, started_at null, author30day360000compute-minute quota. This is an admission blocker, not a source failure. Existing review remains with the requested maintainers.",
+        "curatedAt": "2026-11-21T09:33:07.303823+00:00",
+        "disposition": "Delivered source-equivalent rebase a4b0381b with strict range-diff = and original author/date/trailers preserved. Native head is mergeable and DCO passes; review requests are preserved and auto-merge was absent before and after. Shared five source checks and checkpoint compile/startup gates passed with zero tests. FirstPass2262 and new GitHub checks are pending, not completed. The notice requests maintainer ready-to-test reapplication for main CI.",
         "permanentTransactionBaseline": {
           "productionSource": "b75c76bbee31f309bd3a7bdb125a4b28e96086a1",
           "ciSource": "cbb9a918c4197ddbb9131f9482ba001987a246ce",
@@ -99476,14 +99491,11 @@
           "state": "Conflict resolved by the approved published rebase; exact-head checks and review remain for root to follow."
         },
         "currentCI": {
-          "source": "e43439f069dca7a417d93d5d7faca311366fed59",
-          "githubChecks": "DCO/gazelle/lint/fileheader/label/generate PASS",
-          "requiredFirstPass": 1974,
-          "exit": 80,
-          "started_at": null,
-          "stack_error_detail": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
-          "sourceFailure": false,
-          "nextAction": "Await actual admission recovery; no blind retry or CI-owner ping."
+          "source": "a4b0381bb2b121ec576780dbd65d881b50d837db",
+          "requiredFirstPass": 2262,
+          "githubChecks": "DCO SUCCESS; remaining new-head checks pending at source-owner handoff",
+          "mainPipeline": "Requires maintainer ready-to-test reapplication, requested in existing notice",
+          "nextAction": "approved_rebase_queue follows new-head GitHub/FirstPass results and the maintainer main-CI trigger requested in the saved notice. Main validation is not established by FirstPass; do not bind old-head failures or infer a new failure cause."
         },
         "attentionDispositions": [
           {
@@ -99531,7 +99543,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Root follows actual provider admission recovery and existing review on exacte434. First Pass remains unmet until it executes; do not blindly rerun the quota-rejected job or ping CI owners. No approval, DCO, conflict or PR metadata task remains; do not merge without exact authorization.",
+      "nextStep": "approved_rebase_queue follows new-head GitHub/FirstPass results and the maintainer main-CI trigger requested in the saved notice. Main validation is not established by FirstPass; do not bind old-head failures or infer a new failure cause.",
       "recheckCondition": "Provider admission recovery, exact-head check/review/import change or substantive source feedback."
     },
     {
