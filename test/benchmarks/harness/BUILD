@@ -1,8 +1,16 @@
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("//tools:defs.bzl", "build_test", "go_library", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+sh_binary(
+    name = "native_worker",
+    srcs = ["native_worker.sh"],
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:linux"],
 )
 
 go_library(
