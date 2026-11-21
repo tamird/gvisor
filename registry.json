@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T12:43:00.701524+00:00",
+    "updatedAt": "2026-11-21T13:01:37.342918+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10990,12 +10990,12 @@
           "recheckCondition": "Proposal decision or exact current ref/head, source/base or qualification change."
         },
         "owner": "declared_formatting_resume / root",
-        "nextAction": "declared_formatting_resume consumes the existing final check and completes integrated review/qualification of the smallest C/C++ inventory. No source-publication question has been asked; preserve the approvedad API and all unchanged migration boundaries.",
-        "recheckCondition": "Terminal final check and qualified/reviewed integrated C/C++ source.",
+        "nextAction": "declared_formatting_resume reproduces the mismatch, implements the smallest agreed guard/boundary and requalifies it with the existing caller tests. Keep the approved ad173 API and bounded C/C++ scope; no new framework, bulk migration or source-publication question.",
+        "recheckCondition": "Owned mismatch reproduction and corrected source qualification/review.",
         "observedAt": "2026-11-17T19:58:25.300843+00:00",
         "sourceHead": "63c29f4ef205ae9a8dec3b96e4bb3e32581d6c40",
-        "curatedAt": "2026-11-21T12:43:00.701524+00:00",
-        "disposition": "Current C/C++ inventory extraction source 9986376d9afd3c75b1735c2f9eb62d440452b4af is six files, 184 additions/90 deletions. Bounded integration 44903716923 passed membership/style/fix/rejections and existing caller tests; full 492-input/archive analysis 44904179479 passed. Final Buildifier 44904909577 remains with the original owner. This is a bounded C/C++ prerequisite for approved ad173, not a global 588-package migration or publication-approved new source.",
+        "curatedAt": "2026-11-21T13:01:37.342918+00:00",
+        "disposition": "Independent review of 9986376 found real check/fix drift when configuration is untracked. Earlier integration/full 492-input/archive passes do not close this parity defect. Owner and original reviewer agreed on an exact known-ancestor configuration guard plus indexed root-ignore boundary; focused old-source mismatch reproduction 44906149981 is live. No new guard candidate is qualified yet.",
         "permanentFormatterMilestone": {
           "source": "723486ddd865d3044c5b515865b3a43de6356fde",
           "fixtureSource": "d58ca4f42c5a5a71456cb5de34f43785a6f6670e",
@@ -11161,7 +11161,8 @@
           "https://github.com/tamird/gvisor/actions/runs/44901598173",
           "https://github.com/tamird/gvisor/actions/runs/44903716923",
           "https://github.com/tamird/gvisor/actions/runs/44904179479",
-          "https://github.com/tamird/gvisor/actions/runs/44904909577"
+          "https://github.com/tamird/gvisor/actions/runs/44904909577",
+          "https://github.com/tamird/gvisor/actions/runs/44906149981"
         ]
       },
       "settledReviews": [
@@ -75769,8 +75770,8 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
         "observedAt": "2026-11-20T15:00:40.305787+00:00",
-        "disposition": "Public source a3ca22af remains conflicting. The real author promise in discussion_r4488483371 gates its update on 16522 landing; 16522 is still open. Private candidate 157806d0 prepares a minimal ARM-safe conflict recovery, not adoption of the separate d3f runtime proposal. ARM aquery 44904831168 passed; the source owner must consume the AMD/format batch. Existing approved predecessor 7f6 and source/performance boundaries remain scoped.",
-        "nextAction": "approved_rebase_queue completes the private conflict/prerequisite handoff and root reviews its exact source boundary. Honor the public 16522 landing promise before publication; no age-only campaign, new approval question or runtime-performance waiver.",
+        "disposition": "Public a3ca22af is unchanged and remains behind the real 16522 landing promise. Private formatted candidate e80ddbe9e766fd2d61a05149febf751eac832817 is under matched baseline/candidate raw-stub and generated-offset compilation gates. No runtime digest identity, d3f adoption, performance qualification or new source approval is established; approved predecessor 7f6 remains source-bound.",
+        "nextAction": "approved_rebase_queue consumes the existing matched compile/format gates and exact product digests, then root reviews the minimal ARM-safe recovery. Preserve the public 16522 hold, internal validation and performance boundaries before publication.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17067#discussion_r4486895273",
           "https://github.com/tamird/gvisor/commit/7f6ecfff61b465c2ae00d20ee4ebaad09d430519",
@@ -75786,12 +75787,17 @@
           "https://github.com/gvisor/gvisor/pull/17067#discussion_r4488483371",
           "https://github.com/tamird/gvisor/actions/runs/44904831168",
           "https://github.com/tamird/gvisor/actions/runs/44904829232",
-          "https://github.com/tamird/gvisor/actions/runs/44904833110"
+          "https://github.com/tamird/gvisor/actions/runs/44904833110",
+          "https://github.com/tamird/gvisor/actions/runs/44906316019",
+          "https://github.com/tamird/gvisor/actions/runs/44906317677",
+          "https://github.com/tamird/gvisor/actions/runs/44906319375",
+          "https://github.com/tamird/gvisor/actions/runs/44906321119",
+          "https://github.com/tamird/gvisor/actions/runs/44906322768"
         ],
-        "recheckCondition": "Owned candidate qualification/review, actual 16522 landing or exact public source/feedback change.",
+        "recheckCondition": "Actual matched product/source results, exact review or 16522 landing.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING",
-        "curatedAt": "2026-11-21T12:43:00.701524+00:00"
+        "curatedAt": "2026-11-21T13:01:37.342918+00:00"
       },
       "dcoAmendment": {
         "oldHead": "005743727b3d80d373085133b5da9cd906cc9d7c",
@@ -141454,9 +141460,9 @@
       "title": "Declare unit test worker requirements",
       "owner": "root",
       "head": "e5601c9ebe4ab30accc194fab8a1bf951bb11ee6",
-      "updatedAt": "2026-11-21T12:43:00.701524+00:00",
-      "summary": "The user returned 1189 for revision. Current worker source e5601c9 and separate global-default 775768695aa792ea6bf2369d9e3900fb289aaf00 are unapproved. Aquery 44904594388 proves all six TestRunners request network-off, Firecracker and guest root; only sandbox requests IPv6. The 8133 non-TestRunner actions have no microVM/root/IPv6 property leaks, and 5693 remote-process actions inherit network-off. Buildifier 44904810745 passed. These are action-property proofs, not service/runtime validation.",
-      "nextStep": "worker_requirements_citations and root verify actual service interpretation with the existing capability test on both architectures, then complete review of the revised sources. No publication or new human question is pending yet. Keep the standalone production route/performance boundary separate.",
+      "updatedAt": "2026-11-21T13:01:37.342918+00:00",
+      "summary": "Worker e5601c9 and the separate global-default 775 revision remain unapproved. Correctness and maintainer reviews are complete with no findings; the exact IPv6 citation caveat is closed. AMD namespace 44905173511 passed 95 cases without skips; ARM44905178697 passed 94 with one pidfs skip, with TestApplyNSRestoresThreadNamespace unskipped on both and all guards passing. Commit 4026f169cc4e65cd02a6af18a32b5995515cbb20 changes only message wrapping and has the same tree as e560. Fork preview publication is in progress, not yet provider-verified; no upstream delivery or new approval question is recorded.",
+      "nextStep": "Root verifies the existing atomic fork preview and then presents the exact revised sources for publication review. Preserve original 1189 changes-requested provenance and the separate unapproved global default; no production 4525 composition or approval is inferred.",
       "evidence": [
         {
           "label": "Reviewable source",
@@ -141493,6 +141499,14 @@
         {
           "label": "Current Buildifier",
           "url": "https://github.com/tamird/gvisor/actions/runs/44904810745"
+        },
+        {
+          "label": "Actual AMD namespace capability",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44905173511"
+        },
+        {
+          "label": "Actual ARM namespace capability",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44905178697"
         }
       ],
       "findings": [

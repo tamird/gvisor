@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T12:57:01.702597+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T12:43:00.701524+00:00",
+  "registryDate": "2026-11-21T13:01:37.342918+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -453238,8 +453238,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "disposition": "Public source a3ca22af remains conflicting. The real author promise in discussion_r4488483371 gates its update on 16522 landing; 16522 is still open. Private candidate 157806d0 prepares a minimal ARM-safe conflict recovery, not adoption of the separate d3f runtime proposal. ARM aquery 44904831168 passed; the source owner must consume the AMD/format batch. Existing approved predecessor 7f6 and source/performance boundaries remain scoped.",
-        "nextAction": "approved_rebase_queue completes the private conflict/prerequisite handoff and root reviews its exact source boundary. Honor the public 16522 landing promise before publication; no age-only campaign, new approval question or runtime-performance waiver."
+        "disposition": "Public a3ca22af is unchanged and remains behind the real 16522 landing promise. Private formatted candidate e80ddbe9e766fd2d61a05149febf751eac832817 is under matched baseline/candidate raw-stub and generated-offset compilation gates. No runtime digest identity, d3f adoption, performance qualification or new source approval is established; approved predecessor 7f6 remains source-bound.",
+        "nextAction": "approved_rebase_queue consumes the existing matched compile/format gates and exact product digests, then root reviews the minimal ARM-safe recovery. Preserve the public 16522 hold, internal validation and performance boundaries before publication."
       },
       "conflictObservedSince": "2026-11-17T19:11:47.868378+00:00"
     },
@@ -457879,8 +457879,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "disposition": "Public source a3ca22af remains conflicting. The real author promise in discussion_r4488483371 gates its update on 16522 landing; 16522 is still open. Private candidate 157806d0 prepares a minimal ARM-safe conflict recovery, not adoption of the separate d3f runtime proposal. ARM aquery 44904831168 passed; the source owner must consume the AMD/format batch. Existing approved predecessor 7f6 and source/performance boundaries remain scoped.",
-        "nextAction": "approved_rebase_queue completes the private conflict/prerequisite handoff and root reviews its exact source boundary. Honor the public 16522 landing promise before publication; no age-only campaign, new approval question or runtime-performance waiver."
+        "disposition": "Public a3ca22af is unchanged and remains behind the real 16522 landing promise. Private formatted candidate e80ddbe9e766fd2d61a05149febf751eac832817 is under matched baseline/candidate raw-stub and generated-offset compilation gates. No runtime digest identity, d3f adoption, performance qualification or new source approval is established; approved predecessor 7f6 remains source-bound.",
+        "nextAction": "approved_rebase_queue consumes the existing matched compile/format gates and exact product digests, then root reviews the minimal ARM-safe recovery. Preserve the public 16522 hold, internal validation and performance boundaries before publication."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN1p80gQ",
@@ -469918,7 +469918,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:43:00.701524+00:00"
+        "observedAt": "2026-11-21T13:01:37.342918+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -469927,7 +469927,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:43:00.701524+00:00"
+        "observedAt": "2026-11-21T13:01:37.342918+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -469936,7 +469936,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:43:00.701524+00:00"
+        "observedAt": "2026-11-21T13:01:37.342918+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -469945,7 +469945,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:43:00.701524+00:00"
+        "observedAt": "2026-11-21T13:01:37.342918+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -469954,7 +469954,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:43:00.701524+00:00"
+        "observedAt": "2026-11-21T13:01:37.342918+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -469963,7 +469963,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:43:00.701524+00:00"
+        "observedAt": "2026-11-21T13:01:37.342918+00:00"
       }
     }
   },
