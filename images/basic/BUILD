@@ -114,6 +114,7 @@ image_outputs(
 
 image_outputs(
     name = "benchmark_redis",
+    archive_visibility = ["//test/benchmarks/harness:__pkg__"],
     image = ":redis",
     image_name = "benchmarks/redis",
 )

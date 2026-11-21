@@ -100,3 +100,116 @@ go_test(
     ],
 )
 
+
+# Each category runs the shared-daemon ABBA loop with its full leaf set.
+# Benchtime must be supplied before selecting the paired test.
+_PAIRED_BENCHMARKS = [
+    (
+        "iperf",
+        "//test/benchmarks/network:iperf_test",
+        8,
+        [
+            "//images:benchmark_iperf_archive",
+        ],
+    ),
+    (
+        "nginx",
+        "//test/benchmarks/network:nginx_test",
+        72,
+        [
+            "//images:benchmark_nginx_archive",
+            "//images:benchmark_hey_archive",
+            "//images:benchmark_util_archive",
+        ],
+    ),
+    (
+        "httpd",
+        "//test/benchmarks/network:httpd_test",
+        42,
+        [
+            "//images:benchmark_httpd_archive",
+            "//images:benchmark_hey_archive",
+            "//images:benchmark_util_archive",
+        ],
+    ),
+    (
+        "node",
+        "//test/benchmarks/network:node_test",
+        4,
+        [
+            "//images:benchmark_node_archive",
+            "//images/basic:benchmark_redis_archive",
+            "//images:benchmark_hey_archive",
+            "//images:benchmark_util_archive",
+        ],
+    ),
+    (
+        "ruby",
+        "//test/benchmarks/network:ruby_test",
+        4,
+        [
+            "//images:benchmark_ruby_archive",
+            "//images/basic:benchmark_redis_archive",
+            "//images:benchmark_hey_archive",
+            "//images:benchmark_util_archive",
+        ],
+    ),
+    (
+        "redis",
+        "//test/benchmarks/database:redis_test",
+        20,
+        [
+            "//images/basic:benchmark_redis_archive",
+        ],
+    ),
+]
+
+[
+    go_test(
+        name = "paired_" + category + "_worker_test",
+        size = "large",
+        timeout = "long",
+        srcs = [
+            "paired_products_test.go",
+            "paired_worker_test.go",
+        ],
+        args = [
+            "--paired-base-runsc=$(rootpath :runsc_entrypoint)",
+            "--paired-candidate-runsc=$(rootpath :runsc_entrypoint)",
+            "--paired-base-source=e50582f1801aec027ccbc427d34ecae10d393bf9",
+            "--paired-candidate-source=e50582f1801aec027ccbc427d34ecae10d393bf9",
+            "--paired-benchmark=$(rootpath %s)" % binary,
+            "--paired-leaves=%d" % leaves,
+            "--paired-image-archives='%s'" % " ".join(["$(rootpaths %s)" % archive for archive in archives]),
+            "--client-cpuset=0-1",
+            "--server-cpuset=2-3",
+            "-test.run=^$$",
+        ],
+        data = [
+            ":runsc_entrypoint",
+            "//:release",
+            binary,
+        ] + archives,
+        embed = [":harness"],
+        exec_properties = {
+            "test.EstimatedCPU": "5",
+            "test.EstimatedMemory": "500M",
+            "test.init-dockerd": "false",
+            "test.workload-isolation-type": "firecracker",
+        },
+        pure = True,
+        tags = ["manual"],
+        target_compatible_with = [
+            "@platforms//cpu:x86_64",
+            "@platforms//os:linux",
+        ],
+        deps = [
+            "//pkg/test/testutil",
+            "@org_golang_x_sys//unix:go_default_library",
+            "@com_github_docker_docker//api/types/container:go_default_library",
+            "@com_github_docker_docker//api/types/image:go_default_library",
+            "@com_github_docker_docker//client:go_default_library",
+        ],
+    )
+    for category, binary, leaves, archives in _PAIRED_BENCHMARKS
+]

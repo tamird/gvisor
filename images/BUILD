@@ -89,3 +89,52 @@ image_outputs(
     }),
     image_name = "benchmarks/alpine",
 )
+
+image_outputs(
+    name = "benchmark_iperf",
+    archive_visibility = ["//test/benchmarks/harness:__pkg__"],
+    image = "@benchmark_iperf_amd64",
+    image_name = "benchmarks/iperf",
+)
+
+image_outputs(
+    name = "benchmark_httpd",
+    archive_visibility = ["//test/benchmarks/harness:__pkg__"],
+    image = "@benchmark_httpd_amd64",
+    image_name = "benchmarks/httpd",
+)
+
+image_outputs(
+    name = "benchmark_nginx",
+    archive_visibility = ["//test/benchmarks/harness:__pkg__"],
+    image = "@benchmark_nginx_amd64",
+    image_name = "benchmarks/nginx",
+)
+
+image_outputs(
+    name = "benchmark_ruby",
+    archive_visibility = ["//test/benchmarks/harness:__pkg__"],
+    image = "@benchmark_ruby_amd64",
+    image_name = "benchmarks/ruby",
+)
+
+image_outputs(
+    name = "benchmark_node",
+    archive_visibility = ["//test/benchmarks/harness:__pkg__"],
+    image = "@benchmark_node_amd64",
+    image_name = "benchmarks/node",
+)
+
+image_outputs(
+    name = "benchmark_hey",
+    archive_visibility = ["//test/benchmarks/harness:__pkg__"],
+    image = "@benchmark_hey_amd64",
+    image_name = "benchmarks/hey",
+)
+
+image_outputs(
+    name = "benchmark_util",
+    archive_visibility = ["//test/benchmarks/harness:__pkg__"],
+    image = "@benchmark_util_amd64",
+    image_name = "benchmarks/util",
+)
