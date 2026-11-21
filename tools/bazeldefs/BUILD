@@ -1,5 +1,5 @@
 load("@bazel_lib//lib:run_binary.bzl", "run_binary")
-load("//tools:defs.bzl", "bzl_library")
+load("//tools:defs.bzl", "bool_flag", "bzl_library")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -53,6 +53,56 @@ platform(
         "@platforms//cpu:aarch64",
         "@platforms//os:linux",
     ],
+    visibility = ["//visibility:public"],
+)
+
+# Execution properties select native workers without changing target toolchains.
+_REMOTE_IMAGE = "docker://gcr.io/flame-public/rbe-ubuntu24-04@sha256:be9853fc45092d2cf2bda3abed30d22182881659a50bf35c7125161d7cfc8a75"
+
+# Native C tools are supplied by the pinned RBE image, not the submitting host.
+constraint_setting(name = "c_execution_environment")
+
+constraint_value(
+    name = "rbe_ubuntu24_c",
+    constraint_setting = ":c_execution_environment",
+)
+
+bool_flag(
+    name = "rbe_native_c",
+    build_setting_default = False,
+)
+
+config_setting(
+    name = "rbe_native_c_enabled",
+    flag_values = {":rbe_native_c": "true"},
+)
+
+config_setting(
+    name = "rbe_native_c_disabled",
+    flag_values = {":rbe_native_c": "false"},
+)
+
+platform(
+    name = "remote_linux_amd64",
+    constraint_values = [":rbe_ubuntu24_c"],
+    exec_properties = {
+        "Arch": "amd64",
+        "OSFamily": "linux",
+        "container-image": _REMOTE_IMAGE,
+    },
+    parents = [":linux_amd64"],
+    visibility = ["//visibility:public"],
+)
+
+platform(
+    name = "remote_linux_arm64",
+    constraint_values = [":rbe_ubuntu24_c"],
+    exec_properties = {
+        "Arch": "arm64",
+        "OSFamily": "linux",
+        "container-image": _REMOTE_IMAGE,
+    },
+    parents = [":linux_arm64"],
     visibility = ["//visibility:public"],
 )
 

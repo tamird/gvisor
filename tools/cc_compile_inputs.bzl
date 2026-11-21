@@ -12,30 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Exposes the generated files a C++ compile reads.
-
-Used by tools/gen_compile_commands.py to avoid compiling the whole test suite
-to generate compile_commands.json for clangd.
-"""
+"""Materializes generated C++ sources and headers for compilation databases."""
 
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 
-# Source extensions that end up in the compile commands database.
+# Source extensions whose generated files must be materialized.
 _CC_SRC_EXTENSIONS = (".c", ".cc", ".cpp", ".cxx", ".c++", ".S", ".s", ".inc")
 
 def _cc_compile_inputs_impl(target, ctx):
-    inputs = []
+    inputs = [
+        getattr(dep[OutputGroupInfo], "cc_compile_inputs", depset())
+        for dep in getattr(ctx.rule.attr, "deps", [])
+        if OutputGroupInfo in dep
+    ]
 
     # Transitively covers every header the target may include, generated ones
     # included, plus the _virtual_includes symlink trees that -I flags name.
     if CcInfo in target:
         inputs.append(target[CcInfo].compilation_context.headers)
 
-    # Generated sources are compiled, so they are entries in the database in
-    # their own right; the header set above does not include them.
+    # Generated sources may be declared as inputs or exposed as outputs, as
+    # cc_proto_library does. The header set above does not include them.
     inputs.append(depset([
         f
-        for f in getattr(ctx.rule.files, "srcs", [])
+        for f in getattr(ctx.rule.files, "srcs", []) + target[DefaultInfo].files.to_list()
         if not f.is_source and f.path.endswith(_CC_SRC_EXTENSIONS)
     ]))
 
