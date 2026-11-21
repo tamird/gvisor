@@ -58352,8 +58352,8 @@
         "owner": "root",
         "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
         "observedAt": "2026-11-02T17:47:05.918366+00:00",
-        "disposition": "AMD44954024607 and ARM44954393599 passed actual package/license, JSON, all eight native benchmark rows, cleanup and source guards. Reverse-transfer stock overshoot remains explicit at +25%/+37.5%. Unconditional exact-byte equality was an unsupported stricter diagnostic: original approved676 permits stock overshoot, so root withdrew that gate and the producer-fork assignment. New Ubuntu24 source dce280f99add0a1319970674a57e237e9473c666 is one DCO commit on eb263, pending final review and current source checks; old676 approval does not approve this revision. No timing-stability claim follows.",
-        "nextAction": "benchmark_measurement_review audits independent Sentry admission44961875897 and diagnoses failed sourcechecks44961877715 before final source review. No failure cause is guessed, no Moby build or statistics ran, and the explicit Moby/Bazel-only exception remains unanswered. Preserve both native architecture/functionality proofs and stock overshoot, old676 approval and independent BCR/verifier delivery prerequisites.",
+        "disposition": "Both native architecture, package, license, JSON and eight-row proofs remain valid, with stock reverse overshoot disclosed. Independent Sentry run 44962304533 completed six earlier modes, then the first p64Upload hit its 120-second deadline without p64 JSON. Forced killing failed pre-teardown quiescence; final runtime, daemon, file and source cleanup passed. Bounded diagnostic 44963117418 created all 64 connections and threads, reached TEST_RUNNING and wrote 131,072 bytes for 1,024 requested bytes, then repeated timer/statistics work until SIGINT and exit 124 at 30 seconds. Its visit quiescence and final cleanup passed. The cause is unproved; complete eight-mode and A/A gates remain held.",
+        "nextAction": "benchmark_measurement_review checks maintained upstream behavior and owns one CI-only completion-before-timer hypothesis test. Retain partial six-mode and both native proofs; no Sentry source edit, Moby build, statistical claim or new source approval. The explicit Moby/Bazel-only exception remains unanswered.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
@@ -58369,7 +58369,9 @@
           "https://github.com/tamird/gvisor/actions/runs/44954393599",
           "https://github.com/tamird/gvisor/actions/runs/44955092779",
           "https://github.com/tamird/gvisor/actions/runs/44961875897",
-          "https://github.com/tamird/gvisor/actions/runs/44961877715"
+          "https://github.com/tamird/gvisor/actions/runs/44961877715",
+          "https://github.com/tamird/gvisor/actions/runs/44962304533",
+          "https://github.com/tamird/gvisor/actions/runs/44963117418"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -58383,7 +58385,7 @@
           "owner": "root"
         },
         "technicalOwner": "Build and release",
-        "recheckCondition": "Owner-audited Sentry admission and actual source-check diagnosis/correction, or the real user operational/source decision; no new approval is inferred.",
+        "recheckCondition": "Owner-audited upstream comparison/hypothesis result and actual complete functional evidence, or real user operational/source response; no guessed cause.",
         "curatedAt": "2026-11-21T14:40:26.293073+00:00"
       },
       "refinement": {
@@ -141935,8 +141937,8 @@
       "owner": "root",
       "head": "be47f724fb92fa604dfb998fc9fb6f2b01d364b1",
       "updatedAt": "2026-11-21T14:00:19.559771+00:00",
-      "summary": "The actual new one-commit publication question for be47 is pending. The immutable source has normal identity/DCO, all full and final-cleanup checks passed, and two independent reviews found no blocking issue. It replaces the host-Git/index design; the old d039 approval does not approve this revision. No upstream PR is open. Preview ref creation is provider-blocked after bounded ordinary SSH/HTTPS attempts; the exact commit is remotely reviewable, with no new permission gap.",
-      "nextStep": "Root awaits the existing be47 source-review answer. Preserve the exact supplied PR description, prior d039 approval and qualified source boundaries; no duplicate question, preview-ref retry or approval inference.",
+      "summary": "The actual be47 publication question remains unanswered; all full/cleanup checks and both independent reviews passed. Named fork preview qualification/cc-format-source-be47f724 now exists at exact be47f724fb92fa604dfb998fc9fb6f2b01d364b1, verified after a bounded ordinary HTTPS retry. The former preview-ref execution blocker is resolved without new credentials/scopes/hooks. No upstream PR is open and d039 approval does not transfer to this source.",
+      "nextStep": "Root awaits the existing be47 source-publication decision. Source and named preview are readable; no transport/auth recovery or duplicate question remains. Preserve the exact supplied PR body and original d039 source preview.",
       "evidence": [
         {
           "label": "Actual reviewable clean source",
