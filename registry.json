@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T04:15:55.596839+00:00",
+    "updatedAt": "2026-11-21T04:22:28.091102+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -103762,14 +103762,14 @@
       "url": "https://github.com/nodejs/node/pull/67595",
       "group": "ci-flakes",
       "status": "open",
-      "updatedAt": "2026-11-20T02:14:48.077247+00:00",
-      "summary": "Exact15c2edb full Jenkins79320 is running; GitHub Linux/Windows statuses are pending and the other native statuses green. Existing full-CI request progressed to execution; no new outreach is needed.",
+      "updatedAt": "2026-11-21T04:22:28.091102+00:00",
+      "summary": "Exact15c2edb5708cf8ac75b01360cff2372ecee0be23 remains approved and mergeable. GitHub reports node-test-commit94371, alpine-last-latest-x64 child74753 and aggregate79320 PENDING; the other platform statuses are successful. Canonical Jenkins79320 /api/json returns403, so pending status does not establish live Jenkins execution. Tamir already asked about the elapsed CI time in7053905845; no repeat outreach is needed.",
       "followup": {
         "owner": "root",
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-        "disposition": "Exact15c2edb full Jenkins79320 is running; GitHub Linux/Windows statuses are pending and the other native statuses green. Existing full-CI request progressed to execution; no new outreach is needed.",
-        "nextAction": "Follow current Jenkins/platform results; diagnose terminal failure from available evidence without another CI request.",
-        "recheckCondition": "Current Jenkins/platform result or substantive feedback changes.",
+        "disposition": "Exact15c2edb5708cf8ac75b01360cff2372ecee0be23 remains approved and mergeable. GitHub reports node-test-commit94371, alpine-last-latest-x64 child74753 and aggregate79320 PENDING; the other platform statuses are successful. Canonical Jenkins79320 /api/json returns403, so pending status does not establish live Jenkins execution. Tamir already asked about the elapsed CI time in7053905845; no repeat outreach is needed.",
+        "nextAction": "Root follows accessible GitHub status changes and the maintainer response to the existing elapsed-CI question. Preserve current approval and source-bound validation. No repeated CI request, manual retry, access workaround or new contributor decision.",
+        "recheckCondition": "Accessible current-head status or maintainer response changes.",
         "publishedDelivery": {
           "base": "b7df44bf9c85a6104b9158b616999e3d2c58be5d",
           "head": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
@@ -103980,7 +103980,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-20T02:14:48.077247+00:00",
+        "curatedAt": "2026-11-21T04:22:28.091102+00:00",
         "memberReview": {
           "author": "bnb",
           "association": "MEMBER",
@@ -104129,9 +104129,10 @@
             }
           }
         ],
-        "observedAt": "2026-11-20T02:14:48.077247+00:00",
+        "observedAt": "2026-11-21T04:20:03.935701+00:00",
         "evidence": [
-          "https://github.com/nodejs/node/pull/67595#issuecomment-7026664983"
+          "https://github.com/nodejs/node/pull/67595#issuecomment-7026664983",
+          "https://github.com/nodejs/node/pull/67595#issuecomment-7053905845"
         ]
       },
       "evidence": [
@@ -104154,8 +104155,8 @@
           "note": "User posted a shorter landing-status question directly; do not post the verbose rerun draft or ask again."
         }
       ],
-      "nextStep": "Follow current Jenkins/platform results; diagnose terminal failure from available evidence without another CI request.",
-      "recheckCondition": "Current Jenkins/platform result or substantive feedback changes."
+      "nextStep": "Root follows accessible GitHub status changes and the maintainer response to the existing elapsed-CI question. Preserve current approval and source-bound validation. No repeated CI request, manual retry, access workaround or new contributor decision.",
+      "recheckCondition": "Accessible current-head status or maintainer response changes."
     },
     {
       "id": "branch:lisafs-hardlink-capability",
