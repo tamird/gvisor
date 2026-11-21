@@ -25,10 +25,10 @@ py_test(
     name = "sandbox_py_test",
     srcs = ["tests/sandbox_test.py"],
     data = ["//:release"],
-    main = "tests/sandbox_test.py",
     exec_properties = {
         "test.workload-isolation-type": "firecracker",
     },
+    main = "tests/sandbox_test.py",
     tags = ["nogotsan"],
     deps = [
         ":sandbox_py",
