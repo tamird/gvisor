@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "cc_binary", "go_library", "grpcpp")
+load("//tools/lint:defs.bzl", "clang_format_inputs")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -31,3 +32,5 @@ go_library(
         "@org_golang_x_sys//unix:go_default_library",
     ],
 )
+
+clang_format_inputs(name = "clang_format_srcs")

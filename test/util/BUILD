@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "cc_library", "cc_test", "coreutil", "default_net_util", "gbenchmark", "gbenchmark_internal", "select_gtest", "select_system")
+load("//tools/lint:defs.bzl", "clang_format_inputs")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -467,3 +468,5 @@ cc_library(
         "errno_safe_allocator.cc",
     ],
 )
+
+clang_format_inputs(name = "clang_format_srcs")

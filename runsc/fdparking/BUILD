@@ -11,6 +11,7 @@ filegroup(
     name = "ignore_srcs",
     srcs = ["fdparking.c"],
     tags = ["ignore_srcs"],
+    visibility = ["//tools/lint:__pkg__"],
 )
 
 # runsc-fd-parking must remain a statically-linked, freestanding

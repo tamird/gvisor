@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "bpf_program", "go_library")
+load("//tools/lint:defs.bzl", "clang_format_inputs")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -30,3 +31,5 @@ bpf_program(
     bpf_object = "tunnel_veth_ebpf.o",
     visibility = ["//:sandbox"],
 )
+
+clang_format_inputs(name = "clang_format_srcs")

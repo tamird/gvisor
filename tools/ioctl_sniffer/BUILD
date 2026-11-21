@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "cc_binary", "go_binary", "proto_library")
+load("//tools/lint:defs.bzl", "clang_format_inputs")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -56,3 +57,5 @@ go_binary(
         "//tools/ioctl_sniffer/sniffer",
     ],
 )
+
+clang_format_inputs(name = "clang_format_srcs")
