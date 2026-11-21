@@ -223,7 +223,9 @@ func TestPairedBenchmark(t *testing.T) {
 			if len(remaining) != 0 {
 				t.Errorf("owned runtime processes remain after visit %d: %v", visit, remaining)
 			}
-			containers, listErr := cli.ContainerList(ctx, container.ListOptions{All: true})
+			cleanupCtx, cleanupCancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
+			containers, listErr := cli.ContainerList(cleanupCtx, container.ListOptions{All: true})
+			cleanupCancel()
 			if listErr != nil {
 				t.Error(listErr)
 			} else if len(containers) != 0 {

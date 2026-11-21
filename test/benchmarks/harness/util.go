@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/docker/docker/api/types/mount"
 	"gvisor.dev/gvisor/pkg/cleanup"
@@ -36,11 +37,23 @@ func WaitUntilContainerServing(ctx context.Context, machine Machine, container *
 	defer netcat.CleanUp(context.WithoutCancel(ctx))
 
 	cmd := fmt.Sprintf("while ! wget -q --spider http://%s:%d; do true; done", "server", port)
-	_, err := netcat.Run(ctx, dockerutil.RunOpts{
+	readyCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	_, err := netcat.Run(readyCtx, dockerutil.RunOpts{
 		Image: "benchmarks/util",
 		Links: []string{container.MakeLink("server")},
 	}, "sh", "-c", cmd)
-	return err
+	if err == nil {
+		return nil
+	}
+	logCtx, logCancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+	defer logCancel()
+	state, stateErr := container.Status(logCtx)
+	output, logsErr := container.Logs(logCtx)
+	if len(output) > 8192 {
+		output = output[len(output)-8192:]
+	}
+	return fmt.Errorf("server readiness failed: %w; state: %+v (error: %v); logs (error: %v): %s", err, state, stateErr, logsErr, output)
 }
 
 // DropCaches drops caches on the provided machine. Requires root.
