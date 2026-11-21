@@ -103125,9 +103125,9 @@
         "owner": "root",
         "sourceHead": "5c8a182619525e77d210a31a9b9ff575251165f3",
         "observedAt": "2026-11-18T20:06:11.890448+00:00",
-        "disposition": "Published source 5c8a1826 and its review/provider lifecycle remain intact. Native HTTPD diagnostic 44936022233 recorded 1000 HTTP200 responses and zero errors, with 1000 ConnLats entries (33 zero, 967 positive); this rejects the small-reuse-pool hypothesis. Sentry’s retained N=1000 result remains 481 HTTP200 responses and 519 timeouts. The cause is unknown; no body, performance or source-fix conclusion follows.",
-        "nextAction": "httpd_functional_resume owns one native standard-tool lifecycle diagnostic after strace6.8 attach preflight 44936709265 passed cleanup. Preserve the existing server/workload and unknown cause; no further timing or source publication follows from the preflight. Root retains canonical PR review/import/provider ownership.",
-        "recheckCondition": "Owner-audited native lifecycle evidence or actual source/review/provider change; recheck the native/Sentry difference without treating the rejected pool hypothesis as a cause.",
+        "disposition": "Published source 5c8a1826 and its review/provider lifecycle remain intact. Recovered native trace shows Apache explicitly removes the listener and pauses 4.7s, as in the retained Sentry trace; this does not exonerate Sentry or establish the timeout cause. The CI capacity-isolation run 44941850928 is workflow-successful but its actual case/output audit is pending. No permanent fix, performance or source-publication conclusion follows.",
+        "nextAction": "httpd_functional_resume audits the existing capacity isolation while preserving -X, 25 threads, keepalive, deadlines, request count/concurrency, payload and runtime. Root retains canonical PR lifecycle ownership; await actual case/response/cleanup evidence before any further conclusion.",
+        "recheckCondition": "Owner-audited capacity-isolation evidence or a material source/review/provider change; no inferred cause or new source approval.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/44231839538",
           "https://github.com/tamird/gvisor/actions/runs/44231202091",
@@ -103144,7 +103144,8 @@
           "https://github.com/tamird/gvisor/actions/runs/44932779374",
           "https://github.com/tamird/gvisor/actions/runs/44934752057",
           "https://github.com/tamird/gvisor/actions/runs/44936022233",
-          "https://github.com/tamird/gvisor/actions/runs/44936709265"
+          "https://github.com/tamird/gvisor/actions/runs/44936709265",
+          "https://github.com/tamird/gvisor/actions/runs/44941850928"
         ],
         "qualificationHistory": [
           {
@@ -130635,9 +130636,9 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-13T17:09:10.801249+00:00",
+      "updatedAt": "2026-11-21T19:42:11.849660+00:00",
       "group": "analysis",
-      "summary": "Replace tools/lint.sh with independently runnable Bazel checks and an explicit format command. The combined target ran Buildifier, cpplint, clang-format, spelling and Go formatting on remote workers.",
+      "summary": "Released golang.org/x/tools v0.53.0 contains the required goimports fix (588ada / CL858482). The old full-lint-on-empty design is held, and no current //tools/lint:check target exists. Root assigned buildifier_license_fix a contained dependency refresh and checks of the maintained formatter/analyzer entry points; this does not establish full lint completion.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -131009,7 +131010,7 @@
           ]
         }
       ],
-      "nextStep": "Wait for the first golang.org/x/tools tag that contains CL 858482, then verify the full lint build on an empty worker. The v0.52.0 tag predates the merged goimports change.",
+      "nextStep": "buildifier_license_fix prepares and validates the contained dependency refresh on current upstream using actual maintained checks. Preserve the held architecture and existing source-approval boundary; do not revive the absent aggregate target or introduce a new framework.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
