@@ -24,7 +24,7 @@ on:
         required: false
         default: test
         type: choice
-        options: [test, aquery, cquery, run]
+        options: [build, test, aquery, cquery, run]
       run_arguments:
         description: JSON string array passed to the tool when command is run
         required: false
@@ -275,6 +275,11 @@ jobs:
             *) exit 1 ;;
           esac
           case "$BAZEL_COMMAND" in
+            build)
+              "$results/bazel" build "${options[@]}" \
+                --build_event_json_file="$results/events.json" --profile="$results/profile.gz" \
+                "${targets[@]}" 2>&1 | tee "$results/bazel.log"
+              ;;
             test)
               "$results/bazel" test "${options[@]}" --test_env=GO_TEST_WRAP_TESTV=1 \
                 --build_event_json_file="$results/events.json" --profile="$results/profile.gz" \
