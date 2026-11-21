@@ -28,13 +28,13 @@ image_layer(
 
 image_manifest(
     name = "iperf_image",
-    visibility = ["//images:__pkg__"],
     base = "@benchmark_ubuntu",
     cmd = ["/usr/bin/iperf3"],
     layers = [":iperf_layer"],
     tags = ["manual"],
     # Match the executable's Linux platform, independently of the build host.
     target_compatible_with = ["@platforms//os:linux"],
+    visibility = ["//images:__pkg__"],
 )
 
 image_outputs(
