@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T03:47:46.202347+00:00",
+    "updatedAt": "2026-11-21T04:12:33.507810+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10973,8 +10973,8 @@
       "url": "https://github.com/tamird/gvisor/commit/fb4513fe56a2a8fb94fbd6da8d6c61c827dc5688",
       "group": "rbe",
       "status": "Supplier step delivered as #17816; declared-input migration remains open",
-      "updatedAt": "2026-11-19T18:59:24.568877+00:00",
-      "summary": "The qualified proposal declares Goimports and Buildifier tools and source inputs, migrates maintained check/fix callers, and removes duplicate native downloads and discovery. Source checks, eight caller regressions and the actual Go/BUILD fixer fixture passed their recorded remote gates. Exact source 63c29f is published with the same qualified tree; its first contributor source-review question is pending. Earlier broader fork lint/license evidence is retained separately.",
+      "updatedAt": "2026-11-21T04:12:33.507810+00:00",
+      "summary": "The unmodified Aspect diff primitive is proven by44862512173. Direct original-label invocation then hit actual main-repository //tools:BUILD visibility in44864322388 (probe source90ec493, source guard passed). Public #17816 at9c selects629 inputs across589 packages. No catalog, exporter, adapter or production source candidate exists; broad catalog/package exports conflict with the user’s simplification requirement. Root owns the unresolved design choice; prior qualified proposals retain their historical scope.",
       "followup": {
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -10988,12 +10988,12 @@
           "recheckCondition": "Proposal decision or exact current ref/head, source/base or qualification change."
         },
         "owner": "root",
-        "nextAction": "Follow delivered #17816 exact-head CI/review and provider quota recovery. Continue the full declared-input Bazel check/fix migration separately; the small supplier adoption does not complete it.",
-        "recheckCondition": "PR review/source/check/import change, actual quota recovery or next minimal declared-input milestone.",
+        "nextAction": "Root evaluates a materially smaller existing mechanism before source implementation. Keep the direct-label implementation held and preserve the proven Aspect primitive; no user question or expansion into a catalog/exporter/adapter. The delivered supplier PR has its separate existing review/CI owner.",
+        "recheckCondition": "A concrete materially smaller design or an input-owner/visibility change.",
         "observedAt": "2026-11-17T19:58:25.300843+00:00",
         "sourceHead": "63c29f4ef205ae9a8dec3b96e4bb3e32581d6c40",
-        "curatedAt": "2026-11-19T18:59:24.568877+00:00",
-        "disposition": "User declined7921: excessive size and shell machinery, asks buildifier_prebuilt and removal of the host-shell compatibility test. No upstream publication or approval is inferred. Qualified Aspect-based work remains historical research only.",
+        "curatedAt": "2026-11-21T04:12:33.507810+00:00",
+        "disposition": "The unmodified Aspect diff primitive is proven by44862512173. Direct original-label invocation then hit actual main-repository //tools:BUILD visibility in44864322388 (probe source90ec493, source guard passed). Public #17816 at9c selects629 inputs across589 packages. No catalog, exporter, adapter or production source candidate exists; broad catalog/package exports conflict with the user’s simplification requirement. Root owns the unresolved design choice; prior qualified proposals retain their historical scope.",
         "permanentFormatterMilestone": {
           "source": "723486ddd865d3044c5b515865b3a43de6356fde",
           "fixtureSource": "d58ca4f42c5a5a71456cb5de34f43785a6f6670e",
@@ -11150,7 +11150,11 @@
             "file": "formatter-supplier-source-format-44587607770-evidence.json",
             "sha256": "35d81c60f0b12168de4b9496338be7d379689cc72c5dd3c0248d919807142ae9"
           }
-        }
+        },
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/44862512173",
+          "https://github.com/tamird/gvisor/actions/runs/44864322388"
+        ]
       },
       "settledReviews": [
         {
@@ -11167,7 +11171,7 @@
           "note": "User requested aspect_rules_lint reuse. Source assessment identifies declared-source format_test and format_multirun as viable replacements for most custom rule/runner dispatch. Verify exact source membership, flags and JSON error semantics with a cheap remote preflight before revising the unapproved proposal."
         }
       ],
-      "nextStep": "Follow delivered #17816 exact-head CI/review and provider quota recovery. Continue the full declared-input Bazel check/fix migration separately; the small supplier adoption does not complete it.",
+      "nextStep": "Root evaluates a materially smaller existing mechanism before source implementation. Keep the direct-label implementation held and preserve the proven Aspect primitive; no user question or expansion into a catalog/exporter/adapter. The delivered supplier PR has its separate existing review/CI owner.",
       "recheckCondition": "PR review/source/check/import change, actual quota recovery or next minimal declared-input milestone."
     },
     {
