@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T06:15:32.375526+00:00",
+    "updatedAt": "2026-11-21T06:35:55.765252+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10972,7 +10972,7 @@
       "title": "Declare source format checks in Bazel",
       "url": "https://github.com/tamird/gvisor/commit/fb4513fe56a2a8fb94fbd6da8d6c61c827dc5688",
       "group": "rbe",
-      "status": "Supplier step delivered as #17816; declared-input migration remains open",
+      "status": "Supplier step landed as #17816; declared-input migration remains open",
       "updatedAt": "2026-11-21T04:12:33.507810+00:00",
       "summary": "The unmodified Aspect diff primitive is proven by44862512173. Direct original-label invocation then hit actual main-repository //tools:BUILD visibility in44864322388 (probe source90ec493, source guard passed). Public #17816 at9c selects629 inputs across589 packages. No catalog, exporter, adapter or production source candidate exists; broad catalog/package exports conflict with the user’s simplification requirement. Root owns the unresolved design choice; prior qualified proposals retain their historical scope.",
       "followup": {
@@ -48931,9 +48931,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
-        "observedAt": "2026-11-17T16:45:09.051335Z",
-        "disposition": "Published the already-approved amendment after #17612 landed. The rebase preserved the patch according to range-diff. Hosted tests, checker build, make lint and make lint-cc passed. Independent correctness, catch-all, style, documentation and free-range reviews found no substantive issues. GitHub reports the published head as mergeable. Added the contributor-authorized DCO sign-off as 6e4ccf0109 with an identical source tree; DCO passes. Upstream checks are still running.",
-        "nextAction": "Follow maintainer review and upstream checks on the published head. The existing repair-command feedback is already addressed; do not duplicate the earlier reply.",
+        "observedAt": "2026-11-21T06:31:47.700949+00:00",
+        "disposition": "Exact6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef now conflicts with current upstream. Existing repair-command feedback remains addressed; no new repair or patch equivalence is claimed. Root owns the current conflict assessment through the existing rebase queue.",
+        "nextAction": "Assign the exact current conflict assessment, preserving existing approvals, repaired command behavior and dependency/import boundaries before any publication. The source remains unchanged pending that assessment; do not duplicate the earlier reply.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16663",
           "https://github.com/google/gvisor/pull/17612",
@@ -48944,9 +48944,10 @@
         ],
         "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
         "providerHead": "6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
-        "mergeable": "MERGEABLE",
-        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
-        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
+        "mergeable": "CONFLICTING",
+        "recheckCondition": "Owned conflict assessment, qualified current-source candidate or actual source/base/import change.",
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
+        "curatedAt": "2026-11-21T06:35:55.765252+00:00"
       }
     },
     {
@@ -95830,8 +95831,8 @@
       "url": "https://github.com/google/gvisor/pull/17378",
       "head": "8cab980c14e1011e7855955944adc66b1b2554c4",
       "status": "open",
-      "updatedAt": "2026-11-21T06:15:32.375526+00:00",
-      "summary": "Mechanical Go rebase8cab980c14e1011e7855955944adc66b1b2554c4 is delivered and was independently verified OPEN/MERGEABLE/REVIEW_REQUIRED at06:11:22Z, after the canonical06:09 snapshot cutoff. Existing fvoznika/rivera requests, original source approvals and unset auto-merge are preserved; notice7058409582 is posted. Normal1XML/architecture and AMD coverage pass; the ARM compile-product proof used the separately proposed e33 worker overlay, not a fresh full-runtime/performance result. New First Pass2235 independently rejected admission: attempt1 exit80, no agent/start, stack_errored, author1535036 rolling30-day360000-compute-minute quota, zero tests. Old1586 is not applied to this head. Main CI remains a distinct unmet gate.",
+      "updatedAt": "2026-11-21T06:35:55.765252+00:00",
+      "summary": "Delivered8cab980c14e1011e7855955944adc66b1b2554c4 is now canonical OPEN/MERGEABLE/REVIEW_REQUIRED. All reported GitHub validation and DCO checks pass, including native Go export and exported-tree go build ./...; PR-policy build/push steps are skipped. Exact First Pass2235 independently remains the pre-agent rolling30-day360000-compute-minute quota rejection, zero tests. The new canonical StatusContext identity is now available; old1586 is not applied. Main-pipeline admission and broad runtime/performance remain separate unmet gates. The e33 standalone helper proposal is a distinct actual pending publication decision.",
       "evidence": [
         {
           "label": "Go release notes",
@@ -95865,9 +95866,9 @@
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "8cab980c14e1011e7855955944adc66b1b2554c4",
-        "observedAt": "2026-11-21T06:11:22Z",
-        "disposition": "Mechanical Go rebase8cab980c14e1011e7855955944adc66b1b2554c4 is delivered and was independently verified OPEN/MERGEABLE/REVIEW_REQUIRED at06:11:22Z, after the canonical06:09 snapshot cutoff. Existing fvoznika/rivera requests, original source approvals and unset auto-merge are preserved; notice7058409582 is posted. Normal1XML/architecture and AMD coverage pass; the ARM compile-product proof used the separately proposed e33 worker overlay, not a fresh full-runtime/performance result. New First Pass2235 independently rejected admission: attempt1 exit80, no agent/start, stack_errored, author1535036 rolling30-day360000-compute-minute quota, zero tests. Old1586 is not applied to this head. Main CI remains a distinct unmet gate.",
-        "nextAction": "The existing owner follows remaining actual GitHub checks, maintainer review/import, separate main-CI requirements and evidenced provider recovery. Publication under the standing mechanical grant is complete. On the next natural canonical8cab snapshot, bind the already diagnosed2235 failure using its actual StatusContext ID; current retained output lacks that ID, so no old1586 identity is reused. The e33 standalone-helper posting decision belongs to its separate proposal.",
+        "observedAt": "2026-11-21T06:31:47.700949+00:00",
+        "disposition": "Delivered8cab980c14e1011e7855955944adc66b1b2554c4 is now canonical OPEN/MERGEABLE/REVIEW_REQUIRED. All reported GitHub validation and DCO checks pass, including native Go export and exported-tree go build ./...; PR-policy build/push steps are skipped. Exact First Pass2235 independently remains the pre-agent rolling30-day360000-compute-minute quota rejection, zero tests. The new canonical StatusContext identity is now available; old1586 is not applied. Main-pipeline admission and broad runtime/performance remain separate unmet gates. The e33 standalone helper proposal is a distinct actual pending publication decision.",
+        "nextAction": "Follow existing maintainer review/import, main-CI requirements and evidenced provider recovery. The mechanical Go publication and GitHub export wait are complete; do not repeat CI reads, retries or outreach. Keep the helper’s separate existing proposal and broad performance gates intact.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17378",
           "https://github.com/tamird/gvisor/commit/3349d4ca3",
@@ -95885,9 +95886,31 @@
           "https://buildkite.com/gvisor/first-pass/builds/2235#01a1fcb8-ec47-40ed-a501-8aa4f7b3cb1f"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Next canonical8cab check identity, actual current-head CI/main/review/import event or provider recovery.",
-        "attentionDispositions": [],
-        "curatedAt": "2026-11-21T06:15:32.375526+00:00",
+        "recheckCondition": "Actual current-head provider/main/review/import change, evidenced admission recovery or reply to the separate helper proposal.",
+        "attentionDispositions": [
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "First Pass2235: independently diagnosed rolling30-day quota admission failure",
+            "nextAction": "Follow existing maintainer review/import, main-CI requirements and evidenced provider recovery. The mechanical Go publication and GitHub export wait are complete; do not repeat CI reads, retries or outreach. Keep the helper’s separate existing proposal and broad performance gates intact.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/2235#01a1fcb8-ec47-40ed-a501-8aa4f7b3cb1f"
+            ],
+            "binding": {
+              "sourceHead": "8cab980c14e1011e7855955944adc66b1b2554c4",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN3MYi6w",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/2235",
+                  "kind": "status"
+                }
+              ]
+            }
+          }
+        ],
+        "curatedAt": "2026-11-21T06:35:55.765252+00:00",
         "providerHead": "8cab980c14e1011e7855955944adc66b1b2554c4"
       },
       "refinement": {
@@ -95936,8 +95959,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "The existing owner follows remaining actual GitHub checks, maintainer review/import, separate main-CI requirements and evidenced provider recovery. Publication under the standing mechanical grant is complete. On the next natural canonical8cab snapshot, bind the already diagnosed2235 failure using its actual StatusContext ID; current retained output lacks that ID, so no old1586 identity is reused. The e33 standalone-helper posting decision belongs to its separate proposal.",
-      "recheckCondition": "Next canonical8cab check identity, actual current-head CI/main/review/import event or provider recovery."
+      "nextStep": "Follow existing maintainer review/import, main-CI requirements and evidenced provider recovery. The mechanical Go publication and GitHub export wait are complete; do not repeat CI reads, retries or outreach. Keep the helper’s separate existing proposal and broad performance gates intact.",
+      "recheckCondition": "Actual current-head provider/main/review/import change, evidenced admission recovery or reply to the separate helper proposal."
     },
     {
       "id": "pr:17394",
@@ -104544,16 +104567,16 @@
       "title": "Use prebuilt Buildifier for native lint",
       "url": "https://github.com/google/gvisor/pull/17816",
       "group": "rbe",
-      "status": "open",
-      "updatedAt": "2026-11-20T14:55:02.627201+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-21T06:35:55.765252+00:00",
       "followup": {
         "owner": "root",
-        "curatedAt": "2026-11-20T20:48:41.652999+00:00",
+        "curatedAt": "2026-11-21T06:35:55.765252+00:00",
         "sourceHead": "9c2814db01620f643809f38f3f2e929ab35f4aef",
-        "observedAt": "2026-11-20T20:48:41.652999+00:00",
-        "disposition": "Exact9c2814 has Etienne’s fresh approval and passing GitHub source/DCO checks; Milan’s earlier changes-requested review still awaits reviewer disposition. Root’s unique20:43 canonical observation verified First Pass2135 STARTED with its failed AMD syscall attempt subsequently passed, and main55518 STARTED with15 recovered attempts plus four pending retries (ARM Docker6 and Go runtime2/4/9, prior exits-1). No source or quota attribution follows from those interruptions; old2076 quota is historical.",
-        "nextAction": "Root consumes the next actual current-build/runtime event and existing reviewer disposition. No new poll from this metadata owner, manual retry, source churn or duplicate outreach.",
-        "recheckCondition": "A new exact-head canonical build/runtime event or reviewer/import change.",
+        "observedAt": "2026-11-21T06:31:47.700949+00:00",
+        "disposition": "Merged by the maintainer at2026-11-21T06:16:49Z as8da0d1568267faca963bfe36d7c1c64ac851362f, from9c2814db01620f643809f38f3f2e929ab35f4aef. The supplier/license amendment is delivered and PR-level review/CI waits are complete. The broader declared-input formatting migration retains its separate design owner and open scope.",
+        "nextAction": "Retain the source branch under existing cleanup retention/public-source protections. No further PR reply, re-request or CI retry is needed. Continue the separately owned declared-input formatting design; this landing does not complete that migration.",
+        "recheckCondition": "Canonical cleanup eligibility after retention/protection checks, or actual new post-landing feedback affecting the delivered supplier.",
         "delivery": {
           "source": "fb4513fe56a2a8fb94fbd6da8d6c61c827dc5688",
           "approvedSource": "f2afd9bb79190ea304d402f1063810a286c1fe2e",
@@ -104586,9 +104609,9 @@
           "https://buildkite.com/gvisor/first-pass/builds/2076#01a1f963-eded-4912-941d-4946bf891dce"
         ]
       },
-      "summary": "License-manifest correction9c2814db01620f643809f38f3f2e929ab35f4aef is delivered OPEN/MERGEABLE/BLOCKED with signature/DCO verified. GitHub Go44755227977, lint/Gazelle/file-header/generation checks pass. FirstPass2076 remains upload-only exit80 before any license test, without diagnostic log; owner is following CI. Rebase comment7042475031 is posted. Root saved and verified milantracy review re-request alongside parth-opensrc/riverafernando using the user-authorized native action. Review5985707150 remains unresolved awaiting reviewer disposition; no reply/re-request is pending human approval. Auto-merge is null and no merge action occurred.",
-      "nextStep": "Root consumes the next actual current-build/runtime event and existing reviewer disposition. No new poll from this metadata owner, manual retry, source churn or duplicate outreach.",
-      "recheckCondition": "A new exact-head canonical build/runtime event or reviewer/import change."
+      "summary": "Merged by the maintainer at2026-11-21T06:16:49Z as8da0d1568267faca963bfe36d7c1c64ac851362f, from9c2814db01620f643809f38f3f2e929ab35f4aef. The supplier/license amendment is delivered and PR-level review/CI waits are complete. The broader declared-input formatting migration retains its separate design owner and open scope.",
+      "nextStep": "Retain the source branch under existing cleanup retention/public-source protections. No further PR reply, re-request or CI retry is needed. Continue the separately owned declared-input formatting design; this landing does not complete that migration.",
+      "recheckCondition": "Canonical cleanup eligibility after retention/protection checks, or actual new post-landing feedback affecting the delivered supplier."
     },
     {
       "id": "branch:python-strict-typechecking",
