@@ -75,8 +75,19 @@ go_test(
         "sandbox_test.go",
     ],
     embed = [":sandbox"],
-    # Network namespace tests require root and IPv6 support.
-    local = True,
+    # Use BuildBuddy's microVM runner for namespace operations:
+    # https://www.buildbuddy.io/docs/rbe-microvms/
+    # Its default OCI runner omits CAP_SYS_ADMIN:
+    # https://github.com/buildbuddy-io/buildbuddy/blob/168813c94525e5106459531fb629429d5fe2fb60/enterprise/server/remote_execution/containers/ociruntime/ociruntime.go#L157-L173
+    # Disable external networking, which Firecracker enables by default:
+    # https://www.buildbuddy.io/docs/rbe-platforms/#runner-container-support
+    exec_properties = {
+        "test.network": "off",
+        # BuildBuddy disables guest IPv6 unless requested:
+        # https://github.com/buildbuddy-io/buildbuddy/pull/11585
+        "test.network-enable-ipv6": "true",
+        "test.workload-isolation-type": "firecracker",
+    },
     deps = [
         "//pkg/control/server",
         "//pkg/prometheus",
