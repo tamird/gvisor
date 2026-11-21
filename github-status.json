@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T02:31:35.843688+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T02:11:18.292532+00:00",
+  "registryDate": "2026-11-21T02:33:33.655Z",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -458786,9 +458786,9 @@
       ],
       "recordedFollowup": {
         "owner": "root",
-        "sourceHead": "f1a42e1b95c109bbddc49003ad084a9b28ab0664",
-        "disposition": "User-approved f1a42e1b95c109bbddc49003ad084a9b28ab0664 is published by exact lease and native MERGEABLE. The approved behavior-only reply4647437580 is posted and Milan’s native review re-request persisted; no automatic merge change occurred. DCO, lint, Gazelle and file-header checks pass; Go export is successful in the current canonical snapshot. First Pass2140 independently failed admission before agent assignment: exit80, stack_errored=true, agent_id=null, started_at=null and the author1535036 rolling30-day360,000-compute-minute quota. No project test ran. The former missing-approval/provenance obligation is retired by this actual user approval and delivery.",
-        "nextAction": "Root follows existing exact-head reviewer/import disposition and only future evidenced quota-clearance, new-head or check events. Diagnosis2140 is terminal, with no further polling, retry, CI-owner outreach or user question."
+        "sourceHead": "00c5cd11a3952bf965588d48dd19329cb45de332",
+        "disposition": "The approved equivalent rebase00c5cd11a3952bf965588d48dd19329cb45de332 is delivered OPEN/MERGEABLE with DCO success and notice7055962171. Fresh remote execution passed16 native and16 systrap cases, plus source checks and strict C++ analysis over377 sources. Existing Milan/kerumeto requests and merge settings are preserved. New exact-head First Pass2208 independently fails admission before an agent starts: exit80, stack_errored, agent_id/started_at null, author1535036 rolling30-day360,000-compute-minute quota. Historical2140 is not reused; #17836’s separate admission does not clear this failure.",
+        "nextAction": "Root follows actor-owned remaining GitHub checks and existing reviewer/import events; recheck2208 only on actual provider admission recovery or new source/check evidence. No duplicate CI diagnosis, retry, notification or source-approval question. The pretest-worker mismatch is closed by the canonical remote runner."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3GCGtA"
@@ -467435,7 +467435,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T02:11:18.292532+00:00"
+        "observedAt": "2026-11-21T02:33:33.655Z"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -467444,7 +467444,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T02:11:18.292532+00:00"
+        "observedAt": "2026-11-21T02:33:33.655Z"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -467453,7 +467453,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T02:11:18.292532+00:00"
+        "observedAt": "2026-11-21T02:33:33.655Z"
       }
     },
     "branch:rules-img-rust": {
@@ -467462,7 +467462,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T02:11:18.292532+00:00"
+        "observedAt": "2026-11-21T02:33:33.655Z"
       }
     },
     "branch:package-clang-format": {
@@ -467471,7 +467471,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T02:11:18.292532+00:00"
+        "observedAt": "2026-11-21T02:33:33.655Z"
       }
     },
     "branch:staged-release-tag": {
@@ -467480,7 +467480,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T02:11:18.292532+00:00"
+        "observedAt": "2026-11-21T02:33:33.655Z"
       }
     },
     "branch:staged-release-publication": {
@@ -467489,7 +467489,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T02:11:18.292532+00:00"
+        "observedAt": "2026-11-21T02:33:33.655Z"
       }
     }
   },
