@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T15:21:17.931599+00:00",
+    "updatedAt": "2026-11-21T15:42:31.456870+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -49,8 +49,8 @@
       "lastResult": "Removed 148 local branches and 67 fork branches. Local branches went from 2,704 to 2,556 and fork branches from 3,676 to 3,609. The 227 open upstream PR heads and 1 open fork PR head all matched their published branches. refs/branch-cleanup/archive at 3f221e657 preserves 177 distinct tips and all 148 original local reflogs.",
       "owner": "root",
       "observedAt": "2026-11-18T06:58:20.703035+00:00",
-      "nextAction": "Exact merged-only operation is complete. Preserve both prior fail-closed API attempts and archive recovery. Broader79-plan/local/unmerged/user-owned cleanup remains NOT implicitly authorized; no repeat of the completed operation.",
-      "recheckCondition": "A separately authorized broader scope, new eligible merged source or an archive/ref discrepancy.",
+      "nextAction": "The bounded canonical merged-only DRY RUN completed successfully with zero eligible refs and no deletion/archive/ref/index/checkout/config mutation. Preserve the completed Nov18 exact 80-ref operation and Nov13 full-audit clock; broader original-plan/local/unmerged/user-owned cleanup remains unapproved. No repeat of the 80-ref operation is needed.",
+      "recheckCondition": "New canonically eligible merged source, an archive/ref discrepancy, or separately authorized broader cleanup scope.",
       "pendingApproval": {
         "status": "Broader original plan not approved by the exact merged-only execution override",
         "manifestSHA256": "e6db36dbf362bacd1a883a512a42a39530cb974ce046f708e5137cce88e35ab9",
@@ -98107,10 +98107,10 @@
       "followup": {
         "sourceHead": "b08bf67a0996f2732d82ad5b35949048cc2139f0",
         "owner": "approved_rebase_queue / root",
-        "nextAction": "Root and approved_rebase_queue await actual authorized quiet/controlled-route information already requested. Recheck a real route/configuration change with same-source controls first; no source repair, unchanged repeat, N inflation or candidate comparison is justified.",
+        "nextAction": "The tested GitHub ubuntu-24.04 controller route is inadmissible for the unchanged paired worker: admission 44920236359 found only CPUs 0\u20133 allowed, while 0\u20134 are required. Exit 78 was deliberate; source preservation and credential cleanup passed, with no Docker worker, resources, traffic or timing launched. Recheck an existing authorized >=5-CPU configuration satisfying the original affinity through the same capability preflight, then same-source A/A first. Keep the unanswered executor information request; this does not prove all routes unusable or exclusivity necessary.",
         "mergeable": "CONFLICTING",
         "observedAt": "2026-11-20T23:27:51.953187+00:00",
-        "recheckCondition": "Actual authorized controlled route or material configuration change enabling the required same-source controls.",
+        "recheckCondition": "An existing authorized configuration satisfying the unchanged CPU/affinity admission, followed by capability and same-source controls; no source decision or workload weakening.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17472",
           "https://github.com/tamird/gvisor/commit/6827c2cfbc7102549d4ea74eb602516db2635a16",
@@ -98119,10 +98119,11 @@
           "https://buildkite.com/gvisor/first-pass/builds/1584#01a1eae1-b374-4300-951e-d506a17dbb07",
           "https://github.com/tamird/gvisor/actions/runs/44834353488",
           "https://github.com/tamird/gvisor/actions/runs/44836788962",
-          "https://github.com/tamird/gvisor/actions/runs/44838495979"
+          "https://github.com/tamird/gvisor/actions/runs/44838495979",
+          "https://github.com/tamird/gvisor/actions/runs/44920236359/artifacts/14713770484"
         ],
         "implementationOwner": "approved_rebase_queue",
-        "curatedAt": "2026-11-21T14:41:42.118636+00:00",
+        "curatedAt": "2026-11-21T15:42:31.456870+00:00",
         "disposition": "Same-source controls remain 31/38 within the fixed \u00b12% criterion and 7 INCONCLUSIVE, with no candidate comparison. GraphLoad\u2019s adaptive N4/5 allocation discrepancy is resolved in existing fixed 5x control: both arms have 61,720,168B/op and 444,497allocs/op, but latency remains inconclusive. GraphSave\u2019s allocated/encoded bytes and allocation counts were stable despite 13.79% time drift. No allocator, pool/map or quiet-host latency cause is established. Four CheckpointEmpty/Nginx and RestoreEmpty/Nginx broad controls remain unqualified."
       },
       "dcoAmendment": {
@@ -120792,8 +120793,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-18T15:19:38.271579+00:00",
-      "summary": "The default-branch workflow requests a refresh at minutes 7, 17, 27, 37, 47 and 57. On November 8 GitHub recorded five scheduled runs, at 01:32, 07:52, 14:34, 19:01 and 22:45 UTC. All five succeeded. These timestamps establish gaps between scheduled runs. The cause of the missing events is unknown. An explicit dispatch at 00:03 UTC on November 9 succeeded, and the active owner\u2019s next collection checked GitHub at 00:14 UTC.",
+      "updatedAt": "2026-11-21T15:42:31.456870+00:00",
+      "summary": "One authorized disable/enable sequence for existing workflow 378998679 was accepted; finally-enable restored verified active state, registration updated_at 15:32:11, with default master and workflow bytes/cron/permissions unchanged. The intermediate disabled-state read did not confirm a transition. The post-15:38 native check still lists 08:46:44 as the latest schedule event; no recovered triggering is established and ordinary provider delay remains possible. Manual fallback 44919894578 succeeded and sampled at 15:37:20. No cause or permanent scheduler repair is claimed.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -121036,7 +121037,7 @@
           ]
         }
       ],
-      "nextStep": "Monitor the repaired default-branch refresh workflow and verify subsequent scheduled events. Distinguish missed schedule events from collection failures. The active portfolio goal supervises ongoing ownership; no separate fixed-cadence app task is installed.",
+      "nextStep": "Keep the existing manual freshness guard at 15:54:20 (deadline 16:02:20) and check for an actual post-reset schedule event before any fallback. One future event must be observed, not inferred from active state or updated_at. No second toggle, source/cron rewrite, new monitor or permission change.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -121089,32 +121090,52 @@
         {
           "label": "Successful November 9 dispatch",
           "url": "https://github.com/tamird/gvisor/actions/runs/42538110194"
+        },
+        {
+          "label": "Latest actual pre-reset scheduled event",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44886461540"
+        },
+        {
+          "label": "Unchanged fork-default workflow source",
+          "url": "https://github.com/tamird/gvisor/blob/fc8a0f4298cb4b48dd2109ed3c8029f1f0c4871d/.github/workflows/work-map.yml"
+        },
+        {
+          "label": "Documented workflow enable/disable control",
+          "url": "https://docs.github.com/en/actions/how-tos/manage-workflow-runs/disable-and-enable-workflows"
+        },
+        {
+          "label": "Scheduled-event constraints and delay limits",
+          "url": "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule"
+        },
+        {
+          "label": "Existing manual fallback after the single reset",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44919894578"
         }
       ],
       "technicalOwner": "Codex",
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
+      "recheckCondition": "Actual post-reset scheduled event/completion or existing manual freshness lead; preserve the one-reset boundary.",
       "lifecycleCoordination": {
         "owner": "root",
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
       },
       "currentHealth": {
-        "observedAt": "2026-11-18T15:19:38.271579+00:00",
+        "observedAt": "2026-11-21T15:42:31.456870+00:00",
         "owner": "root",
         "workflowState": "active",
         "actionsEnabled": true,
-        "defaultWorkflowHead": "1748f943694d376fd26123b11009ab01ffa9b597",
+        "defaultWorkflowHead": "fc8a0f4298cb4b48dd2109ed3c8029f1f0c4871d",
         "cron": "7,17,27,37,47,57 * * * *",
-        "latestNativeScheduleRun": 44273240471,
-        "latestNativeScheduleAt": "2026-11-18T09:09:14Z",
+        "latestNativeScheduleRun": 44886461540,
+        "latestNativeScheduleAt": "2026-11-21T08:46:44Z",
         "latestNativeScheduleConclusion": "success",
-        "currentManualSweep": 44331826303,
-        "currentSnapshotAt": "2026-11-18T15:10:11.753341+00:00",
+        "currentManualSweep": 44919894578,
+        "currentSnapshotAt": "2026-11-21T15:37:20.047371+00:00",
         "currentManualConclusion": "success",
-        "cause": "Workflow remains active but no native schedule event after successful44273240471 at09:09:14Z. Manual snapshot-only collectors succeed; cause of missing native events remains unknown.",
-        "nextAction": "Preserve this newer automated snapshot. Continue snapshot-only collection during active lifecycle sweeps and recheck native event creation; do not create a competing scheduler or blindly re-register the active workflow.",
-        "recheckCondition": "A new native scheduled event, provider/activation change, manual collector failure or stale snapshot.",
-        "currentSnapshotSource": "snapshot-only manual sweep44331826303"
+        "cause": "No post-reset event observed at the after 15:38 native check; latest actual schedule remains 08:46:44. Provider/registration cause is unproven. One public GitHub Status read (page updated 12:29:23.505) reports no incident; it does not exclude a repo-specific issue.",
+        "nextAction": "Keep the existing manual freshness guard at 15:54:20 (deadline 16:02:20) and check for an actual post-reset schedule event before any fallback. One future event must be observed, not inferred from active state or updated_at. No second toggle, source/cron rewrite, new monitor or permission change.",
+        "recheckCondition": "Actual post-reset scheduled event/completion or existing manual freshness lead; preserve the one-reset boundary.",
+        "currentSnapshotSource": "Verified snapshot-only manual 44919894578"
       }
     },
     {

@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T15:37:20.047371+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T15:21:17.931599+00:00",
+  "registryDate": "2026-11-21T15:42:31.456870+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -453336,7 +453336,7 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "b08bf67a0996f2732d82ad5b35949048cc2139f0",
         "disposition": "Same-source controls remain 31/38 within the fixed ±2% criterion and 7 INCONCLUSIVE, with no candidate comparison. GraphLoad’s adaptive N4/5 allocation discrepancy is resolved in existing fixed 5x control: both arms have 61,720,168B/op and 444,497allocs/op, but latency remains inconclusive. GraphSave’s allocated/encoded bytes and allocation counts were stable despite 13.79% time drift. No allocator, pool/map or quiet-host latency cause is established. Four CheckpointEmpty/Nginx and RestoreEmpty/Nginx broad controls remain unqualified.",
-        "nextAction": "Root and approved_rebase_queue await actual authorized quiet/controlled-route information already requested. Recheck a real route/configuration change with same-source controls first; no source repair, unchanged repeat, N inflation or candidate comparison is justified."
+        "nextAction": "The tested GitHub ubuntu-24.04 controller route is inadmissible for the unchanged paired worker: admission 44920236359 found only CPUs 0–3 allowed, while 0–4 are required. Exit 78 was deliberate; source preservation and credential cleanup passed, with no Docker worker, resources, traffic or timing launched. Recheck an existing authorized >=5-CPU configuration satisfying the original affinity through the same capability preflight, then same-source A/A first. Keep the unanswered executor information request; this does not prove all routes unusable or exclusivity necessary."
       },
       "conflictObservedSince": "2026-11-20T21:07:20.274292+00:00"
     },
@@ -460580,7 +460580,7 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "b08bf67a0996f2732d82ad5b35949048cc2139f0",
         "disposition": "Same-source controls remain 31/38 within the fixed ±2% criterion and 7 INCONCLUSIVE, with no candidate comparison. GraphLoad’s adaptive N4/5 allocation discrepancy is resolved in existing fixed 5x control: both arms have 61,720,168B/op and 444,497allocs/op, but latency remains inconclusive. GraphSave’s allocated/encoded bytes and allocation counts were stable despite 13.79% time drift. No allocator, pool/map or quiet-host latency cause is established. Four CheckpointEmpty/Nginx and RestoreEmpty/Nginx broad controls remain unqualified.",
-        "nextAction": "Root and approved_rebase_queue await actual authorized quiet/controlled-route information already requested. Recheck a real route/configuration change with same-source controls first; no source repair, unchanged repeat, N inflation or candidate comparison is justified."
+        "nextAction": "The tested GitHub ubuntu-24.04 controller route is inadmissible for the unchanged paired worker: admission 44920236359 found only CPUs 0–3 allowed, while 0–4 are required. Exit 78 was deliberate; source preservation and credential cleanup passed, with no Docker worker, resources, traffic or timing launched. Recheck an existing authorized >=5-CPU configuration satisfying the original affinity through the same capability preflight, then same-source A/A first. Keep the unanswered executor information request; this does not prove all routes unusable or exclusivity necessary."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAANxx6rRg"
@@ -462447,7 +462447,7 @@
         "since": "2026-11-21T15:01:28.141765+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T15:21:17.931599+00:00"
+        "observedAt": "2026-11-21T15:42:31.456870+00:00"
       }
     },
     "pr:15147": {
@@ -469926,7 +469926,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T15:21:17.931599+00:00"
+        "observedAt": "2026-11-21T15:42:31.456870+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -469935,7 +469935,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T15:21:17.931599+00:00"
+        "observedAt": "2026-11-21T15:42:31.456870+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -469944,7 +469944,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T15:21:17.931599+00:00"
+        "observedAt": "2026-11-21T15:42:31.456870+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -469953,7 +469953,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T15:21:17.931599+00:00"
+        "observedAt": "2026-11-21T15:42:31.456870+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -469962,7 +469962,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T15:21:17.931599+00:00"
+        "observedAt": "2026-11-21T15:42:31.456870+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -469971,7 +469971,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T15:21:17.931599+00:00"
+        "observedAt": "2026-11-21T15:42:31.456870+00:00"
       }
     },
     "investigation:unit-test-worker-requirements": {
@@ -469980,7 +469980,7 @@
         "since": "2026-11-21T13:24:07.659680+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T15:21:17.931599+00:00"
+        "observedAt": "2026-11-21T15:42:31.456870+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -469989,7 +469989,7 @@
         "since": "2026-11-21T14:00:19.559771+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T15:21:17.931599+00:00"
+        "observedAt": "2026-11-21T15:42:31.456870+00:00"
       }
     }
   },
