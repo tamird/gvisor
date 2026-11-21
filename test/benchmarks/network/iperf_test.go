@@ -215,13 +215,16 @@ func BenchmarkIperfManyConnections(b *testing.B) {
 				Parallel: bm.parallel,
 			}
 
+			cmd := append(iperf.MakeCmd("iperfsrv", port), "--debug")
+			cmd = append([]string{"timeout", "--signal=INT", "--kill-after=5s", "30s"}, cmd...)
+
 			// Run the client.
 			b.ResetTimer()
 			out, err := client.Run(ctx, dockerutil.RunOpts{
 				Image:      "benchmarks/iperf",
 				CpusetCpus: harness.ClientCPUSet(),
 				Links:      []string{server.MakeLink("iperfsrv")},
-			}, iperf.MakeCmd("iperfsrv", port)...)
+			}, cmd...)
 			if err != nil {
 				b.Fatalf("failed to run client: %v (output: %q)", err, out)
 			}
