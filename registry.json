@@ -103126,9 +103126,9 @@
         "owner": "root",
         "sourceHead": "5c8a182619525e77d210a31a9b9ff575251165f3",
         "observedAt": "2026-11-18T20:06:11.890448+00:00",
-        "disposition": "Published 5c8a1826 and its lifecycle remain intact. Nine HTTPD leaves and calibrations passed request contracts on unchanged images/runtime products. Independent one-setting source bfcd258166ec1c9b028a67c390d163bc42320476 has AMD compilation and all five maintained source checks complete; ARM compilation still needs the existing shared profile repair for a missing local x86_64 GCC. No permanent fix, performance or cause claim follows.",
-        "nextAction": "httpd_functional_resume composes the minimal existing ten-path support on independent bfcd and closes missing ARM compilation/current lint-cc before final source review. Preserve the measured workload and original source/publication boundary.",
-        "recheckCondition": "Actual repaired ARM build and full maintained lint-cc plus final review, or genuine PR lifecycle change.",
+        "disposition": "Published 5c8a1826 and its lifecycle remain intact. HTTPD has valid nine-leaf request-contract outcomes, AMD compilation and all five maintained linters; shared strict C++ checks cover 374 first-party sources. Final ARM build44947661419 is workflow-successful but its artifact audit is pending. Prepared e383b2ac6d7a0424395b031ee57b30f60d94d40a adds only DCO metadata to the unchanged bfcd tree. Root final adversarial review has not run; no source approval or publication is inferred.",
+        "nextAction": "httpd_functional_resume audits the ARM artifact and hands the exact one-setting source to root for final adversarial review before any publication question. Preserve the original workload and source boundaries; do not rerun reconciled C++/configuration checks.",
+        "recheckCondition": "Owner-audited final ARM artifact and root final review, followed by an actual publication question/decision; existing PR lifecycle stays separate.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/44231839538",
           "https://github.com/tamird/gvisor/actions/runs/44231202091",
@@ -103146,7 +103146,8 @@
           "https://github.com/tamird/gvisor/actions/runs/44934752057",
           "https://github.com/tamird/gvisor/actions/runs/44936022233",
           "https://github.com/tamird/gvisor/actions/runs/44936709265",
-          "https://github.com/tamird/gvisor/actions/runs/44941850928"
+          "https://github.com/tamird/gvisor/actions/runs/44941850928",
+          "https://github.com/tamird/gvisor/actions/runs/44947661419"
         ],
         "qualificationHistory": [
           {
@@ -130637,9 +130638,9 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-21T20:24:12.963090+00:00",
+      "updatedAt": "2026-11-21T20:45:26.098382+00:00",
       "group": "analysis",
-      "summary": "The x/tools36e global refresh remains held for shared production dependency/runtime coupling; no isolated graph is implemented. A repaired profile has 288 actual remote C/C++ processes, with the original LLVM/protobuf actions selecting Ubuntu24/glibc2.39; ARM generator admission also passed matching ELF/runtime. Full maintained AMD lint-cc44945623947 is still live, so no strict-completion or regression claim is made.",
+      "summary": "The repaired shared profile passed maintained AMD lint-cc: 379 commands cover 374 first-party sources, with source/config/native-toolchain equivalence reconciled. Native C/proto core e601 also verifies the AArch64 helper on the matching action CPU. These close the profile-check gaps, not x/tools36e production coupling: that global refresh remains held for runtime compatibility/performance, and no isolated graph is implemented.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -131011,7 +131012,7 @@
           ]
         }
       ],
-      "nextStep": "buildifier_license_fix audits the live full lint-cc result under the existing repaired profile, preserving valid formatter/analyzer/source/license proof and the held dependency boundary. No experimental isolation flag, fork, framework or revived old aggregate architecture.",
+      "nextStep": "buildifier_license_fix retains the dependency-scope recovery and completed maintained checks. Do not treat the shared-profile proof as runtime qualification of global36e or revive the held lint architecture.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
