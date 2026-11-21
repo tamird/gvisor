@@ -93564,7 +93564,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:58.120129+00:00",
-      "summary": "The published rebase is one mergeable commit. The 298 ordered source and file lines match the previously approved patch. On native AMD64 Linux all 61 TCP and 48 SACK test records passed. TestKeepaliveReenable passed on Linux in 4.08 seconds and on gVisor in 4.06 seconds.\n\nThe timer now consumes each clock wake under the endpoint lock before calling a TCP handler. It discards canceled wakes, rearms early ones, and invokes the handler only for a due timer. This replaces the old handler-side predicate that also changed timer state.\n\nThree packet tests observed one, one, and two probes. All 60 package records, eight selected end-to-end records, and both architecture analyzers passed on ad55e4137. The proposed source differs by two comment lines. The median allocation counts were 26, 168, and 171 in both arms.\n\nAllocation size in six paired AMD64 samples:\n                                   │    stock     │               fixed                │\n                                   │     B/op     │     B/op      vs base              │\nWildcardBindClose-2                  4.844Ki ± 0%   4.852Ki ± 0%  +0.16% (p=0.002 n=6)\nKeepaliveHandshake/enabled=false-2   18.03Ki ± 1%   18.12Ki ± 1%  +0.49% (p=0.041 n=6)",
+      "summary": "Current public f069808da1b9876130c7a853fe2fbb9f815d8519 is conflicting. Root assigns the existing rebase owner to assess the current-base conflict; no new source or publication is inferred. Historical proof on the published patch: 298 ordered source/file lines matched its approved predecessor, native AMD64 had 61 TCP and 48 SACK records pass, and TestKeepaliveReenable passed on Linux and gVisor. These results do not qualify a future conflict adaptation.\n\nThe timer now consumes each clock wake under the endpoint lock before calling a TCP handler. It discards canceled wakes, rearms early ones, and invokes the handler only for a due timer. This replaces the old handler-side predicate that also changed timer state.\n\nThree packet tests observed one, one, and two probes. All 60 package records, eight selected end-to-end records, and both architecture analyzers passed on ad55e4137. The proposed source differs by two comment lines. The median allocation counts were 26, 168, and 171 in both arms.\n\nAllocation size in six paired AMD64 samples:\n                                   │    stock     │               fixed                │\n                                   │     B/op     │     B/op      vs base              │\nWildcardBindClose-2                  4.844Ki ± 0%   4.852Ki ± 0%  +0.16% (p=0.002 n=6)\nKeepaliveHandshake/enabled=false-2   18.03Ki ± 1%   18.12Ki ± 1%  +0.49% (p=0.041 n=6)",
       "evidence": [
         {
           "label": "Published TCP timer wakeup fix",
@@ -93599,7 +93599,7 @@
         "owner": "root",
         "sourceHead": "f069808da1b9876130c7a853fe2fbb9f815d8519",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "The published rebase is one mergeable commit. The 298 ordered source and file lines match the previously approved patch. On native AMD64 Linux all 61 TCP and 48 SACK test records passed. TestKeepaliveReenable passed on Linux in 4.08 seconds and on gVisor in 4.06 seconds.",
+        "disposition": "Current public f069808da1b9876130c7a853fe2fbb9f815d8519 is conflicting. Root assigns the existing rebase owner to assess the current-base conflict; no new source or publication is inferred. Historical proof on the published patch: 298 ordered source/file lines matched its approved predecessor, native AMD64 had 61 TCP and 48 SACK records pass, and TestKeepaliveReenable passed on Linux and gVisor. These results do not qualify a future conflict adaptation.",
         "nextAction": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17286",
@@ -140988,11 +140988,11 @@
           }
         ],
         "curatedAt": "2026-11-20T23:41:26.383263+00:00",
-        "nextAction": "compdb_final_correctness closes the LLVM startup/caller and source review boundary before any new proposal. Root retains the user’s toolchain/consolidation direction and actual publication authority; do not reopen f611’s superseded question or infer a permanent fork pin.",
-        "recheckCondition": "Actual LLVM startup/caller/source-review evidence and user direction, followed by a compatible upstream release/pin.",
+        "nextAction": "Root follows supplier #236 and publishes the already-approved LLVM producer change when its prerequisite permits, then verifies a compatible upstream release before gVisor pin/adoption. Preserve completed caller/product evidence and the separate pending worker/network question; do not reopen supplier approval.",
+        "recheckCondition": "Supplier #236 landing, a compatible producer/release artifact or actual upstream feedback; approval is already recorded and is not the remaining gate.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
-        "disposition": "The user’s musl-versus-hermetic-LLVM challenge keeps f611 publication superseded/HOLD. Local LLVM producer447 has passing product gates, while startup and actual caller qualification are still ongoing under compdb_final_correctness; it is not review-ready or approved for publication. Prior completed musl/caller proofs remain scoped to that baseline and do not qualify LLVM. Compatible upstream producer/release adoption remains open.",
+        "disposition": "The user approved the qualified LLVM supplier source 44774d5c6b106d09460c5bb85ac64506a712c35b. Startup, actual caller and independent review evidence are complete within their recorded platform/configuration limits. Its publication and gVisor adoption still depend on upstream #236 landing and compatible rebuilt release artifacts; no permanent fork pin or adoption is inferred. The superseded f611 proposal remains held.",
         "dispatcherPublication": {
           "head": "4480e62fd021dce45bed3fe024e1db0923c01b63",
           "state": "Verified published: dependency-closure queries, hidden diagnostics and existing rules_go correctness XML opt-in. Standing fork-maintenance authorization applies; no execution approval pending."
@@ -141766,19 +141766,9 @@
       "title": "Report client aggregate Iperf bandwidth",
       "owner": "root",
       "head": "9cf0dbbe278572fd39d877a0d542483573a0185b",
-      "updatedAt": "2026-11-21T17:49:33.071675+00:00",
-      "summary": "The actual one-commit PR publication question for 9cf is pending. All 18 tools tests, source checks and both independent reviews passed; DCO is included. The historical ead577 payload proposal and the separate approved Iperf3 migration retain their own source and decision boundaries. Nothing is published upstream.",
-      "nextStep": "Root awaits the existing question’s reply: Approve opening PR or Keep with Iperf3 migration. Do not repeat the question or transfer predecessor approvals. The empirical A/A result remains subject to its owner’s audit and does not approve source publication.",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "9cf0dbbe278572fd39d877a0d542483573a0185b",
-        "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
-        "url": "https://github.com/tamird/gvisor/commit/9cf0dbbe278572fd39d877a0d542483573a0185b",
-        "title": "Report client aggregate Iperf bandwidth",
-        "body": "Parallel Iperf benchmarks reported the first connection’s bandwidth instead of the client aggregate. Select the final aggregate summary for parallel transfers and the final numeric summary for a single stream. Reject a missing or malformed final summary instead of using an earlier report.\n\nThis reports the producer’s rate; it does not correct its interval accounting.\n\nPosted by Codex on behalf of @tamird.",
-        "summary": "Approve opening a one-commit gVisor PR for https://github.com/tamird/gvisor/commit/9cf0dbbe278572fd39d877a0d542483573a0185b, “Report client aggregate Iperf bandwidth”?\n\nTwo existing files select the final aggregate for parallel transfers and reject missing or malformed summaries. All 18 tools tests, source checks and both independent reviews passed. DCO is included. The separate Iperf3 migration remains unchanged.\n\nRoot confirms the tool accepted this question and it is unanswered. Options: Approve opening PR / Keep with Iperf3 migration. No precise submission timestamp or question ID was supplied."
-      },
+      "updatedAt": "2026-11-21T18:06:34.151123+00:00",
+      "summary": "Root holds standalone publication of the Iperf2 reporter after N24 visit 28 showed the SUM interval was 10.7154s versus the longest stream’s 11.3312s. Source 9cf remains a literal SUM parsing correction, but its unanswered publication question is suspended by the technical owner; no user rejection, approval or upstream PR is inferred.",
+      "nextStep": "benchmark_measurement_review recovers currentness and dependencies for the existing approved Iperf3 vehicle, preserving BCR11518 and license15146 blockers. No more timing or standalone Iperf2 publication. Recheck that recovery or explicit root release; the old question remains unanswered.",
       "evidence": [
         {
           "label": "Exact reviewable source and included DCO",
@@ -141791,6 +141781,10 @@
         {
           "label": "Affected tools tests",
           "url": "https://github.com/tamird/gvisor/actions/runs/44927188341"
+        },
+        {
+          "label": "Immutable exact unanswered question and proposed PR body before owner hold",
+          "url": "https://github.com/tamird/gvisor/blob/76baaea04a3a26f0b28dbbb886d1b187becae645/registry.json"
         }
       ],
       "findings": []

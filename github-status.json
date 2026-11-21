@@ -453331,7 +453331,7 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "f069808da1b9876130c7a853fe2fbb9f815d8519",
-        "disposition": "The published rebase is one mergeable commit. The 298 ordered source and file lines match the previously approved patch. On native AMD64 Linux all 61 TCP and 48 SACK test records passed. TestKeepaliveReenable passed on Linux in 4.08 seconds and on gVisor in 4.06 seconds.",
+        "disposition": "Current public f069808da1b9876130c7a853fe2fbb9f815d8519 is conflicting. Root assigns the existing rebase owner to assess the current-base conflict; no new source or publication is inferred. Historical proof on the published patch: 298 ordered source/file lines matched its approved predecessor, native AMD64 had 61 TCP and 48 SACK records pass, and TestKeepaliveReenable passed on Linux and gVisor. These results do not qualify a future conflict adaptation.",
         "nextAction": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations."
       },
       "conflictObservedSince": "2026-11-20T23:52:55.787276+00:00"
@@ -459743,7 +459743,7 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "f069808da1b9876130c7a853fe2fbb9f815d8519",
-        "disposition": "The published rebase is one mergeable commit. The 298 ordered source and file lines match the previously approved patch. On native AMD64 Linux all 61 TCP and 48 SACK test records passed. TestKeepaliveReenable passed on Linux in 4.08 seconds and on gVisor in 4.06 seconds.",
+        "disposition": "Current public f069808da1b9876130c7a853fe2fbb9f815d8519 is conflicting. Root assigns the existing rebase owner to assess the current-base conflict; no new source or publication is inferred. Historical proof on the published patch: 298 ordered source/file lines matched its approved predecessor, native AMD64 had 61 TCP and 48 SACK records pass, and TestKeepaliveReenable passed on Linux and gVisor. These results do not qualify a future conflict adaptation.",
         "nextAction": "The existing rebase owner inspects the current-base conflict and prepares the smallest responsible adaptation; verify patch equivalence before any already-authorized mechanical publication. Preserve independent current-source review, validation and dependency obligations."
       },
       "actionCheckIds": [
@@ -470007,15 +470007,6 @@
       "contributor-review": {
         "scope": "d039802d8437f08d27b0282485709cc5f1b464ba",
         "since": "2026-11-21T14:00:19.559771+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-21T15:42:31.456870+00:00"
-      }
-    },
-    "investigation:iperf-aggregate-reporting": {
-      "contributor-review": {
-        "scope": "9cf0dbbe278572fd39d877a0d542483573a0185b",
-        "since": "2026-11-21T15:42:31.456870+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-21T15:42:31.456870+00:00"
