@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T03:00:40.369481+00:00",
+    "updatedAt": "2026-11-21T03:15:14.927530+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -104623,14 +104623,14 @@
       "url": "https://github.com/google/gvisor/pull/17836",
       "group": "ci-flakes",
       "status": "open",
-      "summary": "Equivalent rebase29ff39685e49bee9d4144d6301162e359e2ec6c8 is delivered with DCO and all GitHub source/export gates successful. Etienne approved that exact head at02:08:24Z. First Pass2206 actually started project jobs; current FirstPass2207 is scheduled and main55568 is running. Representative infrastructure interruptions have pending provider retries: an ARM Docker cancellation before tests and pre-command unattended-upgrades/dpkg lock waits. These observations establish neither all-CI success nor a source failure or general quota recovery.",
+      "summary": "Exact29ff39685e49bee9d4144d6301162e359e2ec6c8 has passed First Pass2207 and main55568, together with all GitHub source/export and DCO checks. The PR remains OPEN/MERGEABLE with aggregate REVIEW_REQUIRED; Etienne’s exact-head approval and the existing requested reviewers are preserved. All CI watches are closed. Historical admission failures and recovered infrastructure attempts remain linked at their original scopes; no general provider-quota recovery is inferred.",
       "followup": {
         "owner": "root",
         "sourceHead": "29ff39685e49bee9d4144d6301162e359e2ec6c8",
-        "observedAt": "2026-11-21T02:31:35.843688+00:00",
-        "disposition": "Equivalent rebase29ff39685e49bee9d4144d6301162e359e2ec6c8 is delivered with DCO and all GitHub source/export gates successful. Etienne approved that exact head at02:08:24Z. First Pass2206 actually started project jobs; current FirstPass2207 is scheduled and main55568 is running. Representative infrastructure interruptions have pending provider retries: an ARM Docker cancellation before tests and pre-command unattended-upgrades/dpkg lock waits. These observations establish neither all-CI success nor a source failure or general quota recovery.",
-        "nextAction": "Root retains the sole aggregate project-CI watch and existing reviewer/import follow-through. Let existing provider retries finish; no manual retry, duplicate CI-owner ping or new source change is authorized by the interruptions. Preserve the independent nested-Docker bridge-stall diagnosis.",
-        "recheckCondition": "Actual current-head project-check/retry result or new source/reviewer/import event.",
+        "observedAt": "2026-11-21T03:13:31.088095+00:00",
+        "disposition": "Exact29ff39685e49bee9d4144d6301162e359e2ec6c8 has passed First Pass2207 and main55568, together with all GitHub source/export and DCO checks. The PR remains OPEN/MERGEABLE with aggregate REVIEW_REQUIRED; Etienne’s exact-head approval and the existing requested reviewers are preserved. All CI watches are closed. Historical admission failures and recovered infrastructure attempts remain linked at their original scopes; no general provider-quota recovery is inferred.",
+        "nextAction": "Root follows the already-requested maintainer review of29ff and genuine feedback, import or merge events. No duplicate review request, CI retry or active CI watch remains. Preserve the independently owned nested-Docker investigation without making it a prerequisite for this completed mitigation.",
+        "recheckCondition": "New substantive reviewer feedback, approval/import/merge event or source/check change.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17836",
           "https://github.com/tamird/gvisor/commit/1e0fd46b7e0f82bcd945498b82265a3f5234b9f1",
@@ -104642,12 +104642,12 @@
           "https://buildkite.com/gvisor/pipeline/builds/55568"
         ],
         "attentionDispositions": [],
-        "curatedAt": "2026-11-21T02:33:33.655Z",
+        "curatedAt": "2026-11-21T03:15:14.927530+00:00",
         "mergeable": "MERGEABLE"
       },
-      "nextStep": "Root retains the sole aggregate project-CI watch and existing reviewer/import follow-through. Let existing provider retries finish; no manual retry, duplicate CI-owner ping or new source change is authorized by the interruptions. Preserve the independent nested-Docker bridge-stall diagnosis.",
-      "recheckCondition": "Actual current-head project-check/retry result or new source/reviewer/import event.",
-      "updatedAt": "2026-11-21T02:33:33.655Z"
+      "nextStep": "Root follows the already-requested maintainer review of29ff and genuine feedback, import or merge events. No duplicate review request, CI retry or active CI watch remains. Preserve the independently owned nested-Docker investigation without making it a prerequisite for this completed mitigation.",
+      "recheckCondition": "New substantive reviewer feedback, approval/import/merge event or source/check change.",
+      "updatedAt": "2026-11-21T03:15:14.927530+00:00"
     },
     {
       "id": "pr:17838",
