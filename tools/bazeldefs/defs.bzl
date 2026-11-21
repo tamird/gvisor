@@ -30,6 +30,7 @@ def requires_cap_sys_admin(ipv6 = False):
     Returns:
       Test properties; build actions keep the execution platform's defaults.
     """
+
     # BuildBuddy's default OCI capabilities omit CAP_SYS_ADMIN:
     # https://github.com/buildbuddy-io/buildbuddy/blob/168813c94525e5106459531fb629429d5fe2fb60/enterprise/server/remote_execution/containers/ociruntime/ociruntime.go#L157-L173
     # Its microVM runner supports privileged operations inside the guest:

@@ -1,6 +1,6 @@
-load("//tools:defs.bzl", "requires_cap_sys_admin")
 load("@rules_python//python:py_library.bzl", "py_library")
 load("@rules_python//python:py_test.bzl", "py_test")
+load("//tools:defs.bzl", "requires_cap_sys_admin")
 
 package(
     default_applicable_licenses = ["//:license"],
