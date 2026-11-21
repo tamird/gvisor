@@ -330,6 +330,7 @@ jobs:
             compile_commands.json
             bazel-out/*/testlogs/**/test.xml
             bazel-out/*/testlogs/**/test.log
+            bazel-out/*/testlogs/**/test.outputs/outputs.zip
             bazel-out/*/testlogs/**/runsc.log.*.boot.txt
             bazel-out/*/testlogs/**/runsc.log.*.gofer.txt
             bazel-out/*/testlogs/**/runsc.log.*.run.txt
