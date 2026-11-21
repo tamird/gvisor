@@ -192,7 +192,7 @@ _PAIRED_BENCHMARKS = [
         ] + archives,
         embed = [":harness"],
         exec_properties = {
-            "test.EstimatedCPU": "5",
+            "test.EstimatedCPU": "4",
             "test.EstimatedMemory": "2G" if category == "ruby" else "500M",
             "test.init-dockerd": "false",
             "test.workload-isolation-type": "firecracker",

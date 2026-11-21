@@ -66,17 +66,17 @@ func TestPairedBenchmark(t *testing.T) {
 	if err := unix.SchedGetaffinity(0, &available); err != nil {
 		t.Fatal(err)
 	}
-	for cpu := 0; cpu <= 4; cpu++ {
+	for cpu := 0; cpu <= 3; cpu++ {
 		if !available.IsSet(cpu) {
 			t.Fatalf("required worker CPU %d is unavailable; affinity: %v", cpu, available)
 		}
 	}
-	if available.Count() != 5 {
+	if available.Count() != 4 {
 		// A worker can expose additional guest CPUs beyond its reservation.
 		// Re-exec before creating Docker so all new threads and children
 		// inherit the declared partition.
 		var partition unix.CPUSet
-		for cpu := 0; cpu <= 4; cpu++ {
+		for cpu := 0; cpu <= 3; cpu++ {
 			partition.Set(cpu)
 		}
 		t.Logf("restrict worker affinity from %v to %v before re-exec", available, partition)
