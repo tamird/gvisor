@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T06:35:55.765252+00:00",
+    "updatedAt": "2026-11-21T07:01:57.557943+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -48629,7 +48629,7 @@
       "title": "Run Buildifier and cpplint as Bazel actions",
       "url": "https://github.com/google/gvisor/pull/16663",
       "group": "analysis",
-      "summary": "Prerequisite #17612 merged. The approved option-forwarding amendment is published as 6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef on the existing #16663. GitHub confirms the exact head is mergeable. Hosted lint command tests, both declared checker builds, make lint and make lint-cc passed on this source; two independent reviewers found no substantive issues. The authorized DCO sign-off was added without changing the source tree; DCO now passes.\n\nThe published patch header links to Buildifier’s upstream toolchain export, 9cefc248d. Its 403-byte patch payload is unchanged and applies to the pinned 8.5.1.4 release.\n\nThe formatter correction was published on 045005811 and Milan received a reply. The later revision 4cd0185fe adds a six-line header explaining why the Linux worker invokes Buildifier directly. The formatter repaired the seeded file and the next check passed. A missing module docstring still produces its separate lint warning.\n\nThe revision registers the Buildifier binary, runs Buildifier and cpplint as Bazel actions over a shared source inventory and provides a formatter for the same Starlark files. Compared with the previous fork proposal, the revised check includes two tracked Starlark files under external/ and prints the two repair commands. Generated external symlinks remain excluded.\n\nPublished revision 4f7c34244 adds the executable field to the pinned 8.5.1.4 toolchain, selects that tool for the action’s execution platform and runs the platform-selected executable directly. A future supplier release can replace the patch. With gVisor’s Buildifier 8.5.1, the uncached worker checked 629 tracked files, detected a new misformatted file across a package boundary and passed all 631 inputs after the formatter repaired it. The supplier’s 10.1.0 default reports existing formatting findings in nine files.",
+      "summary": "Public6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef remains conflicting. buildifier_license_fix owns a four-file tool-only candidate (+16/-24), replacing the legacy patch/mirror path with BCR Cpplint2.0.2. The version change from1.4 is semantic and needs its own publication review; maintained Aspect2.9.1 has no Cpplint API. AMD/ARM maintained-caller validation, source guards/tests,226-entry license audit, MODULE formatting and actual negative-error proof are complete at their recorded scopes. The owner is adding an explicit version note and correcting a stale comment before final adversarial review. No new source-publication question or approval exists; the broader source-input migration remains open.",
       "evidence": [
         {
           "label": "Posted question to Ryan about the Buildkite clang-tidy target",
@@ -48841,7 +48841,7 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-17T16:45:09.051335Z",
+      "updatedAt": "2026-11-21T07:01:57.557943+00:00",
       "refinement": {
         "before": {
           "head": "54a734f173ae271dbb6aecbcc61dd3c615a09a6b"
@@ -48929,26 +48929,28 @@
         }
       ],
       "followup": {
-        "owner": "root",
+        "owner": "buildifier_license_fix / root",
         "sourceHead": "6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
-        "observedAt": "2026-11-21T06:31:47.700949+00:00",
-        "disposition": "Exact6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef now conflicts with current upstream. Existing repair-command feedback remains addressed; no new repair or patch equivalence is claimed. Root owns the current conflict assessment through the existing rebase queue.",
-        "nextAction": "Assign the exact current conflict assessment, preserving existing approvals, repaired command behavior and dependency/import boundaries before any publication. The source remains unchanged pending that assessment; do not duplicate the earlier reply.",
+        "observedAt": "2026-11-21T06:54:13.036908+00:00",
+        "disposition": "Public6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef remains conflicting. buildifier_license_fix owns a four-file tool-only candidate (+16/-24), replacing the legacy patch/mirror path with BCR Cpplint2.0.2. The version change from1.4 is semantic and needs its own publication review; maintained Aspect2.9.1 has no Cpplint API. AMD/ARM maintained-caller validation, source guards/tests,226-entry license audit, MODULE formatting and actual negative-error proof are complete at their recorded scopes. The owner is adding an explicit version note and correcting a stale comment before final adversarial review. No new source-publication question or approval exists; the broader source-input migration remains open.",
+        "nextAction": "buildifier_license_fix finishes the version-message/comment correction and final independent/semantic review, then prepares an exact qualified source proposal for the ordinary publication boundary. Keep public6e4 unchanged; do not treat the semantic supplier upgrade as an already-authorized mechanical revival or repeat the earlier repair-command reply.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16663",
           "https://github.com/google/gvisor/pull/17612",
           "https://github.com/tamird/gvisor/commit/cfb38adfa3c60dbfd6f4f234cae63f03c76477bf",
           "https://github.com/tamird/gvisor/actions/runs/44125058497",
           "https://github.com/tamird/gvisor/commit/6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
-          "https://github.com/google/gvisor/pull/16663"
+          "https://github.com/tamird/gvisor/actions/runs/44877255242"
         ],
         "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
         "providerHead": "6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Owned conflict assessment, qualified current-source candidate or actual source/base/import change.",
+        "recheckCondition": "Final exact-source/review milestone, actual public source change or a source-input owner/design change.",
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
-        "curatedAt": "2026-11-21T06:35:55.765252+00:00"
-      }
+        "curatedAt": "2026-11-21T07:01:57.557943+00:00"
+      },
+      "nextStep": "buildifier_license_fix finishes the version-message/comment correction and final independent/semantic review, then prepares an exact qualified source proposal for the ordinary publication boundary. Keep public6e4 unchanged; do not treat the semantic supplier upgrade as an already-authorized mechanical revival or repeat the earlier repair-command reply.",
+      "recheckCondition": "Final exact-source/review milestone, actual public source change or a source-input owner/design change."
     },
     {
       "id": "pr:16664",
