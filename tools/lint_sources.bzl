@@ -15,7 +15,11 @@
 """Declare indexed C/C++ inputs for developer lint."""
 
 def _git(ctx, root, args):
-    result = ctx.execute([ctx.which("git"), "-C", str(root)] + args)
+    index = ctx.getenv("GIT_INDEX_FILE")
+    result = ctx.execute(
+        [ctx.which("git"), "-C", str(root)] + args,
+        environment = {"GIT_INDEX_FILE": index} if index else {},
+    )
     if result.return_code:
         fail("Cannot read source lint's Git index: " + result.stderr)
     return result.stdout
@@ -34,7 +38,12 @@ def _lint_sources(ctx):
     if shared:
         ctx.watch(shared)
     groups = {"cc": [], "clang_format_config": []}
-    selected = _git(ctx, root, ["ls-files", "--stage", "-z", "--", "*.c", "*.cc", "*.h", ".clang-format", "*/.clang-format", "_clang-format", "*/_clang-format", ".clang-format-ignore", "*/.clang-format-ignore"])
+    selected = _git(ctx, root, ["ls-files", "--stage", "-z", "--"] + [
+        "*.c", "*.cc", "*.h",
+        ".clang-format", "*/.clang-format",
+        "_clang-format", "*/_clang-format",
+        ".clang-format-ignore", "*/.clang-format-ignore",
+    ])
     for entry in selected.split("\000"):
         if not entry:
             continue

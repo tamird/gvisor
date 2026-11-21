@@ -115,28 +115,27 @@ class LintTest(unittest.TestCase):
         path.write_text(original)
 
   def test_bazel_options(self) -> None:
-    result = self.lint(
-        "--bazel=bazel --startup=1",
-        "--bazel-options=--opt=1 --opt=2",
-        "goimports",
-    )
-    self.assertEqual(result.returncode, 0, result.stderr)
-    self.assertIn("PASS  goimports", result.stderr)
-    commands = [c.split() for c in self.bazel_log.read_text().splitlines()]
-    self.assertEqual(
-        [c[:4] for c in commands],
-        [
-            ["--startup=1", command, "--opt=1", "--opt=2"]
-            for command in ("build", "info", "cquery")
-        ],
-    )
-
-  def test_clang_bazel_options(self) -> None:
-    for action, command, target in (((), "build", "clang_format"), (("--fix",), "run", "format_clang")):
+    for checks, expected in (
+        (("goimports",), ("build", "info", "cquery")),
+        (("clang-format",), ("build",)),
+        (("--fix", "clang-format"), ("run",)),
+    ):
       self.bazel_log.unlink(missing_ok=True)
-      result = self.lint("--bazel=bazel --startup=1", "--bazel-options=--opt=1", *action, "clang-format")
+      result = self.lint(
+          "--bazel=bazel --startup=1",
+          "--bazel-options=--opt=1 --opt=2",
+          *checks,
+      )
       self.assertEqual(result.returncode, 0, result.stderr)
-      self.assertEqual(self.bazel_log.read_text().split(), ["--startup=1", command, "--opt=1", "//tools/lint:" + target])
+      self.assertIn(f"PASS  {checks[-1]}", result.stderr)
+      commands = [c.split() for c in self.bazel_log.read_text().splitlines()]
+      self.assertEqual(
+          [c[:4] for c in commands],
+          [
+              ["--startup=1", command, "--opt=1", "--opt=2"]
+              for command in expected
+          ],
+      )
 
   def test_bazel_failure(self) -> None:
     self.tool(self.bin / "bazel", "echo bazel-build-failed >&2; exit 7")
@@ -147,7 +146,8 @@ class LintTest(unittest.TestCase):
   def test_diagnostics_and_continuation(self) -> None:
     self.tool(
         self.bin / "bazel",
-        'case "$*" in *clang_format*) echo formatter-crashed >&2; exit 7;; esac',
+        'case "$*" in *clang_format*) echo formatter-crashed >&2; exit 7;; esac\n'
+        + (self.bin / "bazel").read_text(),
     )
     result = self.lint("clang-format", "buildifier")
     self.assert_failed(result, "clang-format")
