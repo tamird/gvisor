@@ -47,4 +47,3 @@ run_binary(
     stdout = "clang_format.report",
     tool = ":clang_format_tool",
 )
-

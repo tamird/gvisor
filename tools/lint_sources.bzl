@@ -39,10 +39,15 @@ def _lint_sources(ctx):
         ctx.watch(shared)
     groups = {"cc": [], "clang_format_config": []}
     selected = _git(ctx, root, ["ls-files", "--stage", "-z", "--"] + [
-        "*.c", "*.cc", "*.h",
-        ".clang-format", "*/.clang-format",
-        "_clang-format", "*/_clang-format",
-        ".clang-format-ignore", "*/.clang-format-ignore",
+        "*.c",
+        "*.cc",
+        "*.h",
+        ".clang-format",
+        "*/.clang-format",
+        "_clang-format",
+        "*/_clang-format",
+        ".clang-format-ignore",
+        "*/.clang-format-ignore",
     ])
     for entry in selected.split("\000"):
         if not entry:
