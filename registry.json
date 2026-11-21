@@ -58303,8 +58303,8 @@
         "owner": "root",
         "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
         "observedAt": "2026-11-02T17:47:05.918366+00:00",
-        "disposition": "Both Iperf3 runtime probes failed at the first --version command because the approved Jammy image lacks required GLIBC_2.38. Archive digests, architecture, Cmd and source guards passed; no JSON, transfer, byte or mode checks ran. Build products remain valid within that boundary. ABI admission44953581420 is workflow-successful, but its actual evidence and next functional gate remain under owner audit. BCR11518 and license15146 delivery/verifier prerequisites remain separate.",
-        "nextAction": "benchmark_measurement_review audits ABI admission and corrects declared build/deploy compatibility using existing compatible SDK options before current endpoint/functionality checks. Preserve the approved runtime image and source/policy boundary; no more timing, source publication or functional-green claim.",
+        "disposition": "AMD44954024607 and ARM44954393599 passed actual package/license, JSON, all eight native benchmark rows, cleanup and source guards. Reverse-transfer stock overshoot remains explicit at +25%/+37.5%. Unconditional exact-byte equality was an unsupported stricter diagnostic: original approved676 permits stock overshoot, so root withdrew that gate and the producer-fork assignment. New Ubuntu24 source dce280f99add0a1319970674a57e237e9473c666 is one DCO commit on eb263, pending final review and current source checks; old676 approval does not approve this revision. No timing-stability claim follows.",
+        "nextAction": "benchmark_measurement_review hands the new Ubuntu24 source to root for final review after sourcechecks44955092779 complete. Preserve both architecture functional proofs and actual overshoot; no producer fork or unconditional equality gate. BCR11518/license15146 prerequisites and any eventual source-publication review remain independent.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
@@ -58315,7 +58315,10 @@
           "https://github.com/tamird/gvisor/actions/runs/44951039467",
           "https://github.com/tamird/gvisor/actions/runs/44951363677",
           "https://github.com/tamird/gvisor/actions/runs/44951365506",
-          "https://github.com/tamird/gvisor/actions/runs/44953581420"
+          "https://github.com/tamird/gvisor/actions/runs/44953581420",
+          "https://github.com/tamird/gvisor/actions/runs/44954024607",
+          "https://github.com/tamird/gvisor/actions/runs/44954393599",
+          "https://github.com/tamird/gvisor/actions/runs/44955092779"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -58329,7 +58332,7 @@
           "owner": "root"
         },
         "technicalOwner": "Build and release",
-        "recheckCondition": "Owner-audited ABI/product evidence and actual current runtime checks, plus independent prerequisite landing/release changes.",
+        "recheckCondition": "Actual final source-check/review result and genuine user publication response or prerequisite landing/release evidence; no new approval is inferred.",
         "curatedAt": "2026-11-21T14:40:26.293073+00:00"
       },
       "refinement": {
