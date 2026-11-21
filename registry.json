@@ -141757,6 +141757,43 @@
         "body": "Source review: https://github.com/tamird/gvisor/commit/d039802d8437f08d27b0282485709cc5f1b464ba\n\nSource lint downloaded a clang-format wheel and selected its files in\nshell. Run the declared LLVM formatter with indexed C/C++ files and\nadjacent configuration as Bazel action inputs. Keep the existing check\nand fix entry points, selecting the client tool for checkout fixes.\n\nKeep the input repository lazy and development-only. Source lint needs\na Git checkout with regular indexed files and indexed formatter\nconfiguration. Reject unindexed configuration before checks or fixes,\nand bound ignore discovery at the repository root so both use the same\nconfiguration.\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
         "summary": "Root confirms the actual async question to open one PR replacing ad173 with the inventory included was asked and accepted by the tool. No returned question ID, exact request timestamp or reply is available."
       }
+    },
+    {
+      "id": "investigation:iperf-aggregate-reporting",
+      "repo": "google/gvisor",
+      "status": "active",
+      "group": "analysis",
+      "title": "Report client aggregate Iperf bandwidth",
+      "owner": "root",
+      "head": "9cf0dbbe278572fd39d877a0d542483573a0185b",
+      "updatedAt": "2026-11-21T17:49:33.071675+00:00",
+      "summary": "The actual one-commit PR publication question for 9cf is pending. All 18 tools tests, source checks and both independent reviews passed; DCO is included. The historical ead577 payload proposal and the separate approved Iperf3 migration retain their own source and decision boundaries. Nothing is published upstream.",
+      "nextStep": "Root awaits the existing question’s reply: Approve opening PR or Keep with Iperf3 migration. Do not repeat the question or transfer predecessor approvals. The empirical A/A result remains subject to its owner’s audit and does not approve source publication.",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "9cf0dbbe278572fd39d877a0d542483573a0185b",
+        "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+        "url": "https://github.com/tamird/gvisor/commit/9cf0dbbe278572fd39d877a0d542483573a0185b",
+        "title": "Report client aggregate Iperf bandwidth",
+        "body": "Parallel Iperf benchmarks reported the first connection’s bandwidth instead of the client aggregate. Select the final aggregate summary for parallel transfers and the final numeric summary for a single stream. Reject a missing or malformed final summary instead of using an earlier report.\n\nThis reports the producer’s rate; it does not correct its interval accounting.\n\nPosted by Codex on behalf of @tamird.",
+        "summary": "Approve opening a one-commit gVisor PR for https://github.com/tamird/gvisor/commit/9cf0dbbe278572fd39d877a0d542483573a0185b, “Report client aggregate Iperf bandwidth”?\n\nTwo existing files select the final aggregate for parallel transfers and reject missing or malformed summaries. All 18 tools tests, source checks and both independent reviews passed. DCO is included. The separate Iperf3 migration remains unchanged.\n\nRoot confirms the tool accepted this question and it is unanswered. Options: Approve opening PR / Keep with Iperf3 migration. No precise submission timestamp or question ID was supplied."
+      },
+      "evidence": [
+        {
+          "label": "Exact reviewable source and included DCO",
+          "url": "https://github.com/tamird/gvisor/commit/9cf0dbbe278572fd39d877a0d542483573a0185b"
+        },
+        {
+          "label": "Existing historical payload reporting predecessor",
+          "url": "https://github.com/tamird/gvisor/commit/ead57716c09ee8f986ac0b0d6576994ea94407d0"
+        },
+        {
+          "label": "Affected tools tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44927188341"
+        }
+      ],
+      "findings": []
     }
   ],
   "updatedAt": "2026-11-20T23:41:26.383263+00:00"
