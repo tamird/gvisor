@@ -1003,3 +1003,11 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+# Preserve whitespace in explicit formatter paths and fail if input discovery
+# fails. Aspect otherwise splits these paths when Git attribute checks are off.
+single_version_override(
+    module_name = "aspect_rules_lint",
+    patch_strip = 1,
+    patches = ["//tools:aspect-format-explicit-files.patch"],
+)

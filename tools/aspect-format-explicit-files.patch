@@ -1,0 +1,29 @@
+--- a/format/private/format.sh
++++ b/format/private/format.sh
+@@ -232,14 +232,12 @@
+             ')' "-print"
+           )
+         fi
+-        files=$(find "$@" "${find_args[@]}")
++        files=$(find "$@" "${find_args[@]}") || return
+     fi
+ 
+     if [[ ${disable_git_attribute_checks:-} == true ]]; then
+       # files should be returned newline separated to avoid a "File name too long" error
+-      for file in $files; do
+-        echo "$file"
+-      done
++      [[ -z "$files" ]] || printf '%s\n' "$files"
+       return
+     fi
+ 
+@@ -294,7 +292,8 @@
+   local args="$1" && shift
+   local TIMEFORMAT="Formatted ${lang} in %lR"
+ 
+-  local files=$(ls-files "$lang" "$@")
++  local files
++  files=$(ls-files "$lang" "$@") || return
+   if [ -n "$files" ] && [ -n "$bin" ]; then
+     case "$lang" in
+       'Protocol Buffer')

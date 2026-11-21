@@ -80,6 +80,7 @@ bzl_library(
 )
 
 exports_files([
+    "aspect-format-explicit-files.patch",
     "benchmark-umbrella-exports.patch",
     "build_cover.sh",
     "llvm-dev-backends.patch",
