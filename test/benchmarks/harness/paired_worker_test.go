@@ -92,7 +92,15 @@ func TestPairedBenchmark(t *testing.T) {
 		t.Fatal(unix.Exec(binary, os.Args, os.Environ()))
 	}
 
-	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Minute)
+	deadline, ok := t.Deadline()
+	if !ok {
+		t.Fatal("paired benchmark requires an explicit Go test timeout")
+	}
+	deadline = deadline.Add(-time.Minute)
+	if time.Until(deadline) <= 0 {
+		t.Fatal("paired benchmark deadline leaves no time before cleanup")
+	}
+	ctx, cancel := context.WithDeadline(t.Context(), deadline)
 	defer cancel()
 	binary, err := testutil.FindFile(*pairedBinary)
 	if err != nil {
