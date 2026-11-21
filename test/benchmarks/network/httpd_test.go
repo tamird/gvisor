@@ -124,7 +124,9 @@ func runHttpd(b *testing.B, hey *tools.Hey) {
 			"APACHE_PID_FILE=/tmp/apache.pid",
 		},
 	}
-	httpdCmd := []string{"sh", "-c", "mkdir -p /tmp/html; cp -r /local/* /tmp/html/.; apache2 -X"}
+	// With the image's 25 event MPM threads idle, factor 40 permits
+	// 1025 connections, above the maximum client concurrency of 1000.
+	httpdCmd := []string{"sh", "-c", "mkdir -p /tmp/html; cp -r /local/* /tmp/html/.; apache2 -X -c 'AsyncRequestWorkerFactor 40'"}
 	runStaticServer(b, httpdRunOpts, httpdCmd, port, hey)
 }
 
