@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T07:51:55.545237+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T07:28:18.199633+00:00",
+  "registryDate": "2026-11-21T07:55:45.574036+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -458131,8 +458131,8 @@
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "8cab980c14e1011e7855955944adc66b1b2554c4",
-        "disposition": "Delivered8cab980c14e1011e7855955944adc66b1b2554c4 is now canonical OPEN/MERGEABLE/REVIEW_REQUIRED. All reported GitHub validation and DCO checks pass, including native Go export and exported-tree go build ./...; PR-policy build/push steps are skipped. Exact First Pass2235 independently remains the pre-agent rolling30-day360000-compute-minute quota rejection, zero tests. The new canonical StatusContext identity is now available; old1586 is not applied. Main-pipeline admission and broad runtime/performance remain separate unmet gates. The e33 standalone helper proposal is a distinct actual pending publication decision.",
-        "nextAction": "Follow existing maintainer review/import, main-CI requirements and evidenced provider recovery. The mechanical Go publication and GitHub export wait are complete; do not repeat CI reads, retries or outreach. Keep the helper’s separate existing proposal and broad performance gates intact."
+        "disposition": "Delivered8cab remains OPEN/MERGEABLE/REVIEW_REQUIRED with reported GitHub/DCO checks passing and FirstPass2235’s known pre-agent quota rejection. Full-unit diagnostic CI53e7f189c9759c30eb136705a25f6a22c8f75882 combines Go8cab, e33, the declared25-file RBE/lint projection and the approved canonical17281 unit profile; it is not raw public8cab. Each architecture reports369 owners:362PASS/7FAIL with preservation/upload guards passing. One lint failure was a missing projection blob; exact-blob recovery CI19648d190379a8f10836c5575febe3b2117f51d8/run44882242022 passes11 maintained Python cases through valid remote cache. Six same worker-dependent failures remain per architecture: three read-only-cgroup sandboxexec consumers, netns EPERM in sandbox/specutils, and overlay-fixture sandbox setup. Full units, main integration, syscall and performance gates remain open.",
+        "nextAction": "approved_rebase_queue reuses existing maintained TestDockerWorker/Firecracker metadata for a cheap same-case capability preflight before recovering the six failed targets. Preserve the complete required matrix; no exclusions or security-policy changes. Root retains provider/main-CI follow-through and the helper’s separate pending publication decision; no broad gate is green."
       },
       "actionCheckIds": [
         "SC_kwDOB9IlXs8AAAAN3MYi6w"
@@ -463487,7 +463487,7 @@
         "since": "2026-11-21T07:28:18.199633+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T07:28:18.199633+00:00"
+        "observedAt": "2026-11-21T07:55:45.574036+00:00"
       }
     },
     "pr:16664": {
@@ -466647,7 +466647,7 @@
         "since": "2026-11-21T05:04:12.012561+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T07:28:18.199633+00:00"
+        "observedAt": "2026-11-21T07:55:45.574036+00:00"
       }
     },
     "pr:17471": {
@@ -467688,7 +467688,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T07:28:18.199633+00:00"
+        "observedAt": "2026-11-21T07:55:45.574036+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -467697,7 +467697,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T07:28:18.199633+00:00"
+        "observedAt": "2026-11-21T07:55:45.574036+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -467706,7 +467706,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T07:28:18.199633+00:00"
+        "observedAt": "2026-11-21T07:55:45.574036+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -467715,7 +467715,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T07:28:18.199633+00:00"
+        "observedAt": "2026-11-21T07:55:45.574036+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -467724,7 +467724,7 @@
         "since": "2026-11-13T04:09:52+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T07:28:18.199633+00:00"
+        "observedAt": "2026-11-21T07:55:45.574036+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -467733,7 +467733,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T07:28:18.199633+00:00"
+        "observedAt": "2026-11-21T07:55:45.574036+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -467742,7 +467742,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T07:28:18.199633+00:00"
+        "observedAt": "2026-11-21T07:55:45.574036+00:00"
       }
     },
     "investigation:coverage-worker-cpu": {
@@ -467751,7 +467751,7 @@
         "since": "2026-11-21T06:15:32.375526+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T07:28:18.199633+00:00"
+        "observedAt": "2026-11-21T07:55:45.574036+00:00"
       }
     }
   },
