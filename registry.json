@@ -58303,8 +58303,8 @@
         "owner": "root",
         "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
         "observedAt": "2026-11-02T17:47:05.918366+00:00",
-        "disposition": "The approved Iperf3 image remains the separate vehicle. Qualification used a standard main-first immutable fe25 registry fallback for the pending BCR version; bootstrap and all four license/image/context cquery targets passed in44951039467. AMD44951363677 and ARM44951365506 canonical image/archive/context builds are workflow-successful, with product/runtime audits pending. BCR11518 remains a delivery prerequisite. License15146 supplies required verifier features/landing (BSD-3-Clause-LBNL/HPND), not an image compiler dependency. No endpoint, performance or publication claim follows.",
-        "nextAction": "benchmark_measurement_review audits both architecture products and runtime behavior using the qualified registry fallback, then reconciles the actual release/delivery prerequisites. Preserve the approved vehicle and separate license-verifier dependency, held Iperf2 source and no-more-timing boundary.",
+        "disposition": "Both Iperf3 runtime probes failed at the first --version command because the approved Jammy image lacks required GLIBC_2.38. Archive digests, architecture, Cmd and source guards passed; no JSON, transfer, byte or mode checks ran. Build products remain valid within that boundary. ABI admission44953581420 is workflow-successful, but its actual evidence and next functional gate remain under owner audit. BCR11518 and license15146 delivery/verifier prerequisites remain separate.",
+        "nextAction": "benchmark_measurement_review audits ABI admission and corrects declared build/deploy compatibility using existing compatible SDK options before current endpoint/functionality checks. Preserve the approved runtime image and source/policy boundary; no more timing, source publication or functional-green claim.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
@@ -58314,7 +58314,8 @@
           "https://github.com/tamird/gvisor/actions/runs/44934299304",
           "https://github.com/tamird/gvisor/actions/runs/44951039467",
           "https://github.com/tamird/gvisor/actions/runs/44951363677",
-          "https://github.com/tamird/gvisor/actions/runs/44951365506"
+          "https://github.com/tamird/gvisor/actions/runs/44951365506",
+          "https://github.com/tamird/gvisor/actions/runs/44953581420"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -58328,7 +58329,7 @@
           "owner": "root"
         },
         "technicalOwner": "Build and release",
-        "recheckCondition": "Audited product/runtime outputs or actual BCR/verifier landing/release evidence; workflow success alone does not close functional qualification.",
+        "recheckCondition": "Owner-audited ABI/product evidence and actual current runtime checks, plus independent prerequisite landing/release changes.",
         "curatedAt": "2026-11-21T14:40:26.293073+00:00"
       },
       "refinement": {
@@ -122551,7 +122552,7 @@
           ]
         }
       ],
-      "nextStep": "benchmark_measurement_review owns the corrected Iperf reporting contract and next same-leaf work-budget check. Diagnostic 44927626779 passed its predeclared integrity and measured gates at n=2 per arm for one leaf only: pooled ns/op range 3.1164%, reported/producer SUM range 3.3312%, mean effects -0.0731%/+0.0165%, and SUM×1024 identity. Original pilot 44924729979 remains failed; no retrospective substitution or stability/candidate qualification follows. Prepare the minimal standard deadline-budget correction before the planned 24-per-arm same-leaf check, preserving all five raw gates. The original full-150/n24 candidate qualification remains separate; this does not create a full-150 A/A campaign. Keep the approved Iperf3/BCR11518/license15146 delivery vehicle separate. Quiet-executor information and other workload gates remain open; HTTPD functional recovery has its own owner.",
+      "nextStep": "The 24-per-arm same-leaf diagnostic44930399362 is complete and failed; visit28 demonstrated producer SUM interval10.7154s versus longest stream11.3312s. The earlier n=2 diagnostic and literal SUM-parser correction do not repair that producer flaw or qualify stability. benchmark_measurement_review advances the existing approved Iperf3 vehicle through ABI and current functional checks, with BCR11518/license15146 prerequisites intact; no further Iperf2 timing or candidate comparison. Other workload/performance gates and the quiet-executor information request remain separate.",
       "evidence": [
         {
           "label": "Merged Nginx restore-benchmark HTTP readiness change",
@@ -122612,6 +122613,10 @@
         {
           "label": "Corrected one-leaf n=2 same-source diagnostic",
           "url": "https://github.com/tamird/gvisor/actions/runs/44927626779"
+        },
+        {
+          "label": "Completed N24 diagnostic demonstrating producer interval mismatch",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44930399362"
         }
       ],
       "comparisons": [
