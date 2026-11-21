@@ -47,7 +47,7 @@ func (i *Iperf) MakeCmd(host string, port int) []string {
 	return cmd
 }
 
-// Report parses output from iperf client and reports metrics.
+// Report records iperf's client-reported bandwidth.
 func (i *Iperf) Report(b *testing.B, output string) {
 	b.Helper()
 	b.Logf("Iperf N=%d elapsed before cleanup=%s; producer output=%q", b.N, b.Elapsed(), output)
@@ -59,13 +59,14 @@ func (i *Iperf) Report(b *testing.B, output string) {
 	ReportCustomMetric(b, bW*1024, "bandwidth" /*metric name*/, "bytes_per_second" /*unit*/)
 }
 
-// bandwidth returns the final single-stream or aggregate rate in KBytes/sec.
+// bandwidth returns the client's final reported rate in KBytes/sec.
+// Parallel transfers use the producer's aggregate summary.
 func (i *Iperf) bandwidth(data string) (float64, error) {
 	id := `\s*\d+`
 	if i.Parallel > 1 {
 		id = `SUM`
 	}
-	rows := regexp.MustCompile(`(?m)^\[` + id + `\][^\n]*$`).FindAllString(data, -1)
+	rows := regexp.MustCompile(`(?m)^\[`+id+`\][^\n]*$`).FindAllString(data, -1)
 	if len(rows) == 0 {
 		return 0, fmt.Errorf("missing iperf bandwidth summary: %s", data)
 	}
