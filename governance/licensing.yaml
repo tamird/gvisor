@@ -44,6 +44,16 @@ exceptions:
       bundled components, including the MPL-2.0 text covering Mozilla's CA
       certificate data (etc/roots.pem). Used by Bazel build and test tooling
       only. Released gVisor binaries use the pure-Go google.golang.org/grpc.
+  - dependency: kythe_release
+    license:
+      - Apache-2.0
+      - NCSA
+    exception_rationale: >-
+      Kythe is Apache-2.0; its LICENSE also includes the legacy LLVM
+      University of Illinois/NCSA grant for incorporated LLVM code. That
+      grant permits redistribution with copyright notices, conditions and
+      disclaimers retained, and prohibits using contributors' names for
+      endorsement without permission.
   - dependency: libpluginstack
     license:
       - Apache-2.0
