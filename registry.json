@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T12:00:06.633567+00:00",
+    "updatedAt": "2026-11-21T12:02:56.484187+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -48782,8 +48782,8 @@
       "repo": "google/gvisor",
       "number": 16663,
       "ref": "review/buildifier-native-diff",
-      "head": "6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
-      "title": "Run Buildifier and cpplint as Bazel actions",
+      "head": "651437132bf0054f1742ab2dce694f28a9ee0dc4",
+      "title": "Use Cpplint from Bazel for source lint",
       "url": "https://github.com/google/gvisor/pull/16663",
       "group": "analysis",
       "summary": "Public6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef remains conflicting. Qualified replacement651437132bf0054f1742ab2dce694f28a9ee0dc4 is now in an actual pending amendment question: four files (+19/-25), Cpplint1.4.0 to maintained BCR2.0.2, wheel installer removed and development-dependency boundary preserved. AMD/ARM492-input callers, unit/license/negative/status checks, final formatting and independent reviews passed at their recorded scopes. Dependency-boundary controls behaved as expected; whole-graph analysis is blocked by the unchanged LLVM extension and is not claimed green. Declared source-input actions remain separate unfinished work. DCO is included; no publication has occurred.",
@@ -48998,7 +48998,7 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-21T12:00:06.633567+00:00",
+      "updatedAt": "2026-11-21T12:02:56.484187+00:00",
       "refinement": {
         "before": {
           "head": "54a734f173ae271dbb6aecbcc61dd3c615a09a6b"
@@ -49098,10 +49098,10 @@
       ],
       "followup": {
         "owner": "approved_rebase_queue / root",
-        "sourceHead": "6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
+        "sourceHead": "651437132bf0054f1742ab2dce694f28a9ee0dc4",
         "observedAt": "2026-11-21T06:54:13.036908+00:00",
-        "disposition": "The user approved exact651437132bf0054f1742ab2dce694f28a9ee0dc4. The publication owner has published the approved branch and is completing PR title/body/readback. The narrower tool-ownership amendment does not supply the complete source inventory.",
-        "nextAction": "approved_rebase_queue completes16663 metadata/readback and owns new-head CI. Preserve the separate full-inventory/clang-format dependency; no repeated approval request or broad migration.",
+        "disposition": "The exact user-approved narrow651 amendment and PR description are published; native head is mergeable and DCO passes. FirstPass failed and approved_rebase_queue owns canonical diagnosis. The existing discussion reply is saved; review-request404 remains under bounded provider diagnosis. Full declared-input migration is still separate and open.",
+        "nextAction": "approved_rebase_queue follows current CI/provider/review lifecycle. Do not restore the superseded broader16663 source or treat this executable-only amendment as the inventory prerequisite.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16663",
           "https://github.com/google/gvisor/pull/17612",
@@ -49117,14 +49117,15 @@
           "https://github.com/tamird/gvisor/actions/runs/44877773647",
           "https://github.com/tamird/gvisor/actions/runs/44877570553",
           "https://github.com/tamird/gvisor/actions/runs/44877654051",
-          "https://github.com/tamird/gvisor/actions/runs/44877743052"
+          "https://github.com/tamird/gvisor/actions/runs/44877743052",
+          "https://github.com/gvisor/gvisor/pull/16663#discussion_r4652347786"
         ],
         "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
         "providerHead": "6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
-        "mergeable": "CONFLICTING",
+        "mergeable": "MERGEABLE",
         "recheckCondition": "Actual reply to the pending amendment question or a source/qualification change.",
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
-        "curatedAt": "2026-11-21T12:00:06.633567+00:00"
+        "curatedAt": "2026-11-21T12:02:56.484187+00:00"
       },
       "nextStep": "Await the reply to the existing exact651 amendment question. Root publishes only after that decision, preserving the reviewed title/description and the broader input-migration boundary. No repeat question, mechanical-approval inference or source-head advance.",
       "recheckCondition": "Actual reply to the pending amendment question or a source/qualification change."
@@ -105151,16 +105152,89 @@
       "url": "https://github.com/google/gvisor/pull/17853",
       "status": "open",
       "updatedAt": "2026-11-21T12:00:06.633567+00:00",
-      "summary": "Delivered user-approved standalone coverage-worker CPU requirement. DCO-only signed metadata preserves reviewed e33 source; one commit is natively mergeable. Existing compile-product/SDK CPU proof does not claim runtime or performance validation.",
+      "summary": "Published the exact user-approved e33 coverage-worker source with DCO-only metadata. Native head is mergeable and DCO passes; FirstPass failure is under its existing source owner\u2019s diagnosis.",
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "3e39c3a0c85601525990460f46d124bb66c927f7",
         "mergeable": "MERGEABLE",
-        "disposition": "Published and provider-verified; resulting CI/review follow-through belongs to the existing source owner.",
+        "disposition": "Native delivered head3e39c3a0 remains mergeable and DCO successful. FirstPass failed; approved_rebase_queue owns canonical exact-source diagnosis. No cause or green CI is inferred.",
         "nextAction": "Follow exact-head CI and maintainer review; diagnose only actual new failures, no duplicate monitoring or merge action.",
         "recheckCondition": "Exact-head checks, substantive review or import/merge event.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17853"
+        ],
+        "curatedAt": "2026-11-21T12:02:56.484187+00:00"
+      }
+    },
+    {
+      "id": "pr:17854",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17854,
+      "group": "analysis",
+      "head": "b64c59c1b06d72919b250766609b328d87a05076",
+      "title": "Skip installed Buildkite package setup",
+      "url": "https://github.com/google/gvisor/pull/17854",
+      "status": "open",
+      "updatedAt": "2026-11-21T12:02:56.484187+00:00",
+      "summary": "Published the exact user-approved source. Native head is mergeable and DCO passes; FirstPass is failed and its existing source owner is diagnosing the actual cause. Qualification limits are retained in the linked source investigation.",
+      "followup": {
+        "owner": "approved_rebase_queue / root",
+        "sourceHead": "b64c59c1b06d72919b250766609b328d87a05076",
+        "mergeable": "MERGEABLE",
+        "disposition": "Published and provider-verified; FirstPass failure is under canonical exact-source diagnosis, not classified as source failure or quota without evidence.",
+        "nextAction": "approved_rebase_queue owns exact-head CI, substantive review and import through delivery. No duplicate observation, manual retry or merge action.",
+        "recheckCondition": "Canonical failure diagnosis or exact-head CI/review/import event.",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/17854"
+        ]
+      }
+    },
+    {
+      "id": "pr:17855",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17855,
+      "group": "analysis",
+      "head": "5ad44c8892f6d9ce773e448357a83917b3c79b5b",
+      "title": "Retain dockerd logs for failed Buildkite tests",
+      "url": "https://github.com/google/gvisor/pull/17855",
+      "status": "open",
+      "updatedAt": "2026-11-21T12:02:56.484187+00:00",
+      "summary": "Published the exact user-approved source. Native head is mergeable and DCO passes; FirstPass is failed and its existing source owner is diagnosing the actual cause. Qualification limits are retained in the linked source investigation.",
+      "followup": {
+        "owner": "approved_rebase_queue / root",
+        "sourceHead": "5ad44c8892f6d9ce773e448357a83917b3c79b5b",
+        "mergeable": "MERGEABLE",
+        "disposition": "Published and provider-verified; FirstPass failure is under canonical exact-source diagnosis, not classified as source failure or quota without evidence.",
+        "nextAction": "approved_rebase_queue owns exact-head CI, substantive review and import through delivery. No duplicate observation, manual retry or merge action.",
+        "recheckCondition": "Canonical failure diagnosis or exact-head CI/review/import event.",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/17855"
+        ]
+      }
+    },
+    {
+      "id": "pr:17856",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17856,
+      "group": "analysis",
+      "head": "2022728765e5e2a6a436272b09b13e5f04292826",
+      "title": "Honor Iperf client and server CPU affinity",
+      "url": "https://github.com/google/gvisor/pull/17856",
+      "status": "open",
+      "updatedAt": "2026-11-21T12:02:56.484187+00:00",
+      "summary": "Published the exact user-approved source. Native head is mergeable and DCO passes; FirstPass is failed and its existing source owner is diagnosing the actual cause. Qualification limits are retained in the linked source investigation.",
+      "followup": {
+        "owner": "approved_rebase_queue / root",
+        "sourceHead": "2022728765e5e2a6a436272b09b13e5f04292826",
+        "mergeable": "MERGEABLE",
+        "disposition": "Published and provider-verified; FirstPass failure is under canonical exact-source diagnosis, not classified as source failure or quota without evidence.",
+        "nextAction": "approved_rebase_queue owns exact-head CI, substantive review and import through delivery. No duplicate observation, manual retry or merge action.",
+        "recheckCondition": "Canonical failure diagnosis or exact-head CI/review/import event.",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/17856"
         ]
       }
     }
@@ -134762,8 +134836,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-21T12:00:06.633567+00:00",
-      "summary": "Exact source is user-approved. The assigned publication owner has atomically published the approved source branches and is completing PR metadata/readback; no unverified PR number or completed metadata claim is recorded.",
+      "updatedAt": "2026-11-21T12:02:56.484187+00:00",
+      "summary": "User-approved source is delivered as gVisor#17855 at exact 5ad44c88, native mergeable and DCO successful. FirstPass failed; the assigned source owner is diagnosing the exact provider cause. Existing functional/product scope remains unchanged.",
       "findings": [
         {
           "text": "Both AMD64 jobs on build 54543 reached 900 seconds in TestDockerWithVFS/docker_run_bridge_network_privileged. On each platform, the preceding host-network docker run completed apk add curl and apk info with exit status 0. The privileged bridge run then began mount setup on the same Alpine image and produced no exit status. Removing a completed container leaves the image available for the next run. The logs do not locate the wait inside the bridge command. The uncached retries passed in 127.3 seconds on systrap and 50 seconds on KVM.",
@@ -134898,7 +134972,7 @@
           ]
         }
       ],
-      "nextStep": "approved_rebase_queue owns publication/readback and resulting CI/review lifecycle. No human approval remains for this exact source; wait for its concrete delivery receipt.",
+      "nextStep": "Follow the existing approved_rebase_queue lifecycle at pr:17855; no source approval or metadata-publication task remains. No green CI or merge claim.",
       "evidence": [
         {
           "label": "Third attempt, privileged container",
@@ -134955,7 +135029,8 @@
           "title": "Retain dockerd logs for failed Buildkite tests",
           "body": "Include dockerd_*.log in the existing failed-test artifact upload loop. Docker image tests already stream these daemon logs into undeclared outputs, but retained Buildkite artifacts omit them. This improves retained evidence; it does not establish the cause of the nested command stall.",
           "summary": "The user explicitly approved this exact source in the current conversation. Publication and prerequisites remain separate; no request/approval timestamp is invented.",
-          "outcome": "APPROVED"
+          "outcome": "APPROVED",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/17855"
         }
       ]
     },
@@ -137864,8 +137939,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-21T12:00:06.633567+00:00",
-      "summary": "Exact source is user-approved. The assigned publication owner has atomically published the approved source branches and is completing PR metadata/readback; no unverified PR number or completed metadata claim is recorded.",
+      "updatedAt": "2026-11-21T12:02:56.484187+00:00",
+      "summary": "User-approved source is delivered as gVisor#17854 at exact b64c59c1, native mergeable and DCO successful. FirstPass failed; the assigned source owner is diagnosing the exact provider cause. Existing functional/product scope remains unchanged.",
       "findings": [
         {
           "text": "The original job logged 623 lock refusals from 07:37:14 through 08:35:58 UTC, each naming unattended-upgr PID 3661. The worker ran apt-get update again on each turn.",
@@ -137907,7 +137982,7 @@
           ]
         }
       ],
-      "nextStep": "approved_rebase_queue owns publication/readback and resulting CI/review lifecycle. No human approval remains for this exact source; wait for its concrete delivery receipt.",
+      "nextStep": "Follow the existing approved_rebase_queue lifecycle at pr:17854; no source approval or metadata-publication task remains. No green CI or merge claim.",
       "evidence": [
         {
           "label": "Release #7761 \u00b7 pre-command timed out before the CUDA test",
@@ -137961,7 +138036,8 @@
           "title": "Skip installed Buildkite package setup",
           "body": "The pre-command hook refreshed and installed its packages before every\njob. A GSO job waited for unattended-upgrades, found every requested\npackage already installed, then failed on APT's separate archive lock.\n\nAvoid APT when all required packages and the running kernel headers are\ninstalled for the host architecture. Keep the existing package discovery\nand bounded installation for agents that still need setup. Already\ninstalled packages retain their current versions during job setup.\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
           "summary": "The user explicitly approved this exact source in the current conversation. Publication and prerequisites remain separate; no request/approval timestamp is invented.",
-          "outcome": "APPROVED"
+          "outcome": "APPROVED",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/17854"
         }
       ],
       "technicalOwner": "CI flake triage",
@@ -141224,9 +141300,9 @@
       "title": "Declare unit test worker requirements",
       "owner": "root",
       "head": "1189d9f09100ec7674b624f4dae531ab6bde1e98",
-      "updatedAt": "2026-11-21T12:00:06.633567+00:00",
-      "summary": "Existing384 proposal returned for cited provider-property comments. Revised1189d9f cites official docs, default-capability source and BuildBuddy11585, and requests IPv6 Firecracker instead of local execution. Remote gate44901481027 is still running; no new source-publication question or approval exists.",
-      "nextStep": "worker_requirements_citations owns qualification of1189 and the reviewable revised handoff. Root owns the single existing remote gate; do not duplicate it or revive384 approval.",
+      "updatedAt": "2026-11-21T12:02:56.484187+00:00",
+      "summary": "The user-requested provider-citation revision1189d9 is still under qualification/review, not approved or published. AMD44901481027 executed remotely and produced90XML: the three retained default-route failures and one RDMA hardware skip remain; no namespace/IPv6 setup failure occurred. ARM44901710528 and Buildifier44901764634 remain live under their existing owners.",
+      "nextStep": "worker_requirements_citations closes the revised qualification/review before a new source question. Root accepts technical ownership of the three existing route failures after active publication recovery, using retained baseline44661918915/artifact14595922735; this is not a new Daybreak hold or quiet-worker prerequisite.",
       "evidence": [
         {
           "label": "Reviewable source",
@@ -141243,6 +141319,14 @@
         {
           "label": "Formatting",
           "url": "https://github.com/tamird/gvisor/actions/runs/44886171178"
+        },
+        {
+          "label": "Actual remote AMD qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44901481027"
+        },
+        {
+          "label": "Retained route baseline",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44661918915/artifacts/14595922735"
         }
       ],
       "findings": [
@@ -141273,9 +141357,9 @@
       "title": "Honor Iperf client and server CPU affinity",
       "owner": "root",
       "head": "2022728765e5e2a6a436272b09b13e5f04292826",
-      "updatedAt": "2026-11-21T12:00:06.633567+00:00",
-      "summary": "Exact source is user-approved. The assigned publication owner has atomically published the approved source branches and is completing PR metadata/readback; no unverified PR number or completed metadata claim is recorded.",
-      "nextStep": "approved_rebase_queue owns publication/readback and resulting CI/review lifecycle. No human approval remains for this exact source; wait for its concrete delivery receipt.",
+      "updatedAt": "2026-11-21T12:02:56.484187+00:00",
+      "summary": "User-approved source is delivered as gVisor#17856 at exact 20227287, native mergeable and DCO successful. FirstPass failed; the assigned source owner is diagnosing the exact provider cause. Existing functional/product scope remains unchanged.",
+      "nextStep": "Follow the existing approved_rebase_queue lifecycle at pr:17856; no source approval or metadata-publication task remains. No green CI or merge claim.",
       "evidence": [
         {
           "label": "Actual reviewable source",
@@ -141314,7 +141398,8 @@
           "title": "Honor Iperf client and server CPU affinity",
           "summary": "The user explicitly approved this exact source in the current conversation. Publication and prerequisites remain separate; no request/approval timestamp is invented.",
           "body": "Iperf containers did not use the benchmark harness CPU affinity\nsettings. Apply the server and client CPU sets in both connection\nvariants, as the other network benchmarks do.\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
-          "outcome": "APPROVED"
+          "outcome": "APPROVED",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/17856"
         }
       ]
     }

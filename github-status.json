@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-21T11:56:05.903830+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-21T12:00:06.633567+00:00",
+  "registryDate": "2026-11-21T12:02:56.484187+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -451897,9 +451897,9 @@
       "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
-        "sourceHead": "6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
-        "disposition": "The user approved exact651437132bf0054f1742ab2dce694f28a9ee0dc4. The publication owner has published the approved branch and is completing PR title/body/readback. The narrower tool-ownership amendment does not supply the complete source inventory.",
-        "nextAction": "approved_rebase_queue completes16663 metadata/readback and owns new-head CI. Preserve the separate full-inventory/clang-format dependency; no repeated approval request or broad migration."
+        "sourceHead": "651437132bf0054f1742ab2dce694f28a9ee0dc4",
+        "disposition": "The exact user-approved narrow651 amendment and PR description are published; native head is mergeable and DCO passes. FirstPass failed and approved_rebase_queue owns canonical diagnosis. The existing discussion reply is saved; review-request404 remains under bounded provider diagnosis. Full declared-input migration is still separate and open.",
+        "nextAction": "approved_rebase_queue follows current CI/provider/review lifecycle. Do not restore the superseded broader16663 source or treat this executable-only amendment as the inventory prerequisite."
       },
       "conflictObservedSince": "2026-11-21T06:31:43.667696+00:00"
     },
@@ -468424,7 +468424,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:00:06.633567+00:00"
+        "observedAt": "2026-11-21T12:02:56.484187+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -468433,7 +468433,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:00:06.633567+00:00"
+        "observedAt": "2026-11-21T12:02:56.484187+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -468442,7 +468442,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:00:06.633567+00:00"
+        "observedAt": "2026-11-21T12:02:56.484187+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -468451,7 +468451,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:00:06.633567+00:00"
+        "observedAt": "2026-11-21T12:02:56.484187+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -468460,7 +468460,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:00:06.633567+00:00"
+        "observedAt": "2026-11-21T12:02:56.484187+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -468469,7 +468469,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-21T12:00:06.633567+00:00"
+        "observedAt": "2026-11-21T12:02:56.484187+00:00"
       }
     }
   },
