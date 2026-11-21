@@ -400,7 +400,7 @@ img_pull(
 # Debian-compatible benchmarks use the C runtime from the published Ubuntu image.
 img_pull(
     name = "benchmark_ubuntu",
-    digest = "sha256:076e7bf82319619f28dd0aa9c02ab34b055ad37100395b4f49a2ffba04fb5e11",
+    digest = "sha256:9c7f200c07e3d4a03e7249d2c16bf66a51120fb876aa2242cf31451412543289",
     layer_handling = "eager",
     platforms = [
         "linux/amd64",
@@ -408,7 +408,7 @@ img_pull(
     ],
     registries = DOCKER_HUB_REGISTRIES,
     repository = "library/ubuntu",
-    tag = "22.04",
+    tag = "24.04",
 )
 
 ### Toolchains
