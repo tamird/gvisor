@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-21T15:42:31.456870+00:00",
+    "updatedAt": "2026-11-22T06:11:17+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -121023,7 +121023,7 @@
       "status": "active",
       "owner": "root",
       "updatedAt": "2026-11-22T01:16:21.953242+00:00",
-      "summary": "Two actual scheduled deliveries are verified: 44949501220 on Nov21 at21:03 and 44970034296 on Nov22 at01:08. The latter completed successfully and sampled the API at01:11:37.920377 UTC. Their irregular delivery does not establish sustained cadence or causality from the one registration reset. Keep the existing timestamp-derived manual guard; no source, cron, credential or further registration change.",
+      "summary": "The existing workflow is active on master with the unchanged 10-minute cron. Scheduled deliveries remain irregular; latest verified scheduled creation is Nov22 01:08:34. Visible default-branch, activity and workflow-state preconditions are met; GitHub status reports Actions operational. No repository defect or provider cause is established, and no further reset or cron change is justified.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -121266,7 +121266,7 @@
           ]
         }
       ],
-      "nextStep": "At each existing freshness lead derived from the actual API timestamp, check for a newer or live native scheduled run before using the existing snapshot-only fallback. Observe subsequent scheduled deliveries before claiming sustained recovery. Preserve the one-reset boundary; no new monitor or source/cron rewrite.",
+      "nextStep": "Root retired the inherited 25-minute manual API rule because no user/project authority was found. For an idle queue, guard native freshness at actual checkedAt +60 minutes and obtain a fresh API sample by +90 minutes, retaining 30 minutes before the unchanged two-hour UI stale threshold; skip manual collection if native delivery is fresh. Current actual API 2026-11-22T06:03:59.963932+00:00 sets lead07:03:59 and deadline07:33:59 UTC. Active owned jobs and human input are handled on arrival. Keep the documented 10-minute cron and one-reset boundary; await actual provider delivery or concrete scheduler evidence, without a second toggle or speculative source fix.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -121347,6 +121347,10 @@
         {
           "label": "Second verified scheduled collection",
           "url": "https://github.com/tamird/gvisor/actions/runs/44970034296"
+        },
+        {
+          "label": "GitHub provider status; operational does not exclude a repository-specific condition",
+          "url": "https://www.githubstatus.com/api/v2/summary.json"
         }
       ],
       "technicalOwner": "Codex",
