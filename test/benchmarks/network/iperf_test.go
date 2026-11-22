@@ -215,7 +215,7 @@ func BenchmarkIperfManyConnections(b *testing.B) {
 				Parallel: bm.parallel,
 			}
 
-			cmd := append(iperf.MakeCmd("iperfsrv", port), "--debug")
+			cmd := iperf.MakeCmd("iperfsrv", port)
 			cmd = append([]string{"timeout", "--signal=INT", "--kill-after=5s", "30s"}, cmd...)
 
 			// Run the client.

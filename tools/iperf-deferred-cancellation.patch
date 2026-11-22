@@ -1,0 +1,22 @@
+--- a/src/iperf_client_api.c
++++ b/src/iperf_client_api.c
+@@ -75,7 +75,7 @@
+     }
+ 
+     /* Allow this thread to be cancelled even if it's in a syscall */
+-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
++    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
+     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+ 
+     while (! (test->done) && ! (sp->done)) {
+--- a/src/iperf_server_api.c
++++ b/src/iperf_server_api.c
+@@ -88,7 +88,7 @@
+     }
+ 
+     /* Allow this thread to be cancelled even if it's in a syscall */
+-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
++    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
+     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+ 
+     while (! (test->done) && ! (sp->done)) {
