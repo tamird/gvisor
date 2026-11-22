@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T22:59:05.271966+00:00",
+    "updatedAt": "2026-11-22T23:03:09.385297+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4972,7 +4972,7 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "Prioritize the 56-pass selection audit and main analyzer registration/wiring candidate in investigation:repository-lint. Independent util.Lines extraction is permitted but is not a critical-path prerequisite; ten marshal loops and performance work stay held. The unqualified 19-file prep is preserved without publication. Follow provider96 preparation without a new publication ask and actual compiler/platform prerequisites; no timing or candidate comparison is authorized.",
+        "nextAction": "Prioritize the 56-directory selection audit and main analyzer registration/wiring candidate in investigation:repository-lint. Independent util.Lines extraction is permitted but is not a critical-path prerequisite; ten marshal loops and performance work stay held. The unqualified 19-file prep is preserved without publication. Follow provider96 preparation without a new publication ask and actual compiler/platform prerequisites; no timing or candidate comparison is authorized.",
         "recheckCondition": "Qualified provider correction and actual deployed behavior, terminal owner evidence for the analyzer policy, or actual upstream prerequisite landing; no repeat of the completed 70857 Nogo gate.",
         "observedAt": "2026-11-17T19:58:24.544895+00:00",
         "curatedAt": "2026-11-21T13:24:07.659680+00:00",
@@ -131414,7 +131414,7 @@
       "owner": "analysis_pass_inventory / root",
       "updatedAt": "2026-11-21T20:45:26.098382+00:00",
       "group": "analysis",
-      "summary": "HIGH-PRIORITY prepared candidate df8f2ce2 is one commit on eb263: eight files, Suite26 plus 20 new diagnostic packages and the complete 56-check inventory/exclusion rationale. Its tree exactly matches original d712, without independent prep/runtime cleanup. Focused AMD/ARM remote checks each pass 14 driver plus one sanity XML case; source checks/guards pass. Correctness/style review accepts; final free/catchall review is pending. The full corpus is known red; historical 275/890 coverage and 1,234 findings are partial evidence, including two held AsType sites. No full matrix, assembly or C++ lint claim, upstream PR approval or new publication question exists.",
+      "summary": "HIGH-PRIORITY candidate df8f2ce2 is one commit on eb263, adding 20 diagnostic packages and all 26 modernize.Suite members including errors.AsType, with the complete 56-directory audit/exclusion rationale. Its tree matches original d712 without independent prep/runtime cleanup. Focused AMD/ARM remote validation each passes 14 driver plus one sanity XML case; source checks/guards pass and both final review groups accept. The actual publication question is pending, with no upstream PR opened. Full-corpus Nogo remains known red and the historical scan partial (275/890, 1,234 findings), including two held AsType sites. No full matrix, assembly or C++ lint claim follows.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -131786,7 +131786,7 @@
           ]
         }
       ],
-      "nextStep": "Finish the existing final review of this exact minimal candidate, then root handles any actual source-publication question. Keep errorsastype global, with no new two-file exceptions/baselines; root owns the two deferred protected findings without source read/edit. The whole warning backlog and independent prep are not source-candidate handoff prerequisites. Preserve actual validation limits and uncertain go_marshal2 semantics separately.",
+      "nextStep": "Await the exact df8 publication decision with known Nogo blockers explicit. The whole warning backlog and independent prep are not source-candidate handoff prerequisites, but migrations remain necessary before merging. Keep errorsastype global without new two-file exceptions/baselines; root owns protected deferred findings without source read/edit. Preserve validation limits and uncertain go_marshal2 semantics separately.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -131985,7 +131985,17 @@
           "outcome": "approved",
           "postedURL": "https://github.com/gvisor/gvisor/pull/17873"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "df8f2ce22ee86a24b1ecc6dd7155132a215f7cf4",
+        "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+        "url": "https://github.com/tamird/gvisor/commit/df8f2ce22ee86a24b1ecc6dd7155132a215f7cf4",
+        "title": "Audit and enable x/tools analysis passes",
+        "summary": "Register the additional diagnostics and full modernize suite, opening the candidate for review with its existing Nogo source-migration blockers explicit.",
+        "body": "Nogo's explicit analyzer list missed newer diagnostics and modern Go APIs. Register 20 additional diagnostic packages and all 26 members of `modernize.Suite`, including `errors.AsType`. Supply the declared ignored files and source reader required by the added passes. The commit records the complete 56-directory audit and the reason for every omission.\n\nFocused driver and sanity tests pass on AMD64 and ARM64. Full-corpus Nogo still reports existing source findings, so source migrations remain necessary before merging; the existing corpus scan is partial.\n\nPosted by Codex on behalf of @tamird.\n"
+      }
     },
     {
       "id": "investigation:proc-boot-identity",
