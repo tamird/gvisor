@@ -569,3 +569,79 @@ func TestDynamicTypeIdentifier(t *testing.T) {
 		t.Errorf("dynamic type is not same after marshalling and unmarshalling: before = %s, after = %s", s, res)
 	}
 }
+
+func BenchmarkGoMarshalNonPackedSlice(b *testing.B) {
+	var src, dst [64]test.Type8
+	analysis.RandomizeValue(&src)
+	var cc mockCopyContext
+	cc.populate(src)
+	expected := bytes.Clone(cc.taskMem.Bytes)
+	buf := bytes.Clone(expected)
+	var reader bytes.Reader
+	var writer bytes.Buffer
+	writer.Grow(len(expected))
+	for _, bench := range []struct {
+		name string
+		run  func() error
+	}{
+		{"CopyIn", func() error {
+			_, err := test.CopyType8SliceIn(&cc, 0, dst[:])
+			return err
+		}},
+		{"CopyOut", func() error {
+			_, err := test.CopyType8SliceOut(&cc, 0, src[:])
+			return err
+		}},
+		{"MarshalUnsafe", func() error {
+			test.MarshalUnsafeType8Slice(src[:], buf)
+			return nil
+		}},
+		{"UnmarshalUnsafe", func() error {
+			test.UnmarshalUnsafeType8Slice(dst[:], buf)
+			return nil
+		}},
+		{"Read", func() error {
+			reader.Reset(buf)
+			_, err := test.ReadType8Slice(&reader, dst[:])
+			return err
+		}},
+		{"Write", func() error {
+			writer.Reset()
+			_, err := test.WriteType8Slice(&writer, src[:])
+			return err
+		}},
+	} {
+		b.Run(bench.name, func(b *testing.B) {
+			copy(cc.taskMem.Bytes, expected)
+			copy(buf, expected)
+			var valid func() bool
+			switch bench.name {
+			case "CopyIn", "UnmarshalUnsafe", "Read":
+				clear(dst[:])
+				valid = func() bool { return reflect.DeepEqual(src, dst) }
+			case "CopyOut":
+				clear(cc.taskMem.Bytes)
+				valid = func() bool { return bytes.Equal(cc.taskMem.Bytes, expected) }
+			case "MarshalUnsafe":
+				clear(buf)
+				valid = func() bool { return bytes.Equal(buf, expected) }
+			case "Write":
+				writer.Reset()
+				valid = func() bool { return bytes.Equal(writer.Bytes(), expected) }
+			default:
+				b.Fatalf("unknown slice operation %q", bench.name)
+			}
+			if valid() {
+				b.Fatal("destination already matches source before marshalling")
+			}
+			for b.Loop() {
+				if err := bench.run(); err != nil {
+					b.Fatal(err)
+				}
+			}
+			if !valid() {
+				b.Fatal("data corruption across slice marshalling")
+			}
+		})
+	}
+}

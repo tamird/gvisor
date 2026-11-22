@@ -11,7 +11,10 @@ index e864fa2..3de0405 100644
      ],
      "armv7a": [
          "/usr/arm-linux-gnueabihf/include/c++/%d" % GCC_VERSION,
-@@ -100,6 +101,7 @@ CXX_BUILTIN_INCLUDE_DIRECTORIES = {
+@@ -100,6 +102,10 @@ CXX_BUILTIN_INCLUDE_DIRECTORIES = {
++        "/usr/include/c++/%d" % GCC_VERSION,
++        "/usr/include/aarch64-linux-gnu/c++/%d" % GCC_VERSION,
++        "/usr/include/c++/%d/backward" % GCC_VERSION,
          "/usr/aarch64-linux-gnu/include/c++/%d" % GCC_VERSION,
          "/usr/aarch64-linux-gnu/include/c++/%d/aarch64-linux-gnu" % GCC_VERSION,
          "/usr/aarch64-linux-gnu/include/c++/%d/backward" % GCC_VERSION,
