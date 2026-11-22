@@ -226,12 +226,16 @@ func BenchmarkIperfManyConnections(b *testing.B) {
 				Links:      []string{server.MakeLink("iperfsrv")},
 			}, cmd...)
 			b.StopTimer()
-			affinity, inspectErr := clientMachine.RunCommand("docker", "inspect", "--format", "{{.HostConfig.CpusetCpus}}", server.Name, client.Name)
-			wantAffinity := fmt.Sprintf("%s\n%s\n", harness.ServerCPUSet(), harness.ClientCPUSet())
-			if inspectErr != nil || affinity != wantAffinity {
-				b.Fatalf("actual server/client Docker CPU sets = %q, %v; want %q", affinity, inspectErr, wantAffinity)
+			affinity, inspectErr := clientMachine.RunCommand("docker", "inspect", "--format", "{{.HostConfig.Runtime}} {{.HostConfig.CpusetCpus}}", server.Name, client.Name)
+			serverRuntime, clientRuntime := "runc", dockerutil.Runtime()
+			if bm.name == "Download" {
+				serverRuntime, clientRuntime = clientRuntime, serverRuntime
 			}
-			b.Logf("actual server/client Docker CPU sets = %q", affinity)
+			wantAffinity := fmt.Sprintf("%s %s\n%s %s\n", serverRuntime, harness.ServerCPUSet(), clientRuntime, harness.ClientCPUSet())
+			if inspectErr != nil || affinity != wantAffinity {
+				b.Fatalf("actual server/client Docker runtime and CPU sets = %q, %v; want %q", affinity, inspectErr, wantAffinity)
+			}
+			b.Logf("actual server/client Docker runtime and CPU sets = %q", affinity)
 			if err != nil {
 				b.Fatalf("failed to run client: %v (output: %q)", err, out)
 			}
