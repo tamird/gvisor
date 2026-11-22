@@ -133597,7 +133597,7 @@
           ]
         }
       ],
-      "nextStep": "On the next dependency-download failure from a base containing gVisor’s workspace mirror (#17311), identify the archive URL and check whether Bazel attempted the configured mirror. The Bazel 9.4 backport landed in #32595. Follow the 10.0 backport in #32574.",
+      "nextStep": "The Bazel 10.0 backport #32574 merged on Nov16 as 97c3cfb8bc40ad28ed83a66d1f1a5b254a8c12da; its merge wait is closed, like the 9.4 backport #32595. Follow an actual release and gVisor adoption before claiming the current Bazel 9.3.1 uses either fix. On the next dependency-download failure from a base containing workspace mirror #17311, identify the archive URL and whether Bazel attempted its configured mirror.",
       "evidence": [
         {
           "label": "Independent Bazel fix for registry-scoped mirrors",
@@ -140714,8 +140714,8 @@
       "owner": "root",
       "technicalOwner": "root",
       "updatedAt": "2026-11-21T12:00:06.633567+00:00",
-      "summary": "The reviewed fork qualification workflow was published normally over SSH from24b tofc8a0f4; the former signing/SSH/workflow-publication blocker is closed. Build-only44900572165 passed with BEP command build, successful target, source guard and artifact. It used12 internal actions; configured cache/RBE does not establish a remote execution or test outputs.zip retention proof.",
-      "nextStep": "Root follows concrete owning build/test uses of the delivered shared workflow. Preserve existing qualification scope and pending outputs.zip/remote-action evidence rather than reopening the resolved SSH blocker or supplier hold.",
+      "summary": "The delivered fc8a0f4 qualification workflow has actual remote-execution proof: canonical release run 44967257331, source 03106cffd4b560ab8cea021d65c48c8772d46d40 on Bazel 9.3.1, reports eight remote actions, 3,194 remote cache hits and 1,272 internal actions in BEP and bazel.log. This closes the earlier remote-action evidence gap; the old build-only run had only internal actions. Test outputs.zip retention remains unproven, with no established code or upload defect.",
+      "nextStep": "Root retains the shared-workflow lifecycle and existing supplier/release dependencies. Verify outputs.zip only on the next naturally needed positive image or packetimpact producer; the inspected candidate artifacts had XML/logs but no zip. Do not run expensive image/packetimpact workloads solely for this evidence gap, add a harness or reopen resolved SSH/remote-execution blockers.",
       "recheckCondition": "Actual LLVM startup/caller/source-review evidence and user direction, followed by a compatible upstream release/pin.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
@@ -141178,6 +141178,10 @@
         {
           "label": "Delivered build-only qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/44900572165"
+        },
+        {
+          "label": "Canonical release BEP and log proving actual remote actions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44967257331/artifacts/14731513651"
         }
       ],
       "followup": {
