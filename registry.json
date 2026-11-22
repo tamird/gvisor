@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T11:54:35+00:00",
+    "updatedAt": "2026-11-22T12:45:19.444913+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4970,17 +4970,21 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "No further Nogo correctness run is needed. Root retains the separate configuration, trust, performance and declared-compiler prerequisites before source publication. Preserve the original 0be5c425a grant, fulfilled worker approval and unanswered global-default 775768695 decision; do not transfer those approvals to changed source or infer performance from cached completion.",
-        "recheckCondition": "Material source/configuration or trust evidence, actual prerequisite landing, the existing global-default answer or a concrete publication decision; no repeated completed Nogo gate.",
+        "nextAction": "Use a24c2b7f for future qualifications. Preserve the completed 892-test Nogo gate and original source approval; follow configuration/trust/performance limits and actual upstream compiler/platform prerequisites before publication. Network-default approval is settled; no repeated Nogo correctness run.",
+        "recheckCondition": "Actual prerequisite landing, material configuration/trust/performance evidence or terminal owner results from the changed analyzer audit.",
         "observedAt": "2026-11-17T19:58:24.544895+00:00",
         "curatedAt": "2026-11-21T13:24:07.659680+00:00",
-        "disposition": "Full Nogo gate on immutable 70857bbd74c9203998a51b9c8c867ba8c9eba01a is complete: 892/892 passed, 804 actual remote and 88 remote-cached; all 87 prior completed checks were reused without rerun. Executed command after existing helper setup:\nbazel test --keep_going --config=buildbuddy --config=x86_64 --credential_helper=\"remote.buildbuddy.io=$(realpath bazel-bin/tools/buildbuddy/credential_helper)\" --test_tag_filters=nogo --build_tests_only --strip=never //...\nUnchanged NogoSplit covers both target architectures; this is not native ARM-host proof. Completion was cache-assisted after the earlier 30-minute cap, with no matched speedup or cold-cache claim. The partial run remains historical evidence, not a current correctness blocker. Documentation-only 4686744ce429cb988a30c5023b4cbf2ca5e0adc0 passed both focused independent reviews and remains unpublished/unapproved.",
+        "disposition": "Full Nogo gate on immutable 70857bbd74c9203998a51b9c8c867ba8c9eba01a is complete: 892/892 passed, 804 actual remote and 88 remote-cached; all 87 prior completed checks were reused without rerun. Executed command after existing helper setup:\nbazel test --keep_going --config=buildbuddy --config=x86_64 --credential_helper=\"remote.buildbuddy.io=$(realpath bazel-bin/tools/buildbuddy/credential_helper)\" --test_tag_filters=nogo --build_tests_only --strip=never //...\nUnchanged NogoSplit covers both target architectures; this is not native ARM-host proof. Completion was cache-assisted after the earlier 30-minute cap, with no matched speedup or cold-cache claim. The partial run remains historical evidence, not a current correctness blocker. Reviewed documentation 4686744 is published in the fork. Current qualification support a24c2b7f composes this documentation with qualified 70857 and the approved network default port 290be01. AMD/ARM action queries verify properties, not provider connectivity. The separate analyzer audit on 5f2b57ca56 passed its compile/sanity preflight; the full changed scan and formatted lint remain with their owner, with no full-pass claim.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45011783743",
           "https://github.com/tamird/gvisor/actions/runs/45011783743/artifacts/14750124755",
           "https://github.com/tamird/gvisor/actions/runs/45014763993",
           "https://github.com/tamird/gvisor/actions/runs/45014763993/artifacts/14751568288",
-          "https://app.buildbuddy.io/invocation/829e7b0e-19df-4b36-baeb-6b936264dc4a"
+          "https://app.buildbuddy.io/invocation/829e7b0e-19df-4b36-baeb-6b936264dc4a",
+          "https://github.com/tamird/gvisor/commit/4686744ce429cb988a30c5023b4cbf2ca5e0adc0",
+          "https://github.com/tamird/gvisor/commit/a24c2b7f3a7def6252a1c06b276991736449059d",
+          "https://github.com/tamird/gvisor/actions/runs/45023075798",
+          "https://github.com/tamird/gvisor/actions/runs/45023080624"
         ]
       },
       "updatedAt": "2026-11-17T20:32:28.027492+00:00"
@@ -44486,8 +44490,8 @@
         }
       ],
       "updatedAt": "2026-11-17T19:04:46.312467+00:00",
-      "status": "open",
-      "summary": "Import #17404 landed the complete change. Replaying the current source on the imported tree left every file unchanged.",
+      "status": "closed",
+      "summary": "Closed after the complete change landed in 3767e597a. No replacement rebase is needed.",
       "refinement": {
         "before": {
           "head": "28a27e004b8e42d9f5b0aed4fbfadff0facaa8cd"
@@ -44525,6 +44529,17 @@
           "outcome": "approved",
           "at": "2026-11-04T11:27:39.033171+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/16591#discussion_r4470795662"
+        },
+        {
+          "kind": "closure",
+          "status": "settled",
+          "head": "d1b274f9eb8d7734c13ab3c6765ac3f9145856ff",
+          "url": "https://github.com/google/gvisor/pull/16591",
+          "title": "Close already-imported #16591",
+          "summary": "Closed after import as 3767e597a.",
+          "body": "Landed in 3767e597a\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "posted",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/16591#issuecomment-7079160484"
         }
       ],
       "reapproval": {
@@ -44552,10 +44567,10 @@
       "followup": {
         "sourceHead": "d1b274f9eb8d7734c13ab3c6765ac3f9145856ff",
         "owner": "approved_rebase_queue / root",
-        "nextAction": "Await the actual unanswered decision to close the already-imported #16591 with “Landed in 3767e597a” and delegated attribution. Do not publish an empty rebase, retry old CI or infer closure permission from source import. Preserve independent historical checkpoint-dump evidence in its existing investigation.",
+        "nextAction": "No source or closure action remains. Preserve independent historical checkpoint-dump evidence in its existing investigation.",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "recheckCondition": "Actual closure/comment decision or a native PR/import state change; no source mutation before that answer.",
+        "recheckCondition": "Genuine post-closure feedback or a demonstrated import problem.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/16591",
           "https://github.com/tamird/gvisor/commit/49fcf45ec2560828be233cfd6499f5bb3f7f8373",
@@ -44593,7 +44608,7 @@
           "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321",
           "https://github.com/gvisor/gvisor/commit/3767e597a341236280bff142471f063a755ec2ff"
         ],
-        "disposition": "The exact change is already imported upstream as 3767e597a341236280bff142471f063a755ec2ff with COPYBARA_INTEGRATE_REVIEW #16591; all four affected blobs equal public d1b274f9 at current eb263. The PR remains open with no native merge commit, so do not relabel it merged. Its obsolete-hook failure is historical and no empty rebase is needed; checkpoint evidence remains separately scoped."
+        "disposition": "Closed after the complete change landed in 3767e597a. No replacement rebase is needed."
       },
       "dcoAmendment": {
         "oldHead": "49fcf45ec2560828be233cfd6499f5bb3f7f8373",
@@ -44616,15 +44631,6 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
-      },
-      "contributorReview": {
-        "kind": "closure",
-        "status": "pending",
-        "head": "d1b274f9eb8d7734c13ab3c6765ac3f9145856ff",
-        "url": "https://github.com/google/gvisor/pull/16591",
-        "title": "Close already-imported #16591",
-        "summary": "Actual unanswered request to close the still-open PR and post this comment. The source is imported as 3767e597a341236280bff142471f063a755ec2ff; import evidence is not closure authorization.",
-        "body": "Landed in 3767e597a\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -67207,9 +67213,9 @@
       "title": "Export the iperf3 license text",
       "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11518",
       "group": "bazel",
-      "status": "open",
+      "status": "merged",
       "updatedAt": "2026-11-02T16:25:23.256481+00:00",
-      "summary": "Export the source notice for consumers packaging iperf3. The release keeps the source and CI matrix and declares the Bazel 7.2.1 minimum required for registry overlays.",
+      "summary": "The registry release exporting the Iperf3 LICENSE merged as 70404f85e6f284ac9be91b90aac34042a1279d90. Requested module-maintainer review of the LICENSE export.",
       "evidence": [
         {
           "label": "Corrected 7.2.1 minimum; all reported checks passed",
@@ -67220,24 +67226,30 @@
         "owner": "benchmark_measurement_review / root",
         "sourceHead": "fe25c8ed035077d6f3afe56d9b0d0411a6455b99",
         "observedAt": "2026-11-17T22:31:20.170000+00:00",
-        "disposition": "The open Copilot summary was stale: discussion_r4444832725 is resolved and outdated. Both currentfe25 MODULE files already declare bazel_compatibility>=7.2.1, and the overlay checksum matches. No source defect, test or reply is needed for that finding. Actual blocker: module-maintainer human review, with kgreenek named in metadata and no reviewer request/review sinceNov2.",
-        "nextAction": "Root awaits the actual accepted question to post the exact concise kgreenek review request. No outreach or source amendment is authorized before the answer; preserve this existing Iperf3 release prerequisite.",
-        "recheckCondition": "Actual outreach decision or genuine maintainer review/release change; do not reopen the resolved bot finding.",
+        "disposition": "BCR #11518 merged on November 22 at 12:14:38 UTC, preserving reviewed head fe25c8ed. The overlay compatibility finding is resolved; the registry release exports LICENSE.",
+        "nextAction": "benchmark_measurement_review verifies the released registry version and adopts it in the existing Iperf3 vehicle. No further review request or source correction is needed for #11518.",
+        "recheckCondition": "Actual released-version availability/adoption or genuine post-merge feedback.",
         "evidence": [
           "https://github.com/bazelbuild/bazel-central-registry/pull/11518#issuecomment-6582183969",
-          "https://github.com/bazelbuild/bazel-central-registry/pull/11518#discussion_r4444832725"
+          "https://github.com/bazelbuild/bazel-central-registry/pull/11518#discussion_r4444832725",
+          "https://github.com/bazelbuild/bazel-central-registry/commit/70404f85e6f284ac9be91b90aac34042a1279d90",
+          "https://github.com/bazelbuild/bazel-central-registry/pull/11518#issuecomment-7078916453"
         ],
         "curatedAt": "2026-11-21T14:40:26.293073+00:00"
       },
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "fe25c8ed035077d6f3afe56d9b0d0411a6455b99",
-        "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11518",
-        "title": "Request module-maintainer review of the license export",
-        "summary": "Root confirms the actual async question to post this concise review request was accepted and remains unanswered. No source amendment or new commitment is included; no precise request timestamp or ID was returned.",
-        "body": "@kgreenek, could you review this release exporting `LICENSE`? Presubmit is green.\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "status": "settled",
+          "head": "fe25c8ed035077d6f3afe56d9b0d0411a6455b99",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11518",
+          "title": "Request module-maintainer review of the license export",
+          "summary": "Requested module-maintainer review of the LICENSE export.",
+          "body": "@kgreenek, could you review this release exporting `LICENSE`? Presubmit is green.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "posted",
+          "postedURL": "https://github.com/bazelbuild/bazel-central-registry/pull/11518#issuecomment-7078916453"
+        }
+      ]
     },
     {
       "id": "pr:16805",
@@ -105651,12 +105663,12 @@
       "title": "DCO check includes commits already on the PR base branch",
       "url": "https://github.com/cncf/dco2/issues/126",
       "updatedAt": "2026-11-21T12:20:58.751348+00:00",
-      "summary": "The delivered DCO range report now has a qualified source proposal d3993939e1ab8feea773db20b7e27c600091fd6a. Exact-source native CI45008480284 passed clippy, rustfmt and262 tests; two independent reviews found no issues. The actual question to open the upstream cncf/dco2 PR is pending. Its stale-event regression does not identify the production webhook/deployed-version cause, and no provider deployment or affected-check correction is established.",
+      "summary": "The current DCO range failure remains unresolved. A fresh force-push produced the wrong 45-commit check three seconds later; the correct current-base comparison contains one commit. Proposal d399 only fixes a synthetic stale-event base and is technically held. The production payload and deployed version remain unknown.",
       "followup": {
         "owner": "root",
-        "disposition": "The delivered DCO range report now has a qualified source proposal d3993939e1ab8feea773db20b7e27c600091fd6a. Exact-source native CI45008480284 passed clippy, rustfmt and262 tests; two independent reviews found no issues. The actual question to open the upstream cncf/dco2 PR is pending. Its stale-event regression does not identify the production webhook/deployed-version cause, and no provider deployment or affected-check correction is established.",
-        "nextAction": "Await the recorded upstream source-PR publication decision. Root retains genuine issue feedback, provider deployment and exact affected-check follow-through; no production cause or correction is inferred from the qualified stale-event regression.",
-        "recheckCondition": "Actual source-publication answer, genuine maintainer issue/PR feedback, provider deployment or source-bound affected DCO check correction.",
+        "disposition": "The current DCO range failure remains unresolved. A fresh force-push produced the wrong 45-commit check three seconds later; the correct current-base comparison contains one commit. Proposal d399 only fixes a synthetic stale-event base and is technically held. The production payload and deployed version remain unknown.",
+        "nextAction": "dco_range_fix / root establish how the production check selected its comparison range before proposing a fix. Preserve the qualified regression as limited evidence; no source PR, provider-policy change or new permission request is justified yet.",
+        "recheckCondition": "Actual production event/deployed-version evidence or a source-bound causal explanation and validated correction.",
         "evidence": [
           "https://github.com/cncf/dco2/issues/126",
           "https://github.com/tamird/dco2/commit/d3993939e1ab8feea773db20b7e27c600091fd6a",
@@ -105664,16 +105676,19 @@
           "https://github.com/tamird/dco2/pull/1"
         ]
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "d3993939e1ab8feea773db20b7e27c600091fd6a",
-        "baseHead": "cd8272fff227aab9eeb5ffac398f1abd88508d73",
-        "url": "https://github.com/tamird/dco2/commit/d3993939e1ab8feea773db20b7e27c600091fd6a",
-        "title": "Use the current pull request base for DCO checks",
-        "summary": "Actual unanswered request to open the one-commit upstream cncf/dco2:main PR from tamird/dco2:dco-current-pr-range. DCO and qualification/reviews are complete; tamird/dco2#1 is validation only. The production webhook, deployed version and actual provider correction remain unknown.",
-        "body": "Select comparison revisions from the current pull request state, so an older webhook base does not include already-landed commits in the DCO check. Skip closed pull requests and events for superseded heads. Preserve comparison pagination, the commit limit and the later label freshness check.\n\nReuse the existing fixtures to distinguish the event base from the current base, and cover lookup failures and skipped closed or moved-head events.\n\nRelated to #126. This covers stale-event selection; that report's triggering production payload and deployed version remain unknown.\n\nPosted by Codex on behalf of @tamird.\n"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "d3993939e1ab8feea773db20b7e27c600091fd6a",
+          "baseHead": "cd8272fff227aab9eeb5ffac398f1abd88508d73",
+          "url": "https://github.com/tamird/dco2/commit/d3993939e1ab8feea773db20b7e27c600091fd6a",
+          "title": "Use the current pull request base for DCO checks",
+          "summary": "The extra pull-request GET has not been shown to fix the observed production failure.",
+          "body": "Select comparison revisions from the current pull request state, so an older webhook base does not include already-landed commits in the DCO check. Skip closed pull requests and events for superseded heads. Preserve comparison pagination, the commit limit and the later label freshness check.\n\nReuse the existing fixtures to distinguish the event base from the current base, and cover lookup failures and skipped closed or moved-head events.\n\nRelated to #126. This covers stale-event selection; that report's triggering production payload and deployed version remain unknown.\n\nPosted by Codex on behalf of @tamird.\n",
+          "outcome": "TECHNICAL-HOLD"
+        }
+      ]
     },
     {
       "id": "pr:17861",
@@ -139048,9 +139063,9 @@
       "title": "Node’s worker ArrayBuffer zero-fill test times out",
       "group": "ci-flakes",
       "status": "active",
-      "owner": "root",
+      "owner": "root / runtime integration",
       "updatedAt": "2026-11-12T19:22:51+00:00",
-      "summary": "Node reported TIMEOUT in worker-arraybuffer-zerofill on shard 1 of build 54705.",
+      "summary": "The original Node 22.2.0 timeout attempt recovered on automatic retry. The original image and 180-second Node harness/20-minute outer contract are preserved; no new tests ran.",
       "findings": [
         {
           "text": "The same shard also timed out in debugger-random-port. The log does not identify where the ArrayBuffer test stopped.",
@@ -139066,7 +139081,7 @@
           ]
         }
       ],
-      "nextStep": "Run the zero-fill case by itself with the original Node image and native and gVisor runtimes. Capture the worker and parent stacks on a timeout.",
+      "nextStep": "Complete the existing Docker-owned runtime integration with the original Node 22.2.0 image, current Bazel and native/Sentry selectors before a targeted recurrence test. Existing integration dced6bfb requires Bazel 8.8.1, while the modern qualification workflow uses 9.3.1; manual Docker requires a preloaded image and installed runtime. Root owns this concrete integration prerequisite; recheck a usable maintained target or natural recurrence, not an unprepared repeat.",
       "evidence": [
         {
           "label": "Original Node shard",
@@ -139090,9 +139105,9 @@
       "title": "Node’s error serialization test times out",
       "group": "ci-flakes",
       "status": "active",
-      "owner": "root",
+      "owner": "root / runtime integration",
       "updatedAt": "2026-11-12T19:22:51+00:00",
-      "summary": "Build 54705 hit Node’s TIMEOUT in error-serdes on shard 7. The retry passed.",
+      "summary": "The original Node 22.2.0 timeout attempt recovered on automatic retry. The original image and 180-second Node harness/20-minute outer contract are preserved; no new tests ran.",
       "findings": [
         {
           "text": "The same test timed out in build 54544. Neither log identifies the operation still running at the deadline.",
@@ -139112,7 +139127,7 @@
           ]
         }
       ],
-      "nextStep": "Repeat error-serdes by itself with the original Node image and capture the parent and child stacks if it stalls.",
+      "nextStep": "Complete the existing Docker-owned runtime integration with the original Node 22.2.0 image, current Bazel and native/Sentry selectors before a targeted recurrence test. Existing integration dced6bfb requires Bazel 8.8.1, while the modern qualification workflow uses 9.3.1; manual Docker requires a preloaded image and installed runtime. Root owns this concrete integration prerequisite; recheck a usable maintained target or natural recurrence, not an unprepared repeat.",
       "evidence": [
         {
           "label": "Original Node shard",
@@ -141409,7 +141424,7 @@
           }
         ],
         "curatedAt": "2026-11-20T23:41:26.383263+00:00",
-        "nextAction": "Root follows supplier #236 and publishes the already-approved LLVM producer change when its prerequisite permits, then verifies a compatible upstream release before gVisor pin/adoption. Preserve completed caller/product evidence and the separate pending worker/network question; do not reopen supplier approval.",
+        "nextAction": "Root follows supplier #236 and publishes the already-approved LLVM producer change when its prerequisite permits, then verifies a compatible upstream release before gVisor pin/adoption. Preserve completed caller/product evidence and the delivered worker source and approved network-default adoption with their upstream prerequisites; do not reopen supplier approval.",
         "recheckCondition": "Supplier #236 landing, a compatible producer/release artifact or actual upstream feedback; approval is already recorded and is not the remaining gate.",
         "owner": "root",
         "sourceHead": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
@@ -141982,8 +141997,8 @@
       "owner": "root",
       "head": "8e869b906e5a651a377178f1cf3621a798042397",
       "updatedAt": "2026-11-21T13:24:07.659680+00:00",
-      "summary": "Worker4026 approval and requested narrow edits are delivered as#17861 at8e869b906. Native head is mergeable/DCO-successful; FirstPass admission quota and current CI are owned by approved_rebase_queue. No publication approval remains. Global775 remains pending and was not included in worker approval.",
-      "nextStep": "Follow canonical pr:17861 under approved_rebase_queue; no duplicate source/CI question. Root retains the separate existing global775 decision.",
+      "summary": "Unit-test worker requirements are delivered in #17861. The approved shared network-off default is incorporated in current fork qualification support a24c2b7f; upstream RBE platform/compiler prerequisites remain.",
+      "nextStep": "Follow #17861 under approved_rebase_queue and use current support a24c2b7f for qualification. Follow actual upstream platform/compiler landing; no network-default approval remains.",
       "evidence": [
         {
           "label": "Reviewable source",
@@ -142040,6 +142055,10 @@
         {
           "label": "Immutable original paired question before partial approval",
           "url": "https://github.com/tamird/gvisor/blob/a0fd7d044f3046e7e03c49f91081d9c2762f3d58/registry.json"
+        },
+        {
+          "label": "Current fork qualification support",
+          "url": "https://github.com/tamird/gvisor/commit/a24c2b7f3a7def6252a1c06b276991736449059d"
         }
       ],
       "findings": [
@@ -142082,18 +142101,19 @@
           "outcome": "APPROVED",
           "summary": "The direct user approved worker4026 only and requested nine-character linked SHAs. The old paired question is preserved in immutable history; global775 remains unanswered.",
           "postedURL": "https://github.com/gvisor/gvisor/pull/17861"
+        },
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "775768695aa792ea6bf2369d9e3900fb289aaf00",
+          "baseHead": "0be5c425a5705e43b043c3d9aefef7839ececa3c",
+          "url": "https://github.com/tamird/gvisor/commit/775768695aa792ea6bf2369d9e3900fb289aaf00",
+          "title": "Set the shared RBE network default",
+          "body": "Set the shared REAPI network default to off. Local Bazel networking is separate.",
+          "summary": "The shared RBE network default is approved.",
+          "outcome": "approved"
         }
-      ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "775768695aa792ea6bf2369d9e3900fb289aaf00",
-        "baseHead": "0be5c425a5705e43b043c3d9aefef7839ececa3c",
-        "url": "https://github.com/tamird/gvisor/commit/775768695aa792ea6bf2369d9e3900fb289aaf00",
-        "title": "Set the shared RBE network default",
-        "body": "Remaining scope of the already-asked paired source question: global-default775 sets one shared REAPI network-off default, distinct from local Bazel networking. Worker4026 was approved separately; this global source remains unanswered. Compiler/RBE prerequisites remain.",
-        "summary": "This is the surviving global775 part of the actual prior paired question, not a new ask. Direct user LGTM covered4026 only. No question ID or request timestamp is invented."
-      }
+      ]
     },
     {
       "id": "investigation:iperf-cpu-affinity",
@@ -142155,11 +142175,11 @@
       "status": "active",
       "group": "bazel",
       "title": "Declare C/C++ formatting inputs in Bazel",
-      "owner": "root",
+      "owner": "declared_formatting_resume",
       "head": "be47f724fb92fa604dfb998fc9fb6f2b01d364b1",
       "updatedAt": "2026-11-21T14:00:19.559771+00:00",
-      "summary": "The actual be47 publication question remains unanswered; all full/cleanup checks and both independent reviews passed. Named fork preview qualification/cc-format-source-be47f724 now exists at exact be47f724fb92fa604dfb998fc9fb6f2b01d364b1, verified after a bounded ordinary HTTPS retry. The former preview-ref execution blocker is resolved without new credentials/scopes/hooks. No upstream PR is open and d039 approval does not transfer to this source.",
-      "nextStep": "Root awaits the existing be47 source-publication decision. Source and named preview are readable; no transport/auth recovery or duplicate question remains. Preserve the exact supplied PR body and original d039 source preview.",
+      "summary": "Revision requested: reuse bazel-contrib/rules_lint instead of per-BUILD clang_format_inputs. The qualified be47 source remains preserved; no upstream PR was opened.",
+      "nextStep": "declared_formatting_resume assesses the maintained rules_lint mechanism read-only and returns the smallest compatible design, retaining complete C/C++ input/configuration coverage.",
       "evidence": [
         {
           "label": "Actual reviewable clean source",
@@ -142207,18 +142227,19 @@
           "body": "Source review: https://github.com/tamird/gvisor/commit/d039802d8437f08d27b0282485709cc5f1b464ba\n\nSource lint downloaded a clang-format wheel and selected its files in\nshell. Run the declared LLVM formatter with indexed C/C++ files and\nadjacent configuration as Bazel action inputs. Keep the existing check\nand fix entry points, selecting the client tool for checkout fixes.\n\nKeep the input repository lazy and development-only. Source lint needs\na Git checkout with regular indexed files and indexed formatter\nconfiguration. Reject unindexed configuration before checks or fixes,\nand bound ignore discovery at the repository root so both use the same\nconfiguration.\n\nSigned-off-by: Tamir Duberstein <tamird@gmail.com>",
           "summary": "Direct user LGTM for d039 included a substantive host-Git/index hermeticity concern. Approval is recorded; publication remains held for responsible correction and qualified review, not another unanswered d039 question.",
           "outcome": "APPROVED"
+        },
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "be47f724fb92fa604dfb998fc9fb6f2b01d364b1",
+          "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+          "url": "https://github.com/tamird/gvisor/commit/be47f724fb92fa604dfb998fc9fb6f2b01d364b1",
+          "title": "Declare clang-format inputs in Bazel",
+          "body": "clang-format currently selects files through Git and downloads a separate tool. Declare its sources and configuration in Bazel and use the existing LLVM tool, preserving the lint check/fix commands and validating workspace paths before fixing.\n\nPackage globs include new matching files without Git staging. Other linters retain their existing input discovery.\n\nPosted by Codex on behalf of @tamird.\n",
+          "summary": "Reuse bazel-contrib/rules_lint instead of per-BUILD clang_format_inputs.",
+          "outcome": "CHANGES-REQUESTED"
         }
-      ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "be47f724fb92fa604dfb998fc9fb6f2b01d364b1",
-        "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
-        "url": "https://github.com/tamird/gvisor/commit/be47f724fb92fa604dfb998fc9fb6f2b01d364b1",
-        "title": "Declare clang-format inputs in Bazel",
-        "body": "clang-format currently selects files through Git and downloads a separate tool. Declare its sources and configuration in Bazel and use the existing LLVM tool, preserving the lint check/fix commands and validating workspace paths before fixing.\n\nPackage globs include new matching files without Git staging. Other linters retain their existing input discovery.\n\nPosted by Codex on behalf of @tamird.\n",
-        "summary": "Root confirms the actual accepted question to open one commit as a PR is unanswered. Comparison from d039 is net+80 lines. No precise request timestamp or question ID was supplied; source approval is separate from the provider-blocked preview ref."
-      }
+      ]
     },
     {
       "id": "investigation:iperf-aggregate-reporting",
@@ -142230,7 +142251,7 @@
       "head": "9cf0dbbe278572fd39d877a0d542483573a0185b",
       "updatedAt": "2026-11-21T18:06:34.151123+00:00",
       "summary": "Root holds standalone publication of the Iperf2 reporter after N24 visit 28 showed the SUM interval was 10.7154s versus the longest stream’s 11.3312s. Source 9cf remains a literal SUM parsing correction, but its unanswered publication question is suspended by the technical owner; no user rejection, approval or upstream PR is inferred.",
-      "nextStep": "benchmark_measurement_review recovers currentness and dependencies for the existing approved Iperf3 vehicle, preserving BCR11518 and license15146 blockers. No more timing or standalone Iperf2 publication. Recheck that recovery or explicit root release; the old question remains unanswered.",
+      "nextStep": "Iperf3 currentness recovery is complete. benchmark_measurement_review follows released BCR #11518 adoption and the separate #15146 license-policy hold; #15146 is not a demonstrated binary-build prerequisite. Complete DING caller ce163 remains gated by the unanswered Moby exception and actual topology qualification. Current Sentry P64 still times out at 30 seconds locally and on RBE; cause is unknown and sensitive investigation remains held pending Daybreak availability. No unchanged retry, timing or standalone 9cf publication.",
       "evidence": [
         {
           "label": "Exact reviewable source and included DCO",
@@ -142247,6 +142268,18 @@
         {
           "label": "Immutable exact unanswered question and proposed PR body before owner hold",
           "url": "https://github.com/tamird/gvisor/blob/76baaea04a3a26f0b28dbbb886d1b187becae645/registry.json"
+        },
+        {
+          "label": "Retained Iperf3 qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44954024607"
+        },
+        {
+          "label": "Retained Iperf3 qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44954393599"
+        },
+        {
+          "label": "Retained Iperf3 qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44955092779"
         }
       ],
       "findings": []
@@ -142306,21 +142339,11 @@
       "status": "active",
       "group": "analysis",
       "title": "Benchmark legacy state and UDP queues",
-      "owner": "root",
-      "head": "408f2c192c96bd614bfc3993cc317cc6406a1c52",
+      "owner": "benchmark_general_review",
+      "head": "6eaaa8495bdb912284019b8d9bae8983c0435d54",
       "updatedAt": "2026-11-22T03:38:58.522285+00:00",
-      "summary": "One actual new-PR publication question for source 408 is pending. Its three benchmark-only files add ten wire cases and six real UDP Save/Load fixtures. All 38 functional 1x cases passed on both architectures, corrected Nogo and five source checks passed, and two independent reviews found no code/methodology issue. The final subject-only revision preserves tree d562 and includes DCO. No upstream PR or statistical result is inferred.",
-      "nextStep": "Root awaits the existing 408 publication answer. Preserve the exact supplied PR body and the independent #17472 production/performance boundary; no duplicate question or timing follows from functional 1x checks.",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "408f2c192c96bd614bfc3993cc317cc6406a1c52",
-        "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
-        "url": "https://github.com/tamird/gvisor/commit/408f2c192c96bd614bfc3993cc317cc6406a1c52",
-        "title": "Benchmark legacy state and UDP queues",
-        "body": "The state benchmark table covers the default graph engine and gob, but lacks an explicit legacy comparison. Add 10 wire cases and UDP receive-queue Save/Load cases for 1, 8 and 32 packets.\n\nThe UDP benchmarks select the legacy engine and check its header and restored links, timestamps and payloads outside the timed operations.\n\nPosted by Codex on behalf of @tamird.\n",
-        "summary": "Approve opening a one-commit gVisor PR for [408f2c192](https://github.com/tamird/gvisor/commit/408f2c192c96bd614bfc3993cc317cc6406a1c52), “Benchmark legacy state and UDP queues”? Three benchmark-only files add the missing legacy cases and real UDP queue fixtures. All 38 functional 1x cases passed on AMD64 and ARM64; Nogo, five source checks and two independent reviews passed. DCO is included. This supplies #17472’s benchmark prerequisite; it makes no performance claim.\n\nRoot confirms this actual question was accepted and remains unanswered; no question ID or precise submission timestamp was returned."
-      },
+      "summary": "The revision selects each algorithm engine explicitly and restores the incoming setting after each benchmark family. Its benchmark-only cases supply the legacy state/UDP comparison prerequisite. The 32-row functional 1x gate, Nogo and both focused reviews passed; these are not performance measurements.",
+      "nextStep": "Await publication review of source 6eaaa8495. Preserve the separate #17472 production/performance requirements; functional 1x rows do not establish statistical benefit.",
       "findings": [],
       "evidence": [
         {
@@ -142334,8 +142357,43 @@
         {
           "label": "Corrected ARM Nogo-only gate",
           "url": "https://github.com/tamird/gvisor/actions/runs/44979306818"
+        },
+        {
+          "label": "Revised source",
+          "url": "https://github.com/tamird/gvisor/commit/6eaaa8495bdb912284019b8d9bae8983c0435d54"
+        },
+        {
+          "label": "Fresh 32-row functional gate",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45023106600"
+        },
+        {
+          "label": "Revised Nogo gate",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45022809649"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "408f2c192c96bd614bfc3993cc317cc6406a1c52",
+          "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+          "url": "https://github.com/tamird/gvisor/commit/408f2c192c96bd614bfc3993cc317cc6406a1c52",
+          "title": "Benchmark legacy state and UDP queues",
+          "body": "The state benchmark table covers the default graph engine and gob, but lacks an explicit legacy comparison. Add 10 wire cases and UDP receive-queue Save/Load cases for 1, 8 and 32 packets.\n\nThe UDP benchmarks select the legacy engine and check its header and restored links, timestamps and payloads outside the timed operations.\n\nPosted by Codex on behalf of @tamird.\n",
+          "summary": "Explain the motivation and select each algorithm engine explicitly without leaking global state.",
+          "outcome": "CHANGES-REQUESTED"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "6eaaa8495bdb912284019b8d9bae8983c0435d54",
+        "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+        "url": "https://github.com/tamird/gvisor/commit/6eaaa8495bdb912284019b8d9bae8983c0435d54",
+        "title": "Benchmark legacy state and UDP queues",
+        "body": "The state/gob benchmark table lacked explicit legacy encoder rows, preventing comparisons with graph encoding. Add wire variants across the existing object graphs and UDP receive-queue Save/Load cases with 1, 8 and 32 packets. Packet payloads, addresses and timestamps exercise a reachable packet graph.\n\nSelect the engine explicitly for every algorithm and restore the incoming setting after each benchmark family. Validate the legacy header and restored queue outside the measured operations.\n\nPosted by Codex on behalf of @tamird.\n",
+        "summary": "Add explicit legacy encoder and UDP queue comparisons. Select and restore graph-engine state per benchmark family. The 32-row functional 1x gate, Nogo and independent reviews passed; no performance claim.\n\ngit range-diff 408f2c192c96bd614bfc3993cc317cc6406a1c52^! 6eaaa8495bdb912284019b8d9bae8983c0435d54^!"
+      }
     }
   ],
   "updatedAt": "2026-11-20T23:41:26.383263+00:00"
