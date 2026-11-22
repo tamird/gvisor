@@ -569,3 +569,58 @@ func TestDynamicTypeIdentifier(t *testing.T) {
 		t.Errorf("dynamic type is not same after marshalling and unmarshalling: before = %s, after = %s", s, res)
 	}
 }
+
+func BenchmarkGoMarshalNonPackedSlice(b *testing.B) {
+	var src, dst [64]test.Type8
+	analysis.RandomizeValue(&src)
+	dst = src
+	var cc mockCopyContext
+	cc.populate(src)
+	expected := bytes.Clone(cc.taskMem.Bytes)
+	buf := bytes.Clone(expected)
+	var reader bytes.Reader
+	var writer bytes.Buffer
+	writer.Write(expected)
+	for _, bench := range []struct {
+		name string
+		run  func() error
+	}{
+		{"CopyIn", func() error {
+			_, err := test.CopyType8SliceIn(&cc, 0, dst[:])
+			return err
+		}},
+		{"CopyOut", func() error {
+			_, err := test.CopyType8SliceOut(&cc, 0, src[:])
+			return err
+		}},
+		{"MarshalUnsafe", func() error {
+			test.MarshalUnsafeType8Slice(src[:], buf)
+			return nil
+		}},
+		{"UnmarshalUnsafe", func() error {
+			test.UnmarshalUnsafeType8Slice(dst[:], buf)
+			return nil
+		}},
+		{"Read", func() error {
+			reader.Reset(buf)
+			_, err := test.ReadType8Slice(&reader, dst[:])
+			return err
+		}},
+		{"Write", func() error {
+			writer.Reset()
+			_, err := test.WriteType8Slice(&writer, src[:])
+			return err
+		}},
+	} {
+		b.Run(bench.name, func(b *testing.B) {
+			for b.Loop() {
+				if err := bench.run(); err != nil {
+					b.Fatal(err)
+				}
+			}
+			if !reflect.DeepEqual(src, dst) || !bytes.Equal(buf, expected) || !bytes.Equal(cc.taskMem.Bytes, expected) || !bytes.Equal(writer.Bytes(), expected) {
+				b.Fatal("data corruption across slice marshalling")
+			}
+		})
+	}
+}
