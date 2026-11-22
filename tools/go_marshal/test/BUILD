@@ -18,6 +18,7 @@ go_test(
         ":test",
         "//pkg/binary",
         "//pkg/hostarch",
+        "//pkg/marshal",
         "//tools/go_marshal/analysis",
     ],
 )
