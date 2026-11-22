@@ -48,7 +48,11 @@ go_cov(
     pure = True,
     race = "off",
     tags = ["manual"],
-    visibility = ["//debian:__pkg__"],
+    visibility = [
+        "//debian:__pkg__",
+        "//test/runner:__pkg__",
+        "//tools/bazeldefs/tests/coverage:__pkg__",
+    ],
     deps = [
         "//runsc/cli/sentrycli",
         "//runsc/gvisorbinaries",
@@ -67,7 +71,11 @@ go_cov(
     race = "on",
     static = True,
     tags = ["manual"],
-    visibility = ["//debian:__pkg__"],
+    visibility = [
+        "//debian:__pkg__",
+        "//test/runner:__pkg__",
+        "//tools/bazeldefs/tests/coverage:__pkg__",
+    ],
     deps = [
         "//runsc/cli/sentrycli",
         "//runsc/gvisorbinaries",

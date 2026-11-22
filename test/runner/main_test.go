@@ -16,6 +16,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,6 +30,35 @@ import (
 
 	_ "gvisor.dev/gvisor/runsc/cli/sentrycli"
 )
+
+func TestReadLogWarnings(t *testing.T) {
+	// A long informational line must not hide a later warning. The final
+	// warning has no newline, as can happen when a process exits abruptly.
+	input := strings.Repeat("I", 128*1024) + "\nW1 warning\r\npanic: final warning"
+	warnings, err := readLogWarnings(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("readLogWarnings: %v", err)
+	}
+	if got, want := strings.Join(warnings, "\n"), "W1 warning\npanic: final warning"; got != want {
+		t.Errorf("warnings = %q, want %q", got, want)
+	}
+}
+
+type failingLogReader struct {
+	err error
+}
+
+func (r failingLogReader) Read([]byte) (int, error) {
+	return 0, r.err
+}
+
+func TestReadLogWarningsError(t *testing.T) {
+	wantErr := errors.New("log read failed")
+	r := io.MultiReader(strings.NewReader("I complete line\n"), failingLogReader{err: wantErr})
+	if _, err := readLogWarnings(r); !errors.Is(err, wantErr) {
+		t.Errorf("readLogWarnings error = %v, want %v", err, wantErr)
+	}
+}
 
 func TestPrintCheckpointDir(t *testing.T) {
 	if err := testutil.ConfigureExePath(); err != nil {
