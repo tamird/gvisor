@@ -25,7 +25,8 @@
       "fmeum/with_cfg.bzl": "none",
       "bazelbuild/bazel-skylib": "none",
       "keith/buildifier-prebuilt": "none",
-      "kiron1/bazel-compile-commands": "none"
+      "kiron1/bazel-compile-commands": "none",
+      "bazel-contrib/rules_lint": "none"
     },
     "registeredOnlyRepositories": [
       "nodejs/node",
@@ -42,7 +43,8 @@
       "fmeum/with_cfg.bzl",
       "bazelbuild/bazel-skylib",
       "keith/buildifier-prebuilt",
-      "kiron1/bazel-compile-commands"
+      "kiron1/bazel-compile-commands",
+      "bazel-contrib/rules_lint"
     ],
     "registryDate": "2026-11-01",
     "branchCleanup": {
@@ -131231,7 +131233,7 @@
       "owner": "analysis_pass_inventory / root",
       "updatedAt": "2026-11-21T20:45:26.098382+00:00",
       "group": "analysis",
-      "summary": "Current native analyzer-policy source ea65581c2c7db180d1ccf7a5c5d4fcbefe4bc03d passes the Prometheus unit check and the omitzero issue is resolved. Nogo run 45037513725 still fails on the remaining strings/sequence diagnostic. The full analyzer audit is not ready; protected-source work remains held. These results do not qualify the separate held global36e runtime-coupled refresh.",
+      "summary": "The analyzer-policy audit remains incomplete. Original partial scan 45022004632 covered 275/890 results and reported 1,234 deduplicated findings; these are historical scan counts, not a current remaining count. Prometheus and omitzero checks have progressed, while protected-source work stays held. Test-only candidate 393faa193f changes nine errors.As assertion sites in tools/tpucheckpoint/tpucontrol/control_test.go; validation is pending. This does not clear the broader audit or the separate runtime-coupled refresh.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -131603,7 +131605,7 @@
           ]
         }
       ],
-      "nextStep": "analysis_pass_inventory reconciles the remaining non-protected Nogo diagnostic and actual gate coverage before a full-audit claim. Keep protected-source findings held under the current user instruction, preserve the global refresh’s runtime/performance limits, and do not revive the retired lint architecture.",
+      "nextStep": "Reconcile the complete original finding inventory and unfinished matrix against source-bound fixes and validation, including producer/performance prerequisites. Keep protected findings held and distinguish original scan counts from any future rescan. Validate the narrow TPU test edit before readiness; no full-audit or publication claim follows.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -131696,6 +131698,10 @@
         {
           "label": "Current remaining Nogo gate",
           "url": "https://github.com/tamird/gvisor/actions/runs/45037513725"
+        },
+        {
+          "label": "Original partial analyzer scan",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45022004632/artifacts/14755381961"
         }
       ],
       "reviewWatch": {
@@ -131724,7 +131730,19 @@
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
       },
-      "head": "ea65581c2c7db180d1ccf7a5c5d4fcbefe4bc03d"
+      "head": "ea65581c2c7db180d1ccf7a5c5d4fcbefe4bc03d",
+      "additionalReviews": [
+        {
+          "kind": "proposal",
+          "status": "pending",
+          "head": "967d146c614ab2c3897fdfb28a42ad96db423a5c",
+          "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+          "url": "https://github.com/tamird/gvisor/commit/967d146c614ab2c3897fdfb28a42ad96db423a5c",
+          "title": "Benchmark generated arrays and slice fallbacks",
+          "body": "The safe-API benchmark covered Stat, and the slice benchmarks covered only packed data. This left array newtypes, arrays of marshallable objects and non-packed slice fallbacks without measurement coverage.\n\nExtend the existing safe-API benchmark with InetAddr and Type1, and benchmark all six generated slice operations with Type8. Reuse the existing copy context and check each operation’s output outside the timed loop, starting from a destination that differs from the expected result.\n\nPosted by Codex on behalf of @tamird.\n",
+          "summary": "Extend benchmark coverage to generated arrays and non-packed slice fallbacks. Source/static checks, six-operation functional 1x checks on both architectures and final independent reviews passed. No timed A/A or performance result is claimed."
+        }
+      ]
     },
     {
       "id": "investigation:proc-boot-identity",
@@ -142513,6 +142531,17 @@
           "summary": "Reuse bazel-contrib/rules_lint instead of per-BUILD clang_format_inputs.",
           "outcome": "CHANGES-REQUESTED"
         }
+      ],
+      "additionalReviews": [
+        {
+          "kind": "exception",
+          "status": "pending",
+          "head": "060bf21948760589331fc213c783da4a8ec3b671",
+          "url": "https://github.com/tamird/gvisor/commit/060bf21948760589331fc213c783da4a8ec3b671",
+          "title": "Allow create-only fork refs after Git failure",
+          "summary": "Use the existing GitHub create-ref API only for absent review/* or qualification/* refs in tamird/gvisor after normal Git and its one-operation HTTPS fallback fail. Existing source approvals remain required.",
+          "body": "Scope summary: permit create-only GitHub ref writes using existing authorized credentials, only for absent review/* or qualification/* refs in tamird/gvisor after normal Git and its one-operation HTTPS fallback fail. No force, existing-ref updates or other repositories. Source-publication approval boundaries remain unchanged.\n\nThe triggering ref is refs/heads/review/clang-format-rules-lint-20261122 at 060bf21948760589331fc213c783da4a8ec3b671. It remains absent. The alternate API write was rejected by automatic approval review and was not performed."
+        }
       ]
     },
     {
@@ -142706,6 +142735,35 @@
         "body": "Commit 72cfaea347f added the network platform property, translating `network=off` to Docker network mode `none`. The OCI provider disabled networking only for `off`, so the new property left networking enabled.\n\nTreat both values as disabled. Extend the existing networking fixture to cover `network=off` overriding `dockerNetwork=bridge`, and the legacy `dockerNetwork=none` setting.\n\nThe Linux networking tests have not run: an authenticated remote test runner is unavailable in this session. Native CI remains required.\n\nPosted by Codex on behalf of @tamird.\n",
         "summary": "Treat both disabled OCI network-mode values consistently. The existing fixture covers the property override and legacy setting. Tests have not run; native CI remains required.",
         "baseHead": "168813c94525e5106459531fb629429d5fe2fb60"
+      }
+    },
+    {
+      "id": "investigation:rules-lint-patcher",
+      "repo": "bazel-contrib/rules_lint",
+      "group": "bazel",
+      "status": "active",
+      "owner": "rules_lint_patcher_fix / root",
+      "head": "4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
+      "title": "Reject failed patch generation",
+      "updatedAt": "2026-11-22T18:32:33.604640+00:00",
+      "summary": "The prepared two-file patch rejects diff spawn errors, signals and exit codes above one before accepting patch output. Eight Bazel tests, the negative baseline control and two independent reviews passed. Creating the public tamird/rules_lint fork and publishing the signed source/PR await the actual user decision; no fork or upstream PR exists.",
+      "nextStep": "Await the combined public-fork, source-push and ready-PR decision. If approved, follow upstream CI, maintainer review and release/integration before clearing the formatter dependency hold.",
+      "findings": [],
+      "evidence": [
+        {
+          "label": "Existing upstream patcher source",
+          "url": "https://github.com/bazel-contrib/rules_lint/tree/1da8c08cd847d55a8561c9064510ec13cbab7da1"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
+        "baseHead": "1da8c08cd847d55a8561c9064510ec13cbab7da1",
+        "url": "https://github.com/tamird/rules_lint/commit/4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
+        "title": "fix: reject failed patch generation",
+        "body": "Diff failures can leave an empty or incomplete patch while the patcher still reports success. Reject spawn errors, signals and exit codes above 1 before accepting diff output, and let the existing sandbox cleanup finish on error.\n\nThe existing patcher fixture covers the diff failure and preserves linter signal and exit-code behavior.\n\nPosted by Codex on behalf of @tamird.\n",
+        "summary": "Approve creating the public tamird/rules_lint fork, pushing signed candidate 4a881d4ef and opening the ready PR in bazel-contrib/rules_lint. The source is currently local; the proposed fork commit link becomes available only after approved publication. The automatic fork operation was rejected and no fork write occurred."
       }
     }
   ],

@@ -29,7 +29,8 @@
     "bazel-contrib/bazel-gazelle": "none",
     "bazel-contrib/rules_shell": "none",
     "hermeticbuild/hermetic-launcher": "none",
-    "grpc/grpc": "none"
+    "grpc/grpc": "none",
+    "bazel-contrib/rules_lint": "none"
   },
   "prs": [
     {
@@ -471497,10 +471498,37 @@
         "observedAt": "2026-11-22T15:59:07.676413+00:00"
       }
     },
+    "investigation:repository-lint": {
+      "contributor-review": {
+        "scope": "967d146c614ab2c3897fdfb28a42ad96db423a5c",
+        "since": "2026-11-22T15:59:07.676413+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-22T15:59:07.676413+00:00"
+      }
+    },
+    "investigation:cc-format-declared-inputs": {
+      "contributor-review": {
+        "scope": "060bf21948760589331fc213c783da4a8ec3b671",
+        "since": "2026-11-22T15:59:07.676413+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-22T15:59:07.676413+00:00"
+      }
+    },
     "investigation:buildbuddy-oci-networking": {
       "contributor-review": {
         "scope": "77d1ff918426052c458aab3647f0ee36243d4580",
         "since": "2026-11-22T14:30:19.849383+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-22T15:59:07.676413+00:00"
+      }
+    },
+    "investigation:rules-lint-patcher": {
+      "contributor-review": {
+        "scope": "4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
+        "since": "2026-11-22T15:59:07.676413+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-22T15:59:07.676413+00:00"
