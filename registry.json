@@ -98174,7 +98174,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-17T19:05:00.391405+00:00",
-      "summary": "Same-source A/A44829018964 fixed-gate result is31/38 PASS and7 INCONCLUSIVE. The inconclusive graph-allocation drift has no established cause; this is not a stability pass or candidate comparison. Functional/compiler proof remains valid, and four broad checkpoint/restore workloads remain required.",
+      "summary": "Public b08bf67 remains conflicting and unchanged. Private conflict recovery 56c7c9ff77e5f7644292094cae6a9e67f5fe1a60 preserves upstream signaling-NaN fixes/tests and the zero-dispatch topic. Both architectures passed 15 state targets (five Go, ten Nogo), with 11,810 XML records, 85 intentional wire-slice skips and zero failures each; all five source checks passed. Both independent correctness and performance/style reviews found no blockers. This is not publication approval or performance qualification: seven component A/A results remain inconclusive and four broad controls remain unqualified.",
       "evidence": [
         {
           "label": "Published single-commit PR #17472",
@@ -98188,10 +98188,10 @@
       "followup": {
         "sourceHead": "b08bf67a0996f2732d82ad5b35949048cc2139f0",
         "owner": "approved_rebase_queue / root",
-        "nextAction": "The tested GitHub ubuntu-24.04 controller route is inadmissible for the unchanged paired worker: admission 44920236359 found only CPUs 0–3 allowed, while 0–4 are required. Exit 78 was deliberate; source preservation and credential cleanup passed, with no Docker worker, resources, traffic or timing launched. Recheck an existing authorized >=5-CPU configuration satisfying the original affinity through the same capability preflight, then same-source A/A first. Keep the unanswered executor information request; this does not prove all routes unusable or exclusivity necessary.",
+        "nextAction": "The existing benchmark owner audits capability-only admission 44973350323 for the maintained four-CPU worker, then resolves required functional/control gates before any timing or candidate comparison. The old five-CPU blocker came from a historical Node diagnostic, not this current contract; do not treat it as missing user input or a demonstrated route failure. Preserve the unresolved component A/A precision and broad workload obligations without unchanged timing retries.",
         "mergeable": "CONFLICTING",
         "observedAt": "2026-11-20T23:27:51.953187+00:00",
-        "recheckCondition": "An existing authorized configuration satisfying the unchanged CPU/affinity admission, followed by capability and same-source controls; no source decision or workload weakening.",
+        "recheckCondition": "Owner-audited four-CPU capability and required functional/control evidence, then source-bound performance review; no publication question or timing stability is inferred from admission.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17472",
           "https://github.com/tamird/gvisor/commit/6827c2cfbc7102549d4ea74eb602516db2635a16",
@@ -98201,11 +98201,15 @@
           "https://github.com/tamird/gvisor/actions/runs/44834353488",
           "https://github.com/tamird/gvisor/actions/runs/44836788962",
           "https://github.com/tamird/gvisor/actions/runs/44838495979",
-          "https://github.com/tamird/gvisor/actions/runs/44920236359/artifacts/14713770484"
+          "https://github.com/tamird/gvisor/actions/runs/44920236359/artifacts/14713770484",
+          "https://github.com/tamird/gvisor/actions/runs/44972729631",
+          "https://github.com/tamird/gvisor/actions/runs/44972734453",
+          "https://github.com/tamird/gvisor/actions/runs/44972880035",
+          "https://github.com/tamird/gvisor/actions/runs/44973350323"
         ],
         "implementationOwner": "approved_rebase_queue",
         "curatedAt": "2026-11-21T15:42:31.456870+00:00",
-        "disposition": "Same-source controls remain 31/38 within the fixed ±2% criterion and 7 INCONCLUSIVE, with no candidate comparison. GraphLoad’s adaptive N4/5 allocation discrepancy is resolved in existing fixed 5x control: both arms have 61,720,168B/op and 444,497allocs/op, but latency remains inconclusive. GraphSave’s allocated/encoded bytes and allocation counts were stable despite 13.79% time drift. No allocator, pool/map or quiet-host latency cause is established. Four CheckpointEmpty/Nginx and RestoreEmpty/Nginx broad controls remain unqualified."
+        "disposition": "Public b08bf67 remains conflicting and unchanged. Private conflict recovery 56c7c9ff77e5f7644292094cae6a9e67f5fe1a60 preserves upstream signaling-NaN fixes/tests and the zero-dispatch topic. Both architectures passed 15 state targets (five Go, ten Nogo), with 11,810 XML records, 85 intentional wire-slice skips and zero failures each; all five source checks passed. Both independent correctness and performance/style reviews found no blockers. This is not publication approval or performance qualification: seven component A/A results remain inconclusive and four broad controls remain unqualified."
       },
       "dcoAmendment": {
         "oldHead": "6827c2cfbc7102549d4ea74eb602516db2635a16",
@@ -98229,7 +98233,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "approved_rebase_queue diagnoses the observed graph-allocation drift using the existing benchmark boundary, closes the required broad controls and only then evaluates candidates. Preserve the exact baseline result without unchanged reruns or global EOF stability inference.",
+      "nextStep": "The existing benchmark owner audits capability-only admission 44973350323 for the maintained four-CPU worker, then resolves required functional/control gates before any timing or candidate comparison. The old five-CPU blocker came from a historical Node diagnostic, not this current contract; do not treat it as missing user input or a demonstrated route failure. Preserve the unresolved component A/A precision and broad workload obligations without unchanged timing retries.",
       "recheckCondition": "An evidence-backed drift cause/environment change and valid source-bound broad/A-A results."
     },
     {
