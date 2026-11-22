@@ -191,3 +191,35 @@ go_cov(
     ],
     deps = MAIN_DEPS,
 )
+
+genrule(
+    name = "legacy_current_runsc_coverage",
+    srcs = [
+        "main.go",
+        "//:go.mod",
+        "//:go.sum",
+        "//:gopath",
+        "//tools:build_cover.sh",
+        "//tools:go_cover_toolchain",
+    ],
+    outs = ["legacy_current_runsc_cov"],
+    cmd =
+        "\"$(location //tools:build_cover.sh)\" " +
+        "\"$(location //runsc:legacy_current_runsc_cov)\" " +
+        "\"$(location //:gopath)\" " +
+        "\"$(location //:go.mod)\" " +
+        "\"$(location //:go.sum)\" " +
+        "\"$(location main.go)\" " +
+        "\"$(location //tools:go_cover_toolchain)\" " +
+        "\"false\" ",
+    exec_compatible_with = [
+        "//tools/bazeldefs:rbe_ubuntu24_c",
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    tags = [
+        "manual",
+        "no-local",
+    ],
+    visibility = ["//debian:__pkg__"],
+)
