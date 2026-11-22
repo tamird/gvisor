@@ -151,10 +151,16 @@ var allAlgos = map[string]struct {
 	Save   func(context.Context, io.Writer, any) (state.Stats, error)
 	Load   func(context.Context, io.Reader, any) (state.Stats, error)
 	MaxPtr int
+	Legacy bool
 }{
 	"state": {
 		Save: state.Save,
 		Load: state.Load,
+	},
+	"wire": {
+		Save:   state.Save,
+		Load:   state.Load,
+		Legacy: true,
 	},
 	"gob": {
 		Save: gobSave,
@@ -166,6 +172,11 @@ func BenchmarkEncoding(b *testing.B) {
 	for objName, objInfo := range allObjects {
 		for algoName, algoInfo := range allAlgos {
 			b.Run(fmt.Sprintf("%s/%s", objName, algoName), func(b *testing.B) {
+				if algoInfo.Legacy {
+					previous := state.GraphEngineEnabled()
+					state.EnableGraphEngine(false)
+					b.Cleanup(func() { state.EnableGraphEngine(previous) })
+				}
 				v := objInfo.New(1024)
 				b.ReportAllocs()
 				for b.Loop() {
@@ -182,6 +193,11 @@ func BenchmarkDecoding(b *testing.B) {
 	for objName, objInfo := range allObjects {
 		for algoName, algoInfo := range allAlgos {
 			b.Run(fmt.Sprintf("%s/%s", objName, algoName), func(b *testing.B) {
+				if algoInfo.Legacy {
+					previous := state.GraphEngineEnabled()
+					state.EnableGraphEngine(false)
+					b.Cleanup(func() { state.EnableGraphEngine(previous) })
+				}
 				v := objInfo.New(1024)
 				buf := new(bytes.Buffer)
 				if _, err := algoInfo.Save(context.Background(), buf, v); err != nil {
