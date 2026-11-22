@@ -1626,9 +1626,17 @@ def derive_snapshot() -> None:
     previous = json.loads((ROOT / "github-status.json").read_text())
     snapshot = previous.copy()
     snapshot["registryDate"] = REGISTRY["meta"]["updatedAt"]
+    nodes, _ = registry_source_indexes()
+    for pr in snapshot["prs"]:
+        node = nodes.get((pr.get("repo", REPO), pr["number"]), {})
+        if handoff := terminal_import_handoff(pr, pr, node):
+            pr["terminalImportHandoff"] = handoff
+        else:
+            pr.pop("terminalImportHandoff", None)
     snapshot["reviewerHandoff"] = reviewer_handoff(previous["prs"], previous)
     snapshot["reviewWatchHandoff"] = review_watch_handoff(previous["prs"] + previous.get("reviewPRs", []), previous)
     snapshot["mergeabilityHandoff"] = mergeability_handoff(check_report(previous["prs"], previous), previous)
+    snapshot["branchCleanup"] = branch_cleanup_handoff(REGISTRY, previous["checkedAt"])
     snapshot["workStates"] = record_states(previous["prs"], REGISTRY, previous, previous["checkedAt"])
     write_snapshot(snapshot)
 
@@ -1857,11 +1865,13 @@ def branch_cleanup_handoff(registry: dict, checked_at: str) -> dict | None:
     due = datetime.fromisoformat(completed) + timedelta(days=1) if completed else None
     operator = subprocess.check_output(["git", "hash-object", Path(__file__).with_name("branch_cleanup.py")],
                                        text=True).strip()
-    return {"id": "local-fork-branch-cleanup", "owner": "Agent",
+    return {"id": "local-fork-branch-cleanup", "owner": task.get("owner", "Agent"),
             "command": f"set -o pipefail && git cat-file blob {operator} | python3 -B -",
             "lastCompletedAt": completed, "lastResult": result,
             "nextDueAt": due.isoformat() if due else None,
-            "due": due is None or datetime.fromisoformat(checked_at) >= due}
+            "due": due is None or datetime.fromisoformat(checked_at) >= due,
+            **{key: task[key] for key in ("nextAction", "recheckCondition", "pendingApproval",
+                                          "mergedOnlyCompletion", "lastCompletedScope") if key in task}}
 
 
 def approved_branches_after_merge(registry: dict, prs: list[dict]) -> list[dict]:
@@ -1958,7 +1968,7 @@ def worker_handoff(snapshot: dict, incoming: list[dict]) -> dict:
     if next_work is None:
         next_work = next((row for (repo, _), pr in owned.items() if repo == REPO and (row := pr.get("terminalImportHandoff"))
                           and row["sourceHead"] == pr["head"] and row["imports"] == older_merged_imports(pr)), None)
-    if next_work is None and cleanup and cleanup["due"]:
+    if next_work is None and cleanup and cleanup["due"] and not cleanup.get("pendingApproval"):
         next_work = cleanup
     ready = approved_branches_after_merge(REGISTRY, snapshot.get("prs", []))
     if next_work is None and ready:

@@ -516,22 +516,18 @@ checks GitHub directly, so a new request can be handled before the next
 scheduled publication. For each request, read the linked conversation and
 the current PR head, then conduct the requested review.
 
-The same snapshot and supervisor handoff include `branchCleanup`. After
-author obligations and incoming review requests, `nextWork` selects the
-local/fork branch audit when 24 hours have elapsed since the last completed
-local cleanup. An audit with no eligible branches also counts. On each
-foreground sweep compare the current UTC time with `branchCleanup.nextDueAt`
-even if the last scheduled snapshot still says `due: false`. When due, run
-`branchCleanup.command` in the full gVisor clone, inspect the plan, and
-append `--apply` to the same command for eligible removals.
-Record the verified completion timestamp and actual result together in
-`registry.meta.branchCleanup.lastCompletedAt` and `lastResult`, and publish
-the paired snapshot. An empty initial record makes the first audit due.
-Scheduled refreshes and read-only handoff checks report the deadline and last
-result. They never advance it or remove branches on the agent's machine.
-Retire a finished qualification's local and fork branches promptly once its
-submitted source, evidence, and active work are preserved. The daily operator
-also finds older disposable branches under its seven-day retention rule.
+The snapshot and supervisor handoff include `branchCleanup` with its recorded
+owner, next action, authorization blocker and completed scopes. A full audit
+is due 24 hours after its last completion; an empty initial record is due.
+After author obligations and incoming review requests, `nextWork` selects due
+cleanup only when no authorization blocker is recorded. Follow the recorded
+owner, next action and recheck condition. Being overdue does not authorize
+deletion: run the command or apply its plan only within the authorized scope.
+Record a completed full audit's verified timestamp and result together in
+`registry.meta.branchCleanup.lastCompletedAt` and `lastResult`. Keep an exact
+approved subset's completion separate; it does not advance the full-audit
+clock. Scheduled refreshes and read-only handoff checks report this state;
+they never advance the clock or remove branches on the agent's machine.
 
 The collector checks open PRs from other authors in `google/gvisor`,
 including PRs absent from the registry. It looks for formal reviewer

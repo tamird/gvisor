@@ -148,6 +148,20 @@ class BranchCleanupTest(unittest.TestCase):
         self.assertIsNone(result["nextWork"])
         self.assertEqual(result["branchCleanup"]["nextDueAt"], "2000-01-04T19:00:00+00:00")
         self.assertEqual(work("2000-01-04T19:00:00+00:00")["nextWork"]["lastResult"], "No removable branches.")
+        task.update(owner="root", lastCompletedAt="2026-11-13T03:43:50+00:00",
+                    lastResult="Completed the full local/fork audit.",
+                    lastCompletedScope="Full audit; merged-only completion is separate.",
+                    nextAction="Do not repeat the completed 80-ref operation or infer broader deletion authority.",
+                    recheckCondition="New eligible merged source or separately authorized broader scope.",
+                    pendingApproval={"status": "Broader original plan not approved", "targetCount": 79},
+                    mergedOnlyCompletion={"state": "VERIFIED complete", "forkBranchesDeleted": 80,
+                                          "archiveCommit": "bae526bff1ec70318863066429a2b8977000d08f"})
+        blocked = work("2026-11-22T19:34:37+00:00")
+        self.assertIsNone(blocked["nextWork"])
+        cleanup = blocked["branchCleanup"]
+        self.assertTrue(cleanup["due"])
+        self.assertEqual(cleanup["nextDueAt"], "2026-11-14T03:43:50+00:00")
+        self.assertEqual({key: cleanup[key] for key in task}, task)
 
 
 class FeedbackSweepTest(unittest.TestCase):
@@ -981,6 +995,20 @@ class CollectorHistoryTest(unittest.TestCase):
         return json.loads(self.path.read_text())
 
     def test_derive_snapshot_preserves_observations_without_api_calls(self) -> None:
+        self.registry["meta"]["branchCleanup"] = {
+            "owner": "root", "nextAction": "Keep broader cleanup blocked.",
+            "pendingApproval": {"status": "Broader original plan not approved"}}
+        self.previous["branchCleanup"] = {"owner": "Agent", "due": True}
+        source = self.previous["prs"][3]
+        export = linked(imported(105, 4, "MERGED"), 4)
+        export.update(sourceHead="9" * 40, matchesSourceHead=False)
+        source["imports"] = [export]
+        source["terminalImportHandoff"] = updater.terminal_import_handoff(source, {}, {})
+        self.assertEqual(source["terminalImportHandoff"]["action"], "inspect-terminal-import")
+        self.registry["nodes"].append({"id": "pr:4", "type": "pr", "repo": "google/gvisor", "number": 4,
+                                      "followup": {"owner": "root", "sourceHead": source["head"],
+                                                   "observedAt": LATER, "evidence": [export["url"]],
+                                                   "nextAction": "Current source remains unimported; await maintainer review."}})
         conflicted = self.previous["prs"][2]
         conflicted["mergeable"] = "CONFLICTING"
         self.registry["nodes"].append({"id": "pr:3", "type": "pr", "repo": "google/gvisor", "number": 3,
@@ -1001,6 +1029,7 @@ class CollectorHistoryTest(unittest.TestCase):
                            "updatedAt": LATER, "evidence": reply["url"]}]}}]
         self.path.write_text(json.dumps(self.previous))
         expected = copy.deepcopy(self.previous)
+        expected["prs"][3].pop("terminalImportHandoff")
         with mock.patch.multiple(updater, ROOT=self.root, REGISTRY=self.registry), \
                 mock.patch.object(updater, "graphql", side_effect=AssertionError("Unexpected API call")) as api, \
                 mock.patch.object(updater.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "", "")):
@@ -1008,6 +1037,7 @@ class CollectorHistoryTest(unittest.TestCase):
             expected["reviewerHandoff"] = updater.reviewer_handoff(expected["prs"], self.previous)
             expected["reviewWatchHandoff"] = updater.review_watch_handoff(expected["prs"] + expected["reviewPRs"], self.previous)
             expected["mergeabilityHandoff"] = updater.mergeability_handoff(updater.check_report(expected["prs"], self.previous), self.previous)
+            expected["branchCleanup"] = updater.branch_cleanup_handoff(self.registry, OLD)
             expected["workStates"] = updater.record_states(expected["prs"], self.registry, self.previous, OLD)
             updater.derive_snapshot()
         actual = json.loads(self.path.read_text())
@@ -1016,7 +1046,12 @@ class CollectorHistoryTest(unittest.TestCase):
         inspected, = actual["reviewPRs"]
         self.assertEqual(inspected.pop("inspectedReviewHeads"), {"reply": watched["head"]})
         self.assertEqual(inspected, watched)
-        self.assertEqual(actual["prs"], self.previous["prs"])
+        self.assertEqual(actual["prs"], expected["prs"])
+        preserved = copy.deepcopy(actual["prs"])
+        preserved[3]["terminalImportHandoff"] = source["terminalImportHandoff"]
+        self.assertEqual(preserved, self.previous["prs"])
+        with mock.patch.object(updater, "REGISTRY", self.registry):
+            self.assertIsNone(updater.worker_handoff(actual, [])["nextWork"])
         self.assertEqual(actual["reviewWatchHandoff"], [])
         conflict, = actual["mergeabilityHandoff"]
         self.assertEqual((conflict["owner"], conflict["action"], conflict["conflictObservedSince"]),
