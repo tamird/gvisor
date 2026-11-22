@@ -29,6 +29,7 @@ import (
 	"github.com/bazelbuild/rules_go/go/runfiles"
 	"golang.org/x/perf/benchfmt"
 	"golang.org/x/perf/benchmath"
+	"golang.org/x/perf/benchunit"
 )
 
 type key struct {
@@ -56,24 +57,48 @@ func read(name string) ([]report, error) {
 		return nil, err
 	}
 	defer file.Close()
+	return parse(name, file)
+}
+
+func parse(name string, input io.Reader) ([]report, error) {
 	hash := sha256.New()
-	reader := benchfmt.NewReader(io.TeeReader(file, hash), name)
+	reader := benchfmt.NewReader(io.TeeReader(input, hash), name)
+	var header [3]string
+	headerSet := false
 	groups := make(map[key]*report)
 	for reader.Scan() {
 		switch row := reader.Result().(type) {
 		case *benchfmt.SyntaxError:
 			return nil, row
 		case *benchfmt.Result:
+			var current [3]string
+			for i, key := range []string{"pkg", "goos", "goarch"} {
+				pos, ok := row.ConfigIndex(key)
+				if !ok || len(row.Config[pos].Value) == 0 {
+					return nil, fmt.Errorf("missing %s header in %s", key, name)
+				}
+				current[i] = string(row.Config[pos].Value)
+			}
+			if headerSet && current != header {
+				return nil, fmt.Errorf("mixed package/OS/architecture headers in %s", name)
+			}
+			header, headerSet = current, true
 			if row.Iters <= 0 {
 				return nil, fmt.Errorf("nonpositive iteration count in %s", row.Name)
 			}
+			seen := make(map[string]bool)
 			for _, value := range row.Values {
+				value.Value, value.Unit = benchunit.Tidy(value.Value, value.Unit)
 				if value.Unit != "sec/op" && value.Unit != "execution_time.s" && value.Unit != "execution_time_per_loop.s" {
 					continue
 				}
 				if value.Value <= 0 || math.IsNaN(value.Value) || math.IsInf(value.Value, 0) {
 					return nil, fmt.Errorf("invalid positive timing in %s", row.Name)
 				}
+				if seen[value.Unit] {
+					return nil, fmt.Errorf("duplicate timing unit %s in %s", value.Unit, row.Name)
+				}
+				seen[value.Unit] = true
 				k := key{string(row.Name), value.Unit}
 				if groups[k] == nil {
 					groups[k] = &report{File: name, Benchmark: k.Benchmark, Unit: k.Unit}
