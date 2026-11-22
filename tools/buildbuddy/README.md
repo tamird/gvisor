@@ -28,17 +28,28 @@ bazel test --keep_going --config=buildbuddy --config=x86_64 \
 workers separately from target toolchains. A successful cross-compile alone does
 not establish native ARM64 test execution.
 
+Run the full Nogo gate with:
+
+```sh
+bazel test --keep_going --config=buildbuddy --config=x86_64 \
+  --credential_helper="remote.buildbuddy.io=$(realpath bazel-bin/tools/buildbuddy/credential_helper)" \
+  --test_tag_filters=nogo --build_tests_only --strip=never //...
+```
+
+Each Nogo test analyzes both AMD64 and ARM64 through its split transition. One
+invocation covers both target architectures; it does not establish native ARM64
+host execution.
+
 Keep correctness results and compiled artifacts cached. For a required fresh
 measurement, apply `--nocache_test_results` to the benchmark invocation; keep the
 build cache enabled. Controlled before/after measurements remain separate from
 the correctness suite.
 
-The current Coral C toolchain does not declare its host compiler and sysroot as
-action inputs. Native C++ actions and Go actions that can invoke absolute host C
-tools stay local and out of the remote cache. The systrap host-tool generators
-have the same restriction. Pure Go actions remain eligible for remote execution
-and caching. Remove these exceptions when the hermetic toolchain declares and
-qualifies the compiler, linker, sysroot and runtime-library inputs.
+With `buildbuddy-cache`, native C/C++ actions stay local and out of the remote
+cache because the Coral toolchain uses host compiler and sysroot paths. With
+`buildbuddy`, native C/C++ actions instead use the pinned execution image and run
+remotely without local fallback. Pure Go actions remain eligible for remote
+execution and caching.
 
 The initial check above exercises pure Go and the credential helper. Canonical
 action-graph inspection and the affected correctness suites must also pass
