@@ -475,12 +475,14 @@ func (i *importer) checkPackage(path string, srcs []string) (*types.Package, Fin
 	// Load all source files.
 	goFiles, nonGoFiles := sortSrcs(srcs)
 	syntax := make([]*ast.File, 0, len(goFiles))
+	var ignoredFiles []string
 	for _, file := range goFiles {
 		include, err := shouldInclude(file)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("error evaluating file %q: %w", file, err)
 		}
 		if !include {
+			ignoredFiles = append(ignoredFiles, file)
 			continue
 		}
 		s, err := parser.ParseFile(i.fset, file, nil, parser.ParseComments)
@@ -496,6 +498,7 @@ func (i *importer) checkPackage(path string, srcs []string) (*types.Package, Fin
 			return nil, nil, nil, fmt.Errorf("error evaluating non-Go file %q: %w", file, err)
 		}
 		if !include {
+			ignoredFiles = append(ignoredFiles, file)
 			continue
 		}
 		otherFiles = append(otherFiles, file)
@@ -602,13 +605,20 @@ func (i *importer) checkPackage(path string, srcs []string) (*types.Package, Fin
 			// Run the analysis.
 			var localFindings FindingSet
 			p := &analysis.Pass{
-				Analyzer:   a,
-				Fset:       i.fset,
-				Files:      syntax,
-				OtherFiles: otherFiles,
-				Pkg:        astPackage,
-				TypesInfo:  typesInfo,
-				ResultOf:   results, // All results.
+				Analyzer:     a,
+				Fset:         i.fset,
+				Files:        syntax,
+				OtherFiles:   otherFiles,
+				IgnoredFiles: ignoredFiles,
+				ReadFile: func(filename string) ([]byte, error) {
+					if !slices.Contains(srcs, filename) {
+						return nil, fmt.Errorf("file %q is not a declared input", filename)
+					}
+					return os.ReadFile(filename)
+				},
+				Pkg:       astPackage,
+				TypesInfo: typesInfo,
+				ResultOf:  results, // All results.
 				Report: func(d analysis.Diagnostic) {
 					localFindings = append(localFindings, Finding{
 						Category: a.Name,
