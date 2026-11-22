@@ -40080,14 +40080,14 @@
       "url": "https://github.com/google/gvisor/pull/16507",
       "group": "bazel",
       "status": "open",
-      "summary": "Permanent Bazel AMD64 NORMAL coverage modes passed100 guest iterations each with reports-on/off and KCOV, plus current structural inventory. ARM release compilation remains blocked; RACE, current-source legacy parity and performance remain open.",
+      "summary": "Public c715 remains unchanged/conflicting. Current-base clean coverage preparation has final tree f47f805d6dd41963b82837d7b1865a226ca988fa; the four manual tags required by the with_cfg public frontend are restored. Existing owner is qualifying current selection, source and license boundaries before a one-commit squash. Older completed compiler/functional/parity evidence remains scoped to its actual sources, not automatically this revision. No upstream amendment or publication approval exists.",
       "updatedAt": "2026-11-19T18:59:24.568877+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
-        "disposition": "Complete AMD/ARM NORMAL/RACE correctness and structural inventories plus current matched AMD NORMAL static parity are qualified. Public c715 remains unchanged/conflicting; one-time legacy CI support is not an upstream retention proposal.",
-        "nextAction": "Finish controlled performance and prepare the clean final coverage amendment, excluding the one-time legacy comparison support. Preserve all completed compiler/functional/parity products and the original publication conflict until actual delivery.",
+        "disposition": "Public c715 remains unchanged/conflicting. Current-base clean coverage preparation has final tree f47f805d6dd41963b82837d7b1865a226ca988fa; the four manual tags required by the with_cfg public frontend are restored. Existing owner is qualifying current selection, source and license boundaries before a one-commit squash. Older completed compiler/functional/parity evidence remains scoped to its actual sources, not automatically this revision. No upstream amendment or publication approval exists.",
+        "nextAction": "buildifier_license_fix owns the source-bound cheap gates 44974924410/44974926513/44974928412, final source preparation and remaining qualification/review handoff. Preserve upstream cgoextras removals, remove superseded SDK support and retain exact protobuf coverage patch; do not launch an expensive matrix or claim old evidence binds without verification.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -40113,10 +40113,13 @@
           "https://github.com/tamird/gvisor/actions/runs/44246691602",
           "https://github.com/tamird/gvisor/actions/runs/44246313719",
           "https://github.com/tamird/gvisor/actions/runs/44254336532",
-          "https://github.com/bazel-contrib/rules_go/blob/v0.65.0/proto/def.bzl#L165-L170"
+          "https://github.com/bazel-contrib/rules_go/blob/v0.65.0/proto/def.bzl#L165-L170",
+          "https://github.com/tamird/gvisor/actions/runs/44974924410",
+          "https://github.com/tamird/gvisor/actions/runs/44974926513",
+          "https://github.com/tamird/gvisor/actions/runs/44974928412"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Actual missing performance evidence, final source review or substantive maintainer/import change.",
+        "recheckCondition": "Owner-audited current cheap gates and one-commit source, followed by required source-bound qualification/review and any actual publication question.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "qualificationHistory": [
           {
@@ -40783,7 +40786,7 @@
           "https://github.com/tamird/gvisor/commit/c71526cea11bd81898c588264c0940d1fb33e511"
         ]
       },
-      "nextStep": "Finish controlled performance and prepare the clean final coverage amendment, excluding the one-time legacy comparison support. Preserve all completed compiler/functional/parity products and the original publication conflict until actual delivery.",
+      "nextStep": "buildifier_license_fix owns the source-bound cheap gates 44974924410/44974926513/44974928412, final source preparation and remaining qualification/review handoff. Preserve upstream cgoextras removals, remove superseded SDK support and retain exact protobuf coverage patch; do not launch an expensive matrix or claim old evidence binds without verification.",
       "recheckCondition": "Actual missing performance evidence, final source review or substantive maintainer/import change."
     },
     {
@@ -58352,8 +58355,8 @@
         "owner": "root",
         "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
         "observedAt": "2026-11-02T17:47:05.918366+00:00",
-        "disposition": "Matched native-runc control 44969537655 passed its single P64/1-KiB visit with 64 connections and valid JSON, using the original image, current nine-file release, actual affinity and clean teardown. Current Sentry liveness run 44969536131 timed out at 90 seconds with exit124 and no row; all nine release maps, actual CPU and cleanup passed. The original 30-second failure remains valid. This establishes a controlled runtime difference, not its mechanism or a kernel cause; complete functionality and performance remain held.",
-        "nextAction": "Root retains the actual Daybreak-availability information question; sensitive investigation remains held until availability is confirmed. No further timing or source permutations. Preserve matched native/Sentry evidence and unknown mechanism, alongside the independently unanswered Moby/Bazel-only exception and source decisions.",
+        "disposition": "Current four-CPU RBE admission 44973350323 genuinely passed Docker/bridge workers, paired INIT, actual runc 0–1/Sentry 2–3 affinity, all nine canonical release maps and cleanup/source guards, with zero benchmark rows. Untraced functional run 44973895706 on that admitted route still timed out at the original 30-second P64/1-KiB deadline: 64 connections, exit 124, interrupt JSON and 131,072 actual bytes, but no completed row. Actual runtime/image/CPU/quiescence/final cleanup passed. The route does not cure liveness; no full eight-mode expansion or performance pilot follows.",
+        "nextAction": "Keep sensitive mechanism investigation held pending confirmed Daybreak availability. The old five-CPU/executor-information blocker is superseded by actual four-CPU admission; it is not a required human answer. Preserve the functional failure and independent state controls, with no more Iperf expansion, timing or source permutations. Moby exception and source decisions remain independent and unanswered.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
@@ -58379,7 +58382,9 @@
           "https://github.com/tamird/gvisor/actions/runs/44967627779",
           "https://github.com/tamird/gvisor/actions/runs/44968321756",
           "https://github.com/tamird/gvisor/actions/runs/44969537655",
-          "https://github.com/tamird/gvisor/actions/runs/44969536131"
+          "https://github.com/tamird/gvisor/actions/runs/44969536131",
+          "https://github.com/tamird/gvisor/actions/runs/44973350323",
+          "https://github.com/tamird/gvisor/actions/runs/44973895706"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -58393,7 +58398,7 @@
           "owner": "root"
         },
         "technicalOwner": "Build and release",
-        "recheckCondition": "Actual confirmed Daybreak availability/information response before sensitive investigation resumes; no inferred enablement date, source approval or acceptance from the longer deadline.",
+        "recheckCondition": "Actual confirmed Daybreak availability before sensitive investigation, or genuine source/operational user decisions; no inferred enablement or stability from admission.",
         "curatedAt": "2026-11-21T14:40:26.293073+00:00"
       },
       "refinement": {
@@ -98188,10 +98193,10 @@
       "followup": {
         "sourceHead": "b08bf67a0996f2732d82ad5b35949048cc2139f0",
         "owner": "approved_rebase_queue / root",
-        "nextAction": "The existing benchmark owner audits capability-only admission 44973350323 for the maintained four-CPU worker, then resolves required functional/control gates before any timing or candidate comparison. The old five-CPU blocker came from a historical Node diagnostic, not this current contract; do not treat it as missing user input or a demonstrated route failure. Preserve the unresolved component A/A precision and broad workload obligations without unchanged timing retries.",
+        "nextAction": "State component controls are independent of Iperf and the broad app worker. Startup preflight 44974381152 passed two ordinary processes in one fresh remote TestRunner, identical forwarded arguments and zero benchmark rows; it imposed no four/five-CPU minimum. The existing owner alone observes GraphLoad control 44974897695: fixed 5x/count 26/cpu 1, two discards per arm then 24 retained, pinned benchstat 406019bb8b68 alpha 0.01/confidence 0.975/CSV and fixed ±2% interval containment. No result or routing attribution yet. Broad four-CPU app admission passed separately; four broad controls remain unqualified.",
         "mergeable": "CONFLICTING",
         "observedAt": "2026-11-20T23:27:51.953187+00:00",
-        "recheckCondition": "Owner-audited four-CPU capability and required functional/control evidence, then source-bound performance review; no publication question or timing stability is inferred from admission.",
+        "recheckCondition": "Owner-audited component GraphLoad interval result and separate broad functional/control qualification; no Iperf dependency or admission-to-stability inference.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17472",
           "https://github.com/tamird/gvisor/commit/6827c2cfbc7102549d4ea74eb602516db2635a16",
@@ -98205,7 +98210,9 @@
           "https://github.com/tamird/gvisor/actions/runs/44972729631",
           "https://github.com/tamird/gvisor/actions/runs/44972734453",
           "https://github.com/tamird/gvisor/actions/runs/44972880035",
-          "https://github.com/tamird/gvisor/actions/runs/44973350323"
+          "https://github.com/tamird/gvisor/actions/runs/44973350323",
+          "https://github.com/tamird/gvisor/actions/runs/44974381152",
+          "https://github.com/tamird/gvisor/actions/runs/44974897695"
         ],
         "implementationOwner": "approved_rebase_queue",
         "curatedAt": "2026-11-21T15:42:31.456870+00:00",
@@ -98233,7 +98240,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "The existing benchmark owner audits capability-only admission 44973350323 for the maintained four-CPU worker, then resolves required functional/control gates before any timing or candidate comparison. The old five-CPU blocker came from a historical Node diagnostic, not this current contract; do not treat it as missing user input or a demonstrated route failure. Preserve the unresolved component A/A precision and broad workload obligations without unchanged timing retries.",
+      "nextStep": "State component controls are independent of Iperf and the broad app worker. Startup preflight 44974381152 passed two ordinary processes in one fresh remote TestRunner, identical forwarded arguments and zero benchmark rows; it imposed no four/five-CPU minimum. The existing owner alone observes GraphLoad control 44974897695: fixed 5x/count 26/cpu 1, two discards per arm then 24 retained, pinned benchstat 406019bb8b68 alpha 0.01/confidence 0.975/CSV and fixed ±2% interval containment. No result or routing attribution yet. Broad four-CPU app admission passed separately; four broad controls remain unqualified.",
       "recheckCondition": "An evidence-backed drift cause/environment change and valid source-bound broad/A-A results."
     },
     {
@@ -122729,7 +122736,7 @@
           ]
         }
       ],
-      "nextStep": "benchmark_measurement_review retains Iperf3/DING functional recovery. Package/protocol/cleanup44956385628 passed its actual assertions before an unrelated wrapper-cwd startup failure; corrected startup44956762450 is workflow-successful with owner audit pending. Root holds one actual unanswered operational question: permit a single remote canonical make rebuild-moby ARCH=x86_64 DOCKER_BUILD=false on ce1634b4a, capped30minutes with no image publication, as an explicit exception to the Bazel-only rule. No approval exists; generic CI grants do not answer it. Recheck the actual user response before that command. No producer build, timing or framework follows; other workload/quiet-route gates stay separate.",
+      "nextStep": "Actual maintained four-CPU RBE admission supersedes the old five-CPU/executor-information blocker; no quiet-route answer is required to establish capability, and statistical stability remains independent. Iperf P64 still fails on that route, so sensitive mechanism work remains held pending confirmed Daybreak availability. Root retains the unanswered explicit exception for one remote make rebuild-moby ARCH=x86_64 DOCKER_BUILD=false on ce1634b4a, capped at 30 minutes without image publication; generic CI grants do not answer the Bazel-only exception. State component controls remain independently owner-observed, not gated on Iperf.",
       "evidence": [
         {
           "label": "Merged Nginx restore-benchmark HTTP readiness change",
