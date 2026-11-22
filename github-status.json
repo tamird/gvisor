@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-22T19:34:37.401167+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-22T19:05:34.497778+00:00",
+  "registryDate": "2026-11-22T19:36:35.142892+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -454545,12 +454545,12 @@
       "mergeabilityCheckedAt": "2026-11-22T19:32:32.508549+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "The validated paired helper 5d7 and corrected benchmark source 967 completed host control-only A/A 45055533293: all 15 cases, four contrasts per case and 24 balanced pairs are intact, but the study FAILS 13/15 cases (36 failed contrasts). All 100 children passed; no timeout or infrastructure loss occurred. These were sequential local TestRunners, not remote project compilation. No runner, parser or timer defect was found. All B/A medians remain within the fixed band; 33 of 36 failed intervals reflect containment/precision without an out-of-band median, so this is not demonstrated systematic bias or a physical-cause result. analysis_pass_inventory owns bounded read-only CPU-placement metadata and supported-affinity assessment; no retry, sample increase, gate/workload change or candidate comparison is authorized. Earlier RBE A/A 45047357285 failed 14/15 on its distinct old benchmark source. Preserve source57’s performance hold and unresolved ARM effective affinity.",
+      "action": "The validated paired helper 5d7 and corrected benchmark source 967 completed host control-only A/A 45055533293: all 15 cases, four contrasts per case and 24 balanced pairs are intact, but the study FAILS 13/15 cases (36 failed contrasts). All 100 children passed; no timeout or infrastructure loss occurred. These were sequential local TestRunners, not remote project compilation. No runner, parser or timer defect was found. All B/A medians remain within the fixed band; 33 of 36 failed intervals reflect containment/precision without an out-of-band median, so this is not demonstrated systematic bias or a physical-cause result. analysis_pass_inventory is implementing affinity source aefb39346126c710d76a09a43573d29d5ee6357a and owns its first functional qualification. It is not ready or publication-approved. No timed A/A, A/B, sample increase or gate/workload change is authorized. Earlier RBE A/A 45047357285 failed 14/15 on its distinct old benchmark source. Preserve source57’s performance hold and unresolved ARM effective affinity.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "disposition": "Public c715 remains unchanged/conflicting; source 57 is not publication-approved. Strict current eb263 comparison 44979111210 is audited PASS: legacy 116,100 is included in candidate 116,102, 2,418 protobuf positions each, zero missing/two additional; candidate hash matches its previously compiled product. No identity claim is made for the additional positions. Source-bound compiler/functionality/ZIP evidence and two implementation reviews are complete; controlled performance remains open. Exact public head Pipeline 55416 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure.",
-        "nextAction": "The validated paired helper 5d7 and corrected benchmark source 967 completed host control-only A/A 45055533293: all 15 cases, four contrasts per case and 24 balanced pairs are intact, but the study FAILS 13/15 cases (36 failed contrasts). All 100 children passed; no timeout or infrastructure loss occurred. These were sequential local TestRunners, not remote project compilation. No runner, parser or timer defect was found. All B/A medians remain within the fixed band; 33 of 36 failed intervals reflect containment/precision without an out-of-band median, so this is not demonstrated systematic bias or a physical-cause result. analysis_pass_inventory owns bounded read-only CPU-placement metadata and supported-affinity assessment; no retry, sample increase, gate/workload change or candidate comparison is authorized. Earlier RBE A/A 45047357285 failed 14/15 on its distinct old benchmark source. Preserve source57’s performance hold and unresolved ARM effective affinity."
+        "nextAction": "The validated paired helper 5d7 and corrected benchmark source 967 completed host control-only A/A 45055533293: all 15 cases, four contrasts per case and 24 balanced pairs are intact, but the study FAILS 13/15 cases (36 failed contrasts). All 100 children passed; no timeout or infrastructure loss occurred. These were sequential local TestRunners, not remote project compilation. No runner, parser or timer defect was found. All B/A medians remain within the fixed band; 33 of 36 failed intervals reflect containment/precision without an out-of-band median, so this is not demonstrated systematic bias or a physical-cause result. analysis_pass_inventory is implementing affinity source aefb39346126c710d76a09a43573d29d5ee6357a and owns its first functional qualification. It is not ready or publication-approved. No timed A/A, A/B, sample increase or gate/workload change is authorized. Earlier RBE A/A 45047357285 failed 14/15 on its distinct old benchmark source. Preserve source57’s performance hold and unresolved ARM effective affinity."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -468912,7 +468912,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T19:05:34.497778+00:00"
+        "observedAt": "2026-11-22T19:36:35.142892+00:00"
       }
     },
     "pr:17082": {
@@ -469299,7 +469299,7 @@
         "since": "2026-11-22T09:10:24+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T19:05:34.497778+00:00"
+        "observedAt": "2026-11-22T19:36:35.142892+00:00"
       }
     },
     "pr:17191": {
@@ -471434,7 +471434,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T19:05:34.497778+00:00"
+        "observedAt": "2026-11-22T19:36:35.142892+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -471443,7 +471443,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T19:05:34.497778+00:00"
+        "observedAt": "2026-11-22T19:36:35.142892+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -471452,7 +471452,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T19:05:34.497778+00:00"
+        "observedAt": "2026-11-22T19:36:35.142892+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -471461,7 +471461,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T19:05:34.497778+00:00"
+        "observedAt": "2026-11-22T19:36:35.142892+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -471470,7 +471470,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T19:05:34.497778+00:00"
+        "observedAt": "2026-11-22T19:36:35.142892+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -471479,7 +471479,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T19:05:34.497778+00:00"
+        "observedAt": "2026-11-22T19:36:35.142892+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -471488,7 +471488,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T19:05:34.497778+00:00"
+        "observedAt": "2026-11-22T19:36:35.142892+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -471497,7 +471497,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T19:05:34.497778+00:00"
+        "observedAt": "2026-11-22T19:36:35.142892+00:00"
       }
     },
     "investigation:repository-lint": {
@@ -471506,7 +471506,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T19:05:34.497778+00:00",
+        "observedAt": "2026-11-22T19:36:35.142892+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     },
@@ -471516,7 +471516,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T19:05:34.497778+00:00",
+        "observedAt": "2026-11-22T19:36:35.142892+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     },
@@ -471526,7 +471526,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T19:05:34.497778+00:00"
+        "observedAt": "2026-11-22T19:36:35.142892+00:00"
       }
     },
     "investigation:rules-lint-patcher": {
@@ -471535,7 +471535,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T19:05:34.497778+00:00",
+        "observedAt": "2026-11-22T19:36:35.142892+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     }
