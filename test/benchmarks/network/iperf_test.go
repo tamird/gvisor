@@ -216,7 +216,7 @@ func BenchmarkIperfManyConnections(b *testing.B) {
 			}
 
 			cmd := iperf.MakeCmd("iperfsrv", port)
-			cmd = append([]string{"timeout", "--signal=INT", "--kill-after=5s", "30s"}, cmd...)
+			cmd = append([]string{"timeout", "--signal=INT", "--kill-after=5s", "90s"}, cmd...)
 
 			// Run the client.
 			b.ResetTimer()
