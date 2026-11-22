@@ -40080,14 +40080,14 @@
       "url": "https://github.com/google/gvisor/pull/16507",
       "group": "bazel",
       "status": "open",
-      "summary": "Public c715 remains unchanged/conflicting. Current clean source 57c5e7b58eb7d0657aa0091065e7c2b16aeab735 is one DCO commit with unchanged eleven-file tree f47f805d6dd41963b82837d7b1865a226ca988fa. Source/license/manual-tag gates passed. AMD 44975283315 and ARM 44975285456 each completed all four compile targets and four CAS binary outputs; all eight GoLink profile spans include actual remote execution, with preservation/cleanup guards passed. These are compiler products, not runtime or inventory qualification. No upstream amendment or publication approval exists.",
+      "summary": "Public c715 remains unchanged/conflicting; current source 57c5e7b58eb7d0657aa0091065e7c2b16aeab735 is not publication-approved. Its explicit CI fixture/RACE inputs now have eight compiler products plus four functional runs: 24 fresh remote tests, 1,200 guest iterations with zero skips, and 2,418 protobuf positions per mode. Twelve native ZIP digests/sizes match BEP and required/absent report checks. Two independent implementation reviews found no defect; a metadata past-tense correction is deferred. Current-parent legacy set inclusion and controlled performance remain incomplete.",
       "updatedAt": "2026-11-19T18:59:24.568877+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
-        "disposition": "Public c715 remains unchanged/conflicting. Current clean source 57c5e7b58eb7d0657aa0091065e7c2b16aeab735 is one DCO commit with unchanged eleven-file tree f47f805d6dd41963b82837d7b1865a226ca988fa. Source/license/manual-tag gates passed. AMD 44975283315 and ARM 44975285456 each completed all four compile targets and four CAS binary outputs; all eight GoLink profile spans include actual remote execution, with preservation/cleanup guards passed. These are compiler products, not runtime or inventory qualification. No upstream amendment or publication approval exists.",
-        "nextAction": "buildifier_license_fix owns the unchanged existing fixture projection and explicit RACE binding deb32c7be4c9a30470d5cedd5f7b385f73273842: three existing inputs across two BUILD files, leaving source 57 unchanged. Verify native-key equality and runtime/inventory through those source-bound fixtures; do not assume generic RACE-input parity or transfer older 657/bf6 results. Respect coordination with state timing; no new wrapper, source-PR fixtures or expensive expansion without the existing gate handoff.",
+        "disposition": "Public c715 remains unchanged/conflicting; current source 57c5e7b58eb7d0657aa0091065e7c2b16aeab735 is not publication-approved. Its explicit CI fixture/RACE inputs now have eight compiler products plus four functional runs: 24 fresh remote tests, 1,200 guest iterations with zero skips, and 2,418 protobuf positions per mode. Twelve native ZIP digests/sizes match BEP and required/absent report checks. Two independent implementation reviews found no defect; a metadata past-tense correction is deferred. Current-parent legacy set inclusion and controlled performance remain incomplete.",
+        "nextAction": "buildifier_license_fix closes current eb263 legacy inclusion and the final source-record handoff using existing evidence and fixture scope. Root and benchmark_measurement_review retain controlled performance. Preserve older 657/bf6 source identities, source 57 and explicit RACE input binding; no upstream amendment or approval is inferred.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -40118,10 +40118,14 @@
           "https://github.com/tamird/gvisor/actions/runs/44974926513",
           "https://github.com/tamird/gvisor/actions/runs/44974928412",
           "https://github.com/tamird/gvisor/actions/runs/44975283315",
-          "https://github.com/tamird/gvisor/actions/runs/44975285456"
+          "https://github.com/tamird/gvisor/actions/runs/44975285456",
+          "https://github.com/tamird/gvisor/actions/runs/44977041157",
+          "https://github.com/tamird/gvisor/actions/runs/44977043446",
+          "https://github.com/tamird/gvisor/actions/runs/44977045585",
+          "https://github.com/tamird/gvisor/actions/runs/44977047717"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Owner-audited explicit-input native-key/runtime/inventory evidence and final review; no publication question or upstream delivery is inferred.",
+        "recheckCondition": "Source-bound current-parent legacy comparison and required controlled performance/final review, followed by an actual publication question.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "qualificationHistory": [
           {
@@ -40788,7 +40792,7 @@
           "https://github.com/tamird/gvisor/commit/c71526cea11bd81898c588264c0940d1fb33e511"
         ]
       },
-      "nextStep": "buildifier_license_fix owns the unchanged existing fixture projection and explicit RACE binding deb32c7be4c9a30470d5cedd5f7b385f73273842: three existing inputs across two BUILD files, leaving source 57 unchanged. Verify native-key equality and runtime/inventory through those source-bound fixtures; do not assume generic RACE-input parity or transfer older 657/bf6 results. Respect coordination with state timing; no new wrapper, source-PR fixtures or expensive expansion without the existing gate handoff.",
+      "nextStep": "buildifier_license_fix closes current eb263 legacy inclusion and the final source-record handoff using existing evidence and fixture scope. Root and benchmark_measurement_review retain controlled performance. Preserve older 657/bf6 source identities, source 57 and explicit RACE input binding; no upstream amendment or approval is inferred.",
       "recheckCondition": "Actual missing performance evidence, final source review or substantive maintainer/import change."
     },
     {
@@ -98195,10 +98199,10 @@
       "followup": {
         "sourceHead": "b08bf67a0996f2732d82ad5b35949048cc2139f0",
         "owner": "approved_rebase_queue / root",
-        "nextAction": "State component controls remain independent of Iperf and broad app admission. The changed remote two-process startup preflight passed without benchmark rows. Unpinned same-source GraphLoad report 44975502828 remains inconclusive under fixed ±2% containment; n=24, alpha 0.01/confidence 0.975 does not turn p=.036 into equivalence. Pinned original-sized control 44976132860 is intact but has raw median drift 8.25%; canonical report 44976633402 awaits the owner’s interval verdict, with no precise endpoints or causal attribution inferred yet. No further measurements or sample expansion; performance and four broad controls remain open.",
+        "nextAction": "benchmark_measurement_review prepares the minimal existing legacy-benchmark and ten-wire-alias publication prerequisites; no production edit or approval is inferred. Required component matrix is 38 rows: 32 state (22 upstream plus ten wire) and six UDP, plus four broad checkpoint/restore controls. Both unpinned and pinned same-source GraphLoad controls are INCONCLUSIVE under the original fixed ±2% containment; do not pool rows, infer routing causes or run more timing. Preserve the independent state scope without importing a separate 150-network-workload gate.",
         "mergeable": "CONFLICTING",
         "observedAt": "2026-11-20T23:27:51.953187+00:00",
-        "recheckCondition": "Owner-audited canonical pinned comparison and evidence-based disposition; no new measurements, candidate-regression or stability claim from same-source drift.",
+        "recheckCondition": "Reviewable minimal benchmark prerequisites and source-bound qualification plan; no new measurements, performance equivalence or production-publication claim.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17472",
           "https://github.com/tamird/gvisor/commit/6827c2cfbc7102549d4ea74eb602516db2635a16",
@@ -98246,7 +98250,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "State component controls remain independent of Iperf and broad app admission. The changed remote two-process startup preflight passed without benchmark rows. Unpinned same-source GraphLoad report 44975502828 remains inconclusive under fixed ±2% containment; n=24, alpha 0.01/confidence 0.975 does not turn p=.036 into equivalence. Pinned original-sized control 44976132860 is intact but has raw median drift 8.25%; canonical report 44976633402 awaits the owner’s interval verdict, with no precise endpoints or causal attribution inferred yet. No further measurements or sample expansion; performance and four broad controls remain open.",
+      "nextStep": "benchmark_measurement_review prepares the minimal existing legacy-benchmark and ten-wire-alias publication prerequisites; no production edit or approval is inferred. Required component matrix is 38 rows: 32 state (22 upstream plus ten wire) and six UDP, plus four broad checkpoint/restore controls. Both unpinned and pinned same-source GraphLoad controls are INCONCLUSIVE under the original fixed ±2% containment; do not pool rows, infer routing causes or run more timing. Preserve the independent state scope without importing a separate 150-network-workload gate.",
       "recheckCondition": "An evidence-backed drift cause/environment change and valid source-bound broad/A-A results."
     },
     {
@@ -140731,8 +140735,8 @@
       "owner": "root",
       "technicalOwner": "root",
       "updatedAt": "2026-11-21T12:00:06.633567+00:00",
-      "summary": "The delivered fc8a0f4 qualification workflow has actual remote-execution proof: canonical release run 44967257331, source 03106cffd4b560ab8cea021d65c48c8772d46d40 on Bazel 9.3.1, reports eight remote actions, 3,194 remote cache hits and 1,272 internal actions in BEP and bazel.log. This closes the earlier remote-action evidence gap; the old build-only run had only internal actions. Test outputs.zip retention remains unproven, with no established code or upload defect.",
-      "nextStep": "Root retains the shared-workflow lifecycle and existing supplier/release dependencies. Verify outputs.zip only on the next naturally needed positive image or packetimpact producer; the inspected candidate artifacts had XML/logs but no zip. Do not run expensive image/packetimpact workloads solely for this evidence gap, add a harness or reopen resolved SSH/remote-execution blockers.",
+      "summary": "Actual remote execution remains proved by canonical release 44967257331. Native zip-enabled retention is now proved by run 44977041157/artifact 14736282398: the whitelisted coverage test.outputs/outputs.zip is 100,110 bytes, SHA256 722f1a8392d67ae733ca667ef6cc3a6ec46d38e6803bbd4a49a6c9807786b10a, matching native testResult digest/size. It contains metadata.json and the actual 770,129-byte .cov.txt report, whose digest matches metadata. This closes retention only for the exercised --zip_undeclared_test_outputs configuration, not default zip-false calls or every producer.",
+      "nextStep": "Root retains the completed remote-action and native-zip retention proofs at their exact configurations. Recheck a genuine changed caller/result or failure; no artificial image/packetimpact harness or expensive run is needed solely to prove ZIP retention. Supplier release/adoption obligations remain independent.",
       "recheckCondition": "Actual LLVM startup/caller/source-review evidence and user direction, followed by a compatible upstream release/pin.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
@@ -141199,6 +141203,10 @@
         {
           "label": "Canonical release BEP and log proving actual remote actions",
           "url": "https://github.com/tamird/gvisor/actions/runs/44967257331/artifacts/14731513651"
+        },
+        {
+          "label": "Exact retained native outputs.zip and metadata/report proof",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44977041157/artifacts/14736282398"
         }
       ],
       "followup": {
