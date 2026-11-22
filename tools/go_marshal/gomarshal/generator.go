@@ -21,6 +21,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"maps"
 	"os"
 	"sort"
 	"strings"
@@ -232,7 +233,7 @@ func newMarshallableType(fset *token.FileSet, tagLine *ast.Comment, spec *ast.Ty
 
 	var unhandledTags []string
 
-	for _, tag := range strings.Fields(strings.TrimPrefix(tagLine.Text, "// +marshal")) {
+	for tag := range strings.FieldsSeq(strings.TrimPrefix(tagLine.Text, "// +marshal")) {
 		if strings.HasPrefix(tag, "slice:") {
 			tokens := strings.Split(tag, ":")
 			if len(tokens) < 2 || len(tokens) > 3 {
@@ -469,9 +470,7 @@ func (g *Generator) Run() error {
 		// done before the loop below because we need to process all ASTs before
 		// we start requesting imports to be copied one by one as we encounter
 		// them in each generated source.
-		for name, i := range g.collectImports(a, fsets[i]) {
-			is[name] = i
-		}
+		maps.Copy(is, g.collectImports(a, fsets[i]))
 	}
 
 	var impls []*interfaceGenerator
