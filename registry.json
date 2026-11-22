@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T21:17:53.978992+00:00",
+    "updatedAt": "2026-11-22T21:52:31.362132+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -92642,13 +92642,13 @@
       "repo": "google/gvisor",
       "number": 17265,
       "ref": "botir/gro-checksum-upstream",
-      "head": "b90cd49da574e19ecfa51decee22213d2936d61a",
+      "head": "e12bd9b418c580df05fe4abd323c2b4c8fea4193",
       "title": "Preserve software-validated receive checksums",
       "url": "https://github.com/google/gvisor/pull/17265",
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-19T16:20:03.380488+00:00",
-      "summary": "The revised IPv4 and IPv6 test injects two adjacent 128-byte TCP segments and requires exactly one outbound reset. This replaced the application read that prompted the earlier review draft.",
+      "summary": "Author source changed from b90cd49da to e12bd9b41. Root owns current-head reviewer follow-through, but the current user-sensitive/Daybreak hold prevents source review. Prior reviews and CI do not qualify this changed head. Broad-workload evidence remains required unless actually supplied and verified; no equivalence, approval or performance completion is inferred.",
       "evidence": [
         {
           "label": "IPv4 and IPv6 segment input and reset count",
@@ -92657,16 +92657,17 @@
       ],
       "followup": {
         "owner": "root",
-        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
-        "providerHead": "b90cd49da574e19ecfa51decee22213d2936d61a",
+        "currentStateObservedAt": "2026-11-22T21:44:27.177935+00:00",
+        "providerHead": "e12bd9b418c580df05fe4abd323c2b4c8fea4193",
         "mergeable": "MERGEABLE",
-        "sourceHead": "b90cd49da574e19ecfa51decee22213d2936d61a",
-        "observedAt": "2026-11-18T02:57:42.449215+00:00",
-        "disposition": "Complete source review found no further issues in the checksum producer/consumer, PacketBuffer lifetime or revised GRO/reset oracle. No independent runtime, race or broad performance qualification is claimed.",
-        "nextAction": "Follow existing requested maintainer review, exact-head CI and outstanding broad workload evidence. No courtesy comment, repeated notification or full approval.",
-        "recheckCondition": "Material author evidence, substantive feedback, current-head checks or broad workload results.",
+        "sourceHead": "e12bd9b418c580df05fe4abd323c2b4c8fea4193",
+        "observedAt": "2026-11-22T21:48:03.162138+00:00",
+        "disposition": "Author source changed from b90cd49da to e12bd9b41. Root owns current-head reviewer follow-through, but the current user-sensitive/Daybreak hold prevents source review. Prior reviews and CI do not qualify this changed head. Broad-workload evidence remains required unless actually supplied and verified; no equivalence, approval or performance completion is inferred.",
+        "nextAction": "Keep current-source review and sensitive work held under the confirmed user instruction; do not read the held source, run tests, implement third-party suggestions, publish or send outreach. The author retains implementation ownership; root retains unfinished reviewer follow-through. Do not transfer prior reviews to this head or reask Daybreak availability.",
+        "recheckCondition": "User releases the sensitive-work hold, actual new external evidence is supplied, or the author changes source again.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17265"
+          "https://github.com/google/gvisor/pull/17265",
+          "https://github.com/google/gvisor/commit/e12bd9b418c580df05fe4abd323c2b4c8fea4193"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
         "curatedAt": "2026-11-19T16:20:03.380488+00:00",
@@ -100348,11 +100349,11 @@
       "repo": "google/gvisor",
       "number": 17374,
       "ref": "botir/pgalloc-reference-accounting",
-      "head": "b04021b975f4eb1087ffaf46152dfe966bb62305",
-      "title": "Separate MemoryFile sharing counts from allocation occupancy",
+      "head": "a62b2c3b2e6d44cc976b604d4ac9de6f400c980f",
+      "title": "Separate pgalloc sharing counts from occupancy",
       "url": "https://github.com/google/gvisor/pull/17374",
       "status": "open",
-      "summary": "Both prior traversal requests are addressed on 80c001d2b. Full independent source review found no further source issues and the approved COMMENTED response was delivered. Full approval still requires before/after results from an existing broad workload benchmark; no fresh tests or benchmarks were run. Earlier checkpoint measurements remain historical evidence for their tested revisions.",
+      "summary": "Author source changed from b04021b97 to a62b2c3b2. Root owns current-head reviewer follow-through, but the current user-sensitive/Daybreak hold prevents source review. Prior reviews and CI do not qualify this changed head. Broad-workload evidence remains required unless actually supplied and verified; no equivalence, approval or performance completion is inferred. Ayush’s delegated occupancy and mixed-final-release comments are unverified external evidence, not assigned implementation work. A resolved/outdated thread flag does not establish completion of our review.",
       "updatedAt": "2026-11-19T16:20:03.380488+00:00",
       "evidence": [
         {
@@ -100411,19 +100412,23 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "b04021b975f4eb1087ffaf46152dfe966bb62305",
-        "observedAt": "2026-11-17T20:37:04.433680+00:00",
-        "disposition": "Current b04021b9 and actually reviewed 80c001d2 have identical parent 5f7e73a and complete 9-file blob/mode sets. Current source is already reviewed by this equivalence, not a substantive source change or rebase. Preserve the delivered COMMENTED response at its actual reviewed head; it is not source approval. No later feedback supplies the required broad workload evidence.",
-        "nextAction": "Root awaits the author’s broad before/after workload evidence before full approval, while retaining separate current CI/import obligations. No duplicate review, tests, courtesy reply or outreach; re-review only substantive source or evidence changes.",
+        "sourceHead": "a62b2c3b2e6d44cc976b604d4ac9de6f400c980f",
+        "observedAt": "2026-11-22T21:48:03.162138+00:00",
+        "disposition": "Author source changed from b04021b97 to a62b2c3b2. Root owns current-head reviewer follow-through, but the current user-sensitive/Daybreak hold prevents source review. Prior reviews and CI do not qualify this changed head. Broad-workload evidence remains required unless actually supplied and verified; no equivalence, approval or performance completion is inferred. Ayush’s delegated occupancy and mixed-final-release comments are unverified external evidence, not assigned implementation work. A resolved/outdated thread flag does not establish completion of our review.",
+        "nextAction": "Keep current-source review and sensitive work held under the confirmed user instruction; do not read the held source, run tests, implement third-party suggestions, publish or send outreach. The author retains implementation ownership; root retains unfinished reviewer follow-through. Do not transfer prior reviews to this head or reask Daybreak availability.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17374#discussion_r4545607204",
           "https://github.com/google/gvisor/pull/17374#discussion_r4576254625",
           "https://github.com/gvisor/gvisor/blob/80c001d2b316feaa887a5ee53498d6ee55799a6a/pkg/sentry/pgalloc/save_restore.go#L135",
           "https://github.com/gvisor/gvisor/pull/17374#pullrequestreview-5946597005",
           "https://github.com/gvisor/gvisor/commit/b04021b975f4eb1087ffaf46152dfe966bb62305",
-          "https://github.com/gvisor/gvisor/commit/80c001d2b316feaa887a5ee53498d6ee55799a6a"
+          "https://github.com/gvisor/gvisor/commit/80c001d2b316feaa887a5ee53498d6ee55799a6a",
+          "https://github.com/google/gvisor/pull/17374",
+          "https://github.com/google/gvisor/commit/a62b2c3b2e6d44cc976b604d4ac9de6f400c980f",
+          "https://github.com/google/gvisor/pull/17374#discussion_r4660161343",
+          "https://github.com/google/gvisor/pull/17374#discussion_r4660163306"
         ],
-        "recheckCondition": "New broad author workload evidence or substantive source/feedback change.",
+        "recheckCondition": "User releases the sensitive-work hold, actual new external evidence is supplied, or the author changes source again.",
         "incomingReview": {
           "repo": "google/gvisor",
           "number": 17374,
@@ -103150,20 +103155,20 @@
       "repo": "google/gvisor",
       "number": 16887,
       "ref": "botir/batch-transmit-metadata",
-      "head": "04a4ea5bf2e111ed78ab4fdf3ce6156f185f3b8b",
+      "head": "bd991e616d06c77074c56576cc94c6f9cddfeef5",
       "title": "Reuse transmit batch metadata storage",
       "url": "https://github.com/google/gvisor/pull/16887",
       "group": "runtime",
       "status": "open",
-      "summary": "Botir's existing watched transmit-batch change. Prior fallback-budget and fixed-array marshal review requests are addressed. Full approval still needs the existing broad network benchmark baseline; the reported component samples do not supply it.",
+      "summary": "Author source changed from 04a4ea5bf to bd991e616. Root owns current-head reviewer follow-through, but the current user-sensitive/Daybreak hold prevents source review. Prior reviews and CI do not qualify this changed head. Broad-workload evidence remains required unless actually supplied and verified; no equivalence, approval or performance completion is inferred.",
       "followup": {
         "owner": "root",
         "sourceNumber": 16887,
-        "sourceHead": "04a4ea5bf2e111ed78ab4fdf3ce6156f185f3b8b",
-        "observedAt": "2026-11-17T20:12:30.472399+00:00",
-        "disposition": "Current 04a4ea5b and actually reviewed 1668e58d have identical parent 451b928 and complete 3-file blob/mode sets. Current source is already reviewed by this equivalence, not a substantive source change or rebase. Preserve the delivered COMMENTED response at its actual reviewed head; it is not source approval. No later feedback supplies the required broad workload evidence.",
-        "nextAction": "Root awaits the author’s broad before/after workload evidence before full approval, while retaining separate current CI/import obligations. No duplicate review, tests, courtesy reply or outreach; re-review only substantive source or evidence changes.",
-        "recheckCondition": "New broad author workload evidence or substantive source/feedback change.",
+        "sourceHead": "bd991e616d06c77074c56576cc94c6f9cddfeef5",
+        "observedAt": "2026-11-22T21:48:03.162138+00:00",
+        "disposition": "Author source changed from 04a4ea5bf to bd991e616. Root owns current-head reviewer follow-through, but the current user-sensitive/Daybreak hold prevents source review. Prior reviews and CI do not qualify this changed head. Broad-workload evidence remains required unless actually supplied and verified; no equivalence, approval or performance completion is inferred.",
+        "nextAction": "Keep current-source review and sensitive work held under the confirmed user instruction; do not read the held source, run tests, implement third-party suggestions, publish or send outreach. The author retains implementation ownership; root retains unfinished reviewer follow-through. Do not transfer prior reviews to this head or reask Daybreak availability.",
+        "recheckCondition": "User releases the sensitive-work hold, actual new external evidence is supplied, or the author changes source again.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16887#issuecomment-6955117776",
           "https://github.com/gvisor/gvisor/blob/1668e58d4c0cb17ecb5fcf6457389575a3c01459/pkg/tcpip/link/fdbased/endpoint.go#L588",
@@ -103174,7 +103179,9 @@
           "https://github.com/google/gvisor/pull/16887#discussion_r4493780726",
           "https://github.com/gvisor/gvisor/pull/16887#pullrequestreview-5946565652",
           "https://github.com/gvisor/gvisor/commit/04a4ea5bf2e111ed78ab4fdf3ce6156f185f3b8b",
-          "https://github.com/gvisor/gvisor/commit/1668e58d4c0cb17ecb5fcf6457389575a3c01459"
+          "https://github.com/gvisor/gvisor/commit/1668e58d4c0cb17ecb5fcf6457389575a3c01459",
+          "https://github.com/google/gvisor/pull/16887",
+          "https://github.com/google/gvisor/commit/bd991e616d06c77074c56576cc94c6f9cddfeef5"
         ],
         "ciObservation": "Observed context buildkite/first-pass (unsuffixed) failed as build #906. No current buildkite/first-pass/pr or buildkite/pipeline/pr result appeared in the queried contexts. This is not a claim of passing required CI; current /pr requirements remain separate.",
         "actionableComment": {
@@ -131302,7 +131309,7 @@
       "owner": "analysis_pass_inventory / root",
       "updatedAt": "2026-11-21T20:45:26.098382+00:00",
       "group": "analysis",
-      "summary": "The analyzer-policy audit remains incomplete. TPU test-only source 393faa193f passes 36 remote unit cases with zero failures/skips and has no diagnostics in edited control_test.go. Owning Nogo still fails with 29 unique findings: two production control.go modernize findings and 27 pkg/state findings (58 architecture-duplicated rows). Production source is unchanged and protected findings remain held. The original partial scan covered 275/890 results and reported 1,234 deduplicated findings; these are historical counts, not a current rescan or remaining count.",
+      "summary": "Preparation source c06d4573 changes 18 tool sites in six files. On each architecture, three changed binaries build and three actual remote targets pass 77 XML cases without issues; source checks pass. Static run 45073984140 and final independent review remain pending. Prior 9a447 proofs remain valid for its unchanged first four sites, including its scoped inherited pkg/state failures; they do not qualify this batch’s pending static gate. The full audit remains incomplete: original scan coverage was 275/890 results with 1,234 deduplicated findings, not a current remaining count. No PR, runtime or performance qualification is claimed.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -131674,7 +131681,7 @@
           ]
         }
       ],
-      "nextStep": "Reconcile the complete original finding inventory and unfinished matrix against source-bound fixes and validation, including producer/performance prerequisites. Preserve the actual Nogo failures and protected-source hold; passing TPU unit tests do not complete the audit. Root retains the non-sensitive obligation audit before further edits.",
+      "nextStep": "analysis_pass_inventory owns the existing static watch and final review, then assesses actual sensitivity and semantics of remaining TPU/Kubernetes tools; being outside the first batch is not itself a user hold. Reconcile the full original finding inventory and unfinished matrix, keep the uncertain go_marshal2 scope separate, and preserve actual protected-source and producer/performance prerequisites.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -131779,6 +131786,38 @@
         {
           "label": "TPU source checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/45055438791/artifacts/14767367698"
+        },
+        {
+          "label": "AMD preparation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45072685491/artifacts/14773903430"
+        },
+        {
+          "label": "ARM preparation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45072687736/artifacts/14773378657"
+        },
+        {
+          "label": "Source checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45072692454/artifacts/14773858773"
+        },
+        {
+          "label": "Nogo scoped result",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45072690052/artifacts/14774385181"
+        },
+        {
+          "label": "Current AMD tool batch",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45073745404/artifacts/14774227423"
+        },
+        {
+          "label": "Current ARM tool batch",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45073981663/artifacts/14774004707"
+        },
+        {
+          "label": "Current source checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45073986582/artifacts/14774487131"
+        },
+        {
+          "label": "Current static gate, pending owner verdict",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45073984140"
         }
       ],
       "reviewWatch": {
@@ -131807,7 +131846,7 @@
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
       },
-      "head": "393faa193f6ecc913ef48071f66c3a79f224faa2",
+      "head": "c06d45734e3c43c7a19855f87283641c0ff18944",
       "additionalReviews": [
         {
           "kind": "proposal",
