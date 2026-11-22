@@ -840,7 +840,7 @@ func writeDataTo[T io.StringWriter](w T, d *Data, when time.Time, options Snapsh
 type Snapshot struct {
 	// When is the timestamp at which the snapshot was taken.
 	// Note that Prometheus ultimately encodes timestamps as millisecond-precision int64s from epoch.
-	When time.Time `json:"when,omitempty"`
+	When time.Time `json:"when"`
 
 	// Data is the whole snapshot data.
 	// Each Data must be a unique combination of (Metric, Labels) within a Snapshot.
