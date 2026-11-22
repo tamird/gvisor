@@ -225,9 +225,6 @@ func BenchmarkIperfManyConnections(b *testing.B) {
 				CpusetCpus: harness.ClientCPUSet(),
 				Links:      []string{server.MakeLink("iperfsrv")},
 			}, cmd...)
-			if err != nil {
-				b.Fatalf("failed to run client: %v (output: %q)", err, out)
-			}
 			b.StopTimer()
 			affinity, inspectErr := clientMachine.RunCommand("docker", "inspect", "--format", "{{.HostConfig.CpusetCpus}}", server.Name, client.Name)
 			wantAffinity := fmt.Sprintf("%s\n%s\n", harness.ServerCPUSet(), harness.ClientCPUSet())
@@ -235,6 +232,9 @@ func BenchmarkIperfManyConnections(b *testing.B) {
 				b.Fatalf("actual server/client Docker CPU sets = %q, %v; want %q", affinity, inspectErr, wantAffinity)
 			}
 			b.Logf("actual server/client Docker CPU sets = %q", affinity)
+			if err != nil {
+				b.Fatalf("failed to run client: %v (output: %q)", err, out)
+			}
 			iperf.Report(b, out)
 			b.StartTimer()
 		})
