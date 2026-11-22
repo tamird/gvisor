@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T08:11:03+00:00",
+    "updatedAt": "2026-11-22T08:21:05+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -102514,11 +102514,12 @@
         "mergeable": "MERGEABLE",
         "sourceHead": "10f9a0f0d126d5fae773c18275bdaa8bc0ec3ae3",
         "observedAt": "2026-11-18T02:57:42.449215+00:00",
-        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
-        "nextAction": "Reconcile current supplier CI/review with declared-SDK package inventory evidence; ensure the existing package-list regression still covers the exact published revision.",
-        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "disposition": "Root reconciled the exact published 10f9a0f0d126d5fae773c18275bdaa8bc0ec3ae3 source: both stdlib and stdliblist pass sdk.srcs through replicateSDK. The existing stdliblist_noexport regression keeps net/internal/socktest physically in the SDK, excludes it from declared -src arguments and rejects it in output. Current supplier CI is successful; the PR is open/mergeable with no comments or reviews. This source reconciliation closes the stale regression-check action; historical inventory measurements retain their original scope, and no new adversarial review is claimed.",
+        "nextAction": "Await genuine supplier maintainer feedback and landing, then verify an actual release and consumer adoption. No source edit, rebuild or outreach is required by the current evidence.",
+        "recheckCondition": "New maintainer feedback, changed source/check state, merge or actual release/adoption evidence.",
         "evidence": [
-          "https://github.com/bazel-contrib/rules_go/pull/4774"
+          "https://github.com/bazel-contrib/rules_go/pull/4774",
+          "https://github.com/bazel-contrib/rules_go/blob/10f9a0f0d126d5fae773c18275bdaa8bc0ec3ae3/go/tools/builders/stdliblist_test.go"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
       }
