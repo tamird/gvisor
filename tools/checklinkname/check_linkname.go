@@ -333,13 +333,6 @@ func (m *memoizer[T]) add(x T, s string) {
 	m.nextEviction++
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 var (
 	memoizedSlices     memoizer[*types.Slice]
 	memoizedArrays     memoizer[*types.Array]
@@ -472,15 +465,15 @@ func makeSignature(sig *types.Signature, maxDepth int) (string, int) {
 		minDepth = min(localMinDepth, minDepth)
 	}
 	if p := sig.Params(); p != nil {
-		for i := 0; i < p.Len(); i++ {
-			s, localMinDepth := simplifyType(p.At(i).Type(), maxDepth)
+		for param := range p.Variables() {
+			s, localMinDepth := simplifyType(param.Type(), maxDepth)
 			params = append(params, s)
 			minDepth = min(localMinDepth, minDepth)
 		}
 	}
 	if r := sig.Results(); r != nil {
-		for i := 0; i < r.Len(); i++ {
-			s, localMinDepth := simplifyType(r.At(i).Type(), maxDepth)
+		for result := range r.Variables() {
+			s, localMinDepth := simplifyType(result.Type(), maxDepth)
 			results = append(results, s)
 			minDepth = min(localMinDepth, minDepth)
 		}

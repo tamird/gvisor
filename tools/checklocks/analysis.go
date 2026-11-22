@@ -246,10 +246,8 @@ func resolveStruct(typ types.Type) (*types.Struct, bool) {
 	visited := buf[:0]
 
 	for {
-		for _, v := range visited {
-			if v == typ {
-				return nil, false
-			}
+		if slices.Contains(visited, typ) {
+			return nil, false
 		}
 		visited = append(visited, typ)
 
@@ -483,8 +481,8 @@ func (pc *passContext) checkGuards(inst almostInst, value, from ssa.Value, acces
 			if !ok {
 				continue
 			}
-			for i := 0; i < structType.NumFields(); i++ {
-				if fieldObj := structType.Field(i); fieldObj == info.object {
+			for fieldObj := range structType.Fields() {
+				if fieldObj == info.object {
 					// Add to the maybe list.
 					oo.counts[info.object]++
 				}
