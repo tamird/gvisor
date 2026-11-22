@@ -29,6 +29,7 @@ go_library(
 
 filegroup(
     name = "coverage_runsc_entrypoint",
+    testonly = True,
     srcs = ["//test/runner:coverage_release"],
     output_group = "runsc",
 )
