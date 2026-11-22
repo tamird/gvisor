@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-22T15:52:56.311235+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-22T14:59:36.820621+00:00",
+  "registryDate": "2026-11-22T15:59:07.676413+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -454530,12 +454530,12 @@
       "mergeabilityCheckedAt": "2026-11-22T15:50:29.534985+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "AMD StartupEmpty same-source control 44988289000 completed the original 50 visits with 24 N=1 observations per arm and balanced AB/BA positions, but remains INCONCLUSIVE: ratio interval [0.9208590976, 1.1026682723], drift and order checks fail the fixed [0.995, 1.005] precision band. The earlier control 44987386374 is separate retained evidence, not pooled or reinterpreted. No further measurements or candidate/syscall/Hackbench expansion; source 57 remains performance-held and ARM effective affinity unresolved. Existing BuildBuddy executor inventory returned HTTP 403, so capacity is unverified; await existing executor information or read permission without new credentials or blind retries. Proposed 0.5% precision is investigative, not a user regression budget. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure.",
+      "action": "analysis_pass_inventory finishes the queued metadata-preservation/formatting and two generated-license-record batch for native paired tool e4b2378424b801dad5d463c905d889d5dc42e498. Unit run 45040345635 passes seven XML cases; functional 1x 45040497302 passes six fresh visits and all expected 9+6 rows. The post-start negative control 45040695474 fails as expected while correctly killing/reaping its child. Canonical Fetch 45040526953 produced exactly two new BSD-3-Clause records with no old-catalog churn. Source gate 45040631926 fails only Go alignment and BUILD-list formatting. No A/A or timing result exists. Preserve source57’s performance hold, inconclusive startup controls and unresolved ARM effective affinity; do not start blind reruns or expand samples.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "disposition": "Public c715 remains unchanged/conflicting; source 57 is not publication-approved. Strict current eb263 comparison 44979111210 is audited PASS: legacy 116,100 is included in candidate 116,102, 2,418 protobuf positions each, zero missing/two additional; candidate hash matches its previously compiled product. No identity claim is made for the additional positions. Source-bound compiler/functionality/ZIP evidence and two implementation reviews are complete; controlled performance remains open. Exact public head Pipeline 55416 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure.",
-        "nextAction": "AMD StartupEmpty same-source control 44988289000 completed the original 50 visits with 24 N=1 observations per arm and balanced AB/BA positions, but remains INCONCLUSIVE: ratio interval [0.9208590976, 1.1026682723], drift and order checks fail the fixed [0.995, 1.005] precision band. The earlier control 44987386374 is separate retained evidence, not pooled or reinterpreted. No further measurements or candidate/syscall/Hackbench expansion; source 57 remains performance-held and ARM effective affinity unresolved. Existing BuildBuddy executor inventory returned HTTP 403, so capacity is unverified; await existing executor information or read permission without new credentials or blind retries. Proposed 0.5% precision is investigative, not a user regression budget. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure."
+        "nextAction": "analysis_pass_inventory finishes the queued metadata-preservation/formatting and two generated-license-record batch for native paired tool e4b2378424b801dad5d463c905d889d5dc42e498. Unit run 45040345635 passes seven XML cases; functional 1x 45040497302 passes six fresh visits and all expected 9+6 rows. The post-start negative control 45040695474 fails as expected while correctly killing/reaping its child. Canonical Fetch 45040526953 produced exactly two new BSD-3-Clause records with no old-catalog churn. Source gate 45040631926 fails only Go alignment and BUILD-list formatting. No A/A or timing result exists. Preserve source57’s performance hold, inconclusive startup controls and unresolved ARM effective affinity; do not start blind reruns or expand samples."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -454607,7 +454607,7 @@
         "owner": "hky1999",
         "sourceHead": "53cc614c1cb28bd0a34a2cf6f0d504f3d28ac72e",
         "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
-        "nextAction": "hky1999 owns the source conflict and implementation. Root owns reviewer follow-through on the November 11/12 author answers and triage of the November 20 experimental review findings. Existing inspection receipts do not establish a later public response or closure of those findings. Reconcile the current revision within actual source/access constraints; do not adopt automated suggestions or run new tests without the existing authorization and policy checks."
+        "nextAction": "hky1999 retains implementation and conflict-repair ownership. Root retains the unfinished reviewer follow-through, including the author answers and later experimental checkpoint/network-save findings. Our sensitive review/source work remains held under the current user instruction; do not route it through another agent or tool. Prior inspections do not establish a public response, resolved findings or permission for source reads/tests."
       },
       "conflictObservedSince": "2026-11-14T20:02:27.078720+00:00"
     },
@@ -468897,7 +468897,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T14:59:36.820621+00:00"
+        "observedAt": "2026-11-22T15:59:07.676413+00:00"
       }
     },
     "pr:17082": {
@@ -469284,7 +469284,7 @@
         "since": "2026-11-22T09:10:24+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T14:59:36.820621+00:00"
+        "observedAt": "2026-11-22T15:59:07.676413+00:00"
       }
     },
     "pr:17191": {
@@ -471419,7 +471419,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T14:59:36.820621+00:00"
+        "observedAt": "2026-11-22T15:59:07.676413+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -471428,7 +471428,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T14:59:36.820621+00:00"
+        "observedAt": "2026-11-22T15:59:07.676413+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -471437,7 +471437,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T14:59:36.820621+00:00"
+        "observedAt": "2026-11-22T15:59:07.676413+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -471446,7 +471446,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T14:59:36.820621+00:00"
+        "observedAt": "2026-11-22T15:59:07.676413+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -471455,7 +471455,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T14:59:36.820621+00:00"
+        "observedAt": "2026-11-22T15:59:07.676413+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -471464,7 +471464,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T14:59:36.820621+00:00"
+        "observedAt": "2026-11-22T15:59:07.676413+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -471473,7 +471473,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T14:59:36.820621+00:00"
+        "observedAt": "2026-11-22T15:59:07.676413+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -471482,7 +471482,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T14:59:36.820621+00:00"
+        "observedAt": "2026-11-22T15:59:07.676413+00:00"
       }
     },
     "investigation:buildbuddy-oci-networking": {
@@ -471491,7 +471491,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T14:59:36.820621+00:00"
+        "observedAt": "2026-11-22T15:59:07.676413+00:00"
       }
     }
   },

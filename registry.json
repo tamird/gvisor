@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T14:59:36.820621+00:00",
+    "updatedAt": "2026-11-22T15:59:07.676413+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4970,11 +4970,11 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "buildbuddy_network_fix / root retain the prepared provider correction 77d1ff918 and its pending publication review in investigation:buildbuddy-oci-networking. Native CI and actual deployed enforcement remain separate required evidence. analysis_pass_inventory owns the changed analyzer policy and pending compiler/performance gates. Use current support 6e2c0cdd for qualifications; preserve source approvals and actual upstream compiler/platform prerequisites.",
+        "nextAction": "Follow the existing provider proposal in investigation:buildbuddy-oci-networking and actual upstream compiler/platform prerequisites. analysis_pass_inventory owns the remaining analyzer-policy diagnostic in investigation:repository-lint and paired-tool readiness on pr:16507. The completed GoMarshal 1x controls and 70857 Nogo gate need no repeat; they do not clear performance or protected-source holds.",
         "recheckCondition": "Qualified provider correction and actual deployed behavior, terminal owner evidence for the analyzer policy, or actual upstream prerequisite landing; no repeat of the completed 70857 Nogo gate.",
         "observedAt": "2026-11-17T19:58:24.544895+00:00",
         "curatedAt": "2026-11-21T13:24:07.659680+00:00",
-        "disposition": "Full Nogo gate on immutable 70857bbd74c9203998a51b9c8c867ba8c9eba01a is complete: 892/892 passed, 804 actual remote and 88 remote-cached; all 87 prior completed checks were reused without rerun. Executed command after existing helper setup:\nbazel test --keep_going --config=buildbuddy --config=x86_64 --credential_helper=\"remote.buildbuddy.io=$(realpath bazel-bin/tools/buildbuddy/credential_helper)\" --test_tag_filters=nogo --build_tests_only --strip=never //...\nUnchanged NogoSplit covers both target architectures; this is not native ARM-host proof. Completion was cache-assisted after the earlier 30-minute cap, with no matched speedup or cold-cache claim. The partial run remains historical evidence, not a current correctness blocker. Current fork support 6e2c0cddf64e8c0c0ddf68a6d8936a9401fd0d22 includes the approved network-default request and reviewed README. Its property queries do not prove provider enforcement; the public OCI implementation at 168813c has a bug, while the cloud deployed version remains unknown. The unposted issue proposal is superseded by preparation of a minimal provider PR and regression under buildbuddy_network_fix. A one-line provider change and existing networking fixtures are prepared under two focused reviews. Remote tests have not run because authentication is unavailable; native upstream CI is the proposed validation route. No fix or publication approval is claimed.\n\nThe separate eight-file analyzer-policy candidate d712184f6 is not ready: scan 45022004632 selected 890 labels (two assembler labels legitimately absent), with 20 pass, 255 fail and 615 unfinished; 1,234 deduplicated findings include 614 generated/protected findings held for review. Prep 47968b737 produced 11,780 XML records per architecture with 85 skips and zero failures/errors; source checks passed. Its compiler/performance gate remains pending with analysis_pass_inventory. These results do not replace the source-bound 70857 Nogo completion above.\n\nGoMarshal control b6039146c367cb05d1894a7d439f4728c1b12859 and candidate 918578a848117f35f8f163f555371e4e2b5b7c74 preserve the same three benchmark blobs and 13 support paths; only four producer files differ. Control run 45035250411 was dispatched for 15 functional 1x rows with native assertions and quiet output. analysis_pass_inventory has not supplied a terminal verdict; no A/A, performance or candidate-pass claim follows. Prep 47968 retains both-architecture 11,780 XML records with 85 skips/zero failures and the 14 baseline Nogo passes.",
+        "disposition": "Full Nogo gate on immutable 70857bbd74c9203998a51b9c8c867ba8c9eba01a is complete: 892/892 passed, 804 actual remote and 88 remote-cached; all 87 prior completed checks were reused without rerun. Executed command after existing helper setup:\nbazel test --keep_going --config=buildbuddy --config=x86_64 --credential_helper=\"remote.buildbuddy.io=$(realpath bazel-bin/tools/buildbuddy/credential_helper)\" --test_tag_filters=nogo --build_tests_only --strip=never //...\nUnchanged NogoSplit covers both target architectures; this is not native ARM-host proof. Completion was cache-assisted after the earlier 30-minute cap, with no matched speedup or cold-cache claim. The partial run remains historical evidence, not a current correctness blocker. Current fork support 6e2c0cddf64e8c0c0ddf68a6d8936a9401fd0d22 includes the approved network-default request and reviewed README. Its property queries do not prove provider enforcement; the public OCI implementation at 168813c has a bug, while the cloud deployed version remains unknown. The unposted issue proposal is superseded by preparation of a minimal provider PR and regression under buildbuddy_network_fix. A one-line provider change and existing networking fixtures are prepared under two focused reviews. Remote tests have not run because authentication is unavailable; native upstream CI is the proposed validation route. No fix or publication approval is claimed.\n\nThe current analyzer-policy audit is tracked in investigation:repository-lint; it remains unready and protected-source work stays held.\n\nGoMarshal control b6039146c367cb05d1894a7d439f4728c1b12859 and candidate 918578a848117f35f8f163f555371e4e2b5b7c74 each passed 15 functional 1x preflight rows (45035250411 and 45036030135). They preserve the same three benchmark blobs and 13 support paths, with only four producer files differing. The owner-qualified functional/compile/source gates and retained 47968 baseline evidence are complete in their source scopes. These are preflight results, not A/A, timing or performance proof.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45011783743",
           "https://github.com/tamird/gvisor/actions/runs/45011783743/artifacts/14750124755",
@@ -4992,7 +4992,8 @@
           "https://github.com/tamird/gvisor/actions/runs/45027141512",
           "https://github.com/tamird/gvisor/commit/b6039146c367cb05d1894a7d439f4728c1b12859",
           "https://github.com/tamird/gvisor/commit/918578a848117f35f8f163f555371e4e2b5b7c74",
-          "https://github.com/tamird/gvisor/actions/runs/45035250411"
+          "https://github.com/tamird/gvisor/actions/runs/45035250411",
+          "https://github.com/tamird/gvisor/actions/runs/45036030135"
         ]
       },
       "updatedAt": "2026-11-17T20:32:28.027492+00:00"
@@ -40150,7 +40151,7 @@
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
         "disposition": "Public c715 remains unchanged/conflicting; source 57 is not publication-approved. Strict current eb263 comparison 44979111210 is audited PASS: legacy 116,100 is included in candidate 116,102, 2,418 protobuf positions each, zero missing/two additional; candidate hash matches its previously compiled product. No identity claim is made for the additional positions. Source-bound compiler/functionality/ZIP evidence and two implementation reviews are complete; controlled performance remains open. Exact public head Pipeline 55416 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure.",
-        "nextAction": "AMD StartupEmpty same-source control 44988289000 completed the original 50 visits with 24 N=1 observations per arm and balanced AB/BA positions, but remains INCONCLUSIVE: ratio interval [0.9208590976, 1.1026682723], drift and order checks fail the fixed [0.995, 1.005] precision band. The earlier control 44987386374 is separate retained evidence, not pooled or reinterpreted. No further measurements or candidate/syscall/Hackbench expansion; source 57 remains performance-held and ARM effective affinity unresolved. Existing BuildBuddy executor inventory returned HTTP 403, so capacity is unverified; await existing executor information or read permission without new credentials or blind retries. Proposed 0.5% precision is investigative, not a user regression budget. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure.",
+        "nextAction": "analysis_pass_inventory finishes the queued metadata-preservation/formatting and two generated-license-record batch for native paired tool e4b2378424b801dad5d463c905d889d5dc42e498. Unit run 45040345635 passes seven XML cases; functional 1x 45040497302 passes six fresh visits and all expected 9+6 rows. The post-start negative control 45040695474 fails as expected while correctly killing/reaping its child. Canonical Fetch 45040526953 produced exactly two new BSD-3-Clause records with no old-catalog churn. Source gate 45040631926 fails only Go alignment and BUILD-list formatting. No A/A or timing result exists. Preserve source57’s performance hold, inconclusive startup controls and unresolved ARM effective affinity; do not start blind reruns or expand samples.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -40206,10 +40207,16 @@
           "https://github.com/tamird/gvisor/actions/runs/44987797824",
           "https://github.com/tamird/gvisor/actions/runs/44988289000",
           "https://buildkite.com/gvisor/pipeline/builds/55416",
-          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
+          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321",
+          "https://github.com/tamird/gvisor/commit/e4b2378424b801dad5d463c905d889d5dc42e498",
+          "https://github.com/tamird/gvisor/actions/runs/45040345635",
+          "https://github.com/tamird/gvisor/actions/runs/45040497302",
+          "https://github.com/tamird/gvisor/actions/runs/45040526953",
+          "https://github.com/tamird/gvisor/actions/runs/45040695474",
+          "https://github.com/tamird/gvisor/actions/runs/45040631926"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Material executor information or resolved ARM containment and an explicitly authorised measurement plan; no unchanged timing retry or source publication inferred. Preserve existing replacement qualification and all performance/dependency/publication holds.",
+        "recheckCondition": "Owner-confirmed source/metadata and generated-license completion, then the existing frozen-harness/executor conditions before measurements; source publication decisions remain separate.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "qualificationHistory": [
           {
@@ -77355,7 +77362,7 @@
         "sourceHead": "53cc614c1cb28bd0a34a2cf6f0d504f3d28ac72e",
         "observedAt": "2026-11-17T18:16:01.120596+00:00",
         "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
-        "nextAction": "hky1999 owns the source conflict and implementation. Root owns reviewer follow-through on the November 11/12 author answers and triage of the November 20 experimental review findings. Existing inspection receipts do not establish a later public response or closure of those findings. Reconcile the current revision within actual source/access constraints; do not adopt automated suggestions or run new tests without the existing authorization and policy checks.",
+        "nextAction": "hky1999 retains implementation and conflict-repair ownership. Root retains the unfinished reviewer follow-through, including the author answers and later experimental checkpoint/network-save findings. Our sensitive review/source work remains held under the current user instruction; do not route it through another agent or tool. Prior inspections do not establish a public response, resolved findings or permission for source reads/tests.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17026#pullrequestreview-5800533049",
           "https://github.com/google/gvisor/pull/17026#discussion_r4492764964",
@@ -77365,7 +77372,7 @@
           "https://github.com/hky1999/gvisor/blob/53cc614c1/test/syscalls/linux/socket_netlink_route.cc#L3689",
           "https://github.com/gvisor/gvisor/pull/17026"
         ],
-        "recheckCondition": "Assigned reviewer reconciliation or actual author revision/integration; preserve the distinction between author implementation and our review obligation.",
+        "recheckCondition": "Actual instructions/access-policy conditions changing our hold, or genuine author revision/integration requiring metadata reconciliation; foreign-author implementation ownership is unchanged.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING"
       },
@@ -131213,10 +131220,10 @@
       "id": "investigation:repository-lint",
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
-      "owner": "root",
+      "owner": "analysis_pass_inventory / root",
       "updatedAt": "2026-11-21T20:45:26.098382+00:00",
       "group": "analysis",
-      "summary": "The repaired shared profile passed maintained AMD lint-cc: 379 commands cover 374 first-party sources, with source/config/native-toolchain equivalence reconciled. Native C/proto core e601 also verifies the AArch64 helper on the matching action CPU. These close the profile-check gaps, not x/tools36e production coupling: that global refresh remains held for runtime compatibility/performance, and no isolated graph is implemented.",
+      "summary": "Current native analyzer-policy source ea65581c2c7db180d1ccf7a5c5d4fcbefe4bc03d passes the Prometheus unit check and the omitzero issue is resolved. Nogo run 45037513725 still fails on the remaining strings/sequence diagnostic. The full analyzer audit is not ready; protected-source work remains held. These results do not qualify the separate held global36e runtime-coupled refresh.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -131588,7 +131595,7 @@
           ]
         }
       ],
-      "nextStep": "buildifier_license_fix retains the dependency-scope recovery and completed maintained checks. Do not treat the shared-profile proof as runtime qualification of global36e or revive the held lint architecture.",
+      "nextStep": "analysis_pass_inventory reconciles the remaining non-protected Nogo diagnostic and actual gate coverage before a full-audit claim. Keep protected-source findings held under the current user instruction, preserve the global refresh’s runtime/performance limits, and do not revive the retired lint architecture.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -131677,6 +131684,10 @@
         {
           "label": "Current maintained AMD lint-cc, result pending owner audit",
           "url": "https://github.com/tamird/gvisor/actions/runs/44945623947"
+        },
+        {
+          "label": "Current remaining Nogo gate",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45037513725"
         }
       ],
       "reviewWatch": {
@@ -131704,7 +131715,8 @@
         "owner": "root",
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
-      }
+      },
+      "head": "ea65581c2c7db180d1ccf7a5c5d4fcbefe4bc03d"
     },
     {
       "id": "investigation:proc-boot-identity",
@@ -142379,10 +142391,10 @@
       "group": "bazel",
       "title": "Declare C/C++ formatting inputs in Bazel",
       "owner": "declared_formatting_resume",
-      "head": "be47f724fb92fa604dfb998fc9fb6f2b01d364b1",
+      "head": "c4ed08d0d687d617a870c6cb622e060badb77ea1",
       "updatedAt": "2026-11-21T14:00:19.559771+00:00",
-      "summary": "The rules_lint revision candidate 21fc050cf has native AMD/ARM JSON UNION ALL coverage of all 492 C/C++ inputs and all 87 headers, with no extras and zero queried actions. These are inventory/query proofs, not formatter execution. The previous be47 publication proposal remains revision-requested.",
-      "nextStep": "declared_formatting_resume qualifies the actual maintained rules_lint check, fix and configuration contract on candidate 21fc before final source review. Preserve complete declared-input coverage; no publication approval transfers from be47.",
+      "summary": "Current candidate c4ed08d0 differs from 1d715 only by Buildifier formatting and four explicit private-API comments. Real caller, configuration and equal-overlap contracts passed 45038110165; the current full gate 45040533494 is awaiting its owner’s verdict. The implementation uses unsupported pinned Aspect 2.9.1 private APIs. Its delta is +243/-230 versus be47 (net +13), and +296/-96 versus original eb263; no overall size win or public-API contract is claimed.",
+      "nextStep": "declared_formatting_resume owns the current full gate and remaining private-API coupling assessment. Preserve the unchanged-behavior caller proof and the be47 revision request; no new source-publication approval is inferred.",
       "evidence": [
         {
           "label": "Actual reviewable clean source",
@@ -142423,14 +142435,25 @@
         {
           "label": "Current rules_lint candidate",
           "url": "https://github.com/tamird/gvisor/commit/21fc050cffdd809cb281d71d5996fe1f86a40715"
-        }
-      ],
-      "findings": [
+        },
         {
-          "text": "Both AMD/ARM C++ check/fix, cross-host fixture, configuration guards and both final reviews are complete. Maintained 44910214972 passed all five source checks on the normal index with a clean checkout, using local process-wrapper execution, no RBE/cache hits and roughly 75s Goimports bootstrap. Archive/import qualification is analysis only.",
-          "evidence": []
+          "label": "Current source",
+          "url": "https://github.com/tamird/gvisor/commit/c4ed08d0d687d617a870c6cb622e060badb77ea1"
+        },
+        {
+          "label": "Real caller/configuration/overlap proof",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45038110165"
+        },
+        {
+          "label": "Current full gate",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45040533494"
+        },
+        {
+          "label": "Historical formatter qualification before the current rules_lint revision",
+          "url": "https://github.com/tamird/gvisor/blob/4bf7a2c1cf738796a630b7c13f16aa25811a4991/registry.json"
         }
       ],
+      "findings": [],
       "settledReviews": [
         {
           "kind": "proposal",
