@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T10:27:43+00:00",
+    "updatedAt": "2026-11-22T10:45:12+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -105722,12 +105722,12 @@
       "url": "https://github.com/google/gvisor/pull/17862",
       "status": "open",
       "updatedAt": "2026-11-21T22:39:02.228805+00:00",
-      "summary": "A subsequent owner audit verified current-head main55624 PASSED, alongside FirstPass2321 and all native GHA/DCO. The final ARM Docker owning target passed after automatic recovery; no HTTPD defect or cause of the earlier journal-output failure is established. Source57691bada remains open/mergeable, REVIEW_REQUIRED, with Milan approved and zkoopmans requested. No auto-merge operation or source change is inferred.",
+      "summary": "Owner-audited main55624 PASSED on exact57691bada17528444d5137569d164234536009fa, alongside FirstPass2321 and all native GHA/DCO. Final ARM retry4 finished10:28:47 UTC and freshly executed5/5 targets, including integration_runtime_test PASS13.1s; individual Go case names were not logged. The missing-journal attempt recovered automatically as a possible flake, with cause unknown and no HTTPD defect established. The PR remains open/mergeable, REVIEW_REQUIRED, with Milan approved and zkoopmans requested. No auto-merge operation or source change is inferred.",
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "57691bada17528444d5137569d164234536009fa",
         "mergeable": "MERGEABLE",
-        "disposition": "A subsequent owner audit verified current-head main55624 PASSED, alongside FirstPass2321 and all native GHA/DCO. The final ARM Docker owning target passed after automatic recovery; no HTTPD defect or cause of the earlier journal-output failure is established. Source57691bada remains open/mergeable, REVIEW_REQUIRED, with Milan approved and zkoopmans requested. No auto-merge operation or source change is inferred.",
+        "disposition": "Owner-audited main55624 PASSED on exact57691bada17528444d5137569d164234536009fa, alongside FirstPass2321 and all native GHA/DCO. Final ARM retry4 finished10:28:47 UTC and freshly executed5/5 targets, including integration_runtime_test PASS13.1s; individual Go case names were not logged. The missing-journal attempt recovered automatically as a possible flake, with cause unknown and no HTTPD defect established. The PR remains open/mergeable, REVIEW_REQUIRED, with Milan approved and zkoopmans requested. No auto-merge operation or source change is inferred.",
         "nextAction": "Follow existing maintainer review and import on the green published head. All execution watches are closed; no CI retry, repeated reviewer request, source amendment or auto-merge action.",
         "recheckCondition": "Substantive maintainer feedback, import/merge event or a changed current source/check state.",
         "evidence": [
