@@ -83,6 +83,7 @@ exports_files([
     "benchmark-umbrella-exports.patch",
     "llvm-dev-backends.patch",
     "llvm-linux-header-default.patch",
+    "rules_go_proto_exec.patch",
 ])
 
 py_test(
