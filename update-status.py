@@ -1628,6 +1628,7 @@ def derive_snapshot() -> None:
     snapshot["registryDate"] = REGISTRY["meta"]["updatedAt"]
     snapshot["reviewerHandoff"] = reviewer_handoff(previous["prs"], previous)
     snapshot["reviewWatchHandoff"] = review_watch_handoff(previous["prs"] + previous.get("reviewPRs", []), previous)
+    snapshot["mergeabilityHandoff"] = mergeability_handoff(check_report(previous["prs"], previous), previous)
     snapshot["workStates"] = record_states(previous["prs"], REGISTRY, previous, previous["checkedAt"])
     write_snapshot(snapshot)
 
@@ -1907,7 +1908,11 @@ def approved_branches_after_merge(registry: dict, prs: list[dict]) -> list[dict]
 
 
 def worker_handoff(snapshot: dict, incoming: list[dict]) -> dict:
-    """Select feedback from our project work before new review requests or maintenance."""
+    """Select feedback from our project work before new review requests or maintenance.
+
+    nextWork selects unclaimed assignments; reconciliation consumes all pending
+    authorFeedback, reviewFollowups and conflicts, including claimed or held work.
+    """
     registered = {(node.get("repo"), node.get("number")) for node in REGISTRY["nodes"] if node.get("type") == "pr"}
     prs = {(pr.get("repo", REPO), pr["number"]): pr
            for collection in ("prs", "reviewPRs") for pr in snapshot.get(collection, [])

@@ -981,6 +981,14 @@ class CollectorHistoryTest(unittest.TestCase):
         return json.loads(self.path.read_text())
 
     def test_derive_snapshot_preserves_observations_without_api_calls(self) -> None:
+        conflicted = self.previous["prs"][2]
+        conflicted["mergeable"] = "CONFLICTING"
+        self.registry["nodes"].append({"id": "pr:3", "type": "pr", "repo": "google/gvisor", "number": 3,
+                                      "followup": {"owner": "root", "sourceHead": conflicted["head"], "base": conflicted["base"],
+                                                   "mergeable": "CONFLICTING", "nextAction": "Keep sensitive work held."}})
+        self.previous["mergeabilityHandoff"] = [{"number": 3, "owner": "Agent"}]
+        self.previous["workStates"] = {"pr:3": {"conflicts": {
+            "scope": conflicted["head"], "since": OLD, "basis": "observed"}}}
         watched = retained(raw_pr(500, author="contributor"))
         reply = {"id": "reply", "url": watched["url"] + "#reply", "kind": "comment",
                  "body": "@tamird, updated.", "author": {"login": "contributor", "__typename": "User"},
@@ -999,6 +1007,7 @@ class CollectorHistoryTest(unittest.TestCase):
             expected["registryDate"] = self.registry["meta"]["updatedAt"]
             expected["reviewerHandoff"] = updater.reviewer_handoff(expected["prs"], self.previous)
             expected["reviewWatchHandoff"] = updater.review_watch_handoff(expected["prs"] + expected["reviewPRs"], self.previous)
+            expected["mergeabilityHandoff"] = updater.mergeability_handoff(updater.check_report(expected["prs"], self.previous), self.previous)
             expected["workStates"] = updater.record_states(expected["prs"], self.registry, self.previous, OLD)
             updater.derive_snapshot()
         actual = json.loads(self.path.read_text())
@@ -1009,6 +1018,9 @@ class CollectorHistoryTest(unittest.TestCase):
         self.assertEqual(inspected, watched)
         self.assertEqual(actual["prs"], self.previous["prs"])
         self.assertEqual(actual["reviewWatchHandoff"], [])
+        conflict, = actual["mergeabilityHandoff"]
+        self.assertEqual((conflict["owner"], conflict["action"], conflict["conflictObservedSince"]),
+                         ("root", "Keep sensitive work held.", OLD))
         api.assert_not_called()
 
     def test_publication_hands_incoming_request_to_supervisor(self) -> None:
@@ -1399,6 +1411,41 @@ class CollectorHistoryTest(unittest.TestCase):
         other = retained(raw)
         self.assertNotIn("rebaseRequest", other)
         self.assertEqual(updater.reviewer_handoff([other], {}), [])
+
+        # A push can update old review metadata. Only a later approval by the
+        # requester for this exact source retires the request.
+        raw = raw_pr(17492)
+        requested = {"__typename": "User", "login": "another-reviewer"}
+        raw["reviewRequests"]["nodes"] = [{"requestedReviewer": requested}]
+        pushed_at = "2026-11-21T09:28:42Z"
+        raw["headHistory"]["nodes"] = [{"createdAt": pushed_at, "afterCommit": {"oid": raw["headRefOid"]}}]
+        request = {"id": "old-request", "url": raw["url"] + "#review-1", "body": "Needs rebase",
+                   "author": {"login": "EtiennePerot", "__typename": "User"}, "state": "APPROVED",
+                   "submittedAt": "2026-11-21T09:04:42Z", "updatedAt": pushed_at,
+                   "commit": {"oid": raw["headRefOid"]}}
+        raw["reviews"]["nodes"] = [request]
+        current = retained(raw)
+        self.assertEqual(updater.current_rebase_request(current, "tamird")["id"], request["id"])
+        approved = {**request, "id": "new-approval", "body": "", "submittedAt": "2026-11-21T09:30:17Z",
+                    "updatedAt": "2026-11-21T09:30:17Z"}
+        for changed in ({"author": {"login": "another-reviewer", "__typename": "User"}},
+                        {"commit": {"oid": "f" * 40}}, {"submittedAt": "2026-11-21T09:00:00Z"}):
+            with self.subTest(approval=changed):
+                current["feedback"]["items"] = [{"kind": "review", **request}, {"kind": "review", **approved, **changed}]
+                self.assertEqual(updater.current_rebase_request(current, "tamird")["id"], request["id"])
+        raw["reviews"]["nodes"].append(approved)
+        current = retained(raw)
+        self.assertIsNone(updater.current_rebase_request(current, "tamird"))
+        self.assertEqual(current["reviewRequests"], [requested])
+        current["mergeable"] = "CONFLICTING"
+        conflict, = updater.mergeability_handoff(updater.check_report([current], {}), {})
+        self.assertEqual(conflict["mergeable"], "CONFLICTING")
+        edited = {"kind": "review", **request, "body": "Please rebase onto master.", "updatedAt": "2026-11-21T09:31:00Z"}
+        current["feedback"]["items"] = [edited, {"kind": "review", **approved}]
+        self.assertEqual(updater.current_rebase_request(current, "tamird")["id"], request["id"])
+        renewed = {**edited, "id": "renewed-request", "submittedAt": edited["updatedAt"]}
+        current["feedback"]["items"] = [{"kind": "review", **request}, {"kind": "review", **approved}, renewed]
+        self.assertEqual(updater.current_rebase_request(current, "tamird")["id"], renewed["id"])
 
     def test_published_branch_feedback_uses_its_unique_exact_owner(self) -> None:
         source = retained(raw_pr(16869))

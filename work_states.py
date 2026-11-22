@@ -250,6 +250,16 @@ def current_rebase_request(pr: dict, owner: str) -> dict | None:
         r"(?: (?:this(?: PR| branch| change)?|it))?(?: (?:on|onto|against) (?:current |latest )?(?:main|master))?"
         r"|(?:this (?:PR )?)?needs (?:a )?rebase)[.?!]*", re.I)
     binding = pr.get("rebaseRequest", {})
+    approvals: dict[str, datetime] = {}
+    for item in pr.get("feedback", {}).get("items", []):
+        author = item.get("author") or {}
+        if (item.get("kind") != "review" or item.get("state") != "APPROVED"
+                or author.get("__typename") != "User" or not author.get("login")
+                or not item.get("submittedAt") or (item.get("commit") or {}).get("oid") != pr["head"]):
+            continue
+        at = datetime.fromisoformat(item["submittedAt"])
+        if (not cutoff or at >= cutoff) and (author["login"] not in approvals or at > approvals[author["login"]]):
+            approvals[author["login"]] = at
     pending = []
     for item in pr.get("feedback", {}).get("items", []):
         author = item.get("author") or {}
@@ -268,7 +278,11 @@ def current_rebase_request(pr: dict, owner: str) -> dict | None:
                 and binding.get("head") != pr["head"]):
             continue
         if at and (not cutoff or datetime.fromisoformat(at) >= cutoff):
-            pending.append((datetime.fromisoformat(at), item))
+            requested = datetime.fromisoformat(at)
+            # Review metadata can change on a push. A later approval of this
+            # source by the requester acknowledges the earlier rebase request.
+            if (approved := approvals.get(author["login"])) is None or approved <= requested:
+                pending.append((requested, item))
     return max(pending, key=lambda pair: pair[0])[1] if pending else None
 
 
