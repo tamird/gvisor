@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T22:43:08.070246+00:00",
+    "updatedAt": "2026-11-22T22:59:05.271966+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -98783,12 +98783,12 @@
       "type": "pr",
       "repo": "protocolbuffers/protobuf",
       "ref": "research/37x-upb-direct",
-      "head": "3bad9c725b55a39cd6964518c97e959c1924830e",
+      "head": "2f8840c6402bc2c5db1cef382adbaee1d89cecf7",
       "title": "[37.x] Run the stage-1 upb generators without Bash",
       "url": "https://github.com/protocolbuffers/protobuf/pull/31530",
       "group": "bazel",
       "status": "open",
-      "summary": "On 37.x all four generator actions failed when Bazel could not execute /bin/bash. The backport ran all four and generated the same six C sources and headers byte for byte. PacketImpact uses these actions on workers without a shell. The core compiler switch can land independently.",
+      "summary": "The 37.x backport source changed to 2f8840c64. Its current All Blocking Tests (fork) check fails, and the author has already requested another test approval. The underlying failure and the claim that it is unrelated are unverified here. Prior generator/output-equivalence evidence remains bound to its actual older source.",
       "evidence": [
         {
           "label": "Supplier CI requires team authorization",
@@ -98823,15 +98823,17 @@
       "number": 31530,
       "followup": {
         "owner": "root",
-        "sourceHead": "3bad9c725b55a39cd6964518c97e959c1924830e",
-        "observedAt": "2026-11-17T19:01:06.487079+00:00",
-        "disposition": "CI #31530 at 3bad9c725b55a39cd6964518c97e959c1924830e: Live failure is Apply Safe for Tests Label, matching the existing documented fork-CI authorization gate; no source test error is established.",
-        "nextAction": "Await maintainer review and safe-for-tests authorization on the backport; do not treat status as a generator regression.",
+        "sourceHead": "2f8840c6402bc2c5db1cef382adbaee1d89cecf7",
+        "observedAt": "2026-11-22T22:57:01.440210+00:00",
+        "disposition": "The 37.x backport source changed to 2f8840c64. Its current All Blocking Tests (fork) check fails, and the author has already requested another test approval. The underlying failure and the claim that it is unrelated are unverified here. Prior generator/output-equivalence evidence remains bound to its actual older source.",
+        "nextAction": "Root follows the existing upstream test-approval request and verifies actual current-head failure evidence before assigning a cause. Preserve prior source qualification limits; no repeated outreach, source rewrite or manual retry is inferred.",
         "evidence": [
           "https://github.com/protocolbuffers/protobuf/pull/31530",
-          "https://github.com/protocolbuffers/protobuf/actions/runs/43039912432/job/130588617472"
+          "https://github.com/protocolbuffers/protobuf/actions/runs/43039912432/job/130588617472",
+          "https://github.com/protocolbuffers/protobuf/pull/31530#issuecomment-7086815521",
+          "https://github.com/protocolbuffers/protobuf/actions/runs/45077691189/job/137378521730"
         ],
-        "recheckCondition": "Authorized label enables code checks; inspect their real results."
+        "recheckCondition": "Maintainer test approval, actual terminal check evidence, changed source or reviewer feedback."
       }
     },
     {
@@ -104546,13 +104548,13 @@
       "group": "ci-flakes",
       "status": "open",
       "updatedAt": "2026-11-21T04:22:28.091102+00:00",
-      "summary": "The approval-count gate is satisfied: bnb and jasnell are listed collaborators and both approved exact head 15c2edb5. The PR remains MERGEABLE/APPROVED but natively BLOCKED with three unchanged pending GitHub Jenkins contexts. The maintainer and queue bot previously reported Jenkins success with a GitHub reporting glitch; current Jenkins endpoints are inaccessible, so no fresh Jenkins verdict is inferred. Remaining work is status correction and maintainer-owned queue admission/landing, not another approval or a seven-day wait.",
+      "summary": "The collaborator approval gate remains satisfied. Gurgunday confirmed the author’s existing landing question and added another exact-head approval on unchanged 15c2edb5. The PR remains OPEN/APPROVED/MERGEABLE but natively BLOCKED with three pending GitHub Jenkins contexts. This is maintainer landing/CI-reporting follow-through, not a new source failure or agent merge authorization.",
       "followup": {
         "owner": "root",
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-        "disposition": "The approval-count gate is satisfied: bnb and jasnell are listed collaborators and both approved exact head 15c2edb5. The PR remains MERGEABLE/APPROVED but natively BLOCKED with three unchanged pending GitHub Jenkins contexts. The maintainer and queue bot previously reported Jenkins success with a GitHub reporting glitch; current Jenkins endpoints are inaccessible, so no fresh Jenkins verdict is inferred. Remaining work is status correction and maintainer-owned queue admission/landing, not another approval or a seven-day wait.",
-        "nextAction": "Root follows actual CI status correction, maintainer-owned queue admission or landing, and exact head changes. No source failure, rebase, retry, relabel/requeue, merge or duplicate outreach is justified or authorized.",
-        "recheckCondition": "Actual status correction, maintainer-owned queue/landing event or exact head change.",
+        "disposition": "The collaborator approval gate remains satisfied. Gurgunday confirmed the author’s existing landing question and added another exact-head approval on unchanged 15c2edb5. The PR remains OPEN/APPROVED/MERGEABLE but natively BLOCKED with three pending GitHub Jenkins contexts. This is maintainer landing/CI-reporting follow-through, not a new source failure or agent merge authorization.",
+        "nextAction": "Root follows actual status correction and maintainer-owned queue/landing events. The new confirmation is read and triaged; do not merge, relabel/requeue, retry, change source or send duplicate outreach.",
+        "recheckCondition": "Actual status correction, maintainer queue/landing event, source/head or substantive new feedback.",
         "publishedDelivery": {
           "base": "b7df44bf9c85a6104b9158b616999e3d2c58be5d",
           "head": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
@@ -104819,8 +104821,8 @@
         "attentionDispositions": [
           {
             "reason": "author-feedback",
-            "title": "Approval gate satisfied; landing awaits status correction and maintainer admission",
-            "nextAction": "Root follows actual CI status correction, maintainer-owned queue admission or landing, and exact head changes. No source failure, rebase, retry, relabel/requeue, merge or duplicate outreach is justified or authorized.",
+            "title": "Approval gate satisfied; confirmation triaged, landing remains maintainer-owned",
+            "nextAction": "Root follows actual status correction and maintainer-owned queue/landing events. The new confirmation is read and triaged; do not merge, relabel/requeue, retry, change source or send duplicate outreach.",
             "evidence": [
               "https://github.com/nodejs/node/pull/67595#issuecomment-7080248335",
               "https://github.com/nodejs/node/pull/67595#issuecomment-7080379119",
@@ -104829,12 +104831,16 @@
               "https://github.com/nodejs/node/pull/67595#pullrequestreview-6014285398",
               "https://github.com/nodejs/node/pull/67595#pullrequestreview-5966960144",
               "https://github.com/nodejs/node/blob/main/README.md",
-              "https://github.com/nodejs/node/pull/67595#issuecomment-7059960789"
+              "https://github.com/nodejs/node/pull/67595#issuecomment-7059960789",
+              "https://github.com/nodejs/node/pull/67595#issuecomment-7026664983",
+              "https://github.com/nodejs/node/pull/67595#issuecomment-7053905845",
+              "https://github.com/nodejs/node/pull/67595#issuecomment-7086842084",
+              "https://github.com/nodejs/node/pull/67595#pullrequestreview-6014883170"
             ],
             "binding": {
               "reviewDecision": "APPROVED",
               "approvedHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-              "approvedAt": "2026-11-22T20:16:25Z",
+              "approvedAt": "2026-11-22T22:33:55Z",
               "headCommittedAt": "2026-11-18T23:13:47Z",
               "headIntroducedAt": "2026-11-18T23:14:18Z",
               "headHistoryComplete": true,
@@ -104979,6 +104985,30 @@
                     }
                   },
                   {
+                    "kind": "comment",
+                    "id": "IC_kwDOAZ7xs88AAAABpmThTw",
+                    "url": "https://github.com/nodejs/node/pull/67595#issuecomment-7086596431",
+                    "body": "Thanks! This can merge now with 2 approvals, yes?",
+                    "createdAt": "2026-11-22T22:09:20Z",
+                    "updatedAt": "2026-11-22T22:09:20Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOAZ7xs88AAAABpmig5A",
+                    "url": "https://github.com/nodejs/node/pull/67595#issuecomment-7086842084",
+                    "body": "Yes it can",
+                    "createdAt": "2026-11-22T22:28:24Z",
+                    "updatedAt": "2026-11-22T22:28:24Z",
+                    "author": {
+                      "login": "gurgunday",
+                      "__typename": "User"
+                    }
+                  },
+                  {
                     "kind": "review",
                     "id": "PRR_kwDOAZ7xs88AAAABY6iWEA",
                     "url": "https://github.com/nodejs/node/pull/67595#pullrequestreview-5966960144",
@@ -105011,6 +105041,23 @@
                     "commit": {
                       "oid": "15c2edb5708cf8ac75b01360cff2372ecee0be23"
                     }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOAZ7xs88AAAABZoPVYg",
+                    "url": "https://github.com/nodejs/node/pull/67595#pullrequestreview-6014883170",
+                    "body": "",
+                    "state": "APPROVED",
+                    "submittedAt": "2026-11-22T22:33:55Z",
+                    "updatedAt": "2026-11-22T22:33:55Z",
+                    "authorAssociation": "MEMBER",
+                    "author": {
+                      "login": "gurgunday",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "15c2edb5708cf8ac75b01360cff2372ecee0be23"
+                    }
                   }
                 ]
               },
@@ -105018,11 +105065,13 @@
             }
           }
         ],
-        "observedAt": "2026-11-21T04:20:03.935701+00:00",
+        "observedAt": "2026-11-22T22:57:01.440210+00:00",
         "evidence": [
           "https://github.com/nodejs/node/pull/67595#issuecomment-7026664983",
           "https://github.com/nodejs/node/pull/67595#issuecomment-7053905845",
-          "https://github.com/nodejs/node/pull/67595#issuecomment-7059960789"
+          "https://github.com/nodejs/node/pull/67595#issuecomment-7059960789",
+          "https://github.com/nodejs/node/pull/67595#issuecomment-7086842084",
+          "https://github.com/nodejs/node/pull/67595#pullrequestreview-6014883170"
         ]
       },
       "evidence": [
@@ -106093,18 +106142,19 @@
       "group": "analysis",
       "status": "open",
       "updatedAt": "2026-11-22T22:40:51.591862+00:00",
-      "summary": "Published exact 967d146c source; OPEN/MERGEABLE with DCO and lint/Gazelle/header/assignment checks passing. Go export 45077224798 was running at the last owner handoff. First Pass 2354 upload failed exit 80; both canonical log reads were empty, so no cause is verified and no tests ran. No quota inference is made.",
+      "summary": "Exact 967d146c remains OPEN/MERGEABLE/REVIEW_REQUIRED. Native Go export 45077224798 is now SUCCESS, as are lint/Gazelle/header and DCO. First Pass 2354 still fails pipeline upload exit 80; both canonical log reads were empty, so its cause remains unverified and no tests ran. No quota or retry inference follows.",
       "followup": {
         "owner": "root",
         "sourceHead": "967d146c614ab2c3897fdfb28a42ad96db423a5c",
         "observedAt": "2026-11-22T22:40:51.591862+00:00",
-        "disposition": "Publication approval is consumed; exact benchmark source is delivered in #17873. First Pass upload failed without a verified cause.",
-        "nextAction": "Root alone follows actual native CI, canonical provider evidence and genuine reviewer feedback. Do not infer quota or authorize a retry/outreach from exit 80.",
-        "recheckCondition": "Actual terminal Go export/check result, provider failure evidence or new review/head/landing event.",
+        "disposition": "Exact 967d146c remains OPEN/MERGEABLE/REVIEW_REQUIRED. Native Go export 45077224798 is now SUCCESS, as are lint/Gazelle/header and DCO. First Pass 2354 still fails pipeline upload exit 80; both canonical log reads were empty, so its cause remains unverified and no tests ran. No quota or retry inference follows.",
+        "nextAction": "Root alone follows canonical First Pass 2354 evidence and existing relkochta/shailend-g review requests. Native completion does not clear the failed upload or establish main-pipeline results. No manual retry or duplicate outreach is authorized.",
+        "recheckCondition": "Actual provider evidence/check change, reviewer feedback, source/head or landing event.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17873",
           "https://buildkite.com/gvisor/first-pass/builds/2354#01a20559-397d-4670-9135-7495bc8ccee8",
-          "https://github.com/tamird/gvisor/actions/runs/45077224798"
+          "https://github.com/tamird/gvisor/actions/runs/45077224798",
+          "https://github.com/gvisor/gvisor/actions/runs/45077224798/job/137377043905"
         ]
       }
     },
@@ -106120,17 +106170,20 @@
       "group": "bazel",
       "status": "open",
       "updatedAt": "2026-11-22T22:40:51.591862+00:00",
-      "summary": "Signed source 4a881d4ef is published in ready PR #1112, OPEN/MERGEABLE. Native check 45078090352 succeeded. Maintainer review, actual release and formatter integration remain.",
+      "summary": "Exact signed 4a881d4ef remains OPEN/MERGEABLE/REVIEW_REQUIRED. Native check 45078090352 succeeds; Buildkite #51 fails with the same six jobs and concrete failure messages as exact integration-base 1da8c08 build #46. Root’s source-bound comparison establishes no PR-specific defect, while required CI remains red. Existing jbedard review, release and integration remain.",
       "followup": {
         "owner": "root",
         "sourceHead": "4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
         "observedAt": "2026-11-22T22:40:51.591862+00:00",
-        "disposition": "Approved public fork, signed source push and ready PR are delivered; no fork-creation policy blocker remains.",
-        "nextAction": "Root follows actual maintainer feedback, release and adoption without duplicating CI checks or inferring a formatter publication grant.",
+        "disposition": "Exact signed 4a881d4ef remains OPEN/MERGEABLE/REVIEW_REQUIRED. Native check 45078090352 succeeds; Buildkite #51 fails with the same six jobs and concrete failure messages as exact integration-base 1da8c08 build #46. Root’s source-bound comparison establishes no PR-specific defect, while required CI remains red. Existing jbedard review, release and integration remain.",
+        "nextAction": "Root follows actual upstream dependency/toolchain baseline changes and existing maintainer feedback, release and adoption. Source-bound failure diagnosis is complete; no source edit, manual retry or outreach is authorized.",
         "recheckCondition": "Genuine review/check/head/merge/release event.",
         "evidence": [
           "https://github.com/bazel-contrib/rules_lint/pull/1112",
-          "https://github.com/tamird/rules_lint/commit/4a881d4ef85dc0cbbaaa24a433aac9f373df8649"
+          "https://github.com/tamird/rules_lint/commit/4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
+          "https://buildkite.com/bazel-contrib/rules-lint/builds/51",
+          "https://github.com/bazel-contrib/rules_lint/actions/runs/45078090352/job/137379762451",
+          "https://buildkite.com/bazel-contrib/rules-lint/builds/46"
         ]
       }
     }
@@ -131361,7 +131414,7 @@
       "owner": "analysis_pass_inventory / root",
       "updatedAt": "2026-11-21T20:45:26.098382+00:00",
       "group": "analysis",
-      "summary": "Main analyzer enhancement is HIGH PRIORITY: deliver the minimal reviewable Suite26 plus 20 new checks and the 56-check selection/exclusion audit as a KNOWN-BLOCKED candidate. The suite is known red; a full-corpus green result is not the source-candidate handoff gate. errorsastype remains global, with the two held findings reported and root-owned; the temporary exception proposal was canceled, not implemented. Last scoped c06 preparation and its failing partial static result retain their limits. The warning backlog and preserved unqualified 19-file prep are not prerequisites. Actual protected-source holds persist.",
+      "summary": "HIGH-PRIORITY prepared candidate df8f2ce2 is one commit on eb263: eight files, Suite26 plus 20 new diagnostic packages and the complete 56-check inventory/exclusion rationale. Its tree exactly matches original d712, without independent prep/runtime cleanup. Focused AMD/ARM remote checks each pass 14 driver plus one sanity XML case; source checks/guards pass. Correctness/style review accepts; final free/catchall review is pending. The full corpus is known red; historical 275/890 coverage and 1,234 findings are partial evidence, including two held AsType sites. No full matrix, assembly or C++ lint claim, upstream PR approval or new publication question exists.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -131733,7 +131786,7 @@
           ]
         }
       ],
-      "nextStep": "analysis_pass_inventory finalizes the exact minimal enhancement and 56-check selection/exclusion rationale, retaining actual validation and CI limits. Do not disable whole modernize members merely because they report warnings. Root owns deferred findings in pkg/sentry/state/stateipc/common.go and runsc/cgroup/systemd.go without protected-source read/edit; no temporary exclusions are required or implemented. Keep uncertain go_marshal2 semantics separate; no new audit PR question or approval is inferred.",
+      "nextStep": "Finish the existing final review of this exact minimal candidate, then root handles any actual source-publication question. Keep errorsastype global, with no new two-file exceptions/baselines; root owns the two deferred protected findings without source read/edit. The whole warning backlog and independent prep are not source-candidate handoff prerequisites. Preserve actual validation limits and uncertain go_marshal2 semantics separately.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -131874,6 +131927,22 @@
         {
           "label": "Final partial static result: 3 PASS / 7 FAIL",
           "url": "https://github.com/tamird/gvisor/actions/runs/45073984140/artifacts/14774976818"
+        },
+        {
+          "label": "Reviewable main enhancement source",
+          "url": "https://github.com/tamird/gvisor/commit/df8f2ce22ee86a24b1ecc6dd7155132a215f7cf4"
+        },
+        {
+          "label": "Focused AMD validation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45080030619/artifacts/14776188844"
+        },
+        {
+          "label": "Focused ARM validation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45080032654/artifacts/14776818032"
+        },
+        {
+          "label": "Source/guard validation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45080034517/artifacts/14776817773"
         }
       ],
       "reviewWatch": {
@@ -131902,7 +131971,7 @@
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
       },
-      "head": "c06d45734e3c43c7a19855f87283641c0ff18944",
+      "head": "df8f2ce22ee86a24b1ecc6dd7155132a215f7cf4",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -142931,8 +143000,8 @@
       "head": "4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
       "title": "Reject failed patch generation",
       "updatedAt": "2026-11-22T18:32:33.604640+00:00",
-      "summary": "The public tamird/rules_lint fork and signed 4a881d4ef source are published. Ready PR #1112 is OPEN/MERGEABLE and native check 45078090352 succeeded. The correction rejects failed patch generation; maintainer review, release and integration remain. The fork/source/PR decision is consumed and its earlier execution blocker is resolved.",
-      "nextStep": "Root follows rules_lint #1112 review, actual release and integration. Delivery does not clear the separate held formatter scope or authorize further formatting work.",
+      "summary": "Signed 4a881d4ef is published in rules_lint #1112; the combined approval is consumed. Native check succeeds, and root verified Buildkite #51 matches the six integration-base #46 failures without establishing a PR-specific defect. Required CI, maintainer review, release and integration remain; no formatter grant follows.",
+      "nextStep": "Root follows the actual check/review/release lifecycle on rules_lint #1112. Preserve the separate formatting hold and source-publication boundary.",
       "findings": [],
       "evidence": [
         {
