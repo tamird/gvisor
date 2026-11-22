@@ -58352,8 +58352,8 @@
         "owner": "root",
         "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
         "observedAt": "2026-11-02T17:47:05.918366+00:00",
-        "disposition": "The unchanged intended image also failed P64/1-KiB functionality on the current complete normal release: run 44967627779 timed out at 30 seconds without a row; all nine runtime files, image, actual CPU and cleanup/source guards matched. Intrusive metadata trace 44968321756 observed slow thread creation, no worker exits before timeout and all exits after SIGINT, with no observed tgkill/FUTEX_WAIT. This does not prove a userspace spin, join-wakeup bug or kernel cause. Both native proofs remain valid; complete Sentry functionality and performance remain held.",
-        "nextAction": "benchmark_measurement_review owns two predeclared existing-interface controls: matched native-runc P64/1-KiB at 30 seconds and untraced current-Sentry 90-second liveness only, with total parent budget at most eight minutes. Preserve the original 30-second failure; the longer cap cannot satisfy acceptance. No extra orchestration, further trace, producer patch/version change or Moby build; source and exception questions remain unanswered.",
+        "disposition": "Matched native-runc control 44969537655 passed its single P64/1-KiB visit with 64 connections and valid JSON, using the original image, current nine-file release, actual affinity and clean teardown. Current Sentry liveness run 44969536131 timed out at 90 seconds with exit124 and no row; all nine release maps, actual CPU and cleanup passed. The original 30-second failure remains valid. This establishes a controlled runtime difference, not its mechanism or a kernel cause; complete functionality and performance remain held.",
+        "nextAction": "Root retains the actual Daybreak-availability information question; sensitive investigation remains held until availability is confirmed. No further timing or source permutations. Preserve matched native/Sentry evidence and unknown mechanism, alongside the independently unanswered Moby/Bazel-only exception and source decisions.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
@@ -58377,7 +58377,9 @@
           "https://github.com/tamird/gvisor/actions/runs/44966121816",
           "https://github.com/tamird/gvisor/actions/runs/44966632076",
           "https://github.com/tamird/gvisor/actions/runs/44967627779",
-          "https://github.com/tamird/gvisor/actions/runs/44968321756"
+          "https://github.com/tamird/gvisor/actions/runs/44968321756",
+          "https://github.com/tamird/gvisor/actions/runs/44969537655",
+          "https://github.com/tamird/gvisor/actions/runs/44969536131"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -58391,7 +58393,7 @@
           "owner": "root"
         },
         "technicalOwner": "Build and release",
-        "recheckCondition": "Owner-audited matched-control and liveness evidence without retrospective acceptance changes; no causal or performance inference from the trace alone.",
+        "recheckCondition": "Actual confirmed Daybreak availability/information response before sensitive investigation resumes; no inferred enablement date, source approval or acceptance from the longer deadline.",
         "curatedAt": "2026-11-21T14:40:26.293073+00:00"
       },
       "refinement": {
@@ -120975,8 +120977,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-21T21:09:14.524994+00:00",
-      "summary": "Actual native event=schedule run44949501220 on master fc8a0f4 completed successfully and sampled the API at21:06:15.542043 UTC. This proves one scheduled delivery after the single registration reset; sustained cadence and causality from that reset remain unproven. No cron, source, credentials, permissions or further registration changes were made.",
+      "updatedAt": "2026-11-22T01:16:21.953242+00:00",
+      "summary": "Two actual scheduled deliveries are verified: 44949501220 on Nov21 at21:03 and 44970034296 on Nov22 at01:08. The latter completed successfully and sampled the API at01:11:37.920377 UTC. Their irregular delivery does not establish sustained cadence or causality from the one registration reset. Keep the existing timestamp-derived manual guard; no source, cron, credential or further registration change.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -121296,6 +121298,10 @@
         {
           "label": "First verified post-reset scheduled collection",
           "url": "https://github.com/tamird/gvisor/actions/runs/44949501220"
+        },
+        {
+          "label": "Second verified scheduled collection",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44970034296"
         }
       ],
       "technicalOwner": "Codex",
@@ -121306,22 +121312,22 @@
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
       },
       "currentHealth": {
-        "observedAt": "2026-11-21T21:09:14.524994+00:00",
+        "observedAt": "2026-11-22T01:16:21.953242+00:00",
         "owner": "root",
         "workflowState": "active",
         "actionsEnabled": true,
         "defaultWorkflowHead": "fc8a0f4298cb4b48dd2109ed3c8029f1f0c4871d",
         "cron": "7,17,27,37,47,57 * * * *",
-        "latestNativeScheduleRun": 44949501220,
-        "latestNativeScheduleAt": "2026-11-21T21:03:18Z",
+        "latestNativeScheduleRun": 44970034296,
+        "latestNativeScheduleAt": "2026-11-22T01:08:34Z",
         "latestNativeScheduleConclusion": "success",
-        "currentManualSweep": 44949159952,
-        "currentSnapshotAt": "2026-11-21T21:06:15.542043+00:00",
+        "currentManualSweep": 44968409941,
+        "currentSnapshotAt": "2026-11-22T01:11:37.920377+00:00",
         "currentManualConclusion": "success",
-        "cause": "One successful scheduled event is verified; neither sustained cadence nor causality from the earlier reset is established.",
+        "cause": "Two scheduled deliveries are verified, separated by an irregular interval; sustained cadence and reset causality remain unproved.",
         "nextAction": "At each existing freshness lead derived from the actual API timestamp, check for a newer or live native scheduled run before using the existing snapshot-only fallback. Observe subsequent scheduled deliveries before claiming sustained recovery. Preserve the one-reset boundary; no new monitor or source/cron rewrite.",
         "recheckCondition": "Next actual scheduled delivery or existing timestamp-derived manual freshness lead; no second reset.",
-        "currentSnapshotSource": "Verified scheduled run44949501220"
+        "currentSnapshotSource": "Verified scheduled run 44970034296"
       }
     },
     {
