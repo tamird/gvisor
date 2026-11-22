@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T21:58:24.907375+00:00",
+    "updatedAt": "2026-11-22T22:43:08.070246+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4972,11 +4972,11 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "The independent non-performance util.Lines producer and its existing fixture may be extracted from 47968; implementation/qualification and any publication remain separate. Ten marshal emission loops and performance work stay held. analysis_pass_inventory owns the scoped tool batch in investigation:repository-lint; protected source and uncertain go_marshal2 semantics remain separate. Follow actual provider/compiler/platform prerequisites; no timing or candidate comparison is authorized.",
+        "nextAction": "Prioritize the 56-pass selection audit and main analyzer registration/wiring candidate in investigation:repository-lint. Independent util.Lines extraction is permitted but is not a critical-path prerequisite; ten marshal loops and performance work stay held. The unqualified 19-file prep is preserved without publication. Follow provider96 preparation without a new publication ask and actual compiler/platform prerequisites; no timing or candidate comparison is authorized.",
         "recheckCondition": "Qualified provider correction and actual deployed behavior, terminal owner evidence for the analyzer policy, or actual upstream prerequisite landing; no repeat of the completed 70857 Nogo gate.",
         "observedAt": "2026-11-17T19:58:24.544895+00:00",
         "curatedAt": "2026-11-21T13:24:07.659680+00:00",
-        "disposition": "Full Nogo gate on immutable 70857bbd74c9203998a51b9c8c867ba8c9eba01a is complete: 892/892 passed, 804 actual remote and 88 remote-cached; all 87 prior completed checks were reused without rerun. Executed command after existing helper setup:\nbazel test --keep_going --config=buildbuddy --config=x86_64 --credential_helper=\"remote.buildbuddy.io=$(realpath bazel-bin/tools/buildbuddy/credential_helper)\" --test_tag_filters=nogo --build_tests_only --strip=never //...\nUnchanged NogoSplit covers both target architectures; this is not native ARM-host proof. Completion was cache-assisted after the earlier 30-minute cap, with no matched speedup or cold-cache claim. The partial run remains historical evidence, not a current correctness blocker. Current fork support 6e2c0cddf64e8c0c0ddf68a6d8936a9401fd0d22 includes the approved network-default request and reviewed README. Its property queries do not prove provider enforcement; the public OCI implementation at 168813c has a bug, while the cloud deployed version remains unknown. The unposted issue proposal is superseded by preparation of a minimal provider PR and regression under buildbuddy_network_fix. A one-line provider change and existing networking fixtures are prepared under two focused reviews. Remote tests have not run because authentication is unavailable; native upstream CI is the proposed validation route. No fix or publication approval is claimed.\n\nThe current analyzer-policy audit is tracked in investigation:repository-lint; it remains unready and protected-source work stays held.\n\nCorrected benchmark 967 and validated helper 5d7 completed host control-only A/A 45055533293, failing 13/15 cases under the existing gates despite valid execution. The prior RBE control failed 14/15 on a different old benchmark source. Current statistical disposition and existing-data diagnosis are on pr:16507; neither venue is performance-qualified.",
+        "disposition": "Full Nogo gate on immutable 70857bbd74c9203998a51b9c8c867ba8c9eba01a is complete: 892/892 passed, 804 actual remote and 88 remote-cached; all 87 prior completed checks were reused without rerun. Executed command after existing helper setup:\nbazel test --keep_going --config=buildbuddy --config=x86_64 --credential_helper=\"remote.buildbuddy.io=$(realpath bazel-bin/tools/buildbuddy/credential_helper)\" --test_tag_filters=nogo --build_tests_only --strip=never //...\nUnchanged NogoSplit covers both target architectures; this is not native ARM-host proof. Completion was cache-assisted after the earlier 30-minute cap, with no matched speedup or cold-cache claim. The partial run remains historical evidence, not a current correctness blocker. Current fork support 6e2c0cdd requests the approved network default but does not prove provider enforcement. BuildBuddy revision 96fe4a8e clarifies both live off-mode callers and is independently reviewed; tests have not run because anonymous RBE is unsupported. It remains prepared/unapproved, with new publication questions held behind main-analysis priority. Cloud deployment and enforcement remain unverified.\n\nThe current analyzer-policy audit is tracked in investigation:repository-lint; it remains unready and protected-source work stays held.\n\nCorrected benchmark 967 and validated helper 5d7 completed host control-only A/A 45055533293, failing 13/15 cases under the existing gates despite valid execution. The prior RBE control failed 14/15 on a different old benchmark source. Current statistical disposition and existing-data diagnosis are on pr:16507; neither venue is performance-qualified.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45011783743",
           "https://github.com/tamird/gvisor/actions/runs/45011783743/artifacts/14750124755",
@@ -106081,6 +106081,58 @@
           "https://github.com/google/gvisor/pull/16660#discussion_r4419960483"
         ]
       }
+    },
+    {
+      "id": "pr:17873",
+      "type": "pr",
+      "number": 17873,
+      "repo": "google/gvisor",
+      "head": "967d146c614ab2c3897fdfb28a42ad96db423a5c",
+      "title": "Benchmark generated arrays and slice fallbacks",
+      "url": "https://github.com/google/gvisor/pull/17873",
+      "group": "analysis",
+      "status": "open",
+      "updatedAt": "2026-11-22T22:40:51.591862+00:00",
+      "summary": "Published exact 967d146c source; OPEN/MERGEABLE with DCO and lint/Gazelle/header/assignment checks passing. Go export 45077224798 was running at the last owner handoff. First Pass 2354 upload failed exit 80; both canonical log reads were empty, so no cause is verified and no tests ran. No quota inference is made.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "967d146c614ab2c3897fdfb28a42ad96db423a5c",
+        "observedAt": "2026-11-22T22:40:51.591862+00:00",
+        "disposition": "Publication approval is consumed; exact benchmark source is delivered in #17873. First Pass upload failed without a verified cause.",
+        "nextAction": "Root alone follows actual native CI, canonical provider evidence and genuine reviewer feedback. Do not infer quota or authorize a retry/outreach from exit 80.",
+        "recheckCondition": "Actual terminal Go export/check result, provider failure evidence or new review/head/landing event.",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/17873",
+          "https://buildkite.com/gvisor/first-pass/builds/2354#01a20559-397d-4670-9135-7495bc8ccee8",
+          "https://github.com/tamird/gvisor/actions/runs/45077224798"
+        ]
+      }
+    },
+    {
+      "id": "pr:bazel-contrib/rules_lint:1112",
+      "type": "pr",
+      "number": 1112,
+      "repo": "bazel-contrib/rules_lint",
+      "ref": "fix-patcher-diff-failure",
+      "head": "4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
+      "title": "fix: reject failed patch generation",
+      "url": "https://github.com/bazel-contrib/rules_lint/pull/1112",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-22T22:40:51.591862+00:00",
+      "summary": "Signed source 4a881d4ef is published in ready PR #1112, OPEN/MERGEABLE. Native check 45078090352 succeeded. Maintainer review, actual release and formatter integration remain.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
+        "observedAt": "2026-11-22T22:40:51.591862+00:00",
+        "disposition": "Approved public fork, signed source push and ready PR are delivered; no fork-creation policy blocker remains.",
+        "nextAction": "Root follows actual maintainer feedback, release and adoption without duplicating CI checks or inferring a formatter publication grant.",
+        "recheckCondition": "Genuine review/check/head/merge/release event.",
+        "evidence": [
+          "https://github.com/bazel-contrib/rules_lint/pull/1112",
+          "https://github.com/tamird/rules_lint/commit/4a881d4ef85dc0cbbaaa24a433aac9f373df8649"
+        ]
+      }
     }
   ],
   "edges": [
@@ -131309,7 +131361,7 @@
       "owner": "analysis_pass_inventory / root",
       "updatedAt": "2026-11-21T20:45:26.098382+00:00",
       "group": "analysis",
-      "summary": "Preparation source c06d4573 passes the changed-tool builds, 77 remote XML cases per architecture and source checks; both independent review groups found no issues. Final static run 45073984140 has ten actual remote results: three pass and seven fail, with zero findings in the six edited files. The partial scan has 38 normalized untouched findings (27 state, eight newly observed tool sites, and three source/generated plusbuild findings) across 354 repeated raw rows. No infrastructure, compile or timeout failure occurred. This is not a full census or a green audit; original incomplete matrix coverage and protected-source limits remain.",
+      "summary": "Main analyzer enhancement is HIGH PRIORITY: deliver the minimal reviewable Suite26 plus 20 new checks and the 56-check selection/exclusion audit as a KNOWN-BLOCKED candidate. The suite is known red; a full-corpus green result is not the source-candidate handoff gate. errorsastype remains global, with the two held findings reported and root-owned; the temporary exception proposal was canceled, not implemented. Last scoped c06 preparation and its failing partial static result retain their limits. The warning backlog and preserved unqualified 19-file prep are not prerequisites. Actual protected-source holds persist.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -131681,7 +131733,7 @@
           ]
         }
       ],
-      "nextStep": "analysis_pass_inventory owns the next implementation batch: eight safe tool sites and six non-sensitive equivalent TPU/Kubernetes expressions. Protected runsc/flag source stays untouched; uncertain go_marshal2 semantics remain separate. Reconcile the full original finding inventory and unfinished matrix before any full-audit claim. No audit PR or performance qualification is inferred.",
+      "nextStep": "analysis_pass_inventory finalizes the exact minimal enhancement and 56-check selection/exclusion rationale, retaining actual validation and CI limits. Do not disable whole modernize members merely because they report warnings. Root owns deferred findings in pkg/sentry/state/stateipc/common.go and runsc/cgroup/systemd.go without protected-source read/edit; no temporary exclusions are required or implemented. Keep uncertain go_marshal2 semantics separate; no new audit PR question or approval is inferred.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -131851,16 +131903,18 @@
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
       },
       "head": "c06d45734e3c43c7a19855f87283641c0ff18944",
-      "additionalReviews": [
+      "settledReviews": [
         {
           "kind": "proposal",
-          "status": "pending",
+          "status": "settled",
           "head": "967d146c614ab2c3897fdfb28a42ad96db423a5c",
           "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
           "url": "https://github.com/tamird/gvisor/commit/967d146c614ab2c3897fdfb28a42ad96db423a5c",
           "title": "Benchmark generated arrays and slice fallbacks",
           "body": "The safe-API benchmark covered Stat, and the slice benchmarks covered only packed data. This left array newtypes, arrays of marshallable objects and non-packed slice fallbacks without measurement coverage.\n\nExtend the existing safe-API benchmark with InetAddr and Type1, and benchmark all six generated slice operations with Type8. Reuse the existing copy context and check each operation’s output outside the timed loop, starting from a destination that differs from the expected result.\n\nPosted by Codex on behalf of @tamird.\n",
-          "summary": "Extend benchmark coverage to generated arrays and non-packed slice fallbacks. Source/static checks, six-operation functional 1x checks on both architectures and final independent reviews passed. No timed A/A or performance result is claimed."
+          "summary": "Published the generated-array and slice-fallback benchmark coverage.",
+          "outcome": "approved",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/17873"
         }
       ]
     },
@@ -142539,8 +142593,8 @@
       "owner": "declared_formatting_resume",
       "head": "060bf21948760589331fc213c783da4a8ec3b671",
       "updatedAt": "2026-11-21T14:00:19.559771+00:00",
-      "summary": "Source 060bf219 passed source/Buildifier, native conflict/private-visibility, licensing, remote check/patch and ARM formatter execution checks. Publication is held because the pinned rules_lint 2.9.1 patcher can falsely pass signal termination or diff errors. Upstream main fixes the signal case but is unreleased; The qualified supplier correction 4a881d4ef awaits its fork/PR publication decision and release/integration. The formatter uses unsupported pinned private APIs and changes the LLVM wheel from 23.1.1 to 23.1.2. Its source object is readable, but the desired preview ref remains absent after a provider timeout; this is not a pending human permission.",
-      "nextStep": "Await the supplier4a fork/PR publication decision and actual supplier release/integration before clearing the formatter dependency hold. The desired native formatter ref remains absent after one justified normal Git/HTTPS retry ended in provider timeout. Preserve the separate pending create-only-ref API exception, source-publication boundary, private-API coupling and LLVM wheel change; do not repeat publication attempts without new basis.",
+      "summary": "Formatting is LOW PRIORITY and further work is HELD. The preserved prototype’s latest preflight 45078085772 establishes positive API mechanics only; full inventory, host-fix and failure validation are unqualified. Supplier rules_lint #1112 is published and its reported native check passes, but release/integration remains. The prototype’s private-API coupling and LLVM wheel change retain their scope; no formatter readiness or publication approval is inferred.",
+      "nextStep": "Do not rewrite or continue formatting while held. Preserve the prototype and existing source evidence, follow actual supplier release/integration, and keep the separate create-only-ref API question pending without treating it as permission.",
       "evidence": [
         {
           "label": "Actual reviewable clean source",
@@ -142625,6 +142679,10 @@
         {
           "label": "Remote patch",
           "url": "https://github.com/tamird/gvisor/actions/runs/45045408635"
+        },
+        {
+          "label": "Prototype positive API preflight only",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45078085772"
         }
       ],
       "findings": [],
@@ -142834,28 +142892,35 @@
       "group": "buildbuddy",
       "status": "active",
       "owner": "buildbuddy_network_fix / root",
-      "head": "77d1ff918426052c458aab3647f0ee36243d4580",
+      "head": "96fe4a8e5e8f376a40aa6e275edeb4e1c915c7eb",
       "title": "Honor disabled OCI network modes",
       "updatedAt": "2026-11-22T14:30:19.849383+00:00",
-      "summary": "The prepared one-line OCI change treats off and none as disabled network modes and extends the existing networking fixtures. Two focused reviews are complete. Tests have not run because an authenticated remote runner is unavailable; native upstream CI remains required. The deployed cloud revision and actual RBE enforcement remain unverified.",
-      "nextStep": "Await the source-PR publication decision. If approved, follow native upstream CI and genuine maintainer feedback; source preparation does not establish deployed behavior. The earlier issue proposal is superseded and no issue was posted.",
+      "summary": "Signed fork revision 96fe4a8e clarifies that legacy dockerNetwork=off and OCI default_network_mode=off are both live. Its comment and commit message address the legacy-path question, and independent review accepts the revision. Tests have not run because anonymous RBE is unsupported. No upstream PR approval or new publication question exists; deployed-cloud behavior remains unverified.",
+      "nextStep": "Keep new BuildBuddy publication questions held behind the main-analysis priority. Prepared source 96 remains unapproved, and native upstream CI is still required if publication is later authorized. The original 77 question is preserved as superseded by revision, not approved or rejected.",
       "findings": [],
       "evidence": [
         {
           "label": "Prepared provider correction",
           "url": "https://github.com/tamird/buildbuddy/commit/77d1ff918426052c458aab3647f0ee36243d4580"
+        },
+        {
+          "label": "Revised source clarifying both callers",
+          "url": "https://github.com/tamird/buildbuddy/commit/96fe4a8e5e8f376a40aa6e275edeb4e1c915c7eb"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "77d1ff918426052c458aab3647f0ee36243d4580",
-        "url": "https://github.com/tamird/buildbuddy/commit/77d1ff918426052c458aab3647f0ee36243d4580",
-        "title": "Honor disabled OCI network modes",
-        "body": "Commit 72cfaea347f added the network platform property, translating `network=off` to Docker network mode `none`. The OCI provider disabled networking only for `off`, so the new property left networking enabled.\n\nTreat both values as disabled. Extend the existing networking fixture to cover `network=off` overriding `dockerNetwork=bridge`, and the legacy `dockerNetwork=none` setting.\n\nThe Linux networking tests have not run: an authenticated remote test runner is unavailable in this session. Native CI remains required.\n\nPosted by Codex on behalf of @tamird.\n",
-        "summary": "Treat both disabled OCI network-mode values consistently. The existing fixture covers the property override and legacy setting. Tests have not run; native CI remains required.",
-        "baseHead": "168813c94525e5106459531fb629429d5fe2fb60"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "77d1ff918426052c458aab3647f0ee36243d4580",
+          "url": "https://github.com/tamird/buildbuddy/commit/77d1ff918426052c458aab3647f0ee36243d4580",
+          "title": "Honor disabled OCI network modes",
+          "body": "Commit 72cfaea347f added the network platform property, translating `network=off` to Docker network mode `none`. The OCI provider disabled networking only for `off`, so the new property left networking enabled.\n\nTreat both values as disabled. Extend the existing networking fixture to cover `network=off` overriding `dockerNetwork=bridge`, and the legacy `dockerNetwork=none` setting.\n\nThe Linux networking tests have not run: an authenticated remote test runner is unavailable in this session. Native CI remains required.\n\nPosted by Codex on behalf of @tamird.\n",
+          "summary": "Revised to clarify the live legacy and OCI-default callers; no publication approval or rejection is inferred.",
+          "baseHead": "168813c94525e5106459531fb629429d5fe2fb60",
+          "outcome": "superseded"
+        }
+      ]
     },
     {
       "id": "investigation:rules-lint-patcher",
@@ -142866,8 +142931,8 @@
       "head": "4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
       "title": "Reject failed patch generation",
       "updatedAt": "2026-11-22T18:32:33.604640+00:00",
-      "summary": "The prepared two-file patch rejects diff spawn errors, signals and exit codes above one before accepting patch output. Eight Bazel tests, the negative baseline control and two independent reviews passed. Creating the public tamird/rules_lint fork and publishing the signed source/PR await the actual user decision; no fork or upstream PR exists.",
-      "nextStep": "Await the combined public-fork, source-push and ready-PR decision. If approved, follow upstream CI, maintainer review and release/integration before clearing the formatter dependency hold.",
+      "summary": "The public tamird/rules_lint fork and signed 4a881d4ef source are published. Ready PR #1112 is OPEN/MERGEABLE and native check 45078090352 succeeded. The correction rejects failed patch generation; maintainer review, release and integration remain. The fork/source/PR decision is consumed and its earlier execution blocker is resolved.",
+      "nextStep": "Root follows rules_lint #1112 review, actual release and integration. Delivery does not clear the separate held formatter scope or authorize further formatting work.",
       "findings": [],
       "evidence": [
         {
@@ -142875,16 +142940,20 @@
           "url": "https://github.com/bazel-contrib/rules_lint/tree/1da8c08cd847d55a8561c9064510ec13cbab7da1"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
-        "baseHead": "1da8c08cd847d55a8561c9064510ec13cbab7da1",
-        "url": "https://github.com/tamird/rules_lint/commit/4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
-        "title": "fix: reject failed patch generation",
-        "body": "Diff failures can leave an empty or incomplete patch while the patcher still reports success. Reject spawn errors, signals and exit codes above 1 before accepting diff output, and let the existing sandbox cleanup finish on error.\n\nThe existing patcher fixture covers the diff failure and preserves linter signal and exit-code behavior.\n\nPosted by Codex on behalf of @tamird.\n",
-        "summary": "Approve creating the public tamird/rules_lint fork, pushing signed candidate 4a881d4ef and opening the ready PR in bazel-contrib/rules_lint. The source is currently local; the proposed fork commit link becomes available only after approved publication. The automatic fork operation was rejected and no fork write occurred."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
+          "baseHead": "1da8c08cd847d55a8561c9064510ec13cbab7da1",
+          "url": "https://github.com/tamird/rules_lint/commit/4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
+          "title": "fix: reject failed patch generation",
+          "body": "Diff failures can leave an empty or incomplete patch while the patcher still reports success. Reject spawn errors, signals and exit codes above 1 before accepting diff output, and let the existing sandbox cleanup finish on error.\n\nThe existing patcher fixture covers the diff failure and preserves linter signal and exit-code behavior.\n\nPosted by Codex on behalf of @tamird.\n",
+          "summary": "Published the failed-patch-generation correction in rules_lint #1112.",
+          "outcome": "approved",
+          "postedURL": "https://github.com/bazel-contrib/rules_lint/pull/1112"
+        }
+      ]
     }
   ],
   "updatedAt": "2026-11-20T23:41:26.383263+00:00"
