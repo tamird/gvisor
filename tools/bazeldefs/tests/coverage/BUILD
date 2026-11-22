@@ -43,10 +43,7 @@ coverage_selection_test(
 
 filegroup(
     name = "inventory_sentry",
-    srcs = select({
-        "//tools:gotsan": ["//runsc/cmd/sentry:gvisor_sentry_race_coverage"],
-        "//conditions:default": ["//runsc/cmd/sentry:gvisor_sentry_coverage"],
-    }),
+    srcs = ["//runsc/cmd/sentry:gvisor_sentry_race_coverage"],
 )
 
 py_test(

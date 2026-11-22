@@ -10,14 +10,8 @@ release_files(
     name = "coverage_release",
     testonly = True,
     bins = ["//shim:containerd-shim-runsc-v1"],
-    runsc = select({
-        "//tools:gotsan": RUNSC["race-coverage"],
-        "//conditions:default": RUNSC["coverage"],
-    }),
-    sidecars = select({
-        "//tools:gotsan": sidecars("race-coverage"),
-        "//conditions:default": sidecars("coverage"),
-    }),
+    runsc = RUNSC["race-coverage"],
+    sidecars = sidecars("race-coverage"),
     visibility = ["//:sandbox"],
 )
 
