@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T08:21:05+00:00",
+    "updatedAt": "2026-11-22T08:30:02+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1085,11 +1085,11 @@
       "updatedAt": "2026-11-19T07:47:10.548489+00:00",
       "summary": "Published one commit at 45137f922. It folds the approved direct assembler invocation into the netgofer-aware export. All 16 declared archive inputs match 4ecb0b121, including netgofer and three C sidecars. The new GoExport action wrote a byte-identical 2,566-entry ZIP (6,246,266 bytes, SHA-256 6c52dca5d…). The Go-only netgofer consumer ran on the same archive bytes from 4ecb0b121.",
       "followup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "5fd1b4fb3c7dd9af907e90b20f6a0969f0e6bc1f",
         "observedAt": "2026-11-17T20:13:53.813850+00:00",
-        "disposition": "Footer-only DCO metadata is published and green; technical source/import obligations remain. Importer regeneration must preserve the already-correct source assemble test packaging; no source regression or private diagnostic inferred.",
-        "nextAction": "Root follows new-head CI to terminal. Importer regeneration must preserve the already-correct source assemble test packaging; no source regression or private diagnostic inferred. No repeated approval or outreach for the completed metadata update.",
+        "disposition": "Exact public head Pipeline 55470 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure. First Pass2009, native checks and DCO passed; preserve the independent assemble-test packaging/internal-import hold.",
+        "nextAction": "At the next safe TCP checkout interval, approved_rebase_queue prepares and qualifies an eligible same-patch current-base refresh importing the landed hook repair. Root preserves assemble packaging and importer/internal holds; no Copybara push or unchanged-head CI retry.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42849078055/artifacts/13780790760",
           "https://github.com/tamird/gvisor/compare/4ecb0b121...45137f922",
@@ -1109,9 +1109,11 @@
           "https://github.com/gvisor/gvisor/blob/30939a65692560803c4a4570140cb693186c9376/tools/go_export/BUILD",
           "https://github.com/google/gvisor/pull/15687",
           "https://github.com/gvisor/gvisor/pull/17664",
-          "https://github.com/gvisor/gvisor/pull/15106#issuecomment-6958934771"
+          "https://github.com/gvisor/gvisor/pull/15106#issuecomment-6958934771",
+          "https://buildkite.com/gvisor/pipeline/builds/55470",
+          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
         ],
-        "recheckCondition": "Current-head CI terminal/change, substantive technical feedback, source/import lifecycle change or an already-pending source-review decision; root remains accountable.",
+        "recheckCondition": "Owner-qualified equivalent refresh and source/authority review, then actual new-head CI; preserve the independent import contract.",
         "attentionDispositions": [
           {
             "reason": "author-feedback",
@@ -40089,8 +40091,8 @@
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
-        "disposition": "Public c715 remains unchanged/conflicting; source 57 is not publication-approved. Strict current eb263 comparison 44979111210 is audited PASS: legacy 116,100 is included in candidate 116,102, 2,418 protobuf positions each, zero missing/two additional; candidate hash matches its previously compiled product. No identity claim is made for the additional positions. Source-bound compiler/functionality/ZIP evidence and two implementation reviews are complete; controlled performance remains open.",
-        "nextAction": "AMD StartupEmpty same-source control 44988289000 completed the original 50 visits with 24 N=1 observations per arm and balanced AB/BA positions, but remains INCONCLUSIVE: ratio interval [0.9208590976, 1.1026682723], drift and order checks fail the fixed [0.995, 1.005] precision band. The earlier control 44987386374 is separate retained evidence, not pooled or reinterpreted. No further measurements or candidate/syscall/Hackbench expansion; source 57 remains performance-held and ARM effective affinity unresolved. Existing BuildBuddy executor inventory returned HTTP 403, so capacity is unverified; await existing executor information or read permission without new credentials or blind retries. Proposed 0.5% precision is investigative, not a user regression budget.",
+        "disposition": "Public c715 remains unchanged/conflicting; source 57 is not publication-approved. Strict current eb263 comparison 44979111210 is audited PASS: legacy 116,100 is included in candidate 116,102, 2,418 protobuf positions each, zero missing/two additional; candidate hash matches its previously compiled product. No identity claim is made for the additional positions. Source-bound compiler/functionality/ZIP evidence and two implementation reviews are complete; controlled performance remains open. Exact public head Pipeline 55416 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure.",
+        "nextAction": "AMD StartupEmpty same-source control 44988289000 completed the original 50 visits with 24 N=1 observations per arm and balanced AB/BA positions, but remains INCONCLUSIVE: ratio interval [0.9208590976, 1.1026682723], drift and order checks fail the fixed [0.995, 1.005] precision band. The earlier control 44987386374 is separate retained evidence, not pooled or reinterpreted. No further measurements or candidate/syscall/Hackbench expansion; source 57 remains performance-held and ARM effective affinity unresolved. Existing BuildBuddy executor inventory returned HTTP 403, so capacity is unverified; await existing executor information or read permission without new credentials or blind retries. Proposed 0.5% precision is investigative, not a user regression budget. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -40144,10 +40146,12 @@
           "https://github.com/tamird/gvisor/actions/runs/44986846677",
           "https://github.com/tamird/gvisor/actions/runs/44987799580",
           "https://github.com/tamird/gvisor/actions/runs/44987797824",
-          "https://github.com/tamird/gvisor/actions/runs/44988289000"
+          "https://github.com/tamird/gvisor/actions/runs/44988289000",
+          "https://buildkite.com/gvisor/pipeline/builds/55416",
+          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Material executor information or resolved ARM containment and an explicitly authorised measurement plan; no unchanged timing retry or source publication inferred.",
+        "recheckCondition": "Material executor information or resolved ARM containment and an explicitly authorised measurement plan; no unchanged timing retry or source publication inferred. Preserve existing replacement qualification and all performance/dependency/publication holds.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "qualificationHistory": [
           {
@@ -40814,7 +40818,7 @@
           "https://github.com/tamird/gvisor/commit/c71526cea11bd81898c588264c0940d1fb33e511"
         ]
       },
-      "nextStep": "AMD StartupEmpty same-source control 44988289000 completed the original 50 visits with 24 N=1 observations per arm and balanced AB/BA positions, but remains INCONCLUSIVE: ratio interval [0.9208590976, 1.1026682723], drift and order checks fail the fixed [0.995, 1.005] precision band. The earlier control 44987386374 is separate retained evidence, not pooled or reinterpreted. No further measurements or candidate/syscall/Hackbench expansion; source 57 remains performance-held and ARM effective affinity unresolved. Existing BuildBuddy executor inventory returned HTTP 403, so capacity is unverified; await existing executor information or read permission without new credentials or blind retries. Proposed 0.5% precision is investigative, not a user regression budget.",
+      "nextStep": "AMD StartupEmpty same-source control 44988289000 completed the original 50 visits with 24 N=1 observations per arm and balanced AB/BA positions, but remains INCONCLUSIVE: ratio interval [0.9208590976, 1.1026682723], drift and order checks fail the fixed [0.995, 1.005] precision band. The earlier control 44987386374 is separate retained evidence, not pooled or reinterpreted. No further measurements or candidate/syscall/Hackbench expansion; source 57 remains performance-held and ARM effective affinity unresolved. Existing BuildBuddy executor inventory returned HTTP 403, so capacity is unverified; await existing executor information or read permission without new credentials or blind retries. Proposed 0.5% precision is investigative, not a user regression budget. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure.",
       "recheckCondition": "Actual missing performance evidence, final source review or substantive maintainer/import change."
     },
     {
@@ -44517,11 +44521,11 @@
       },
       "followup": {
         "sourceHead": "d1b274f9eb8d7734c13ab3c6765ac3f9145856ff",
-        "owner": "root",
-        "nextAction": "Follow maintainer review, exact published-head checks and any matching import; handle new substantive feedback in the existing workstream. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source d1b274f9eb8d7734c13ab3c6765ac3f9145856ff; observed 2026-11-17T19:29:29.454062+00:00): build 1474 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller. Earlier executed failure remains open under investigation:ci-flake-checkpoint-dump: TestCheckpointRestoreCrossEngineChained/systrap/wire_to_graph_to_wire: hop 0 statefile dump failed, exit 128; error printing state: unreachable. Unknown for this exact source and retained checkpoint; shared failure signature is not proof of the previously diagnosed cause. Next: Preserve original checkpoint artifact and compare with existing #17208 investigation; inspect the first exact-source run including that fix after CI prerequisites clear. Recheck: First upstream run containing #17208, or new evidence from the retained failing checkpoint.",
+        "owner": "approved_rebase_queue / root",
+        "nextAction": "approved_rebase_queue prepares and qualifies the eligible same-patch refresh at the next safe TCP checkout interval. Preserve the checkpoint artifact and existing #17208-dependent dump investigation; verify actual new-head CI before closure, without retrying the unchanged head.",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "recheckCondition": "Qualified refresh/new-head provider result, #17208-dependent checkpoint evidence or substantive maintainer/import change.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/16591",
           "https://github.com/tamird/gvisor/commit/49fcf45ec2560828be233cfd6499f5bb3f7f8373",
@@ -44554,8 +44558,11 @@
           "https://buildkite.com/gvisor/first-pass/builds/1474#01a1ead6-82f4-46a3-8fd9-f1479bf43ea5",
           "https://buildkite.com/gvisor/first-pass/builds/1474#01a1ead6-82f5-401d-86b9-6e5ce115508d",
           "https://buildkite.com/gvisor/first-pass/builds/1474#01a1ead6-82ef-45b4-8310-7e324ca74506",
-          "https://storage.googleapis.com/gvisor-buildkite/01a1ead1-7a99-4650-92a8-23a3f0e3fe6d/01a1ead6-82ef-45b4-8310-7e324ca74506/home/agent-111726-184811/.cache/bazel/_bazel_agent-111726-184811/73df0d6a229fc84d640625285449c629/execroot/_main/bazel-out/k8-fastbuild/testlogs/runsc/container/container_test/shard_5_of_8/test.log"
-        ]
+          "https://storage.googleapis.com/gvisor-buildkite/01a1ead1-7a99-4650-92a8-23a3f0e3fe6d/01a1ead6-82ef-45b4-8310-7e324ca74506/home/agent-111726-184811/.cache/bazel/_bazel_agent-111726-184811/73df0d6a229fc84d640625285449c629/execroot/_main/bazel-out/k8-fastbuild/testlogs/runsc/container/container_test/shard_5_of_8/test.log",
+          "https://buildkite.com/gvisor/pipeline/builds/55465",
+          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
+        ],
+        "disposition": "Exact public head Pipeline 55465 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure. Historical checkpoint-dump failure remains independent: no bootstrap diagnosis settles its exact-source checkpoint evidence or #17208 comparison."
       },
       "dcoAmendment": {
         "oldHead": "49fcf45ec2560828be233cfd6499f5bb3f7f8373",
@@ -71787,8 +71794,8 @@
         "owner": "root",
         "sourceHead": "f3575cb4ed538695d0b7936e36662633a38b2b5e",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "The contributor approved the amendment and it is published at c2fa04be2. Both original review threads have replies covering how the revised test handles save/restore and checks the exact MTU.",
-        "nextAction": "Await maintainer review of the revised source. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source f3575cb4ed538695d0b7936e36662633a38b2b5e; observed 2026-11-17T19:29:29.454062+00:00): build 1523 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "disposition": "Exact public head Pipeline 55555 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure. The veth implementation/syscall source retains its unresolved sensitive-source and performance boundaries; no protected-source work is authorised by this shared failure.",
+        "nextAction": "Root reconciles the existing sensitive-source/performance boundary before any source adaptation. Preserve exact prior approval and evidence; do not probe protected source, retry unchanged CI or create a new human-decision question from bootstrap exposure.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16957",
           "https://github.com/tamird/gvisor/commit/fea7e15b6",
@@ -71830,10 +71837,12 @@
           "https://buildkite.com/gvisor/first-pass/builds/1523#01a1ead6-97a9-41ee-9c5a-79565021dc5d",
           "https://buildkite.com/gvisor/first-pass/builds/1523#01a1ead6-97a9-4dec-88da-48077d3befaf",
           "https://buildkite.com/gvisor/first-pass/builds/1523#01a1ead6-97aa-433b-acf1-5e0ff016dc90",
-          "https://buildkite.com/gvisor/first-pass/builds/1523#01a1ead6-97aa-4ec7-a75a-7a161c4ef3ce"
+          "https://buildkite.com/gvisor/first-pass/builds/1523#01a1ead6-97aa-4ec7-a75a-7a161c4ef3ce",
+          "https://buildkite.com/gvisor/pipeline/builds/55555",
+          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+        "recheckCondition": "Actual clearance of the existing source/performance boundary, or a changed provider/head/maintainer event; no automatic rebase."
       },
       "refinement": {
         "before": {
@@ -75908,8 +75917,8 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
         "observedAt": "2026-11-20T15:00:40.305787+00:00",
-        "disposition": "Strict AMD 44914203382/ARM 44914205072 passed two C entries/sources per architecture with zero findings/errors only under CI 6af8011bbf3b343d496faf18866585503bca3dc6, which composes exact approved 17446 C/header blobs. DB JSON/argv match the raw 5026 strict failures 44912116517/44912118433; no checker change or suppression occurred. This closes strict only with 17446 as a prerequisite, not raw 5026. Original 57-case/five-linter CI 568 evidence remains separate; no combined runtime proof is asserted. Product bytes/offsets remain nonidentical and performance, root review, 16522/17446 landing and internal import remain open.",
-        "nextAction": "Root reviews exact source/authority and combined-validation bounds. approved_rebase_queue preserves the explicit 17446 strict prerequisite and original source evidence; no public update or runtime/performance identity is inferred.",
+        "disposition": "Strict AMD 44914203382/ARM 44914205072 passed two C entries/sources per architecture with zero findings/errors only under CI 6af8011bbf3b343d496faf18866585503bca3dc6, which composes exact approved 17446 C/header blobs. DB JSON/argv match the raw 5026 strict failures 44912116517/44912118433; no checker change or suppression occurred. This closes strict only with 17446 as a prerequisite, not raw 5026. Original 57-case/five-linter CI 568 evidence remains separate; no combined runtime proof is asserted. Product bytes/offsets remain nonidentical and performance, root review, 16522/17446 landing and internal import remain open. Exact public head Pipeline 55478 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure.",
+        "nextAction": "Root reviews exact source/authority and combined-validation bounds. approved_rebase_queue preserves the explicit 17446 strict prerequisite and original source evidence; no public update or runtime/performance identity is inferred. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17067#discussion_r4486895273",
           "https://github.com/tamird/gvisor/commit/7f6ecfff61b465c2ae00d20ee4ebaad09d430519",
@@ -75943,9 +75952,11 @@
           "https://github.com/tamird/gvisor/actions/runs/44912955198",
           "https://github.com/tamird/gvisor/actions/runs/44914203382",
           "https://github.com/tamird/gvisor/actions/runs/44914205072",
-          "https://github.com/google/gvisor/pull/17446"
+          "https://github.com/google/gvisor/pull/17446",
+          "https://buildkite.com/gvisor/pipeline/builds/55478",
+          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
         ],
-        "recheckCondition": "Final source review, required 16522/17446 landing/internal import or concrete performance evidence.",
+        "recheckCondition": "Final source review, required 16522/17446 landing/internal import or concrete performance evidence. Preserve existing replacement qualification and all performance/dependency/publication holds.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING",
         "curatedAt": "2026-11-21T14:40:26.293073+00:00"
@@ -75972,7 +75983,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "root / existing Systrap native stub workstream"
       },
-      "nextStep": "Root prepares requested delete/modify resolution preserving upstream ARM runtime page-size semantics through reviewed d3f/adaptor work where applicable. Distinguish public-source rebase preparation from dependent d3f publication; retain final source/performance review and explicit #16522 landing edge.",
+      "nextStep": "Root reviews exact source/authority and combined-validation bounds. approved_rebase_queue preserves the explicit 17446 strict prerequisite and original source evidence; no public update or runtime/performance identity is inferred. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure.",
       "recheckCondition": "Reviewable current-base resolution or actual16522 landing/source approval/performance evidence."
     },
     {
@@ -96772,11 +96783,11 @@
         }
       ],
       "followup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "60a7129eb22bacfcddb598d35f78f1d022047473",
         "observedAt": "2026-11-18T20:06:11.890448+00:00",
-        "disposition": "Current-head First Pass1749 failed because Nogo and cgroupv2 unit jobs timed out. Earlier C++ download, container and syscall failures passed on retry; no current source-regression cause is established.",
-        "nextAction": "Root consumes the retained Nogo/unit timeout evidence and upstream CI disposition before any authorized retry. Keep the exact approved source and historical provider failures separate; no source change inferred.",
+        "disposition": "Exact public head Pipeline 55353 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure. Earlier independently executed Nogo and cgroupv2-unit timeouts remain separate unresolved evidence.",
+        "nextAction": "approved_rebase_queue prepares and qualifies the eligible same-patch refresh at the next safe TCP checkout interval. Reconcile new-head CI and the prior Nogo/unit failures separately; no unchanged-head rerun or source-regression inference.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17416",
           "https://github.com/tamird/gvisor/commit/79d4294d4",
@@ -96785,10 +96796,12 @@
           "https://github.com/tamird/gvisor/commit/79d4294d46442fafe7c140f3d28b2a4feb8ffe40",
           "https://github.com/tamird/gvisor/commit/60a7129eb22bacfcddb598d35f78f1d022047473",
           "https://buildkite.com/gvisor/first-pass/builds/1580",
-          "https://buildkite.com/gvisor/first-pass/builds/1580#01a1eae1-b221-472e-b7a6-08733d039b47"
+          "https://buildkite.com/gvisor/first-pass/builds/1580#01a1eae1-b221-472e-b7a6-08733d039b47",
+          "https://buildkite.com/gvisor/pipeline/builds/55353",
+          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "CI owner diagnosis, changed check/head/base or substantive human feedback.",
+        "recheckCondition": "Owner-qualified equivalent refresh and actual new-head CI, or independent Nogo/unit diagnosis and substantive feedback.",
         "latestReviewObservation": {
           "checkedAt": "2026-11-18T19:22:58.577211+00:00",
           "head": "60a7129eb22bacfcddb598d35f78f1d022047473",
@@ -132681,7 +132694,7 @@
           ]
         }
       ],
-      "nextStep": "Keep required first-pass and Pipeline gates unmet until their actual provider results pass. For old-source bootstrap exposure, rebase and qualify the owning source on current master so it includes 909c3dce2e and the first-pass pipeline definition, preserving explicit source holds and exact-import ownership. Author quota exhaustion independently requires quota reset or an authorized provider/operator adjustment; source amendments and retries cannot repair admission limits. Do not retry the cohort while quota is exhausted. Record missing Pipeline/pr statuses separately and verify CI integration/trigger behavior before claiming full validation.\n\nRoot owns tracking of the source-bound required first-pass blockers. Coordinate quota clearance and evidenced bootstrap/queue prerequisites with the upstream CI owner; retain human feedback and delivery holds. Recheck when provider capacity or supported pipeline configuration changes, or an exact source/check changes, through this existing investigation. No automatic reruns or additional poller.",
+      "nextStep": "Six exact public heads have canonical pre-validation obsolete-hook failures: #15106/55470, #16591/55465, #16957/55555, #17416/55353, #16507/55416 and #17067/55478. Landed 909c3dce2 removes the branch check. approved_rebase_queue owns eligible same-patch #15106/#16591/#17416 recovery at a safe TCP checkout interval; preserve independent packaging, checkpoint and Nogo/unit evidence. #16957 sensitive-source/performance boundaries and #16507/#17067 qualified-replacement holds prevent redundant old-head adaptation. #17546/55544 upload recovered automatically and is not in this cohort. Verify actual new-head validation; do not retry unchanged heads or infer quota clearance. Other CI/provider and import gates remain independently owned.",
       "evidence": [
         {
           "label": "GitHub issues mentioning “flaky”",
@@ -132698,6 +132711,34 @@
         {
           "label": "Pending exact CI-owner question on the existing two-pipeline policy change",
           "url": "https://github.com/gvisor/gvisor/pull/17733"
+        },
+        {
+          "label": "Exact-head obsolete-hook bootstrap failure for #15106",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/55470"
+        },
+        {
+          "label": "Exact-head obsolete-hook bootstrap failure for #16591",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/55465"
+        },
+        {
+          "label": "Exact-head obsolete-hook bootstrap failure for #16957",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/55555"
+        },
+        {
+          "label": "Exact-head obsolete-hook bootstrap failure for #17416",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/55353"
+        },
+        {
+          "label": "Exact-head obsolete-hook bootstrap failure for #16507",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/55416"
+        },
+        {
+          "label": "Exact-head obsolete-hook bootstrap failure for #17067",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/55478"
+        },
+        {
+          "label": "Landed removal of obsolete branch check",
+          "url": "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
         }
       ],
       "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
