@@ -19,6 +19,7 @@ go_binary(
     ],
     pure = True,
     tags = ["manual"],
+    visibility = ["//test/benchmarks/harness:__pkg__"],
     deps = [
         "@io_bazel_rules_go//go/runfiles",
         "@org_golang_x_perf//benchfmt:go_default_library",

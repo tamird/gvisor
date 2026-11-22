@@ -173,44 +173,44 @@ _COVERAGE_INITIALIZATIONS = [
 ]
 
 go_test(
-        name = "coverage_reporter_integration_test",
-        size = "large",
-        timeout = "long",
-        srcs = [
-            "docker_worker_test.go",
-            "paired_products_test.go",
-            "paired_worker_test.go",
-        ],
-        args = [
-            "--paired-reporter=$(rootpath //test/benchmarks/harness/coverage_bounds:coverage_bounds)",
-            "-test.run=^TestPairedReporter$$",
-        ],
-        data = [
-            "//test/benchmarks/harness/coverage_bounds:coverage_bounds",
-            "startup-aa-base.txt",
-            "startup-aa-candidate.txt",
-        ],
-        embed = [":harness"],
-        exec_properties = {
-            "test.EstimatedCPU": "4",
-            "test.EstimatedMemory": "500M",
-            "test.init-dockerd": "false",
-            "test.workload-isolation-type": "firecracker",
-        },
-        pure = True,
-        tags = ["manual"],
-        target_compatible_with = ["@platforms//os:linux"],
-        deps = [
-            "//pkg/test/testutil",
-            "@com_github_docker_docker//api/types/container:go_default_library",
-            "@com_github_docker_docker//api/types/image:go_default_library",
-            "@com_github_docker_docker//api/types/mount:go_default_library",
-            "@com_github_docker_docker//api/types/network:go_default_library",
-            "@com_github_docker_docker//client:go_default_library",
-            "@com_github_docker_docker//errdefs:go_default_library",
-            "@org_golang_x_sys//unix:go_default_library",
-        ],
-    )
+    name = "coverage_reporter_integration_test",
+    size = "large",
+    timeout = "long",
+    srcs = [
+        "docker_worker_test.go",
+        "paired_products_test.go",
+        "paired_worker_test.go",
+    ],
+    args = [
+        "--paired-reporter=$(rootpath //test/benchmarks/harness/coverage_bounds:coverage_bounds)",
+        "-test.run=^TestPairedReporter$$",
+    ],
+    data = [
+        "//test/benchmarks/harness/coverage_bounds:coverage_bounds",
+        "startup-aa-base.txt",
+        "startup-aa-candidate.txt",
+    ],
+    embed = [":harness"],
+    exec_properties = {
+        "test.EstimatedCPU": "4",
+        "test.EstimatedMemory": "500M",
+        "test.init-dockerd": "false",
+        "test.workload-isolation-type": "firecracker",
+    },
+    pure = True,
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:linux"],
+    deps = [
+        "//pkg/test/testutil",
+        "@com_github_docker_docker//api/types/container:go_default_library",
+        "@com_github_docker_docker//api/types/image:go_default_library",
+        "@com_github_docker_docker//api/types/mount:go_default_library",
+        "@com_github_docker_docker//api/types/network:go_default_library",
+        "@com_github_docker_docker//client:go_default_library",
+        "@com_github_docker_docker//errdefs:go_default_library",
+        "@org_golang_x_sys//unix:go_default_library",
+    ],
+)
 
 exports_files(
     ["startup-aa-base.txt", "startup-aa-candidate.txt"],

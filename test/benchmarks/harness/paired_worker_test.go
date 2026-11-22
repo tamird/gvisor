@@ -218,6 +218,7 @@ func TestPairedBenchmark(t *testing.T) {
 			"-test.run=^$", "-test.bench=^$",
 		}
 		cmd := exec.CommandContext(ctx, binary, args...)
+		cmd.Env = append(os.Environ(), "GOMAXPROCS=4")
 		var stderr strings.Builder
 		cmd.Stderr = &stderr
 		output, err := cmd.Output()
@@ -274,6 +275,7 @@ func TestPairedBenchmark(t *testing.T) {
 			}
 			args = append(args, "--owned-docker", "--client-cpuset="+ClientCPUSet(), "--server-cpuset="+ServerCPUSet())
 			cmd := exec.CommandContext(ctx, binary, args...)
+			cmd.Env = append(os.Environ(), "GOMAXPROCS=4")
 			var stderr strings.Builder
 			cmd.Stderr = &stderr
 			output, err := cmd.Output()
@@ -332,7 +334,9 @@ func TestPairedBenchmark(t *testing.T) {
 			return
 		}
 	}
-	runPairedReporter(t, ctx, outputDir)
+	if *pairedReporter != "" {
+		runPairedReporter(t, ctx, outputDir)
+	}
 }
 
 func recordVisit(dir string, visit int, arm string, warmup bool, output, diagnostics []byte) error {
