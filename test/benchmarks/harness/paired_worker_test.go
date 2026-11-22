@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"maps"
 	"os"
 	"os/exec"
@@ -49,6 +50,7 @@ var (
 	pairedBlocks      = flag.Int("paired-blocks", 1, "number of balanced BASE/CONTROL/CONTROL/BASE blocks")
 	pairedLeaves      = flag.Int("paired-leaves", 0, "number of selected benchmark leaves per visit")
 	pairedWarmups     = flag.Int("paired-warmup-pairs", 0, "unmeasured warmup visits for each runtime before balanced blocks")
+	pairedReporter    = flag.String("paired-reporter", "", "declared canonical exact-bound reporter")
 	pairedInitOnly    = flag.Bool("paired-initialize-only", false, "initialize declared products and harness without benchmark visits")
 	pairedNative      = flag.Bool("paired-native-control", false, "use the existing native runc runtime for one diagnostic arm")
 )
@@ -225,6 +227,16 @@ func TestPairedBenchmark(t *testing.T) {
 		}
 		return
 	}
+	outputDir := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR")
+	if outputDir == "" {
+		t.Fatal("paired visits require TEST_UNDECLARED_OUTPUTS_DIR")
+	}
+	metadata, err := os.Create(filepath.Join(outputDir, "visits.jsonl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer metadata.Close()
+	visitEncoder := json.NewEncoder(io.MultiWriter(os.Stdout, metadata))
 	blocks := *pairedBlocks
 	warmups := *pairedWarmups
 	order := make([]int, 0, 2*warmups+4*blocks)
@@ -242,7 +254,7 @@ func TestPairedBenchmark(t *testing.T) {
 			if !warmup {
 				block = (visit - 2*warmups) / 4
 			}
-			if err := json.NewEncoder(os.Stdout).Encode(struct {
+			if err := visitEncoder.Encode(struct {
 				Visit    int    `json:"paired_visit"`
 				Worker   string `json:"paired_worker"`
 				Block    int    `json:"paired_block"`
@@ -258,10 +270,19 @@ func TestPairedBenchmark(t *testing.T) {
 			args := []string{
 				"-test.v=false", "--runtime=" + runtimes[index], "--config_path=" + config,
 				"-test.run=^$", "-test.bench=" + *pairedFilter, "-test.benchtime=" + *pairedBenchtime,
+				"-test.cpu=4", "-test.count=1",
 			}
 			args = append(args, "--owned-docker", "--client-cpuset="+ClientCPUSet(), "--server-cpuset="+ServerCPUSet())
 			cmd := exec.CommandContext(ctx, binary, args...)
-			output, err := cmd.CombinedOutput()
+			var stderr strings.Builder
+			cmd.Stderr = &stderr
+			output, err := cmd.Output()
+			if writeErr := recordVisit(outputDir, visit, arm.name, warmup, output, []byte(stderr.String())); writeErr != nil {
+				t.Fatal(writeErr)
+			}
+			if _, writeErr := os.Stderr.WriteString(stderr.String()); writeErr != nil {
+				t.Fatal(writeErr)
+			}
 			remaining, processErr := ownedReleaseProcesses(allProducts)
 			if processErr != nil {
 				t.Error(processErr)
@@ -311,4 +332,77 @@ func TestPairedBenchmark(t *testing.T) {
 			return
 		}
 	}
+	runPairedReporter(t, ctx, outputDir)
+}
+
+func recordVisit(dir string, visit int, arm string, warmup bool, output, diagnostics []byte) error {
+	prefix := filepath.Join(dir, fmt.Sprintf("visit-%d-%s", visit, arm))
+	if err := os.WriteFile(prefix+".txt", output, 0600); err != nil {
+		return err
+	}
+	if err := os.WriteFile(prefix+".stderr", diagnostics, 0600); err != nil {
+		return err
+	}
+	if warmup {
+		return nil
+	}
+	file, err := os.OpenFile(filepath.Join(dir, arm+".txt"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	if err != nil {
+		return err
+	}
+	_, writeErr := file.Write(output)
+	closeErr := file.Close()
+	if writeErr != nil {
+		return writeErr
+	}
+	return closeErr
+}
+
+func runPairedReporter(t *testing.T, ctx context.Context, dir string) {
+	t.Helper()
+	if *pairedReporter == "" {
+		t.Fatal("a declared exact-bound reporter is required")
+	}
+	binary, err := testutil.FindFile(*pairedReporter)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cmd := exec.CommandContext(ctx, binary, filepath.Join(dir, "BASE.txt"), filepath.Join(dir, "CONTROL.txt"))
+	var diagnostics strings.Builder
+	cmd.Stderr = &diagnostics
+	output, err := cmd.Output()
+	if writeErr := os.WriteFile(filepath.Join(dir, "bounds.json"), output, 0600); writeErr != nil {
+		t.Fatal(writeErr)
+	}
+	if writeErr := os.WriteFile(filepath.Join(dir, "bounds.stderr"), []byte(diagnostics.String()), 0600); writeErr != nil {
+		t.Fatal(writeErr)
+	}
+	if err != nil {
+		t.Fatalf("canonical bounds: %v: %s", err, diagnostics.String())
+	}
+}
+
+func TestPairedReporter(t *testing.T) {
+	dir := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR")
+	if dir == "" {
+		t.Fatal("reporter integration requires TEST_UNDECLARED_OUTPUTS_DIR")
+	}
+	for i, fixture := range []string{"startup-aa-base.txt", "startup-aa-candidate.txt"} {
+		path, err := testutil.FindFile("test/benchmarks/harness/" + fixture)
+		if err != nil {
+			t.Fatal(err)
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		arm := []string{"BASE", "CONTROL"}[i]
+		if err := recordVisit(dir, i, arm, true, data, []byte("retained warmup diagnostic\n")); err != nil {
+			t.Fatal(err)
+		}
+		if err := recordVisit(dir, i+2, arm, false, data, nil); err != nil {
+			t.Fatal(err)
+		}
+	}
+	runPairedReporter(t, t.Context(), dir)
 }
