@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T12:45:19.444913+00:00",
+    "updatedAt": "2026-11-22T13:48:07.985731+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4970,11 +4970,11 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "Use a24c2b7f for future qualifications. Preserve the completed 892-test Nogo gate and original source approval; follow configuration/trust/performance limits and actual upstream compiler/platform prerequisites before publication. Network-default approval is settled; no repeated Nogo correctness run.",
-        "recheckCondition": "Actual prerequisite landing, material configuration/trust/performance evidence or terminal owner results from the changed analyzer audit.",
+        "nextAction": "Root prepares the minimal BuildBuddy provider fix/regression and verifies actual enforcement before treating requested properties as effective. analysis_pass_inventory owns the changed analyzer policy and pending compiler/performance gates. Use current support 6e2c0cdd for qualifications; preserve source approvals and actual upstream compiler/platform prerequisites.",
+        "recheckCondition": "Qualified provider correction and actual deployed behavior, terminal owner evidence for the analyzer policy, or actual upstream prerequisite landing; no repeat of the completed 70857 Nogo gate.",
         "observedAt": "2026-11-17T19:58:24.544895+00:00",
         "curatedAt": "2026-11-21T13:24:07.659680+00:00",
-        "disposition": "Full Nogo gate on immutable 70857bbd74c9203998a51b9c8c867ba8c9eba01a is complete: 892/892 passed, 804 actual remote and 88 remote-cached; all 87 prior completed checks were reused without rerun. Executed command after existing helper setup:\nbazel test --keep_going --config=buildbuddy --config=x86_64 --credential_helper=\"remote.buildbuddy.io=$(realpath bazel-bin/tools/buildbuddy/credential_helper)\" --test_tag_filters=nogo --build_tests_only --strip=never //...\nUnchanged NogoSplit covers both target architectures; this is not native ARM-host proof. Completion was cache-assisted after the earlier 30-minute cap, with no matched speedup or cold-cache claim. The partial run remains historical evidence, not a current correctness blocker. Reviewed documentation 4686744 is published in the fork. Current qualification support a24c2b7f composes this documentation with qualified 70857 and the approved network default port 290be01. AMD/ARM action queries verify properties, not provider connectivity. The separate analyzer audit on 5f2b57ca56 passed its compile/sanity preflight; the full changed scan and formatted lint remain with their owner, with no full-pass claim.",
+        "disposition": "Full Nogo gate on immutable 70857bbd74c9203998a51b9c8c867ba8c9eba01a is complete: 892/892 passed, 804 actual remote and 88 remote-cached; all 87 prior completed checks were reused without rerun. Executed command after existing helper setup:\nbazel test --keep_going --config=buildbuddy --config=x86_64 --credential_helper=\"remote.buildbuddy.io=$(realpath bazel-bin/tools/buildbuddy/credential_helper)\" --test_tag_filters=nogo --build_tests_only --strip=never //...\nUnchanged NogoSplit covers both target architectures; this is not native ARM-host proof. Completion was cache-assisted after the earlier 30-minute cap, with no matched speedup or cold-cache claim. The partial run remains historical evidence, not a current correctness blocker. Current fork support 6e2c0cddf64e8c0c0ddf68a6d8936a9401fd0d22 includes the approved network-default request and reviewed README. Its property queries do not prove provider enforcement; the public OCI implementation at 168813c has a bug, while the cloud deployed version remains unknown. The user redirected the unposted issue proposal toward a minimal provider PR and regression; no patch or publication decision exists yet.\n\nThe separate eight-file analyzer-policy candidate d712184f6 is not ready: scan 45022004632 selected 890 labels (two assembler labels legitimately absent), with 20 pass, 255 fail and 615 unfinished; 1,234 deduplicated findings include 614 generated/protected findings held for review. Prep 47968b737 produced 11,780 XML records per architecture with 85 skips and zero failures/errors; source checks passed. Its compiler/performance gate remains pending with analysis_pass_inventory. These results do not replace the source-bound 70857 Nogo completion above.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45011783743",
           "https://github.com/tamird/gvisor/actions/runs/45011783743/artifacts/14750124755",
@@ -4984,7 +4984,12 @@
           "https://github.com/tamird/gvisor/commit/4686744ce429cb988a30c5023b4cbf2ca5e0adc0",
           "https://github.com/tamird/gvisor/commit/a24c2b7f3a7def6252a1c06b276991736449059d",
           "https://github.com/tamird/gvisor/actions/runs/45023075798",
-          "https://github.com/tamird/gvisor/actions/runs/45023080624"
+          "https://github.com/tamird/gvisor/actions/runs/45023080624",
+          "https://github.com/tamird/gvisor/commit/6e2c0cddf64e8c0c0ddf68a6d8936a9401fd0d22",
+          "https://github.com/tamird/gvisor/actions/runs/45022004632",
+          "https://github.com/tamird/gvisor/actions/runs/45027138923",
+          "https://github.com/tamird/gvisor/actions/runs/45027141642",
+          "https://github.com/tamird/gvisor/actions/runs/45027141512"
         ]
       },
       "updatedAt": "2026-11-17T20:32:28.027492+00:00"
@@ -67226,8 +67231,8 @@
         "owner": "benchmark_measurement_review / root",
         "sourceHead": "fe25c8ed035077d6f3afe56d9b0d0411a6455b99",
         "observedAt": "2026-11-17T22:31:20.170000+00:00",
-        "disposition": "BCR #11518 merged on November 22 at 12:14:38 UTC, preserving reviewed head fe25c8ed. The overlay compatibility finding is resolved; the registry release exports LICENSE.",
-        "nextAction": "benchmark_measurement_review verifies the released registry version and adopts it in the existing Iperf3 vehicle. No further review request or source correction is needed for #11518.",
+        "disposition": "BCR #11518 merged as 70404f85e6f284ac9be91b90aac34042a1279d90. Published metadata matches reviewed fe25, and public-registry admission passed four labels with zero actions; this is dependency admission, not an image rebuild.",
+        "nextAction": "Follow actual adoption in the existing Iperf3 vehicle and genuine post-merge feedback. No review request, source correction or qualification fallback remains for #11518.",
         "recheckCondition": "Actual released-version availability/adoption or genuine post-merge feedback.",
         "evidence": [
           "https://github.com/bazelbuild/bazel-central-registry/pull/11518#issuecomment-6582183969",
@@ -68021,17 +68026,17 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-18T21:49:57.504662+00:00",
-      "summary": "The complete primary automated coverage review reports31passed cases plus10expected socket-type skips, not missing-CAP_SETGID skips. It supplies no execution artifacts; author lint and description fixes remain pending.",
+      "summary": "Author source advanced to 2b096ecc6 with clang-format and linux/limits.h corrections and updated STREAM/SEQPACKET description. The author reports 31 peer-group cases passed on prior bdf1068 under systrap/save/save_resume and native root; sandbox-user-namespace setgroups EPERM also affects uidgid_test_native. Those prior-source claims are not new-head execution proof.",
       "followup": {
         "owner": "root",
         "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
         "providerHead": "bdf1068d1ad7ecd626d71553e361402f966e223d",
         "mergeable": "MERGEABLE",
-        "sourceHead": "bdf1068d1ad7ecd626d71553e361402f966e223d",
+        "sourceHead": "2b096ecc6cbe58cb80521653e28c60bf8fee3661",
         "observedAt": "2026-11-18T20:06:11.890448+00:00",
-        "disposition": "The complete primary automated coverage review reports31passed cases plus10expected socket-type skips, not missing-CAP_SETGID skips. It supplies no execution artifacts; author lint and description fixes remain pending.",
-        "nextAction": "Await author lint/description changes and source-bound execution artifacts. Named coverage is reported but independently unverified; no duplicate outreach or technical approval solely from the automated review.",
-        "recheckCondition": "Author source/reply, concrete native/Sentry logs/XML or current CI change.",
+        "disposition": "Author source advanced to 2b096ecc6 with clang-format and linux/limits.h corrections and updated STREAM/SEQPACKET description. The author reports 31 peer-group cases passed on prior bdf1068 under systrap/save/save_resume and native root; sandbox-user-namespace setgroups EPERM also affects uidgid_test_native. Those prior-source claims are not new-head execution proof.",
+        "nextAction": "Root routes the changed source and complete author response to the existing reviewer. Reconcile the fixes and source-bound qualification without inferring authorization for new sensitive-source tests. Current new-head DCO is action-required and FirstPass2324 pending; no cause is established.",
+        "recheckCondition": "Existing reviewer reconciliation, genuine new author feedback or exact-head CI result.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14999"
         ],
@@ -105790,6 +105795,44 @@
           }
         ]
       }
+    },
+    {
+      "id": "pr:17871",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17871,
+      "group": "analysis",
+      "ref": "review/legacy-state-benchmarks-20261122",
+      "head": "6eaaa8495bdb912284019b8d9bae8983c0435d54",
+      "title": "Benchmark legacy state and UDP queues",
+      "url": "https://github.com/google/gvisor/pull/17871",
+      "status": "open",
+      "summary": "Published the legacy state and UDP benchmark prerequisite. Native GHA and DCO pass; FirstPass2325 failed and its cause is not yet classified. Review is required from ayushr2 and xinzhong. Functional 1x qualification is not performance evidence.",
+      "evidence": [
+        {
+          "label": "Published benchmark prerequisite",
+          "url": "https://github.com/google/gvisor/pull/17871"
+        },
+        {
+          "label": "Current First Pass",
+          "url": "https://buildkite.com/gvisor/first-pass/builds/2325"
+        },
+        {
+          "label": "Fresh 32-row functional qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45023106600"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "6eaaa8495bdb912284019b8d9bae8983c0435d54",
+        "disposition": "Exact 6eaaa8495 source is published and mergeable. Native checks and DCO pass; FirstPass2325 failed, without a canonical cause established here. Publication approval is consumed.",
+        "nextAction": "Root owns canonical diagnosis of FirstPass2325 and genuine reviewer feedback. Preserve the separate state-performance gate; no source change or manual retry is inferred from this failed check.",
+        "recheckCondition": "Canonical exact-head failure evidence or genuine maintainer feedback.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17871",
+          "https://buildkite.com/gvisor/first-pass/builds/2325"
+        ]
+      }
     }
   ],
   "edges": [
@@ -140927,7 +140970,7 @@
       "technicalOwner": "root",
       "updatedAt": "2026-11-21T12:00:06.633567+00:00",
       "summary": "Actual remote execution remains proved by canonical release 44967257331. Native zip-enabled retention is now proved by run 44977041157/artifact 14736282398: the whitelisted coverage test.outputs/outputs.zip is 100,110 bytes, SHA256 722f1a8392d67ae733ca667ef6cc3a6ec46d38e6803bbd4a49a6c9807786b10a, matching native testResult digest/size. It contains metadata.json and the actual 770,129-byte .cov.txt report, whose digest matches metadata. This closes retention only for the exercised --zip_undeclared_test_outputs configuration, not default zip-false calls or every producer.",
-      "nextStep": "The exact native zip-enabled retention proof remains complete. A one-line fork default-ZIP change passed Actions validation 44978721380, but is unpublished: SSH is unavailable and existing HTTPS/gh credentials lack workflow scope; fork master remains fc8. This is a provider/credential capability block, not pending source approval. Recheck ordinary authorized transport capability only; no broader scopes, credential/config changes, channel workaround or artificial ZIP workload.",
+      "nextStep": "The one-line ZIP default is delivered on fork master as 7c3d3aa03b4eaaaf2f554bf592b43a06e217c1cc; the former transport block is cleared. Current jobs use that workflow. Retain the exact exercised native ZIP digest proof; default configuration does not prove every producer emitted an archive.",
       "recheckCondition": "Actual LLVM startup/caller/source-review evidence and user direction, followed by a compatible upstream release/pin.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
@@ -141402,6 +141445,10 @@
         {
           "label": "Validated unpublished fork ZIP-default workflow change",
           "url": "https://github.com/tamird/gvisor/actions/runs/44978721380"
+        },
+        {
+          "label": "Delivered fork ZIP default",
+          "url": "https://github.com/tamird/gvisor/commit/7c3d3aa03b4eaaaf2f554bf592b43a06e217c1cc"
         }
       ],
       "followup": {
@@ -141997,8 +142044,8 @@
       "owner": "root",
       "head": "8e869b906e5a651a377178f1cf3621a798042397",
       "updatedAt": "2026-11-21T13:24:07.659680+00:00",
-      "summary": "Unit-test worker requirements are delivered in #17861. The approved shared network-off default is incorporated in current fork qualification support a24c2b7f; upstream RBE platform/compiler prerequisites remain.",
-      "nextStep": "Follow #17861 under approved_rebase_queue and use current support a24c2b7f for qualification. Follow actual upstream platform/compiler landing; no network-default approval remains.",
+      "summary": "Unit-test worker requirements are delivered in #17861. The approved shared network-off request is incorporated in current fork support 6e2c0cdd; actual provider enforcement is not verified, and upstream RBE platform/compiler prerequisites remain.",
+      "nextStep": "Follow #17861 under approved_rebase_queue and current support 6e2c0cdd for qualification. Root owns the provider implementation correction and actual enforcement check; no network-default approval remains.",
       "evidence": [
         {
           "label": "Reviewable source",
@@ -142178,8 +142225,8 @@
       "owner": "declared_formatting_resume",
       "head": "be47f724fb92fa604dfb998fc9fb6f2b01d364b1",
       "updatedAt": "2026-11-21T14:00:19.559771+00:00",
-      "summary": "Revision requested: reuse bazel-contrib/rules_lint instead of per-BUILD clang_format_inputs. The qualified be47 source remains preserved; no upstream PR was opened.",
-      "nextStep": "declared_formatting_resume assesses the maintained rules_lint mechanism read-only and returns the smallest compatible design, retaining complete C/C++ input/configuration coverage.",
+      "summary": "The rules_lint revision candidate 21fc050cf has native AMD/ARM JSON UNION ALL coverage of all 492 C/C++ inputs and all 87 headers, with no extras and zero queried actions. These are inventory/query proofs, not formatter execution. The previous be47 publication proposal remains revision-requested.",
+      "nextStep": "declared_formatting_resume qualifies the actual maintained rules_lint check, fix and configuration contract on candidate 21fc before final source review. Preserve complete declared-input coverage; no publication approval transfers from be47.",
       "evidence": [
         {
           "label": "Actual reviewable clean source",
@@ -142208,6 +142255,18 @@
         {
           "label": "Git-free formatter final full-lint gate",
           "url": "https://github.com/tamird/gvisor/actions/runs/44960221545"
+        },
+        {
+          "label": "Native declared-input inventory",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45025933943"
+        },
+        {
+          "label": "Native declared-input inventory",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45026907833"
+        },
+        {
+          "label": "Current rules_lint candidate",
+          "url": "https://github.com/tamird/gvisor/commit/21fc050cffdd809cb281d71d5996fe1f86a40715"
         }
       ],
       "findings": [
@@ -142251,7 +142310,7 @@
       "head": "9cf0dbbe278572fd39d877a0d542483573a0185b",
       "updatedAt": "2026-11-21T18:06:34.151123+00:00",
       "summary": "Root holds standalone publication of the Iperf2 reporter after N24 visit 28 showed the SUM interval was 10.7154s versus the longest stream’s 11.3312s. Source 9cf remains a literal SUM parsing correction, but its unanswered publication question is suspended by the technical owner; no user rejection, approval or upstream PR is inferred.",
-      "nextStep": "Iperf3 currentness recovery is complete. benchmark_measurement_review follows released BCR #11518 adoption and the separate #15146 license-policy hold; #15146 is not a demonstrated binary-build prerequisite. Complete DING caller ce163 remains gated by the unanswered Moby exception and actual topology qualification. Current Sentry P64 still times out at 30 seconds locally and on RBE; cause is unknown and sensitive investigation remains held pending Daybreak availability. No unchanged retry, timing or standalone 9cf publication.",
+      "nextStep": "BCR #11518 is merged and published metadata matches reviewed fe25. Canonical public-registry admission 45024961797 passed four labels with zero actions, clearing the qualification fallback without rebuilding the image. benchmark_measurement_review retains DING ce163 topology qualification and its unanswered Moby exception. The separate #15146 license-policy hold is not a demonstrated binary-build prerequisite. Sentry P64 remains a 30-second timeout locally and on RBE, with unknown cause and sensitive investigation held pending Daybreak availability. No unchanged retry, timing or standalone 9cf publication.",
       "evidence": [
         {
           "label": "Exact reviewable source and included DCO",
@@ -142280,6 +142339,10 @@
         {
           "label": "Retained Iperf3 qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/44955092779"
+        },
+        {
+          "label": "Published BCR admission",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45024961797"
         }
       ],
       "findings": []
@@ -142339,11 +142402,11 @@
       "status": "active",
       "group": "analysis",
       "title": "Benchmark legacy state and UDP queues",
-      "owner": "benchmark_general_review",
+      "owner": "root",
       "head": "6eaaa8495bdb912284019b8d9bae8983c0435d54",
       "updatedAt": "2026-11-22T03:38:58.522285+00:00",
-      "summary": "The revision selects each algorithm engine explicitly and restores the incoming setting after each benchmark family. Its benchmark-only cases supply the legacy state/UDP comparison prerequisite. The 32-row functional 1x gate, Nogo and both focused reviews passed; these are not performance measurements.",
-      "nextStep": "Await publication review of source 6eaaa8495. Preserve the separate #17472 production/performance requirements; functional 1x rows do not establish statistical benefit.",
+      "summary": "Published as #17871 at exact source 6eaaa8495. The benchmark-only change explicitly selects each graph engine and restores the incoming state. Functional 1x qualification, Nogo and independent reviews passed; no performance claim.",
+      "nextStep": "Root follows #17871 review and exact-head CI. Native GHA and DCO pass; FirstPass2325 failed and awaits canonical diagnosis. Preserve the independent #17472 production/performance boundary; no timing follows from this publication.",
       "findings": [],
       "evidence": [
         {
@@ -142369,6 +142432,10 @@
         {
           "label": "Revised Nogo gate",
           "url": "https://github.com/tamird/gvisor/actions/runs/45022809649"
+        },
+        {
+          "label": "Published benchmark prerequisite",
+          "url": "https://github.com/gvisor/gvisor/pull/17871"
         }
       ],
       "settledReviews": [
@@ -142382,18 +142449,20 @@
           "body": "The state benchmark table covers the default graph engine and gob, but lacks an explicit legacy comparison. Add 10 wire cases and UDP receive-queue Save/Load cases for 1, 8 and 32 packets.\n\nThe UDP benchmarks select the legacy engine and check its header and restored links, timestamps and payloads outside the timed operations.\n\nPosted by Codex on behalf of @tamird.\n",
           "summary": "Explain the motivation and select each algorithm engine explicitly without leaking global state.",
           "outcome": "CHANGES-REQUESTED"
+        },
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "6eaaa8495bdb912284019b8d9bae8983c0435d54",
+          "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+          "url": "https://github.com/tamird/gvisor/commit/6eaaa8495bdb912284019b8d9bae8983c0435d54",
+          "title": "Benchmark legacy state and UDP queues",
+          "body": "The state/gob benchmark table lacked explicit legacy encoder rows, preventing comparisons with graph encoding. Add wire variants across the existing object graphs and UDP receive-queue Save/Load cases with 1, 8 and 32 packets. Packet payloads, addresses and timestamps exercise a reachable packet graph.\n\nSelect the engine explicitly for every algorithm and restore the incoming setting after each benchmark family. Validate the legacy header and restored queue outside the measured operations.\n\nPosted by Codex on behalf of @tamird.\n",
+          "summary": "Published the legacy state and UDP benchmark prerequisite.",
+          "outcome": "approved",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/17871"
         }
-      ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "6eaaa8495bdb912284019b8d9bae8983c0435d54",
-        "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
-        "url": "https://github.com/tamird/gvisor/commit/6eaaa8495bdb912284019b8d9bae8983c0435d54",
-        "title": "Benchmark legacy state and UDP queues",
-        "body": "The state/gob benchmark table lacked explicit legacy encoder rows, preventing comparisons with graph encoding. Add wire variants across the existing object graphs and UDP receive-queue Save/Load cases with 1, 8 and 32 packets. Packet payloads, addresses and timestamps exercise a reachable packet graph.\n\nSelect the engine explicitly for every algorithm and restore the incoming setting after each benchmark family. Validate the legacy header and restored queue outside the measured operations.\n\nPosted by Codex on behalf of @tamird.\n",
-        "summary": "Add explicit legacy encoder and UDP queue comparisons. Select and restore graph-engine state per benchmark family. The 32-row functional 1x gate, Nogo and independent reviews passed; no performance claim.\n\ngit range-diff 408f2c192c96bd614bfc3993cc317cc6406a1c52^! 6eaaa8495bdb912284019b8d9bae8983c0435d54^!"
-      }
+      ]
     }
   ],
   "updatedAt": "2026-11-20T23:41:26.383263+00:00"
