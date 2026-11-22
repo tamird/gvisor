@@ -326,7 +326,8 @@ def feedback_claimed(source: dict, item: dict, followup: dict, assigned: bool) -
     observed = bool(followup.get("observedAt") and item.get("updatedAt")
                     and datetime.fromisoformat(followup["observedAt"]) >= datetime.fromisoformat(item["updatedAt"]))
     unedited = bool(item.get("createdAt") and item.get("updatedAt") == item["createdAt"])
-    linked = followup.get("sourceHead") == source["head"] and item["url"] in followup.get("evidence", [])
+    linked = (followup.get("sourceHead") == source["head"]
+              and any(url in followup.get("evidence", []) for url in equivalent_repository_urls(item["url"])))
     return bool(followup.get("owner") and (assigned and (observed or unedited) or observed and linked))
 
 

@@ -1418,6 +1418,13 @@ class CollectorHistoryTest(unittest.TestCase):
 
         with mock.patch.object(updater, "REGISTRY", registry):
             self.assertEqual(assignment(), ("root", True))
+            alias = finding["url"].replace("google/gvisor", "gvisor/gvisor")
+            with mock.patch.dict(branch["followup"], evidence=[alias]):
+                self.assertEqual(assignment(), ("root", True))
+            for unrelated in (alias.replace("discussion_r1", "discussion_r2"),
+                              alias.replace("gvisor/gvisor", "other/gvisor")):
+                with self.subTest(evidence=unrelated), mock.patch.dict(branch["followup"], evidence=[unrelated]):
+                    self.assertEqual(assignment(), ("Agent", False))
             for field, other in (("repo", "other/gvisor"), ("ref", "another-branch"), ("head", "b" * 40),
                                  ("repo", None), ("ref", None), ("head", None)):
                 with self.subTest(identity=field, value=other), mock.patch.dict(branch, {field: other}):
