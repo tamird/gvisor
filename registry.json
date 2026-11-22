@@ -58352,8 +58352,8 @@
         "owner": "root",
         "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
         "observedAt": "2026-11-02T17:47:05.918366+00:00",
-        "disposition": "Both native architecture proofs remain valid, with stock overshoot disclosed; complete Sentry functionality remains open. The isolated upstream backport 44966121816 ran the same P64 request and timed out without a row, so it was not adopted as a fix. Debug 44966632076 also timed out with all 64 threads created and no successful-join markers; first cancellation/join versus statistics remains unresolved. Actual CPU, runtime, source, quiescence and final cleanup passed. Root stopped the patch chain; historical e505 failures do not establish the current-runtime cause.",
-        "nextAction": "benchmark_measurement_review qualifies the unchanged intended Iperf3/unpatched image against the current complete opaque normal release at eb263e1f414d0bceaf10decea6c73e2c77332112. Reuse a valid existing product first; otherwise use one canonical remote //:release build with the qualified profile, then one bounded P64 preflight before eight modes. No timing, Moby build, held runtime edits or further patch chain; the existing Moby exception remains unanswered.",
+        "disposition": "The unchanged intended image also failed P64/1-KiB functionality on the current complete normal release: run 44967627779 timed out at 30 seconds without a row; all nine runtime files, image, actual CPU and cleanup/source guards matched. Intrusive metadata trace 44968321756 observed slow thread creation, no worker exits before timeout and all exits after SIGINT, with no observed tgkill/FUTEX_WAIT. This does not prove a userspace spin, join-wakeup bug or kernel cause. Both native proofs remain valid; complete Sentry functionality and performance remain held.",
+        "nextAction": "benchmark_measurement_review owns two predeclared existing-interface controls: matched native-runc P64/1-KiB at 30 seconds and untraced current-Sentry 90-second liveness only, with total parent budget at most eight minutes. Preserve the original 30-second failure; the longer cap cannot satisfy acceptance. No extra orchestration, further trace, producer patch/version change or Moby build; source and exception questions remain unanswered.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
@@ -58375,7 +58375,9 @@
           "https://github.com/tamird/gvisor/actions/runs/44964449643",
           "https://github.com/tamird/gvisor/actions/runs/44965025042",
           "https://github.com/tamird/gvisor/actions/runs/44966121816",
-          "https://github.com/tamird/gvisor/actions/runs/44966632076"
+          "https://github.com/tamird/gvisor/actions/runs/44966632076",
+          "https://github.com/tamird/gvisor/actions/runs/44967627779",
+          "https://github.com/tamird/gvisor/actions/runs/44968321756"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -58389,7 +58391,7 @@
           "owner": "root"
         },
         "technicalOwner": "Build and release",
-        "recheckCondition": "Source-bound current normal-release identity and bounded P64 result before full modes; actual user decisions remain independent.",
+        "recheckCondition": "Owner-audited matched-control and liveness evidence without retrospective acceptance changes; no causal or performance inference from the trace alone.",
         "curatedAt": "2026-11-21T14:40:26.293073+00:00"
       },
       "refinement": {
