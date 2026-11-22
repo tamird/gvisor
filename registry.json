@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T11:04:03+00:00",
+    "updatedAt": "2026-11-22T11:54:35+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4970,15 +4970,17 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "Root and the existing RBE owner audit completion run 45014763993 when terminal. Preserve the exact partial evidence and compiler prerequisites. The existing global-default 775768695 publication decision remains pending; worker approval is fulfilled. Source, access, pools, flags and statistical gates remain unchanged.",
-        "recheckCondition": "Owner-audited terminal completion evidence, actual compiler-prerequisite landing or the existing global-default answer; no extrapolation from partial execution.",
+        "nextAction": "No further Nogo correctness run is needed. Root retains the separate configuration, trust, performance and declared-compiler prerequisites before source publication. Preserve the original 0be5c425a grant, fulfilled worker approval and unanswered global-default 775768695 decision; do not transfer those approvals to changed source or infer performance from cached completion.",
+        "recheckCondition": "Material source/configuration or trust evidence, actual prerequisite landing, the existing global-default answer or a concrete publication decision; no repeated completed Nogo gate.",
         "observedAt": "2026-11-17T19:58:24.544895+00:00",
         "curatedAt": "2026-11-21T13:24:07.659680+00:00",
-        "disposition": "The original 0be5c425a approval and compiler prerequisite remain source-bound. Worker 4026f169c approval was consumed by delivered #17861; only the separate global-default 775768695 question remains unanswered. Owner validation run 45011783743 hit its 30-minute cap with 87/892 real remote tests passed and 805 without terminal results. ZIP artifact 14750124755 retains partial BEP, log, profile and 87 XML records. No source or test error was observed before cancellation. One identical completion run 45014763993 is active after verifying cache reuse is permitted, with no disabling overrides or no-cache tags. Full-suite correctness and performance remain unproven; no new source approval follows.",
+        "disposition": "Full Nogo gate on immutable 70857bbd74c9203998a51b9c8c867ba8c9eba01a is complete: 892/892 passed, 804 actual remote and 88 remote-cached; all 87 prior completed checks were reused without rerun. Executed command after existing helper setup:\nbazel test --keep_going --config=buildbuddy --config=x86_64 --credential_helper=\"remote.buildbuddy.io=$(realpath bazel-bin/tools/buildbuddy/credential_helper)\" --test_tag_filters=nogo --build_tests_only --strip=never //...\nUnchanged NogoSplit covers both target architectures; this is not native ARM-host proof. Completion was cache-assisted after the earlier 30-minute cap, with no matched speedup or cold-cache claim. The partial run remains historical evidence, not a current correctness blocker. Documentation-only 4686744ce429cb988a30c5023b4cbf2ca5e0adc0 passed both focused independent reviews and remains unpublished/unapproved.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45011783743",
           "https://github.com/tamird/gvisor/actions/runs/45011783743/artifacts/14750124755",
-          "https://github.com/tamird/gvisor/actions/runs/45014763993"
+          "https://github.com/tamird/gvisor/actions/runs/45014763993",
+          "https://github.com/tamird/gvisor/actions/runs/45014763993/artifacts/14751568288",
+          "https://app.buildbuddy.io/invocation/829e7b0e-19df-4b36-baeb-6b936264dc4a"
         ]
       },
       "updatedAt": "2026-11-17T20:32:28.027492+00:00"
@@ -7063,8 +7065,8 @@
       "title": "Combine Nogo with runtime qualification",
       "url": "https://github.com/tamird/gvisor/tree/rbe-nogo-test-selection",
       "group": "rbe",
-      "status": "extraction needed",
-      "summary": "Upstream delivery needs smaller Bazel-native extraction units. The reviewed architecture keeps qualify.sh and the Python selector as temporary fork comparison tooling; durable behavior should use configured test owners and native suites. These existing component branches remain evidence/comparison inputs, not independently ready upstream PRs. The individual source cuts still need implementation and review.\n\nPublished source 0a05f9f02 selects the existing complete Nogo profile before composing runtime lanes. Each analyzer already checks both architectures. When requested, only the Nogo exclusion is removed from unit and ordinary syscall filters; exact canonical union verification preserves original wildcard build roots. Positive Nogo filtering and build_tests_only remain confined to analysis. Integrated as 08102c576 in qualification head eb6a71ba1. The first proof completed 26 zero-action analyses, then failed at a 136456-byte subprocess argument limit. Recovery 9d381d0b-8f49-4b78-a568-e5782f5de969 uses file-based selection transport and passed its independently reconciled bounded selection/runtime proof across 13 child invocations. No full Nogo or runtime-matrix pass is claimed.",
+      "status": "Standalone selector superseded; combined contract open",
+      "summary": "The old 08102/0a05 bespoke selector has no maintained caller on current 70857 or f26. The native first-pass pipeline already invokes make nogo-tests, whose Makefile gate owns positive Nogo selection over //... and the existing architecture split. Its standalone Nogo extraction is superseded and the four-path delta is omitted. A combined runtime-plus-Nogo single-invocation contract remains unfulfilled and separate; the 892-target Nogo result does not qualify it. Keep unit_matrix.py for other proposed runtime lanes and retain old source-bound evidence.",
       "followup": {
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -7073,14 +7075,19 @@
           "observedAt": "2026-11-17T19:58:24.544963+00:00",
           "state": "present",
           "canonicalPRs": [],
-          "nextAction": "Reverify this exact ref before delivery; follow the canonical PR alias where present.",
-          "recheckCondition": "Exact ref/head change, canonical PR feedback/check/import or terminal-state change, dependency landing or contributor decision.",
+          "nextAction": "Preserve this historical selector ref; no standalone delivery. Revisit only for an actual combined-runtime integration requirement.",
+          "recheckCondition": "Actual maintained combined-runtime caller/integration requirements or combined-contract evidence; no inference from standalone Nogo success.",
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "Extract the existing Combine Nogo with runtime qualification work into the reviewed Bazel-native source scope, preserve its declared suppliers and bounded qualification, then seek contributor review before upstream publication.",
-        "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings.",
-        "observedAt": "2026-11-17T19:58:24.544963+00:00"
+        "nextAction": "Retire the bespoke standalone selector extraction. Root rechecks only an actual combined-runtime caller or integration requirement; preserve unit_matrix.py and other lane contracts. No new script, source publication question or further standalone Nogo run is needed.",
+        "recheckCondition": "Actual maintained combined-runtime caller/integration requirements or combined-contract evidence; no inference from standalone Nogo success.",
+        "observedAt": "2026-11-17T19:58:24.544963+00:00",
+        "evidence": [
+          "https://github.com/tamird/gvisor/blob/70857bbd74c9203998a51b9c8c867ba8c9eba01a/.buildkite/first-pass.yaml",
+          "https://github.com/tamird/gvisor/blob/70857bbd74c9203998a51b9c8c867ba8c9eba01a/Makefile#L260-L261",
+          "https://github.com/tamird/gvisor/blob/8e0348a7d3742409f55a4fdb8b57bb698c1a4cc3/registry.json"
+        ]
       },
       "updatedAt": "2026-11-17T20:32:28.027492+00:00"
     },
