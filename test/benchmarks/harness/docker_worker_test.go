@@ -324,6 +324,14 @@ done`},
 			}
 		}
 		if got != want {
+			t.Logf("affinity mismatch container=%s runtime=%s inspected_pid=%d requested=%s observed=%s", name, info.HostConfig.Runtime, info.State.Pid, want, got)
+			logProcessAffinity(t, os.Getpid())
+			logProcessAffinity(t, info.State.Pid)
+			cmd := exec.CommandContext(ctx, "docker", "--host="+cli.DaemonHost(), "exec", name, "sh", "-c", "cat /proc/self/status; cat /proc/self/cgroup")
+			var stderr bytes.Buffer
+			cmd.Stderr = &stderr
+			output, diagnosticErr := cmd.Output()
+			t.Logf("affinity diagnostic guest container=%s stdout=%q stderr=%q error=%v", name, output, stderr.String(), diagnosticErr)
 			t.Fatalf("container %s effective CPUs = %q, want %q", name, got, want)
 		}
 		if err := json.NewEncoder(os.Stdout).Encode(struct {

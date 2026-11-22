@@ -310,6 +310,8 @@ func startDockerDaemons(t testing.TB, ctx context.Context, releases []string, br
 						t.Fatalf("Docker did not load declared runtime %q", selected)
 					}
 				}
+				logProcessAffinity(t, os.Getpid())
+				logProcessAffinity(t, cmd.Process.Pid)
 				return "unix://" + socket, selectedRuntimes, configPath
 			}
 		}
@@ -456,4 +458,63 @@ func loadDockerImage(t testing.TB, ctx context.Context, cli *client.Client, arch
 			t.Fatalf("image load: %s", message.ErrorDetail.Message)
 		}
 	}
+}
+
+// logProcessAffinity records only the selected owned worker process and tasks.
+func logProcessAffinity(t testing.TB, pid int) {
+	t.Helper()
+	root := "/proc/" + strconv.Itoa(pid)
+	read := func(path string) []byte {
+		data, err := os.ReadFile(path)
+		t.Logf("affinity diagnostic pid=%d path=%s data=%q error=%v", pid, path, data, err)
+		return data
+	}
+	before := read(root + "/stat")
+	exe, err := os.Readlink(root + "/exe")
+	t.Logf("affinity diagnostic pid=%d executable=%q error=%v", pid, exe, err)
+	read(root + "/status")
+	membership := read(root + "/cgroup")
+	tasks, err := os.ReadDir(root + "/task")
+	t.Logf("affinity diagnostic pid=%d task_count=%d error=%v", pid, len(tasks), err)
+	for _, task := range tasks {
+		read(root + "/task/" + task.Name() + "/status")
+	}
+	mounts, err := os.ReadFile("/proc/self/mountinfo")
+	if err != nil {
+		t.Logf("affinity diagnostic mountinfo error=%v", err)
+	}
+	for _, line := range strings.Split(string(mounts), "\n") {
+		left, right, ok := strings.Cut(line, " - ")
+		fields, filesystem := strings.Fields(left), strings.Fields(right)
+		if !ok || len(fields) < 5 || len(filesystem) < 3 || (filesystem[0] != "cgroup2" && filesystem[0] != "cgroup") {
+			continue
+		}
+		t.Logf("affinity diagnostic cgroup_mount=%s", line)
+		for _, entry := range strings.Split(string(membership), "\n") {
+			parts := strings.SplitN(entry, ":", 3)
+			if len(parts) != 3 {
+				continue
+			}
+			name := "cpuset.cpus.effective"
+			if filesystem[0] == "cgroup2" {
+				if parts[1] != "" {
+					continue
+				}
+			} else {
+				if !strings.Contains(","+parts[1]+",", ",cpuset,") || !strings.Contains(","+filesystem[2]+",", ",cpuset,") {
+					continue
+				}
+				name = "cpuset.effective_cpus"
+			}
+			relative, err := filepath.Rel(fields[3], parts[2])
+			if err != nil || relative == ".." || strings.HasPrefix(relative, "../") {
+				t.Logf("affinity diagnostic unresolved membership=%q mount_root=%q error=%v", entry, fields[3], err)
+				continue
+			}
+			read(filepath.Join(fields[4], relative, name))
+			read(filepath.Join(fields[4], relative, "cpuset.cpus"))
+		}
+	}
+	after := read(root + "/stat")
+	t.Logf("affinity diagnostic pid=%d stat_before=%q stat_after=%q", pid, before, after)
 }
