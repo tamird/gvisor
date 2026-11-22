@@ -47,6 +47,7 @@ go_cov(
     ],
     pure = True,
     race = "off",
+    tags = ["manual"],
     visibility = ["//debian:__pkg__"],
     deps = [
         "//runsc/cli/sentrycli",
@@ -65,6 +66,7 @@ go_cov(
     ],
     race = "on",
     static = True,
+    tags = ["manual"],
     visibility = ["//debian:__pkg__"],
     deps = [
         "//runsc/cli/sentrycli",
