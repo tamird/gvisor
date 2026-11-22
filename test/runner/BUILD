@@ -1,5 +1,5 @@
 load("//tools:defs.bzl", "build_test", "bzl_library", "go_binary", "go_test")
-load("//tools:release.bzl", "RUNSC", "release_files", "sidecars")
+load("//tools:release.bzl", "OTHER_SIDECARS", "RUNSC", "release_files", "sidecars")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -18,6 +18,18 @@ release_files(
         "//tools:gotsan": sidecars("race-coverage"),
         "//conditions:default": sidecars("coverage"),
     }),
+    visibility = ["//:sandbox"],
+)
+
+release_files(
+    name = "legacy_coverage_release",
+    testonly = True,
+    bins = ["//shim:containerd-shim-runsc-v1"],
+    runsc = "//runsc:legacy_current_runsc_coverage",
+    sidecars = OTHER_SIDECARS | {
+        "//runsc/cmd/sentry:legacy_current_sentry_coverage": "gvisor_sentry",
+    },
+    tags = ["manual"],
     visibility = ["//:sandbox"],
 )
 

@@ -192,5 +192,8 @@ genrule(
         "no-local",
     ],
     tools = ["//tools:build_cover.sh"],
-    visibility = ["//tools/bazeldefs/tests/coverage:__pkg__"],
+    visibility = [
+        "//tools/bazeldefs/tests/coverage:__pkg__",
+        "//test/runner:__pkg__",
+    ],
 )

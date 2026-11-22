@@ -221,5 +221,8 @@ genrule(
         "manual",
         "no-local",
     ],
-    visibility = ["//debian:__pkg__"],
+    visibility = [
+        "//debian:__pkg__",
+        "//test/runner:__pkg__",
+    ],
 )
