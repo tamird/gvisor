@@ -183,10 +183,11 @@ genrule(
     ),
     exec_compatible_with = [
         "//tools/bazeldefs:rbe_ubuntu24_c",
-        "@platforms//cpu:x86_64",
+        "@platforms//cpu:aarch64",
         "@platforms//os:linux",
     ],
     executable = True,
+    exec_properties = {"EstimatedComputeUnits": "2"},
     tags = [
         "manual",
         "no-local",
