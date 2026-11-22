@@ -61,10 +61,14 @@ _PAIRED_BENCHMARKS = [
         size = "large",
         timeout = "long",
         srcs = [
+            "docker_worker_test.go",
             "paired_products_test.go",
             "paired_worker_test.go",
         ],
         args = [
+            "--alpine-archive=$(rootpath //images/basic:alpine_archive)",
+            "--worker-runtime=runsc",
+            "--release-runsc=$(rootpath :runsc_entrypoint)",
             "--paired-base-runsc=$(rootpath :runsc_entrypoint)",
             "--paired-candidate-runsc=$(rootpath :runsc_entrypoint)",
             "--paired-base-source=eb263e1f414d0bceaf10decea6c73e2c77332112",
@@ -79,6 +83,7 @@ _PAIRED_BENCHMARKS = [
         data = [
             ":runsc_entrypoint",
             "//:release",
+            "//images/basic:alpine_archive",
             binary,
         ] + archives,
         embed = [":harness"],
@@ -98,7 +103,10 @@ _PAIRED_BENCHMARKS = [
             "//pkg/test/testutil",
             "@com_github_docker_docker//api/types/container:go_default_library",
             "@com_github_docker_docker//api/types/image:go_default_library",
+            "@com_github_docker_docker//api/types/mount:go_default_library",
+            "@com_github_docker_docker//api/types/network:go_default_library",
             "@com_github_docker_docker//client:go_default_library",
+            "@com_github_docker_docker//errdefs:go_default_library",
             "@org_golang_x_sys//unix:go_default_library",
         ],
     )
