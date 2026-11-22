@@ -83,9 +83,17 @@ pkg_tar(
 
 image_outputs(
     name = "benchmark_alpine",
+    archive_visibility = ["//test/benchmarks/harness:__pkg__"],
     image = select({
         "@platforms//cpu:aarch64": "@benchmark_alpine_arm64",
         "@platforms//cpu:x86_64": "@benchmark_alpine_amd64",
     }),
     image_name = "benchmarks/alpine",
+)
+
+image_outputs(
+    name = "benchmark_hackbench",
+    archive_visibility = ["//test/benchmarks/harness:__pkg__"],
+    image = "@benchmark_hackbench_arm64",
+    image_name = "benchmarks/hackbench",
 )

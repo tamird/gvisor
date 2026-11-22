@@ -36,6 +36,7 @@ image_manifest(
 
 image_outputs(
     name = "syscallbench",
+    archive_visibility = ["//test/benchmarks/harness:__pkg__"],
     image = ":syscallbench_image",
     image_name = "benchmarks/syscallbench",
 )

@@ -115,3 +115,63 @@ go_test(
         "@com_github_docker_docker//errdefs:go_default_library",
     ],
 )
+
+_COVERAGE_INITIALIZATIONS = [
+    ("startup", "//test/benchmarks/base:startup_test", 1, "//images:benchmark_alpine_archive", []),
+    ("syscall", "//test/benchmarks/base:syscallbench_test", 7, "//images/benchmarks/syscallbench:syscallbench_archive", ["@platforms//cpu:x86_64"]),
+    ("hackbench", "//test/benchmarks/base:hackbench_test", 2, "//images:benchmark_hackbench_archive", ["@platforms//cpu:aarch64"]),
+]
+
+[
+    go_test(
+        name = "coverage_" + category + "_initialization_test",
+        size = "large",
+        timeout = "long",
+        srcs = [
+            "docker_worker_test.go",
+            "paired_products_test.go",
+            "paired_worker_test.go",
+        ],
+        args = [
+            "--paired-base-runsc=$(rootpath :coverage_runsc_entrypoint)",
+            "--paired-candidate-runsc=$(rootpath :coverage_runsc_entrypoint)",
+            "--paired-base-source=57c5e7b58eb7d0657aa0091065e7c2b16aeab735",
+            "--paired-candidate-source=57c5e7b58eb7d0657aa0091065e7c2b16aeab735",
+            "--paired-benchmark=$(rootpath %s)" % binary,
+            "--paired-leaves=%d" % leaves,
+            "--paired-image-archives=$(rootpath %s)" % archive,
+            "--paired-benchtime=1x",
+            "--paired-initialize-only",
+            "--client-cpuset=0-1",
+            "--server-cpuset=2-3",
+            "-test.run=^TestPairedBenchmark$",
+        ],
+        data = [
+            ":coverage_runsc_entrypoint",
+            "//test/runner:coverage_release",
+            binary,
+            archive,
+        ],
+        embed = [":harness"],
+        exec_properties = {
+            "test.EstimatedCPU": "4",
+            "test.EstimatedMemory": "500M",
+            "test.init-dockerd": "false",
+            "test.workload-isolation-type": "firecracker",
+        },
+        pure = True,
+        tags = ["manual"],
+        target_compatible_with = ["@platforms//os:linux"] + constraints,
+        deps = [
+            "//pkg/test/testutil",
+            "@com_github_docker_docker//api/types/container:go_default_library",
+            "@com_github_docker_docker//api/types/image:go_default_library",
+            "@com_github_docker_docker//api/types/mount:go_default_library",
+            "@com_github_docker_docker//api/types/network:go_default_library",
+            "@com_github_docker_docker//client:go_default_library",
+            "@com_github_docker_docker//errdefs:go_default_library",
+            "@org_golang_x_sys//unix:go_default_library",
+        ],
+    )
+    for category, binary, leaves, archive, constraints in _COVERAGE_INITIALIZATIONS
+]

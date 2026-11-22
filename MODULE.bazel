@@ -1010,3 +1010,11 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+img_pull(
+    name = "benchmark_hackbench_arm64",
+    digest = "sha256:09ce6e67d71aab0fe95e01e0981c9bb96fb322bb8b5d275a4c532252f154f610",
+    layer_handling = "eager",
+    registries = ["us-central1-docker.pkg.dev"],
+    repository = "gvisor-presubmit/gvisor-presubmit-images/benchmarks/hackbench_aarch64",
+)
