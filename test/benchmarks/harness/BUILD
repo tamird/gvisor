@@ -22,3 +22,11 @@ go_library(
         "@com_github_docker_docker//api/types/mount:go_default_library",
     ],
 )
+
+exports_files(
+    [
+        "startup-aa-base.txt",
+        "startup-aa-candidate.txt",
+    ],
+    visibility = ["//test/benchmarks/harness/coverage_bounds:__pkg__"],
+)
