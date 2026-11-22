@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T06:11:17+00:00",
+    "updatedAt": "2026-11-22T06:35:27+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -82520,7 +82520,7 @@
       "url": "https://github.com/google/gvisor/pull/17184",
       "group": "tests",
       "status": "open",
-      "summary": "The user requested changes again to simplified0583208d, questioning why it remains +267 lines instead of the earlier net-negative rewrite (reply call_a40bac98a99d485ea1465d902d644e21). No current Go question or publication approval remains; public2aa840f4 is unchanged. All three actual CLI deadline/cleanup cases passed (10.14/70.17/71.30seconds, XML4 including parent, zero failures/skips), with eight fast units per architecture and two final reviewers accepting the source. Those source-bound results do not settle the requested size/design revision. The original writer is held for lean-baseline investigation after the current CI/RBE research priority.",
+      "summary": "The CI/cache research and published #17832 rewrite are complete, so that conditional hold has expired. approved_rebase_queue is actively preparing the smallest independent cleanup correction: the current shell already bounds startup and transfer, but TERM followed by wait can hang. Public 2aa840f4 remains unchanged; rejected 058 is not approved, and the Go migration is not fulfilled. Earlier functional receipts remain valid only for their recorded sources.",
       "evidence": [
         {
           "label": "Published standalone benchmark correction",
@@ -82538,11 +82538,11 @@
       "updatedAt": "2026-11-20T15:36:10.284882+00:00",
       "followup": {
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
-        "owner": "root",
-        "nextAction": "Root prioritizes the requested current-CI/cache research and proposed issue rewrite. On resumption, approved_rebase_queue compares the earlier lean Go baseline and identifies the smallest owning mechanism while preserving required behavior and meaningful negatives. Do not repeat an approval question or publish058.",
+        "owner": "approved_rebase_queue / root",
+        "nextAction": "approved_rebase_queue implements the focused cleanup correction on existing fix/tcp-benchmark-cleanup-20261122 at eb263e1f414d0bceaf10decea6c73e2c77332112, then qualifies one real-traffic TERM-resistant regression. Root reviews the concrete result before any source-publication question or PR update; no current jobs or passes are inferred.",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-20T18:31:31.140104+00:00",
-        "recheckCondition": "Completion of the prioritized read-only CI research or explicit user steering to resume the lean-baseline revision; then a materially smaller reviewable source.",
+        "recheckCondition": "Concrete source, source-bound regression evidence and final review, or actual user steering; no renewed wait for completed CI research and no 058 publication.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17184",
           "https://github.com/tamird/gvisor/commit/9c541c3ae1cd68df1741882480d5bf184396e695",
@@ -82574,7 +82574,8 @@
           "https://buildkite.com/gvisor/first-pass/builds/1546#01a1ead9-87ab-4a69-ad0a-6540f18e4c4b",
           "https://buildkite.com/gvisor/first-pass/builds/1546#01a1ead9-87ac-452f-bb57-c63ce81511e4",
           "https://github.com/tamird/gvisor/actions/runs/44660305436",
-          "https://github.com/tamird/gvisor/actions/runs/44660308694"
+          "https://github.com/tamird/gvisor/actions/runs/44660308694",
+          "https://github.com/tamird/gvisor/blob/779bbd2aa3bc936a305ed98bd6a6eb577aa57630/registry.json"
         ],
         "disposition": "The user requested changes again to simplified0583208d, questioning why it remains +267 lines instead of the earlier net-negative rewrite (reply call_a40bac98a99d485ea1465d902d644e21). No current Go question or publication approval remains; public2aa840f4 is unchanged. All three actual CLI deadline/cleanup cases passed (10.14/70.17/71.30seconds, XML4 including parent, zero failures/skips), with eight fast units per architecture and two final reviewers accepting the source. Those source-bound results do not settle the requested size/design revision. The original writer is held for lean-baseline investigation after the current CI/RBE research priority.",
         "curatedAt": "2026-11-20T18:31:31.140104+00:00",
@@ -82602,7 +82603,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Await the existing actual ee28310b amendment decision once. On approval, root completes authorized sign-off/publication and ordinary verified rebase communication; preserve exact body/source binding and do not repeat the question.",
+      "nextStep": "approved_rebase_queue implements the focused cleanup correction on existing fix/tcp-benchmark-cleanup-20261122 at eb263e1f414d0bceaf10decea6c73e2c77332112, then qualifies one real-traffic TERM-resistant regression. Root reviews the concrete result before any source-publication question or PR update; no current jobs or passes are inferred.",
       "recheckCondition": "User answer to this actual question or substantive source/qualification change.",
       "refinement": {
         "before": {
