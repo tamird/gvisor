@@ -38,12 +38,8 @@ func releaseCodecQueue(queue *udpPacketList) {
 }
 
 // BenchmarkUDPReceiveQueueSave serializes the actual receive-list subtree.
-// The chosen occupancies are scenarios, not measured production frequencies.
 // Packet delivery, endpoint freezing and the rest of the kernel are not timed.
 func BenchmarkUDPReceiveQueueSave(b *testing.B) {
-	prev := state.GraphEngineEnabled()
-	state.EnableGraphEngine(false)
-	b.Cleanup(func() { state.EnableGraphEngine(prev) })
 	benchmarkUDPReceiveQueue(b, false)
 }
 
@@ -51,14 +47,14 @@ func BenchmarkUDPReceiveQueueSave(b *testing.B) {
 // measured operation releases the previous restored packet buffers before Load;
 // the final graph is validated and released outside the timed loop.
 func BenchmarkUDPReceiveQueueLoad(b *testing.B) {
-	prev := state.GraphEngineEnabled()
-	state.EnableGraphEngine(false)
-	b.Cleanup(func() { state.EnableGraphEngine(prev) })
 	benchmarkUDPReceiveQueue(b, true)
 }
 
 func benchmarkUDPReceiveQueue(b *testing.B, load bool) {
 	b.Helper()
+	prev := state.GraphEngineEnabled()
+	state.EnableGraphEngine(false)
+	b.Cleanup(func() { state.EnableGraphEngine(prev) })
 	for _, count := range []int{1, 8, 32} {
 		b.Run(fmt.Sprint(count), func(b *testing.B) {
 			var queue udpPacketList
@@ -68,8 +64,7 @@ func benchmarkUDPReceiveQueue(b *testing.B, load bool) {
 			timestamp := time.Date(2026, time.October, 7, 12, 0, 0, 1, time.UTC)
 			memory := 0
 			for i := range count {
-				// Match the existing UDP tests' 30-byte payload size. Build
-				// parsed incoming headers, as retained by HandlePacket.
+				// Build parsed IPv4 and UDP headers with a 30-byte payload.
 				data := make([]byte, header.IPv4MinimumSize+header.UDPMinimumSize+30)
 				ip := header.IPv4(data)
 				ip.Encode(&header.IPv4Fields{
@@ -105,8 +100,7 @@ func benchmarkUDPReceiveQueue(b *testing.B, load bool) {
 				})
 				memory += pkt.MemSize()
 			}
-			// These scenarios fit even the endpoint's initial 32KiB quota,
-			// before newEndpoint applies any stack-specific override.
+			// The queue fits within the initial 32KiB receive quota.
 			if got, want := memory, 32*1024; got > want {
 				b.Fatalf("queue memory estimate = %d, exceeds initial receive quota %d", got, want)
 			}
