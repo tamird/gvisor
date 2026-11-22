@@ -40087,7 +40087,7 @@
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
         "disposition": "Public c715 remains unchanged/conflicting; current source 57c5e7b58eb7d0657aa0091065e7c2b16aeab735 is not publication-approved. Its explicit CI fixture/RACE inputs now have eight compiler products plus four functional runs: 24 fresh remote tests, 1,200 guest iterations with zero skips, and 2,418 protobuf positions per mode. Twelve native ZIP digests/sizes match BEP and required/absent report checks. Two independent implementation reviews found no defect; a metadata past-tense correction is deferred. Current-parent legacy set inclusion and controlled performance remain incomplete.",
-        "nextAction": "buildifier_license_fix closes current eb263 legacy inclusion and the final source-record handoff using existing evidence and fixture scope. Root and benchmark_measurement_review retain controlled performance. Preserve older 657/bf6 source identities, source 57 and explicit RACE input binding; no upstream amendment or approval is inferred.",
+        "nextAction": "buildifier_license_fix alone owns current-parent legacy set-inclusion comparison 44979111210 under its 30-minute cap; no verdict is available yet. Preserve source 57 compiler/functional/ZIP proofs, reviews and explicit fixture/RACE inputs without claiming full current-parent inclusion or controlled performance. Root and benchmark_measurement_review retain the independent performance boundary; no upstream amendment or approval.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -40122,10 +40122,11 @@
           "https://github.com/tamird/gvisor/actions/runs/44977041157",
           "https://github.com/tamird/gvisor/actions/runs/44977043446",
           "https://github.com/tamird/gvisor/actions/runs/44977045585",
-          "https://github.com/tamird/gvisor/actions/runs/44977047717"
+          "https://github.com/tamird/gvisor/actions/runs/44977047717",
+          "https://github.com/tamird/gvisor/actions/runs/44979111210"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Source-bound current-parent legacy comparison and required controlled performance/final review, followed by an actual publication question.",
+        "recheckCondition": "Owner-audited current-parent comparison and remaining controlled performance/final source-record review before an actual publication question.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "qualificationHistory": [
           {
@@ -40792,7 +40793,7 @@
           "https://github.com/tamird/gvisor/commit/c71526cea11bd81898c588264c0940d1fb33e511"
         ]
       },
-      "nextStep": "buildifier_license_fix closes current eb263 legacy inclusion and the final source-record handoff using existing evidence and fixture scope. Root and benchmark_measurement_review retain controlled performance. Preserve older 657/bf6 source identities, source 57 and explicit RACE input binding; no upstream amendment or approval is inferred.",
+      "nextStep": "buildifier_license_fix alone owns current-parent legacy set-inclusion comparison 44979111210 under its 30-minute cap; no verdict is available yet. Preserve source 57 compiler/functional/ZIP proofs, reviews and explicit fixture/RACE inputs without claiming full current-parent inclusion or controlled performance. Root and benchmark_measurement_review retain the independent performance boundary; no upstream amendment or approval.",
       "recheckCondition": "Actual missing performance evidence, final source review or substantive maintainer/import change."
     },
     {
@@ -98199,10 +98200,10 @@
       "followup": {
         "sourceHead": "b08bf67a0996f2732d82ad5b35949048cc2139f0",
         "owner": "approved_rebase_queue / root",
-        "nextAction": "benchmark_measurement_review prepares the minimal existing legacy-benchmark and ten-wire-alias publication prerequisites; no production edit or approval is inferred. Required component matrix is 38 rows: 32 state (22 upstream plus ten wire) and six UDP, plus four broad checkpoint/restore controls. Both unpinned and pinned same-source GraphLoad controls are INCONCLUSIVE under the original fixed ±2% containment; do not pool rows, infer routing causes or run more timing. Preserve the independent state scope without importing a separate 150-network-workload gate.",
+        "nextAction": "The missing benchmark-only prerequisite is prepared as source 78494728df702033ae535631eb21c26ca8b1f5c7, tree d56288d0c36f3299687673a6184a5107d575805a. All 38 N1 functional leaves passed on both architectures; corrected Nogo-only and five source checks passed, and two independent reviewers found no code/methodology defect. A minor subject-length correction remains; no PR or publication question exists. Component matrix remains 32 state (22 upstream plus ten wire) plus six UDP, with four checkpoint/restore controls separate. Both GraphLoad controls remain INCONCLUSIVE; no further timing or broader 150-network gate.",
         "mergeable": "CONFLICTING",
         "observedAt": "2026-11-20T23:27:51.953187+00:00",
-        "recheckCondition": "Reviewable minimal benchmark prerequisites and source-bound qualification plan; no new measurements, performance equivalence or production-publication claim.",
+        "recheckCondition": "Final benchmark-only source record and actual publication review/decision, followed by existing source-bound qualification gates; no production/performance approval is inferred.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17472",
           "https://github.com/tamird/gvisor/commit/6827c2cfbc7102549d4ea74eb602516db2635a16",
@@ -98222,7 +98223,9 @@
           "https://github.com/tamird/gvisor/actions/runs/44975502828",
           "https://github.com/tamird/gvisor/actions/runs/44975807172",
           "https://github.com/tamird/gvisor/actions/runs/44976132860",
-          "https://github.com/tamird/gvisor/actions/runs/44976633402"
+          "https://github.com/tamird/gvisor/actions/runs/44976633402",
+          "https://github.com/tamird/gvisor/actions/runs/44979305312",
+          "https://github.com/tamird/gvisor/actions/runs/44979306818"
         ],
         "implementationOwner": "approved_rebase_queue",
         "curatedAt": "2026-11-21T15:42:31.456870+00:00",
@@ -98250,7 +98253,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "benchmark_measurement_review prepares the minimal existing legacy-benchmark and ten-wire-alias publication prerequisites; no production edit or approval is inferred. Required component matrix is 38 rows: 32 state (22 upstream plus ten wire) and six UDP, plus four broad checkpoint/restore controls. Both unpinned and pinned same-source GraphLoad controls are INCONCLUSIVE under the original fixed ±2% containment; do not pool rows, infer routing causes or run more timing. Preserve the independent state scope without importing a separate 150-network-workload gate.",
+      "nextStep": "The missing benchmark-only prerequisite is prepared as source 78494728df702033ae535631eb21c26ca8b1f5c7, tree d56288d0c36f3299687673a6184a5107d575805a. All 38 N1 functional leaves passed on both architectures; corrected Nogo-only and five source checks passed, and two independent reviewers found no code/methodology defect. A minor subject-length correction remains; no PR or publication question exists. Component matrix remains 32 state (22 upstream plus ten wire) plus six UDP, with four checkpoint/restore controls separate. Both GraphLoad controls remain INCONCLUSIVE; no further timing or broader 150-network gate.",
       "recheckCondition": "An evidence-backed drift cause/environment change and valid source-bound broad/A-A results."
     },
     {
@@ -140736,7 +140739,7 @@
       "technicalOwner": "root",
       "updatedAt": "2026-11-21T12:00:06.633567+00:00",
       "summary": "Actual remote execution remains proved by canonical release 44967257331. Native zip-enabled retention is now proved by run 44977041157/artifact 14736282398: the whitelisted coverage test.outputs/outputs.zip is 100,110 bytes, SHA256 722f1a8392d67ae733ca667ef6cc3a6ec46d38e6803bbd4a49a6c9807786b10a, matching native testResult digest/size. It contains metadata.json and the actual 770,129-byte .cov.txt report, whose digest matches metadata. This closes retention only for the exercised --zip_undeclared_test_outputs configuration, not default zip-false calls or every producer.",
-      "nextStep": "Root retains the completed remote-action and native-zip retention proofs at their exact configurations. Recheck a genuine changed caller/result or failure; no artificial image/packetimpact harness or expensive run is needed solely to prove ZIP retention. Supplier release/adoption obligations remain independent.",
+      "nextStep": "The exact native zip-enabled retention proof remains complete. A one-line fork default-ZIP change passed Actions validation 44978721380, but is unpublished: SSH is unavailable and existing HTTPS/gh credentials lack workflow scope; fork master remains fc8. This is a provider/credential capability block, not pending source approval. Recheck ordinary authorized transport capability only; no broader scopes, credential/config changes, channel workaround or artificial ZIP workload.",
       "recheckCondition": "Actual LLVM startup/caller/source-review evidence and user direction, followed by a compatible upstream release/pin.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
@@ -141207,6 +141210,10 @@
         {
           "label": "Exact retained native outputs.zip and metadata/report proof",
           "url": "https://github.com/tamird/gvisor/actions/runs/44977041157/artifacts/14736282398"
+        },
+        {
+          "label": "Validated unpublished fork ZIP-default workflow change",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44978721380"
         }
       ],
       "followup": {
