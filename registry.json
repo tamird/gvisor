@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T13:48:07.985731+00:00",
+    "updatedAt": "2026-11-22T14:30:19.849383+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4970,11 +4970,11 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "Root prepares the minimal BuildBuddy provider fix/regression and verifies actual enforcement before treating requested properties as effective. analysis_pass_inventory owns the changed analyzer policy and pending compiler/performance gates. Use current support 6e2c0cdd for qualifications; preserve source approvals and actual upstream compiler/platform prerequisites.",
+        "nextAction": "buildbuddy_network_fix / root retain the prepared provider correction 77d1ff918 and its pending publication review in investigation:buildbuddy-oci-networking. Native CI and actual deployed enforcement remain separate required evidence. analysis_pass_inventory owns the changed analyzer policy and pending compiler/performance gates. Use current support 6e2c0cdd for qualifications; preserve source approvals and actual upstream compiler/platform prerequisites.",
         "recheckCondition": "Qualified provider correction and actual deployed behavior, terminal owner evidence for the analyzer policy, or actual upstream prerequisite landing; no repeat of the completed 70857 Nogo gate.",
         "observedAt": "2026-11-17T19:58:24.544895+00:00",
         "curatedAt": "2026-11-21T13:24:07.659680+00:00",
-        "disposition": "Full Nogo gate on immutable 70857bbd74c9203998a51b9c8c867ba8c9eba01a is complete: 892/892 passed, 804 actual remote and 88 remote-cached; all 87 prior completed checks were reused without rerun. Executed command after existing helper setup:\nbazel test --keep_going --config=buildbuddy --config=x86_64 --credential_helper=\"remote.buildbuddy.io=$(realpath bazel-bin/tools/buildbuddy/credential_helper)\" --test_tag_filters=nogo --build_tests_only --strip=never //...\nUnchanged NogoSplit covers both target architectures; this is not native ARM-host proof. Completion was cache-assisted after the earlier 30-minute cap, with no matched speedup or cold-cache claim. The partial run remains historical evidence, not a current correctness blocker. Current fork support 6e2c0cddf64e8c0c0ddf68a6d8936a9401fd0d22 includes the approved network-default request and reviewed README. Its property queries do not prove provider enforcement; the public OCI implementation at 168813c has a bug, while the cloud deployed version remains unknown. The user redirected the unposted issue proposal toward a minimal provider PR and regression; no patch or publication decision exists yet.\n\nThe separate eight-file analyzer-policy candidate d712184f6 is not ready: scan 45022004632 selected 890 labels (two assembler labels legitimately absent), with 20 pass, 255 fail and 615 unfinished; 1,234 deduplicated findings include 614 generated/protected findings held for review. Prep 47968b737 produced 11,780 XML records per architecture with 85 skips and zero failures/errors; source checks passed. Its compiler/performance gate remains pending with analysis_pass_inventory. These results do not replace the source-bound 70857 Nogo completion above.",
+        "disposition": "Full Nogo gate on immutable 70857bbd74c9203998a51b9c8c867ba8c9eba01a is complete: 892/892 passed, 804 actual remote and 88 remote-cached; all 87 prior completed checks were reused without rerun. Executed command after existing helper setup:\nbazel test --keep_going --config=buildbuddy --config=x86_64 --credential_helper=\"remote.buildbuddy.io=$(realpath bazel-bin/tools/buildbuddy/credential_helper)\" --test_tag_filters=nogo --build_tests_only --strip=never //...\nUnchanged NogoSplit covers both target architectures; this is not native ARM-host proof. Completion was cache-assisted after the earlier 30-minute cap, with no matched speedup or cold-cache claim. The partial run remains historical evidence, not a current correctness blocker. Current fork support 6e2c0cddf64e8c0c0ddf68a6d8936a9401fd0d22 includes the approved network-default request and reviewed README. Its property queries do not prove provider enforcement; the public OCI implementation at 168813c has a bug, while the cloud deployed version remains unknown. The unposted issue proposal is superseded by preparation of a minimal provider PR and regression under buildbuddy_network_fix. A one-line provider change and existing networking fixtures are prepared under two focused reviews. Remote tests have not run because authentication is unavailable; native upstream CI is the proposed validation route. No fix or publication approval is claimed.\n\nThe separate eight-file analyzer-policy candidate d712184f6 is not ready: scan 45022004632 selected 890 labels (two assembler labels legitimately absent), with 20 pass, 255 fail and 615 unfinished; 1,234 deduplicated findings include 614 generated/protected findings held for review. Prep 47968b737 produced 11,780 XML records per architecture with 85 skips and zero failures/errors; source checks passed. Its compiler/performance gate remains pending with analysis_pass_inventory. These results do not replace the source-bound 70857 Nogo completion above.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45011783743",
           "https://github.com/tamird/gvisor/actions/runs/45011783743/artifacts/14750124755",
@@ -11645,9 +11645,9 @@
           "https://buildkite.com/gvisor/internal/builds/36754",
           "https://github.com/gvisor/gvisor/pull/17626"
         ],
-        "mergeable": "MERGEABLE",
+        "mergeable": "CONFLICTING",
         "recheckCondition": "EOF prerequisite delivery, missing architecture/performance evidence or substantive importer/source feedback.",
-        "curatedAt": "2026-11-19T18:59:24.568877+00:00",
+        "curatedAt": "2026-11-22T14:02:28.619749+00:00",
         "priorImportNextAction": "Importing maintainer must read the original failed internal job and provide the first actionable error or correct the internal change. Root follows the exact source/import without guessing a source fix. DCO import coordination: Root coordinates #17626 at 0e17e2f614e9. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17626,
@@ -11860,7 +11860,8 @@
             }
           },
           "limit": "Supported ARM correctness complete; full controlled performance and public Netip/import qualification remain open."
-        }
+        },
+        "base": "eb263e1f414d0bceaf10decea6c73e2c77332112"
       },
       "evidence": [
         {
@@ -16427,7 +16428,7 @@
         "disposition": "Fresh adaptation4d7e686c passed functional, Nogo, source and C++ gates. Performance and adversarial review remain open; publicf11 is unchanged and the adaptation is not approved for publication. The old1454 CI record is separate from this work.",
         "sourceHead": "f11f74a174170eedf4b158ef111937c4533d4abe",
         "observedAt": "2026-11-20T23:41:26.383263+00:00",
-        "nextAction": "approved_rebase_queue closes the owned performance and adversarial-review obligations, then presents a qualified exact-source handoff for any required publication review. No current human question or public push is inferred.",
+        "nextAction": "Latest private source d015e4c537be52d4a0bbeda2cd04c3f54efa8d0d includes the agreed public Insert/private insert correction. Both architecture qualifications and source checks passed; both final static reviews were accepted. Root retains the broad performance gate and any eventual qualified-source publication decision. No new adversarial review or source rewrite is the next action; public f11 remains unchanged.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15634",
           "https://github.com/tamird/gvisor/actions/runs/41091511027/artifacts/12994247763",
@@ -16463,10 +16464,11 @@
           "https://buildkite.com/gvisor/first-pass/builds/1454#01a1ead6-2076-4b23-a6b9-ab65f8ae04de",
           "https://buildkite.com/gvisor/first-pass/builds/1454#01a1ead6-2077-4a61-8951-2ccc3f48ae1f"
         ],
-        "mergeable": "MERGEABLE",
+        "mergeable": "CONFLICTING",
         "recheckCondition": "Actual performance/adversarial findings and qualified source, or new maintainer guidance.",
         "implementationOwner": "approved_rebase_queue",
-        "curatedAt": "2026-11-20T23:41:26.383263+00:00"
+        "curatedAt": "2026-11-22T14:02:28.619749+00:00",
+        "base": "eb263e1f414d0bceaf10decea6c73e2c77332112"
       },
       "outreachReviewClock": {
         "head": "679d14eed77a4ce6029065d88248c8ce0902c270",
@@ -36013,7 +36015,7 @@
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
         "observedAt": "2026-11-20T23:31:27.372182+00:00",
         "disposition": "The affected matcher/parity/current-base investigation is held until actual confirmed Daybreak access. The original owner turn stopped with a cybersecurity content flag and Daybreak suggestion; no specific command or detailed rationale was supplied. This is an execution-policy hold, not missing human approval. Already-launched test-only run44836517279 is metadata-known FAILURE; the observer incorrectly treated nil TCP.SeqNum as a wildcard, so no new Linux-parity claim follows. Public0ae and productionc9-on4b are unchanged; prior ordinary proofs and separate ARM prerequisites retain their scopes.",
-        "nextAction": "After Daybreak access is actually confirmed, resume the original owner’s matcher correction and current-base verification. Do not retry held diagnostics, read the held run’s logs or route the work through another agent/rephrasing. Continue unrelated authorized work independently.",
+        "nextAction": "Keep matcher/current-base and sensitive source work held under the current user instruction. Do not read the held source, adapt it, run tests/retries or publish. Root retains the verified conflict and both November 20 findings as unfinished obligations; a claim or hold is not completion.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16419",
           "https://github.com/google/gvisor/pull/16419#discussion_r4504268180",
@@ -36042,8 +36044,8 @@
           "https://github.com/gvisor/gvisor/pull/16419#discussion_r4648619069",
           "https://github.com/gvisor/gvisor/pull/16419#discussion_r4648619071"
         ],
-        "recheckCondition": "Actual confirmed Daybreak access, then the original owner’s source-bound matcher/current-base evidence.",
-        "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
+        "recheckCondition": "Actual user instruction changing the hold and applicable access/policy checks; no repeated availability or publication request.",
+        "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "mergeable": "CONFLICTING",
         "qualificationHistory": [
           {
@@ -36152,7 +36154,7 @@
           ]
         },
         "remainingNetworkOutcomeOwner": "tcp_conflict",
-        "curatedAt": "2026-11-20T23:31:27.372182+00:00",
+        "curatedAt": "2026-11-22T14:02:28.619749+00:00",
         "ciExecutionAuthorization": {
           "status": "Authorized CI-only; held for permanent Bazel mechanism migration",
           "owner": "root",
@@ -38898,7 +38900,7 @@
         "sourceHead": "cbe9181a465bf9a2db17a9494ee9ad7792977f93",
         "observedAt": "2026-11-20T21:38:17.837349+00:00",
         "disposition": "The RACK adaptation’s code passed546 functional cases plus two Nogo targets per architecture and canonical source checks; both code reviewers found no remaining issue. Prose correction428e8fdf fixes the false two-assertion/cwnd claim with a tree identical to testedC515. Broad performance/A-A remains open; this is not yet the first human source-publication question and the publiccbe source has not been replaced.",
-        "nextAction": "approved_rebase_queue/root finish the scoped prose handoff and preserve exact code/input evidence. Root closes the required broad performance/A-A gate on a verified suitable worker before a concrete qualified-source review; no current pending human decision or public push.",
+        "nextAction": "The approved prose correction already exists at 428e8fdf14d80191228e081e00f761aa0ac70815; no metadata/prose edit remains. Preserve exact code/input evidence. Root closes the required broad performance/A-A gate before any qualified-source publication review; no public source push is inferred.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16495",
           "https://github.com/google/gvisor/pull/16495#event-35504395605",
@@ -38913,7 +38915,8 @@
         "mergeable": "CONFLICTING",
         "recheckCondition": "Final scoped prose acceptance and valid source-bound performance evidence, or actual new source/review guidance.",
         "implementationOwner": "approved_rebase_queue",
-        "curatedAt": "2026-11-20T21:38:17.837349+00:00"
+        "curatedAt": "2026-11-22T14:02:28.619749+00:00",
+        "base": "eb263e1f414d0bceaf10decea6c73e2c77332112"
       },
       "dcoAmendment": {
         "oldHead": "ffac28a03554b62419747c41f389bdc9bfe303d9",
@@ -39630,7 +39633,20 @@
           "sourceHead": "86947e250a0b280c20f498dba9576b1b6380bacc",
           "reviewDecision": "APPROVED"
         }
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "status": "settled",
+          "head": "28a5f72059346d1c74e1146c17e42a7ca388518f",
+          "url": "https://github.com/google/gvisor/pull/16490#pullrequestreview-6004162562",
+          "title": "Respond to retained review feedback",
+          "outcome": "posted",
+          "postedURL": "https://github.com/google/gvisor/pull/16490#issuecomment-7061334471",
+          "at": "2026-11-21T10:34:59Z",
+          "summary": "Explained the RBE value concern; the maintainer later approved the current source."
+        }
+      ]
     },
     {
       "id": "pr:16496",
@@ -40191,7 +40207,7 @@
         ],
         "mergeable": "CONFLICTING",
         "recheckCondition": "Material executor information or resolved ARM containment and an explicitly authorised measurement plan; no unchanged timing retry or source publication inferred. Preserve existing replacement qualification and all performance/dependency/publication holds.",
-        "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
+        "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "qualificationHistory": [
           {
             "observedAt": "2026-11-17T21:09:15.022997+00:00",
@@ -40514,7 +40530,7 @@
           "proofSHA256": "8cfa9665fca33bd1625d96c7b184d3b8454523fbfe87c0b7bd9744d867d14c0b",
           "recheckCondition": "Root permanent-mechanism decision, same-operation execution-review result or actual fidelity evidence."
         },
-        "curatedAt": "2026-11-19T18:59:24.568877+00:00",
+        "curatedAt": "2026-11-22T14:02:28.619749+00:00",
         "permanentBazelFirstLayer": {
           "testSource": "340e1072aa5a3d47e01ff68dffea34f91be4a9f4",
           "ciSource": "fa452727d8d6af2399f8644f9d64a40dc5d902ae",
@@ -41063,7 +41079,20 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "pinring_source_scope"
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "status": "settled",
+          "head": "24c1b39e498eb0f4635694e8a9b1ebe179257fb6",
+          "url": "https://github.com/google/gvisor/pull/16508#pullrequestreview-6004164648",
+          "title": "Respond to retained review feedback",
+          "outcome": "posted",
+          "postedURL": "https://github.com/google/gvisor/pull/16508#issuecomment-7060606298",
+          "at": "2026-11-21T09:29:29Z",
+          "summary": "Delivered the requested rebase and posted its notice; the maintainer subsequently approved."
+        }
+      ]
     },
     {
       "id": "branch:systrap-elf-offsets",
@@ -54431,7 +54460,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44355859825"
         ],
         "recheckCondition": "Missing-gate plan/qualification result, source or runtime input change, human feedback.",
-        "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
+        "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "mergeable": "CONFLICTING",
         "qualificationHistory": [
           {
@@ -54837,7 +54866,7 @@
           "selectionGap": "Master-onlysoft-failingbenchmark lane already includednative; not PR-blocking FUSEfixture coverage. Newsmall maintained owner smoke targets that specific gap.",
           "causeLimit": "No claim thatf196 introduced missingdevice or that this fix resolves laterbenchmark cancellation."
         },
-        "curatedAt": "2026-11-19T01:19:23.138983+00:00",
+        "curatedAt": "2026-11-22T14:02:28.619749+00:00",
         "technicalOwner": "fuse_full20_resume",
         "full20Recovery": {
           "owner": "fuse_full20_resume",
@@ -76014,9 +76043,9 @@
           "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
         ],
         "recheckCondition": "Final source review, required 16522/17446 landing/internal import or concrete performance evidence. Preserve existing replacement qualification and all performance/dependency/publication holds.",
-        "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
+        "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "mergeable": "CONFLICTING",
-        "curatedAt": "2026-11-21T14:40:26.293073+00:00"
+        "curatedAt": "2026-11-22T14:02:28.619749+00:00"
       },
       "dcoAmendment": {
         "oldHead": "005743727b3d80d373085133b5da9cd906cc9d7c",
@@ -76041,7 +76070,16 @@
         "priorOwner": "root / existing Systrap native stub workstream"
       },
       "nextStep": "Root reviews exact source/authority and combined-validation bounds. approved_rebase_queue preserves the explicit 17446 strict prerequisite and original source evidence; no public update or runtime/performance identity is inferred. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure.",
-      "recheckCondition": "Reviewable current-base resolution or actual16522 landing/source approval/performance evidence."
+      "recheckCondition": "Reviewable current-base resolution or actual16522 landing/source approval/performance evidence.",
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
+        "url": "https://github.com/google/gvisor/pull/17067",
+        "title": "Reply to outstanding rebase request",
+        "body": "I’m waiting for #16522 before updating this PR, as discussed.\n\nPosted by Codex on behalf of @tamird.",
+        "summary": "The PR update waits for #16522, as previously discussed."
+      }
     },
     {
       "id": "pr:bazel-contrib/buildtools:1527",
@@ -77314,7 +77352,7 @@
         "sourceHead": "53cc614c1cb28bd0a34a2cf6f0d504f3d28ac72e",
         "observedAt": "2026-11-17T18:16:01.120596+00:00",
         "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
-        "nextAction": "Author resolves source conflict while preserving root registry credit and bridge/veth coverage; follow integration or a new review request.",
+        "nextAction": "hky1999 owns the source conflict and implementation. Root owns reviewer follow-through on the November 11/12 author answers and triage of the November 20 experimental review findings. Existing inspection receipts do not establish a later public response or closure of those findings. Reconcile the current revision within actual source/access constraints; do not adopt automated suggestions or run new tests without the existing authorization and policy checks.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17026#pullrequestreview-5800533049",
           "https://github.com/google/gvisor/pull/17026#discussion_r4492764964",
@@ -77324,7 +77362,7 @@
           "https://github.com/hky1999/gvisor/blob/53cc614c1/test/syscalls/linux/socket_netlink_route.cc#L3689",
           "https://github.com/gvisor/gvisor/pull/17026"
         ],
-        "recheckCondition": "Author publishes a new head or PR merges/closes; recheck exact head/base. Preserve recorded policy/hold conditions.",
+        "recheckCondition": "Assigned reviewer reconciliation or actual author revision/integration; preserve the distinction between author implementation and our review obligation.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "CONFLICTING"
       },
@@ -77344,6 +77382,11 @@
             "head": "53cc614c1cb28bd0a34a2cf6f0d504f3d28ac72e",
             "evidence": "https://github.com/hky1999/gvisor/blob/53cc614c1/test/syscalls/linux/socket_netlink_route.cc#L3689"
           }
+        ],
+        "owner": "root",
+        "since": "2026-11-06T13:12:08Z",
+        "reviewers": [
+          "tamird"
         ]
       }
     },
@@ -77721,7 +77764,7 @@
         "owner": "root",
         "sourceHead": "6bd31cd09cc922fb7235267e95c0d951ad1f43c8",
         "observedAt": "2026-11-20T20:48:41.652999+00:00",
-        "disposition": "The final NIC correction passed all five affected gates, including actual new tests; performance and correctness reviewers accepted the changed API. This closes the actionable source-review findings on that candidate, not elapsed-time A/A or performance qualification. Root owns the verified quiet-worker recheck. Public6bd31cd remains unchanged and no source-publication question is pending.",
+        "disposition": "Private candidate 8a3cb46e78abfb7da36099399b5c5ffbe7f0096b addresses the retained race and RemoveNIC-test feedback. Public 6bd still carries both unresolved findings until required performance qualification and publication. Preserve both current author-feedback rows.",
         "nextAction": "Root rechecks verified quiet-worker availability and closes the source-bound elapsed-time A/A/performance obligation. Preserve the candidate’s exact functional/race/Nogo/source evidence and obtain any eventual publication review only after required qualification.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17103",
@@ -82607,8 +82650,8 @@
       "followup": {
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
         "owner": "approved_rebase_queue / root",
-        "nextAction": "Await the actual unanswered #17184 amendment decision for f26a34c11bfa461eb497291194bfcf7b649d6612. Preserve all guard/source/Nogo/positive-mode evidence and clean final independent reviews. Fork-preview workflow-permission determination timed out after normal SSH refusal and guarded HTTPS retry; missing scope is unproved, and exact public f6 source remains reviewable. No competing b7 PR, source publication or new permission request.",
-        "mergeable": "MERGEABLE",
+        "nextAction": "Await the unanswered #17184 amendment decision for f26a34c11bfa461eb497291194bfcf7b649d6612. The exact f26 preview is now accessible, with tree 0c22e56cec3994a3d1b92a09c1db40e9733e2eaa and parent eb263e1f414d0bceaf10decea6c73e2c77332112. Preserve all guard/source/Nogo/positive-mode evidence and final independent reviews. Public 2aa remains unchanged; there is no competing b7 PR or transport/permission blocker.",
+        "mergeable": "CONFLICTING",
         "observedAt": "2026-11-20T18:31:31.140104+00:00",
         "recheckCondition": "Actual amendment answer or substantive source/qualification change; treat preview transport recovery separately from source approval.",
         "evidence": [
@@ -82655,8 +82698,9 @@
           "https://github.com/tamird/gvisor/blob/ab856ed6063d63de247adbb26e01617a7a50c02d/registry.json"
         ],
         "disposition": "The lean Go TCP rewrite is fully qualified and independently reviewed. One-commit f26a34c11bfa461eb497291194bfcf7b649d6612 has the exact qualified f6f9382a tree on eb263, includes DCO and remains cumulative +144 lines. The actual question to amend #17184 is pending; public 2aa840f4 is unchanged. The unanswered b7 standalone proposal is superseded as the current vehicle and retained only as an alternative, without an approval grant.",
-        "curatedAt": "2026-11-20T18:31:31.140104+00:00",
-        "implementationOwner": "approved_rebase_queue"
+        "curatedAt": "2026-11-22T14:02:28.619749+00:00",
+        "implementationOwner": "approved_rebase_queue",
+        "base": "eb263e1f414d0bceaf10decea6c73e2c77332112"
       },
       "dcoAmendment": {
         "oldHead": "9c541c3ae1cd68df1741882480d5bf184396e695",
@@ -93802,7 +93846,7 @@
         "sourceHead": "f069808da1b9876130c7a853fe2fbb9f815d8519",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
         "disposition": "Current public f069808da1b9876130c7a853fe2fbb9f815d8519 is conflicting. Timer source access, adaptation and retry remain explicitly held until Daybreak availability is actually confirmed; no confirmation exists. Historical approved-patch tests remain scoped to their original source and do not qualify a future conflict adaptation.",
-        "nextAction": "Preserve the explicit Daybreak hold: no timer source read, adaptation or retry until actual availability is confirmed. Root and the existing owner recheck that condition; this is not a pending user approval.",
+        "nextAction": "Keep the explicit user hold: no timer source read, adaptation or retry. The published conflict remains an unfinished root-owned obligation. Recheck only actual instructions and access/policy conditions changing the hold; do not manufacture a pending approval question.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17286",
           "https://github.com/tamird/gvisor/commit/97e5ddeb6",
@@ -93839,7 +93883,9 @@
               ]
             }
           }
-        ]
+        ],
+        "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+        "curatedAt": "2026-11-22T14:02:28.619749+00:00"
       },
       "settledReviews": [
         {
@@ -97951,7 +97997,20 @@
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b0f308f6547907a11d07fff7805be7e01df05143"
         ]
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "status": "settled",
+          "head": "4b845306c75b9ad0d09d31cdb86d68dc64171fe9",
+          "url": "https://github.com/google/gvisor/pull/17456#issuecomment-7060709622",
+          "title": "Respond to retained review feedback",
+          "outcome": "posted",
+          "postedURL": "https://github.com/google/gvisor/pull/17456#issuecomment-7060695802",
+          "at": "2026-11-21T09:41:09Z",
+          "summary": "Addressed the DCO range report in the saved rebase notice; the provider issue126 dependency remains."
+        }
+      ]
     },
     {
       "id": "pr:17457",
@@ -98315,7 +98374,7 @@
       "followup": {
         "sourceHead": "b08bf67a0996f2732d82ad5b35949048cc2139f0",
         "owner": "approved_rebase_queue / root",
-        "nextAction": "The missing benchmark prerequisite is qualified and has an actual pending publication question in investigation:legacy-state-udp-benchmarks for 408f2c192. Root awaits that answer; no upstream PR or production amendment exists. Required component matrix remains 38 rows: 32 state (22 upstream plus 10 wire) and 6 UDP, with 4 checkpoint/restore broad controls separate. Both GraphLoad controls remain INCONCLUSIVE under fixed ±2% containment; no further timing, pooled rows, routing attribution or separate 150-network gate.",
+        "nextAction": "The missing legacy benchmark prerequisite is delivered as #17871 at exact 6eaaa8495. Root follows its CI/review lifecycle. Preserve the original 38 component and four checkpoint/restore controls, both inconclusive GraphLoad A/A results and independent production/performance gates; no new timing or source publication follows from benchmark delivery.",
         "mergeable": "CONFLICTING",
         "observedAt": "2026-11-20T23:27:51.953187+00:00",
         "recheckCondition": "Actual benchmark-only publication decision and prerequisite delivery, with independent source-bound production/performance gates preserved.",
@@ -98343,8 +98402,9 @@
           "https://github.com/tamird/gvisor/actions/runs/44979306818"
         ],
         "implementationOwner": "approved_rebase_queue",
-        "curatedAt": "2026-11-21T15:42:31.456870+00:00",
-        "disposition": "Public b08bf67 remains conflicting and unchanged. Private conflict recovery 56c7c9ff77e5f7644292094cae6a9e67f5fe1a60 preserves upstream signaling-NaN fixes/tests and the zero-dispatch topic. Both architectures passed 15 state targets (five Go, ten Nogo), with 11,810 XML records, 85 intentional wire-slice skips and zero failures each; all five source checks passed. Both independent correctness and performance/style reviews found no blockers. This is not publication approval or performance qualification: seven component A/A results remain inconclusive and four broad controls remain unqualified."
+        "curatedAt": "2026-11-22T14:02:28.619749+00:00",
+        "disposition": "Public b08bf67 remains conflicting and unchanged. Private conflict recovery 56c7c9ff77e5f7644292094cae6a9e67f5fe1a60 preserves upstream signaling-NaN fixes/tests and the zero-dispatch topic. Both architectures passed 15 state targets (five Go, ten Nogo), with 11,810 XML records, 85 intentional wire-slice skips and zero failures each; all five source checks passed. Both independent correctness and performance/style reviews found no blockers. This is not publication approval or performance qualification: seven component A/A results remain inconclusive and four broad controls remain unqualified.",
+        "base": "eb263e1f414d0bceaf10decea6c73e2c77332112"
       },
       "dcoAmendment": {
         "oldHead": "6827c2cfbc7102549d4ea74eb602516db2635a16",
@@ -105831,6 +105891,47 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/17871",
           "https://buildkite.com/gvisor/first-pass/builds/2325"
+        ]
+      }
+    },
+    {
+      "id": "pr:16660",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16660,
+      "group": "runtime",
+      "ref": "tlp-new-data-when-cwnd-full",
+      "head": "2c1ea17a6be7c217a0bc8c52631ee0e2fd7539fc",
+      "title": "tcp: send new data as the loss probe when the congestion window is full",
+      "url": "https://github.com/google/gvisor/pull/16660",
+      "status": "open",
+      "summary": "The author offered to include the remaining retransmitted-probe correction. Root still owes the TCP correctness choice and current-source reconciliation; the user confirmed keeping sensitive work held. Current source is 2c1ea17a; older 0bf evidence is historical. An outdated flag or earlier inspection is not completion.",
+      "reviewWatch": {
+        "owner": "root",
+        "reviewers": [
+          "tamird"
+        ],
+        "since": "2026-10-30T02:43:22Z",
+        "inspected": []
+      },
+      "evidence": [
+        {
+          "label": "Uncompleted author response",
+          "url": "https://github.com/google/gvisor/pull/16660#discussion_r4419960483"
+        },
+        {
+          "label": "Current pull request",
+          "url": "https://github.com/google/gvisor/pull/16660"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "2c1ea17a6be7c217a0bc8c52631ee0e2fd7539fc",
+        "observedAt": "2026-11-22T13:44:34.842618+00:00",
+        "nextAction": "Keep the sensitive TCP reviewer choice held under the current user instruction. Root must reconcile the author’s proposed retransmitted-probe scope with current source 2c1ea17a when actual instructions and access/policy conditions permit. adios-404 retains implementation ownership; do not reply, edit the author branch or run source/tests from this metadata assignment.",
+        "recheckCondition": "Actual user instruction changing the hold or genuine author feedback; preserve the unresolved reviewer choice until a concrete disposition.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16660#discussion_r4419960483"
         ]
       }
     }
@@ -122932,7 +123033,7 @@
           ]
         }
       ],
-      "nextStep": "Actual maintained four-CPU RBE admission supersedes the old five-CPU/executor-information blocker; no quiet-route answer is required to establish capability, and statistical stability remains independent. Iperf P64 still fails on that route, so sensitive mechanism work remains held pending confirmed Daybreak availability. Root retains the unanswered explicit exception for one remote make rebuild-moby ARCH=x86_64 DOCKER_BUILD=false on ce1634b4a, capped at 30 minutes without image publication; generic CI grants do not answer the Bazel-only exception. State component controls remain independently owner-observed, not gated on Iperf.",
+      "nextStep": "Actual maintained four-CPU RBE admission supersedes the old five-CPU/executor-information blocker; no quiet-route answer is required to establish capability, and statistical stability remains independent. Iperf P64 still fails on that route, so sensitive mechanism work remains held under the current user instruction. Root retains the unanswered explicit exception for one remote make rebuild-moby ARCH=x86_64 DOCKER_BUILD=false on ce1634b4a, capped at 30 minutes without image publication; generic CI grants do not answer the Bazel-only exception. State component controls remain independently owner-observed, not gated on Iperf.",
       "evidence": [
         {
           "label": "Merged Nginx restore-benchmark HTTP readiness change",
@@ -123144,13 +123245,15 @@
         "summary": "Scope summary of the existing unanswered Bazel-only exception request; original wording is unavailable. This is not source-publication approval.",
         "body": "Scope summary, not a verbatim question: permit one remote canonical `make rebuild-moby ARCH=x86_64 DOCKER_BUILD=false` on gVisor source ce1634b4adf686f6067b4fed388de417efd43ddd, capped at 30 minutes, without image publication, followed by Bazel validation. Generic CI authorization does not answer this specific exception to the Bazel-only rule."
       },
-      "additionalReviews": [
+      "additionalReviews": [],
+      "settledReviews": [
         {
           "kind": "information",
-          "status": "pending",
+          "status": "settled",
           "title": "Is Daybreak enabled?",
-          "summary": "Scope summary of the existing unanswered availability question; original wording is unavailable. Information only, without execution authorization.",
-          "body": "Scope summary, not a verbatim question: whether Daybreak is enabled so the held sensitive-source investigation can be reconsidered under actual access and policy checks. No answer or availability confirmation is known; this request does not authorize execution or source changes."
+          "summary": "The user confirmed keeping sensitive work held.",
+          "body": "Scope summary, not a verbatim question: confirm current Daybreak availability for the explicitly held #16419 matcher/current-base work and related investigations with an existing source-access hold. This reuses the existing information request. Availability alone does not authorize source access, implementation, tests or retries beyond the actual access and policy checks.",
+          "outcome": "keep-held"
         }
       ]
     },
@@ -129048,7 +129151,7 @@
       "group": "runtime",
       "updatedAt": "2026-11-18T09:21:28.062516+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "For #10343, obtain packet captures spanning recovery on an affected proxy connection. The eight Linux repeats delivered data in every measured interval. Keep the M003 Reno control separate. For #15253 compare captures or GSO metadata from the Kubernetes interfaces, and follow the duplicate reconnect reply on #15019. For #16887, the approved exact COMMENTED response was posted at 1668e58d4c0cb17ecb5fcf6457389575a3c01459. Await before/after results from an existing broad network benchmark before full approval; the response supplies no fresh runtime validation. Re-review new source or evidence.",
+      "nextStep": "For #10343, obtain packet captures spanning recovery on an affected proxy connection. The eight Linux repeats delivered data in every measured interval. Keep the M003 Reno control separate. For #15253 compare captures or GSO metadata from the Kubernetes interfaces, and follow the duplicate reconnect reply on #15019. For #16887, the approved exact COMMENTED response was posted at 1668e58d4c0cb17ecb5fcf6457389575a3c01459. Await before/after results from an existing broad network benchmark before full approval; the response supplies no fresh runtime validation. Re-review new source or evidence. The unresolved #16660 retransmitted-probe reviewer choice is tracked on its exact PR card and remains held; its Oct30 reply predates the broad watch but is not completed.",
       "findings": [
         {
           "text": "Reusing the receive buffers in #17187 reduced whole-Sentry allocations per GiB received by 63.16% on the single-worker TCP download (p < 0.001). Skipping flow parsing in #17188 alone yielded 55.48k allocations/GiB against 55.36k on stock (p = 0.378). The earlier two-build comparison had measured a 63.18% reduction with both changes applied.",
@@ -130274,7 +130377,6 @@
           15972,
           16081,
           16659,
-          16660,
           16793,
           16887,
           17022,
@@ -142463,6 +142565,35 @@
           "postedURL": "https://github.com/gvisor/gvisor/pull/17871"
         }
       ]
+    },
+    {
+      "id": "investigation:buildbuddy-oci-networking",
+      "repo": "buildbuddy-io/buildbuddy",
+      "group": "buildbuddy",
+      "status": "active",
+      "owner": "buildbuddy_network_fix / root",
+      "head": "77d1ff918426052c458aab3647f0ee36243d4580",
+      "title": "Honor disabled OCI network modes",
+      "updatedAt": "2026-11-22T14:30:19.849383+00:00",
+      "summary": "The prepared one-line OCI change treats off and none as disabled network modes and extends the existing networking fixtures. Two focused reviews are complete. Tests have not run because an authenticated remote runner is unavailable; native upstream CI remains required. The deployed cloud revision and actual RBE enforcement remain unverified.",
+      "nextStep": "Await the source-PR publication decision. If approved, follow native upstream CI and genuine maintainer feedback; source preparation does not establish deployed behavior. The earlier issue proposal is superseded and no issue was posted.",
+      "findings": [],
+      "evidence": [
+        {
+          "label": "Prepared provider correction",
+          "url": "https://github.com/tamird/buildbuddy/commit/77d1ff918426052c458aab3647f0ee36243d4580"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "77d1ff918426052c458aab3647f0ee36243d4580",
+        "url": "https://github.com/tamird/buildbuddy/commit/77d1ff918426052c458aab3647f0ee36243d4580",
+        "title": "Honor disabled OCI network modes",
+        "body": "Commit 72cfaea347f added the network platform property, translating `network=off` to Docker network mode `none`. The OCI provider disabled networking only for `off`, so the new property left networking enabled.\n\nTreat both values as disabled. Extend the existing networking fixture to cover `network=off` overriding `dockerNetwork=bridge`, and the legacy `dockerNetwork=none` setting.\n\nThe Linux networking tests have not run: an authenticated remote test runner is unavailable in this session. Native CI remains required.\n\nPosted by Codex on behalf of @tamird.\n",
+        "summary": "Treat both disabled OCI network-mode values consistently. The existing fixture covers the property override and legacy setting. Tests have not run; native CI remains required.",
+        "baseHead": "168813c94525e5106459531fb629429d5fe2fb60"
+      }
     }
   ],
   "updatedAt": "2026-11-20T23:41:26.383263+00:00"

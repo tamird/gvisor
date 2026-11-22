@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-22T13:44:34.842618+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-22T13:48:07.985731+00:00",
+  "registryDate": "2026-11-22T14:30:19.849383+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -452182,27 +452182,6 @@
     },
     {
       "repo": "google/gvisor",
-      "number": 17492,
-      "head": "a4b0381bb2b121ec576780dbd65d881b50d837db",
-      "sourceNumber": 17492,
-      "owner": "Agent",
-      "claimed": false,
-      "overdue": true,
-      "kind": "review",
-      "id": "PRR_kwDOB9IlXs8AAAABZeJSDg",
-      "needsTriage": false,
-      "rebaseRequested": true,
-      "url": "https://github.com/google/gvisor/pull/17492#pullrequestreview-6004298254",
-      "author": "EtiennePerot",
-      "updatedAt": "2026-11-21T09:28:42Z",
-      "newOrChanged": false,
-      "awaitingAuthor": true,
-      "assigned": true,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
       "number": 16076,
       "head": "63bcfa2ad44882db0ecd5afab16df8c5e285e485",
       "sourceNumber": 16076,
@@ -453710,10 +453689,10 @@
       "number": 16508,
       "head": "24c1b39e498eb0f4635694e8a9b1ebe179257fb6",
       "sourceNumber": 16508,
-      "owner": "Agent",
+      "owner": "approved_rebase_queue / root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABZeBIKA",
-      "needsTriage": true,
+      "needsTriage": false,
       "url": "https://github.com/google/gvisor/pull/16508#pullrequestreview-6004164648",
       "author": "EtiennePerot",
       "updatedAt": "2026-11-21T09:28:41Z",
@@ -453728,10 +453707,10 @@
       "number": 16490,
       "head": "28a5f72059346d1c74e1146c17e42a7ca388518f",
       "sourceNumber": 16490,
-      "owner": "Agent",
+      "owner": "buildifier_license_fix / root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABZeBAAg",
-      "needsTriage": true,
+      "needsTriage": false,
       "url": "https://github.com/google/gvisor/pull/16490#pullrequestreview-6004162562",
       "author": "EtiennePerot",
       "updatedAt": "2026-11-21T09:34:14Z",
@@ -453746,10 +453725,10 @@
       "number": 17456,
       "head": "4b845306c75b9ad0d09d31cdb86d68dc64171fe9",
       "sourceNumber": 17456,
-      "owner": "Agent",
+      "owner": "buildifier_license_fix / root",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABpNng9g",
-      "needsTriage": true,
+      "needsTriage": false,
       "createdAt": "2026-11-21T09:38:09Z",
       "url": "https://github.com/google/gvisor/pull/17456#issuecomment-7060709622",
       "author": "EtiennePerot",
@@ -453762,6 +453741,26 @@
     }
   ],
   "reviewWatchHandoff": [
+    {
+      "repo": "google/gvisor",
+      "number": 16660,
+      "head": "2c1ea17a6be7c217a0bc8c52631ee0e2fd7539fc",
+      "action": "Keep the sensitive TCP reviewer choice held under the current user instruction. Root must reconcile the author’s proposed retransmitted-probe scope with current source 2c1ea17a when actual instructions and access/policy conditions permit. adios-404 retains implementation ownership; do not reply, edit the author branch or run source/tests from this metadata assignment.",
+      "claimed": true,
+      "firstObservedHead": "2c1ea17a6be7c217a0bc8c52631ee0e2fd7539fc",
+      "reviewHead": null,
+      "kind": "inline",
+      "id": "PRRC_kwDOB9IlXs8AAAABB3M-ow",
+      "url": "https://github.com/google/gvisor/pull/16660#discussion_r4419960483",
+      "author": "adios-404",
+      "updatedAt": "2026-10-30T02:43:22Z",
+      "threadId": "PRRT_kwDOB9IlXs6xkn1w",
+      "rootURL": "https://github.com/google/gvisor/pull/16660#discussion_r4412924476",
+      "rootId": "PRRC_kwDOB9IlXs8AAAABBwfiPA",
+      "owner": "root",
+      "assigned": false,
+      "feedbackComplete": true
+    },
     {
       "repo": "google/gvisor",
       "number": 17374,
@@ -453866,13 +453865,13 @@
       "checkedAt": "2026-11-22T13:44:02.084044+00:00",
       "mergeabilityCheckedAt": "2026-11-22T13:42:05.112711+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "Latest private source d015e4c537be52d4a0bbeda2cd04c3f54efa8d0d includes the agreed public Insert/private insert correction. Both architecture qualifications and source checks passed; both final static reviews were accepted. Root retains the broad performance gate and any eventual qualified-source publication decision. No new adversarial review or source rewrite is the next action; public f11 remains unchanged.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "f11f74a174170eedf4b158ef111937c4533d4abe",
         "disposition": "Fresh adaptation4d7e686c passed functional, Nogo, source and C++ gates. Performance and adversarial review remain open; publicf11 is unchanged and the adaptation is not approved for publication. The old1454 CI record is separate from this work.",
-        "nextAction": "approved_rebase_queue closes the owned performance and adversarial-review obligations, then presents a qualified exact-source handoff for any required publication review. No current human question or public push is inferred."
+        "nextAction": "Latest private source d015e4c537be52d4a0bbeda2cd04c3f54efa8d0d includes the agreed public Insert/private insert correction. Both architecture qualifications and source checks passed; both final static reviews were accepted. Root retains the broad performance gate and any eventual qualified-source publication decision. No new adversarial review or source rewrite is the next action; public f11 remains unchanged."
       },
       "conflictObservedSince": "2026-11-20T22:49:23.248038+00:00"
     },
@@ -453890,8 +453889,8 @@
       "checkedAt": "2026-11-22T13:44:02.084044+00:00",
       "mergeabilityCheckedAt": "2026-11-22T13:42:10.828443+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "Keep standalone EOF delivery and remaining architecture/performance obligations moving through shared owners. Preserve original Netip failure and private importing hold; standalone EOF proof does not qualify public Netip or clear the hold.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "58fb6b08096d65974497d16c020b3f8a0cd955a8",
@@ -453938,13 +453937,13 @@
       "checkedAt": "2026-11-22T13:44:02.084044+00:00",
       "mergeabilityCheckedAt": "2026-11-22T13:42:14.771551+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "Keep matcher/current-base and sensitive source work held under the current user instruction. Do not read the held source, adapt it, run tests/retries or publish. Root retains the verified conflict and both November 20 findings as unfinished obligations; a claim or hold is not completion.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
         "disposition": "The affected matcher/parity/current-base investigation is held until actual confirmed Daybreak access. The original owner turn stopped with a cybersecurity content flag and Daybreak suggestion; no specific command or detailed rationale was supplied. This is an execution-policy hold, not missing human approval. Already-launched test-only run44836517279 is metadata-known FAILURE; the observer incorrectly treated nil TCP.SeqNum as a wildcard, so no new Linux-parity claim follows. Public0ae and productionc9-on4b are unchanged; prior ordinary proofs and separate ARM prerequisites retain their scopes.",
-        "nextAction": "After Daybreak access is actually confirmed, resume the original owner’s matcher correction and current-base verification. Do not retry held diagnostics, read the held run’s logs or route the work through another agent/rephrasing. Continue unrelated authorized work independently."
+        "nextAction": "Keep matcher/current-base and sensitive source work held under the current user instruction. Do not read the held source, adapt it, run tests/retries or publish. Root retains the verified conflict and both November 20 findings as unfinished obligations; a claim or hold is not completion."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -453962,13 +453961,13 @@
       "checkedAt": "2026-11-22T13:44:02.084044+00:00",
       "mergeabilityCheckedAt": "2026-11-22T13:42:19.351326+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "The approved prose correction already exists at 428e8fdf14d80191228e081e00f761aa0ac70815; no metadata/prose edit remains. Preserve exact code/input evidence. Root closes the required broad performance/A-A gate before any qualified-source publication review; no public source push is inferred.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "cbe9181a465bf9a2db17a9494ee9ad7792977f93",
         "disposition": "The RACK adaptation’s code passed546 functional cases plus two Nogo targets per architecture and canonical source checks; both code reviewers found no remaining issue. Prose correction428e8fdf fixes the false two-assertion/cwnd claim with a tree identical to testedC515. Broad performance/A-A remains open; this is not yet the first human source-publication question and the publiccbe source has not been replaced.",
-        "nextAction": "approved_rebase_queue/root finish the scoped prose handoff and preserve exact code/input evidence. Root closes the required broad performance/A-A gate on a verified suitable worker before a concrete qualified-source review; no current pending human decision or public push."
+        "nextAction": "The approved prose correction already exists at 428e8fdf14d80191228e081e00f761aa0ac70815; no metadata/prose edit remains. Preserve exact code/input evidence. Root closes the required broad performance/A-A gate before any qualified-source publication review; no public source push is inferred."
       },
       "conflictObservedSince": "2026-11-20T20:43:54.441989+00:00"
     },
@@ -453986,8 +453985,8 @@
       "checkedAt": "2026-11-22T13:44:02.084044+00:00",
       "mergeabilityCheckedAt": "2026-11-22T13:42:19.351327+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "AMD StartupEmpty same-source control 44988289000 completed the original 50 visits with 24 N=1 observations per arm and balanced AB/BA positions, but remains INCONCLUSIVE: ratio interval [0.9208590976, 1.1026682723], drift and order checks fail the fixed [0.995, 1.005] precision band. The earlier control 44987386374 is separate retained evidence, not pooled or reinterpreted. No further measurements or candidate/syscall/Hackbench expansion; source 57 remains performance-held and ARM effective affinity unresolved. Existing BuildBuddy executor inventory returned HTTP 403, so capacity is unverified; await existing executor information or read permission without new credentials or blind retries. Proposed 0.5% precision is investigative, not a user regression budget. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
@@ -454034,8 +454033,8 @@
       "checkedAt": "2026-11-22T13:44:02.084044+00:00",
       "mergeabilityCheckedAt": "2026-11-22T13:42:32.570801+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "Root owns source-review/publication resolution and missing permanent Bazel consumer/device/KVM/current-base gates; qualify exact required runtime/configuration and performance separately. Existing full20 historical proof retained; do not call the new preflight full qualification.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
@@ -454064,7 +454063,7 @@
         "owner": "hky1999",
         "sourceHead": "53cc614c1cb28bd0a34a2cf6f0d504f3d28ac72e",
         "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
-        "nextAction": "Author resolves source conflict while preserving root registry credit and bridge/veth coverage; follow integration or a new review request."
+        "nextAction": "hky1999 owns the source conflict and implementation. Root owns reviewer follow-through on the November 11/12 author answers and triage of the November 20 experimental review findings. Existing inspection receipts do not establish a later public response or closure of those findings. Reconcile the current revision within actual source/access constraints; do not adopt automated suggestions or run new tests without the existing authorization and policy checks."
       },
       "conflictObservedSince": "2026-11-14T20:02:27.078720+00:00"
     },
@@ -454106,8 +454105,8 @@
       "checkedAt": "2026-11-22T13:44:02.084044+00:00",
       "mergeabilityCheckedAt": "2026-11-22T13:43:06.881472+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "approved_rebase_queue / root",
+      "action": "Root reviews exact source/authority and combined-validation bounds. approved_rebase_queue preserves the explicit 17446 strict prerequisite and original source evidence; no public update or runtime/performance identity is inferred. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure.",
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
@@ -454130,13 +454129,13 @@
       "checkedAt": "2026-11-22T13:44:02.084044+00:00",
       "mergeabilityCheckedAt": "2026-11-22T13:43:14.810226+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "approved_rebase_queue / root",
+      "action": "Await the unanswered #17184 amendment decision for f26a34c11bfa461eb497291194bfcf7b649d6612. The exact f26 preview is now accessible, with tree 0c22e56cec3994a3d1b92a09c1db40e9733e2eaa and parent eb263e1f414d0bceaf10decea6c73e2c77332112. Preserve all guard/source/Nogo/positive-mode evidence and final independent reviews. Public 2aa remains unchanged; there is no competing b7 PR or transport/permission blocker.",
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
         "disposition": "The lean Go TCP rewrite is fully qualified and independently reviewed. One-commit f26a34c11bfa461eb497291194bfcf7b649d6612 has the exact qualified f6f9382a tree on eb263, includes DCO and remains cumulative +144 lines. The actual question to amend #17184 is pending; public 2aa840f4 is unchanged. The unanswered b7 standalone proposal is superseded as the current vehicle and retained only as an alternative, without an approval grant.",
-        "nextAction": "Await the actual unanswered #17184 amendment decision for f26a34c11bfa461eb497291194bfcf7b649d6612. Preserve all guard/source/Nogo/positive-mode evidence and clean final independent reviews. Fork-preview workflow-permission determination timed out after normal SSH refusal and guarded HTTPS retry; missing scope is unproved, and exact public f6 source remains reviewable. No competing b7 PR, source publication or new permission request."
+        "nextAction": "Await the unanswered #17184 amendment decision for f26a34c11bfa461eb497291194bfcf7b649d6612. The exact f26 preview is now accessible, with tree 0c22e56cec3994a3d1b92a09c1db40e9733e2eaa and parent eb263e1f414d0bceaf10decea6c73e2c77332112. Preserve all guard/source/Nogo/positive-mode evidence and final independent reviews. Public 2aa remains unchanged; there is no competing b7 PR or transport/permission blocker."
       },
       "conflictObservedSince": "2026-11-20T00:41:37.337032+00:00"
     },
@@ -454178,13 +454177,13 @@
       "checkedAt": "2026-11-22T13:44:02.084044+00:00",
       "mergeabilityCheckedAt": "2026-11-22T13:43:30.221059+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "Keep the explicit user hold: no timer source read, adaptation or retry. The published conflict remains an unfinished root-owned obligation. Recheck only actual instructions and access/policy conditions changing the hold; do not manufacture a pending approval question.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "f069808da1b9876130c7a853fe2fbb9f815d8519",
         "disposition": "Current public f069808da1b9876130c7a853fe2fbb9f815d8519 is conflicting. Timer source access, adaptation and retry remain explicitly held until Daybreak availability is actually confirmed; no confirmation exists. Historical approved-patch tests remain scoped to their original source and do not qualify a future conflict adaptation.",
-        "nextAction": "Preserve the explicit Daybreak hold: no timer source read, adaptation or retry until actual availability is confirmed. Root and the existing owner recheck that condition; this is not a pending user approval."
+        "nextAction": "Keep the explicit user hold: no timer source read, adaptation or retry. The published conflict remains an unfinished root-owned obligation. Recheck only actual instructions and access/policy conditions changing the hold; do not manufacture a pending approval question."
       },
       "conflictObservedSince": "2026-11-20T23:52:55.787276+00:00"
     },
@@ -454202,13 +454201,13 @@
       "checkedAt": "2026-11-22T13:44:02.084044+00:00",
       "mergeabilityCheckedAt": "2026-11-22T13:43:43.626699+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "approved_rebase_queue / root",
+      "action": "The missing legacy benchmark prerequisite is delivered as #17871 at exact 6eaaa8495. Root follows its CI/review lifecycle. Preserve the original 38 component and four checkpoint/restore controls, both inconclusive GraphLoad A/A results and independent production/performance gates; no new timing or source publication follows from benchmark delivery.",
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "b08bf67a0996f2732d82ad5b35949048cc2139f0",
         "disposition": "Public b08bf67 remains conflicting and unchanged. Private conflict recovery 56c7c9ff77e5f7644292094cae6a9e67f5fe1a60 preserves upstream signaling-NaN fixes/tests and the zero-dispatch topic. Both architectures passed 15 state targets (five Go, ten Nogo), with 11,810 XML records, 85 intentional wire-slice skips and zero failures each; all five source checks passed. Both independent correctness and performance/style reviews found no blockers. This is not publication approval or performance qualification: seven component A/A results remain inconclusive and four broad controls remain unqualified.",
-        "nextAction": "The missing benchmark prerequisite is qualified and has an actual pending publication question in investigation:legacy-state-udp-benchmarks for 408f2c192. Root awaits that answer; no upstream PR or production amendment exists. Required component matrix remains 38 rows: 32 state (22 upstream plus 10 wire) and 6 UDP, with 4 checkpoint/restore broad controls separate. Both GraphLoad controls remain INCONCLUSIVE under fixed ±2% containment; no further timing, pooled rows, routing attribution or separate 150-network gate."
+        "nextAction": "The missing legacy benchmark prerequisite is delivered as #17871 at exact 6eaaa8495. Root follows its CI/review lifecycle. Preserve the original 38 component and four checkpoint/restore controls, both inconclusive GraphLoad A/A results and independent production/performance gates; no new timing or source publication follows from benchmark delivery."
       },
       "conflictObservedSince": "2026-11-20T21:07:20.274292+00:00"
     },
@@ -468341,6 +468340,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-22T13:44:02.084044+00:00"
+      },
+      "contributor-review": {
+        "scope": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
+        "since": "2026-11-22T14:30:19.849383+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-22T14:30:19.849383+00:00"
       }
     },
     "pr:17082": {
@@ -468727,7 +468733,7 @@
         "since": "2026-11-22T09:10:24+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T13:48:07.985731+00:00"
+        "observedAt": "2026-11-22T14:30:19.849383+00:00"
       }
     },
     "pr:17191": {
@@ -470862,7 +470868,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T13:48:07.985731+00:00"
+        "observedAt": "2026-11-22T14:30:19.849383+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -470871,7 +470877,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T13:48:07.985731+00:00"
+        "observedAt": "2026-11-22T14:30:19.849383+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -470880,7 +470886,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T13:48:07.985731+00:00"
+        "observedAt": "2026-11-22T14:30:19.849383+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -470889,7 +470895,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T13:48:07.985731+00:00"
+        "observedAt": "2026-11-22T14:30:19.849383+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -470898,7 +470904,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T13:48:07.985731+00:00"
+        "observedAt": "2026-11-22T14:30:19.849383+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -470907,7 +470913,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T13:48:07.985731+00:00"
+        "observedAt": "2026-11-22T14:30:19.849383+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -470916,7 +470922,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T13:48:07.985731+00:00"
+        "observedAt": "2026-11-22T14:30:19.849383+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -470925,7 +470931,16 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T13:48:07.985731+00:00"
+        "observedAt": "2026-11-22T14:30:19.849383+00:00"
+      }
+    },
+    "investigation:buildbuddy-oci-networking": {
+      "contributor-review": {
+        "scope": "77d1ff918426052c458aab3647f0ee36243d4580",
+        "since": "2026-11-22T14:30:19.849383+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-22T14:30:19.849383+00:00"
       }
     }
   },
