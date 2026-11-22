@@ -1,0 +1,118 @@
+// Copyright 2026 The gVisor Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package tcp_test
+
+import (
+	"bufio"
+	"bytes"
+	"context"
+	"flag"
+	"fmt"
+	"os"
+	"os/exec"
+	"os/signal"
+	"path/filepath"
+	"strings"
+	"syscall"
+	"testing"
+	"time"
+
+	"gvisor.dev/gvisor/pkg/test/testutil"
+)
+
+var iperfBinary = flag.String("iperf-binary", "", "declared iperf3 executable")
+
+func TestMain(m *testing.M) {
+	if proxy := os.Getenv("TCP_BENCHMARK_TEST_PROXY"); proxy != "" {
+		// The real proxy handles traffic. Its parent resists cleanup's TERM.
+		signal.Ignore(syscall.SIGTERM)
+		cmd := exec.Command(proxy, os.Args[1:]...)
+		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+		if err := cmd.Run(); err != nil {
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+	os.Exit(m.Run())
+}
+
+func TestCleanupAfterTransfer(t *testing.T) {
+	self, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	find := func(path string) string {
+		t.Helper()
+		file, err := testutil.FindFile("test/benchmarks/tcp/" + path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return file
+	}
+	helpers, err := os.MkdirTemp(testutil.TmpDir(), "tcp-cleanup-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.RemoveAll(helpers) })
+	for name, path := range map[string]string{
+		"tcp_proxy": self,
+		"nsjoin":    find("nsjoin"),
+	} {
+		if err := os.Symlink(path, filepath.Join(helpers, name)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	iperf, err := testutil.FindFile(*iperfBinary)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, find("tcp_benchmark"), "--helpers", helpers, "--iperf-binary", iperf, "--ideal", "--duration", "1", "--no-user-ns")
+	cmd.Env = append(os.Environ(), "TCP_BENCHMARK_TEST_PROXY="+find("tcp_proxy"))
+	// Reap the private PID namespace even if the unmodified shell hangs.
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.Cancel = func() error { return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL) }
+	cmd.WaitDelay = 2 * time.Second
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	result := bufio.NewScanner(stdout)
+	result.Scan()
+	var name string
+	var iterations int
+	var throughput, cpu float64
+	n, scanErr := fmt.Sscanf(result.Text(), "%s %d %f Mb/s %f cpu-time", &name, &iterations, &throughput, &cpu)
+	if scanErr != nil || n != 4 || !strings.HasPrefix(name, "BenchmarkTCP/") || iterations != 1 || throughput <= 0 {
+		cancel()
+		_ = cmd.Wait()
+		t.Fatalf("missing benchmark result: %q (scan error %v):\n%s", result.Text(), result.Err(), &stderr)
+	}
+	// Start the cleanup budget only after a real transfer has produced output.
+	timer := time.AfterFunc(20*time.Second, cancel)
+	defer timer.Stop()
+	if result.Scan() {
+		t.Errorf("unexpected additional output: %q", result.Text())
+	}
+	if err := cmd.Wait(); err != nil || ctx.Err() != nil || result.Err() != nil {
+		t.Fatalf("cleanup failed: %v (context %v, stdout %v):\n%s", err, ctx.Err(), result.Err(), &stderr)
+	}
+}
