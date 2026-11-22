@@ -16,6 +16,9 @@ bazel_dep(name = "rules_img", version = "0.3.23")
 bazel_dep(name = "rules_cc", version = "0.2.25")
 bazel_dep(name = "llvm", version = "0.8.26")
 bazel_dep(name = "libbpf", version = "1.7.0.bcr.1")
+
+bazel_dep(name = "iperf", version = "3.18.0", dev_dependency = True)
+
 bazel_dep(name = "rules_shell", version = "0.8.0")
 bazel_dep(name = "rules_qemu", version = "0.3.0")
 bazel_dep(name = "rules_foreign_cc", version = "0.16.0")
