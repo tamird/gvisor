@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T09:10:24+00:00",
+    "updatedAt": "2026-11-22T09:55:20+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1083,13 +1083,13 @@
       "status": "open",
       "reviewDecision": "REVIEW_REQUIRED",
       "updatedAt": "2026-11-19T07:47:10.548489+00:00",
-      "summary": "Published one commit at 45137f922. It folds the approved direct assembler invocation into the netgofer-aware export. All 16 declared archive inputs match 4ecb0b121, including netgofer and three C sidecars. The new GoExport action wrote a byte-identical 2,566-entry ZIP (6,246,266 bytes, SHA-256 6c52dca5d…). The Go-only netgofer consumer ran on the same archive bytes from 4ecb0b121.",
+      "summary": "Equivalent bootstrap rebase afb6198869d091f721f559dc0e2eceb0c6bb5455 is delivered with strict range-diff equality and current both-architecture owning tests/Nogo/source/archive qualification. Native GHA including actual Go export/build passed. FirstPass2319 is executing its remaining Nogo work with progress and no failed attempts; no main-pipeline result is established. DCO137159021678 evaluates the wrong 45-commit range despite one valid PR commit, linked to issue126. GitHub automatically cleared prior auto-merge; no agent auto-merge operation occurred. Current aggregate review is REVIEW_REQUIRED with fvoznika pending. Preserve independent source-assemble/import packaging requirements.",
       "followup": {
         "owner": "approved_rebase_queue / root",
-        "sourceHead": "5fd1b4fb3c7dd9af907e90b20f6a0969f0e6bc1f",
+        "sourceHead": "afb6198869d091f721f559dc0e2eceb0c6bb5455",
         "observedAt": "2026-11-17T20:13:53.813850+00:00",
-        "disposition": "Exact public head Pipeline 55470 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure. First Pass2009, native checks and DCO passed; preserve the independent assemble-test packaging/internal-import hold. Private equivalent refresh afb6198869d091f721f559dc0e2eceb0c6bb5455 on eb263 has strict range-diff equality; owner qualification is live, not a published PR-head update.",
-        "nextAction": "approved_rebase_queue audits its sole live source/current-architecture qualification barrier before root publication review. Preserve the public head and all independent packaging/import or Nogo/unit evidence; no mirrored CI read, speculative pass or publication.",
+        "disposition": "Equivalent bootstrap rebase afb6198869d091f721f559dc0e2eceb0c6bb5455 is delivered with strict range-diff equality and current both-architecture owning tests/Nogo/source/archive qualification. Native GHA including actual Go export/build passed. FirstPass2319 is executing its remaining Nogo work with progress and no failed attempts; no main-pipeline result is established. DCO137159021678 evaluates the wrong 45-commit range despite one valid PR commit, linked to issue126. GitHub automatically cleared prior auto-merge; no agent auto-merge operation occurred. Current aggregate review is REVIEW_REQUIRED with fvoznika pending. Preserve independent source-assemble/import packaging requirements.",
+        "nextAction": "approved_rebase_queue retains the sole FirstPass2319 observation and consumes its actual terminal result; root follows issue126/provider correction and independent importer packaging. Preserve requested review and do not retry, amend sign-off or re-enable auto-merge.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42849078055/artifacts/13780790760",
           "https://github.com/tamird/gvisor/compare/4ecb0b121...45137f922",
@@ -1112,9 +1112,14 @@
           "https://github.com/gvisor/gvisor/pull/15106#issuecomment-6958934771",
           "https://buildkite.com/gvisor/pipeline/builds/55470",
           "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321",
-          "https://github.com/tamird/gvisor/commit/afb6198869d091f721f559dc0e2eceb0c6bb5455"
+          "https://github.com/tamird/gvisor/commit/afb6198869d091f721f559dc0e2eceb0c6bb5455",
+          "https://github.com/gvisor/gvisor/pull/15106#issuecomment-7077017818",
+          "https://buildkite.com/gvisor/first-pass/builds/2319",
+          "https://github.com/gvisor/gvisor/runs/137159021678",
+          "https://github.com/cncf/dco2/issues/126",
+          "https://github.com/tamird/gvisor/blob/9667c31dac0426442b7ae872d8449ebb518df1b4/registry.json"
         ],
-        "recheckCondition": "Owner-audited terminal qualification and actual root publication disposition, then exact new-head CI; retain existing independent holds.",
+        "recheckCondition": "Actual FirstPass/main result, DCO provider correction or substantive maintainer/import feedback.",
         "attentionDispositions": [
           {
             "reason": "author-feedback",
@@ -1478,9 +1483,10 @@
           "reviewDecision": "REVIEW_REQUIRED",
           "scope": "Actual current-head checks; historical approvals retain their original review identity/timestamp. No new human review or import completion inferred.",
           "nextAction": "Root follows remaining source-review or technical import disposition; current checks are green."
-        }
+        },
+        "mergeable": "MERGEABLE"
       },
-      "head": "5fd1b4fb3c7dd9af907e90b20f6a0969f0e6bc1f",
+      "head": "afb6198869d091f721f559dc0e2eceb0c6bb5455",
       "evidence": [
         {
           "label": "Direct archive action on 45137f922 and byte-for-byte comparison",
@@ -96709,13 +96715,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/netgofer-wait-for-idle-slot",
-      "head": "60a7129eb22bacfcddb598d35f78f1d022047473",
+      "head": "24841003c42c262436c161885db756eef1496a40",
       "title": "Wait for the idle UDP flow to release its netgofer slot",
       "url": "https://github.com/google/gvisor/pull/17416",
       "group": "tests",
       "status": "open",
       "updatedAt": "2026-11-18T20:11:46.639485+00:00",
-      "summary": "Current-head First Pass1749 failed because Nogo and cgroupv2 unit jobs timed out. Earlier C++ download, container and syscall failures passed on retry; no current source-regression cause is established.",
+      "summary": "Equivalent bootstrap rebase 24841003c42c262436c161885db756eef1496a40 is delivered with strict range-diff equality and both-architecture owning tests/Nogo/source qualification. FirstPass2320 and all current native GHA/DCO passed; public source is open/mergeable, REVIEW_REQUIRED with manninglucas pending. New-head main Pipeline and import are not established. Earlier Nogo/unit failures retain historical source-bound scope and are not applied to this passing head.",
       "evidence": [
         {
           "label": "All 22 ARM64 cases, eight slower releases and three failing controls",
@@ -96803,10 +96809,10 @@
       ],
       "followup": {
         "owner": "approved_rebase_queue / root",
-        "sourceHead": "60a7129eb22bacfcddb598d35f78f1d022047473",
+        "sourceHead": "24841003c42c262436c161885db756eef1496a40",
         "observedAt": "2026-11-18T20:06:11.890448+00:00",
-        "disposition": "Exact public head Pipeline 55353 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure. Earlier independently executed Nogo and cgroupv2-unit timeouts remain separate unresolved evidence. Private equivalent refresh 24841003c42c262436c161885db756eef1496a40 on eb263 has strict range-diff equality; owner qualification is live, not a published PR-head update.",
-        "nextAction": "approved_rebase_queue audits its sole live source/current-architecture qualification barrier before root publication review. Preserve the public head and all independent packaging/import or Nogo/unit evidence; no mirrored CI read, speculative pass or publication.",
+        "disposition": "Equivalent bootstrap rebase 24841003c42c262436c161885db756eef1496a40 is delivered with strict range-diff equality and both-architecture owning tests/Nogo/source qualification. FirstPass2320 and all current native GHA/DCO passed; public source is open/mergeable, REVIEW_REQUIRED with manninglucas pending. New-head main Pipeline and import are not established. Earlier Nogo/unit failures retain historical source-bound scope and are not applied to this passing head.",
+        "nextAction": "Follow existing maintainer review and actual new-head main/import lifecycle. Preserve pending manninglucas and historical evidence; no repeated reviewer request, manual CI retry or additional source edit.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17416",
           "https://github.com/tamird/gvisor/commit/79d4294d4",
@@ -96818,10 +96824,13 @@
           "https://buildkite.com/gvisor/first-pass/builds/1580#01a1eae1-b221-472e-b7a6-08733d039b47",
           "https://buildkite.com/gvisor/pipeline/builds/55353",
           "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321",
-          "https://github.com/tamird/gvisor/commit/24841003c42c262436c161885db756eef1496a40"
+          "https://github.com/tamird/gvisor/commit/24841003c42c262436c161885db756eef1496a40",
+          "https://github.com/gvisor/gvisor/pull/17416#issuecomment-7077018038",
+          "https://buildkite.com/gvisor/first-pass/builds/2320",
+          "https://github.com/tamird/gvisor/blob/9667c31dac0426442b7ae872d8449ebb518df1b4/registry.json"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Owner-audited terminal qualification and actual root publication disposition, then exact new-head CI; retain existing independent holds.",
+        "recheckCondition": "New maintainer feedback, actual main/import result or changed current head/check state.",
         "latestReviewObservation": {
           "checkedAt": "2026-11-18T19:22:58.577211+00:00",
           "head": "60a7129eb22bacfcddb598d35f78f1d022047473",
@@ -105613,14 +105622,17 @@
       "title": "DCO check includes commits already on the PR base branch",
       "url": "https://github.com/cncf/dco2/issues/126",
       "updatedAt": "2026-11-21T12:20:58.751348+00:00",
-      "summary": "The user-approved bug-only DCO range report is published and natively verified OPEN with zero comments at readback. It does not request operator/clickops actions. No further posting approval remains.",
+      "summary": "The delivered DCO range report now has a qualified source proposal d3993939e1ab8feea773db20b7e27c600091fd6a. Exact-source native CI45008480284 passed clippy, rustfmt and262 tests; two independent reviews found no issues. The actual question to open the upstream cncf/dco2 PR is pending. Its stale-event regression does not identify the production webhook/deployed-version cause, and no provider deployment or affected-check correction is established.",
       "followup": {
         "owner": "root",
-        "disposition": "Published report-only issue; no maintainer feedback is present at the current native readback.",
-        "nextAction": "Root consumes genuine issue comments/state changes through the existing canonical issue collection. Keep affected PR DCO checks independently source-bound; no operator request, duplicate report, manual sign-off or source churn.",
-        "recheckCondition": "New issue feedback/state change or evidenced DCO provider range correction.",
+        "disposition": "The delivered DCO range report now has a qualified source proposal d3993939e1ab8feea773db20b7e27c600091fd6a. Exact-source native CI45008480284 passed clippy, rustfmt and262 tests; two independent reviews found no issues. The actual question to open the upstream cncf/dco2 PR is pending. Its stale-event regression does not identify the production webhook/deployed-version cause, and no provider deployment or affected-check correction is established.",
+        "nextAction": "Await the actual unanswered publication decision for “Use the current pull request base for DCO checks”, source https://github.com/tamird/dco2/commit/d3993939e1ab8feea773db20b7e27c600091fd6a on dco-current-pr-range, parent cd8272fff227aab9eeb5ffac398f1abd88508d73, targeting cncf/dco2:main. Exact draft /private/tmp/gvisor-owner-20261117.knEPWo/dco-current-pr-range-pr-body.txt (SHA256 ce2cc1912960a04b681da443292daf4d378aa3c083ef869748e45d0ec57bed4c). DCO is included. Fork draft tamird/dco2#1 is validation only. Existing GET permission was verified sufficient; no app/access change. Root retains genuine issue feedback/deployment and exact affected-check follow-through; no PR publication or production-cause claim before evidence.",
+        "recheckCondition": "Actual source-publication answer, genuine maintainer issue/PR feedback, provider deployment or source-bound affected DCO check correction.",
         "evidence": [
-          "https://github.com/cncf/dco2/issues/126"
+          "https://github.com/cncf/dco2/issues/126",
+          "https://github.com/tamird/dco2/commit/d3993939e1ab8feea773db20b7e27c600091fd6a",
+          "https://github.com/tamird/dco2/actions/runs/45008480284",
+          "https://github.com/tamird/dco2/pull/1"
         ]
       }
     },
@@ -105683,17 +105695,21 @@
       "url": "https://github.com/google/gvisor/pull/17862",
       "status": "open",
       "updatedAt": "2026-11-21T22:39:02.228805+00:00",
-      "summary": "User-approved source and requested narrow edits are delivered, OPEN/MERGEABLE with DCO success and no auto-merge. FirstPass2302 independently failed before agent assignment: exit80, null agent/start, actual author1535036 rolling30-day360000compute-minute quota; no Bazel target ran. All GitHub-native checks are complete PASS. Main CI and human review/import remain separate.",
+      "summary": "Milan approved exact 57691bada17528444d5137569d164234536009fa at09:33:17 UTC; zkoopmans remains requested and aggregate review remains REVIEW_REQUIRED. A subsequent owner read verified FirstPass2321 PASSED; main55624 remains pending with automatic retries and no established HTTPD defect. Prior2302 quota evidence is historical and is not the current admission disposition; no global quota recovery or passing main result is inferred. Delivered source, native GHA/DCO qualification and absence of any agent auto-merge action remain intact.",
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "57691bada17528444d5137569d164234536009fa",
         "mergeable": "MERGEABLE",
-        "disposition": "User-approved source and requested narrow edits are delivered, OPEN/MERGEABLE with DCO success and no auto-merge. FirstPass2302 independently failed before agent assignment: exit80, null agent/start, actual author1535036 rolling30-day360000compute-minute quota; no Bazel target ran. All GitHub-native checks are complete PASS. Main CI and human review/import remain separate.",
-        "nextAction": "approved_rebase_queue owns the current published CI/review/import follow-through; recheck admission/head/check changes without duplicate monitoring, manual retry or outreach.",
-        "recheckCondition": "Actual current-head provider/check or maintainer/import event.",
+        "disposition": "Milan approved exact 57691bada17528444d5137569d164234536009fa at09:33:17 UTC; zkoopmans remains requested and aggregate review remains REVIEW_REQUIRED. A subsequent owner read verified FirstPass2321 PASSED; main55624 remains pending with automatic retries and no established HTTPD defect. Prior2302 quota evidence is historical and is not the current admission disposition; no global quota recovery or passing main result is inferred. Delivered source, native GHA/DCO qualification and absence of any agent auto-merge action remain intact.",
+        "nextAction": "approved_rebase_queue owns bounded main55624 follow-through and outstanding review/import lifecycle. FirstPass2321 is passed; consume actual main results without a duplicate watch, manual retry, extra reviewer request or source change.",
+        "recheckCondition": "Actual current provider terminal/change or substantive reviewer/import feedback.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17862",
-          "https://buildkite.com/gvisor/first-pass/builds/2302#01a20034-67c3-44f5-aa12-41cc6c0a9a9e"
+          "https://buildkite.com/gvisor/first-pass/builds/2302#01a20034-67c3-44f5-aa12-41cc6c0a9a9e",
+          "https://github.com/gvisor/gvisor/pull/17862#pullrequestreview-6011512540",
+          "https://buildkite.com/gvisor/first-pass/builds/2321",
+          "https://buildkite.com/gvisor/pipeline/builds/55624",
+          "https://github.com/tamird/gvisor/blob/9667c31dac0426442b7ae872d8449ebb518df1b4/registry.json"
         ],
         "attentionDispositions": [
           {
@@ -132714,7 +132730,7 @@
           ]
         }
       ],
-      "nextStep": "Six exact public heads have canonical pre-validation obsolete-hook failures: #15106/55470, #16591/55465, #16957/55555, #17416/55353, #16507/55416 and #17067/55478. Landed 909c3dce2 removes the branch check. approved_rebase_queue is qualifying equivalent #15106/#17416 refreshes; #16591 is already imported and has a pending closure decision, so no empty rebase; preserve independent packaging, checkpoint and Nogo/unit evidence. #16957 sensitive-source/performance boundaries and #16507/#17067 qualified-replacement holds prevent redundant old-head adaptation. #17546/55544 upload recovered automatically and is not in this cohort. Verify actual new-head validation; do not retry unchanged heads or infer quota clearance. Other CI/provider and import gates remain independently owned.",
+      "nextStep": "The equivalent #15106/#17416 bootstrap rebases are delivered. #17416 current FirstPass2320/native GHA/DCO passed; #15106 FirstPass2319 is progressing while its wrong-range DCO check remains linked to issue126. New-head main/import gates remain distinct. #16591 is already imported with closure approval pending; no empty rebase. Preserve #16957 sensitive-source/performance and #16507/#17067 replacement holds, and all historical target evidence. No unchanged-head retries, quota sweeps or automatic merge.",
       "evidence": [
         {
           "label": "GitHub issues mentioning “flaky”",
