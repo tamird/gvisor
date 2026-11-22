@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T21:52:31.362132+00:00",
+    "updatedAt": "2026-11-22T21:58:24.907375+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4972,7 +4972,7 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "Follow the existing provider proposal and upstream compiler/platform prerequisites. The incomplete analyzer inventory is tracked in investigation:repository-lint. The recorder’s completed execution/integrity qualification and upstream scope hold are recorded on pr:16507; no timing or candidate comparison is authorized. Completed functional/Nogo checks do not clear performance or protected-source holds.",
+        "nextAction": "The independent non-performance util.Lines producer and its existing fixture may be extracted from 47968; implementation/qualification and any publication remain separate. Ten marshal emission loops and performance work stay held. analysis_pass_inventory owns the scoped tool batch in investigation:repository-lint; protected source and uncertain go_marshal2 semantics remain separate. Follow actual provider/compiler/platform prerequisites; no timing or candidate comparison is authorized.",
         "recheckCondition": "Qualified provider correction and actual deployed behavior, terminal owner evidence for the analyzer policy, or actual upstream prerequisite landing; no repeat of the completed 70857 Nogo gate.",
         "observedAt": "2026-11-17T19:58:24.544895+00:00",
         "curatedAt": "2026-11-21T13:24:07.659680+00:00",
@@ -131309,7 +131309,7 @@
       "owner": "analysis_pass_inventory / root",
       "updatedAt": "2026-11-21T20:45:26.098382+00:00",
       "group": "analysis",
-      "summary": "Preparation source c06d4573 changes 18 tool sites in six files. On each architecture, three changed binaries build and three actual remote targets pass 77 XML cases without issues; source checks pass. Static run 45073984140 and final independent review remain pending. Prior 9a447 proofs remain valid for its unchanged first four sites, including its scoped inherited pkg/state failures; they do not qualify this batch’s pending static gate. The full audit remains incomplete: original scan coverage was 275/890 results with 1,234 deduplicated findings, not a current remaining count. No PR, runtime or performance qualification is claimed.",
+      "summary": "Preparation source c06d4573 passes the changed-tool builds, 77 remote XML cases per architecture and source checks; both independent review groups found no issues. Final static run 45073984140 has ten actual remote results: three pass and seven fail, with zero findings in the six edited files. The partial scan has 38 normalized untouched findings (27 state, eight newly observed tool sites, and three source/generated plusbuild findings) across 354 repeated raw rows. No infrastructure, compile or timeout failure occurred. This is not a full census or a green audit; original incomplete matrix coverage and protected-source limits remain.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -131681,7 +131681,7 @@
           ]
         }
       ],
-      "nextStep": "analysis_pass_inventory owns the existing static watch and final review, then assesses actual sensitivity and semantics of remaining TPU/Kubernetes tools; being outside the first batch is not itself a user hold. Reconcile the full original finding inventory and unfinished matrix, keep the uncertain go_marshal2 scope separate, and preserve actual protected-source and producer/performance prerequisites.",
+      "nextStep": "analysis_pass_inventory owns the next implementation batch: eight safe tool sites and six non-sensitive equivalent TPU/Kubernetes expressions. Protected runsc/flag source stays untouched; uncertain go_marshal2 semantics remain separate. Reconcile the full original finding inventory and unfinished matrix before any full-audit claim. No audit PR or performance qualification is inferred.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -131816,8 +131816,12 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/45073986582/artifacts/14774487131"
         },
         {
-          "label": "Current static gate, pending owner verdict",
+          "label": "Final static gate, partial scope",
           "url": "https://github.com/tamird/gvisor/actions/runs/45073984140"
+        },
+        {
+          "label": "Final partial static result: 3 PASS / 7 FAIL",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45073984140/artifacts/14774976818"
         }
       ],
       "reviewWatch": {
