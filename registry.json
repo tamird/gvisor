@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T19:03:47.598808+00:00",
+    "updatedAt": "2026-11-22T19:05:34.497778+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -76028,9 +76028,9 @@
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "observedAt": "2026-11-20T15:00:40.305787+00:00",
+        "observedAt": "2026-11-22T19:05:34.497778+00:00",
         "disposition": "Strict AMD 44914203382/ARM 44914205072 passed two C entries/sources per architecture with zero findings/errors only under CI 6af8011bbf3b343d496faf18866585503bca3dc6, which composes exact approved 17446 C/header blobs. DB JSON/argv match the raw 5026 strict failures 44912116517/44912118433; no checker change or suppression occurred. This closes strict only with 17446 as a prerequisite, not raw 5026. Original 57-case/five-linter CI 568 evidence remains separate; no combined runtime proof is asserted. Product bytes/offsets remain nonidentical and performance, root review, 16522/17446 landing and internal import remain open. Exact public head Pipeline 55478 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure.",
-        "nextAction": "Root reviews exact source/authority and combined-validation bounds. approved_rebase_queue preserves the explicit 17446 strict prerequisite and original source evidence; no public update or runtime/performance identity is inferred. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure.",
+        "nextAction": "approved_rebase_queue / root owns review 5985786939, an explicitly automated no-new-findings reminder of the existing BUILD issue and #16522 dependency. Preserve the prior finding, pending acknowledgment decision and all source/performance/landing holds; no new source read or external reply is authorized. Root reviews exact source/authority and combined-validation bounds. approved_rebase_queue preserves the explicit 17446 strict prerequisite and original source evidence; no public update or runtime/performance identity is inferred. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17067#discussion_r4486895273",
           "https://github.com/tamird/gvisor/commit/7f6ecfff61b465c2ae00d20ee4ebaad09d430519",
@@ -76066,12 +76066,19 @@
           "https://github.com/tamird/gvisor/actions/runs/44914205072",
           "https://github.com/google/gvisor/pull/17446",
           "https://buildkite.com/gvisor/pipeline/builds/55478",
-          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
+          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321",
+          "https://github.com/google/gvisor/pull/17067#pullrequestreview-5985786939"
         ],
         "recheckCondition": "Final source review, required 16522/17446 landing/internal import or concrete performance evidence. Preserve existing replacement qualification and all performance/dependency/publication holds.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "mergeable": "CONFLICTING",
-        "curatedAt": "2026-11-22T14:02:28.619749+00:00"
+        "curatedAt": "2026-11-22T14:02:28.619749+00:00",
+        "actionableComment": {
+          "kind": "review",
+          "commentId": "PRR_kwDOB9IlXs8AAAABZMfcOw",
+          "url": "https://github.com/google/gvisor/pull/17067#pullrequestreview-5985786939",
+          "head": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a"
+        }
       },
       "dcoAmendment": {
         "oldHead": "005743727b3d80d373085133b5da9cd906cc9d7c",
