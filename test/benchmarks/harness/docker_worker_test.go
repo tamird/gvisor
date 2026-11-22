@@ -15,6 +15,7 @@
 package harness
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/json"
@@ -345,7 +346,13 @@ done`},
 	fetch := func(from, url, token string) {
 		t.Helper()
 		for attempt := 0; ; attempt++ {
-			output, err := exec.CommandContext(ctx, "docker", "--host="+cli.DaemonHost(), "exec", from, "wget", "-T", "1", "-q", "-O", "-", url).CombinedOutput()
+			cmd := exec.CommandContext(ctx, "docker", "--host="+cli.DaemonHost(), "exec", from, "wget", "-T", "1", "-q", "-O", "-", url)
+			var stderr bytes.Buffer
+			cmd.Stderr = &stderr
+			output, err := cmd.Output()
+			if stderr.Len() != 0 {
+				t.Logf("bridge HTTP diagnostics from %s: %s", from, stderr.String())
+			}
 			if err == nil {
 				if string(output) != token+"\n" {
 					t.Fatalf("bridge HTTP response from %s to %s = %q, want exact peer token", from, url, output)
