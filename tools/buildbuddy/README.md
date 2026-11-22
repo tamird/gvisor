@@ -40,10 +40,10 @@ Each Nogo test analyzes both AMD64 and ARM64 through its split transition. One
 invocation covers both target architectures; it does not establish native ARM64
 host execution.
 
-Remote actions have localhost access but no external network access. This
-policy is set on the execution platforms because Bazel's local sandbox network
-settings do not configure remote workers. Explicit action execution properties
-can override the platform default.
+Both remote execution platforms request `network=off` for localhost-only
+networking. The provider controls network isolation; Bazel's local sandbox
+network settings do not configure remote workers. Explicit action execution
+properties can override the platform request.
 
 Keep correctness results and compiled artifacts cached. For a required fresh
 measurement, apply `--nocache_test_results` to the benchmark invocation; keep the
