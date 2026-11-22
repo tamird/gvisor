@@ -14,6 +14,8 @@ go_binary(
         "$(rlocationpath //test/benchmarks/harness:startup-aa-candidate.txt)",
     ],
     data = [
+        "current-aa-base.txt",
+        "current-aa-control.txt",
         "//test/benchmarks/harness:startup-aa-base.txt",
         "//test/benchmarks/harness:startup-aa-candidate.txt",
     ],

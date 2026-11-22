@@ -75,6 +75,9 @@ func parse(name string, input io.Reader) ([]report, error) {
 			for i, key := range []string{"pkg", "goos", "goarch"} {
 				pos, ok := row.ConfigIndex(key)
 				if !ok || len(row.Config[pos].Value) == 0 {
+					if key == "pkg" {
+						continue
+					}
 					return nil, fmt.Errorf("missing %s header in %s", key, name)
 				}
 				current[i] = string(row.Config[pos].Value)
