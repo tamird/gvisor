@@ -11052,12 +11052,12 @@
           "recheckCondition": "Proposal decision or exact current ref/head, source/base or qualification change."
         },
         "owner": "declared_formatting_resume / root",
-        "nextAction": "Root follows the one actual d039 decision through the existing proposal card. Do not repeat approval, transfer the earlier ad173 approval or claim remote execution from the maintained local lint gate.",
-        "recheckCondition": "Actual d039 publication reply or materially changed source.",
+        "nextAction": "Evaluate a materially smaller existing source-owning interface before implementation; follow the separate be47 publication question without transferring the old d039 approval.",
+        "recheckCondition": "A concrete smaller interface or input-owner change, or the actual separate be47 decision.",
         "observedAt": "2026-11-17T19:58:25.300843+00:00",
         "sourceHead": "63c29f4ef205ae9a8dec3b96e4bb3e32581d6c40",
         "curatedAt": "2026-11-21T14:00:19.559771+00:00",
-        "disposition": "The corrected, fully reviewed d039 source and clean fork preview are complete. Required maintained ALL-check 44910214972 passed all five source checks on the normal index, locally/process-wrapper without RBE or cache hits. The actual new one-PR question is pending on investigation:cc-format-declared-inputs; the existing landed 17816 supplier record/ref remains unchanged.",
+        "disposition": "Aspect 2.9.1 consumes declared bzl_library or tagged filegroup sources; format_test uses ordinary filegroups and does not bypass visibility. It does not supply ownership for the existing 629 indexed inputs across 589 packages. Root owns the smallest source-owning interface; direct-label/catalog/exporter/adapter approaches remain held. Delivered #17816 and the separately pending be47 clang-format proposal retain their scopes.",
         "permanentFormatterMilestone": {
           "source": "723486ddd865d3044c5b515865b3a43de6356fde",
           "fixtureSource": "d58ca4f42c5a5a71456cb5de34f43785a6f6670e",
@@ -11227,7 +11227,9 @@
           "https://github.com/tamird/gvisor/actions/runs/44906149981",
           "https://github.com/tamird/gvisor/actions/runs/44907032493",
           "https://github.com/tamird/gvisor/commit/d039802d8437f08d27b0282485709cc5f1b464ba",
-          "https://github.com/tamird/gvisor/actions/runs/44908942436"
+          "https://github.com/tamird/gvisor/actions/runs/44908942436",
+          "https://github.com/aspect-build/rules_lint/blob/v2.9.1/lint/buildifier.bzl",
+          "https://github.com/aspect-build/rules_lint/blob/v2.9.1/format/defs.bzl"
         ]
       },
       "settledReviews": [
@@ -40087,7 +40089,7 @@
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
         "disposition": "Public c715 remains unchanged/conflicting; source 57 is not publication-approved. Strict current eb263 comparison 44979111210 is audited PASS: legacy 116,100 is included in candidate 116,102, 2,418 protobuf positions each, zero missing/two additional; candidate hash matches its previously compiled product. No identity claim is made for the additional positions. Source-bound compiler/functionality/ZIP evidence and two implementation reviews are complete; controlled performance remains open.",
-        "nextAction": "Reporter boundary 44986741109 is audited with canonical 07, n=24 and warmup exclusion; actual flags 44987097256 confirm default sandbox networking, debug off, empty report and systrap. One authorised AMD StartupEmpty same-source control 44987386374 is live under buildifier_license_fix’s sole observation, original 50 visits/24 pairs only; no result or expansion is inferred. Separate ARM INIT/basic-guest proof does not bind its bridge workload binaries: both releases selected host-leader CPUs 0–6 rather than requested 2–3. The ARM guard remains unresolved, with no rerun or source inspection authorised. Preserve source 57 and proposed 0.5% precision as investigative, not a user regression budget.",
+        "nextAction": "AMD StartupEmpty same-source control 44988289000 completed the original 50 visits with 24 N=1 observations per arm and balanced AB/BA positions, but remains INCONCLUSIVE: ratio interval [0.9208590976, 1.1026682723], drift and order checks fail the fixed [0.995, 1.005] precision band. The earlier control 44987386374 is separate retained evidence, not pooled or reinterpreted. No further measurements or candidate/syscall/Hackbench expansion; source 57 remains performance-held and ARM effective affinity unresolved. Existing BuildBuddy executor inventory returned HTTP 403, so capacity is unverified; await existing executor information or read permission without new credentials or blind retries. Proposed 0.5% precision is investigative, not a user regression budget.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -40138,10 +40140,13 @@
           "https://github.com/tamird/gvisor/actions/runs/44987097256",
           "https://github.com/tamird/gvisor/actions/runs/44987386374",
           "https://github.com/tamird/gvisor/actions/runs/44986031005",
-          "https://github.com/tamird/gvisor/actions/runs/44986846677"
+          "https://github.com/tamird/gvisor/actions/runs/44986846677",
+          "https://github.com/tamird/gvisor/actions/runs/44987799580",
+          "https://github.com/tamird/gvisor/actions/runs/44987797824",
+          "https://github.com/tamird/gvisor/actions/runs/44988289000"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Owner-audited original-sized AMD control and explicit ARM affinity-boundary disposition; no expansion, runtime-regression claim or publication approval from setup proof.",
+        "recheckCondition": "Material executor information or resolved ARM containment and an explicitly authorised measurement plan; no unchanged timing retry or source publication inferred.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "qualificationHistory": [
           {
@@ -40808,7 +40813,7 @@
           "https://github.com/tamird/gvisor/commit/c71526cea11bd81898c588264c0940d1fb33e511"
         ]
       },
-      "nextStep": "Reporter boundary 44986741109 is audited with canonical 07, n=24 and warmup exclusion; actual flags 44987097256 confirm default sandbox networking, debug off, empty report and systrap. One authorised AMD StartupEmpty same-source control 44987386374 is live under buildifier_license_fix’s sole observation, original 50 visits/24 pairs only; no result or expansion is inferred. Separate ARM INIT/basic-guest proof does not bind its bridge workload binaries: both releases selected host-leader CPUs 0–6 rather than requested 2–3. The ARM guard remains unresolved, with no rerun or source inspection authorised. Preserve source 57 and proposed 0.5% precision as investigative, not a user regression budget.",
+      "nextStep": "AMD StartupEmpty same-source control 44988289000 completed the original 50 visits with 24 N=1 observations per arm and balanced AB/BA positions, but remains INCONCLUSIVE: ratio interval [0.9208590976, 1.1026682723], drift and order checks fail the fixed [0.995, 1.005] precision band. The earlier control 44987386374 is separate retained evidence, not pooled or reinterpreted. No further measurements or candidate/syscall/Hackbench expansion; source 57 remains performance-held and ARM effective affinity unresolved. Existing BuildBuddy executor inventory returned HTTP 403, so capacity is unverified; await existing executor information or read permission without new credentials or blind retries. Proposed 0.5% precision is investigative, not a user regression budget.",
       "recheckCondition": "Actual missing performance evidence, final source review or substantive maintainer/import change."
     },
     {
