@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T10:45:12+00:00",
+    "updatedAt": "2026-11-22T11:04:03+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4970,11 +4970,16 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "Root awaits the existing paired 4026+775 reply. Preserve the original 0be5 approval without transferring it to the revision; do not create another question or treat local sandbox controls as REAPI settings.",
-        "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings.",
+        "nextAction": "Root and the existing RBE owner audit completion run 45014763993 when terminal. Preserve the exact partial evidence and compiler prerequisites. The existing global-default 775768695 publication decision remains pending; worker approval is fulfilled. Source, access, pools, flags and statistical gates remain unchanged.",
+        "recheckCondition": "Owner-audited terminal completion evidence, actual compiler-prerequisite landing or the existing global-default answer; no extrapolation from partial execution.",
         "observedAt": "2026-11-17T19:58:24.544895+00:00",
         "curatedAt": "2026-11-21T13:24:07.659680+00:00",
-        "disposition": "The original 0be5 approval and compiler prerequisite remain source-bound. Changed global-default 77576869 is fork-verified and covered by the one current paired question on investigation:unit-test-worker-requirements; it is not approved or published upstream."
+        "disposition": "The original 0be5c425a approval and compiler prerequisite remain source-bound. Worker 4026f169c approval was consumed by delivered #17861; only the separate global-default 775768695 question remains unanswered. Owner validation run 45011783743 hit its 30-minute cap with 87/892 real remote tests passed and 805 without terminal results. ZIP artifact 14750124755 retains partial BEP, log, profile and 87 XML records. No source or test error was observed before cancellation. One identical completion run 45014763993 is active after verifying cache reuse is permitted, with no disabling overrides or no-cache tags. Full-suite correctness and performance remain unproven; no new source approval follows.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/45011783743",
+          "https://github.com/tamird/gvisor/actions/runs/45011783743/artifacts/14750124755",
+          "https://github.com/tamird/gvisor/actions/runs/45014763993"
+        ]
       },
       "updatedAt": "2026-11-17T20:32:28.027492+00:00"
     },
