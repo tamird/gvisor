@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T23:29:11.797344+00:00",
+    "updatedAt": "2026-11-22T23:40:33.833042+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4972,11 +4972,11 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "First priority is the actual df8 analyzer publication question; the updated BuildBuddy96 publication question is separately pending. Independent util.Lines extraction is not a handoff prerequisite; ten marshal loops/performance remain held. Preparation object deb218dfd31eb9bf8bd94d1b684ac18379f04cff is readable, but its expected audit/go-analysis-tooling-preparation-20261122 ref is absent after guarded create-only attempts returned 404. This unresolved provider/transport issue is not pending human approval; analysis_pass_inventory owns its separate baseline validation. No source, timing or publication grant is inferred.",
+        "nextAction": "First priority is the main analyzer compatibility revision: exclude only modernize.embedlit after pinned IR panics invalidated its static qualification. The old df8 opening question is superseded; no replacement question exists. Independent preparation restores explicit wrappers and reruns spec_nogo/source checks. Its deb218 object is readable but expected preview ref remains absent after two guarded REST 404 responses: a provider/transport issue, not pending human approval. BuildBuddy96 has a separate unanswered publication question; ten marshal loops/performance and protected work remain held.",
         "recheckCondition": "Qualified provider correction and actual deployed behavior, terminal owner evidence for the analyzer policy, or actual upstream prerequisite landing; no repeat of the completed 70857 Nogo gate.",
         "observedAt": "2026-11-17T19:58:24.544895+00:00",
         "curatedAt": "2026-11-21T13:24:07.659680+00:00",
-        "disposition": "Full Nogo gate on immutable 70857bbd74c9203998a51b9c8c867ba8c9eba01a is complete: 892/892 passed, 804 actual remote and 88 remote-cached; all 87 prior completed checks were reused without rerun. Executed command after existing helper setup:\nbazel test --keep_going --config=buildbuddy --config=x86_64 --credential_helper=\"remote.buildbuddy.io=$(realpath bazel-bin/tools/buildbuddy/credential_helper)\" --test_tag_filters=nogo --build_tests_only --strip=never //...\nUnchanged NogoSplit covers both target architectures; this is not native ARM-host proof. Completion was cache-assisted after the earlier 30-minute cap, with no matched speedup or cold-cache claim. The partial run remains historical evidence, not a current correctness blocker. Current fork support 6e2c0cdd requests the approved network default but does not prove provider enforcement. BuildBuddy revision 96fe4a8e clarifies both live off-mode callers and is independently reviewed; tests have not run because anonymous RBE is unsupported. It remains prepared/unapproved, with new publication questions held behind main-analysis priority. Cloud deployment and enforcement remain unverified.\n\nThe current analyzer-policy audit is tracked in investigation:repository-lint; it remains unready and protected-source work stays held.\n\nCorrected benchmark 967 and validated helper 5d7 completed host control-only A/A 45055533293, failing 13/15 cases under the existing gates despite valid execution. The prior RBE control failed 14/15 on a different old benchmark source. Current statistical disposition and existing-data diagnosis are on pr:16507; neither venue is performance-qualified.",
+        "disposition": "Full Nogo gate on immutable 70857bbd74c9203998a51b9c8c867ba8c9eba01a is complete: 892/892 passed, 804 actual remote and 88 remote-cached; all 87 prior completed checks were reused without rerun. Executed command after existing helper setup:\nbazel test --keep_going --config=buildbuddy --config=x86_64 --credential_helper=\"remote.buildbuddy.io=$(realpath bazel-bin/tools/buildbuddy/credential_helper)\" --test_tag_filters=nogo --build_tests_only --strip=never //...\nUnchanged NogoSplit covers both target architectures; this is not native ARM-host proof. Completion was cache-assisted after the earlier 30-minute cap, with no matched speedup or cold-cache claim. The partial run remains historical evidence, not a current correctness blocker. Current fork support 6e2c0cdd requests the approved network default but does not prove provider enforcement. BuildBuddy revision 96fe4a8e clarifies both live off-mode callers and is independently reviewed; tests have not run because anonymous RBE is unsupported. Its updated source-publication question is unanswered, separately from main-analysis priority. Cloud deployment and enforcement remain unverified.\n\nThe current analyzer-policy audit is tracked in investigation:repository-lint; it remains unready and protected-source work stays held.\n\nCorrected benchmark 967 and validated helper 5d7 completed host control-only A/A 45055533293, failing 13/15 cases under the existing gates despite valid execution. The prior RBE control failed 14/15 on a different old benchmark source. Current statistical disposition and existing-data diagnosis are on pr:16507; neither venue is performance-qualified.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45011783743",
           "https://github.com/tamird/gvisor/actions/runs/45011783743/artifacts/14750124755",
@@ -131413,9 +131413,9 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "analysis_pass_inventory / root",
-      "updatedAt": "2026-11-21T20:45:26.098382+00:00",
+      "updatedAt": "2026-11-22T23:40:33.833042+00:00",
       "group": "analysis",
-      "summary": "HIGH-PRIORITY candidate df8f2ce2 is one commit on eb263, adding 20 diagnostic packages and all 26 modernize.Suite members including errors.AsType, with the complete 56-directory audit/exclusion rationale. Its tree matches original d712 without independent prep/runtime cleanup. Focused AMD/ARM remote validation each passes 14 driver plus one sanity XML case; source checks/guards pass and both final review groups accept. The actual publication question is pending, with no upstream PR opened. Full-corpus Nogo remains known red and the historical scan partial (275/890, 1,234 findings), including two held AsType sites. No full matrix, assembly or C++ lint claim follows.",
+      "summary": "HIGH-PRIORITY analyzer candidate is under revision. Pinned Staticcheck go/ir panics on legal Go 1.27 promoted embedded-field literals: spec_nogo reports 122 unpositioned panics (61 categories on both target architectures), also present in the earlier static run. The earlier static qualification was incomplete and is withdrawn. The amendment will exclude only modernize.embedlit until pinned IR support exists, retaining 25 of 26 modernize.Suite members, 20 additional diagnostic packages and globally active errorsastype without new exceptions or warning baselines. The df8 opening question is superseded; no replacement question or upstream PR exists. Functional baseline, spec compiler and source passes remain valid within their actual scope. Full-corpus Nogo remains known red and its historical scan partial.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -131787,7 +131787,7 @@
           ]
         }
       ],
-      "nextStep": "FIRST PRIORITY: await the exact df8 publication decision with known Nogo blockers explicit. The whole warning backlog and independent prep are not source-candidate handoff prerequisites, but migrations remain necessary before merging. Keep errorsastype global without new two-file exceptions/baselines; root owns protected deferred findings without source read/edit. Preserve validation limits and uncertain go_marshal2 semantics separately.",
+      "nextStep": "analysis_pass_inventory owns the minimal eight-file main amendment and compatibility rationale, focused validation and final review before a replacement publication question. Separate migration restores three explicit wrappers while retaining new(true), then reruns only spec_nogo and source checks. Classify native JSON and unpositioned panics explicitly; do not count missing positioned diagnostics as static success. Preserve the 64 baseline functional cases and compiler/source evidence without transferring them to static qualification. Whole-warning-backlog cleanup is not a source-candidate handoff prerequisite; protected findings remain held.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -131944,6 +131944,14 @@
         {
           "label": "Source/guard validation",
           "url": "https://github.com/tamird/gvisor/actions/runs/45080034517/artifacts/14776817773"
+        },
+        {
+          "label": "Promoted-literal IR failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45082719940/artifacts/14778277518"
+        },
+        {
+          "label": "Earlier static run with the same panics; qualification withdrawn",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45076325513/artifacts/14775911284"
         }
       ],
       "reviewWatch": {
@@ -131985,18 +131993,19 @@
           "summary": "Published the generated-array and slice-fallback benchmark coverage.",
           "outcome": "approved",
           "postedURL": "https://github.com/gvisor/gvisor/pull/17873"
+        },
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "df8f2ce22ee86a24b1ecc6dd7155132a215f7cf4",
+          "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+          "url": "https://github.com/tamird/gvisor/commit/df8f2ce22ee86a24b1ecc6dd7155132a215f7cf4",
+          "title": "Audit and enable x/tools analysis passes",
+          "summary": "Superseded by the compatibility revision excluding modernize.embedlit; no approval or rejection was given.",
+          "body": "Nogo's explicit analyzer list missed newer diagnostics and modern Go APIs. Register 20 additional diagnostic packages and all 26 members of `modernize.Suite`, including `errors.AsType`. Supply the declared ignored files and source reader required by the added passes. The commit records the complete 56-directory audit and the reason for every omission.\n\nFocused driver and sanity tests pass on AMD64 and ARM64. Full-corpus Nogo still reports existing source findings, so source migrations remain necessary before merging; the existing corpus scan is partial.\n\nPosted by Codex on behalf of @tamird.\n",
+          "outcome": "superseded"
         }
-      ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "df8f2ce22ee86a24b1ecc6dd7155132a215f7cf4",
-        "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
-        "url": "https://github.com/tamird/gvisor/commit/df8f2ce22ee86a24b1ecc6dd7155132a215f7cf4",
-        "title": "Audit and enable x/tools analysis passes",
-        "summary": "Register the additional diagnostics and full modernize suite, opening the candidate for review with its existing Nogo source-migration blockers explicit.",
-        "body": "Nogo's explicit analyzer list missed newer diagnostics and modern Go APIs. Register 20 additional diagnostic packages and all 26 members of `modernize.Suite`, including `errors.AsType`. Supply the declared ignored files and source reader required by the added passes. The commit records the complete 56-directory audit and the reason for every omission.\n\nFocused driver and sanity tests pass on AMD64 and ARM64. Full-corpus Nogo still reports existing source findings, so source migrations remain necessary before merging; the existing corpus scan is partial.\n\nPosted by Codex on behalf of @tamird.\n"
-      }
+      ]
     },
     {
       "id": "investigation:proc-boot-identity",
