@@ -169,6 +169,8 @@ var allAlgos = map[string]struct {
 }
 
 func BenchmarkEncoding(b *testing.B) {
+	previous := state.GraphEngineEnabled()
+	b.Cleanup(func() { state.EnableGraphEngine(previous) })
 	for objName, objInfo := range allObjects {
 		for algoName, algoInfo := range allAlgos {
 			b.Run(fmt.Sprintf("%s/%s", objName, algoName), func(b *testing.B) {
@@ -186,6 +188,8 @@ func BenchmarkEncoding(b *testing.B) {
 }
 
 func BenchmarkDecoding(b *testing.B) {
+	previous := state.GraphEngineEnabled()
+	b.Cleanup(func() { state.EnableGraphEngine(previous) })
 	for objName, objInfo := range allObjects {
 		for algoName, algoInfo := range allAlgos {
 			b.Run(fmt.Sprintf("%s/%s", objName, algoName), func(b *testing.B) {
