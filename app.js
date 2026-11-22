@@ -407,7 +407,17 @@ function sourceAuthenticationRecovery(node) {
 }
 function requestedRebase(pr, owner) {
   if (!pr?.rebaseRequest || pr.revisionChanged || pr.authorLogin !== owner || pr.rebaseRequest.head !== pr.head) return null;
-  return pr.feedback?.items?.find(item => item.id === pr.rebaseRequest.id);
+  const request = pr.feedback?.items?.find(item => item.id === pr.rebaseRequest.id);
+  if (!request) return null;
+  const requestedAt = Date.parse(request.updatedAt || request.createdAt);
+  const cutoff = Math.max(...[pr.headIntroducedAt, pr.headCommittedAt].map(value => Date.parse(value)).filter(Number.isFinite));
+  const approved = pr.feedback.items.some(item => {
+    const at = Date.parse(item.submittedAt);
+    return item.kind === "review" && item.state === "APPROVED" && item.author?.__typename === "User"
+      && item.author.login && item.author.login === request.author?.login && item.commit?.oid === pr.head
+      && at > requestedAt && at >= cutoff;
+  });
+  return approved ? null : request;
 }
 function actionableComment(node) {
   const record = node.followup?.actionableComment, pr = node.github;

@@ -48,6 +48,37 @@ test('a requested rebase belongs to its author and source head', () => {
   c.pr.authorLogin = 'tamird';
   c.pr.head = 'b'.repeat(40);
   assert.equal(request(), null);
+
+  c.pr.head = 'a'.repeat(40);
+  c.pr.headIntroducedAt = '2026-11-21T09:28:42Z';
+  c.pr.headCommittedAt = '2026-11-21T09:17:15Z';
+  const earlier = c.pr.feedback.items[0];
+  Object.assign(earlier, { kind: 'review', body: 'Needs rebase', state: 'APPROVED',
+    author: { login: 'EtiennePerot', __typename: 'User' }, submittedAt: '2026-11-21T09:04:42Z',
+    updatedAt: c.pr.headIntroducedAt, commit: { oid: c.pr.head } });
+  const approval = { ...earlier, id: 'approval', body: '', submittedAt: '2026-11-21T09:30:17Z',
+    updatedAt: '2026-11-21T09:30:17Z' };
+  for (const changed of [{ author: { login: 'another-reviewer', __typename: 'User' } },
+    { commit: { oid: 'f'.repeat(40) } }, { submittedAt: '2026-11-21T09:00:00Z' }]) {
+    c.pr.feedback.items = [earlier, { ...approval, ...changed }];
+    assert.equal(request().id, earlier.id);
+  }
+  c.pr.feedback.items = [earlier, approval];
+  assert.equal(request(), null);
+  Object.assign(c.pr, { status: 'open', headOwner: 'tamird', mergeable: 'CONFLICTING',
+    branchHead: c.pr.head, imports: [], threads: { complete: true, unresolved: 0 }, feedback: {
+      complete: true, items: [earlier, approval] } });
+  c.node = { id: 'pr:17492', type: 'pr', repo: 'google/gvisor', number: 17492, github: c.pr };
+  const reasons = vm.runInContext("attentionReasons(node, 'tamird').map(row => row.id)", c);
+  assert.ok(reasons.includes('author-conflicts'));
+  assert.ok(!reasons.includes('author-feedback'));
+  earlier.body = 'Please rebase onto master.';
+  earlier.updatedAt = '2026-11-21T09:31:00Z';
+  assert.equal(request().id, earlier.id);
+  const renewed = { ...earlier, id: 'renewed', submittedAt: earlier.updatedAt };
+  c.pr.feedback.items = [approval, renewed];
+  c.pr.rebaseRequest.id = renewed.id;
+  assert.equal(request().id, renewed.id);
 });
 
 test('a default-branch result directs the investigation owner using the observed commit', () => {
