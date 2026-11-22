@@ -228,6 +228,12 @@
   commit: 7084bd2fa445d83629a67a91ff4e072517a11f04
   sha256: 77c127afa2d239d7163c969642fa6015f8d0236672394e3304e5ab41dd8d706c
   license: MIT
+- dependency: github.com/aclements/go-moremath
+  version: v0.0.0-20210112150236-f10218a38794
+  retrieved: "2026-11-22"
+  commit: f10218a38794
+  sha256: d83b2a13bee30e772c4f414ccb02c8fec9a4d614e814e1a2c740a6567974861d
+  license: BSD-3-Clause
 - dependency: github.com/cenkalti/backoff
   version: v2.2.1+incompatible
   retrieved: "2026-08-27"
@@ -917,6 +923,12 @@
   retrieved: "2026-08-27"
   commit: 4d954e69a88d9e1ccb8439f8d5b6cbef230c4ef9
   sha256: 15bf65ff103e5dafc809d78cd037a1d1e88ccb8451824e851156002a13304504
+  license: BSD-3-Clause
+- dependency: golang.org/x/perf
+  version: v0.0.0-20261117185222-4febdb082b2c
+  retrieved: "2026-11-22"
+  commit: 4febdb082b2ce2a0f9f6f496698aa5a2273279b8
+  sha256: 1cb1ebc675d14f58fcee23d1f738e3019d9de0839a84a4a99f79995760358fdd
   license: BSD-3-Clause
 - dependency: golang.org/x/sync
   version: v0.23.0
