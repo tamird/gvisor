@@ -14,6 +14,8 @@
 
 """Check the declared Sentry's complete static coverage inventory."""
 
+import argparse
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -26,10 +28,12 @@ from python.runfiles import runfiles
 
 class InventoryTest(unittest.TestCase):
     sentry: Path
+    legacy_sentry: Path | None = None
+    source_archive: Path | None = None
 
-    def test_positions(self) -> None:
+    def _positions(self, sentry: Path) -> set[str]:
         result = subprocess.run(
-            [self.sentry, "symbolize", "-all"],
+            [sentry, "symbolize", "-all"],
             check=False,
             capture_output=True,
             text=True,
@@ -59,19 +63,52 @@ class InventoryTest(unittest.TestCase):
         self.assertGreater(len(protobuf), 0, "no generated protobuf coverage positions")
         forbidden = re.compile(r"/pkg/(coverage/|ring0/|sleep/|sync/|syncevent/|bpf/|sentry/platform/)")
         self.assertEqual(sorted(position for position in current if forbidden.search(position)), [])
-        print(json.dumps({"positions": len(current), "protobuf_positions": len(protobuf)}, sort_keys=True))
+        return current
+
+    def test_positions(self) -> None:
+        current = self._positions(self.sentry)
+        result: dict[str, object] = {
+            "positions": len(current),
+            "protobuf_positions": sum(".pb.go:" in position for position in current),
+        }
+        if self.legacy_sentry is not None:
+            legacy = self._positions(self.legacy_sentry)
+            missing = legacy - current
+            self.assertFalse(missing, f"{len(missing)} missing positions: {sorted(missing)[:20]}")
+            result.update(
+                legacy_positions=len(legacy),
+                legacy_protobuf_positions=sum(".pb.go:" in position for position in legacy),
+                additional_positions=len(current - legacy),
+                missing_positions=0,
+            )
+        for name, binary in (("candidate_binary", self.sentry),
+                             ("legacy_binary", self.legacy_sentry),
+                             ("source_export", self.source_archive)):
+            if binary is not None:
+                with binary.open("rb") as source:
+                    result[name + "_sha256"] = hashlib.file_digest(source, "sha256").hexdigest()
+        print(json.dumps(result, sort_keys=True))
 
 
 if __name__ == "__main__":
-    match sys.argv:
-        case [program, sentry, *test_args]:
-            resolver = runfiles.Create()
-            if resolver is None:
-                raise RuntimeError("Bazel runfiles are unavailable")
-            sentry_path = resolver.Rlocation(sentry)
-            if sentry_path is None:
-                raise FileNotFoundError(f"missing declared runfile: {sentry}")
-            InventoryTest.sentry = Path(sentry_path)
-            unittest.main(argv=[program, *test_args])
-        case _:
-            raise ValueError("expected Sentry runfile path")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("sentry")
+    parser.add_argument("--legacy-sentry")
+    parser.add_argument("--source-archive")
+    args, test_args = parser.parse_known_args()
+    resolver = runfiles.Create()
+    if resolver is None:
+        raise RuntimeError("Bazel runfiles are unavailable")
+
+    def resolve(name: str) -> Path:
+        path = resolver.Rlocation(name)
+        if path is None:
+            raise FileNotFoundError(f"missing declared runfile: {name}")
+        return Path(path)
+
+    InventoryTest.sentry = resolve(args.sentry)
+    if args.legacy_sentry is not None:
+        InventoryTest.legacy_sentry = resolve(args.legacy_sentry)
+    if args.source_archive is not None:
+        InventoryTest.source_archive = resolve(args.source_archive)
+    unittest.main(argv=[sys.argv[0], *test_args])

@@ -59,3 +59,27 @@ py_test(
     tags = ["manual"],
     deps = ["@rules_python//python/runfiles"],
 )
+
+py_test(
+    name = "legacy_parity_test",
+    size = "large",
+    srcs = ["inventory_test.py"],
+    args = [
+        "$(rlocationpath :inventory_sentry)",
+        "--legacy-sentry=$(rlocationpath //runsc/cmd/sentry:legacy_current_sentry_cov)",
+        "--source-archive=$(rlocationpath //:gopath)",
+    ],
+    data = [
+        ":inventory_sentry",
+        "//:gopath",
+        "//runsc/cmd/sentry:legacy_current_sentry_cov",
+    ],
+    main = "inventory_test.py",
+    stamp = -1,
+    tags = ["manual"],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    deps = ["@rules_python//python/runfiles"],
+)
