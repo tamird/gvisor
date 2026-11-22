@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T20:47:20.104837+00:00",
+    "updatedAt": "2026-11-22T21:17:53.978992+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4972,7 +4972,7 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "Follow the existing provider proposal and upstream compiler/platform prerequisites. The incomplete analyzer inventory is tracked in investigation:repository-lint. analysis_pass_inventory owns the held recorder reduction and first cheap functional qualification on pr:16507; no timing or candidate comparison is authorized. Completed functional/Nogo checks do not clear performance or protected-source holds.",
+        "nextAction": "Follow the existing provider proposal and upstream compiler/platform prerequisites. The incomplete analyzer inventory is tracked in investigation:repository-lint. The recorder’s completed execution/integrity qualification and upstream scope hold are recorded on pr:16507; no timing or candidate comparison is authorized. Completed functional/Nogo checks do not clear performance or protected-source holds.",
         "recheckCondition": "Qualified provider correction and actual deployed behavior, terminal owner evidence for the analyzer policy, or actual upstream prerequisite landing; no repeat of the completed 70857 Nogo gate.",
         "observedAt": "2026-11-17T19:58:24.544895+00:00",
         "curatedAt": "2026-11-21T13:24:07.659680+00:00",
@@ -40157,7 +40157,7 @@
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
         "disposition": "Public c715 remains unchanged/conflicting; source 57 is not publication-approved. Strict current eb263 comparison 44979111210 is audited PASS: legacy 116,100 is included in candidate 116,102, 2,418 protobuf positions each, zero missing/two additional; candidate hash matches its previously compiled product. No identity claim is made for the additional positions. Source-bound compiler/functionality/ZIP evidence and two implementation reviews are complete; controlled performance remains open. Exact public head Pipeline 55416 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure.",
-        "nextAction": "Pinned control-only A/A 45063972774 remains a complete valid FAIL (13/15 cases); its precision band and four contrasts were agent protocol choices, not explicit user requirements. Held recorder revision c61ce758d9c9fc4c538dab85e8f7483c2f6e9cef removes those statistical gates and duplicate JSON samples, retaining native benchfmt data and an execution manifest. It is 549 lines, 103 fewer than helper588. analysis_pass_inventory owns its first cheap functional qualification; no timed A/A, A/B, retry or candidate comparison is authorized. No maintained caller was retired, and correctness qualification would not establish performance or upstream readiness. Source57’s performance hold and required workload/statistical coverage remain open.",
+        "nextAction": "Recorder bf96bd54092f4af422a9d0136151622e955800e2 passes execution/data-integrity qualification: 12 verbatim process files, all 90 rows/15 cases and manifest bindings; three fresh remote unit cases per architecture, source checks and four final reviews are complete. Static validators were cached. The expected cancellation failure reaped its child and retained a manifest-linked zero-byte file, without partial benchmark-row proof. UPSTREAM HELD: only transient direct Go operations were retired; no maintained caller migrated. Grouped presentation, non-Linux runtime and cross-revision products remain unqualified. Pinned A/A 45063972774 still FAILS 38 intervals; its 0.5% band/four contrasts were agent choices, not user requirements. Performance, producer479 and analyzer scope remain unfinished. No more timing, A/A, A/B or source expansion is authorized.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -40230,10 +40230,16 @@
           "https://github.com/tamird/gvisor/actions/runs/45047357285",
           "https://github.com/tamird/gvisor/actions/runs/45055533293/artifacts/14767149238",
           "https://app.buildbuddy.io/invocation/d71210cd-8713-4027-9cd5-c9ee58bbd06c",
-          "https://github.com/tamird/gvisor/actions/runs/45063972774/artifacts/14771127348"
+          "https://github.com/tamird/gvisor/actions/runs/45063972774/artifacts/14771127348",
+          "https://github.com/tamird/gvisor/actions/runs/45070283237/artifacts/14772852065",
+          "https://github.com/tamird/gvisor/actions/runs/45070651031/artifacts/14773250997",
+          "https://github.com/tamird/gvisor/actions/runs/45070653512/artifacts/14773066667",
+          "https://github.com/tamird/gvisor/actions/runs/45070656007/artifacts/14772694991",
+          "https://github.com/tamird/gvisor/actions/runs/45070658275/artifacts/14772772674",
+          "https://github.com/tamird/gvisor/actions/runs/45070660673/artifacts/14773501134"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Owner-confirmed cheap functional qualification and scope/necessity assessment of the held recorder; a separate actual authorization is required before any further timing or publication.",
+        "recheckCondition": "Existing scope/necessity and maintained-caller integration requirements, followed by an actual authorized next step. The rejected optional grouped-presentation dispatch is an execution constraint, not a pending human approval; do not retry via another route.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "qualificationHistory": [
           {

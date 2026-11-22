@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-22T20:40:53.192589+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-22T20:47:20.104837+00:00",
+  "registryDate": "2026-11-22T21:17:53.978992+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -454545,12 +454545,12 @@
       "mergeabilityCheckedAt": "2026-11-22T20:38:25.207359+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Pinned control-only A/A 45063972774 remains a complete valid FAIL (13/15 cases); its precision band and four contrasts were agent protocol choices, not explicit user requirements. Held recorder revision c61ce758d9c9fc4c538dab85e8f7483c2f6e9cef removes those statistical gates and duplicate JSON samples, retaining native benchfmt data and an execution manifest. It is 549 lines, 103 fewer than helper588. analysis_pass_inventory owns its first cheap functional qualification; no timed A/A, A/B, retry or candidate comparison is authorized. No maintained caller was retired, and correctness qualification would not establish performance or upstream readiness. Source57’s performance hold and required workload/statistical coverage remain open.",
+      "action": "Recorder bf96bd54092f4af422a9d0136151622e955800e2 passes execution/data-integrity qualification: 12 verbatim process files, all 90 rows/15 cases and manifest bindings; three fresh remote unit cases per architecture, source checks and four final reviews are complete. Static validators were cached. The expected cancellation failure reaped its child and retained a manifest-linked zero-byte file, without partial benchmark-row proof. UPSTREAM HELD: only transient direct Go operations were retired; no maintained caller migrated. Grouped presentation, non-Linux runtime and cross-revision products remain unqualified. Pinned A/A 45063972774 still FAILS 38 intervals; its 0.5% band/four contrasts were agent choices, not user requirements. Performance, producer479 and analyzer scope remain unfinished. No more timing, A/A, A/B or source expansion is authorized.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "disposition": "Public c715 remains unchanged/conflicting; source 57 is not publication-approved. Strict current eb263 comparison 44979111210 is audited PASS: legacy 116,100 is included in candidate 116,102, 2,418 protobuf positions each, zero missing/two additional; candidate hash matches its previously compiled product. No identity claim is made for the additional positions. Source-bound compiler/functionality/ZIP evidence and two implementation reviews are complete; controlled performance remains open. Exact public head Pipeline 55416 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure.",
-        "nextAction": "Pinned control-only A/A 45063972774 remains a complete valid FAIL (13/15 cases); its precision band and four contrasts were agent protocol choices, not explicit user requirements. Held recorder revision c61ce758d9c9fc4c538dab85e8f7483c2f6e9cef removes those statistical gates and duplicate JSON samples, retaining native benchfmt data and an execution manifest. It is 549 lines, 103 fewer than helper588. analysis_pass_inventory owns its first cheap functional qualification; no timed A/A, A/B, retry or candidate comparison is authorized. No maintained caller was retired, and correctness qualification would not establish performance or upstream readiness. Source57’s performance hold and required workload/statistical coverage remain open."
+        "nextAction": "Recorder bf96bd54092f4af422a9d0136151622e955800e2 passes execution/data-integrity qualification: 12 verbatim process files, all 90 rows/15 cases and manifest bindings; three fresh remote unit cases per architecture, source checks and four final reviews are complete. Static validators were cached. The expected cancellation failure reaped its child and retained a manifest-linked zero-byte file, without partial benchmark-row proof. UPSTREAM HELD: only transient direct Go operations were retired; no maintained caller migrated. Grouped presentation, non-Linux runtime and cross-revision products remain unqualified. Pinned A/A 45063972774 still FAILS 38 intervals; its 0.5% band/four contrasts were agent choices, not user requirements. Performance, producer479 and analyzer scope remain unfinished. No more timing, A/A, A/B or source expansion is authorized."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -468912,7 +468912,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T20:47:20.104837+00:00"
+        "observedAt": "2026-11-22T21:17:53.978992+00:00"
       }
     },
     "pr:17082": {
@@ -469299,7 +469299,7 @@
         "since": "2026-11-22T09:10:24+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T20:47:20.104837+00:00"
+        "observedAt": "2026-11-22T21:17:53.978992+00:00"
       }
     },
     "pr:17191": {
@@ -471434,7 +471434,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T20:47:20.104837+00:00"
+        "observedAt": "2026-11-22T21:17:53.978992+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -471443,7 +471443,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T20:47:20.104837+00:00"
+        "observedAt": "2026-11-22T21:17:53.978992+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -471452,7 +471452,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T20:47:20.104837+00:00"
+        "observedAt": "2026-11-22T21:17:53.978992+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -471461,7 +471461,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T20:47:20.104837+00:00"
+        "observedAt": "2026-11-22T21:17:53.978992+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -471470,7 +471470,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T20:47:20.104837+00:00"
+        "observedAt": "2026-11-22T21:17:53.978992+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -471479,7 +471479,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T20:47:20.104837+00:00"
+        "observedAt": "2026-11-22T21:17:53.978992+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -471488,7 +471488,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T20:47:20.104837+00:00"
+        "observedAt": "2026-11-22T21:17:53.978992+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -471497,7 +471497,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T20:47:20.104837+00:00"
+        "observedAt": "2026-11-22T21:17:53.978992+00:00"
       }
     },
     "investigation:repository-lint": {
@@ -471506,7 +471506,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T20:47:20.104837+00:00",
+        "observedAt": "2026-11-22T21:17:53.978992+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     },
@@ -471516,7 +471516,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T20:47:20.104837+00:00",
+        "observedAt": "2026-11-22T21:17:53.978992+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     },
@@ -471526,7 +471526,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T20:47:20.104837+00:00"
+        "observedAt": "2026-11-22T21:17:53.978992+00:00"
       }
     },
     "investigation:rules-lint-patcher": {
@@ -471535,7 +471535,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T20:47:20.104837+00:00",
+        "observedAt": "2026-11-22T21:17:53.978992+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     }
