@@ -28,20 +28,22 @@ for (const node of nodes) {
       [node.contributorReview, ...(node.additionalReviews || [])].some(item => item?.status === "pending")) {
     throw new Error(`Record tracker maintenance as agent work: ${node.id}`);
   }
-  const decision = node.contributorReview;
-  if (decision?.status !== 'pending') continue;
-  if (node.type === 'branch' &&
-      (node.head !== decision.head || node.url !== decision.url)) {
-    throw new Error(`Link the proposal and its card to the same validated revision: ${node.id}`);
-  }
-  context.node = node;
-  if (vm.runInContext('alreadyReviewed(node, node.contributorReview)', context)) {
-    throw new Error(`Already reviewed: ${node.id} at ${decision.head || decision.url}`);
-  }
-  if (node.type === 'branch' && decision.kind === 'proposal' &&
-      (node.refinement || node.settledReviews?.some(review => review.kind === 'proposal' && review.head !== decision.head)) &&
-      !vm.runInContext('refinementComparison(node, node.contributorReview)', context)) {
-    throw new Error(`Missing range-diff for revised proposal: ${node.id} at ${decision.head}`);
+  for (const decision of [node.contributorReview, ...(node.additionalReviews || [])]) {
+    if (decision?.status !== 'pending') continue;
+    if (node.type === 'branch' && [undefined, 'proposal'].includes(decision.kind) &&
+        (node.head !== decision.head || node.url !== decision.url)) {
+      throw new Error(`Link the proposal and its card to the same validated revision: ${node.id}`);
+    }
+    context.node = node;
+    context.decision = decision;
+    if (vm.runInContext('alreadyReviewed(node, decision)', context)) {
+      throw new Error(`Already reviewed: ${node.id} at ${decision.head || decision.url}`);
+    }
+    if (node.type === 'branch' && decision.kind === 'proposal' &&
+        (node.refinement || node.settledReviews?.some(review => review.kind === 'proposal' && review.head !== decision.head)) &&
+        !vm.runInContext('refinementComparison(node, decision)', context)) {
+      throw new Error(`Missing range-diff for revised proposal: ${node.id} at ${decision.head}`);
+    }
   }
 }
 console.log(JSON.stringify({

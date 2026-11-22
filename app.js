@@ -7,7 +7,7 @@ const UI_KEY = "gvisor-work-map-view-v1";
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 const VIEWS = ["dag", "table", "investigations"];
 const SORT_KEYS = ["number", "title", "impact", "direct", "age", "review", "checks", "group"];
-const STATE_LABELS = { "author-feedback": "Agent: review follow-up", "contributor-review": "Contributor review", "maintainer-review": "Maintainer review", "proposed-update": "Prepared proposals", "changes-requested": "Changes requested",
+const STATE_LABELS = { "author-feedback": "Agent: review follow-up", "contributor-review": "Contributor input", "maintainer-review": "Maintainer review", "proposed-update": "Prepared proposals", "changes-requested": "Changes requested",
   "awaiting-import": "Awaiting public export", importing: "Import PR open", "waiting-merge": "Waiting for merge", failing: "Failing checks",
   "checks-pending": "Checks pending", "waiting-release": "Waiting for an upstream release", conflicts: "Conflicts", draft: "Draft", imported: "Imported", merged: "Merged", closed: "Closed" };
 const FILTER_STATES = ["author-feedback", "contributor-review", "maintainer-review", "proposed-update", "awaiting-import", "importing", "waiting-merge", "waiting-release", "failing", "changes-requested", "checks-pending", "conflicts", "draft"];
@@ -277,6 +277,9 @@ const DECISION_REASONS = [
   { id: "review-changes", owner: "user", title: "Review our changes" },
   { id: "post-review", owner: "user", title: "Approve outgoing PR reviews" },
   { id: "post-reply", owner: "user", title: "Approve replies, comments, and issues" },
+  { id: "provide-information", owner: "user", title: "Provide requested information" },
+  { id: "approve-exception", owner: "user", title: "Consider a scoped execution exception" },
+  { id: "close-pr", owner: "user", title: "Approve closing a pull request" },
 ];
 const ATTENTION_REASONS = [
   { id: "agent-review-outreach", owner: "agent", title: "Find or contact a reviewer" },
@@ -1212,8 +1215,9 @@ function contributorChanges(node) {
 // messages about the same commit, so their text is part of the decision too.
 function alreadyReviewed(node, decision) {
   return node.settledReviews?.some(item => item.kind === decision.kind && item.head === decision.head
-    && (!["review", "reply", "issue"].includes(item.kind) || item.body === decision.body)
-    && (item.kind !== "issue" || item.url === decision.url && item.title === decision.title));
+    && (!["review", "reply", "issue", "information", "exception", "closure"].includes(item.kind) || item.body === decision.body)
+    && (!["issue", "information", "exception", "closure"].includes(item.kind)
+      || item.url === decision.url && item.title === decision.title));
 }
 function commitLinkMatches(repo, head, url) {
   const prefix = `https://github.com/${repo}/commit/`;
@@ -1226,13 +1230,19 @@ function trackerMaintenance(node) {
 function pendingDecisions(node) {
   if (trackerMaintenance(node)) return [];
   const decisions = node.contributorReview ? [node.contributorReview] : [];
-  return decisions.concat(node.additionalReviews || []).filter(decision => decision?.status === "pending" && !alreadyReviewed(node, decision) && (node.type === "branch" && decision.head === node.head
+  return decisions.concat(node.additionalReviews || []).filter(decision => decision?.status === "pending" && !alreadyReviewed(node, decision) && (["information", "exception", "issue"].includes(decision.kind)
+    && (node.type !== "investigation" || node.status === "active")
+    || node.type === "branch" && decision.head === node.head
     || node.type === "pr" && decision.kind === "amendment" && !providerClosed(node) && decision.head !== node.github?.head
-    || node.type === "investigation" && node.status === "active" && ["issue", "proposal"].includes(decision.kind)
-    || ["pr", "issue"].includes(node.type) && ["reply", "issue"].includes(decision.kind)
-    || node.type === "pr" && decision.kind === "review" && !providerClosed(node)));
+    || node.type === "investigation" && node.status === "active" && decision.kind === "proposal"
+    || node.type === "issue" && decision.kind === "proposal"
+    || ["pr", "issue"].includes(node.type) && decision.kind === "reply"
+    || node.type === "pr" && ["review", "closure"].includes(decision.kind) && !providerClosed(node)));
 }
 function decisionReason(decision) {
+  if (decision.kind === "information") return "provide-information";
+  if (decision.kind === "exception") return "approve-exception";
+  if (decision.kind === "closure") return "close-pr";
   if (decision.kind === "review") return "post-review";
   if (["reply", "issue"].includes(decision.kind)) return "post-reply";
   return "review-changes";
@@ -1251,7 +1261,7 @@ function contributorDecisionHeadChanged(node, decision = contributorDecision(nod
   return Boolean(node.github?.head && head && head !== node.github.head);
 }
 function contributorDecisionNeedsRefresh(node, decision = contributorDecision(node)) {
-  return ["amendment", "review"].includes(decision?.kind) && contributorDecisionHeadChanged(node, decision);
+  return ["amendment", "review", "closure"].includes(decision?.kind) && contributorDecisionHeadChanged(node, decision);
 }
 function validateHumanAction(node, retiredExecution = false) {
   const action = node.humanAction;
@@ -1259,7 +1269,7 @@ function validateHumanAction(node, retiredExecution = false) {
       || !/^[a-f0-9]{40}$/.test(action.head) || action.head !== node.head
       || ![action.title, action.summary, action.body].every(value => typeof value === "string" && value.trim())
       || !safeURL(action.url) || !(retiredExecution || action.kind === "submission" && safeURL(action.policyURL))
-      || node.contributorReview !== undefined))
+      || node.contributorReview !== undefined || node.additionalReviews?.length))
     throw new Error("Invalid human-only action");
 }
 function humanAction(node) {
@@ -1828,7 +1838,7 @@ function drawTable(nodes) {
       const revision = refinementComparison(node, decision);
       title.append(link((decision.title || "Review proposed change") + (revision ? ` · ${revision.label}` : ""), decision.url, "decision-source"));
     }
-    for (const decision of decisions.filter(item => ["review", "reply", "issue"].includes(item.kind))) {
+    for (const decision of decisions.filter(item => decisionReason(item) !== "review-changes")) {
       title.append(readDraftLink(node, decision, decisions.length === 1 ? "Read draft " + decision.kind : decision.title));
     }
     const action = humanAction(node);
@@ -1999,7 +2009,10 @@ function appendContributorDecisions(parent, node, decisions) {
     if (decision.kind === "issue") {
       const form = decision.url + "?title=" + encodeURIComponent(decision.title) + "&body=" + encodeURIComponent(decision.body);
       section.append(link("Open prefilled issue ↗", form));
-    } else section.append(link(decision.kind === "review" ? "Open original PR ↗" : decision.kind === "reply" ? "Open original discussion ↗" : "Open proposed commit ↗", decision.url));
+    } else if (decision.url) section.append(link(["review", "closure"].includes(decision.kind) ? "Open original PR ↗"
+      : decision.kind === "reply" ? "Open original discussion ↗"
+      : decision.kind === "information" ? "Open context ↗"
+      : decision.kind === "exception" ? "Open scoped source ↗" : "Open proposed commit ↗", decision.url));
     parent.append(section);
   }
   return showedComparison;
@@ -2262,7 +2275,7 @@ function stateRecords(snapshot, node) {
     }
   }
   if (decision && !contributorDecisionNeedsRefresh(node)) {
-    const scope = decision.head || decision.url, history = snapshot.workStates?.[node.id];
+    const scope = decision.head || decision.url || decision.title, history = snapshot.workStates?.[node.id];
     const previous = history?.["contributor-review"] || (node.type === "branch" ? history?.review : null);
     // Registry publication is the first observation of a new decision; an older
     // provider snapshot must neither hide it nor lend it another candidate's age.
@@ -2370,6 +2383,46 @@ function validIssueDraft(decision) {
   return decision?.kind === "issue" && /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/issues\/new$/.test(decision.url)
     && [decision.title, decision.summary, decision.body].every(value => typeof value === "string" && value.trim());
 }
+function validateContributorDecisions(node, candidate) {
+  if (node.additionalReviews !== undefined && (!Array.isArray(node.additionalReviews) || node.humanAction))
+    throw new Error(`Invalid additional review for ${node.id}`);
+  const repo = node.repo || candidate.meta.repo;
+  const fork = `${candidate.meta.owner}/${repo.split("/")[1]}`;
+  const decisions = node.contributorReview === undefined ? [] : [node.contributorReview];
+  for (const decision of decisions.concat(node.additionalReviews || [])) {
+    const text = [decision?.title, decision?.summary, decision?.body]
+      .every(value => typeof value === "string" && value.trim());
+    const commit = /^[a-f0-9]{40}$/.test(decision?.head);
+    const proposal = node.type === "branch" && node.repo === fork && commit
+      && [undefined, "proposal"].includes(decision.kind)
+      && (commitLinkMatches(fork, decision.head, decision.url)
+        || /^[a-f0-9]{40}$/.test(decision.baseHead)
+          && decision.url === `https://github.com/${fork}/compare/${decision.baseHead.slice(0, 9)}...${decision.head.slice(0, 9)}`);
+    const fix = ["investigation", "issue"].includes(node.type) && decision?.kind === "proposal" && text
+      && commit && /^[a-f0-9]{40}$/.test(decision.baseHead) && decision.head !== decision.baseHead
+      && commitLinkMatches(fork, decision.head, decision.url);
+    const amendment = node.type === "pr" && decision?.kind === "amendment" && text
+      && commit && /^[a-f0-9]{40}$/.test(decision.baseHead) && decision.head !== decision.baseHead
+      && commitLinkMatches(fork, decision.head, decision.url);
+    const outgoing = ["pr", "issue"].includes(node.type) && ["reply", "review", "closure"].includes(decision?.kind) && text
+      && (node.type === "issue" && decision.head === undefined && decision.kind !== "closure" || node.type === "pr" && commit)
+      && (decision.url === node.url || decision.kind !== "closure" && (decision.url?.startsWith(node.url + "#")
+        || decision.kind === "review" && decision.url?.startsWith(node.url + "/files#diff-")
+          && /^[a-f0-9]{64}[LR][1-9]\d*$/.test(decision.url.slice((node.url + "/files#diff-").length))));
+    const issue = validIssueDraft(decision) && (node.type === "pr" ? commit : decision.head === undefined);
+    const information = decision?.kind === "information" && text && decision.head === undefined
+      && (decision.url === undefined || safeURL(decision.url));
+    const exception = decision?.kind === "exception" && text && commit && commitLinkMatches(fork, decision.head, decision.url);
+    if (!decision || decision.status !== "pending" || !proposal && !fix && !amendment && !outgoing && !issue && !information && !exception
+        || node.type === "investigation" && !node.group
+        || decision.body !== undefined && typeof decision.body !== "string"
+        || decision.replyBody !== undefined && (!["proposal", "amendment"].includes(decision.kind)
+          || typeof decision.replyBody !== "string" || !decision.replyBody.trim())
+        || decision.summary !== undefined && typeof decision.summary !== "string"
+        || decision.title !== undefined && typeof decision.title !== "string")
+      throw new Error(`Invalid contributor decision for ${node.id}`);
+  }
+}
 function validBranchTimestamp(value) {
   if (typeof value !== "string") return false;
   const fields = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(Z|([+-])(\d{2}):(\d{2}))$/.exec(value);
@@ -2459,35 +2512,7 @@ function validateRegistry(candidate, { allowRetiredExecution = false } = {}) {
     const retiredExecution = allowRetiredExecution && action?.kind === "execution" && proposalRepo
       && /^[a-f0-9]{40}$/.test(action.sourceHead) && commitLinkMatches(proposalRepo, action.sourceHead, action.url);
     validateHumanAction(node, retiredExecution);
-    if (node.additionalReviews !== undefined && (!Array.isArray(node.additionalReviews) || node.type !== "pr" || action ||
-        node.additionalReviews.some(review => review?.kind !== "review"))) throw new Error("Invalid additional review");
-    const decisions = node.contributorReview === undefined ? [] : [node.contributorReview];
-    for (const decision of decisions.concat(node.additionalReviews || [])) {
-      const proposal = node.type === "branch" && proposalRepo && /^[a-f0-9]{40}$/.test(decision?.head)
-        && (commitLinkMatches(proposalRepo, decision.head, decision.url)
-          || /^[a-f0-9]{40}$/.test(decision.baseHead)
-            && decision.url === `https://github.com/${proposalRepo}/compare/${decision.baseHead.slice(0, 9)}...${decision.head.slice(0, 9)}`);
-      const amendment = node.type === "pr" && decision?.kind === "amendment"
-        && /^[a-f0-9]{40}$/.test(decision.head) && /^[a-f0-9]{40}$/.test(decision.baseHead)
-        && decision.head !== decision.baseHead
-        && commitLinkMatches(`${candidate.meta.owner}/${node.repo.split("/")[1]}`, decision.head, decision.url)
-        && [decision.title, decision.summary, decision.body].every(value => typeof value === "string" && value.trim());
-      const outgoing = ["pr", "issue"].includes(node.type) && ["reply", "review", "issue"].includes(decision?.kind)
-        && (node.type === "issue" && decision.head === undefined || /^[a-f0-9]{40}$/.test(decision.head))
-        && (decision.kind === "issue" ? validIssueDraft(decision)
-          : decision.url === node.url || decision.url?.startsWith(node.url + "#") ||
-          decision.kind === "review" && decision.url?.startsWith(node.url + "/files#diff-") &&
-            /^[a-f0-9]{64}[LR][1-9]\d*$/.test(decision.url.slice((node.url + "/files#diff-").length)))
-        && typeof decision.title === "string" && decision.title.trim()
-        && typeof decision.summary === "string" && decision.summary.trim()
-        && typeof decision.body === "string" && decision.body.trim();
-      if (!decision || decision.status !== "pending" || !proposal && !amendment && !outgoing
-          || decision.body !== undefined && typeof decision.body !== "string"
-          || decision.replyBody !== undefined && (!["proposal", "amendment"].includes(decision.kind)
-            || typeof decision.replyBody !== "string" || !decision.replyBody.trim())
-          || decision.summary !== undefined && typeof decision.summary !== "string"
-          || decision.title !== undefined && typeof decision.title !== "string") throw new Error(`Invalid contributor decision for ${node.id}`);
-    }
+    validateContributorDecisions(node, candidate);
     const changes = node.contributorChangesRequested;
     if (changes !== undefined && (!changes || node.type !== "branch" || node.contributorReview !== undefined ||
         !/^[a-f0-9]{40}$/.test(changes.head) || !proposalRepo || !commitLinkMatches(proposalRepo, changes.head, changes.url)))
@@ -2559,7 +2584,6 @@ function validateRegistry(candidate, { allowRetiredExecution = false } = {}) {
           !Number.isFinite(Date.parse(item.updatedAt)) || (item.nextStep !== undefined && typeof item.nextStep !== "string") || !evidenceValid(item.evidence) ||
           !Array.isArray(item.findings) || !item.findings.every(finding => finding && typeof finding.text === "string" && finding.text.trim() && evidenceValid(finding.evidence)))
         throw new Error("Invalid investigation record");
-      if (item.additionalReviews !== undefined) throw new Error(`Invalid additional review for ${item.id}`);
       const repo = item.repo === undefined ? candidate.meta.repo : item.repo;
       if (typeof repo !== "string" || !Object.hasOwn(policies, repo)) throw new Error(`Invalid investigation repository for ${item.id}`);
       validateHumanAction(item);
@@ -2570,16 +2594,7 @@ function validateRegistry(candidate, { allowRetiredExecution = false } = {}) {
       if (item.defaultBranchCheck !== undefined && (repo !== candidate.meta.repo
           || !nonemptyText(item.defaultBranchCheck?.context) || !nonemptyText(item.defaultBranchCheck?.onSuccess)))
         throw new Error("Invalid default-branch investigation check");
-      const draft = item.contributorReview;
-      if (draft !== undefined) {
-        const issue = repo === candidate.meta.repo && validIssueDraft(draft) && draft.head === undefined
-          && draft.url === `https://github.com/${candidate.meta.repo}/issues/new`;
-        const fix = draft?.kind === "proposal" && [draft.head, draft.baseHead].every(head => /^[a-f0-9]{40}$/.test(head))
-          && draft.head !== draft.baseHead && [draft.title, draft.summary, draft.body].every(nonemptyText)
-          && commitLinkMatches(`${candidate.meta.owner}/${repo.split("/")[1]}`, draft.head, draft.url);
-        if (!item.group || draft?.status !== "pending" || !issue && !fix)
-          throw new Error(`Invalid contributor decision for ${item.id}`);
-      }
+      validateContributorDecisions({ ...item, type: "investigation" }, candidate);
       if (item.comparisons !== undefined && (!Array.isArray(item.comparisons) || !item.comparisons.every(comparison => comparison &&
           [comparison.title, comparison.description, comparison.note].every(nonemptyText) &&
           Array.isArray(comparison.columns) && comparison.columns.length >= 2 && comparison.columns.every(nonemptyText) &&

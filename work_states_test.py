@@ -2,6 +2,8 @@
 
 import copy
 from importlib import import_module
+import json
+from pathlib import Path
 import subprocess
 import unittest
 from unittest.mock import patch
@@ -23,6 +25,29 @@ def original(**changes: object) -> dict:
 
 
 class WorkStatesTest(unittest.TestCase):
+    def test_existing_scoped_questions_remain_pending_without_source_approval(self) -> None:
+        registry = json.loads(Path(__file__).with_name("attention_dispositions_fixture.json").read_text())["pendingRequests"]
+        closure = next(node for node in registry["nodes"] if node["id"] == "pr:16591")
+        pr = original(number=16591, head=closure["head"], reviewDecision="REVIEW_REQUIRED")
+        before = copy.deepcopy(pr)
+        now = registry["meta"]["updatedAt"]
+        states = record_states([pr], registry, {}, now)
+        self.assertEqual({identity for identity, row in states.items() if "contributor-review" in row},
+                         {"pr:16591", "branch:rbe-declared-lint-tools", "issue:cncf/dco2:126", "investigation:runtime-startup"})
+        self.assertEqual(review_decision(pr), "REVIEW_REQUIRED")
+        self.assertEqual(pr, before)
+        runtime, = registry["investigations"]
+        information, = runtime["additionalReviews"]
+        runtime["settledReviews"] = [{**runtime["contributorReview"], "outcome": "rejected"}]
+        self.assertEqual(record_states([pr], registry, {}, now)[runtime["id"]]["contributor-review"]["scope"], information["title"])
+        runtime["settledReviews"].append({**information, "outcome": "answered"})
+        self.assertNotIn(runtime["id"], record_states([pr], registry, {}, now))
+        information["body"] += " Different requested scope."
+        del runtime["contributorReview"]
+        self.assertIn(runtime["id"], record_states([pr], registry, {}, now))
+        pr["head"] = "f" * 40
+        self.assertNotIn("contributor-review", record_states([pr], registry, {}, now)["pr:16591"])
+
     def test_investigation_issue_uses_one_decision_until_settled(self):
         url = "https://github.com/google/gvisor/issues/new"
         decision = dict(kind="issue", status="pending", url=url, title="Timeout", body="The exec never finished.")

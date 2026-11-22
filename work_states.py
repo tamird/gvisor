@@ -704,7 +704,8 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
                 if pr.get("headRepo") and pr["status"] in {"open", "draft", "merged"}}
     closed = {pr_identity(pr, registry["meta"]["repo"]) for pr in prs if pr["status"] in {"closed", "merged"}}
     investigations = (dict(item, type="investigation") for item in registry.get("investigations", [])
-                      if item.get("group") and item["status"] == "active" and item.get("contributorReview"))
+                      if item.get("group") and item["status"] == "active"
+                      and (item.get("contributorReview") or item.get("additionalReviews")))
     for node in [*registry["nodes"], *investigations]:
         # Only the task owner records actual pending contributor decisions.
         # An explicit PR amendment keeps its candidate scope separate from the
@@ -712,8 +713,11 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
         decisions = [node["contributorReview"]] if "contributorReview" in node else []
         decisions.extend(node.get("additionalReviews", []))
         attached = any(node["type"] == "pr" and decision.get("kind") == "amendment"
+                       or decision.get("kind") in {"information", "exception", "issue"}
                        or node["type"] == "investigation" and decision.get("kind") in {"issue", "proposal"}
+                       or node["type"] == "issue" and decision.get("kind") == "proposal"
                        or node["type"] in {"pr", "issue"} and decision.get("kind") in {"reply", "review", "issue"}
+                       or node["type"] == "pr" and decision.get("kind") == "closure"
                        for decision in decisions)
         if not attached and (node["type"] != "branch" or node["id"] in closed
                              or (node.get("repo"), node.get("ref")) in promoted):
@@ -722,16 +726,19 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
         for decision in decisions:
             settled = any(
                 item["kind"] == decision.get("kind") and item.get("head") == decision.get("head")
-                and (item["kind"] not in {"reply", "review", "issue"} or item.get("body") == decision.get("body"))
-                and (item["kind"] != "issue" or (item.get("url"), item.get("title")) == (decision.get("url"), decision.get("title")))
+                and (item["kind"] not in {"reply", "review", "issue", "information", "exception", "closure"}
+                     or item.get("body") == decision.get("body"))
+                and (item["kind"] not in {"issue", "information", "exception", "closure"}
+                     or (item.get("url"), item.get("title")) == (decision.get("url"), decision.get("title")))
                 for item in node.get("settledReviews", [])
             )
             if decision["status"] == "pending" and not settled:
                 base = decision.get("baseHead", decision.get("head"))
-                source_changed = (pr and decision.get("kind") in {"amendment", "review"}
+                source_changed = (pr and decision.get("kind") in {"amendment", "review", "closure"}
                                   and (pr["status"] in {"closed", "merged"} or pr.get("head") and pr["head"] != base))
                 if not source_changed:
-                    states.setdefault(node["id"], {})["contributor-review"] = {"scope": decision.get("head", decision.get("url"))}
+                    states.setdefault(node["id"], {})["contributor-review"] = {
+                        "scope": decision.get("head") or decision.get("url") or decision.get("title")}
         changes = node.get("contributorChangesRequested")
         if changes and node.get("head") == changes["head"]:
             states.setdefault(node["id"], {})["changes-requested"] = {

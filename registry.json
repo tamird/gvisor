@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T09:55:20+00:00",
+    "updatedAt": "2026-11-22T10:27:43+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1083,13 +1083,13 @@
       "status": "open",
       "reviewDecision": "REVIEW_REQUIRED",
       "updatedAt": "2026-11-19T07:47:10.548489+00:00",
-      "summary": "Equivalent bootstrap rebase afb6198869d091f721f559dc0e2eceb0c6bb5455 is delivered with strict range-diff equality and current both-architecture owning tests/Nogo/source/archive qualification. Native GHA including actual Go export/build passed. FirstPass2319 is executing its remaining Nogo work with progress and no failed attempts; no main-pipeline result is established. DCO137159021678 evaluates the wrong 45-commit range despite one valid PR commit, linked to issue126. GitHub automatically cleared prior auto-merge; no agent auto-merge operation occurred. Current aggregate review is REVIEW_REQUIRED with fvoznika pending. Preserve independent source-assemble/import packaging requirements.",
+      "summary": "Equivalent bootstrap rebase afb6198869d091f721f559dc0e2eceb0c6bb5455 is delivered with strict range-diff equality and current both-architecture owning tests/Nogo/source/archive qualification. Native GHA including actual Go export/build passed. A subsequent owner audit verified FirstPass2319 PASSED in42m21; no current main-pipeline result is established. DCO137159021678 evaluates the wrong 45-commit range despite one valid PR commit, linked to issue126. GitHub automatically cleared prior auto-merge; no agent auto-merge operation occurred. Current aggregate review is REVIEW_REQUIRED with fvoznika pending. Preserve independent source-assemble/import packaging requirements.",
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "afb6198869d091f721f559dc0e2eceb0c6bb5455",
         "observedAt": "2026-11-17T20:13:53.813850+00:00",
-        "disposition": "Equivalent bootstrap rebase afb6198869d091f721f559dc0e2eceb0c6bb5455 is delivered with strict range-diff equality and current both-architecture owning tests/Nogo/source/archive qualification. Native GHA including actual Go export/build passed. FirstPass2319 is executing its remaining Nogo work with progress and no failed attempts; no main-pipeline result is established. DCO137159021678 evaluates the wrong 45-commit range despite one valid PR commit, linked to issue126. GitHub automatically cleared prior auto-merge; no agent auto-merge operation occurred. Current aggregate review is REVIEW_REQUIRED with fvoznika pending. Preserve independent source-assemble/import packaging requirements.",
-        "nextAction": "approved_rebase_queue retains the sole FirstPass2319 observation and consumes its actual terminal result; root follows issue126/provider correction and independent importer packaging. Preserve requested review and do not retry, amend sign-off or re-enable auto-merge.",
+        "disposition": "Equivalent bootstrap rebase afb6198869d091f721f559dc0e2eceb0c6bb5455 is delivered with strict range-diff equality and current both-architecture owning tests/Nogo/source/archive qualification. Native GHA including actual Go export/build passed. A subsequent owner audit verified FirstPass2319 PASSED in42m21; no current main-pipeline result is established. DCO137159021678 evaluates the wrong 45-commit range despite one valid PR commit, linked to issue126. GitHub automatically cleared prior auto-merge; no agent auto-merge operation occurred. Current aggregate review is REVIEW_REQUIRED with fvoznika pending. Preserve independent source-assemble/import packaging requirements.",
+        "nextAction": "Root follows the source-bound wrong-range DCO check through issue126 and its pending qualified source proposal, plus genuine review/import feedback. FirstPass2319 and native GHA are passed; its sole watch is closed. Preserve independent importer packaging and do not retry old CI or re-enable auto-merge.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42849078055/artifacts/13780790760",
           "https://github.com/tamird/gvisor/compare/4ecb0b121...45137f922",
@@ -11064,7 +11064,7 @@
           "recheckCondition": "Proposal decision or exact current ref/head, source/base or qualification change."
         },
         "owner": "declared_formatting_resume / root",
-        "nextAction": "Await the existing issue-posting decision for https://github.com/bazelbuild/bazel/issues/new. Exact draft: /private/tmp/gvisor-owner-20261117.knEPWo/bazel-owning-build-file-issue.txt (SHA256 f3a27aeb2d9e49683e6b7739fe73fa859a2ea6e5292c6cdae40cc83093b0d195). No returned question ID or exact submission time is recorded. If approved, publish that draft only; retain the separate full-input coverage/design obligation and be47 source decision.",
+        "nextAction": "Await the recorded Bazel issue-filing decision. If approved, publish its exact draft only; retain the full input-coverage and source-owning-interface obligation and the separate be47 publication question.",
         "recheckCondition": "Actual issue-posting answer or concrete canonical File interface/full-input coverage evidence; no implementation or source approval inferred.",
         "observedAt": "2026-11-17T19:58:25.300843+00:00",
         "sourceHead": "63c29f4ef205ae9a8dec3b96e4bb3e32581d6c40",
@@ -11261,7 +11261,15 @@
         }
       ],
       "nextStep": "Root evaluates a materially smaller existing mechanism before source implementation. Keep the direct-label implementation held and preserve the proven Aspect primitive; no user question or expansion into a catalog/exporter/adapter. The delivered supplier PR has its separate existing review/CI owner.",
-      "recheckCondition": "PR review/source/check/import change, actual quota recovery or next minimal declared-input milestone."
+      "recheckCondition": "PR review/source/check/import change, actual quota recovery or next minimal declared-input milestone.",
+      "contributorReview": {
+        "kind": "issue",
+        "status": "pending",
+        "url": "https://github.com/bazelbuild/bazel/issues/new",
+        "title": "Expose the owning BUILD file as an action input",
+        "summary": "Actual unanswered request to file this feature issue. A BUILD File accessor addresses only one blocker; complete MODULE/.bzl coverage remains required, and no partial stage or registration framework is approved.",
+        "body": "A lint aspect needs its package’s BUILD file as a declared action input. I haven’t found a supported way to obtain that File: ctx.build_file_path provides a string, and aspects reject computed dependency defaults.\n\nSources: https://bazel.build/rules/lib/builtins/ctx#build_file_path and https://github.com/bazelbuild/bazel/blob/9.3.1/src/main/java/com/google/devtools/build/lib/analysis/starlark/StarlarkRuleClassFunctions.java#L1435\n\nFor repository-wide Buildifier checks, package-local input registration is substantial: our current gVisor selection includes 588 BUILD files.\n\nCould ctx expose the owning BUILD file as a File, restricted to the current package? Formatter actions could then declare that input directly. Important cases include BUILD versus BUILD.bazel spelling, external repositories, private packages, and comment-only changes invalidating the formatter action.\n\nIssue #31936 concerns filename discovery during build_file_path deprecation; this request concerns obtaining the source artifact itself.\n\nPosted by Codex on behalf of @tamird.\n"
+      }
     },
     {
       "id": "branch:rbe-license-headers",
@@ -44596,6 +44604,15 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
+      },
+      "contributorReview": {
+        "kind": "closure",
+        "status": "pending",
+        "head": "d1b274f9eb8d7734c13ab3c6765ac3f9145856ff",
+        "url": "https://github.com/google/gvisor/pull/16591",
+        "title": "Close already-imported #16591",
+        "summary": "Actual unanswered request to close the still-open PR and post this comment. The source is imported as 3767e597a341236280bff142471f063a755ec2ff; import evidence is not closure authorization.",
+        "body": "Landed in 3767e597a\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -105626,7 +105643,7 @@
       "followup": {
         "owner": "root",
         "disposition": "The delivered DCO range report now has a qualified source proposal d3993939e1ab8feea773db20b7e27c600091fd6a. Exact-source native CI45008480284 passed clippy, rustfmt and262 tests; two independent reviews found no issues. The actual question to open the upstream cncf/dco2 PR is pending. Its stale-event regression does not identify the production webhook/deployed-version cause, and no provider deployment or affected-check correction is established.",
-        "nextAction": "Await the actual unanswered publication decision for “Use the current pull request base for DCO checks”, source https://github.com/tamird/dco2/commit/d3993939e1ab8feea773db20b7e27c600091fd6a on dco-current-pr-range, parent cd8272fff227aab9eeb5ffac398f1abd88508d73, targeting cncf/dco2:main. Exact draft /private/tmp/gvisor-owner-20261117.knEPWo/dco-current-pr-range-pr-body.txt (SHA256 ce2cc1912960a04b681da443292daf4d378aa3c083ef869748e45d0ec57bed4c). DCO is included. Fork draft tamird/dco2#1 is validation only. Existing GET permission was verified sufficient; no app/access change. Root retains genuine issue feedback/deployment and exact affected-check follow-through; no PR publication or production-cause claim before evidence.",
+        "nextAction": "Await the recorded upstream source-PR publication decision. Root retains genuine issue feedback, provider deployment and exact affected-check follow-through; no production cause or correction is inferred from the qualified stale-event regression.",
         "recheckCondition": "Actual source-publication answer, genuine maintainer issue/PR feedback, provider deployment or source-bound affected DCO check correction.",
         "evidence": [
           "https://github.com/cncf/dco2/issues/126",
@@ -105634,6 +105651,16 @@
           "https://github.com/tamird/dco2/actions/runs/45008480284",
           "https://github.com/tamird/dco2/pull/1"
         ]
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "d3993939e1ab8feea773db20b7e27c600091fd6a",
+        "baseHead": "cd8272fff227aab9eeb5ffac398f1abd88508d73",
+        "url": "https://github.com/tamird/dco2/commit/d3993939e1ab8feea773db20b7e27c600091fd6a",
+        "title": "Use the current pull request base for DCO checks",
+        "summary": "Actual unanswered request to open the one-commit upstream cncf/dco2:main PR from tamird/dco2:dco-current-pr-range. DCO and qualification/reviews are complete; tamird/dco2#1 is validation only. The production webhook, deployed version and actual provider correction remain unknown.",
+        "body": "Select comparison revisions from the current pull request state, so an older webhook base does not include already-landed commits in the DCO check. Skip closed pull requests and events for superseded heads. Preserve comparison pagination, the commit limit and the later label freshness check.\n\nReuse the existing fixtures to distinguish the event base from the current base, and cover lookup failures and skipped closed or moved-head events.\n\nRelated to #126. This covers stale-event selection; that report's triggering production payload and deployed version remain unknown.\n\nPosted by Codex on behalf of @tamird.\n"
       }
     },
     {
@@ -105695,21 +105722,22 @@
       "url": "https://github.com/google/gvisor/pull/17862",
       "status": "open",
       "updatedAt": "2026-11-21T22:39:02.228805+00:00",
-      "summary": "Milan approved exact 57691bada17528444d5137569d164234536009fa at09:33:17 UTC; zkoopmans remains requested and aggregate review remains REVIEW_REQUIRED. A subsequent owner read verified FirstPass2321 PASSED; main55624 remains pending with automatic retries and no established HTTPD defect. Prior2302 quota evidence is historical and is not the current admission disposition; no global quota recovery or passing main result is inferred. Delivered source, native GHA/DCO qualification and absence of any agent auto-merge action remain intact.",
+      "summary": "A subsequent owner audit verified current-head main55624 PASSED, alongside FirstPass2321 and all native GHA/DCO. The final ARM Docker owning target passed after automatic recovery; no HTTPD defect or cause of the earlier journal-output failure is established. Source57691bada remains open/mergeable, REVIEW_REQUIRED, with Milan approved and zkoopmans requested. No auto-merge operation or source change is inferred.",
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "57691bada17528444d5137569d164234536009fa",
         "mergeable": "MERGEABLE",
-        "disposition": "Milan approved exact 57691bada17528444d5137569d164234536009fa at09:33:17 UTC; zkoopmans remains requested and aggregate review remains REVIEW_REQUIRED. A subsequent owner read verified FirstPass2321 PASSED; main55624 remains pending with automatic retries and no established HTTPD defect. Prior2302 quota evidence is historical and is not the current admission disposition; no global quota recovery or passing main result is inferred. Delivered source, native GHA/DCO qualification and absence of any agent auto-merge action remain intact.",
-        "nextAction": "approved_rebase_queue owns bounded main55624 follow-through and outstanding review/import lifecycle. FirstPass2321 is passed; consume actual main results without a duplicate watch, manual retry, extra reviewer request or source change.",
-        "recheckCondition": "Actual current provider terminal/change or substantive reviewer/import feedback.",
+        "disposition": "A subsequent owner audit verified current-head main55624 PASSED, alongside FirstPass2321 and all native GHA/DCO. The final ARM Docker owning target passed after automatic recovery; no HTTPD defect or cause of the earlier journal-output failure is established. Source57691bada remains open/mergeable, REVIEW_REQUIRED, with Milan approved and zkoopmans requested. No auto-merge operation or source change is inferred.",
+        "nextAction": "Follow existing maintainer review and import on the green published head. All execution watches are closed; no CI retry, repeated reviewer request, source amendment or auto-merge action.",
+        "recheckCondition": "Substantive maintainer feedback, import/merge event or a changed current source/check state.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17862",
           "https://buildkite.com/gvisor/first-pass/builds/2302#01a20034-67c3-44f5-aa12-41cc6c0a9a9e",
           "https://github.com/gvisor/gvisor/pull/17862#pullrequestreview-6011512540",
           "https://buildkite.com/gvisor/first-pass/builds/2321",
           "https://buildkite.com/gvisor/pipeline/builds/55624",
-          "https://github.com/tamird/gvisor/blob/9667c31dac0426442b7ae872d8449ebb518df1b4/registry.json"
+          "https://github.com/tamird/gvisor/blob/9667c31dac0426442b7ae872d8449ebb518df1b4/registry.json",
+          "https://buildkite.com/gvisor/pipeline/builds/55624#01a202c7-dfff-4eb2-b178-e57e16898179"
         ],
         "attentionDispositions": [
           {
@@ -123034,7 +123062,27 @@
         "owner": "root",
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
-      }
+      },
+      "group": "runtime",
+      "repo": "google/gvisor",
+      "contributorReview": {
+        "kind": "exception",
+        "status": "pending",
+        "head": "ce1634b4adf686f6067b4fed388de417efd43ddd",
+        "url": "https://github.com/tamird/gvisor/commit/ce1634b4adf686f6067b4fed388de417efd43ddd",
+        "title": "Permit one remote Moby rebuild",
+        "summary": "Scope summary of the existing unanswered Bazel-only exception request; original wording is unavailable. This is not source-publication approval.",
+        "body": "Scope summary, not a verbatim question: permit one remote canonical `make rebuild-moby ARCH=x86_64 DOCKER_BUILD=false` on gVisor source ce1634b4adf686f6067b4fed388de417efd43ddd, capped at 30 minutes, without image publication, followed by Bazel validation. Generic CI authorization does not answer this specific exception to the Bazel-only rule."
+      },
+      "additionalReviews": [
+        {
+          "kind": "information",
+          "status": "pending",
+          "title": "Is Daybreak enabled?",
+          "summary": "Scope summary of the existing unanswered availability question; original wording is unavailable. Information only, without execution authorization.",
+          "body": "Scope summary, not a verbatim question: whether Daybreak is enabled so the held sensitive-source investigation can be reconsidered under actual access and policy checks. No answer or availability confirmation is known; this request does not authorize execution or source changes."
+        }
+      ]
     },
     {
       "id": "investigation:qemu-prebuilt-generator",

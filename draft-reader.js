@@ -25,7 +25,8 @@ async function readDraft() {
     const item = [...data.nodes, ...(data.investigations || [])].find(node => node.id === id);
     const draft = await findDraft(item, url.searchParams.get("draft"));
     if (!draft) throw Error("This version of the draft is no longer available. Open its card for the current work.");
-    const labels = { issue: "Issue", reply: "Reply", review: "Review", proposal: "Pull request", amendment: "PR amendment", submission: "Pull request" };
+    const labels = { issue: "Issue", reply: "Reply", review: "Review", proposal: "Pull request", amendment: "PR amendment", submission: "Pull request",
+      information: "Information request", exception: "Scoped execution exception", closure: "Pull request closure" };
     const kind = labels[draft.kind] || "Draft";
     document.getElementById("draft-context").textContent = [kind, item.repo || item.title].join(" · ");
     heading.textContent = draft.title || item.title;
@@ -42,8 +43,8 @@ async function readDraft() {
       body.insertAdjacentHTML("beforeend", markdown.render(draft.replyBody));
     }
     const source = document.getElementById("draft-source");
-    const destination = new URL(draft.url);
-    if (destination.protocol === "https:") {
+    const destination = draft.url ? new URL(draft.url) : null;
+    if (destination?.protocol === "https:") {
       if (draft.kind === "issue") {
         destination.searchParams.set("title", draft.title);
         destination.searchParams.set("body", draft.body);

@@ -1082,7 +1082,7 @@
           {
             "reason": "author-feedback",
             "title": "Approved observation; internal CI follow-up",
-            "nextAction": "The sole unresolved inline is an observation followed by the reviewer\u2019s exact-head approval, without an amendment request. The supported-GPU question was already answered. Await substantive feedback or accessible internal CI evidence; no further author reply is pending.",
+            "nextAction": "The sole unresolved inline is an observation followed by the reviewer’s exact-head approval, without an amendment request. The supported-GPU question was already answered. Await substantive feedback or accessible internal CI evidence; no further author reply is pending.",
             "evidence": [
               "https://github.com/google/gvisor/pull/15670#discussion_r4317491751",
               "https://github.com/google/gvisor/pull/15670#pullrequestreview-5576093955",
@@ -1572,7 +1572,7 @@
           {
             "reason": "author-conflicts",
             "title": "Waiting for the maintainer replacement",
-            "nextAction": "The maintainer\u2019s open replacement explicitly supersedes this proposal. Monitor its actual landing, then reconcile retirement under the existing authorization; do not rebase the superseded proposal.",
+            "nextAction": "The maintainer’s open replacement explicitly supersedes this proposal. Monitor its actual landing, then reconcile retirement under the existing authorization; do not rebase the superseded proposal.",
             "evidence": [
               "https://github.com/buildbuddy-io/buildbuddy/pull/13803#issuecomment-6203357276",
               "https://github.com/buildbuddy-io/buildbuddy/pull/13826"
@@ -1913,5 +1913,126 @@
         "status": "open"
       }
     }
-  ]
+  ],
+  "pendingRequests": {
+    "meta": {
+      "repo": "google/gvisor",
+      "owner": "tamird",
+      "updatedAt": "2026-11-22T09:55:20+00:00"
+    },
+    "groups": [
+      {
+        "id": "analysis",
+        "label": "Analysis & locking"
+      },
+      {
+        "id": "bazel",
+        "label": "Bazel & toolchains"
+      },
+      {
+        "id": "runtime",
+        "label": "Runtime & kernel"
+      },
+      {
+        "id": "rbe",
+        "label": "Remote CI"
+      }
+    ],
+    "nodes": [
+      {
+        "id": "branch:rbe-declared-lint-tools",
+        "type": "branch",
+        "repo": "tamird/gvisor",
+        "head": "fb4513fe56a2a8fb94fbd6da8d6c61c827dc5688",
+        "title": "Declare source format checks in Bazel",
+        "url": "https://github.com/tamird/gvisor/commit/fb4513fe56a2a8fb94fbd6da8d6c61c827dc5688",
+        "group": "rbe",
+        "status": "Supplier step landed as #17816; declared-input migration remains open",
+        "updatedAt": "2026-11-21T04:12:33.507810+00:00",
+        "contributorReview": {
+          "kind": "issue",
+          "status": "pending",
+          "url": "https://github.com/bazelbuild/bazel/issues/new",
+          "title": "Expose the owning BUILD file as an action input",
+          "summary": "Actual unanswered request to file this feature issue. A BUILD File accessor addresses only one blocker; complete MODULE/.bzl coverage remains required, and no partial stage or registration framework is approved.",
+          "body": "A lint aspect needs its package’s BUILD file as a declared action input. I haven’t found a supported way to obtain that File: ctx.build_file_path provides a string, and aspects reject computed dependency defaults.\n\nSources: https://bazel.build/rules/lib/builtins/ctx#build_file_path and https://github.com/bazelbuild/bazel/blob/9.3.1/src/main/java/com/google/devtools/build/lib/analysis/starlark/StarlarkRuleClassFunctions.java#L1435\n\nFor repository-wide Buildifier checks, package-local input registration is substantial: our current gVisor selection includes 588 BUILD files.\n\nCould ctx expose the owning BUILD file as a File, restricted to the current package? Formatter actions could then declare that input directly. Important cases include BUILD versus BUILD.bazel spelling, external repositories, private packages, and comment-only changes invalidating the formatter action.\n\nIssue #31936 concerns filename discovery during build_file_path deprecation; this request concerns obtaining the source artifact itself.\n\nPosted by Codex on behalf of @tamird.\n"
+        }
+      },
+      {
+        "id": "pr:16591",
+        "type": "pr",
+        "repo": "google/gvisor",
+        "number": 16591,
+        "group": "bazel",
+        "head": "d1b274f9eb8d7734c13ab3c6765ac3f9145856ff",
+        "title": "Generate Go host-layout tests from source files",
+        "url": "https://github.com/google/gvisor/pull/16591",
+        "updatedAt": "2026-11-17T19:04:46.312467+00:00",
+        "status": "open",
+        "contributorReview": {
+          "kind": "closure",
+          "status": "pending",
+          "head": "d1b274f9eb8d7734c13ab3c6765ac3f9145856ff",
+          "url": "https://github.com/google/gvisor/pull/16591",
+          "title": "Close already-imported #16591",
+          "summary": "Actual unanswered request to close the still-open PR and post this comment. The source is imported as 3767e597a341236280bff142471f063a755ec2ff; import evidence is not closure authorization.",
+          "body": "Landed in 3767e597a\n\nPosted by Codex on behalf of @tamird."
+        }
+      },
+      {
+        "id": "issue:cncf/dco2:126",
+        "type": "issue",
+        "repo": "cncf/dco2",
+        "number": 126,
+        "group": "analysis",
+        "status": "open",
+        "title": "DCO check includes commits already on the PR base branch",
+        "url": "https://github.com/cncf/dco2/issues/126",
+        "updatedAt": "2026-11-21T12:20:58.751348+00:00",
+        "contributorReview": {
+          "kind": "proposal",
+          "status": "pending",
+          "head": "d3993939e1ab8feea773db20b7e27c600091fd6a",
+          "baseHead": "cd8272fff227aab9eeb5ffac398f1abd88508d73",
+          "url": "https://github.com/tamird/dco2/commit/d3993939e1ab8feea773db20b7e27c600091fd6a",
+          "title": "Use the current pull request base for DCO checks",
+          "summary": "Actual unanswered request to open the one-commit upstream cncf/dco2:main PR from tamird/dco2:dco-current-pr-range. DCO and qualification/reviews are complete; tamird/dco2#1 is validation only. The production webhook, deployed version and actual provider correction remain unknown.",
+          "body": "Select comparison revisions from the current pull request state, so an older webhook base does not include already-landed commits in the DCO check. Skip closed pull requests and events for superseded heads. Preserve comparison pagination, the commit limit and the later label freshness check.\n\nReuse the existing fixtures to distinguish the event base from the current base, and cover lookup failures and skipped closed or moved-head events.\n\nRelated to #126. This covers stale-event selection; that report's triggering production payload and deployed version remain unknown.\n\nPosted by Codex on behalf of @tamird.\n"
+        }
+      }
+    ],
+    "edges": [],
+    "investigations": [
+      {
+        "id": "investigation:runtime-startup",
+        "title": "Runtime startup performance",
+        "status": "active",
+        "owner": "root",
+        "updatedAt": "2026-11-21T17:23:33.618046+00:00",
+        "summary": "Existing scoped questions.",
+        "findings": [],
+        "evidence": [],
+        "group": "runtime",
+        "repo": "google/gvisor",
+        "contributorReview": {
+          "kind": "exception",
+          "status": "pending",
+          "head": "ce1634b4adf686f6067b4fed388de417efd43ddd",
+          "url": "https://github.com/tamird/gvisor/commit/ce1634b4adf686f6067b4fed388de417efd43ddd",
+          "title": "Permit one remote Moby rebuild",
+          "summary": "Scope summary of the existing unanswered Bazel-only exception request; original wording is unavailable. This is not source-publication approval.",
+          "body": "Scope summary, not a verbatim question: permit one remote canonical `make rebuild-moby ARCH=x86_64 DOCKER_BUILD=false` on gVisor source ce1634b4adf686f6067b4fed388de417efd43ddd, capped at 30 minutes, without image publication, followed by Bazel validation. Generic CI authorization does not answer this specific exception to the Bazel-only rule."
+        },
+        "additionalReviews": [
+          {
+            "kind": "information",
+            "status": "pending",
+            "title": "Is Daybreak enabled?",
+            "summary": "Scope summary of the existing unanswered availability question; original wording is unavailable. Information only, without execution authorization.",
+            "body": "Scope summary, not a verbatim question: whether Daybreak is enabled so the held sensitive-source investigation can be reconsidered under actual access and policy checks. No answer or availability confirmation is known; this request does not authorize execution or source changes."
+          }
+        ]
+      }
+    ]
+  }
 }

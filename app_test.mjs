@@ -132,11 +132,14 @@ test('an investigation issue has one filing decision and keeps its receipt after
   assert.deepEqual(JSON.parse(read()), [1, [], 0]);
   delete row.settledReviews;
   assert.deepEqual(JSON.parse(read()), [1, [], 0]);
-  row.additionalReviews = [draft];
-  assert.throws(read, /Invalid additional review/);
+  row.status = 'active';
+  row.additionalReviews = [{ ...draft, title: 'Another issue', body: 'Another failure.' }];
+  assert.deepEqual(JSON.parse(read()), [1, ['post-reply'], 2]);
+  row.additionalReviews[0].kind = 'reply';
+  assert.throws(read, /Invalid contributor decision/);
   delete row.additionalReviews;
   draft.url = 'https://github.com/other/repo/issues/new';
-  assert.throws(read, /Invalid contributor decision/);
+  assert.deepEqual(JSON.parse(read()), [1, ['post-reply'], 1]);
 });
 
 test('an investigation can review its exact fork fix after an issue was approved', () => {
@@ -1437,6 +1440,74 @@ test('an upstream issue draft opens from its source PR without accepting cross-t
   assert.equal(vm.runInContext('contributorDecision(nodeInput)', context), null);
   node.contributorReview = { ...draft, url: 'https://github.com/other/project/issues/new' };
   assert.equal(vm.runInContext('contributorDecision(nodeInput).kind', context), 'issue');
+});
+
+test('existing scoped questions appear separately without granting approval', () => {
+  const context = client();
+  context.registryInput = JSON.parse(readFileSync(new URL('./attention_dispositions_fixture.json', import.meta.url))).pendingRequests;
+  const closure = context.registryInput.nodes.find(node => node.id === 'pr:16591');
+  closure.github = { ...attentionNode(16591).github, head: closure.head, reviewDecision: 'REVIEW_REQUIRED',
+    approvedHead: null, approvedAt: null };
+  const before = JSON.stringify(closure.github);
+  const createElement = () => ({ children: [], append(...items) { this.children.push(...items); },
+    setAttribute() {}, addEventListener() {} });
+  context.document = { createElement };
+  context.location = new URL('https://tamird.github.io/gvisor/');
+  const sections = createElement(); context.sections = sections;
+  const read = () => JSON.parse(vm.runInContext(`(() => {
+    registry = registryInput;
+    validateRegistry(registry);
+    return JSON.stringify(registryNodes(registry).flatMap(node => {
+      node.workStates = stateRecords(snapshotInput, node);
+      appendContributorDecisions(sections, node, pendingDecisions(node));
+      return pendingDecisions(node).map(decision => [node.id, decision.kind, decisionReason(decision)]);
+    }));
+  })()`, context));
+  const expected = [
+    ['pr:16591', 'closure', 'close-pr'],
+    ['branch:rbe-declared-lint-tools', 'issue', 'post-reply'],
+    ['issue:cncf/dco2:126', 'proposal', 'review-changes'],
+    ['investigation:runtime-startup', 'exception', 'approve-exception'],
+    ['investigation:runtime-startup', 'information', 'provide-information'],
+  ];
+  assert.deepEqual(read().sort(), expected.sort());
+  assert.equal(sections.children.length, 5);
+  const text = element => [element.textContent || '', ...(element.children || []).map(text)].join(' ');
+  const information = sections.children.find(section => text(section).includes('Is Daybreak enabled?'));
+  assert.match(text(information), /Information only, without execution authorization/);
+  assert.ok(!information.children.some(child => child.textContent?.startsWith('Open ')));
+  assert.equal(JSON.stringify(closure.github), before);
+
+  const runtime = context.registryInput.investigations[0];
+  for (const [decision, change] of [
+    [runtime.contributorReview, { head: undefined }],
+    [runtime.additionalReviews[0], { head: 'a'.repeat(40) }],
+    [closure.contributorReview, { url: closure.url + '#issuecomment-1' }],
+  ]) {
+    const original = { ...decision }; Object.assign(decision, change);
+    assert.throws(read, /Invalid contributor decision/);
+    for (const key of Object.keys(change)) if (!Object.hasOwn(original, key)) delete decision[key];
+    Object.assign(decision, original);
+  }
+  runtime.settledReviews = [{ ...runtime.contributorReview, outcome: 'rejected' }];
+  assert.equal(read().length, 4);
+  assert.ok(read().some(([, kind]) => kind === 'information'));
+  runtime.settledReviews.push({ ...runtime.additionalReviews[0], outcome: 'answered' });
+  assert.equal(read().length, 3);
+  runtime.additionalReviews[0].body += ' Different requested scope.';
+  assert.equal(read().length, 4); // An old answer cannot settle changed scope.
+  delete runtime.additionalReviews;
+  delete runtime.contributorReview;
+  assert.equal(read().length, 3); // History never creates a pending request.
+
+  closure.github.head = 'f'.repeat(40);
+  context.nodeInput = closure;
+  assert.equal(vm.runInContext('contributorDecisionNeedsRefresh(nodeInput)', context), true);
+  closure.github.status = 'closed';
+  assert.equal(read().length, 2);
+  const fix = context.registryInput.nodes.find(node => node.type === 'issue').contributorReview;
+  fix.url = fix.url.replace('tamird/dco2', 'other/dco2');
+  assert.throws(read, /Invalid contributor decision/);
 });
 
 test('direct terminal status refresh does not refresh other PR states', () => {
@@ -2980,7 +3051,7 @@ test('shared table URLs preserve multiple attention reasons and legacy handoff n
   const shared = JSON.parse(vm.runInContext('JSON.stringify(readViewURL())', context)); assert.deepEqual(shared.reasonFilters, ['author-conflicts', 'maintainer-import-failed']); assert.equal(shared.sortKey, 'number'); assert.equal(shared.sortDirection, 1);
 });
 
-test('legacy contributor URLs and saved views expand to all three decision filters', () => {
+test('legacy contributor URLs and saved views expand to all decision filters', () => {
   const review = attentionNode(15814), reply = attentionNode(16496), head = 'b'.repeat(40);
   review.github.headOwner = 'EtiennePerot';
   review.contributorReview = { status: 'pending', kind: 'review', head: review.github.head, url: review.url };
@@ -3001,11 +3072,11 @@ test('legacy contributor URLs and saved views expand to all three decision filte
       view: 'table', reasonFilters: ['author-proposal'], selected: review.id,
     }) : null };
     vm.runInContext('restoreView()', context);
-    assert.deepEqual([...vm.runInContext('reasonFilters', context)], ['review-changes', 'post-review', 'post-reply']);
+    assert.deepEqual([...vm.runInContext('reasonFilters', context)], ['review-changes', 'post-review', 'post-reply', 'provide-information', 'approve-exception', 'close-pr']);
     assert.deepEqual([...vm.runInContext('tableNodes().map(n => n.id)', context)], nodes.map(n => n.id));
     assert.equal(vm.runInContext('selected', context), review.id);
     const canonical = new URL(vm.runInContext('currentViewURL()', context), context.location);
-    assert.deepEqual(canonical.searchParams.getAll('reason'), ['review-changes', 'post-review', 'post-reply']);
+    assert.deepEqual(canonical.searchParams.getAll('reason'), ['review-changes', 'post-review', 'post-reply', 'provide-information', 'approve-exception', 'close-pr']);
   }
   // An explicit typed link overrides the older broad saved preference.
   context.location = new URL('https://example.test/?view=table&reason=post-review#pr%3A15814');

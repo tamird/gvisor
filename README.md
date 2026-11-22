@@ -44,7 +44,16 @@ facts and unresolved causes in every relationship.
   for a decision, including outgoing reviews on someone else's PR. Record the
   exact proposed text or commit. Use `kind: issue` on the source work item with
   the destination repository's `/issues/new` URL and the form's `title` and
-  `body`; `kind: reply` refers to an existing thread. Remove the request when answered; keep any
+  `body`; `kind: reply` refers to an existing thread. Use `additionalReviews`
+  for other independent pending questions on that same item. An existing
+  issue can carry a `kind: proposal` for its source fix, with the exact fork
+  commit, base, title and body. `kind: closure` requests closing a PR and
+  posting its recorded body, bound to the current head and original PR URL.
+  `kind: information` asks for facts, without authorizing execution;
+  `kind: exception` records an explicitly requested, source-bound execution
+  exception. Neither is a source approval. When original question text is
+  unavailable, label its verified scope summary rather than invent a quotation.
+  Remove the request when answered; keep any
   checks or publication left to the agent in the work item. After a PR head
   changes, verify the draft against the new source before asking for review.
   If review starts before a check finishes, state which result publication
@@ -870,10 +879,11 @@ The state filters overlap: select several to match any. Counts follow search
 and workstream, independently of the other state buttons. The collector owns
 these classifications in `work_states.py`, and the UI consumes its snapshot:
 
-- **Contributor review:** an actual pending decision recorded by the task owner
+- **Contributor input:** an actual pending decision recorded by the task owner
   in the registry's `contributorReview` object (`status: pending`, exact candidate
   `head` and commit `url`) on an unpublished branch node. Independently reviewable
-  fixes each have their own branch row, with no inferred dependency between them.
+  fixes retain their own source binding, with no inferred dependency between
+  them; a fix for an existing issue can use that issue's row.
   An amendment to an existing PR may instead use that same PR row with
   `kind: amendment`, the exact proposed `head` and fork commit `url`, and
   `baseHead` identifying the published revision it replaces. Include a specific
@@ -888,7 +898,9 @@ these classifications in `work_states.py`, and the UI consumes its snapshot:
   than silently deleting the outstanding question. Text and links appear in the
   table and item details. **Review our changes** opens proposals and amendments.
   **Approve outgoing PR reviews** shows the review text prepared for someone
-  else's PR. **Approve replies and comments** shows draft discussion messages.
+  else's PR. **Approve replies, comments, and issues** shows outgoing drafts.
+  Information, scoped execution exceptions and PR closures have separate
+  queue labels; an unanswered request never records an approval.
   Each filter has a shareable URL. Older contributor-decision links select
   all three filters.
   When asking Tamir for a decision, record it here and link the request to its
@@ -1123,7 +1135,8 @@ polling lane.
 
 Routine validation on the existing RBE service has standing authorization.
 Dispatch the workload and track its source, invocation, and results under the
-agent’s follow-up. Contributor review covers the changes proposed for publication.
+agent’s follow-up. Only an explicitly asked exception belongs in the contributor
+queue; routine execution does not become an approval request.
 
 ### Retire local and fork automation branches
 
