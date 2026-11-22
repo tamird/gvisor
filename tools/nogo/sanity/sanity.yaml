@@ -5,3 +5,9 @@ groups:
 analyzers:
   printf:
     all: # Enabled.
+  errorsastype:
+    all: # Enabled.
+  waitgroup:
+    all: # Enabled.
+  inline:
+    all: # Enabled.

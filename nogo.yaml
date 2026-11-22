@@ -128,16 +128,23 @@ analyzers:
     internal:
       exclude:
         - "^-$" # b/181776900: analyzer fails on buildkite.
-  shadow: # Disable for now.
+  # Intentional branch-local variables and error guards produce false positives.
+  shadow:
     generated:
       exclude: [".*"]
     internal:
       exclude: [".*"]
-  composites: # Disable for now.
+  directive:
     generated:
-      exclude: [".*"]
+      exclude:
+        # Invalid NBSP whitespace tests checkescape's directive parsing.
+        - '^bazel-out/[^/]+/bin/tools/checkescape/test1/nosplit\.go:'
+  reflectvaluecompare:
     internal:
-      exclude: [".*"]
+      exclude:
+        # Merge checks descriptor identity for disjoint address ranges.
+        # Equal contents do not establish object identity.
+        - '^pkg/state/encode\.go:896:[0-9]+$'
   errorsas:
     external: # Enabled.
       exclude:

@@ -25,7 +25,7 @@ import (
 	"gvisor.dev/gvisor/runsc/flag"
 )
 
-func TestFormatFinding(t *testing.T) {
+func TestFindings(t *testing.T) {
 	args := flag.CommandLine.Args()
 	if len(args) == 0 {
 		t.Fatal("missing Nogo test command")
@@ -39,8 +39,14 @@ func TestFormatFinding(t *testing.T) {
 	if !ok || exitErr.ExitCode() != 1 {
 		t.Fatalf("%v: got %v, want exit status 1; stdout:\n%s", cmd.Args, err, out)
 	}
-	const want = `fmt.Fprintf format %d has arg "hello world!" of wrong type string`
-	if !bytes.Contains(out, []byte(want)) {
-		t.Errorf("missing %q in stdout:\n%s", want, out)
+	for _, want := range []string{
+		`fmt.Fprintf format %d has arg "hello world!" of wrong type string`,
+		"errors.As can be simplified using AsType[*os.PathError]",
+		"WaitGroup.Add called from inside new goroutine",
+		"should be inlined",
+	} {
+		if !bytes.Contains(out, []byte(want)) {
+			t.Errorf("missing %q in stdout:\n%s", want, out)
+		}
 	}
 }
