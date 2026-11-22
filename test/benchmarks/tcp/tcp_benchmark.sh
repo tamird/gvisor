@@ -360,23 +360,17 @@ function cleanup() {
   if [[ -n "\${results_file}" ]]; then
     rm -f "\${results_file}"
   fi
-  # Only the benchmark services are background jobs in this shell.
-  for pid in \$(jobs -pr; jobs -ps); do
-    if [[ "\${pid}" == "\${iperf_pid}" ]]; then
-      kill -KILL "\${pid}" 2>/dev/null
-    else
-      kill -TERM "\${pid}" 2>/dev/null
-    fi
-  done
-  # Give proxies time to flush profiles, then reap any that ignore TERM.
-  for ((i = 0; i < 100; i++)); do
-    [[ -z "\$(jobs -pr; jobs -ps)" ]] && break
-    sleep 0.1
-  done
-  for pid in \$(jobs -pr; jobs -ps); do
-    kill -KILL "\${pid}" 2>/dev/null
-  done
-  wait
+  if [[ -n "\${client_pid}" ]]; then
+    kill -TERM "\${client_pid}" 2>/dev/null
+    wait "\${client_pid}"
+  fi
+  if [[ -n "\${server_pid}" ]]; then
+    kill -TERM "\${server_pid}" 2>/dev/null
+    wait "\${server_pid}"
+  fi
+  if [[ -n "\${iperf_pid}" ]]; then
+    kill -9 "\${iperf_pid}" 2>/dev/null
+  fi
   # Unlink all relevant devices from the bridge. This is because when the bridge
   # is deleted, the kernel may hang. It appears that this problem is fixed in
   # upstream commit 1ce5cce895309862d2c35d922816adebe094fe4a.
