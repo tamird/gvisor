@@ -93,7 +93,10 @@ config_setting(
 platform(
     name = "remote_linux_amd64",
     constraint_values = [":rbe_ubuntu24_c"],
-    exec_properties = dict(_REMOTE_EXEC_PROPERTIES, Arch = "amd64"),
+    exec_properties = dict(
+        _REMOTE_EXEC_PROPERTIES,
+        Arch = "amd64",
+    ),
     parents = [":linux_amd64"],
     visibility = ["//visibility:public"],
 )
@@ -101,7 +104,10 @@ platform(
 platform(
     name = "remote_linux_arm64",
     constraint_values = [":rbe_ubuntu24_c"],
-    exec_properties = dict(_REMOTE_EXEC_PROPERTIES, Arch = "arm64"),
+    exec_properties = dict(
+        _REMOTE_EXEC_PROPERTIES,
+        Arch = "arm64",
+    ),
     parents = [":linux_arm64"],
     visibility = ["//visibility:public"],
 )
