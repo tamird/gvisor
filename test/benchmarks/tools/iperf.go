@@ -44,6 +44,7 @@ func (i *Iperf) MakeCmd(host string, port int) []string {
 // Report parses output from iperf3 and reports aggregate sender throughput.
 func (i *Iperf) Report(b *testing.B, output string) {
 	b.Helper()
+	b.Logf("Iperf N=%d elapsed before cleanup=%s; producer output=%q", b.N, b.Elapsed(), output)
 	bandwidth, err := i.bandwidth(output)
 	if err != nil {
 		b.Fatalf("failed to parse bandwidth from %s: %v", output, err)

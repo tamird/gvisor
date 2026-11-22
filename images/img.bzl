@@ -4,13 +4,14 @@ load("@rules_img//img:load.bzl", "image_load")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_files")
 load("//tools:defs.bzl", "pkg_tar")
 
-def image_outputs(name, image, image_name):
+def image_outputs(name, image, image_name, archive_visibility = None):
     """Exposes a Docker-save archive and Make's content-addressed context.
 
     Args:
       name: Prefix for the archive and context target names.
       image: The image_manifest target.
       image_name: Stable image name relative to images/, such as basic/alpine.
+      archive_visibility: Visibility of the Docker-save archive filegroup.
     """
     image_load(
         name = name + "_load",
@@ -23,6 +24,7 @@ def image_outputs(name, image, image_name):
         srcs = [":" + name + "_load"],
         output_group = "tarball",
         tags = ["manual"],
+        visibility = archive_visibility,
     )
     pkg_files(
         name = name + "_files",

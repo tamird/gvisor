@@ -2,6 +2,11 @@
 
 load("//tools:defs.bzl", "COPY_FILE_TOOLCHAINS", "copy_file_action", "cov_available", "tar")
 
+ReleaseInfo = provider(
+    doc = "Entrypoint metadata for a complete assembled release fileset.",
+    fields = {"runsc": "The assembled runsc File, adjacent to gvisor-bin/."},
+)
+
 # FLAVORS are the instrumentation flavors of gVisor binaries.
 FLAVORS = [
     "default",
@@ -91,20 +96,28 @@ def _release_files_impl(ctx):
         layout.append((_single_file(target), "gvisor-bin/" + name))
 
     outputs = []
+    runsc = None
     for src, path in layout:
         out = ctx.actions.declare_file("%s/%s" % (ctx.label.name, path))
         copy_file_action(ctx, src, out)
         outputs.append(out)
+        if path == "runsc":
+            runsc = out
 
     runfiles = ctx.runfiles(files = outputs)
-    return [DefaultInfo(
-        files = depset(outputs),
-        default_runfiles = runfiles,
-        data_runfiles = runfiles,
-    )]
+    return [
+        ReleaseInfo(runsc = runsc),
+        OutputGroupInfo(runsc = depset([runsc])),
+        DefaultInfo(
+            files = depset(outputs),
+            default_runfiles = runfiles,
+            data_runfiles = runfiles,
+        ),
+    ]
 
 release_files = rule(
     implementation = _release_files_impl,
+    provides = [ReleaseInfo],
     attrs = {
         "bins": attr.label_list(
             doc = "Binaries placed at the top level of the layout.",

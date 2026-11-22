@@ -80,7 +80,7 @@ func BenchmarkIperfOneConnection(b *testing.B) {
 			port := 5001
 
 			// Start the server.
-			if err := server.Spawn(ctx, dockerutil.RunOpts{Image: "benchmarks/iperf"}, "iperf3", "--server", "--port", fmt.Sprint(port), "--forceflush"); err != nil {
+			if err := server.Spawn(ctx, dockerutil.RunOpts{Image: "benchmarks/iperf", CpusetCpus: harness.ServerCPUSet()}, "iperf3", "--server", "--port", fmt.Sprint(port), "--forceflush"); err != nil {
 				b.Fatalf("failed to start server with: %v", err)
 			}
 			if out, err := server.WaitForOutput(ctx, fmt.Sprintf("Server listening on %d", port), 10*time.Second); err != nil {
@@ -94,13 +94,20 @@ func BenchmarkIperfOneConnection(b *testing.B) {
 			// Run the client.
 			b.ResetTimer()
 			out, err := client.Run(ctx, dockerutil.RunOpts{
-				Image: "benchmarks/iperf",
-				Links: []string{server.MakeLink("iperfsrv")},
+				Image:      "benchmarks/iperf",
+				CpusetCpus: harness.ClientCPUSet(),
+				Links:      []string{server.MakeLink("iperfsrv")},
 			}, iperf.MakeCmd("iperfsrv", port)...)
 			if err != nil {
 				b.Fatalf("failed to run client: %v", err)
 			}
 			b.StopTimer()
+			affinity, inspectErr := clientMachine.RunCommand("docker", "inspect", "--format", "{{.HostConfig.CpusetCpus}}", server.Name, client.Name)
+			wantAffinity := fmt.Sprintf("%s\n%s\n", harness.ServerCPUSet(), harness.ClientCPUSet())
+			if inspectErr != nil || affinity != wantAffinity {
+				b.Fatalf("actual server/client Docker CPU sets = %q, %v; want %q", affinity, inspectErr, wantAffinity)
+			}
+			b.Logf("actual server/client Docker CPU sets = %q", affinity)
 			iperf.Report(b, out)
 			b.StartTimer()
 		})
@@ -196,7 +203,7 @@ func BenchmarkIperfManyConnections(b *testing.B) {
 			port := 5001
 
 			// Start the server.
-			if err := server.Spawn(ctx, dockerutil.RunOpts{Image: "benchmarks/iperf"}, "iperf3", "--server", "--port", fmt.Sprint(port), "--forceflush"); err != nil {
+			if err := server.Spawn(ctx, dockerutil.RunOpts{Image: "benchmarks/iperf", CpusetCpus: harness.ServerCPUSet()}, "iperf3", "--server", "--port", fmt.Sprint(port), "--forceflush"); err != nil {
 				b.Fatalf("failed to start server with: %v", err)
 			}
 			if out, err := server.WaitForOutput(ctx, fmt.Sprintf("Server listening on %d", port), 10*time.Second); err != nil {
@@ -208,16 +215,26 @@ func BenchmarkIperfManyConnections(b *testing.B) {
 				Parallel: bm.parallel,
 			}
 
+			cmd := iperf.MakeCmd("iperfsrv", port)
+			cmd = append([]string{"timeout", "--signal=INT", "--kill-after=5s", "30s"}, cmd...)
+
 			// Run the client.
 			b.ResetTimer()
 			out, err := client.Run(ctx, dockerutil.RunOpts{
-				Image: "benchmarks/iperf",
-				Links: []string{server.MakeLink("iperfsrv")},
-			}, iperf.MakeCmd("iperfsrv", port)...)
+				Image:      "benchmarks/iperf",
+				CpusetCpus: harness.ClientCPUSet(),
+				Links:      []string{server.MakeLink("iperfsrv")},
+			}, cmd...)
+			b.StopTimer()
+			affinity, inspectErr := clientMachine.RunCommand("docker", "inspect", "--format", "{{.HostConfig.CpusetCpus}}", server.Name, client.Name)
+			wantAffinity := fmt.Sprintf("%s\n%s\n", harness.ServerCPUSet(), harness.ClientCPUSet())
+			if inspectErr != nil || affinity != wantAffinity {
+				b.Fatalf("actual server/client Docker CPU sets = %q, %v; want %q", affinity, inspectErr, wantAffinity)
+			}
+			b.Logf("actual server/client Docker CPU sets = %q", affinity)
 			if err != nil {
 				b.Fatalf("failed to run client: %v (output: %q)", err, out)
 			}
-			b.StopTimer()
 			iperf.Report(b, out)
 			b.StartTimer()
 		})

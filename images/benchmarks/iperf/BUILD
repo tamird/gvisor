@@ -38,6 +38,7 @@ image_manifest(
 
 image_outputs(
     name = "iperf",
+    archive_visibility = ["//test/benchmarks/harness:__pkg__"],
     image = ":iperf_image",
     image_name = "benchmarks/iperf",
 )

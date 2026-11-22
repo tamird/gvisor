@@ -24,9 +24,16 @@ import (
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
 )
 
+var workerBridge = flag.Bool("worker-bridge", true, "create a private network namespace and Docker bridge for the owned worker")
+
 var (
-	help  = flag.Bool("help", false, "print this usage message")
-	debug = flag.Bool("debug", false, "turns on debug messages for individual benchmarks")
+	help           = flag.Bool("help", false, "print this usage message")
+	ownedDocker    = flag.Bool("owned-docker", false, "start a private Docker worker from declared inputs")
+	workerRunsc    = flag.String("worker-runsc", "", "entrypoint in the declared complete runsc release; empty selects native runc")
+	workerArchives = flag.String("worker-image-archives", "", "comma-separated declared Docker-save archives")
+	clientCPUs     = flag.String("client-cpuset", "", "explicit benchmark client CPU affinity; empty selects the default split")
+	serverCPUs     = flag.String("server-cpuset", "", "explicit benchmark server CPU affinity; empty selects the default split")
+	debug          = flag.Bool("debug", false, "turns on debug messages for individual benchmarks")
 )
 
 // Init performs any harness initialization before runs.
@@ -40,7 +47,9 @@ func Init() error {
 		flag.Usage()
 		os.Exit(0)
 	}
-	dockerutil.EnsureSupportedDockerVersion()
+	if !*ownedDocker {
+		dockerutil.EnsureSupportedDockerVersion()
+	}
 	return nil
 }
 
@@ -59,6 +68,9 @@ func GetMachine() (Machine, error) {
 
 // ClientCPUSet returns the CPU affinity string for benchmark client containers.
 func ClientCPUSet() string {
+	if *clientCPUs != "" {
+		return *clientCPUs
+	}
 	if n := runtime.NumCPU(); n >= 8 {
 		return fmt.Sprintf("0-%d", n/2-1)
 	} else if n >= 4 {
@@ -69,6 +81,9 @@ func ClientCPUSet() string {
 
 // ServerCPUSet returns the CPU affinity string for benchmark server containers.
 func ServerCPUSet() string {
+	if *serverCPUs != "" {
+		return *serverCPUs
+	}
 	if n := runtime.NumCPU(); n >= 8 {
 		return fmt.Sprintf("%d-%d", n/2, n-1)
 	} else if n >= 4 {
