@@ -646,7 +646,7 @@ func parseShowRepos(out string) (map[string]repoInfo, error) {
 			end = headers[i+1][0]
 		}
 		info := repoInfo{attrs: make(map[string][]string)}
-		for _, line := range strings.Split(out[h[1]:end], "\n") {
+		for line := range strings.SplitSeq(out[h[1]:end], "\n") {
 			if strings.HasPrefix(line, "#") {
 				continue
 			}
@@ -710,7 +710,7 @@ var (
 // permanent and reported as errNotFound.
 func httpGet(url string, header map[string]string) ([]byte, error) {
 	var lastErr error
-	for attempt := 0; attempt < 2; attempt++ {
+	for range 2 {
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
 			return nil, err
