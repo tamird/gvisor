@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T23:03:09.385297+00:00",
+    "updatedAt": "2026-11-22T23:29:11.797344+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4972,7 +4972,7 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "Prioritize the 56-directory selection audit and main analyzer registration/wiring candidate in investigation:repository-lint. Independent util.Lines extraction is permitted but is not a critical-path prerequisite; ten marshal loops and performance work stay held. The unqualified 19-file prep is preserved without publication. Follow provider96 preparation without a new publication ask and actual compiler/platform prerequisites; no timing or candidate comparison is authorized.",
+        "nextAction": "First priority is the actual df8 analyzer publication question; the updated BuildBuddy96 publication question is separately pending. Independent util.Lines extraction is not a handoff prerequisite; ten marshal loops/performance remain held. Preparation object deb218dfd31eb9bf8bd94d1b684ac18379f04cff is readable, but its expected audit/go-analysis-tooling-preparation-20261122 ref is absent after guarded create-only attempts returned 404. This unresolved provider/transport issue is not pending human approval; analysis_pass_inventory owns its separate baseline validation. No source, timing or publication grant is inferred.",
         "recheckCondition": "Qualified provider correction and actual deployed behavior, terminal owner evidence for the analyzer policy, or actual upstream prerequisite landing; no repeat of the completed 70857 Nogo gate.",
         "observedAt": "2026-11-17T19:58:24.544895+00:00",
         "curatedAt": "2026-11-21T13:24:07.659680+00:00",
@@ -98788,7 +98788,7 @@
       "url": "https://github.com/protocolbuffers/protobuf/pull/31530",
       "group": "bazel",
       "status": "open",
-      "summary": "The 37.x backport source changed to 2f8840c64. Its current All Blocking Tests (fork) check fails, and the author has already requested another test approval. The underlying failure and the claim that it is unrelated are unverified here. Prior generator/output-equivalence evidence remains bound to its actual older source.",
+      "summary": "Verified pull_request_target run 45077691189 on exact 2f8840c64 fails Apply Safe for Tests Label because the unsafe fork has not been approved to run tests. All Blocking Tests (fork) only runs false. This is a protobuf-team test-approval gate; no source-test failure or unrelated-error cause is established. The existing author comment already requests approval. Prior generator/output qualification does not transfer to this changed head.",
       "evidence": [
         {
           "label": "Supplier CI requires team authorization",
@@ -98825,15 +98825,16 @@
         "owner": "root",
         "sourceHead": "2f8840c6402bc2c5db1cef382adbaee1d89cecf7",
         "observedAt": "2026-11-22T22:57:01.440210+00:00",
-        "disposition": "The 37.x backport source changed to 2f8840c64. Its current All Blocking Tests (fork) check fails, and the author has already requested another test approval. The underlying failure and the claim that it is unrelated are unverified here. Prior generator/output-equivalence evidence remains bound to its actual older source.",
-        "nextAction": "Root follows the existing upstream test-approval request and verifies actual current-head failure evidence before assigning a cause. Preserve prior source qualification limits; no repeated outreach, source rewrite or manual retry is inferred.",
+        "disposition": "Verified pull_request_target run 45077691189 on exact 2f8840c64 fails Apply Safe for Tests Label because the unsafe fork has not been approved to run tests. All Blocking Tests (fork) only runs false. This is a protobuf-team test-approval gate; no source-test failure or unrelated-error cause is established. The existing author comment already requests approval. Prior generator/output qualification does not transfer to this changed head.",
+        "nextAction": "Root follows the existing test-approval request; a protobuf team member owns the safe-for-tests label. No duplicate outreach, source change, manual retry or permission bypass is authorized.",
         "evidence": [
           "https://github.com/protocolbuffers/protobuf/pull/31530",
           "https://github.com/protocolbuffers/protobuf/actions/runs/43039912432/job/130588617472",
           "https://github.com/protocolbuffers/protobuf/pull/31530#issuecomment-7086815521",
-          "https://github.com/protocolbuffers/protobuf/actions/runs/45077691189/job/137378521730"
+          "https://github.com/protocolbuffers/protobuf/actions/runs/45077691189/job/137378521730",
+          "https://github.com/protocolbuffers/protobuf/actions/runs/45077691189/job/137378502010"
         ],
-        "recheckCondition": "Maintainer test approval, actual terminal check evidence, changed source or reviewer feedback."
+        "recheckCondition": "Actual safe-for-tests label, new trusted run, maintainer review or exact head change."
       }
     },
     {
@@ -131786,7 +131787,7 @@
           ]
         }
       ],
-      "nextStep": "Await the exact df8 publication decision with known Nogo blockers explicit. The whole warning backlog and independent prep are not source-candidate handoff prerequisites, but migrations remain necessary before merging. Keep errorsastype global without new two-file exceptions/baselines; root owns protected deferred findings without source read/edit. Preserve validation limits and uncertain go_marshal2 semantics separately.",
+      "nextStep": "FIRST PRIORITY: await the exact df8 publication decision with known Nogo blockers explicit. The whole warning backlog and independent prep are not source-candidate handoff prerequisites, but migrations remain necessary before merging. Keep errorsastype global without new two-file exceptions/baselines; root owns protected deferred findings without source read/edit. Preserve validation limits and uncertain go_marshal2 semantics separately.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -142974,8 +142975,8 @@
       "head": "96fe4a8e5e8f376a40aa6e275edeb4e1c915c7eb",
       "title": "Honor disabled OCI network modes",
       "updatedAt": "2026-11-22T14:30:19.849383+00:00",
-      "summary": "Signed fork revision 96fe4a8e clarifies that legacy dockerNetwork=off and OCI default_network_mode=off are both live. Its comment and commit message address the legacy-path question, and independent review accepts the revision. Tests have not run because anonymous RBE is unsupported. No upstream PR approval or new publication question exists; deployed-cloud behavior remains unverified.",
-      "nextStep": "Keep new BuildBuddy publication questions held behind the main-analysis priority. Prepared source 96 remains unapproved, and native upstream CI is still required if publication is later authorized. The original 77 question is preserved as superseded by revision, not approved or rejected.",
+      "summary": "Prepared signed revision 96fe4a8e documents both live off-mode callers: dockerNetwork=off and executor.oci.default_network_mode=off. Production logic and test postimages are unchanged from 77; independent review accepts the revision. Linux Bazel tests remain unrun because an authenticated remote runner is unavailable. The updated source-publication question is now pending; no upstream PR or approval is inferred. Main-analysis publication remains first priority and deployed-cloud behavior is unverified.",
+      "nextStep": "Await the actual updated96 publication decision after the first-priority main-analysis question. If publication is authorized, native upstream CI remains required. Preserve the retired77 question and its revision history without transferring an approval.",
       "findings": [],
       "evidence": [
         {
@@ -142999,7 +143000,17 @@
           "baseHead": "168813c94525e5106459531fb629429d5fe2fb60",
           "outcome": "superseded"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "96fe4a8e5e8f376a40aa6e275edeb4e1c915c7eb",
+        "baseHead": "168813c94525e5106459531fb629429d5fe2fb60",
+        "url": "https://github.com/tamird/buildbuddy/commit/96fe4a8e5e8f376a40aa6e275edeb4e1c915c7eb",
+        "title": "Honor disabled OCI network modes",
+        "summary": "Treat both disabled OCI network-mode values consistently, including the live legacy and default-mode callers. Linux tests remain unrun; upstream CI is required.",
+        "body": "Commit 72cfaea347f added the network platform property, translating `network=off` to Docker network mode `none`. The OCI provider disabled networking only for `off`, so the new property left networking enabled.\n\nTreat both values as disabled. `dockerNetwork=off` passes through the platform helper unchanged, and the OCI provider also accepts `executor.oci.default_network_mode=off`. Extend the existing networking fixture to cover `network=off` overriding `dockerNetwork=bridge`, and `dockerNetwork=none`.\n\nThe Linux networking tests have not run: an authenticated remote test runner is unavailable in this session. Native CI remains required.\n\nPosted by Codex on behalf of @tamird.\n"
+      }
     },
     {
       "id": "investigation:rules-lint-patcher",
