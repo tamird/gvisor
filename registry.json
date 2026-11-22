@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T20:43:35.105262+00:00",
+    "updatedAt": "2026-11-22T20:47:20.104837+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -104533,13 +104533,13 @@
       "group": "ci-flakes",
       "status": "open",
       "updatedAt": "2026-11-21T04:22:28.091102+00:00",
-      "summary": "Jasnell added exact-head approval on unchanged 15c2edb5 at 20:16:25 UTC, alongside bnb’s existing approval. The PR remains OPEN/APPROVED/MERGEABLE but natively BLOCKED, with three Jenkins status contexts pending. The earlier queue attempt reported Jenkins success; no source failure is established.",
+      "summary": "The approval-count gate is satisfied: bnb and jasnell are listed collaborators and both approved exact head 15c2edb5. The PR remains MERGEABLE/APPROVED but natively BLOCKED with three unchanged pending GitHub Jenkins contexts. The maintainer and queue bot previously reported Jenkins success with a GitHub reporting glitch; current Jenkins endpoints are inaccessible, so no fresh Jenkins verdict is inferred. Remaining work is status correction and maintainer-owned queue admission/landing, not another approval or a seven-day wait.",
       "followup": {
         "owner": "root",
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-        "disposition": "Jasnell added exact-head approval on unchanged 15c2edb5 at 20:16:25 UTC, alongside bnb’s existing approval. The PR remains OPEN/APPROVED/MERGEABLE but natively BLOCKED, with three Jenkins status contexts pending. The earlier queue attempt reported Jenkins success; no source failure is established.",
-        "nextAction": "Root reconciles the new approval with current CI reporting and maintainer-owned landing admission. Do not relabel/requeue, retry, merge, change source or repeat outreach from bot instructions.",
-        "recheckCondition": "Corrected CI reporting, maintainer-owned queue admission, changed review/source or terminal PR state.",
+        "disposition": "The approval-count gate is satisfied: bnb and jasnell are listed collaborators and both approved exact head 15c2edb5. The PR remains MERGEABLE/APPROVED but natively BLOCKED with three unchanged pending GitHub Jenkins contexts. The maintainer and queue bot previously reported Jenkins success with a GitHub reporting glitch; current Jenkins endpoints are inaccessible, so no fresh Jenkins verdict is inferred. Remaining work is status correction and maintainer-owned queue admission/landing, not another approval or a seven-day wait.",
+        "nextAction": "Root follows actual CI status correction, maintainer-owned queue admission or landing, and exact head changes. No source failure, rebase, retry, relabel/requeue, merge or duplicate outreach is justified or authorized.",
+        "recheckCondition": "Actual status correction, maintainer-owned queue/landing event or exact head change.",
         "publishedDelivery": {
           "base": "b7df44bf9c85a6104b9158b616999e3d2c58be5d",
           "head": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
@@ -104806,14 +104806,17 @@
         "attentionDispositions": [
           {
             "reason": "author-feedback",
-            "title": "Landing awaits current CI reporting and maintainer admission",
-            "nextAction": "Root reconciles the new approval with current CI reporting and maintainer-owned landing admission. Do not relabel/requeue, retry, merge, change source or repeat outreach from bot instructions.",
+            "title": "Approval gate satisfied; landing awaits status correction and maintainer admission",
+            "nextAction": "Root follows actual CI status correction, maintainer-owned queue admission or landing, and exact head changes. No source failure, rebase, retry, relabel/requeue, merge or duplicate outreach is justified or authorized.",
             "evidence": [
               "https://github.com/nodejs/node/pull/67595#issuecomment-7080248335",
               "https://github.com/nodejs/node/pull/67595#issuecomment-7080379119",
               "https://github.com/nodejs/node/pull/67595#issuecomment-7080487959",
               "https://github.com/nodejs/node/blob/main/doc/contributing/collaborator-guide.md#code-reviews",
-              "https://github.com/nodejs/node/pull/67595#pullrequestreview-6014285398"
+              "https://github.com/nodejs/node/pull/67595#pullrequestreview-6014285398",
+              "https://github.com/nodejs/node/pull/67595#pullrequestreview-5966960144",
+              "https://github.com/nodejs/node/blob/main/README.md",
+              "https://github.com/nodejs/node/pull/67595#issuecomment-7059960789"
             ],
             "binding": {
               "reviewDecision": "APPROVED",
@@ -105017,6 +105020,26 @@
         {
           "label": "New exact-head maintainer approval",
           "url": "https://github.com/nodejs/node/pull/67595#pullrequestreview-6014285398"
+        },
+        {
+          "label": "First exact-head collaborator approval",
+          "url": "https://github.com/nodejs/node/pull/67595#pullrequestreview-5966960144"
+        },
+        {
+          "label": "Collaborator approval rule",
+          "url": "https://github.com/nodejs/node/blob/main/doc/contributing/collaborator-guide.md#code-reviews"
+        },
+        {
+          "label": "Collaborator roster",
+          "url": "https://github.com/nodejs/node/blob/main/README.md"
+        },
+        {
+          "label": "Maintainer-reported CI reporting glitch",
+          "url": "https://github.com/nodejs/node/pull/67595#issuecomment-7059960789"
+        },
+        {
+          "label": "Existing queue admission result",
+          "url": "https://github.com/nodejs/node/pull/67595#issuecomment-7080379119"
         }
       ],
       "settledReviews": [
