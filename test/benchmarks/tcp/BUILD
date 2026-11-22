@@ -1,5 +1,5 @@
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
-load("//tools:defs.bzl", "cc_binary", "go_binary")
+load("//tools:defs.bzl", "cc_binary", "go_binary", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -53,4 +53,21 @@ sh_binary(
         ":tcp_proxy",
     ],
     visibility = ["//:sandbox"],
+)
+
+go_test(
+    name = "cleanup_test",
+    size = "medium",
+    srcs = ["cleanup_test.go"],
+    args = ["--iperf-binary=$(rootpath @iperf//:iperf3)"],
+    data = [
+        ":nsjoin",
+        ":tcp_benchmark",
+        ":tcp_proxy",
+        "@iperf//:iperf3",
+    ],
+    local = True,
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:linux"],
+    deps = ["//pkg/test/testutil"],
 )

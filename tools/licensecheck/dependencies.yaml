@@ -1065,6 +1065,14 @@
   license:
     - BSD-3-Clause
     - MIT
+- dependency: iperf
+  version: https://github.com/esnet/iperf/releases/download/3.18/iperf-3.18.tar.gz
+  retrieved: "2026-11-22"
+  commit: 2a2984488d6de8f7a2d1f5938e03ca7be57e227c
+  sha256: c0618175514331e766522500e20c94bfb293b4424eb27d7207fb427b88d20bab
+  license:
+    - BSD-3-Clause
+    - MIT
 - dependency: k8s.io/api
   version: v0.32.3
   retrieved: "2026-08-27"
