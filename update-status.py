@@ -1608,6 +1608,29 @@ def snapshot_posting_mode() -> str:
         return "unknown"
 
 
+def write_snapshot(snapshot: dict[str, object]) -> None:
+    temporary = ROOT / ".github-status.json.tmp"
+    temporary.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n")
+    # Run the same validator used by the browser before publishing any bytes.
+    validation = subprocess.run(["node", str(ROOT / "metadata-preflight.mjs"), str(ROOT), str(temporary)],
+                                check=False, capture_output=True, text=True, timeout=30)
+    if validation.returncode:
+        temporary.unlink()
+        raise RuntimeError(f"Client metadata validation failed: {validation.stderr.strip()}")
+    temporary.replace(ROOT / "github-status.json")
+
+
+def derive_snapshot() -> None:
+    """Refresh registry-derived state without collecting new observations."""
+    previous = json.loads((ROOT / "github-status.json").read_text())
+    snapshot = previous.copy()
+    snapshot["registryDate"] = REGISTRY["meta"]["updatedAt"]
+    snapshot["reviewerHandoff"] = reviewer_handoff(previous["prs"], previous)
+    snapshot["reviewWatchHandoff"] = review_watch_handoff(previous["prs"] + previous.get("reviewPRs", []), previous)
+    snapshot["workStates"] = record_states(previous["prs"], REGISTRY, previous, previous["checkedAt"])
+    write_snapshot(snapshot)
+
+
 def main(*, outreach_mode: str = "unknown") -> None:
     global requests
     policies = repository_policies(REGISTRY)
@@ -1769,15 +1792,7 @@ def main(*, outreach_mode: str = "unknown") -> None:
         for row in actions["observations"]:
             if row["failedJob"] not in prior_jobs:
                 print(json.dumps({"newActionsRetry": row}))
-    temporary = ROOT / ".github-status.json.tmp"
-    temporary.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n")
-    # Run the same validator used by the browser before publishing any bytes.
-    validation = subprocess.run(["node", str(ROOT / "metadata-preflight.mjs"), str(ROOT), str(temporary)],
-                                check=False, capture_output=True, text=True, timeout=30)
-    if validation.returncode:
-        temporary.unlink()
-        raise RuntimeError(f"Client metadata validation failed: {validation.stderr.strip()}")
-    temporary.replace(output)
+    write_snapshot(snapshot)
     print(f"Retained {len(prs)} PRs across {len(policies)} repositories; refreshed "
           f"{len(refreshed)} records in {requests} GitHub requests ({query_cost} GraphQL points).")
     worker = worker_handoff(snapshot, snapshot["incomingReviewRequests"])
@@ -2008,8 +2023,12 @@ if __name__ == "__main__":
                         help="Use the existing snapshot and fresh GitHub reads for approved amendments")
     mode.add_argument("--review-outreach", choices=("plan", "post"),
                       help="Check and deliver review requests for idle gVisor PRs")
+    mode.add_argument("--derive-snapshot", action="store_true",
+                      help="Refresh registry-derived state in the retained snapshot without API calls")
     arguments = parser.parse_args()
-    if arguments.incoming_review_handoff:
+    if arguments.derive_snapshot:
+        derive_snapshot()
+    elif arguments.incoming_review_handoff:
         incoming_review_handoff()
     elif arguments.review_outreach:
         review_outreach(post=arguments.review_outreach == "post")

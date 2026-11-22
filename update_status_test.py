@@ -980,6 +980,37 @@ class CollectorHistoryTest(unittest.TestCase):
             updater.main()
         return json.loads(self.path.read_text())
 
+    def test_derive_snapshot_preserves_observations_without_api_calls(self) -> None:
+        watched = retained(raw_pr(500, author="contributor"))
+        reply = {"id": "reply", "url": watched["url"] + "#reply", "kind": "comment",
+                 "body": "@tamird, updated.", "author": {"login": "contributor", "__typename": "User"},
+                 "createdAt": LATER, "updatedAt": LATER}
+        watched["feedback"] = {"complete": True, "items": [reply]}
+        self.previous["reviewPRs"] = [watched]
+        self.registry["investigations"] = [{"id": "investigation:external-reviews", "reviewWatch": {
+            "repo": watched["repo"], "numbers": [500], "owner": "Reviewer", "reviewers": ["tamird"], "since": OLD,
+            "inspected": [{"id": "reply", "url": reply["url"], "head": watched["head"],
+                           "updatedAt": LATER, "evidence": reply["url"]}]}}]
+        self.path.write_text(json.dumps(self.previous))
+        expected = copy.deepcopy(self.previous)
+        with mock.patch.multiple(updater, ROOT=self.root, REGISTRY=self.registry), \
+                mock.patch.object(updater, "graphql", side_effect=AssertionError("Unexpected API call")) as api, \
+                mock.patch.object(updater.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "", "")):
+            expected["registryDate"] = self.registry["meta"]["updatedAt"]
+            expected["reviewerHandoff"] = updater.reviewer_handoff(expected["prs"], self.previous)
+            expected["reviewWatchHandoff"] = updater.review_watch_handoff(expected["prs"] + expected["reviewPRs"], self.previous)
+            expected["workStates"] = updater.record_states(expected["prs"], self.registry, self.previous, OLD)
+            updater.derive_snapshot()
+        actual = json.loads(self.path.read_text())
+        self.assertEqual(actual, expected)
+        self.assertEqual(actual["checkedAt"], OLD)
+        inspected, = actual["reviewPRs"]
+        self.assertEqual(inspected.pop("inspectedReviewHeads"), {"reply": watched["head"]})
+        self.assertEqual(inspected, watched)
+        self.assertEqual(actual["prs"], self.previous["prs"])
+        self.assertEqual(actual["reviewWatchHandoff"], [])
+        api.assert_not_called()
+
     def test_publication_hands_incoming_request_to_supervisor(self) -> None:
         pr = self.raw[2]
         message = {"body": "@tamird PTAL", "createdAt": OLD, "updatedAt": OLD,
