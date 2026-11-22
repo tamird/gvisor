@@ -144,7 +144,7 @@ _COVERAGE_INITIALIZATIONS = [
             "--paired-initialize-only",
             "--client-cpuset=0-1",
             "--server-cpuset=2-3",
-            "-test.run=^TestPairedBenchmark$",
+            "-test.run=^TestPairedBenchmark$$",
         ],
         data = [
             ":coverage_runsc_entrypoint",
