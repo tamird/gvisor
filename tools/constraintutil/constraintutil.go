@@ -140,11 +140,8 @@ func CombineFromFiles(paths []string) (constraint.Expr, error) {
 	return Combine(es), nil
 }
 
-// Lines returns a string containing build constraint directives for the given
-// constraint.Expr, including two trailing newlines, as appropriate for a Go
-// source or assembly file. At least a go:build directive will be emitted; if
-// the constraint is expressible using +build directives as well, then +build
-// directives will also be emitted.
+// Lines returns a go:build directive for the given constraint.Expr, including
+// two trailing newlines, as appropriate for a Go source or assembly file.
 //
 // If e is nil, Lines returns the empty string.
 func Lines(e constraint.Expr) string {
@@ -156,13 +153,6 @@ func Lines(e constraint.Expr) string {
 	b.WriteString("//go:build ")
 	b.WriteString(e.String())
 	b.WriteByte('\n')
-
-	if pblines, err := constraint.PlusBuildLines(e); err == nil {
-		for _, line := range pblines {
-			b.WriteString(line)
-			b.WriteByte('\n')
-		}
-	}
 
 	b.WriteByte('\n')
 	return b.String()

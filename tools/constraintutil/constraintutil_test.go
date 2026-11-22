@@ -133,6 +133,13 @@ func TestCombine(t *testing.T) {
 					t.Errorf("Combine(%v): got %q, wanted %q", test.in, got, test.out)
 				}
 			}
+			var wantLines string
+			if test.out != "" {
+				wantLines = "//go:build " + test.out + "\n\n"
+			}
+			if got := Lines(outexpr); got != wantLines {
+				t.Errorf("Lines(%v): got %q, want %q", outexpr, got, wantLines)
+			}
 		})
 	}
 }
