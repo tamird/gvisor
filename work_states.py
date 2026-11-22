@@ -739,6 +739,7 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
                 if not source_changed:
                     states.setdefault(node["id"], {})["contributor-review"] = {
                         "scope": decision.get("head") or decision.get("url") or decision.get("title")}
+                    break  # Match the client's first current, unsettled decision.
         changes = node.get("contributorChangesRequested")
         if changes and node.get("head") == changes["head"]:
             states.setdefault(node["id"], {})["changes-requested"] = {

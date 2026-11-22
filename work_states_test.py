@@ -38,8 +38,16 @@ class WorkStatesTest(unittest.TestCase):
         self.assertEqual(pr, before)
         runtime, = registry["investigations"]
         information, = runtime["additionalReviews"]
+        representative = states[runtime["id"]]["contributor-review"]
+        self.assertEqual(representative["scope"], runtime["contributorReview"]["head"])
+        later = "2026-11-22T10:45:00+00:00"
+        registry["meta"]["updatedAt"] = later
+        refreshed = record_states([pr], registry, {"workStates": states, "prs": [pr], "checkedAt": now}, now)
+        self.assertEqual(refreshed[runtime["id"]]["contributor-review"],
+                         {**representative, "observedAt": later})
         runtime["settledReviews"] = [{**runtime["contributorReview"], "outcome": "rejected"}]
-        self.assertEqual(record_states([pr], registry, {}, now)[runtime["id"]]["contributor-review"]["scope"], information["title"])
+        fallback = record_states([pr], registry, {"workStates": refreshed}, now)[runtime["id"]]["contributor-review"]
+        self.assertEqual((fallback["scope"], fallback["since"]), (information["title"], later))
         runtime["settledReviews"].append({**information, "outcome": "answered"})
         self.assertNotIn(runtime["id"], record_states([pr], registry, {}, now))
         information["body"] += " Different requested scope."
@@ -47,6 +55,8 @@ class WorkStatesTest(unittest.TestCase):
         self.assertIn(runtime["id"], record_states([pr], registry, {}, now))
         pr["head"] = "f" * 40
         self.assertNotIn("contributor-review", record_states([pr], registry, {}, now)["pr:16591"])
+        closure["additionalReviews"] = [information]
+        self.assertEqual(record_states([pr], registry, {}, now)["pr:16591"]["contributor-review"]["scope"], information["title"])
 
     def test_investigation_issue_uses_one_decision_until_settled(self):
         url = "https://github.com/google/gvisor/issues/new"

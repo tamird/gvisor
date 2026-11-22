@@ -902,7 +902,7 @@ these classifications in `work_states.py`, and the UI consumes its snapshot:
   Information, scoped execution exceptions and PR closures have separate
   queue labels; an unanswered request never records an approval.
   Each filter has a shareable URL. Older contributor-decision links select
-  all three filters.
+  all contributor-input filters.
   When asking Tamir for a decision, record it here and link the request to its
   canonical tracker item with the exact proposed commit or reviewable reply.
   Verify that the item appears in the contributor filter before considering the

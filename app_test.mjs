@@ -1503,6 +1503,11 @@ test('existing scoped questions appear separately without granting approval', ()
   closure.github.head = 'f'.repeat(40);
   context.nodeInput = closure;
   assert.equal(vm.runInContext('contributorDecisionNeedsRefresh(nodeInput)', context), true);
+  closure.additionalReviews = [{ kind: 'information', status: 'pending', title: 'Current availability',
+    summary: 'An independent information request.', body: 'Is the existing service available?' }];
+  assert.equal(vm.runInContext('contributorDecision(nodeInput).kind', context), 'information');
+  assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["contributor-review"].scope', context), 'Current availability');
+  delete closure.additionalReviews;
   closure.github.status = 'closed';
   assert.equal(read().length, 2);
   const fix = context.registryInput.nodes.find(node => node.type === 'issue').contributorReview;
