@@ -28,6 +28,11 @@ bazel test --keep_going --config=buildbuddy --config=x86_64 \
 workers separately from target toolchains. A successful cross-compile alone does
 not establish native ARM64 test execution.
 
+Remote actions have localhost access but no external network access. This
+policy is set on the execution platforms because Bazel's local sandbox network
+settings do not configure remote workers. Explicit action execution properties
+can override the platform default.
+
 Keep correctness results and compiled artifacts cached. For a required fresh
 measurement, apply `--nocache_test_results` to the benchmark invocation; keep the
 build cache enabled. Controlled before/after measurements remain separate from
