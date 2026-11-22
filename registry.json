@@ -40087,7 +40087,7 @@
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
         "disposition": "Public c715 remains unchanged/conflicting; source 57 is not publication-approved. Strict current eb263 comparison 44979111210 is audited PASS: legacy 116,100 is included in candidate 116,102, 2,418 protobuf positions each, zero missing/two additional; candidate hash matches its previously compiled product. No identity claim is made for the additional positions. Source-bound compiler/functionality/ZIP evidence and two implementation reviews are complete; controlled performance remains open.",
-        "nextAction": "Both architectures’ NORMAL opaque pairs and frozen startup/syscall/Hackbench harnesses are audited: each complete nine-member pair shares seven helpers, with only runsc and Sentry differing. Runtime/image/install admission is still unexecuted. Existing owners reuse admitted worker ad80’s DockerWorker/private configuration and cleanup; no new driver or host sysctl. The exact-CI adapter 07a0c72a253467ad67fd52c2476904aca94a7ee9 corrects pre-validation zero/Inf-unit filtering and duplicate-metric n inflation; seven boundary tests 44984482335 and retained-data run 44984483998 are still acceptance-pending. A prior valid-data API probe is not parser acceptance. No measurements or statistical gate passed; proposed 0.5% precision is not a user regression budget.",
+        "nextAction": "Both NORMAL product/harness pairs remain audited. Corrected adapter 07a0c72a253467ad67fd52c2476904aca94a7ee9 now passed all seven parser boundaries and 144 retained values with exact canonical bounds; independent fix review is closed. Worker admission 44984719062 stopped during analysis because a test-only filegroup lacked its attribute, so no runtime ran; the existing owner owns the one-attribute correction/same-capability retry. ARM Hackbench has no current Bazel image producer; inspect existing immutable provenance before any producer delta. Runtime/image/install admission remains open. No measurements or statistical gate passed; proposed 0.5% precision is not a user regression budget.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -40132,10 +40132,11 @@
           "https://github.com/tamird/gvisor/actions/runs/44983304342",
           "https://github.com/tamird/gvisor/actions/runs/44984102487",
           "https://github.com/tamird/gvisor/actions/runs/44984482335",
-          "https://github.com/tamird/gvisor/actions/runs/44984483998"
+          "https://github.com/tamird/gvisor/actions/runs/44984483998",
+          "https://github.com/tamird/gvisor/actions/runs/44984719062"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Owner-audited corrected parser boundaries/retained-data integration and actual executor/runtime admission, then source-bound frozen A/A design before measurements or publication claims.",
+        "recheckCondition": "Owner-audited corrected capability/runtime admission and existing immutable ARM image provenance, then frozen source-bound A/A readiness; no measurement/publication inference from parser or build proof.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "qualificationHistory": [
           {
@@ -40802,7 +40803,7 @@
           "https://github.com/tamird/gvisor/commit/c71526cea11bd81898c588264c0940d1fb33e511"
         ]
       },
-      "nextStep": "Both architectures’ NORMAL opaque pairs and frozen startup/syscall/Hackbench harnesses are audited: each complete nine-member pair shares seven helpers, with only runsc and Sentry differing. Runtime/image/install admission is still unexecuted. Existing owners reuse admitted worker ad80’s DockerWorker/private configuration and cleanup; no new driver or host sysctl. The exact-CI adapter 07a0c72a253467ad67fd52c2476904aca94a7ee9 corrects pre-validation zero/Inf-unit filtering and duplicate-metric n inflation; seven boundary tests 44984482335 and retained-data run 44984483998 are still acceptance-pending. A prior valid-data API probe is not parser acceptance. No measurements or statistical gate passed; proposed 0.5% precision is not a user regression budget.",
+      "nextStep": "Both NORMAL product/harness pairs remain audited. Corrected adapter 07a0c72a253467ad67fd52c2476904aca94a7ee9 now passed all seven parser boundaries and 144 retained values with exact canonical bounds; independent fix review is closed. Worker admission 44984719062 stopped during analysis because a test-only filegroup lacked its attribute, so no runtime ran; the existing owner owns the one-attribute correction/same-capability retry. ARM Hackbench has no current Bazel image producer; inspect existing immutable provenance before any producer delta. Runtime/image/install admission remains open. No measurements or statistical gate passed; proposed 0.5% precision is not a user regression budget.",
       "recheckCondition": "Actual missing performance evidence, final source review or substantive maintainer/import change."
     },
     {
