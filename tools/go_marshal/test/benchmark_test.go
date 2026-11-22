@@ -23,6 +23,7 @@ import (
 
 	"gvisor.dev/gvisor/pkg/binary"
 	"gvisor.dev/gvisor/pkg/hostarch"
+	"gvisor.dev/gvisor/pkg/marshal"
 	"gvisor.dev/gvisor/tools/go_marshal/analysis"
 	"gvisor.dev/gvisor/tools/go_marshal/test"
 )
@@ -137,22 +138,25 @@ func BenchmarkMarshalManual(b *testing.B) {
 
 // Marshalling with the go_marshal safe API.
 func BenchmarkGoMarshalSafe(b *testing.B) {
-	var s1, s2 test.Stat
-	analysis.RandomizeValue(&s1)
-
-	b.ResetTimer()
-
-	for n := 0; n < b.N; n++ {
-		buf := make([]byte, s1.SizeBytes())
-		s1.MarshalBytes(buf)
-		s2.UnmarshalBytes(buf)
-	}
-
-	b.StopTimer()
-
-	// Sanity check, make sure the values were preserved.
-	if !reflect.DeepEqual(s1, s2) {
-		panic(fmt.Sprintf("Data corruption across marshal/unmarshal cycle:\nBefore: %+v\nAfter: %+v\n", s1, s2))
+	for _, newValue := range []func() marshal.Marshallable{
+		func() marshal.Marshallable { return new(test.Stat) },
+		func() marshal.Marshallable { return new(test.InetAddr) },
+		func() marshal.Marshallable { return new(test.Type1) },
+	} {
+		s1, s2 := newValue(), newValue()
+		b.Run(reflect.TypeOf(s1).Elem().Name(), func(b *testing.B) {
+			analysis.RandomizeValue(s1)
+			b.ResetTimer()
+			for range b.N {
+				buf := make([]byte, s1.SizeBytes())
+				s1.MarshalBytes(buf)
+				s2.UnmarshalBytes(buf)
+			}
+			b.StopTimer()
+			if !reflect.DeepEqual(s1, s2) {
+				b.Fatalf("Data corruption across marshal/unmarshal cycle:\nBefore: %+v\nAfter: %+v", s1, s2)
+			}
+		})
 	}
 }
 
