@@ -58352,8 +58352,8 @@
         "owner": "root",
         "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
         "observedAt": "2026-11-02T17:47:05.918366+00:00",
-        "disposition": "Both native architecture, package, license, JSON and eight-row proofs remain valid, with stock reverse overshoot disclosed. Independent Sentry run 44962304533 completed six earlier modes, then the first p64Upload hit its 120-second deadline without p64 JSON. Forced killing failed pre-teardown quiescence; final runtime, daemon, file and source cleanup passed. Bounded diagnostic 44963117418 created all 64 connections and threads, reached TEST_RUNNING and wrote 131,072 bytes for 1,024 requested bytes, then repeated timer/statistics work until SIGINT and exit 124 at 30 seconds. Its visit quiescence and final cleanup passed. The cause is unproved; complete eight-mode and A/A gates remain held.",
-        "nextAction": "benchmark_measurement_review checks maintained upstream behavior and owns one CI-only completion-before-timer hypothesis test. Retain partial six-mode and both native proofs; no Sentry source edit, Moby build, statistical claim or new source approval. The explicit Moby/Bazel-only exception remains unanswered.",
+        "disposition": "Both native architecture proofs remain valid, with stock overshoot disclosed. The Sentry eight-mode gate remains partial after the p64 deadline. Negative hypothesis run 44964449643 genuinely ran the patched image on the same runtime/workload but still timed out at 30 seconds without a completed row; cleanup/source guards passed, failure-time affinity was absent, and the guard was not adopted. Debug run 44965025042 also failed; phase, actual CPU and cleanup await the owner’s audit. No cause or new fix is established.",
+        "nextAction": "benchmark_measurement_review audits the debug result before one authorised bounded CLI-option test on the original image: pinned 3.18 supports --interval 0 on both endpoints, disabling periodic reports while retaining final JSON. Byte-mode completion wakeup may be affected and must be checked. No producer patch/debug image or adoption from a single run; representative 32-GiB termination remains required. Performance and Moby/Bazel-only exception gates stay separate and unanswered.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
@@ -58371,7 +58371,9 @@
           "https://github.com/tamird/gvisor/actions/runs/44961875897",
           "https://github.com/tamird/gvisor/actions/runs/44961877715",
           "https://github.com/tamird/gvisor/actions/runs/44962304533",
-          "https://github.com/tamird/gvisor/actions/runs/44963117418"
+          "https://github.com/tamird/gvisor/actions/runs/44963117418",
+          "https://github.com/tamird/gvisor/actions/runs/44964449643",
+          "https://github.com/tamird/gvisor/actions/runs/44965025042"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -58385,7 +58387,7 @@
           "owner": "root"
         },
         "technicalOwner": "Build and release",
-        "recheckCondition": "Owner-audited upstream comparison/hypothesis result and actual complete functional evidence, or real user operational/source response; no guessed cause.",
+        "recheckCondition": "Owner-audited debug evidence and bounded original-image option result, followed by representative termination proof; no timing/adoption or source approval inference.",
         "curatedAt": "2026-11-21T14:40:26.293073+00:00"
       },
       "refinement": {
