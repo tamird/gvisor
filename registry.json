@@ -58352,8 +58352,8 @@
         "owner": "root",
         "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
         "observedAt": "2026-11-02T17:47:05.918366+00:00",
-        "disposition": "Both native architecture proofs remain valid, with stock overshoot disclosed. The Sentry eight-mode gate remains partial after the p64 deadline. Negative hypothesis run 44964449643 genuinely ran the patched image on the same runtime/workload but still timed out at 30 seconds without a completed row; cleanup/source guards passed, failure-time affinity was absent, and the guard was not adopted. Debug run 44965025042 also failed; phase, actual CPU and cleanup await the owner’s audit. No cause or new fix is established.",
-        "nextAction": "benchmark_measurement_review audits the debug result before one authorised bounded CLI-option test on the original image: pinned 3.18 supports --interval 0 on both endpoints, disabling periodic reports while retaining final JSON. Byte-mode completion wakeup may be affected and must be checked. No producer patch/debug image or adoption from a single run; representative 32-GiB termination remains required. Performance and Moby/Bazel-only exception gates stay separate and unanswered.",
+        "disposition": "Both native architecture proofs remain valid, with stock overshoot disclosed; the Sentry eight-mode gate is incomplete. Patched debug run 44965025042 proves completed cancellation/join pairs before the stall, but the next cancellation or join is not localized. Original 44963117418 lacks callback-entry timestamps: statistics and stdout ordering do not establish a periodic-callback stall or prove that the guard moved the phase. Patched SIGINT output must not be generalized to all original statistics. Actual affinity and cleanup passed; the independent deferred-cancellation hypothesis remains unproved.",
+        "nextAction": "benchmark_measurement_review owns one CI-only original-producer backport test of merged upstream 333fa400, changing client/server cancellation from asynchronous to deferred. The interval-zero test was withdrawn as irrelevant and never dispatched; the private completion guard is dropped. No shared-cause or adoption claim, timing or Moby action follows. Preserve all unanswered source/outreach/exception questions.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
@@ -58387,7 +58387,7 @@
           "owner": "root"
         },
         "technicalOwner": "Build and release",
-        "recheckCondition": "Owner-audited debug evidence and bounded original-image option result, followed by representative termination proof; no timing/adoption or source approval inference.",
+        "recheckCondition": "Owner-audited original-log comparison and bounded upstream-backport test result; complete functionality and any adoption remain separate gates.",
         "curatedAt": "2026-11-21T14:40:26.293073+00:00"
       },
       "refinement": {
