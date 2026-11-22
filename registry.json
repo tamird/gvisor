@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T08:30:02+00:00",
+    "updatedAt": "2026-11-22T09:10:24+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1088,8 +1088,8 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "5fd1b4fb3c7dd9af907e90b20f6a0969f0e6bc1f",
         "observedAt": "2026-11-17T20:13:53.813850+00:00",
-        "disposition": "Exact public head Pipeline 55470 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure. First Pass2009, native checks and DCO passed; preserve the independent assemble-test packaging/internal-import hold.",
-        "nextAction": "At the next safe TCP checkout interval, approved_rebase_queue prepares and qualifies an eligible same-patch current-base refresh importing the landed hook repair. Root preserves assemble packaging and importer/internal holds; no Copybara push or unchanged-head CI retry.",
+        "disposition": "Exact public head Pipeline 55470 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure. First Pass2009, native checks and DCO passed; preserve the independent assemble-test packaging/internal-import hold. Private equivalent refresh afb6198869d091f721f559dc0e2eceb0c6bb5455 on eb263 has strict range-diff equality; owner qualification is live, not a published PR-head update.",
+        "nextAction": "approved_rebase_queue audits its sole live source/current-architecture qualification barrier before root publication review. Preserve the public head and all independent packaging/import or Nogo/unit evidence; no mirrored CI read, speculative pass or publication.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42849078055/artifacts/13780790760",
           "https://github.com/tamird/gvisor/compare/4ecb0b121...45137f922",
@@ -1111,9 +1111,10 @@
           "https://github.com/gvisor/gvisor/pull/17664",
           "https://github.com/gvisor/gvisor/pull/15106#issuecomment-6958934771",
           "https://buildkite.com/gvisor/pipeline/builds/55470",
-          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
+          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321",
+          "https://github.com/tamird/gvisor/commit/afb6198869d091f721f559dc0e2eceb0c6bb5455"
         ],
-        "recheckCondition": "Owner-qualified equivalent refresh and source/authority review, then actual new-head CI; preserve the independent import contract.",
+        "recheckCondition": "Owner-audited terminal qualification and actual root publication disposition, then exact new-head CI; retain existing independent holds.",
         "attentionDispositions": [
           {
             "reason": "author-feedback",
@@ -1730,9 +1731,9 @@
       "updatedAt": "2026-11-20T00:43:57.063788+00:00",
       "summary": "Root read complete review5985340174 and inline4636715726 on unchanged publicacf93596. The review explicitly identifies an AI reviewer on Rex’s behalf: it is an automated finding, not a new human instruction. packet_copy_feedback owns verification of Linux/Sentry socket-family behavior; the finding remains unresolved. A31-line native syscall case is under qualification in44647566688, with the original production guard unchanged pending Linux evidence. No reply or source amendment is published.",
       "followup": {
-        "disposition": "Root read complete review5985340174 and inline4636715726 on unchanged publicacf93596. The review explicitly identifies an AI reviewer on Rex’s behalf: it is an automated finding, not a new human instruction. packet_copy_feedback owns verification of Linux/Sentry socket-family behavior; the finding remains unresolved. A31-line native syscall case is under qualification in44647566688, with the original production guard unchanged pending Linux evidence. No reply or source amendment is published.",
+        "disposition": "Candidate e7b9d365bfc957234050df46d52b9f5815c4513a completed its source-bound qualification: native44677577060, Sentry MmapCopy44677579344 and strict44677584539 (376 sources) passed under exact CI98bcc context. Earlier44647566688 was a terminal setup-container permission failure, not a live investigation. Public acf93596 is unchanged/open; automated inline4636715726 remains unresolved. Existing focused review closure is retained, not a new review or publication approval.",
         "owner": "packet_copy_feedback",
-        "nextAction": "packet_copy_feedback audits actual Linux/Sentry syscall evidence, then fixes the owning mechanism only if supported. Preserve publicacf93596 and existing CI/dependency requirements; root handles any eventual source-review/publication decision. No automatic acknowledgement or resolved-finding claim.",
+        "nextAction": "Preserve completed candidate evidence while awaiting held feature-performance qualification, an authorised ARM-KVM worker (tested routes lacked /dev/kvm), actual Daybreak availability and source approval before DCO/publication. Do not rerun completed tests or access protected source merely to restate the result.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15064",
           "https://github.com/tamird/gvisor/commit/9708dbc9f027a6eece93b1bb9b4f1638038ff31c",
@@ -1743,12 +1744,15 @@
           "https://buildkite.com/gvisor/first-pass/builds/1448#01a1ead3-e466-4239-b8d9-11058e054af7",
           "https://github.com/google/gvisor/pull/15064#discussion_r4636715726",
           "https://github.com/google/gvisor/pull/15064#pullrequestreview-5985340174",
-          "https://github.com/tamird/gvisor/actions/runs/44647566688"
+          "https://github.com/tamird/gvisor/actions/runs/44647566688",
+          "https://github.com/tamird/gvisor/actions/runs/44677577060",
+          "https://github.com/tamird/gvisor/actions/runs/44677579344",
+          "https://github.com/tamird/gvisor/actions/runs/44677584539"
         ],
         "sourceHead": "acf93596eddca6ca31f652d75b207a8da544ff54",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-20T00:43:57.063788+00:00",
-        "recheckCondition": "Actual Linux/Sentry conformance result, verified production correction/review readiness, or changed current source/feedback.",
+        "recheckCondition": "Actual worker/access availability, required feature-performance evidence or a source-publication decision; no new hardware commitment or approval inferred.",
         "curatedAt": "2026-11-20T00:43:57.063788+00:00"
       },
       "head": "acf93596eddca6ca31f652d75b207a8da544ff54",
@@ -44522,10 +44526,10 @@
       "followup": {
         "sourceHead": "d1b274f9eb8d7734c13ab3c6765ac3f9145856ff",
         "owner": "approved_rebase_queue / root",
-        "nextAction": "approved_rebase_queue prepares and qualifies the eligible same-patch refresh at the next safe TCP checkout interval. Preserve the checkpoint artifact and existing #17208-dependent dump investigation; verify actual new-head CI before closure, without retrying the unchanged head.",
+        "nextAction": "Await the actual unanswered decision to close the already-imported #16591 with “Landed in 3767e597a” and delegated attribution. Do not publish an empty rebase, retry old CI or infer closure permission from source import. Preserve independent historical checkpoint-dump evidence in its existing investigation.",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "recheckCondition": "Qualified refresh/new-head provider result, #17208-dependent checkpoint evidence or substantive maintainer/import change.",
+        "recheckCondition": "Actual closure/comment decision or a native PR/import state change; no source mutation before that answer.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/16591",
           "https://github.com/tamird/gvisor/commit/49fcf45ec2560828be233cfd6499f5bb3f7f8373",
@@ -44560,9 +44564,10 @@
           "https://buildkite.com/gvisor/first-pass/builds/1474#01a1ead6-82ef-45b4-8310-7e324ca74506",
           "https://storage.googleapis.com/gvisor-buildkite/01a1ead1-7a99-4650-92a8-23a3f0e3fe6d/01a1ead6-82ef-45b4-8310-7e324ca74506/home/agent-111726-184811/.cache/bazel/_bazel_agent-111726-184811/73df0d6a229fc84d640625285449c629/execroot/_main/bazel-out/k8-fastbuild/testlogs/runsc/container/container_test/shard_5_of_8/test.log",
           "https://buildkite.com/gvisor/pipeline/builds/55465",
-          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
+          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321",
+          "https://github.com/gvisor/gvisor/commit/3767e597a341236280bff142471f063a755ec2ff"
         ],
-        "disposition": "Exact public head Pipeline 55465 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure. Historical checkpoint-dump failure remains independent: no bootstrap diagnosis settles its exact-source checkpoint evidence or #17208 comparison."
+        "disposition": "The exact change is already imported upstream as 3767e597a341236280bff142471f063a755ec2ff with COPYBARA_INTEGRATE_REVIEW #16591; all four affected blobs equal public d1b274f9 at current eb263. The PR remains open with no native merge commit, so do not relabel it merged. Its obsolete-hook failure is historical and no empty rebase is needed; checkpoint evidence remains separately scoped."
       },
       "dcoAmendment": {
         "oldHead": "49fcf45ec2560828be233cfd6499f5bb3f7f8373",
@@ -82531,7 +82536,7 @@
       "url": "https://github.com/google/gvisor/pull/17184",
       "group": "tests",
       "status": "open",
-      "summary": "The independent shell cleanup fix b7cfebd739beb406455366a172f39cecfe9dea24 is qualified and signed off; its standalone PR publication question is pending. Standard Bazel run/sudo qualification 45000572045 performed a real transfer and cleanup in 11.64 seconds, exit 0 with EOF and no BEP errors. Prior structured AMD/ARM/control evidence retains its shared output-restoring CI-adapter scope; direct bazel-test/sudo run44999083615 is not clean reporting despite its case passing. Public 2aa840f4 is unchanged; the separate lean Go revision remains active and rejected 058 is not approved.",
+      "summary": "The lean Go TCP rewrite is fully qualified and independently reviewed. One-commit f26a34c11bfa461eb497291194bfcf7b649d6612 has the exact qualified f6f9382a tree on eb263, includes DCO and remains cumulative +144 lines. The actual question to amend #17184 is pending; public 2aa840f4 is unchanged. The unanswered b7 standalone proposal is superseded as the current vehicle and retained only as an alternative, without an approval grant.",
       "evidence": [
         {
           "label": "Published standalone benchmark correction",
@@ -82550,10 +82555,10 @@
       "followup": {
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
         "owner": "approved_rebase_queue / root",
-        "nextAction": "Await the actual unanswered standalone cleanup publication decision for b7cfebd739beb406455366a172f39cecfe9dea24; no PR or approval is inferred. Separately, approved_rebase_queue reduces the lean Go rewrite against original e201, preserving b7 and reusing the real regression and current deadline contracts. Root reviews that distinct result; do not treat shell cleanup as fulfilling the Go migration or revive rejected 058.",
+        "nextAction": "Await the actual unanswered #17184 amendment decision for f26a34c11bfa461eb497291194bfcf7b649d6612. Preserve all guard/source/Nogo/positive-mode evidence and clean final independent reviews. Fork-preview workflow-permission determination timed out after normal SSH refusal and guarded HTTPS retry; missing scope is unproved, and exact public f6 source remains reviewable. No competing b7 PR, source publication or new permission request.",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-20T18:31:31.140104+00:00",
-        "recheckCondition": "Actual cleanup publication answer or concrete smaller Go source and owner-audited qualification; preserve separate source and delivery boundaries.",
+        "recheckCondition": "Actual amendment answer or substantive source/qualification change; treat preview transport recovery separately from source approval.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17184",
           "https://github.com/tamird/gvisor/commit/9c541c3ae1cd68df1741882480d5bf184396e695",
@@ -82591,9 +82596,13 @@
           "https://github.com/tamird/gvisor/actions/runs/44996626987",
           "https://github.com/tamird/gvisor/commit/b7cfebd739beb406455366a172f39cecfe9dea24",
           "https://github.com/tamird/gvisor/actions/runs/45000572045",
-          "https://github.com/tamird/gvisor/actions/runs/45000572045/artifacts/14745229230"
+          "https://github.com/tamird/gvisor/actions/runs/45000572045/artifacts/14745229230",
+          "https://github.com/tamird/gvisor/commit/f6f9382a055959d59857f9688ab57bc15ae853b4",
+          "https://github.com/tamird/gvisor/actions/runs/45004530900",
+          "https://github.com/tamird/gvisor/actions/runs/45004532751",
+          "https://github.com/tamird/gvisor/blob/ab856ed6063d63de247adbb26e01617a7a50c02d/registry.json"
         ],
-        "disposition": "The independent shell cleanup fix b7cfebd739beb406455366a172f39cecfe9dea24 is qualified and signed off; its standalone PR publication question is pending. Standard Bazel run/sudo qualification 45000572045 performed a real transfer and cleanup in 11.64 seconds, exit 0 with EOF and no BEP errors. Prior structured AMD/ARM/control evidence retains its shared output-restoring CI-adapter scope; direct bazel-test/sudo run44999083615 is not clean reporting despite its case passing. Public 2aa840f4 is unchanged; the separate lean Go revision remains active and rejected 058 is not approved.",
+        "disposition": "The lean Go TCP rewrite is fully qualified and independently reviewed. One-commit f26a34c11bfa461eb497291194bfcf7b649d6612 has the exact qualified f6f9382a tree on eb263, includes DCO and remains cumulative +144 lines. The actual question to amend #17184 is pending; public 2aa840f4 is unchanged. The unanswered b7 standalone proposal is superseded as the current vehicle and retained only as an alternative, without an approval grant.",
         "curatedAt": "2026-11-20T18:31:31.140104+00:00",
         "implementationOwner": "approved_rebase_queue"
       },
@@ -82619,7 +82628,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Await the actual unanswered standalone cleanup publication decision for b7cfebd739beb406455366a172f39cecfe9dea24; no PR or approval is inferred. Separately, approved_rebase_queue reduces the lean Go rewrite against original e201, preserving b7 and reusing the real regression and current deadline contracts. Root reviews that distinct result; do not treat shell cleanup as fulfilling the Go migration or revive rejected 058.",
+      "nextStep": "Await the actual unanswered #17184 amendment decision for f26a34c11bfa461eb497291194bfcf7b649d6612. Preserve all guard/source/Nogo/positive-mode evidence and clean final independent reviews. Fork-preview workflow-permission determination timed out after normal SSH refusal and guarded HTTPS retry; missing scope is unproved, and exact public f6 source remains reviewable. No competing b7 PR, source publication or new permission request.",
       "recheckCondition": "User answer to this actual question or substantive source/qualification change.",
       "refinement": {
         "before": {
@@ -82670,7 +82679,17 @@
           "note": "No pending question, publication approval or DCO action remains. The simplified source had valid owning gates and final review, but the user requested further reduction."
         }
       ],
-      "nextAction": "Root prioritizes the requested current-CI/cache research and proposed issue rewrite. On resumption, approved_rebase_queue compares the earlier lean Go baseline and identifies the smallest owning mechanism while preserving required behavior and meaningful negatives. Do not repeat an approval question or publish058."
+      "nextAction": "Root prioritizes the requested current-CI/cache research and proposed issue rewrite. On resumption, approved_rebase_queue compares the earlier lean Go baseline and identifies the smallest owning mechanism while preserving required behavior and meaningful negatives. Do not repeat an approval question or publish058.",
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "f26a34c11bfa461eb497291194bfcf7b649d6612",
+        "baseHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
+        "url": "https://github.com/tamird/gvisor/commit/f26a34c11bfa461eb497291194bfcf7b649d6612",
+        "title": "Run the TCP benchmark from Go",
+        "body": "Replace the TCP benchmark's shell coordinator with Go argument vectors and iperf3 JSON reporting. Keep network setup and service lifetimes in one coordinator, with CLI parsing and namespace entry separate. Resolve the declared helpers and iperf executable through Bazel runfiles.\n\nBound server and proxy startup, the complete transfer, and shutdown. Allow proxies ten seconds to flush profiles, then kill and reap remaining children. Read the final aggregate sender rate and sample proxy CPU usage before cleanup.\n\nExtend the real-transfer regression to cover stalled service launchers and bounded exit after output. Include the declared iperf tool's generated license entry and correct the README's obsolete CSV recipes.\n\nPosted by Codex on behalf of @tamird.\n",
+        "summary": "Actual accepted, unanswered question to amend existing #17184. Candidate parent eb263e1f414d0bceaf10decea6c73e2c77332112; tree0c22e56cec3994a3d1b92a09c1db40e9733e2eaa is identical to public qualified f6f9382a055959d59857f9688ab57bc15ae853b4. Full source compare: https://github.com/tamird/gvisor/compare/eb263e1f4...f6f9382a0 . DCO included; cumulative +144 lines is disclosed. No question ID or precise submission time was supplied."
+      }
     },
     {
       "id": "branch:tcp-dsack-below-ack-parity",
@@ -96786,8 +96805,8 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "60a7129eb22bacfcddb598d35f78f1d022047473",
         "observedAt": "2026-11-18T20:06:11.890448+00:00",
-        "disposition": "Exact public head Pipeline 55353 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure. Earlier independently executed Nogo and cgroupv2-unit timeouts remain separate unresolved evidence.",
-        "nextAction": "approved_rebase_queue prepares and qualifies the eligible same-patch refresh at the next safe TCP checkout interval. Reconcile new-head CI and the prior Nogo/unit failures separately; no unchanged-head rerun or source-regression inference.",
+        "disposition": "Exact public head Pipeline 55353 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure. Earlier independently executed Nogo and cgroupv2-unit timeouts remain separate unresolved evidence. Private equivalent refresh 24841003c42c262436c161885db756eef1496a40 on eb263 has strict range-diff equality; owner qualification is live, not a published PR-head update.",
+        "nextAction": "approved_rebase_queue audits its sole live source/current-architecture qualification barrier before root publication review. Preserve the public head and all independent packaging/import or Nogo/unit evidence; no mirrored CI read, speculative pass or publication.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17416",
           "https://github.com/tamird/gvisor/commit/79d4294d4",
@@ -96798,10 +96817,11 @@
           "https://buildkite.com/gvisor/first-pass/builds/1580",
           "https://buildkite.com/gvisor/first-pass/builds/1580#01a1eae1-b221-472e-b7a6-08733d039b47",
           "https://buildkite.com/gvisor/pipeline/builds/55353",
-          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
+          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321",
+          "https://github.com/tamird/gvisor/commit/24841003c42c262436c161885db756eef1496a40"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Owner-qualified equivalent refresh and actual new-head CI, or independent Nogo/unit diagnosis and substantive feedback.",
+        "recheckCondition": "Owner-audited terminal qualification and actual root publication disposition, then exact new-head CI; retain existing independent holds.",
         "latestReviewObservation": {
           "checkedAt": "2026-11-18T19:22:58.577211+00:00",
           "head": "60a7129eb22bacfcddb598d35f78f1d022047473",
@@ -132694,7 +132714,7 @@
           ]
         }
       ],
-      "nextStep": "Six exact public heads have canonical pre-validation obsolete-hook failures: #15106/55470, #16591/55465, #16957/55555, #17416/55353, #16507/55416 and #17067/55478. Landed 909c3dce2 removes the branch check. approved_rebase_queue owns eligible same-patch #15106/#16591/#17416 recovery at a safe TCP checkout interval; preserve independent packaging, checkpoint and Nogo/unit evidence. #16957 sensitive-source/performance boundaries and #16507/#17067 qualified-replacement holds prevent redundant old-head adaptation. #17546/55544 upload recovered automatically and is not in this cohort. Verify actual new-head validation; do not retry unchanged heads or infer quota clearance. Other CI/provider and import gates remain independently owned.",
+      "nextStep": "Six exact public heads have canonical pre-validation obsolete-hook failures: #15106/55470, #16591/55465, #16957/55555, #17416/55353, #16507/55416 and #17067/55478. Landed 909c3dce2 removes the branch check. approved_rebase_queue is qualifying equivalent #15106/#17416 refreshes; #16591 is already imported and has a pending closure decision, so no empty rebase; preserve independent packaging, checkpoint and Nogo/unit evidence. #16957 sensitive-source/performance boundaries and #16507/#17067 qualified-replacement holds prevent redundant old-head adaptation. #17546/55544 upload recovered automatically and is not in this cohort. Verify actual new-head validation; do not retry unchanged heads or infer quota clearance. Other CI/provider and import gates remain independently owned.",
       "evidence": [
         {
           "label": "GitHub issues mentioning “flaky”",
