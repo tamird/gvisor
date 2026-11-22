@@ -24,8 +24,8 @@ func TestParseBoundaries(t *testing.T) {
 	const noPackage = "goos: linux\ngoarch: amd64\n"
 	valid := strings.Repeat("BenchmarkTiming-4 1 3 ns/op\n", 24)
 	for _, tc := range []struct {
-		name string
-		input string
+		name      string
+		input     string
 		wantError bool
 	}{
 		{"valid", header + valid, false},
