@@ -30,7 +30,10 @@ go_binary(
 
 go_test(
     name = "coverage_bounds_test",
-    srcs = ["main.go", "main_test.go"],
+    srcs = [
+        "main.go",
+        "main_test.go",
+    ],
     deps = [
         "@io_bazel_rules_go//go/runfiles",
         "@org_golang_x_perf//benchfmt:go_default_library",

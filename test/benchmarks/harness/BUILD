@@ -53,8 +53,8 @@ go_test(
     ],
     data = [
         ":coverage_runsc_entrypoint",
-        "//test/runner:coverage_release",
         "//images/basic:alpine_archive",
+        "//test/runner:coverage_release",
     ],
     embed = [":harness"],
     exec_properties = {
@@ -75,6 +75,7 @@ go_test(
         "@com_github_docker_docker//errdefs:go_default_library",
     ],
 )
+
 go_test(
     name = "legacy_coverage_worker_test",
     size = "large",
@@ -87,8 +88,8 @@ go_test(
     ],
     data = [
         ":legacy_coverage_runsc_entrypoint",
-        "//test/runner:legacy_coverage_release",
         "//images/basic:alpine_archive",
+        "//test/runner:legacy_coverage_release",
     ],
     embed = [":harness"],
     exec_properties = {
@@ -112,8 +113,20 @@ go_test(
 
 _COVERAGE_INITIALIZATIONS = [
     ("startup", "//test/benchmarks/base:startup_test", 1, "//images:benchmark_alpine_archive", []),
-    ("syscall", "//test/benchmarks/base:syscallbench_test", 7, "//images/benchmarks/syscallbench:syscallbench_archive", ["@platforms//cpu:x86_64"]),
-    ("hackbench", "//test/benchmarks/base:hackbench_test", 2, "//images:benchmark_hackbench_archive", ["@platforms//cpu:aarch64"]),
+    (
+        "syscall",
+        "//test/benchmarks/base:syscallbench_test",
+        7,
+        "//images/benchmarks/syscallbench:syscallbench_archive",
+        ["@platforms//cpu:x86_64"],
+    ),
+    (
+        "hackbench",
+        "//test/benchmarks/base:hackbench_test",
+        2,
+        "//images:benchmark_hackbench_archive",
+        ["@platforms//cpu:aarch64"],
+    ),
 ]
 
 [
@@ -146,7 +159,7 @@ _COVERAGE_INITIALIZATIONS = [
             "//test/runner:coverage_release",
             binary,
             archive,
-            "//test/benchmarks/harness/coverage_bounds:coverage_bounds",
+            "//test/benchmarks/harness/coverage_bounds",
         ],
         embed = [":harness"],
         exec_properties = {
@@ -186,9 +199,9 @@ go_test(
         "-test.run=^TestPairedReporter$$",
     ],
     data = [
-        "//test/benchmarks/harness/coverage_bounds:coverage_bounds",
         "startup-aa-base.txt",
         "startup-aa-candidate.txt",
+        "//test/benchmarks/harness/coverage_bounds",
     ],
     embed = [":harness"],
     exec_properties = {
@@ -213,6 +226,9 @@ go_test(
 )
 
 exports_files(
-    ["startup-aa-base.txt", "startup-aa-candidate.txt"],
+    [
+        "startup-aa-base.txt",
+        "startup-aa-candidate.txt",
+    ],
     visibility = ["//test/benchmarks/harness/coverage_bounds:__pkg__"],
 )
