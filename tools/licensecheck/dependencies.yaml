@@ -78,6 +78,12 @@
   commit: 914e7df21a07ef503a81201c76d2b11c789d3fca
   sha256: cadcf7ea4efe3a68728893813643cebe1185e5b1d4be5b96245f65c9a4d5ea41
   license: MIT
+- dependency: aspect_rules_lint
+  version: https://github.com/aspect-build/rules_lint/releases/download/v2.9.1/rules_lint-v2.9.1.tar.gz
+  retrieved: "2026-11-22"
+  commit: 4cc8fe1dadfdc6a766b61194eaaa82fc8e17a028
+  sha256: 99357f85fbead6d6e55153dbde713fa2d13edcf2a22182c6a114797bfbcffe67
+  license: Apache-2.0
 - dependency: bazel_lib
   version: https://github.com/bazel-contrib/bazel-lib/releases/download/v3.4.0/bazel-lib-v3.4.0.tar.gz
   retrieved: "2026-10-30"
