@@ -244,8 +244,12 @@ func TestPairedBenchmark(t *testing.T) {
 	for range *pairedWarmups {
 		order = append(order, 0, 1)
 	}
-	for range *pairedBlocks {
-		order = append(order, 0, 1, 1, 0)
+	for block := range *pairedBlocks {
+		if block%2 == 0 {
+			order = append(order, 0, 1, 1, 0)
+		} else {
+			order = append(order, 1, 0, 0, 1)
+		}
 	}
 	for visit, index := range order {
 		arm := arms[index]
