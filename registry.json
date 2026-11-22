@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T07:10:44+00:00",
+    "updatedAt": "2026-11-22T08:11:03+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -82520,7 +82520,7 @@
       "url": "https://github.com/google/gvisor/pull/17184",
       "group": "tests",
       "status": "open",
-      "summary": "The CI/cache research and published #17832 rewrite are complete, so that conditional hold has expired. approved_rebase_queue is actively preparing the smallest independent cleanup correction: the current shell already bounds startup and transfer, but TERM followed by wait can hang. Public 2aa840f4 remains unchanged; rejected 058 is not approved, and the Go migration is not fulfilled. Earlier functional receipts remain valid only for their recorded sources.",
+      "summary": "The independent shell cleanup fix b7cfebd739beb406455366a172f39cecfe9dea24 is qualified and signed off; its standalone PR publication question is pending. Standard Bazel run/sudo qualification 45000572045 performed a real transfer and cleanup in 11.64 seconds, exit 0 with EOF and no BEP errors. Prior structured AMD/ARM/control evidence retains its shared output-restoring CI-adapter scope; direct bazel-test/sudo run44999083615 is not clean reporting despite its case passing. Public 2aa840f4 is unchanged; the separate lean Go revision remains active and rejected 058 is not approved.",
       "evidence": [
         {
           "label": "Published standalone benchmark correction",
@@ -82539,10 +82539,10 @@
       "followup": {
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
         "owner": "approved_rebase_queue / root",
-        "nextAction": "approved_rebase_queue completes the canonical Iperf license catalog qualification, then runs the focused real-traffic TERM-resistant cleanup regression and required source checks. Root reviews the concrete result before any source-publication question; preserve prior source-bound functional evidence and do not treat the Go migration as fulfilled.",
+        "nextAction": "Await the actual unanswered standalone cleanup publication decision for b7cfebd739beb406455366a172f39cecfe9dea24; no PR or approval is inferred. Separately, approved_rebase_queue reduces the lean Go rewrite against original e201, preserving b7 and reusing the real regression and current deadline contracts. Root reviews that distinct result; do not treat shell cleanup as fulfilling the Go migration or revive rejected 058.",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-20T18:31:31.140104+00:00",
-        "recheckCondition": "Owner-audited catalog, real cleanup/control and source-check results, or actual user steering; no source publication or performance claim from tool-graph admission.",
+        "recheckCondition": "Actual cleanup publication answer or concrete smaller Go source and owner-audited qualification; preserve separate source and delivery boundaries.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17184",
           "https://github.com/tamird/gvisor/commit/9c541c3ae1cd68df1741882480d5bf184396e695",
@@ -82577,9 +82577,12 @@
           "https://github.com/tamird/gvisor/actions/runs/44660308694",
           "https://github.com/tamird/gvisor/blob/779bbd2aa3bc936a305ed98bd6a6eb577aa57630/registry.json",
           "https://github.com/tamird/gvisor/actions/runs/44996212094",
-          "https://github.com/tamird/gvisor/actions/runs/44996626987"
+          "https://github.com/tamird/gvisor/actions/runs/44996626987",
+          "https://github.com/tamird/gvisor/commit/b7cfebd739beb406455366a172f39cecfe9dea24",
+          "https://github.com/tamird/gvisor/actions/runs/45000572045",
+          "https://github.com/tamird/gvisor/actions/runs/45000572045/artifacts/14745229230"
         ],
-        "disposition": "The independent cleanup fix is active under approved_rebase_queue. Its released Iperf 3.18 tool graph passed; license qualification requires the missing Iperf catalog entry, with canonical Fetch 44996626987 in progress. No actual cleanup regression/control verdict or publication is established. Public 2aa840f4 and rejected 058 retain their distinct approval boundaries.",
+        "disposition": "The independent shell cleanup fix b7cfebd739beb406455366a172f39cecfe9dea24 is qualified and signed off; its standalone PR publication question is pending. Standard Bazel run/sudo qualification 45000572045 performed a real transfer and cleanup in 11.64 seconds, exit 0 with EOF and no BEP errors. Prior structured AMD/ARM/control evidence retains its shared output-restoring CI-adapter scope; direct bazel-test/sudo run44999083615 is not clean reporting despite its case passing. Public 2aa840f4 is unchanged; the separate lean Go revision remains active and rejected 058 is not approved.",
         "curatedAt": "2026-11-20T18:31:31.140104+00:00",
         "implementationOwner": "approved_rebase_queue"
       },
@@ -82605,7 +82608,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "approved_rebase_queue completes the canonical Iperf license catalog qualification, then runs the focused real-traffic TERM-resistant cleanup regression and required source checks. Root reviews the concrete result before any source-publication question; preserve prior source-bound functional evidence and do not treat the Go migration as fulfilled.",
+      "nextStep": "Await the actual unanswered standalone cleanup publication decision for b7cfebd739beb406455366a172f39cecfe9dea24; no PR or approval is inferred. Separately, approved_rebase_queue reduces the lean Go rewrite against original e201, preserving b7 and reusing the real regression and current deadline contracts. Root reviews that distinct result; do not treat shell cleanup as fulfilling the Go migration or revive rejected 058.",
       "recheckCondition": "User answer to this actual question or substantive source/qualification change.",
       "refinement": {
         "before": {
@@ -121026,7 +121029,7 @@
       "status": "active",
       "owner": "root",
       "updatedAt": "2026-11-22T01:16:21.953242+00:00",
-      "summary": "The existing workflow is active on master with the unchanged 10-minute cron. Scheduled deliveries remain irregular; latest verified scheduled creation is Nov22 01:08:34. Visible default-branch, activity and workflow-state preconditions are met; GitHub status reports Actions operational. No repository defect or provider cause is established, and no further reset or cron change is justified.",
+      "summary": "A further native scheduled delivery 45000638069 completed successfully and sampled the API at 2026-11-22T08:01:50.678695+00:00. Manual collection was skipped at the hourly guard. Scheduled deliveries remain irregular, so this does not prove sustained 10-minute cadence or reset causality; keep the unchanged cron and evidence-based 60/90-minute idle guard.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -121354,6 +121357,10 @@
         {
           "label": "GitHub provider status; operational does not exclude a repository-specific condition",
           "url": "https://www.githubstatus.com/api/v2/summary.json"
+        },
+        {
+          "label": "Fresh native schedule reused; manual collection skipped",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45000638069"
         }
       ],
       "technicalOwner": "Codex",
