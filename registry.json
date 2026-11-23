@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T11:53:23.629366+00:00",
+    "updatedAt": "2026-11-23T12:54:35.713246+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -92566,13 +92566,13 @@
       "repo": "google/gvisor",
       "number": 17264,
       "ref": "botir/tcp-msg-more-upstream",
-      "head": "e5f0f6f7fc500b646b4a0dbd738f142e1a9032a2",
+      "head": "3389a2aa144abf8f474fc65bcabc84487564ee86",
       "title": "Honor MSG_MORE on TCP writes",
       "url": "https://github.com/google/gvisor/pull/17264",
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-19T16:20:03.380488+00:00",
-      "summary": "Author source is now e5f0f6f7f. New Ayush findings concern zero-window restore, concurrent cork setters and MSG_MORE segment filling. These are external evidence, not adopted implementation instructions. The old92e posting question is source-stale and is not transferred. Current-source reviewer follow-through remains unfinished under the confirmed sensitive-work hold.",
+      "summary": "Current3389a2aa is MERGEABLE. Root’s post-sample read found new Ayush replies4666058640/4666060334 alleging open-window restored loss-recovery stall and incomplete coalescing behind a Nagle-held MSG_MORE header. These are external claims, not independently verified source/test evidence. The foreign author owns repair; root’s current-source review remains sensitive-held, with no prior approval or qualification transferred.",
       "evidence": [
         {
           "label": "Timer restore",
@@ -92624,20 +92624,23 @@
       "followup": {
         "owner": "root",
         "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
-        "providerHead": "92e403ef2d8cb7e24a334d37dabb248cef3b4407",
+        "providerHead": "3389a2aa144abf8f474fc65bcabc84487564ee86",
         "mergeable": "MERGEABLE",
-        "sourceHead": "e5f0f6f7fc500b646b4a0dbd738f142e1a9032a2",
-        "observedAt": "2026-11-23T11:53:11.347436+00:00",
-        "disposition": "Author source is now e5f0f6f7f. New Ayush findings concern zero-window restore, concurrent cork setters and MSG_MORE segment filling. These are external evidence, not adopted implementation instructions. The old92e posting question is source-stale and is not transferred. Current-source reviewer follow-through remains unfinished under the confirmed sensitive-work hold.",
-        "nextAction": "Root keeps current-source review and sensitive work held. The author retains implementation ownership; do not transfer prior reviews, read held source, run tests, adopt suggestions or send outreach. No Daybreak re-ask.",
-        "recheckCondition": "User releases the sensitive-work hold, actual new external evidence, or source/head/base change.",
+        "sourceHead": "3389a2aa144abf8f474fc65bcabc84487564ee86",
+        "observedAt": "2026-11-23T12:54:35.713246+00:00",
+        "disposition": "Current3389a2aa is MERGEABLE. Root’s post-sample read found new Ayush replies4666058640/4666060334 alleging open-window restored loss-recovery stall and incomplete coalescing behind a Nagle-held MSG_MORE header. These are external claims, not independently verified source/test evidence. The foreign author owns repair; root’s current-source review remains sensitive-held, with no prior approval or qualification transferred.",
+        "nextAction": "Keep current-source review and sensitive work held under the confirmed user instruction. The author owns implementation; root owns reviewer follow-through. Do not read held source, run tests, adopt suggestions, post outreach or infer equivalence/approval from the head change.",
+        "recheckCondition": "User releases the sensitive-work hold, actual new external evidence or another source/head/base change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17264",
           "https://github.com/gvisor/gvisor/commit/e5f0f6f7fc500b646b4a0dbd738f142e1a9032a2",
           "https://github.com/gvisor/gvisor/pull/17264#discussion_r4665104998",
           "https://github.com/gvisor/gvisor/pull/17264#discussion_r4665101143",
           "https://github.com/gvisor/gvisor/pull/17264#discussion_r4665101152",
-          "https://github.com/google/gvisor/pull/17264#discussion_r4665104998"
+          "https://github.com/google/gvisor/pull/17264#discussion_r4665104998",
+          "https://github.com/gvisor/gvisor/commit/3389a2aa144abf8f474fc65bcabc84487564ee86",
+          "https://github.com/gvisor/gvisor/pull/17264#discussion_r4666058640",
+          "https://github.com/gvisor/gvisor/pull/17264#discussion_r4666060334"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
         "curatedAt": "2026-11-19T16:20:03.380488+00:00",
@@ -92659,10 +92662,19 @@
           "sha256": "37017384ce8cc638265d4feb82b08cc0c404b70ec5c8465a7a78d7665f134c2d"
         },
         "currentHeadCI": {
-          "head": "92e403ef2d8cb7e24a334d37dabb248cef3b4407",
-          "state": "SUCCESS",
-          "checkedAt": "2026-11-19T16:09:13.797948+00:00",
-          "limit": "Current provider check state only; does not supply outstanding broad workload evidence or clear source-review findings."
+          "head": "3389a2aa144abf8f474fc65bcabc84487564ee86",
+          "state": "PENDING",
+          "evidence": [
+            "https://github.com/gvisor/gvisor/actions/runs/45176283890/job/137698255038",
+            "https://github.com/gvisor/gvisor/actions/runs/45176283782/job/137698254273",
+            "https://github.com/gvisor/gvisor/actions/runs/45176283752/job/137698255087",
+            "https://github.com/gvisor/gvisor/actions/runs/45176283724/job/137698254843",
+            "https://github.com/gvisor/gvisor/actions/runs/45176283782/job/137698257152",
+            "https://github.com/gvisor/gvisor/actions/runs/45176283782/job/137698256837",
+            "https://buildkite.com/gvisor/first-pass/builds/2427",
+            "https://github.com/cncf/dco2"
+          ],
+          "limits": "Provider status only; no new broad-workload qualification, source review or release of the sensitive hold."
         }
       },
       "contributorReview": {
@@ -100394,11 +100406,11 @@
       "repo": "google/gvisor",
       "number": 17374,
       "ref": "botir/pgalloc-reference-accounting",
-      "head": "9a148a2d983cee10ab3baedb10e609dd97547085",
+      "head": "76da24a45d4f86263762877dc0b7c4f8376f7100",
       "title": "Separate pgalloc sharing counts from occupancy",
       "url": "https://github.com/google/gvisor/pull/17374",
       "status": "open",
-      "summary": "Author source is now 9a148a2d9. Ayush reports a six-sample sparse-sharing result and suggests insertion-gap reuse. This is unverified external evidence, not broad-workload qualification or assigned implementation. Current-source reviewer follow-through remains unfinished under the confirmed sensitive-work hold.",
+      "summary": "Author source changed from 9a148a2d9 to 76da24a45, now MERGEABLE. No new comments or reviews were collected. Root retains unfinished current-source reviewer follow-through under the confirmed sensitive-work hold; prior findings remain external evidence and earlier review/qualification does not transfer.",
       "updatedAt": "2026-11-19T16:20:03.380488+00:00",
       "evidence": [
         {
@@ -100457,10 +100469,10 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "9a148a2d983cee10ab3baedb10e609dd97547085",
-        "observedAt": "2026-11-23T11:53:11.347436+00:00",
-        "disposition": "Author source is now 9a148a2d9. Ayush reports a six-sample sparse-sharing result and suggests insertion-gap reuse. This is unverified external evidence, not broad-workload qualification or assigned implementation. Current-source reviewer follow-through remains unfinished under the confirmed sensitive-work hold.",
-        "nextAction": "Root keeps current-source review and sensitive work held. The author retains implementation ownership; do not transfer prior reviews, read held source, run tests, adopt suggestions or send outreach. No Daybreak re-ask.",
+        "sourceHead": "76da24a45d4f86263762877dc0b7c4f8376f7100",
+        "observedAt": "2026-11-23T12:54:11.953191+00:00",
+        "disposition": "Author source changed from 9a148a2d9 to 76da24a45, now MERGEABLE. No new comments or reviews were collected. Root retains unfinished current-source reviewer follow-through under the confirmed sensitive-work hold; prior findings remain external evidence and earlier review/qualification does not transfer.",
+        "nextAction": "Keep current-source review and sensitive work held under the confirmed user instruction. The author owns implementation; root owns reviewer follow-through. Do not read held source, run tests, adopt suggestions, post outreach or infer equivalence/approval from the head change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17374#discussion_r4545607204",
           "https://github.com/google/gvisor/pull/17374#discussion_r4576254625",
@@ -100473,9 +100485,10 @@
           "https://github.com/google/gvisor/pull/17374#discussion_r4660161343",
           "https://github.com/google/gvisor/pull/17374#discussion_r4660163306",
           "https://github.com/gvisor/gvisor/commit/9a148a2d983cee10ab3baedb10e609dd97547085",
-          "https://github.com/gvisor/gvisor/pull/17374#discussion_r4665033514"
+          "https://github.com/gvisor/gvisor/pull/17374#discussion_r4665033514",
+          "https://github.com/gvisor/gvisor/commit/76da24a45d4f86263762877dc0b7c4f8376f7100"
         ],
-        "recheckCondition": "User releases the sensitive-work hold, actual new external evidence, or source/head/base change.",
+        "recheckCondition": "User releases the sensitive-work hold, actual new external evidence or another source/head/base change.",
         "incomingReview": {
           "repo": "google/gvisor",
           "number": 17374,
@@ -100510,11 +100523,22 @@
           }
         },
         "currentHeadCI": {
-          "head": "b04021b975f4eb1087ffaf46152dfe966bb62305",
-          "build": 1904,
-          "url": "https://buildkite.com/gvisor/first-pass/builds/1904",
-          "state": "Three pipeline-upload attempts failed in the repository pre-command hook before tests. Ubuntu package indexes returned503/connection failures, then graphviz/pkg-config had no installation candidates. Observed with the canonical public reader; not the Tamir quota failure or a pgalloc test failure."
-        }
+          "head": "76da24a45d4f86263762877dc0b7c4f8376f7100",
+          "state": "PENDING",
+          "evidence": [
+            "https://github.com/gvisor/gvisor/actions/runs/45176212138/job/137698007170",
+            "https://github.com/gvisor/gvisor/actions/runs/45176212113/job/137698006558",
+            "https://github.com/gvisor/gvisor/actions/runs/45176212057/job/137698006415",
+            "https://github.com/gvisor/gvisor/actions/runs/45176212056/job/137698006098",
+            "https://github.com/gvisor/gvisor/actions/runs/45176212113/job/137698009411",
+            "https://github.com/gvisor/gvisor/actions/runs/45176212113/job/137698009240",
+            "https://buildkite.com/gvisor/first-pass/builds/2426",
+            "https://github.com/cncf/dco2"
+          ],
+          "limits": "Provider status only; no new broad-workload qualification, source review or release of the sensitive hold."
+        },
+        "providerHead": "76da24a45d4f86263762877dc0b7c4f8376f7100",
+        "mergeable": "MERGEABLE"
       },
       "reviewWatch": {
         "inspected": [
@@ -103258,11 +103282,22 @@
           }
         },
         "currentHeadCI": {
-          "head": "04a4ea5bf2e111ed78ab4fdf3ce6156f185f3b8b",
+          "head": "f16198b9425460ecbbd1312a60f1ab57478df1df",
           "state": "SUCCESS",
-          "checkedAt": "2026-11-19T16:09:13.797948+00:00",
-          "limit": "Current provider check state only; does not supply outstanding broad workload evidence or clear source-review findings."
-        }
+          "evidence": [
+            "https://github.com/gvisor/gvisor/actions/runs/45159405595/job/137640582624",
+            "https://github.com/gvisor/gvisor/actions/runs/45159405580/job/137640582555",
+            "https://github.com/gvisor/gvisor/actions/runs/45159405721/job/137640584388",
+            "https://github.com/gvisor/gvisor/actions/runs/45159405506/job/137640582644",
+            "https://github.com/gvisor/gvisor/actions/runs/45159405580/job/137640585582",
+            "https://github.com/gvisor/gvisor/actions/runs/45159405580/job/137640585510",
+            "https://github.com/cncf/dco2",
+            "https://buildkite.com/gvisor/first-pass/builds/2409"
+          ],
+          "limits": "Provider status only; no new broad-workload qualification, source review or release of the sensitive hold."
+        },
+        "providerHead": "f16198b9425460ecbbd1312a60f1ab57478df1df",
+        "mergeable": "MERGEABLE"
       },
       "updatedAt": "2026-11-19T16:20:03.380488+00:00",
       "settledReviews": [
@@ -121714,8 +121749,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-23T10:12:01.198799+00:00",
-      "summary": "Native schedule45157946718 delivered API10:42:20; one fallback45167662397 delivered API11:46:32 after the next guard. Native cron delivery remains irregular with no established cause or demonstrated configuration defect. User resumed goal ACTIVE; no pending Resume-UI request remains.",
+      "updatedAt": "2026-11-23T12:54:11.953191+00:00",
+      "summary": "Sole fallback45177676619 completed SUCCESS4m10s with actual API12:51:42 UTC after the due guard found no newer/live native run. Native scheduled delivery remains irregular; no established provider cause or demonstrated configuration defect. The active foreground/goal supervision owns fallback delivery.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -121958,7 +121993,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground/active-goal supervision owns the next guard at12:46:32 UTC and API recovery by13:16:32, using native delivery first and at most one fallback. No independent manual scheduler is configured; preserve native cron,60/90-minute policy and2-hour UI staleness threshold.",
+      "nextStep": "Root foreground/active-goal supervision owns the next native-first guard at13:51:42 UTC and API recovery by14:21:42. Reuse newer/live native delivery, otherwise one canonical fallback; preserve existing cron,60/90-minute policy and2-hour UI staleness threshold. No second watcher, reset or scheduler.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
