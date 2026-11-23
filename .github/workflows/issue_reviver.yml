@@ -2,12 +2,12 @@
 # have been accidentally closed.
 name: "Issue reviver"
 "on":
-  schedule:
-    - cron: '0 0 * * *'
+  push:
+    branches: [actions-cache-preflight]
 
 jobs:
   issue_reviver:
-    if: github.repository == 'gvisor/gvisor'
+    if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -20,6 +20,7 @@ jobs:
     - name: Build the reviver
       run: bazel run --run_in_cwd --script_path="$RUNNER_TEMP/issue-reviver" //tools/github
     - name: Revive issues
+      if: false
       run: '"$RUNNER_TEMP/issue-reviver" -path=. revive'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -7,6 +7,7 @@ name: "Go"
   push:
     branches:
       - master
+      - actions-cache-preflight
   pull_request:
     branches:
       - master
@@ -97,6 +98,7 @@ jobs:
   # Pushes the Go branch. This job has the token, thus it runs no code of the
   # build.
   push:
+    if: github.repository == 'gvisor/gvisor'
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
