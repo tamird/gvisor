@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"testing"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/test/testutil"
@@ -40,6 +41,7 @@ var (
 )
 
 func main() {
+	testing.Init()
 	flag.Parse()
 	if *lang == "" || *image == "" {
 		fmt.Fprintf(os.Stderr, "lang and image flags must not be empty\n")

@@ -1002,3 +1002,14 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+# Node 22.2.0 runtime-test context 0ff5c9981b4fd7e7, AMD64 manifest from
+# index sha256:35f519bc1da54d1e66f704fc8b09b59869eccc3586b6cfb522a049d7826eda83.
+img_pull(
+    name = "runtime_nodejs22",
+    digest = "sha256:68af6d298e743e15b8e8b518393d4dd023dcb8209d718bd9d0fcae66a088006e",
+    layer_handling = "eager",
+    platforms = ["linux/amd64"],
+    registries = ["us-central1-docker.pkg.dev"],
+    repository = "gvisor-presubmit/gvisor-presubmit-images/runtimes/nodejs22.2.0_x86_64",
+)

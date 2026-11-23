@@ -89,3 +89,9 @@ image_outputs(
     }),
     image_name = "benchmarks/alpine",
 )
+
+image_outputs(
+    name = "runtime_nodejs22",
+    image = "@runtime_nodejs22",
+    image_name = "runtimes/nodejs22.2.0",
+)
