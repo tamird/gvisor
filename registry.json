@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T01:04:08.331244+00:00",
+    "updatedAt": "2026-11-23T01:05:56.327352+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -100743,16 +100743,18 @@
         "owner": "root",
         "sourceHead": "e034c5df95a680919aa077a802900c7141b18455",
         "observedAt": "2026-11-23T01:04:08.331244+00:00",
-        "disposition": "Foreign author reports the explicit logging dependency fixed in e034c5df. This is author evidence, not an independently verified source correction. Current native checks and DCO pass; FirstPass2359 is pending and main55646 reports failure without a source-bound diagnosis here. Earlier exact-head approvals and qualification do not transfer.",
-        "nextAction": "Root follows author-owned changed-source review and actual current-head CI/maintainer events. No foreign source write, duplicate acknowledgement, manual retry or publication grant follows.",
+        "disposition": "Author sam10ridh reports the logging dependency done at exact e034c5df, a source change not independently qualified here. Canonical main55646 diagnosis preserves three upload attempts, all exit1 before target validation: the obsolete pre-command parses sam10ridh:samridh/unix-connect-wait as an invalid ref and reports “couldn’t find remote ref sam10ridh”. Landed909c3dce2 removes that hook check; no source-test failure or tests run are established. Native checks/DCO pass and FirstPass2359 remains pending.",
+        "nextAction": "Author owns refreshing the source to include landed909c3dce2, or an actual CI-mechanism update. Root follows exact-head FirstPass2359 and review status. No foreign push, sensitive implementation read, duplicate outreach or manual retry is authorized.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17552",
           "https://buildkite.com/gvisor/internal/builds/36539",
           "https://github.com/google/gvisor/pull/17083#discussion_r4660624236",
           "https://github.com/google/gvisor/pull/17083#discussion_r4660661482",
-          "https://github.com/google/gvisor/pull/17083#discussion_r4660679045"
+          "https://github.com/google/gvisor/pull/17083#discussion_r4660679045",
+          "https://buildkite.com/gvisor/pipeline/builds/55646",
+          "https://github.com/google/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
         ],
-        "recheckCondition": "Author head/dependency correction, current-source checks or substantive reviewer/import event.",
+        "recheckCondition": "Author head/base refresh, actual CI-mechanism change, exact-head check or maintainer review event.",
         "providerHead": "e034c5df95a680919aa077a802900c7141b18455",
         "latestSourceTriage": {
           "oldHead": "65afc4e121b577d5675faba0b77ae8edea9c5c63",
