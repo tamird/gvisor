@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T03:13:48.119404+00:00",
+    "updatedAt": "2026-11-23T03:14:54.088857+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -104559,15 +104559,15 @@
       "title": "test: check the TLS server name on address-family fallback locally",
       "url": "https://github.com/nodejs/node/pull/67595",
       "group": "ci-flakes",
-      "status": "open",
+      "status": "closed",
       "updatedAt": "2026-11-21T04:22:28.091102+00:00",
       "summary": "The collaborator approval gate remains satisfied. Gurgunday confirmed the author’s existing landing question and added another exact-head approval on unchanged 15c2edb5. The PR remains OPEN/APPROVED/MERGEABLE but natively BLOCKED with three pending GitHub Jenkins contexts. This is maintainer landing/CI-reporting follow-through, not a new source failure or agent merge authorization.",
       "followup": {
         "owner": "root",
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-        "disposition": "Native PR is CLOSED on exact15c2edb. Maintainer jakecastelli reports landing in660c1040592c; root owns exact landed-source verification and the independent pinned Node22 fixture backport. The landing notice is read and routed; native closure alone is not a merged-source equivalence claim.",
-        "nextAction": "Root verifies the actual landing commit against the approved PR source, then reconciles the existing pinned Node22 image backport obligation. Do not repeat old approval timers, relabel/requeue, retry CI, change source or send duplicate outreach.",
-        "recheckCondition": "Verified landing/source comparison or actual existing pinned-fixture backport event.",
+        "disposition": "Upstream delivery is complete by manual landing:660c1040592c4332520e7d783360139c8298cb52 names PR67595 and is upstream main. Root verified its changed-file set, statuses and blob IDs exactly match reviewed15c2edb. Native GitHub mergedAt remains null; this is landed-by-commit, not an API merge claim. Maintainer Jake’s notice is source-bound.",
+        "nextAction": "No upstream approval/CI/queue wait remains. Root resumes the existing pinned Node22 fixture-backport owner with its recorded qualification and authorization; that separate obligation remains on the TLS investigation. No duplicate upstream CI or outreach.",
+        "recheckCondition": "Actual separate pinned-fixture backport or post-landing regression.",
         "publishedDelivery": {
           "base": "b7df44bf9c85a6104b9158b616999e3d2c58be5d",
           "head": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
@@ -104834,8 +104834,8 @@
         "attentionDispositions": [
           {
             "reason": "author-feedback",
-            "title": "Landing notice triaged; verify landed source and pinned-fixture follow-through",
-            "nextAction": "Root verifies the actual landing commit against the approved PR source, then reconciles the existing pinned Node22 image backport obligation. Do not repeat old approval timers, relabel/requeue, retry CI, change source or send duplicate outreach.",
+            "title": "Verified manual landing; upstream wait complete",
+            "nextAction": "No upstream approval/CI/queue wait remains. Root resumes the existing pinned Node22 fixture-backport owner with its recorded qualification and authorization; that separate obligation remains on the TLS investigation. No duplicate upstream CI or outreach.",
             "evidence": [
               "https://github.com/nodejs/node/pull/67595#issuecomment-7080248335",
               "https://github.com/nodejs/node/pull/67595#issuecomment-7080379119",
@@ -104850,7 +104850,8 @@
               "https://github.com/nodejs/node/pull/67595#issuecomment-7086842084",
               "https://github.com/nodejs/node/pull/67595#pullrequestreview-6014883170",
               "https://github.com/nodejs/node/pull/67595#issuecomment-7087863667",
-              "https://github.com/nodejs/node/pull/67595#issuecomment-7089675675"
+              "https://github.com/nodejs/node/pull/67595#issuecomment-7089675675",
+              "https://github.com/nodejs/node/commit/660c1040592c4332520e7d783360139c8298cb52"
             ],
             "binding": {
               "reviewDecision": "APPROVED",
@@ -105104,7 +105105,7 @@
             }
           }
         ],
-        "observedAt": "2026-11-22T22:57:01.440210+00:00",
+        "observedAt": "2026-11-23T03:14:54.088857+00:00",
         "evidence": [
           "https://github.com/nodejs/node/pull/67595#issuecomment-7026664983",
           "https://github.com/nodejs/node/pull/67595#issuecomment-7053905845",
@@ -105113,7 +105114,8 @@
           "https://github.com/nodejs/node/pull/67595#pullrequestreview-6014883170",
           "https://github.com/nodejs/node/pull/67595#issuecomment-7087863667",
           "https://github.com/nodejs/node/pull/67595#issuecomment-7089675675",
-          "https://github.com/nodejs/node/commit/660c1040592c"
+          "https://github.com/nodejs/node/commit/660c1040592c",
+          "https://github.com/nodejs/node/commit/660c1040592c4332520e7d783360139c8298cb52"
         ]
       },
       "evidence": [
@@ -105161,7 +105163,8 @@
         }
       ],
       "nextStep": "Root follows accessible GitHub status changes and the maintainer response to the existing elapsed-CI question. Preserve current approval and source-bound validation. No repeated CI request, manual retry, access workaround or new contributor decision.",
-      "recheckCondition": "Accessible current-head status or maintainer response changes."
+      "recheckCondition": "Accessible current-head status or maintainer response changes.",
+      "inactive": true
     },
     {
       "id": "branch:lisafs-hardlink-capability",
@@ -137675,7 +137678,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-18T23:27:40.021573+00:00",
+      "updatedAt": "2026-11-23T03:14:54.088857+00:00",
       "summary": "On Buildkite #54502 for #17495, Node 22.2.0 reported read ECONNRESET in internet/test-tls-autoselectfamily-servername.js. The same-source retry passed. The approved source-identical fresh-base revision is now published as Node.js#67595. The final commit-message check passed; current-main runtime CI remains separate from prior Node22/native/Sentry results. The cause of the historical external reset is still unknown.",
       "findings": [
         {
@@ -137722,7 +137725,7 @@
           ]
         }
       ],
-      "nextStep": "Node67595 is now natively CLOSED and its maintainer reports landing in660c1040592c. Root verifies landed-source binding before advancing the independent pinned Node22 fixture backport; preserve old5bf qualification/version scopes. No old approval/queue timer or new outreach is needed.",
+      "nextStep": "Upstream Node67595 is delivered by verified manual landing660c1040592c4332520e7d783360139c8298cb52 on main, with exact reviewed15c2edb file/blob identity. Root resumes the existing pinned Node22 fixture-backport owner using recorded qualification/version scopes and authorizations. The upstream approval/queue/CI wait is complete; do not duplicate outreach or upstream tests.",
       "evidence": [
         {
           "label": "#54502 Node TLS failure",
@@ -137767,6 +137770,10 @@
         {
           "label": "Canonical approved Node TLS test PR",
           "url": "https://github.com/nodejs/node/pull/67595"
+        },
+        {
+          "label": "Verified manual landing on upstream main",
+          "url": "https://github.com/nodejs/node/commit/660c1040592c4332520e7d783360139c8298cb52"
         }
       ],
       "repo": "nodejs/node",
