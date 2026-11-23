@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T05:04:11.229864+00:00",
+    "updatedAt": "2026-11-23T10:17:17.531349+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1085,13 +1085,13 @@
       "status": "open",
       "reviewDecision": "REVIEW_REQUIRED",
       "updatedAt": "2026-11-19T07:47:10.548489+00:00",
-      "summary": "Equivalent bootstrap rebase afb6198869d091f721f559dc0e2eceb0c6bb5455 is delivered with strict range-diff equality and current both-architecture owning tests/Nogo/source/archive qualification. Native GHA including actual Go export/build passed. A subsequent owner audit verified FirstPass2319 PASSED in42m21; no current main-pipeline result is established. DCO137159021678 evaluates the wrong 45-commit range despite one valid PR commit, linked to issue126. GitHub automatically cleared prior auto-merge; no agent auto-merge operation occurred. Current aggregate review is REVIEW_REQUIRED with fvoznika pending. Preserve independent source-assemble/import packaging requirements.",
+      "summary": "Equivalent bootstrap rebase afb6198869d091f721f559dc0e2eceb0c6bb5455 is delivered with strict range-diff equality and current both-architecture owning tests/Nogo/source/archive qualification. Native GHA including actual Go export/build passed. A subsequent owner audit verified First Pass 2319 PASSED in42m21; no current main-pipeline result is established. DCO check 137159021678 evaluates the wrong 45-commit range despite one valid PR commit, linked to issue #126. GitHub automatically cleared prior auto-merge; no agent auto-merge operation occurred. Current aggregate review is REVIEW_REQUIRED with fvoznika pending. Preserve independent source-assemble/import packaging requirements.",
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "afb6198869d091f721f559dc0e2eceb0c6bb5455",
-        "observedAt": "2026-11-17T20:13:53.813850+00:00",
-        "disposition": "Equivalent bootstrap rebase afb6198869d091f721f559dc0e2eceb0c6bb5455 is delivered with strict range-diff equality and current both-architecture owning tests/Nogo/source/archive qualification. Native GHA including actual Go export/build passed. A subsequent owner audit verified FirstPass2319 PASSED in42m21; no current main-pipeline result is established. DCO137159021678 evaluates the wrong 45-commit range despite one valid PR commit, linked to issue126. GitHub automatically cleared prior auto-merge; no agent auto-merge operation occurred. Current aggregate review is REVIEW_REQUIRED with fvoznika pending. Preserve independent source-assemble/import packaging requirements.",
-        "nextAction": "Root follows the source-bound wrong-range DCO check through issue126 and its pending qualified source proposal, plus genuine review/import feedback. FirstPass2319 and native GHA are passed; its sole watch is closed. Preserve independent importer packaging and do not retry old CI or re-enable auto-merge.",
+        "observedAt": "2026-11-23T10:12:01.198799+00:00",
+        "disposition": "Current afb619 has one valid signed-off PR commit, but DCO check 137159021678 evaluates 45 commits with 23 invalid upstream entries. Etienne reported the current failing check; the app maintainer acknowledged issue #126 without a deployed fix. Native GHA/First Pass 2319 pass; main/import packaging requirements remain separate. The actual concise reply question is pending and nothing is posted.",
+        "nextAction": "Await the existing source-bound reply decision, then deliver only the approved text. Root follows the provider range defect and genuine maintainer/import events; d399 remains technically held, not an approved production fix. No sign-off churn, unchanged CI retry, new access request or auto-merge.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42849078055/artifacts/13780790760",
           "https://github.com/tamird/gvisor/compare/4ecb0b121...45137f922",
@@ -1119,7 +1119,9 @@
           "https://buildkite.com/gvisor/first-pass/builds/2319",
           "https://github.com/gvisor/gvisor/runs/137159021678",
           "https://github.com/cncf/dco2/issues/126",
-          "https://github.com/tamird/gvisor/blob/9667c31dac0426442b7ae872d8449ebb518df1b4/registry.json"
+          "https://github.com/tamird/gvisor/blob/9667c31dac0426442b7ae872d8449ebb518df1b4/registry.json",
+          "https://github.com/google/gvisor/pull/15106#issuecomment-7093388831",
+          "https://github.com/cncf/dco2/issues/126#issuecomment-7094792736"
         ],
         "recheckCondition": "Actual FirstPass/main result, DCO provider correction or substantive maintainer/import feedback.",
         "attentionDispositions": [
@@ -1486,7 +1488,13 @@
           "scope": "Actual current-head checks; historical approvals retain their original review identity/timestamp. No new human review or import completion inferred.",
           "nextAction": "Root follows remaining source-review or technical import disposition; current checks are green."
         },
-        "mergeable": "MERGEABLE"
+        "mergeable": "MERGEABLE",
+        "actionableComment": {
+          "kind": "comment",
+          "commentId": "IC_kwDOB9IlXs8AAAABpsyGHw",
+          "url": "https://github.com/google/gvisor/pull/15106#issuecomment-7093388831",
+          "head": "afb6198869d091f721f559dc0e2eceb0c6bb5455"
+        }
       },
       "head": "afb6198869d091f721f559dc0e2eceb0c6bb5455",
       "evidence": [
@@ -1681,6 +1689,15 @@
         "nextAction": "Footer-only DCO metadata delivery is complete. Follow remaining current-head CI and the existing technical importing-maintainer disposition; do not request permission for the completed metadata operation.",
         "recheckCondition": "Current-head CI, substantive technical feedback or import lifecycle changes; named technical holds remain.",
         "holdsPreserved": {}
+      },
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "afb6198869d091f721f559dc0e2eceb0c6bb5455",
+        "url": "https://github.com/google/gvisor/pull/15106",
+        "title": "Explain the incorrect DCO commit range",
+        "summary": "Reply to the maintainer’s DCO report: the sole PR commit has a valid sign-off, while the app checks upstream commits; its maintainer has acknowledged the bug.",
+        "body": "The PR’s single commit has a valid sign-off. The DCO check is including upstream commits outside the PR; the app maintainer has acknowledged the bug in cncf/dco2#126.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -100756,8 +100773,8 @@
         "owner": "root",
         "sourceHead": "aa175bd84686b4585c413e2fabb36f1457cd52db",
         "observedAt": "2026-11-23T04:16:53.896263+00:00",
-        "disposition": "Author sam10ridh changed source from e034c5df to aa175bd846; current provider checks are PENDING. The old head’s logging-dependency verification and obsolete-hook failure diagnosis retain only their original source scope. No new review/source qualification or fixed-bootstrap claim is established for aa175 here.",
-        "nextAction": "Root follows the foreign author’s current-head CI and review/import events. The author retains implementation ownership; preserve sensitive-review boundaries and do not transfer old-head approvals/tests, write the foreign branch, send duplicate outreach or retry CI.",
+        "disposition": "Current foreign-author aa175bd846 now has native checks and FirstPass2386 SUCCESS. This clears the old-head bootstrap/check status wait, not the sensitive current-source review or broader qualification. Prior e034 source evidence remains historically bound; no foreign-source edit or review approval is inferred.",
+        "nextAction": "Root follows the foreign author’s actual review/import events; implementation remains author-owned. Preserve sensitive-review boundaries and do not repeat completed CI, send duplicate outreach or change source.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17552",
           "https://buildkite.com/gvisor/internal/builds/36539",
@@ -103186,8 +103203,8 @@
         "owner": "root",
         "sourceNumber": 16887,
         "sourceHead": "bd991e616d06c77074c56576cc94c6f9cddfeef5",
-        "observedAt": "2026-11-22T21:48:03.162138+00:00",
-        "disposition": "Current bd991e616 has source-bound FirstPass2343 compile failures: endpoint_test.go616 and mmap_test.go34 call virtioNetHdr.marshal with the old no-argument/return-value API. Unit and Nogo each have three failed attempts and one target failing to build; these are not runtime failures or a full fresh-corpus verdict. Author botirkhaltaev owns the two test callers. Current sensitive reviewer/performance holds remain; prior reviews do not transfer to this changed head.",
+        "observedAt": "2026-11-23T10:14:03.684900+00:00",
+        "disposition": "Current bd991e has the verified two-test-caller compilation failure. Ayush’s comment 4662373782 reiterates those changes and reports a local race pass; this is external evidence, not this owner’s fresh qualification. The optional encoder refactor is not adopted. Author botirkhaltaev owns caller updates; root’s current-source review and performance obligations remain held.",
         "nextAction": "Author updates the two test callers; root follows the next head and exact-source CI while retaining the sensitive review/performance hold. Ayush already reported the failure, so no duplicate outreach, foreign edit or manual retry.",
         "recheckCondition": "User releases the sensitive-work hold, actual new external evidence is supplied, or the author changes source again.",
         "evidence": [
@@ -103205,7 +103222,8 @@
           "https://github.com/google/gvisor/commit/bd991e616d06c77074c56576cc94c6f9cddfeef5",
           "https://github.com/google/gvisor/pull/16887#issuecomment-7089434753",
           "https://buildkite.com/gvisor/first-pass/builds/2343#01a20536-1f2e-42e3-b1e5-1d1e8d181d82",
-          "https://buildkite.com/gvisor/first-pass/builds/2343#01a20532-8a63-4708-9daf-0edafaec0714"
+          "https://buildkite.com/gvisor/first-pass/builds/2343#01a20532-8a63-4708-9daf-0edafaec0714",
+          "https://github.com/google/gvisor/pull/16887#discussion_r4662373782"
         ],
         "ciObservation": "Observed context buildkite/first-pass (unsuffixed) failed as build #906. No current buildkite/first-pass/pr or buildkite/pipeline/pr result appeared in the queried contexts. This is not a claim of passing required CI; current /pr requirements remain separate.",
         "actionableComment": {
@@ -105881,42 +105899,51 @@
       "url": "https://github.com/google/gvisor/pull/17855",
       "status": "open",
       "updatedAt": "2026-11-21T12:02:56.484187+00:00",
-      "summary": "Published the exact user-approved source. Native head is mergeable and DCO passes; FirstPass is failed and its existing source owner is diagnosing the actual cause. Qualification limits are retained in the linked source investigation.",
+      "summary": "Exact 5ad44c8 now has First Pass 2396 PASS and current native/DCO green; Etienne approved, with relkochta still requested and aggregate REVIEW_REQUIRED. Main pipeline 55699 fails on final ARM Docker shard6 attempt 3: TestDockerWithVFS/docker_run_bridge_network_privileged timed out after 900.2 seconds in Process.Logs/stdcopy; four other shard targets pass and other failed jobs recovered. The workload cause is unknown. Existing cancellation fix #17836 is implemented/qualified but still OPEN, relevant to the reporting/cancellation boundary only; it is not proven to fix this privileged workload.",
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "5ad44c8892f6d9ce773e448357a83917b3c79b5b",
         "mergeable": "MERGEABLE",
-        "disposition": "Published user-approved source remains mergeable. All GitHub-native execution checks and DCO pass in the canonical snapshot. FirstPass 2286 independently failed before agent assignment: exit 80, null agent_id/started_at, stack_errored, author 1535036 rolling 30-day quota of 360,000 compute minutes. No Bazel target ran; main admission and maintainer review remain distinct.",
-        "nextAction": "Existing source/provider owner rechecks evidenced admission recovery or an actual source/check event. No manual retry, quota-owner outreach, source change or additional polling is implied. approved_rebase_queue retains the review/import lifecycle.",
-        "recheckCondition": "Canonical failure diagnosis or exact-head CI/review/import event.",
+        "disposition": "Exact 5ad44c8 now has First Pass 2396 PASS and current native/DCO green; Etienne approved, with relkochta still requested and aggregate REVIEW_REQUIRED. Main pipeline 55699 fails on final ARM Docker shard6 attempt 3: TestDockerWithVFS/docker_run_bridge_network_privileged timed out after 900.2 seconds in Process.Logs/stdcopy; four other shard targets pass and other failed jobs recovered. The workload cause is unknown. Existing cancellation fix #17836 is implemented/qualified but still OPEN, relevant to the reporting/cancellation boundary only; it is not proven to fix this privileged workload.",
+        "nextAction": "Root/source owner follows existing #17836 integration and maintainer/import events, retaining the separate #17855 log-retention purpose. Keep sensitive implementation work held; no source edit, retry, additional outreach or causal fix claim.",
+        "recheckCondition": "Actual helper integration, natural recurrence with bounded evidence or new maintainer/provider event.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17855",
-          "https://buildkite.com/gvisor/first-pass/builds/2286#01a1fdf7-c92c-42e2-babc-75c2e4761a74"
+          "https://buildkite.com/gvisor/first-pass/builds/2286#01a1fdf7-c92c-42e2-babc-75c2e4761a74",
+          "https://buildkite.com/gvisor/first-pass/builds/2396",
+          "https://buildkite.com/gvisor/pipeline/builds/55699#01a20762-8c60-488e-8bab-b5f77d911419",
+          "https://github.com/google/gvisor/pull/17836",
+          "https://github.com/google/gvisor/pull/17855#pullrequestreview-6017755268"
         ],
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
-            "action": "ci-infrastructure-retry",
-            "title": "FirstPass 2286: verified provider admission quota",
-            "nextAction": "Existing source/provider owner rechecks evidenced admission recovery or an actual source/check event. No manual retry, quota-owner outreach, source change or additional polling is implied.",
+            "title": "Main55699 logs-drain timeout diagnosed; workload cause unknown",
+            "nextAction": "Root/source owner follows existing #17836 integration and maintainer/import events, retaining the separate17855 log-retention purpose. Keep sensitive implementation work held; no source edit, retry, additional outreach or causal fix claim.",
             "evidence": [
-              "https://buildkite.com/gvisor/first-pass/builds/2286#01a1fdf7-c92c-42e2-babc-75c2e4761a74"
+              "https://github.com/gvisor/gvisor/pull/17855",
+              "https://buildkite.com/gvisor/first-pass/builds/2286#01a1fdf7-c92c-42e2-babc-75c2e4761a74",
+              "https://buildkite.com/gvisor/first-pass/builds/2396",
+              "https://buildkite.com/gvisor/pipeline/builds/55699#01a20762-8c60-488e-8bab-b5f77d911419",
+              "https://github.com/google/gvisor/pull/17836",
+              "https://github.com/google/gvisor/pull/17855#pullrequestreview-6017755268"
             ],
             "binding": {
               "sourceHead": "5ad44c8892f6d9ce773e448357a83917b3c79b5b",
               "checks": [
                 {
-                  "id": "SC_kwDOB9IlXs8AAAAN3VZq5g",
-                  "name": "buildkite/first-pass/pr",
+                  "id": "SC_kwDOB9IlXs8AAAAN4nKulA",
+                  "name": "buildkite/pipeline/pr",
                   "state": "FAILURE",
-                  "url": "https://buildkite.com/gvisor/first-pass/builds/2286",
+                  "url": "https://buildkite.com/gvisor/pipeline/builds/55699",
                   "kind": "status"
                 }
               ]
             }
           }
         ],
-        "curatedAt": "2026-11-21T12:20:58.751348+00:00"
+        "curatedAt": "2026-11-21T12:20:58.751348+00:00",
+        "observedAt": "2026-11-23T10:12:01.198799+00:00"
       }
     },
     {
@@ -105978,17 +106005,18 @@
       "title": "DCO check includes commits already on the PR base branch",
       "url": "https://github.com/cncf/dco2/issues/126",
       "updatedAt": "2026-11-21T12:20:58.751348+00:00",
-      "summary": "The current DCO range failure remains unresolved. A fresh force-push produced the wrong 45-commit check three seconds later; the correct current-base comparison contains one commit. Proposal d399 only fixes a synthetic stale-event base and is technically held. The production payload and deployed version remain unknown.",
+      "summary": "The app maintainer acknowledged the reported incorrect commit range; no deployed fix or corrected affected check is established. Production payload/version and range-selection cause remain unknown. The synthetic stale-base fix d399 remains technically held.",
       "followup": {
         "owner": "root",
-        "disposition": "The current DCO range failure remains unresolved. A fresh force-push produced the wrong 45-commit check three seconds later; the correct current-base comparison contains one commit. Proposal d399 only fixes a synthetic stale-event base and is technically held. The production payload and deployed version remain unknown.",
-        "nextAction": "dco_range_fix / root establish how the production check selected its comparison range before proposing a fix. Preserve the qualified regression as limited evidence; no source PR, provider-policy change or new permission request is justified yet.",
+        "disposition": "The app maintainer acknowledged the reported incorrect commit range; no deployed fix or corrected affected check is established. Production payload/version and range-selection cause remain unknown. The synthetic stale-base fix d399 remains technically held.",
+        "nextAction": "Root follows actual provider/deployed-version evidence and affected-check correction. Maintainer acknowledgment is consumed as inspected evidence, not a fix or a new commitment; no source PR, reply or permission change follows.",
         "recheckCondition": "Actual production event/deployed-version evidence or a source-bound causal explanation and validated correction.",
         "evidence": [
           "https://github.com/cncf/dco2/issues/126",
           "https://github.com/tamird/dco2/commit/d3993939e1ab8feea773db20b7e27c600091fd6a",
           "https://github.com/tamird/dco2/actions/runs/45008480284",
-          "https://github.com/tamird/dco2/pull/1"
+          "https://github.com/tamird/dco2/pull/1",
+          "https://github.com/cncf/dco2/issues/126#issuecomment-7094792736"
         ]
       },
       "settledReviews": [
@@ -106003,7 +106031,17 @@
           "body": "Select comparison revisions from the current pull request state, so an older webhook base does not include already-landed commits in the DCO check. Skip closed pull requests and events for superseded heads. Preserve comparison pagination, the commit limit and the later label freshness check.\n\nReuse the existing fixtures to distinguish the event base from the current base, and cover lookup failures and skipped closed or moved-head events.\n\nRelated to #126. This covers stale-event selection; that report's triggering production payload and deployed version remain unknown.\n\nPosted by Codex on behalf of @tamird.\n",
           "outcome": "TECHNICAL-HOLD"
         }
-      ]
+      ],
+      "reviewWatch": {
+        "inspected": [
+          {
+            "id": "IC_kwDOMl7Ezc8AAAABpuHyIA",
+            "url": "https://github.com/cncf/dco2/issues/126#issuecomment-7094792736",
+            "updatedAt": "2026-11-23T07:52:28Z",
+            "evidence": "https://github.com/cncf/dco2/issues/126#issuecomment-7094792736"
+          }
+        ]
+      }
     },
     {
       "id": "pr:17861",
@@ -106116,7 +106154,7 @@
       "title": "Benchmark legacy state and UDP queues",
       "url": "https://github.com/google/gvisor/pull/17871",
       "status": "open",
-      "summary": "Later source-owner/root observation: unchanged-patch rebase a9314b453 is delivered, with notice7091622653 and all current native GHA/DCO passed. Exact-head FirstPass2387 is blocked before agent/start by the explicit rolling30-day360000compute-minute quota. The raw public API snapshot below remains honestly dated04:14 on predecessor6e; its2325empty-log failure is historical. Review/import and changed provider admission are the remaining conditions.",
+      "summary": "Current public a931 and its unchanged-patch rebase remain delivered. Candidate dd4cd790d addresses the new buffer guard finding, with both architectures’ six UDP1x leaves/eight XML cases, Nogo and source checks passing and two clean final reviews. Its actual combined amendment-and-reply question is now pending. A reviewer over-read the immutable options file beyond the requested constant; this was immediately reported, without edits/tests/further reads. Direct First Pass 2387 quota evidence and independent performance holds remain.",
       "evidence": [
         {
           "label": "Published benchmark prerequisite",
@@ -106134,9 +106172,9 @@
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a9314b45369b5f58a23c7acca9414f5533a79eb2",
-        "disposition": "Requested unchanged-patch rebase delivered at a9314b453 on4f8c693a9, strict range-diff “=” from approved6e; all three topic blobs match. Notice7091622653 is posted. Both architectures pass qualification (zero failures,85 existing wire skips each,38 actual1x leaves,two Nogo targets each) and source guards. Current native GHA/DCO, including Go45112126255 export and exported-tree go build, pass. Root and the source owner verified OPEN/MERGEABLE/REVIEW_REQUIRED, Ayush/xinzhong requests and auto-merge null. Exact-head FirstPass2387 failed before agent/start with direct rolling30-day360000compute-minute quota detail for author1535036. This is not flakiness or a source failure. The overall/raw API snapshot still reflects6e at04:14; these later per-item facts are retained owner/root observations.",
-        "nextAction": "Rebase, notice, qualification and author-action waits are complete. Follow existing maintainer review/import and a changed provider-admission event; no unchanged CI retry, quota outreach, auto-merge or new source-approval question. Keep independent #17472 performance holds.",
-        "recheckCondition": "New substantive review/import event or changed exact-source provider admission evidence; no active execution watch remains.",
+        "disposition": "Current public a931 and its unchanged-patch rebase remain delivered. Candidate dd4cd790d addresses the new buffer guard finding, with both architectures’ six UDP1x leaves/eight XML cases, Nogo and source checks passing and two clean final reviews. Its actual combined amendment-and-reply question is now pending. A reviewer over-read the immutable options file beyond the requested constant; this was immediately reported, without edits/tests/further reads. Direct First Pass 2387 quota evidence and independent performance holds remain.",
+        "nextAction": "Await the actual dd4 amendment-and-reply decision. No public amendment or reply is authorized before the answer; do not transfer the old source approval. Keep the existing quota admission/review/import and independent #17472 performance boundaries.",
+        "recheckCondition": "Owner’s exact candidate qualification/final review, actual publication decision or new review/provider evidence.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17871",
           "https://buildkite.com/gvisor/first-pass/builds/2325",
@@ -106145,82 +106183,17 @@
           "https://github.com/google/gvisor/pull/17871#issuecomment-7091396174",
           "https://github.com/tamird/gvisor/commit/a9314b45369b5f58a23c7acca9414f5533a79eb2",
           "https://github.com/tamird/gvisor/actions/runs/45112126255",
-          "https://buildkite.com/gvisor/first-pass/builds/2387#01a206aa-41f8-492a-8fca-637ecce94597"
+          "https://buildkite.com/gvisor/first-pass/builds/2387#01a206aa-41f8-492a-8fca-637ecce94597",
+          "https://github.com/google/gvisor/pull/17871#discussion_r4662347374",
+          "https://github.com/tamird/gvisor/actions/runs/45153412137",
+          "https://github.com/tamird/gvisor/actions/runs/45153551833",
+          "https://github.com/tamird/gvisor/actions/runs/45153555583",
+          "https://github.com/tamird/gvisor/actions/runs/45153558941",
+          "https://github.com/tamird/gvisor/actions/runs/45153562375"
         ],
-        "observedAt": "2026-11-23T04:48:59.137415+00:00",
+        "observedAt": "2026-11-23T10:12:01.198799+00:00",
         "providerHead": "a9314b45369b5f58a23c7acca9414f5533a79eb2",
-        "attentionDispositions": [
-          {
-            "reason": "author-feedback",
-            "title": "Rebase a9314b453 and notice delivered",
-            "nextAction": "Later source-owner/root verification: a9314b453 is OPEN/MERGEABLE with all native GHA/DCO passed, requests retained and auto-merge null. FirstPass2387 explicitly failed pre-agent30-day quota admission. Rebase/notice/qualification/author-action waits are complete; follow review/import and changed provider evidence. Raw API remains04:14 on predecessor6e; no new full snapshot is claimed.",
-            "evidence": [
-              "https://github.com/google/gvisor/pull/17871#issuecomment-7091622653",
-              "https://github.com/google/gvisor/pull/17871#issuecomment-7091396174",
-              "https://github.com/tamird/gvisor/commit/a9314b45369b5f58a23c7acca9414f5533a79eb2",
-              "https://github.com/tamird/gvisor/actions/runs/45112126255",
-              "https://buildkite.com/gvisor/first-pass/builds/2387#01a206aa-41f8-492a-8fca-637ecce94597"
-            ],
-            "binding": {
-              "reviewDecision": "REVIEW_REQUIRED",
-              "approvedHead": null,
-              "approvedAt": null,
-              "headCommittedAt": "2026-11-22T12:29:33Z",
-              "headIntroducedAt": null,
-              "headHistoryComplete": true,
-              "threads": {
-                "unresolved": 0,
-                "total": 0,
-                "complete": true
-              },
-              "feedback": {
-                "complete": true,
-                "items": [
-                  {
-                    "kind": "comment",
-                    "id": "IC_kwDOB9IlXs8AAAABpq1jbg",
-                    "url": "https://github.com/google/gvisor/pull/17871#issuecomment-7091348334",
-                    "body": "can you rebase, somehow pipeline upload job is failing. It's quite flaky.",
-                    "createdAt": "2026-11-23T04:10:28Z",
-                    "updatedAt": "2026-11-23T04:10:28Z",
-                    "author": {
-                      "login": "ayushr2",
-                      "__typename": "User"
-                    }
-                  }
-                ]
-              },
-              "sourceHead": "6eaaa8495bdb912284019b8d9bae8983c0435d54"
-            }
-          },
-          {
-            "reason": "author-public-checks",
-            "title": "Historical upload failure diagnosed; later source quota remains",
-            "nextAction": "Later source-owner/root verification: a9314b453 is OPEN/MERGEABLE with all native GHA/DCO passed, requests retained and auto-merge null. FirstPass2387 explicitly failed pre-agent30-day quota admission. Rebase/notice/qualification/author-action waits are complete; follow review/import and changed provider evidence. Raw API remains04:14 on predecessor6e; no new full snapshot is claimed.",
-            "evidence": [
-              "https://github.com/google/gvisor/pull/17871",
-              "https://buildkite.com/gvisor/first-pass/builds/2325",
-              "https://github.com/google/gvisor/pull/17871#issuecomment-7091348334",
-              "https://github.com/google/gvisor/pull/17871#issuecomment-7091622653",
-              "https://github.com/google/gvisor/pull/17871#issuecomment-7091396174",
-              "https://github.com/tamird/gvisor/commit/a9314b45369b5f58a23c7acca9414f5533a79eb2",
-              "https://github.com/tamird/gvisor/actions/runs/45112126255",
-              "https://buildkite.com/gvisor/first-pass/builds/2387#01a206aa-41f8-492a-8fca-637ecce94597"
-            ],
-            "binding": {
-              "sourceHead": "6eaaa8495bdb912284019b8d9bae8983c0435d54",
-              "checks": [
-                {
-                  "id": "SC_kwDOB9IlXs8AAAAN3-CWCg",
-                  "name": "buildkite/first-pass/pr",
-                  "state": "FAILURE",
-                  "url": "https://buildkite.com/gvisor/first-pass/builds/2325",
-                  "kind": "status"
-                }
-              ]
-            }
-          }
-        ],
+        "attentionDispositions": [],
         "currentSourceCI": {
           "head": "a9314b45369b5f58a23c7acca9414f5533a79eb2",
           "parent": "4f8c693a92a3079860d75ceec65d4d221a9dc84e",
@@ -106235,6 +106208,18 @@
           ],
           "scope": "Retained source-owner/root terminal observations; not a fresh full-snapshot API read."
         }
+      },
+      "head": "a9314b45369b5f58a23c7acca9414f5533a79eb2",
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "dd4cd790d4915f47e66b03dd02c2c5f8a40e9c6f",
+        "baseHead": "a9314b45369b5f58a23c7acca9414f5533a79eb2",
+        "url": "https://github.com/tamird/gvisor/commit/dd4cd790d4915f47e66b03dd02c2c5f8a40e9c6f",
+        "title": "Use the default receive quota guard and reply",
+        "summary": "Approve the qualified test-only buffer guard amendment and its exact reply. The public PR remains a931 until this question is answered; the review-scope error is disclosed.",
+        "body": "Amend #17871 to the qualified test-only revision. Three lines use stack.DefaultBufferSize and correct the wording; workloads, graph engines and timers are unchanged. Both architecture smoke/Nogo checks, source checks and two final reviews pass.\n\ngit range-diff --creation-factor=100 a9314b453^! dd4cd790d^!\n\nProposed reply:\n\nChanged the guard to `stack.DefaultBufferSize`, matching the default receive quota.\n\nPosted by Codex on behalf of @tamird.\n\nReview-scope disclosure: one reviewer read the whole immutable stack_options.go instead of only the requested constant. This was reported immediately; no edits, tests or further source reads followed.",
+        "replyBody": "Changed the guard to `stack.DefaultBufferSize`, matching the default receive quota.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -121688,8 +121673,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-22T01:16:21.953242+00:00",
-      "summary": "A further native scheduled delivery 45000638069 completed successfully and sampled the API at 2026-11-22T08:01:50.678695+00:00. Manual collection was skipped at the hourly guard. Scheduled deliveries remain irregular, so this does not prove sustained 10-minute cadence or reset causality; keep the unchanged cron and evidence-based 60/90-minute idle guard.",
+      "updatedAt": "2026-11-23T10:12:01.198799+00:00",
+      "summary": "API freshness recovered at 10:05:34 UTC after a sampling gap of 5 hours, 51 minutes and 16 seconds. The prior 90-minute deadline was missed by 4 hours, 21 minutes and 16 seconds. The foreground fallback was not delivered while the coordinator stopped; it is distinct from native GitHub scheduling, which has created no event since 01:59:45 despite the unchanged active default-branch workflow. No source/config defect or exact provider cause is demonstrated; current public Actions status is operational.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -121932,7 +121917,7 @@
           ]
         }
       ],
-      "nextStep": "Root retired the inherited 25-minute manual API rule because no user/project authority was found. For an idle queue, guard native freshness at actual checkedAt +60 minutes and obtain a fresh API sample by +90 minutes, retaining 30 minutes before the unchanged two-hour UI stale threshold; skip manual collection if native delivery is fresh. Read actual checkedAt from the matching snapshot; metadata curation does not advance it. Active owned jobs and human input are handled on arrival. Keep the documented 10-minute cron and one-reset boundary; await actual provider delivery or concrete scheduler evidence, without a second toggle or speculative source fix.",
+      "nextStep": "Root’s current foreground turn owns the next native freshness check at 11:05:34 UTC and recovery by 11:35:34. The supervision goal is still blocked and the tool cannot resume it; the existing user Resume action is pending. Automatic continuation is not active unless that state is verified changed. If the foreground turn ends first, no verified independent manual-fallback mechanism will deliver this guard. Keep the existing policy to check after 60 minutes and collect by 90 minutes and native cron; do not add a scheduler, second watcher, reset or speculative rewrite.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122021,6 +122006,10 @@
         {
           "label": "Fresh native schedule reused; manual collection skipped",
           "url": "https://github.com/tamird/gvisor/actions/runs/45000638069"
+        },
+        {
+          "label": "Fresh recovery collection",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45152394764"
         }
       ],
       "technicalOwner": "Codex",
@@ -143231,9 +143220,9 @@
       "title": "Benchmark legacy state and UDP queues",
       "owner": "root",
       "head": "a9314b45369b5f58a23c7acca9414f5533a79eb2",
-      "updatedAt": "2026-11-23T04:48:59.137415+00:00",
-      "summary": "The requested unchanged-patch rebase is delivered as #17871 at a9314b453, preserving the approved6e benchmark semantics. Both architectures’ qualification/source checks and all current native GHA/DCO pass; Go export and exported-tree build also pass. FirstPass2387 directly reports a pre-agent rolling30-day360000compute-minute quota failure. Etienne’s quota correction is attributed separately; historical2325 remains exit80/empty-log evidence, not the source of this diagnosis. Publication approval and the rebase/notice waits are consumed; no performance claim.",
-      "nextStep": "approved_rebase_queue/root follows existing Ayush/xinzhong review/import and changed provider-admission evidence. No active check observer, unchanged retry, quota outreach or new approval ask remains. Preserve #17472 production/performance boundaries.",
+      "updatedAt": "2026-11-23T10:12:01.198799+00:00",
+      "summary": "Current public a931 and its unchanged-patch rebase remain delivered. Candidate dd4cd790d addresses the new buffer guard finding, with both architectures’ six UDP1x leaves/eight XML cases, Nogo and source checks passing and two clean final reviews. Its actual combined amendment-and-reply question is now pending. A reviewer over-read the immutable options file beyond the requested constant; this was immediately reported, without edits/tests/further reads. Direct First Pass 2387 quota evidence and independent performance holds remain.",
+      "nextStep": "Await the actual dd4 amendment-and-reply decision. No public amendment or reply is authorized before the answer; do not transfer the old source approval. Keep the existing quota admission/review/import and independent #17472 performance boundaries.",
       "findings": [],
       "evidence": [
         {

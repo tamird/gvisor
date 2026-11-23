@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-23T10:05:34.250820+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-23T05:04:11.229864+00:00",
+  "registryDate": "2026-11-23T10:17:17.531349+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -452238,21 +452238,7 @@
         }
       ],
       "olderComments": false,
-      "issueFeedback": [
-        {
-          "repo": "cncf/dco2",
-          "number": 126,
-          "issue": "issue:cncf/dco2:126",
-          "kind": "issue-comment",
-          "id": "IC_kwDOMl7Ezc8AAAABpuHyIA",
-          "url": "https://github.com/cncf/dco2/issues/126#issuecomment-7094792736",
-          "updatedAt": "2026-11-23T07:52:28Z",
-          "author": "tegioz",
-          "claimed": false,
-          "owner": "Agent",
-          "action": "Read the issue comment and follow up."
-        }
-      ]
+      "issueFeedback": []
     },
     "issue:bazel-contrib/bazel-gazelle:2499": {
       "githubState": "open",
@@ -453861,8 +453847,8 @@
       "number": 17871,
       "head": "a9314b45369b5f58a23c7acca9414f5533a79eb2",
       "sourceNumber": 17871,
-      "owner": "Agent",
-      "claimed": false,
+      "owner": "approved_rebase_queue / root",
+      "claimed": true,
       "overdue": false,
       "kind": "inline",
       "id": "PRRC_kwDOB9IlXs8AAAABFeXGbg",
@@ -453870,7 +453856,28 @@
       "url": "https://github.com/google/gvisor/pull/17871#discussion_r4662347374",
       "author": "ayushr2",
       "updatedAt": "2026-11-23T06:08:13Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
+      "awaitingAuthor": true,
+      "assigned": true,
+      "feedbackComplete": true,
+      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
+    },
+    {
+      "repo": "google/gvisor",
+      "number": 15106,
+      "head": "afb6198869d091f721f559dc0e2eceb0c6bb5455",
+      "sourceNumber": 15106,
+      "owner": "approved_rebase_queue / root",
+      "claimed": true,
+      "overdue": false,
+      "kind": "comment",
+      "id": "IC_kwDOB9IlXs8AAAABpsyGHw",
+      "needsTriage": false,
+      "createdAt": "2026-11-23T06:29:44Z",
+      "url": "https://github.com/google/gvisor/pull/15106#issuecomment-7093388831",
+      "author": "EtiennePerot",
+      "updatedAt": "2026-11-23T06:29:44Z",
+      "newOrChanged": false,
       "awaitingAuthor": true,
       "assigned": true,
       "feedbackComplete": true,
@@ -455412,26 +455419,7 @@
       "url": "https://github.com/google/gvisor/pull/17871#issuecomment-7091396174",
       "author": "EtiennePerot",
       "updatedAt": "2026-11-23T04:13:32Z",
-      "newOrChanged": true,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 15106,
-      "head": "afb6198869d091f721f559dc0e2eceb0c6bb5455",
-      "sourceNumber": 15106,
-      "owner": "Agent",
-      "kind": "comment",
-      "id": "IC_kwDOB9IlXs8AAAABpsyGHw",
-      "needsTriage": true,
-      "createdAt": "2026-11-23T06:29:44Z",
-      "url": "https://github.com/google/gvisor/pull/15106#issuecomment-7093388831",
-      "author": "EtiennePerot",
-      "updatedAt": "2026-11-23T06:29:44Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
       "feedbackComplete": true,
@@ -455503,8 +455491,8 @@
       "repo": "google/gvisor",
       "number": 16887,
       "head": "bd991e616d06c77074c56576cc94c6f9cddfeef5",
-      "action": "Read the reply on this review and follow up on the current revision.",
-      "claimed": false,
+      "action": "Author updates the two test callers; root follows the next head and exact-source CI while retaining the sensitive review/performance hold. Ayush already reported the failure, so no duplicate outreach, foreign edit or manual retry.",
+      "claimed": true,
       "firstObservedHead": "bd991e616d06c77074c56576cc94c6f9cddfeef5",
       "reviewHead": null,
       "kind": "inline",
@@ -455515,7 +455503,7 @@
       "threadId": "PRRT_kwDOB9IlXs60jdyu",
       "rootURL": "https://github.com/google/gvisor/pull/16887#discussion_r4493780726",
       "rootId": "PRRC_kwDOB9IlXs8AAAABC9mm9g",
-      "owner": "Netstack",
+      "owner": "root",
       "assigned": false,
       "feedbackComplete": true
     }
@@ -464879,6 +464867,13 @@
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
         "observedAt": "2026-11-23T10:04:34.081771+00:00"
+      },
+      "contributor-review": {
+        "scope": "afb6198869d091f721f559dc0e2eceb0c6bb5455",
+        "since": "2026-11-23T10:12:01.198799+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-23T10:17:17.531349+00:00"
       }
     },
     "pr:15107": {
@@ -470109,7 +470104,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T05:04:11.229864+00:00"
+        "observedAt": "2026-11-23T10:17:17.531349+00:00"
       }
     },
     "pr:17082": {
@@ -470489,7 +470484,7 @@
         "since": "2026-11-22T09:10:24+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T05:04:11.229864+00:00"
+        "observedAt": "2026-11-23T10:17:17.531349+00:00"
       }
     },
     "pr:17191": {
@@ -470931,7 +470926,7 @@
         "since": "2026-11-23T05:04:11.229864+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T05:04:11.229864+00:00"
+        "observedAt": "2026-11-23T10:17:17.531349+00:00"
       }
     },
     "pr:17265": {
@@ -472012,6 +472007,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-23T10:04:34.081771+00:00"
+      },
+      "contributor-review": {
+        "scope": "dd4cd790d4915f47e66b03dd02c2c5f8a40e9c6f",
+        "since": "2026-11-23T10:17:17.531349+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-23T10:17:17.531349+00:00"
       }
     },
     "pr:17873": {
@@ -472561,7 +472563,7 @@
         "since": "2026-11-23T00:18:10.610714+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T05:04:11.229864+00:00"
+        "observedAt": "2026-11-23T10:17:17.531349+00:00"
       }
     },
     "pr:bazel-contrib/rules_go:4772": {
@@ -472649,7 +472651,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T05:04:11.229864+00:00"
+        "observedAt": "2026-11-23T10:17:17.531349+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -472658,7 +472660,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T05:04:11.229864+00:00"
+        "observedAt": "2026-11-23T10:17:17.531349+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -472667,7 +472669,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T05:04:11.229864+00:00"
+        "observedAt": "2026-11-23T10:17:17.531349+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -472676,7 +472678,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T05:04:11.229864+00:00"
+        "observedAt": "2026-11-23T10:17:17.531349+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -472685,7 +472687,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T05:04:11.229864+00:00"
+        "observedAt": "2026-11-23T10:17:17.531349+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -472694,7 +472696,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T05:04:11.229864+00:00"
+        "observedAt": "2026-11-23T10:17:17.531349+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -472703,7 +472705,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T05:04:11.229864+00:00"
+        "observedAt": "2026-11-23T10:17:17.531349+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -472712,7 +472714,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T05:04:11.229864+00:00"
+        "observedAt": "2026-11-23T10:17:17.531349+00:00"
       }
     },
     "investigation:repository-lint": {
@@ -472721,7 +472723,7 @@
         "since": "2026-11-23T00:00:51.257650+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T05:04:11.229864+00:00"
+        "observedAt": "2026-11-23T10:17:17.531349+00:00"
       }
     },
     "investigation:ci-flake-node-tls-autoselectfamily": {
@@ -472730,7 +472732,7 @@
         "since": "2026-11-23T03:53:11.542890+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T05:04:11.229864+00:00"
+        "observedAt": "2026-11-23T10:17:17.531349+00:00"
       }
     },
     "investigation:ci-flake-node-worker-arraybuffer-zerofill": {
@@ -472739,7 +472741,7 @@
         "since": "2026-11-23T03:12:55.378620+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T05:04:11.229864+00:00"
+        "observedAt": "2026-11-23T10:17:17.531349+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -472748,7 +472750,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T05:04:11.229864+00:00",
+        "observedAt": "2026-11-23T10:17:17.531349+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     },
@@ -472758,7 +472760,7 @@
         "since": "2026-11-22T23:29:11.797344+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T05:04:11.229864+00:00"
+        "observedAt": "2026-11-23T10:17:17.531349+00:00"
       }
     }
   },
