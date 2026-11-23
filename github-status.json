@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-23T19:16:35.732585+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-23T18:41:19.574220+00:00",
+  "registryDate": "2026-11-23T19:35:06.669147+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -455273,7 +455273,7 @@
       "number": 16098,
       "head": "06b8ee2c46ca4f71c261da86f7b1905032e8b08f",
       "sourceNumber": 16098,
-      "owner": "root",
+      "owner": "root / approved_rebase_queue",
       "claimed": true,
       "overdue": false,
       "kind": "inline",
@@ -455476,8 +455476,8 @@
       "number": 16098,
       "head": "06b8ee2c46ca4f71c261da86f7b1905032e8b08f",
       "sourceNumber": 16098,
-      "owner": "Agent",
-      "claimed": false,
+      "owner": "root / approved_rebase_queue",
+      "claimed": true,
       "overdue": false,
       "kind": "inline",
       "id": "PRRC_kwDOB9IlXs8AAAABFlt1xg",
@@ -455485,7 +455485,7 @@
       "url": "https://github.com/google/gvisor/pull/16098#discussion_r4670059974",
       "author": "kerumeto",
       "updatedAt": "2026-11-23T18:21:54Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": true,
       "assigned": true,
       "feedbackComplete": true,
@@ -455496,8 +455496,8 @@
       "number": 16874,
       "head": "f0a6a2dd4027ff6bef9b0d99b043016f6a8c1665",
       "sourceNumber": 16874,
-      "owner": "Agent",
-      "claimed": false,
+      "owner": "root",
+      "claimed": true,
       "overdue": false,
       "kind": "inline",
       "id": "PRRC_kwDOB9IlXs8AAAABFl0s7w",
@@ -455505,7 +455505,28 @@
       "url": "https://github.com/google/gvisor/pull/16874#discussion_r4670172399",
       "author": "ayushr2",
       "updatedAt": "2026-11-23T18:28:00Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
+      "awaitingAuthor": true,
+      "assigned": true,
+      "feedbackComplete": true,
+      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
+    },
+    {
+      "repo": "buildbuddy-io/buildbuddy",
+      "number": 14275,
+      "head": "c622472f16d973ae138660034da8e6926525a014",
+      "sourceNumber": 14275,
+      "owner": "root / buildbuddy_network_fix",
+      "claimed": true,
+      "overdue": false,
+      "kind": "comment",
+      "id": "IC_kwDODlcBtc8AAAABp9uS5g",
+      "needsTriage": false,
+      "createdAt": "2026-11-23T19:08:34Z",
+      "url": "https://github.com/buildbuddy-io/buildbuddy/pull/14275#issuecomment-7111152358",
+      "author": "tylerwilliams",
+      "updatedAt": "2026-11-23T19:08:34Z",
+      "newOrChanged": false,
       "awaitingAuthor": true,
       "assigned": true,
       "feedbackComplete": true,
@@ -457077,14 +457098,14 @@
       "number": 16874,
       "head": "f0a6a2dd4027ff6bef9b0d99b043016f6a8c1665",
       "sourceNumber": 16874,
-      "owner": "Agent",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABZzycfg",
-      "needsTriage": true,
+      "needsTriage": false,
       "url": "https://github.com/google/gvisor/pull/16874#pullrequestreview-6026992766",
       "author": "rexren-gif",
       "updatedAt": "2026-11-23T18:12:38Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
       "feedbackComplete": true,
@@ -457095,33 +457116,14 @@
       "number": 16874,
       "head": "f0a6a2dd4027ff6bef9b0d99b043016f6a8c1665",
       "sourceNumber": 16874,
-      "owner": "Agent",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABZ0ADlg",
-      "needsTriage": true,
+      "needsTriage": false,
       "url": "https://github.com/google/gvisor/pull/16874#pullrequestreview-6027215766",
       "author": "ayushr2",
       "updatedAt": "2026-11-23T18:28:00Z",
-      "newOrChanged": true,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "buildbuddy-io/buildbuddy",
-      "number": 14275,
-      "head": "c622472f16d973ae138660034da8e6926525a014",
-      "sourceNumber": 14275,
-      "owner": "Agent",
-      "kind": "comment",
-      "id": "IC_kwDODlcBtc8AAAABp9uS5g",
-      "needsTriage": true,
-      "createdAt": "2026-11-23T19:08:34Z",
-      "url": "https://github.com/buildbuddy-io/buildbuddy/pull/14275#issuecomment-7111152358",
-      "author": "tylerwilliams",
-      "updatedAt": "2026-11-23T19:08:34Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
       "feedbackComplete": true,
@@ -457213,8 +457215,8 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "0ec767e4d4f1ec1bdf56d3675e06b860a02d7e19",
-      "action": "Read the reply on this review and follow up on the current revision.",
-      "claimed": false,
+      "action": "Existing owner follows the exact new-head CI/admission and author evidence, preserving the sensitive source-review hold. No source/test/benchmark read or rerun, foreign edit, duplicate outreach or approval transfer.",
+      "claimed": true,
       "firstObservedHead": "e5f0f6f7fc500b646b4a0dbd738f142e1a9032a2",
       "reviewHead": null,
       "kind": "inline",
@@ -457225,7 +457227,7 @@
       "threadId": "PRRT_kwDOB9IlXs61UqSZ",
       "rootURL": "https://github.com/google/gvisor/pull/17264#discussion_r4514647899",
       "rootId": "PRRC_kwDOB9IlXs8AAAABDRgPWw",
-      "owner": "Netstack",
+      "owner": "root",
       "assigned": false,
       "feedbackComplete": true
     },
@@ -457233,8 +457235,8 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "0ec767e4d4f1ec1bdf56d3675e06b860a02d7e19",
-      "action": "Read the reply on this review and follow up on the current revision.",
-      "claimed": false,
+      "action": "Existing owner follows the exact new-head CI/admission and author evidence, preserving the sensitive source-review hold. No source/test/benchmark read or rerun, foreign edit, duplicate outreach or approval transfer.",
+      "claimed": true,
       "firstObservedHead": "3389a2aa144abf8f474fc65bcabc84487564ee86",
       "reviewHead": null,
       "kind": "inline",
@@ -457245,7 +457247,7 @@
       "threadId": "PRRT_kwDOB9IlXs61UqSZ",
       "rootURL": "https://github.com/google/gvisor/pull/17264#discussion_r4514647899",
       "rootId": "PRRC_kwDOB9IlXs8AAAABDRgPWw",
-      "owner": "Netstack",
+      "owner": "root",
       "assigned": false,
       "feedbackComplete": true
     }
@@ -457602,12 +457604,12 @@
       "mergeabilityCheckedAt": "2026-11-23T19:16:32.120767+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Root revises the existing TCP Go proposal after main-checkout allocation, using LookupEnv and simpler child cleanup and retaining before/after output. Qualify/review the revised source before a new publication question; public17184 remains unchanged.",
+      "action": "Root completes final review and the requested before/after record for the simplified LookupEnv/child-cleanup revision, then prepares an actual publication question. Do not update the public PR, run timings or infer approval from the priorf26 proposal.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
-        "disposition": "The old f26 opening/amendment proposal is superseded by requested revisions, not approved: LookupEnv, line wrapping, simpler []*exec.Cmd child cleanup and commit before/after output.",
-        "nextAction": "Root revises the existing TCP Go proposal after main-checkout allocation, using LookupEnv and simpler child cleanup and retaining before/after output. Qualify/review the revised source before a new publication question; public17184 remains unchanged."
+        "disposition": "Revised private TCP Go source4aba6f94689dc7f185c524b10a4c903c401cf5d2 has compiler/source/cleanup guards and all seven original CLI recipes plus three stalled cases passing on CI7dcb with15 support paths. Final adversarial review remains pending. Public17184 is unchanged, the oldf26 ask is superseded, and no new publication approval or performance claim exists.",
+        "nextAction": "Root completes final review and the requested before/after record for the simplified LookupEnv/child-cleanup revision, then prepares an actual publication question. Do not update the public PR, run timings or infer approval from the priorf26 proposal."
       },
       "conflictObservedSince": "2026-11-20T00:41:37.337032+00:00"
     },
@@ -471877,7 +471879,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:41:19.574220+00:00"
+        "observedAt": "2026-11-23T19:35:06.669147+00:00"
       }
     },
     "pr:17082": {
@@ -474444,7 +474446,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:41:19.574220+00:00"
+        "observedAt": "2026-11-23T19:35:06.669147+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -474453,7 +474455,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:41:19.574220+00:00"
+        "observedAt": "2026-11-23T19:35:06.669147+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -474462,7 +474464,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:41:19.574220+00:00"
+        "observedAt": "2026-11-23T19:35:06.669147+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -474471,7 +474473,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:41:19.574220+00:00"
+        "observedAt": "2026-11-23T19:35:06.669147+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -474480,7 +474482,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:41:19.574220+00:00"
+        "observedAt": "2026-11-23T19:35:06.669147+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -474489,7 +474491,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:41:19.574220+00:00"
+        "observedAt": "2026-11-23T19:35:06.669147+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -474498,16 +474500,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:41:19.574220+00:00"
-      }
-    },
-    "issue:17832": {
-      "contributor-review": {
-        "scope": "https://github.com/gvisor/gvisor/issues/17832",
-        "since": "2026-11-23T11:53:23.629366+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-23T18:41:19.574220+00:00"
+        "observedAt": "2026-11-23T19:35:06.669147+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -474516,7 +474509,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:41:19.574220+00:00"
+        "observedAt": "2026-11-23T19:35:06.669147+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -474525,7 +474518,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:41:19.574220+00:00",
+        "observedAt": "2026-11-23T19:35:06.669147+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     }
