@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-23T13:55:57.103565+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-23T12:54:35.713246+00:00",
+  "registryDate": "2026-11-23T13:57:37.136553+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -455756,8 +455756,8 @@
       "repo": "google/gvisor",
       "number": 17374,
       "head": "4350a5ff5623c7272296c3ee82d858ce21b8a0b1",
-      "action": "Read the reply on this review and follow up on the current revision.",
-      "claimed": false,
+      "action": "Keep current-source review and sensitive work held. Follow actual new author results or user hold release without implementation reads, tests, benchmarks, outreach, equivalence assumptions or transferred approval.",
+      "claimed": true,
       "firstObservedHead": "80c001d2b316feaa887a5ee53498d6ee55799a6a",
       "reviewHead": null,
       "kind": "inline",
@@ -455836,8 +455836,8 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "3389a2aa144abf8f474fc65bcabc84487564ee86",
-      "action": "Read the reply on this review and follow up on the current revision.",
-      "claimed": false,
+      "action": "Keep current-source review and sensitive work held under the confirmed user instruction. The author owns implementation; root owns reviewer follow-through. Do not read held source, run tests, adopt suggestions, post outreach or infer equivalence/approval from the head change.",
+      "claimed": true,
       "firstObservedHead": "3389a2aa144abf8f474fc65bcabc84487564ee86",
       "reviewHead": null,
       "kind": "inline",
@@ -455848,7 +455848,7 @@
       "threadId": "PRRT_kwDOB9IlXs61UqSZ",
       "rootURL": "https://github.com/google/gvisor/pull/17264#discussion_r4514647899",
       "rootId": "PRRC_kwDOB9IlXs8AAAABDRgPWw",
-      "owner": "Netstack",
+      "owner": "root",
       "assigned": false,
       "feedbackComplete": true
     }
@@ -470327,7 +470327,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T12:54:35.713246+00:00"
+        "observedAt": "2026-11-23T13:57:37.136553+00:00"
       }
     },
     "pr:17082": {
@@ -470707,7 +470707,7 @@
         "since": "2026-11-22T09:10:24+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T12:54:35.713246+00:00"
+        "observedAt": "2026-11-23T13:57:37.136553+00:00"
       }
     },
     "pr:17191": {
@@ -472222,7 +472222,7 @@
         "since": "2026-11-23T10:17:17.531349+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T12:54:35.713246+00:00"
+        "observedAt": "2026-11-23T13:57:37.136553+00:00"
       }
     },
     "pr:17873": {
@@ -472772,7 +472772,7 @@
         "since": "2026-11-23T00:18:10.610714+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T12:54:35.713246+00:00"
+        "observedAt": "2026-11-23T13:57:37.136553+00:00"
       }
     },
     "pr:bazel-contrib/rules_go:4772": {
@@ -472860,7 +472860,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T12:54:35.713246+00:00"
+        "observedAt": "2026-11-23T13:57:37.136553+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -472869,7 +472869,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T12:54:35.713246+00:00"
+        "observedAt": "2026-11-23T13:57:37.136553+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -472878,7 +472878,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T12:54:35.713246+00:00"
+        "observedAt": "2026-11-23T13:57:37.136553+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -472887,7 +472887,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T12:54:35.713246+00:00"
+        "observedAt": "2026-11-23T13:57:37.136553+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -472896,7 +472896,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T12:54:35.713246+00:00"
+        "observedAt": "2026-11-23T13:57:37.136553+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -472905,7 +472905,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T12:54:35.713246+00:00"
+        "observedAt": "2026-11-23T13:57:37.136553+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -472914,7 +472914,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T12:54:35.713246+00:00"
+        "observedAt": "2026-11-23T13:57:37.136553+00:00"
       }
     },
     "issue:17832": {
@@ -472923,7 +472923,7 @@
         "since": "2026-11-23T11:53:23.629366+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T12:54:35.713246+00:00"
+        "observedAt": "2026-11-23T13:57:37.136553+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -472932,7 +472932,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T12:54:35.713246+00:00"
+        "observedAt": "2026-11-23T13:57:37.136553+00:00"
       }
     },
     "investigation:repository-lint": {
@@ -472941,7 +472941,7 @@
         "since": "2026-11-23T11:53:23.629366+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T12:54:35.713246+00:00"
+        "observedAt": "2026-11-23T13:57:37.136553+00:00"
       }
     },
     "investigation:ci-flake-node-tls-autoselectfamily": {
@@ -472950,7 +472950,7 @@
         "since": "2026-11-23T03:53:11.542890+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T12:54:35.713246+00:00"
+        "observedAt": "2026-11-23T13:57:37.136553+00:00"
       }
     },
     "investigation:ci-flake-node-worker-arraybuffer-zerofill": {
@@ -472959,7 +472959,7 @@
         "since": "2026-11-23T03:12:55.378620+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T12:54:35.713246+00:00"
+        "observedAt": "2026-11-23T13:57:37.136553+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -472968,7 +472968,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T12:54:35.713246+00:00",
+        "observedAt": "2026-11-23T13:57:37.136553+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     },
@@ -472978,7 +472978,7 @@
         "since": "2026-11-22T23:29:11.797344+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T12:54:35.713246+00:00"
+        "observedAt": "2026-11-23T13:57:37.136553+00:00"
       }
     }
   },
