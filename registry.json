@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T01:05:56.327352+00:00",
+    "updatedAt": "2026-11-23T01:43:05.852759+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -100743,7 +100743,7 @@
         "owner": "root",
         "sourceHead": "e034c5df95a680919aa077a802900c7141b18455",
         "observedAt": "2026-11-23T01:04:08.331244+00:00",
-        "disposition": "Author sam10ridh reports the logging dependency done at exact e034c5df, a source change not independently qualified here. Canonical main55646 diagnosis preserves three upload attempts, all exit1 before target validation: the obsolete pre-command parses sam10ridh:samridh/unix-connect-wait as an invalid ref and reports “couldn’t find remote ref sam10ridh”. Landed909c3dce2 removes that hook check; no source-test failure or tests run are established. Native checks/DCO pass and FirstPass2359 remains pending.",
+        "disposition": "Root verified BUILD metadata on exact e034c5df: accept_bind_test now explicitly depends on //test/util:logging. This closes that narrow dependency request; full sensitive review and CI remain unqualified. Canonical main55646 diagnosis preserves three upload attempts, all exit1 before target validation: the obsolete pre-command parses sam10ridh:samridh/unix-connect-wait as an invalid ref and reports “couldn’t find remote ref sam10ridh”. Landed909c3dce2 removes that hook check; no source-test failure or tests run are established. Native checks/DCO pass and FirstPass2359 remains pending.",
         "nextAction": "Author owns refreshing the source to include landed909c3dce2, or an actual CI-mechanism update. Root follows exact-head FirstPass2359 and review status. No foreign push, sensitive implementation read, duplicate outreach or manual retry is authorized.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17552",
@@ -131444,9 +131444,9 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "analysis_pass_inventory / root",
-      "updatedAt": "2026-11-23T00:37:53.629100+00:00",
+      "updatedAt": "2026-11-23T01:43:05.852759+00:00",
       "group": "analysis",
-      "summary": "HIGH-PRIORITY candidate 68c042487 is one commit on eb263: eight files, 175 additions and 16 deletions. It registers 20 additional diagnostic packages and 24 of 26 modernize.Suite members, including globally active errorsastype. EmbedLitAnalyzer is deferred because pinned Staticcheck IR panics on promoted-field literals; NewExprAnalyzer is deferred because v0.5.1 IR drops initializer and argument effects. All 56 catalog entries and exclusions are justified in the commit. Focused AMD/ARM validation each passes 14 remote driver cases plus one sanity case; source checks and both final review groups pass. The actual opening question is pending, with known Nogo blockers explicit. Full corpus is not green: the historical 1,234 findings came from a partial 26-member scan (275/890), not a current 24-member count. Two held AsType findings remain active blockers; no runtime edits, analyzer upgrade, baseline or new exceptions. Released-IR preflight on v0.8.2 compiles //tools/nogo:nogo without API adaptation. The exact former panic reproduction has zero panic headers or spec.go diagnostics; its validator still fails on 54 positioned existing pkg/state/generated findings (27 per target architecture). This demonstrates bounded IR compatibility only, not full upgrade or full-corpus readiness; frozen 68c and its unanswered publication question are unchanged. Separate dependent upgrade 3fa9c571b on frozen68c restores all26modernize analyzers after released-IR compatibility: actual AMD/ARM driver14+sanity1, final source and225-license checks pass, canonicalFetch changes one record, and both final independent reviews found no issues. The old reproduction still reports54 existing state findings with zeroIRpanics; no full-corpus-green claim. Its public source object is readable but durable preview ref is absent after SSH/HTTPS timeouts, with cause unproven. It has no publication question.",
+      "summary": "FIRST PRIORITY: frozen68c registers 20 additional diagnostic packages and 24/26 modernize analyzers; embedlit/newexpr are excluded for demonstrated pinned-IR incompatibilities. Focused AMD/ARM/source checks and final reviews pass; its opening question is pending with existing Nogo blockers explicit. Historical 1,234 findings are a partial old scan, not a current count. Dependent upgrade3fa on parent68c activates all26 after released-IR compatibility, with AMD/ARM/source/license checks and two reviews passing; it has no publication question and must wait analyzer landing for independent one-commit delivery. Mechanical migration9e is final-reviewed, local-only and tree-identical to0828; retain predecessor64-case/ISA and final targeted Nogo/source evidence without claiming fresh64 cases. Separate baseline checklinkname fixdb9 has a failing-original regression, passing fixed AMD/ARM tests, three targeted Nogo validators/source checks and two clean reviews. Its actual one-commit opening question is pending; full corpus was not rerun. Transport remains blocked independently of source approval; protected work stays held.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -131818,7 +131818,7 @@
           ]
         }
       ],
-      "nextStep": "Await the frozen68c opening decision, unchanged. Dependent upgrade3fa9c571b is qualified within its recorded scope but has no source-publication question. Root follows the actual SSH-availability response or working transport before another bounded publication attempt; no unchanged retry or credential/scope workaround. Protected findings remain held and existing corpus blockers remain explicit.",
+      "nextStep": "Await main68c and independent db9 publication decisions; no repeated asks. Preserve upgrade3fa’s parent68c prerequisite: wait analyzer landing before independent one-commit upstream delivery unless the user authorizes another structure. Mechanical9e has no publication question. Recheck actual SSH-unlock response or working transport, without unchanged retry or access workaround. Whole warning backlog is not a source-handoff prerequisite; current corpus and protected-source limits remain explicit.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132027,6 +132027,14 @@
         {
           "label": "Dependent upgrade license verification",
           "url": "https://github.com/tamird/gvisor/actions/runs/45091632838/artifacts/14781945166"
+        },
+        {
+          "label": "Independent checklinkname fix",
+          "url": "https://github.com/tamird/gvisor/commit/db9a861fc1a160b58bce0561a6745932be0675e1"
+        },
+        {
+          "label": "Original checker fails the two composite-signature regressions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45093873111"
         }
       ],
       "reviewWatch": {
@@ -132098,6 +132106,16 @@
           "title": "Restore normal SSH availability",
           "summary": "Operational availability of the existing machine/SSH agent is needed for the dependent upgrade preview; this does not grant source publication or change access.",
           "body": "Scope summary (original wording not retained): check or unlock the existing machine/SSH agent so normal authorized Git transport can be used. The source-publication boundary and existing credentials, scopes and hooks remain unchanged."
+        },
+        {
+          "kind": "proposal",
+          "status": "pending",
+          "head": "db9a861fc1a160b58bce0561a6745932be0675e1",
+          "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+          "url": "https://github.com/tamird/gvisor/commit/db9a861fc1a160b58bce0561a6745932be0675e1",
+          "title": "Include fields and methods in linkname signatures",
+          "summary": "Correct the baseline checker loops with an owning regression. Fixed tests, targeted Nogo validators, source checks and two reviews passed; full corpus was not rerun.",
+          "body": "Include struct fields and interface methods in linkname signatures. Both helpers iterated over an initially empty output slice, so different composite types could compare equal. Iterate the actual type members and omit only the implicit interface-method receiver, which otherwise recurses through the interface itself.\n\nThe new owning-package regression distinguishes changes to the second field and method and checks that non-recursive types retain signature depth.\n\nValidation: the regression fails against the original checker. Fixed AMD64/ARM64 unit and driver tests, three targeted Nogo validators and source checks pass. The full repository corpus was not rerun.\n\nPosted by Codex on behalf of @tamird.\n"
         }
       ]
     },
