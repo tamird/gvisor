@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T03:53:11.542890+00:00",
+    "updatedAt": "2026-11-23T04:17:34.506940+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -100697,7 +100697,7 @@
       "repo": "google/gvisor",
       "number": 17083,
       "ref": "samridh/unix-connect-wait",
-      "head": "e034c5df95a680919aa077a802900c7141b18455",
+      "head": "aa175bd84686b4585c413e2fabb36f1457cd52db",
       "title": "unix: block connect(2) while the accept queue is full",
       "url": "https://github.com/google/gvisor/pull/17083",
       "status": "open",
@@ -100745,10 +100745,10 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "e034c5df95a680919aa077a802900c7141b18455",
-        "observedAt": "2026-11-23T01:04:08.331244+00:00",
-        "disposition": "Root verified BUILD metadata on exact e034c5df: accept_bind_test now explicitly depends on //test/util:logging. This closes that narrow dependency request; full sensitive review and CI remain unqualified. Canonical main55646 diagnosis preserves three upload attempts, all exit1 before target validation: the obsolete pre-command parses sam10ridh:samridh/unix-connect-wait as an invalid ref and reports “couldn’t find remote ref sam10ridh”. Landed909c3dce2 removes that hook check; no source-test failure or tests run are established. Native checks/DCO pass and FirstPass2359 remains pending.",
-        "nextAction": "Author owns refreshing the source to include landed909c3dce2, or an actual CI-mechanism update. Root follows exact-head FirstPass2359 and review status. No foreign push, sensitive implementation read, duplicate outreach or manual retry is authorized.",
+        "sourceHead": "aa175bd84686b4585c413e2fabb36f1457cd52db",
+        "observedAt": "2026-11-23T04:16:53.896263+00:00",
+        "disposition": "Author sam10ridh changed source from e034c5df to aa175bd846; current provider checks are PENDING. The old head’s logging-dependency verification and obsolete-hook failure diagnosis retain only their original source scope. No new review/source qualification or fixed-bootstrap claim is established for aa175 here.",
+        "nextAction": "Root follows the foreign author’s current-head CI and review/import events. The author retains implementation ownership; preserve sensitive-review boundaries and do not transfer old-head approvals/tests, write the foreign branch, send duplicate outreach or retry CI.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17552",
           "https://buildkite.com/gvisor/internal/builds/36539",
@@ -100758,8 +100758,8 @@
           "https://buildkite.com/gvisor/pipeline/builds/55646",
           "https://github.com/google/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
         ],
-        "recheckCondition": "Author head/base refresh, actual CI-mechanism change, exact-head check or maintainer review event.",
-        "providerHead": "e034c5df95a680919aa077a802900c7141b18455",
+        "recheckCondition": "Exact aa175 head/base/check/review or actual import event.",
+        "providerHead": "aa175bd84686b4585c413e2fabb36f1457cd52db",
         "latestSourceTriage": {
           "oldHead": "65afc4e121b577d5675faba0b77ae8edea9c5c63",
           "head": "5ef0a9f23312c68227b1431298f13edcdd0c9a28",
@@ -106126,13 +106126,21 @@
       "followup": {
         "owner": "root",
         "sourceHead": "6eaaa8495bdb912284019b8d9bae8983c0435d54",
-        "disposition": "Exact 6eaaa8495 source is published and mergeable. Native checks and DCO pass; FirstPass2325 failed, without a canonical cause established here. Publication approval is consumed.",
-        "nextAction": "Root owns canonical diagnosis of FirstPass2325 and genuine reviewer feedback. Preserve the separate state-performance gate; no source change or manual retry is inferred from this failed check.",
-        "recheckCondition": "Canonical exact-head failure evidence or genuine maintainer feedback.",
+        "disposition": "Exact6eaaa8495 remains published with native checks/DCO passing. Canonical FirstPass2325 diagnosis is complete: upload exit80 with empty log; no failure cause or source-test result is established. Ayush now explicitly requests a rebase in7091348334. This is unfinished author follow-through, not a new contributor-approval question; “flaky” is the reviewer’s description, not a proven cause.",
+        "nextAction": "Root routes the explicit rebase request through the existing publication owner and source-lease workflow, retaining exact source/qualification and the independent #17472 performance boundary. No manual CI retry or quota outreach follows from the empty log.",
+        "recheckCondition": "Assigned owner’s source-bound rebase/delivery evidence, actual provider change or substantive reviewer event.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17871",
-          "https://buildkite.com/gvisor/first-pass/builds/2325"
-        ]
+          "https://buildkite.com/gvisor/first-pass/builds/2325",
+          "https://github.com/google/gvisor/pull/17871#issuecomment-7091348334"
+        ],
+        "observedAt": "2026-11-23T04:16:53.896263+00:00",
+        "actionableComment": {
+          "kind": "comment",
+          "commentId": "IC_kwDOB9IlXs8AAAABpq1jbg",
+          "url": "https://github.com/google/gvisor/pull/17871#issuecomment-7091348334",
+          "head": "6eaaa8495bdb912284019b8d9bae8983c0435d54"
+        }
       }
     },
     {
@@ -137857,9 +137865,9 @@
       "title": "Native runc filesystem benchmarks cannot start the FUSE server",
       "status": "active",
       "group": "ci-flakes",
-      "owner": "benchmark_measurement_review / root",
-      "updatedAt": "2026-11-13T04:20:44+00:00",
-      "summary": "The native runc Ruby benchmark failed while creating its FUSE server on 3238f32db. The helper could see both tmpfs mounts but could not see the host FUSE device.",
+      "owner": "root",
+      "updatedAt": "2026-11-23T04:16:53.896263+00:00",
+      "summary": "Completed confined-worker diagnosis45109429669: the actual helper runs under docker-default(enforce), /dev/fuse opens O_RDWR (go-fuse2.3 debugfd7), then syscall.Mount fails EPERM. Supplying the device is insufficient on this worker; the denying layer is not uniquely established. No mount, readiness or I/O occurred. Owned container/tag/temp teardown and source guards pass; exit1 preserves the helper failure and there was no mount to unmount. Upstream aced2 still lacks device binding.",
       "findings": [
         {
           "text": "The original Ruby and ABSL jobs reported “could not create fuse server: no such file or directory” for fusefs. Other filesystem variants reported benchmark timings. The two logs do not identify the missing path or establish a passing retry.",
@@ -137938,7 +137946,7 @@
           ]
         }
       ],
-      "nextStep": "benchmark_measurement_review owns the existing functional setup check: inspect actual helper profile and /dev/fuse, attempt the mount under the existing confinement, retain its result/errno and verify teardown. No timing measurements, security weakening, new daemon or framework is authorized.",
+      "nextStep": "The profile/device-open-versus-mount information wait is closed. Root owns the remaining functional mount blocker and an evidence-based policy/worker strategy under existing security and sensitive-work holds. No confinement relaxation, unchanged retry, Ruby/ABSL timings or new approval question follows.",
       "evidence": [
         {
           "label": "#54492 Ruby benchmark failure",
@@ -137999,6 +138007,10 @@
         {
           "label": "Docker 28.0.4 default AppArmor mount rule",
           "url": "https://github.com/moby/moby/blob/6430e49a5/profiles/apparmor/template.go#L45"
+        },
+        {
+          "label": "Confined FUSE helper: device opens, mount EPERM, teardown preserved",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45109429669/artifacts/14789146378"
         }
       ],
       "technicalOwner": "CI flake triage",
@@ -143127,7 +143139,7 @@
       "head": "6eaaa8495bdb912284019b8d9bae8983c0435d54",
       "updatedAt": "2026-11-23T00:38:44.781577+00:00",
       "summary": "The benchmark-only change in #17871 explicitly selects each graph engine and restores the incoming state. Functional 1x, Nogo and independent reviews passed; no performance claim. Exact 6eaaa8495 remains MERGEABLE with native checks/DCO green and no reviews. Canonical FirstPass2325 diagnosis is complete: only Pipeline upload exited 80 with an empty log. This run establishes no source-test failure or cause.",
-      "nextStep": "Root follows changed provider evidence, an actual CI retry or maintainer event on #17871. No unchanged retry or quota outreach follows from the empty log. Preserve #17472 production/performance boundaries; no timing follows from benchmark publication.",
+      "nextStep": "Root follows Ayush’s explicit #17871 rebase request through the existing publication owner. Preserve completed upload diagnosis (exit80/empty log, cause unverified), source-bound qualification and independent #17472 performance holds. No unchanged CI retry or quota outreach.",
       "findings": [],
       "evidence": [
         {
