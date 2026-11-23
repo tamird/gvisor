@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T21:36:15.021685+00:00",
+    "updatedAt": "2026-11-23T22:28:52.692599+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5016,11 +5016,11 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "Implement and validate the user-directed GitHub Actions Bazel-cache first step before RBE comparison. Root separately foregrounds actual parallel-execution evidence, security and free-OSS funding limits. Unified analyzer work remains active under its own owner; no new infrastructure or upstream publication approval is inferred.",
+        "nextAction": "Follow the actual cache-first decision and existing compiler/platform, deployment/trust and evidence gates. Do not retain the obsolete96 source-publication wait, claim hosted enforcement, transfer job settings to old proofs or start performance comparison before its authorized prerequisites.",
         "recheckCondition": "Qualified provider correction and actual deployed behavior, terminal owner evidence for the analyzer policy, or actual upstream prerequisite landing; no repeat of the completed 70857 Nogo gate.",
-        "observedAt": "2026-11-23T21:36:15.021685+00:00",
+        "observedAt": "2026-11-23T22:28:52.692599+00:00",
         "curatedAt": "2026-11-21T13:24:07.659680+00:00",
-        "disposition": "Full Nogo gate on immutable 70857bbd74c9203998a51b9c8c867ba8c9eba01a is complete: 892/892 passed, 804 actual remote and 88 remote-cached; all 87 prior completed checks were reused without rerun. Executed command after existing helper setup:\nbazel test --keep_going --config=buildbuddy --config=x86_64 --credential_helper=\"remote.buildbuddy.io=$(realpath bazel-bin/tools/buildbuddy/credential_helper)\" --test_tag_filters=nogo --build_tests_only --strip=never //...\nUnchanged NogoSplit covers both target architectures; this is not native ARM-host proof. Completion was cache-assisted after the earlier 30-minute cap, with no matched speedup or cold-cache claim. The partial run remains historical evidence, not a current correctness blocker. Current fork support 6e2c0cdd requests the approved network default but does not prove provider enforcement. BuildBuddy revision 96fe4a8e clarifies both live off-mode callers and is independently reviewed; tests have not run because anonymous RBE is unsupported. Its updated source-publication question is unanswered, separately from main-analysis priority. Cloud deployment and enforcement remain unverified.\n\nThe current analyzer-policy audit is tracked in investigation:repository-lint; it remains unready and protected-source work stays held.\n\nCorrected benchmark 967 and validated helper 5d7 completed host control-only A/A 45055533293, failing 13/15 cases under the existing gates despite valid execution. The prior RBE control failed 14/15 on a different old benchmark source. Current statistical disposition and existing-data diagnosis are on pr:16507; neither venue is performance-qualified. Existing bounded runtime evidence: specutils namespace tests executed actual remote TestRunner on AMD44905173511 and ARM44905178697, with95/94 passes and one intentional ARM pidfs skip. The original PTY systrap TestRunner was local, not remote; no end-to-end speedup claim. Jobs50/e00 remains a separate candidate/configuration proof, not adopted into old qualifications. New bounded capability proof45261803627/art14861107334 shows both pty_test_native and pty_test_runsc_systrap_directfs using actual remote TestRunner, two cases each with no skips/failures, AMD only. It does not qualify a full matrix, performance, security attestation or the original local PTY run. Research across20 records/five passing PRs has retry-heavy40–63 minute builds and58–135 second closing-gate envelopes, dominated by48–127 seconds of checkout; no speedup or eligible fraction follows. Same-source Podman zero remote-cache hits versus Go3047 is a lead; sudo-loss remains unproved pending the existing safe preflight.",
+        "disposition": "The exact70857 standalone Nogo qualification remains complete and cache-assisted, not a cold-cache speedup or native ARM-host proof. Namespace and bounded PTY runtime records retain their actual per-source remote/local/architecture limits. Approved network-default requests in fork support do not prove cloud enforcement: BuildBuddy14275 is merged, but hosted deployment is unverified. Cache-first GitHub Actions source86cff remains an actual pending publication decision before RBE comparison; compiler/platform prerequisites and performance holds remain separate. Jobs50/e00 is its own candidate/configuration proof, not adopted into arbitrary old qualifications.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45011783743",
           "https://github.com/tamird/gvisor/actions/runs/45011783743/artifacts/14750124755",
@@ -5047,7 +5047,8 @@
           "https://github.com/tamird/gvisor/actions/runs/44905173511",
           "https://github.com/tamird/gvisor/actions/runs/44905178697",
           "https://github.com/tamird/gvisor/actions/runs/45261803627/artifacts/14861107334",
-          "https://app.buildbuddy.io/invocation/501e8924-fa50-41e6-adce-9ca51ea22a74"
+          "https://app.buildbuddy.io/invocation/501e8924-fa50-41e6-adce-9ca51ea22a74",
+          "https://github.com/buildbuddy-io/buildbuddy/commit/3d0a8571862e680a4f93099a6e5387032cacad80"
         ]
       },
       "updatedAt": "2026-11-17T20:32:28.027492+00:00"
@@ -6468,12 +6469,12 @@
       "url": "https://github.com/google/gvisor/pull/15449",
       "group": "runtime",
       "status": "open",
-      "summary": "Manning’s exact-head APPROVED review is now observed on fdce23a34. Main55733 fails; its cause is unclassified. Maintainer approval is not release of the current source/performance/sensitive-feature boundaries. Existing source qualification retains only its original scope.",
+      "summary": "Exact source fdce23a34 main55733 terminated in pipeline upload on missing fork-ref errors before builds/tests. Merged prerequisite17735/909c3dce2 removes the obsolete hook fetch; no source-test failure is established. Exact-head maintainer approval and existing sensitive-source/review limits remain distinct.",
       "updatedAt": "2026-11-17T19:04:43.853615+00:00",
       "followup": {
-        "disposition": "Manning’s exact-head APPROVED review is now observed on fdce23a34. Main55733 fails; its cause is unclassified. Maintainer approval is not release of the current source/performance/sensitive-feature boundaries. Existing source qualification retains only its original scope.",
+        "disposition": "Exact source fdce23a34 main55733 terminated in pipeline upload on missing fork-ref errors before builds/tests. Merged prerequisite17735/909c3dce2 removes the obsolete hook fetch; no source-test failure is established. Exact-head maintainer approval and existing sensitive-source/review limits remain distinct.",
         "owner": "root",
-        "nextAction": "Root routes the exact CI failure classification and retains the applicable held source-review/implementation obligation. No protected source read/edit, test or timing retry, foreign write, duplicate outreach or approval transfer.",
+        "nextAction": "Root retains the held source obligation. Recheck an actual head containing the merged hook prerequisite or a verified CI-mechanism change. No automatic source refresh, blind retry, outreach or protected implementation read follows from the prerequisite landing.",
         "sourceHead": "fdce23a34c322b076944df7369772ec68ea78254",
         "evidence": [
           "https://github.com/google/gvisor/pull/15449",
@@ -6496,11 +6497,13 @@
           "https://github.com/tamird/gvisor/commit/0441369f5058b76a6e38677f3e501022f6c07e15",
           "https://github.com/tamird/gvisor/commit/fdce23a34c322b076944df7369772ec68ea78254",
           "https://github.com/google/gvisor/pull/15449#pullrequestreview-6029040089",
-          "https://buildkite.com/gvisor/pipeline/builds/55733"
+          "https://buildkite.com/gvisor/pipeline/builds/55733",
+          "https://github.com/gvisor/gvisor/pull/17735",
+          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
         ],
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-23T21:36:15.021685+00:00",
-        "recheckCondition": "Exact provider/author evidence, new source/check/review event or user hold release.",
+        "observedAt": "2026-11-23T22:28:52.692599+00:00",
+        "recheckCondition": "Actual source/head/base or CI-mechanism event, respecting the existing sensitive-work hold.",
         "providerHead": "fdce23a34c322b076944df7369772ec68ea78254"
       },
       "head": "fdce23a34c322b076944df7369772ec68ea78254",
@@ -25152,9 +25155,9 @@
       "title": "Audit declared npm artifact licenses",
       "url": "https://github.com/tamird/gvisor/commit/8facdc0012a7714662f8c40a9cc5db1030ee2864",
       "group": "release",
-      "status": "Contributor approved; LicenseRef integration queued",
+      "status": "Contributor-approved logic; LicenseRef integration in qualification",
       "updatedAt": "2026-11-17T20:32:28.027492+00:00",
-      "summary": "The16051 LicenseRef prerequisite is fulfilled, but approved8facdc001 depends on the removed ManuallyAudited schema and test helper. This is real integration work, not unchanged immutable publication. The old approved ref remains preserved.",
+      "summary": "Integrated candidate9c63274cbc2a17dfabac062d229c3ac45ed8a4e9 ports the approved npm integrity/retention logic to landed LicenseRef on base1325ee6d (four files851+/21−). Initial tests/lint/Verify runs failed before source checks because the upstream base lacked the credential_helper target; no qualification result is claimed. CI-only child32b18cffffaa3d965f9b7796b3dc4ac6b5a0157a reuses the established12-file support delta without changing the four npm source/manifest files. Cheap helper/label preflight45277817664 is owner-observed before any batch. The source-commit policy rejection was resolved by the standing grant. GitHub’s workflow-permission lookup timeout remains a provider/credential-path issue; identical workflow objects already satisfy the documented scope exception, so no need for new token permissions is demonstrated. No new human permission, access/config change or blind ref retry is pending.",
       "evidence": [
         {
           "label": "Owning checks and lint PASS",
@@ -25162,14 +25165,17 @@
         }
       ],
       "followup": {
-        "owner": "approved_rebase_queue / root",
-        "disposition": "The16051 LicenseRef prerequisite is fulfilled, but approved8facdc001 depends on the removed ManuallyAudited schema and test helper. This is real integration work, not unchanged immutable publication. The old approved ref remains preserved.",
+        "owner": "approved_delivery_batch / root",
+        "disposition": "Integrated candidate9c63274cbc2a17dfabac062d229c3ac45ed8a4e9 ports the approved npm integrity/retention logic to landed LicenseRef on base1325ee6d (four files851+/21−). Initial tests/lint/Verify runs failed before source checks because the upstream base lacked the credential_helper target; no qualification result is claimed. CI-only child32b18cffffaa3d965f9b7796b3dc4ac6b5a0157a reuses the established12-file support delta without changing the four npm source/manifest files. Cheap helper/label preflight45277817664 is owner-observed before any batch. The source-commit policy rejection was resolved by the standing grant. GitHub’s workflow-permission lookup timeout remains a provider/credential-path issue; identical workflow objects already satisfy the documented scope exception, so no need for new token permissions is demonstrated. No new human permission, access/config change or blind ref retry is pending.",
         "sourceHead": "8facdc0012a7714662f8c40a9cc5db1030ee2864",
-        "observedAt": "2026-11-23T17:11:54.720473+00:00",
-        "nextAction": "After the analyzer checkout is released, approved_rebase_queue ports the approved npm integrity/retention logic and owning tests to landed LicenseRef semantics, qualifies and reviews the integration delta before publication. Do not revive obsolete manual-audit support or the notice-only proposal.",
+        "observedAt": "2026-11-23T22:28:52.692599+00:00",
+        "nextAction": "Let the owning preflight complete, then run the source-preserving owning Bazel tests/build, canonical lint and catalog Verify through the existing owner. Preserve SHA512/source plus auditedSHA256 identity, archive rules and LicenseRef/license_source rejection using existing fixtures; no restored ManuallyAudited or new harness. Preview ref creation waits actual provider/SSH recovery; object/SHA qualification remains available. No upstream PR approval has been asked.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/8facdc0012a7714662f8c40a9cc5db1030ee2864",
-          "https://github.com/gvisor/gvisor/commit/0cf6f98cb89bf2d9fbc6886bc11085a895b4eb23"
+          "https://github.com/gvisor/gvisor/commit/0cf6f98cb89bf2d9fbc6886bc11085a895b4eb23",
+          "https://github.com/tamird/gvisor/commit/9c63274cbc2a17dfabac062d229c3ac45ed8a4e9",
+          "https://github.com/tamird/gvisor/commit/32b18cffffaa3d965f9b7796b3dc4ac6b5a0157a",
+          "https://github.com/tamird/gvisor/actions/runs/45277817664"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -25183,7 +25189,7 @@
           "owner": "root"
         },
         "technicalOwner": "node_tls_sni",
-        "recheckCondition": "Coordinated checkout release, then source-bound integration qualification/review."
+        "recheckCondition": "Owner-audited preflight/qualification and actual transport recovery, then final source review/publication boundary."
       }
     },
     {
@@ -41297,14 +41303,14 @@
       "url": "https://github.com/google/gvisor/pull/16516",
       "group": "bazel",
       "status": "open",
-      "summary": "User-requested equivalent sourcea959 remains OPEN/MERGEABLE. All native GitHub checks, DCO and FirstPass2303 passed; the earlier syscall watchdog attempt recovered on its configured automatic retry, with cause unclassified. No verified main-pipeline/import result or new human feedback exists; existing requested reviewers remain.",
+      "summary": "Etienne’s exact-head APPROVED review6030082805 is now observed on a959. Main55748 fails, with cause not established from status alone; earlier targeted qualification and passing First Pass retain their source-bound historical scope. Approval does not justify a source-failure or full-main-pass claim.",
       "updatedAt": "2026-11-17T17:42:43.236533Z",
       "followup": {
         "owner": "root",
         "sourceHead": "a9594385d15d2e17e5dd7491be94d774f47fa80e",
-        "observedAt": "2026-11-17T17:20:44.991697Z",
-        "disposition": "User-requested equivalent sourcea959 remains OPEN/MERGEABLE. All native GitHub checks, DCO and FirstPass2303 passed; the earlier syscall watchdog attempt recovered on its configured automatic retry, with cause unclassified. No verified main-pipeline/import result or new human feedback exists; existing requested reviewers remain.",
-        "nextAction": "Root and approved_rebase_queue follow actual main-pipeline/import and pending-review changes. The FirstPass watch is closed; no replacement watcher, manual retry or global quota-clearance claim.",
+        "observedAt": "2026-11-23T22:28:52.692599+00:00",
+        "disposition": "Etienne’s exact-head APPROVED review6030082805 is now observed on a959. Main55748 fails, with cause not established from status alone; earlier targeted qualification and passing First Pass retain their source-bound historical scope. Approval does not justify a source-failure or full-main-pass claim.",
+        "nextAction": "Root/existing CI owner classifies the actual main55748 result and follows genuine maintainer/import events. No duplicate reviewer request, source rewrite, unchanged retry or transfer of old failure causes.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16516#pullrequestreview-5895770949",
           "https://github.com/gvisor/gvisor/pull/16516#pullrequestreview-5943223023",
@@ -41314,7 +41320,9 @@
           "https://github.com/tamird/gvisor/actions/runs/44956730500",
           "https://github.com/tamird/gvisor/actions/runs/44956732064",
           "https://github.com/tamird/gvisor/actions/runs/44956733840",
-          "https://buildkite.com/gvisor/first-pass/builds/2303#01a2003f-e1ce-4a4c-acb9-5a30df33af5d"
+          "https://buildkite.com/gvisor/first-pass/builds/2303#01a2003f-e1ce-4a4c-acb9-5a30df33af5d",
+          "https://github.com/google/gvisor/pull/16516#pullrequestreview-6030082805",
+          "https://buildkite.com/gvisor/pipeline/builds/55748"
         ],
         "nativeReviewRequest": {
           "reviewer": "manninglucas",
@@ -41323,9 +41331,10 @@
           "delivered": true,
           "endpoint": "/repos/gvisor/gvisor/pulls/16516/requested_reviewers/rerequest"
         },
-        "recheckCondition": "Genuine maintainer/review/import or actual required main-pipeline event at a959.",
+        "recheckCondition": "Exact current-build diagnosis or actual check/review/import/head event.",
         "mergeable": "MERGEABLE",
-        "attentionDispositions": []
+        "attentionDispositions": [],
+        "providerHead": "a9594385d15d2e17e5dd7491be94d774f47fa80e"
       },
       "evidence": [
         {
@@ -61466,7 +61475,7 @@
       "url": "https://github.com/google/gvisor/pull/16787",
       "status": "open",
       "updatedAt": "2026-11-18T12:19:41.750038+00:00",
-      "summary": "Manning’s exact-head APPROVED review is now observed on 6869e8002. Main55735 fails; its cause is unclassified. Maintainer approval is not release of the current source/performance/sensitive-feature boundaries. The foreign author retains implementation responsibility.",
+      "summary": "Exact source 6869e8002 main55735 terminated in pipeline upload on missing fork-ref errors before builds/tests. Merged prerequisite17735/909c3dce2 removes the obsolete hook fetch; no source-test failure is established. Exact-head maintainer approval and existing sensitive-source/review limits remain distinct.",
       "evidence": [
         {
           "label": "Author’s offer to include the tested commit",
@@ -61509,14 +61518,16 @@
         "providerHead": "6869e8002ace5d787ef464938b49ba215fbd1693",
         "mergeable": "MERGEABLE",
         "sourceHead": "6869e8002ace5d787ef464938b49ba215fbd1693",
-        "observedAt": "2026-11-23T21:36:15.021685+00:00",
-        "disposition": "Manning’s exact-head APPROVED review is now observed on 6869e8002. Main55735 fails; its cause is unclassified. Maintainer approval is not release of the current source/performance/sensitive-feature boundaries. The foreign author retains implementation responsibility.",
-        "nextAction": "Root routes the exact CI failure classification and retains the applicable held source-review/implementation obligation. No protected source read/edit, test or timing retry, foreign write, duplicate outreach or approval transfer.",
-        "recheckCondition": "Exact provider/author evidence, new source/check/review event or user hold release.",
+        "observedAt": "2026-11-23T22:28:52.692599+00:00",
+        "disposition": "Exact source 6869e8002 main55735 terminated in pipeline upload on missing fork-ref errors before builds/tests. Merged prerequisite17735/909c3dce2 removes the obsolete hook fetch; no source-test failure is established. Exact-head maintainer approval and existing sensitive-source/review limits remain distinct.",
+        "nextAction": "The foreign author owns a refresh; root retains held reviewer follow-through. Recheck an actual head containing the merged hook prerequisite or a verified CI-mechanism change. No automatic source refresh, blind retry, outreach or protected implementation read follows from the prerequisite landing.",
+        "recheckCondition": "Actual source/head/base or CI-mechanism event, respecting the existing sensitive-work hold.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16787",
           "https://github.com/google/gvisor/pull/16787#pullrequestreview-6029118218",
-          "https://buildkite.com/gvisor/pipeline/builds/55735"
+          "https://buildkite.com/gvisor/pipeline/builds/55735",
+          "https://github.com/gvisor/gvisor/pull/17735",
+          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
         "curatedAt": "2026-11-18T12:19:41.750038+00:00",
@@ -72284,7 +72295,7 @@
       "status": "Delivered as #16961",
       "head": "e0cbd5ea2de2bd79901bdcea796e25eeaa2acdba",
       "updatedAt": "2026-11-17T19:04:51.199074+00:00",
-      "summary": "The published proposal/bridge-mtu-roundtrip ref and PR16961 now point to e0cbd5ea rather than75414935. Relkochta and Manning approved this exact head (Relkochta’s two records are one reviewer). Main55741 fails, with cause unclassified. The head change is observed, but actor/source/base equivalence and prior qualification transfer are not established.",
+      "summary": "Relkochta performed the same-patch maintainer rebase to e0cbd5ea at20:53:59; exact-head relkochta/Manning approvals are verified. Range-diff is equal and stable patch ID is12f4507dc6cd62f761f7876c3fbdc71b8ccde087; old qualification is historical because the base changed. First Pass2514 passed. Main55741 is CANCELED: Java shard8 exhausted three pre-command apt/dpkg-lock attempts before tests; FreeBSD fetch was terminated by cancellation. Complete hostnet/KVM/posture retry chains passed. No failed test target or source failure is established.",
       "evidence": [
         {
           "label": "BridgeAddUnnamed on native Linux, stock gVisor and corrected gVisor",
@@ -72309,20 +72320,22 @@
       "inactive": true,
       "followup": {
         "sourceHead": "e0cbd5ea2de2bd79901bdcea796e25eeaa2acdba",
-        "owner": "root / approved_rebase_queue",
-        "nextAction": "Existing owner reconciles the actual ref/actor and source-bound delta using metadata first before further source action. Preserve sensitive-feature and performance boundaries; do not infer equivalence, source approval, a new source defect or an automatic rebase from the status alone.",
+        "owner": "root",
+        "nextAction": "Follow a replacement run/head event or verified package-setup recovery through existing17854/ci-buildkite-apt-lock ownership. The maintainer’s disable-updates plan is not deployed proof; do not blindly retry, amend source, repeat outreach or re-verify the fulfilled same-patch comparison.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-23T21:36:15.021685+00:00",
-        "recheckCondition": "Owner-verified source/base/actor comparison, exact CI diagnosis or actual new review/head event.",
+        "observedAt": "2026-11-23T22:28:52.692599+00:00",
+        "recheckCondition": "Actual replacement/current-head CI, verified package-setup recovery or new source/reviewer event.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/16961",
           "https://github.com/tamird/gvisor/commit/735639f573bb921490150d0c722414c124119728",
           "https://github.com/tamird/gvisor/commit/754149356164d6f7ed1710d8d0492b172284b6a5",
           "https://github.com/gvisor/gvisor/commit/e0cbd5ea2de2bd79901bdcea796e25eeaa2acdba",
-          "https://buildkite.com/gvisor/pipeline/builds/55741"
+          "https://buildkite.com/gvisor/pipeline/builds/55741",
+          "https://buildkite.com/gvisor/first-pass/builds/2514",
+          "https://buildkite.com/gvisor/pipeline/builds/55741#01a20a3a-3dfa-4936-bc7a-1c82d48bae3e"
         ],
         "providerHead": "e0cbd5ea2de2bd79901bdcea796e25eeaa2acdba",
-        "disposition": "The published proposal/bridge-mtu-roundtrip ref and PR16961 now point to e0cbd5ea rather than75414935. Relkochta and Manning approved this exact head (Relkochta’s two records are one reviewer). Main55741 fails, with cause unclassified. The head change is observed, but actor/source/base equivalence and prior qualification transfer are not established."
+        "disposition": "Relkochta performed the same-patch maintainer rebase to e0cbd5ea at20:53:59; exact-head relkochta/Manning approvals are verified. Range-diff is equal and stable patch ID is12f4507dc6cd62f761f7876c3fbdc71b8ccde087; old qualification is historical because the base changed. First Pass2514 passed. Main55741 is CANCELED: Java shard8 exhausted three pre-command apt/dpkg-lock attempts before tests; FreeBSD fetch was terminated by cancellation. Complete hostnet/KVM/posture retry chains passed. No failed test target or source failure is established."
       },
       "dcoAmendment": {
         "oldHead": "735639f573bb921490150d0c722414c124119728",
@@ -99799,7 +99812,7 @@
       "group": "tests",
       "status": "open",
       "updatedAt": "2026-11-17T19:05:00.391405+00:00",
-      "summary": "Requested source-equivalent rebase f6fa is delivered, MERGEABLE and APPROVED, with strict range-diff equality, owning qualification and notice7113648893 verified. Current GitHub checks and First Pass2510 pass. A later canonical main55739 read is CANCELED: Docker image_test timed out900.1s (four other shard targets passed), IPTables retained a pre-Bazel dpkg/unattended-upgrades lock failure, and other attempts/retries were canceled. This replaces the preliminary pending-retry summary; no PTY/source cause or full-pipeline pass is established.",
+      "summary": "Current f6fa remains MERGEABLE and APPROVED; requested rebase/qualification/notice are complete. The maintainer added ready-to-test and describes a CI workaround while fixes progress. Replacement main55752 is PENDING, so canceled55739 is historical rather than the current active run. No replacement outcome, quota rejection, source fix or package-policy deployment is inferred from the label/comment.",
       "evidence": [
         {
           "label": "Published single-commit revision",
@@ -99813,10 +99826,10 @@
       "followup": {
         "sourceHead": "f6fa027fbfaa28e930d3a288c3a78e9d35b53738",
         "owner": "root",
-        "nextAction": "Root follows the existing image-test/setup failure classification and genuine maintainer/import events. Rebase, notice and reviewer approval are complete; no repeated rebase, reviewer ping, retry, source edit, timing or new approval question.",
+        "nextAction": "Root follows actual replacement main55752 and genuine maintainer/import events, preserving the earlier canceled-run mixed evidence. No agent retry, duplicate notice/reviewer request, protected source change or inference that the maintainer plan is deployed.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-23T21:36:15.021685+00:00",
-        "recheckCondition": "Actual classified failure/admission or new current-head review/import/check event.",
+        "observedAt": "2026-11-23T22:28:52.692599+00:00",
+        "recheckCondition": "Replacement run terminal or actual source/review/import/package-recovery event.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17484",
           "https://github.com/tamird/gvisor/commit/8a64c10e33211d4e255aa6ad43d8131f344558d4",
@@ -99829,7 +99842,9 @@
           "https://github.com/gvisor/gvisor/pull/17484#issuecomment-7113648893",
           "https://buildkite.com/gvisor/first-pass/builds/2510",
           "https://buildkite.com/gvisor/pipeline/builds/55739#01a20a30-0b56-4062-ab3b-8c3a5372a7b6",
-          "https://buildkite.com/gvisor/pipeline/builds/55739#01a20a32-1ffd-4ccf-97d3-b2ad4f78eea7"
+          "https://buildkite.com/gvisor/pipeline/builds/55739#01a20a32-1ffd-4ccf-97d3-b2ad4f78eea7",
+          "https://github.com/google/gvisor/pull/17484#issuecomment-7115536743",
+          "https://buildkite.com/gvisor/pipeline/builds/55752"
         ],
         "attentionDispositions": [
           {
@@ -99855,7 +99870,7 @@
           }
         ],
         "providerHead": "f6fa027fbfaa28e930d3a288c3a78e9d35b53738",
-        "disposition": "Requested source-equivalent rebase f6fa is delivered, MERGEABLE and APPROVED, with strict range-diff equality, owning qualification and notice7113648893 verified. Current GitHub checks and First Pass2510 pass. A later canonical main55739 read is CANCELED: Docker image_test timed out900.1s (four other shard targets passed), IPTables retained a pre-Bazel dpkg/unattended-upgrades lock failure, and other attempts/retries were canceled. This replaces the preliminary pending-retry summary; no PTY/source cause or full-pipeline pass is established."
+        "disposition": "Current f6fa remains MERGEABLE and APPROVED; requested rebase/qualification/notice are complete. The maintainer added ready-to-test and describes a CI workaround while fixes progress. Replacement main55752 is PENDING, so canceled55739 is historical rather than the current active run. No replacement outcome, quota rejection, source fix or package-policy deployment is inferred from the label/comment."
       },
       "dcoAmendment": {
         "oldHead": "8a64c10e33211d4e255aa6ad43d8131f344558d4",
@@ -102095,10 +102110,10 @@
       "followup": {
         "sourceHead": "f3c485cd64fe2d802cbec5891f537f797e76a3c1",
         "owner": "root",
-        "nextAction": "Root follows 17836 and 17855 landing. Recheck a natural recurrence after both are applied, then consume bounded output plus the retained daemon journal. No active duplicate source investigation, manual retry or new proposal is needed.",
+        "nextAction": "Follow only the remaining17836 cancellation/helper integration plus genuine current-source CI/review/import events. The17855 log-retention prerequisite already merged as6547111625; do not retain that fulfilled wait. Preserve existing failure/source bounds, with no unchanged retry, duplicate diagnosis or outreach.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "recheckCondition": "Both existing repairs land and a natural recurrence supplies output/daemon evidence.",
+        "observedAt": "2026-11-23T22:28:52.692599+00:00",
+        "recheckCondition": "Actual17836 landing, bounded post-fix evidence or genuine current-source/review event.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17546",
           "https://github.com/tamird/gvisor/commit/92c2c4ff86b674a8d910e2227312e161f1d4613d",
@@ -102108,7 +102123,8 @@
           "https://buildkite.com/gvisor/pipeline/builds/55544#01a1fb56-d49f-4494-abb8-7c88eb0f8006",
           "https://github.com/google/gvisor/pull/17836",
           "https://github.com/google/gvisor/pull/17855",
-          "https://buildkite.com/gvisor/pipeline/builds/55568#01a1fbdc-cded-46d5-b95a-e90f21070cbb"
+          "https://buildkite.com/gvisor/pipeline/builds/55568#01a1fbdc-cded-46d5-b95a-e90f21070cbb",
+          "https://github.com/gvisor/gvisor/commit/6547111625e38fff684f7e3d68225814d87872cf"
         ],
         "curatedAt": "2026-11-21T14:40:26.293073+00:00",
         "freshApprovalAndCI": {
@@ -103338,16 +103354,16 @@
       "title": "Reuse transmit batch metadata storage",
       "url": "https://github.com/google/gvisor/pull/16887",
       "group": "runtime",
-      "status": "open",
-      "summary": "Foreign author source f16198b94 is now CONFLICTING. The unrelated sensitive-feature hold remains binding. The foreign author owns conflict repair; root retains unfinished current-source review.",
+      "status": "closed",
+      "summary": "The foreign author closed the PR and reports being unable to reproduce the claimed performance gains, attributing earlier measurements to a noisy development machine. This is the author’s withdrawal report, not our independent performance/cause analysis. The active source/review/conflict lifecycle is closed without approval or resolution claims for historical findings.",
       "followup": {
         "owner": "root",
         "sourceNumber": 16887,
         "sourceHead": "f16198b9425460ecbbd1312a60f1ab57478df1df",
-        "observedAt": "2026-11-23T21:36:15.021685+00:00",
-        "disposition": "Foreign author source f16198b94 is now CONFLICTING. The unrelated sensitive-feature hold remains binding. The foreign author owns conflict repair; root retains unfinished current-source review.",
-        "nextAction": "Follow actual foreign-author source/base repair and user hold release; no foreign edit or approval transfer.",
-        "recheckCondition": "Actual source/base/mergeability change, relevant external evidence or user hold release.",
+        "observedAt": "2026-11-23T22:28:52.692599+00:00",
+        "disposition": "The foreign author closed the PR and reports being unable to reproduce the claimed performance gains, attributing earlier measurements to a noisy development machine. This is the author’s withdrawal report, not our independent performance/cause analysis. The active source/review/conflict lifecycle is closed without approval or resolution claims for historical findings.",
+        "nextAction": "No active source-review/rebase obligation remains for this closed PR. Preserve historical evidence and unrelated holds; recheck only an actual reopen/new source request, with no implementation read, test, timing or outreach.",
+        "recheckCondition": "Actual author reopen/new request or explicit user scope change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16887#issuecomment-6955117776",
           "https://github.com/gvisor/gvisor/blob/1668e58d4c0cb17ecb5fcf6457389575a3c01459/pkg/tcpip/link/fdbased/endpoint.go#L588",
@@ -103366,7 +103382,8 @@
           "https://buildkite.com/gvisor/first-pass/builds/2343#01a20532-8a63-4708-9daf-0edafaec0714",
           "https://github.com/google/gvisor/pull/16887#discussion_r4662373782",
           "https://github.com/gvisor/gvisor/commit/f16198b9425460ecbbd1312a60f1ab57478df1df",
-          "https://github.com/google/gvisor/pull/16887#issuecomment-7111262061"
+          "https://github.com/google/gvisor/pull/16887#issuecomment-7111262061",
+          "https://github.com/google/gvisor/pull/16887#issuecomment-7114621991"
         ],
         "ciObservation": "Observed context buildkite/first-pass (unsuffixed) failed as build #906. No current buildkite/first-pass/pr or buildkite/pipeline/pr result appeared in the queried contexts. This is not a claim of passing required CI; current /pr requirements remain separate.",
         "actionableComment": {
@@ -106656,24 +106673,25 @@
       "title": "Honor disabled OCI network modes",
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/14275",
       "group": "analysis",
-      "status": "open",
+      "status": "merged",
       "updatedAt": "2026-11-23T18:40:13.679878+00:00",
-      "summary": "Current 0f955 is APPROVED and MERGEABLE. Windows45252487106 completed successfully; both required checks, Check style and Test, pass. Only the independently proven pre-existing/nonrequired anonymous GitHub build failure remains; it is not a delivery blocker. Formatting and source delivery are complete, no CI watch remains, and no merge or provider-deployment authority is inferred.",
+      "summary": "Native GitHub confirms approved source0f955 merged at21:34:28 as3d0a8571862e680a4f93099a6e5387032cacad80. Source publication, formatting, required validation and upstream review/landing waits are fulfilled. The source fix does not establish hosted-provider rollout or network-mode enforcement; known nonrequired baseline build failures remain historical.",
       "followup": {
         "owner": "buildbuddy_network_fix / root",
         "sourceHead": "0f9557ec5cf3b4baedb2a454d74b118a36a4b2e1",
         "providerHead": "0f9557ec5cf3b4baedb2a454d74b118a36a4b2e1",
-        "observedAt": "2026-11-23T21:36:15.021685+00:00",
-        "disposition": "Current 0f955 is APPROVED and MERGEABLE. Windows45252487106 completed successfully; both required checks, Check style and Test, pass. Only the independently proven pre-existing/nonrequired anonymous GitHub build failure remains; it is not a delivery blocker. Formatting and source delivery are complete, no CI watch remains, and no merge or provider-deployment authority is inferred.",
-        "nextAction": "Follow genuine maintainer/landing or current source/required-check changes. Do not retain the old Windows wait, reopen formatting, retry the nonrequired baseline failure, duplicate outreach or merge.",
-        "recheckCondition": "Actual maintainer/landing/head/required-check event.",
+        "observedAt": "2026-11-23T22:28:52.692599+00:00",
+        "disposition": "Native GitHub confirms approved source0f955 merged at21:34:28 as3d0a8571862e680a4f93099a6e5387032cacad80. Source publication, formatting, required validation and upstream review/landing waits are fulfilled. The source fix does not establish hosted-provider rollout or network-mode enforcement; known nonrequired baseline build failures remain historical.",
+        "nextAction": "Follow actual hosted-provider deployment/enforcement evidence through the existing authorized qualification boundary or a real provider/version event. No merge, retry, duplicate reviewer request, operator outreach or new probe is authorized by source landing alone.",
+        "recheckCondition": "Actual deployed-version/runtime evidence or new provider/source event.",
         "evidence": [
           "https://github.com/buildbuddy-io/buildbuddy/pull/14275",
           "https://github.com/buildbuddy-io/buildbuddy/pull/14275#issuecomment-7111152358",
           "https://github.com/buildbuddy-io/buildbuddy/pull/14275#pullrequestreview-6027725165",
           "https://github.com/buildbuddy-io/buildbuddy/commit/0f9557ec5cf3b4baedb2a454d74b118a36a4b2e1",
           "https://github.com/buildbuddy-io/buildbuddy/pull/14275/checks",
-          "https://github.com/buildbuddy-io/buildbuddy/actions/runs/45252487106"
+          "https://github.com/buildbuddy-io/buildbuddy/actions/runs/45252487106",
+          "https://github.com/buildbuddy-io/buildbuddy/commit/3d0a8571862e680a4f93099a6e5387032cacad80"
         ],
         "attentionDispositions": [
           {
@@ -122042,8 +122060,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-23T21:36:15.021685+00:00",
-      "summary": "Existing collector45269077239 completed SUCCESS3m30s with actual API21:26:17 UTC. Native scheduled delivery was not fresh at the due guard, so one canonical fallback supplied the sample. The prior bounded scheduler audit found no demonstrated source/config defect; native trigger cause remains unexposed. No reset, second observer or new scheduler was introduced.",
+      "updatedAt": "2026-11-23T22:28:52.692599+00:00",
+      "summary": "Fresh native scheduled run45277681053 completed SUCCESS22:18:10 on masterc1c30b6, with actual API22:17:49. It was reused without fallback dispatch or a new watch. This proves one scheduled delivery after the gap, not sustained cadence recovery or a source/config repair; the native trigger cause remains unexposed.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122286,7 +122304,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground/active-goal supervision owns the next native-first guard at22:26:17 UTC and recovery by22:56:17. Reuse newer/live native delivery, otherwise one canonical fallback; retain the60/90-minute policy and2-hour UI threshold. No independent manual scheduler exists.",
+      "nextStep": "Root foreground/active-goal supervision owns the next native-first guard at23:17:49 UTC and recovery by23:47:49. Reuse newer/live native delivery, otherwise one canonical fallback; retain60/90-minute policy and2-hour UI staleness threshold. No reset, second observer or new scheduler.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122411,8 +122429,10 @@
           "https://github.com/tamird/gvisor/actions/runs/45157946718",
           "https://github.com/tamird/gvisor/blob/c1c30b6b13079debb356befab9de2fb529e4af83/.github/workflows/work-map.yml",
           "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule",
-          "https://docs.github.com/en/actions/how-tos/troubleshoot-workflows#scheduled-workflow-stopped-running"
-        ]
+          "https://docs.github.com/en/actions/how-tos/troubleshoot-workflows#scheduled-workflow-stopped-running",
+          "https://github.com/tamird/gvisor/actions/runs/45277681053"
+        ],
+        "observedAt": "2026-11-23T22:28:52.692599+00:00"
       }
     },
     {
@@ -131937,9 +131957,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "analysis_pass_inventory / root",
-      "updatedAt": "2026-11-23T21:36:15.021685+00:00",
+      "updatedAt": "2026-11-23T22:28:52.692599+00:00",
       "group": "analysis",
-      "summary": "Unified analyzer implementation remains active. The latest c682 syntax recovery and unfiltered architecture-layout checks are still owner-observed and in progress, not green. Earlier full source52 results remain a red historical baseline rather than a current remaining count. Source/generator migrations, concrete iterator exceptions and exact-current validation continue; no WaitGroup.Go checker special case, final corpus pass, performance claim or publication-readiness decision is established.",
+      "summary": "The reference full Nogo run on source4dd completed all891 target results:226 passed,665 reported findings and zero build failures. Six non-layout locations and remaining layout findings are being migrated; these counts describe that exact run, not a final current-source pass. The unified analyzer source and affected validation remain active under their existing owner. No final corpus/performance qualification, publication-readiness claim or user-approval blocker is established.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132311,7 +132331,7 @@
           ]
         }
       ],
-      "nextStep": "The existing analyzer owner finishes the syntax recovery, unfiltered per-architecture layout checks and remaining affected validation before integrated review. Preserve the narrow migration authorization and unrelated sensitive-feature holds; no new opening ask or duplicate observer.",
+      "nextStep": "Existing analyzer owner finishes the concrete non-layout/layout migrations and exact affected validation, retaining the user’s narrow migration authorization and unrelated feature holds. Use source-bound findings and actual completed results; no duplicate observer or new opening question before final reviewed source.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132647,7 +132667,13 @@
           "outcome": "superseded"
         }
       ],
-      "additionalReviews": []
+      "additionalReviews": [],
+      "followup": {
+        "observedAt": "2026-11-23T22:28:52.692599+00:00",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/45274157128/artifacts/14868766183"
+        ]
+      }
     },
     {
       "id": "investigation:proc-boot-identity",
@@ -136662,8 +136688,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-21T14:40:26.293073+00:00",
-      "summary": "Exact user-approved source is delivered as gVisor#17855. GitHub-native checks and DCO pass; independently verified FirstPass2286 is pre-agent quota-blocked. No source approval remains; existing qualification scope and review/import boundaries stay intact.",
+      "updatedAt": "2026-11-23T22:28:52.692599+00:00",
+      "summary": "Log-retention prerequisite17855 is fulfilled by merged6547111625e38fff684f7e3d68225814d87872cf. The separate cancellation/reporting prerequisite17836 remains open. Existing Docker/image timeout evidence, including main55739, is retained; no bounded post-fix result or underlying workload-cause fix is established.",
       "findings": [
         {
           "text": "Both AMD64 jobs on build 54543 reached 900 seconds in TestDockerWithVFS/docker_run_bridge_network_privileged. On each platform, the preceding host-network docker run completed apk add curl and apk info with exit status 0. The privileged bridge run then began mount setup on the same Alpine image and produced no exit status. Removing a completed container leaves the image available for the next run. The logs do not locate the wait inside the bridge command. The uncached retries passed in 127.3 seconds on systrap and 50 seconds on KVM.",
@@ -136798,7 +136824,7 @@
           ]
         }
       ],
-      "nextStep": "approved_rebase_queue follows the delivered 17855 source PR; root owns 17546 causal lifecycle. Follow 17836/17855 landing, then use retained daemon logs and bounded output from a natural recurrence. The duplicate cancellation edit is removed; no new proposal or retry is required.",
+      "nextStep": "Follow the remaining17836 integration and existing authorized post-fix evidence conditions. Do not keep17855 as an open landing wait, repeat unchanged runs, or start a new diagnosis from the already-captured recurrence.",
       "evidence": [
         {
           "label": "Third attempt, privileged container",
@@ -139801,8 +139827,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-21T12:20:58.751348+00:00",
-      "summary": "Exact user-approved source is delivered as gVisor#17854. GitHub-native checks and DCO pass; independently verified FirstPass2285 is pre-agent quota-blocked. No source approval remains; existing qualification scope and review/import boundaries stay intact.",
+      "updatedAt": "2026-11-23T22:28:52.692599+00:00",
+      "summary": "Existing apt-lock evidence now includes main55741 Java shard8’s exhausted pre-command attempts and main55739’s IPTables setup failure. The lock belongs to unattended-upgrades; these attempts did not reach Bazel. Maintainer17854’s accepted disabling-updates plan is not proof of deployment. The canceled55741 build and complete retry chains, not intermediate retry=failed entries, control its disposition; separate image-test timeouts are not erased or assigned this cause.",
       "findings": [
         {
           "text": "The original job logged 623 lock refusals from 07:37:14 through 08:35:58 UTC, each naming unattended-upgr PID 3661. The worker ran apt-get update again on each turn.",
@@ -139844,7 +139870,7 @@
           ]
         }
       ],
-      "nextStep": "Follow canonical pr:17854 through its existing source/provider owner; no duplicate monitoring, manual retry or quota outreach.",
+      "nextStep": "Follow actual17854/package-setup recovery or a naturally admitted replacement/head event. Reuse existing job evidence; no duplicate fix, operator outreach, blind retry or new diagnostic framework.",
       "evidence": [
         {
           "label": "Release #7761 · pre-command timed out before the CUDA test",
@@ -139908,6 +139934,13 @@
         "owner": "root",
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+      },
+      "followup": {
+        "observedAt": "2026-11-23T22:28:52.692599+00:00",
+        "evidence": [
+          "https://buildkite.com/gvisor/pipeline/builds/55741#01a20a3a-3dfa-4936-bc7a-1c82d48bae3e",
+          "https://buildkite.com/gvisor/pipeline/builds/55739#01a20a32-1ffd-4ccf-97d3-b2ad4f78eea7"
+        ]
       }
     },
     {
@@ -143788,9 +143821,9 @@
       "owner": "buildbuddy_network_fix / root",
       "head": "96fe4a8e5e8f376a40aa6e275edeb4e1c915c7eb",
       "title": "Honor disabled OCI network modes",
-      "updatedAt": "2026-11-23T18:40:13.679878+00:00",
-      "summary": "User-approved96 logic and comment relocation are delivered as BuildBuddy14275 at signedc622472f. Root verified exact head and MERGEABLE; new CI is pending. Production/test postimages are unchanged from the reviewed96 source. Linux Bazel tests were not run because authenticated RBE was unavailable; no deployed-fix or provider-enforcement claim is made.",
-      "nextStep": "Root/approved delivery owner follows the published PR’s actual current-head checks, review and landing events. No open source-publication approval wait remains; original investigation/evidence limits remain distinct.",
+      "updatedAt": "2026-11-23T22:28:52.692599+00:00",
+      "summary": "The approved disabled-network-mode correction is merged through BuildBuddy14275/3d0a8571. Its source/review/required-check lifecycle is complete. Hosted-worker deployment and actual network-mode enforcement remain unverified; source landing is not rollout proof. Earlier Linux-test access and nonrequired baseline failures retain their original scope.",
+      "nextStep": "Root follows actual deployed-version or naturally needed authorized worker evidence before claiming provider enforcement. No open PR-publication question, duplicate source fix or new credential/access change remains.",
       "findings": [],
       "evidence": [
         {
