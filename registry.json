@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T03:35:27.429881+00:00",
+    "updatedAt": "2026-11-23T03:53:11.542890+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -104566,7 +104566,7 @@
         "owner": "root",
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
         "disposition": "Upstream delivery is complete by manual landing:660c1040592c4332520e7d783360139c8298cb52 names PR67595 and is upstream main. Root verified its changed-file set, statuses and blob IDs exactly match reviewed15c2edb. Native GitHub mergedAt remains null; this is landed-by-commit, not an API merge claim. Maintainer Jake’s notice is source-bound.",
-        "nextAction": "Upstream delivery is complete. node22_backport_delivery/root owns the independent pinned Node22 fixture backport and active native/Sentry packaging qualification; no new backport source approval is inferred and no duplicate upstream CI/outreach is needed.",
+        "nextAction": "Upstream delivery remains complete. The pinned Node22 fixture backport is technically qualified at057d; root owns its independent unanswered gVisor publication question. Prior technical owner node22_backport_delivery/evidence is retained on the TLS investigation. No duplicate upstream CI/outreach or approval transfer.",
         "recheckCondition": "Actual separate pinned-fixture backport or post-landing regression.",
         "publishedDelivery": {
           "base": "b7df44bf9c85a6104b9158b616999e3d2c58be5d",
@@ -137677,9 +137677,9 @@
       "title": "Node’s Internet TLS connection test reports a connection reset",
       "status": "active",
       "group": "ci-flakes",
-      "owner": "node22_backport_delivery / root",
-      "updatedAt": "2026-11-23T03:35:27.429881+00:00",
-      "summary": "Upstream Node67595 is delivered by verified manual landing660c1040592c on main with exact reviewed15c2edb file/blob identity. The existing pinned Node22 fixture backport is actively qualifying at057d078081: two files,87 additions, published at fix/node22-tls-loopback-backport-20261123. Runc TLS TAP passes and patch/hash/version/syntax/original-Internet-file-removal checks pass. Systrap stopped at Docker-cp visibility before the test, so it has no test verdict. This is not approved, publication-ready or a proven flake fix.",
+      "owner": "root",
+      "updatedAt": "2026-11-23T03:53:11.542890+00:00",
+      "summary": "Pinned Node22 backport057d is technically complete and independently reviewed, with the exact fork ref verified. The targeted TLS case passes in the original Node22.2.0 image under runc and Sentry, without skips/TODO; exact patch/hash, syntax, old Internet-test removal, cleanup and source preservation checks pass. Two final reviewers found no issues. Maintained linters select neither changed image file; diff-check passes. No fresh image/Node build, full-suite or ARM result is claimed. Upstream Node67595 landing remains complete; the original external reset cause is unknown. The actual one-commit gVisor publication question is pending, independently of upstream approval.",
       "findings": [
         {
           "text": "The pinned test opens two TLS connections to the same host on port 443. One enables automatic address-family selection and the other disables it. The default hostname is nodejs.org and can be overridden by the test environment. The failure has yet to be attributed to either connection.",
@@ -137725,7 +137725,7 @@
           ]
         }
       ],
-      "nextStep": "node22_backport_delivery owns the recovered existing backport obligation; the original agent route was unavailable. Retain runc PASS and recover only systrap using the existing Bazel proctor with exec stdin. Final package proof and source-publication review remain ahead; no backport approval question has been asked. Upstream67595 waiting is complete and needs no duplicate CI/outreach.",
+      "nextStep": "Root owns the actual057d publication decision and delivery. node22_backport_delivery completed technical preparation; no setup or qualification wait remains. Await the answer without re-asking or transferring upstream Node approval; no additional tests, rebuild, transport retry or source changes follow from this milestone.",
       "evidence": [
         {
           "label": "#54502 Node TLS failure",
@@ -137782,9 +137782,17 @@
         {
           "label": "Runc TAP PASS; systrap stopped before test",
           "url": "https://github.com/tamird/gvisor/actions/runs/45106135980"
+        },
+        {
+          "label": "Native targeted TLS PASS; later setup failure separate",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45106135980/artifacts/14787796388"
+        },
+        {
+          "label": "Sentry targeted TLS PASS and cleanup/source preservation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45106632584/artifacts/14787871200"
         }
       ],
-      "repo": "nodejs/node",
+      "repo": "google/gvisor",
       "head": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
       "settledReviews": [
         {
@@ -137832,14 +137840,24 @@
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
         "disposition": "Approved exact test postimages rebased through the own-fork GitData API; normal author/committer/DCO/Assisted and exact title/body readbacks verified. No local checkout or foreign gVisor objects were needed."
       },
-      "linkedPR": "pr:nodejs/node:67595"
+      "linkedPR": "pr:nodejs/node:67595",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
+        "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+        "url": "https://github.com/tamird/gvisor/commit/057d0780812983db12df2e41f2b29a0a1a1f79c1",
+        "title": "Backport Node's local TLS fallback test",
+        "summary": "Backport the landed loopback TLS test into the pinned Node22.2.0 image. Exact patch and targeted native/Sentry checks plus two final reviews passed; original reset cause remains unknown and no full-suite/image-build claim follows.",
+        "body": "The pinned Node 22.2.0 TLS address-family test depends on external DNS and a public HTTPS server. Backport nodejs/node@660c10405 so it authenticates a loopback TLS server and verifies the server name on both direct IPv4 and IPv6-to-IPv4 fallback paths.\n\nThe patch applies after Node compilation because it changes only tests. The historical external ECONNRESET remains unattributed.\n\nValidation: exact patch application, Node syntax and the targeted TLS case passed in the original Node 22.2.0 image under [runc](https://github.com/tamird/gvisor/actions/runs/45106135980/artifacts/14787796388) and [Sentry](https://github.com/tamird/gvisor/actions/runs/45106632584/artifacts/14787871200). No fresh image build or full-suite run was performed.\n\nPosted by Codex on behalf of @tamird.\n"
+      }
     },
     {
       "id": "investigation:ci-benchmark-fuse-device",
       "title": "Native runc filesystem benchmarks cannot start the FUSE server",
       "status": "active",
       "group": "ci-flakes",
-      "owner": "root",
+      "owner": "benchmark_measurement_review / root",
       "updatedAt": "2026-11-13T04:20:44+00:00",
       "summary": "The native runc Ruby benchmark failed while creating its FUSE server on 3238f32db. The helper could see both tmpfs mounts but could not see the host FUSE device.",
       "findings": [
@@ -137920,7 +137938,7 @@
           ]
         }
       ],
-      "nextStep": "Read the FUSE helper’s active AppArmor profile inside the native container before mounting. With /dev/fuse present and the existing confinement in place, record whether mount(2) succeeds or which errno it returns. If the mount succeeds, check the Ruby and ABSL measurements and teardown.",
+      "nextStep": "benchmark_measurement_review owns the existing functional setup check: inspect actual helper profile and /dev/fuse, attempt the mount under the existing confinement, retain its result/errno and verify teardown. No timing measurements, security weakening, new daemon or framework is authorized.",
       "evidence": [
         {
           "label": "#54492 Ruby benchmark failure",
