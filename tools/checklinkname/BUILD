@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library")
+load("//tools:defs.bzl", "go_library", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -13,4 +13,11 @@ go_library(
     stateify = False,
     visibility = ["//tools/nogo:__subpackages__"],
     deps = ["@org_golang_x_tools//go/analysis:go_default_library"],
+)
+
+go_test(
+    name = "checklinkname_test",
+    size = "small",
+    srcs = ["check_linkname_test.go"],
+    embed = [":checklinkname"],
 )
