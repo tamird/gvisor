@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-23T21:26:17.434879+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-23T20:29:42.991432+00:00",
+  "registryDate": "2026-11-23T21:36:15.021685+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -457641,7 +457641,7 @@
       "repo": "google/gvisor",
       "number": 16887,
       "head": "f16198b9425460ecbbd1312a60f1ab57478df1df",
-      "action": "Root keeps current-source review and sensitive work held. The author retains implementation ownership; do not transfer prior reviews, read held source, run tests, adopt suggestions or send outreach. No Daybreak re-ask.",
+      "action": "Follow actual foreign-author source/base repair and user hold release; no foreign edit or approval transfer.",
       "claimed": true,
       "firstObservedHead": "1668e58d4c0cb17ecb5fcf6457389575a3c01459",
       "reviewHead": null,
@@ -457661,7 +457661,7 @@
       "repo": "google/gvisor",
       "number": 16887,
       "head": "f16198b9425460ecbbd1312a60f1ab57478df1df",
-      "action": "Root keeps current-source review and sensitive work held. The author retains implementation ownership; do not transfer prior reviews, read held source, run tests, adopt suggestions or send outreach. No Daybreak re-ask.",
+      "action": "Follow actual foreign-author source/base repair and user hold release; no foreign edit or approval transfer.",
       "claimed": true,
       "firstObservedHead": "bd991e616d06c77074c56576cc94c6f9cddfeef5",
       "reviewHead": null,
@@ -457681,7 +457681,7 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "0ec767e4d4f1ec1bdf56d3675e06b860a02d7e19",
-      "action": "Follow actual quota recovery or a new admitted build through the existing owner. No unchanged retry, operator outreach, unsupported rerequest or source churn. Preserve the sensitive source/test hold and foreign implementation ownership.",
+      "action": "Keep root’s current-source review sensitive-held and foreign implementation ownership distinct. Follow actual author/head/evidence events without creating work for the cross-referenced issues, reading protected source, testing or posting outreach.",
       "claimed": true,
       "firstObservedHead": "e5f0f6f7fc500b646b4a0dbd738f142e1a9032a2",
       "reviewHead": null,
@@ -457701,7 +457701,7 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "0ec767e4d4f1ec1bdf56d3675e06b860a02d7e19",
-      "action": "Follow actual quota recovery or a new admitted build through the existing owner. No unchanged retry, operator outreach, unsupported rerequest or source churn. Preserve the sensitive source/test hold and foreign implementation ownership.",
+      "action": "Keep root’s current-source review sensitive-held and foreign implementation ownership distinct. Follow actual author/head/evidence events without creating work for the cross-referenced issues, reading protected source, testing or posting outreach.",
       "claimed": true,
       "firstObservedHead": "3389a2aa144abf8f474fc65bcabc84487564ee86",
       "reviewHead": null,
@@ -457721,7 +457721,7 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "0ec767e4d4f1ec1bdf56d3675e06b860a02d7e19",
-      "action": "Follow actual quota recovery or a new admitted build through the existing owner. No unchanged retry, operator outreach, unsupported rerequest or source churn. Preserve the sensitive source/test hold and foreign implementation ownership.",
+      "action": "Keep root’s current-source review sensitive-held and foreign implementation ownership distinct. Follow actual author/head/evidence events without creating work for the cross-referenced issues, reading protected source, testing or posting outreach.",
       "claimed": true,
       "firstObservedHead": "0ec767e4d4f1ec1bdf56d3675e06b860a02d7e19",
       "reviewHead": null,
@@ -458018,14 +458018,14 @@
       "mergeabilityCheckedAt": "2026-11-23T21:24:25.200877+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Root keeps current-source review and sensitive work held. The author retains implementation ownership; do not transfer prior reviews, read held source, run tests, adopt suggestions or send outreach. No Daybreak re-ask.",
+      "action": "Follow actual foreign-author source/base repair and user hold release; no foreign edit or approval transfer.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "f16198b9425460ecbbd1312a60f1ab57478df1df",
-        "disposition": "Foreign author comment7111262061 says the currentf161 issue should be fixed. Provider contexts are successful, but no independent source/test verification or approval is transferred. Root’s current-source review remains sensitive-held; the author retains implementation ownership.",
-        "nextAction": "Root keeps current-source review and sensitive work held. The author retains implementation ownership; do not transfer prior reviews, read held source, run tests, adopt suggestions or send outreach. No Daybreak re-ask."
+        "disposition": "Foreign author source f16198b94 is now CONFLICTING. The unrelated sensitive-feature hold remains binding. The foreign author owns conflict repair; root retains unfinished current-source review.",
+        "nextAction": "Follow actual foreign-author source/base repair and user hold release; no foreign edit or approval transfer."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-23T21:25:26.211072+00:00"
     },
     {
       "repo": "google/gvisor",
@@ -458114,14 +458114,14 @@
       "mergeabilityCheckedAt": "2026-11-23T21:26:12.901588+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Follow the existing exact-head reviewer/import and actor-owned CI watches. Recheck admission only after actual provider recovery or a new source/check event; no retry, duplicate notification or automatic merge.",
+      "action": "Keep the source conflict root-owned and held until the applicable sensitive-work authorization changes. Do not read/adapt protected implementation, run tests or fabricate a pending approval question.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "32fd9c26abba8ceb7d68c6aacfd565bda81f839a",
-        "disposition": "The approved current-base rebase 32fd9c26abba8ceb7d68c6aacfd565bda81f839a is published by exact lease; native source is OPEN/MERGEABLE and DCO passes. Rebase notice7054668856 is posted. First Pass2189 is independently diagnosed as pre-agent admission rejection: exit80, stack_errored=true, agent_id=null and author1535036 rolling30-day360,000-compute-minute quota. No target ran. Lint, Gazelle and file-header checks pass; the original rebase owner retains the remaining Go-generation watch. Existing source/runtime/performance limits remain separate.",
-        "nextAction": "Follow the existing exact-head reviewer/import and actor-owned CI watches. Recheck admission only after actual provider recovery or a new source/check event; no retry, duplicate notification or automatic merge."
+        "disposition": "Our published source 32fd9c26a is now CONFLICTING. The unrelated sensitive-feature hold remains binding. Root retains the conflict/rebase obligation; earlier published-rebase and quota evidence does not resolve this new base conflict.",
+        "nextAction": "Keep the source conflict root-owned and held until the applicable sensitive-work authorization changes. Do not read/adapt protected implementation, run tests or fabricate a pending approval question."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-23T21:26:12.901588+00:00"
     },
     {
       "repo": "google/gvisor",
@@ -472451,7 +472451,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T20:29:42.991432+00:00"
+        "observedAt": "2026-11-23T21:36:15.021685+00:00"
       }
     },
     "pr:17082": {
@@ -474997,7 +474997,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T20:29:42.991432+00:00"
+        "observedAt": "2026-11-23T21:36:15.021685+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -475006,7 +475006,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T20:29:42.991432+00:00"
+        "observedAt": "2026-11-23T21:36:15.021685+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -475015,7 +475015,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T20:29:42.991432+00:00"
+        "observedAt": "2026-11-23T21:36:15.021685+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -475024,7 +475024,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T20:29:42.991432+00:00"
+        "observedAt": "2026-11-23T21:36:15.021685+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -475033,7 +475033,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T20:29:42.991432+00:00"
+        "observedAt": "2026-11-23T21:36:15.021685+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -475042,7 +475042,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T20:29:42.991432+00:00"
+        "observedAt": "2026-11-23T21:36:15.021685+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -475051,7 +475051,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T20:29:42.991432+00:00"
+        "observedAt": "2026-11-23T21:36:15.021685+00:00"
       }
     },
     "issue:17832": {
@@ -475060,7 +475060,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T20:29:42.991432+00:00"
+        "observedAt": "2026-11-23T21:36:15.021685+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -475069,7 +475069,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T20:29:42.991432+00:00"
+        "observedAt": "2026-11-23T21:36:15.021685+00:00"
       }
     },
     "investigation:ci-flake-node-worker-arraybuffer-zerofill": {
@@ -475078,7 +475078,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T20:29:42.991432+00:00"
+        "observedAt": "2026-11-23T21:36:15.021685+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -475087,7 +475087,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T20:29:42.991432+00:00",
+        "observedAt": "2026-11-23T21:36:15.021685+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     }
