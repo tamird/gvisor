@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T00:37:53.629100+00:00",
+    "updatedAt": "2026-11-23T00:38:44.781577+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -142977,9 +142977,9 @@
       "title": "Benchmark legacy state and UDP queues",
       "owner": "root",
       "head": "6eaaa8495bdb912284019b8d9bae8983c0435d54",
-      "updatedAt": "2026-11-22T03:38:58.522285+00:00",
-      "summary": "Published as #17871 at exact source 6eaaa8495. The benchmark-only change explicitly selects each graph engine and restores the incoming state. Functional 1x qualification, Nogo and independent reviews passed; no performance claim.",
-      "nextStep": "Root follows #17871 review and exact-head CI. Native GHA and DCO pass; FirstPass2325 failed and awaits canonical diagnosis. Preserve the independent #17472 production/performance boundary; no timing follows from this publication.",
+      "updatedAt": "2026-11-23T00:38:44.781577+00:00",
+      "summary": "The benchmark-only change in #17871 explicitly selects each graph engine and restores the incoming state. Functional 1x, Nogo and independent reviews passed; no performance claim. Exact 6eaaa8495 remains MERGEABLE with native checks/DCO green and no reviews. Canonical FirstPass2325 diagnosis is complete: only Pipeline upload exited 80 with an empty log. This run establishes no source-test failure or cause.",
+      "nextStep": "Root follows changed provider evidence, an actual CI retry or maintainer event on #17871. No unchanged retry or quota outreach follows from the empty log. Preserve #17472 production/performance boundaries; no timing follows from benchmark publication.",
       "findings": [],
       "evidence": [
         {
@@ -143009,6 +143009,10 @@
         {
           "label": "Published benchmark prerequisite",
           "url": "https://github.com/gvisor/gvisor/pull/17871"
+        },
+        {
+          "label": "Canonical upload failure: exit80, empty log, cause unverified",
+          "url": "https://buildkite.com/gvisor/first-pass/builds/2325#01a2034b-65f3-43dd-97a6-ad64618b648c"
         }
       ],
       "settledReviews": [
