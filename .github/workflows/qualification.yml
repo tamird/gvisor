@@ -192,7 +192,7 @@ jobs:
   bazel:
     if: inputs.targets != '' && github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.ref == 'refs/heads/master'
     runs-on: ${{ inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
-    timeout-minutes: ${{ (inputs.command == 'run' || inputs.command == 'test') && 30 || 15 }}
+    timeout-minutes: ${{ (inputs.command == 'run' || inputs.command == 'test') && 90 || 15 }}
     env:
       SOURCE: ${{ inputs.source }}
       TARGETS: ${{ inputs.targets }}
