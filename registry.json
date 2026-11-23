@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T01:43:05.852759+00:00",
+    "updatedAt": "2026-11-23T02:05:19.894694+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40993,15 +40993,15 @@
       "title": "Reload the state file produced by the EncodeStatefile benchmark",
       "url": "https://github.com/google/gvisor/pull/16508",
       "group": "analysis",
-      "status": "open",
+      "status": "merged",
       "updatedAt": "2026-11-21T09:33:07.303823+00:00",
       "summary": "The amended EncodeStatefile benchmark preserves the raw modes, uses the input checkpoint’s metadata and compression, and reloads the final output after timing stops. An AMD64 Nginx checkpoint run decoded a 296,028-byte state file and reloaded the 296,018-byte output. #16508 is open; this checks one iteration, not a speedup.",
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "24c1b39e498eb0f4635694e8a9b1ebe179257fb6",
-        "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Exact delivered 24c1b39e has canonical main 55599 and FirstPass 2264 PASSED; all GitHub-native checks and DCO pass. Automatic retries recovered the infrastructure attempts without manual reruns. Existing review/import requirements remain; no merge or auto-merge action is inferred.",
-        "nextAction": "Root follows existing maintainer review/import and merge events. Source CI is terminal; no execution watch, repeated outreach or further retry remains.",
+        "observedAt": "2026-11-23T02:05:19.894694+00:00",
+        "disposition": "Exact delivered24c1b39e is MERGED at2026-11-23T01:40:14Z with native merge commit a8cf14d44ee34b73fb5fa059f3fe28773cde8298. Prior main55599/FirstPass2264/native/DCO passes retain their scope; the review/import waiting instruction is consumed by this actual merge.",
+        "nextAction": "approved_rebase_queue/root owns terminal-delivery reconciliation. Preserve merge/source evidence and apply only existing cleanup authorization and canonical eligibility; no new deletion, merge or outreach is implied.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16508",
           "https://app.buildbuddy.io/invocation/7cd3432a-9763-4eb0-91d6-2a59ea477f9e",
@@ -41020,10 +41020,11 @@
           "https://github.com/tamird/gvisor/actions/runs/44889319061",
           "https://github.com/google/gvisor/pull/16508#pullrequestreview-6004401925",
           "https://buildkite.com/gvisor/pipeline/builds/55599",
-          "https://github.com/tamird/gvisor/actions/runs/44889765204"
+          "https://github.com/tamird/gvisor/actions/runs/44889765204",
+          "https://github.com/google/gvisor/commit/a8cf14d44ee34b73fb5fa059f3fe28773cde8298"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "New substantive feedback, import or merge event.",
+        "recheckCondition": "Actual import/release/adoption or newly authorized canonical cleanup event.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -103174,7 +103175,7 @@
         "sourceNumber": 16887,
         "sourceHead": "bd991e616d06c77074c56576cc94c6f9cddfeef5",
         "observedAt": "2026-11-22T21:48:03.162138+00:00",
-        "disposition": "Author source changed from 04a4ea5bf to bd991e616. Root owns current-head reviewer follow-through, but the current user-sensitive/Daybreak hold prevents source review. Prior reviews and CI do not qualify this changed head. Broad-workload evidence remains required unless actually supplied and verified; no equivalence, approval or performance completion is inferred.",
+        "disposition": "Author source changed from 04a4ea5bf to bd991e616. Root owns current-head reviewer follow-through, but the current user-sensitive/Daybreak hold prevents source review. Prior reviews and CI do not qualify this changed head. Broad-workload evidence remains required unless actually supplied and verified; no equivalence, approval or performance completion is inferred. New external evidence: Ayush reports unit and Nogo failures in FirstPass2343 on current bd991e616; this report is routed to root and the author, without a new implementation commitment or independent failure-cause claim.",
         "nextAction": "Keep current-source review and sensitive work held under the confirmed user instruction; do not read the held source, run tests, implement third-party suggestions, publish or send outreach. The author retains implementation ownership; root retains unfinished reviewer follow-through. Do not transfer prior reviews to this head or reask Daybreak availability.",
         "recheckCondition": "User releases the sensitive-work hold, actual new external evidence is supplied, or the author changes source again.",
         "evidence": [
@@ -103189,7 +103190,8 @@
           "https://github.com/gvisor/gvisor/commit/04a4ea5bf2e111ed78ab4fdf3ce6156f185f3b8b",
           "https://github.com/gvisor/gvisor/commit/1668e58d4c0cb17ecb5fcf6457389575a3c01459",
           "https://github.com/google/gvisor/pull/16887",
-          "https://github.com/google/gvisor/commit/bd991e616d06c77074c56576cc94c6f9cddfeef5"
+          "https://github.com/google/gvisor/commit/bd991e616d06c77074c56576cc94c6f9cddfeef5",
+          "https://github.com/google/gvisor/pull/16887#issuecomment-7089434753"
         ],
         "ciObservation": "Observed context buildkite/first-pass (unsuffixed) failed as build #906. No current buildkite/first-pass/pr or buildkite/pipeline/pr result appeared in the queried contexts. This is not a claim of passing required CI; current /pr requirements remain separate.",
         "actionableComment": {
@@ -105901,7 +105903,7 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "2022728765e5e2a6a436272b09b13e5f04292826",
         "mergeable": "MERGEABLE",
-        "disposition": "Published user-approved source remains mergeable. All GitHub-native execution checks and DCO pass in the canonical snapshot. FirstPass 2287 independently failed before agent assignment: exit 80, null agent_id/started_at, stack_errored, author 1535036 rolling 30-day quota of 360,000 compute minutes. No Bazel target ran; main admission and maintainer review remain distinct.",
+        "disposition": "Published user-approved source remains mergeable. All GitHub-native execution checks and DCO pass in the canonical snapshot. FirstPass 2287 independently failed before agent assignment: exit 80, null agent_id/started_at, stack_errored, author 1535036 rolling 30-day quota of 360,000 compute minutes. No Bazel target ran; main admission and maintainer review remain distinct. Ayush has now approved the exact head; Etienne remains requested and native REVIEW_REQUIRED persists. The independently diagnosed quota-only FirstPass failure is unchanged.",
         "nextAction": "Existing source/provider owner rechecks evidenced admission recovery or an actual source/check event. No manual retry, quota-owner outreach, source change or additional polling is implied. approved_rebase_queue retains the review/import lifecycle.",
         "recheckCondition": "Canonical failure diagnosis or exact-head CI/review/import event.",
         "evidence": [
@@ -139675,8 +139677,8 @@
       "title": "Node’s worker ArrayBuffer zero-fill test times out",
       "group": "ci-flakes",
       "status": "active",
-      "owner": "root / runtime integration",
-      "updatedAt": "2026-11-12T19:22:51+00:00",
+      "owner": "benchmark_measurement_review / root",
+      "updatedAt": "2026-11-23T02:05:19.894694+00:00",
       "summary": "The original Node 22.2.0 timeout attempt recovered on automatic retry. The original image and 180-second Node harness/20-minute outer contract are preserved; no new tests ran.",
       "findings": [
         {
@@ -139693,7 +139695,7 @@
           ]
         }
       ],
-      "nextStep": "Complete the existing Docker-owned runtime integration with the original Node 22.2.0 image, current Bazel and native/Sentry selectors before a targeted recurrence test. Existing integration dced6bfb requires Bazel 8.8.1, while the modern qualification workflow uses 9.3.1; manual Docker requires a preloaded image and installed runtime. Root owns this concrete integration prerequisite; recheck a usable maintained target or natural recurrence, not an unprepared repeat.",
+      "nextStep": "Complete the existing declared Node-image/owned-Docker-worker specialization with native and Sentry selectors; cheap cquery precedes any expensive build. No-build inventory45096860079 passed with Bazel9.3.1 and Docker28.0.4 available, only runc runtimes installed and no matching local Node image. Original image tag0ff5c9981b4fd7e7 exists at index35f519bc1da54d1e66f704fc8b09b59869eccc3586b6cfb522a049d7826eda83, so no image rebuild is needed. Inventory does not establish runtime/test readiness; old Bazel8.8.1 limits apply only to the historical integration. No new flake tests, performance experiment or held-source changes.",
       "evidence": [
         {
           "label": "Original Node shard",
@@ -139702,6 +139704,10 @@
         {
           "label": "Passing retry",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54705#01a1d10a-74d5-419c-986a-86b11e7a81ed"
+        },
+        {
+          "label": "No-build current-tool/image inventory",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45096860079/artifacts/14784125464"
         }
       ],
       "technicalOwner": "CI flake triage",
@@ -139717,8 +139723,8 @@
       "title": "Node’s error serialization test times out",
       "group": "ci-flakes",
       "status": "active",
-      "owner": "root / runtime integration",
-      "updatedAt": "2026-11-12T19:22:51+00:00",
+      "owner": "benchmark_measurement_review / root",
+      "updatedAt": "2026-11-23T02:05:19.894694+00:00",
       "summary": "The original Node 22.2.0 timeout attempt recovered on automatic retry. The original image and 180-second Node harness/20-minute outer contract are preserved; no new tests ran.",
       "findings": [
         {
@@ -139739,7 +139745,7 @@
           ]
         }
       ],
-      "nextStep": "Complete the existing Docker-owned runtime integration with the original Node 22.2.0 image, current Bazel and native/Sentry selectors before a targeted recurrence test. Existing integration dced6bfb requires Bazel 8.8.1, while the modern qualification workflow uses 9.3.1; manual Docker requires a preloaded image and installed runtime. Root owns this concrete integration prerequisite; recheck a usable maintained target or natural recurrence, not an unprepared repeat.",
+      "nextStep": "Complete the existing declared Node-image/owned-Docker-worker specialization with native and Sentry selectors; cheap cquery precedes any expensive build. No-build inventory45096860079 passed with Bazel9.3.1 and Docker28.0.4 available, only runc runtimes installed and no matching local Node image. Original image tag0ff5c9981b4fd7e7 exists at index35f519bc1da54d1e66f704fc8b09b59869eccc3586b6cfb522a049d7826eda83, so no image rebuild is needed. Inventory does not establish runtime/test readiness; old Bazel8.8.1 limits apply only to the historical integration. No new flake tests, performance experiment or held-source changes.",
       "evidence": [
         {
           "label": "Original Node shard",
@@ -139752,6 +139758,10 @@
         {
           "label": "Earlier error-serdes timeout",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54544#01a1cd0b-b9e6-4ca1-899c-edfd23122fcf"
+        },
+        {
+          "label": "No-build current-tool/image inventory",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45096860079/artifacts/14784125464"
         }
       ],
       "technicalOwner": "CI flake triage",
