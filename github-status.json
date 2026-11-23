@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-23T23:21:43.661808+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-23T23:03:59.853434+00:00",
+  "registryDate": "2026-11-23T23:26:26.059838+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -458028,14 +458028,14 @@
       "number": 16522,
       "head": "8585cf9fc70d84fa7cc92d9a4fbb799f1b0f17ce",
       "sourceNumber": 16522,
-      "owner": "Agent",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABZ3IT7w",
-      "needsTriage": true,
+      "needsTriage": false,
       "url": "https://github.com/google/gvisor/pull/16522#pullrequestreview-6030496751",
       "author": "rexren-gif",
       "updatedAt": "2026-11-23T22:25:33Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": false,
       "assigned": false,
       "feedbackComplete": true,
@@ -458067,8 +458067,8 @@
       "repo": "google/gvisor",
       "number": 17374,
       "head": "a8107e23ece0cf1f5152e2f4da4fb5e6cba0c7ea",
-      "action": "Read the reply on this review and follow up on the current revision.",
-      "claimed": false,
+      "action": "Root retains current-source reviewer follow-through under the confirmed sensitive-work hold. The foreign author retains implementation ownership. Await actual author evidence or user hold release; no protected source read, tests, timings, retry, outreach or transfer of old-head approval.",
+      "claimed": true,
       "firstObservedHead": "80c001d2b316feaa887a5ee53498d6ee55799a6a",
       "reviewHead": null,
       "kind": "inline",
@@ -458087,8 +458087,8 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "b98b4d2f6f7d6f1381cf4b0305ce3d4b8a967554",
-      "action": "Read the reply on this review and follow up on the current revision.",
-      "claimed": false,
+      "action": "Root retains current-source reviewer follow-through under the confirmed sensitive-work hold. The foreign author retains implementation ownership. Await actual author evidence or user hold release; no protected source read, tests, timings, retry, outreach or transfer of old-head approval.",
+      "claimed": true,
       "firstObservedHead": "e5f0f6f7fc500b646b4a0dbd738f142e1a9032a2",
       "reviewHead": null,
       "kind": "inline",
@@ -458099,7 +458099,7 @@
       "threadId": "PRRT_kwDOB9IlXs61UqSZ",
       "rootURL": "https://github.com/google/gvisor/pull/17264#discussion_r4514647899",
       "rootId": "PRRC_kwDOB9IlXs8AAAABDRgPWw",
-      "owner": "Netstack",
+      "owner": "root",
       "assigned": false,
       "feedbackComplete": true
     },
@@ -458107,8 +458107,8 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "b98b4d2f6f7d6f1381cf4b0305ce3d4b8a967554",
-      "action": "Read the reply on this review and follow up on the current revision.",
-      "claimed": false,
+      "action": "Root retains current-source reviewer follow-through under the confirmed sensitive-work hold. The foreign author retains implementation ownership. Await actual author evidence or user hold release; no protected source read, tests, timings, retry, outreach or transfer of old-head approval.",
+      "claimed": true,
       "firstObservedHead": "3389a2aa144abf8f474fc65bcabc84487564ee86",
       "reviewHead": null,
       "kind": "inline",
@@ -458119,7 +458119,7 @@
       "threadId": "PRRT_kwDOB9IlXs61UqSZ",
       "rootURL": "https://github.com/google/gvisor/pull/17264#discussion_r4514647899",
       "rootId": "PRRC_kwDOB9IlXs8AAAABDRgPWw",
-      "owner": "Netstack",
+      "owner": "root",
       "assigned": false,
       "feedbackComplete": true
     },
@@ -458127,8 +458127,8 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "b98b4d2f6f7d6f1381cf4b0305ce3d4b8a967554",
-      "action": "Read the reply on this review and follow up on the current revision.",
-      "claimed": false,
+      "action": "Root retains current-source reviewer follow-through under the confirmed sensitive-work hold. The foreign author retains implementation ownership. Await actual author evidence or user hold release; no protected source read, tests, timings, retry, outreach or transfer of old-head approval.",
+      "claimed": true,
       "firstObservedHead": "0ec767e4d4f1ec1bdf56d3675e06b860a02d7e19",
       "reviewHead": null,
       "kind": "inline",
@@ -458139,7 +458139,7 @@
       "threadId": "PRRT_kwDOB9IlXs61UqSZ",
       "rootURL": "https://github.com/google/gvisor/pull/17264#discussion_r4514647899",
       "rootId": "PRRC_kwDOB9IlXs8AAAABDRgPWw",
-      "owner": "Netstack",
+      "owner": "root",
       "assigned": false,
       "feedbackComplete": true
     }
@@ -472749,7 +472749,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T23:03:59.853434+00:00"
+        "observedAt": "2026-11-23T23:26:26.059838+00:00"
       }
     },
     "pr:17082": {
@@ -475295,7 +475295,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T23:03:59.853434+00:00"
+        "observedAt": "2026-11-23T23:26:26.059838+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -475304,7 +475304,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T23:03:59.853434+00:00"
+        "observedAt": "2026-11-23T23:26:26.059838+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -475313,7 +475313,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T23:03:59.853434+00:00"
+        "observedAt": "2026-11-23T23:26:26.059838+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -475322,7 +475322,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T23:03:59.853434+00:00"
+        "observedAt": "2026-11-23T23:26:26.059838+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -475331,7 +475331,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T23:03:59.853434+00:00"
+        "observedAt": "2026-11-23T23:26:26.059838+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -475340,7 +475340,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T23:03:59.853434+00:00"
+        "observedAt": "2026-11-23T23:26:26.059838+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -475349,7 +475349,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T23:03:59.853434+00:00"
+        "observedAt": "2026-11-23T23:26:26.059838+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -475358,7 +475358,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T23:03:59.853434+00:00"
+        "observedAt": "2026-11-23T23:26:26.059838+00:00"
       }
     },
     "issue:17832": {
@@ -475367,7 +475367,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T23:03:59.853434+00:00"
+        "observedAt": "2026-11-23T23:26:26.059838+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -475376,7 +475376,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T23:03:59.853434+00:00"
+        "observedAt": "2026-11-23T23:26:26.059838+00:00"
       }
     },
     "investigation:ci-flake-node-worker-arraybuffer-zerofill": {
@@ -475385,7 +475385,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T23:03:59.853434+00:00"
+        "observedAt": "2026-11-23T23:26:26.059838+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -475394,7 +475394,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T23:03:59.853434+00:00",
+        "observedAt": "2026-11-23T23:26:26.059838+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     }

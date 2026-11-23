@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T23:03:59.853434+00:00",
+    "updatedAt": "2026-11-23T23:26:26.059838+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41620,7 +41620,7 @@
       "group": "release",
       "status": "open",
       "updatedAt": "2026-11-20T15:15:34.980085+00:00",
-      "summary": "User-approved8585cf9 is published by the exactce4 lease and native MERGEABLE/DCO-successful. Approved review6000583632 and ThinLTO inline reply4648737517 are posted; native review re-requests for manninglucas and rexren-gif persisted. Code/response delivery is complete and no source question remains. First Pass2165 independently failed admission with exit80, no agent/start and the rolling30-day360,000-minute quota; no test or source failure is inferred. Private internal adapter/import mapping remains maintainer-owned and unverified here.",
+      "summary": "Exact-head rexren-gif approval 6030526146 is recorded. Its preceding explicitly automated review 6030496751 reports no findings and confirms the visibility forwarding change addresses the earlier comment. Source and response delivery are complete; maintainer/import follow-through and internal adapter mapping retain their existing limits.",
       "evidence": [
         {
           "label": "Latest exact-head review",
@@ -41837,11 +41837,11 @@
       ],
       "followup": {
         "owner": "root",
-        "observedAt": "2026-11-20T23:41:26.383263+00:00",
+        "observedAt": "2026-11-23T23:26:26.059838+00:00",
         "sourceHead": "8585cf9fc70d84fa7cc92d9a4fbb799f1b0f17ce",
         "mergeable": "MERGEABLE",
-        "disposition": "User-approved 8585cf9 is published by the exact ce4 lease and native MERGEABLE/DCO-successful. Approved review 6000583632 and ThinLTO inline reply 4648737517 are posted; native review re-requests for manninglucas and rexren-gif persisted. Code/response delivery is complete and no source question remains. First Pass 2165 independently failed admission with exit80, no agent/start and the rolling30-day360,000-minute quota; no test or source failure is inferred. Private internal adapter/import mapping remains maintainer-owned and unverified here. The original owner closed native Go generate/export SUCCESS in the recorded merge/export context; build/push are SKIPPED by PR policy. The separate legacy commit-status POST403 is workflow reporting with a read-only fork token, not a source-build failure or a successful status post.",
-        "nextAction": "Root follows maintainer/import review and actual admission/check events; quota diagnosis is terminal with no rerun or CI ping. The Go export watchers are closed. Root handles any reporting-auth consideration within the existing export pilot without expanding permissions.",
+        "disposition": "Exact-head rexren-gif approval 6030526146 is recorded. Its preceding explicitly automated review 6030496751 reports no findings and confirms the visibility forwarding change addresses the earlier comment. Source and response delivery are complete; maintainer/import follow-through and internal adapter mapping retain their existing limits.",
+        "nextAction": "Root follows maintainer import and actual source/check events. No new source change, acknowledgement, duplicate review request or CI retry follows the no-findings event.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16522",
           "https://github.com/tamird/gvisor/commit/4e034130e",
@@ -41854,9 +41854,11 @@
           "https://github.com/gvisor/gvisor/pull/16522#discussion_r4648158685",
           "https://github.com/gvisor/gvisor/pull/16522#pullrequestreview-6000583632",
           "https://github.com/gvisor/gvisor/pull/16522#discussion_r4648737517",
-          "https://buildkite.com/gvisor/first-pass/builds/2165#01a1fb36-af1a-4318-acfc-24dcac798498"
+          "https://buildkite.com/gvisor/first-pass/builds/2165#01a1fb36-af1a-4318-acfc-24dcac798498",
+          "https://github.com/google/gvisor/pull/16522#pullrequestreview-6030496751",
+          "https://github.com/google/gvisor/pull/16522#pullrequestreview-6030526146"
         ],
-        "recheckCondition": "A genuine maintainer/import/check event or evidenced provider admission recovery.",
+        "recheckCondition": "Actual import/landing, substantive maintainer feedback or changed source/check evidence.",
         "curatedAt": "2026-11-20T23:27:51.953187+00:00",
         "implementationOwner": "sidecar_visibility_feedback",
         "attentionDispositions": [
@@ -92666,13 +92668,13 @@
       "repo": "google/gvisor",
       "number": 17264,
       "ref": "botir/tcp-msg-more-upstream",
-      "head": "0ec767e4d4f1ec1bdf56d3675e06b860a02d7e19",
+      "head": "b98b4d2f6f7d6f1381cf4b0305ce3d4b8a967554",
       "title": "Honor MSG_MORE on TCP writes",
       "url": "https://github.com/google/gvisor/pull/17264",
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-19T16:20:03.380488+00:00",
-      "summary": "Current0ec source remains review-held. The foreign author says the next revision is scoped to MSG_MORE/cork behavior, with uncorked restore timers and ordinary short writes tracked in17893/17894 and TODOs retained. This is external task partitioning, not a new tracked commitment, verified fix or approval. Existing exact-head daily-quota admission diagnosis remains; no source/test/performance clearance is inferred.",
+      "summary": "Current source b98b4d2f6 is MERGEABLE. Ayush inline 4673268482 requests a fresh capture timeout and reports a testbench-deadline reproduction on native Linux and netstack. This is unverified external evidence, not our source/test qualification or an adopted change. The foreign author owns repair; root current-source review remains sensitive-held. Earlier-head quota and review evidence do not qualify this head.",
       "evidence": [
         {
           "label": "Timer restore",
@@ -92724,13 +92726,13 @@
       "followup": {
         "owner": "root",
         "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
-        "providerHead": "0ec767e4d4f1ec1bdf56d3675e06b860a02d7e19",
+        "providerHead": "b98b4d2f6f7d6f1381cf4b0305ce3d4b8a967554",
         "mergeable": "MERGEABLE",
-        "sourceHead": "0ec767e4d4f1ec1bdf56d3675e06b860a02d7e19",
-        "observedAt": "2026-11-23T21:36:15.021685+00:00",
-        "disposition": "Current0ec source remains review-held. The foreign author says the next revision is scoped to MSG_MORE/cork behavior, with uncorked restore timers and ordinary short writes tracked in17893/17894 and TODOs retained. This is external task partitioning, not a new tracked commitment, verified fix or approval. Existing exact-head daily-quota admission diagnosis remains; no source/test/performance clearance is inferred.",
-        "nextAction": "Keep root’s current-source review sensitive-held and foreign implementation ownership distinct. Follow actual author/head/evidence events without creating work for the cross-referenced issues, reading protected source, testing or posting outreach.",
-        "recheckCondition": "Actual new admission/source/check/review/import evidence or next normal canonical sweep.",
+        "sourceHead": "b98b4d2f6f7d6f1381cf4b0305ce3d4b8a967554",
+        "observedAt": "2026-11-23T23:26:26.059838+00:00",
+        "disposition": "Current source b98b4d2f6 is MERGEABLE. Ayush inline 4673268482 requests a fresh capture timeout and reports a testbench-deadline reproduction on native Linux and netstack. This is unverified external evidence, not our source/test qualification or an adopted change. The foreign author owns repair; root current-source review remains sensitive-held. Earlier-head quota and review evidence do not qualify this head.",
+        "nextAction": "Root retains current-source reviewer follow-through under the confirmed sensitive-work hold. The foreign author retains implementation ownership. Await actual author evidence or user hold release; no protected source read, tests, timings, retry, outreach or transfer of old-head approval.",
+        "recheckCondition": "Actual author source/results, substantive external review/check event or user hold release.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17264",
           "https://github.com/gvisor/gvisor/commit/e5f0f6f7fc500b646b4a0dbd738f142e1a9032a2",
@@ -92752,7 +92754,9 @@
           "https://buildkite.com/gvisor/first-pass/builds/2475#01a209ce-377a-40b2-8c2a-aeab22bbc304",
           "https://github.com/google/gvisor/pull/17264#discussion_r4670806381",
           "https://github.com/google/gvisor/pull/17264#discussion_r4670804473",
-          "https://github.com/google/gvisor/pull/17264#issuecomment-7113425267"
+          "https://github.com/google/gvisor/pull/17264#issuecomment-7113425267",
+          "https://github.com/google/gvisor/pull/17264#discussion_r4673268482",
+          "https://github.com/google/gvisor/commit/b98b4d2f6f7d6f1381cf4b0305ce3d4b8a967554"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
         "curatedAt": "2026-11-19T16:20:03.380488+00:00",
@@ -92797,7 +92801,8 @@
         "title": "Review reader retry and idle cork restore coverage",
         "summary": "Post the retained COMMENT review and two inline comments on the unchanged current source. The earlier approved review covered a different head; this posting decision is still unanswered. No validation was rerun.",
         "body": "The saved timer state and ordinary short-write check address my earlier points. Two remaining reader/test issues are below. I have not rerun validation.\n\nPosted by Codex on behalf of @tamird.\n\n`pkg/tcpip/transport/tcp/test/e2e/tcp_test.go:4363`\n\nThis case reads all ten outer bytes but accepts only five after the competing write. [SendMsg](https://github.com/gvisor/gvisor/blob/92e403ef2d8cb7e24a334d37dabb248cef3b4407/pkg/sentry/socket/netstack/netstack.go#L3407) retries the same reader for the remainder, so it cannot deliver the suffix. Could you check that retry and the complete stream? This also affects the parent; a separate owning fix is reasonable.\n\n`pkg/tcpip/transport/tcp/test/e2e/tcp_test.go:4038`\n\nCould you also cover TCP_CORK enabled with an idle timer across restore? A new write should receive a full hold, rather than a restore-time timer deadline."
-      }
+      },
+      "nextStep": "Root retains current-source reviewer follow-through under the confirmed sensitive-work hold. The foreign author retains implementation ownership. Await actual author evidence or user hold release; no protected source read, tests, timings, retry, outreach or transfer of old-head approval."
     },
     {
       "id": "pr:17265",
@@ -100547,11 +100552,11 @@
       "repo": "google/gvisor",
       "number": 17374,
       "ref": "botir/pgalloc-reference-accounting",
-      "head": "4350a5ff5623c7272296c3ee82d858ce21b8a0b1",
+      "head": "a8107e23ece0cf1f5152e2f4da4fb5e6cba0c7ea",
       "title": "Separate pgalloc sharing counts from occupancy",
       "url": "https://github.com/google/gvisor/pull/17374",
       "status": "open",
-      "summary": "Current4350a5ff5 FirstPass2428 has mixed failures. Attempt1 executed and reported pkg/state/tests:tests_test TIMEOUT and pkg/shim/v1/proc:proc_test TestCreatePinsOnlyMatchingSandbox/LinkedSidecar failure; cause remains unclassified, with no pgalloc-causation claim. Attempt2 never obtained an agent and exited80 after author80454001 exhausted the1-day36,000compute-minute quota. Quota blocks recovery but does not erase the actual target failures. Prior76da external performance reports do not qualify this changed head; current-source review remains sensitive-held.",
+      "summary": "Current source a8107e23e is MERGEABLE with no new review in this snapshot. Prior 4350 source-bound test failures, quota evidence and external performance reports remain historical and do not establish this changed head’s outcome. The foreign author owns repair/classification; root current-source review remains sensitive-held.",
       "updatedAt": "2026-11-19T16:20:03.380488+00:00",
       "evidence": [
         {
@@ -100610,10 +100615,10 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "4350a5ff5623c7272296c3ee82d858ce21b8a0b1",
-        "observedAt": "2026-11-23T15:06:30.966336+00:00",
-        "disposition": "Current4350a5ff5 FirstPass2428 has mixed failures. Attempt1 executed and reported pkg/state/tests:tests_test TIMEOUT and pkg/shim/v1/proc:proc_test TestCreatePinsOnlyMatchingSandbox/LinkedSidecar failure; cause remains unclassified, with no pgalloc-causation claim. Attempt2 never obtained an agent and exited80 after author80454001 exhausted the1-day36,000compute-minute quota. Quota blocks recovery but does not erase the actual target failures. Prior76da external performance reports do not qualify this changed head; current-source review remains sensitive-held.",
-        "nextAction": "Root retains sensitive-held review/triage; the foreign source author owns target-failure classification/repair and the CI owner owns quota availability. Recheck source-owner classification or changed source and actual quota recovery, respecting the hold. No retry, held source read/edit, tests, timing or outreach.",
+        "sourceHead": "a8107e23ece0cf1f5152e2f4da4fb5e6cba0c7ea",
+        "observedAt": "2026-11-23T23:26:26.059838+00:00",
+        "disposition": "Current source a8107e23e is MERGEABLE with no new review in this snapshot. Prior 4350 source-bound test failures, quota evidence and external performance reports remain historical and do not establish this changed head’s outcome. The foreign author owns repair/classification; root current-source review remains sensitive-held.",
+        "nextAction": "Root retains current-source reviewer follow-through under the confirmed sensitive-work hold. The foreign author retains implementation ownership. Await actual author evidence or user hold release; no protected source read, tests, timings, retry, outreach or transfer of old-head approval.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17374#discussion_r4545607204",
           "https://github.com/google/gvisor/pull/17374#discussion_r4576254625",
@@ -100632,9 +100637,10 @@
           "https://github.com/gvisor/gvisor/commit/4350a5ff5623c7272296c3ee82d858ce21b8a0b1",
           "https://buildkite.com/gvisor/first-pass/builds/2428",
           "https://buildkite.com/gvisor/first-pass/builds/2428#01a208a6-2f61-4a24-af33-223b484b0c2e",
-          "https://buildkite.com/gvisor/first-pass/builds/2428#01a208b9-9eae-46bd-9f0d-c6bd2bac97aa"
+          "https://buildkite.com/gvisor/first-pass/builds/2428#01a208b9-9eae-46bd-9f0d-c6bd2bac97aa",
+          "https://github.com/google/gvisor/commit/a8107e23ece0cf1f5152e2f4da4fb5e6cba0c7ea"
         ],
-        "recheckCondition": "Source-owner failure classification/changed source and actual CI-owner daily-quota recovery, or user hold release; do not conflate with Tamir’s rolling30-day quota.",
+        "recheckCondition": "Actual author source/results, substantive external review/check event or user hold release.",
         "incomingReview": {
           "repo": "google/gvisor",
           "number": 17374,
@@ -100684,7 +100690,7 @@
           ],
           "limits": "Attempt1 actual target timeout/failure, cause unclassified; attempt2 pre-agent daily quota. No source-cause or broad-workload qualification claim."
         },
-        "providerHead": "4350a5ff5623c7272296c3ee82d858ce21b8a0b1",
+        "providerHead": "a8107e23ece0cf1f5152e2f4da4fb5e6cba0c7ea",
         "mergeable": "MERGEABLE"
       },
       "reviewWatch": {
@@ -100701,7 +100707,8 @@
             ]
           }
         ]
-      }
+      },
+      "nextStep": "Root retains current-source reviewer follow-through under the confirmed sensitive-work hold. The foreign author retains implementation ownership. Await actual author evidence or user hold release; no protected source read, tests, timings, retry, outreach or transfer of old-head approval."
     },
     {
       "id": "pr:16485",
@@ -122090,7 +122097,7 @@
       "status": "active",
       "owner": "root",
       "updatedAt": "2026-11-23T22:28:52.692599+00:00",
-      "summary": "Fresh native scheduled run45277681053 completed SUCCESS22:18:10 on masterc1c30b6, with actual API22:17:49. It was reused without fallback dispatch or a new watch. This proves one scheduled delivery after the gap, not sustained cadence recovery or a source/config repair; the native trigger cause remains unexposed.",
+      "summary": "Native-first guard found no fresh or live scheduled collection. The sole snapshot-only fallback 45287620194 completed successfully and published actual API 2026-11-23T23:21:43.661808+00:00. No outreach ran. Native trigger delivery remains irregular with no demonstrated source/configuration defect or established provider cause.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122333,7 +122340,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground/active-goal supervision owns the next native-first guard at23:17:49 UTC and recovery by23:47:49. Reuse newer/live native delivery, otherwise one canonical fallback; retain60/90-minute policy and2-hour UI staleness threshold. No reset, second observer or new scheduler.",
+      "nextStep": "Root foreground/active-goal supervision owns the next native-first guard at 00:21:43 UTC and recovery deadline 00:51:43. Reuse fresh/live native delivery before one fallback. Retain the 60/90-minute policy and two-hour UI threshold; no scheduler reset, extra monitor or repeated access request.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122459,7 +122466,8 @@
           "https://github.com/tamird/gvisor/blob/c1c30b6b13079debb356befab9de2fb529e4af83/.github/workflows/work-map.yml",
           "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule",
           "https://docs.github.com/en/actions/how-tos/troubleshoot-workflows#scheduled-workflow-stopped-running",
-          "https://github.com/tamird/gvisor/actions/runs/45277681053"
+          "https://github.com/tamird/gvisor/actions/runs/45277681053",
+          "https://github.com/tamird/gvisor/actions/runs/45287620194"
         ],
         "observedAt": "2026-11-23T22:28:52.692599+00:00"
       }
@@ -131988,7 +131996,7 @@
       "owner": "analysis_pass_inventory / root",
       "updatedAt": "2026-11-23T22:28:52.692599+00:00",
       "group": "analysis",
-      "summary": "The reference full Nogo run on source4dd completed all891 target results:226 passed,665 reported findings and zero build failures. Six non-layout locations and remaining layout findings are being migrated; these counts describe that exact run, not a final current-source pass. The unified analyzer source and affected validation remain active under their existing owner. No final corpus/performance qualification, publication-readiness claim or user-approval blocker is established.",
+      "summary": "Unified analyzer migrations and source-bound validation remain active. Latest reported source 98a11 has 1,030 owning cases per architecture passing; this is affected-package coverage, not a full current-source corpus pass. The prior complete 4dd run reported 891 results, 226 passes and 665 findings with zero build failures. Sandbox worker recovery now has TestSandboxEnv passing through the approved Firecracker helper; both full 50-case architecture runs remain owner-observed and pending.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132360,7 +132368,7 @@
           ]
         }
       ],
-      "nextStep": "Existing analyzer owner finishes the concrete non-layout/layout migrations and exact affected validation, retaining the user’s narrow migration authorization and unrelated feature holds. Use source-bound findings and actual completed results; no duplicate observer or new opening question before final reviewed source.",
+      "nextStep": "Existing analyzer owner completes migrations and exact affected/full-corpus validation. The RBE owner owns sandbox runs 45288110135 and 45288103200; consume its terminal results without a second observer. Preserve narrow migration authorization and unrelated protected-feature holds; no readiness, performance or final corpus-green claim.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132700,7 +132708,10 @@
       "followup": {
         "observedAt": "2026-11-23T22:28:52.692599+00:00",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/45274157128/artifacts/14868766183"
+          "https://github.com/tamird/gvisor/actions/runs/45274157128/artifacts/14868766183",
+          "https://github.com/tamird/gvisor/actions/runs/45286918461",
+          "https://github.com/tamird/gvisor/actions/runs/45288110135",
+          "https://github.com/tamird/gvisor/actions/runs/45288103200"
         ]
       }
     },
