@@ -190,7 +190,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
   bazel:
-    if: inputs.targets != '' && github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.ref == 'refs/heads/master'
+    if: inputs.targets != '' && github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.ref == 'refs/heads/qualification/rbe-options-preflight-20261123'
     runs-on: ${{ inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: ${{ (inputs.command == 'run' || inputs.command == 'test') && 90 || 15 }}
     env:
