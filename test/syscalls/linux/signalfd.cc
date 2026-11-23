@@ -23,6 +23,7 @@
 #include <sys/signalfd.h>
 #include <sys/socket.h>
 #include <sys/syscall.h>
+#include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/wait.h>
 #include <unistd.h>
