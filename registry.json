@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T00:38:44.781577+00:00",
+    "updatedAt": "2026-11-23T01:04:08.331244+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -77756,7 +77756,7 @@
       "head": "6bd31cd09cc922fb7235267e95c0d951ad1f43c8",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:53.479529+00:00",
-      "summary": "The final NIC correction passed all five affected gates, including actual new tests; performance and correctness reviewers accepted the changed API. This closes the actionable source-review findings on that candidate, not elapsed-time A/A or performance qualification. Root owns the verified quiet-worker recheck. Public6bd31cd remains unchanged and no source-publication question is pending.",
+      "summary": "Private 8a3cb46e addresses the retained race and RemoveNIC-test feedback and keeps its exact functional/race/Nogo/source qualifications. Public 6bd31cd remains unchanged with unresolved findings. Current sensitive-work hold and failed A/A measurement limits prevent further qualification or publication; no source-publication question is pending.",
       "evidence": [
         {
           "label": "Uncached owner tests and both architecture analyzers",
@@ -77809,7 +77809,7 @@
         "sourceHead": "6bd31cd09cc922fb7235267e95c0d951ad1f43c8",
         "observedAt": "2026-11-20T20:48:41.652999+00:00",
         "disposition": "Private candidate 8a3cb46e78abfb7da36099399b5c5ffbe7f0096b addresses the retained race and RemoveNIC-test feedback. Public 6bd still carries both unresolved findings until required performance qualification and publication. Preserve both current author-feedback rows.",
-        "nextAction": "Root rechecks verified quiet-worker availability and closes the source-bound elapsed-time A/A/performance obligation. Preserve the candidate’s exact functional/race/Nogo/source evidence and obtain any eventual publication review only after required qualification.",
+        "nextAction": "Keep sensitive work held. Failed A/A limits do not justify unchanged timings, sample expansion or speculative quiet-worker retries. Preserve public6bd/private8a3 evidence and unresolved public feedback; reconsider only on actual user hold release, new placement/methodology evidence or changed source.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17103",
           "https://github.com/tamird/gvisor/actions/runs/42855947112/artifacts/13784755003",
@@ -77821,7 +77821,7 @@
           "https://github.com/gvisor/gvisor/pull/17103#pullrequestreview-5998248075"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Verified quiet-worker/telemetry availability and valid source-bound performance evidence, or a changed candidate/human finding.",
+        "recheckCondition": "Actual user hold release, new placement or methodology evidence, or changed source; no unchanged measurement retry.",
         "implementationOwner": "tcp_go_final_maintainer_review",
         "curatedAt": "2026-11-20T20:48:41.652999+00:00"
       },
@@ -77847,7 +77847,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "Root rechecks verified quiet-worker availability and closes the source-bound elapsed-time A/A/performance obligation. Preserve the candidate’s exact functional/race/Nogo/source evidence and obtain any eventual publication review only after required qualification.",
+      "nextStep": "Keep sensitive work held. Failed A/A limits do not justify unchanged timings, sample expansion or speculative quiet-worker retries. Preserve public6bd/private8a3 evidence and unresolved public feedback; reconsider only on actual user hold release, new placement/methodology evidence or changed source.",
       "recheckCondition": "Verified quiet-worker/telemetry availability and valid source-bound performance evidence, or a changed candidate/human finding."
     },
     {
@@ -100693,7 +100693,7 @@
       "repo": "google/gvisor",
       "number": 17083,
       "ref": "samridh/unix-connect-wait",
-      "head": "d9fdbaedcd8b9159c1fa8437962e7b85dc12bba8",
+      "head": "e034c5df95a680919aa077a802900c7141b18455",
       "title": "unix: block connect(2) while the accept queue is full",
       "url": "https://github.com/google/gvisor/pull/17083",
       "status": "open",
@@ -100741,18 +100741,19 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "d9fdbaedcd8b9159c1fa8437962e7b85dc12bba8",
-        "observedAt": "2026-11-23T00:00:51.257650+00:00",
-        "disposition": "Foreign author published d9fdbaed and reports the direct includes fixed. Ayush now requests an explicit //test/util:logging dependency for accept_bind_test. Implementation remains author-owned; prior exact-head approvals and CI do not transfer.",
-        "nextAction": "Root follows the author-owned BUILD dependency correction and subsequent exact-source review/CI. Preserve the declined CI-post decision; no foreign source write, retry or duplicate outreach.",
+        "sourceHead": "e034c5df95a680919aa077a802900c7141b18455",
+        "observedAt": "2026-11-23T01:04:08.331244+00:00",
+        "disposition": "Foreign author reports the explicit logging dependency fixed in e034c5df. This is author evidence, not an independently verified source correction. Current native checks and DCO pass; FirstPass2359 is pending and main55646 reports failure without a source-bound diagnosis here. Earlier exact-head approvals and qualification do not transfer.",
+        "nextAction": "Root follows author-owned changed-source review and actual current-head CI/maintainer events. No foreign source write, duplicate acknowledgement, manual retry or publication grant follows.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17552",
           "https://buildkite.com/gvisor/internal/builds/36539",
           "https://github.com/google/gvisor/pull/17083#discussion_r4660624236",
-          "https://github.com/google/gvisor/pull/17083#discussion_r4660661482"
+          "https://github.com/google/gvisor/pull/17083#discussion_r4660661482",
+          "https://github.com/google/gvisor/pull/17083#discussion_r4660679045"
         ],
         "recheckCondition": "Author head/dependency correction, current-source checks or substantive reviewer/import event.",
-        "providerHead": "d9fdbaedcd8b9159c1fa8437962e7b85dc12bba8",
+        "providerHead": "e034c5df95a680919aa077a802900c7141b18455",
         "latestSourceTriage": {
           "oldHead": "65afc4e121b577d5675faba0b77ae8edea9c5c63",
           "head": "5ef0a9f23312c68227b1431298f13edcdd0c9a28",
@@ -127709,7 +127710,7 @@
           ]
         }
       ],
-      "nextStep": "Test rules_go 2b0358c4e with the first rules_shell release containing #64, then submit the rules_go change. gVisor can adopt both modules once the rules_go change is released. Continue the other scratch-worker integrations in parallel.",
+      "nextStep": "Rules_shell v0.10.0 is published, but prerequisite #64 remains OPEN/unmerged, so no released-prerequisite trigger exists. Retain rules_go2b0358c4e until a published rules_shell release contains #64; then perform the existing qualification and release/adoption sequence. No rebuild or outreach is triggered now.",
       "evidence": [
         {
           "label": "Both optimized release layouts from tool-free AMD64 workers",
@@ -131443,7 +131444,7 @@
       "owner": "analysis_pass_inventory / root",
       "updatedAt": "2026-11-23T00:37:53.629100+00:00",
       "group": "analysis",
-      "summary": "HIGH-PRIORITY candidate 68c042487 is one commit on eb263: eight files, 175 additions and 16 deletions. It registers 20 additional diagnostic packages and 24 of 26 modernize.Suite members, including globally active errorsastype. EmbedLitAnalyzer is deferred because pinned Staticcheck IR panics on promoted-field literals; NewExprAnalyzer is deferred because v0.5.1 IR drops initializer and argument effects. All 56 catalog entries and exclusions are justified in the commit. Focused AMD/ARM validation each passes 14 remote driver cases plus one sanity case; source checks and both final review groups pass. The actual opening question is pending, with known Nogo blockers explicit. Full corpus is not green: the historical 1,234 findings came from a partial 26-member scan (275/890), not a current 24-member count. Two held AsType findings remain active blockers; no runtime edits, analyzer upgrade, baseline or new exceptions. Released-IR preflight on v0.8.2 compiles //tools/nogo:nogo without API adaptation. The exact former panic reproduction has zero panic headers or spec.go diagnostics; its validator still fails on 54 positioned existing pkg/state/generated findings (27 per target architecture). This demonstrates bounded IR compatibility only, not full upgrade or full-corpus readiness; frozen 68c and its unanswered publication question are unchanged.",
+      "summary": "HIGH-PRIORITY candidate 68c042487 is one commit on eb263: eight files, 175 additions and 16 deletions. It registers 20 additional diagnostic packages and 24 of 26 modernize.Suite members, including globally active errorsastype. EmbedLitAnalyzer is deferred because pinned Staticcheck IR panics on promoted-field literals; NewExprAnalyzer is deferred because v0.5.1 IR drops initializer and argument effects. All 56 catalog entries and exclusions are justified in the commit. Focused AMD/ARM validation each passes 14 remote driver cases plus one sanity case; source checks and both final review groups pass. The actual opening question is pending, with known Nogo blockers explicit. Full corpus is not green: the historical 1,234 findings came from a partial 26-member scan (275/890), not a current 24-member count. Two held AsType findings remain active blockers; no runtime edits, analyzer upgrade, baseline or new exceptions. Released-IR preflight on v0.8.2 compiles //tools/nogo:nogo without API adaptation. The exact former panic reproduction has zero panic headers or spec.go diagnostics; its validator still fails on 54 positioned existing pkg/state/generated findings (27 per target architecture). This demonstrates bounded IR compatibility only, not full upgrade or full-corpus readiness; frozen 68c and its unanswered publication question are unchanged. Separate dependent upgrade 3fa9c571b on frozen68c restores all26modernize analyzers after released-IR compatibility: actual AMD/ARM driver14+sanity1, final source and225-license checks pass, canonicalFetch changes one record, and both final independent reviews found no issues. The old reproduction still reports54 existing state findings with zeroIRpanics; no full-corpus-green claim. Its public source object is readable but durable preview ref is absent after SSH/HTTPS timeouts, with cause unproven. It has no publication question.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -131815,7 +131816,7 @@
           ]
         }
       ],
-      "nextStep": "Await the exact frozen 68c publication decision with known Nogo blockers. Released v0.8.2 IR compatibility preflight is terminal: no API adaptation, former panic case cleared, existing positioned findings retained. No further probe, upgrade, source change or publication approval follows from that result. Whole-backlog cleanup and separate migration remain outside source-handoff prerequisites; protected findings stay held.",
+      "nextStep": "Await the frozen68c opening decision, unchanged. Dependent upgrade3fa9c571b is qualified within its recorded scope but has no source-publication question. Root follows the actual SSH-availability response or working transport before another bounded publication attempt; no unchanged retry or credential/scope workaround. Protected findings remain held and existing corpus blockers remain explicit.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132004,6 +132005,26 @@
         {
           "label": "Former panic reproduction: zero panics, existing findings remain",
           "url": "https://github.com/tamird/gvisor/actions/runs/45089049784/artifacts/14780328673"
+        },
+        {
+          "label": "Qualified dependent upgrade source",
+          "url": "https://github.com/tamird/gvisor/commit/3fa9c571bc9afc8fb6a5de9a41a71857d8623ba5"
+        },
+        {
+          "label": "Dependent upgrade AMD validation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45090511370/artifacts/14781362153"
+        },
+        {
+          "label": "Dependent upgrade ARM validation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45090511271/artifacts/14781242798"
+        },
+        {
+          "label": "Dependent upgrade final source checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45091632818/artifacts/14781715743"
+        },
+        {
+          "label": "Dependent upgrade license verification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45091632838/artifacts/14781945166"
         }
       ],
       "reviewWatch": {
@@ -132067,7 +132088,16 @@
         "title": "Audit and enable x/tools analysis passes",
         "summary": "Open the audited analyzer enhancement for review with known Nogo blockers; defer embedlit and newexpr until pinned IR support is sound.",
         "body": "Nogo's explicit analyzer list missed newer diagnostics and modern Go APIs. Register 20 additional diagnostic packages and 24 of the 26 members of `modernize.Suite`, including `errors.AsType`. Supply the declared ignored files and source reader required by the added passes. Defer `embedlit` and `newexpr`: the pinned Staticcheck v0.5.1 IR builder crashes on promoted-field literals and does not preserve `new(value)` initialization or argument effects. The commit records the complete 56-directory audit and the reason for every omission.\n\nFocused driver and sanity tests pass on AMD64 and ARM64, as do source checks. Full-corpus Nogo still reports existing source findings, so source migrations remain necessary before merging; the existing corpus scan is partial.\n\nPosted by Codex on behalf of @tamird.\n"
-      }
+      },
+      "additionalReviews": [
+        {
+          "kind": "information",
+          "status": "pending",
+          "title": "Restore normal SSH availability",
+          "summary": "Operational availability of the existing machine/SSH agent is needed for the dependent upgrade preview; this does not grant source publication or change access.",
+          "body": "Scope summary (original wording not retained): check or unlock the existing machine/SSH agent so normal authorized Git transport can be used. The source-publication boundary and existing credentials, scopes and hooks remain unchanged."
+        }
+      ]
     },
     {
       "id": "investigation:proc-boot-identity",
@@ -137209,7 +137239,7 @@
           ]
         }
       ],
-      "nextStep": "Test 2b0358c4e against the first published rules_shell module containing #64, then submit the change to rules_go. Once rules_go releases it, update gVisor to the published modules.",
+      "nextStep": "Rules_shell v0.10.0 is published, but prerequisite #64 remains OPEN/unmerged, so no released-prerequisite trigger exists. Retain rules_go2b0358c4e until a published rules_shell release contains #64; then perform the existing qualification and release/adoption sequence. No rebuild or outreach is triggered now.",
       "evidence": [
         {
           "label": "rules_go 0.65 integration with the execution-platform interpreter",
