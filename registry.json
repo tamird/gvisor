@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-22T23:40:33.833042+00:00",
+    "updatedAt": "2026-11-23T00:01:20.103608+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4972,7 +4972,7 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "First priority is the main analyzer compatibility revision: exclude only modernize.embedlit after pinned IR panics invalidated its static qualification. The old df8 opening question is superseded; no replacement question exists. Independent preparation restores explicit wrappers and reruns spec_nogo/source checks. Its deb218 object is readable but expected preview ref remains absent after two guarded REST 404 responses: a provider/transport issue, not pending human approval. BuildBuddy96 has a separate unanswered publication question; ten marshal loops/performance and protected work remain held.",
+        "nextAction": "First priority is the actual 68c analyzer publication question: 24 of 26 modernize.Suite members, excluding embedlit and newexpr for verified pinned-IR incompatibilities; known Nogo blockers remain explicit. Separate migration static/source checks passed but final review/publication is incomplete and its absent preview branch is a provider issue, not pending human approval. BuildBuddy96 has a separate unanswered publication question. Ten marshal loops/performance and protected work remain held.",
         "recheckCondition": "Qualified provider correction and actual deployed behavior, terminal owner evidence for the analyzer policy, or actual upstream prerequisite landing; no repeat of the completed 70857 Nogo gate.",
         "observedAt": "2026-11-17T19:58:24.544895+00:00",
         "curatedAt": "2026-11-21T13:24:07.659680+00:00",
@@ -16927,10 +16927,10 @@
       ],
       "followup": {
         "owner": "root",
-        "disposition": "Rebased; conflict resolved",
+        "disposition": "Current 94e3488d is newly CONFLICTING. The earlier resolved-conflict disposition and qualifications are historical; no current-source adaptation has been performed.",
         "sourceHead": "94e3488d99cba57f92c7acc767eae3d2d4b0f5a5",
-        "observedAt": "2026-11-17T19:04:43.853615+00:00",
-        "nextAction": "Await existing requested reviewers. No new contributor decision. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks.",
+        "observedAt": "2026-11-23T00:00:51.257650+00:00",
+        "nextAction": "Root reconciles the new conflict with the existing source/authorization and sensitive-work holds before assigning any adaptation. No source read, artificial rebase or new approval is inferred.",
         "evidence": [
           {
             "label": "All four clock and restore results",
@@ -16944,8 +16944,8 @@
           "https://github.com/tamird/gvisor/commit/80bbb7478312a10e7335a5475c9683a76d5c17d6",
           "https://github.com/tamird/gvisor/commit/94e3488d99cba57f92c7acc767eae3d2d4b0f5a5"
         ],
-        "mergeable": "MERGEABLE",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change."
+        "mergeable": "CONFLICTING",
+        "recheckCondition": "Root source-bound disposition, actual conflict/head/base change or user release of applicable hold."
       },
       "dcoAmendment": {
         "oldHead": "80bbb7478312a10e7335a5475c9683a76d5c17d6",
@@ -98825,7 +98825,7 @@
         "owner": "root",
         "sourceHead": "2f8840c6402bc2c5db1cef382adbaee1d89cecf7",
         "observedAt": "2026-11-22T22:57:01.440210+00:00",
-        "disposition": "Verified pull_request_target run 45077691189 on exact 2f8840c64 fails Apply Safe for Tests Label because the unsafe fork has not been approved to run tests. All Blocking Tests (fork) only runs false. This is a protobuf-team test-approval gate; no source-test failure or unrelated-error cause is established. The existing author comment already requests approval. Prior generator/output qualification does not transfer to this changed head.",
+        "disposition": "Exact 2f8840c64 now has native APPROVED review. The verified failing test_runner remains the protobuf-team safe-for-tests approval gate, not a source-test failure; the new author comment does not independently establish unrelated failures. Prior generator/output qualification does not transfer to this changed head.",
         "nextAction": "Root follows the existing test-approval request; a protobuf team member owns the safe-for-tests label. No duplicate outreach, source change, manual retry or permission bypass is authorized.",
         "evidence": [
           "https://github.com/protocolbuffers/protobuf/pull/31530",
@@ -100693,7 +100693,7 @@
       "repo": "google/gvisor",
       "number": 17083,
       "ref": "samridh/unix-connect-wait",
-      "head": "5ef0a9f23312c68227b1431298f13edcdd0c9a28",
+      "head": "d9fdbaedcd8b9159c1fa8437962e7b85dc12bba8",
       "title": "unix: block connect(2) while the accept queue is full",
       "url": "https://github.com/google/gvisor/pull/17083",
       "status": "open",
@@ -100741,16 +100741,18 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "5ef0a9f23312c68227b1431298f13edcdd0c9a28",
-        "observedAt": "2026-11-18T21:05:51.124797+00:00",
-        "disposition": "Foreign source remains author-owned and unchanged; export closure is not current-source delivery or rewrite permission. Current DCO SUCCESS; author header fix remains due and declined CI post preserved.",
-        "nextAction": "Root follows foreign author and importing-maintainer disposition; no branch/DCO rewrite or new comment. Preserve declined CI-post decision and author direct-header obligation.",
+        "sourceHead": "d9fdbaedcd8b9159c1fa8437962e7b85dc12bba8",
+        "observedAt": "2026-11-23T00:00:51.257650+00:00",
+        "disposition": "Foreign author published d9fdbaed and reports the direct includes fixed. Ayush now requests an explicit //test/util:logging dependency for accept_bind_test. Implementation remains author-owned; prior exact-head approvals and CI do not transfer.",
+        "nextAction": "Root follows the author-owned BUILD dependency correction and subsequent exact-source review/CI. Preserve the declined CI-post decision; no foreign source write, retry or duplicate outreach.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17552",
-          "https://buildkite.com/gvisor/internal/builds/36539"
+          "https://buildkite.com/gvisor/internal/builds/36539",
+          "https://github.com/google/gvisor/pull/17083#discussion_r4660624236",
+          "https://github.com/google/gvisor/pull/17083#discussion_r4660661482"
         ],
-        "recheckCondition": "Exact source/fork head/base, source or import CI, maintainer first diagnostic/disposition, replacement/import event; fresh lease before any authorized write.",
-        "providerHead": "5ef0a9f23312c68227b1431298f13edcdd0c9a28",
+        "recheckCondition": "Author head/dependency correction, current-source checks or substantive reviewer/import event.",
+        "providerHead": "d9fdbaedcd8b9159c1fa8437962e7b85dc12bba8",
         "latestSourceTriage": {
           "oldHead": "65afc4e121b577d5675faba0b77ae8edea9c5c63",
           "head": "5ef0a9f23312c68227b1431298f13edcdd0c9a28",
@@ -104553,7 +104555,7 @@
       "followup": {
         "owner": "root",
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-        "disposition": "The collaborator approval gate remains satisfied. Gurgunday confirmed the author’s existing landing question and added another exact-head approval on unchanged 15c2edb5. The PR remains OPEN/APPROVED/MERGEABLE but natively BLOCKED with three pending GitHub Jenkins contexts. This is maintainer landing/CI-reporting follow-through, not a new source failure or agent merge authorization.",
+        "disposition": "The collaborator approval gate remains satisfied on unchanged 15c2edb. The commit queue removed the PR and applied commit-queue-failed because GitHub CI still reports running. This is the current maintainer queue/CI-reporting blocker, not an established source failure or agent relabel/requeue/merge authorization.",
         "nextAction": "Root follows actual status correction and maintainer-owned queue/landing events. The new confirmation is read and triaged; do not merge, relabel/requeue, retry, change source or send duplicate outreach.",
         "recheckCondition": "Actual status correction, maintainer queue/landing event, source/head or substantive new feedback.",
         "publishedDelivery": {
@@ -104822,7 +104824,7 @@
         "attentionDispositions": [
           {
             "reason": "author-feedback",
-            "title": "Approval gate satisfied; confirmation triaged, landing remains maintainer-owned",
+            "title": "Queue failure triaged; GitHub status correction and maintainer landing remain",
             "nextAction": "Root follows actual status correction and maintainer-owned queue/landing events. The new confirmation is read and triaged; do not merge, relabel/requeue, retry, change source or send duplicate outreach.",
             "evidence": [
               "https://github.com/nodejs/node/pull/67595#issuecomment-7080248335",
@@ -104836,7 +104838,8 @@
               "https://github.com/nodejs/node/pull/67595#issuecomment-7026664983",
               "https://github.com/nodejs/node/pull/67595#issuecomment-7053905845",
               "https://github.com/nodejs/node/pull/67595#issuecomment-7086842084",
-              "https://github.com/nodejs/node/pull/67595#pullrequestreview-6014883170"
+              "https://github.com/nodejs/node/pull/67595#pullrequestreview-6014883170",
+              "https://github.com/nodejs/node/pull/67595#issuecomment-7087863667"
             ],
             "binding": {
               "reviewDecision": "APPROVED",
@@ -104857,9 +104860,9 @@
                     "kind": "comment",
                     "id": "IC_kwDOAZ7xs88AAAABoQXNCw",
                     "url": "https://github.com/nodejs/node/pull/67595#issuecomment-6996479243",
-                    "body": "## [Codecov](https://app.codecov.io/gh/nodejs/node/pull/67595?dropdown=coverage&src=pr&el=h1&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nodejs) Report\n:white_check_mark: All modified and coverable lines are covered by tests.\n:white_check_mark: Project coverage is 90.70%. Comparing base ([`b7df44b`](https://app.codecov.io/gh/nodejs/node/commit/b7df44bf9c85a6104b9158b616999e3d2c58be5d?dropdown=coverage&el=desc&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nodejs)) to head ([`15c2edb`](https://app.codecov.io/gh/nodejs/node/commit/15c2edb5708cf8ac75b01360cff2372ecee0be23?dropdown=coverage&el=desc&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nodejs)).\n:warning: Report is 77 commits behind head on main.\n\n<details><summary>Additional details and impacted files</summary>\n\n\n\n```diff\n@@            Coverage Diff             @@\n##             main   #67595      +/-   ##\n==========================================\n- Coverage   90.73%   90.70%   -0.03%     \n==========================================\n  Files         801      801              \n  Lines      280787   280787              \n  Branches    54221    54202      -19     \n==========================================\n- Hits       254765   254700      -65     \n- Misses      16203    16261      +58     \n- Partials     9819     9826       +7     \n```\n[see 40 files with indirect coverage changes](https://app.codecov.io/gh/nodejs/node/pull/67595/indirect-changes?src=pr&el=tree-more&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nodejs)\n</details>\n<details><summary> :rocket: New features to boost your workflow: </summary>\n\n- :snowflake: [Test Analytics](https://docs.codecov.com/docs/test-analytics): Detect flaky tests, report on failures, and find test suite problems.\n- :package: [JS Bundle Analysis](https://docs.codecov.com/docs/javascript-bundle-analysis): Save yourself from yourself by tracking and limiting bundle sizes in JS merges.\n</details>",
+                    "body": "## [Codecov](https://app.codecov.io/gh/nodejs/node/pull/67595?dropdown=coverage&src=pr&el=h1&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nodejs) Report\n:white_check_mark: All modified and coverable lines are covered by tests.\n:white_check_mark: Project coverage is 90.70%. Comparing base ([`b7df44b`](https://app.codecov.io/gh/nodejs/node/commit/b7df44bf9c85a6104b9158b616999e3d2c58be5d?dropdown=coverage&el=desc&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nodejs)) to head ([`15c2edb`](https://app.codecov.io/gh/nodejs/node/commit/15c2edb5708cf8ac75b01360cff2372ecee0be23?dropdown=coverage&el=desc&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nodejs)).\n:warning: Report is 135 commits behind head on main.\n\n<details><summary>Additional details and impacted files</summary>\n\n\n\n```diff\n@@            Coverage Diff             @@\n##             main   #67595      +/-   ##\n==========================================\n- Coverage   90.73%   90.70%   -0.03%     \n==========================================\n  Files         801      801              \n  Lines      280787   280787              \n  Branches    54221    54202      -19     \n==========================================\n- Hits       254765   254700      -65     \n- Misses      16203    16261      +58     \n- Partials     9819     9826       +7     \n```\n[see 40 files with indirect coverage changes](https://app.codecov.io/gh/nodejs/node/pull/67595/indirect-changes?src=pr&el=tree-more&utm_medium=referral&utm_source=github&utm_content=comment&utm_campaign=pr+comments&utm_term=nodejs)\n</details>\n<details><summary> :rocket: New features to boost your workflow: </summary>\n\n- :snowflake: [Test Analytics](https://docs.codecov.com/docs/test-analytics): Detect flaky tests, report on failures, and find test suite problems.\n- :package: [JS Bundle Analysis](https://docs.codecov.com/docs/javascript-bundle-analysis): Save yourself from yourself by tracking and limiting bundle sizes in JS merges.\n</details>",
                     "createdAt": "2026-11-19T01:06:34Z",
-                    "updatedAt": "2026-11-22T14:03:30Z",
+                    "updatedAt": "2026-11-22T23:46:33Z",
                     "author": {
                       "login": "codecov",
                       "__typename": "Bot"
@@ -105010,6 +105013,18 @@
                     }
                   },
                   {
+                    "kind": "comment",
+                    "id": "IC_kwDOAZ7xs88AAAABpng3cw",
+                    "url": "https://github.com/nodejs/node/pull/67595#issuecomment-7087863667",
+                    "body": "### Commit Queue failed\n\n`    ✖  GitHub CI is still running `\n\nThe pull request was removed from the Commit Queue and labeled https://github.com/nodejs/node/labels/commit-queue-failed. After resolving the failure, remove that label and add https://github.com/nodejs/node/labels/commit-queue to retry.\n\n<details>\n<summary>Full Commit Queue output</summary>\n\n```\n^[[36m⠋^[[39m Loading data for nodejs/node/pull/67595\n^[[36m⠋^[[39m Loading data for nodejs/node/pull/67595\n^[[36m⠋^[[39m Getting collaborator contacts from README of nodejs/node\n^[[36m⠋^[[39m Getting PR from nodejs/node/pull/67595\n^[[36m⠋^[[39m Getting reviews from nodejs/node/pull/67595\n^[[36m⠋^[[39m Getting comments from nodejs/node/pull/67595\n^[[36m⠋^[[39m Getting commits from nodejs/node/pull/67595\n✔  Done loading data for nodejs/node/pull/67595\n----------------------------------- PR info ------------------------------------\nTitle      test: check the TLS server name on address-family fallback locally (#67595)\nAuthor     Tamir Duberstein <tamird@gmail.com> (@tamird)\nBranch     tamird:proposal/tls-autoselectfamily-loopback -> nodejs:main\nLabels     test, author ready, needs-ci, commit-queue\nCommits    1\n - test: check the TLS server name on address-family fallback locally\nCommitters 1\n - Tamir Duberstein <tamird@gmail.com>\nPR-URL: https://github.com/nodejs/node/pull/67595\nRefs: https://github.com/nodejs/node/issues/46679\nReviewed-By: Tierney Cyren <hello@bnb.im>\nReviewed-By: James M Snell <jasnell@gmail.com>\nReviewed-By: Gürgün Dayıoğlu <hey@gurgun.day>\n------------------------------ Generated metadata ------------------------------\nPR-URL: https://github.com/nodejs/node/pull/67595\nRefs: https://github.com/nodejs/node/issues/46679\nReviewed-By: Tierney Cyren <hello@bnb.im>\nReviewed-By: James M Snell <jasnell@gmail.com>\nReviewed-By: Gürgün Dayıoğlu <hey@gurgun.day>\n--------------------------------------------------------------------------------\n   ℹ  This PR was created on Wed, 18 Nov 2026 23:11:54 GMT\n   ✔  Approvals: 3\n   ✔  - Tierney Cyren (@bnb): https://github.com/nodejs/node/pull/67595#pullrequestreview-5966960144\n   ✔  - James M Snell (@jasnell) (TSC): https://github.com/nodejs/node/pull/67595#pullrequestreview-6014285398\n   ✔  - Gürgün Dayıoğlu (@gurgunday): https://github.com/nodejs/node/pull/67595#pullrequestreview-6014883170\n   ✖  GitHub CI is still running\n   ℹ  Last Full PR CI on 2026-11-22T14:13:05Z: https://ci.nodejs.org/job/node-test-pull-request/79320/\n^[[36m⠙^[[39m Querying data for job/node-test-pull-request/79320/\n^[[36m⠙^[[39m Querying data for job/node-test-pull-request/79320/\n^[[36m⠙^[[39m Querying API for job/node-test-pull-request/79320/\n✔  Build data downloaded\n   ✔  Last Jenkins CI successful\n--------------------------------------------------------------------------------\n   ✔  Aborted `git node land` session in /home/runner/work/node/node/.ncu\n```\n\n</details>\n\n[View workflow run](https://github.com/nodejs/node/actions/runs/45085238426)",
+                    "createdAt": "2026-11-22T23:49:44Z",
+                    "updatedAt": "2026-11-22T23:49:44Z",
+                    "author": {
+                      "login": "nodejs-github-bot",
+                      "__typename": "User"
+                    }
+                  },
+                  {
                     "kind": "review",
                     "id": "PRR_kwDOAZ7xs88AAAABY6iWEA",
                     "url": "https://github.com/nodejs/node/pull/67595#pullrequestreview-5966960144",
@@ -105072,7 +105087,8 @@
           "https://github.com/nodejs/node/pull/67595#issuecomment-7053905845",
           "https://github.com/nodejs/node/pull/67595#issuecomment-7059960789",
           "https://github.com/nodejs/node/pull/67595#issuecomment-7086842084",
-          "https://github.com/nodejs/node/pull/67595#pullrequestreview-6014883170"
+          "https://github.com/nodejs/node/pull/67595#pullrequestreview-6014883170",
+          "https://github.com/nodejs/node/pull/67595#issuecomment-7087863667"
         ]
       },
       "evidence": [
@@ -106175,16 +106191,17 @@
       "followup": {
         "owner": "root",
         "sourceHead": "4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
-        "observedAt": "2026-11-22T22:40:51.591862+00:00",
-        "disposition": "Exact signed 4a881d4ef remains OPEN/MERGEABLE/REVIEW_REQUIRED. Native check 45078090352 succeeds; Buildkite #51 fails with the same six jobs and concrete failure messages as exact integration-base 1da8c08 build #46. Root’s source-bound comparison establishes no PR-specific defect, while required CI remains red. Existing jbedard review, release and integration remain.",
-        "nextAction": "Root follows actual upstream dependency/toolchain baseline changes and existing maintainer feedback, release and adoption. Source-bound failure diagnosis is complete; no source edit, manual retry or outreach is authorized.",
+        "observedAt": "2026-11-23T00:00:51.257650+00:00",
+        "disposition": "Exact signed 4a881d4ef remains OPEN/MERGEABLE/REVIEW_REQUIRED. Native check 45078090352 succeeds; Buildkite #51 fails with the same six jobs and concrete failure messages as exact integration-base 1da8c08 build #46. Root’s source-bound comparison establishes no PR-specific defect, while required CI remains red. Existing jbedard review, release and integration remain. New CodeRabbit inline 4660454549 alleges partial patch output may survive diff failure when rules_js records exit status separately; this is unverified review evidence, not an adopted fix.",
+        "nextAction": "Root verifies the new partial-output finding against exact 4a and its actual consumer before choosing a source correction or evidence-backed response. Preserve the verified shared-baseline Buildkite failures, existing jbedard request and release/adoption wait; no automatic source edit, retry or outreach.",
         "recheckCondition": "Genuine review/check/head/merge/release event.",
         "evidence": [
           "https://github.com/bazel-contrib/rules_lint/pull/1112",
           "https://github.com/tamird/rules_lint/commit/4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
           "https://buildkite.com/bazel-contrib/rules-lint/builds/51",
           "https://github.com/bazel-contrib/rules_lint/actions/runs/45078090352/job/137379762451",
-          "https://buildkite.com/bazel-contrib/rules-lint/builds/46"
+          "https://buildkite.com/bazel-contrib/rules-lint/builds/46",
+          "https://github.com/bazel-contrib/rules_lint/pull/1112#discussion_r4660454549"
         ]
       }
     }
@@ -131413,9 +131430,9 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "analysis_pass_inventory / root",
-      "updatedAt": "2026-11-22T23:40:33.833042+00:00",
+      "updatedAt": "2026-11-22T23:55:05.239880+00:00",
       "group": "analysis",
-      "summary": "HIGH-PRIORITY analyzer candidate is under revision. Pinned Staticcheck go/ir panics on legal Go 1.27 promoted embedded-field literals: spec_nogo reports 122 unpositioned panics (61 categories on both target architectures), also present in the earlier static run. The earlier static qualification was incomplete and is withdrawn. The amendment will exclude only modernize.embedlit until pinned IR support exists, retaining 25 of 26 modernize.Suite members, 20 additional diagnostic packages and globally active errorsastype without new exceptions or warning baselines. The df8 opening question is superseded; no replacement question or upstream PR exists. Functional baseline, spec compiler and source passes remain valid within their actual scope. Full-corpus Nogo remains known red and its historical scan partial.",
+      "summary": "HIGH-PRIORITY candidate 68c042487 is one commit on eb263: eight files, 175 additions and 16 deletions. It registers 20 additional diagnostic packages and 24 of 26 modernize.Suite members, including globally active errorsastype. EmbedLitAnalyzer is deferred because pinned Staticcheck IR panics on promoted-field literals; NewExprAnalyzer is deferred because v0.5.1 IR drops initializer and argument effects. All 56 catalog entries and exclusions are justified in the commit. Focused AMD/ARM validation each passes 14 remote driver cases plus one sanity case; source checks and both final review groups pass. The actual opening question is pending, with known Nogo blockers explicit. Full corpus is not green: the historical 1,234 findings came from a partial 26-member scan (275/890), not a current 24-member count. Two held AsType findings remain active blockers; no runtime edits, analyzer upgrade, baseline or new exceptions.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -131787,7 +131804,7 @@
           ]
         }
       ],
-      "nextStep": "analysis_pass_inventory owns the minimal eight-file main amendment and compatibility rationale, focused validation and final review before a replacement publication question. Separate migration restores three explicit wrappers while retaining new(true), then reruns only spec_nogo and source checks. Classify native JSON and unpositioned panics explicitly; do not count missing positioned diagnostics as static success. Preserve the 64 baseline functional cases and compiler/source evidence without transferring them to static qualification. Whole-warning-backlog cleanup is not a source-candidate handoff prerequisite; protected findings remain held.",
+      "nextStep": "Await the exact 68c publication decision for opening review with known Nogo blockers. No more gates are required before human review; whole-backlog cleanup and the separate migration are not source-handoff prerequisites. Keep protected findings held. Separate 17-file migration 0828 passed affected static/source checks but lacks final review/publication; its absent source branch remains a provider error, not a user decision.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -131952,6 +131969,22 @@
         {
           "label": "Earlier static run with the same panics; qualification withdrawn",
           "url": "https://github.com/tamird/gvisor/actions/runs/45076325513/artifacts/14775911284"
+        },
+        {
+          "label": "Current analyzer enhancement",
+          "url": "https://github.com/tamird/gvisor/commit/68c042487cd93a312d5e9e935e11d7219b2983f1"
+        },
+        {
+          "label": "Current focused AMD validation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45085046992/artifacts/14779001379"
+        },
+        {
+          "label": "Current focused ARM validation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45085047335/artifacts/14779106959"
+        },
+        {
+          "label": "Current source/guard validation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45085046990/artifacts/14778822335"
         }
       ],
       "reviewWatch": {
@@ -131980,7 +132013,7 @@
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
       },
-      "head": "df8f2ce22ee86a24b1ecc6dd7155132a215f7cf4",
+      "head": "68c042487cd93a312d5e9e935e11d7219b2983f1",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -132005,7 +132038,17 @@
           "body": "Nogo's explicit analyzer list missed newer diagnostics and modern Go APIs. Register 20 additional diagnostic packages and all 26 members of `modernize.Suite`, including `errors.AsType`. Supply the declared ignored files and source reader required by the added passes. The commit records the complete 56-directory audit and the reason for every omission.\n\nFocused driver and sanity tests pass on AMD64 and ARM64. Full-corpus Nogo still reports existing source findings, so source migrations remain necessary before merging; the existing corpus scan is partial.\n\nPosted by Codex on behalf of @tamird.\n",
           "outcome": "superseded"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "68c042487cd93a312d5e9e935e11d7219b2983f1",
+        "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+        "url": "https://github.com/tamird/gvisor/commit/68c042487cd93a312d5e9e935e11d7219b2983f1",
+        "title": "Audit and enable x/tools analysis passes",
+        "summary": "Open the audited analyzer enhancement for review with known Nogo blockers; defer embedlit and newexpr until pinned IR support is sound.",
+        "body": "Nogo's explicit analyzer list missed newer diagnostics and modern Go APIs. Register 20 additional diagnostic packages and 24 of the 26 members of `modernize.Suite`, including `errors.AsType`. Supply the declared ignored files and source reader required by the added passes. Defer `embedlit` and `newexpr`: the pinned Staticcheck v0.5.1 IR builder crashes on promoted-field literals and does not preserve `new(value)` initialization or argument effects. The commit records the complete 56-directory audit and the reason for every omission.\n\nFocused driver and sanity tests pass on AMD64 and ARM64, as do source checks. Full-corpus Nogo still reports existing source findings, so source migrations remain necessary before merging; the existing corpus scan is partial.\n\nPosted by Codex on behalf of @tamird.\n"
+      }
     },
     {
       "id": "investigation:proc-boot-identity",

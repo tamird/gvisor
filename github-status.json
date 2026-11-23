@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-22T23:58:09.306907+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-22T23:40:33.833042+00:00",
+  "registryDate": "2026-11-23T00:01:20.103608+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -455338,25 +455338,6 @@
       "assigned": false,
       "feedbackComplete": true,
       "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "nodejs/node",
-      "number": 67595,
-      "head": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-      "sourceNumber": 67595,
-      "owner": "Agent",
-      "kind": "comment",
-      "id": "IC_kwDOAZ7xs88AAAABpng3cw",
-      "needsTriage": true,
-      "createdAt": "2026-11-22T23:49:44Z",
-      "url": "https://github.com/nodejs/node/pull/67595#issuecomment-7087863667",
-      "author": "nodejs-github-bot",
-      "updatedAt": "2026-11-22T23:49:44Z",
-      "newOrChanged": true,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
     }
   ],
   "reviewWatchHandoff": [
@@ -455513,10 +455494,10 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "94e3488d99cba57f92c7acc767eae3d2d4b0f5a5",
-        "disposition": "Rebased; conflict resolved",
-        "nextAction": "Await existing requested reviewers. No new contributor decision. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks."
+        "disposition": "Current 94e3488d is newly CONFLICTING. The earlier resolved-conflict disposition and qualifications are historical; no current-source adaptation has been performed.",
+        "nextAction": "Root reconciles the new conflict with the existing source/authorization and sensitive-work holds before assigning any adaptation. No source read, artificial rebase or new approval is inferred."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-22T23:58:04.739191+00:00"
     },
     {
       "repo": "google/gvisor",
@@ -470052,7 +470033,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T23:40:33.833042+00:00"
+        "observedAt": "2026-11-23T00:01:20.103608+00:00"
       }
     },
     "pr:17082": {
@@ -470439,7 +470420,7 @@
         "since": "2026-11-22T09:10:24+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T23:40:33.833042+00:00"
+        "observedAt": "2026-11-23T00:01:20.103608+00:00"
       }
     },
     "pr:17191": {
@@ -472592,7 +472573,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T23:40:33.833042+00:00"
+        "observedAt": "2026-11-23T00:01:20.103608+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -472601,7 +472582,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T23:40:33.833042+00:00"
+        "observedAt": "2026-11-23T00:01:20.103608+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -472610,7 +472591,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T23:40:33.833042+00:00"
+        "observedAt": "2026-11-23T00:01:20.103608+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -472619,7 +472600,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T23:40:33.833042+00:00"
+        "observedAt": "2026-11-23T00:01:20.103608+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -472628,7 +472609,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T23:40:33.833042+00:00"
+        "observedAt": "2026-11-23T00:01:20.103608+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -472637,7 +472618,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T23:40:33.833042+00:00"
+        "observedAt": "2026-11-23T00:01:20.103608+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -472646,7 +472627,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T23:40:33.833042+00:00"
+        "observedAt": "2026-11-23T00:01:20.103608+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -472655,7 +472636,16 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T23:40:33.833042+00:00"
+        "observedAt": "2026-11-23T00:01:20.103608+00:00"
+      }
+    },
+    "investigation:repository-lint": {
+      "contributor-review": {
+        "scope": "68c042487cd93a312d5e9e935e11d7219b2983f1",
+        "since": "2026-11-23T00:00:51.257650+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-23T00:01:20.103608+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -472664,7 +472654,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T23:40:33.833042+00:00",
+        "observedAt": "2026-11-23T00:01:20.103608+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     },
@@ -472674,7 +472664,7 @@
         "since": "2026-11-22T23:29:11.797344+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-22T23:40:33.833042+00:00"
+        "observedAt": "2026-11-23T00:01:20.103608+00:00"
       }
     }
   },
