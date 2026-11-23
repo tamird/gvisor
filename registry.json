@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T15:06:30.966336+00:00",
+    "updatedAt": "2026-11-23T15:10:15.337518+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4993,7 +4993,7 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "First priority is the actual combined60a analyzer/Staticcheck opening question, with all26 modernize members and known corpus blockers explicit. Independent migration remains reviewed with source-bound limits and transport unresolved; BuildBuddy96 has a separate pending opening question. Protected work and performance remain held.",
+        "nextAction": "First priority is root’s user-requested combined analyzer revision to latest x/tools v0.53.0 and required transitive updates. The old60a opening ask is superseded, not approved; await actual revised source, affected gates and final review before any new publication question. Independent tooling/checker proposals remain separate. Protected work and performance remain held.",
         "recheckCondition": "Qualified provider correction and actual deployed behavior, terminal owner evidence for the analyzer policy, or actual upstream prerequisite landing; no repeat of the completed 70857 Nogo gate.",
         "observedAt": "2026-11-17T19:58:24.544895+00:00",
         "curatedAt": "2026-11-21T13:24:07.659680+00:00",
@@ -131654,12 +131654,12 @@
     },
     {
       "id": "investigation:repository-lint",
-      "title": "Repository lint on scratch workers and in downstream Bazel modules",
+      "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "analysis_pass_inventory / root",
-      "updatedAt": "2026-11-23T15:03:11.522701+00:00",
+      "updatedAt": "2026-11-23T15:10:15.337518+00:00",
       "group": "analysis",
-      "summary": "FIRST PRIORITY: combined one-commit 60a94549c includes the analyzer audit and Staticcheck 2026.2.2/v0.8.2, activating all26 modernize members and global errorsastype. Its tree exactly matches qualified3fa; AMD/ARM driver/sanity, source/license checks and two reviews are reused without rerun. The actual opening question is unanswered. Full corpus is not green; historical1,234 findings came from a partial older scan, not this candidate count, and two protected AsType findings remain held. The combined60a source is publicly readable and now durably published on the existing audit/x-tools-analysis-enhancement-20261122 fork ref, verified by root after a normal expected-head HTTPS update. No upstream PR has been opened; the actual opening question is unchanged. Independent checkerdb9 has a published preview and a separate unanswered opening question. Independent mechanical9e is publicly readable, tree-identical to qualified0828, and now has an actual unanswered one-commit opening question. Its17-file60+/82− preparation preserves prior source-bound validation and two reviews; branch creation remains transport-blocked. It uses the baseline Staticcheck0.5.1 and does not change analyzer selection or runtime source. The9e constructor-restoration validation gap is closed: exact owning TPU target passed36 cases without failures/errors/skips on each architecture, with one actual remote TestRunner per run and guards clean. All17 native9e postimages match actual CI source68ed070bf987463546a89009cab8630ab2c0b167;7c3d is the workflow head, not source. Other unchanged checks/reviews are reused, not64 fresh cases.",
+      "summary": "FIRST PRIORITY: root is revising the combined analyzer candidate to latest x/tools v0.53.0 with its required transitive updates, following the user’s direct request. The prior60a opening question is superseded without approval or rejection; no replacement question exists yet. The existing audit registers additional diagnostics and all26 modernize analyzers with Staticcheck v0.8.2. The new revision must retain honest source-bound validation and known full-corpus blockers; historical1,234 findings are from a partial older scan, not a current count. Protected-source migrations remain held. Independent9e tooling preparation and db9 checker proposals retain their separate pending decisions and validation limits.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132031,7 +132031,7 @@
           ]
         }
       ],
-      "nextStep": "Await the actual combined60a, independentdb9 and independent9e opening decisions. The60a canonical existing preview ref is published;9e is readable but its absent fork ref remains a transport issue, not missing source-publication approval. Reuse exact-tree9e validation without unchanged retries. Whole warning backlog is not a source-handoff prerequisite; preserve protected/corpus limits and the existing operational SSH question.",
+      "nextStep": "Root owns the gVisor checkout and latest-x/tools combined revision. Complete the minimal dependency update, affected validation and final review before preparing a replacement publication question. Do not transfer60a approval, claim full-corpus readiness or treat the warning backlog as a source-handoff prerequisite. Independent9e/db9 and operational SSH questions remain separate.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132319,6 +132319,17 @@
           "summary": "Superseded by the user-requested combined analyzer and latest Staticcheck revision; no approval or rejection inferred.",
           "body": "Nogo's explicit analyzer list missed newer diagnostics and modern Go APIs. Register 20 additional diagnostic packages and 24 of the 26 members of `modernize.Suite`, including `errors.AsType`. Supply the declared ignored files and source reader required by the added passes. Defer `embedlit` and `newexpr`: the pinned Staticcheck v0.5.1 IR builder crashes on promoted-field literals and does not preserve `new(value)` initialization or argument effects. The commit records the complete 56-directory audit and the reason for every omission.\n\nFocused driver and sanity tests pass on AMD64 and ARM64, as do source checks. Full-corpus Nogo still reports existing source findings, so source migrations remain necessary before merging; the existing corpus scan is partial.\n\nPosted by Codex on behalf of @tamird.\n",
           "outcome": "superseded"
+        },
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "60a94549c9029c455743aca6449c3cc26bc20302",
+          "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+          "url": "https://github.com/tamird/gvisor/commit/60a94549c9029c455743aca6449c3cc26bc20302",
+          "title": "Audit and enable x/tools analysis passes",
+          "summary": "Superseded by the user-requested update to latest x/tools. This revision request is not publication approval; no replacement opening question has been asked.",
+          "body": "Nogo's explicit analyzer list missed newer diagnostics and modern Go APIs. Register 20 additional diagnostic packages and all 26 members of `modernize.Suite`, including `errors.AsType`. Supply the declared ignored files and source reader required by the added passes. Update Staticcheck to v0.8.2 so its IR supports promoted-field literals and `new(value)` without excluding modernize checks. The commit records the complete 56-directory audit and the reason for every omission.\n\nFocused driver and sanity tests pass on AMD64 and ARM64, as do source and license checks. These results apply to the identical qualified source tree. Full-corpus Nogo still reports existing source findings, so source migrations remain necessary before merging; the existing corpus scan is partial.\n\nPosted by Codex on behalf of @tamird.\n",
+          "outcome": "superseded"
         }
       ],
       "additionalReviews": [
@@ -132349,17 +132360,7 @@
           "summary": "Prepare17 maintained tool files with modern APIs and canonical build-tag emission. Identical-tree checks and two reviews are reused; analyzer registration and runtime migrations remain separate.",
           "body": "Prepare maintained Go tools for the expanded analyzer set with typed ranges, go/types iterators, sequence iterators, current reflection APIs and errors.AsType assertions. Preserve generator ordering, delimiter handling and stack-signature bytes.\n\nEmit only go:build constraints from the canonical producer for the declared Go toolchain. Extend the existing combination cases to check the complete directive and newline contract.\n\nAnalyzer registration and runtime-source migrations remain separate.\n\nPosted by Codex on behalf of @tamird.\n"
         }
-      ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "60a94549c9029c455743aca6449c3cc26bc20302",
-        "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
-        "url": "https://github.com/tamird/gvisor/commit/60a94549c9029c455743aca6449c3cc26bc20302",
-        "title": "Audit and enable x/tools analysis passes",
-        "summary": "Register 20 diagnostic packages and all 26 modernize analyzers with Staticcheck v0.8.2. Focused checks apply to the identical qualified tree; full-corpus Nogo remains blocked.",
-        "body": "Nogo's explicit analyzer list missed newer diagnostics and modern Go APIs. Register 20 additional diagnostic packages and all 26 members of `modernize.Suite`, including `errors.AsType`. Supply the declared ignored files and source reader required by the added passes. Update Staticcheck to v0.8.2 so its IR supports promoted-field literals and `new(value)` without excluding modernize checks. The commit records the complete 56-directory audit and the reason for every omission.\n\nFocused driver and sanity tests pass on AMD64 and ARM64, as do source and license checks. These results apply to the identical qualified source tree. Full-corpus Nogo still reports existing source findings, so source migrations remain necessary before merging; the existing corpus scan is partial.\n\nPosted by Codex on behalf of @tamird.\n"
-      }
+      ]
     },
     {
       "id": "investigation:proc-boot-identity",
