@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-22T23:58:09.306907+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-23T00:01:20.103608+00:00",
+  "registryDate": "2026-11-23T00:18:10.610714+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -455494,8 +455494,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "94e3488d99cba57f92c7acc767eae3d2d4b0f5a5",
-        "disposition": "Current 94e3488d is newly CONFLICTING. The earlier resolved-conflict disposition and qualifications are historical; no current-source adaptation has been performed.",
-        "nextAction": "Root reconciles the new conflict with the existing source/authorization and sensitive-work holds before assigning any adaptation. No source read, artificial rebase or new approval is inferred."
+        "disposition": "Exact 94e3488d is CONFLICTING against bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa. File-metadata inspection identifies sensitive clock/startup/restore paths; actual adaptation is held by the confirmed user sensitive-work hold.",
+        "nextAction": "Root owns rebase on release of the sensitive-work hold. No implementation read, rebase, push or new Daybreak question is authorized while held."
       },
       "conflictObservedSince": "2026-11-22T23:58:04.739191+00:00"
     },
@@ -470033,7 +470033,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T00:01:20.103608+00:00"
+        "observedAt": "2026-11-23T00:18:10.610714+00:00"
       }
     },
     "pr:17082": {
@@ -470420,7 +470420,7 @@
         "since": "2026-11-22T09:10:24+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T00:01:20.103608+00:00"
+        "observedAt": "2026-11-23T00:18:10.610714+00:00"
       }
     },
     "pr:17191": {
@@ -472486,6 +472486,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-22T23:57:54.086145+00:00"
+      },
+      "contributor-review": {
+        "scope": "a3fbb54b2930347d57dc1c607f5e7546f738e7a2",
+        "since": "2026-11-23T00:18:10.610714+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-23T00:18:10.610714+00:00"
       }
     },
     "pr:bazel-contrib/rules_go:4772": {
@@ -472573,7 +472580,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T00:01:20.103608+00:00"
+        "observedAt": "2026-11-23T00:18:10.610714+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -472582,7 +472589,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T00:01:20.103608+00:00"
+        "observedAt": "2026-11-23T00:18:10.610714+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -472591,7 +472598,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T00:01:20.103608+00:00"
+        "observedAt": "2026-11-23T00:18:10.610714+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -472600,7 +472607,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T00:01:20.103608+00:00"
+        "observedAt": "2026-11-23T00:18:10.610714+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -472609,7 +472616,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T00:01:20.103608+00:00"
+        "observedAt": "2026-11-23T00:18:10.610714+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -472618,7 +472625,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T00:01:20.103608+00:00"
+        "observedAt": "2026-11-23T00:18:10.610714+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -472627,7 +472634,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T00:01:20.103608+00:00"
+        "observedAt": "2026-11-23T00:18:10.610714+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -472636,7 +472643,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T00:01:20.103608+00:00"
+        "observedAt": "2026-11-23T00:18:10.610714+00:00"
       }
     },
     "investigation:repository-lint": {
@@ -472645,7 +472652,7 @@
         "since": "2026-11-23T00:00:51.257650+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T00:01:20.103608+00:00"
+        "observedAt": "2026-11-23T00:18:10.610714+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -472654,7 +472661,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T00:01:20.103608+00:00",
+        "observedAt": "2026-11-23T00:18:10.610714+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     },
@@ -472664,7 +472671,7 @@
         "since": "2026-11-22T23:29:11.797344+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T00:01:20.103608+00:00"
+        "observedAt": "2026-11-23T00:18:10.610714+00:00"
       }
     }
   },

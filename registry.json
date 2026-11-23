@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T00:01:20.103608+00:00",
+    "updatedAt": "2026-11-23T00:18:10.610714+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -16927,10 +16927,10 @@
       ],
       "followup": {
         "owner": "root",
-        "disposition": "Current 94e3488d is newly CONFLICTING. The earlier resolved-conflict disposition and qualifications are historical; no current-source adaptation has been performed.",
+        "disposition": "Exact 94e3488d is CONFLICTING against bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa. File-metadata inspection identifies sensitive clock/startup/restore paths; actual adaptation is held by the confirmed user sensitive-work hold.",
         "sourceHead": "94e3488d99cba57f92c7acc767eae3d2d4b0f5a5",
-        "observedAt": "2026-11-23T00:00:51.257650+00:00",
-        "nextAction": "Root reconciles the new conflict with the existing source/authorization and sensitive-work holds before assigning any adaptation. No source read, artificial rebase or new approval is inferred.",
+        "observedAt": "2026-11-23T00:18:10.610714+00:00",
+        "nextAction": "Root owns rebase on release of the sensitive-work hold. No implementation read, rebase, push or new Daybreak question is authorized while held.",
         "evidence": [
           {
             "label": "All four clock and restore results",
@@ -16945,7 +16945,7 @@
           "https://github.com/tamird/gvisor/commit/94e3488d99cba57f92c7acc767eae3d2d4b0f5a5"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Root source-bound disposition, actual conflict/head/base change or user release of applicable hold."
+        "recheckCondition": "User releases the hold, or actual head/base/mergeability changes."
       },
       "dcoAmendment": {
         "oldHead": "80bbb7478312a10e7335a5475c9683a76d5c17d6",
@@ -106191,18 +106191,29 @@
       "followup": {
         "owner": "root",
         "sourceHead": "4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
-        "observedAt": "2026-11-23T00:00:51.257650+00:00",
-        "disposition": "Exact signed 4a881d4ef remains OPEN/MERGEABLE/REVIEW_REQUIRED. Native check 45078090352 succeeds; Buildkite #51 fails with the same six jobs and concrete failure messages as exact integration-base 1da8c08 build #46. Root’s source-bound comparison establishes no PR-specific defect, while required CI remains red. Existing jbedard review, release and integration remain. New CodeRabbit inline 4660454549 alleges partial patch output may survive diff failure when rules_js records exit status separately; this is unverified review evidence, not an adopted fix.",
-        "nextAction": "Root verifies the new partial-output finding against exact 4a and its actual consumer before choosing a source correction or evidence-backed response. Preserve the verified shared-baseline Buildkite failures, existing jbedard request and release/adoption wait; no automatic source edit, retry or outreach.",
-        "recheckCondition": "Genuine review/check/head/merge/release event.",
+        "observedAt": "2026-11-23T00:18:10.610714+00:00",
+        "disposition": "The partial-patch finding is verified: rules_js can capture failure status while the visible patch output survives. Candidate a3fbb54b removes incomplete output in catch, rethrows and closes its descriptor in finally, preserving normal exit-1/7 patches. Eight Bazel tests pass; the old source fails seven new absence assertions, and two final independent reviews found no issues. The fork review branch is verified, but upstream PR #1112 remains at 4a with no reply posted.",
+        "nextAction": "Await the actual combined amendment-and-reply decision for a3fbb54b. Preserve required upstream CI, maintainer review, release and integration; do not amend or reply without that answer.",
+        "recheckCondition": "Actual publication decision or source-bound upstream review/check/head/release event.",
         "evidence": [
           "https://github.com/bazel-contrib/rules_lint/pull/1112",
           "https://github.com/tamird/rules_lint/commit/4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
           "https://buildkite.com/bazel-contrib/rules-lint/builds/51",
           "https://github.com/bazel-contrib/rules_lint/actions/runs/45078090352/job/137379762451",
           "https://buildkite.com/bazel-contrib/rules-lint/builds/46",
-          "https://github.com/bazel-contrib/rules_lint/pull/1112#discussion_r4660454549"
+          "https://github.com/bazel-contrib/rules_lint/pull/1112#discussion_r4660454549",
+          "https://github.com/tamird/rules_lint/commit/a3fbb54b2930347d57dc1c607f5e7546f738e7a2"
         ]
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "a3fbb54b2930347d57dc1c607f5e7546f738e7a2",
+        "baseHead": "4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
+        "url": "https://github.com/tamird/rules_lint/commit/a3fbb54b2930347d57dc1c607f5e7546f738e7a2",
+        "title": "Amend patcher failure handling and reply",
+        "summary": "Remove incomplete patches on failure, close their descriptor and post the prepared confirmation on #1112. Tests, negative control and both independent reviews passed.",
+        "body": "Amend #1112 to the reviewed a3fbb54b revision and post this exact reply:\n\nConfirmed. Diff failures now remove the incomplete patch and close its descriptor. The existing test fails before the fix and passes afterward.\n\nPosted by Codex on behalf of @tamird."
       }
     }
   ],
@@ -143070,11 +143081,11 @@
       "group": "bazel",
       "status": "active",
       "owner": "rules_lint_patcher_fix / root",
-      "head": "4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
+      "head": "a3fbb54b2930347d57dc1c607f5e7546f738e7a2",
       "title": "Reject failed patch generation",
-      "updatedAt": "2026-11-22T18:32:33.604640+00:00",
-      "summary": "Signed 4a881d4ef is published in rules_lint #1112; the combined approval is consumed. Native check succeeds, and root verified Buildkite #51 matches the six integration-base #46 failures without establishing a PR-specific defect. Required CI, maintainer review, release and integration remain; no formatter grant follows.",
-      "nextStep": "Root follows the actual check/review/release lifecycle on rules_lint #1112. Preserve the separate formatting hold and source-publication boundary.",
+      "updatedAt": "2026-11-23T00:18:10.610714+00:00",
+      "summary": "The verified partial-output failure has a reviewed correction at a3fbb54b: remove incomplete patches, rethrow failure and close the descriptor. Eight Bazel tests and the old-source negative control pass; both independent reviews found no issues. The fork preview is public; #1112 remains at 4a and its amendment-and-reply question is unanswered.",
+      "nextStep": "Await the source-bound combined amendment/reply decision on #1112, then follow actual CI, review and release. Main analyzer68c remains first priority; formatting remains held.",
       "findings": [],
       "evidence": [
         {
