@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-23T04:14:18.175846+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-23T04:17:34.506940+00:00",
+  "registryDate": "2026-11-23T04:51:03.992288+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -453641,27 +453641,6 @@
     },
     {
       "repo": "google/gvisor",
-      "number": 17871,
-      "head": "6eaaa8495bdb912284019b8d9bae8983c0435d54",
-      "sourceNumber": 17871,
-      "owner": "root",
-      "claimed": true,
-      "overdue": false,
-      "kind": "comment",
-      "id": "IC_kwDOB9IlXs8AAAABpq1jbg",
-      "needsTriage": false,
-      "createdAt": "2026-11-23T04:10:28Z",
-      "url": "https://github.com/google/gvisor/pull/17871#issuecomment-7091348334",
-      "author": "ayushr2",
-      "updatedAt": "2026-11-23T04:10:28Z",
-      "newOrChanged": false,
-      "awaitingAuthor": true,
-      "assigned": true,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
       "number": 16076,
       "head": "63bcfa2ad44882db0ecd5afab16df8c5e285e485",
       "sourceNumber": 16076,
@@ -469835,7 +469814,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:17:34.506940+00:00"
+        "observedAt": "2026-11-23T04:51:03.992288+00:00"
       }
     },
     "pr:17082": {
@@ -470222,7 +470201,7 @@
         "since": "2026-11-22T09:10:24+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:17:34.506940+00:00"
+        "observedAt": "2026-11-23T04:51:03.992288+00:00"
       }
     },
     "pr:17191": {
@@ -472287,7 +472266,7 @@
         "since": "2026-11-23T00:18:10.610714+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:17:34.506940+00:00"
+        "observedAt": "2026-11-23T04:51:03.992288+00:00"
       }
     },
     "pr:bazel-contrib/rules_go:4772": {
@@ -472375,7 +472354,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:17:34.506940+00:00"
+        "observedAt": "2026-11-23T04:51:03.992288+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -472384,7 +472363,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:17:34.506940+00:00"
+        "observedAt": "2026-11-23T04:51:03.992288+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -472393,7 +472372,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:17:34.506940+00:00"
+        "observedAt": "2026-11-23T04:51:03.992288+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -472402,7 +472381,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:17:34.506940+00:00"
+        "observedAt": "2026-11-23T04:51:03.992288+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -472411,7 +472390,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:17:34.506940+00:00"
+        "observedAt": "2026-11-23T04:51:03.992288+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -472420,7 +472399,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:17:34.506940+00:00"
+        "observedAt": "2026-11-23T04:51:03.992288+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -472429,7 +472408,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:17:34.506940+00:00"
+        "observedAt": "2026-11-23T04:51:03.992288+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -472438,7 +472417,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:17:34.506940+00:00"
+        "observedAt": "2026-11-23T04:51:03.992288+00:00"
       }
     },
     "investigation:repository-lint": {
@@ -472447,7 +472426,7 @@
         "since": "2026-11-23T00:00:51.257650+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:17:34.506940+00:00"
+        "observedAt": "2026-11-23T04:51:03.992288+00:00"
       }
     },
     "investigation:ci-flake-node-tls-autoselectfamily": {
@@ -472456,7 +472435,7 @@
         "since": "2026-11-23T03:53:11.542890+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:17:34.506940+00:00"
+        "observedAt": "2026-11-23T04:51:03.992288+00:00"
       }
     },
     "investigation:ci-flake-node-worker-arraybuffer-zerofill": {
@@ -472465,7 +472444,7 @@
         "since": "2026-11-23T03:12:55.378620+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:17:34.506940+00:00"
+        "observedAt": "2026-11-23T04:51:03.992288+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -472474,7 +472453,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:17:34.506940+00:00",
+        "observedAt": "2026-11-23T04:51:03.992288+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     },
@@ -472484,7 +472463,7 @@
         "since": "2026-11-22T23:29:11.797344+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:17:34.506940+00:00"
+        "observedAt": "2026-11-23T04:51:03.992288+00:00"
       }
     }
   },
