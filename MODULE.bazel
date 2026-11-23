@@ -47,6 +47,7 @@ single_version_override(
     patches = [
         "//tools:rules_cgo.patch",
         "//tools:rules_go_export.patch",
+        "//tools:rules_go_proto_exec.patch",
     ],
     version = "0.65.0",
 )
@@ -398,6 +399,11 @@ register_toolchains("//:cc_toolchain_k8")
 
 register_toolchains("//:cc_toolchain_aarch64")
 
+register_toolchains(
+    "//:cc_toolchain_k8_rbe",
+    "//:cc_toolchain_aarch64_rbe",
+)
+
 ### Go
 go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")
 go_sdk.from_file(
@@ -655,8 +661,8 @@ go_deps.module(
 )
 go_deps.module(
     path = "honnef.co/go/tools",
-    sum = "h1:4bH5o3b5ZULQ4UrBmP+63W9r7qIkqJClEA9ko5YKx+I=",
-    version = "v0.5.1",
+    sum = "h1:+jPbCzuYxYrcoOvCecYUFDj+XJQRmzIhJmlbpps21Zk=",
+    version = "v0.8.2",
 )
 go_deps.module(
     path = "cloud.google.com/go",

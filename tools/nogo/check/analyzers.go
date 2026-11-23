@@ -214,11 +214,6 @@ func init() {
 	register(allAnalyzers, &plainAnalyzer{unusedwrite.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{waitgroup.Analyzer})
 	for _, a := range modernize.Suite {
-		// Staticcheck v0.5.1 cannot lower promoted-field literals or
-		// preserve initialization and argument effects in new(value).
-		if a == modernize.EmbedLitAnalyzer || a == modernize.NewExprAnalyzer {
-			continue
-		}
 		register(allAnalyzers, &plainAnalyzer{a})
 	}
 	register(allAnalyzers, checkescape.Analyzer)
