@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T14:04:04.245715+00:00",
+    "updatedAt": "2026-11-23T15:06:30.966336+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -100412,7 +100412,7 @@
       "title": "Separate pgalloc sharing counts from occupancy",
       "url": "https://github.com/google/gvisor/pull/17374",
       "status": "open",
-      "summary": "Author head is now4350a5ff5/MERGEABLE. Ayush’s new whole-range starting-count benchmark request and six-sample23% report concern76da24a45, not this changed head. They are unverified external evidence, not our statistical qualification or adopted code work. Root’s current-source review remains unfinished under the confirmed sensitive hold; the author retains implementation ownership.",
+      "summary": "Current4350a5ff5 FirstPass2428 has mixed failures. Attempt1 executed and reported pkg/state/tests:tests_test TIMEOUT and pkg/shim/v1/proc:proc_test TestCreatePinsOnlyMatchingSandbox/LinkedSidecar failure; cause remains unclassified, with no pgalloc-causation claim. Attempt2 never obtained an agent and exited80 after author80454001 exhausted the1-day36,000compute-minute quota. Quota blocks recovery but does not erase the actual target failures. Prior76da external performance reports do not qualify this changed head; current-source review remains sensitive-held.",
       "updatedAt": "2026-11-19T16:20:03.380488+00:00",
       "evidence": [
         {
@@ -100472,9 +100472,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "4350a5ff5623c7272296c3ee82d858ce21b8a0b1",
-        "observedAt": "2026-11-23T13:57:37.136553+00:00",
-        "disposition": "Author head is now4350a5ff5/MERGEABLE. Ayush’s new whole-range starting-count benchmark request and six-sample23% report concern76da24a45, not this changed head. They are unverified external evidence, not our statistical qualification or adopted code work. Root’s current-source review remains unfinished under the confirmed sensitive hold; the author retains implementation ownership.",
-        "nextAction": "Keep current-source review and sensitive work held. Follow actual new author results or user hold release without implementation reads, tests, benchmarks, outreach, equivalence assumptions or transferred approval.",
+        "observedAt": "2026-11-23T15:06:30.966336+00:00",
+        "disposition": "Current4350a5ff5 FirstPass2428 has mixed failures. Attempt1 executed and reported pkg/state/tests:tests_test TIMEOUT and pkg/shim/v1/proc:proc_test TestCreatePinsOnlyMatchingSandbox/LinkedSidecar failure; cause remains unclassified, with no pgalloc-causation claim. Attempt2 never obtained an agent and exited80 after author80454001 exhausted the1-day36,000compute-minute quota. Quota blocks recovery but does not erase the actual target failures. Prior76da external performance reports do not qualify this changed head; current-source review remains sensitive-held.",
+        "nextAction": "Root retains sensitive-held review/triage; the foreign source author owns target-failure classification/repair and the CI owner owns quota availability. Recheck source-owner classification or changed source and actual quota recovery, respecting the hold. No retry, held source read/edit, tests, timing or outreach.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17374#discussion_r4545607204",
           "https://github.com/google/gvisor/pull/17374#discussion_r4576254625",
@@ -100490,9 +100490,12 @@
           "https://github.com/gvisor/gvisor/pull/17374#discussion_r4665033514",
           "https://github.com/gvisor/gvisor/commit/76da24a45d4f86263762877dc0b7c4f8376f7100",
           "https://github.com/google/gvisor/pull/17374#discussion_r4666082668",
-          "https://github.com/gvisor/gvisor/commit/4350a5ff5623c7272296c3ee82d858ce21b8a0b1"
+          "https://github.com/gvisor/gvisor/commit/4350a5ff5623c7272296c3ee82d858ce21b8a0b1",
+          "https://buildkite.com/gvisor/first-pass/builds/2428",
+          "https://buildkite.com/gvisor/first-pass/builds/2428#01a208a6-2f61-4a24-af33-223b484b0c2e",
+          "https://buildkite.com/gvisor/first-pass/builds/2428#01a208b9-9eae-46bd-9f0d-c6bd2bac97aa"
         ],
-        "recheckCondition": "Actual new author/external evidence, another head/base change or user release of the sensitive-work hold.",
+        "recheckCondition": "Source-owner failure classification/changed source and actual CI-owner daily-quota recovery, or user hold release; do not conflate with Tamir’s rolling30-day quota.",
         "incomingReview": {
           "repo": "google/gvisor",
           "number": 17374,
@@ -100528,7 +100531,7 @@
         },
         "currentHeadCI": {
           "head": "4350a5ff5623c7272296c3ee82d858ce21b8a0b1",
-          "state": "PENDING",
+          "state": "FAILURE",
           "evidence": [
             "https://github.com/gvisor/gvisor/actions/runs/45186208179/job/137732368957",
             "https://github.com/gvisor/gvisor/actions/runs/45186208137/job/137732369249",
@@ -100537,9 +100540,10 @@
             "https://github.com/gvisor/gvisor/actions/runs/45186208179/job/137732372196",
             "https://github.com/gvisor/gvisor/actions/runs/45186208179/job/137732372231",
             "https://buildkite.com/gvisor/first-pass/builds/2428",
-            "https://github.com/cncf/dco2"
+            "https://github.com/cncf/dco2",
+            "https://buildkite.com/gvisor/first-pass/builds/2428"
           ],
-          "limits": "Provider status only; not source review or broad-workload qualification and not release of the sensitive hold."
+          "limits": "Attempt1 actual target timeout/failure, cause unclassified; attempt2 pre-agent daily quota. No source-cause or broad-workload qualification claim."
         },
         "providerHead": "4350a5ff5623c7272296c3ee82d858ce21b8a0b1",
         "mergeable": "MERGEABLE"
@@ -106077,13 +106081,13 @@
       "status": "closed",
       "title": "DCO check includes commits already on the PR base branch",
       "url": "https://github.com/cncf/dco2/issues/126",
-      "updatedAt": "2026-11-21T12:20:58.751348+00:00",
-      "summary": "Issue126 is closed by merged127/2b9ce5f80. Its image build/push succeeded, but no deployment is established and the affected15106/17456 DCO checks remain ACTION_REQUIRED despite valid single topic commits.",
+      "updatedAt": "2026-11-23T15:03:11.522701+00:00",
+      "summary": "The original commit-range bug is fixed upstream by merged127/2b9ce5f80; its image build/push succeeded. Deployment and affected-check recomputation remain unverified: current15106/17456 still report ACTION_REQUIRED. Optional issue48 native-rerequest support is a separate capability, not a prerequisite or replacement for the original fix.",
       "followup": {
         "owner": "root",
-        "disposition": "Issue126 is closed by merged127/2b9ce5f80. Its image build/push succeeded, but no deployment is established and the affected15106/17456 DCO checks remain ACTION_REQUIRED despite valid single topic commits.",
-        "nextAction": "Root follows fixed-app deployment and actual affected-check recomputation. Normal rerequest is ignored by the app; do not retry, override, churn source, close/reopen PRs or send operator outreach. The prior d399 synthetic fix remains historical and unproven for production.",
-        "recheckCondition": "Verified fixed-app deployment or actual corrected affected-check result.",
+        "disposition": "The original commit-range bug is fixed upstream by merged127/2b9ce5f80; its image build/push succeeded. Deployment and affected-check recomputation remain unverified: current15106/17456 still report ACTION_REQUIRED. Optional issue48 native-rerequest support is a separate capability, not a prerequisite or replacement for the original fix.",
+        "nextAction": "Root follows actual deployed-app and affected-check evidence for the original fixed bug. The separate d8/issue48 proposal is optional and held pending clarification/decision; no further work, publication, outreach, unsupported rerequest, manual override or source/PR churn.",
+        "recheckCondition": "Actual affected-check/deployment change or explicit decision on the separate optional capability.",
         "evidence": [
           "https://github.com/cncf/dco2/issues/126",
           "https://github.com/tamird/dco2/commit/d3993939e1ab8feea773db20b7e27c600091fd6a",
@@ -106092,9 +106096,12 @@
           "https://github.com/cncf/dco2/issues/126#issuecomment-7094792736",
           "https://github.com/cncf/dco2/commit/2b9ce5f80e5fe366e624285b335d075feeb88c0c",
           "https://github.com/cncf/dco2/actions/runs/45167328676",
-          "https://github.com/cncf/dco2/pull/127"
+          "https://github.com/cncf/dco2/pull/127",
+          "https://github.com/cncf/dco2/issues/48",
+          "https://github.com/tamird/dco2/commit/d8ceef994f4e4ee54c443d2722f265f4cb70d715",
+          "https://github.com/tamird/dco2/actions/runs/45196166650"
         ],
-        "observedAt": "2026-11-23T11:53:11.347436+00:00"
+        "observedAt": "2026-11-23T15:03:11.522701+00:00"
       },
       "settledReviews": [
         {
@@ -106118,6 +106125,16 @@
             "evidence": "https://github.com/cncf/dco2/issues/126#issuecomment-7094792736"
           }
         ]
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "d8ceef994f4e4ee54c443d2722f265f4cb70d715",
+        "baseHead": "2b9ce5f80e5fe366e624285b335d075feeb88c0c",
+        "url": "https://github.com/tamird/dco2/commit/d8ceef994f4e4ee54c443d2722f265f4cb70d715",
+        "title": "Handle re-requested DCO checks",
+        "summary": "Optional native-rerequest capability for existing issue48, held after the user’s clarification question. The original range bug is already fixed upstream; this proposal is not required recovery. No publication approval received.",
+        "body": "Re-requested check-run events were ignored, so users could not rerun DCO without updating the pull request. Resolve the originating pull request from its external ID or a unique repository-matching reference, fetch its current state, and run the same current-base comparison and DCO policy as normal pull-request events. Closed pull requests and moved heads are skipped; missing or ambiguous origins return an error.\n\nThe result uses the existing check-run publication path, including member exemptions, remediation output and attention-label handling. A re-request does not invoke the manual override action.\n\nCloses #48\n\nPosted by Codex on behalf of @tamird.\n"
       }
     },
     {
@@ -121753,8 +121770,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-23T13:57:37.136553+00:00",
-      "summary": "Sole fallback45188241347 completed SUCCESS3m46s with actual API13:55:57 UTC after the due guard found no newer/live native run. Native scheduling remains irregular with no established provider cause or demonstrated configuration defect; foreground/active-goal supervision owns fallback delivery.",
+      "updatedAt": "2026-11-23T15:03:11.522701+00:00",
+      "summary": "Sole fallback45199771155 completed SUCCESS4m6s with actual API15:01:13 UTC after the due guard found no newer/live native run. No established scheduling provider cause or demonstrated configuration defect; foreground/active-goal supervision owns fallback delivery.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -121997,7 +122014,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground/active-goal supervision owns the next native-first guard at14:55:57 UTC and recovery by15:25:57. Reuse newer/live native delivery, otherwise one canonical fallback; retain existing cron,60/90-minute policy and2-hour UI threshold. No second watcher, reset or scheduler.",
+      "nextStep": "Root foreground/active-goal supervision owns the next native-first guard at16:01:13 UTC and recovery by16:31:13. Reuse newer/live native delivery, otherwise one canonical fallback; preserve existing cron,60/90-minute policy and2-hour UI threshold. No second watcher, reset or scheduler.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -131640,9 +131657,9 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "analysis_pass_inventory / root",
-      "updatedAt": "2026-11-23T14:04:04.245715+00:00",
+      "updatedAt": "2026-11-23T15:03:11.522701+00:00",
       "group": "analysis",
-      "summary": "FIRST PRIORITY: combined one-commit 60a94549c includes the analyzer audit and Staticcheck 2026.2.2/v0.8.2, activating all26 modernize members and global errorsastype. Its tree exactly matches qualified3fa; AMD/ARM driver/sanity, source/license checks and two reviews are reused without rerun. The actual opening question is unanswered. Full corpus is not green; historical1,234 findings came from a partial older scan, not this candidate count, and two protected AsType findings remain held. The combined60a source is publicly readable and now durably published on the existing audit/x-tools-analysis-enhancement-20261122 fork ref, verified by root after a normal expected-head HTTPS update. No upstream PR has been opened; the actual opening question is unchanged. Independent checkerdb9 has a published preview and a separate unanswered opening question. Independent mechanical9e is publicly readable, tree-identical to qualified0828, and now has an actual unanswered one-commit opening question. Its17-file60+/82− preparation preserves prior source-bound validation and two reviews; branch creation remains transport-blocked. It uses the baseline Staticcheck0.5.1 and does not change analyzer selection or runtime source.",
+      "summary": "FIRST PRIORITY: combined one-commit 60a94549c includes the analyzer audit and Staticcheck 2026.2.2/v0.8.2, activating all26 modernize members and global errorsastype. Its tree exactly matches qualified3fa; AMD/ARM driver/sanity, source/license checks and two reviews are reused without rerun. The actual opening question is unanswered. Full corpus is not green; historical1,234 findings came from a partial older scan, not this candidate count, and two protected AsType findings remain held. The combined60a source is publicly readable and now durably published on the existing audit/x-tools-analysis-enhancement-20261122 fork ref, verified by root after a normal expected-head HTTPS update. No upstream PR has been opened; the actual opening question is unchanged. Independent checkerdb9 has a published preview and a separate unanswered opening question. Independent mechanical9e is publicly readable, tree-identical to qualified0828, and now has an actual unanswered one-commit opening question. Its17-file60+/82− preparation preserves prior source-bound validation and two reviews; branch creation remains transport-blocked. It uses the baseline Staticcheck0.5.1 and does not change analyzer selection or runtime source. The9e constructor-restoration validation gap is closed: exact owning TPU target passed36 cases without failures/errors/skips on each architecture, with one actual remote TestRunner per run and guards clean. All17 native9e postimages match actual CI source68ed070bf987463546a89009cab8630ab2c0b167;7c3d is the workflow head, not source. Other unchanged checks/reviews are reused, not64 fresh cases.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132231,6 +132248,14 @@
         {
           "label": "Original checker fails the two composite-signature regressions",
           "url": "https://github.com/tamird/gvisor/actions/runs/45093873111"
+        },
+        {
+          "label": "9e owning TPU unit 45191565135",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45191565135/artifacts/14824354614"
+        },
+        {
+          "label": "9e owning TPU unit 45191569759",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45191569759/artifacts/14825148197"
         }
       ],
       "reviewWatch": {
