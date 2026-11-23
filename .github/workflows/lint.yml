@@ -24,4 +24,6 @@ jobs:
       with:
         persist-credentials: false
 
+    - uses: ./.github/actions/setup-bazel
+
     - run: make lint

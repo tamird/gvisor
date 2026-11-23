@@ -32,6 +32,8 @@
 ##     PRE_BAZEL_INIT         - If set, run this command with bash outside the Bazel
 ##                              server container.
 ##     BAZEL_CACHE            - The bazel cache directory (default: detected).
+##     BAZEL_DISK_CACHE       - Optional action cache directory shared with the container.
+##     BAZEL_REPOSITORY_CACHE - Optional repository cache directory shared with the container.
 ##     BAZEL_CACHE_VOLUME     - Docker volume for Bazel cache (default: detected).
 ##     BAZEL_CACHE_USE_VOLUME - If set to true, use a Docker volume for
 ##                              BAZEL_CACHE instead of a host bind mount.
@@ -120,6 +122,12 @@ BAZEL_OPTIONS      ?=
 BAZEL_REMOTE_CACHE ?=
 BAZEL              := bazel $(STARTUP_OPTIONS)
 BASE_OPTIONS       := --color=no --curses=no $(BAZEL_REMOTE_CACHE)
+ifneq ($(BAZEL_DISK_CACHE),)
+BASE_OPTIONS += --disk_cache=$(BAZEL_DISK_CACHE)
+endif
+ifneq ($(BAZEL_REPOSITORY_CACHE),)
+BASE_OPTIONS += --repository_cache=$(BAZEL_REPOSITORY_CACHE)
+endif
 BAZEL_TEST_OUTPUT  ?= errors
 TEST_OPTIONS       += $(BASE_OPTIONS) \
   --sandbox_add_mount_pair=/tmp \
@@ -151,6 +159,12 @@ DOCKER_RUN_OPTIONS += -v "$(shell $(REALPATH_M) $(BAZEL_CACHE)):$(BAZEL_CACHE)"
 ifneq ($(patsubst %/,%,$(BAZEL_CACHE)),$(HOME)/.cache/bazel)
 DOCKER_RUN_OPTIONS += -v "$(shell $(REALPATH_M) $(BAZEL_CACHE)):$(HOME)/.cache/bazel"
 endif
+endif
+ifneq ($(BAZEL_DISK_CACHE),)
+DOCKER_RUN_OPTIONS += -v "$(BAZEL_DISK_CACHE):$(BAZEL_DISK_CACHE)"
+endif
+ifneq ($(BAZEL_REPOSITORY_CACHE),)
+DOCKER_RUN_OPTIONS += -v "$(BAZEL_REPOSITORY_CACHE):$(BAZEL_REPOSITORY_CACHE)"
 endif
 ifneq ($(GO_REPOSITORY_USE_HOST_CACHE),)
 DOCKER_RUN_OPTIONS  += -e GO_REPOSITORY_USE_HOST_CACHE=$(GO_REPOSITORY_USE_HOST_CACHE)
