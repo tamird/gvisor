@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-23T20:20:39.140569+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-23T19:35:06.669147+00:00",
+  "registryDate": "2026-11-23T20:29:42.991432+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -455492,8 +455492,8 @@
       "number": 16098,
       "head": "7bca7b25f93434a14c2c003d38339e54c4f40906",
       "sourceNumber": 16098,
-      "owner": "Agent",
-      "claimed": false,
+      "owner": "root / approved_rebase_queue",
+      "claimed": true,
       "overdue": false,
       "kind": "inline",
       "id": "PRRC_kwDOB9IlXs8AAAABE1Brmw",
@@ -455675,8 +455675,8 @@
       "number": 16098,
       "head": "7bca7b25f93434a14c2c003d38339e54c4f40906",
       "sourceNumber": 16098,
-      "owner": "Agent",
-      "claimed": false,
+      "owner": "root / approved_rebase_queue",
+      "claimed": true,
       "overdue": false,
       "kind": "inline",
       "id": "PRRC_kwDOB9IlXs8AAAABFlt1xg",
@@ -455715,8 +455715,8 @@
       "number": 17484,
       "head": "b40bcf9536da455cc3dcf59183667a0f166c328d",
       "sourceNumber": 17484,
-      "owner": "Agent",
-      "claimed": false,
+      "owner": "root / approved_rebase_queue",
+      "claimed": true,
       "overdue": false,
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABp_UDfA",
@@ -455726,7 +455726,7 @@
       "url": "https://github.com/google/gvisor/pull/17484#issuecomment-7112819580",
       "author": "relkochta",
       "updatedAt": "2026-11-23T20:15:53Z",
-      "newOrChanged": true,
+      "newOrChanged": false,
       "awaitingAuthor": true,
       "assigned": true,
       "feedbackComplete": true,
@@ -457415,7 +457415,7 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "0ec767e4d4f1ec1bdf56d3675e06b860a02d7e19",
-      "action": "Existing owner follows the exact new-head CI/admission and author evidence, preserving the sensitive source-review hold. No source/test/benchmark read or rerun, foreign edit, duplicate outreach or approval transfer.",
+      "action": "Follow actual quota recovery or a new admitted build through the existing owner. No unchanged retry, operator outreach, unsupported rerequest or source churn. Preserve the sensitive source/test hold and foreign implementation ownership.",
       "claimed": true,
       "firstObservedHead": "e5f0f6f7fc500b646b4a0dbd738f142e1a9032a2",
       "reviewHead": null,
@@ -457435,7 +457435,7 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "0ec767e4d4f1ec1bdf56d3675e06b860a02d7e19",
-      "action": "Existing owner follows the exact new-head CI/admission and author evidence, preserving the sensitive source-review hold. No source/test/benchmark read or rerun, foreign edit, duplicate outreach or approval transfer.",
+      "action": "Follow actual quota recovery or a new admitted build through the existing owner. No unchanged retry, operator outreach, unsupported rerequest or source churn. Preserve the sensitive source/test hold and foreign implementation ownership.",
       "claimed": true,
       "firstObservedHead": "3389a2aa144abf8f474fc65bcabc84487564ee86",
       "reviewHead": null,
@@ -457455,8 +457455,8 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "0ec767e4d4f1ec1bdf56d3675e06b860a02d7e19",
-      "action": "Read the reply on this review and follow up on the current revision.",
-      "claimed": false,
+      "action": "Follow actual quota recovery or a new admitted build through the existing owner. No unchanged retry, operator outreach, unsupported rerequest or source churn. Preserve the sensitive source/test hold and foreign implementation ownership.",
+      "claimed": true,
       "firstObservedHead": "0ec767e4d4f1ec1bdf56d3675e06b860a02d7e19",
       "reviewHead": null,
       "kind": "inline",
@@ -457467,7 +457467,7 @@
       "threadId": "PRRT_kwDOB9IlXs61UqSZ",
       "rootURL": "https://github.com/google/gvisor/pull/17264#discussion_r4514647899",
       "rootId": "PRRC_kwDOB9IlXs8AAAABDRgPWw",
-      "owner": "Netstack",
+      "owner": "root",
       "assigned": false,
       "feedbackComplete": true
     }
@@ -472077,7 +472077,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T19:35:06.669147+00:00"
+        "observedAt": "2026-11-23T20:29:42.991432+00:00"
       }
     },
     "pr:17082": {
@@ -474637,7 +474637,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T19:35:06.669147+00:00"
+        "observedAt": "2026-11-23T20:29:42.991432+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -474646,7 +474646,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T19:35:06.669147+00:00"
+        "observedAt": "2026-11-23T20:29:42.991432+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -474655,7 +474655,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T19:35:06.669147+00:00"
+        "observedAt": "2026-11-23T20:29:42.991432+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -474664,7 +474664,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T19:35:06.669147+00:00"
+        "observedAt": "2026-11-23T20:29:42.991432+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -474673,7 +474673,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T19:35:06.669147+00:00"
+        "observedAt": "2026-11-23T20:29:42.991432+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -474682,7 +474682,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T19:35:06.669147+00:00"
+        "observedAt": "2026-11-23T20:29:42.991432+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -474691,7 +474691,16 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T19:35:06.669147+00:00"
+        "observedAt": "2026-11-23T20:29:42.991432+00:00"
+      }
+    },
+    "issue:17832": {
+      "contributor-review": {
+        "scope": "86cffbf727d4a5628ca2a324fe3c06ec21d7c24c",
+        "since": "2026-11-23T20:29:42.991432+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-23T20:29:42.991432+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -474700,7 +474709,16 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T19:35:06.669147+00:00"
+        "observedAt": "2026-11-23T20:29:42.991432+00:00"
+      }
+    },
+    "investigation:ci-flake-node-worker-arraybuffer-zerofill": {
+      "contributor-review": {
+        "scope": "f05f486dc0182b1a9c3e55b33fb3ccde3f0a75b0",
+        "since": "2026-11-23T20:29:42.991432+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-23T20:29:42.991432+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -474709,7 +474727,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T19:35:06.669147+00:00",
+        "observedAt": "2026-11-23T20:29:42.991432+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     }
