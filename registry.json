@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T04:51:03.992288+00:00",
+    "updatedAt": "2026-11-23T05:04:11.229864+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -92607,9 +92607,9 @@
         "mergeable": "MERGEABLE",
         "sourceHead": "92e403ef2d8cb7e24a334d37dabb248cef3b4407",
         "observedAt": "2026-11-18T02:57:42.449215+00:00",
-        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
-        "nextAction": "Await the first posting decision already requested for the concise COMMENTED review. Its proposal targets the identical current source. On approval verify the head and lines, then post once. No source edit, fresh runtime validation or repeated approval is needed.",
-        "recheckCondition": "Answer to the existing concrete review proposal, substantive source/author evidence or current-head CI change.",
+        "disposition": "The retained current-head COMMENT proposal asks for same-reader retry/full-stream coverage and idle TCP_CORK restore coverage. Its posting decision remains pending, separately from the earlier approved/posted d364 review. The exact draft and source-alias evidence are retained; no new source read, validation or approval is inferred.",
+        "nextAction": "Await the existing typed posting decision for the retained92e COMMENT review. No re-ask or external post is authorized here; preserve the source-binding and current sensitive-work boundaries before any later delivery.",
+        "recheckCondition": "Answer to this existing source-bound posting question, actual source change or new substantive evidence; do not transfer the old-head approval.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17264"
         ],
@@ -92638,6 +92638,15 @@
           "checkedAt": "2026-11-19T16:09:13.797948+00:00",
           "limit": "Current provider check state only; does not supply outstanding broad workload evidence or clear source-review findings."
         }
+      },
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "92e403ef2d8cb7e24a334d37dabb248cef3b4407",
+        "url": "https://github.com/google/gvisor/pull/17264",
+        "title": "Review reader retry and idle cork restore coverage",
+        "summary": "Post the retained COMMENT review and two inline comments on the unchanged current source. The earlier approved review covered a different head; this posting decision is still unanswered. No validation was rerun.",
+        "body": "The saved timer state and ordinary short-write check address my earlier points. Two remaining reader/test issues are below. I have not rerun validation.\n\nPosted by Codex on behalf of @tamird.\n\n`pkg/tcpip/transport/tcp/test/e2e/tcp_test.go:4363`\n\nThis case reads all ten outer bytes but accepts only five after the competing write. [SendMsg](https://github.com/gvisor/gvisor/blob/92e403ef2d8cb7e24a334d37dabb248cef3b4407/pkg/sentry/socket/netstack/netstack.go#L3407) retries the same reader for the remainder, so it cannot deliver the suffix. Could you check that retry and the complete stream? This also affects the parent; a separate owning fix is reasonable.\n\n`pkg/tcpip/transport/tcp/test/e2e/tcp_test.go:4038`\n\nCould you also cover TCP_CORK enabled with an idle timer across restore? A new write should receive a full hold, rather than a restore-time timer deadline."
       }
     },
     {

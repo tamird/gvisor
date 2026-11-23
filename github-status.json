@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-23T04:14:18.175846+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-23T04:51:03.992288+00:00",
+  "registryDate": "2026-11-23T05:04:11.229864+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -455601,12 +455601,12 @@
       "mergeabilityCheckedAt": "2026-11-23T04:14:16.924442+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Await the first posting decision already requested for the concise COMMENTED review. Its proposal targets the identical current source. On approval verify the head and lines, then post once. No source edit, fresh runtime validation or repeated approval is needed.",
+      "action": "Await the existing typed posting decision for the retained92e COMMENT review. No re-ask or external post is authorized here; preserve the source-binding and current sensitive-work boundaries before any later delivery.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "92e403ef2d8cb7e24a334d37dabb248cef3b4407",
-        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
-        "nextAction": "Await the first posting decision already requested for the concise COMMENTED review. Its proposal targets the identical current source. On approval verify the head and lines, then post once. No source edit, fresh runtime validation or repeated approval is needed."
+        "disposition": "The retained current-head COMMENT proposal asks for same-reader retry/full-stream coverage and idle TCP_CORK restore coverage. Its posting decision remains pending, separately from the earlier approved/posted d364 review. The exact draft and source-alias evidence are retained; no new source read, validation or approval is inferred.",
+        "nextAction": "Await the existing typed posting decision for the retained92e COMMENT review. No re-ask or external post is authorized here; preserve the source-binding and current sensitive-work boundaries before any later delivery."
       },
       "conflictObservedSince": "2026-11-20T23:52:55.787276+00:00"
     },
@@ -469814,7 +469814,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:51:03.992288+00:00"
+        "observedAt": "2026-11-23T05:04:11.229864+00:00"
       }
     },
     "pr:17082": {
@@ -470201,7 +470201,7 @@
         "since": "2026-11-22T09:10:24+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:51:03.992288+00:00"
+        "observedAt": "2026-11-23T05:04:11.229864+00:00"
       }
     },
     "pr:17191": {
@@ -470637,6 +470637,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-23T04:14:16.924442+00:00"
+      },
+      "contributor-review": {
+        "scope": "92e403ef2d8cb7e24a334d37dabb248cef3b4407",
+        "since": "2026-11-23T05:04:11.229864+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-23T05:04:11.229864+00:00"
       }
     },
     "pr:17265": {
@@ -472266,7 +472273,7 @@
         "since": "2026-11-23T00:18:10.610714+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:51:03.992288+00:00"
+        "observedAt": "2026-11-23T05:04:11.229864+00:00"
       }
     },
     "pr:bazel-contrib/rules_go:4772": {
@@ -472354,7 +472361,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:51:03.992288+00:00"
+        "observedAt": "2026-11-23T05:04:11.229864+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -472363,7 +472370,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:51:03.992288+00:00"
+        "observedAt": "2026-11-23T05:04:11.229864+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -472372,7 +472379,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:51:03.992288+00:00"
+        "observedAt": "2026-11-23T05:04:11.229864+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -472381,7 +472388,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:51:03.992288+00:00"
+        "observedAt": "2026-11-23T05:04:11.229864+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -472390,7 +472397,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:51:03.992288+00:00"
+        "observedAt": "2026-11-23T05:04:11.229864+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -472399,7 +472406,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:51:03.992288+00:00"
+        "observedAt": "2026-11-23T05:04:11.229864+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -472408,7 +472415,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:51:03.992288+00:00"
+        "observedAt": "2026-11-23T05:04:11.229864+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -472417,7 +472424,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:51:03.992288+00:00"
+        "observedAt": "2026-11-23T05:04:11.229864+00:00"
       }
     },
     "investigation:repository-lint": {
@@ -472426,7 +472433,7 @@
         "since": "2026-11-23T00:00:51.257650+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:51:03.992288+00:00"
+        "observedAt": "2026-11-23T05:04:11.229864+00:00"
       }
     },
     "investigation:ci-flake-node-tls-autoselectfamily": {
@@ -472435,7 +472442,7 @@
         "since": "2026-11-23T03:53:11.542890+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:51:03.992288+00:00"
+        "observedAt": "2026-11-23T05:04:11.229864+00:00"
       }
     },
     "investigation:ci-flake-node-worker-arraybuffer-zerofill": {
@@ -472444,7 +472451,7 @@
         "since": "2026-11-23T03:12:55.378620+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:51:03.992288+00:00"
+        "observedAt": "2026-11-23T05:04:11.229864+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -472453,7 +472460,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:51:03.992288+00:00",
+        "observedAt": "2026-11-23T05:04:11.229864+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     },
@@ -472463,7 +472470,7 @@
         "since": "2026-11-22T23:29:11.797344+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T04:51:03.992288+00:00"
+        "observedAt": "2026-11-23T05:04:11.229864+00:00"
       }
     }
   },
