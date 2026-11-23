@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T18:19:28.669923+00:00",
+    "updatedAt": "2026-11-23T18:25:38.380071+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -215,11 +215,11 @@
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
       "updatedAt": "2026-11-23T17:55:09.877980+00:00",
-      "summary": "The reviewed private candidate d279425e integrates the scanner registry with landed LicenseRef support and two retained test-constant spellings. AMD/ARM owning tests56 plus Nogo1 each, source checks and catalog Verify226 pass; two final reviews are clear. The actual new-source amendment question is pending. Public15146 remains427; these private checks are not public native checks. Root’s later REST mergeability read was unknown, while the prior canonical conflict observation remains dated to its actual API snapshot. QEMU Fetch, internal-policy and import landing holds remain.",
+      "summary": "The reviewed private candidate d279425e integrates the scanner registry with landed LicenseRef support and two retained test-constant spellings. AMD/ARM owning tests56 plus Nogo1 each, source checks and catalog Verify226 pass; two final reviews are clear. The actual new-source amendment question is pending. Public15146 remains427; these private checks are not public native checks. Root’s later REST mergeability read was unknown, while the prior canonical conflict observation remains dated to its actual API snapshot. Candidate d279 is now durably published at review/licensecheck-15146-rebase-20261123 after normal SSH success and exact native readback. Public15146 is still427 and new-source amendment approval remains pending. QEMU Fetch, internal-policy and import landing holds remain.",
       "followup": {
-        "disposition": "The reviewed private candidate d279425e integrates the scanner registry with landed LicenseRef support and two retained test-constant spellings. AMD/ARM owning tests56 plus Nogo1 each, source checks and catalog Verify226 pass; two final reviews are clear. The actual new-source amendment question is pending. Public15146 remains427; these private checks are not public native checks. Root’s later REST mergeability read was unknown, while the prior canonical conflict observation remains dated to its actual API snapshot. QEMU Fetch, internal-policy and import landing holds remain.",
+        "disposition": "The reviewed private candidate d279425e integrates the scanner registry with landed LicenseRef support and two retained test-constant spellings. AMD/ARM owning tests56 plus Nogo1 each, source checks and catalog Verify226 pass; two final reviews are clear. The actual new-source amendment question is pending. Public15146 remains427; these private checks are not public native checks. Root’s later REST mergeability read was unknown, while the prior canonical conflict observation remains dated to its actual API snapshot. Candidate d279 is now durably published at review/licensecheck-15146-rebase-20261123 after normal SSH success and exact native readback. Public15146 is still427 and new-source amendment approval remains pending. QEMU Fetch, internal-policy and import landing holds remain.",
         "owner": "root / approved_rebase_queue",
-        "nextAction": "Await the actual d279 source-amendment decision. Root owns the existing-PR update and routine standing-authorized post-rebase notice after an approved push. Clarification7070045072 is already consumed; no new reply question. Candidate commit is readable despite new-preview-ref transport errors; the existing PR amendment path remains available, with no human execution-permission question.",
+        "nextAction": "Await the actual d279 source-amendment decision; root owns the existing-PR update and standing-authorized routine post-rebase notice after an approved push. Candidate preview publication is complete, not an execution-permission blocker. Clarification7070045072 is already consumed; no repeated reply question. Preserve QEMU/internal-policy/import landing holds.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/23b8ddf0a",
           "https://github.com/tamird/gvisor/actions/runs/43014384411",
@@ -253,13 +253,14 @@
           "https://github.com/tamird/gvisor/actions/runs/45230114794",
           "https://github.com/tamird/gvisor/actions/runs/45230120958",
           "https://github.com/tamird/gvisor/actions/runs/45230126786",
-          "https://github.com/tamird/gvisor/actions/runs/45230526075"
+          "https://github.com/tamird/gvisor/actions/runs/45230526075",
+          "https://github.com/tamird/gvisor/tree/review/licensecheck-15146-rebase-20261123"
         ],
         "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
         "sourceHead": "427a8de7470d18956964b5ef71a21fab92440039",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-23T17:55:09.877980+00:00",
+        "observedAt": "2026-11-23T18:24:45.555294+00:00",
         "providerHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
         "recheckCondition": "Actual amendment decision, then exact public-head/check readback; actual policy/Fetch/import evidence remains separate.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
@@ -131736,7 +131737,7 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "analysis_pass_inventory / root",
-      "updatedAt": "2026-11-23T18:16:34.852164+00:00",
+      "updatedAt": "2026-11-23T18:24:45.555294+00:00",
       "group": "analysis",
       "summary": "FIRST PRIORITY: all890 original targets are inventoried for the unified latest-x/tools/Staticcheck proposal with alignment checks and all30 modernizers. Hash-bound SuggestedFixes collection is repeatedly healthy but has reached the30-minute cap; source962ae recovery45233411757 for804 unfinished targets remains under the existing sole owner. Fourteen safe upstream edits across eight files and precisely indexed plainFields lock-proof restoration are applied; source/generator migrations continue. These are incomplete collection and implementation results, not final qualification or full-corpus green. Old60a and separate9e opening asks stay superseded. Narrow analyzer migrations are authorized; unrelated sensitive-feature holds remain.",
       "findings": [
@@ -132110,7 +132111,7 @@
           ]
         }
       ],
-      "nextStep": "The existing analyzer owner retains the checkout and sole collection watch. Finish the remaining hash-bound findings/migrations and affected qualification; preserve actual capped coverage limits. The reviewed workflow-timeout change is not yet delivered and is an existing transport/credential dependency, not a new approval question or a source-work stop. No new opening ask until an actual final candidate is prepared.",
+      "nextStep": "The existing analyzer owner retains the checkout and sole collection watch. Finish the remaining hash-bound findings/migrations and affected qualification; preserve actual capped coverage limits. The reviewed workflow-timeout repair is delivered on fork master a92cff80; future qualification run/test jobs use90minutes, while currently running jobs retain their old cap. No new opening ask until an actual final candidate is prepared.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132436,17 +132437,17 @@
           "body": "Include struct fields and interface methods in linkname signatures. Both helpers iterated over an initially empty output slice, so different composite types could compare equal. Iterate the actual type members and omit only the implicit interface-method receiver, which otherwise recurses through the interface itself.\n\nThe new owning-package regression distinguishes changes to the second field and method and checks that non-recursive types retain signature depth.\n\nValidation: the regression fails against the original checker. Fixed AMD64/ARM64 unit and driver tests, three targeted Nogo validators and source checks pass. The full repository corpus was not rerun.\n\nPosted by Codex on behalf of @tamird.\n",
           "outcome": "approved",
           "postedURL": "https://github.com/gvisor/gvisor/pull/17884"
-        }
-      ],
-      "additionalReviews": [
+        },
         {
           "kind": "information",
-          "status": "pending",
+          "status": "settled",
           "title": "Restore normal SSH availability",
-          "summary": "Operational availability of the existing machine/SSH agent is needed for the dependent upgrade preview; this does not grant source publication or change access.",
-          "body": "Scope summary (original wording not retained): check or unlock the existing machine/SSH agent so normal authorized Git transport can be used. The source-publication boundary and existing credentials, scopes and hooks remain unchanged."
+          "summary": "Normal SSH availability is now observed through successful expected-ref-safe workflow and preview pushes. The operational request is no longer needed; no user answer, source approval or expanded credential authority is inferred.",
+          "body": "Scope summary (original wording not retained): check or unlock the existing machine/SSH agent so normal authorized Git transport can be used. The source-publication boundary and existing credentials, scopes and hooks remain unchanged.",
+          "outcome": "superseded"
         }
-      ]
+      ],
+      "additionalReviews": []
     },
     {
       "id": "investigation:proc-boot-identity",
@@ -140039,8 +140040,8 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "benchmark_measurement_review / root",
-      "updatedAt": "2026-11-23T03:12:55.378620+00:00",
-      "summary": "The original Node 22.2.0 timeout attempt recovered on automatic retry. The original image and 180-second Node harness/20-minute outer contract are preserved; no new tests ran. The five-file prerequisite6a has passing owning AMD/ARM unit/Nogo, ARM runner compilation, source checks and two final independent reviews. Its source object is public but its durable preview ref remains verified absent after one additional attempt justified by a successful backport publication; no automatic-review or authorization blocker exists, and no unchanged retry follows. Its actual publication question is unanswered.",
+      "updatedAt": "2026-11-23T18:25:38.380071+00:00",
+      "summary": "The original Node22.2.0 timeout attempt recovered automatically; no original-flake fix or reproduction is claimed. Qualified prerequisite6a2916b3 is now durably published at review/node-runtime-completion-20261123 after normal SSH success and exact native readback. This is the gVisor proctor/image/runner change, not Node upstream publication. Its actual one-commit upstream-opening decision remains pending; no PR has been opened.",
       "findings": [
         {
           "text": "The same shard also timed out in debugger-random-port. The log does not identify where the ArrayBuffer test stopped.",
@@ -140056,7 +140057,7 @@
           ]
         }
       ],
-      "nextStep": "The Node runtime prerequisite is complete on exact6a: both original cases produced TAP success under runc and Sentry with verified runtime/Node22.2.0 selections, known FLAKY annotations and zero skips; cleanup restored original runtimes/config. This is neither an original-flake fix/reproduction nor an ARM fixture result. Await the actual one-commit prerequisite-publication decision recorded on the worker-arraybuffer item. Keep the original timeout investigation for natural recurrence under its original conditions; no unchanged test retry or speculative source edit.",
+      "nextStep": "Await the existing exact6a source-opening decision; authorized fork-preview preparation is complete. Preserve the original runc/Sentry two-case results, owning checks/reviews and runtime/image/source limits without new tests or approval transfer. Retain the original timeout investigation for natural recurrence under its original conditions.",
       "evidence": [
         {
           "label": "Original Node shard",
@@ -140081,6 +140082,10 @@
         {
           "label": "Both original cases under runc/Sentry; original environment restored",
           "url": "https://github.com/tamird/gvisor/actions/runs/45102386726/artifacts/14785599973"
+        },
+        {
+          "label": "Published exact6a fork preview",
+          "url": "https://github.com/tamird/gvisor/tree/review/node-runtime-completion-20261123"
         }
       ],
       "technicalOwner": "CI flake triage",
@@ -140108,8 +140113,8 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "benchmark_measurement_review / root",
-      "updatedAt": "2026-11-23T03:12:55.378620+00:00",
-      "summary": "The original Node 22.2.0 timeout attempt recovered on automatic retry. The original image and 180-second Node harness/20-minute outer contract are preserved; no new tests ran.",
+      "updatedAt": "2026-11-23T18:25:38.380071+00:00",
+      "summary": "The original Node22.2.0 timeout attempt recovered automatically; no original-flake fix or reproduction is claimed. Qualified prerequisite6a2916b3 is now durably published at review/node-runtime-completion-20261123 after normal SSH success and exact native readback. This is the gVisor proctor/image/runner change, not Node upstream publication. Its actual one-commit upstream-opening decision remains pending; no PR has been opened.",
       "findings": [
         {
           "text": "The same test timed out in build 54544. Neither log identifies the operation still running at the deadline.",
@@ -140129,7 +140134,7 @@
           ]
         }
       ],
-      "nextStep": "The Node runtime prerequisite is complete on exact6a: both original cases produced TAP success under runc and Sentry with verified runtime/Node22.2.0 selections, known FLAKY annotations and zero skips; cleanup restored original runtimes/config. This is neither an original-flake fix/reproduction nor an ARM fixture result. Await the actual one-commit prerequisite-publication decision recorded on the worker-arraybuffer item. Keep the original timeout investigation for natural recurrence under its original conditions; no unchanged test retry or speculative source edit.",
+      "nextStep": "Await the existing exact6a source-opening decision; authorized fork-preview preparation is complete. Preserve the original runc/Sentry two-case results, owning checks/reviews and runtime/image/source limits without new tests or approval transfer. Retain the original timeout investigation for natural recurrence under its original conditions.",
       "evidence": [
         {
           "label": "Original Node shard",
@@ -140158,6 +140163,10 @@
         {
           "label": "Both original cases under runc/Sentry; original environment restored",
           "url": "https://github.com/tamird/gvisor/actions/runs/45102386726/artifacts/14785599973"
+        },
+        {
+          "label": "Published exact6a fork preview",
+          "url": "https://github.com/tamird/gvisor/tree/review/node-runtime-completion-20261123"
         }
       ],
       "technicalOwner": "CI flake triage",
@@ -141943,9 +141952,9 @@
       "group": "rbe",
       "owner": "root",
       "technicalOwner": "root",
-      "updatedAt": "2026-11-23T18:16:34.852164+00:00",
-      "summary": "Actual remote execution remains proved by canonical release 44967257331. Native zip-enabled retention is now proved by run 44977041157/artifact 14736282398: the whitelisted coverage test.outputs/outputs.zip is 100,110 bytes, SHA256 722f1a8392d67ae733ca667ef6cc3a6ec46d38e6803bbd4a49a6c9807786b10a, matching native testResult digest/size. It contains metadata.json and the actual 770,129-byte .cov.txt report, whose digest matches metadata. This closes retention only for the exercised --zip_undeclared_test_outputs configuration, not default zip-false calls or every producer. Current workflow-timeout repair a92cff80b23559cd75cad6b1f02adfd029060533 is reviewed but unpublished: only qualification Bazel run/test hard timeouts change30→90minutes; build/query15 and legacy330 remain unchanged. SSH signing/auth was refused and HTTPS explicitly lacks workflow scope; fork master remains7c3. This is an existing credential/SSH-availability dependency, not automatic approval review or a pending human authorization.",
-      "nextStep": "Reuse the existing SSH/existing-authorized-credential availability path to publish the reviewed one-line timeout repair when available; no duplicate unlock question, credential/config/hook change or unchanged retry. Keep current capped analyzer recovery active. ZIP-default delivery on7c3 and its exact exercised retention proof remain valid; archive production is still source/configuration-specific.",
+      "updatedAt": "2026-11-23T18:24:45.555294+00:00",
+      "summary": "Actual remote execution remains proved by canonical release 44967257331. Native zip-enabled retention is now proved by run 44977041157/artifact 14736282398: the whitelisted coverage test.outputs/outputs.zip is 100,110 bytes, SHA256 722f1a8392d67ae733ca667ef6cc3a6ec46d38e6803bbd4a49a6c9807786b10a, matching native testResult digest/size. It contains metadata.json and the actual 770,129-byte .cov.txt report, whose digest matches metadata. This closes retention only for the exercised --zip_undeclared_test_outputs configuration, not default zip-false calls or every producer. The reviewed fork-only timeout repair a92cff80b23559cd75cad6b1f02adfd029060533 is now delivered and exact-master verified after normal SSH recovery. New qualification run/test jobs allow90minutes; build/query remains15 and existing jobs pinned to the older workflow keep30minutes. No credentials, hooks, configuration or approval boundaries changed.",
+      "nextStep": "Use delivered master a92cff80 for future qualification run/test jobs. Existing running jobs retain their pinned30-minute cap; the current source collection and sole observer continue unchanged. Keep exact exercised ZIP retention limits and existing source/publication prerequisites; no workflow publication authorization blocker remains.",
       "recheckCondition": "Actual LLVM startup/caller/source-review evidence and user direction, followed by a compatible upstream release/pin.",
       "source": {
         "head": "a1b5c1e23bc6f2f81d2b615f7696ac0d013edea8",
@@ -142424,6 +142433,10 @@
         {
           "label": "Delivered fork ZIP default",
           "url": "https://github.com/tamird/gvisor/commit/7c3d3aa03b4eaaaf2f554bf592b43a06e217c1cc"
+        },
+        {
+          "label": "Delivered qualification timeout repair",
+          "url": "https://github.com/tamird/gvisor/commit/a92cff80b23559cd75cad6b1f02adfd029060533"
         }
       ],
       "followup": {
