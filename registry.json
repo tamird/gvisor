@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T13:57:37.136553+00:00",
+    "updatedAt": "2026-11-23T14:04:04.245715+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -131640,9 +131640,9 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "analysis_pass_inventory / root",
-      "updatedAt": "2026-11-23T13:57:37.136553+00:00",
+      "updatedAt": "2026-11-23T14:04:04.245715+00:00",
       "group": "analysis",
-      "summary": "FIRST PRIORITY: combined one-commit 60a94549c includes the analyzer audit and Staticcheck 2026.2.2/v0.8.2, activating all26 modernize members and global errorsastype. Its tree exactly matches qualified3fa; AMD/ARM driver/sanity, source/license checks and two reviews are reused without rerun. The actual opening question is unanswered. Full corpus is not green; historical1,234 findings came from a partial older scan, not this candidate count, and two protected AsType findings remain held. The combined60a source is publicly readable and now durably published on the existing audit/x-tools-analysis-enhancement-20261122 fork ref, verified by root after a normal expected-head HTTPS update. No upstream PR has been opened; the actual opening question is unchanged. Independent checkerdb9 has a published preview and a separate unanswered opening question. Mechanical9e remains reviewed/local with its prior source-bound evidence and transport limit.",
+      "summary": "FIRST PRIORITY: combined one-commit 60a94549c includes the analyzer audit and Staticcheck 2026.2.2/v0.8.2, activating all26 modernize members and global errorsastype. Its tree exactly matches qualified3fa; AMD/ARM driver/sanity, source/license checks and two reviews are reused without rerun. The actual opening question is unanswered. Full corpus is not green; historical1,234 findings came from a partial older scan, not this candidate count, and two protected AsType findings remain held. The combined60a source is publicly readable and now durably published on the existing audit/x-tools-analysis-enhancement-20261122 fork ref, verified by root after a normal expected-head HTTPS update. No upstream PR has been opened; the actual opening question is unchanged. Independent checkerdb9 has a published preview and a separate unanswered opening question. Independent mechanical9e is publicly readable, tree-identical to qualified0828, and now has an actual unanswered one-commit opening question. Its17-file60+/82− preparation preserves prior source-bound validation and two reviews; branch creation remains transport-blocked. It uses the baseline Staticcheck0.5.1 and does not change analyzer selection or runtime source.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132014,7 +132014,7 @@
           ]
         }
       ],
-      "nextStep": "Await the actual combined60a opening decision and independentdb9 decision. Old68c and separate3fa vehicles are superseded by the user-requested combination, without publication approval. The canonical existing60a preview ref is published; no unchanged transport retry, full-corpus-green claim or protected-source work; retain the existing operational SSH availability question.",
+      "nextStep": "Await the actual combined60a, independentdb9 and independent9e opening decisions. The60a canonical existing preview ref is published;9e is readable but its absent fork ref remains a transport issue, not missing source-publication approval. Reuse exact-tree9e validation without unchanged retries. Whole warning backlog is not a source-handoff prerequisite; preserve protected/corpus limits and the existing operational SSH question.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132313,6 +132313,16 @@
           "title": "Include fields and methods in linkname signatures",
           "summary": "Correct the baseline checker loops with an owning regression. Fixed tests, targeted Nogo validators, source checks and two reviews passed; full corpus was not rerun.",
           "body": "Include struct fields and interface methods in linkname signatures. Both helpers iterated over an initially empty output slice, so different composite types could compare equal. Iterate the actual type members and omit only the implicit interface-method receiver, which otherwise recurses through the interface itself.\n\nThe new owning-package regression distinguishes changes to the second field and method and checks that non-recursive types retain signature depth.\n\nValidation: the regression fails against the original checker. Fixed AMD64/ARM64 unit and driver tests, three targeted Nogo validators and source checks pass. The full repository corpus was not rerun.\n\nPosted by Codex on behalf of @tamird.\n"
+        },
+        {
+          "kind": "proposal",
+          "status": "pending",
+          "head": "9e27fed64d6fa4a60bd23940a7458a6e01b30387",
+          "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+          "url": "https://github.com/tamird/gvisor/commit/9e27fed64d6fa4a60bd23940a7458a6e01b30387",
+          "title": "Prepare Go tooling for expanded analysis",
+          "summary": "Prepare17 maintained tool files with modern APIs and canonical build-tag emission. Identical-tree checks and two reviews are reused; analyzer registration and runtime migrations remain separate.",
+          "body": "Prepare maintained Go tools for the expanded analyzer set with typed ranges, go/types iterators, sequence iterators, current reflection APIs and errors.AsType assertions. Preserve generator ordering, delimiter handling and stack-signature bytes.\n\nEmit only go:build constraints from the canonical producer for the declared Go toolchain. Extend the existing combination cases to check the complete directive and newline contract.\n\nAnalyzer registration and runtime-source migrations remain separate.\n\nPosted by Codex on behalf of @tamird.\n"
         }
       ],
       "contributorReview": {
