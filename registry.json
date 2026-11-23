@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T15:10:15.337518+00:00",
+    "updatedAt": "2026-11-23T16:10:34.503992+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -215,11 +215,11 @@
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
       "updatedAt": "2026-11-17T18:16:01.120596+00:00",
-      "summary": "User-approved427 and the approved clarification7070045072 are delivered in the required push-first order. All native GitHub checks and DCO now pass. FirstPass2300 independently failed pre-agent on author1535036 rolling30-day360000compute-minute quota; no tests started. Upstream internal-exception/QEMU acceptance remain landing decisions, not pending source or posting approvals.",
+      "summary": "Current approved427a8de source is now CONFLICTING. The existing rebase owner is reconciling the conflict read-only until a coordinated source-checkout release. The separate internal-exception/QEMU landing hold remains; no new source approval or policy change is inferred.",
       "followup": {
-        "disposition": "User-approved427 and the approved clarification7070045072 are delivered in the required push-first order. All native GitHub checks and DCO now pass. FirstPass2300 independently failed pre-agent on author1535036 rolling30-day360000compute-minute quota; no tests started. Upstream internal-exception/QEMU acceptance remain landing decisions, not pending source or posting approvals.",
-        "owner": "benchmark_measurement_review / root",
-        "nextAction": "Root follows maintainer response and actual admission/current-head events. Preserve the independent internal-exception/QEMU landing hold; no retry, quota outreach or repeated source/comment approval.",
+        "disposition": "Current approved427a8de source is now CONFLICTING. The existing rebase owner is reconciling the conflict read-only until a coordinated source-checkout release. The separate internal-exception/QEMU landing hold remains; no new source approval or policy change is inferred.",
+        "owner": "approved_rebase_queue / root",
+        "nextAction": "After benchmark_measurement_review releases the checkout, approved_rebase_queue composes the427 classifier with landed16051 LicenseRef verification, then qualifies and reviews the actual integration delta. Existing clarification7070045072 is already posted; no repeated reply question or post. Preserve the independent internal-exception/QEMU landing hold and stale mismatched17126 importer bounds.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/23b8ddf0a",
           "https://github.com/tamird/gvisor/actions/runs/43014384411",
@@ -246,15 +246,17 @@
           "https://github.com/tamird/gvisor/blob/e0a38c9195a36b5d18c30011e6a193aac4bad47b/registry.json",
           "https://github.com/gvisor/gvisor/pull/15146#issuecomment-7070045072",
           "https://github.com/tamird/gvisor/actions/runs/44955678692",
-          "https://buildkite.com/gvisor/first-pass/builds/2300#01a2002c-8092-4cc1-8ab7-eb0653355824"
+          "https://buildkite.com/gvisor/first-pass/builds/2300#01a2002c-8092-4cc1-8ab7-eb0653355824",
+          "https://github.com/gvisor/gvisor/pull/15146",
+          "https://github.com/gvisor/gvisor/pull/15146#issuecomment-7070045072"
         ],
         "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
         "sourceHead": "427a8de7470d18956964b5ef71a21fab92440039",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-17T18:16:01.120596+00:00",
+        "observedAt": "2026-11-23T16:07:56.932949+00:00",
         "providerHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "recheckCondition": "Actual current-head CI result or maintainer acceptance/hold response; publication/reply approvals are consumed.",
+        "recheckCondition": "Coordinated checkout release, then source-bound integration/qualification result or actual policy/maintainer change.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "curatedAt": "2026-11-21T15:01:28.141765+00:00",
         "attentionDispositions": [
@@ -4993,7 +4995,7 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "First priority is root’s user-requested combined analyzer revision to latest x/tools v0.53.0 and required transitive updates. The old60a opening ask is superseded, not approved; await actual revised source, affected gates and final review before any new publication question. Independent tooling/checker proposals remain separate. Protected work and performance remain held.",
+        "nextAction": "First priority is the unified x/tools0.53 analyzer proposal: alignment checks, all30 modernizers, tooling edits and23 non-tools errors.AsType migrations. Old60a and separate9e asks are superseded, not approved. Root owns integrated implementation/validation; the narrow analyzer migration grant does not release unrelated sensitive-feature holds.",
         "recheckCondition": "Qualified provider correction and actual deployed behavior, terminal owner evidence for the analyzer policy, or actual upstream prerequisite landing; no repeat of the completed 70857 Nogo gate.",
         "observedAt": "2026-11-17T19:58:24.544895+00:00",
         "curatedAt": "2026-11-21T13:24:07.659680+00:00",
@@ -25122,9 +25124,9 @@
       "title": "Audit declared npm artifact licenses",
       "url": "https://github.com/tamird/gvisor/commit/8facdc0012a7714662f8c40a9cc5db1030ee2864",
       "group": "release",
-      "status": "Contributor approved; waiting for prerequisite merge",
+      "status": "Contributor approved; prerequisite merged, checkout allocation pending",
       "updatedAt": "2026-11-17T20:32:28.027492+00:00",
-      "summary": "Contributor approved the npm checker. Its archive enumeration, integrity checks and automatic notice handling use the mechanism already in master. The manually audited package path still depends on #16051.",
+      "summary": "The approved npm checker’s16051 prerequisite has landed. This existing source obligation is actionable after a coordinated checkout allocation, not waiting for an external merge or another source approval.",
       "evidence": [
         {
           "label": "Owning checks and lint PASS",
@@ -25132,13 +25134,14 @@
         }
       ],
       "followup": {
-        "owner": "root",
-        "disposition": "Contributor approved; waiting for manual artifact support",
+        "owner": "approved_rebase_queue / root",
+        "disposition": "The approved npm checker’s16051 prerequisite has landed. This existing source obligation is actionable after a coordinated checkout allocation, not waiting for an external merge or another source approval.",
         "sourceHead": "8facdc0012a7714662f8c40a9cc5db1030ee2864",
-        "observedAt": "2026-10-29T21:10:41.864614+00:00",
-        "nextAction": "Rebase the approved npm checker after #16051. Avoid reintroducing the superseded notice-only proposal.",
+        "observedAt": "2026-11-23T16:10:34.503992+00:00",
+        "nextAction": "After the current analyzer writer releases the checkout, rebase and qualify the approved8facdc001 npm checker against the landed LicenseRef support. Do not revive the superseded notice-only proposal or preempt the current analyzer priority.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/8facdc0012a7714662f8c40a9cc5db1030ee2864"
+          "https://github.com/tamird/gvisor/commit/8facdc0012a7714662f8c40a9cc5db1030ee2864",
+          "https://github.com/gvisor/gvisor/commit/0cf6f98cb89bf2d9fbc6886bc11085a895b4eb23"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -25152,7 +25155,7 @@
           "owner": "root"
         },
         "technicalOwner": "node_tls_sni",
-        "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings."
+        "recheckCondition": "Root’s coordinated source-checkout allocation and actual integration result."
       }
     },
     {
@@ -25545,8 +25548,8 @@
       "title": "Preserve LicenseRef audits for pinned artifacts",
       "url": "https://github.com/google/gvisor/pull/16051",
       "group": "release",
-      "status": "open",
-      "summary": "Keep audited license terms while the URL and SHA256 of a binary artifact match. An invalid local reference cannot cause automatic discovery to overwrite a reviewed entry.",
+      "status": "merged",
+      "summary": "Native GitHub confirms this source merged at 2026-11-23T15:45:51Z as 0cf6f98cb89bf2d9fbc6886bc11085a895b4eb23. The open source-PR review/import wait is fulfilled. All three topic blobs exactly match the merged result. Source-bound closure is verified; no duplicate branch alias has this exact head. Related prerequisite edges are fulfilled, while descendant-specific gates and superseded lifecycles remain distinct.",
       "updatedAt": "2026-11-21T09:45:00.751471+00:00",
       "evidence": [
         {
@@ -25654,11 +25657,11 @@
       ],
       "followup": {
         "sourceHead": "c0c76ca28a6ee79682e22dab6cf0d8b2327e3ea7",
-        "owner": "buildifier_license_fix / root",
-        "nextAction": "Root follows existing maintainer review/import lifecycle; no live execution watch, manual retry or extra outreach remains.",
+        "owner": "approved_rebase_queue / root",
+        "nextAction": "No open source-PR review/import obligation remains. Preserve source evidence and edge history; existing descendants retain only their own remaining obligations. No ref deletion, outreach or new source authority.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-17T19:04:43.853615+00:00",
-        "recheckCondition": "New review/import/merge event or an actual DCO provider range refresh.",
+        "observedAt": "2026-11-23T16:10:34.503992+00:00",
+        "recheckCondition": "Actual new upstream evidence or an existing descendant’s own prerequisite/consumer change.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/16051",
           "https://github.com/tamird/gvisor/commit/62d7054b7f5b5b22521e7346ed84f533c49f081e",
@@ -25666,9 +25669,10 @@
           "https://buildkite.com/gvisor/pipeline/builds/55594",
           "https://github.com/google/gvisor/pull/16051#issuecomment-7060694543",
           "https://buildkite.com/gvisor/first-pass/builds/2272",
-          "https://buildkite.com/gvisor/pipeline/builds/55604"
+          "https://buildkite.com/gvisor/pipeline/builds/55604",
+          "https://github.com/gvisor/gvisor/commit/0cf6f98cb89bf2d9fbc6886bc11085a895b4eb23"
         ],
-        "disposition": "Exact deliveredc0c76ca2 remains OPEN/MERGEABLE. Canonical main55604 passed after automatic retries recovered the infrastructure attempts. All GitHub aggregate checks pass; review remains required and auto-merge is off.",
+        "disposition": "Native GitHub confirms this source merged at 2026-11-23T15:45:51Z as 0cf6f98cb89bf2d9fbc6886bc11085a895b4eb23. The open source-PR review/import wait is fulfilled. All three topic blobs exactly match the merged result. Source-bound closure is verified; no duplicate branch alias has this exact head. Related prerequisite edges are fulfilled, while descendant-specific gates and superseded lifecycles remain distinct.",
         "curatedAt": "2026-11-21T10:32:02.692176+00:00",
         "currentCI": {
           "source": "c0c76ca28a6ee79682e22dab6cf0d8b2327e3ea7",
@@ -30045,7 +30049,7 @@
       "title": "Fix GNU tools used for image assembly",
       "group": "bazel",
       "url": "https://github.com/tamird/gvisor/commit/ae68fad95",
-      "status": "Contributor approved; awaiting pinned-license support",
+      "status": "Contributor approved; awaiting first active consumer",
       "updatedAt": "2026-11-17T20:32:28.027492+00:00",
       "summary": "The image-tool build needs gawk 5.4 for its regex fixes. The accompanying rules_cc_autoconf patch lets the GNU compiler find its selected linker during configure probes. Neither change uses an Ollama or profiling image. The approved gawk catalog entry covers the entire source bundle with LicenseRef-Gawk-source-bundle, which requires #16051. The original GNU and AMD64/ARM64 checks apply to the reviewed source; a standalone rebase has not been qualified.",
       "links": [
@@ -30071,7 +30075,7 @@
         "sourceHead": "ae68fad953586e472b8c275b3aaaf17d5f1a450f",
         "observedAt": "2026-10-31T02:41:05.863202+00:00",
         "disposition": "Contributor approved; awaiting pinned-license support",
-        "nextAction": "Once #16051 lands, rebase with the first active image that still needs gawk. Verify its configure probes and the regenerated catalog before submitting.",
+        "nextAction": "The pinned-license support prerequisite16051 is fulfilled. Rebase with the first active image that still needs gawk, then verify its configure probes and regenerated catalog; no standalone unused producer delivery is implied.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ae68fad95",
           "https://github.com/google/gvisor/pull/16051"
@@ -30088,7 +30092,7 @@
           "owner": "root"
         },
         "technicalOwner": "work_map_current",
-        "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings."
+        "recheckCondition": "An actual active image consumer requiring gawk and coordinated checkout allocation."
       },
       "refinement": {
         "before": {
@@ -39406,7 +39410,7 @@
       "group": "rbe",
       "status": "open",
       "updatedAt": "2026-11-21T09:45:00.751471+00:00",
-      "summary": "The published one-commit rebase keeps #17191’s release_tars implementation. Bazel cquery and aquery selected the six expected release outputs and the six matching architecture-specific package inputs for their symlinks. The approved patch retains its original changes with the import spelling used by current master. GitHub reports approved and mergeable.",
+      "summary": "Current source is now provider APPROVED with all current checks successful. Existing maintainer review/import ownership continues; no merge, repeated outreach or new source approval is inferred.",
       "evidence": [
         {
           "label": "All nine installed executable hashes, modes and ELF architectures match across .deb, bzip2 and zstd on AMD64 and ARM64 (2c90e983d)",
@@ -39457,8 +39461,8 @@
       "followup": {
         "owner": "buildifier_license_fix / root",
         "sourceHead": "28a5f72059346d1c74e1146c17e42a7ca388518f",
-        "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Exact delivered28a5f720 remains OPEN/MERGEABLE. Canonical main55609 passed after automatic retries recovered the infrastructure attempts. All GitHub aggregate checks pass; review remains required and auto-merge is off.",
+        "observedAt": "2026-11-23T16:07:56.932949+00:00",
+        "disposition": "Current source is now provider APPROVED with all current checks successful. Existing maintainer review/import ownership continues; no merge, repeated outreach or new source approval is inferred.",
         "nextAction": "Root follows existing maintainer review/import lifecycle; no live execution watch, manual retry or extra outreach remains.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16490",
@@ -39503,7 +39507,8 @@
           "https://buildkite.com/gvisor/pipeline/builds/55586",
           "https://github.com/google/gvisor/pull/16490#issuecomment-7060695022",
           "https://buildkite.com/gvisor/first-pass/builds/2267",
-          "https://buildkite.com/gvisor/pipeline/builds/55609"
+          "https://buildkite.com/gvisor/pipeline/builds/55609",
+          "https://github.com/google/gvisor/pull/16490#pullrequestreview-6024572021"
         ],
         "mergeable": "MERGEABLE",
         "recheckCondition": "New review/import/merge event or an actual DCO provider range refresh.",
@@ -70998,8 +71003,8 @@
       "title": "Run governance and license checks on the Buildkite agent",
       "url": "https://github.com/google/gvisor/pull/16904",
       "group": "bazel",
-      "status": "open",
-      "summary": "Buildkite build 53913 ran the two governance comparisons in the dedicated job and all three unit jobs. The proposed revision keeps them in the unit jobs and runs license verification on the agent. Native Make verified all 220 entries and rejected a catalog missing abseil-cpp.",
+      "status": "merged",
+      "summary": "Native GitHub confirms this source merged at 2026-11-23T15:53:11Z as b7e93ffc4474132319ed027317c9b97808d56421. The open source-PR review/import wait is fulfilled. Three of four topic blobs match; first-pass preserves an already-upstream smoke-barrier removal. Source-bound closure is verified; no duplicate branch alias has this exact head. Related prerequisite edges are fulfilled, while descendant-specific gates and superseded lifecycles remain distinct.",
       "updatedAt": "2026-11-18T05:24:21.084067+00:00",
       "settledReviews": [
         {
@@ -71072,20 +71077,21 @@
         }
       ],
       "followup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "2a2862327306d9b0bc53dfffaa6e649837352e8d",
-        "observedAt": "2026-11-18T05:24:21.084067+00:00",
-        "disposition": "Etienne approved exact2a286232 in review6004172497 (Whoo). No reply or new source action is required. Existing provider/main-CI and import obligations remain separate.",
-        "nextAction": "Follow the existing current-head CI and import lifecycle, preserving the new approval and prior source-bound qualification. Do not duplicate reviewer outreach.",
+        "observedAt": "2026-11-23T16:10:34.503992+00:00",
+        "disposition": "Native GitHub confirms this source merged at 2026-11-23T15:53:11Z as b7e93ffc4474132319ed027317c9b97808d56421. The open source-PR review/import wait is fulfilled. Three of four topic blobs match; first-pass preserves an already-upstream smoke-barrier removal. Source-bound closure is verified; no duplicate branch alias has this exact head. Related prerequisite edges are fulfilled, while descendant-specific gates and superseded lifecycles remain distinct.",
+        "nextAction": "No open source-PR review/import obligation remains. Preserve source evidence and edge history; existing descendants retain only their own remaining obligations. No ref deletion, outreach or new source authority.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16904",
           "https://github.com/tamird/gvisor/commit/d51e6c370",
           "https://github.com/gvisor/gvisor/pull/16904",
           "https://github.com/tamird/gvisor/commit/2a28623273",
           "https://github.com/tamird/gvisor/actions/runs/44151120232",
-          "https://github.com/google/gvisor/pull/16904#pullrequestreview-6004172497"
+          "https://github.com/google/gvisor/pull/16904#pullrequestreview-6004172497",
+          "https://github.com/gvisor/gvisor/commit/b7e93ffc4474132319ed027317c9b97808d56421"
         ],
-        "recheckCondition": "Authenticated Buildkite retry capability, a provider retry/new admission result, review/CI/head change or contributor instruction.",
+        "recheckCondition": "Actual new upstream evidence or an existing descendant’s own prerequisite/consumer change.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "mergeable": "MERGEABLE",
         "qualificationHistory": [
@@ -97927,7 +97933,7 @@
       "group": "release",
       "status": "open",
       "updatedAt": "2026-11-21T09:45:00.751471+00:00",
-      "summary": "Current sole PR commit has a valid sign-off; old DCO check 136804177496:56 listed/27 invalid remains ACTION_REQUIRED. Fix127/2b9ce5f80 and its image build/push are complete; app deployment and affected-check recovery are unverified. Existing execution-check passes and import/landing requirements retain their scope.",
+      "summary": "New relkochta review is APPROVED. Current execution checks pass; the only non-success context remains the existing wrong-range DCO ACTION_REQUIRED. Upstream127 fixed the range bug, but deployed-app/check recovery remains unverified. No new source-test failure or new DCO cause is established.",
       "evidence": [
         {
           "label": "Bazel on the Actions host, nine AMD64 executables in the uploaded ZIP",
@@ -98022,7 +98028,8 @@
           "https://buildkite.com/gvisor/first-pass/builds/2273",
           "https://buildkite.com/gvisor/pipeline/builds/55605",
           "https://github.com/cncf/dco2/commit/2b9ce5f80e5fe366e624285b335d075feeb88c0c",
-          "https://github.com/cncf/dco2/actions/runs/45167328676"
+          "https://github.com/cncf/dco2/actions/runs/45167328676",
+          "https://github.com/google/gvisor/pull/17456#pullrequestreview-6024588277"
         ],
         "dcoCoordinationHistory": [
           {
@@ -98032,8 +98039,8 @@
             "nextAction": "Follow the existing exact source/import delivery. DCO import coordination: Root coordinates #17562 at c16bb8d4706e. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch."
           }
         ],
-        "observedAt": "2026-11-23T11:53:11.347436+00:00",
-        "disposition": "Current sole PR commit has a valid sign-off; old DCO check 136804177496:56 listed/27 invalid remains ACTION_REQUIRED. Fix127/2b9ce5f80 and its image build/push are complete; app deployment and affected-check recovery are unverified. Existing execution-check passes and import/landing requirements retain their scope.",
+        "observedAt": "2026-11-23T16:07:56.932949+00:00",
+        "disposition": "New relkochta review is APPROVED. Current execution checks pass; the only non-success context remains the existing wrong-range DCO ACTION_REQUIRED. Upstream127 fixed the range bug, but deployed-app/check recovery remains unverified. No new source-test failure or new DCO cause is established.",
         "currentCI": {
           "source": "4b845306c75b9ad0d09d31cdb86d68dc64171fe9",
           "requiredFirstPass": 2273,
@@ -99926,9 +99933,9 @@
       "title": "pgo: commit newly generated profiles before rebasing",
       "url": "https://github.com/google/gvisor/pull/17492",
       "group": "release",
-      "status": "open",
+      "status": "merged",
       "updatedAt": "2026-11-21T09:33:07.303823+00:00",
-      "summary": "The user-approved minimal e434 amendment is published with verified signing and DCO. DCO, gazelle, lint, fileheader, label and generate all pass. Required FirstPass1974 never started an agent: exit80, started_at null, author30day360000compute-minute quota. This is an admission blocker, not a source failure. Existing review remains with the requested maintainers.",
+      "summary": "Native GitHub confirms this source merged at 2026-11-23T15:48:07Z as 253b20a3de467bb4430d0766f9e1e2dfc82c95b8. The open source-PR review/import wait is fulfilled. The sole topic script exactly matches the merged result. Source-bound closure is verified; no duplicate branch alias has this exact head. Related prerequisite edges are fulfilled, while descendant-specific gates and superseded lifecycles remain distinct.",
       "evidence": [
         {
           "label": "Ten native publisher cases",
@@ -99938,10 +99945,10 @@
       "followup": {
         "sourceHead": "a4b0381bb2b121ec576780dbd65d881b50d837db",
         "owner": "approved_rebase_queue / root",
-        "nextAction": "Root follows existing maintainer review/import and merge events. Source CI is terminal; no execution watch, repeated outreach or further retry remains.",
+        "nextAction": "No open source-PR review/import obligation remains. Preserve source evidence and edge history; existing descendants retain only their own remaining obligations. No ref deletion, outreach or new source authority.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-19T21:03:40.118346+00:00",
-        "recheckCondition": "New substantive feedback, import or merge event.",
+        "observedAt": "2026-11-23T16:10:34.503992+00:00",
+        "recheckCondition": "Actual new upstream evidence or an existing descendant’s own prerequisite/consumer change.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17492",
           "https://github.com/tamird/gvisor/commit/2ca38c700a1f17a2520e456022b2840285296185",
@@ -99956,10 +99963,11 @@
           "https://github.com/tamird/gvisor/actions/runs/44889319061",
           "https://github.com/google/gvisor/pull/17492#pullrequestreview-6004399761",
           "https://buildkite.com/gvisor/pipeline/builds/55598",
-          "https://github.com/tamird/gvisor/actions/runs/44889765892"
+          "https://github.com/tamird/gvisor/actions/runs/44889765892",
+          "https://github.com/gvisor/gvisor/commit/253b20a3de467bb4430d0766f9e1e2dfc82c95b8"
         ],
         "curatedAt": "2026-11-21T10:53:48.994925+00:00",
-        "disposition": "Exact delivered a4b0381b has canonical main 55598 and FirstPass 2263 PASSED; all GitHub-native checks and DCO pass. Automatic retries recovered the infrastructure attempts without manual reruns. Existing review/import requirements remain; no merge or auto-merge action is inferred.",
+        "disposition": "Native GitHub confirms this source merged at 2026-11-23T15:48:07Z as 253b20a3de467bb4430d0766f9e1e2dfc82c95b8. The open source-PR review/import wait is fulfilled. The sole topic script exactly matches the merged result. Source-bound closure is verified; no duplicate branch alias has this exact head. Related prerequisite edges are fulfilled, while descendant-specific gates and superseded lifecycles remain distinct.",
         "permanentTransactionBaseline": {
           "productionSource": "b75c76bbee31f309bd3a7bdb125a4b28e96086a1",
           "ciSource": "cbb9a918c4197ddbb9131f9482ba001987a246ce",
@@ -105927,17 +105935,18 @@
       "url": "https://github.com/google/gvisor/pull/17854",
       "status": "open",
       "updatedAt": "2026-11-21T12:02:56.484187+00:00",
-      "summary": "Published the exact user-approved source. Native head is mergeable and DCO passes; FirstPass is failed and its existing source owner is diagnosing the actual cause. Qualification limits are retained in the linked source investigation.",
+      "summary": "The maintainer states unattended-upgrades will be disabled on agents soon. This is an external planned policy change, not verified deployment or source-publication authority. Existing source/check/admission and review/import obligations remain owned.",
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "b64c59c1b06d72919b250766609b328d87a05076",
         "mergeable": "MERGEABLE",
-        "disposition": "Published user-approved source remains mergeable. All GitHub-native execution checks and DCO pass in the canonical snapshot. FirstPass 2285 independently failed before agent assignment: exit 80, null agent_id/started_at, stack_errored, author 1535036 rolling 30-day quota of 360,000 compute minutes. No Bazel target ran; main admission and maintainer review remain distinct.",
+        "disposition": "The maintainer states unattended-upgrades will be disabled on agents soon. This is an external planned policy change, not verified deployment or source-publication authority. Existing source/check/admission and review/import obligations remain owned.",
         "nextAction": "Existing source/provider owner rechecks evidenced admission recovery or an actual source/check event. No manual retry, quota-owner outreach, source change or additional polling is implied. approved_rebase_queue retains the review/import lifecycle.",
         "recheckCondition": "Canonical failure diagnosis or exact-head CI/review/import event.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17854",
-          "https://buildkite.com/gvisor/first-pass/builds/2285#01a1fdf7-c201-49b6-beb5-06067deda5b0"
+          "https://buildkite.com/gvisor/first-pass/builds/2285#01a1fdf7-c201-49b6-beb5-06067deda5b0",
+          "https://github.com/google/gvisor/pull/17854#issuecomment-7105927794"
         ],
         "attentionDispositions": [
           {
@@ -105962,7 +105971,8 @@
             }
           }
         ],
-        "curatedAt": "2026-11-21T12:20:58.751348+00:00"
+        "curatedAt": "2026-11-21T12:20:58.751348+00:00",
+        "observedAt": "2026-11-23T16:07:56.932949+00:00"
       }
     },
     {
@@ -105976,21 +105986,23 @@
       "url": "https://github.com/google/gvisor/pull/17855",
       "status": "open",
       "updatedAt": "2026-11-21T12:02:56.484187+00:00",
-      "summary": "Exact 5ad44c8 now has First Pass 2396 PASS and current native/DCO green; Etienne approved, with relkochta still requested and aggregate REVIEW_REQUIRED. Main pipeline 55699 fails on final ARM Docker shard6 attempt 3: TestDockerWithVFS/docker_run_bridge_network_privileged timed out after 900.2 seconds in Process.Logs/stdcopy; four other shard targets pass and other failed jobs recovered. The workload cause is unknown. Existing cancellation fix #17836 is implemented/qualified but still OPEN, relevant to the reporting/cancellation boundary only; it is not proven to fix this privileged workload.",
+      "summary": "New relkochta review makes the current source provider APPROVED. Main55712 is pending. Earlier main55699 actual Docker log-drain hang and the unmerged17836 cancellation/reporting dependency remain distinct; no source fix or cause claim follows.",
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "5ad44c8892f6d9ce773e448357a83917b3c79b5b",
         "mergeable": "MERGEABLE",
-        "disposition": "Exact 5ad44c8 now has First Pass 2396 PASS and current native/DCO green; Etienne approved, with relkochta still requested and aggregate REVIEW_REQUIRED. Main pipeline 55699 fails on final ARM Docker shard6 attempt 3: TestDockerWithVFS/docker_run_bridge_network_privileged timed out after 900.2 seconds in Process.Logs/stdcopy; four other shard targets pass and other failed jobs recovered. The workload cause is unknown. Existing cancellation fix #17836 is implemented/qualified but still OPEN, relevant to the reporting/cancellation boundary only; it is not proven to fix this privileged workload.",
+        "disposition": "New relkochta review makes the current source provider APPROVED. Main55712 is pending. Earlier main55699 actual Docker log-drain hang and the unmerged17836 cancellation/reporting dependency remain distinct; no source fix or cause claim follows.",
         "nextAction": "Root/source owner follows existing #17836 integration and maintainer/import events, retaining the separate #17855 log-retention purpose. Keep sensitive implementation work held; no source edit, retry, additional outreach or causal fix claim.",
-        "recheckCondition": "Actual helper integration, natural recurrence with bounded evidence or new maintainer/provider event.",
+        "recheckCondition": "Actual main55712 terminal result,17836 integration or genuine maintainer/import change; no duplicate watch or unchanged retry.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17855",
           "https://buildkite.com/gvisor/first-pass/builds/2286#01a1fdf7-c92c-42e2-babc-75c2e4761a74",
           "https://buildkite.com/gvisor/first-pass/builds/2396",
           "https://buildkite.com/gvisor/pipeline/builds/55699#01a20762-8c60-488e-8bab-b5f77d911419",
           "https://github.com/google/gvisor/pull/17836",
-          "https://github.com/google/gvisor/pull/17855#pullrequestreview-6017755268"
+          "https://github.com/google/gvisor/pull/17855#pullrequestreview-6017755268",
+          "https://github.com/google/gvisor/pull/17855#pullrequestreview-6024750772",
+          "https://buildkite.com/gvisor/pipeline/builds/55712"
         ],
         "attentionDispositions": [
           {
@@ -106020,7 +106032,7 @@
           }
         ],
         "curatedAt": "2026-11-21T12:20:58.751348+00:00",
-        "observedAt": "2026-11-23T10:12:01.198799+00:00"
+        "observedAt": "2026-11-23T16:07:56.932949+00:00"
       }
     },
     {
@@ -121770,8 +121782,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-23T15:03:11.522701+00:00",
-      "summary": "Sole fallback45199771155 completed SUCCESS4m6s with actual API15:01:13 UTC after the due guard found no newer/live native run. No established scheduling provider cause or demonstrated configuration defect; foreground/active-goal supervision owns fallback delivery.",
+      "updatedAt": "2026-11-23T16:07:56.932949+00:00",
+      "summary": "Sole fallback45211775248 completed SUCCESS3m22s with actual API16:04:44 UTC after the due guard found no newer/live native run. No established scheduling provider cause or demonstrated configuration defect; foreground/active-goal supervision owns fallback delivery.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122014,7 +122026,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground/active-goal supervision owns the next native-first guard at16:01:13 UTC and recovery by16:31:13. Reuse newer/live native delivery, otherwise one canonical fallback; preserve existing cron,60/90-minute policy and2-hour UI threshold. No second watcher, reset or scheduler.",
+      "nextStep": "Root foreground/active-goal supervision owns the next native-first guard at17:04:44 UTC and recovery by17:34:44. Reuse newer/live native delivery, otherwise one canonical fallback; preserve existing cron,60/90-minute policy and2-hour UI threshold. No second watcher, reset or scheduler.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -131657,9 +131669,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "analysis_pass_inventory / root",
-      "updatedAt": "2026-11-23T15:10:15.337518+00:00",
+      "updatedAt": "2026-11-23T16:07:56.932949+00:00",
       "group": "analysis",
-      "summary": "FIRST PRIORITY: root is revising the combined analyzer candidate to latest x/tools v0.53.0 with its required transitive updates, following the user’s direct request. The prior60a opening question is superseded without approval or rejection; no replacement question exists yet. The existing audit registers additional diagnostics and all26 modernize analyzers with Staticcheck v0.8.2. The new revision must retain honest source-bound validation and known full-corpus blockers; historical1,234 findings are from a partial older scan, not a current count. Protected-source migrations remain held. Independent9e tooling preparation and db9 checker proposals retain their separate pending decisions and validation limits.",
+      "summary": "FIRST PRIORITY: the unified analyzer proposal now includes x/tools v0.53.0 with required transitive updates, atomicalign and fieldalignment, all30 modernizers (all26 Suite members plus the four outside Suite), the17 tooling edits and23 non-tools errors.AsType migrations. Root owns implementation and affected validation; old60a and separate9e opening questions are superseded without publication approval. Narrow mechanical analyzer migrations, including runtime errors.AsType sites, are explicitly authorized for this proposal; unrelated TCP, pgalloc and sensitive-feature work remains held. Only concrete local exceptions should be justified. The intentional NBSP negative fixture is not an upstream bug; Merge’s descriptor-identity assertion remains valid. No final integrated validation or full-corpus-green result is claimed.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132031,7 +132043,7 @@
           ]
         }
       ],
-      "nextStep": "Root owns the gVisor checkout and latest-x/tools combined revision. Complete the minimal dependency update, affected validation and final review before preparing a replacement publication question. Do not transfer60a approval, claim full-corpus readiness or treat the warning backlog as a source-handoff prerequisite. Independent9e/db9 and operational SSH questions remain separate.",
+      "nextStep": "Complete the same unified source proposal and its findings/source migrations, affected validation and final review. Fold the tooling changes into it rather than a separate9e delivery. Root retains the checkout; do not create a new opening question until an actual final candidate is reviewed. Independent db9 and unrelated pending decisions remain separate; preserve all unrelated sensitive-feature holds.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132330,6 +132342,17 @@
           "summary": "Superseded by the user-requested update to latest x/tools. This revision request is not publication approval; no replacement opening question has been asked.",
           "body": "Nogo's explicit analyzer list missed newer diagnostics and modern Go APIs. Register 20 additional diagnostic packages and all 26 members of `modernize.Suite`, including `errors.AsType`. Supply the declared ignored files and source reader required by the added passes. Update Staticcheck to v0.8.2 so its IR supports promoted-field literals and `new(value)` without excluding modernize checks. The commit records the complete 56-directory audit and the reason for every omission.\n\nFocused driver and sanity tests pass on AMD64 and ARM64, as do source and license checks. These results apply to the identical qualified source tree. Full-corpus Nogo still reports existing source findings, so source migrations remain necessary before merging; the existing corpus scan is partial.\n\nPosted by Codex on behalf of @tamird.\n",
           "outcome": "superseded"
+        },
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "9e27fed64d6fa4a60bd23940a7458a6e01b30387",
+          "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+          "url": "https://github.com/tamird/gvisor/commit/9e27fed64d6fa4a60bd23940a7458a6e01b30387",
+          "title": "Prepare Go tooling for expanded analysis",
+          "summary": "Superseded by the user-requested unified analyzer proposal; these tooling edits are folded into it, not separately published. No approval or rejection inferred.",
+          "body": "Prepare maintained Go tools for the expanded analyzer set with typed ranges, go/types iterators, sequence iterators, current reflection APIs and errors.AsType assertions. Preserve generator ordering, delimiter handling and stack-signature bytes.\n\nEmit only go:build constraints from the canonical producer for the declared Go toolchain. Extend the existing combination cases to check the complete directive and newline contract.\n\nAnalyzer registration and runtime-source migrations remain separate.\n\nPosted by Codex on behalf of @tamird.\n",
+          "outcome": "superseded"
         }
       ],
       "additionalReviews": [
@@ -132349,16 +132372,6 @@
           "title": "Include fields and methods in linkname signatures",
           "summary": "Correct the baseline checker loops with an owning regression. Fixed tests, targeted Nogo validators, source checks and two reviews passed; full corpus was not rerun.",
           "body": "Include struct fields and interface methods in linkname signatures. Both helpers iterated over an initially empty output slice, so different composite types could compare equal. Iterate the actual type members and omit only the implicit interface-method receiver, which otherwise recurses through the interface itself.\n\nThe new owning-package regression distinguishes changes to the second field and method and checks that non-recursive types retain signature depth.\n\nValidation: the regression fails against the original checker. Fixed AMD64/ARM64 unit and driver tests, three targeted Nogo validators and source checks pass. The full repository corpus was not rerun.\n\nPosted by Codex on behalf of @tamird.\n"
-        },
-        {
-          "kind": "proposal",
-          "status": "pending",
-          "head": "9e27fed64d6fa4a60bd23940a7458a6e01b30387",
-          "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
-          "url": "https://github.com/tamird/gvisor/commit/9e27fed64d6fa4a60bd23940a7458a6e01b30387",
-          "title": "Prepare Go tooling for expanded analysis",
-          "summary": "Prepare17 maintained tool files with modern APIs and canonical build-tag emission. Identical-tree checks and two reviews are reused; analyzer registration and runtime migrations remain separate.",
-          "body": "Prepare maintained Go tools for the expanded analyzer set with typed ranges, go/types iterators, sequence iterators, current reflection APIs and errors.AsType assertions. Preserve generator ordering, delimiter handling and stack-signature bytes.\n\nEmit only go:build constraints from the canonical producer for the declared Go toolchain. Extend the existing combination cases to check the complete directive and newline contract.\n\nAnalyzer registration and runtime-source migrations remain separate.\n\nPosted by Codex on behalf of @tamird.\n"
         }
       ]
     },
