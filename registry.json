@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T18:25:38.380071+00:00",
+    "updatedAt": "2026-11-23T18:41:19.574220+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -214,12 +214,12 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-11-23T17:55:09.877980+00:00",
-      "summary": "The reviewed private candidate d279425e integrates the scanner registry with landed LicenseRef support and two retained test-constant spellings. AMD/ARM owning tests56 plus Nogo1 each, source checks and catalog Verify226 pass; two final reviews are clear. The actual new-source amendment question is pending. Public15146 remains427; these private checks are not public native checks. Root’s later REST mergeability read was unknown, while the prior canonical conflict observation remains dated to its actual API snapshot. Candidate d279 is now durably published at review/licensecheck-15146-rebase-20261123 after normal SSH success and exact native readback. Public15146 is still427 and new-source amendment approval remains pending. QEMU Fetch, internal-policy and import landing holds remain.",
+      "updatedAt": "2026-11-23T18:40:13.679878+00:00",
+      "summary": "Approved d279 is delivered and root/provider-verified MERGEABLE, with concise rebase notice7110402134 posted. New checks are pending. The overall snapshot still observes old427; that old conflict is superseded by this exact publication receipt, not an unfinished rebase. QEMU Fetch/internal-policy/import landing holds remain.",
       "followup": {
-        "disposition": "The reviewed private candidate d279425e integrates the scanner registry with landed LicenseRef support and two retained test-constant spellings. AMD/ARM owning tests56 plus Nogo1 each, source checks and catalog Verify226 pass; two final reviews are clear. The actual new-source amendment question is pending. Public15146 remains427; these private checks are not public native checks. Root’s later REST mergeability read was unknown, while the prior canonical conflict observation remains dated to its actual API snapshot. Candidate d279 is now durably published at review/licensecheck-15146-rebase-20261123 after normal SSH success and exact native readback. Public15146 is still427 and new-source amendment approval remains pending. QEMU Fetch, internal-policy and import landing holds remain.",
-        "owner": "root / approved_rebase_queue",
-        "nextAction": "Await the actual d279 source-amendment decision; root owns the existing-PR update and standing-authorized routine post-rebase notice after an approved push. Candidate preview publication is complete, not an execution-permission blocker. Clarification7070045072 is already consumed; no repeated reply question. Preserve QEMU/internal-policy/import landing holds.",
+        "disposition": "Approved d279 is delivered and root/provider-verified MERGEABLE, with concise rebase notice7110402134 posted. New checks are pending. The overall snapshot still observes old427; that old conflict is superseded by this exact publication receipt, not an unfinished rebase. QEMU Fetch/internal-policy/import landing holds remain.",
+        "owner": "root / approved_delivery_batch",
+        "nextAction": "Follow actual new-head CI/maintainer/policy events; no rebase or source-approval wait remains. Preserve QEMU/internal/import holds and do not duplicate the already-posted clarification or rebase notice.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/23b8ddf0a",
           "https://github.com/tamird/gvisor/actions/runs/43014384411",
@@ -254,15 +254,16 @@
           "https://github.com/tamird/gvisor/actions/runs/45230120958",
           "https://github.com/tamird/gvisor/actions/runs/45230126786",
           "https://github.com/tamird/gvisor/actions/runs/45230526075",
-          "https://github.com/tamird/gvisor/tree/review/licensecheck-15146-rebase-20261123"
+          "https://github.com/tamird/gvisor/tree/review/licensecheck-15146-rebase-20261123",
+          "https://github.com/gvisor/gvisor/pull/15146#issuecomment-7110402134"
         ],
         "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
         "sourceHead": "427a8de7470d18956964b5ef71a21fab92440039",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-23T18:24:45.555294+00:00",
-        "providerHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "recheckCondition": "Actual amendment decision, then exact public-head/check readback; actual policy/Fetch/import evidence remains separate.",
+        "observedAt": "2026-11-23T18:40:13.679878+00:00",
+        "providerHead": "d279425e0defee09168de15f54f82b63f1e2a8a9",
+        "recheckCondition": "Actual new-head check/review/import evidence, approved reply completion or next normal canonical sweep.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "curatedAt": "2026-11-21T15:01:28.141765+00:00",
         "attentionDispositions": [
@@ -289,7 +290,7 @@
           }
         ]
       },
-      "head": "427a8de7470d18956964b5ef71a21fab92440039",
+      "head": "d279425e0defee09168de15f54f82b63f1e2a8a9",
       "evidence": [
         {
           "label": "Tested fork repair on current master",
@@ -466,18 +467,20 @@
           "summary": "Direct user LGTM for427 was followed by the explicitly requested push-before-comment delivery. No source publication question remains pending.",
           "outcome": "APPROVED",
           "postedURL": "https://github.com/gvisor/gvisor/pull/15146"
+        },
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "head": "d279425e0defee09168de15f54f82b63f1e2a8a9",
+          "baseHead": "427a8de7470d18956964b5ef71a21fab92440039",
+          "url": "https://github.com/tamird/gvisor/commit/d279425e0defee09168de15f54f82b63f1e2a8a9",
+          "title": "Integrate license scanning with landed LicenseRef support",
+          "summary": "User approved the d279 amendment; delivered to the existing PR. Prior427 and new-source grants remain distinct.",
+          "body": "Scope summary: amend the existing PR with d279425e0defee09168de15f54f82b63f1e2a8a9 on parent b7e93ffc. The integration composes the scanner registry with landed LicenseRef verification and preserves two test-constant spellings. Each architecture passed 56 owning unit cases and one Nogo target; source checks and canonical Verify of all226 catalog entries passed on exact CI4c45e9a255 with12 support files. Two final independent reviews are clear. These are private-candidate results, not public427 native checks.\n\nActual Fetch acceptance, the internal policy/QEMU hold and import landing limits remain unresolved. The earlier clarification is already posted. No approval of this new source is inferred from the prior427 grant.\n\n```sh\ngit range-diff --creation-factor=100 427a8de747^! d279425e0d^!\n```",
+          "outcome": "approved",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/15146#issuecomment-7110402134"
         }
-      ],
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "d279425e0defee09168de15f54f82b63f1e2a8a9",
-        "baseHead": "427a8de7470d18956964b5ef71a21fab92440039",
-        "url": "https://github.com/tamird/gvisor/commit/d279425e0defee09168de15f54f82b63f1e2a8a9",
-        "title": "Integrate license scanning with landed LicenseRef support",
-        "summary": "Amend15146 with the reviewed LicenseRef/scanner integration and two retained test-constant spellings. Private candidate gates pass; public source remains427 and source approval is pending.",
-        "body": "Scope summary: amend the existing PR with d279425e0defee09168de15f54f82b63f1e2a8a9 on parent b7e93ffc. The integration composes the scanner registry with landed LicenseRef verification and preserves two test-constant spellings. Each architecture passed 56 owning unit cases and one Nogo target; source checks and canonical Verify of all226 catalog entries passed on exact CI4c45e9a255 with12 support files. Two final independent reviews are clear. These are private-candidate results, not public427 native checks.\n\nActual Fetch acceptance, the internal policy/QEMU hold and import landing limits remain unresolved. The earlier clarification is already posted. No approval of this new source is inferred from the prior427 grant.\n\n```sh\ngit range-diff --creation-factor=100 427a8de747^! d279425e0d^!\n```"
-      }
+      ]
     },
     {
       "id": "pr:15145",
@@ -43950,7 +43953,7 @@
       "number": 16587,
       "group": "release",
       "ref": "review/debian-changelog-release-date",
-      "head": "7f37bebc1adeb13213c29774b278d3e3e861fff5",
+      "head": "b31ec1084c1cfb767db222fdf04124c7c7000b86",
       "title": "Date the Debian changelog from the release version",
       "url": "https://github.com/google/gvisor/pull/16587",
       "evidence": [
@@ -44003,9 +44006,9 @@
           "url": "https://github.com/tamird/gvisor/commit/6cb9d5004"
         }
       ],
-      "updatedAt": "2026-11-19T16:20:03.380488+00:00",
+      "updatedAt": "2026-11-23T18:40:13.679878+00:00",
       "status": "open",
-      "summary": "Approved7f37bebc now conflicts with live69e3b9c3 only at adjacent debian/BUILD loads. The existing owner has verified the minimal composition: retain approved go_binary/go_test imports together with landed release_archives, preserving the single production/test topic commit.",
+      "summary": "Source-equivalent b31ec108 rebase is delivered and verified MERGEABLE/DCO success, with auto-merge absent and relkochta request retained. FirstPass2469 and native checks are pending. Root resolved the child execution-review rejection using the actual standing authorization; factual notice7110449402 is now posted and verified. Old7f snapshot conflict is superseded by this publication receipt, not an unfinished rebase.",
       "refinement": {
         "before": {
           "head": "dbb2424c475adc4c2b2915f4f26f07f251f13eb6"
@@ -44016,21 +44019,24 @@
         }
       },
       "followup": {
-        "owner": "approved_rebase_queue / root",
+        "owner": "root / approved_delivery_batch",
         "sourceHead": "7f37bebc1adeb13213c29774b278d3e3e861fff5",
-        "observedAt": "2026-11-23T18:19:28.669923+00:00",
-        "disposition": "Approved7f37bebc now conflicts with live69e3b9c3 only at adjacent debian/BUILD loads. The existing owner has verified the minimal composition: retain approved go_binary/go_test imports together with landed release_archives, preserving the single production/test topic commit.",
-        "nextAction": "Approved rebase owner queues the minimal source-equivalent load composition and qualification after current17780 naming preparation, without touching the analyzer checkout. Preserve the one-topic commit and existing authority; no new semantic decision or approval question is indicated.",
+        "observedAt": "2026-11-23T18:41:19.574220+00:00",
+        "disposition": "Source-equivalent b31ec108 rebase is delivered and verified MERGEABLE/DCO success, with auto-merge absent and relkochta request retained. FirstPass2469 and native checks are pending. Root resolved the child execution-review rejection using the actual standing authorization; factual notice7110449402 is now posted and verified. Old7f snapshot conflict is superseded by this publication receipt, not an unfinished rebase.",
+        "nextAction": "Follow actual b31 current-head checks, maintainer/import events through the existing owner. Rebase and notice are complete; no execution-permission or source-approval wait remains, and no duplicate watch/notice/retry follows.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42209485090/artifacts/13498582036",
           "https://github.com/google/gvisor/pull/16587",
           "https://github.com/tamird/gvisor/commit/8311c4cdbffedf751449bfc1bb8560889dfda1fb",
           "https://github.com/tamird/gvisor/commit/dbb2424c475adc4c2b2915f4f26f07f251f13eb6",
           "https://github.com/tamird/gvisor/commit/6cb9d5004",
-          "https://github.com/gvisor/gvisor/pull/17678"
+          "https://github.com/gvisor/gvisor/pull/17678",
+          "https://github.com/tamird/gvisor/commit/b31ec1084c1cfb767db222fdf04124c7c7000b86",
+          "https://buildkite.com/gvisor/first-pass/builds/2469",
+          "https://github.com/gvisor/gvisor/pull/16587#issuecomment-7110449402"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Owner-qualified rebase delivery following the current naming preparation and actual head/check evidence.",
+        "recheckCondition": "Actual new-head check/review/import event or next normal canonical sweep.",
         "curatedAt": "2026-11-19T16:20:03.380488+00:00",
         "priorImportNextAction": "Follow the checks, maintainer review and import for the published revision. DCO import coordination: Root coordinates #17678 at 8569dbe2475f. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
@@ -44214,7 +44220,8 @@
             "file": "debian16587-new-head-terminal-ci.json",
             "sha256": "e96b36143ca51611d4bb2dfa8ed1e2d6cbfddb4c4504ff7e16fb552d85af7921"
           }
-        }
+        },
+        "providerHead": "b31ec1084c1cfb767db222fdf04124c7c7000b86"
       },
       "dcoCoordination": {
         "owner": "root",
@@ -82723,7 +82730,7 @@
       "url": "https://github.com/google/gvisor/pull/17184",
       "group": "tests",
       "status": "open",
-      "summary": "The lean Go TCP rewrite is fully qualified and independently reviewed. One-commit f26a34c11bfa461eb497291194bfcf7b649d6612 has the exact qualified f6f9382a tree on eb263, includes DCO and remains cumulative +144 lines. The actual question to amend #17184 is pending; public 2aa840f4 is unchanged. The unanswered b7 standalone proposal is superseded as the current vehicle and retained only as an alternative, without an approval grant.",
+      "summary": "The old f26 opening/amendment proposal is superseded by requested revisions, not approved: LookupEnv, line wrapping, simpler []*exec.Cmd child cleanup and commit before/after output.",
       "evidence": [
         {
           "label": "Published standalone benchmark correction",
@@ -82738,14 +82745,14 @@
           "url": "https://github.com/tamird/gvisor/blob/208cd127d/.github/qualification/tcp_benchmark_go.result.json"
         }
       ],
-      "updatedAt": "2026-11-20T15:36:10.284882+00:00",
+      "updatedAt": "2026-11-23T18:40:13.679878+00:00",
       "followup": {
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
-        "owner": "approved_rebase_queue / root",
-        "nextAction": "Await the unanswered #17184 amendment decision for f26a34c11bfa461eb497291194bfcf7b649d6612. The exact f26 preview is now accessible, with tree 0c22e56cec3994a3d1b92a09c1db40e9733e2eaa and parent eb263e1f414d0bceaf10decea6c73e2c77332112. Preserve all guard/source/Nogo/positive-mode evidence and final independent reviews. Public 2aa remains unchanged; there is no competing b7 PR or transport/permission blocker.",
+        "owner": "root",
+        "nextAction": "Root revises the existing TCP Go proposal after main-checkout allocation, using LookupEnv and simpler child cleanup and retaining before/after output. Qualify/review the revised source before a new publication question; public17184 remains unchanged.",
         "mergeable": "CONFLICTING",
-        "observedAt": "2026-11-20T18:31:31.140104+00:00",
-        "recheckCondition": "Actual amendment answer or substantive source/qualification change; treat preview transport recovery separately from source approval.",
+        "observedAt": "2026-11-23T18:40:13.679878+00:00",
+        "recheckCondition": "Root’s actual revised source/explanation or actual provider evidence; no invented pending approval.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17184",
           "https://github.com/tamird/gvisor/commit/9c541c3ae1cd68df1741882480d5bf184396e695",
@@ -82789,7 +82796,7 @@
           "https://github.com/tamird/gvisor/actions/runs/45004532751",
           "https://github.com/tamird/gvisor/blob/ab856ed6063d63de247adbb26e01617a7a50c02d/registry.json"
         ],
-        "disposition": "The lean Go TCP rewrite is fully qualified and independently reviewed. One-commit f26a34c11bfa461eb497291194bfcf7b649d6612 has the exact qualified f6f9382a tree on eb263, includes DCO and remains cumulative +144 lines. The actual question to amend #17184 is pending; public 2aa840f4 is unchanged. The unanswered b7 standalone proposal is superseded as the current vehicle and retained only as an alternative, without an approval grant.",
+        "disposition": "The old f26 opening/amendment proposal is superseded by requested revisions, not approved: LookupEnv, line wrapping, simpler []*exec.Cmd child cleanup and commit before/after output.",
         "curatedAt": "2026-11-22T14:02:28.619749+00:00",
         "implementationOwner": "approved_rebase_queue",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112"
@@ -82816,7 +82823,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Await the actual unanswered #17184 amendment decision for f26a34c11bfa461eb497291194bfcf7b649d6612. Preserve all guard/source/Nogo/positive-mode evidence and clean final independent reviews. Fork-preview workflow-permission determination timed out after normal SSH refusal and guarded HTTPS retry; missing scope is unproved, and exact public f6 source remains reviewable. No competing b7 PR, source publication or new permission request.",
+      "nextStep": "Root revises the existing TCP Go proposal after main-checkout allocation, using LookupEnv and simpler child cleanup and retaining before/after output. Qualify/review the revised source before a new publication question; public17184 remains unchanged.",
       "recheckCondition": "User answer to this actual question or substantive source/qualification change.",
       "refinement": {
         "before": {
@@ -82865,19 +82872,20 @@
           "outcome": "changes-requested",
           "observedAt": "2026-11-20T18:31:31.140104+00:00",
           "note": "No pending question, publication approval or DCO action remains. The simplified source had valid owning gates and final review, but the user requested further reduction."
+        },
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "head": "f26a34c11bfa461eb497291194bfcf7b649d6612",
+          "baseHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
+          "url": "https://github.com/tamird/gvisor/commit/f26a34c11bfa461eb497291194bfcf7b649d6612",
+          "title": "Run the TCP benchmark from Go",
+          "body": "Replace the TCP benchmark's shell coordinator with Go argument vectors and iperf3 JSON reporting. Keep network setup and service lifetimes in one coordinator, with CLI parsing and namespace entry separate. Resolve the declared helpers and iperf executable through Bazel runfiles.\n\nBound server and proxy startup, the complete transfer, and shutdown. Allow proxies ten seconds to flush profiles, then kill and reap remaining children. Read the final aggregate sender rate and sample proxy CPU usage before cleanup.\n\nExtend the real-transfer regression to cover stalled service launchers and bounded exit after output. Include the declared iperf tool's generated license entry and correct the README's obsolete CSV recipes.\n\nPosted by Codex on behalf of @tamird.\n",
+          "summary": "The old f26 opening/amendment proposal is superseded by requested revisions, not approved: LookupEnv, line wrapping, simpler []*exec.Cmd child cleanup and commit before/after output.",
+          "outcome": "changes-requested"
         }
       ],
-      "nextAction": "Root prioritizes the requested current-CI/cache research and proposed issue rewrite. On resumption, approved_rebase_queue compares the earlier lean Go baseline and identifies the smallest owning mechanism while preserving required behavior and meaningful negatives. Do not repeat an approval question or publish058.",
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "f26a34c11bfa461eb497291194bfcf7b649d6612",
-        "baseHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
-        "url": "https://github.com/tamird/gvisor/commit/f26a34c11bfa461eb497291194bfcf7b649d6612",
-        "title": "Run the TCP benchmark from Go",
-        "body": "Replace the TCP benchmark's shell coordinator with Go argument vectors and iperf3 JSON reporting. Keep network setup and service lifetimes in one coordinator, with CLI parsing and namespace entry separate. Resolve the declared helpers and iperf executable through Bazel runfiles.\n\nBound server and proxy startup, the complete transfer, and shutdown. Allow proxies ten seconds to flush profiles, then kill and reap remaining children. Read the final aggregate sender rate and sample proxy CPU usage before cleanup.\n\nExtend the real-transfer regression to cover stalled service launchers and bounded exit after output. Include the declared iperf tool's generated license entry and correct the README's obsolete CSV recipes.\n\nPosted by Codex on behalf of @tamird.\n",
-        "summary": "Actual accepted, unanswered question to amend existing #17184. Candidate parent eb263e1f414d0bceaf10decea6c73e2c77332112; tree0c22e56cec3994a3d1b92a09c1db40e9733e2eaa is identical to public qualified f6f9382a055959d59857f9688ab57bc15ae853b4. Full source compare: https://github.com/tamird/gvisor/compare/eb263e1f4...f6f9382a0 . DCO included; cumulative +144 lines is disclosed. No question ID or precise submission time was supplied."
-      }
+      "nextAction": "Root prioritizes the requested current-CI/cache research and proposed issue rewrite. On resumption, approved_rebase_queue compares the earlier lean Go baseline and identifies the smallest owning mechanism while preserving required behavior and meaningful negatives. Do not repeat an approval question or publish058."
     },
     {
       "id": "branch:tcp-dsack-below-ack-parity",
@@ -103589,13 +103597,13 @@
       "group": "bazel",
       "status": "open",
       "updatedAt": "2026-11-19T08:32:44.165346+00:00",
-      "summary": "Kerumeto requests changes on current5c8a1826: the function name should describe timer and benchmark control, not only executing hey. This naming feedback is unresolved; no source/reply change or publication approval is inferred. Existing timing/performance limits remain.",
+      "summary": "Private naming candidate ebc2451733 is compiled on both architectures and source-checked, but final review/publication remains pending. Public5c8 is unchanged and the reviewer finding remains unresolved. The new user approval list did not approve this rename.",
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "5c8a182619525e77d210a31a9b9ff575251165f3",
         "observedAt": "2026-11-23T18:19:28.669923+00:00",
-        "disposition": "Kerumeto requests changes on current5c8a1826: the function name should describe timer and benchmark control, not only executing hey. This naming feedback is unresolved; no source/reply change or publication approval is inferred. Existing timing/performance limits remain.",
-        "nextAction": "Existing owner prepares the object-only runHey→runHTTPBenchmark rename across the three known files, preserving behavior and the analyzer checkout. Complete the existing RBE validation and terse reply draft; the public reviewer finding remains unresolved until actual authorized publication. No timing run or approval inference.",
+        "disposition": "Private naming candidate ebc2451733 is compiled on both architectures and source-checked, but final review/publication remains pending. Public5c8 is unchanged and the reviewer finding remains unresolved. The new user approval list did not approve this rename.",
+        "nextAction": "Existing rebase owner/root finishes final review and the actual source-publication boundary for the naming-only candidate. Do not publish or resolve the public finding from unrelated approvals.",
         "recheckCondition": "Owner-qualified naming candidate/reply and actual publication decision or public-head/reviewer change.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/44231839538",
@@ -106129,13 +106137,13 @@
       "status": "closed",
       "title": "DCO check includes commits already on the PR base branch",
       "url": "https://github.com/cncf/dco2/issues/126",
-      "updatedAt": "2026-11-23T15:03:11.522701+00:00",
-      "summary": "The original commit-range bug is fixed upstream by merged127/2b9ce5f80; its image build/push succeeded. Deployment and affected-check recomputation remain unverified: current15106/17456 still report ACTION_REQUIRED. Optional issue48 native-rerequest support is a separate capability, not a prerequisite or replacement for the original fix.",
+      "updatedAt": "2026-11-23T18:40:13.679878+00:00",
+      "summary": "The user explicitly abandoned the optional d8/native-rerequest proposal. No upstream PR, message or branch/state deletion follows. Original range bug127 and optional issue48 are distinct.",
       "followup": {
         "owner": "root",
-        "disposition": "The original commit-range bug is fixed upstream by merged127/2b9ce5f80; its image build/push succeeded. Deployment and affected-check recomputation remain unverified: current15106/17456 still report ACTION_REQUIRED. Optional issue48 native-rerequest support is a separate capability, not a prerequisite or replacement for the original fix.",
-        "nextAction": "Root follows actual deployed-app and affected-check evidence for the original fixed bug. The separate d8/issue48 proposal is optional and held pending clarification/decision; no further work, publication, outreach, unsupported rerequest, manual override or source/PR churn.",
-        "recheckCondition": "Actual affected-check/deployment change or explicit decision on the separate optional capability.",
+        "disposition": "The user explicitly abandoned the optional d8/native-rerequest proposal. No upstream PR, message or branch/state deletion follows. Original range bug127 and optional issue48 are distinct.",
+        "nextAction": "Stop optional issue48 work/publication; preserve its source/history without deletion. The original commit-range bug is fixed by127; follow only actual deployed-app/affected-check evidence for existing wrong-range results. Do not claim127 implements native rerequest support.",
+        "recheckCondition": "Root’s actual revised source/explanation or actual provider evidence; no invented pending approval.",
         "evidence": [
           "https://github.com/cncf/dco2/issues/126",
           "https://github.com/tamird/dco2/commit/d3993939e1ab8feea773db20b7e27c600091fd6a",
@@ -106149,7 +106157,7 @@
           "https://github.com/tamird/dco2/commit/d8ceef994f4e4ee54c443d2722f265f4cb70d715",
           "https://github.com/tamird/dco2/actions/runs/45196166650"
         ],
-        "observedAt": "2026-11-23T15:03:11.522701+00:00"
+        "observedAt": "2026-11-23T18:40:13.679878+00:00"
       },
       "settledReviews": [
         {
@@ -106162,6 +106170,17 @@
           "summary": "The extra pull-request GET has not been shown to fix the observed production failure.",
           "body": "Select comparison revisions from the current pull request state, so an older webhook base does not include already-landed commits in the DCO check. Skip closed pull requests and events for superseded heads. Preserve comparison pagination, the commit limit and the later label freshness check.\n\nReuse the existing fixtures to distinguish the event base from the current base, and cover lookup failures and skipped closed or moved-head events.\n\nRelated to #126. This covers stale-event selection; that report's triggering production payload and deployed version remain unknown.\n\nPosted by Codex on behalf of @tamird.\n",
           "outcome": "TECHNICAL-HOLD"
+        },
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "d8ceef994f4e4ee54c443d2722f265f4cb70d715",
+          "baseHead": "2b9ce5f80e5fe366e624285b335d075feeb88c0c",
+          "url": "https://github.com/tamird/dco2/commit/d8ceef994f4e4ee54c443d2722f265f4cb70d715",
+          "title": "Handle re-requested DCO checks",
+          "summary": "The user explicitly abandoned the optional d8/native-rerequest proposal. No upstream PR, message or branch/state deletion follows. Original range bug127 and optional issue48 are distinct.",
+          "body": "Re-requested check-run events were ignored, so users could not rerun DCO without updating the pull request. Resolve the originating pull request from its external ID or a unique repository-matching reference, fetch its current state, and run the same current-base comparison and DCO policy as normal pull-request events. Closed pull requests and moved heads are skipped; missing or ambiguous origins return an error.\n\nThe result uses the existing check-run publication path, including member exemptions, remediation output and attention-label handling. A re-request does not invoke the manual override action.\n\nCloses #48\n\nPosted by Codex on behalf of @tamird.\n",
+          "outcome": "abandoned"
         }
       ],
       "reviewWatch": {
@@ -106173,16 +106192,6 @@
             "evidence": "https://github.com/cncf/dco2/issues/126#issuecomment-7094792736"
           }
         ]
-      },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "d8ceef994f4e4ee54c443d2722f265f4cb70d715",
-        "baseHead": "2b9ce5f80e5fe366e624285b335d075feeb88c0c",
-        "url": "https://github.com/tamird/dco2/commit/d8ceef994f4e4ee54c443d2722f265f4cb70d715",
-        "title": "Handle re-requested DCO checks",
-        "summary": "Optional native-rerequest capability for existing issue48, held after the user’s clarification question. The original range bug is already fixed upstream; this proposal is not required recovery. No publication approval received.",
-        "body": "Re-requested check-run events were ignored, so users could not rerun DCO without updating the pull request. Resolve the originating pull request from its external ID or a unique repository-matching reference, fetch its current state, and run the same current-base comparison and DCO policy as normal pull-request events. Closed pull requests and moved heads are skipped; missing or ambiguous origins return an error.\n\nThe result uses the existing check-run publication path, including member exemptions, remediation output and attention-label handling. A re-request does not invoke the manual override action.\n\nCloses #48\n\nPosted by Codex on behalf of @tamird.\n"
       }
     },
     {
@@ -106299,7 +106308,7 @@
       "title": "Benchmark legacy state and UDP queues",
       "url": "https://github.com/google/gvisor/pull/17871",
       "status": "open",
-      "summary": "Current public a931 and its unchanged-patch rebase remain delivered. Candidate dd4cd790d addresses the new buffer guard finding, with both architectures’ six UDP1x leaves/eight XML cases, Nogo and source checks passing and two clean final reviews. Its actual combined amendment-and-reply question is now pending. A reviewer over-read the immutable options file beyond the requested constant; this was immediately reported, without edits/tests/further reads. Direct First Pass 2387 quota evidence and independent performance holds remain.",
+      "summary": "Approved test-only dd4 amendment is delivered and verified MERGEABLE; new checks are pending. The exact approved receive-quota reply remains unfinished, so the public finding is not marked resolved. Old snapshot a931 remains honestly dated.",
       "evidence": [
         {
           "label": "Published benchmark prerequisite",
@@ -106315,11 +106324,11 @@
         }
       ],
       "followup": {
-        "owner": "approved_rebase_queue / root",
+        "owner": "root / approved_delivery_batch",
         "sourceHead": "a9314b45369b5f58a23c7acca9414f5533a79eb2",
-        "disposition": "Current public a931 and its unchanged-patch rebase remain delivered. Candidate dd4cd790d addresses the new buffer guard finding, with both architectures’ six UDP1x leaves/eight XML cases, Nogo and source checks passing and two clean final reviews. Its actual combined amendment-and-reply question is now pending. A reviewer over-read the immutable options file beyond the requested constant; this was immediately reported, without edits/tests/further reads. Direct First Pass 2387 quota evidence and independent performance holds remain.",
-        "nextAction": "Await the actual dd4 amendment-and-reply decision. No public amendment or reply is authorized before the answer; do not transfer the old source approval. Keep the existing quota admission/review/import and independent #17472 performance boundaries.",
-        "recheckCondition": "Owner’s exact candidate qualification/final review, actual publication decision or new review/provider evidence.",
+        "disposition": "Approved test-only dd4 amendment is delivered and verified MERGEABLE; new checks are pending. The exact approved receive-quota reply remains unfinished, so the public finding is not marked resolved. Old snapshot a931 remains honestly dated.",
+        "nextAction": "Approved delivery owner posts only the retained exact reply, verifies it, and follows actual new-head CI/review/import events. No new source or reply approval question.",
+        "recheckCondition": "Actual new-head check/review/import evidence, approved reply completion or next normal canonical sweep.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17871",
           "https://buildkite.com/gvisor/first-pass/builds/2325",
@@ -106334,10 +106343,11 @@
           "https://github.com/tamird/gvisor/actions/runs/45153551833",
           "https://github.com/tamird/gvisor/actions/runs/45153555583",
           "https://github.com/tamird/gvisor/actions/runs/45153558941",
-          "https://github.com/tamird/gvisor/actions/runs/45153562375"
+          "https://github.com/tamird/gvisor/actions/runs/45153562375",
+          "https://github.com/tamird/gvisor/commit/dd4cd790d4915f47e66b03dd02c2c5f8a40e9c6f"
         ],
-        "observedAt": "2026-11-23T10:12:01.198799+00:00",
-        "providerHead": "a9314b45369b5f58a23c7acca9414f5533a79eb2",
+        "observedAt": "2026-11-23T18:40:13.679878+00:00",
+        "providerHead": "dd4cd790d4915f47e66b03dd02c2c5f8a40e9c6f",
         "attentionDispositions": [],
         "currentSourceCI": {
           "head": "a9314b45369b5f58a23c7acca9414f5533a79eb2",
@@ -106354,18 +106364,22 @@
           "scope": "Retained source-owner/root terminal observations; not a fresh full-snapshot API read."
         }
       },
-      "head": "a9314b45369b5f58a23c7acca9414f5533a79eb2",
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "dd4cd790d4915f47e66b03dd02c2c5f8a40e9c6f",
-        "baseHead": "a9314b45369b5f58a23c7acca9414f5533a79eb2",
-        "url": "https://github.com/tamird/gvisor/commit/dd4cd790d4915f47e66b03dd02c2c5f8a40e9c6f",
-        "title": "Use the default receive quota guard and reply",
-        "summary": "Approve the qualified test-only buffer guard amendment and its exact reply. The public PR remains a931 until this question is answered; the review-scope error is disclosed.",
-        "body": "Amend #17871 to the qualified test-only revision. Three lines use stack.DefaultBufferSize and correct the wording; workloads, graph engines and timers are unchanged. Both architecture smoke/Nogo checks, source checks and two final reviews pass.\n\ngit range-diff --creation-factor=100 a9314b453^! dd4cd790d^!\n\nProposed reply:\n\nChanged the guard to `stack.DefaultBufferSize`, matching the default receive quota.\n\nPosted by Codex on behalf of @tamird.\n\nReview-scope disclosure: one reviewer read the whole immutable stack_options.go instead of only the requested constant. This was reported immediately; no edits, tests or further source reads followed.",
-        "replyBody": "Changed the guard to `stack.DefaultBufferSize`, matching the default receive quota.\n\nPosted by Codex on behalf of @tamird."
-      }
+      "head": "dd4cd790d4915f47e66b03dd02c2c5f8a40e9c6f",
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "head": "dd4cd790d4915f47e66b03dd02c2c5f8a40e9c6f",
+          "baseHead": "a9314b45369b5f58a23c7acca9414f5533a79eb2",
+          "url": "https://github.com/tamird/gvisor/commit/dd4cd790d4915f47e66b03dd02c2c5f8a40e9c6f",
+          "title": "Use the default receive quota guard and reply",
+          "summary": "User approved dd4 amendment and the exact retained reply. Source delivered; approved reply still awaits delivery-owner completion.",
+          "body": "Amend #17871 to the qualified test-only revision. Three lines use stack.DefaultBufferSize and correct the wording; workloads, graph engines and timers are unchanged. Both architecture smoke/Nogo checks, source checks and two final reviews pass.\n\ngit range-diff --creation-factor=100 a9314b453^! dd4cd790d^!\n\nProposed reply:\n\nChanged the guard to `stack.DefaultBufferSize`, matching the default receive quota.\n\nPosted by Codex on behalf of @tamird.\n\nReview-scope disclosure: one reviewer read the whole immutable stack_options.go instead of only the requested constant. This was reported immediately; no edits, tests or further source reads followed.",
+          "replyBody": "Changed the guard to `stack.DefaultBufferSize`, matching the default receive quota.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved"
+        }
+      ],
+      "updatedAt": "2026-11-23T18:40:13.679878+00:00"
     },
     {
       "id": "pr:16660",
@@ -106441,20 +106455,20 @@
       "number": 1112,
       "repo": "bazel-contrib/rules_lint",
       "ref": "fix-patcher-diff-failure",
-      "head": "4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
+      "head": "a3fbb54b2930347d57dc1c607f5e7546f738e7a2",
       "title": "fix: reject failed patch generation",
       "url": "https://github.com/bazel-contrib/rules_lint/pull/1112",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-22T22:40:51.591862+00:00",
-      "summary": "Exact signed 4a881d4ef remains OPEN/MERGEABLE/REVIEW_REQUIRED. Native check 45078090352 succeeds; Buildkite #51 fails with the same six jobs and concrete failure messages as exact integration-base 1da8c08 build #46. Root’s source-bound comparison establishes no PR-specific defect, while required CI remains red. Existing jbedard review, release and integration remain.",
+      "updatedAt": "2026-11-23T18:40:13.679878+00:00",
+      "summary": "Approved a3 patcher amendment is delivered to1112 and verified MERGEABLE; new checks are pending. The exact approved incomplete-patch reply remains unfinished. Earlier4a source/CI evidence is historical and not bound as new native checks.",
       "followup": {
-        "owner": "root",
+        "owner": "root / approved_delivery_batch",
         "sourceHead": "4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
-        "observedAt": "2026-11-23T00:18:10.610714+00:00",
-        "disposition": "The partial-patch finding is verified: rules_js can capture failure status while the visible patch output survives. Candidate a3fbb54b removes incomplete output in catch, rethrows and closes its descriptor in finally, preserving normal exit-1/7 patches. Eight Bazel tests pass; the old source fails seven new absence assertions, and two final independent reviews found no issues. The fork review branch is verified, but upstream PR #1112 remains at 4a with no reply posted.",
-        "nextAction": "Await the actual combined amendment-and-reply decision for a3fbb54b. Preserve required upstream CI, maintainer review, release and integration; do not amend or reply without that answer.",
-        "recheckCondition": "Actual publication decision or source-bound upstream review/check/head/release event.",
+        "observedAt": "2026-11-23T18:40:13.679878+00:00",
+        "disposition": "Approved a3 patcher amendment is delivered to1112 and verified MERGEABLE; new checks are pending. The exact approved incomplete-patch reply remains unfinished. Earlier4a source/CI evidence is historical and not bound as new native checks.",
+        "nextAction": "Approved delivery owner posts and verifies the retained exact reply, then follows new-head CI/review/release. No duplicate reply or source-approval question.",
+        "recheckCondition": "Actual new-head check/review/import evidence, approved reply completion or next normal canonical sweep.",
         "evidence": [
           "https://github.com/bazel-contrib/rules_lint/pull/1112",
           "https://github.com/tamird/rules_lint/commit/4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
@@ -106462,19 +106476,24 @@
           "https://github.com/bazel-contrib/rules_lint/actions/runs/45078090352/job/137379762451",
           "https://buildkite.com/bazel-contrib/rules-lint/builds/46",
           "https://github.com/bazel-contrib/rules_lint/pull/1112#discussion_r4660454549",
+          "https://github.com/tamird/rules_lint/commit/a3fbb54b2930347d57dc1c607f5e7546f738e7a2",
           "https://github.com/tamird/rules_lint/commit/a3fbb54b2930347d57dc1c607f5e7546f738e7a2"
-        ]
+        ],
+        "providerHead": "a3fbb54b2930347d57dc1c607f5e7546f738e7a2"
       },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "a3fbb54b2930347d57dc1c607f5e7546f738e7a2",
-        "baseHead": "4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
-        "url": "https://github.com/tamird/rules_lint/commit/a3fbb54b2930347d57dc1c607f5e7546f738e7a2",
-        "title": "Amend patcher failure handling and reply",
-        "summary": "Remove incomplete patches on failure, close their descriptor and post the prepared confirmation on #1112. Tests, negative control and both independent reviews passed.",
-        "body": "Amend #1112 to the reviewed a3fbb54b revision and post this exact reply:\n\nConfirmed. Diff failures now remove the incomplete patch and close its descriptor. The existing test fails before the fix and passes afterward.\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "head": "a3fbb54b2930347d57dc1c607f5e7546f738e7a2",
+          "baseHead": "4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
+          "url": "https://github.com/tamird/rules_lint/commit/a3fbb54b2930347d57dc1c607f5e7546f738e7a2",
+          "title": "Amend patcher failure handling and reply",
+          "summary": "User approved a3 amendment and exact retained reply. Source delivered; approved reply still awaits delivery-owner completion.",
+          "body": "Amend #1112 to the reviewed a3fbb54b revision and post this exact reply:\n\nConfirmed. Diff failures now remove the incomplete patch and close its descriptor. The existing test fails before the fix and passes afterward.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved"
+        }
+      ]
     },
     {
       "id": "pr:17884",
@@ -106505,6 +106524,56 @@
           "https://github.com/gvisor/gvisor/pull/17884",
           "https://buildkite.com/gvisor/first-pass/builds/2458",
           "https://buildkite.com/gvisor/first-pass/builds/2458#01a20969-0f79-46fd-84d3-74439eaf30cf"
+        ]
+      }
+    },
+    {
+      "id": "pr:17885",
+      "type": "pr",
+      "number": 17885,
+      "repo": "google/gvisor",
+      "head": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
+      "title": "Backport Node's local TLS fallback test",
+      "url": "https://github.com/google/gvisor/pull/17885",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-23T18:40:13.679878+00:00",
+      "summary": "User-approved source is published and verified MERGEABLE; new native checks are pending. Prior qualification is reused within its original limits. No merge/deployment, new tests or source-cause claim.",
+      "followup": {
+        "owner": "root / approved_delivery_batch",
+        "sourceHead": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
+        "providerHead": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
+        "observedAt": "2026-11-23T18:40:13.679878+00:00",
+        "disposition": "Publication approval is consumed by actual delivery; root owns current-head CI/review/landing follow-through.",
+        "nextAction": "Follow actual new-head CI/review/landing events through the existing owner. No duplicate watch, unchanged retry or new publication question.",
+        "recheckCondition": "Actual current-head check/review/landing/head event or next normal canonical sweep.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17885"
+        ]
+      }
+    },
+    {
+      "id": "pr:buildbuddy-io/buildbuddy:14275",
+      "type": "pr",
+      "number": 14275,
+      "repo": "buildbuddy-io/buildbuddy",
+      "head": "c622472f16d973ae138660034da8e6926525a014",
+      "title": "Honor disabled OCI network modes",
+      "url": "https://github.com/buildbuddy-io/buildbuddy/pull/14275",
+      "group": "analysis",
+      "status": "open",
+      "updatedAt": "2026-11-23T18:40:13.679878+00:00",
+      "summary": "User-approved source is published and verified MERGEABLE; new native checks are pending. Prior qualification is reused within its original limits. No merge/deployment, new tests or source-cause claim.",
+      "followup": {
+        "owner": "root / approved_delivery_batch",
+        "sourceHead": "c622472f16d973ae138660034da8e6926525a014",
+        "providerHead": "c622472f16d973ae138660034da8e6926525a014",
+        "observedAt": "2026-11-23T18:40:13.679878+00:00",
+        "disposition": "Publication approval is consumed by actual delivery; root owns current-head CI/review/landing follow-through.",
+        "nextAction": "Follow actual new-head CI/review/landing events through the existing owner. No duplicate watch, unchanged retry or new publication question.",
+        "recheckCondition": "Actual current-head check/review/landing/head event or next normal canonical sweep.",
+        "evidence": [
+          "https://github.com/buildbuddy-io/buildbuddy/pull/14275"
         ]
       }
     }
@@ -137983,8 +138052,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-23T03:53:11.542890+00:00",
-      "summary": "Pinned Node22 backport057d is technically complete and independently reviewed, with the exact fork ref verified. The targeted TLS case passes in the original Node22.2.0 image under runc and Sentry, without skips/TODO; exact patch/hash, syntax, old Internet-test removal, cleanup and source preservation checks pass. Two final reviewers found no issues. Maintained linters select neither changed image file; diff-check passes. No fresh image/Node build, full-suite or ARM result is claimed. Upstream Node67595 landing remains complete; the original external reset cause is unknown. The actual one-commit gVisor publication question is pending, independently of upstream approval.",
+      "updatedAt": "2026-11-23T18:40:13.679878+00:00",
+      "summary": "The user-approved057d Node22 TLS backport is delivered as gVisor17885 and verified MERGEABLE, with new checks pending. Prior exact-image runc and systrap TLS cases passed; no new Node/image build, full-suite or ARM claim. Original Node67595 landing is complete; the original reset cause remains unknown.",
       "findings": [
         {
           "text": "The pinned test opens two TLS connections to the same host on port 443. One enables automatic address-family selection and the other disables it. The default hostname is nodejs.org and can be overridden by the test environment. The failure has yet to be attributed to either connection.",
@@ -138030,7 +138099,7 @@
           ]
         }
       ],
-      "nextStep": "Root owns the actual057d publication decision and delivery. node22_backport_delivery completed technical preparation; no setup or qualification wait remains. Await the answer without re-asking or transferring upstream Node approval; no additional tests, rebuild, transport retry or source changes follow from this milestone.",
+      "nextStep": "Root/approved delivery owner follows the published PR’s actual current-head checks, review and landing events. No open source-publication approval wait remains; original investigation/evidence limits remain distinct.",
       "evidence": [
         {
           "label": "#54502 Node TLS failure",
@@ -138111,6 +138180,18 @@
           "body": "The TLS address-selection test connects to nodejs.org twice. A reset\ncan fail the test before the handshake completes, and the addresses\nreturned by DNS determine whether the client ever tries a second one.\n\nRun a TLS server on IPv4 loopback. With address-family selection\nenabled, return IPv6 loopback first so the client has to switch TCP\nhandles. Check which server name reaches the server and keep certificate\nverification enabled on the client.\n\nRefs: https://github.com/nodejs/node/issues/46679\nAssisted-by: Codex",
           "outcome": "approved",
           "at": "2026-11-12T01:01:41+00:00"
+        },
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
+          "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+          "url": "https://github.com/tamird/gvisor/commit/057d0780812983db12df2e41f2b29a0a1a1f79c1",
+          "title": "Backport Node's local TLS fallback test",
+          "summary": "User approval consumed by published PR; source-bound qualification and remaining CI limits remain.",
+          "body": "The pinned Node 22.2.0 TLS address-family test depends on external DNS and a public HTTPS server. Backport nodejs/node@660c10405 so it authenticates a loopback TLS server and verifies the server name on both direct IPv4 and IPv6-to-IPv4 fallback paths.\n\nThe patch applies after Node compilation because it changes only tests. The historical external ECONNRESET remains unattributed.\n\nValidation: exact patch application, Node syntax and the targeted TLS case passed in the original Node 22.2.0 image under [runc](https://github.com/tamird/gvisor/actions/runs/45106135980/artifacts/14787796388) and [Sentry](https://github.com/tamird/gvisor/actions/runs/45106632584/artifacts/14787871200). No fresh image build or full-suite run was performed.\n\nPosted by Codex on behalf of @tamird.\n",
+          "outcome": "approved",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/17885"
         }
       ],
       "technicalOwner": "CI flake triage",
@@ -138145,17 +138226,7 @@
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
         "disposition": "Approved exact test postimages rebased through the own-fork GitData API; normal author/committer/DCO/Assisted and exact title/body readbacks verified. No local checkout or foreign gVisor objects were needed."
       },
-      "linkedPR": "pr:nodejs/node:67595",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
-        "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
-        "url": "https://github.com/tamird/gvisor/commit/057d0780812983db12df2e41f2b29a0a1a1f79c1",
-        "title": "Backport Node's local TLS fallback test",
-        "summary": "Backport the landed loopback TLS test into the pinned Node22.2.0 image. Exact patch and targeted native/Sentry checks plus two final reviews passed; original reset cause remains unknown and no full-suite/image-build claim follows.",
-        "body": "The pinned Node 22.2.0 TLS address-family test depends on external DNS and a public HTTPS server. Backport nodejs/node@660c10405 so it authenticates a loopback TLS server and verifies the server name on both direct IPv4 and IPv6-to-IPv4 fallback paths.\n\nThe patch applies after Node compilation because it changes only tests. The historical external ECONNRESET remains unattributed.\n\nValidation: exact patch application, Node syntax and the targeted TLS case passed in the original Node 22.2.0 image under [runc](https://github.com/tamird/gvisor/actions/runs/45106135980/artifacts/14787796388) and [Sentry](https://github.com/tamird/gvisor/actions/runs/45106632584/artifacts/14787871200). No fresh image build or full-suite run was performed.\n\nPosted by Codex on behalf of @tamird.\n"
-      }
+      "linkedPR": "pr:nodejs/node:67595"
     },
     {
       "id": "investigation:ci-benchmark-fuse-device",
@@ -140040,8 +140111,8 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "benchmark_measurement_review / root",
-      "updatedAt": "2026-11-23T18:25:38.380071+00:00",
-      "summary": "The original Node22.2.0 timeout attempt recovered automatically; no original-flake fix or reproduction is claimed. Qualified prerequisite6a2916b3 is now durably published at review/node-runtime-completion-20261123 after normal SSH success and exact native readback. This is the gVisor proctor/image/runner change, not Node upstream publication. Its actual one-commit upstream-opening decision remains pending; no PR has been opened.",
+      "updatedAt": "2026-11-23T18:40:13.679878+00:00",
+      "summary": "The prior6a opening proposal is superseded by the user’s request for clearer causal documentation and assessment of its three independent changes; it was not approved.",
       "findings": [
         {
           "text": "The same shard also timed out in debugger-random-port. The log does not identify where the ArrayBuffer test stopped.",
@@ -140057,7 +140128,7 @@
           ]
         }
       ],
-      "nextStep": "Await the existing exact6a source-opening decision; authorized fork-preview preparation is complete. Preserve the original runc/Sentry two-case results, owning checks/reviews and runtime/image/source limits without new tests or approval transfer. Retain the original timeout investigation for natural recurrence under its original conditions.",
+      "nextStep": "Root owns the causal explanation and splitting assessment before any revised source/proposal. Keep existing qualification and original natural-recurrence limits; do not open the old proposal or invent a replacement question.",
       "evidence": [
         {
           "label": "Original Node shard",
@@ -140096,15 +140167,25 @@
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
       },
       "head": "6a2916b318c17cc636ebf92e32844bf781612eed",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "6a2916b318c17cc636ebf92e32844bf781612eed",
-        "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
-        "url": "https://github.com/tamird/gvisor/commit/6a2916b318c17cc636ebf92e32844bf781612eed",
-        "title": "Retain Node runtime test completion output",
-        "summary": "Expose the canonical Node22.2.0 image and retain TAP completion output. Both selected cases passed under runc and Sentry, owning checks/reviews passed; no original flake fix or ARM fixture result is claimed.",
-        "body": "The runtime runner discards successful proctor output, hiding individual Node test outcomes. Use Node’s TAP progress, retain successful output in verbose runner logs, and initialize the standard testing flags before parsing options.\n\nExpose the canonical AMD64 Node 22.2.0 image through the existing Bazel loader. This enables the maintained runtime target without rebuilding the image.\n\nValidation: both selected Node cases completed under runc and Sentry, retaining their existing FLAKY annotations. Owning unit/Nogo checks passed on AMD64 and ARM64; the updated runner also compiled on ARM64. [Functional results](https://github.com/tamird/gvisor/actions/runs/45102386726).\n\nPosted by Codex on behalf of @tamird.\n"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "6a2916b318c17cc636ebf92e32844bf781612eed",
+          "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+          "url": "https://github.com/tamird/gvisor/commit/6a2916b318c17cc636ebf92e32844bf781612eed",
+          "title": "Retain Node runtime test completion output",
+          "summary": "The prior6a opening proposal is superseded by the user’s request for clearer causal documentation and assessment of its three independent changes; it was not approved.",
+          "body": "The runtime runner discards successful proctor output, hiding individual Node test outcomes. Use Node’s TAP progress, retain successful output in verbose runner logs, and initialize the standard testing flags before parsing options.\n\nExpose the canonical AMD64 Node 22.2.0 image through the existing Bazel loader. This enables the maintained runtime target without rebuilding the image.\n\nValidation: both selected Node cases completed under runc and Sentry, retaining their existing FLAKY annotations. Owning unit/Nogo checks passed on AMD64 and ARM64; the updated runner also compiled on ARM64. [Functional results](https://github.com/tamird/gvisor/actions/runs/45102386726).\n\nPosted by Codex on behalf of @tamird.\n",
+          "outcome": "changes-requested"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-11-23T18:40:13.679878+00:00",
+        "disposition": "The prior6a opening proposal is superseded by the user’s request for clearer causal documentation and assessment of its three independent changes; it was not approved.",
+        "nextAction": "Root owns the causal explanation and splitting assessment before any revised source/proposal. Keep existing qualification and original natural-recurrence limits; do not open the old proposal or invent a replacement question.",
+        "recheckCondition": "Root’s actual revised source/explanation or actual provider evidence; no invented pending approval."
       }
     },
     {
@@ -143538,9 +143619,9 @@
       "owner": "buildbuddy_network_fix / root",
       "head": "96fe4a8e5e8f376a40aa6e275edeb4e1c915c7eb",
       "title": "Honor disabled OCI network modes",
-      "updatedAt": "2026-11-22T14:30:19.849383+00:00",
-      "summary": "Prepared signed revision 96fe4a8e documents both live off-mode callers: dockerNetwork=off and executor.oci.default_network_mode=off. Production logic and test postimages are unchanged from 77; independent review accepts the revision. Linux Bazel tests remain unrun because an authenticated remote runner is unavailable. The updated source-publication question is now pending; no upstream PR or approval is inferred. Main-analysis publication remains first priority and deployed-cloud behavior is unverified.",
-      "nextStep": "Await the actual updated96 publication decision after the first-priority main-analysis question. If publication is authorized, native upstream CI remains required. Preserve the retired77 question and its revision history without transferring an approval.",
+      "updatedAt": "2026-11-23T18:40:13.679878+00:00",
+      "summary": "User-approved96 logic and comment relocation are delivered as BuildBuddy14275 at signedc622472f. Root verified exact head and MERGEABLE; new CI is pending. Production/test postimages are unchanged from the reviewed96 source. Linux Bazel tests were not run because authenticated RBE was unavailable; no deployed-fix or provider-enforcement claim is made.",
+      "nextStep": "Root/approved delivery owner follows the published PR’s actual current-head checks, review and landing events. No open source-publication approval wait remains; original investigation/evidence limits remain distinct.",
       "findings": [],
       "evidence": [
         {
@@ -143563,18 +143644,20 @@
           "summary": "Revised to clarify the live legacy and OCI-default callers; no publication approval or rejection is inferred.",
           "baseHead": "168813c94525e5106459531fb629429d5fe2fb60",
           "outcome": "superseded"
+        },
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "96fe4a8e5e8f376a40aa6e275edeb4e1c915c7eb",
+          "baseHead": "168813c94525e5106459531fb629429d5fe2fb60",
+          "url": "https://github.com/tamird/buildbuddy/commit/96fe4a8e5e8f376a40aa6e275edeb4e1c915c7eb",
+          "title": "Honor disabled OCI network modes",
+          "summary": "User approval consumed by published PR; source-bound qualification and remaining CI limits remain.",
+          "body": "Commit 72cfaea347f added the network platform property, translating `network=off` to Docker network mode `none`. The OCI provider disabled networking only for `off`, so the new property left networking enabled.\n\nTreat both values as disabled. `dockerNetwork=off` passes through the platform helper unchanged, and the OCI provider also accepts `executor.oci.default_network_mode=off`. Extend the existing networking fixture to cover `network=off` overriding `dockerNetwork=bridge`, and `dockerNetwork=none`.\n\nThe Linux networking tests have not run: an authenticated remote test runner is unavailable in this session. Native CI remains required.\n\nPosted by Codex on behalf of @tamird.\n",
+          "outcome": "approved",
+          "postedURL": "https://github.com/buildbuddy-io/buildbuddy/pull/14275"
         }
-      ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "96fe4a8e5e8f376a40aa6e275edeb4e1c915c7eb",
-        "baseHead": "168813c94525e5106459531fb629429d5fe2fb60",
-        "url": "https://github.com/tamird/buildbuddy/commit/96fe4a8e5e8f376a40aa6e275edeb4e1c915c7eb",
-        "title": "Honor disabled OCI network modes",
-        "summary": "Treat both disabled OCI network-mode values consistently, including the live legacy and default-mode callers. Linux tests remain unrun; upstream CI is required.",
-        "body": "Commit 72cfaea347f added the network platform property, translating `network=off` to Docker network mode `none`. The OCI provider disabled networking only for `off`, so the new property left networking enabled.\n\nTreat both values as disabled. `dockerNetwork=off` passes through the platform helper unchanged, and the OCI provider also accepts `executor.oci.default_network_mode=off`. Extend the existing networking fixture to cover `network=off` overriding `dockerNetwork=bridge`, and `dockerNetwork=none`.\n\nThe Linux networking tests have not run: an authenticated remote test runner is unavailable in this session. Native CI remains required.\n\nPosted by Codex on behalf of @tamird.\n"
-      }
+      ]
     },
     {
       "id": "investigation:rules-lint-patcher",

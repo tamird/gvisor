@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-23T18:13:20.234094+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-23T18:25:38.380071+00:00",
+  "registryDate": "2026-11-23T18:41:19.574220+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -454317,7 +454317,7 @@
       "number": 17871,
       "head": "a9314b45369b5f58a23c7acca9414f5533a79eb2",
       "sourceNumber": 17871,
-      "owner": "approved_rebase_queue / root",
+      "owner": "root / approved_delivery_batch",
       "claimed": true,
       "overdue": false,
       "kind": "inline",
@@ -455883,7 +455883,7 @@
       "number": 17871,
       "head": "a9314b45369b5f58a23c7acca9414f5533a79eb2",
       "sourceNumber": 17871,
-      "owner": "approved_rebase_queue / root",
+      "owner": "root / approved_delivery_batch",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABpq4eTg",
       "needsTriage": false,
@@ -456096,13 +456096,13 @@
       "checkedAt": "2026-11-23T18:12:36.067014+00:00",
       "mergeabilityCheckedAt": "2026-11-23T18:10:37.631178+00:00",
       "sourceBranchMismatch": false,
-      "owner": "root / approved_rebase_queue",
-      "action": "Await the actual d279 source-amendment decision; root owns the existing-PR update and standing-authorized routine post-rebase notice after an approved push. Candidate preview publication is complete, not an execution-permission blocker. Clarification7070045072 is already consumed; no repeated reply question. Preserve QEMU/internal-policy/import landing holds.",
+      "owner": "root / approved_delivery_batch",
+      "action": "Follow actual new-head CI/maintainer/policy events; no rebase or source-approval wait remains. Preserve QEMU/internal/import holds and do not duplicate the already-posted clarification or rebase notice.",
       "recordedFollowup": {
-        "owner": "root / approved_rebase_queue",
+        "owner": "root / approved_delivery_batch",
         "sourceHead": "427a8de7470d18956964b5ef71a21fab92440039",
-        "disposition": "The reviewed private candidate d279425e integrates the scanner registry with landed LicenseRef support and two retained test-constant spellings. AMD/ARM owning tests56 plus Nogo1 each, source checks and catalog Verify226 pass; two final reviews are clear. The actual new-source amendment question is pending. Public15146 remains427; these private checks are not public native checks. Root’s later REST mergeability read was unknown, while the prior canonical conflict observation remains dated to its actual API snapshot. Candidate d279 is now durably published at review/licensecheck-15146-rebase-20261123 after normal SSH success and exact native readback. Public15146 is still427 and new-source amendment approval remains pending. QEMU Fetch, internal-policy and import landing holds remain.",
-        "nextAction": "Await the actual d279 source-amendment decision; root owns the existing-PR update and standing-authorized routine post-rebase notice after an approved push. Candidate preview publication is complete, not an execution-permission blocker. Clarification7070045072 is already consumed; no repeated reply question. Preserve QEMU/internal-policy/import landing holds."
+        "disposition": "Approved d279 is delivered and root/provider-verified MERGEABLE, with concise rebase notice7110402134 posted. New checks are pending. The overall snapshot still observes old427; that old conflict is superseded by this exact publication receipt, not an unfinished rebase. QEMU Fetch/internal-policy/import landing holds remain.",
+        "nextAction": "Follow actual new-head CI/maintainer/policy events; no rebase or source-approval wait remains. Preserve QEMU/internal/import holds and do not duplicate the already-posted clarification or rebase notice."
       },
       "conflictObservedSince": "2026-11-23T16:04:38.052481+00:00"
     },
@@ -456312,13 +456312,13 @@
       "checkedAt": "2026-11-23T18:12:36.067014+00:00",
       "mergeabilityCheckedAt": "2026-11-23T18:10:55.568498+00:00",
       "sourceBranchMismatch": false,
-      "owner": "approved_rebase_queue / root",
-      "action": "Approved rebase owner queues the minimal source-equivalent load composition and qualification after current17780 naming preparation, without touching the analyzer checkout. Preserve the one-topic commit and existing authority; no new semantic decision or approval question is indicated.",
+      "owner": "root / approved_delivery_batch",
+      "action": "Follow actual b31 current-head checks, maintainer/import events through the existing owner. Rebase and notice are complete; no execution-permission or source-approval wait remains, and no duplicate watch/notice/retry follows.",
       "recordedFollowup": {
-        "owner": "approved_rebase_queue / root",
+        "owner": "root / approved_delivery_batch",
         "sourceHead": "7f37bebc1adeb13213c29774b278d3e3e861fff5",
-        "disposition": "Approved7f37bebc now conflicts with live69e3b9c3 only at adjacent debian/BUILD loads. The existing owner has verified the minimal composition: retain approved go_binary/go_test imports together with landed release_archives, preserving the single production/test topic commit.",
-        "nextAction": "Approved rebase owner queues the minimal source-equivalent load composition and qualification after current17780 naming preparation, without touching the analyzer checkout. Preserve the one-topic commit and existing authority; no new semantic decision or approval question is indicated."
+        "disposition": "Source-equivalent b31ec108 rebase is delivered and verified MERGEABLE/DCO success, with auto-merge absent and relkochta request retained. FirstPass2469 and native checks are pending. Root resolved the child execution-review rejection using the actual standing authorization; factual notice7110449402 is now posted and verified. Old7f snapshot conflict is superseded by this publication receipt, not an unfinished rebase.",
+        "nextAction": "Follow actual b31 current-head checks, maintainer/import events through the existing owner. Rebase and notice are complete; no execution-permission or source-approval wait remains, and no duplicate watch/notice/retry follows."
       },
       "conflictObservedSince": "2026-11-23T18:12:36.067014+00:00"
     },
@@ -456456,13 +456456,13 @@
       "checkedAt": "2026-11-23T18:13:17.474910+00:00",
       "mergeabilityCheckedAt": "2026-11-23T18:13:17.474910+00:00",
       "sourceBranchMismatch": false,
-      "owner": "approved_rebase_queue / root",
-      "action": "Await the unanswered #17184 amendment decision for f26a34c11bfa461eb497291194bfcf7b649d6612. The exact f26 preview is now accessible, with tree 0c22e56cec3994a3d1b92a09c1db40e9733e2eaa and parent eb263e1f414d0bceaf10decea6c73e2c77332112. Preserve all guard/source/Nogo/positive-mode evidence and final independent reviews. Public 2aa remains unchanged; there is no competing b7 PR or transport/permission blocker.",
+      "owner": "root",
+      "action": "Root revises the existing TCP Go proposal after main-checkout allocation, using LookupEnv and simpler child cleanup and retaining before/after output. Qualify/review the revised source before a new publication question; public17184 remains unchanged.",
       "recordedFollowup": {
-        "owner": "approved_rebase_queue / root",
+        "owner": "root",
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
-        "disposition": "The lean Go TCP rewrite is fully qualified and independently reviewed. One-commit f26a34c11bfa461eb497291194bfcf7b649d6612 has the exact qualified f6f9382a tree on eb263, includes DCO and remains cumulative +144 lines. The actual question to amend #17184 is pending; public 2aa840f4 is unchanged. The unanswered b7 standalone proposal is superseded as the current vehicle and retained only as an alternative, without an approval grant.",
-        "nextAction": "Await the unanswered #17184 amendment decision for f26a34c11bfa461eb497291194bfcf7b649d6612. The exact f26 preview is now accessible, with tree 0c22e56cec3994a3d1b92a09c1db40e9733e2eaa and parent eb263e1f414d0bceaf10decea6c73e2c77332112. Preserve all guard/source/Nogo/positive-mode evidence and final independent reviews. Public 2aa remains unchanged; there is no competing b7 PR or transport/permission blocker."
+        "disposition": "The old f26 opening/amendment proposal is superseded by requested revisions, not approved: LookupEnv, line wrapping, simpler []*exec.Cmd child cleanup and commit before/after output.",
+        "nextAction": "Root revises the existing TCP Go proposal after main-checkout allocation, using LookupEnv and simpler child cleanup and retaining before/after output. Qualify/review the revised source before a new publication question; public17184 remains unchanged."
       },
       "conflictObservedSince": "2026-11-20T00:41:37.337032+00:00"
     },
@@ -465664,13 +465664,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-23T18:12:36.067014+00:00"
-      },
-      "contributor-review": {
-        "scope": "d279425e0defee09168de15f54f82b63f1e2a8a9",
-        "since": "2026-11-23T17:55:09.877980+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-23T18:25:38.380071+00:00"
       }
     },
     "pr:15147": {
@@ -470684,7 +470677,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:25:38.380071+00:00"
+        "observedAt": "2026-11-23T18:41:19.574220+00:00"
       }
     },
     "pr:17082": {
@@ -471058,13 +471051,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-23T18:13:17.474910+00:00"
-      },
-      "contributor-review": {
-        "scope": "f26a34c11bfa461eb497291194bfcf7b649d6612",
-        "since": "2026-11-22T09:10:24+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-23T18:25:38.380071+00:00"
       }
     },
     "pr:17191": {
@@ -472573,13 +472559,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-23T18:12:36.067014+00:00"
-      },
-      "contributor-review": {
-        "scope": "dd4cd790d4915f47e66b03dd02c2c5f8a40e9c6f",
-        "since": "2026-11-23T10:17:17.531349+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-23T18:25:38.380071+00:00"
       }
     },
     "pr:17873": {
@@ -473139,13 +473118,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-23T18:13:04.626110+00:00"
-      },
-      "contributor-review": {
-        "scope": "a3fbb54b2930347d57dc1c607f5e7546f738e7a2",
-        "since": "2026-11-23T00:18:10.610714+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-23T18:25:38.380071+00:00"
       }
     },
     "pr:bazel-contrib/rules_go:4772": {
@@ -473233,7 +473205,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:25:38.380071+00:00"
+        "observedAt": "2026-11-23T18:41:19.574220+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -473242,7 +473214,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:25:38.380071+00:00"
+        "observedAt": "2026-11-23T18:41:19.574220+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -473251,7 +473223,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:25:38.380071+00:00"
+        "observedAt": "2026-11-23T18:41:19.574220+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -473260,7 +473232,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:25:38.380071+00:00"
+        "observedAt": "2026-11-23T18:41:19.574220+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -473269,7 +473241,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:25:38.380071+00:00"
+        "observedAt": "2026-11-23T18:41:19.574220+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -473278,7 +473250,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:25:38.380071+00:00"
+        "observedAt": "2026-11-23T18:41:19.574220+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -473287,7 +473259,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:25:38.380071+00:00"
+        "observedAt": "2026-11-23T18:41:19.574220+00:00"
       }
     },
     "issue:17832": {
@@ -473296,16 +473268,7 @@
         "since": "2026-11-23T11:53:23.629366+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:25:38.380071+00:00"
-      }
-    },
-    "issue:cncf/dco2:126": {
-      "contributor-review": {
-        "scope": "d8ceef994f4e4ee54c443d2722f265f4cb70d715",
-        "since": "2026-11-23T15:03:11.522701+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-23T18:25:38.380071+00:00"
+        "observedAt": "2026-11-23T18:41:19.574220+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -473314,25 +473277,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:25:38.380071+00:00"
-      }
-    },
-    "investigation:ci-flake-node-tls-autoselectfamily": {
-      "contributor-review": {
-        "scope": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
-        "since": "2026-11-23T03:53:11.542890+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-23T18:25:38.380071+00:00"
-      }
-    },
-    "investigation:ci-flake-node-worker-arraybuffer-zerofill": {
-      "contributor-review": {
-        "scope": "6a2916b318c17cc636ebf92e32844bf781612eed",
-        "since": "2026-11-23T03:12:55.378620+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-23T18:25:38.380071+00:00"
+        "observedAt": "2026-11-23T18:41:19.574220+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -473341,17 +473286,8 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-23T18:25:38.380071+00:00",
+        "observedAt": "2026-11-23T18:41:19.574220+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
-      }
-    },
-    "investigation:buildbuddy-oci-networking": {
-      "contributor-review": {
-        "scope": "96fe4a8e5e8f376a40aa6e275edeb4e1c915c7eb",
-        "since": "2026-11-22T23:29:11.797344+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-23T18:25:38.380071+00:00"
       }
     }
   },
