@@ -11,6 +11,7 @@ concurrency:
 
 jobs:
   build:
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -27,8 +28,16 @@ jobs:
 
     - name: build
       run: |
+          bazel test --test_output=errors //:github_actions_test
           mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
+          make copy TARGETS=//tools/github DESTINATION=bin/
+          container=$(docker ps --filter 'name=gvisor-bazel-' --format '{{.ID}}')
+          test -n "$container"
+          docker inspect "$container" --format '{{json .Mounts}}'
+          test -d "$BAZEL_DISK_CACHE/ac"
+          test -d "$BAZEL_REPOSITORY_CACHE/content_addressable"
+          du -sh "$BAZEL_DISK_CACHE" "$BAZEL_REPOSITORY_CACHE"
+          make bazel-shutdown
 
     - name: Upload runsc
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
