@@ -44,44 +44,6 @@ Different configurations can be run using different arguments. For example:
 
 Use `tcp_benchmark --help` for full arguments.
 
-This tool may be used to easily generate data for graphing. For example, to
-generate a CSV for various latencies, you might do:
-
-```
-rm -f /tmp/netstack_latency.csv /tmp/native_latency.csv
-latencies=$(seq 0 5 50;
-            seq 60 10 100;
-            seq 125 25 250;
-            seq 300 50 500)
-for latency in $latencies; do
-  read throughput client_cpu server_cpu <<< \
-    $(./tcp_benchmark --duration 30 --client --ideal --latency $latency)
-  echo $latency,$throughput,$client_cpu >> /tmp/netstack_latency.csv
-done
-for latency in $latencies; do
-  read throughput client_cpu server_cpu <<< \
-    $(./tcp_benchmark --duration 30 --ideal --latency $latency)
-  echo $latency,$throughput,$client_cpu >> /tmp/native_latency.csv
-done
-```
-
-Similarly, to generate a CSV for various levels of packet loss, the following
-would be appropriate:
-
-```
-rm -f /tmp/netstack_loss.csv /tmp/native_loss.csv
-losses=$(seq 0 0.1 1.0;
-         seq 1.2 0.2 2.0;
-         seq 2.5 0.5 5.0;
-         seq 6.0 1.0 10.0)
-for loss in $losses; do
-  read throughput client_cpu server_cpu <<< \
-    $(./tcp_benchmark --duration 30 --client --ideal --latency 10 --loss $loss)
-  echo $loss,$throughput,$client_cpu >> /tmp/netstack_loss.csv
-done
-for loss in $losses; do
-  read throughput client_cpu server_cpu <<< \
-    $(./tcp_benchmark --duration 30 --ideal --latency 10 --loss $loss)
-  echo $loss,$throughput,$client_cpu >> /tmp/native_loss.csv
-done
-```
+Results use the Go benchmark format, with throughput reported in `Mb/s`.
+The `cpu-time` metric is the selected client or server proxy's CPU time divided by
+the test duration.
