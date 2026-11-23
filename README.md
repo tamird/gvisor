@@ -628,10 +628,10 @@ even when `changedMergeability` is empty. It also includes current-source
 imports; older imports remain in the ordinary diagnostic report. Route each
 blocker to its recorded owner, or assign one if absent, and keep the concrete
 next action in the active handoff. The agent prepares rebases on our gVisor PRs.
-If a specific owner is handling or holding a rebase, record its `sourceHead`,
-`owner` and `nextAction` in the PR node’s `sourceConflict`. That assignment
-covers conflicts on that head as master advances. Do not repeatedly notify an owner already
-working on the same evidence. A free-text "waiting for synchronization"
+A `followup` with the current `sourceHead`, `owner` and `nextAction` keeps
+that assignment authoritative as master advances. An explicit `sourceConflict`
+assignment for the same head takes precedence. Neither clears the conflict.
+Do not repeatedly notify an owner already working on the same evidence. A free-text "waiting for synchronization"
 disposition is not resolution: verify the actual PR head, fork head and current
 base, and distinguish a source conflict from stale provider metadata. Preserve
 the original conflict observation time; a new refresh does not make it new.

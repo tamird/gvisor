@@ -455442,7 +455442,7 @@
       "mergeabilityCheckedAt": "2026-11-22T23:58:04.739191+00:00",
       "sourceBranchMismatch": false,
       "owner": "Upstream importing maintainer / Copybara change owner; root tracks",
-      "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
+      "action": "Retain conflict as an import blocker; importing maintainer must refresh or resolve the internal change and re-export. Do not push the export branch.",
       "recordedFollowup": {
         "owner": "Upstream importing maintainer / Copybara change owner; root tracks",
         "sourceHead": "00aaa82b9e9cda8dc25dbe1df6e07a56c68302c5",
@@ -455465,8 +455465,8 @@
       "checkedAt": "2026-11-22T23:58:04.739191+00:00",
       "mergeabilityCheckedAt": "2026-11-22T23:58:04.739191+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "Latest private source d015e4c537be52d4a0bbeda2cd04c3f54efa8d0d includes the agreed public Insert/private insert correction. Both architecture qualifications and source checks passed; both final static reviews were accepted. Root retains the broad performance gate and any eventual qualified-source publication decision. No new adversarial review or source rewrite is the next action; public f11 remains unchanged.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "f11f74a174170eedf4b158ef111937c4533d4abe",
@@ -455489,8 +455489,8 @@
       "checkedAt": "2026-11-22T23:58:04.739191+00:00",
       "mergeabilityCheckedAt": "2026-11-22T23:58:04.739191+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "Root owns rebase on release of the sensitive-work hold. No implementation read, rebase, push or new Daybreak question is authorized while held.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "94e3488d99cba57f92c7acc767eae3d2d4b0f5a5",
@@ -455513,8 +455513,8 @@
       "checkedAt": "2026-11-22T23:58:04.739191+00:00",
       "mergeabilityCheckedAt": "2026-11-22T23:58:04.739191+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "Keep standalone EOF delivery and remaining architecture/performance obligations moving through shared owners. Preserve original Netip failure and private importing hold; standalone EOF proof does not qualify public Netip or clear the hold.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "58fb6b08096d65974497d16c020b3f8a0cd955a8",
@@ -455538,7 +455538,7 @@
       "mergeabilityCheckedAt": "2026-11-22T23:55:58.359519+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
+      "action": "Root follows kekawia’s source refresh and re-evaluates the exact resulting source composition and retained review/performance obligations. Preserve author ownership; no foreign push, speculative fix or automatic notification.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "1b9768b199524246fe8e4fa66a0b623069778780",
@@ -455561,8 +455561,8 @@
       "checkedAt": "2026-11-22T23:58:04.739191+00:00",
       "mergeabilityCheckedAt": "2026-11-22T23:58:04.739191+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "Keep matcher/current-base and sensitive source work held under the current user instruction. Do not read the held source, adapt it, run tests/retries or publish. Root retains the verified conflict and both November 20 findings as unfinished obligations; a claim or hold is not completion.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
@@ -455585,8 +455585,8 @@
       "checkedAt": "2026-11-22T23:58:04.739191+00:00",
       "mergeabilityCheckedAt": "2026-11-22T23:58:04.739191+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "The approved prose correction already exists at 428e8fdf14d80191228e081e00f761aa0ac70815; no metadata/prose edit remains. Preserve exact code/input evidence. Root closes the required broad performance/A-A gate before any qualified-source publication review; no public source push is inferred.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "cbe9181a465bf9a2db17a9494ee9ad7792977f93",
@@ -455609,8 +455609,8 @@
       "checkedAt": "2026-11-22T23:58:04.739191+00:00",
       "mergeabilityCheckedAt": "2026-11-22T23:58:04.739191+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "Recorder bf96bd54092f4af422a9d0136151622e955800e2 passes execution/data-integrity qualification: 12 verbatim process files, all 90 rows/15 cases and manifest bindings; three fresh remote unit cases per architecture, source checks and four final reviews are complete. Static validators were cached. The expected cancellation failure reaped its child and retained a manifest-linked zero-byte file, without partial benchmark-row proof. UPSTREAM HELD: only transient direct Go operations were retired; no maintained caller migrated. Grouped presentation, non-Linux runtime and cross-revision products remain unqualified. Pinned A/A 45063972774 still FAILS 38 intervals; its 0.5% band/four contrasts were agent choices, not user requirements. Performance, producer479 and analyzer scope remain unfinished. No more timing, A/A, A/B or source expansion is authorized.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
@@ -455634,7 +455634,7 @@
       "mergeabilityCheckedAt": "2026-11-22T23:56:17.734416+00:00",
       "sourceBranchMismatch": false,
       "owner": "parth-opensrc",
-      "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
+      "action": "Author resolves source conflicts; retain request for like-for-like checkpoint engine/compression settings and the #16767 ancestor-limit dependency.",
       "recordedFollowup": {
         "owner": "parth-opensrc",
         "sourceHead": "c31b2adc27b1d19b1e647b3239cd2b3b536a5adf",
@@ -455657,8 +455657,8 @@
       "checkedAt": "2026-11-22T23:58:04.739191+00:00",
       "mergeabilityCheckedAt": "2026-11-22T23:58:04.739191+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "Root owns source-review/publication resolution and missing permanent Bazel consumer/device/KVM/current-base gates; qualify exact required runtime/configuration and performance separately. Existing full20 historical proof retained; do not call the new preflight full qualification.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
@@ -455682,7 +455682,7 @@
       "mergeabilityCheckedAt": "2026-11-22T23:58:06.750566+00:00",
       "sourceBranchMismatch": false,
       "owner": "hky1999",
-      "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
+      "action": "hky1999 retains implementation and conflict-repair ownership. Root retains the unfinished reviewer follow-through, including the author answers and later experimental checkpoint/network-save findings. Our sensitive review/source work remains held under the current user instruction; do not route it through another agent or tool. Prior inspections do not establish a public response, resolved findings or permission for source reads/tests.",
       "recordedFollowup": {
         "owner": "hky1999",
         "sourceHead": "53cc614c1cb28bd0a34a2cf6f0d504f3d28ac72e",
@@ -455706,7 +455706,7 @@
       "mergeabilityCheckedAt": "2026-11-22T23:58:06.750566+00:00",
       "sourceBranchMismatch": false,
       "owner": "hky1999",
-      "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
+      "action": "Author resolves checkpoint-test source conflict; retain Docker-compatible subtest names and follow review.",
       "recordedFollowup": {
         "owner": "hky1999",
         "sourceHead": "e17281fec8dea3f23e6c3a573f12943a72c0e21f",
@@ -455729,8 +455729,8 @@
       "checkedAt": "2026-11-22T23:58:06.750566+00:00",
       "mergeabilityCheckedAt": "2026-11-22T23:58:06.750566+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "approved_rebase_queue / root",
+      "action": "approved_rebase_queue / root owns review 5985786939, an explicitly automated no-new-findings reminder of the existing BUILD issue and #16522 dependency. Preserve the prior finding, pending acknowledgment decision and all source/performance/landing holds; no new source read or external reply is authorized. Root reviews exact source/authority and combined-validation bounds. approved_rebase_queue preserves the explicit 17446 strict prerequisite and original source evidence; no public update or runtime/performance identity is inferred. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure.",
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
@@ -455753,8 +455753,8 @@
       "checkedAt": "2026-11-22T23:58:08.501113+00:00",
       "mergeabilityCheckedAt": "2026-11-22T23:58:08.501113+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "approved_rebase_queue / root",
+      "action": "Await the unanswered #17184 amendment decision for f26a34c11bfa461eb497291194bfcf7b649d6612. The exact f26 preview is now accessible, with tree 0c22e56cec3994a3d1b92a09c1db40e9733e2eaa and parent eb263e1f414d0bceaf10decea6c73e2c77332112. Preserve all guard/source/Nogo/positive-mode evidence and final independent reviews. Public 2aa remains unchanged; there is no competing b7 PR or transport/permission blocker.",
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
@@ -455778,7 +455778,7 @@
       "mergeabilityCheckedAt": "2026-11-22T23:58:08.501113+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
+      "action": "Await the first posting decision already requested for the concise COMMENTED review. Its proposal targets the identical current source. On approval verify the head and lines, then post once. No source edit, fresh runtime validation or repeated approval is needed.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "92e403ef2d8cb7e24a334d37dabb248cef3b4407",
@@ -455801,8 +455801,8 @@
       "checkedAt": "2026-11-22T23:58:08.501113+00:00",
       "mergeabilityCheckedAt": "2026-11-22T23:58:08.501113+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "root",
+      "action": "Keep the explicit user hold: no timer source read, adaptation or retry. The published conflict remains an unfinished root-owned obligation. Recheck only actual instructions and access/policy conditions changing the hold; do not manufacture a pending approval question.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "f069808da1b9876130c7a853fe2fbb9f815d8519",
@@ -455825,8 +455825,8 @@
       "checkedAt": "2026-11-22T23:58:09.304123+00:00",
       "mergeabilityCheckedAt": "2026-11-22T23:58:09.304123+00:00",
       "sourceBranchMismatch": false,
-      "owner": "Agent",
-      "action": "Check the source conflict against current master and prepare the rebase. Preserve any recorded maintainer hold before publication.",
+      "owner": "approved_rebase_queue / root",
+      "action": "The missing legacy benchmark prerequisite is delivered as #17871 at exact 6eaaa8495. Root follows its CI/review lifecycle. Preserve the original 38 component and four checkpoint/restore controls, both inconclusive GraphLoad A/A results and independent production/performance gates; no new timing or source publication follows from benchmark delivery.",
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "b08bf67a0996f2732d82ad5b35949048cc2139f0",
@@ -455850,7 +455850,7 @@
       "mergeabilityCheckedAt": "2026-11-22T23:57:30.718281+00:00",
       "sourceBranchMismatch": false,
       "owner": "bduffany",
-      "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
+      "action": "Maintainer bduffany owns replacement source repair and merge; root monitors actual merge for retained #13803 disposition.",
       "recordedFollowup": {
         "owner": "bduffany",
         "sourceHead": "1c8ea1521a8b39fb5e39346367c605ea51706f4b",
@@ -455874,7 +455874,7 @@
       "mergeabilityCheckedAt": "2026-11-22T23:57:30.718296+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
+      "action": "Await maintainer approval/test authorization; preserve existing13858 API/support-policy hold and13882 executor-advertisement-before-enforcement dependency. Do not bypass the gate or rerun unapproved tests.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "8c704d5324518b02f430a3f5f0f9388549c65eab",
@@ -455898,7 +455898,7 @@
       "mergeabilityCheckedAt": "2026-11-22T23:57:43.138790+00:00",
       "sourceBranchMismatch": false,
       "owner": "geligeli / upstream maintainer",
-      "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
+      "action": "Keep static-glibc work on hold; no rebase without a demonstrated target behavior unavailable through musl.",
       "recordedFollowup": {
         "owner": "geligeli / upstream maintainer",
         "sourceHead": "6f070847add9ac9bf0d19c96dee873e84f9594d9",
@@ -455922,7 +455922,7 @@
       "mergeabilityCheckedAt": "2026-11-22T23:57:38.600836+00:00",
       "sourceBranchMismatch": false,
       "owner": "dzbarsky",
-      "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
+      "action": "Author/maintainers own source revision and cross-platform prebuilt-wrapper decision; preserve prepared fork aa90c0a75 without publishing into the author branch.",
       "recordedFollowup": {
         "owner": "dzbarsky",
         "sourceHead": "b9d613ad6ba7e5bd73b88ca498bf3ecf7f13c699",
@@ -455946,7 +455946,7 @@
       "mergeabilityCheckedAt": "2026-11-22T23:57:38.600833+00:00",
       "sourceBranchMismatch": false,
       "owner": "fmeum",
-      "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
+      "action": "Author fmeum owns conflict repair and release of file-backed shell API; root follows dependency availability, without adopting author branch ownership.",
       "recordedFollowup": {
         "owner": "fmeum",
         "sourceHead": "aa4ad1622a8f755f38cae724ef3abc63aed171c3",

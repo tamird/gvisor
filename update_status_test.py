@@ -2214,7 +2214,7 @@ class CheckReportTest(unittest.TestCase):
             registry["nodes"].append(direct)
             self.assertEqual(row()["owner"], "pr-owner")
 
-    def test_owned_source_conflict_precedes_a_recorded_review_wait(self) -> None:
+    def test_owned_source_conflict_keeps_current_followup_owner(self) -> None:
         source = retained(raw_pr(16458), [linked(imported(17300, 16458), 16458)])
         source["mergeable"] = source["imports"][0]["mergeable"] = "CONFLICTING"
         followup = {"owner": "Maintainer", "sourceHead": source["head"], "nextAction": "Review the MySQL image."}
@@ -2223,12 +2223,17 @@ class CheckReportTest(unittest.TestCase):
             return updater.mergeability_handoff(updater.check_report([source], {}), {})
         with mock.patch.object(updater, "REGISTRY", {"nodes": [node]}):
             ours, export = rows()
-            self.assertEqual((ours["owner"], export["owner"]), ("Agent", "Maintainer"))
-            self.assertIn("prepare the rebase", ours["action"])
+            self.assertEqual((ours["owner"], export["owner"]), ("Maintainer", "Maintainer"))
+            self.assertEqual(ours["action"], followup["nextAction"])
             self.assertEqual(ours["recordedFollowup"], followup)
-            # Master can conflict again while the same head is still waiting for review.
-            followup["mergeable"] = "CONFLICTING"
+            followup.update(owner="root", nextAction="Keep sensitive work held.")
+            self.assertEqual((rows()[0]["owner"], rows()[0]["action"]), ("root", followup["nextAction"]))
+            self.assertEqual(rows()[0]["mergeable"], "CONFLICTING")
+            followup["sourceHead"] = "b" * 40
             self.assertEqual(rows()[0]["owner"], "Agent")
+            self.assertIn("prepare the rebase", rows()[0]["action"])
+            followup["sourceHead"] = source["head"]
+            followup["mergeable"] = "CONFLICTING"
             # A verified disposition owns this exact conflict, rather than
             # adding a second sourceConflict owner/action record.
             followup.update(owner="root", nextAction="Prepare the image conflict repair.", base=source["base"])
@@ -2246,11 +2251,12 @@ class CheckReportTest(unittest.TestCase):
                     ours, export = rows()
                     self.assertEqual((ours["owner"], ours["action"]), ("root", followup["nextAction"]))
             del node["sourceConflict"]
-            for field, stale in (("base", "f" * 40), ("sourceHead", "e" * 40), ("mergeable", "MERGEABLE")):
-                with self.subTest(stale=field):
+            for field, stale in (("base", "f" * 40), ("mergeable", "MERGEABLE")):
+                with self.subTest(changed=field):
                     original = followup[field]
                     followup[field] = stale
-                    self.assertEqual(rows()[0]["owner"], "Agent")
+                    self.assertEqual((rows()[0]["owner"], rows()[0]["action"]),
+                                     ("root", followup["nextAction"]))
                     followup[field] = original
             followup["owner"] = "Maintainer"
             node["sourceConflict"] = {"owner": "image-owner", "sourceHead": source["head"],
@@ -2260,9 +2266,11 @@ class CheckReportTest(unittest.TestCase):
             self.assertEqual((ours["owner"], ours["action"]), ("image-owner", node["sourceConflict"]["nextAction"]))
             self.assertEqual(export["owner"], "Maintainer")
             node["sourceConflict"]["sourceHead"] = "b" * 40
-            self.assertEqual(rows()[0]["owner"], "Agent")
+            self.assertEqual((rows()[0]["owner"], rows()[0]["action"]),
+                             ("Maintainer", followup["nextAction"]))
             source.update(authorLogin="upstream", headOwner="upstream")
-            self.assertNotIn("prepare the rebase", rows()[0]["action"])
+            self.assertEqual((rows()[0]["owner"], rows()[0]["action"]),
+                             ("Maintainer", followup["nextAction"]))
             source["mergeable"] = "MERGEABLE"
             self.assertEqual([row["number"] for row in rows()], [17300])
 

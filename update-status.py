@@ -1280,12 +1280,17 @@ def mergeability_handoff(report: dict, previous: dict) -> list[dict]:
             action = ("Mergeability remains unknown after the bounded provider check. "
                       "Establish the actual current head/base result before treating this source as ready.")
         followup = observation["followup"]
+        owner = observation.get("owner", followup.get("owner"))
+        if (not observation["sourceBranchMismatch"] and observation.get("owner") in {None, "Agent"}
+                and followup.get("sourceHead") == observation["sourceHead"]
+                and followup.get("owner") and followup.get("nextAction")):
+            owner, action = followup["owner"], followup["nextAction"]
         identity = f"pr:{observation['source']}" if observation["repo"] == REPO else f"pr:{observation['repo']}:{observation['source']}"
         conflict = previous.get("workStates", {}).get(identity, {}).get("conflicts", {})
         records.append({key: observation[key] for key in (
             "repo", "source", "sourceHead", "number", "url", "scope", "head", "branchHead", "base", "mergeable",
             "checkedAt", "mergeabilityCheckedAt", "sourceBranchMismatch"
-        )} | {"owner": observation.get("owner", followup.get("owner")), "action": action, "recordedFollowup": followup,
+        )} | {"owner": owner, "action": action, "recordedFollowup": followup,
               "conflictObservedSince": conflict.get("since") if conflict.get("scope") == observation["head"] else None})
     return records
 
