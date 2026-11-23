@@ -1,8 +1,16 @@
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("//tools:defs.bzl", "bzl_library", "go_binary", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+sh_binary(
+    name = "sudo_test",
+    testonly = True,
+    srcs = ["sudo_test.sh"],
+    visibility = ["//visibility:public"],
 )
 
 go_binary(
