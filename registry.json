@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T17:13:57.719471+00:00",
+    "updatedAt": "2026-11-23T17:19:00.710709+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -106454,6 +106454,38 @@
         "summary": "Remove incomplete patches on failure, close their descriptor and post the prepared confirmation on #1112. Tests, negative control and both independent reviews passed.",
         "body": "Amend #1112 to the reviewed a3fbb54b revision and post this exact reply:\n\nConfirmed. Diff failures now remove the incomplete patch and close its descriptor. The existing test fails before the fix and passes afterward.\n\nPosted by Codex on behalf of @tamird."
       }
+    },
+    {
+      "id": "pr:17884",
+      "type": "pr",
+      "number": 17884,
+      "repo": "google/gvisor",
+      "head": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
+      "title": "Include fields and methods in linkname signatures",
+      "url": "https://github.com/google/gvisor/pull/17884",
+      "group": "analysis",
+      "status": "open",
+      "updatedAt": "2026-11-23T17:18:37.535937+00:00",
+      "summary": "Published supporting checker0c7e69e3 is OPEN/MERGEABLE with DCO success. Exact-head FirstPass2458 failed upload before agent/start: author1535036 exhausted the rolling30-day360,000 compute-minute quota. No tests ran and no source failure is established. The user-requested test/BUILD removal leaves one production file7+/4− identical to the approved qualified production blob; two final reviews are clear. Native checks remain owner-followed; the unified analyzer work stays active.",
+      "evidence": [
+        {
+          "label": "Published source",
+          "url": "https://github.com/tamird/gvisor/commit/0c7e69e359dbfc284a7d109ad007395086a70cd4"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
+        "observedAt": "2026-11-23T17:19:00.710709+00:00",
+        "disposition": "Published supporting checker0c7e69e3 is OPEN/MERGEABLE with DCO success. Exact-head FirstPass2458 failed upload before agent/start: author1535036 exhausted the rolling30-day360,000 compute-minute quota. No tests ran and no source failure is established. The user-requested test/BUILD removal leaves one production file7+/4− identical to the approved qualified production blob; two final reviews are clear. Native checks remain owner-followed; the unified analyzer work stays active.",
+        "nextAction": "Root follows actual current-head native checks, provider admission and maintainer/import events in the next canonical sweep. No tests ran in FirstPass2458; do not retry unchanged CI, contact operators, conflate the quota with the foreign author’s daily limit or change source.",
+        "recheckCondition": "Actual admission/check/review/import/head event or next normal canonical sweep.",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/17884",
+          "https://buildkite.com/gvisor/first-pass/builds/2458",
+          "https://buildkite.com/gvisor/first-pass/builds/2458#01a20969-0f79-46fd-84d3-74439eaf30cf"
+        ]
+      }
     }
   ],
   "edges": [
@@ -131684,9 +131716,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "analysis_pass_inventory / root",
-      "updatedAt": "2026-11-23T17:13:19.175408+00:00",
+      "updatedAt": "2026-11-23T17:18:37.535937+00:00",
       "group": "analysis",
-      "summary": "FIRST PRIORITY: the unified analyzer proposal includes latest x/tools and Staticcheck, atomicalign/fieldalignment and all 30 modernizers. Inventory of all 890 targets is complete; concrete source/generator migrations and the fieldalignment-only semantic-layout filter are in progress. The initial 69-file checkpoint 2c8303e4c252e166a679f31d22eec2071d38c922 is followed by 477 integer-loop and 270 obsolete-build-tag edits; these are implementation progress, not final qualified results. The 17 tooling edits and 23 non-tools errors.AsType migrations are part of this same proposal. Old60a and separate9e opening asks remain superseded. The user authorized narrow analyzer migrations, not unrelated sensitive-feature work; no final integrated validation or publication approval is claimed. The standalone checklinkname fix is user-approved with explicit removal of the added test; root owns the isolated reduction/publication. Original db9 remains evidence, not an unchanged publication vehicle.",
+      "summary": "FIRST PRIORITY: the unified analyzer proposal includes latest x/tools and Staticcheck, atomicalign/fieldalignment and all 30 modernizers. Inventory of all 890 targets is complete; concrete source/generator migrations and the fieldalignment-only semantic-layout filter are in progress. The initial 69-file checkpoint 2c8303e4c252e166a679f31d22eec2071d38c922 is followed by 477 integer-loop and 270 obsolete-build-tag edits; these are implementation progress, not final qualified results. The 17 tooling edits and 23 non-tools errors.AsType migrations are part of this same proposal. Old60a and separate9e opening asks remain superseded. The user authorized narrow analyzer migrations, not unrelated sensitive-feature work; no final integrated validation or publication approval is claimed. The supporting checklinkname fix is delivered as PR17884 at0c7e69e3 after the user-requested test/BUILD removal. Its sole production file matches the approved qualified production blob; two final reviews are clear. The unified analyzer proposal remains active and unqualified.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132283,6 +132315,10 @@
         {
           "label": "9e owning TPU unit 45191569759",
           "url": "https://github.com/tamird/gvisor/actions/runs/45191569759/artifacts/14825148197"
+        },
+        {
+          "label": "Delivered supporting checker fix",
+          "url": "https://github.com/gvisor/gvisor/pull/17884"
         }
       ],
       "reviewWatch": {
@@ -132376,9 +132412,10 @@
           "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
           "url": "https://github.com/tamird/gvisor/commit/db9a861fc1a160b58bce0561a6745932be0675e1",
           "title": "Include fields and methods in linkname signatures",
-          "summary": "User approved the standalone checker fix conditioned on removing the added test. Root owns the isolated reduction/publication; the original db9 must not be published unchanged.",
+          "summary": "Approved with test removal; delivered as single-production-file0c7e69e3 in PR17884. Original db9 production blob is preserved; its added test/BUILD change is omitted.",
           "body": "Include struct fields and interface methods in linkname signatures. Both helpers iterated over an initially empty output slice, so different composite types could compare equal. Iterate the actual type members and omit only the implicit interface-method receiver, which otherwise recurses through the interface itself.\n\nThe new owning-package regression distinguishes changes to the second field and method and checks that non-recursive types retain signature depth.\n\nValidation: the regression fails against the original checker. Fixed AMD64/ARM64 unit and driver tests, three targeted Nogo validators and source checks pass. The full repository corpus was not rerun.\n\nPosted by Codex on behalf of @tamird.\n",
-          "outcome": "approved"
+          "outcome": "approved",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/17884"
         }
       ],
       "additionalReviews": [
