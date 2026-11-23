@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T00:18:10.610714+00:00",
+    "updatedAt": "2026-11-23T00:37:53.629100+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -131441,9 +131441,9 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "analysis_pass_inventory / root",
-      "updatedAt": "2026-11-22T23:55:05.239880+00:00",
+      "updatedAt": "2026-11-23T00:37:53.629100+00:00",
       "group": "analysis",
-      "summary": "HIGH-PRIORITY candidate 68c042487 is one commit on eb263: eight files, 175 additions and 16 deletions. It registers 20 additional diagnostic packages and 24 of 26 modernize.Suite members, including globally active errorsastype. EmbedLitAnalyzer is deferred because pinned Staticcheck IR panics on promoted-field literals; NewExprAnalyzer is deferred because v0.5.1 IR drops initializer and argument effects. All 56 catalog entries and exclusions are justified in the commit. Focused AMD/ARM validation each passes 14 remote driver cases plus one sanity case; source checks and both final review groups pass. The actual opening question is pending, with known Nogo blockers explicit. Full corpus is not green: the historical 1,234 findings came from a partial 26-member scan (275/890), not a current 24-member count. Two held AsType findings remain active blockers; no runtime edits, analyzer upgrade, baseline or new exceptions.",
+      "summary": "HIGH-PRIORITY candidate 68c042487 is one commit on eb263: eight files, 175 additions and 16 deletions. It registers 20 additional diagnostic packages and 24 of 26 modernize.Suite members, including globally active errorsastype. EmbedLitAnalyzer is deferred because pinned Staticcheck IR panics on promoted-field literals; NewExprAnalyzer is deferred because v0.5.1 IR drops initializer and argument effects. All 56 catalog entries and exclusions are justified in the commit. Focused AMD/ARM validation each passes 14 remote driver cases plus one sanity case; source checks and both final review groups pass. The actual opening question is pending, with known Nogo blockers explicit. Full corpus is not green: the historical 1,234 findings came from a partial 26-member scan (275/890), not a current 24-member count. Two held AsType findings remain active blockers; no runtime edits, analyzer upgrade, baseline or new exceptions. Released-IR preflight on v0.8.2 compiles //tools/nogo:nogo without API adaptation. The exact former panic reproduction has zero panic headers or spec.go diagnostics; its validator still fails on 54 positioned existing pkg/state/generated findings (27 per target architecture). This demonstrates bounded IR compatibility only, not full upgrade or full-corpus readiness; frozen 68c and its unanswered publication question are unchanged.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -131815,7 +131815,7 @@
           ]
         }
       ],
-      "nextStep": "Await the exact 68c publication decision for opening review with known Nogo blockers. No more gates are required before human review; whole-backlog cleanup and the separate migration are not source-handoff prerequisites. Keep protected findings held. Separate 17-file migration 0828 passed affected static/source checks but lacks final review/publication; its absent source branch remains a provider error, not a user decision.",
+      "nextStep": "Await the exact frozen 68c publication decision with known Nogo blockers. Released v0.8.2 IR compatibility preflight is terminal: no API adaptation, former panic case cleared, existing positioned findings retained. No further probe, upgrade, source change or publication approval follows from that result. Whole-backlog cleanup and separate migration remain outside source-handoff prerequisites; protected findings stay held.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -131996,6 +131996,14 @@
         {
           "label": "Current source/guard validation",
           "url": "https://github.com/tamird/gvisor/actions/runs/45085046990/artifacts/14778822335"
+        },
+        {
+          "label": "Released IR API preflight",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45088532563/artifacts/14780346324"
+        },
+        {
+          "label": "Former panic reproduction: zero panics, existing findings remain",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45089049784/artifacts/14780328673"
         }
       ],
       "reviewWatch": {
