@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T02:05:19.894694+00:00",
+    "updatedAt": "2026-11-23T02:07:13.958421+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40001,15 +40001,15 @@
       "title": "Reload the state file produced by the EncodeStatefile benchmark",
       "url": "https://github.com/tamird/gvisor/commit/0e53bb437a08531aa1220066f123c1a2ec827fe6",
       "group": "analysis",
-      "status": "Published as #16508",
-      "summary": "Published as #16508 at 2552104f3c, then amended on current master to 0e53bb437a. The source-matched Nginx run reloaded the final measured frame; follow the open PR for checks and review.",
+      "status": "Delivered through merged #16508",
+      "summary": "Predecessor publication lifecycle is complete through merged #16508 at exact24c1b39e. Its qualified checkpointfile.go blob matches mergea8cf14d44. Historical Nginx and CI evidence remains bound to its original sources; no dependent-source task remains.",
       "updatedAt": "2026-10-28T13:38:53.803726+00:00",
       "followup": {
-        "owner": "work_map_current",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "0e53bb437a08531aa1220066f123c1a2ec827fe6",
-        "observedAt": "2026-10-28T13:38:53.803726+00:00",
-        "disposition": "Approved amendment published as #16508",
-        "nextAction": "Follow the open PR. No contributor decision remains.",
+        "observedAt": "2026-11-23T02:07:13.958421+00:00",
+        "disposition": "Canonical #16508 is merged; predecessor follow-open-PR obligation is complete.",
+        "nextAction": "No open publication/review/import obligation remains for this predecessor. Preserve evidence and refs; no cleanup deletion is authorized.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16508",
           "https://app.buildbuddy.io/invocation/7cd3432a-9763-4eb0-91d6-2a59ea477f9e",
@@ -40018,8 +40018,10 @@
           "https://app.buildbuddy.io/invocation/2f18b8f1-b0c7-4396-9d98-a532b5b20aa5",
           "https://github.com/tamird/gvisor/commit/0e53bb437a08531aa1220066f123c1a2ec827fe6",
           "https://github.com/google/gvisor/pull/16574",
-          "https://app.buildbuddy.io/invocation/15ed87c1-0921-474e-854d-4026b584a3c8"
-        ]
+          "https://app.buildbuddy.io/invocation/15ed87c1-0921-474e-854d-4026b584a3c8",
+          "https://github.com/google/gvisor/commit/a8cf14d44ee34b73fb5fa059f3fe28773cde8298"
+        ],
+        "recheckCondition": "Actual post-landing regression or newly authorized work."
       },
       "evidence": [
         {
@@ -40999,9 +41001,9 @@
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "24c1b39e498eb0f4635694e8a9b1ebe179257fb6",
-        "observedAt": "2026-11-23T02:05:19.894694+00:00",
-        "disposition": "Exact delivered24c1b39e is MERGED at2026-11-23T01:40:14Z with native merge commit a8cf14d44ee34b73fb5fa059f3fe28773cde8298. Prior main55599/FirstPass2264/native/DCO passes retain their scope; the review/import waiting instruction is consumed by this actual merge.",
-        "nextAction": "approved_rebase_queue/root owns terminal-delivery reconciliation. Preserve merge/source evidence and apply only existing cleanup authorization and canonical eligibility; no new deletion, merge or outreach is implied.",
+        "observedAt": "2026-11-23T02:07:13.958421+00:00",
+        "disposition": "Delivery complete: exact24c1b39e merged as a8cf14d44 at01:40:14UTC; the sole checkpointfile.go blob exactly matches the qualified source. No separate Copybara import or actual dependency edge remains; prior main55599/FirstPass2264/native/DCO evidence is historical.",
+        "nextAction": "No open delivery or dependent-source task remains. Preserve exact merge/source/qualification evidence; no ref deletion or outgoing message is authorized.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16508",
           "https://app.buildbuddy.io/invocation/7cd3432a-9763-4eb0-91d6-2a59ea477f9e",
@@ -41024,7 +41026,7 @@
           "https://github.com/google/gvisor/commit/a8cf14d44ee34b73fb5fa059f3fe28773cde8298"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Actual import/release/adoption or newly authorized canonical cleanup event.",
+        "recheckCondition": "Actual post-landing regression or newly authorized work.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -41126,7 +41128,8 @@
           "at": "2026-11-21T09:29:29Z",
           "summary": "Delivered the requested rebase and posted its notice; the maintainer subsequently approved."
         }
-      ]
+      ],
+      "inactive": true
     },
     {
       "id": "branch:systrap-elf-offsets",
@@ -103175,8 +103178,8 @@
         "sourceNumber": 16887,
         "sourceHead": "bd991e616d06c77074c56576cc94c6f9cddfeef5",
         "observedAt": "2026-11-22T21:48:03.162138+00:00",
-        "disposition": "Author source changed from 04a4ea5bf to bd991e616. Root owns current-head reviewer follow-through, but the current user-sensitive/Daybreak hold prevents source review. Prior reviews and CI do not qualify this changed head. Broad-workload evidence remains required unless actually supplied and verified; no equivalence, approval or performance completion is inferred. New external evidence: Ayush reports unit and Nogo failures in FirstPass2343 on current bd991e616; this report is routed to root and the author, without a new implementation commitment or independent failure-cause claim.",
-        "nextAction": "Keep current-source review and sensitive work held under the confirmed user instruction; do not read the held source, run tests, implement third-party suggestions, publish or send outreach. The author retains implementation ownership; root retains unfinished reviewer follow-through. Do not transfer prior reviews to this head or reask Daybreak availability.",
+        "disposition": "Current bd991e616 has source-bound FirstPass2343 compile failures: endpoint_test.go616 and mmap_test.go34 call virtioNetHdr.marshal with the old no-argument/return-value API. Unit and Nogo each have three failed attempts and one target failing to build; these are not runtime failures or a full fresh-corpus verdict. Author botirkhaltaev owns the two test callers. Current sensitive reviewer/performance holds remain; prior reviews do not transfer to this changed head.",
+        "nextAction": "Author updates the two test callers; root follows the next head and exact-source CI while retaining the sensitive review/performance hold. Ayush already reported the failure, so no duplicate outreach, foreign edit or manual retry.",
         "recheckCondition": "User releases the sensitive-work hold, actual new external evidence is supplied, or the author changes source again.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16887#issuecomment-6955117776",
@@ -103191,7 +103194,9 @@
           "https://github.com/gvisor/gvisor/commit/1668e58d4c0cb17ecb5fcf6457389575a3c01459",
           "https://github.com/google/gvisor/pull/16887",
           "https://github.com/google/gvisor/commit/bd991e616d06c77074c56576cc94c6f9cddfeef5",
-          "https://github.com/google/gvisor/pull/16887#issuecomment-7089434753"
+          "https://github.com/google/gvisor/pull/16887#issuecomment-7089434753",
+          "https://buildkite.com/gvisor/first-pass/builds/2343#01a20536-1f2e-42e3-b1e5-1d1e8d181d82",
+          "https://buildkite.com/gvisor/first-pass/builds/2343#01a20532-8a63-4708-9daf-0edafaec0714"
         ],
         "ciObservation": "Observed context buildkite/first-pass (unsuffixed) failed as build #906. No current buildkite/first-pass/pr or buildkite/pipeline/pr result appeared in the queried contexts. This is not a claim of passing required CI; current /pr requirements remain separate.",
         "actionableComment": {
@@ -139695,7 +139700,7 @@
           ]
         }
       ],
-      "nextStep": "Complete the existing declared Node-image/owned-Docker-worker specialization with native and Sentry selectors; cheap cquery precedes any expensive build. No-build inventory45096860079 passed with Bazel9.3.1 and Docker28.0.4 available, only runc runtimes installed and no matching local Node image. Original image tag0ff5c9981b4fd7e7 exists at index35f519bc1da54d1e66f704fc8b09b59869eccc3586b6cfb522a049d7826eda83, so no image rebuild is needed. Inventory does not establish runtime/test readiness; old Bazel8.8.1 limits apply only to the historical integration. No new flake tests, performance experiment or held-source changes.",
+      "nextStep": "benchmark_measurement_review owns the existing current-host Docker worker with Make install, opaque release and declared original Node image. The oversized design was rejected before build; cheap cquery45097950938 failed visibility and establishes no runtime verdict. Use the maintained mechanism without a new daemon, launcher or visibility relaxation. Inventory already proves Bazel9.3.1/Docker28.0.4 availability and the original image exists; it does not establish test readiness. No expensive build, new flake test, performance experiment or held-source edit follows yet.",
       "evidence": [
         {
           "label": "Original Node shard",
@@ -139708,6 +139713,10 @@
         {
           "label": "No-build current-tool/image inventory",
           "url": "https://github.com/tamird/gvisor/actions/runs/45096860079/artifacts/14784125464"
+        },
+        {
+          "label": "Cheap configured analysis failed visibility; no runtime execution",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45097950938"
         }
       ],
       "technicalOwner": "CI flake triage",
@@ -139745,7 +139754,7 @@
           ]
         }
       ],
-      "nextStep": "Complete the existing declared Node-image/owned-Docker-worker specialization with native and Sentry selectors; cheap cquery precedes any expensive build. No-build inventory45096860079 passed with Bazel9.3.1 and Docker28.0.4 available, only runc runtimes installed and no matching local Node image. Original image tag0ff5c9981b4fd7e7 exists at index35f519bc1da54d1e66f704fc8b09b59869eccc3586b6cfb522a049d7826eda83, so no image rebuild is needed. Inventory does not establish runtime/test readiness; old Bazel8.8.1 limits apply only to the historical integration. No new flake tests, performance experiment or held-source changes.",
+      "nextStep": "benchmark_measurement_review owns the existing current-host Docker worker with Make install, opaque release and declared original Node image. The oversized design was rejected before build; cheap cquery45097950938 failed visibility and establishes no runtime verdict. Use the maintained mechanism without a new daemon, launcher or visibility relaxation. Inventory already proves Bazel9.3.1/Docker28.0.4 availability and the original image exists; it does not establish test readiness. No expensive build, new flake test, performance experiment or held-source edit follows yet.",
       "evidence": [
         {
           "label": "Original Node shard",
@@ -139762,6 +139771,10 @@
         {
           "label": "No-build current-tool/image inventory",
           "url": "https://github.com/tamird/gvisor/actions/runs/45096860079/artifacts/14784125464"
+        },
+        {
+          "label": "Cheap configured analysis failed visibility; no runtime execution",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45097950938"
         }
       ],
       "technicalOwner": "CI flake triage",
