@@ -261,9 +261,10 @@ jobs:
               raise SystemExit('bazel_options must be a JSON array of --flag[=value] strings without NUL characters')
           sys.stdout.buffer.write(b''.join(value.encode() + b'\0' for value in options))
           PY
-          mapfile -d '' -t options < "$results/bazel-options"
+          mapfile -d '' -t caller_options < "$results/bazel-options"
           rm "$results/bazel-options"
-          options+=(--announce_rc=false --keep_going --config=buildbuddy --config="$QUAL_CONFIG"
+          options=(--config=buildbuddy --config="$QUAL_CONFIG" "${caller_options[@]}"
+            --announce_rc=false --keep_going
             --credential_helper="remote.buildbuddy.io=$helper"
             --bes_backend=grpcs://remote.buildbuddy.io
             --bes_results_url=https://app.buildbuddy.io/invocation/
