@@ -21,7 +21,6 @@ import (
 	"slices"
 	"strings"
 
-	"google.golang.org/protobuf/proto"
 	appsv1 "k8s.io/api/apps/v1"
 	v13 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -74,14 +73,10 @@ func RunscInstallDaemonSet(image string, options InstallOptions) *appsv1.DaemonS
 		})
 	}
 	return &appsv1.DaemonSet{
-		TypeMeta: v1.TypeMeta{
-			Kind:       "DaemonSet",
-			APIVersion: "apps/v1",
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name:      options.DaemonSetName,
-			Namespace: options.DaemonSetNamespace,
-		},
+		Kind:       "DaemonSet",
+		APIVersion: "apps/v1",
+		Name:       options.DaemonSetName,
+		Namespace:  options.DaemonSetNamespace,
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &v1.LabelSelector{
 				MatchLabels: options.Labels,
@@ -121,7 +116,7 @@ func RunscInstallDaemonSet(image string, options InstallOptions) *appsv1.DaemonS
 								Capabilities: &v13.Capabilities{
 									Add: []v13.Capability{"CAP_SYS_ADMIN"},
 								},
-								Privileged: proto.Bool(true),
+								Privileged: new(true),
 							},
 						},
 					},
@@ -135,11 +130,9 @@ func RunscInstallDaemonSet(image string, options InstallOptions) *appsv1.DaemonS
 					Volumes: []v13.Volume{
 						{
 							Name: "host",
-							VolumeSource: v13.VolumeSource{
-								HostPath: &v13.HostPathVolumeSource{
-									Path: "/",
-									Type: &hpType,
-								},
+							HostPath: &v13.HostPathVolumeSource{
+								Path: "/",
+								Type: &hpType,
 							},
 						},
 					},
