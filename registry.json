@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T22:28:52.692599+00:00",
+    "updatedAt": "2026-11-23T23:03:59.853434+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1108,13 +1108,13 @@
       "status": "open",
       "reviewDecision": "REVIEW_REQUIRED",
       "updatedAt": "2026-11-19T07:47:10.548489+00:00",
-      "summary": "Current sole PR commit has a valid sign-off; old DCO check 137159021678:45 listed/23 invalid remains ACTION_REQUIRED. Fix127/2b9ce5f80 and its image build/push are complete; app deployment and affected-check recovery are unverified. Existing execution-check passes and import/landing requirements retain their scope.",
+      "summary": "At the22:17:49 snapshot, exact source afb619886 still reports DCO ACTION_REQUIRED (CR_kwDOB9IlXs8AAAAf71CUbg). Retained evidence establishes the valid sole topic sign-off and wrong-range provider result. Upstream127 fixes the range bug, but fixed-app deployment and actual affected-check recomputation remain unverified. Existing source approval and independent landing/import/main conditions are unchanged. The independent import/packaging hold remains; do not push a Copybara/export branch.",
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "afb6198869d091f721f559dc0e2eceb0c6bb5455",
-        "observedAt": "2026-11-23T11:53:11.347436+00:00",
-        "disposition": "Current sole PR commit has a valid sign-off; old DCO check 137159021678:45 listed/23 invalid remains ACTION_REQUIRED. Fix127/2b9ce5f80 and its image build/push are complete; app deployment and affected-check recovery are unverified. Existing execution-check passes and import/landing requirements retain their scope.",
-        "nextAction": "Root follows fixed-app deployment and actual check recomputation, plus genuine maintainer/import events. No normal rerequest, manual override, source churn, PR close/reopen, unchanged retry or operator outreach.",
+        "observedAt": "2026-11-23T23:03:59.853434+00:00",
+        "disposition": "At the22:17:49 snapshot, exact source afb619886 still reports DCO ACTION_REQUIRED (CR_kwDOB9IlXs8AAAAf71CUbg). Retained evidence establishes the valid sole topic sign-off and wrong-range provider result. Upstream127 fixes the range bug, but fixed-app deployment and actual affected-check recomputation remain unverified. Existing source approval and independent landing/import/main conditions are unchanged. The independent import/packaging hold remains; do not push a Copybara/export branch.",
+        "nextAction": "Root follows actual app deployment and corrected current-source DCO results, plus the existing source-specific maintainer/import/main lifecycle. Do not change approved source, manually override/sign off, request operators, perform unsupported rerequests, retry unchanged checks or post unapproved prose.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42849078055/artifacts/13780790760",
           "https://github.com/tamird/gvisor/compare/4ecb0b121...45137f922",
@@ -1147,9 +1147,10 @@
           "https://github.com/cncf/dco2/issues/126#issuecomment-7094792736",
           "https://github.com/cncf/dco2/commit/2b9ce5f80e5fe366e624285b335d075feeb88c0c",
           "https://github.com/cncf/dco2/actions/runs/45167328676",
-          "https://github.com/gvisor/gvisor/pull/15106#issuecomment-7099750008"
+          "https://github.com/gvisor/gvisor/pull/15106#issuecomment-7099750008",
+          "https://github.com/cncf/dco2/pull/127"
         ],
-        "recheckCondition": "Actual corrected check/deployment or substantive maintainer/import change.",
+        "recheckCondition": "Actual corrected check/deployment or substantive maintainer/import/current-head main event.",
         "attentionDispositions": [
           {
             "reason": "author-feedback",
@@ -25151,13 +25152,13 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "fix/license-npm-artifacts",
-      "head": "8facdc0012a7714662f8c40a9cc5db1030ee2864",
+      "head": "9c63274cbc2a17dfabac062d229c3ac45ed8a4e9",
       "title": "Audit declared npm artifact licenses",
-      "url": "https://github.com/tamird/gvisor/commit/8facdc0012a7714662f8c40a9cc5db1030ee2864",
+      "url": "https://github.com/tamird/gvisor/commit/9c63274cbc2a17dfabac062d229c3ac45ed8a4e9",
       "group": "release",
-      "status": "Contributor-approved logic; LicenseRef integration in qualification",
-      "updatedAt": "2026-11-17T20:32:28.027492+00:00",
-      "summary": "Integrated candidate9c63274cbc2a17dfabac062d229c3ac45ed8a4e9 ports the approved npm integrity/retention logic to landed LicenseRef on base1325ee6d (four files851+/21−). Initial tests/lint/Verify runs failed before source checks because the upstream base lacked the credential_helper target; no qualification result is claimed. CI-only child32b18cffffaa3d965f9b7796b3dc4ac6b5a0157a reuses the established12-file support delta without changing the four npm source/manifest files. Cheap helper/label preflight45277817664 is owner-observed before any batch. The source-commit policy rejection was resolved by the standing grant. GitHub’s workflow-permission lookup timeout remains a provider/credential-path issue; identical workflow objects already satisfy the documented scope exception, so no need for new token permissions is demonstrated. No new human permission, access/config change or blind ref retry is pending.",
+      "status": "LicenseRef integration publication review requested",
+      "updatedAt": "2026-11-23T23:03:59.853434+00:00",
+      "summary": "LicenseRef integration9c of the approved8fac logic is qualified through source-preserving CI32b: AMD/ARM owning tests passed76 cases each, full Go/C++ lint passed and catalog Verify passed225 dependencies. Two final full-change reviews are clear; DCO is included and the public commit is readable. The actual upstream-opening question is unanswered. Declaration-only preflight verified the pinned Node archive and enumerated552 lock entries (317 documentation/235 ESLint), with expected exit1 for552 missing catalog entries. This is not live package Fetch, classification or policy acceptance; Node image467 owns the separate catalog scope.",
       "evidence": [
         {
           "label": "Owning checks and lint PASS",
@@ -25165,17 +25166,22 @@
         }
       ],
       "followup": {
-        "owner": "approved_delivery_batch / root",
-        "disposition": "Integrated candidate9c63274cbc2a17dfabac062d229c3ac45ed8a4e9 ports the approved npm integrity/retention logic to landed LicenseRef on base1325ee6d (four files851+/21−). Initial tests/lint/Verify runs failed before source checks because the upstream base lacked the credential_helper target; no qualification result is claimed. CI-only child32b18cffffaa3d965f9b7796b3dc4ac6b5a0157a reuses the established12-file support delta without changing the four npm source/manifest files. Cheap helper/label preflight45277817664 is owner-observed before any batch. The source-commit policy rejection was resolved by the standing grant. GitHub’s workflow-permission lookup timeout remains a provider/credential-path issue; identical workflow objects already satisfy the documented scope exception, so no need for new token permissions is demonstrated. No new human permission, access/config change or blind ref retry is pending.",
-        "sourceHead": "8facdc0012a7714662f8c40a9cc5db1030ee2864",
-        "observedAt": "2026-11-23T22:28:52.692599+00:00",
-        "nextAction": "Let the owning preflight complete, then run the source-preserving owning Bazel tests/build, canonical lint and catalog Verify through the existing owner. Preserve SHA512/source plus auditedSHA256 identity, archive rules and LicenseRef/license_source rejection using existing fixtures; no restored ManuallyAudited or new harness. Preview ref creation waits actual provider/SSH recovery; object/SHA qualification remains available. No upstream PR approval has been asked.",
+        "owner": "root",
+        "disposition": "LicenseRef integration9c of the approved8fac logic is qualified through source-preserving CI32b: AMD/ARM owning tests passed76 cases each, full Go/C++ lint passed and catalog Verify passed225 dependencies. Two final full-change reviews are clear; DCO is included and the public commit is readable. The actual upstream-opening question is unanswered. Declaration-only preflight verified the pinned Node archive and enumerated552 lock entries (317 documentation/235 ESLint), with expected exit1 for552 missing catalog entries. This is not live package Fetch, classification or policy acceptance; Node image467 owns the separate catalog scope.",
+        "sourceHead": "9c63274cbc2a17dfabac062d229c3ac45ed8a4e9",
+        "observedAt": "2026-11-23T23:03:59.853434+00:00",
+        "nextAction": "Await review of the new LicenseRef integration before opening its preparatory PR. Root owns publication. Independently, a durable preview ref remains blocked by GitHub workflow-check timeout after bounded normal transport attempts; no new credential scope or human execution permission is proved necessary. Recheck only actual user answer or provider/SSH recovery, without blind retries. Live Node catalog Fetch/policy work remains outside this PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/8facdc0012a7714662f8c40a9cc5db1030ee2864",
           "https://github.com/gvisor/gvisor/commit/0cf6f98cb89bf2d9fbc6886bc11085a895b4eb23",
           "https://github.com/tamird/gvisor/commit/9c63274cbc2a17dfabac062d229c3ac45ed8a4e9",
           "https://github.com/tamird/gvisor/commit/32b18cffffaa3d965f9b7796b3dc4ac6b5a0157a",
-          "https://github.com/tamird/gvisor/actions/runs/45277817664"
+          "https://github.com/tamird/gvisor/actions/runs/45277817664",
+          "https://github.com/tamird/gvisor/actions/runs/45278904911",
+          "https://github.com/tamird/gvisor/actions/runs/45278909846",
+          "https://github.com/tamird/gvisor/actions/runs/45278912706",
+          "https://github.com/tamird/gvisor/actions/runs/45278916135",
+          "https://github.com/tamird/gvisor/actions/runs/45281690189"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -25188,8 +25194,26 @@
           "recheckCondition": "Exact ref/head change, canonical PR feedback/check/import or terminal-state change, dependency landing or contributor decision.",
           "owner": "root"
         },
-        "technicalOwner": "node_tls_sni",
-        "recheckCondition": "Owner-audited preflight/qualification and actual transport recovery, then final source review/publication boundary."
+        "technicalOwner": "approved_delivery_batch",
+        "recheckCondition": "Actual source-publication answer or normal provider/ref availability; no duplicate qualification or new permission question."
+      },
+      "refinement": {
+        "before": {
+          "head": "8facdc0012a7714662f8c40a9cc5db1030ee2864"
+        },
+        "after": {
+          "head": "9c63274cbc2a17dfabac062d229c3ac45ed8a4e9"
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "9c63274cbc2a17dfabac062d229c3ac45ed8a4e9",
+        "baseHead": "1325ee6d79bd838f43a08c437ef220fdc81de811",
+        "url": "https://github.com/tamird/gvisor/commit/9c63274cbc2a17dfabac062d229c3ac45ed8a4e9",
+        "title": "Audit npm archives from declared Node sources",
+        "summary": "Awaiting review of the LicenseRef integration. Owning tests/build, full lint, catalog Verify and two final reviews pass; declared-only Node enumeration is not live package Fetch or policy acceptance.",
+        "body": "The dependency audit covered Bazel and Go inputs, while declared Node runtime sources also install packages from upstream documentation and ESLint locks. Enumerate those canonical locks from the pinned Node source archive, verify each npm archive against its SHA512 integrity pin, and record its SHA256 and package notices. Identify bundled packages within their containing archive.\n\nRetain reviewed LicenseRef artifact terms only while the source and locked integrity match, and reject combining LicenseRef with an explicit license_source. Explicit notice sources remain a separate fetch path. Images without a source checksum declaration keep their existing audit inputs.\n\nPosted by Codex on behalf of @tamird.\n"
       }
     },
     {
@@ -41303,14 +41327,14 @@
       "url": "https://github.com/google/gvisor/pull/16516",
       "group": "bazel",
       "status": "open",
-      "summary": "Etienne’s exact-head APPROVED review6030082805 is now observed on a959. Main55748 fails, with cause not established from status alone; earlier targeted qualification and passing First Pass retain their source-bound historical scope. Approval does not justify a source-failure or full-main-pass claim.",
+      "summary": "At the existing22:45 owner checkpoint, main55748 was still RUNNING with six jobs running and only three known APT/dpkg setup chains; no new terminal target cause was established. Current source/approval/qualification and already-delivered notices remain unchanged; a GitHub failure/pending context is not a full-build terminal verdict.",
       "updatedAt": "2026-11-17T17:42:43.236533Z",
       "followup": {
         "owner": "root",
         "sourceHead": "a9594385d15d2e17e5dd7491be94d774f47fa80e",
-        "observedAt": "2026-11-23T22:28:52.692599+00:00",
-        "disposition": "Etienne’s exact-head APPROVED review6030082805 is now observed on a959. Main55748 fails, with cause not established from status alone; earlier targeted qualification and passing First Pass retain their source-bound historical scope. Approval does not justify a source-failure or full-main-pass claim.",
-        "nextAction": "Root/existing CI owner classifies the actual main55748 result and follows genuine maintainer/import events. No duplicate reviewer request, source rewrite, unchanged retry or transfer of old failure causes.",
+        "observedAt": "2026-11-23T23:03:59.853434+00:00",
+        "disposition": "At the existing22:45 owner checkpoint, main55748 was still RUNNING with six jobs running and only three known APT/dpkg setup chains; no new terminal target cause was established. Current source/approval/qualification and already-delivered notices remain unchanged; a GitHub failure/pending context is not a full-build terminal verdict.",
+        "nextAction": "The same existing RBE CI owner retains the23:10 checkpoint and complete-attempt-chain classification. No new observer, retry, source change or duplicate outreach.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16516#pullrequestreview-5895770949",
           "https://github.com/gvisor/gvisor/pull/16516#pullrequestreview-5943223023",
@@ -41331,7 +41355,7 @@
           "delivered": true,
           "endpoint": "/repos/gvisor/gvisor/pulls/16516/requested_reviewers/rerequest"
         },
-        "recheckCondition": "Exact current-build diagnosis or actual check/review/import/head event.",
+        "recheckCondition": "Existing owner’s23:10/terminal receipt or an actual source/review/import event.",
         "mergeable": "MERGEABLE",
         "attentionDispositions": [],
         "providerHead": "a9594385d15d2e17e5dd7491be94d774f47fa80e"
@@ -98024,7 +98048,7 @@
       "group": "release",
       "status": "open",
       "updatedAt": "2026-11-21T09:45:00.751471+00:00",
-      "summary": "New relkochta review is APPROVED. Current execution checks pass; the only non-success context remains the existing wrong-range DCO ACTION_REQUIRED. Upstream127 fixed the range bug, but deployed-app/check recovery remains unverified. No new source-test failure or new DCO cause is established.",
+      "summary": "At the22:17:49 snapshot, exact source 4b845306c still reports DCO ACTION_REQUIRED (CR_kwDOB9IlXs8AAAAf2ioWWA). Retained evidence establishes the valid sole topic sign-off and wrong-range provider result. Upstream127 fixes the range bug, but fixed-app deployment and actual affected-check recomputation remain unverified. Existing source approval and independent landing/import/main conditions are unchanged.",
       "evidence": [
         {
           "label": "Bazel on the Actions host, nine AMD64 executables in the uploaded ZIP",
@@ -98106,8 +98130,8 @@
       "followup": {
         "owner": "buildifier_license_fix / root",
         "sourceHead": "4b845306c75b9ad0d09d31cdb86d68dc64171fe9",
-        "nextAction": "Root follows fixed-app deployment and actual check recomputation, plus genuine maintainer/import events. No normal rerequest, manual override, source churn, PR close/reopen, unchanged retry or operator outreach.",
-        "recheckCondition": "Actual corrected check/deployment or substantive maintainer/import change.",
+        "nextAction": "Root follows actual app deployment and corrected current-source DCO results, plus the existing source-specific maintainer/import/main lifecycle. Do not change approved source, manually override/sign off, request operators, perform unsupported rerequests, retry unchanged checks or post unapproved prose.",
+        "recheckCondition": "Actual corrected check/deployment or substantive maintainer/import/current-head main event.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17562",
           "https://github.com/google/gvisor/pull/17456#issuecomment-6975559077",
@@ -98120,7 +98144,9 @@
           "https://buildkite.com/gvisor/pipeline/builds/55605",
           "https://github.com/cncf/dco2/commit/2b9ce5f80e5fe366e624285b335d075feeb88c0c",
           "https://github.com/cncf/dco2/actions/runs/45167328676",
-          "https://github.com/google/gvisor/pull/17456#pullrequestreview-6024588277"
+          "https://github.com/google/gvisor/pull/17456#pullrequestreview-6024588277",
+          "https://github.com/google/gvisor/pull/17456",
+          "https://github.com/cncf/dco2/pull/127"
         ],
         "dcoCoordinationHistory": [
           {
@@ -98130,15 +98156,15 @@
             "nextAction": "Follow the existing exact source/import delivery. DCO import coordination: Root coordinates #17562 at c16bb8d4706e. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch."
           }
         ],
-        "observedAt": "2026-11-23T16:07:56.932949+00:00",
-        "disposition": "New relkochta review is APPROVED. Current execution checks pass; the only non-success context remains the existing wrong-range DCO ACTION_REQUIRED. Upstream127 fixed the range bug, but deployed-app/check recovery remains unverified. No new source-test failure or new DCO cause is established.",
+        "observedAt": "2026-11-23T23:03:59.853434+00:00",
+        "disposition": "At the22:17:49 snapshot, exact source 4b845306c still reports DCO ACTION_REQUIRED (CR_kwDOB9IlXs8AAAAf2ioWWA). Retained evidence establishes the valid sole topic sign-off and wrong-range provider result. Upstream127 fixes the range bug, but fixed-app deployment and actual affected-check recomputation remain unverified. Existing source approval and independent landing/import/main conditions are unchanged.",
         "currentCI": {
           "source": "4b845306c75b9ad0d09d31cdb86d68dc64171fe9",
           "requiredFirstPass": 2273,
           "mainPipeline": 55605,
           "githubChecks": "All execution checks PASS; wrong-range DCO action required",
           "dco": "wrong-range provider issue; own commit valid",
-          "nextAction": "Root follows the existing DCO-provider external-report decision and maintainer-managed landing. Do not add sign-offs, retry the unchanged check or change auto-merge.",
+          "nextAction": "Root follows actual app deployment and corrected current-source DCO results, plus the existing source-specific maintainer/import/main lifecycle. Do not change approved source, manually override/sign off, request operators, perform unsupported rerequests, retry unchanged checks or post unapproved prose.",
           "mainDisposition": "PASSED; automatic retries recovered prior infrastructure attempts"
         },
         "pendingAcknowledgement": {
@@ -98353,7 +98379,7 @@
       "group": "tests",
       "status": "open",
       "updatedAt": "2026-11-21T12:00:06.633567+00:00",
-      "summary": "Deliveredbc55ab6327453ed38e289b2b1b1f7197b38087e8 retains its existing approvals. First Pass2223 and all reported non-DCO validation checks pass, but no current-head main-pipeline result exists: canonical main55576 belongs to old3ee54. Root verified and updated notice7057355062 at05:02:43Z to request a maintainer reapply ready to test. DCO 136732232020 still reports the wrong55-versus-one commit range; the topic sign-off is valid. The user-approved bug-only report is delivered as cncf/dco2#126; no posting decision remains.",
+      "summary": "At the22:17:49 snapshot, exact source bc55ab632 still reports DCO ACTION_REQUIRED (CR_kwDOB9IlXs8AAAAf1eBJVA). Retained evidence establishes the valid sole topic sign-off and wrong-range provider result. Upstream127 fixes the range bug, but fixed-app deployment and actual affected-check recomputation remain unverified. Existing source approval and independent landing/import/main conditions are unchanged. First Pass2223/non-DCO validation scope is retained, but no exact-bc55 main result is established; old55576 belongs to3ee54. The already-requested maintainer trigger is not a new outreach task.",
       "evidence": [
         {
           "label": "Published diagnostic change",
@@ -98379,10 +98405,10 @@
       "followup": {
         "sourceHead": "bc55ab6327453ed38e289b2b1b1f7197b38087e8",
         "owner": "approved_rebase_queue / root",
-        "nextAction": "Root follows genuine feedback/provider correction through existing issue:cncf/dco2:126 and the already-requested bc55 main-trigger/review lifecycle. No new report, operator/clickops request, external post, manual sign-off, source churn or duplicate outreach.",
+        "nextAction": "Root follows actual app deployment and corrected current-source DCO results, plus the existing source-specific maintainer/import/main lifecycle. Do not change approved source, manually override/sign off, request operators, perform unsupported rerequests, retry unchanged checks or post unapproved prose.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-21T04:40:29.431125+00:00",
-        "recheckCondition": "Actual DCO range correction, issue126 feedback or exact-bc55 main/maintainer-trigger event.",
+        "observedAt": "2026-11-23T23:03:59.853434+00:00",
+        "recheckCondition": "Actual corrected check/deployment or substantive maintainer/import/current-head main event.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17470",
           "https://github.com/tamird/gvisor/commit/60ec8592c1c5fcec63846664b77a1bec5018b97c",
@@ -98396,7 +98422,10 @@
           "https://github.com/cncf/dco2",
           "https://buildkite.com/gvisor/first-pass/builds/2223",
           "https://github.com/gvisor/gvisor/runs/136732232020",
-          "https://github.com/cncf/dco2/issues/126"
+          "https://github.com/cncf/dco2/issues/126",
+          "https://github.com/google/gvisor/pull/17470",
+          "https://github.com/cncf/dco2/pull/127",
+          "https://github.com/cncf/dco2/commit/2b9ce5f80e5fe366e624285b335d075feeb88c0c"
         ],
         "latestReviewObservation": {
           "checkedAt": "2026-11-18T19:22:58.577211+00:00",
@@ -98423,7 +98452,7 @@
           ]
         },
         "curatedAt": "2026-11-21T15:21:17.931599+00:00",
-        "disposition": "Native DCO 136732232020 accepts sole topic bc55ab63 but evaluates 55 commits/27 invalid sign-offs. Rejected 9ad3ba91 is already an ancestor of actual PR base e50582f1 (ahead 52/behind 0): this is the proven base-commit inclusion bug reported in delivered cncf/dco2#126. No source/sign-off amendment, report approval or retry is needed; exact-head main-trigger/review obligations remain independent."
+        "disposition": "At the22:17:49 snapshot, exact source bc55ab632 still reports DCO ACTION_REQUIRED (CR_kwDOB9IlXs8AAAAf1eBJVA). Retained evidence establishes the valid sole topic sign-off and wrong-range provider result. Upstream127 fixes the range bug, but fixed-app deployment and actual affected-check recomputation remain unverified. Existing source approval and independent landing/import/main conditions are unchanged. First Pass2223/non-DCO validation scope is retained, but no exact-bc55 main result is established; old55576 belongs to3ee54. The already-requested maintainer trigger is not a new outreach task."
       },
       "dcoAmendment": {
         "oldHead": "60ec8592c1c5fcec63846664b77a1bec5018b97c",
@@ -98447,7 +98476,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Root follows the maintainer response/current-head main trigger already requested in the rebase notice, the DCO app refresh and feedback on the delivered cncf/dco2#126 bug report. Keep main validation open until an actual bc55 build is observed; no repeated outreach, source churn or upstream sign-offs.",
+      "nextStep": "Root follows actual app deployment and corrected current-source DCO results, plus the existing source-specific maintainer/import/main lifecycle. Do not change approved source, manually override/sign off, request operators, perform unsupported rerequests, retry unchanged checks or post unapproved prose. Keep exact-bc55 main validation open until actually observed; issue126 feedback is no longer a pending bug-report step.",
       "recheckCondition": "Exact-bc55 main status/build or maintainer-trigger event, DCO app result, or reply to the existing external-report posting question.",
       "settledReviews": [
         {
@@ -99812,7 +99841,7 @@
       "group": "tests",
       "status": "open",
       "updatedAt": "2026-11-17T19:05:00.391405+00:00",
-      "summary": "Current f6fa remains MERGEABLE and APPROVED; requested rebase/qualification/notice are complete. The maintainer added ready-to-test and describes a CI workaround while fixes progress. Replacement main55752 is PENDING, so canceled55739 is historical rather than the current active run. No replacement outcome, quota rejection, source fix or package-policy deployment is inferred from the label/comment.",
+      "summary": "At the existing22:45 owner checkpoint, replacement main55752 was still RUNNING with five platform jobs plus its gate and no unrecovered terminal failure. Current source/approval/qualification and already-delivered notices remain unchanged; a GitHub failure/pending context is not a full-build terminal verdict.",
       "evidence": [
         {
           "label": "Published single-commit revision",
@@ -99826,10 +99855,10 @@
       "followup": {
         "sourceHead": "f6fa027fbfaa28e930d3a288c3a78e9d35b53738",
         "owner": "root",
-        "nextAction": "Root follows actual replacement main55752 and genuine maintainer/import events, preserving the earlier canceled-run mixed evidence. No agent retry, duplicate notice/reviewer request, protected source change or inference that the maintainer plan is deployed.",
+        "nextAction": "The same existing RBE CI owner retains the23:10 checkpoint and complete-attempt-chain classification. No new observer, retry, source change or duplicate outreach.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-23T22:28:52.692599+00:00",
-        "recheckCondition": "Replacement run terminal or actual source/review/import/package-recovery event.",
+        "observedAt": "2026-11-23T23:03:59.853434+00:00",
+        "recheckCondition": "Existing owner’s23:10/terminal receipt or an actual source/review/import event.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17484",
           "https://github.com/tamird/gvisor/commit/8a64c10e33211d4e255aa6ad43d8131f344558d4",
@@ -99870,7 +99899,7 @@
           }
         ],
         "providerHead": "f6fa027fbfaa28e930d3a288c3a78e9d35b53738",
-        "disposition": "Current f6fa remains MERGEABLE and APPROVED; requested rebase/qualification/notice are complete. The maintainer added ready-to-test and describes a CI workaround while fixes progress. Replacement main55752 is PENDING, so canceled55739 is historical rather than the current active run. No replacement outcome, quota rejection, source fix or package-policy deployment is inferred from the label/comment."
+        "disposition": "At the existing22:45 owner checkpoint, replacement main55752 was still RUNNING with five platform jobs plus its gate and no unrecovered terminal failure. Current source/approval/qualification and already-delivered notices remain unchanged; a GitHub failure/pending context is not a full-build terminal verdict."
       },
       "dcoAmendment": {
         "oldHead": "8a64c10e33211d4e255aa6ad43d8131f344558d4",
@@ -141431,9 +141460,9 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-18T22:30:58.775869+00:00",
-      "summary": "179 trailer-only DCO amendments are verified across the published manifests. Four previously held source PRs were certified after their maintainers closed the exact exports and requested sign-offs. All 184 reported own DCO checks pass in the latest snapshot. Twenty-one exact-source imports retain separate coordination; foreign certification and unreported checks remain outside that claim.",
-      "nextStep": "Four own-DCO amendments already passed exact-head CI with retry history preserved. Follow existing maintainer/import obligations and settled per-thread decisions; do not convert old courtesy acknowledgements into new pending contributor questions. Preserve21 import bindings and source-specific execution-policy blocks separately.",
+      "updatedAt": "2026-11-23T23:03:59.853434+00:00",
+      "summary": "The retained migration manifests record179 trailer-only amendments and four maintainer-requested certifications after exact exports closed;21 import bindings remain separate historical coordination facts. In the 2026-11-23T22:17:49.610339+00:00 snapshot, tracked open PRs authored by tamird have 192 SUCCESS and 3 ACTION_REQUIRED reported DCO checks, deduplicated by repository/check identity. Exceptions are15106 atafb619886,17456 at4b845306c and17470 atbc55ab632. This is not an all-green claim or a claim about foreign, draft, import or unreported checks.",
+      "nextStep": "Root follows the three exact-source DCO exceptions through actual fixed-app deployment/check recomputation and their independent maintainer/import/main-validation conditions. Upstream127 fixed the range bug; old checks have not been shown corrected. Preserve approved source and existing holds. No operator outreach, manual override/sign-off, unsupported rerequest, unchanged retry or new approval question.",
       "completedMetadataAmendments": 179,
       "activeImportCoordination": [
         15106,
@@ -142151,6 +142180,10 @@
         {
           "label": "Published DCO amendment and source state",
           "url": "https://github.com/gvisor/gvisor/pull/17407"
+        },
+        {
+          "label": "Dated22:17:49 canonical check observations",
+          "url": "https://github.com/tamird/gvisor/blob/f36f436baaea8822ab1a403a43c3ef60cd29decc/github-status.json"
         }
       ],
       "additionalSourceRepairs": [
