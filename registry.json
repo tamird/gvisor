@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T03:14:54.088857+00:00",
+    "updatedAt": "2026-11-23T03:35:27.429881+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -104566,7 +104566,7 @@
         "owner": "root",
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
         "disposition": "Upstream delivery is complete by manual landing:660c1040592c4332520e7d783360139c8298cb52 names PR67595 and is upstream main. Root verified its changed-file set, statuses and blob IDs exactly match reviewed15c2edb. Native GitHub mergedAt remains null; this is landed-by-commit, not an API merge claim. Maintainer Jake’s notice is source-bound.",
-        "nextAction": "No upstream approval/CI/queue wait remains. Root resumes the existing pinned Node22 fixture-backport owner with its recorded qualification and authorization; that separate obligation remains on the TLS investigation. No duplicate upstream CI or outreach.",
+        "nextAction": "Upstream delivery is complete. node22_backport_delivery/root owns the independent pinned Node22 fixture backport and active native/Sentry packaging qualification; no new backport source approval is inferred and no duplicate upstream CI/outreach is needed.",
         "recheckCondition": "Actual separate pinned-fixture backport or post-landing regression.",
         "publishedDelivery": {
           "base": "b7df44bf9c85a6104b9158b616999e3d2c58be5d",
@@ -131469,9 +131469,9 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "analysis_pass_inventory / root",
-      "updatedAt": "2026-11-23T01:43:05.852759+00:00",
+      "updatedAt": "2026-11-23T03:35:27.429881+00:00",
       "group": "analysis",
-      "summary": "FIRST PRIORITY: frozen68c registers 20 additional diagnostic packages and 24/26 modernize analyzers; embedlit/newexpr are excluded for demonstrated pinned-IR incompatibilities. Focused AMD/ARM/source checks and final reviews pass; its opening question is pending with existing Nogo blockers explicit. Historical 1,234 findings are a partial old scan, not a current count. Dependent upgrade3fa on parent68c activates all26 after released-IR compatibility, with AMD/ARM/source/license checks and two reviews passing; it has no publication question and must wait analyzer landing for independent one-commit delivery. Mechanical migration9e is final-reviewed, local-only and tree-identical to0828; retain predecessor64-case/ISA and final targeted Nogo/source evidence without claiming fresh64 cases. Separate baseline checklinkname fixdb9 has a failing-original regression, passing fixed AMD/ARM tests, three targeted Nogo validators/source checks and two clean reviews. Its actual one-commit opening question is pending; full corpus was not rerun. Transport remains blocked independently of source approval; protected work stays held.",
+      "summary": "FIRST PRIORITY: frozen68c registers 20 additional diagnostic packages and 24/26 modernize analyzers; embedlit/newexpr are excluded for demonstrated pinned-IR incompatibilities. Focused AMD/ARM/source checks and final reviews pass; its opening question is pending with existing Nogo blockers explicit. Historical 1,234 findings are a partial old scan, not a current count. Dependent upgrade3fa on parent68c activates all26 after released-IR compatibility, with AMD/ARM/source/license checks and two reviews passing; it has no publication question and must wait analyzer landing for independent one-commit delivery. Mechanical migration9e is final-reviewed, local-only and tree-identical to0828; retain predecessor64-case/ISA and final targeted Nogo/source evidence without claiming fresh64 cases. Separate baseline checklinkname fixdb9 has a failing-original regression, passing fixed AMD/ARM tests, three targeted Nogo validators/source checks and two clean reviews. Its actual one-commit opening question is pending; full corpus was not rerun. The db9 preview branch is now published and exact-head verified; its opening question remains pending. Upgrade3fa and mechanical9e refs remain absent after one newly justified transport attempt, independently of source approval; protected work stays held.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -131843,7 +131843,7 @@
           ]
         }
       ],
-      "nextStep": "Await main68c and independent db9 publication decisions; no repeated asks. Preserve upgrade3fa’s parent68c prerequisite: wait analyzer landing before independent one-commit upstream delivery unless the user authorizes another structure. Mechanical9e has no publication question. Recheck actual SSH-unlock response or working transport, without unchanged retry or access workaround. Whole warning backlog is not a source-handoff prerequisite; current corpus and protected-source limits remain explicit.",
+      "nextStep": "Await main68c and independent db9 publication decisions; db9 transport is resolved at fix/checklinkname-composite-signatures-20261123. Preserve upgrade3fa’s parent68c prerequisite: wait analyzer landing before independent one-commit upstream delivery unless the user authorizes another structure. Upgrade3fa and mechanical9e refs remain verified absent after one new-basis attempt; neither has a publication question. No further unchanged transport retries. Whole warning backlog is not a source-handoff prerequisite; protected/corpus limits and the existing operational SSH question remain.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -137677,9 +137677,9 @@
       "title": "Node’s Internet TLS connection test reports a connection reset",
       "status": "active",
       "group": "ci-flakes",
-      "owner": "root",
-      "updatedAt": "2026-11-23T03:14:54.088857+00:00",
-      "summary": "On Buildkite #54502 for #17495, Node 22.2.0 reported read ECONNRESET in internet/test-tls-autoselectfamily-servername.js. The same-source retry passed. The approved source-identical fresh-base revision is now published as Node.js#67595. The final commit-message check passed; current-main runtime CI remains separate from prior Node22/native/Sentry results. The cause of the historical external reset is still unknown.",
+      "owner": "node22_backport_delivery / root",
+      "updatedAt": "2026-11-23T03:35:27.429881+00:00",
+      "summary": "Upstream Node67595 is delivered by verified manual landing660c1040592c on main with exact reviewed15c2edb file/blob identity. The existing pinned Node22 fixture backport is actively qualifying at057d078081: two files,87 additions, published at fix/node22-tls-loopback-backport-20261123. Runc TLS TAP passes and patch/hash/version/syntax/original-Internet-file-removal checks pass. Systrap stopped at Docker-cp visibility before the test, so it has no test verdict. This is not approved, publication-ready or a proven flake fix.",
       "findings": [
         {
           "text": "The pinned test opens two TLS connections to the same host on port 443. One enables automatic address-family selection and the other disables it. The default hostname is nodejs.org and can be overridden by the test environment. The failure has yet to be attributed to either connection.",
@@ -137725,7 +137725,7 @@
           ]
         }
       ],
-      "nextStep": "Upstream Node67595 is delivered by verified manual landing660c1040592c4332520e7d783360139c8298cb52 on main, with exact reviewed15c2edb file/blob identity. Root resumes the existing pinned Node22 fixture-backport owner using recorded qualification/version scopes and authorizations. The upstream approval/queue/CI wait is complete; do not duplicate outreach or upstream tests.",
+      "nextStep": "node22_backport_delivery owns the recovered existing backport obligation; the original agent route was unavailable. Retain runc PASS and recover only systrap using the existing Bazel proctor with exec stdin. Final package proof and source-publication review remain ahead; no backport approval question has been asked. Upstream67595 waiting is complete and needs no duplicate CI/outreach.",
       "evidence": [
         {
           "label": "#54502 Node TLS failure",
@@ -137774,10 +137774,18 @@
         {
           "label": "Verified manual landing on upstream main",
           "url": "https://github.com/nodejs/node/commit/660c1040592c4332520e7d783360139c8298cb52"
+        },
+        {
+          "label": "Published pinned-Node22 backport source",
+          "url": "https://github.com/tamird/gvisor/commit/057d0780812983db12df2e41f2b29a0a1a1f79c1"
+        },
+        {
+          "label": "Runc TAP PASS; systrap stopped before test",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45106135980"
         }
       ],
       "repo": "nodejs/node",
-      "head": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
+      "head": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -139706,7 +139714,7 @@
       "status": "active",
       "owner": "benchmark_measurement_review / root",
       "updatedAt": "2026-11-23T03:12:55.378620+00:00",
-      "summary": "The original Node 22.2.0 timeout attempt recovered on automatic retry. The original image and 180-second Node harness/20-minute outer contract are preserved; no new tests ran. The five-file prerequisite6a has passing owning AMD/ARM unit/Nogo, ARM runner compilation, source checks and two final independent reviews. Its source object is public but durable preview ref remains absent after the authorized transport timeout; no unresolved DCO or transport-permission decision exists. Its actual publication question is unanswered.",
+      "summary": "The original Node 22.2.0 timeout attempt recovered on automatic retry. The original image and 180-second Node harness/20-minute outer contract are preserved; no new tests ran. The five-file prerequisite6a has passing owning AMD/ARM unit/Nogo, ARM runner compilation, source checks and two final independent reviews. Its source object is public but its durable preview ref remains verified absent after one additional attempt justified by a successful backport publication; no automatic-review or authorization blocker exists, and no unchanged retry follows. Its actual publication question is unanswered.",
       "findings": [
         {
           "text": "The same shard also timed out in debugger-random-port. The log does not identify where the ArrayBuffer test stopped.",
