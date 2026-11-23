@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T02:07:13.958421+00:00",
+    "updatedAt": "2026-11-23T03:13:48.119404+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -92666,7 +92666,7 @@
         "mergeable": "MERGEABLE",
         "sourceHead": "e12bd9b418c580df05fe4abd323c2b4c8fea4193",
         "observedAt": "2026-11-22T21:48:03.162138+00:00",
-        "disposition": "Author source changed from b90cd49da to e12bd9b41. Root owns current-head reviewer follow-through, but the current user-sensitive/Daybreak hold prevents source review. Prior reviews and CI do not qualify this changed head. Broad-workload evidence remains required unless actually supplied and verified; no equivalence, approval or performance completion is inferred.",
+        "disposition": "Author source changed from b90cd49da to e12bd9b41. Root owns current-head reviewer follow-through, but the current user-sensitive/Daybreak hold prevents source review. Prior reviews and CI do not qualify this changed head. Broad-workload evidence remains required unless actually supplied and verified; no equivalence, approval or performance completion is inferred. Current provider checks now report SUCCESS on e12bd9b41; this is a status observation, not broad-workload qualification or release of the sensitive review hold.",
         "nextAction": "Keep current-source review and sensitive work held under the confirmed user instruction; do not read the held source, run tests, implement third-party suggestions, publish or send outreach. The author retains implementation ownership; root retains unfinished reviewer follow-through. Do not transfer prior reviews to this head or reask Daybreak availability.",
         "recheckCondition": "User releases the sensitive-work hold, actual new external evidence is supplied, or the author changes source again.",
         "evidence": [
@@ -104565,9 +104565,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-        "disposition": "The collaborator approval gate remains satisfied on unchanged 15c2edb. The commit queue removed the PR and applied commit-queue-failed because GitHub CI still reports running. This is the current maintainer queue/CI-reporting blocker, not an established source failure or agent relabel/requeue/merge authorization.",
-        "nextAction": "Root follows actual status correction and maintainer-owned queue/landing events. The new confirmation is read and triaged; do not merge, relabel/requeue, retry, change source or send duplicate outreach.",
-        "recheckCondition": "Actual status correction, maintainer queue/landing event, source/head or substantive new feedback.",
+        "disposition": "Native PR is CLOSED on exact15c2edb. Maintainer jakecastelli reports landing in660c1040592c; root owns exact landed-source verification and the independent pinned Node22 fixture backport. The landing notice is read and routed; native closure alone is not a merged-source equivalence claim.",
+        "nextAction": "Root verifies the actual landing commit against the approved PR source, then reconciles the existing pinned Node22 image backport obligation. Do not repeat old approval timers, relabel/requeue, retry CI, change source or send duplicate outreach.",
+        "recheckCondition": "Verified landing/source comparison or actual existing pinned-fixture backport event.",
         "publishedDelivery": {
           "base": "b7df44bf9c85a6104b9158b616999e3d2c58be5d",
           "head": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
@@ -104834,8 +104834,8 @@
         "attentionDispositions": [
           {
             "reason": "author-feedback",
-            "title": "Queue failure triaged; GitHub status correction and maintainer landing remain",
-            "nextAction": "Root follows actual status correction and maintainer-owned queue/landing events. The new confirmation is read and triaged; do not merge, relabel/requeue, retry, change source or send duplicate outreach.",
+            "title": "Landing notice triaged; verify landed source and pinned-fixture follow-through",
+            "nextAction": "Root verifies the actual landing commit against the approved PR source, then reconciles the existing pinned Node22 image backport obligation. Do not repeat old approval timers, relabel/requeue, retry CI, change source or send duplicate outreach.",
             "evidence": [
               "https://github.com/nodejs/node/pull/67595#issuecomment-7080248335",
               "https://github.com/nodejs/node/pull/67595#issuecomment-7080379119",
@@ -104849,7 +104849,8 @@
               "https://github.com/nodejs/node/pull/67595#issuecomment-7053905845",
               "https://github.com/nodejs/node/pull/67595#issuecomment-7086842084",
               "https://github.com/nodejs/node/pull/67595#pullrequestreview-6014883170",
-              "https://github.com/nodejs/node/pull/67595#issuecomment-7087863667"
+              "https://github.com/nodejs/node/pull/67595#issuecomment-7087863667",
+              "https://github.com/nodejs/node/pull/67595#issuecomment-7089675675"
             ],
             "binding": {
               "reviewDecision": "APPROVED",
@@ -105035,6 +105036,18 @@
                     }
                   },
                   {
+                    "kind": "comment",
+                    "id": "IC_kwDOAZ7xs88AAAABppPdmw",
+                    "url": "https://github.com/nodejs/node/pull/67595#issuecomment-7089675675",
+                    "body": "Landed in 660c1040592c",
+                    "createdAt": "2026-11-23T02:06:59Z",
+                    "updatedAt": "2026-11-23T02:06:59Z",
+                    "author": {
+                      "login": "jakecastelli",
+                      "__typename": "User"
+                    }
+                  },
+                  {
                     "kind": "review",
                     "id": "PRR_kwDOAZ7xs88AAAABY6iWEA",
                     "url": "https://github.com/nodejs/node/pull/67595#pullrequestreview-5966960144",
@@ -105098,7 +105111,9 @@
           "https://github.com/nodejs/node/pull/67595#issuecomment-7059960789",
           "https://github.com/nodejs/node/pull/67595#issuecomment-7086842084",
           "https://github.com/nodejs/node/pull/67595#pullrequestreview-6014883170",
-          "https://github.com/nodejs/node/pull/67595#issuecomment-7087863667"
+          "https://github.com/nodejs/node/pull/67595#issuecomment-7087863667",
+          "https://github.com/nodejs/node/pull/67595#issuecomment-7089675675",
+          "https://github.com/nodejs/node/commit/660c1040592c"
         ]
       },
       "evidence": [
@@ -137707,7 +137722,7 @@
           ]
         }
       ],
-      "nextStep": "Follow canonical Node.js#67595 at15c2ed through actual upstream CI and maintainer review; no personal-DCO/submission decision remains. Preserve old5bf qualification/version scopes. After upstream landing, the existing pinned Node22 image backport remains a separate recorded need.",
+      "nextStep": "Node67595 is now natively CLOSED and its maintainer reports landing in660c1040592c. Root verifies landed-source binding before advancing the independent pinned Node22 fixture backport; preserve old5bf qualification/version scopes. No old approval/queue timer or new outreach is needed.",
       "evidence": [
         {
           "label": "#54502 Node TLS failure",
@@ -139683,8 +139698,8 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "benchmark_measurement_review / root",
-      "updatedAt": "2026-11-23T02:05:19.894694+00:00",
-      "summary": "The original Node 22.2.0 timeout attempt recovered on automatic retry. The original image and 180-second Node harness/20-minute outer contract are preserved; no new tests ran.",
+      "updatedAt": "2026-11-23T03:12:55.378620+00:00",
+      "summary": "The original Node 22.2.0 timeout attempt recovered on automatic retry. The original image and 180-second Node harness/20-minute outer contract are preserved; no new tests ran. The five-file prerequisite6a has passing owning AMD/ARM unit/Nogo, ARM runner compilation, source checks and two final independent reviews. Its source object is public but durable preview ref remains absent after the authorized transport timeout; no unresolved DCO or transport-permission decision exists. Its actual publication question is unanswered.",
       "findings": [
         {
           "text": "The same shard also timed out in debugger-random-port. The log does not identify where the ArrayBuffer test stopped.",
@@ -139700,7 +139715,7 @@
           ]
         }
       ],
-      "nextStep": "benchmark_measurement_review owns the existing current-host Docker worker with Make install, opaque release and declared original Node image. The oversized design was rejected before build; cheap cquery45097950938 failed visibility and establishes no runtime verdict. Use the maintained mechanism without a new daemon, launcher or visibility relaxation. Inventory already proves Bazel9.3.1/Docker28.0.4 availability and the original image exists; it does not establish test readiness. No expensive build, new flake test, performance experiment or held-source edit follows yet.",
+      "nextStep": "The Node runtime prerequisite is complete on exact6a: both original cases produced TAP success under runc and Sentry with verified runtime/Node22.2.0 selections, known FLAKY annotations and zero skips; cleanup restored original runtimes/config. This is neither an original-flake fix/reproduction nor an ARM fixture result. Await the actual one-commit prerequisite-publication decision recorded on the worker-arraybuffer item. Keep the original timeout investigation for natural recurrence under its original conditions; no unchanged test retry or speculative source edit.",
       "evidence": [
         {
           "label": "Original Node shard",
@@ -139717,6 +139732,14 @@
         {
           "label": "Cheap configured analysis failed visibility; no runtime execution",
           "url": "https://github.com/tamird/gvisor/actions/runs/45097950938"
+        },
+        {
+          "label": "Qualified Node runtime prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/6a2916b318c17cc636ebf92e32844bf781612eed"
+        },
+        {
+          "label": "Both original cases under runc/Sentry; original environment restored",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45102386726/artifacts/14785599973"
         }
       ],
       "technicalOwner": "CI flake triage",
@@ -139725,6 +139748,17 @@
         "owner": "root",
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+      },
+      "head": "6a2916b318c17cc636ebf92e32844bf781612eed",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "6a2916b318c17cc636ebf92e32844bf781612eed",
+        "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+        "url": "https://github.com/tamird/gvisor/commit/6a2916b318c17cc636ebf92e32844bf781612eed",
+        "title": "Retain Node runtime test completion output",
+        "summary": "Expose the canonical Node22.2.0 image and retain TAP completion output. Both selected cases passed under runc and Sentry, owning checks/reviews passed; no original flake fix or ARM fixture result is claimed.",
+        "body": "The runtime runner discards successful proctor output, hiding individual Node test outcomes. Use Node’s TAP progress, retain successful output in verbose runner logs, and initialize the standard testing flags before parsing options.\n\nExpose the canonical AMD64 Node 22.2.0 image through the existing Bazel loader. This enables the maintained runtime target without rebuilding the image.\n\nValidation: both selected Node cases completed under runc and Sentry, retaining their existing FLAKY annotations. Owning unit/Nogo checks passed on AMD64 and ARM64; the updated runner also compiled on ARM64. [Functional results](https://github.com/tamird/gvisor/actions/runs/45102386726).\n\nPosted by Codex on behalf of @tamird.\n"
       }
     },
     {
@@ -139733,7 +139767,7 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "benchmark_measurement_review / root",
-      "updatedAt": "2026-11-23T02:05:19.894694+00:00",
+      "updatedAt": "2026-11-23T03:12:55.378620+00:00",
       "summary": "The original Node 22.2.0 timeout attempt recovered on automatic retry. The original image and 180-second Node harness/20-minute outer contract are preserved; no new tests ran.",
       "findings": [
         {
@@ -139754,7 +139788,7 @@
           ]
         }
       ],
-      "nextStep": "benchmark_measurement_review owns the existing current-host Docker worker with Make install, opaque release and declared original Node image. The oversized design was rejected before build; cheap cquery45097950938 failed visibility and establishes no runtime verdict. Use the maintained mechanism without a new daemon, launcher or visibility relaxation. Inventory already proves Bazel9.3.1/Docker28.0.4 availability and the original image exists; it does not establish test readiness. No expensive build, new flake test, performance experiment or held-source edit follows yet.",
+      "nextStep": "The Node runtime prerequisite is complete on exact6a: both original cases produced TAP success under runc and Sentry with verified runtime/Node22.2.0 selections, known FLAKY annotations and zero skips; cleanup restored original runtimes/config. This is neither an original-flake fix/reproduction nor an ARM fixture result. Await the actual one-commit prerequisite-publication decision recorded on the worker-arraybuffer item. Keep the original timeout investigation for natural recurrence under its original conditions; no unchanged test retry or speculative source edit.",
       "evidence": [
         {
           "label": "Original Node shard",
@@ -139775,6 +139809,14 @@
         {
           "label": "Cheap configured analysis failed visibility; no runtime execution",
           "url": "https://github.com/tamird/gvisor/actions/runs/45097950938"
+        },
+        {
+          "label": "Qualified Node runtime prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/6a2916b318c17cc636ebf92e32844bf781612eed"
+        },
+        {
+          "label": "Both original cases under runc/Sentry; original environment restored",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45102386726/artifacts/14785599973"
         }
       ],
       "technicalOwner": "CI flake triage",
