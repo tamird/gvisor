@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T17:19:00.710709+00:00",
+    "updatedAt": "2026-11-23T17:55:09.877980+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -214,12 +214,12 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-11-17T18:16:01.120596+00:00",
-      "summary": "Current approved427a8de source is now CONFLICTING. The existing rebase owner is reconciling the conflict read-only until a coordinated source-checkout release. The separate internal-exception/QEMU landing hold remains; no new source approval or policy change is inferred.",
+      "updatedAt": "2026-11-23T17:55:09.877980+00:00",
+      "summary": "The reviewed private candidate d279425e integrates the scanner registry with landed LicenseRef support and two retained test-constant spellings. AMD/ARM owning tests56 plus Nogo1 each, source checks and catalog Verify226 pass; two final reviews are clear. The actual new-source amendment question is pending. Public15146 remains427; these private checks are not public native checks. Root’s later REST mergeability read was unknown, while the prior canonical conflict observation remains dated to its actual API snapshot. QEMU Fetch, internal-policy and import landing holds remain.",
       "followup": {
-        "disposition": "Current approved427a8de source is now CONFLICTING. The existing rebase owner is reconciling the conflict read-only until a coordinated source-checkout release. The separate internal-exception/QEMU landing hold remains; no new source approval or policy change is inferred.",
-        "owner": "approved_rebase_queue / root",
-        "nextAction": "After benchmark_measurement_review releases the checkout, approved_rebase_queue composes the427 classifier with landed16051 LicenseRef verification, then qualifies and reviews the actual integration delta. Existing clarification7070045072 is already posted; no repeated reply question or post. Preserve the independent internal-exception/QEMU landing hold and stale mismatched17126 importer bounds.",
+        "disposition": "The reviewed private candidate d279425e integrates the scanner registry with landed LicenseRef support and two retained test-constant spellings. AMD/ARM owning tests56 plus Nogo1 each, source checks and catalog Verify226 pass; two final reviews are clear. The actual new-source amendment question is pending. Public15146 remains427; these private checks are not public native checks. Root’s later REST mergeability read was unknown, while the prior canonical conflict observation remains dated to its actual API snapshot. QEMU Fetch, internal-policy and import landing holds remain.",
+        "owner": "root / approved_rebase_queue",
+        "nextAction": "Await the actual d279 source-amendment decision. Root owns the existing-PR update and routine standing-authorized post-rebase notice after an approved push. Clarification7070045072 is already consumed; no new reply question. Candidate commit is readable despite new-preview-ref transport errors; the existing PR amendment path remains available, with no human execution-permission question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/23b8ddf0a",
           "https://github.com/tamird/gvisor/actions/runs/43014384411",
@@ -248,15 +248,20 @@
           "https://github.com/tamird/gvisor/actions/runs/44955678692",
           "https://buildkite.com/gvisor/first-pass/builds/2300#01a2002c-8092-4cc1-8ab7-eb0653355824",
           "https://github.com/gvisor/gvisor/pull/15146",
-          "https://github.com/gvisor/gvisor/pull/15146#issuecomment-7070045072"
+          "https://github.com/gvisor/gvisor/pull/15146#issuecomment-7070045072",
+          "https://github.com/tamird/gvisor/commit/d279425e0defee09168de15f54f82b63f1e2a8a9",
+          "https://github.com/tamird/gvisor/actions/runs/45230114794",
+          "https://github.com/tamird/gvisor/actions/runs/45230120958",
+          "https://github.com/tamird/gvisor/actions/runs/45230126786",
+          "https://github.com/tamird/gvisor/actions/runs/45230526075"
         ],
         "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
         "sourceHead": "427a8de7470d18956964b5ef71a21fab92440039",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-23T16:07:56.932949+00:00",
+        "observedAt": "2026-11-23T17:55:09.877980+00:00",
         "providerHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
-        "recheckCondition": "Coordinated checkout release, then source-bound integration/qualification result or actual policy/maintainer change.",
+        "recheckCondition": "Actual amendment decision, then exact public-head/check readback; actual policy/Fetch/import evidence remains separate.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
         "curatedAt": "2026-11-21T15:01:28.141765+00:00",
         "attentionDispositions": [
@@ -461,7 +466,17 @@
           "outcome": "APPROVED",
           "postedURL": "https://github.com/gvisor/gvisor/pull/15146"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "d279425e0defee09168de15f54f82b63f1e2a8a9",
+        "baseHead": "427a8de7470d18956964b5ef71a21fab92440039",
+        "url": "https://github.com/tamird/gvisor/commit/d279425e0defee09168de15f54f82b63f1e2a8a9",
+        "title": "Integrate license scanning with landed LicenseRef support",
+        "summary": "Amend15146 with the reviewed LicenseRef/scanner integration and two retained test-constant spellings. Private candidate gates pass; public source remains427 and source approval is pending.",
+        "body": "Scope summary: amend the existing PR with d279425e0defee09168de15f54f82b63f1e2a8a9 on parent b7e93ffc. The integration composes the scanner registry with landed LicenseRef verification and preserves two test-constant spellings. Each architecture passed 56 owning unit cases and one Nogo target; source checks and canonical Verify of all226 catalog entries passed on exact CI4c45e9a255 with12 support files. Two final independent reviews are clear. These are private-candidate results, not public427 native checks.\n\nActual Fetch acceptance, the internal policy/QEMU hold and import landing limits remain unresolved. The earlier clarification is already posted. No approval of this new source is inferred from the prior427 grant.\n\n```sh\ngit range-diff --creation-factor=100 427a8de747^! d279425e0d^!\n```"
+      }
     },
     {
       "id": "pr:15145",
