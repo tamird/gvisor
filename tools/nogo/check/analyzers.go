@@ -34,6 +34,7 @@ import (
 	"golang.org/x/tools/go/analysis/passes/defers"
 	"golang.org/x/tools/go/analysis/passes/errorsas"
 	"golang.org/x/tools/go/analysis/passes/gofix"
+	"golang.org/x/tools/go/analysis/passes/hostport"
 	"golang.org/x/tools/go/analysis/passes/httpresponse"
 	"golang.org/x/tools/go/analysis/passes/loopclosure"
 	"golang.org/x/tools/go/analysis/passes/lostcancel"
@@ -166,6 +167,7 @@ func init() {
 	register(allAnalyzers, &plainAnalyzer{defers.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{errorsas.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{gofix.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{hostport.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{httpresponse.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{loopclosure.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{lostcancel.Analyzer})
