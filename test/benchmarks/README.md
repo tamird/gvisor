@@ -34,6 +34,31 @@ well as run the benchmark on native runc.
 Benchmarks are run with root as some benchmarks require root privileges to do
 things like drop caches.
 
+## Startup functional admission
+
+On an exclusively owned x86-64 Linux host, the startup profile loads the declared
+images and complete release, and runs all seven startup, checkpoint and restore
+leaves once:
+
+```sh
+bazel test --nostamp --noincompatible_bazel_test_exec_run_under \
+  --run_under='//test/benchmarks/harness:startup_host_docker --startup' \
+  --cache_test_results=no --test_timeout=300 \
+  --test_arg=-test.run='^$' --test_arg=-test.bench=. \
+  --test_arg=-test.benchtime=1x --test_arg=-test.count=1 --test_arg=-test.cpu=1 \
+  //test/benchmarks/base:startup_test
+```
+
+This profile requires passwordless sudo and the standard `docker.service` unit.
+It selects the declared Docker 27.5.1 executable for the known Docker 28.0.4 host
+unit because [Moby #50750](https://github.com/moby/moby/issues/50750) prevents
+restores with the default network on Docker 28. It uses the existing daemon,
+socket, containerd and storage, then restores the original configuration and
+engine. Other host engine versions or a modified Docker 28 unit must be
+qualified separately.
+The ordinary `host_docker` target keeps the host engine and Alpine-only inputs.
+One iteration verifies functionality; it is not performance evidence.
+
 ## Writing benchmarks
 
 Benchmarks consist of docker images as Dockerfiles and golang testing.B

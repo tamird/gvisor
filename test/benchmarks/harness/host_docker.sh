@@ -17,7 +17,8 @@
 # Requires exclusive ownership of the host daemon for the entire invocation.
 # With bazel test --run_under, use --noincompatible_bazel_test_exec_run_under
 # to keep the complete release in the target configuration.
-# --startup loads the maintained startup-category images and enables checkpoint API support.
+# --startup selects the declared images and Docker 27 checkpoint-compatible profile.
+# Docker 28 default-network restores fail: https://github.com/moby/moby/issues/50750
 # With no caller, checks the native and installed runtimes using Alpine.
 set -euo pipefail
 export RUNFILES_DIR="${TEST_SRCDIR:-${RUNFILES_DIR:-$0.runfiles}}"
@@ -30,7 +31,12 @@ if test "${1:-}" = --startup; then
   shift
   checkpoint_mode=true
   names+=(nginx node util redis)
-  loaders+=(images/benchmark_nginx_load.exe images/benchmark_node_load.exe images/benchmark_util_load.exe images/basic/benchmark_redis_load.exe)
+  loaders+=(
+    images/benchmark_nginx_load.exe
+    images/benchmark_node_load.exe
+    images/benchmark_util_load.exe
+    images/basic/benchmark_redis_load.exe
+  )
 fi
 image=gvisor.dev/images/benchmarks/alpine:latest
 sudo -n true
@@ -39,9 +45,31 @@ initial_containers=$(docker ps -aq)
 test -z "$initial_containers" # Require an otherwise unused daemon.
 initial_experimental=$(docker info --format '{{.ExperimentalBuild}}')
 restart_experimental=false
-if $checkpoint_mode && test "$initial_experimental" = false; then restart_experimental=true; fi
+if $checkpoint_mode && test "$initial_experimental" = false; then
+  restart_experimental=true
+fi
 initial_runtimes=$(docker info --format '{{json .Runtimes}}')
 docker_root=$(docker info --format '{{.DockerRootDir}}')
+engine_changed=false
+if $checkpoint_mode; then
+  initial_engine=$(docker version --format '{{.Server.Version}}')
+  initial_driver=$(docker info --format '{{.Driver}}')
+  initial_inventory=$(
+    docker image ls --no-trunc --format '{{.ID}} {{.Repository}}:{{.Tag}}' | sort
+  )
+  initial_socket=$(stat -Lc '%i:%u:%g:%a' /var/run/docker.sock)
+  initial_containerd=$(systemctl show containerd --property=MainPID --value)
+  # Keep the compatibility profile bound to the qualified host unit and versions.
+  if test "$initial_engine" != 28.0.4; then
+    echo "Unsupported checkpoint-profile host Docker version: $initial_engine" >&2
+    exit 1
+  fi
+  test "$(systemctl show docker --property=DropInPaths --value)" = ''
+  test "$(systemctl show docker --property=FragmentPath --value)" = /usr/lib/systemd/system/docker.service
+  grep -qxF \
+    'ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock' \
+    /usr/lib/systemd/system/docker.service
+fi
 work=$(mktemp -d "${TEST_TMPDIR:-${TMPDIR:-/tmp}}/benchmark-runtime.XXXXXX")
 runtime=benchmark-$(basename "$work")
 container=$runtime-check
@@ -56,6 +84,10 @@ mkdir "$work/release"
 owned_config="$work/daemon.json"
 configured=false
 loaded=()
+dropin_dir=/run/systemd/system/docker.service.d
+dropin="$dropin_dir/$runtime.conf"
+dropin_dir_existed=false
+if test -d "$dropin_dir"; then dropin_dir_existed=true; fi
 cleanup() {
   command_status=$?
   ret=0
@@ -81,16 +113,42 @@ path.write_text(json.dumps(config))
 PYCONFIG
     fi
     sudo cp "$owned_config" "$config" || ret=1
-    if $restart_experimental; then timeout 90s sudo systemctl restart docker || ret=1; else sudo systemctl reload docker || ret=1; fi
+    if $engine_changed; then
+      sudo rm -f "$dropin" || ret=1
+      sudo systemctl daemon-reload || ret=1
+    fi
+    if $restart_experimental || $engine_changed; then
+      timeout 90s sudo systemctl restart docker || ret=1
+    else
+      sudo systemctl reload docker || ret=1
+    fi
     for i in {1..10}; do
-      test "$(docker info --format '{{json .Runtimes}}')" = "$initial_runtimes" && test "$(docker info --format '{{.ExperimentalBuild}}')" = "$initial_experimental" && break
+      if test "$(docker info --format '{{json .Runtimes}}')" = "$initial_runtimes" &&
+          test "$(docker info --format '{{.ExperimentalBuild}}')" = "$initial_experimental"; then
+        break
+      fi
       sleep 1
     done
-    if $config_existed; then sudo cp --preserve=all "$work/daemon.before" "$config" || ret=1; else sudo rm -f "$config" || ret=1; fi
+    if $config_existed; then
+      sudo cp --preserve=all "$work/daemon.before" "$config" || ret=1
+    else
+      sudo rm -f "$config" || ret=1
+    fi
   fi
   test "$(docker info --format '{{json .Runtimes}}')" = "$initial_runtimes" || ret=1
   test "$(docker ps -aq)" = "$initial_containers" || ret=1
   test "$(docker info --format '{{.ExperimentalBuild}}')" = "$initial_experimental" || ret=1
+  if $checkpoint_mode; then
+    test "$(docker version --format '{{.Server.Version}}')" = "$initial_engine" || ret=1
+    test "$(docker info --format '{{.DockerRootDir}}')" = "$docker_root" || ret=1
+    test "$(docker info --format '{{.Driver}}')" = "$initial_driver" || ret=1
+    test "$(stat -Lc '%i:%u:%g:%a' /var/run/docker.sock)" = "$initial_socket" || ret=1
+    test "$(systemctl show containerd --property=MainPID --value)" = "$initial_containerd" || ret=1
+    if $engine_changed; then
+      test "$(systemctl show docker --property=DropInPaths --value)" = '' || ret=1
+      if ! $dropin_dir_existed; then sudo rmdir "$dropin_dir" || ret=1; fi
+    fi
+  fi
   if test "$ret" -ne 0; then
     echo "HOST_DOCKER_CLEANUP_BLOCKED: daemon restoration failed; preserving $work" >&2
     exit 1
@@ -107,11 +165,23 @@ PY
     elif test -n "$loaded_image"; then
       docker image rm "$image" >/dev/null || ret=1
     fi
-    if test -n "$loaded_image" && ! grep -qxF "$loaded_image" <<<"$initial_images" && test -n "${initial_image[$image]}"; then
+    if test -n "$loaded_image" &&
+        ! grep -qxF "$loaded_image" <<<"$initial_images" &&
+        test -n "${initial_image[$image]}"; then
       docker image rm "$loaded_image" >/dev/null || ret=1
     fi
     test "$(docker image inspect "$image" --format '{{.Id}}' 2>/dev/null || true)" = "${initial_image[$image]}" || ret=1
   done
+  if $checkpoint_mode; then
+    test "$(docker image ls --no-trunc --format '{{.ID}} {{.Repository}}:{{.Tag}}' | sort)" = "$initial_inventory" || ret=1
+  fi
+  if test "$ret" -ne 0; then
+    echo "HOST_DOCKER_CLEANUP_BLOCKED: image restoration failed; preserving $work" >&2
+    exit 1
+  fi
+  if $checkpoint_mode; then
+    echo "HOST_DOCKER_ORIGINAL_ENGINE_RESTORED=$initial_engine"
+  fi
   sudo rm -rf -- "$work" || ret=1
   echo "HOST_DOCKER_COMMAND_EXIT=$command_status"
   echo "HOST_DOCKER_CLEANUP_EXIT=$ret"
@@ -141,11 +211,43 @@ for path in sorted(root.rglob("*")):
         print("HOST_DOCKER_RELEASE", path.relative_to(root), hashlib.sha256(path.read_bytes()).hexdigest())
 PY
 "$work/release/runsc" --version
-sudo "$work/release/runsc" install --experimental="$restart_experimental" --config_file="$owned_config" --runtime="$runtime" -- --platform=systrap
+sudo "$work/release/runsc" install --experimental="$restart_experimental" \
+  --config_file="$owned_config" --runtime="$runtime" -- --platform=systrap
 configured=true
+if $checkpoint_mode; then
+  engine=$(python3 - "$RUNFILES_DIR/_repo_mapping" "$RUNFILES_DIR" <<'PYENGINE'
+import csv, pathlib, sys
+with open(sys.argv[1]) as mapping:
+    repos = [
+        row[2] for row in csv.reader(mapping)
+        if row[1] == "docker_27_5_1" and row[0] in ("", "_main")
+    ]
+assert len(repos) == 1, repos
+print(pathlib.Path(sys.argv[2], repos[0], "dockerd"))
+PYENGINE
+)
+  cp "$engine" "$work/dockerd"
+  chmod 0755 "$work/dockerd"
+  test ! -e "$dropin"
+  sudo mkdir -p "$dropin_dir"
+  engine_changed=true
+  printf '[Service]\nExecStart=\nExecStart=%s -H fd:// --containerd=/run/containerd/containerd.sock\n' \
+    "$work/dockerd" | sudo tee "$dropin" >/dev/null
+  sudo systemctl daemon-reload
+fi
 sudo cp "$owned_config" "$config"
-if $restart_experimental; then timeout 90s sudo systemctl restart docker; else sudo systemctl reload docker; fi
-if $checkpoint_mode; then test "$(docker info --format '{{.ExperimentalBuild}}')" = true; fi
+if $restart_experimental || $engine_changed; then
+  timeout 90s sudo systemctl restart docker
+else
+  sudo systemctl reload docker
+fi
+if $checkpoint_mode; then
+  test "$(docker version --format '{{.Server.Version}}')" = 27.5.1
+  echo HOST_DOCKER_CHECKPOINT_ENGINE=27.5.1
+fi
+if $checkpoint_mode; then
+  test "$(docker info --format '{{.ExperimentalBuild}}')" = true
+fi
 for i in {1..10}; do
   actual=$(docker info --format "{{with index .Runtimes \"$runtime\"}}{{.Path}}{{end}}")
   test "$actual" = "$work/release/runsc" && break

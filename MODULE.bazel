@@ -1026,3 +1026,12 @@ img_pull(
     registries = ["us-central1-docker.pkg.dev"],
     repository = "gvisor-presubmit/gvisor-presubmit-images/benchmarks/util_x86_64",
 )
+
+# Docker 28 cannot restore the default-network checkpoint workloads (moby/moby#50750).
+http_archive(
+    name = "docker_27_5_1",
+    build_file_content = 'exports_files(["dockerd"])',
+    sha256 = "4f798b3ee1e0140eab5bf30b0edc4e84f4cdb53255a429dc3bbae9524845d640",
+    strip_prefix = "docker",
+    urls = ["https://download.docker.com/linux/static/stable/x86_64/docker-27.5.1.tgz"],
+)

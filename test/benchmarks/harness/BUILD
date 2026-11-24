@@ -46,6 +46,7 @@ sh_binary(
         "//images:benchmark_node_load",
         "//images:benchmark_util_load",
         "//images/basic:benchmark_redis_load",
+        "@docker_27_5_1//:dockerd",
     ],
     tags = ["manual"],
     target_compatible_with = ["@platforms//cpu:x86_64"],
