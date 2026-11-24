@@ -17,7 +17,8 @@
 # Requires exclusive ownership of the host daemon for the entire invocation.
 # With no caller, checks the native and installed runtimes using Alpine.
 set -euo pipefail
-runfiles="${TEST_SRCDIR:-${RUNFILES_DIR:-$0.runfiles}}/${TEST_WORKSPACE:-_main}"
+export RUNFILES_DIR="${TEST_SRCDIR:-${RUNFILES_DIR:-$0.runfiles}}"
+runfiles="$RUNFILES_DIR/${TEST_WORKSPACE:-_main}"
 config=/etc/docker/daemon.json
 image=gvisor.dev/images/benchmarks/alpine:latest
 sudo -n true
