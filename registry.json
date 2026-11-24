@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T06:29:25.808085+00:00",
+    "updatedAt": "2026-11-24T07:04:01.624871+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41306,14 +41306,14 @@
       "url": "https://github.com/google/gvisor/pull/16516",
       "group": "bazel",
       "status": "open",
-      "summary": "Main55748 at a959 is terminal FAILED. The final Windows attempt also timed out during local-origin Go-history fetch, before Windows compilation; known Go/32-bit fetch and APT setup failures remain. No new source failure is demonstrated. Shared Go-export candidatef850 is tracked separately under issue17832.",
+      "summary": "Main 55748 at a959 is terminal FAILED. The final Windows attempt also timed out during local-origin Go-history fetch, before Windows compilation; known Go/32-bit fetch and APT setup failures remain. No new source failure is demonstrated. Shared Go-export candidate f8500dffe is tracked separately under issue #17832.",
       "updatedAt": "2026-11-24T06:27:10.701611+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "a9594385d15d2e17e5dd7491be94d774f47fa80e",
         "observedAt": "2026-11-24T05:25:45.034658+00:00",
-        "disposition": "Main55748 at a959 is terminal FAILED. The final Windows attempt also timed out during local-origin Go-history fetch, before Windows compilation; known Go/32-bit fetch and APT setup failures remain. No new source failure is demonstrated. Shared Go-export candidatef850 is tracked separately under issue17832.",
-        "nextAction": "Root advances the separate Go-export proposal at issue17832 and follows the existing APT17854/shared provider blockers. Regular CI watching is retired; preserve exact-source validation and await actual changed provider/review/import evidence.",
+        "disposition": "Main 55748 at a959 is terminal FAILED. The final Windows attempt also timed out during local-origin Go-history fetch, before Windows compilation; known Go/32-bit fetch and APT setup failures remain. No new source failure is demonstrated. Shared Go-export candidate f8500dffe is tracked separately under issue #17832.",
+        "nextAction": "Root advances the separate Go-export proposal at issue #17832 and follows the existing APT #17854/shared provider blockers. Regular CI watching is retired; preserve exact-source validation and await actual changed provider/review/import evidence.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16516#pullrequestreview-5895770949",
           "https://github.com/gvisor/gvisor/pull/16516#pullrequestreview-5943223023",
@@ -41400,7 +41400,7 @@
           "postedURL": "https://github.com/gvisor/gvisor/pull/16516#pullrequestreview-5943223023"
         }
       ],
-      "nextStep": "Root advances the separate Go-export proposal at issue17832 and follows the existing APT17854/shared provider blockers. Regular CI watching is retired; preserve exact-source validation and await actual changed provider/review/import evidence.",
+      "nextStep": "Root advances the separate Go-export proposal at issue #17832 and follows the existing APT #17854/shared provider blockers. Regular CI watching is retired; preserve exact-source validation and await actual changed provider/review/import evidence.",
       "recheckCondition": "Actual Go-export/APT prerequisite delivery, replacement CI, agent diagnostics or substantive review/import/source event."
     },
     {
@@ -99902,7 +99902,7 @@
       "followup": {
         "sourceHead": "f6fa027fbfaa28e930d3a288c3a78e9d35b53738",
         "owner": "root",
-        "nextAction": "Root advances the separately reviewed Go-export proposal at issue17832. The original Mac lock/cancellation origin remains an external agent-data blocker; the proposal does not establish that cause or authorize an unchanged retry.",
+        "nextAction": "Root advances the separately reviewed Go-export proposal at issue #17832. The original Mac lock/cancellation origin remains an external agent-data blocker; the proposal does not establish that cause or authorize an unchanged retry.",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-24T04:47:08.376554+00:00",
         "recheckCondition": "Actual Go-export delivery, agent progress/cancellation/lock evidence, replacement run or substantive source/review/import event.",
@@ -99971,7 +99971,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Root advances the separately reviewed Go-export proposal at issue17832. The original Mac lock/cancellation origin remains an external agent-data blocker; the proposal does not establish that cause or authorize an unchanged retry.",
+      "nextStep": "Root advances the separately reviewed Go-export proposal at issue #17832. The original Mac lock/cancellation origin remains an external agent-data blocker; the proposal does not establish that cause or authorize an unchanged retry.",
       "recheckCondition": "Actual Go-export delivery, agent progress/cancellation/lock evidence, replacement run or substantive source/review/import event."
     },
     {
@@ -105872,12 +105872,12 @@
       "url": "https://github.com/gvisor/gvisor/issues/17832",
       "group": "rbe",
       "status": "open",
-      "summary": "Cache86cff, the measured-scope issue rewrite and Go-exportf850 have three separate unanswered publication decisions. The Go-export Git/syntax checks, source guards, cleanup and independent reviews are complete. Canonical make lint/lint-cc reuse passing exact-parent5cc evidence because their selected inputs are unchanged. Full export assembly was not rebuilt, shallow-source limitations remain, and no RBE speedup is established. The Go-export fork ref is unpublished.",
+      "summary": "Cache 86cffbf72, the measured-scope issue rewrite and Go export f8500dffe have three separate unanswered publication decisions. The Go export Git/syntax checks, source guards, cleanup and independent reviews are complete. Canonical make lint/lint-cc reuse passing exact-parent 5cc6d0394 evidence because their selected inputs are unchanged. Full export assembly was not rebuilt, shallow-source limitations remain, and no RBE speedup is established. The Go export fork ref is unpublished.",
       "followup": {
         "owner": "root",
         "observedAt": "2026-11-24T06:29:20.083295+00:00",
-        "disposition": "Cache86cff, the measured-scope issue rewrite and Go-exportf850 have three separate unanswered publication decisions. The Go-export Git/syntax checks, source guards, cleanup and independent reviews are complete. Canonical make lint/lint-cc reuse passing exact-parent5cc evidence because their selected inputs are unchanged. Full export assembly was not rebuilt, shallow-source limitations remain, and no RBE speedup is established. The Go-export fork ref is unpublished.",
-        "nextAction": "Root consumes each existing decision independently: open the cache86cff PR, replace the issue body with the current measured-scope draft, and open the Go-exportf850 PR. Canonical lint coverage is reconciled through unchanged-input parent evidence. Deliver approved changes through the existing authorized routes; the unpublished Go-export fork ref still needs its SSH/HTTPS execution blocker to clear.",
+        "disposition": "Cache 86cffbf72, the measured-scope issue rewrite and Go export f8500dffe have three separate unanswered publication decisions. The Go export Git/syntax checks, source guards, cleanup and independent reviews are complete. Canonical make lint/lint-cc reuse passing exact-parent 5cc6d0394 evidence because their selected inputs are unchanged. Full export assembly was not rebuilt, shallow-source limitations remain, and no RBE speedup is established. The Go export fork ref is unpublished.",
+        "nextAction": "Root consumes each existing decision independently: open the cache 86cffbf72 PR, replace the issue body with the current measured-scope draft, and open the Go export f8500dffe PR. Canonical lint coverage is reconciled through unchanged-input parent evidence. Deliver approved changes through the existing authorized routes; the unpublished Go export fork ref still needs its SSH/HTTPS execution blocker to clear.",
         "recheckCondition": "Actual response to any of the three existing publication questions, fork delivery recovery, or substantive maintainer/source/CI evidence.",
         "evidence": [
           "https://github.com/gvisor/gvisor/issues/17832",
@@ -105902,7 +105902,7 @@
         "curatedAt": "2026-11-21T00:26:41.755Z"
       },
       "updatedAt": "2026-11-24T06:29:20.083295+00:00",
-      "nextStep": "Root consumes each existing decision independently: open the cache86cff PR, replace the issue body with the current measured-scope draft, and open the Go-exportf850 PR. Canonical lint coverage is reconciled through unchanged-input parent evidence. Deliver approved changes through the existing authorized routes; the unpublished Go-export fork ref still needs its SSH/HTTPS execution blocker to clear.",
+      "nextStep": "Root consumes each existing decision independently: open the cache 86cffbf72 PR, replace the issue body with the current measured-scope draft, and open the Go export f8500dffe PR. Canonical lint coverage is reconciled through unchanged-input parent evidence. Deliver approved changes through the existing authorized routes; the unpublished Go export fork ref still needs its SSH/HTTPS execution blocker to clear.",
       "recheckCondition": "Actual response to any of the three existing publication questions, fork delivery recovery, or substantive maintainer/source/CI evidence.",
       "reviewWatch": {
         "inspected": [
@@ -105953,7 +105953,7 @@
           "baseHead": "5cc6d039453de0dc46ecb3f0a7c0a55cdc529ee1",
           "url": "https://github.com/tamird/gvisor/commit/f8500dffed4bace8841b900232beb6fd19740cd7",
           "title": "Retain promisor sources in Go export clones",
-          "summary": "Existing PR-opening question is unanswered. Two independent source reviews accepted the exact change; the relative-path finding is confirmed resolved. Git behavior, syntax/diff, source guards and cleanup passed. Canonical make lint and make lint-cc results are reused from exact parent5cc (Actions45332448383 and Buildkite55802 C++ lint): their selected source, tooling and configuration are unchanged; this shell file is not a lint input. Full generated-export assembly was not rebuilt; shallow-source limitations remain. The fork ref remains unpublished after SSH/HTTPS execution failures.",
+          "summary": "Existing PR-opening question is unanswered. Two independent source reviews accepted the exact change; the relative-path finding is confirmed resolved. Git behavior, syntax/diff, source guards and cleanup passed. Canonical make lint and make lint-cc results are reused from exact parent 5cc6d0394 (Actions 45332448383 and Buildkite 55802 C++ lint): their selected source, tooling and configuration are unchanged; this shell file is not a lint input. Full generated-export assembly was not rebuilt; shallow-source limitations remain. The fork ref remains unpublished after SSH/HTTPS execution failures.",
           "body": "Go export fetched its selected Go commit from a temporary local clone even when cloning had already copied that commit. With Buildkite's blobless checkout, that fetch enumerated about 189,000 objects; the Windows attempt in build 55748 timed out in this phase.\n\nKeep the original fetch when the commit is absent. Otherwise, let checkout retrieve the missing Go-tip blobs through the original promisor sources. Local cloning copies their packs without their remote configuration, so register those object-source URLs in the temporary clone and resolve relative local paths against the source repository. Keep invalid boolean configuration fatal. Export assembly and merge construction are unchanged.\n\nShallow-source merge limitations remain. Full generated-export assembly has not been rebuilt; this patch does not explain unrelated CI cancellations.\n\nPosted by Codex on behalf of @tamird.\n",
           "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/go-export-promisor-pr-body.txt",
           "sourceSha256": "6e4c040184c00fa0f58e930703680dcbb289d12b163941e61ad9308e38656302"
@@ -106752,13 +106752,13 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-24T06:27:10.701611+00:00",
-      "summary": "Main55757 at057d is terminal FAILED at05:40:01UTC. Node index4 exhausted12 attempts; its final attempt was canceled during Node22.2.0/V8 image compilation. Known index1 compilation and index8 checkout cancellations remain. Cancellation origin is unknown; no new gVisor source failure is demonstrated.",
+      "summary": "Main 55757 at 057d07808 is terminal FAILED at05:40:01UTC. Node index 4 exhausted 12 attempts; its final attempt was canceled during Node 22.2.0/V8 image compilation. Known index 1 compilation and index 8 checkout cancellations remain. Cancellation origin is unknown; no new gVisor source failure is demonstrated.",
       "followup": {
         "owner": "root",
         "sourceHead": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
         "providerHead": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
         "observedAt": "2026-11-24T06:20:46.557823+00:00",
-        "disposition": "Main55757 at057d is terminal FAILED at05:40:01UTC. Node index4 exhausted12 attempts; its final attempt was canceled during Node22.2.0/V8 image compilation. Known index1 compilation and index8 checkout cancellations remain. Cancellation origin is unknown; no new gVisor source failure is demonstrated.",
+        "disposition": "Main 55757 at 057d07808 is terminal FAILED at05:40:01UTC. Node index 4 exhausted 12 attempts; its final attempt was canceled during Node 22.2.0/V8 image compilation. Known index 1 compilation and index 8 checkout cancellations remain. Cancellation origin is unknown; no new gVisor source failure is demonstrated.",
         "nextAction": "Root retains the external agent/cancellation evidence blocker and existing maintainer/import follow-through. Retire regular job watching; advance only actual replacement-CI or diagnostic evidence, without an unchanged retry or source churn.",
         "recheckCondition": "Actual new CI/review/import/source event or agent/cancellation diagnostics through the canonical collector.",
         "evidence": [
@@ -132070,10 +132070,10 @@
       "id": "investigation:repository-lint",
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
-      "owner": "analysis_pass_inventory / root",
-      "updatedAt": "2026-11-23T22:28:52.692599+00:00",
+      "owner": "benchmark_measurement_review / root",
+      "updatedAt": "2026-11-24T07:01:47.154032+00:00",
       "group": "analysis",
-      "summary": "Native aae2569e23bc7ed3203e1189a988ea86f89799b2 has a complete clean corpus: run45338108931/artifact14895932437 executed891 targets, all891 PASS with zero findings, failures, skips or aborts; guards passed. CI8ccfde11c988df8ca617621bce102fe7199e6d0a differs only by18 reviewed support paths. Both release/caller runs45338245187 and45338247735 pass, with nine-member opaque manifests and one TestFindings XML case per ISA. Native checker and five source checks pass. This establishes source-bound static/build/caller qualification, not runtime or performance closure.",
+      "summary": "Current native review-fix source is 8fc45ed322c5e75f782505aea016dbdfbc5acfe4. The earlier aae2569e23 corpus executed 891 targets with zero findings, and both release/caller builds passed, but complete coverage acceptance is open: five cgroup test helpers still appear diagnosable by newexpr. Security/hardening review found no blocker; final general review accepted documentation/dead-symbol cleanup. Six-file cleanup removes 78 net lines without replacement tests. The source owner is reconciling actual cgroup sources/version through canonical aquery run 45344645597; prior copied-wrapper attempts supplied no decisive metadata.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132445,7 +132445,7 @@
           ]
         }
       ],
-      "nextStep": "Root completes final adversarial review. Remaining prerequisites are unmerged #17884/provider admission, required comparative performance with no demonstrated stable same-source A/A route, and retained Netgofer AMD cleanup/runtime/hardware limits. Preserve scoped prior proofs; no human DCO gate, invented publication approval or final readiness claim.",
+      "nextStep": "benchmark_measurement_review resolves cgroup target/source/version coverage before broad reruns, qualifies the actual cleanup, and then checks QueueAIO allocation risk using pinned-compiler evidence. Root completes narrow finding confirmation and final audit packaging. Preserve #17884, comparative performance, Netgofer/runtime and hardware limits; DCO is already authorized.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132696,13 +132696,13 @@
           }
         ]
       },
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
+      "recheckCondition": "Canonical aquery 45344645597 result at 07:05 UTC, then an actual source/coverage/compiler milestone; no unchanged timing retry or new publication question.",
       "lifecycleCoordination": {
         "owner": "root",
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
       },
-      "head": "452d4b92fe140153f606ed719663b0c6d2919cf4",
+      "head": "8fc45ed322c5e75f782505aea016dbdfbc5acfe4",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -132783,31 +132783,16 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T06:29:25.808085+00:00",
+        "observedAt": "2026-11-24T07:01:47.154032+00:00",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/45274157128/artifacts/14868766183",
-          "https://github.com/tamird/gvisor/actions/runs/45286918461",
-          "https://github.com/tamird/gvisor/actions/runs/45288110135",
-          "https://github.com/tamird/gvisor/actions/runs/45288103200",
-          "https://github.com/tamird/gvisor/actions/runs/45292265635",
-          "https://github.com/tamird/gvisor/actions/runs/45292268167",
-          "https://github.com/tamird/gvisor/actions/runs/45292270599",
-          "https://github.com/tamird/gvisor/actions/runs/45292273315",
-          "https://github.com/tamird/gvisor/commit/12fd1be7cdeb8c5eaaff0e0f565860d3862099ca",
-          "https://github.com/tamird/gvisor/actions/runs/45319022026",
-          "https://github.com/tamird/gvisor/actions/runs/45319927699",
-          "https://github.com/tamird/gvisor/actions/runs/45332368082/artifacts/14892554106",
-          "https://github.com/tamird/gvisor/actions/runs/45327433523",
-          "https://github.com/tamird/gvisor/actions/runs/45328185109",
-          "https://github.com/tamird/gvisor/commit/aae2569e23bc7ed3203e1189a988ea86f89799b2",
-          "https://github.com/tamird/gvisor/actions/runs/45338108931/artifacts/14895932437",
-          "https://github.com/tamird/gvisor/actions/runs/45338245187",
-          "https://github.com/tamird/gvisor/actions/runs/45338247735"
+          "https://github.com/tamird/gvisor/actions/runs/45338108931",
+          "https://github.com/tamird/gvisor/actions/runs/45344645597"
         ],
-        "owner": "root",
-        "disposition": "Native aae2569e23bc7ed3203e1189a988ea86f89799b2 has a complete clean corpus: run45338108931/artifact14895932437 executed891 targets, all891 PASS with zero findings, failures, skips or aborts; guards passed. CI8ccfde11c988df8ca617621bce102fe7199e6d0a differs only by18 reviewed support paths. Both release/caller runs45338245187 and45338247735 pass, with nine-member opaque manifests and one TestFindings XML case per ISA. Native checker and five source checks pass. This establishes source-bound static/build/caller qualification, not runtime or performance closure.",
-        "nextAction": "Root completes final adversarial review. Remaining prerequisites are unmerged #17884/provider admission, required comparative performance with no demonstrated stable same-source A/A route, and retained Netgofer AMD cleanup/runtime/hardware limits. Preserve scoped prior proofs; no human DCO gate, invented publication approval or final readiness claim.",
-        "recheckCondition": "Root final review result, actual #17884 landing/admission, qualified performance-route evidence, or source-bound runtime/cleanup/hardware recovery."
+        "owner": "benchmark_measurement_review / root",
+        "disposition": "Current native review-fix source is 8fc45ed322c5e75f782505aea016dbdfbc5acfe4. The earlier aae2569e23 corpus executed 891 targets with zero findings, and both release/caller builds passed, but complete coverage acceptance is open: five cgroup test helpers still appear diagnosable by newexpr. Security/hardening review found no blocker; final general review accepted documentation/dead-symbol cleanup. Six-file cleanup removes 78 net lines without replacement tests. The source owner is reconciling actual cgroup sources/version through canonical aquery run 45344645597; prior copied-wrapper attempts supplied no decisive metadata.",
+        "nextAction": "benchmark_measurement_review resolves cgroup target/source/version coverage before broad reruns, qualifies the actual cleanup, and then checks QueueAIO allocation risk using pinned-compiler evidence. Root completes narrow finding confirmation and final audit packaging. Preserve #17884, comparative performance, Netgofer/runtime and hardware limits; DCO is already authorized.",
+        "recheckCondition": "Canonical aquery 45344645597 result at 07:05 UTC, then an actual source/coverage/compiler milestone; no unchanged timing retry or new publication question.",
+        "sourceHead": "8fc45ed322c5e75f782505aea016dbdfbc5acfe4"
       },
       "contributorReview": {
         "kind": "proposal",
