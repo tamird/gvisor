@@ -56,8 +56,12 @@ memory_mode=false
 if test "${1:-}" = --memory; then
   shift
   memory_mode=true
-  names+=(sysbench)
-  loaders+=(images/benchmark_sysbench_load.exe)
+  for name in nginx node sysbench util; do
+    names+=("$name")
+    loaders+=("images/benchmark_${name}_load.exe")
+  done
+  names+=(redis)
+  loaders+=(images/basic/benchmark_redis_load.exe)
 fi
 comparison=false
 if test "${1:-}" = --compare; then
