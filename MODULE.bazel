@@ -413,6 +413,7 @@ go_deps.from_file(go_mod = "//:go.mod")
 use_repo(
     go_deps,
     "co_honnef_go_tools",
+    "com_github_aclements_go_moremath",
     "com_github_burntsushi_toml",
     "com_github_cenkalti_backoff",
     "com_github_cilium_ebpf",
@@ -521,6 +522,7 @@ use_repo(
     "org_golang_x_mod",
     "org_golang_x_net",
     "org_golang_x_oauth2",
+    "org_golang_x_perf",
     "org_golang_x_sync",
     "org_golang_x_sys",
     "org_golang_x_telemetry",
@@ -652,6 +654,16 @@ go_deps.module(
     path = "github.com/moby/docker-image-spec",
     sum = "h1:jMKff3w6PgbfSa69GfNg+zN/XLhfXJGnEx3Nl2EsFP0=",
     version = "v1.3.1",
+)
+go_deps.module(
+    path = "github.com/aclements/go-moremath",
+    sum = "h1:xlwdaKcTNVW4PtpQb8aKA4Pjy0CdJHEqvFbAnvR5m2g=",
+    version = "v0.0.0-20210112150236-f10218a38794",
+)
+go_deps.module(
+    path = "golang.org/x/perf",
+    sum = "h1:eIwwPvTmcIzTN2qXPzVy5oOvSX7f6C8S4JG9nSRf+pI=",
+    version = "v0.0.0-20261117185222-4febdb082b2c",
 )
 go_deps.module(
     path = "honnef.co/go/tools",
@@ -1001,4 +1013,47 @@ go_deps.gazelle_override(
         "gazelle:proto disable_global",
     ],
     path = "k8s.io/apimachinery",
+)
+
+img_pull(
+    name = "benchmark_nginx_amd64",
+    digest = "sha256:31c649d512cced4f7dd414fd05cfa9bb7416ee37575caeba46cc1e9b56aef163",
+    layer_handling = "eager",
+    registries = ["us-central1-docker.pkg.dev"],
+    repository = "gvisor-presubmit/gvisor-presubmit-images/benchmarks/nginx_x86_64",
+)
+
+img_pull(
+    name = "benchmark_node_amd64",
+    digest = "sha256:b2cb415cd6e6c0fe9dd98351b0629a8e2b8caaeb2188eb6c586f07a6d8faf287",
+    layer_handling = "eager",
+    registries = ["us-central1-docker.pkg.dev"],
+    repository = "gvisor-presubmit/gvisor-presubmit-images/benchmarks/node_x86_64",
+)
+
+img_pull(
+    name = "benchmark_util_amd64",
+    digest = "sha256:1c1e09a0ed76fec9cb2489227c8e9ad4f7c45d824126b12a1610c45ead46cbe5",
+    layer_handling = "eager",
+    registries = ["us-central1-docker.pkg.dev"],
+    repository = "gvisor-presubmit/gvisor-presubmit-images/benchmarks/util_x86_64",
+)
+
+# Docker 28 cannot restore the default-network checkpoint workloads (moby/moby#50750).
+http_archive(
+    name = "docker_27_5_1",
+    build_file_content = 'exports_files(["dockerd"])',
+    sha256 = "4f798b3ee1e0140eab5bf30b0edc4e84f4cdb53255a429dc3bbae9524845d640",
+    strip_prefix = "docker",
+    urls = ["https://download.docker.com/linux/static/stable/x86_64/docker-27.5.1.tgz"],
+)
+
+# Fork qualification only; this pinned baseline artifact expires 2026-12-24.
+http_archive(
+    name = "startup_baseline_release",
+    build_file_content = 'exports_files(["baseline-release.tar.bz2"], visibility = ["//visibility:public"])',
+    sha256 = "4d80f232c36cb9298e54a13270a003b1d74ef737b6b78fcf0b2a08b36e616c01",
+    strip_prefix = "_temp/bazel-qualification/artifacts",
+    type = "zip",
+    urls = ["https://api.github.com/repos/tamird/gvisor/actions/artifacts/14935569879/zip"],
 )

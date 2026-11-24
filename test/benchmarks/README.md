@@ -34,6 +34,25 @@ well as run the benchmark on native runc.
 Benchmarks are run with root as some benchmarks require root privileges to do
 things like drop caches.
 
+## Startup functional admission
+
+On an exclusively owned x86-64 Linux host, the startup profile loads the declared
+images and complete release, and runs all seven startup, checkpoint and restore
+leaves once:
+
+```sh
+bazel test --nostamp --noincompatible_bazel_test_exec_run_under \
+  --run_under='//test/benchmarks/harness:startup_host_docker --startup' \
+  --cache_test_results=no --test_timeout=300 \
+  --test_arg=-test.run='^$' --test_arg=-test.bench=. \
+  --test_arg=-test.benchtime=1x --test_arg=-test.count=1 --test_arg=-test.cpu=1 \
+  //test/benchmarks/base:startup_test
+```
+
+This profile requires passwordless sudo and the standard Docker 28.0.4
+`docker.service` unit, no existing containers and no dangling images. Other host engine versions or a modified unit must be
+qualified separately. One iteration verifies functionality, not performance.
+
 ## Writing benchmarks
 
 Benchmarks consist of docker images as Dockerfiles and golang testing.B

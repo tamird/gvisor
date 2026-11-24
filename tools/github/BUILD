@@ -15,3 +15,5 @@ go_binary(
         "@org_golang_x_oauth2//:go_default_library",
     ],
 )
+
+exports_files(["credential_helper.py"])

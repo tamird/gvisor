@@ -115,6 +115,7 @@ image_outputs(
     name = "benchmark_redis",
     image = ":redis",
     image_name = "benchmarks/redis",
+    visibility = ["//test/benchmarks/harness:__pkg__"],
 )
 
 # Exercise containerd's resolver mounts through a symlink in the image.

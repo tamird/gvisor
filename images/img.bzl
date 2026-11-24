@@ -4,19 +4,21 @@ load("@rules_img//img:load.bzl", "image_load")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_files")
 load("//tools:defs.bzl", "pkg_tar")
 
-def image_outputs(name, image, image_name):
+def image_outputs(name, image, image_name, visibility = None):
     """Exposes a Docker-save archive and Make's content-addressed context.
 
     Args:
       name: Prefix for the archive and context target names.
       image: The image_manifest target.
       image_name: Stable image name relative to images/, such as basic/alpine.
+      visibility: Visibility of the image loader.
     """
     image_load(
         name = name + "_load",
         image = image,
         tag = "gvisor.dev/images/%s:latest" % image_name,
         tags = ["manual"],
+        visibility = visibility,
     )
     native.filegroup(
         name = name + "_archive",
