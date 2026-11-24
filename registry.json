@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T23:06:03.539758+00:00",
+    "updatedAt": "2026-11-24T23:17:16.941087+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37782,14 +37782,14 @@
       "url": "https://github.com/google/gvisor/pull/16458",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-24T23:06:03.539758+00:00",
-      "summary": "Exact source f9f6e326 has Konstantin approval 6047971133; the provider aggregate remains REVIEW_REQUIRED and relkochta is still requested. Native checks and DCO pass. New FirstPass 2722 and main 55849 are pending; the older 2648 quota result is historical, not a cause assigned to these runs.",
+      "updatedAt": "2026-11-24T23:17:16.941087+00:00",
+      "summary": "Exact source f9f6e326 has successful native checks, DCO, FirstPass 2722 and main 55849. Konstantin approval 6047971133 is exact-head; aggregate review remains REVIEW_REQUIRED and relkochta is requested. The previous 2648 quota diagnosis is historical and does not block these completed checks.",
       "followup": {
         "owner": "root",
         "sourceHead": "f9f6e3261d13800cb3bdbdaf713d44fc142811ac",
-        "observedAt": "2026-11-24T23:06:03.539758+00:00",
-        "disposition": "Exact source f9f6e326 has Konstantin approval 6047971133; the provider aggregate remains REVIEW_REQUIRED and relkochta is still requested. Native checks and DCO pass. New FirstPass 2722 and main 55849 are pending; the older 2648 quota result is historical, not a cause assigned to these runs.",
-        "nextAction": "Root follows actual current-head CI/admission and maintainer-review events. Source and notice delivery are complete; no unchanged retry, duplicate request, source amendment or merge.",
+        "observedAt": "2026-11-24T23:17:16.941087+00:00",
+        "disposition": "Exact source f9f6e326 has successful native checks, DCO, FirstPass 2722 and main 55849. Konstantin approval 6047971133 is exact-head; aggregate review remains REVIEW_REQUIRED and relkochta is requested. The previous 2648 quota diagnosis is historical and does not block these completed checks.",
+        "nextAction": "Root follows remaining maintainer review and actual landing/source changes. Source delivery is complete; no duplicate request, retry, source change or merge is authorized.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/f9f6e3261d13800cb3bdbdaf713d44fc142811ac",
           "https://github.com/tamird/gvisor/actions/runs/45330766710",
@@ -37802,7 +37802,7 @@
           "https://buildkite.com/gvisor/pipeline/builds/55849"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Actual terminal check, substantive review/head or landing event.",
+        "recheckCondition": "Actual substantive review, changed source or landing event.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -37940,7 +37940,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
       },
-      "nextStep": "Root follows actual current-head CI/admission and maintainer-review events. Source and notice delivery are complete; no unchanged retry, duplicate request, source amendment or merge.",
+      "nextStep": "Root follows remaining maintainer review and actual landing/source changes. Source delivery is complete; no duplicate request, retry, source change or merge is authorized.",
       "sourceConflict": {
         "sourceHead": "303aee0fb294bcf676c2579d24b6821d0578a603",
         "owner": "root",
@@ -122476,8 +122476,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-24T23:06:03.539758+00:00",
-      "summary": "The single recovery collector 45497289229 completed at 22:07:45 UTC and published API observations at 22:07:29. The due-guard dispatch tool call crossed an external wall-clock gap: GitHub created the run only at 22:04, after the 21:35 deadline. CI then took 3m45s. No duplicate collector or observer was created; the hidden pre-provider delay has no exposed approval-duration trace.",
+      "updatedAt": "2026-11-24T23:17:16.941087+00:00",
+      "summary": "The 23:07 guard used the single fallback 45507373437, created 23:08:39 and completed 23:11:55, publishing API 23:11:27 before the 23:37 deadline. The earlier 21:35 deadline was missed: its collector was created 22:04 and published 22:07. That was an ownership/timing failure; provider dispatch delay was not established. The deployed 503 read retry remains bounded.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122720,7 +122720,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground supervision owns the next native-first guard at 23:07:29 UTC, deadline 23:37:29. Reuse an actual fresh/live native generation before at most one existing snapshot-only fallback. Metadata publication does not advance the API clock.",
+      "nextStep": "tracker_health_resume owns the next native-first guard at 00:11:27 UTC Nov 25, deadline 00:41:27, with root foreground supervision delivering the wake-up. Reuse actual fresh/live native delivery before at most one existing fallback. No new scheduler or unattended-monitoring promise.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122859,12 +122859,13 @@
           "https://github.com/tamird/gvisor/actions/runs/45449232722",
           "https://github.com/tamird/gvisor/actions/runs/45460996764",
           "https://github.com/tamird/gvisor/actions/runs/45476428340",
-          "https://github.com/tamird/gvisor/actions/runs/45497289229"
+          "https://github.com/tamird/gvisor/actions/runs/45497289229",
+          "https://github.com/tamird/gvisor/actions/runs/45507373437"
         ],
-        "observedAt": "2026-11-24T23:06:03.539758+00:00",
-        "disposition": "The single recovery collector 45497289229 completed at 22:07:45 UTC and published API observations at 22:07:29. The due-guard dispatch tool call crossed an external wall-clock gap: GitHub created the run only at 22:04, after the 21:35 deadline. CI then took 3m45s. No duplicate collector or observer was created; the hidden pre-provider delay has no exposed approval-duration trace.",
-        "nextAction": "Root foreground supervision owns the next native-first guard at 23:07:29 UTC, deadline 23:37:29. Reuse an actual fresh/live native generation before at most one existing snapshot-only fallback. Metadata publication does not advance the API clock.",
-        "recheckCondition": "Actual fresh/live native delivery or next due guard.",
+        "observedAt": "2026-11-24T23:17:16.941087+00:00",
+        "disposition": "The 23:07 guard used the single fallback 45507373437, created 23:08:39 and completed 23:11:55, publishing API 23:11:27 before the 23:37 deadline. The earlier 21:35 deadline was missed: its collector was created 22:04 and published 22:07. That was an ownership/timing failure; provider dispatch delay was not established. The deployed 503 read retry remains bounded.",
+        "nextAction": "tracker_health_resume owns the next native-first guard at 00:11:27 UTC Nov 25, deadline 00:41:27, with root foreground supervision delivering the wake-up. Reuse actual fresh/live native delivery before at most one existing fallback. No new scheduler or unattended-monitoring promise.",
+        "recheckCondition": "Actual fresh/live native delivery or the next due guard.",
         "owner": "root"
       }
     },
@@ -132390,9 +132391,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-24T23:06:03.539758+00:00",
+      "updatedAt": "2026-11-24T23:17:16.941087+00:00",
       "group": "analysis",
-      "summary": "54-commit analyzer series at 26090b334; Module-aware NoGo passes 891 validators per ISA and focused source checks pass. Scoped startup and four Node variants completed matched A/A and A/B. Node C1 has nominal timing/QPS findings (p=.009/.001); none survive global adjustment. Size/Empty functional recovery and independent reviews pass; remaining network/MM matched qualification is incomplete. Four behavioral targets and #17884 remain open.",
+      "summary": "54-commit analyzer series at 26090b334; Module-aware NoGo passes 891 validators per ISA. Startup has scoped matched qualification. Network 92/150 variants are complete, but measurement quality is HOLD: controls are unstable, so A/B results are exploratory. MM passes all 11 functional leaves; five A/A-only controls are underway, without automatic A/B. Four behavioral targets and #17884 remain open.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132764,7 +132765,7 @@
           ]
         }
       ],
-      "nextStep": "Existing category owners finish remaining required matched-workload qualification, then root requests publication review. benchmark_measurement_review owns network groups; benchmark_general_review owns the remaining MM leaves and measurements. Functional Size/Empty proof is not full MM timing or broad equivalence clearance.",
+      "nextStep": "Owners audit network quality and partial work, and finish MM A/A-only controls. Syscall admission awaits the existing loader/source gates; filesystem image admission passed without FUSE relaxation. Preserve the 40-variant partial and hardware/source holds. Do not infer retries, automatic MM A/B, equivalence or publication clearance.",
       "evidence": [
         {
           "label": "Current reviewed analyzer series",
@@ -133122,7 +133123,7 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T23:06:03.539758+00:00",
+        "observedAt": "2026-11-24T23:17:16.941087+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45338108931",
           "https://github.com/tamird/gvisor/actions/runs/45344645597",
@@ -133182,12 +133183,17 @@
           "https://github.com/tamird/gvisor/actions/runs/45456834454/artifacts/14952383343",
           "https://github.com/tamird/gvisor/actions/runs/45456849968/artifacts/14952872436",
           "https://github.com/tamird/gvisor/actions/runs/45471808094/artifacts/14959282175",
-          "https://github.com/tamird/gvisor/actions/runs/45484537300/artifacts/14962947037"
+          "https://github.com/tamird/gvisor/actions/runs/45484537300/artifacts/14962947037",
+          "https://github.com/tamird/gvisor/actions/runs/45486587996",
+          "https://github.com/tamird/gvisor/actions/runs/45487179547",
+          "https://github.com/tamird/gvisor/actions/runs/45508246063",
+          "https://github.com/tamird/gvisor/actions/runs/45508249341",
+          "https://github.com/tamird/gvisor/actions/runs/45507924900"
         ],
         "owner": "root",
-        "disposition": "54-commit analyzer series at 26090b334; Module-aware NoGo passes 891 validators per ISA and focused source checks pass. Scoped startup and four Node variants completed matched A/A and A/B. Node C1 has nominal timing/QPS findings (p=.009/.001); none survive global adjustment. Size/Empty functional recovery and independent reviews pass; remaining network/MM matched qualification is incomplete. Four behavioral targets and #17884 remain open.",
-        "nextAction": "Existing category owners finish remaining required matched-workload qualification, then root requests publication review. benchmark_measurement_review owns network groups; benchmark_general_review owns the remaining MM leaves and measurements. Functional Size/Empty proof is not full MM timing or broad equivalence clearance.",
-        "recheckCondition": "Actual owner-returned remaining matched-workload results, behavioral/prerequisite changes or publication-review milestone.",
+        "disposition": "54-commit analyzer series at 26090b334; Module-aware NoGo passes 891 validators per ISA. Startup has scoped matched qualification. Network 92/150 variants are complete, but measurement quality is HOLD: controls are unstable, so A/B results are exploratory. MM passes all 11 functional leaves; five A/A-only controls are underway, without automatic A/B. Four behavioral targets and #17884 remain open.",
+        "nextAction": "Owners audit network quality and partial work, and finish MM A/A-only controls. Syscall admission awaits the existing loader/source gates; filesystem image admission passed without FUSE relaxation. Preserve the 40-variant partial and hardware/source holds. Do not infer retries, automatic MM A/B, equivalence or publication clearance.",
+        "recheckCondition": "Owner-returned quality/functional receipts, actual behavioral/prerequisite changes or an authorized next milestone.",
         "sourceHead": "26090b334cf9c5f4657ec33aef64efc6fa86ef82",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4"
