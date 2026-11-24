@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T07:14:02.616377+00:00",
+    "updatedAt": "2026-11-24T07:18:12.732705+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -132073,7 +132073,7 @@
       "owner": "benchmark_measurement_review / root",
       "updatedAt": "2026-11-24T07:01:47.154032+00:00",
       "group": "analysis",
-      "summary": "Current native source remains 8fc45ed322c5e75f782505aea016dbdfbc5acfe4. Canonical metadata query45345401016/artifact14898435114 proves both architecture cgroup test actions include all four test files and Go1.27.3. Missing-source and wrong-version explanations are rejected. Coverage acceptance is still open: actual newexpr execution, guards and filtering must explain the five apparently diagnosable helpers. Earlier clean891-target corpus and release/caller proofs remain source-bound; accepted cleanup is not final diagnostic/performance closure.",
+      "summary": "Current native source remains8fc45ed322c5e75f782505aea016dbdfbc5acfe4. The cgroup coverage finding is resolved/withdrawn: both original reviewer and source owner verified package-level func new at cgroup.go:485 shadows the builtin across embedded tests, and pinned x/tools v0.53 newexpr correctly declines those rewrites. Both-ISA source/Go1.27.3 metadata and prior zero findings are consistent. No aspect/checker fix, fixture or full rerun is warranted. General review has no remaining correctness/testing/style/catch-all finding on all six cleanup paths; security/hardening clearance on aae is reused only for the unchanged-scope documentation/dead-symbol delta.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132445,7 +132445,7 @@
           ]
         }
       ],
-      "nextStep": "benchmark_measurement_review and the resumed general reviewer resolve actual newexpr execution/guard/filtering on unchanged8fc before broad reruns or an aspect fix. Then qualify the actual cleanup and check QueueAIO allocation risk using pinned-compiler evidence. Root retains final packaging and #17884/performance/Netgofer/runtime/hardware limits; no new publication question.",
+      "nextStep": "Source owner owns live post-review unit/five-Nogo-per-ISA runs45346686981/45346689761, five source checks45346693758 and matched target-local QueueAIO compiler controls45346684875/45346731514. CI f29f5bbdbc06354b80c634bdfd2348f72426ba3b adds only18 reviewed support paths. Sole source observer38461 rechecks07:25; no duplicate monitoring. Preserve #17884, comparative-performance/stable-A/A, Netgofer/runtime and hardware limits; no final qualification or publication approval is inferred.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132783,16 +132783,22 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T07:14:02.616377+00:00",
+        "observedAt": "2026-11-24T07:18:12.732705+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45338108931",
           "https://github.com/tamird/gvisor/actions/runs/45344645597",
-          "https://github.com/tamird/gvisor/actions/runs/45345401016/artifacts/14898435114"
+          "https://github.com/tamird/gvisor/actions/runs/45345401016/artifacts/14898435114",
+          "https://github.com/tamird/gvisor/blob/8fc45ed322c5e75f782505aea016dbdfbc5acfe4/runsc/cgroup/cgroup.go#L485",
+          "https://github.com/tamird/gvisor/actions/runs/45346686981",
+          "https://github.com/tamird/gvisor/actions/runs/45346689761",
+          "https://github.com/tamird/gvisor/actions/runs/45346693758",
+          "https://github.com/tamird/gvisor/actions/runs/45346684875",
+          "https://github.com/tamird/gvisor/actions/runs/45346731514"
         ],
         "owner": "benchmark_measurement_review / root",
-        "disposition": "Current native source remains 8fc45ed322c5e75f782505aea016dbdfbc5acfe4. Canonical metadata query45345401016/artifact14898435114 proves both architecture cgroup test actions include all four test files and Go1.27.3. Missing-source and wrong-version explanations are rejected. Coverage acceptance is still open: actual newexpr execution, guards and filtering must explain the five apparently diagnosable helpers. Earlier clean891-target corpus and release/caller proofs remain source-bound; accepted cleanup is not final diagnostic/performance closure.",
-        "nextAction": "benchmark_measurement_review and the resumed general reviewer resolve actual newexpr execution/guard/filtering on unchanged8fc before broad reruns or an aspect fix. Then qualify the actual cleanup and check QueueAIO allocation risk using pinned-compiler evidence. Root retains final packaging and #17884/performance/Netgofer/runtime/hardware limits; no new publication question.",
-        "recheckCondition": "Actual owner/reviewer execution or filtering finding, scoped cleanup/compiler proof, or a genuine prerequisite/source/publication decision.",
+        "disposition": "Current native source remains8fc45ed322c5e75f782505aea016dbdfbc5acfe4. The cgroup coverage finding is resolved/withdrawn: both original reviewer and source owner verified package-level func new at cgroup.go:485 shadows the builtin across embedded tests, and pinned x/tools v0.53 newexpr correctly declines those rewrites. Both-ISA source/Go1.27.3 metadata and prior zero findings are consistent. No aspect/checker fix, fixture or full rerun is warranted. General review has no remaining correctness/testing/style/catch-all finding on all six cleanup paths; security/hardening clearance on aae is reused only for the unchanged-scope documentation/dead-symbol delta.",
+        "nextAction": "Source owner owns live post-review unit/five-Nogo-per-ISA runs45346686981/45346689761, five source checks45346693758 and matched target-local QueueAIO compiler controls45346684875/45346731514. CI f29f5bbdbc06354b80c634bdfd2348f72426ba3b adds only18 reviewed support paths. Sole source observer38461 rechecks07:25; no duplicate monitoring. Preserve #17884, comparative-performance/stable-A/A, Netgofer/runtime and hardware limits; no final qualification or publication approval is inferred.",
+        "recheckCondition": "Existing source owner supplies post-review and compiler-control results at07:25, or actual prerequisite/performance/runtime evidence changes.",
         "sourceHead": "8fc45ed322c5e75f782505aea016dbdfbc5acfe4"
       },
       "contributorReview": {
