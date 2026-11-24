@@ -139,3 +139,10 @@ image_outputs(
     image_name = "benchmarks/hey",
     visibility = ["//test/benchmarks/harness:__pkg__"],
 )
+
+image_outputs(
+    name = "benchmark_sysbench",
+    image = "@benchmark_sysbench_amd64",
+    image_name = "benchmarks/sysbench",
+    visibility = ["//test/benchmarks/harness:__pkg__"],
+)

@@ -1095,3 +1095,11 @@ img_pull(
     registries = ["us-central1-docker.pkg.dev"],
     repository = "gvisor-presubmit/gvisor-presubmit-images/benchmarks/hey_x86_64",
 )
+
+img_pull(
+    name = "benchmark_sysbench_amd64",
+    digest = "sha256:fa019c44b753b55f63a1e744994ede632a1561cea5c43d5cbb8e771a8801feb3",
+    layer_handling = "eager",
+    registries = ["us-central1-docker.pkg.dev"],
+    repository = "gvisor-presubmit/gvisor-presubmit-images/benchmarks/sysbench_x86_64",
+)

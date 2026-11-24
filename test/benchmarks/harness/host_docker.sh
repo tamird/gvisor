@@ -19,6 +19,7 @@
 # to keep the complete release in the target configuration.
 # --startup selects the declared images and Docker 27 checkpoint-compatible profile.
 # --network selects the declared networking images without changing the engine.
+# --memory selects the declared memory benchmark images without changing the engine.
 # --compare adds the declared baseline release with separate owned runtime names.
 # Docker 28 default-network restores fail: https://github.com/moby/moby/issues/50750
 # With no caller, checks the native and installed runtimes using Alpine.
@@ -51,11 +52,18 @@ if test "${1:-}" = --network; then
   names+=(redis)
   loaders+=(images/basic/benchmark_redis_load.exe)
 fi
+memory_mode=false
+if test "${1:-}" = --memory; then
+  shift
+  memory_mode=true
+  names+=(sysbench)
+  loaders+=(images/benchmark_sysbench_load.exe)
+fi
 comparison=false
 if test "${1:-}" = --compare; then
   shift
-  if ! $checkpoint_mode && ! $network_mode; then
-    echo "--compare requires --startup or --network" >&2
+  if ! $checkpoint_mode && ! $network_mode && ! $memory_mode; then
+    echo "--compare requires --startup, --network, or --memory" >&2
     exit 1
   fi
   comparison=true
