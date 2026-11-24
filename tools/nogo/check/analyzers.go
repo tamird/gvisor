@@ -51,6 +51,7 @@ import (
 	"golang.org/x/tools/go/analysis/passes/stdmethods"
 	"golang.org/x/tools/go/analysis/passes/stringintconv"
 	"golang.org/x/tools/go/analysis/passes/structtag"
+	"golang.org/x/tools/go/analysis/passes/testinggoroutine"
 	"golang.org/x/tools/go/analysis/passes/tests"
 	"golang.org/x/tools/go/analysis/passes/unmarshal"
 	"golang.org/x/tools/go/analysis/passes/unreachable"
@@ -189,6 +190,7 @@ func init() {
 	register(allAnalyzers, &plainAnalyzer{stringintconv.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{shadow.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{structtag.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{testinggoroutine.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{tests.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{unmarshal.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{unreachable.Analyzer})
