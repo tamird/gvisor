@@ -215,7 +215,8 @@ func init() {
 			"plusbuild",
 			"errorsastype",
 			"importcomment",
-			"reflecttypefor":
+			"reflecttypefor",
+			"reflecttypeassert":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}

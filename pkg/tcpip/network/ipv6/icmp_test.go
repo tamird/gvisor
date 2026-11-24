@@ -634,7 +634,7 @@ func visitStats(v reflect.Value, f func(string, *tcpip.StatCounter)) {
 	t := v.Type()
 	for i := 0; i < v.NumField(); i++ {
 		v := v.Field(i)
-		if s, ok := v.Interface().(*tcpip.StatCounter); ok {
+		if s, ok := reflect.TypeAssert[*tcpip.StatCounter](v); ok {
 			f(t.Field(i).Name, s)
 		} else {
 			visitStats(v, f)

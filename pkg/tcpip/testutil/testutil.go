@@ -78,7 +78,7 @@ func checkFieldCounts(ref, multi reflect.Value) error {
 }
 
 func validateField(ref reflect.Value, refName string, m tcpip.MultiCounterStat, multiName string) error {
-	s, ok := ref.Addr().Interface().(**tcpip.StatCounter)
+	s, ok := reflect.TypeAssert[**tcpip.StatCounter](ref.Addr())
 	if !ok {
 		return fmt.Errorf("expected ref type's to be *StatCounter, but its type is %s", ref.Type().Elem().Name())
 	}
@@ -102,7 +102,7 @@ func validateIntegralMapField(ref reflect.Value, refName string, m tcpip.MultiIn
 	if !strings.EqualFold(refName, multiName) {
 		return fmt.Errorf("wrong field name: got = %s, want = %s", multiName, refName)
 	}
-	s, ok := ref.Addr().Interface().(**tcpip.IntegralStatCounterMap)
+	s, ok := reflect.TypeAssert[**tcpip.IntegralStatCounterMap](ref.Addr())
 	if !ok {
 		return fmt.Errorf("field is not an IntegralStatCounterMap")
 	}

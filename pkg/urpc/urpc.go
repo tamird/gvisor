@@ -351,7 +351,7 @@ func (s *Server) handleOne(client *unet.Socket) error {
 	}
 
 	// Set the file payload as an argument.
-	if fp, ok := na.Interface().(filePayloader); ok {
+	if fp, ok := reflect.TypeAssert[filePayloader](na); ok {
 		fp.setFilePayload(newFs)
 	}
 
@@ -365,7 +365,7 @@ func (s *Server) handleOne(client *unet.Socket) error {
 
 	// Set the resulting payload.
 	var fs []*os.File
-	if fp, ok := re.Interface().(filePayloader); ok {
+	if fp, ok := reflect.TypeAssert[filePayloader](re); ok {
 		fs = fp.filePayload()
 		if len(fs) > maxFiles {
 			// Ugh. Send an error to the client, despite success.

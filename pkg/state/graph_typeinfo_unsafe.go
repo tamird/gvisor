@@ -241,14 +241,14 @@ func (b *typeInfoBuilder) get(t reflect.Type) *typeInfo {
 	)
 	if ti.kind == reflect.Struct {
 		pt = reflect.PointerTo(t)
-		st, _ = reflect.Zero(pt).Interface().(StructType)
+		st, _ = reflect.TypeAssert[StructType](reflect.Zero(pt))
 	}
 	if st != nil {
 		ti.name = st.StateTypeName()
 		isType = true
 	} else if t.Name() != "" || ti.kind == reflect.Struct {
 		pt = reflect.PointerTo(t)
-		if tt, ok := reflect.Zero(pt).Interface().(Type); ok {
+		if tt, ok := reflect.TypeAssert[Type](reflect.Zero(pt)); ok {
 			ti.name = tt.StateTypeName()
 			isType = true
 		}
