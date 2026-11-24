@@ -14,8 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Checks failure propagation through the public lint entrypoint."""
+"""Checks failure propagation through the lint tools."""
 
+import json
 import os
 import pathlib
 import re
@@ -25,6 +26,7 @@ import tempfile
 import unittest
 
 LINT = pathlib.Path(sys.argv.pop(1)).absolute()
+CLANG_TIDY = pathlib.Path(sys.argv.pop(1)).absolute()
 
 
 class LintTest(unittest.TestCase):
@@ -169,6 +171,51 @@ class LintTest(unittest.TestCase):
     (self.cache / f"codespell-{self.versions['CODESPELL']}").mkdir()
     self.tool(self.bin / "python3", "exit 0")
     self.assert_failed(self.lint("spelling"), "spelling")
+
+  def test_clang_tidy_status(self) -> None:
+    source = self.root / "source.cc"
+    database = self.root / "compile_commands.json"
+    database.write_text(json.dumps([{"file": str(source)}]))
+    config = self.root / ".clang-tidy"
+    config.write_text("Checks: '-*,misc-include-cleaner'\n")
+    analyzer = self.bin / "clang-tidy"
+    for body, status, diagnostic in (
+        ("exit 0", 0, "1 sources analyzed."),
+        ("echo progress >&2", 0, "1 sources analyzed."),
+        ("echo loader-failed >&2; exit 7", 1, "loader-failed"),
+        (
+            "printf 'context\\n%.0s' 1 2 3 4 5 >&2; "
+            "echo 'source.cc:1:1: error: late diagnostic'; exit 7",
+            1,
+            "late diagnostic",
+        ),
+        ("exit 7", 1, "source.cc: clang-tidy exited with status 7"),
+        ("kill -TERM $$", 1, "source.cc: clang-tidy exited with status -15"),
+        ("echo 'source.cc:1:1: error: invalid input' >&2", 1, "invalid input"),
+        (
+            "echo 'source.cc:1:1: warning: missing header [misc-include-cleaner]'",
+            1,
+            "missing header",
+        ),
+    ):
+      with self.subTest(body=body):
+        self.tool(analyzer, body)
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(CLANG_TIDY),
+                f"--clang-tidy={analyzer}",
+                f"--config-file={config}",
+                f"--database={database}",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, status, result.stdout + result.stderr)
+        self.assertIn(diagnostic, result.stdout + result.stderr)
+        if status:
+          self.assertNotIn("sources analyzed.", result.stdout)
 
 
 if __name__ == "__main__":
