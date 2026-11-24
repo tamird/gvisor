@@ -3015,7 +3015,9 @@ class ReapprovalReminderTest(unittest.TestCase):
         successor = imported(108, 8)
         successor["body"] = successor["body"].replace("/pull/8 from tamird:topic-8", "/pull/7 from tamird:topic-7")
         self.raw["timelineItems"]["nodes"] = [{"source": successor}]
-        with mock.patch.object(updater, "fetch_numbers", return_value={107: imported(107, 7, "CLOSED"), 108: successor}) as fetch:
+        registry = {"meta": {"repo": "google/gvisor", "repositories": {"google/gvisor": "copybara"}}, "nodes": []}
+        with mock.patch.object(updater, "REGISTRY", registry), \
+                mock.patch.object(updater, "fetch_numbers", return_value={107: imported(107, 7, "CLOSED"), 108: successor}) as fetch:
             result = updater.refresh_reminder_imports(self.raw, source)
         self.assertEqual([(item["number"], item["matchesSourceHead"]) for item in result], [(107, False), (108, True)])
         fetch.assert_called_once_with([107, 108], timeline=False, repo="google/gvisor", team_details=False)
