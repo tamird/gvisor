@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T01:32:50.502686+00:00",
+    "updatedAt": "2026-11-24T02:39:01.884940+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38242,13 +38242,13 @@
       "group": "bazel",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:46.312467+00:00",
-      "summary": "Delivered unchanged-patch rebase 0a9681ef9 and saved notice are verified in the current API sample. FirstPass2577 and all reported native GitHub contexts are SUCCESS; no current-head main-pipeline context is reported. Provider binds the retained approval to the rebased head with its original submission time; this is not a newly submitted review. Provider remains REVIEW_REQUIRED. Old main upload failures were before-tests obsolete-hook errors; parent5004 contains the hook correction by content, without a literal909 ancestry claim.",
+      "summary": "New exact-head approval 6032295671 is recorded on 0a9681ef9. Provider review is APPROVED and source is MERGEABLE. Current reported main remains PENDING; no main pass, import or merge is established.",
       "followup": {
         "owner": "root / approved_rebase_queue",
         "sourceHead": "0a9681ef9cdaf1a3640c64438d0507351a050fac",
-        "observedAt": "2026-11-24T01:32:50.502686+00:00",
-        "disposition": "Delivered unchanged-patch rebase 0a9681ef9 and saved notice are verified in the current API sample. FirstPass2577 and all reported native GitHub contexts are SUCCESS; no current-head main-pipeline context is reported. Provider binds the retained approval to the rebased head with its original submission time; this is not a newly submitted review. Provider remains REVIEW_REQUIRED. Old main upload failures were before-tests obsolete-hook errors; parent5004 contains the hook correction by content, without a literal909 ancestry claim.",
-        "nextAction": "Root follows remaining maintainer/import review and actual new-head main/check events; existing rbe_parallel_evidence owner retains the01:45 checkpoint. Rebase, notice and affected qualification are complete. No duplicate source approval, notice, retry, outreach or merge.",
+        "observedAt": "2026-11-24T02:39:01.884940+00:00",
+        "disposition": "New exact-head approval 6032295671 is recorded on 0a9681ef9. Provider review is APPROVED and source is MERGEABLE. Current reported main remains PENDING; no main pass, import or merge is established.",
+        "nextAction": "Root follows actual remaining maintainer/import and source-bound main CI events through existing ownership. No duplicate review request, retry, source change, merge or all-green claim.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16466",
           "https://github.com/tamird/gvisor/actions/runs/43013691770/job/130499353612",
@@ -38292,10 +38292,11 @@
           "https://buildkite.com/gvisor/first-pass/builds/2577",
           "https://github.com/tamird/gvisor/actions/runs/45298674216",
           "https://github.com/tamird/gvisor/actions/runs/45298678572",
-          "https://github.com/tamird/gvisor/actions/runs/45298156847"
+          "https://github.com/tamird/gvisor/actions/runs/45298156847",
+          "https://github.com/google/gvisor/pull/16466#pullrequestreview-6032295671"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Actual new-head main result, substantive review/import event or source/base change.",
+        "recheckCondition": "Actual terminal main/check result, substantive review/import or changed head/base.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -41646,7 +41647,7 @@
       "group": "release",
       "status": "open",
       "updatedAt": "2026-11-20T15:15:34.980085+00:00",
-      "summary": "Exact-head rexren-gif approval 6030526146 is recorded. Its preceding explicitly automated review 6030496751 reports no findings and confirms the visibility forwarding change addresses the earlier comment. Source and response delivery are complete; maintainer/import follow-through and internal adapter mapping retain their existing limits.",
+      "summary": "Current8585 has Etienne CHANGES_REQUESTED review6032358726. Inline4674426513 questions why the old BUILD rule is no longer needed across the affected BUILD files; this requires root-owned source-bound rationale/assessment, not an inferred accepted fix. Separate prewarmer inline4674422062 explicitly says nothing to change and is a curiosity question. Prior no-findings/approval evidence does not resolve this new maintainer objection.",
       "evidence": [
         {
           "label": "Latest exact-head review",
@@ -41863,11 +41864,11 @@
       ],
       "followup": {
         "owner": "root",
-        "observedAt": "2026-11-23T23:26:26.059838+00:00",
+        "observedAt": "2026-11-24T02:39:01.884940+00:00",
         "sourceHead": "8585cf9fc70d84fa7cc92d9a4fbb799f1b0f17ce",
         "mergeable": "MERGEABLE",
-        "disposition": "Exact-head rexren-gif approval 6030526146 is recorded. Its preceding explicitly automated review 6030496751 reports no findings and confirms the visibility forwarding change addresses the earlier comment. Source and response delivery are complete; maintainer/import follow-through and internal adapter mapping retain their existing limits.",
-        "nextAction": "Root follows maintainer import and actual source/check events. No new source change, acknowledgement, duplicate review request or CI retry follows the no-findings event.",
+        "disposition": "Current8585 has Etienne CHANGES_REQUESTED review6032358726. Inline4674426513 questions why the old BUILD rule is no longer needed across the affected BUILD files; this requires root-owned source-bound rationale/assessment, not an inferred accepted fix. Separate prewarmer inline4674422062 explicitly says nothing to change and is a curiosity question. Prior no-findings/approval evidence does not resolve this new maintainer objection.",
+        "nextAction": "Root routes the exact BUILD-rule concern to the existing sidecar lifecycle owner for bounded rationale/source assessment under current source-ownership and sensitive-work limits. Do not mark feedback resolved, invent an amendment decision, read held implementation, post a reply or transfer earlier approval.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16522",
           "https://github.com/tamird/gvisor/commit/4e034130e",
@@ -41882,9 +41883,12 @@
           "https://github.com/gvisor/gvisor/pull/16522#discussion_r4648737517",
           "https://buildkite.com/gvisor/first-pass/builds/2165#01a1fb36-af1a-4318-acfc-24dcac798498",
           "https://github.com/google/gvisor/pull/16522#pullrequestreview-6030496751",
-          "https://github.com/google/gvisor/pull/16522#pullrequestreview-6030526146"
+          "https://github.com/google/gvisor/pull/16522#pullrequestreview-6030526146",
+          "https://github.com/google/gvisor/pull/16522#pullrequestreview-6032358726",
+          "https://github.com/google/gvisor/pull/16522#discussion_r4674426513",
+          "https://github.com/google/gvisor/pull/16522#discussion_r4674422062"
         ],
-        "recheckCondition": "Actual import/landing, substantive maintainer feedback or changed source/check evidence.",
+        "recheckCondition": "Existing owner/root supplies the source-bound assessment or actual maintainer/head change.",
         "curatedAt": "2026-11-20T23:27:51.953187+00:00",
         "implementationOwner": "sidecar_visibility_feedback",
         "attentionDispositions": [
@@ -97987,13 +97991,13 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-18T02:42:04.017074+00:00",
-      "summary": "The systrap signal stub defines its own memcpy. Its old declaration returned void while the C interface returns the destination pointer. The revision uses the standard prototype, returns the destination, and makes the memory-order wrappers explicit.",
+      "summary": "New exact-head approval 6032352553 is recorded on af4126a46. Provider review is REVIEW_REQUIRED and source is MERGEABLE. Current reported main remains PENDING; no main pass, import or merge is established.",
       "followup": {
         "owner": "root",
         "sourceHead": "af4126a4619b3c4c851fb6d10afecd1817fa8105",
-        "observedAt": "2026-11-18T04:14:40.243881+00:00",
-        "disposition": "Approved af4126a is live and First Pass1664 passed. Its original checkpoint-dump and KVM-watchdog failures both passed automatic retry; preserve them as possible flakes without assigning a verified cause. Required full-pipeline and existing human review remain separate obligations.",
-        "nextAction": "Follow required full-pipeline status and existing Lucas/Zach review requests; handle new feedback. Retain all prior performance measurements and the ARM64 C++ baseline limitation. Do not merge.",
+        "observedAt": "2026-11-24T02:39:01.884940+00:00",
+        "disposition": "New exact-head approval 6032352553 is recorded on af4126a46. Provider review is REVIEW_REQUIRED and source is MERGEABLE. Current reported main remains PENDING; no main pass, import or merge is established.",
+        "nextAction": "Root follows actual remaining maintainer/import and source-bound main CI events through existing ownership. No duplicate review request, retry, source change, merge or all-green claim.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17446",
           "https://github.com/tamird/gvisor/commit/4e82d9605",
@@ -98005,11 +98009,12 @@
           "https://github.com/tamird/gvisor/actions/runs/44193164299",
           "https://github.com/tamird/gvisor/actions/runs/44196112563",
           "https://github.com/tamird/gvisor/actions/runs/44208843653",
-          "https://buildkite.com/gvisor/first-pass/builds/1664"
+          "https://buildkite.com/gvisor/first-pass/builds/1664",
+          "https://github.com/google/gvisor/pull/17446#pullrequestreview-6032352553"
         ],
         "mergeable": "MERGEABLE",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
-        "recheckCondition": "Required check/review/source/import change.",
+        "recheckCondition": "Actual terminal main/check result, substantive review/import or changed head/base.",
         "qualificationHistory": [
           {
             "observedAt": "2026-11-17T21:09:15.022997+00:00",
@@ -99897,7 +99902,7 @@
       "group": "tests",
       "status": "open",
       "updatedAt": "2026-11-17T19:05:00.391405+00:00",
-      "summary": "Current API reports main55752 FAILURE on exactf6fa027fb. This GitHub context alone does not establish terminal build state or a new target cause. Existing owner checkpoints and source-bound qualification retain their limits; no new human feedback is present.",
+      "summary": "Current f6fa main55752 remains owner-observed. The scoped11-attempt Mac diagnosis spans different agents: six passed gopath then stopped logging during local-origin Go history fetch, including one55-minute timeout. The final attempt blocked on Bazel output-base lock PID23023 and was canceled before compilation. PID-to-command, cancellation and progress data are missing; no single lock/cancellation cause or source failure is established.",
       "evidence": [
         {
           "label": "Published single-commit revision",
@@ -99910,11 +99915,11 @@
       ],
       "followup": {
         "sourceHead": "f6fa027fbfaa28e930d3a288c3a78e9d35b53738",
-        "owner": "root",
-        "nextAction": "Existing rbe_parallel_evidence owner classifies complete retry chains at01:45. Root retains review/import follow-through; preserve known APT/image recovery ownership. No duplicate reader, unchanged retry, source failure attribution or merge from status alone.",
+        "owner": "root / rbe_parallel_evidence",
+        "nextAction": "Root/rbe retain the external agent-data blocker and bounded existing CI follow-through. Other platform jobs retain their live state; no fictitious accepted operator owner, source fix, blind retry or outreach.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-24T01:32:50.502686+00:00",
-        "recheckCondition": "Existing CI owner supplies a terminal source-bound verdict, or actual review/import/head/base change.",
+        "observedAt": "2026-11-24T02:39:01.884940+00:00",
+        "recheckCondition": "Actual retained agent lifecycle/progress/cancellation data or existing owner terminal build/retry-chain evidence.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17484",
           "https://github.com/tamird/gvisor/commit/8a64c10e33211d4e255aa6ad43d8131f344558d4",
@@ -99955,7 +99960,7 @@
           }
         ],
         "providerHead": "f6fa027fbfaa28e930d3a288c3a78e9d35b53738",
-        "disposition": "Current API reports main55752 FAILURE on exactf6fa027fb. This GitHub context alone does not establish terminal build state or a new target cause. Existing owner checkpoints and source-bound qualification retain their limits; no new human feedback is present."
+        "disposition": "Current f6fa main55752 remains owner-observed. The scoped11-attempt Mac diagnosis spans different agents: six passed gopath then stopped logging during local-origin Go history fetch, including one55-minute timeout. The final attempt blocked on Bazel output-base lock PID23023 and was canceled before compilation. PID-to-command, cancellation and progress data are missing; no single lock/cancellation cause or source failure is established."
       },
       "dcoAmendment": {
         "oldHead": "8a64c10e33211d4e255aa6ad43d8131f344558d4",
@@ -102599,7 +102604,7 @@
       "group": "ci-flakes",
       "status": "open",
       "updatedAt": "2026-11-21T02:33:33.655Z",
-      "summary": "The approved equivalent rebase00c5cd11a3952bf965588d48dd19329cb45de332 is delivered OPEN/MERGEABLE with DCO success and notice7055962171. Fresh remote execution passed16 native and16 systrap cases, plus source checks and strict C++ analysis over377 sources. Existing Milan/kerumeto requests and merge settings are preserved. New exact-head First Pass2208 independently fails admission before an agent starts: exit80, stack_errored, agent_id/started_at null, author1535036 rolling30-day360,000-compute-minute quota. Historical2140 is not reused; #17836’s separate admission does not clear this failure.",
+      "summary": "New exact-head approval 6032431146 is recorded on 00c5cd11a. Provider review is REVIEW_REQUIRED and source is MERGEABLE. Current reported main remains PENDING; no main pass, import or merge is established.",
       "evidence": [
         {
           "label": "Formatter amendment",
@@ -102609,10 +102614,10 @@
       "followup": {
         "sourceHead": "00c5cd11a3952bf965588d48dd19329cb45de332",
         "owner": "root",
-        "nextAction": "Root follows actor-owned remaining GitHub checks and existing reviewer/import events; recheck2208 only on actual provider admission recovery or new source/check evidence. No duplicate CI diagnosis, retry, notification or source-approval question. The pretest-worker mismatch is closed by the canonical remote runner.",
+        "nextAction": "Root follows actual remaining maintainer/import and source-bound main CI events through existing ownership. No duplicate review request, retry, source change, merge or all-green claim.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-21T02:31:35.843688+00:00",
-        "recheckCondition": "Genuine exact-head check/reviewer/import change or independently evidenced provider admission recovery.",
+        "observedAt": "2026-11-24T02:39:01.884940+00:00",
+        "recheckCondition": "Actual terminal main/check result, substantive review/import or changed head/base.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17568",
           "https://github.com/tamird/gvisor/commit/63ff9616fe4c004db00310ea45b6e06a521f803c",
@@ -102626,9 +102631,10 @@
           "https://buildkite.com/gvisor/first-pass/builds/2140#01a1faae-cbe2-4117-b733-0f2d17c6bcdf",
           "https://github.com/tamird/gvisor/commit/00c5cd11a3952bf965588d48dd19329cb45de332",
           "https://github.com/gvisor/gvisor/pull/17568#issuecomment-7055962171",
-          "https://buildkite.com/gvisor/first-pass/builds/2208#01a1fbf0-b35b-40e6-8468-fcffb0ecb0b3"
+          "https://buildkite.com/gvisor/first-pass/builds/2208#01a1fbf0-b35b-40e6-8468-fcffb0ecb0b3",
+          "https://github.com/google/gvisor/pull/17568#pullrequestreview-6032431146"
         ],
-        "disposition": "The approved equivalent rebase00c5cd11a3952bf965588d48dd19329cb45de332 is delivered OPEN/MERGEABLE with DCO success and notice7055962171. Fresh remote execution passed16 native and16 systrap cases, plus source checks and strict C++ analysis over377 sources. Existing Milan/kerumeto requests and merge settings are preserved. New exact-head First Pass2208 independently fails admission before an agent starts: exit80, stack_errored, agent_id/started_at null, author1535036 rolling30-day360,000-compute-minute quota. Historical2140 is not reused; #17836’s separate admission does not clear this failure.",
+        "disposition": "New exact-head approval 6032431146 is recorded on 00c5cd11a. Provider review is REVIEW_REQUIRED and source is MERGEABLE. Current reported main remains PENDING; no main pass, import or merge is established.",
         "curatedAt": "2026-11-21T02:33:33.655Z",
         "attentionDispositions": [
           {
@@ -106393,26 +106399,28 @@
       "url": "https://github.com/google/gvisor/pull/17861",
       "status": "open",
       "updatedAt": "2026-11-21T22:39:02.228805+00:00",
-      "summary": "Delivered worker8e869b906 has native GHA/DCO passes; FirstPass2301 pre-agent quota remains separate. Milan now requests agreement on issue17832 before this change; native review is CHANGES_REQUESTED. The user-approved775 requests-only fork support is settled, without proving upstream platform adoption or provider enforcement.",
+      "summary": "Delivered8e869b906 already declares the exact helper and runsc/sandbox target; native BUILD/defs/bazeldefs blob IDs match CIa96. No prerequisite source amendment or new publication question is required. CIa96 projects that delivered prerequisite onto35d: AMD45309461331 reports90 cases/3 failures/1 skip and ARM45309464136 reports90/3/2. All11 namespaceEPERM failures are gone; three route-expectation failures remain root-owned qualification/protected-source blockers. RXE skips apply on both architectures and ARM open_tree is unsupported. Existing13-target passes belong to35d, not native8e runtime equivalence.",
       "followup": {
-        "owner": "approved_rebase_queue / root",
+        "owner": "root",
         "sourceHead": "8e869b906e5a651a377178f1cf3621a798042397",
         "mergeable": "MERGEABLE",
-        "disposition": "Delivered worker8e869b906 has native GHA/DCO passes; FirstPass2301 pre-agent quota remains separate. Milan now requests agreement on issue17832 before this change; native review is CHANGES_REQUESTED. The user-approved775 requests-only fork support is settled, without proving upstream platform adoption or provider enforcement.",
-        "nextAction": "Root addresses the existing CI/RBE proposal objections on17832 before worker integration. Current critical-path research is complete; a concise revision/reply is being prepared, not approved or posted by the agent. Tamir already asked whether this change is controversial. No duplicate prose, CI retry, access request or operator outreach.",
-        "recheckCondition": "Actual maintainer coordination/review, provider admission or source/check change.",
+        "disposition": "Delivered8e869b906 already declares the exact helper and runsc/sandbox target; native BUILD/defs/bazeldefs blob IDs match CIa96. No prerequisite source amendment or new publication question is required. CIa96 projects that delivered prerequisite onto35d: AMD45309461331 reports90 cases/3 failures/1 skip and ARM45309464136 reports90/3/2. All11 namespaceEPERM failures are gone; three route-expectation failures remain root-owned qualification/protected-source blockers. RXE skips apply on both architectures and ARM open_tree is unsupported. Existing13-target passes belong to35d, not native8e runtime equivalence.",
+        "nextAction": "Root retains cache-first/RBE coordination and the three route-expectation qualification blockers under current holds. No further protected route changes are authorized. Foreign PR15866 by eren23 at1be6183240b96e6ac4ac51a9f03463ae3077a43f is not an adopted owned fix or guaranteed remedy. No source amendment, new decision, retry or operator outreach follows.",
+        "recheckCondition": "Actual source-bound route qualification evidence, user authorization change or maintainer/prerequisite event.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17861",
           "https://buildkite.com/gvisor/first-pass/builds/2301#01a20034-61d8-4402-8dfe-b2c59fb8e7a3",
           "https://github.com/gvisor/gvisor/pull/17861#pullrequestreview-6019845664",
-          "https://github.com/gvisor/gvisor/pull/17861#issuecomment-7099531396"
+          "https://github.com/gvisor/gvisor/pull/17861#issuecomment-7099531396",
+          "https://github.com/tamird/gvisor/actions/runs/45309461331",
+          "https://github.com/tamird/gvisor/actions/runs/45309464136"
         ],
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
             "action": "ci-infrastructure-retry",
             "title": "FirstPass 2301: verified pre-agent quota admission",
-            "nextAction": "Root retains internal ownership; the unchanged pre-agent FirstPass2301 failure now depends on a native Buildkite operator retry. The bounded capability check found no retained authenticated retry interface/credential or installed CLI; the canonical reader is read-only. Do not request new access, repeat declined quota outreach, or treat later2303 admission as global recovery.",
+            "nextAction": "Root follows actual admission/check changes through the existing read-only CI ownership. No accepted operator investigation, unchanged retry, new access or quota outreach is established.",
             "evidence": [
               "https://buildkite.com/gvisor/first-pass/builds/2301#01a20034-61d8-4402-8dfe-b2c59fb8e7a3"
             ],
@@ -106430,7 +106438,7 @@
             }
           }
         ],
-        "observedAt": "2026-11-23T11:53:11.347436+00:00"
+        "observedAt": "2026-11-24T02:39:01.884940+00:00"
       }
     },
     {
@@ -122150,7 +122158,7 @@
       "status": "active",
       "owner": "root",
       "updatedAt": "2026-11-23T22:28:52.692599+00:00",
-      "summary": "The due native-first guard found no fresh/live native run. Sole snapshot-only fallback45305019407 completed successfully and published API2026-11-24T01:29:32.041999+00:00; outreach was disabled. Native scheduling irregularity has no demonstrated source/configuration defect or established provider cause.",
+      "summary": "Due native-first guard found no fresh/live native run. Sole snapshot-only fallback45312886122 succeeded and delivered API2026-11-24T02:33:40.186902+00:00 with outreach disabled. Native cadence irregularity has no established provider cause or demonstrated configuration defect.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122393,7 +122401,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground/active-goal supervision owns next native-first guard02:29:32 UTC and deadline02:59:32. Reuse fresh/live native delivery before one fallback; preserve60/90-minute policy and2-hour UI threshold without reset, competing monitor or access change.",
+      "nextStep": "Root foreground/active-goal supervision owns next native-first guard03:33:40 UTC and deadline04:03:40. Reuse fresh/live native delivery before one fallback; preserve60/90-minute policy and2-hour UI threshold, without reset or extra monitor.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -132050,7 +132058,7 @@
       "owner": "analysis_pass_inventory / root",
       "updatedAt": "2026-11-23T22:28:52.692599+00:00",
       "group": "analysis",
-      "summary": "Unified analyzer migrations remain active on source1fa. Current accounting closes339 of724 captured source spans, preserves one contract and leaves384; diagnostic closure is not verified. Source7233 command tests/Nogo await the existing owner checkpoint, and the object-only container12 handoff remains active. Worker788 full50 per ISA passed49 plus one existing non-root skip, without blanket latest-source corpus qualification. Separate headerac0439 publication review remains unanswered; npm original ARM strict failure is not retroactively green.",
+      "summary": "Unified analyzer migrations remain active beyond the earlier427-span checkpoint; no new completion count is asserted. Source d946/nested9 and declaration handoff93b5137e15 are active, with diagnostic closure unverified. Architecture Kernel split and common PageTables constraints retain their documented source-specific limits. Worker/runtime projection evidence and the three route failures remain separate from a native-source/full-corpus pass. Headerac0439 and npm9c publication questions remain unanswered.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132422,7 +132430,7 @@
           ]
         }
       ],
-      "nextStep": "Primary analyzer owner completes remaining source/generator migrations and exact affected/full-corpus validation; secondary container owner supplies its bounded handoff. Preserve unrelated protected-feature holds and separate pending header/npm decisions. No duplicate observer, broad current-source pass or publication-ready claim.",
+      "nextStep": "Primary analyzer owner finishes source/generator migrations and exact validation; bounded secondary handoffs supply their existing evidence. Preserve unrelated sensitive-feature holds, source ownership and independent strict-C++/route limitations. No diagnostic-closure, final corpus-green or publication-ready claim.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132760,7 +132768,7 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T01:32:50.502686+00:00",
+        "observedAt": "2026-11-24T02:39:01.884940+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45274157128/artifacts/14868766183",
           "https://github.com/tamird/gvisor/actions/runs/45286918461",
@@ -132772,8 +132780,8 @@
           "https://github.com/tamird/gvisor/actions/runs/45292273315"
         ],
         "owner": "root",
-        "disposition": "Unified analyzer migrations remain active on source1fa. Current accounting closes339 of724 captured source spans, preserves one contract and leaves384; diagnostic closure is not verified. Source7233 command tests/Nogo await the existing owner checkpoint, and the object-only container12 handoff remains active. Worker788 full50 per ISA passed49 plus one existing non-root skip, without blanket latest-source corpus qualification. Separate headerac0439 publication review remains unanswered; npm original ARM strict failure is not retroactively green.",
-        "nextAction": "Primary analyzer owner completes remaining source/generator migrations and exact affected/full-corpus validation; secondary container owner supplies its bounded handoff. Preserve unrelated protected-feature holds and separate pending header/npm decisions. No duplicate observer, broad current-source pass or publication-ready claim.",
+        "disposition": "Unified analyzer migrations remain active beyond the earlier427-span checkpoint; no new completion count is asserted. Source d946/nested9 and declaration handoff93b5137e15 are active, with diagnostic closure unverified. Architecture Kernel split and common PageTables constraints retain their documented source-specific limits. Worker/runtime projection evidence and the three route failures remain separate from a native-source/full-corpus pass. Headerac0439 and npm9c publication questions remain unanswered.",
+        "nextAction": "Primary analyzer owner finishes source/generator migrations and exact validation; bounded secondary handoffs supply their existing evidence. Preserve unrelated sensitive-feature holds, source ownership and independent strict-C++/route limitations. No diagnostic-closure, final corpus-green or publication-ready claim.",
         "recheckCondition": "Actual analyzer validation/migration milestone, existing header-publication answer or working normal preview transport."
       },
       "contributorReview": {
