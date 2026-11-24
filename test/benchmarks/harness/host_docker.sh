@@ -62,7 +62,8 @@ if $checkpoint_mode; then
   initial_inventory=$(
     docker image ls --no-trunc --format '{{.ID}} {{.Repository}}:{{.Tag}}' | sort
   )
-  initial_socket=$(stat -Lc '%i:%u:%g:%a' /var/run/docker.sock)
+  initial_socket=$(stat -Lc '%f:%u:%g' /var/run/docker.sock)
+  initial_socket_unit=$(systemctl show docker.socket --property=Listen,FragmentPath,DropInPaths)
   initial_containerd=$(systemctl show containerd --property=MainPID --value)
   # Keep the compatibility profile bound to the qualified host unit and versions.
   if test "$initial_engine" != 28.0.4; then
@@ -169,7 +170,8 @@ PYCONFIG
     test "$(docker version --format '{{.Server.Version}}')" = "$initial_engine" || ret=1
     test "$(docker info --format '{{.DockerRootDir}}')" = "$docker_root" || ret=1
     test "$(docker info --format '{{.Driver}}')" = "$initial_driver" || ret=1
-    test "$(stat -Lc '%i:%u:%g:%a' /var/run/docker.sock)" = "$initial_socket" || ret=1
+    test "$(stat -Lc '%f:%u:%g' /var/run/docker.sock)" = "$initial_socket" || ret=1
+    test "$(systemctl show docker.socket --property=Listen,FragmentPath,DropInPaths)" = "$initial_socket_unit" || ret=1
     test "$(systemctl show containerd --property=MainPID --value)" = "$initial_containerd" || ret=1
     if $engine_changed; then
       test "$(systemctl show docker --property=DropInPaths --value)" = '' || ret=1
