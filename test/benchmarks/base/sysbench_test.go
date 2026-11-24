@@ -110,6 +110,7 @@ func BenchmarkSysbench(b *testing.B) {
 				b.Fatalf("failed to run sysbench: %v: logs:%s", err, out)
 			}
 			b.StopTimer()
+			fmt.Print(out)
 			tc.test.Report(b, out)
 		})
 	}
