@@ -20,6 +20,7 @@
 # --startup selects the declared images and Docker 27 checkpoint-compatible profile.
 # --network selects the declared networking images without changing the engine.
 # --memory selects the declared memory benchmark images without changing the engine.
+# --syscall selects the declared syscall image without changing the engine.
 # --compare adds the declared baseline release with separate owned runtime names.
 # Docker 28 default-network restores fail: https://github.com/moby/moby/issues/50750
 # With no caller, checks the native and installed runtimes using Alpine.
@@ -63,11 +64,18 @@ if test "${1:-}" = --memory; then
   names+=(redis)
   loaders+=(images/basic/benchmark_redis_load.exe)
 fi
+syscall_mode=false
+if test "${1:-}" = --syscall; then
+  shift
+  syscall_mode=true
+  names+=(syscallbench)
+  loaders+=(images/benchmarks/syscallbench/syscallbench_load.exe)
+fi
 comparison=false
 if test "${1:-}" = --compare; then
   shift
-  if ! $checkpoint_mode && ! $network_mode && ! $memory_mode; then
-    echo "--compare requires --startup, --network, or --memory" >&2
+  if ! $checkpoint_mode && ! $network_mode && ! $memory_mode && ! $syscall_mode; then
+    echo "--compare requires --startup, --network, --memory, or --syscall" >&2
     exit 1
   fi
   comparison=true
