@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T02:39:01.884940+00:00",
+    "updatedAt": "2026-11-24T02:57:05.420540+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41647,7 +41647,7 @@
       "group": "release",
       "status": "open",
       "updatedAt": "2026-11-20T15:15:34.980085+00:00",
-      "summary": "Current8585 has Etienne CHANGES_REQUESTED review6032358726. Inline4674426513 questions why the old BUILD rule is no longer needed across the affected BUILD files; this requires root-owned source-bound rationale/assessment, not an inferred accepted fix. Separate prewarmer inline4674422062 explicitly says nothing to change and is a curiosity question. Prior no-findings/approval evidence does not resolve this new maintainer objection.",
+      "summary": "Qualified private amendment c125b0e27 restores exactly23 original ignore_srcs lines in three BUILD files; macro/runtime/tests are unchanged. AMD45314624404 and ARM45314627023 action JSONs are byte-identical to matching qualified8585/cbd; Buildifier45314629193/source guards and two final independent reviews pass. Prior unchanged-input runtime/source/strict-lint evidence is reused with private-cleaner/ThinLTO limits explicit. Public source remains8585; the actual amendment-plus-reply question is unanswered. Prewarmer curiosity requests no source change.",
       "evidence": [
         {
           "label": "Latest exact-head review",
@@ -41864,11 +41864,11 @@
       ],
       "followup": {
         "owner": "root",
-        "observedAt": "2026-11-24T02:39:01.884940+00:00",
+        "observedAt": "2026-11-24T02:57:05.420540+00:00",
         "sourceHead": "8585cf9fc70d84fa7cc92d9a4fbb799f1b0f17ce",
         "mergeable": "MERGEABLE",
-        "disposition": "Current8585 has Etienne CHANGES_REQUESTED review6032358726. Inline4674426513 questions why the old BUILD rule is no longer needed across the affected BUILD files; this requires root-owned source-bound rationale/assessment, not an inferred accepted fix. Separate prewarmer inline4674422062 explicitly says nothing to change and is a curiosity question. Prior no-findings/approval evidence does not resolve this new maintainer objection.",
-        "nextAction": "Root routes the exact BUILD-rule concern to the existing sidecar lifecycle owner for bounded rationale/source assessment under current source-ownership and sensitive-work limits. Do not mark feedback resolved, invent an amendment decision, read held implementation, post a reply or transfer earlier approval.",
+        "disposition": "Qualified private amendment c125b0e27 restores exactly23 original ignore_srcs lines in three BUILD files; macro/runtime/tests are unchanged. AMD45314624404 and ARM45314627023 action JSONs are byte-identical to matching qualified8585/cbd; Buildifier45314629193/source guards and two final independent reviews pass. Prior unchanged-input runtime/source/strict-lint evidence is reused with private-cleaner/ThinLTO limits explicit. Public source remains8585; the actual amendment-plus-reply question is unanswered. Prewarmer curiosity requests no source change.",
+        "nextAction": "Root awaits the existing c125 amendment-and-reply decision before updating #16522 or posting the exact proposed reply. Candidate commit is publicly readable; new preview-ref creation alone remains provider workflow-check-timeout blocked. Existing topic publication has not been attempted, and no execution permission or additional approval question is missing.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16522",
           "https://github.com/tamird/gvisor/commit/4e034130e",
@@ -41886,9 +41886,13 @@
           "https://github.com/google/gvisor/pull/16522#pullrequestreview-6030526146",
           "https://github.com/google/gvisor/pull/16522#pullrequestreview-6032358726",
           "https://github.com/google/gvisor/pull/16522#discussion_r4674426513",
-          "https://github.com/google/gvisor/pull/16522#discussion_r4674422062"
+          "https://github.com/google/gvisor/pull/16522#discussion_r4674422062",
+          "https://github.com/tamird/gvisor/commit/c125b0e272ddb337b4c78588c79a86b2f5e228b6",
+          "https://github.com/tamird/gvisor/actions/runs/45314624404",
+          "https://github.com/tamird/gvisor/actions/runs/45314627023",
+          "https://github.com/tamird/gvisor/actions/runs/45314629193"
         ],
-        "recheckCondition": "Existing owner/root supplies the source-bound assessment or actual maintainer/head change.",
+        "recheckCondition": "Actual contributor answer, substantive new review/head evidence or working normal preview transport.",
         "curatedAt": "2026-11-20T23:27:51.953187+00:00",
         "implementationOwner": "sidecar_visibility_feedback",
         "attentionDispositions": [
@@ -42524,7 +42528,18 @@
         "priorOwner": "Maintainer"
       },
       "nextStep": "Root follows maintainer/import review and actual admission/check events; quota diagnosis is terminal with no rerun or CI ping. The Go export watchers are closed. Root handles any reporting-auth consideration within the existing export pilot without expanding permissions.",
-      "recheckCondition": "A genuine maintainer/import/check event or evidenced provider admission recovery."
+      "recheckCondition": "A genuine maintainer/import/check event or evidenced provider admission recovery.",
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "c125b0e272ddb337b4c78588c79a86b2f5e228b6",
+        "baseHead": "8585cf9fc70d84fa7cc92d9a4fbb799f1b0f17ce",
+        "url": "https://github.com/tamird/gvisor/commit/c125b0e272ddb337b4c78588c79a86b2f5e228b6",
+        "title": "Restore the sidecar ignore_srcs filegroups",
+        "summary": "Awaiting review of the #16522 amendment and reply. Restore 23 original ignore_srcs lines in three BUILD files; macro, runtime and tests are unchanged. Both architecture action JSONs match the qualified source byte-for-byte; Buildifier/source guards and two reviews pass. Private cleaner and ThinLTO evidence limits remain.",
+        "body": "Restore the original ignore_srcs filegroups in the three sidecar BUILD files, addressing the maintainer’s rule-retention objection. The candidate is one amended commit; prior unchanged-input runtime, source and strict-lint evidence is reused under its original limits.\n\ngit range-diff 8585cf9fc7^! c125b0e272^!",
+        "replyBody": "Restored the `ignore_srcs` filegroups in all three BUILD files.\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "branch:licensecheck-native-bazel-mod",
