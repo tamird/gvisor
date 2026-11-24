@@ -366,42 +366,42 @@ func TestGetAllocationDirection(t *testing.T) {
 		{
 			"No last fault in vma with mmap direction BottomUp",
 			arch.MmapBottomUp,
-			hostarch.AddrRange{123, 456},
+			hostarch.AddrRange{Start: 123, End: 456},
 			&vma{lastFault: 0},
 			pgalloc.BottomUp,
 		},
 		{
 			"No last fault in vma with mmap direction TopDown",
 			arch.MmapTopDown,
-			hostarch.AddrRange{123, 456},
+			hostarch.AddrRange{Start: 123, End: 456},
 			&vma{lastFault: 0},
 			pgalloc.TopDown,
 		},
 		{
 			"Last fault in vma equals to addr range, with mmap direction BottomUp",
 			arch.MmapBottomUp,
-			hostarch.AddrRange{123, 456},
+			hostarch.AddrRange{Start: 123, End: 456},
 			&vma{lastFault: 123},
 			pgalloc.BottomUp,
 		},
 		{
 			"Last fault in vma equals to addr range, with mmap direction TopDown",
 			arch.MmapTopDown,
-			hostarch.AddrRange{123, 456},
+			hostarch.AddrRange{Start: 123, End: 456},
 			&vma{lastFault: 123},
 			pgalloc.TopDown,
 		},
 		{
 			"Last fault in vma greater than addr range",
 			arch.MmapTopDown,
-			hostarch.AddrRange{123, 456},
+			hostarch.AddrRange{Start: 123, End: 456},
 			&vma{lastFault: 456},
 			pgalloc.TopDown,
 		},
 		{
 			"Last fault in vma smaller than addr range",
 			arch.MmapTopDown,
-			hostarch.AddrRange{123, 456},
+			hostarch.AddrRange{Start: 123, End: 456},
 			&vma{lastFault: 100},
 			pgalloc.BottomUp,
 		},
@@ -1218,7 +1218,7 @@ func TestIODuringAsyncPageLoad(t *testing.T) {
 	if err != nil {
 		t.Fatalf("MMap got err %v want nil", err)
 	}
-	ar := hostarch.AddrRange{addr, addr + size}
+	ar := hostarch.AddrRange{Start: addr, End: addr + size}
 	mm.activeMu.Lock()
 	mm.pmas.Insert(mm.pmas.FindGap(ar.Start), ar, pma{
 		file:           mf,

@@ -75,7 +75,7 @@ func (fl *FileLocks) peek() *fileLocks {
 
 // LockBSD tries to acquire a BSD-style lock on the entire file.
 func (fl *FileLocks) LockBSD(ctx context.Context, uid fslock.UniqueID, ownerID int32, t fslock.LockType, block bool) error {
-	if err := fl.get().bsd.LockRegion(ctx, uid, ownerID, t, fslock.LockRange{0, fslock.LockEOF}, block); err == nil || err == linuxerr.ErrWouldBlock {
+	if err := fl.get().bsd.LockRegion(ctx, uid, ownerID, t, fslock.LockRange{Start: 0, End: fslock.LockEOF}, block); err == nil || err == linuxerr.ErrWouldBlock {
 		return err
 	}
 	return linuxerr.ERESTARTSYS
@@ -87,7 +87,7 @@ func (fl *FileLocks) LockBSD(ctx context.Context, uid fslock.UniqueID, ownerID i
 // the requested region held by uid in the first place.
 func (fl *FileLocks) UnlockBSD(uid fslock.UniqueID) {
 	if l := fl.peek(); l != nil {
-		l.bsd.UnlockRegion(uid, fslock.LockRange{0, fslock.LockEOF})
+		l.bsd.UnlockRegion(uid, fslock.LockRange{Start: 0, End: fslock.LockEOF})
 	}
 }
 

@@ -617,7 +617,7 @@ func TestFindAllocatable(t *testing.T) {
 			chunks := make([]chunkInfo, len(test.chunkHuge))
 			for i, huge := range test.chunkHuge {
 				chunks[i].huge = huge
-				chunkFR := memmap.FileRange{uint64(i) * chunkSize, uint64(i+1) * chunkSize}
+				chunkFR := memmap.FileRange{Start: uint64(i) * chunkSize, End: uint64(i+1) * chunkSize}
 				if huge {
 					f.unfreeHuge.RemoveRange(chunkFR)
 				} else {
@@ -626,7 +626,7 @@ func TestFindAllocatable(t *testing.T) {
 			}
 			f.chunks.Store(&chunks)
 			for _, es := range test.existing {
-				f.forEachChunk(memmap.FileRange{es.start, es.end}, func(chunk *chunkInfo, chunkFR memmap.FileRange) bool {
+				f.forEachChunk(memmap.FileRange{Start: es.start, End: es.end}, func(chunk *chunkInfo, chunkFR memmap.FileRange) bool {
 					unwaste, unfree := &f.unwasteSmall, &f.unfreeSmall
 					if chunk.huge {
 						unwaste, unfree = &f.unwasteHuge, &f.unfreeHuge

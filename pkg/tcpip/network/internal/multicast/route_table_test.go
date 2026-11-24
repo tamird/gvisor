@@ -41,7 +41,7 @@ var (
 	defaultAddress            = testutil.MustParse4("192.168.1.1")
 	defaultRouteKey           = stack.UnicastSourceAndMulticastDestination{Source: defaultAddress, Destination: defaultAddress}
 	defaultOutgoingInterfaces = []stack.MulticastRouteOutgoingInterface{{ID: outgoingNICID, MinTTL: defaultMinTTL}}
-	defaultRoute              = stack.MulticastRoute{inputNICID, defaultOutgoingInterfaces}
+	defaultRoute              = stack.MulticastRoute{ExpectedInputInterface: inputNICID, OutgoingInterfaces: defaultOutgoingInterfaces}
 )
 
 func newPacketBuffer(body string) *stack.PacketBuffer {
@@ -334,7 +334,7 @@ func TestAddInstalledRouteWithNoPending(t *testing.T) {
 
 	firstRoute := table.NewInstalledRoute(defaultRoute)
 
-	secondMulticastRoute := stack.MulticastRoute{defaultNICID, defaultOutgoingInterfaces}
+	secondMulticastRoute := stack.MulticastRoute{ExpectedInputInterface: defaultNICID, OutgoingInterfaces: defaultOutgoingInterfaces}
 	secondRoute := table.NewInstalledRoute(secondMulticastRoute)
 
 	pkt := newPacketBuffer("hello")
@@ -418,7 +418,7 @@ func TestRemoveAllInstalledRoutes(t *testing.T) {
 
 	routes := map[stack.UnicastSourceAndMulticastDestination]stack.MulticastRoute{
 		defaultRouteKey:              defaultRoute,
-		{otherAddress, otherAddress}: defaultRoute,
+		{Source: otherAddress, Destination: otherAddress}: defaultRoute,
 	}
 
 	for key, route := range routes {

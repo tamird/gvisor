@@ -179,7 +179,7 @@ func (r *BufReader) Read(dst []byte) (int, error) {
 			for range r.chunksRefillable {
 				chunkStart := r.chunkLen * chunkToRefill
 				chunkEnd := chunkStart + r.chunkLen
-				r.ar.AddRead(chunkToRefill, r.refillOffset, r.df, memmap.FileRange{uint64(chunkStart), uint64(chunkEnd)}, r.buf[chunkStart:chunkEnd])
+				r.ar.AddRead(chunkToRefill, r.refillOffset, r.df, memmap.FileRange{Start: uint64(chunkStart), End: uint64(chunkEnd)}, r.buf[chunkStart:chunkEnd])
 				chunkToRefill++
 				if chunkToRefill >= r.numChunks {
 					chunkToRefill = 0

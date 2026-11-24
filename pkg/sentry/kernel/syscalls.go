@@ -33,7 +33,7 @@ import (
 
 // outOfRangeSyscallNumber is used to represent a syscall number that is out of the
 // range [0, maxSyscallNum] in monitoring.
-var outOfRangeSyscallNumber = &metric.FieldValue{"-1"}
+var outOfRangeSyscallNumber = &metric.FieldValue{Value: "-1"}
 
 // SyscallSupportLevel is a syscall support levels.
 type SyscallSupportLevel int
@@ -384,7 +384,7 @@ func RegisterSyscallTable(s *SyscallTable) {
 	unimplementedSyscallCounterInit.Do(func() {
 		allowedValues := make([]*metric.FieldValue, sentry.MaxSyscallNum+2)
 		for i := uintptr(0); i <= sentry.MaxSyscallNum; i++ {
-			allowedValues[i] = &metric.FieldValue{strconv.Itoa(int(i))}
+			allowedValues[i] = &metric.FieldValue{Value: strconv.Itoa(int(i))}
 		}
 		allowedValues[len(allowedValues)-1] = outOfRangeSyscallNumber
 		unimplementedSyscallNumbers = allowedValues

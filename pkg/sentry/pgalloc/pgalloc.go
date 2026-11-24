@@ -257,7 +257,7 @@ func (f *MemoryFile) forEachChunk(fr memmap.FileRange, fn func(chunk *chunkInfo,
 	i := int(fr.Start / chunkSize)
 	for chunkStart < fr.End {
 		chunkEnd := chunkStart + chunkSize
-		if !fn(&chunks[i], fr.Intersect(memmap.FileRange{chunkStart, chunkEnd})) {
+		if !fn(&chunks[i], fr.Intersect(memmap.FileRange{Start: chunkStart, End: chunkEnd})) {
 			return
 		}
 		chunkStart = chunkEnd
@@ -475,7 +475,7 @@ func NewMemoryFile(file *os.File, opts MemoryFileOpts) (*MemoryFile, error) {
 
 func (f *MemoryFile) initFields() {
 	// Initially, all pages are void.
-	fullFR := memmap.FileRange{0, math.MaxUint64}
+	fullFR := memmap.FileRange{Start: 0, End: math.MaxUint64}
 	f.unwasteSmall.InsertRange(fullFR, unwasteInfo{})
 	f.unwasteHuge.InsertRange(fullFR, unwasteInfo{})
 	f.releaseCond.L = &f.mu
@@ -507,7 +507,7 @@ func (f *MemoryFile) releaserDestroyLocked() {
 
 	if f.opts.DecommitOnDestroy {
 		if chunks := f.chunksLoad(); len(chunks) != 0 {
-			if err := f.decommitFile(memmap.FileRange{0, uint64(len(chunks)) * chunkSize}); err != nil {
+			if err := f.decommitFile(memmap.FileRange{Start: 0, End: uint64(len(chunks)) * chunkSize}); err != nil {
 				panic(fmt.Sprintf("failed to decommit entire memory file during destruction: %v", err))
 			}
 		}
@@ -738,7 +738,7 @@ func (f *MemoryFile) Allocate(length uint64, opts AllocOpts) (memmap.FileRange, 
 		if un < length {
 			// Free unused memory and update fr to contain only the memory that is
 			// still allocated.
-			f.DecRef(memmap.FileRange{fr.Start + un, fr.End})
+			f.DecRef(memmap.FileRange{Start: fr.Start + un, End: fr.End})
 			fr.End = fr.Start + un
 		}
 		if err != nil {
@@ -1468,7 +1468,7 @@ func (f *MemoryFile) releaseLocked(fr memmap.FileRange, huge bool) {
 			if oldSubrel != 0 {
 				delete(f.subreleased, firstHugeStart)
 			}
-			hugeFR := memmap.FileRange{firstHugeStart, firstHugeEnd}
+			hugeFR := memmap.FileRange{Start: firstHugeStart, End: firstHugeEnd}
 			f.mu.Unlock()
 			f.decommitOrManuallyZero(hugeFR)
 			f.mu.Lock()

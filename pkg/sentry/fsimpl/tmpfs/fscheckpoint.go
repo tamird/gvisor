@@ -151,7 +151,7 @@ func (cb *fsckptTarReaderCallbacks) regularFileRead(ctx context.Context, hdr *ta
 	rf.size.Store(size)
 	gap := rf.data.FirstGap()
 	for _, seg := range segs {
-		gap = rf.data.Insert(gap, memmap.MappableRange{seg.Start, seg.End}, seg.Value).NextGap()
+		gap = rf.data.Insert(gap, memmap.MappableRange{Start: seg.Start, End: seg.End}, seg.Value).NextGap()
 	}
 	return nil
 }

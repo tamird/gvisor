@@ -149,7 +149,7 @@ func (f *MmapCachedFile) IncRef(fr memmap.FileRange, memCgID uint32) {
 func (f *MmapCachedFile) AddMapping(ar hostarch.AddrRange, offset uint64) {
 	f.refsMu.Lock()
 	defer f.refsMu.Unlock()
-	f.incRefUnaccounted(memmap.FileRange{offset, offset + uint64(ar.Length())})
+	f.incRefUnaccounted(memmap.FileRange{Start: offset, End: offset + uint64(ar.Length())})
 }
 
 // Preconditions:
@@ -192,7 +192,7 @@ func (f *MmapCachedFile) DecRef(fr memmap.FileRange) {
 func (f *MmapCachedFile) RemoveMapping(ar hostarch.AddrRange, offset uint64) {
 	f.refsMu.Lock()
 	defer f.refsMu.Unlock()
-	f.decRefUnaccounted(memmap.FileRange{offset, offset + uint64(ar.Length())})
+	f.decRefUnaccounted(memmap.FileRange{Start: offset, End: offset + uint64(ar.Length())})
 }
 
 // Preconditions:

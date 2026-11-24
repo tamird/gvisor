@@ -67,12 +67,12 @@ func (fd *randomFD) Release(context.Context) {
 
 // PRead implements vfs.FileDescriptionImpl.PRead.
 func (fd *randomFD) PRead(ctx context.Context, dst usermem.IOSequence, offset int64, opts vfs.ReadOptions) (int64, error) {
-	return dst.CopyOutFrom(ctx, safemem.FromIOReader{rand.Reader})
+	return dst.CopyOutFrom(ctx, safemem.FromIOReader{Reader: rand.Reader})
 }
 
 // Read implements vfs.FileDescriptionImpl.Read.
 func (fd *randomFD) Read(ctx context.Context, dst usermem.IOSequence, opts vfs.ReadOptions) (int64, error) {
-	n, err := dst.CopyOutFrom(ctx, safemem.FromIOReader{rand.Reader})
+	n, err := dst.CopyOutFrom(ctx, safemem.FromIOReader{Reader: rand.Reader})
 	fd.off.Add(n)
 	return n, err
 }

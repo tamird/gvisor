@@ -289,7 +289,7 @@ func (fd *VFSPipeFD) SpliceToNonPipe(ctx context.Context, out *vfs.FileDescripti
 	}
 	src := usermem.IOSequence{
 		IO:    fd,
-		Addrs: hostarch.AddrRangeSeqOf(hostarch.AddrRange{0, hostarch.Addr(count)}),
+		Addrs: hostarch.AddrRangeSeqOf(hostarch.AddrRange{Start: 0, End: hostarch.Addr(count)}),
 	}
 
 	var (
@@ -325,7 +325,7 @@ func (fd *VFSPipeFD) SpliceToNonPipe(ctx context.Context, out *vfs.FileDescripti
 func (fd *VFSPipeFD) SpliceFromNonPipe(ctx context.Context, in *vfs.FileDescription, off, count int64) (int64, error) {
 	dst := usermem.IOSequence{
 		IO:    fd,
-		Addrs: hostarch.AddrRangeSeqOf(hostarch.AddrRange{0, hostarch.Addr(count)}),
+		Addrs: hostarch.AddrRangeSeqOf(hostarch.AddrRange{Start: 0, End: hostarch.Addr(count)}),
 	}
 
 	var (

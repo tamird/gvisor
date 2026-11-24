@@ -103,12 +103,12 @@ const (
 )
 
 var (
-	socketLevelSocketFieldValue = metric.FieldValue{"SOCKET"}
-	socketLevelTCPFieldValue    = metric.FieldValue{"TCP"}
-	socketLevelICMPV6FieldValue = metric.FieldValue{"ICMPV6"}
-	socketLevelIPFieldValue     = metric.FieldValue{"IP"}
-	socketLevelIPV6FieldValue   = metric.FieldValue{"IPV6"}
-	socketLevelPacketFieldValue = metric.FieldValue{"PACKET"}
+	socketLevelSocketFieldValue = metric.FieldValue{Value: "SOCKET"}
+	socketLevelTCPFieldValue    = metric.FieldValue{Value: "TCP"}
+	socketLevelICMPV6FieldValue = metric.FieldValue{Value: "ICMPV6"}
+	socketLevelIPFieldValue     = metric.FieldValue{Value: "IP"}
+	socketLevelIPV6FieldValue   = metric.FieldValue{Value: "IPV6"}
+	socketLevelPacketFieldValue = metric.FieldValue{Value: "PACKET"}
 
 	allowedSocketOptionLevels     = []*metric.FieldValue{&socketLevelSocketFieldValue, &socketLevelTCPFieldValue, &socketLevelICMPV6FieldValue, &socketLevelIPFieldValue, &socketLevelIPV6FieldValue, &socketLevelPacketFieldValue}
 	allowedSocketOptionNameValues = initSocketMetricFields()
@@ -120,7 +120,7 @@ var (
 func initSocketMetricFields() []*metric.FieldValue {
 	values := make([]*metric.FieldValue, maxSocketOptionNameValue+1)
 	for i := 0; i <= maxSocketOptionNameValue; i++ {
-		values[i] = &metric.FieldValue{strconv.Itoa(i)}
+		values[i] = &metric.FieldValue{Value: strconv.Itoa(i)}
 	}
 	return values
 }

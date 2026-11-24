@@ -43,7 +43,7 @@ type EndpointWriter struct {
 
 // WriteFromBlocks implements safemem.Writer.WriteFromBlocks.
 func (w *EndpointWriter) WriteFromBlocks(srcs safemem.BlockSeq) (uint64, error) {
-	return safemem.FromVecWriterFunc{func(bufs [][]byte) (int64, error) {
+	return safemem.FromVecWriterFunc{WriteVec: func(bufs [][]byte) (int64, error) {
 		n, notify, err := w.Endpoint.SendMsg(w.Ctx, bufs, w.Control, w.To)
 		w.Notify = notify
 		if err != nil {
@@ -121,7 +121,7 @@ func (r *EndpointReader) Truncate() error {
 
 // ReadToBlocks implements safemem.Reader.ReadToBlocks.
 func (r *EndpointReader) ReadToBlocks(dsts safemem.BlockSeq) (uint64, error) {
-	return safemem.FromVecReaderFunc{func(bufs [][]byte) (int64, error) {
+	return safemem.FromVecReaderFunc{ReadVec: func(bufs [][]byte) (int64, error) {
 		args := transport.RecvArgs{
 			Creds:     r.Creds,
 			NumRights: r.NumRights,

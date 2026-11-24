@@ -474,7 +474,7 @@ func (mm *MemoryManager) MRemap(ctx context.Context, oldAddr hostarch.Addr, oldS
 				// If oldAddr+oldSize didn't overflow, oldAddr+newSize can't
 				// either.
 				newEnd := oldAddr + hostarch.Addr(newSize)
-				_, droppedIDs = mm.unmapLocked(ctx, hostarch.AddrRange{newEnd, oldEnd}, droppedIDs)
+				_, droppedIDs = mm.unmapLocked(ctx, hostarch.AddrRange{Start: newEnd, End: oldEnd}, droppedIDs)
 			}
 			return oldAddr, nil
 		}
@@ -561,7 +561,7 @@ func (mm *MemoryManager) MRemap(ctx context.Context, oldAddr hostarch.Addr, oldS
 		if !ok {
 			return 0, linuxerr.EINVAL
 		}
-		if (hostarch.AddrRange{oldAddr, oldEnd}).Overlaps(newAR) {
+		if (hostarch.AddrRange{Start: oldAddr, End: oldEnd}).Overlaps(newAR) {
 			return 0, linuxerr.EINVAL
 		}
 
@@ -593,7 +593,7 @@ func (mm *MemoryManager) MRemap(ctx context.Context, oldAddr hostarch.Addr, oldS
 		// vma_to_resize().
 		if newSize < oldSize {
 			oldNewEnd := oldAddr + hostarch.Addr(newSize)
-			_, droppedIDs = mm.unmapLocked(ctx, hostarch.AddrRange{oldNewEnd, oldEnd}, droppedIDs)
+			_, droppedIDs = mm.unmapLocked(ctx, hostarch.AddrRange{Start: oldNewEnd, End: oldEnd}, droppedIDs)
 			oldEnd = oldNewEnd
 		}
 
@@ -601,7 +601,7 @@ func (mm *MemoryManager) MRemap(ctx context.Context, oldAddr hostarch.Addr, oldS
 		vseg = mm.vmas.FindSegment(oldAddr)
 	}
 
-	oldAR := hostarch.AddrRange{oldAddr, oldEnd}
+	oldAR := hostarch.AddrRange{Start: oldAddr, End: oldEnd}
 
 	// Check that a vma still exists at oldAddr and that oldEnd maps to it. An
 	// empty source range (oldSize == 0) doesn't overlap newAR, so unmapping
@@ -817,7 +817,7 @@ func (mm *MemoryManager) BrkSetup(ctx context.Context, addr hostarch.Addr) {
 	if mm.brk.Length() != 0 {
 		_, droppedIDs = mm.unmapLocked(ctx, mm.brk, droppedIDs)
 	}
-	mm.brk = hostarch.AddrRange{addr, addr}
+	mm.brk = hostarch.AddrRange{Start: addr, End: addr}
 	mm.mappingMu.Unlock()
 	for _, id := range droppedIDs {
 		id.DecRef(ctx)
@@ -900,7 +900,7 @@ func (mm *MemoryManager) Brk(ctx context.Context, addr hostarch.Addr) (hostarch.
 		}
 
 	case newbrkpg < oldbrkpg:
-		_, droppedIDs = mm.unmapLocked(ctx, hostarch.AddrRange{newbrkpg, oldbrkpg}, droppedIDs)
+		_, droppedIDs = mm.unmapLocked(ctx, hostarch.AddrRange{Start: newbrkpg, End: oldbrkpg}, droppedIDs)
 		fallthrough
 
 	default:
@@ -1275,14 +1275,14 @@ func (mm *MemoryManager) Decommit(addr hostarch.Addr, length uint64) error {
 							pseg = pseg.NextSegment()
 							continue
 						}
-						mm.mf.Decommit(pseg.fileRangeOf(hostarch.AddrRange{psegAR.Start, firstHugeEnd}))
+						mm.mf.Decommit(pseg.fileRangeOf(hostarch.AddrRange{Start: psegAR.Start, End: firstHugeEnd}))
 						psegAR.Start = firstHugeEnd
 					}
 					// Drop whole huge pages between psegAR.Start (which after the above
 					// is either firstHugeStart or firstHugeEnd) and lastWholeHugeEnd
 					// normally.
 					if psegAR.Start < lastWholeHugeEnd {
-						pseg = mm.pmas.Isolate(pseg, hostarch.AddrRange{psegAR.Start, lastWholeHugeEnd})
+						pseg = mm.pmas.Isolate(pseg, hostarch.AddrRange{Start: psegAR.Start, End: lastWholeHugeEnd})
 						pma = pseg.ValuePtr()
 						if !didUnmapAS {
 							// Unmap all of ar, not just pseg.Range(), to minimize host
@@ -1297,7 +1297,7 @@ func (mm *MemoryManager) Decommit(addr hostarch.Addr, length uint64) error {
 					}
 					if lastWholeHugeEnd != psegAR.End {
 						// psegAR.End is not hugepage-aligned.
-						mm.mf.Decommit(pseg.fileRangeOf(hostarch.AddrRange{lastWholeHugeEnd, psegAR.End}))
+						mm.mf.Decommit(pseg.fileRangeOf(hostarch.AddrRange{Start: lastWholeHugeEnd, End: psegAR.End}))
 						pseg = pseg.NextSegment()
 					}
 					continue

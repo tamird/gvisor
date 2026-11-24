@@ -133,11 +133,6 @@ analyzers:
       exclude: [".*"]
     internal:
       exclude: [".*"]
-  composites: # Disable for now.
-    generated:
-      exclude: [".*"]
-    internal:
-      exclude: [".*"]
   directive:
     generated:
       exclude:

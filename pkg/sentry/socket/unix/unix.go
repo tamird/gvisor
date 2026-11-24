@@ -606,7 +606,7 @@ func (s *Socket) extractEndpoint(t *kernel.Task, sockaddr []byte) (transport.Bou
 		Path:               p,
 		FollowFinalSymlink: true,
 	}
-	ep, e := t.Kernel().VFS().BoundEndpointAt(t, t.Credentials(), &pop, &vfs.BoundEndpointOptions{path})
+	ep, e := t.Kernel().VFS().BoundEndpointAt(t, t.Credentials(), &pop, &vfs.BoundEndpointOptions{Addr: path})
 	root.DecRef(t)
 	if relPath {
 		start.DecRef(t)
