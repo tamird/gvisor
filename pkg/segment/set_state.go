@@ -16,13 +16,14 @@ package segment
 
 import (
 	"context"
+	"slices"
 )
 
 func (s *Set) saveRoot() []FlatSegment {
 	fs := s.ExportSlice()
 	// The state package saves data in slice capacity beyond slice length; save
 	// it some time by cutting ours off.
-	fs = fs[:len(fs):len(fs)]
+	fs = slices.Clip(fs)
 	return fs
 }
 

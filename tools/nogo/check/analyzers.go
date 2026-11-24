@@ -233,7 +233,8 @@ func init() {
 			"rangeint",
 			"stditerators",
 			"slicesbackward",
-			"slicessort":
+			"slicessort",
+			"slicesclip":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}
