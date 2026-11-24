@@ -114,6 +114,7 @@ func runNode(b *testing.B, hey *tools.Hey) {
 	// the client should run on Native.
 	b.ResetTimer()
 	client := clientMachine.GetNativeContainer(ctx, b)
+	defer client.CleanUp(ctx)
 	out, err := client.Run(ctx, dockerutil.RunOpts{
 		Image:      "benchmarks/hey",
 		Links:      []string{nodeApp.MakeLink("node")},
