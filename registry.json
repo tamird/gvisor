@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T20:51:36.949756+00:00",
+    "updatedAt": "2026-11-24T20:55:31.712040+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4292,9 +4292,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "89a85fa8f0b193be67ada38a3d755a080b09dbbc",
-        "observedAt": "2026-11-11T00:51:01+00:00",
+        "observedAt": "2026-11-24T20:55:31.712040+00:00",
         "disposition": "Both complete selections passed, covering 380 configured C/C++ units on AMD64 and 379 on ARM64. In each selection two focused actions already had outputs. The full invocations supplied the other 378 and 377. The reporter incorrectly required the focused actions to execute again.",
-        "nextAction": "Review the clang-tidy proposal for submission after both the LLVM compiler migration and the independent systrap C fix in #17446 land.",
+        "nextAction": "The independent C/header prerequisite #17446 is landed and source-verified. Review submission only after the remaining LLVM compiler migration and existing source/publication conditions are satisfied; historical full-selection qualification stays source-bound.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17446",
           "https://github.com/tamird/gvisor/commit/89a85fa8f",
@@ -4379,7 +4379,8 @@
         "title": "Run clang-tidy through Bazel compile actions",
         "body": "A source file can compile with different flags and headers in different\ntargets. Running clang-tidy once per source in a local execution root\nmisses those differences and keeps Bazel from scheduling lint remotely.\n\nRun the LLVM toolchain's clang-tidy for each configured compilation of\nrepository sources. Pass the compile action's arguments, declared\ninputs and clang-tidy's matching builtin headers. Share header\ndiscovery with the editor's compilation database and include transitive\ngenerated sources in that database. Keep generated and third-party\nsources outside the lint selection.\n\nDeclare a serialized Clang frontend diagnostics file for each action.\nClang writes it even on a clean run, so Bazel can invoke clang-tidy\ndirectly without a shell. Read clang-tidy findings in the Bazel action\nlog. With warnings treated as errors, clang-tidy's exit status replaces\nthe Python diagnostic parser and thread pool.",
         "summary": "Open this clang-tidy change after the compiler migration and the standalone C correction in #17446 land? Both architecture selections passed. Across each full and focused invocation, the verified diagnostics cover all 380 AMD64 and 379 ARM64 C/C++ units. The aggregate reporter expected four cached stub actions to repeat.\n\ngit -C ~/code/gvisor range-diff 49c4a3a92^! 89a85fa8f^!"
-      }
+      },
+      "nextStep": "The independent C/header prerequisite #17446 is landed and source-verified. Review submission only after the remaining LLVM compiler migration and existing source/publication conditions are satisfied; historical full-selection qualification stays source-bound."
     },
     {
       "id": "pr:15307",
@@ -76092,8 +76093,8 @@
       "url": "https://github.com/google/gvisor/pull/17067",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-20T15:00:40.305787+00:00",
-      "summary": "Public a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a is conflicting; Etienne’s comment 7026931258 Needs rebase request is genuine. Master build.bzl now selects AMD64 PAGE_SIZE=4096 and leaves ARM unset for runtime page size; public replaces build.bzl with BUILD.local_defines using old pagesize_64k selection, preventing a literal patch-equivalent rebase. Root owns a semantics-preserving resolution. Separate final d3f depends on the #16522 proposal d1ae and its explicit publication edge waits for #16522 to land; this does not prohibit preparing the current public PR’s requested rebase.",
+      "updatedAt": "2026-11-24T20:55:31.712040+00:00",
+      "summary": "Public a3ca22afe was last observed CONFLICTING; GitHub is now recomputing mergeability. #17446 landed with C/header inputs identical to the historical strict-composition CI, satisfying that landing prerequisite only. Raw5026 strict failures and the separate original runtime evidence retain their scopes. #16522, root review, performance and internal adapter integration remain open.",
       "evidence": [
         {
           "label": "Revised #17089 source with explicit ARM64 layouts for 4 KiB and 64 KiB pages",
@@ -76243,9 +76244,9 @@
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "observedAt": "2026-11-24T18:07:30.803456+00:00",
-        "disposition": "Strict AMD 44914203382/ARM 44914205072 passed two C entries/sources per architecture with zero findings/errors only under CI 6af8011bbf3b343d496faf18866585503bca3dc6, which composes exact approved 17446 C/header blobs. DB JSON/argv match the raw 5026 strict failures 44912116517/44912118433; no checker change or suppression occurred. This closes strict only with 17446 as a prerequisite, not raw 5026. Original 57-case/five-linter CI 568 evidence remains separate; no combined runtime proof is asserted. Product bytes/offsets remain nonidentical and performance, root review, 16522/17446 landing and internal import remain open. Exact public head Pipeline 55478 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure.",
-        "nextAction": "approved_rebase_queue / root owns review 5985786939, an explicitly automated no-new-findings reminder of the existing BUILD issue and #16522 dependency. Preserve the prior finding, the user’s already-posted dependency statement and all source/performance/landing holds; no new source read or external reply is authorized. Root reviews exact source/authority and combined-validation bounds. approved_rebase_queue preserves the explicit 17446 strict prerequisite and original source evidence; no public update or runtime/performance identity is inferred. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure.",
+        "observedAt": "2026-11-24T20:55:31.712040+00:00",
+        "disposition": "Public a3ca22afe was last observed CONFLICTING; GitHub is now recomputing mergeability. #17446 landed with C/header inputs identical to the historical strict-composition CI, satisfying that landing prerequisite only. Raw5026 strict failures and the separate original runtime evidence retain their scopes. #16522, root review, performance and internal adapter integration remain open.",
+        "nextAction": "approved_rebase_queue / root retains the existing requested-rebase and source-authority bounds. Current-PR preparation is separate from the prepared replacement’s #16522 publication prerequisite. Preserve performance/internal holds; do not transfer historical strict qualification to new master or raw5026.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17067#discussion_r4486895273",
           "https://github.com/tamird/gvisor/commit/7f6ecfff61b465c2ae00d20ee4ebaad09d430519",
@@ -76283,9 +76284,10 @@
           "https://buildkite.com/gvisor/pipeline/builds/55478",
           "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321",
           "https://github.com/google/gvisor/pull/17067#pullrequestreview-5985786939",
-          "https://github.com/google/gvisor/pull/17067#issuecomment-7139245011"
+          "https://github.com/google/gvisor/pull/17067#issuecomment-7139245011",
+          "https://github.com/google/gvisor/commit/e597012bfea79de2a377822696c3c22a3cc7dbeb"
         ],
-        "recheckCondition": "Final source review, required 16522/17446 landing/internal import or concrete performance evidence. Preserve existing replacement qualification and all performance/dependency/publication holds.",
+        "recheckCondition": "Actual source/base/mergeability change, #16522 landing, existing reviewed integration or qualified performance evidence.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "mergeable": "CONFLICTING",
         "curatedAt": "2026-11-22T14:02:28.619749+00:00",
@@ -76318,7 +76320,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "root / existing Systrap native stub workstream"
       },
-      "nextStep": "approved_rebase_queue / root owns review 5985786939, an explicitly automated no-new-findings reminder of the existing BUILD issue and #16522 dependency. Preserve the prior finding, the user’s already-posted dependency statement and all source/performance/landing holds; no new source read or external reply is authorized. Root reviews exact source/authority and combined-validation bounds. approved_rebase_queue preserves the explicit 17446 strict prerequisite and original source evidence; no public update or runtime/performance identity is inferred. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure.",
+      "nextStep": "approved_rebase_queue / root retains the existing requested-rebase and source-authority bounds. Current-PR preparation is separate from the prepared replacement’s #16522 publication prerequisite. Preserve performance/internal holds; do not transfer historical strict qualification to new master or raw5026.",
       "recheckCondition": "Reviewable current-base resolution or actual16522 landing/source approval/performance evidence."
     },
     {
@@ -97323,8 +97325,8 @@
       "url": "https://github.com/tamird/gvisor/commit/4e82d9605",
       "group": "runtime",
       "status": "Published",
-      "updatedAt": "2026-11-11T00:51:01+00:00",
-      "summary": "The systrap signal stub defines its own memcpy. Its old declaration returned void while the C interface returns the destination pointer. The revision uses the standard prototype, returns the destination, and makes the memory-order wrappers explicit.",
+      "updatedAt": "2026-11-24T20:55:31.712040+00:00",
+      "summary": "The topic is delivered through merged #17446. Its obsolete upstream-following obligation is complete. The earlier 4e82 qualification and performance evidence remain historical and source-scoped.",
       "evidence": [
         {
           "label": "Published upstream PR #17446",
@@ -97340,15 +97342,17 @@
         }
       ],
       "followup": {
-        "owner": "Upstream review",
+        "owner": "root",
         "sourceHead": "4e82d96053956477eed5782e780581d68e5ff6fc",
-        "observedAt": "2026-11-11T00:51:01+00:00",
-        "disposition": "Published as one commit on #17446 at the exact approved head.",
-        "nextAction": "Follow checks and maintainer review on #17446.",
+        "observedAt": "2026-11-24T20:55:31.712040+00:00",
+        "disposition": "The topic is delivered through merged #17446. Its obsolete upstream-following obligation is complete. The earlier 4e82 qualification and performance evidence remain historical and source-scoped.",
+        "nextAction": "Complete; follow no further #17446 review/import wait. Retain the historical source and evidence without branch deletion.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17446",
-          "https://github.com/tamird/gvisor/commit/4e82d9605"
-        ]
+          "https://github.com/tamird/gvisor/commit/4e82d9605",
+          "https://github.com/google/gvisor/commit/e597012bfea79de2a377822696c3c22a3cc7dbeb"
+        ],
+        "recheckCondition": "Actual source/landing discrepancy."
       },
       "settledReviews": [
         {
@@ -97367,7 +97371,8 @@
           "note": "Published upstream as one commit on the exact approved head."
         }
       ],
-      "inactive": true
+      "inactive": true,
+      "nextStep": "Complete; follow no further #17446 review/import wait. Retain the historical source and evidence without branch deletion."
     },
     {
       "id": "pr:17444",
@@ -98031,14 +98036,14 @@
       "url": "https://github.com/google/gvisor/pull/17446",
       "group": "runtime",
       "status": "merged",
-      "updatedAt": "2026-11-24T20:51:36.949756+00:00",
-      "summary": "Native #17446 merged at 18:57:32 UTC as e597012bf from unchanged headaf4126a46. Native validation, FirstPass2703 and main55835 succeeded. The upstream PR wait is fulfilled; existing source-owner reconciliation will verify the landing and exact dependent obligations without transferring child qualification.",
+      "updatedAt": "2026-11-24T20:55:31.712040+00:00",
+      "summary": "Merged as e597012bf from approved af4126a46. The source owner verified all five changed C/header inputs byte-identical across approved source, landed merge and the historical #17067 strict-composition CI. Current native, DCO, FirstPass2703 and main55835 checks passed. Source/import correspondence is complete.",
       "followup": {
-        "owner": "approved_rebase_queue / root",
+        "owner": "root",
         "sourceHead": "af4126a4619b3c4c851fb6d10afecd1817fa8105",
-        "observedAt": "2026-11-24T20:51:36.949756+00:00",
-        "disposition": "Native #17446 merged at 18:57:32 UTC as e597012bf from unchanged headaf4126a46. Native validation, FirstPass2703 and main55835 succeeded. The upstream PR wait is fulfilled; existing source-owner reconciliation will verify the landing and exact dependent obligations without transferring child qualification.",
-        "nextAction": "approved_rebase_queue / root closes exact source/alias/dependency correspondence. Preserve #17067’s separate #16522, internal adapter and performance holds and the clang-tidy child’s other prerequisites. No source edit, retry, merge or outreach.",
+        "observedAt": "2026-11-24T20:55:31.712040+00:00",
+        "disposition": "Merged as e597012bf from approved af4126a46. The source owner verified all five changed C/header inputs byte-identical across approved source, landed merge and the historical #17067 strict-composition CI. Current native, DCO, FirstPass2703 and main55835 checks passed. Source/import correspondence is complete.",
+        "nextAction": "Complete. No source, review or import action remains. Only the exact #17446 landing prerequisites are satisfied; dependent work retains its separate validation and authorization limits.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17446",
           "https://github.com/tamird/gvisor/commit/4e82d9605",
@@ -98056,7 +98061,7 @@
         ],
         "mergeable": "MERGEABLE",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
-        "recheckCondition": "Existing owner returns exact landing/dependency proof or a discrepancy.",
+        "recheckCondition": "Actual landing/source discrepancy.",
         "qualificationHistory": [
           {
             "observedAt": "2026-11-17T21:09:15.022997+00:00",
@@ -98138,7 +98143,7 @@
           "https://github.com/tamird/gvisor/commit/08eb4bb3605759f7cd942a0d6a1a900d0eb80a5c"
         ]
       },
-      "nextStep": "approved_rebase_queue / root closes exact source/alias/dependency correspondence. Preserve #17067’s separate #16522, internal adapter and performance holds and the clang-tidy child’s other prerequisites. No source edit, retry, merge or outreach."
+      "nextStep": "Complete. No source, review or import action remains. Only the exact #17446 landing prerequisites are satisfied; dependent work retains its separate validation and authorization limits."
     },
     {
       "id": "pr:17456",
@@ -111048,10 +111053,11 @@
       "from": "pr:17446",
       "to": "branch:bazel-clang-tidy-llvm",
       "type": "depends_on",
-      "reason": "The full clang-tidy selection checks the freestanding C sources. Their independent prototype and header correction passed on both toolchains and architectures.",
+      "reason": "This source-verified #17446 landing prerequisite is satisfied. Preserve the dependent item’s other source, compiler, validation, performance and publication conditions.",
       "evidence": [
         "https://github.com/google/gvisor/pull/17446",
-        "https://github.com/tamird/gvisor/actions/runs/42923279810/artifacts/13812582816"
+        "https://github.com/tamird/gvisor/actions/runs/42923279810/artifacts/13812582816",
+        "https://github.com/google/gvisor/commit/e597012bfea79de2a377822696c3c22a3cc7dbeb"
       ]
     },
     {
@@ -111133,11 +111139,12 @@
       "type": "depends_on",
       "from": "pr:17446",
       "to": "pr:17067",
-      "reason": "Planned 5026 recovery satisfies strict C only with exact approved 17446 C/header prerequisites; raw5026 strict failed. This is a planned-source qualification/landing dependency, not a claim that public a3 has adopted it.",
+      "reason": "This source-verified #17446 landing prerequisite is satisfied. Preserve the dependent item’s other source, compiler, validation, performance and publication conditions.",
       "evidence": [
         "https://github.com/google/gvisor/pull/17446",
         "https://github.com/tamird/gvisor/actions/runs/44914203382",
-        "https://github.com/tamird/gvisor/actions/runs/44914205072"
+        "https://github.com/tamird/gvisor/actions/runs/44914205072",
+        "https://github.com/google/gvisor/commit/e597012bfea79de2a377822696c3c22a3cc7dbeb"
       ]
     },
     {

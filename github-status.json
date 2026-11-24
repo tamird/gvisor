@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-24T20:05:23.023227+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-24T20:51:36.949756+00:00",
+  "registryDate": "2026-11-24T20:55:31.712040+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -462046,12 +462046,12 @@
       "mergeabilityCheckedAt": "2026-11-24T20:05:18.333399+00:00",
       "sourceBranchMismatch": false,
       "owner": "approved_rebase_queue / root",
-      "action": "approved_rebase_queue / root owns review 5985786939, an explicitly automated no-new-findings reminder of the existing BUILD issue and #16522 dependency. Preserve the prior finding, the user’s already-posted dependency statement and all source/performance/landing holds; no new source read or external reply is authorized. Root reviews exact source/authority and combined-validation bounds. approved_rebase_queue preserves the explicit 17446 strict prerequisite and original source evidence; no public update or runtime/performance identity is inferred. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure.",
+      "action": "approved_rebase_queue / root retains the existing requested-rebase and source-authority bounds. Current-PR preparation is separate from the prepared replacement’s #16522 publication prerequisite. Preserve performance/internal holds; do not transfer historical strict qualification to new master or raw5026.",
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "disposition": "Strict AMD 44914203382/ARM 44914205072 passed two C entries/sources per architecture with zero findings/errors only under CI 6af8011bbf3b343d496faf18866585503bca3dc6, which composes exact approved 17446 C/header blobs. DB JSON/argv match the raw 5026 strict failures 44912116517/44912118433; no checker change or suppression occurred. This closes strict only with 17446 as a prerequisite, not raw 5026. Original 57-case/five-linter CI 568 evidence remains separate; no combined runtime proof is asserted. Product bytes/offsets remain nonidentical and performance, root review, 16522/17446 landing and internal import remain open. Exact public head Pipeline 55478 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure.",
-        "nextAction": "approved_rebase_queue / root owns review 5985786939, an explicitly automated no-new-findings reminder of the existing BUILD issue and #16522 dependency. Preserve the prior finding, the user’s already-posted dependency statement and all source/performance/landing holds; no new source read or external reply is authorized. Root reviews exact source/authority and combined-validation bounds. approved_rebase_queue preserves the explicit 17446 strict prerequisite and original source evidence; no public update or runtime/performance identity is inferred. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure."
+        "disposition": "Public a3ca22afe was last observed CONFLICTING; GitHub is now recomputing mergeability. #17446 landed with C/header inputs identical to the historical strict-composition CI, satisfying that landing prerequisite only. Raw5026 strict failures and the separate original runtime evidence retain their scopes. #16522, root review, performance and internal adapter integration remain open.",
+        "nextAction": "approved_rebase_queue / root retains the existing requested-rebase and source-authority bounds. Current-PR preparation is separate from the prepared replacement’s #16522 publication prerequisite. Preserve performance/internal holds; do not transfer historical strict qualification to new master or raw5026."
       },
       "conflictObservedSince": "2026-11-17T19:11:47.868378+00:00"
     },
@@ -479073,7 +479073,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T20:51:36.949756+00:00"
+        "observedAt": "2026-11-24T20:55:31.712040+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -479082,7 +479082,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T20:51:36.949756+00:00"
+        "observedAt": "2026-11-24T20:55:31.712040+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -479091,7 +479091,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T20:51:36.949756+00:00"
+        "observedAt": "2026-11-24T20:55:31.712040+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -479100,7 +479100,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T20:51:36.949756+00:00"
+        "observedAt": "2026-11-24T20:55:31.712040+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -479109,7 +479109,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T20:51:36.949756+00:00"
+        "observedAt": "2026-11-24T20:55:31.712040+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -479118,7 +479118,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T20:51:36.949756+00:00"
+        "observedAt": "2026-11-24T20:55:31.712040+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -479127,7 +479127,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T20:51:36.949756+00:00"
+        "observedAt": "2026-11-24T20:55:31.712040+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -479136,7 +479136,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T20:51:36.949756+00:00"
+        "observedAt": "2026-11-24T20:55:31.712040+00:00"
       }
     },
     "issue:17832": {
@@ -479145,7 +479145,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T20:51:36.949756+00:00"
+        "observedAt": "2026-11-24T20:55:31.712040+00:00"
       }
     },
     "branch:arm-premerge-cpp-lint": {
@@ -479154,7 +479154,7 @@
         "since": "2026-11-24T18:07:30.803456+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T20:51:36.949756+00:00"
+        "observedAt": "2026-11-24T20:55:31.712040+00:00"
       }
     },
     "branch:clang-tidy-process-failures": {
@@ -479163,7 +479163,7 @@
         "since": "2026-11-24T18:07:30.803456+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T20:51:36.949756+00:00"
+        "observedAt": "2026-11-24T20:55:31.712040+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -479172,7 +479172,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T20:51:36.949756+00:00"
+        "observedAt": "2026-11-24T20:55:31.712040+00:00"
       }
     },
     "investigation:ci-flake-node-worker-arraybuffer-zerofill": {
@@ -479181,7 +479181,7 @@
         "since": "2026-11-24T18:06:03.132845+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T20:51:36.949756+00:00"
+        "observedAt": "2026-11-24T20:55:31.712040+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -479190,7 +479190,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T20:51:36.949756+00:00",
+        "observedAt": "2026-11-24T20:55:31.712040+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     }
