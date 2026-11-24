@@ -116,8 +116,12 @@ go_cov(
 py_test(
     name = "lint_test",
     srcs = ["lint_test.py"],
-    args = ["$(rootpath :lint.sh)"],
+    args = [
+        "$(rootpath :lint.sh)",
+        "$(rootpath :clang_tidy/clang_tidy.py)",
+    ],
     data = [
+        "clang_tidy/clang_tidy.py",
         "lint.sh",
         "//:.clang-format",
     ],
