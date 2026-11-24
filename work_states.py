@@ -714,8 +714,75 @@ def pr_states(pr: dict, patch: dict | None = None, landing: dict | None = None) 
     return states
 
 
-def derive_states(prs: list[dict], registry: dict) -> StateMap:
+def source_publication(node: dict, decision: dict, prs: list[dict], primary: str, receipts: list[dict] | None = None) -> dict | None:
+    """Bind a source-opening decision to its actual upstream publication."""
+    if decision.get("kind", "proposal") not in {"proposal", "amendment"} or not re.fullmatch(r"[a-f0-9]{40}", (decision.get("head") or "")):
+        return None
+    recorded = next((item for item in [*node.get("settledReviews", []), *(receipts or [])]
+                     if item.get("kind", "proposal") == decision.get("kind", "proposal")
+                     and item.get("head") == decision["head"] and item.get("outcome") == "posted"
+                     and item.get("postedURL")), None)
+    for pr in prs:
+        repo = pr.get("repo", primary)
+        if pr.get("url") != f"https://github.com/{repo}/pull/{pr['number']}":
+            continue
+        if recorded and recorded["postedURL"] == pr["url"]:
+            return pr
+        statuses = {"open", "draft", "merged", "closed"} if decision.get("kind") == "amendment" else {"open", "draft", "merged"}
+        if pr.get("head") != decision["head"] or pr.get("status") not in statuses:
+            continue
+        if decision.get("kind") == "amendment":
+            matches = node.get("type") == "pr" and (node.get("repo", primary), node.get("number")) == (repo, pr["number"])
+        else:
+            commit = re.fullmatch(r"https://github.com/([\w.-]+/[\w.-]+)/commit/([a-f0-9]{9}|[a-f0-9]{40})", decision.get("url", ""))
+            compare = re.fullmatch(r"https://github.com/([\w.-]+/[\w.-]+)/compare/([a-f0-9]{9})\.\.\.([a-f0-9]{9})", decision.get("url", ""))
+            if commit and commit[2] in {decision["head"], decision["head"][:9]}:
+                source_repo = commit[1]
+            elif (node.get("type") == "branch" and compare and compare[2] == decision.get("baseHead", "")[:9]
+                  and compare[3] == decision["head"][:9]):
+                source_repo = compare[1]
+            else:
+                continue
+            matches = source_repo in {repo, pr.get("headRepo")} and repo == node.get("repo", primary)
+            if node.get("type") == "branch" and node.get("repo") == source_repo:
+                matches = repo == primary and pr.get("headRepo") == source_repo and pr.get("ref") == node.get("ref")
+        if not matches:
+            continue
+        return pr
+    return None
+
+
+def decision_receipt(node: dict, decision: dict, receipts: list[dict]) -> dict | None:
+    issue_update = node.get("type") == "issue" and decision.get("kind") == "proposal" and decision.get("head") is None
+    return next((item for item in [*node.get("settledReviews", []), *receipts]
+                 if item.get("kind", "proposal") == decision.get("kind", "proposal") and item.get("head") == decision.get("head")
+                 and (item.get("kind", "proposal") not in {"proposal", "amendment"} or item.get("replyBody") == decision.get("replyBody"))
+                 and (not issue_update and item.get("kind", "proposal") not in {"reply", "review", "issue", "information", "exception", "closure"}
+                      or item.get("body") == decision.get("body"))
+                 and (not issue_update and item.get("kind", "proposal") not in {"issue", "information", "exception", "closure"}
+                      or (item.get("url"), item.get("title")) == (decision.get("url"), decision.get("title")))), None)
+
+
+def published_decisions(prs: list[dict], registry: dict, previous: dict) -> dict[str, list[dict]]:
+    """Retain completed source decisions when their PR later changes or closes."""
+    receipts = {identity: list(items) for identity, items in previous.get("publishedDecisions", {}).items()}
+    for item in [*registry["nodes"], *registry.get("investigations", [])]:
+        node = {**item, "type": item.get("type", "investigation")}
+        decisions = ([node["contributorReview"]] if node.get("contributorReview") else []) + node.get("additionalReviews", [])
+        for decision in decisions:
+            if decision.get("status") != "pending" or decision_receipt(node, decision, receipts.get(node["id"], [])):
+                continue
+            if publication := source_publication(node, decision, prs, registry["meta"]["repo"], receipts.get(node["id"], [])):
+                receipt = {**decision, "status": "settled", "outcome": "posted", "postedURL": publication["url"]}
+                source = {key: value for key, value in receipt.items() if key != "replyBody"}
+                if source not in receipts.setdefault(node["id"], []):
+                    receipts[node["id"]].append(source)
+    return receipts
+
+
+def derive_states(prs: list[dict], registry: dict, publications: dict | None = None) -> StateMap:
     nodes = {node["id"]: node for node in registry["nodes"]}
+    publications = published_decisions(prs, registry, {}) if publications is None else publications
     published = {pr_identity(pr, registry["meta"]["repo"]): pr for pr in prs}
     states = {identity: pr_states(pr, nodes.get(identity, {}).get("approvedPatch"), nodes.get(identity, {}).get("landedPatch"))
               for identity, pr in published.items()}
@@ -731,7 +798,8 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
         # published head, as replies and reviews do from GitHub approval.
         decisions = [node["contributorReview"]] if "contributorReview" in node else []
         decisions.extend(node.get("additionalReviews", []))
-        attached = any(node["type"] == "pr" and decision.get("kind") == "amendment"
+        attached = any(node["type"] == "branch" and decision.get("replyBody")
+                       or node["type"] == "pr" and decision.get("kind") == "amendment"
                        or decision.get("kind") in {"information", "exception", "issue"}
                        or node["type"] == "investigation" and decision.get("kind") in {"issue", "proposal"}
                        or node["type"] == "issue" and decision.get("kind") == "proposal"
@@ -743,19 +811,11 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
             continue
         pr = published.get(node["id"])
         for decision in decisions:
-            issue_update = (node["type"] == "issue" and decision.get("kind") == "proposal"
-                            and decision.get("head") is None)
-            settled = any(
-                item["kind"] == decision.get("kind") and item.get("head") == decision.get("head")
-                and (not issue_update and item["kind"] not in {"reply", "review", "issue", "information", "exception", "closure"}
-                     or item.get("body") == decision.get("body"))
-                and (not issue_update and item["kind"] not in {"issue", "information", "exception", "closure"}
-                     or (item.get("url"), item.get("title")) == (decision.get("url"), decision.get("title")))
-                for item in node.get("settledReviews", [])
-            )
+            settled = decision_receipt(node, decision, publications.get(node["id"], []))
             if decision["status"] == "pending" and not settled:
                 base = decision.get("baseHead", decision.get("head"))
                 source_changed = (pr and decision.get("kind") in {"amendment", "review", "closure"}
+                                  and not source_publication(node, decision, prs, registry["meta"]["repo"], publications.get(node["id"], []))
                                   and (pr["status"] in {"closed", "merged"} or pr.get("head") and pr["head"] != base))
                 if not source_changed:
                     states.setdefault(node["id"], {})["contributor-review"] = {
@@ -769,7 +829,7 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
 
 
 def record_states(prs: list[dict], registry: dict, previous: dict, checked_at: str) -> ObservationMap:
-    current = derive_states(prs, registry)
+    current = derive_states(prs, registry, published_decisions(prs, registry, previous))
     current_prs = {pr_identity(pr, registry["meta"]["repo"]): pr for pr in prs}
     previous_prs = {pr_identity(pr, registry["meta"]["repo"]): pr for pr in previous.get("prs", [])}
     prior_prs = {pr_identity(pr, registry["meta"]["repo"]): pr_states(pr) for pr in previous.get("prs", [])}

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T17:17:08.041093+00:00",
+    "updatedAt": "2026-11-24T18:07:30.803456+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -51,8 +51,8 @@
       "lastResult": "Removed 148 local branches and 67 fork branches. Local branches went from 2,704 to 2,556 and fork branches from 3,676 to 3,609. The 227 open upstream PR heads and 1 open fork PR head all matched their published branches. refs/branch-cleanup/archive at 3f221e657 preserves 177 distinct tips and all 148 original local reflogs.",
       "owner": "root",
       "observedAt": "2026-11-18T06:58:20.703035+00:00",
-      "nextAction": "The bounded canonical merged-only DRY RUN completed successfully with zero eligible refs and no deletion/archive/ref/index/checkout/config mutation. Preserve the completed Nov18 exact 80-ref operation and Nov13 full-audit clock; broader original-plan/local/unmerged/user-owned cleanup remains unapproved. No repeat of the 80-ref operation is needed.",
-      "recheckCondition": "New canonically eligible merged source, an archive/ref discrepancy, or separately authorized broader cleanup scope.",
+      "nextAction": "The latest canonical merged-only dry run stopped before planning: live_protections could not complete the in-progress Actions inventory (17 expected) after bounded retries. No deletion, archive, ref, index, checkout or configuration mutation occurred. Preserve the completed Nov18 exact 80-ref scope and Nov13 full-audit clock; the broader 79-ref manifest remains unapproved.",
+      "recheckCondition": "Stable complete live Actions inventory or a new canonical eligibility trigger; no retry loop or broader cleanup authorization is inferred.",
       "pendingApproval": {
         "status": "Broader original plan not approved by the exact merged-only execution override",
         "manifestSHA256": "e6db36dbf362bacd1a883a512a42a39530cb974ce046f708e5137cce88e35ab9",
@@ -76189,6 +76189,10 @@
         {
           "label": "Clang-built static musl probe, nine release hashes and both uncached guest results",
           "url": "https://github.com/tamird/gvisor/actions/runs/43244273528/artifacts/13956109226"
+        },
+        {
+          "label": "User-posted dependency statement; obsolete reply draft retired",
+          "url": "https://github.com/google/gvisor/pull/17067#issuecomment-7139245011"
         }
       ],
       "settledReviews": [
@@ -76215,14 +76219,24 @@
           "outcome": "approved",
           "at": "2026-11-06T02:45:41.617288Z",
           "postedURL": "https://github.com/google/gvisor/pull/17067#discussion_r4488483371"
+        },
+        {
+          "kind": "reply",
+          "status": "settled",
+          "head": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
+          "url": "https://github.com/google/gvisor/pull/17067",
+          "title": "Reply to outstanding rebase request",
+          "body": "I’m waiting for #16522 before updating this PR, as discussed.\n\nPosted by Codex on behalf of @tamird.",
+          "summary": "The user posted the dependency statement directly in comment7139245011. This obsolete attributed draft was not posted verbatim.",
+          "outcome": "superseded"
         }
       ],
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "observedAt": "2026-11-22T19:05:34.497778+00:00",
+        "observedAt": "2026-11-24T18:07:30.803456+00:00",
         "disposition": "Strict AMD 44914203382/ARM 44914205072 passed two C entries/sources per architecture with zero findings/errors only under CI 6af8011bbf3b343d496faf18866585503bca3dc6, which composes exact approved 17446 C/header blobs. DB JSON/argv match the raw 5026 strict failures 44912116517/44912118433; no checker change or suppression occurred. This closes strict only with 17446 as a prerequisite, not raw 5026. Original 57-case/five-linter CI 568 evidence remains separate; no combined runtime proof is asserted. Product bytes/offsets remain nonidentical and performance, root review, 16522/17446 landing and internal import remain open. Exact public head Pipeline 55478 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure.",
-        "nextAction": "approved_rebase_queue / root owns review 5985786939, an explicitly automated no-new-findings reminder of the existing BUILD issue and #16522 dependency. Preserve the prior finding, pending acknowledgment decision and all source/performance/landing holds; no new source read or external reply is authorized. Root reviews exact source/authority and combined-validation bounds. approved_rebase_queue preserves the explicit 17446 strict prerequisite and original source evidence; no public update or runtime/performance identity is inferred. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure.",
+        "nextAction": "approved_rebase_queue / root owns review 5985786939, an explicitly automated no-new-findings reminder of the existing BUILD issue and #16522 dependency. Preserve the prior finding, the user’s already-posted dependency statement and all source/performance/landing holds; no new source read or external reply is authorized. Root reviews exact source/authority and combined-validation bounds. approved_rebase_queue preserves the explicit 17446 strict prerequisite and original source evidence; no public update or runtime/performance identity is inferred. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17067#discussion_r4486895273",
           "https://github.com/tamird/gvisor/commit/7f6ecfff61b465c2ae00d20ee4ebaad09d430519",
@@ -76259,7 +76273,8 @@
           "https://github.com/google/gvisor/pull/17446",
           "https://buildkite.com/gvisor/pipeline/builds/55478",
           "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321",
-          "https://github.com/google/gvisor/pull/17067#pullrequestreview-5985786939"
+          "https://github.com/google/gvisor/pull/17067#pullrequestreview-5985786939",
+          "https://github.com/google/gvisor/pull/17067#issuecomment-7139245011"
         ],
         "recheckCondition": "Final source review, required 16522/17446 landing/internal import or concrete performance evidence. Preserve existing replacement qualification and all performance/dependency/publication holds.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
@@ -76294,17 +76309,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "root / existing Systrap native stub workstream"
       },
-      "nextStep": "Root reviews exact source/authority and combined-validation bounds. approved_rebase_queue preserves the explicit 17446 strict prerequisite and original source evidence; no public update or runtime/performance identity is inferred. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure.",
-      "recheckCondition": "Reviewable current-base resolution or actual16522 landing/source approval/performance evidence.",
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "url": "https://github.com/google/gvisor/pull/17067",
-        "title": "Reply to outstanding rebase request",
-        "body": "I’m waiting for #16522 before updating this PR, as discussed.\n\nPosted by Codex on behalf of @tamird.",
-        "summary": "The PR update waits for #16522, as previously discussed."
-      }
+      "nextStep": "approved_rebase_queue / root owns review 5985786939, an explicitly automated no-new-findings reminder of the existing BUILD issue and #16522 dependency. Preserve the prior finding, the user’s already-posted dependency statement and all source/performance/landing holds; no new source read or external reply is authorized. Root reviews exact source/authority and combined-validation bounds. approved_rebase_queue preserves the explicit 17446 strict prerequisite and original source evidence; no public update or runtime/performance identity is inferred. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure.",
+      "recheckCondition": "Reviewable current-base resolution or actual16522 landing/source approval/performance evidence."
     },
     {
       "id": "pr:bazel-contrib/buildtools:1527",
@@ -106900,6 +106906,156 @@
         "sourceHead": "cafd7c0bb1ba8f37a32facc212e778ac84a1a3df",
         "mergeable": "MERGEABLE"
       }
+    },
+    {
+      "id": "pr:17920",
+      "type": "pr",
+      "number": 17920,
+      "repo": "google/gvisor",
+      "head": "ac0439e2b8f91f764841ff02fd3b511c1842a276",
+      "title": "Include the ssize_t header in signalfd tests",
+      "url": "https://github.com/google/gvisor/pull/17920",
+      "group": "analysis",
+      "status": "open",
+      "updatedAt": "2026-11-24T17:54:21.639001+00:00",
+      "evidence": [
+        {
+          "label": "Published source proposal",
+          "url": "https://github.com/tamird/gvisor/commit/ac0439e2b8f91f764841ff02fd3b511c1842a276"
+        }
+      ],
+      "summary": "Published #17920 at ac0439e2b after the actual source approval. Native publication readback verified OPEN/MERGEABLE, DCO success and auto-merge off; other GitHub validation was pending at that observation. FirstPass 2684 stopped before an agent or source execution: author 1535036 exhausted the rolling 30-day 360,000 compute-minute quota. Prior source qualification retains its original scope; this run executed no tests.",
+      "nextStep": "Root follows current-head native validation, maintainer review and actual provider admission through the normal canonical sweep. No unchanged CI retry, quota outreach or merge is authorized.",
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-11-24T17:54:21.639001+00:00",
+        "disposition": "Published #17920 at ac0439e2b after the actual source approval. Native publication readback verified OPEN/MERGEABLE, DCO success and auto-merge off; other GitHub validation was pending at that observation. FirstPass 2684 stopped before an agent or source execution: author 1535036 exhausted the rolling 30-day 360,000 compute-minute quota. Prior source qualification retains its original scope; this run executed no tests.",
+        "nextAction": "Root follows current-head native validation, maintainer review and actual provider admission through the normal canonical sweep. No unchanged CI retry, quota outreach or merge is authorized.",
+        "recheckCondition": "Actual source/check/review/admission event or the next canonical sweep.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17920",
+          "https://buildkite.com/gvisor/first-pass/builds/2684"
+        ],
+        "sourceHead": "ac0439e2b8f91f764841ff02fd3b511c1842a276",
+        "providerHead": "ac0439e2b8f91f764841ff02fd3b511c1842a276"
+      }
+    },
+    {
+      "id": "pr:17921",
+      "type": "pr",
+      "number": 17921,
+      "repo": "google/gvisor",
+      "head": "f05f486dc0182b1a9c3e55b33fb3ccde3f0a75b0",
+      "title": "Retain successful runtime batch output",
+      "url": "https://github.com/google/gvisor/pull/17921",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-24T17:54:21.639001+00:00",
+      "evidence": [
+        {
+          "label": "Published source proposal",
+          "url": "https://github.com/tamird/gvisor/commit/f05f486dc0182b1a9c3e55b33fb3ccde3f0a75b0"
+        }
+      ],
+      "summary": "Published #17921 at f05f486dc after the actual source approval. Native publication readback verified OPEN/MERGEABLE, DCO success and auto-merge off; other GitHub validation was pending at that observation. FirstPass 2685 stopped before an agent or source execution: author 1535036 exhausted the rolling 30-day 360,000 compute-minute quota. Prior source qualification retains its original scope; this run executed no tests.",
+      "nextStep": "Root follows current-head native validation, maintainer review and actual provider admission through the normal canonical sweep. No unchanged CI retry, quota outreach or merge is authorized.",
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-11-24T17:54:21.639001+00:00",
+        "disposition": "Published #17921 at f05f486dc after the actual source approval. Native publication readback verified OPEN/MERGEABLE, DCO success and auto-merge off; other GitHub validation was pending at that observation. FirstPass 2685 stopped before an agent or source execution: author 1535036 exhausted the rolling 30-day 360,000 compute-minute quota. Prior source qualification retains its original scope; this run executed no tests.",
+        "nextAction": "Root follows current-head native validation, maintainer review and actual provider admission through the normal canonical sweep. No unchanged CI retry, quota outreach or merge is authorized.",
+        "recheckCondition": "Actual source/check/review/admission event or the next canonical sweep.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17921",
+          "https://buildkite.com/gvisor/first-pass/builds/2685"
+        ],
+        "sourceHead": "f05f486dc0182b1a9c3e55b33fb3ccde3f0a75b0",
+        "providerHead": "f05f486dc0182b1a9c3e55b33fb3ccde3f0a75b0"
+      }
+    },
+    {
+      "id": "branch:arm-premerge-cpp-lint",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "ci/arm-cpp-lint",
+      "head": "6d9a3fa8ee4f33cc89afeaeaeeab0b1a7410d742",
+      "title": "Run ARM64 C++ lint on premerge workers",
+      "url": "https://github.com/tamird/gvisor/commit/6d9a3fa8ee4f33cc89afeaeaeeab0b1a7410d742",
+      "group": "analysis",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-24T18:07:30.803456+00:00",
+      "summary": "The prepared ARM premerge job has YAML and independent review coverage; the existing ARM route is proven, but this new job itself has not run. Depends on #17920. The actual opening decision is pending.",
+      "nextStep": "Root awaits the actual batched opening decision; preserve each proposal’s independent source and validation scope.",
+      "owner": "root",
+      "evidence": [
+        {
+          "label": "Prepared source",
+          "url": "https://github.com/tamird/gvisor/commit/6d9a3fa8ee4f33cc89afeaeaeeab0b1a7410d742"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "6d9a3fa8ee4f33cc89afeaeaeeab0b1a7410d742",
+        "baseHead": "ac0439e2b8f91f764841ff02fd3b511c1842a276",
+        "url": "https://github.com/tamird/gvisor/commit/6d9a3fa8ee4f33cc89afeaeaeeab0b1a7410d742",
+        "title": "Run ARM64 C++ lint on premerge workers",
+        "body": "AMD64 C++ lint passed when #17806 introduced a missing header that ARM64 clang-tidy detects. Run the same checker on ARM64 beside the existing premerge ARM smoke tests.\n\nDepends on #17920.\n\nPosted by Codex on behalf of @tamird.\n",
+        "summary": "The prepared ARM premerge job has YAML and independent review coverage; the existing ARM route is proven, but this new job itself has not run. Depends on #17920. The actual opening decision is pending."
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "6d9a3fa8ee4f33cc89afeaeaeeab0b1a7410d742",
+        "observedAt": "2026-11-24T18:07:30.803456+00:00",
+        "disposition": "The prepared ARM premerge job has YAML and independent review coverage; the existing ARM route is proven, but this new job itself has not run. Depends on #17920. The actual opening decision is pending.",
+        "nextAction": "Root awaits the actual batched opening decision; preserve each proposal’s independent source and validation scope.",
+        "recheckCondition": "Actual contributor decision or changed source/prerequisite evidence.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/6d9a3fa8ee4f33cc89afeaeaeeab0b1a7410d742"
+        ]
+      }
+    },
+    {
+      "id": "branch:clang-tidy-process-failures",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fix/clang-tidy-failure",
+      "head": "df787c7f2f3dd984810e0a8dec1cc4b78e69ebdc",
+      "title": "Fail closed on clang-tidy process errors",
+      "url": "https://github.com/tamird/gvisor/commit/df787c7f2f3dd984810e0a8dec1cc4b78e69ebdc",
+      "group": "analysis",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-24T18:07:30.803456+00:00",
+      "summary": "The checker fails on process errors and retains full diagnostics. Targeted Bazel regression checks and independent reviews pass; Buildifier evidence is reused. The actual independent opening decision is pending.",
+      "nextStep": "Root awaits the actual batched opening decision; preserve each proposal’s independent source and validation scope.",
+      "owner": "root",
+      "evidence": [
+        {
+          "label": "Prepared source",
+          "url": "https://github.com/tamird/gvisor/commit/df787c7f2f3dd984810e0a8dec1cc4b78e69ebdc"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "df787c7f2f3dd984810e0a8dec1cc4b78e69ebdc",
+        "baseHead": "4f8c693a92a3079860d75ceec65d4d221a9dc84e",
+        "url": "https://github.com/tamird/gvisor/commit/df787c7f2f3dd984810e0a8dec1cc4b78e69ebdc",
+        "title": "Fail closed on clang-tidy process errors",
+        "body": "The runner ignored clang-tidy's exit status and stderr, allowing loader failures and crashes to pass. Check both output streams for diagnostics and fail on every nonzero exit, reporting the filename, status and complete failure output.\n\nPosted by Codex on behalf of @tamird.\n",
+        "summary": "The checker fails on process errors and retains full diagnostics. Targeted Bazel regression checks and independent reviews pass; Buildifier evidence is reused. The actual independent opening decision is pending."
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "df787c7f2f3dd984810e0a8dec1cc4b78e69ebdc",
+        "observedAt": "2026-11-24T18:07:30.803456+00:00",
+        "disposition": "The checker fails on process errors and retains full diagnostics. Targeted Bazel regression checks and independent reviews pass; Buildifier evidence is reused. The actual independent opening decision is pending.",
+        "nextAction": "Root awaits the actual batched opening decision; preserve each proposal’s independent source and validation scope.",
+        "recheckCondition": "Actual contributor decision or changed source/prerequisite evidence.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/df787c7f2f3dd984810e0a8dec1cc4b78e69ebdc"
+        ]
+      }
     }
   ],
   "edges": [
@@ -110941,6 +111097,25 @@
         "https://github.com/google/gvisor/pull/17446",
         "https://github.com/tamird/gvisor/actions/runs/44914203382",
         "https://github.com/tamird/gvisor/actions/runs/44914205072"
+      ]
+    },
+    {
+      "from": "pr:17884",
+      "to": "investigation:repository-lint",
+      "type": "depends_on",
+      "reason": "The current 54-commit analyzer series has exact prerequisite parent 0c7e69e359 from open #17884. Its landing remains a source-delivery prerequisite; focused qualification does not complete behavioral or performance obligations.",
+      "evidence": [
+        "https://github.com/gvisor/gvisor/pull/17884",
+        "https://github.com/tamird/gvisor/compare/0c7e69e359dbfc284a7d109ad007395086a70cd4...26090b334cf9c5f4657ec33aef64efc6fa86ef82"
+      ]
+    },
+    {
+      "from": "pr:17920",
+      "to": "branch:arm-premerge-cpp-lint",
+      "type": "depends_on",
+      "reason": "The ARM lint proposal is based on the standalone signalfd header correction in #17920.",
+      "evidence": [
+        "https://github.com/gvisor/gvisor/pull/17920"
       ]
     }
   ],
@@ -122243,8 +122418,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-23T22:28:52.692599+00:00",
-      "summary": "The due native-first guard found no newer/live native delivery. Sole snapshot-only fallback45443163776 succeeded on its failed-job recovery after the reviewed fixture fix with outreach disabled and delivered API 2026-11-24T17:03:38.747135+00:00. Native scheduler-side delivery remains unknown; the active default-branch cron has no demonstrated configuration defect or freshness/fallback suppression.",
+      "updatedAt": "2026-11-24T18:06:03.132845+00:00",
+      "summary": "Native scheduled run 45449232722 completed successfully and published API observations at 17:33:41 UTC. The due 18:03:38 guard reused that fresh generation; no fallback was dispatched. This proves one resumed scheduled delivery, not a scheduler-cause diagnosis or future cadence guarantee.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122487,7 +122662,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground/active-goal supervision owns the next native-first guard 18:03:38 UTC and deadline 18:33:38. Reuse a fresh/live native generation before at most one fallback. Preserve the60/90-minute policy and two-hour UI threshold; no reset, new scheduler or operator outreach.",
+      "nextStep": "Root foreground supervision owns the next native-first guard at 18:33:41 UTC, deadline 19:03:41. Reuse a fresh/live native generation before at most one existing snapshot-only fallback. Preserve the existing freshness policy and source/approval holds.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122622,12 +122797,13 @@
           "https://github.com/tamird/gvisor/actions/runs/45405557424",
           "https://github.com/tamird/gvisor/actions/runs/45417195867",
           "https://github.com/tamird/gvisor/actions/runs/45430212258",
-          "https://github.com/tamird/gvisor/actions/runs/45443163776"
+          "https://github.com/tamird/gvisor/actions/runs/45443163776",
+          "https://github.com/tamird/gvisor/actions/runs/45449232722"
         ],
-        "observedAt": "2026-11-24T17:04:41.818848+00:00",
-        "disposition": "The due native-first guard found no newer/live native delivery. Sole snapshot-only fallback45443163776 succeeded on its failed-job recovery after the reviewed fixture fix with outreach disabled and delivered API 2026-11-24T17:03:38.747135+00:00. Native scheduler-side delivery remains unknown; the active default-branch cron has no demonstrated configuration defect or freshness/fallback suppression.",
-        "nextAction": "Root foreground/active-goal supervision owns the next native-first guard 18:03:38 UTC and deadline 18:33:38. Reuse a fresh/live native generation before at most one fallback. Preserve the60/90-minute policy and two-hour UI threshold; no reset, new scheduler or operator outreach.",
-        "recheckCondition": "Actual fresh/live native delivery, substantive external event or the next due guard.",
+        "observedAt": "2026-11-24T18:06:03.132845+00:00",
+        "disposition": "Native scheduled run 45449232722 completed successfully and published API observations at 17:33:41 UTC. The due 18:03:38 guard reused that fresh generation; no fallback was dispatched. This proves one resumed scheduled delivery, not a scheduler-cause diagnosis or future cadence guarantee.",
+        "nextAction": "Root foreground supervision owns the next native-first guard at 18:33:41 UTC, deadline 19:03:41. Reuse a fresh/live native generation before at most one existing snapshot-only fallback. Preserve the existing freshness policy and source/approval holds.",
+        "recheckCondition": "Actual fresh/live native delivery or the next due freshness guard.",
         "owner": "root"
       }
     },
@@ -132152,10 +132328,10 @@
       "id": "investigation:repository-lint",
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
-      "owner": "root / analysis_pass_inventory",
-      "updatedAt": "2026-11-24T17:17:08.041093+00:00",
+      "owner": "root",
+      "updatedAt": "2026-11-24T18:03:34.004856+00:00",
       "group": "analysis",
-      "summary": "Prepared native series 26090b334 contains 54 commits on 0c7e69e359: dependency update first, then 53 analyzer activation/fix commits. Stable preview qualification/x-tools-module-input-20261124 is verified. Runtime postimages match reviewed a3f; only 10 checker/config paths differ, including required module inputs. Independent module and series reviews are accepted. Functional driver/check/CLI/sanity evidence passes 32 XML cases per ISA under accepted unchanged-input reuse for the three CLI declaration-order moves. Final cli_nogo and cli_test_nogo pass on both ISAs, two XML commands each with no errors; source gates and source-preservation steps pass. Earlier three check/check_test/sanity NoGo validators per ISA also pass. This closes focused checker/source qualification, not the full behavioral or performance gates.",
+      "summary": "54-commit series at 26090b334: dependencies first, then one analyzer and its fixes per commit. Focused AMD64/ARM64 checker and source checks pass. Broader behavioral and performance qualification remains incomplete; prerequisite #17884 is still open.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132527,7 +132703,7 @@
           ]
         }
       ],
-      "nextStep": "Root presents the exact reviewed 54-commit series for publication review; no new-series publication question has yet been asked or granted. Depends on open #17884. Four provider/route behavioral targets and broader performance qualification remain explicit limitations. benchmark_measurement_review owns resumed startup comparison with retained baseline 45425843883 and the established route; no completed A/B result is claimed. Preserve unrelated sensitive-feature holds and separate actual pending decisions.",
+      "nextStep": "Finish the current same-worker startup A/A then A/B run and remaining required workload qualification, then request publication review. Four behavioral targets remain unresolved.",
       "evidence": [
         {
           "label": "Current reviewed analyzer series",
@@ -132869,11 +133045,23 @@
           "summary": "Normal SSH availability is now observed through successful expected-ref-safe workflow and preview pushes. The operational request is no longer needed; no user answer, source approval or expanded credential authority is inferred.",
           "body": "Scope summary (original wording not retained): check or unlock the existing machine/SSH agent so normal authorized Git transport can be used. The source-publication boundary and existing credentials, scopes and hooks remain unchanged.",
           "outcome": "superseded"
+        },
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "ac0439e2b8f91f764841ff02fd3b511c1842a276",
+          "baseHead": "5004cb3b543d351758717a7cd8d2ec42c5a6cb70",
+          "url": "https://github.com/tamird/gvisor/commit/ac0439e2b8f91f764841ff02fd3b511c1842a276",
+          "title": "Include the ssize_t header in signalfd tests",
+          "summary": "Separate strict-C++ baseline repair awaiting source-publication review. One direct include; AMD/ARM native cases, full ARM strict C++, AMD affected translation units and formatting pass, with unchanged AMD coverage reused. Two final reviews are clear; npm source and its original ARM strict result remain separate.",
+          "body": "Include `sys/types.h` for `ssize_t` in the signalfd test's concurrent read loop. This fixes the ARM clang-tidy `misc-include-cleaner` finding.\n\nPosted by Codex on behalf of @tamird.\n",
+          "outcome": "posted",
+          "postedURL": "https://github.com/google/gvisor/pull/17920"
         }
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T17:17:08.041093+00:00",
+        "observedAt": "2026-11-24T18:03:34.004856+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45338108931",
           "https://github.com/tamird/gvisor/actions/runs/45344645597",
@@ -132924,25 +133112,17 @@
           "https://github.com/tamird/gvisor/actions/runs/45444358730/artifacts/14945044229",
           "https://github.com/tamird/gvisor/actions/runs/45444362496/artifacts/14944952935",
           "https://github.com/tamird/gvisor/actions/runs/45441968934",
-          "https://github.com/tamird/gvisor/actions/runs/45441979500"
+          "https://github.com/tamird/gvisor/actions/runs/45441979500",
+          "https://github.com/gvisor/gvisor/pull/17920",
+          "https://github.com/tamird/gvisor/actions/runs/45452628262"
         ],
-        "owner": "root / analysis_pass_inventory",
-        "disposition": "Prepared native series 26090b334 contains 54 commits on 0c7e69e359: dependency update first, then 53 analyzer activation/fix commits. Stable preview qualification/x-tools-module-input-20261124 is verified. Runtime postimages match reviewed a3f; only 10 checker/config paths differ, including required module inputs. Independent module and series reviews are accepted. Functional driver/check/CLI/sanity evidence passes 32 XML cases per ISA under accepted unchanged-input reuse for the three CLI declaration-order moves. Final cli_nogo and cli_test_nogo pass on both ISAs, two XML commands each with no errors; source gates and source-preservation steps pass. Earlier three check/check_test/sanity NoGo validators per ISA also pass. This closes focused checker/source qualification, not the full behavioral or performance gates.",
-        "nextAction": "Root presents the exact reviewed 54-commit series for publication review; no new-series publication question has yet been asked or granted. Depends on open #17884. Four provider/route behavioral targets and broader performance qualification remain explicit limitations. benchmark_measurement_review owns resumed startup comparison with retained baseline 45425843883 and the established route; no completed A/B result is claimed. Preserve unrelated sensitive-feature holds and separate actual pending decisions.",
-        "recheckCondition": "Actual new-series publication review, prerequisite #17884 landing, remaining-workload inventory or qualified performance result; no repeated focused gate.",
+        "owner": "root",
+        "disposition": "54-commit series at 26090b334: dependencies first, then one analyzer and its fixes per commit. Focused AMD64/ARM64 checker and source checks pass. Broader behavioral and performance qualification remains incomplete; prerequisite #17884 is still open.",
+        "nextAction": "Finish the current same-worker startup A/A then A/B run and remaining required workload qualification, then request publication review. Four behavioral targets remain unresolved.",
+        "recheckCondition": "Existing performance owner returns the current same-worker run result; actual remaining-workload qualification or #17884 landing. No publication question has been asked for this series.",
         "sourceHead": "26090b334cf9c5f4657ec33aef64efc6fa86ef82",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4"
-      },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "ac0439e2b8f91f764841ff02fd3b511c1842a276",
-        "baseHead": "5004cb3b543d351758717a7cd8d2ec42c5a6cb70",
-        "url": "https://github.com/tamird/gvisor/commit/ac0439e2b8f91f764841ff02fd3b511c1842a276",
-        "title": "Include the ssize_t header in signalfd tests",
-        "summary": "Separate strict-C++ baseline repair awaiting source-publication review. One direct include; AMD/ARM native cases, full ARM strict C++, AMD affected translation units and formatting pass, with unchanged AMD coverage reused. Two final reviews are clear; npm source and its original ARM strict result remain separate.",
-        "body": "Include `sys/types.h` for `ssize_t` in the signalfd test's concurrent read loop. This fixes the ARM clang-tidy `misc-include-cleaner` finding.\n\nPosted by Codex on behalf of @tamird.\n"
       }
     },
     {
@@ -140583,8 +140763,8 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "benchmark_measurement_review / root",
-      "updatedAt": "2026-11-23T20:29:42.991432+00:00",
-      "summary": "The old combined6a question is superseded. Three independently documented published proposals f05f486d,8044063a,e17f88ff have actual unanswered opening questions. Source/parent identity and reused combined-source functional evidence retain their limits, including original FLAKY annotations. No upstream PR is opened.",
+      "updatedAt": "2026-11-24T17:54:21.639001+00:00",
+      "summary": "The successful-output proposal f05f486d is delivered as #17921. The independent Node TAP 8044063a and pinned-image e17f88ff opening questions remain unanswered. Reused combined-source functional evidence retains its original FLAKY annotations; the original worker timeout cause remains unknown.",
       "findings": [
         {
           "text": "The same shard also timed out in debugger-random-port. The log does not identify where the ArrayBuffer test stopped.",
@@ -140600,7 +140780,7 @@
           ]
         }
       ],
-      "nextStep": "Root awaits the existing three-source opening decision; causal documentation and splitting are complete. Preserve original timeout natural-recurrence and image/runtime limits, with no transfer of old6a approval, duplicate question or new validation claim.",
+      "nextStep": "Root follows #17921 validation/review and awaits the two remaining actual opening decisions. Retain the original timeout investigation for natural recurrence or new evidence; delivery does not establish a flake fix.",
       "evidence": [
         {
           "label": "Original Node shard",
@@ -140650,24 +140830,29 @@
           "summary": "The prior6a opening proposal is superseded by the user’s request for clearer causal documentation and assessment of its three independent changes; it was not approved.",
           "body": "The runtime runner discards successful proctor output, hiding individual Node test outcomes. Use Node’s TAP progress, retain successful output in verbose runner logs, and initialize the standard testing flags before parsing options.\n\nExpose the canonical AMD64 Node 22.2.0 image through the existing Bazel loader. This enables the maintained runtime target without rebuilding the image.\n\nValidation: both selected Node cases completed under runc and Sentry, retaining their existing FLAKY annotations. Owning unit/Nogo checks passed on AMD64 and ARM64; the updated runner also compiled on ARM64. [Functional results](https://github.com/tamird/gvisor/actions/runs/45102386726).\n\nPosted by Codex on behalf of @tamird.\n",
           "outcome": "changes-requested"
+        },
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "f05f486dc0182b1a9c3e55b33fb3ccde3f0a75b0",
+          "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+          "url": "https://github.com/tamird/gvisor/commit/f05f486dc0182b1a9c3e55b33fb3ccde3f0a75b0",
+          "title": "Retain successful runtime batch output",
+          "summary": "First of the three actual pending opening proposals. Preserve exact source/parent and reused combined-source validation limits.",
+          "body": "The runtime runner discarded proctor output when a batch succeeded, hiding individual Node results during the worker timeout investigation. Retain successful output through testing.T and initialize the standard testing flags before parsing options so -test.v can expose it.\n\nPosted by Codex on behalf of @tamird.\n",
+          "outcome": "posted",
+          "postedURL": "https://github.com/google/gvisor/pull/17921"
         }
       ],
       "followup": {
         "owner": "root",
-        "observedAt": "2026-11-24T05:47:43.330769+00:00",
-        "disposition": "The old combined6a question is superseded. Three independently documented published proposals f05f486d,8044063a,e17f88ff have actual unanswered opening questions. Source/parent identity and reused combined-source functional evidence retain their limits, including original FLAKY annotations. No upstream PR is opened.",
-        "nextAction": "Root awaits the existing three-source opening decision; causal documentation and splitting are complete. Preserve original timeout natural-recurrence and image/runtime limits, with no transfer of old6a approval, duplicate question or new validation claim.",
-        "recheckCondition": "Actual contributor answer or substantive source/review/provider evidence."
-      },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "f05f486dc0182b1a9c3e55b33fb3ccde3f0a75b0",
-        "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
-        "url": "https://github.com/tamird/gvisor/commit/f05f486dc0182b1a9c3e55b33fb3ccde3f0a75b0",
-        "title": "Retain successful runtime batch output",
-        "summary": "First of the three actual pending opening proposals. Preserve exact source/parent and reused combined-source validation limits.",
-        "body": "The runtime runner discarded proctor output when a batch succeeded, hiding individual Node results during the worker timeout investigation. Retain successful output through testing.T and initialize the standard testing flags before parsing options so -test.v can expose it.\n\nPosted by Codex on behalf of @tamird.\n"
+        "observedAt": "2026-11-24T17:54:21.639001+00:00",
+        "disposition": "The successful-output proposal f05f486d is delivered as #17921. The independent Node TAP 8044063a and pinned-image e17f88ff opening questions remain unanswered. Reused combined-source functional evidence retains its original FLAKY annotations; the original worker timeout cause remains unknown.",
+        "nextAction": "Root follows #17921 validation/review and awaits the two remaining actual opening decisions. Retain the original timeout investigation for natural recurrence or new evidence; delivery does not establish a flake fix.",
+        "recheckCondition": "Actual sibling decision, #17921 source/check/review event, natural recurrence or new causal evidence.",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/17921"
+        ]
       },
       "additionalReviews": [
         {

@@ -24,7 +24,7 @@ from reapproval import import_author_block, maintainer_logins, reminder_plan
 from outreach import outreach_states, plan as outreach_plan, reviewer_history
 from outreach_delivery import allows_post, live_posting_mode, load_registry, posting_mode, registry_is_published
 from reviewer_selection import is_generic_review, needs_reviewer_paths, recent_reviewer_work, reviewer_governance
-from work_states import FAILURES, check_purpose, check_states, current_rebase_request, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, is_private_buildkite_check, matches_feedback_assignment, matches_feedback_binding, pr_identity, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, validation_checks, verified_landing, with_maintainer_reviewers, with_review_decision
+from work_states import FAILURES, check_purpose, check_states, current_rebase_request, effective_approval, import_lineage, is_advisory_check, is_canceled_validation_check, is_private_buildkite_check, matches_feedback_assignment, matches_feedback_binding, pr_identity, published_decisions, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, validation_checks, verified_landing, with_maintainer_reviewers, with_review_decision
 
 
 ROOT = Path(__file__).resolve().parent
@@ -1653,6 +1653,7 @@ def derive_snapshot() -> None:
     snapshot["reviewWatchHandoff"] = review_watch_handoff(previous["prs"] + previous.get("reviewPRs", []), previous)
     snapshot["mergeabilityHandoff"] = mergeability_handoff(check_report(previous["prs"], previous), previous)
     snapshot["branchCleanup"] = branch_cleanup_handoff(REGISTRY, previous["checkedAt"])
+    snapshot["publishedDecisions"] = published_decisions(previous["prs"], REGISTRY, previous)
     snapshot["workStates"] = record_states(previous["prs"], REGISTRY, previous, previous["checkedAt"])
     write_snapshot(snapshot)
 
@@ -1747,6 +1748,7 @@ def main(*, outreach_mode: str = "unknown") -> None:
             approval = effective_approval(pr, require_aggregate=False)
             pr["publicImportDisposition"]["authorBlock"] = import_author_block(pr, node, OWNER, approval)
     report = check_report(prs, previous)
+    publications = published_decisions(prs, REGISTRY, previous)
     snapshot = {"schema": 1, "reviewAuthority": "gvisor-maintainers", "repo": REPO, "owner": OWNER, "checkedAt": checked_at,
                 "outreachPostingMode": outreach_mode,
                 "registryDate": REGISTRY["meta"]["updatedAt"], "repositories": policies, "prs": prs, "issues": issues,
@@ -1756,6 +1758,7 @@ def main(*, outreach_mode: str = "unknown") -> None:
                 "reviewWatchHandoff": review_watch_handoff(prs + review_prs, previous),
                 "mergeabilityHandoff": mergeability_handoff(report, previous),
                 "checkFailures": report["checkFailures"],
+                "publishedDecisions": publications,
                 "workStates": record_states(prs, REGISTRY, previous, checked_at),
                 "limits": {"requests": requests, "graphqlCost": query_cost, "graphqlRemaining": rate_remaining,
                            "nestedPageSize": 100, "requestLimit": REQUEST_LIMIT, "repositories": inventories,

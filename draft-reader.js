@@ -22,14 +22,24 @@ async function readDraft() {
     if (!response.ok) throw Error("Could not load the work map. Reload to try again.");
     const data = await response.json();
     const id = decodeURIComponent(url.hash.slice(1));
-    const item = [...data.nodes, ...(data.investigations || [])].find(node => node.id === id);
-    const draft = await findDraft(item, url.searchParams.get("draft"));
+    let item = [...data.nodes, ...(data.investigations || [])].find(node => node.id === id);
+    const key = url.searchParams.get("draft");
+    let snapshot = null;
+    if (/^(proposal|amendment)-/.test(key || "")) {
+      const status = await fetch("github-status.json", { cache: "no-cache" });
+      if (!status.ok) throw Error("Could not verify publication status. Open the card for current work.");
+      snapshot = await status.json();
+      if (item) item = { ...item, settledReviews: [...(item.settledReviews || []), ...(snapshot.publishedDecisions?.[id] || [])] };
+    }
+    const draft = await findDraft(item, key);
     if (!draft) throw Error("This version of the draft is no longer available. Open its card for the current work.");
     const labels = { issue: "Issue", reply: "Reply", review: "Review", proposal: "Pull request", amendment: "PR amendment", submission: "Pull request",
       information: "Information request", exception: "Scoped execution exception", closure: "Pull request closure" };
     const kind = item.type === "issue" && draft.kind === "proposal" && draft.head === undefined
       ? "Issue update" : labels[draft.kind] || "Draft";
-    document.getElementById("draft-context").textContent = [kind, item.repo || item.title].join(" · ");
+    const receipt = decisionReceipt(item, draft);
+    const publication = !receipt && snapshot && sourcePublication(item, draft, snapshot.prs, data.meta.repo);
+    document.getElementById("draft-context").textContent = [receipt ? "History" : publication ? "Published" : null, kind, item.repo || item.title].filter(Boolean).join(" · ");
     heading.textContent = draft.title || item.title;
     document.title = heading.textContent + " · gVisor work map";
 
@@ -37,6 +47,15 @@ async function readDraft() {
     // use the renderer’s URL validation on both inline and reference links.
     const markdown = markdownit({ html: false, linkify: true });
     body.innerHTML = markdown.render(draft.body);
+    if (receipt || publication) {
+      const notice = document.createElement("p");
+      notice.textContent = publication && draft.replyBody
+        ? "Source already delivered. The companion reply is still outstanding."
+        : publication || receipt?.outcome === "posted"
+        ? "Already delivered. This draft is retained as history; it is not an outstanding request."
+        : "This decision is settled. The draft is retained as history; open its card for current work.";
+      body.prepend(notice);
+    }
     if (draft.replyBody) {
       const subheading = document.createElement("h2");
       subheading.textContent = "Reply to reviewer";

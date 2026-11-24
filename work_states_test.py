@@ -8,7 +8,7 @@ import subprocess
 import unittest
 from unittest.mock import patch
 
-from work_states import approved_patch, check_purpose, check_qualifier, checks_passed, derive_states, pr_states, public_import_disposition, record_states, remember_mergeability, review_decision
+from work_states import approved_patch, check_purpose, check_qualifier, checks_passed, derive_states, pr_states, public_import_disposition, published_decisions, record_states, source_publication, remember_mergeability, review_decision
 
 
 def original(**changes: object) -> dict:
@@ -766,8 +766,8 @@ class WorkStatesTest(unittest.TestCase):
             self.assertEqual("contributor-review" in states.get("pr:1", {}), len(settled) == 1)
 
     def test_outgoing_decisions_use_registry_clock_and_do_not_replace_public_review(self):
-        pr = original(reviewDecision="CHANGES_REQUESTED")
-        node = {"id": "pr:1", "type": "pr", "contributorReview": {
+        pr = original(reviewDecision="CHANGES_REQUESTED", url="https://github.com/google/gvisor/pull/1")
+        node = {"id": "pr:1", "type": "pr", "number": 1, "contributorReview": {
             "status": "pending", "kind": "review", "head": pr["head"]}}
         issue = {"id": "issue:2", "type": "issue", "contributorReview": {
             "status": "pending", "kind": "reply", "url": "https://github.com/google/gvisor/issues/2"}}
@@ -784,8 +784,8 @@ class WorkStatesTest(unittest.TestCase):
         self.assertNotIn("contributor-review", record_states([pr], registry, {"workStates": states}, "2026-10-03T00:00:00Z")["pr:1"])
 
     def test_amendment_only_needs_review_against_its_published_base(self):
-        pr = original(reviewDecision="CHANGES_REQUESTED")
-        node = {"id": "pr:1", "type": "pr", "contributorReview": {
+        pr = original(reviewDecision="CHANGES_REQUESTED", url="https://github.com/google/gvisor/pull/1")
+        node = {"id": "pr:1", "type": "pr", "number": 1, "contributorReview": {
             "status": "pending", "kind": "amendment", "head": "c" * 40,
             "baseHead": pr["head"]}}
         registry = {"meta": {"repo": "google/gvisor", "updatedAt": "2026-10-03T00:00:00Z"},
@@ -867,6 +867,76 @@ class RepositoryStateTest(unittest.TestCase):
         self.assertEqual((disposition["state"], disposition["action"]), ("not-applicable", None))
         self.assertIn("do not require an export lookup", disposition["description"])
         self.assertEqual(pr, before)
+
+
+class SourcePublicationTest(unittest.TestCase):
+    def test_exact_publication_is_durable_and_does_not_retire_prose(self):
+        head = "a" * 40
+        decision = {"kind": "proposal", "status": "pending", "head": head,
+                    "url": "https://github.com/tamird/gvisor/commit/" + head, "title": "Analyzer", "body": "Enable it."}
+        node = {"id": "investigation:analysis", "type": "investigation", "group": "analysis", "status": "active",
+                "contributorReview": decision}
+        registry = {"meta": {"repo": "google/gvisor", "owner": "tamird"}, "nodes": [], "investigations": [node]}
+        pr = original(repo="google/gvisor", number=7, url="https://github.com/google/gvisor/pull/7")
+        before = copy.deepcopy(registry)
+        receipts = published_decisions([pr], registry, {})
+        self.assertEqual(receipts[node["id"]][0]["postedURL"], pr["url"])
+        previous = {"publishedDecisions": receipts}
+        moved = {**pr, "head": "b" * 40, "status": "closed"}
+        states = record_states([moved], registry, previous, "2026-11-24T00:00:00Z")
+        self.assertNotIn("contributor-review", states.get(node["id"], {}))
+        self.assertEqual(published_decisions([moved], registry, previous), receipts)
+        self.assertEqual(registry, before)
+        for changes in ({"head": "b" * 40}, {"headRepo": "other/gvisor"},
+                        {"repo": "tamird/gvisor", "url": "https://github.com/tamird/gvisor/pull/7"},
+                        {"status": "closed"}):
+            with self.subTest(changes=changes):
+                self.assertIsNone(source_publication(node, decision, [{**pr, **changes}], "google/gvisor"))
+        for kind in ("reply", "review", "information", "exception"):
+            self.assertIsNone(source_publication(node, {**decision, "kind": kind}, [pr], "google/gvisor"))
+
+    def test_source_delivery_survives_a_new_head_without_discarding_its_companion_reply(self):
+        for kind in ("amendment", "proposal"):
+            with self.subTest(kind=kind):
+                pr = original(repo="google/gvisor", url="https://github.com/google/gvisor/pull/1")
+                decision = {"kind": kind, "status": "pending", "head": pr["head"], "baseHead": "b" * 40,
+                            "url": "https://github.com/tamird/gvisor/commit/" + pr["head"],
+                            "replyBody": "Fixed.", "title": "Restore", "body": "Keep rules."}
+                node = {"id": "pr:1" if kind == "amendment" else "investigation:analysis",
+                        "type": "pr" if kind == "amendment" else "investigation", "group": "analysis", "status": "active",
+                        "repo": "google/gvisor", "number": 1, "contributorReview": decision}
+                registry = {"meta": {"repo": "google/gvisor"}, "nodes": [node]}
+                receipts = published_decisions([pr], registry, {})
+                self.assertNotIn("replyBody", receipts[node["id"]][0])
+                previous = {"publishedDecisions": receipts}
+                pr.update(head="c" * 40, status="closed", feedback={"items": [
+                    {"kind": "inline", "body": "Fixed.", "author": {"login": "tamird"}}]})
+                refreshed = published_decisions([pr], registry, previous)
+                self.assertEqual(refreshed, receipts)
+                self.assertIn("contributor-review", record_states([pr], registry, previous, "2026-11-24T00:00:00Z")[node["id"]])
+                node["settledReviews"] = [{**decision, "outcome": "posted", "postedURL": pr["url"]}]
+                self.assertNotIn("contributor-review", record_states([pr], registry, previous, "2026-11-24T00:00:00Z").get(node["id"], {}))
+                decision["replyBody"] = "A new reply."
+                self.assertIn("contributor-review", record_states([pr], registry, previous, "2026-11-24T00:00:00Z")[node["id"]])
+
+    def test_branch_compare_and_legacy_proposals_require_the_canonical_destination(self):
+        head, base = "a" * 40, "b" * 40
+        node = {"id": "branch:analysis", "type": "branch", "repo": "tamird/gvisor", "ref": "topic"}
+        pr = original(repo="google/gvisor", url="https://github.com/google/gvisor/pull/1")
+        for kind in (None, "proposal"):
+            decision = {"head": head, "baseHead": base,
+                        "url": f"https://github.com/tamird/gvisor/compare/{base[:9]}...{head[:9]}"}
+            if kind:
+                decision["kind"] = kind
+            self.assertEqual(source_publication(node, decision, [pr], "google/gvisor"), pr)
+            foreign = {**pr, "repo": "other/gvisor", "url": "https://github.com/other/gvisor/pull/1"}
+            self.assertIsNone(source_publication(node, decision, [foreign], "google/gvisor"))
+        decision.update(kind="proposal", status="pending", replyBody="Fixed.")
+        node.update(head=head, contributorReview=decision)
+        registry = {"meta": {"repo": "google/gvisor"}, "nodes": [node]}
+        receipts = published_decisions([pr], registry, {})
+        states = record_states([pr], registry, {"publishedDecisions": receipts}, "2026-11-24T00:00:00Z")
+        self.assertIn("contributor-review", states[node["id"]])
 
 
 class ApprovalGateTest(unittest.TestCase):

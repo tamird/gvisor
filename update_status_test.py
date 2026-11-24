@@ -872,6 +872,7 @@ class MergeabilityBatchTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "app.js").symlink_to(updater.ROOT / "app.js")
+            (root / "draft.js").symlink_to(updater.ROOT / "draft.js")
             (root / "registry.json").write_text(json.dumps(registry))
             (root / "github-status.json").write_text(json.dumps(snapshot))
             subprocess.run(["node", updater.ROOT / "metadata-preflight.mjs", root],
@@ -1035,6 +1036,7 @@ class CollectorHistoryTest(unittest.TestCase):
                 mock.patch.object(updater.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "", "")):
             expected["registryDate"] = self.registry["meta"]["updatedAt"]
             expected["repositories"] = updater.repository_policies(self.registry)
+            expected["publishedDecisions"] = updater.published_decisions(expected["prs"], self.registry, self.previous)
             expected["reviewerHandoff"] = updater.reviewer_handoff(expected["prs"], self.previous)
             expected["reviewWatchHandoff"] = updater.review_watch_handoff(expected["prs"] + expected["reviewPRs"], self.previous)
             expected["mergeabilityHandoff"] = updater.mergeability_handoff(updater.check_report(expected["prs"], self.previous), self.previous)

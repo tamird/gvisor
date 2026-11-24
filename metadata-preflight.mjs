@@ -9,6 +9,7 @@ const bytes = Object.fromEntries(['app.js', 'registry.json', 'github-status.json
 const source = bytes['app.js'].toString();
 if (!source.endsWith('start();\n')) throw new Error('Unexpected application entry point; review the validator binding.');
 const context = vm.createContext({ URL });
+vm.runInContext(readFileSync(resolve(root, "draft.js"), "utf8"), context, { filename: "draft.js" });
 vm.runInContext(source.slice(0, -'start();\n'.length), context, { filename: 'app.js' });
 context.candidateRegistry = JSON.parse(bytes['registry.json']);
 context.candidateSnapshot = JSON.parse(bytes['github-status.json']);

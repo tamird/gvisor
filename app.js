@@ -295,6 +295,7 @@ const ATTENTION_REASONS = [
   { id: "maintainer-import-checks", owner: "agent", title: "Public import checks failing" },
   { id: "author-feedback", owner: "agent", title: "Review feedback to address" },
   { id: "agent-branch-work", owner: "agent", title: "Branch implementation and validation" },
+  { id: "agent-investigation", owner: "agent", title: "Ongoing investigations" },
   { id: "agent-default-branch-check", owner: "agent", title: "Default-branch CI investigations" },
   { id: "agent-ci-flake", owner: "agent", title: "CI flake investigations" },
   { id: "agent-release-check", owner: "agent", title: "Check an upstream release" },
@@ -671,11 +672,13 @@ function attentionReasons(node, owner) {
     }
   }
   if (humanAction(node)) add("human-submission", humanAction(node).summary);
-  if (node.type === "investigation" && node.status === "active" && !contributorDecision(node) && !humanAction(node)) {
-    if (node.defaultBranchCheck) {
+  if (node.type === "investigation" && node.status === "active") {
+    if (node.group !== "ci-flakes" && !node.defaultBranchCheck && node.owner && node.nextStep)
+      add("agent-investigation", `${node.owner}: ${node.nextStep}`);
+    if (!contributorDecision(node) && !humanAction(node) && node.defaultBranchCheck) {
       if (["FAILURE", "ERROR", "SUCCESS"].includes(liveSnapshot?.defaultBranchChecks?.[node.id]?.state))
         add("agent-default-branch-check", investigationNextStep(node));
-    } else if (node.group === "ci-flakes") add("agent-ci-flake", node.nextStep);
+    } else if (!contributorDecision(node) && !humanAction(node) && node.group === "ci-flakes") add("agent-ci-flake", node.nextStep);
   }
   if (contributorChanges(node)) add("author-feedback", "The contributor requested changes to this branch revision.");
   const outreach = currentOutreach(node);
@@ -1067,6 +1070,24 @@ function appendCrossReferences(section, pr) {
   if (!references.complete) section.append(element("p", "detail-meta", "Cross-reference inventory incomplete; only the latest 100 timeline references were checked."));
 }
 
+function appendInvestigationSource(parent, node) {
+  if (!/^[a-f0-9]{40}$/.test(node.head || "") || node.followup?.sourceHead !== node.head) return;
+  const urls = [...(node.followup.evidence || []), ...(node.evidence || []).map(item => item.url)];
+  const source = urls.find(url => /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/commit\//.test(url)
+    && (url.endsWith("/" + node.head) || url.endsWith("/" + node.head.slice(0, 9))));
+  parent.append(source ? link(`Current source ${node.head.slice(0, 9)} ↗`, source, "detail-meta")
+    : element("p", "detail-meta", `Current source ${node.head.slice(0, 9)}`));
+}
+function appendInvestigationWork(parent, node) {
+  if (node.type !== "investigation" || node.status !== "active") return;
+  const section = element("section", "detail-section");
+  section.append(element("h3", "", "Current work"), element("p", "detail-meta", `Owner: ${node.owner}`));
+  appendInvestigationSource(section, node);
+  if (node.summary) section.append(element("p", "detail-description", node.summary));
+  if (node.nextStep) section.append(element("h4", "", "Next action"), element("p", "", node.nextStep));
+  if (node.followup?.recheckCondition) section.append(element("p", "detail-meta", `Recheck: ${node.followup.recheckCondition}`));
+  parent.append(section);
+}
 function appendAttributes(container, node) {
   if (node.type !== "pr") return;
   const section = element("section", "detail-section pr-attributes"), pr = node.github;
@@ -1226,12 +1247,9 @@ function contributorChanges(node) {
 // Code approval is for a commit. Reviews and replies can contain different
 // messages about the same commit, so their text is part of the decision too.
 function alreadyReviewed(node, decision) {
-  const issueUpdate = node.type === "issue" && decision.kind === "proposal" && decision.head === undefined;
-  return node.settledReviews?.some(item => item.kind === decision.kind && item.head === decision.head
-    && (!(issueUpdate || ["review", "reply", "issue", "information", "exception", "closure"].includes(item.kind)) || item.body === decision.body)
-    && (!(issueUpdate || ["issue", "information", "exception", "closure"].includes(item.kind))
-      || item.url === decision.url && item.title === decision.title));
+  return !!decisionReceipt(node, decision, liveSnapshot?.publishedDecisions?.[node.id]);
 }
+
 function commitLinkMatches(repo, head, url) {
   const prefix = `https://github.com/${repo}/commit/`;
   return typeof head === "string" && (url === prefix + head || url === prefix + head.slice(0, 9));
@@ -1240,13 +1258,23 @@ function trackerMaintenance(node) {
   return node.type === "branch" && node.repo === "tamird/gvisor" &&
     (node.id?.startsWith("branch:work-map-") || /^(tracker\/|review\/work-map-)/.test(node.ref || ""));
 }
+function observedSourcePublication(node, decision) {
+  return sourcePublication(node, decision, [...(liveSnapshot?.prs || []), ...(node.github ? [node.github] : [])],
+    registry.meta.repo, liveSnapshot?.publishedDecisions?.[node.id]);
+}
+function sourceDecisionComplete(node, decision) {
+  const publication = observedSourcePublication(node, decision);
+  return publication && !decision.replyBody;
+}
 function pendingDecisions(node) {
   if (trackerMaintenance(node)) return [];
   const decisions = node.contributorReview ? [node.contributorReview] : [];
-  return decisions.concat(node.additionalReviews || []).filter(decision => decision?.status === "pending" && !alreadyReviewed(node, decision) && (["information", "exception", "issue"].includes(decision.kind)
+  return decisions.concat(node.additionalReviews || []).filter(decision => decision?.status === "pending" && !alreadyReviewed(node, decision)
+    && !sourceDecisionComplete(node, decision) && (["information", "exception", "issue"].includes(decision.kind)
     && (node.type !== "investigation" || node.status === "active")
     || node.type === "branch" && decision.head === node.head
-    || node.type === "pr" && decision.kind === "amendment" && !providerClosed(node) && decision.head !== node.github?.head
+    || node.type === "pr" && decision.kind === "amendment"
+      && (!providerClosed(node) || decision.replyBody && observedSourcePublication(node, decision))
     || node.type === "investigation" && node.status === "active" && decision.kind === "proposal"
     || node.type === "issue" && decision.kind === "proposal"
     || ["pr", "issue"].includes(node.type) && decision.kind === "reply"
@@ -1274,7 +1302,8 @@ function contributorDecisionHeadChanged(node, decision = contributorDecision(nod
   return Boolean(node.github?.head && head && head !== node.github.head);
 }
 function contributorDecisionNeedsRefresh(node, decision = contributorDecision(node)) {
-  return ["amendment", "review", "closure"].includes(decision?.kind) && contributorDecisionHeadChanged(node, decision);
+  return ["amendment", "review", "closure"].includes(decision?.kind)
+    && !observedSourcePublication(node, decision) && contributorDecisionHeadChanged(node, decision);
 }
 function validateHumanAction(node, retiredExecution = false) {
   const action = node.humanAction;
@@ -1630,6 +1659,7 @@ function drawInvestigations() {
     }
     const node = nodes.get(item.id);
     if (node) {
+      appendInvestigationSource(card, node);
       appendContributorDecisions(card, node, pendingDecisions(node));
       appendSettledPublications(card, node);
       appendHumanAction(card, node);
@@ -2057,6 +2087,7 @@ function drawDetails() {
       section.append(link(`@${row.author} · ${date(row.updatedAt)} ↗`, row.url));
     details.append(section);
   }
+  appendInvestigationWork(details, node);
   const showedComparison = appendContributorDecisions(details, node, visibleDecisions(node));
   appendSettledPublications(details, node);
   appendHumanAction(details, node);
@@ -2080,7 +2111,7 @@ function drawDetails() {
   if (refinement && !showedComparison) appendRangeDiffCommand(details, refinement);
   const reach = impact(node.id);
   details.append(element("p", "detail-impact", `${reach.prs} downstream open PRs · ${reach.direct} direct`));
-  if (node.summary) {
+  if (node.summary && !(node.type === "investigation" && node.status === "active")) {
     if (node.type === "pr") {
       const notes = element("details", "curated-notes"); notes.dataset.pr = node.id;
       notes.append(element("summary", "", "Curated notes and history"), element("p", "detail-description", node.summary));
@@ -2353,7 +2384,7 @@ function applyLive(snapshot, nextRegistry = registry) {
     const node = { ...existing, id, type: "pr", number: pr.number, repo: prRepo(pr), title: pr.title, url: pr.url,
       status: pr.status, updatedAt: pr.updatedAt, ref: pr.ref || existing?.ref, group: existing?.group || branch?.group || "new",
       workStates: stateRecords(snapshot, { ...existing, id, type: "pr", github: pr }), github: pr.head ? pr : existing?.github };
-    if (branch && ["open", "draft", "merged"].includes(pr.status)) {
+    if (branch && ["open", "draft", "merged"].includes(pr.status) && !pendingDecisions(branch).some(decision => decision.replyBody)) {
       aliases.set(branch.id, id); node.promotedFrom = branch.ref; node.summary ||= branch.summary;
       // A branch's last published revision can also be the starting point of
       // a pending PR amendment. Keep that amendment's full comparison ranges.
@@ -2765,6 +2796,19 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
   // Older snapshots may predate observation of a registered supplier. Only
   // repositories actually observed in this snapshot can supply live PRs.
   const policies = snapshot.repositories || configured;
+
+  if (snapshot.publishedDecisions !== undefined) {
+    const receipts = snapshot.publishedDecisions;
+    const cards = [...nextRegistry.nodes, ...(nextRegistry.investigations || [])];
+    if (!receipts || Array.isArray(receipts) || typeof receipts !== "object"
+        || Object.entries(receipts).some(([id, entries]) => !cards.some(node => node.id === id) || !Array.isArray(entries)
+          || entries.some(item => !item || ![undefined, "proposal", "amendment"].includes(item.kind)
+            || !/^[a-f0-9]{40}$/.test(item.head || "") || item.status !== "settled" || item.outcome !== "posted"
+            || !nonemptyText(item.url) || item.title !== undefined && !nonemptyText(item.title) || item.body !== undefined && !nonemptyText(item.body)
+            || !/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/[1-9]\d*$/.test(item.postedURL || "")
+            || !safeURL(item.url) || item.replyBody !== undefined && typeof item.replyBody !== "string")))
+      throw new Error("Invalid source-publication receipts");
+  }
   if (Object.entries(configured).some(([repo, policy]) => policies[repo] !== policy) ||
       Object.entries(policies).some(([repo, policy]) => !Object.hasOwn(configured, repo) &&
         (policy !== "none" || !suppliers.some(node => node.repo === repo)))) throw new Error("Snapshot repository policies differ");

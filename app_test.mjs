@@ -3775,3 +3775,114 @@ test('draft links preserve the original decision, including a second reply on th
   c.draftURLInput = url;
   assert.equal(vm.runInContext('draftReturnURL(draftURLInput).href', c), c.current + '#pr%3Aexample%2Frepo%3A42');
 });
+
+
+test('exact upstream source publication retires only its delivery proposal and remains settled after a new head', () => {
+  const c = client(), head = 'a'.repeat(40), pr = attentionNode(7).github;
+  Object.assign(pr, { repo: 'google/gvisor', headRepo: 'tamird/gvisor' });
+  const draft = { kind: 'proposal', status: 'pending', head, title: 'Header', body: 'Include a header.',
+    url: `https://github.com/tamird/gvisor/commit/${head}` };
+  const row = { id: 'investigation:analysis', type: 'investigation', status: 'active', group: 'tools',
+    title: 'Audit and enable analysis', owner: 'root', summary: 'Current checker gates passed; performance remains open.',
+    nextStep: 'Finish performance qualification.', head: 'b'.repeat(40),
+    followup: { sourceHead: 'b'.repeat(40), evidence: [`https://github.com/tamird/gvisor/commit/${'b'.repeat(40)}`],
+      recheckCondition: 'Owning qualification result.' }, contributorReview: draft };
+  c.nodeInput = row; c.pr = pr; c.decision = draft;
+  c.snapshotInput.prs = [pr];
+  const pending = () => JSON.parse(vm.runInContext('JSON.stringify(pendingDecisions(nodeInput))', c));
+  vm.runInContext('liveSnapshot = snapshotInput', c);
+  assert.deepEqual(pending(), []);
+  for (const changed of [{ head: 'c'.repeat(40) }, { headRepo: 'other/gvisor' },
+    { repo: 'tamird/gvisor', url: 'https://github.com/tamird/gvisor/pull/7' }]) {
+    c.snapshotInput.prs = [{ ...pr, ...changed }];
+    assert.equal(pending().length, 1);
+  }
+  c.snapshotInput.prs = [pr];
+  draft.kind = 'reply';
+  assert.equal(vm.runInContext('sourcePublication(nodeInput, decision, [pr], "google/gvisor")', c), null);
+  draft.kind = 'proposal';
+  const receipt = { ...draft, status: 'settled', outcome: 'posted', postedURL: pr.url };
+  c.snapshotInput.publishedDecisions = { [row.id]: [receipt] };
+  c.snapshotInput.prs = [{ ...pr, head: 'c'.repeat(40), status: 'closed' }];
+  assert.deepEqual(pending(), []);
+  assert.ok(vm.runInContext('attentionReasons(nodeInput).some(reason => reason.id === "agent-investigation")', c));
+  const create = () => ({ children: [], append(...items) { this.children.push(...items); },
+    setAttribute(name, value) { this[name] = value; }, addEventListener() {} });
+  c.document = { createElement: create }; c.parent = create();
+  vm.runInContext('appendInvestigationWork(parent, nodeInput)', c);
+  const text = el => [el.textContent || '', el.href || '', ...(el.children || []).map(text)].join(' ');
+  const rendered = text(c.parent);
+  for (const expected of ['Current work', 'Owner: root', 'Current source bbbbbbbbb', row.summary, row.nextStep,
+    row.followup.evidence[0].slice(0, -31), row.followup.recheckCondition]) assert.ok(rendered.includes(expected), expected);
+  assert.ok(!rendered.includes('Include a header.'));
+});
+
+test('publishing an amendment preserves an unposted companion reply and distinct later prose', () => {
+  const c = client(), node = attentionNode(); c.nodeInput = node;
+  const decision = { kind: 'amendment', status: 'pending', head: node.github.head, baseHead: 'b'.repeat(40),
+    title: 'Restore rules', body: 'Restored', replyBody: 'Restored the rules.',
+    url: `https://github.com/tamird/gvisor/commit/${node.github.head}` };
+  node.contributorReview = decision;
+  const pending = () => vm.runInContext('pendingDecisions(nodeInput).length', c);
+  assert.equal(pending(), 1);
+  assert.equal(vm.runInContext('contributorDecisionNeedsRefresh(nodeInput)', c), false);
+  const reply = { kind: 'inline', body: decision.replyBody, author: { login: 'other' } };
+  node.github.feedback.items.push(reply);
+  assert.equal(pending(), 1);
+  reply.author.login = 'tamird';
+  assert.equal(pending(), 1); // An old identical message does not prove this reply was posted.
+  node.settledReviews = [{ ...decision, outcome: 'posted' }];
+  assert.equal(pending(), 0);
+  decision.replyBody = 'A different follow-up.';
+  assert.equal(pending(), 1);
+});
+
+test('a settled source draft is explicitly historical instead of an outstanding request', async () => {
+  const c = client(), head = 'c'.repeat(40);
+  const receipt = { kind: 'amendment', status: 'settled', outcome: 'posted', head,
+    url: `https://github.com/tamird/gvisor/commit/${head}`, title: 'Restore the rules', body: 'Restored rules.',
+    postedURL: 'https://github.com/google/gvisor/pull/16522' };
+  const node = { id: 'pr:16522', type: 'pr', repo: 'google/gvisor', settledReviews: [receipt] };
+  c.registryInput.nodes = [node]; c.registryInput.investigations = [];
+  c.receipt = receipt;
+  const key = await vm.runInContext('draftKey(receipt)', c);
+  const create = () => ({ children: [], append(...items) { this.children.push(...items); },
+    prepend(...items) { this.children.unshift(...items); }, setAttribute() {}, addEventListener() {}, focus() {} });
+  const elements = {};
+  c.document = { referrer: '', createElement: create, addEventListener() {}, getElementById: id => elements[id] ||= create() };
+  c.history = { length: 1 }; c.location = new URL(`https://tamird.github.io/gvisor/draft.html?draft=${key}#pr%3A16522`);
+  c.fetch = async name => ({ ok: true, json: async () => name === 'registry.json' ? c.registryInput : c.snapshotInput });
+  c.markdownit = () => ({ render: body => body });
+  const reader = readFileSync(new URL('./draft-reader.js', import.meta.url), 'utf8');
+  vm.runInContext(reader.slice(0, -'readDraft();\n'.length), c);
+  await vm.runInContext('readDraft()', c);
+  assert.match(elements['draft-context'].textContent, /^History/);
+  assert.match(elements['draft-body'].children[0].textContent, /Already delivered.*not an outstanding request/);
+  assert.equal(elements['draft-body'].innerHTML, receipt.body);
+});
+
+
+test('source receipts retain pending companion prose across head changes and reject foreign-fork branch publications', () => {
+  const c = client(), head = 'a'.repeat(40), base = 'b'.repeat(40);
+  const proposal = { status: 'pending', head, baseHead: base, title: 'Proposal', body: 'Enable',
+    url: `https://github.com/tamird/gvisor/compare/${base.slice(0, 9)}...${head.slice(0, 9)}` };
+  const node = { id: 'branch:analysis', type: 'branch', repo: 'tamird/gvisor', ref: 'topic', head, contributorReview: proposal };
+  const pr = { ...attentionNode().github, repo: 'google/gvisor', headRepo: 'tamird/gvisor', ref: 'topic' };
+  c.node = node; c.decision = proposal; c.pr = pr;
+  assert.ok(vm.runInContext('sourcePublication(node, decision, [pr], "google/gvisor")', c));
+  c.pr = { ...pr, repo: 'other/gvisor', url: 'https://github.com/other/gvisor/pull/1' };
+  assert.equal(vm.runInContext('sourcePublication(node, decision, [pr], "google/gvisor")', c), null);
+  proposal.kind = 'proposal'; proposal.replyBody = 'Fixed.';
+  const receipt = { ...proposal, status: 'settled', outcome: 'posted', postedURL: pr.url };
+  delete receipt.replyBody;
+  c.snapshotInput.publishedDecisions = { [node.id]: [receipt] };
+  c.snapshotInput.prs = [{ ...pr, head: 'c'.repeat(40), status: 'closed', feedback: {
+    items: [{ kind: 'inline', body: 'Fixed.', author: { login: 'tamird' } }] } }];
+  vm.runInContext('liveSnapshot = snapshotInput', c);
+  assert.equal(vm.runInContext('pendingDecisions(node).length', c), 1);
+  assert.equal(vm.runInContext('contributorDecisionNeedsRefresh(node)', c), false);
+  node.settledReviews = [{ ...proposal, outcome: 'posted', postedURL: pr.url }];
+  assert.equal(vm.runInContext('pendingDecisions(node).length', c), 0);
+  proposal.replyBody = 'Another reply.';
+  assert.equal(vm.runInContext('pendingDecisions(node).length', c), 1);
+});

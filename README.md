@@ -1110,7 +1110,7 @@ unchanged patch is displayed separately.
 
 ### Maintainer handoff
 
-The four queue totals partition the visible items. An outstanding contributor decision puts an item in Needs your attention. Otherwise, agent work takes priority over maintainer attention. Other tracked work includes drafts, investigations and branches waiting for prerequisites. “Show this queue” uses the same assignment as the counts and the grouped table. Individual reason filters still match secondary responsibilities. Queue and reason filters are shareable in the URL.
+The four queue totals partition the visible items. An outstanding contributor decision puts an item in Needs your attention. Otherwise, agent work takes priority over maintainer attention. Active investigations with an owner and next action appear in Ongoing investigations, even when no contributor decision has been asked. Their details show the current source and next action separately from publication drafts. Other tracked work includes drafts and branches waiting for prerequisites. “Show this queue” uses the same assignment as the counts and the grouped table. Individual reason filters still match secondary responsibilities. Queue and reason filters are shareable in the URL.
 An unpublished branch with `status: Agent work` routes to the agent when its existing `followup` names an owner, a nonempty next action and the exact current `sourceHead`. Remove an active `contributorReview` badge while implementation or validation remains with the agent, and retain the prior request in the follow-up description; this does not create a second contributor request. Stale-head assignments do not carry forward.
 
 
@@ -1186,6 +1186,6 @@ The archive also stores the original local reflogs in `reflogs.json`.
 
 Open **Read draft** on a card to read the complete proposed post, issue or
 PR description. The address identifies the text shown, including a
-reviewer's reply attached to an amendment. The reader uses the MIT-licensed
+reviewer's reply attached to an amendment. Exact upstream source publication retires its proposal; a companion reply remains outstanding until its exact posting is explicitly recorded. Source-publication receipts persist across later PR revisions. Historical draft links remain readable and are labeled as settled, not outstanding requests. Fork previews do not retire an upstream proposal. The reader uses the MIT-licensed
 [markdown-it 15.0.3 distribution](https://www.npmjs.com/package/markdown-it/v/15.0.3)
 in `vendor/`. The browser renders Markdown locally with embedded HTML disabled.
