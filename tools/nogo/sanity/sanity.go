@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // Package sanity provides a basic sanity test.
-package sanity
+package sanity // import "gvisor.dev/gvisor/tools/nogo/sanity"
 
 import (
 	"errors"

@@ -213,7 +213,8 @@ func init() {
 		switch a.Name {
 		case "any",
 			"plusbuild",
-			"errorsastype":
+			"errorsastype",
+			"importcomment":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}

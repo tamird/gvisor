@@ -44,6 +44,7 @@ func TestFindings(t *testing.T) {
 		"errors.As can be simplified using AsType[*os.PathError]",
 		"WaitGroup.Add called from inside new goroutine",
 		"should be inlined",
+		"canonical import path comment is ignored in module mode",
 	} {
 		if !bytes.Contains(out, []byte(want)) {
 			t.Errorf("missing %q in stdout:\n%s", want, out)

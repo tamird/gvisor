@@ -61,12 +61,65 @@ func TestIgnoredFileDirectives(t *testing.T) {
 		cache:     make(map[string]*importerEntry),
 		analyzers: analyzers,
 	}
-	_, findings, _, err := i.checkPackage("sample", []string{source, ignored})
+	_, findings, _, err := i.checkPackage("sample", []string{source, ignored}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(findings) != 1 || findings[0].Category != "directive" || findings[0].Position.Filename != ignored || !strings.Contains(findings[0].Message, "//go:debug directive only valid in package main or test") {
 		t.Fatalf("findings = %v, want invalid directive in %s", findings, ignored)
+	}
+}
+
+func TestModuleImportComments(t *testing.T) {
+	analyzers := make(map[*analysis.Analyzer]analyzer)
+	for a, runner := range allAnalyzers {
+		if a.Name == "importcomment" {
+			register(analyzers, runner)
+		}
+	}
+	dir := t.TempDir()
+	source := filepath.Join(dir, "source.go")
+	dep := filepath.Join(dir, "dep.go")
+	for filename, contents := range map[string]string{
+		source: "package sample // import \"example.com/sample\"\nimport _ \"example.com/dep\"\n",
+		dep:    "package dep // import \"example.com/dep\"\n",
+	} {
+		if err := os.WriteFile(filename, []byte(contents), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, tc := range []struct {
+		module *analysis.Module
+		name   string
+		want   int
+	}{
+		{module: &analysis.Module{Path: "example.com/sample", Main: true}, name: "module", want: 1},
+		{name: "no module"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			i := &importer{
+				fset:      token.NewFileSet(),
+				sources:   map[string][]string{"example.com/dep": {dep}},
+				cache:     make(map[string]*importerEntry),
+				imports:   make(map[string]*types.Package),
+				analyzers: analyzers,
+			}
+			_, findings, _, err := i.checkPackage("example.com/sample", []string{source}, tc.module)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(findings) != tc.want {
+				t.Fatalf("findings = %v, want %d importcomment findings", findings, tc.want)
+			}
+			for _, f := range findings {
+				if f.Category != "importcomment" || f.Position.Filename != source {
+					t.Errorf("unexpected finding: %v", f)
+				}
+			}
+			if entry := i.cache["example.com/dep"]; entry == nil || len(entry.findings) != 0 {
+				t.Errorf("module metadata leaked to imported package: %+v", entry)
+			}
+		})
 	}
 }
 
@@ -149,7 +202,7 @@ func TestDeclaredFactsErrors(t *testing.T) {
 				analyzers: map[*analysis.Analyzer]analyzer{a: &plainAnalyzer{a}},
 			}
 			// An empty package exercises fact loading without SDK imports.
-			_, findings, _, err := i.checkPackage("test", nil)
+			_, findings, _, err := i.checkPackage("test", nil, nil)
 			if tc.wantText != "" {
 				if err == nil || !strings.Contains(err.Error(), tc.wantText) {
 					t.Fatalf("checkPackage() error = %v, want %q (findings: %v)", err, tc.wantText, findings)
@@ -246,7 +299,7 @@ func use() {
 }
 `, importPath, value)
 				const consumerPath = "gvisor.dev/gvisor/consumer"
-				_, findings, _, err := i.checkPackage(consumerPath, writePackage(consumerPath, source))
+				_, findings, _, err := i.checkPackage(consumerPath, writePackage(consumerPath, source), nil)
 				if err != nil {
 					t.Fatal(err)
 				}

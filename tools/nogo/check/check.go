@@ -402,7 +402,7 @@ func (i *importer) importPackage(importPath, dir string) (*types.Package, error)
 	// analysis from first principles to validate the package and derive
 	// the types. We strictly prefer this to the gcexportdata.
 	if srcs, ok := i.sources[pkgPath]; ok && len(srcs) > 0 {
-		entry.pkg, entry.findings, entry.facts, entry.err = i.checkPackage(pkgPath, srcs)
+		entry.pkg, entry.findings, entry.facts, entry.err = i.checkPackage(pkgPath, srcs, nil)
 		if entry.err != nil {
 			return nil, entry.err
 		}
@@ -471,7 +471,7 @@ func (i *errorImporter) ImportFrom(path, dir string, mode types.ImportMode) (*ty
 //
 // [1] bazelbuid/rules_go/tools/builders/nogo_main.go
 // [2] golang.org/x/tools/go/checker/internal/checker
-func (i *importer) checkPackage(path string, srcs []string) (*types.Package, FindingSet, *facts.Package, error) {
+func (i *importer) checkPackage(path string, srcs []string, module *analysis.Module) (*types.Package, FindingSet, *facts.Package, error) {
 	// Load all source files.
 	goFiles, nonGoFiles := sortSrcs(srcs)
 	syntax := make([]*ast.File, 0, len(goFiles))
@@ -605,6 +605,7 @@ func (i *importer) checkPackage(path string, srcs []string) (*types.Package, Fin
 			// Run the analysis.
 			var localFindings FindingSet
 			p := &analysis.Pass{
+				Module:       module,
 				Analyzer:     a,
 				Fset:         i.fset,
 				Files:        syntax,
@@ -798,7 +799,7 @@ func (i *importer) hardImportPackages(pkgs []string) error {
 }
 
 // Package runs all analyzer on a single package.
-func Package(path string, srcs []string) (FindingSet, facts.Serializer, error) {
+func Package(path string, srcs []string, module *analysis.Module) (FindingSet, facts.Serializer, error) {
 	i := &importer{
 		fset:      token.NewFileSet(),
 		cache:     make(map[string]*importerEntry),
@@ -811,7 +812,7 @@ func Package(path string, srcs []string) (FindingSet, facts.Serializer, error) {
 		return nil, nil, err
 	}
 
-	_, findings, facts, err := i.checkPackage(path, srcs)
+	_, findings, facts, err := i.checkPackage(path, srcs, module)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -861,7 +862,7 @@ func TemplateFuncs(path string, srcs []string) (map[string]any, any, error) {
 		return nil, nil, err
 	}
 
-	pkg, _, localFacts, err := i.checkPackage(path, srcs)
+	pkg, _, localFacts, err := i.checkPackage(path, srcs, nil)
 	if err != nil {
 		return nil, nil, err
 	}
