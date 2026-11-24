@@ -70,9 +70,7 @@ func (f *MemoryFile) exportMetadataProto() *pgallocpb.MemoryFileMetadataProto {
 		Version:     1,
 		Subreleased: make(map[uint64]uint64, len(f.subreleased)),
 	}
-	for k, v := range f.subreleased {
-		pb.Subreleased[k] = v
-	}
+	maps.Copy(pb.Subreleased, f.subreleased)
 	chunks := f.chunksLoad()
 	pb.Chunks = make([]*pgallocpb.ChunkInfoProto, len(chunks))
 	for i, c := range chunks {
@@ -126,9 +124,7 @@ func (f *MemoryFile) importMetadataProto(pb *pgallocpb.MemoryFileMetadataProto) 
 		return fmt.Errorf("unsupported MemoryFileMetadataProto version %d", pb.Version)
 	}
 	f.subreleased = make(map[uint64]uint64, len(pb.Subreleased))
-	for k, v := range pb.Subreleased {
-		f.subreleased[k] = v
-	}
+	maps.Copy(f.subreleased, pb.Subreleased)
 	chunks := make([]chunkInfo, len(pb.Chunks))
 	for i, c := range pb.Chunks {
 		chunks[i] = chunkInfo{

@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"os"
 	"os/exec"
@@ -85,9 +86,8 @@ func SimpleSpec(name, image string, cmd []string, extra map[string]any) string {
 	if len(cmd) > 0 { // Omit if empty.
 		s["command"] = cmd
 	}
-	for k, v := range extra {
-		s[k] = v // Extra settings.
-	}
+	// Extra settings.
+	maps.Copy(s, extra)
 	v, err := json.Marshal(s)
 	if err != nil {
 		// This shouldn't happen.

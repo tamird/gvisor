@@ -19,6 +19,7 @@ package testutil
 import (
 	"fmt"
 	"io"
+	"maps"
 	"strings"
 	"testing"
 
@@ -268,9 +269,7 @@ func (d *DirentCollector) Contains(name string, typ uint8) error {
 func (d *DirentCollector) Dirents() map[string]*vfs.Dirent {
 	d.mu.Lock()
 	dirents := make(map[string]*vfs.Dirent)
-	for n, d := range d.dirents {
-		dirents[n] = d
-	}
+	maps.Copy(dirents, d.dirents)
 	d.mu.Unlock()
 	return dirents
 }

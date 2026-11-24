@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"math"
 	"path"
 	"strconv"
@@ -299,9 +300,7 @@ func TestTasksWithOverrideProc(t *testing.T) {
 	defer s.Destroy()
 
 	expected := make(map[string]testutil.DirentType)
-	for k, v := range tasksStaticFiles {
-		expected[k] = v
-	}
+	maps.Copy(expected, tasksStaticFiles)
 	expected["kallsyms"] = linux.DT_REG
 	expected["arbitrary_file"] = linux.DT_REG
 
@@ -339,9 +338,7 @@ func TestTasks(t *testing.T) {
 	defer s.Destroy()
 
 	expectedDirents := make(map[string]testutil.DirentType)
-	for n, d := range tasksStaticFiles {
-		expectedDirents[n] = d
-	}
+	maps.Copy(expectedDirents, tasksStaticFiles)
 
 	k := kernel.KernelFromContext(s.Ctx)
 	var tasks []*kernel.Task

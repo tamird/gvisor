@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"math"
 	"sort"
 	"strings"
@@ -71,9 +72,7 @@ func (m *metricMetadata) clone() *metricMetadata {
 		Fields: make(map[string]string, len(m.Fields)),
 	}
 	proto.Merge(m2.PB, m.PB)
-	for k, v := range m.Fields {
-		m2.Fields[k] = v
-	}
+	maps.Copy(m2.Fields, m.Fields)
 	return m2
 }
 

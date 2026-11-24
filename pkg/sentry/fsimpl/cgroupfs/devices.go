@@ -17,6 +17,7 @@ package cgroupfs
 import (
 	"bytes"
 	"fmt"
+	"maps"
 	"strconv"
 	"strings"
 
@@ -346,9 +347,7 @@ func (c *devicesController) Clone() controller {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	newRules := make(map[deviceID]permission)
-	for id, p := range c.deviceRules {
-		newRules[id] = p
-	}
+	maps.Copy(newRules, c.deviceRules)
 	new := &devicesController{
 		defaultAllow: c.defaultAllow,
 		deviceRules:  newRules,

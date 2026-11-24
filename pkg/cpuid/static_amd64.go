@@ -20,6 +20,7 @@ import (
 	"cmp"
 	"encoding/binary"
 	"fmt"
+	"maps"
 	"slices"
 )
 
@@ -88,9 +89,7 @@ func (fs FeatureSet) ToStatic() Static {
 func (s Static) ToFeatureSet() FeatureSet {
 	// Make a copy.
 	ns := make(Static)
-	for k, v := range s {
-		ns[k] = v
-	}
+	maps.Copy(ns, s)
 	ns.normalize()
 	return FeatureSet{ns, hwCap{}}
 }

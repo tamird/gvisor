@@ -22,6 +22,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net"
 	"os"
 	"os/exec"
@@ -586,9 +587,7 @@ func newRunscConfig(m *MockContainerd, shimArgsOverrides, runscArgsOverrides map
 		"platform":                "systrap",
 		"network":                 "none",
 	}
-	for k, v := range runscArgsOverrides {
-		runscConfig[k] = v
-	}
+	maps.Copy(runscConfig, runscArgsOverrides)
 	if runscConfig["debug"] == "true" {
 		runscConfig["debug-log"] = runscDebugPath
 	}
@@ -599,9 +598,7 @@ func newRunscConfig(m *MockContainerd, shimArgsOverrides, runscArgsOverrides map
 		"runsc_config": runscConfig,
 	}
 
-	for k, v := range shimArgsOverrides {
-		config[k] = v
-	}
+	maps.Copy(config, shimArgsOverrides)
 
 	var buf bytes.Buffer
 	if err := toml.NewEncoder(&buf).Encode(config); err != nil {
