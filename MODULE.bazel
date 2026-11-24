@@ -1103,3 +1103,35 @@ img_pull(
     registries = ["us-central1-docker.pkg.dev"],
     repository = "gvisor-presubmit/gvisor-presubmit-images/benchmarks/sysbench_x86_64",
 )
+
+img_pull(
+    name = "benchmark_fio_amd64",
+    digest = "sha256:e14d005fc4c247305dbde4136dfe797f0a91a1446af5b4ff1925505f635370a5",
+    layer_handling = "eager",
+    registries = ["us-central1-docker.pkg.dev"],
+    repository = "gvisor-presubmit/gvisor-presubmit-images/benchmarks/fio_x86_64",
+)
+
+img_pull(
+    name = "benchmark_absl_amd64",
+    digest = "sha256:399f4288a0ff1d6067145bc0749fe362ea4d51d06f33cbb45cdc959b866ae5a9",
+    layer_handling = "eager",
+    registries = ["us-central1-docker.pkg.dev"],
+    repository = "gvisor-presubmit/gvisor-presubmit-images/benchmarks/absl_x86_64",
+)
+
+img_pull(
+    name = "benchmark_build_grpc_amd64",
+    digest = "sha256:f1d6de0746e2387e745a65bdb489a9e23e3e6ff7d7f7c2dc14ce66f6637394e0",
+    layer_handling = "eager",
+    registries = ["us-central1-docker.pkg.dev"],
+    repository = "gvisor-presubmit/gvisor-presubmit-images/benchmarks/build-grpc_x86_64",
+)
+
+img_pull(
+    name = "benchmark_rubydev_amd64",
+    digest = "sha256:908f36fb814f54d2a710d10f7f1c80eb8642b1f64468b8291223951c0cc15909",
+    layer_handling = "eager",
+    registries = ["us-central1-docker.pkg.dev"],
+    repository = "gvisor-presubmit/gvisor-presubmit-images/benchmarks/rubydev_x86_64",
+)

@@ -21,6 +21,7 @@
 # --network selects the declared networking images without changing the engine.
 # --memory selects the declared memory benchmark images without changing the engine.
 # --syscall selects the declared syscall image without changing the engine.
+# --filesystem selects the declared filesystem images without changing the engine.
 # --compare adds the declared baseline release with separate owned runtime names.
 # Docker 28 default-network restores fail: https://github.com/moby/moby/issues/50750
 # With no caller, checks the native and installed runtimes using Alpine.
@@ -71,11 +72,23 @@ if test "${1:-}" = --syscall; then
   names+=(syscallbench)
   loaders+=(images/benchmarks/syscallbench/syscallbench_load.exe)
 fi
+filesystem_mode=false
+if test "${1:-}" = --filesystem; then
+  shift
+  filesystem_mode=true
+  names+=(fio absl build-grpc rubydev)
+  loaders+=(
+    images/benchmark_fio_load.exe
+    images/benchmark_absl_load.exe
+    images/benchmark_build_grpc_load.exe
+    images/benchmark_rubydev_load.exe
+  )
+fi
 comparison=false
 if test "${1:-}" = --compare; then
   shift
-  if ! $checkpoint_mode && ! $network_mode && ! $memory_mode && ! $syscall_mode; then
-    echo "--compare requires --startup, --network, --memory, or --syscall" >&2
+  if ! $checkpoint_mode && ! $network_mode && ! $memory_mode && ! $syscall_mode && ! $filesystem_mode; then
+    echo "--compare requires --startup, --network, --memory, --syscall, or --filesystem" >&2
     exit 1
   fi
   comparison=true

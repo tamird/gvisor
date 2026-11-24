@@ -128,3 +128,21 @@ sh_binary(
     target_compatible_with = ["@platforms//cpu:x86_64"],
     visibility = ["//:sandbox"],
 )
+
+sh_binary(
+    name = "filesystem_comparison_host_docker",
+    srcs = ["host_docker.sh"],
+    data = [
+        "//:release",
+        "//images:benchmark_absl_load",
+        "//images:benchmark_alpine_load",
+        "//images:benchmark_build_grpc_load",
+        "//images:benchmark_fio_load",
+        "//images:benchmark_rubydev_load",
+        "//tools/benchmark/paired",
+        "@startup_baseline_release//:baseline-release.tar.bz2",
+    ],
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//cpu:x86_64"],
+    visibility = ["//:sandbox"],
+)

@@ -146,3 +146,31 @@ image_outputs(
     image_name = "benchmarks/sysbench",
     visibility = ["//test/benchmarks/harness:__pkg__"],
 )
+
+image_outputs(
+    name = "benchmark_fio",
+    image = "@benchmark_fio_amd64",
+    image_name = "benchmarks/fio",
+    visibility = ["//test/benchmarks/harness:__pkg__"],
+)
+
+image_outputs(
+    name = "benchmark_absl",
+    image = "@benchmark_absl_amd64",
+    image_name = "benchmarks/absl",
+    visibility = ["//test/benchmarks/harness:__pkg__"],
+)
+
+image_outputs(
+    name = "benchmark_build_grpc",
+    image = "@benchmark_build_grpc_amd64",
+    image_name = "benchmarks/build-grpc",
+    visibility = ["//test/benchmarks/harness:__pkg__"],
+)
+
+image_outputs(
+    name = "benchmark_rubydev",
+    image = "@benchmark_rubydev_amd64",
+    image_name = "benchmarks/rubydev",
+    visibility = ["//test/benchmarks/harness:__pkg__"],
+)
