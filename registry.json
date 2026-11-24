@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T13:45:26.628504+00:00",
+    "updatedAt": "2026-11-24T14:47:59.067163+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -122232,7 +122232,7 @@
       "status": "active",
       "owner": "root",
       "updatedAt": "2026-11-23T22:28:52.692599+00:00",
-      "summary": "The due native-first guard found no newer/live native delivery. Sole snapshot-only fallback 45405557424 succeeded with outreach disabled and delivered API 2026-11-24T13:42:20.766153+00:00. Native scheduler-side delivery remains unknown; the active default-branch cron has no demonstrated configuration defect or freshness/fallback suppression.",
+      "summary": "The due native-first guard found no newer/live native delivery. Sole snapshot-only fallback45417195867 succeeded with outreach disabled and delivered API 2026-11-24T14:47:11.369592+00:00. Native scheduler-side delivery remains unknown; the active default-branch cron has no demonstrated configuration defect or freshness/fallback suppression.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122475,7 +122475,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground/active-goal supervision owns the next native-first guard 14:42:20 UTC and deadline 15:12:20. Reuse a fresh/live native generation before at most one fallback. Preserve the 60/90-minute policy and two-hour UI threshold; no reset, new scheduler or operator outreach.",
+      "nextStep": "Root foreground/active-goal supervision owns the next native-first guard 15:47:11 UTC and deadline 16:17:11. Reuse a fresh/live native generation before at most one fallback. Preserve the60/90-minute policy and two-hour UI threshold; no reset, new scheduler or operator outreach.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122607,11 +122607,12 @@
           "https://github.com/tamird/gvisor/actions/runs/45374435406",
           "https://github.com/tamird/gvisor/actions/runs/45384586173",
           "https://github.com/tamird/gvisor/actions/runs/45394813634",
-          "https://github.com/tamird/gvisor/actions/runs/45405557424"
+          "https://github.com/tamird/gvisor/actions/runs/45405557424",
+          "https://github.com/tamird/gvisor/actions/runs/45417195867"
         ],
-        "observedAt": "2026-11-24T13:43:16.568508+00:00",
-        "disposition": "The due native-first guard found no newer/live native delivery. Sole snapshot-only fallback 45405557424 succeeded with outreach disabled and delivered API 2026-11-24T13:42:20.766153+00:00. Native scheduler-side delivery remains unknown; the active default-branch cron has no demonstrated configuration defect or freshness/fallback suppression.",
-        "nextAction": "Root foreground/active-goal supervision owns the next native-first guard 14:42:20 UTC and deadline 15:12:20. Reuse a fresh/live native generation before at most one fallback. Preserve the 60/90-minute policy and two-hour UI threshold; no reset, new scheduler or operator outreach.",
+        "observedAt": "2026-11-24T14:47:59.067163+00:00",
+        "disposition": "The due native-first guard found no newer/live native delivery. Sole snapshot-only fallback45417195867 succeeded with outreach disabled and delivered API 2026-11-24T14:47:11.369592+00:00. Native scheduler-side delivery remains unknown; the active default-branch cron has no demonstrated configuration defect or freshness/fallback suppression.",
+        "nextAction": "Root foreground/active-goal supervision owns the next native-first guard 15:47:11 UTC and deadline 16:17:11. Reuse a fresh/live native generation before at most one fallback. Preserve the60/90-minute policy and two-hour UI threshold; no reset, new scheduler or operator outreach.",
         "recheckCondition": "Actual fresh/live native delivery, substantive external event or the next due guard.",
         "owner": "root"
       }
