@@ -143,6 +143,13 @@ analyzers:
       exclude:
         # The NBSP fixture verifies that malformed whitespace does not grant nosplit.
         - '^bazel-out/[^/]+/bin/tools/checkescape/test1/nosplit\.go:'
+  bloop:
+    internal:
+      exclude:
+        # Measure and StartTimer regions exclude per-iteration setup and cleanup.
+        - '^sandboxexec/sandbox/sandbox_bench_test\.go:(74|107|124|146):[0-9]+$'
+        - '^test/benchmarks/base/startup_test\.go:(42|170|212):[0-9]+$'
+        - '^test/benchmarks/media/ffmpeg_test\.go:42:[0-9]+$'
   waitgroupgo:
     internal:
       exclude:

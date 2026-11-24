@@ -213,6 +213,7 @@ func init() {
 	register(allAnalyzers, &plainAnalyzer{unreachable.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{unsafeptr.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{unusedresult.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{modernize.BLoopAnalyzer})
 	register(allAnalyzers, &plainAnalyzer{modernize.FmtAppendfAnalyzer})
 	for _, a := range modernize.Suite {
 		switch a.Name {

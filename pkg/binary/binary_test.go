@@ -125,7 +125,7 @@ func BenchmarkMarshalUnmarshal(b *testing.B) {
 	buf := make([]byte, Size(&in))
 	out := outerBenchmark{}
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		buf := Marshal(buf[:0], LittleEndian, &in)
 		Unmarshal(buf, LittleEndian, &out)
 	}
@@ -142,7 +142,7 @@ func BenchmarkReadWrite(b *testing.B) {
 	buf := bytes.NewBuffer(make([]byte, binary.Size(&in)))
 	out := outerBenchmark{}
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		buf.Reset()
 		if err := binary.Write(buf, LittleEndian, &in); err != nil {
 			b.Error("Write:", err)

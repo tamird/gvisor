@@ -457,8 +457,7 @@ func BenchmarkSleeperMultiSelect(b *testing.B) {
 		s.AddWaker(&w[i])
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		w[count-1].Assert()
 		s.Fetch(true)
 	}
@@ -473,8 +472,7 @@ func BenchmarkGoMultiSelect(b *testing.B) {
 		ch[i] = make(chan struct{}, 1)
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		ch[count-1] <- struct{}{}
 		select {
 		case <-ch[0]:
@@ -492,8 +490,7 @@ func BenchmarkSleeperSingleSelect(b *testing.B) {
 	w := Waker{}
 	s.AddWaker(&w)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		w.Assert()
 		s.Fetch(true)
 	}
@@ -504,8 +501,7 @@ func BenchmarkSleeperSingleSelect(b *testing.B) {
 func BenchmarkGoSingleSelect(b *testing.B) {
 	ch := make(chan struct{}, 1)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		ch <- struct{}{}
 		<-ch
 	}
@@ -516,7 +512,7 @@ func BenchmarkGoSingleSelect(b *testing.B) {
 func BenchmarkSleeperAssertNonWaiting(b *testing.B) {
 	w := Waker{}
 	w.Assert()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		w.Assert()
 	}
 
@@ -527,7 +523,7 @@ func BenchmarkSleeperAssertNonWaiting(b *testing.B) {
 func BenchmarkGoAssertNonWaiting(b *testing.B) {
 	ch := make(chan struct{}, 1)
 	ch <- struct{}{}
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		select {
 		case ch <- struct{}{}:
 		default:

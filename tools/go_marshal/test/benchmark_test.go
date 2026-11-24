@@ -34,9 +34,7 @@ func BenchmarkEncodingBinary(b *testing.B) {
 
 	size := encbin.Size(&s1)
 
-	b.ResetTimer()
-
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		buf := bytes.NewBuffer(make([]byte, size))
 		buf.Reset()
 		if err := encbin.Write(buf, hostarch.ByteOrder, &s1); err != nil {
@@ -46,8 +44,6 @@ func BenchmarkEncodingBinary(b *testing.B) {
 			b.Error("Read:", err)
 		}
 	}
-
-	b.StopTimer()
 
 	// Sanity check, make sure the values were preserved.
 	if !reflect.DeepEqual(s1, s2) {
@@ -62,15 +58,11 @@ func BenchmarkBinary(b *testing.B) {
 
 	size := binary.Size(s1)
 
-	b.ResetTimer()
-
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		buf := make([]byte, 0, size)
 		buf = binary.Marshal(buf, hostarch.ByteOrder, &s1)
 		binary.Unmarshal(buf, hostarch.ByteOrder, &s2)
 	}
-
-	b.StopTimer()
 
 	// Sanity check, make sure the values were preserved.
 	if !reflect.DeepEqual(s1, s2) {
@@ -83,9 +75,7 @@ func BenchmarkMarshalManual(b *testing.B) {
 	var s1, s2 test.Stat
 	analysis.RandomizeValue(&s1)
 
-	b.ResetTimer()
-
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		buf := make([]byte, 0, s1.SizeBytes())
 
 		// Marshal
@@ -127,8 +117,6 @@ func BenchmarkMarshalManual(b *testing.B) {
 		s2.CTime.Nsec = int64(hostarch.ByteOrder.Uint64(buf[112:120]))
 	}
 
-	b.StopTimer()
-
 	// Sanity check, make sure the values were preserved.
 	if !reflect.DeepEqual(s1, s2) {
 		panic(fmt.Sprintf("Data corruption across marshal/unmarshal cycle:\nBefore: %+v\nAfter: %+v\n", s1, s2))
@@ -140,15 +128,11 @@ func BenchmarkGoMarshalSafe(b *testing.B) {
 	var s1, s2 test.Stat
 	analysis.RandomizeValue(&s1)
 
-	b.ResetTimer()
-
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		buf := make([]byte, s1.SizeBytes())
 		s1.MarshalBytes(buf)
 		s2.UnmarshalBytes(buf)
 	}
-
-	b.StopTimer()
 
 	// Sanity check, make sure the values were preserved.
 	if !reflect.DeepEqual(s1, s2) {
@@ -161,15 +145,11 @@ func BenchmarkGoMarshalUnsafe(b *testing.B) {
 	var s1, s2 test.Stat
 	analysis.RandomizeValue(&s1)
 
-	b.ResetTimer()
-
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		buf := make([]byte, s1.SizeBytes())
 		s1.MarshalUnsafe(buf)
 		s2.UnmarshalUnsafe(buf)
 	}
-
-	b.StopTimer()
 
 	// Sanity check, make sure the values were preserved.
 	if !reflect.DeepEqual(s1, s2) {
@@ -183,15 +163,11 @@ func BenchmarkBinarySlice(b *testing.B) {
 
 	size := binary.Size(s1)
 
-	b.ResetTimer()
-
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		buf := make([]byte, 0, size)
 		buf = binary.Marshal(buf, hostarch.ByteOrder, &s1)
 		binary.Unmarshal(buf, hostarch.ByteOrder, &s2)
 	}
-
-	b.StopTimer()
 
 	// Sanity check, make sure the values were preserved.
 	if !reflect.DeepEqual(s1, s2) {
@@ -203,15 +179,11 @@ func BenchmarkGoMarshalUnsafeSlice(b *testing.B) {
 	var s1, s2 [64]test.Stat
 	analysis.RandomizeValue(&s1)
 
-	b.ResetTimer()
-
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		buf := make([]byte, (*test.Stat)(nil).SizeBytes()*len(s1))
 		test.MarshalUnsafeStatSlice(s1[:], buf)
 		test.UnmarshalUnsafeStatSlice(s2[:], buf)
 	}
-
-	b.StopTimer()
 
 	// Sanity check, make sure the values were preserved.
 	if !reflect.DeepEqual(s1, s2) {

@@ -20,14 +20,14 @@ import (
 
 func BenchmarkAndUint32(b *testing.B) {
 	val32 := FromUint32(0xfffffff)
-	for i := 0; i < b.N; i++ {
+	for i := 0; b.Loop(); i++ {
 		AndUint32(&val32, uint32(i))
 	}
 }
 
 func BenchmarkAndUint64(b *testing.B) {
 	val64 := FromUint64(0xfffffffffffffff)
-	for i := 0; i < b.N; i++ {
+	for i := 0; b.Loop(); i++ {
 		AndUint64(&val64, uint64(i))
 	}
 }
@@ -56,14 +56,14 @@ func BenchmarkAndUint64Parallel(b *testing.B) {
 
 func BenchmarkOrUint32(b *testing.B) {
 	val32 := FromUint32(0xfffffff)
-	for i := 0; i < b.N; i++ {
+	for i := 0; b.Loop(); i++ {
 		OrUint32(&val32, uint32(i))
 	}
 }
 
 func BenchmarkOrUint64(b *testing.B) {
 	val64 := FromUint64(0xfffffffffffffff)
-	for i := 0; i < b.N; i++ {
+	for i := 0; b.Loop(); i++ {
 		OrUint64(&val64, uint64(i))
 	}
 }
@@ -92,14 +92,14 @@ func BenchmarkOrUint64Parallel(b *testing.B) {
 
 func BenchmarkXorUint32(b *testing.B) {
 	val32 := FromUint32(0xfffffff)
-	for i := 0; i < b.N; i++ {
+	for i := 0; b.Loop(); i++ {
 		XorUint32(&val32, uint32(i))
 	}
 }
 
 func BenchmarkXorUint64(b *testing.B) {
 	val64 := FromUint64(0xfffffffffffffff)
-	for i := 0; i < b.N; i++ {
+	for i := 0; b.Loop(); i++ {
 		XorUint64(&val64, uint64(i))
 	}
 }

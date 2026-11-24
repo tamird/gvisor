@@ -374,7 +374,7 @@ func TestSchemaOwnership(t *testing.T) {
 func BenchmarkUintSave(b *testing.B) {
 	w := Writer{Writer: bufio.NewWriter(io.Discard)}
 	n := Uint(0xdeadbeef)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		n.save(&w)
 	}
 }

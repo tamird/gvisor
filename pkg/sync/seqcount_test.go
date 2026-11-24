@@ -82,7 +82,7 @@ func TestSeqCountReadOkDuringWrite(t *testing.T) {
 
 func BenchmarkSeqCountWriteUncontended(b *testing.B) {
 	var seq SeqCount
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		seq.BeginWrite()
 		seq.EndWrite()
 	}

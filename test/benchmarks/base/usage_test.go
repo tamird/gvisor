@@ -41,7 +41,7 @@ func BenchmarkSizeEmpty(b *testing.B) {
 	var sumMemoryUsage uint64
 
 	// Make N containers.
-	for i := 0; i < b.N; i++ {
+	for i := 0; b.Loop(); i++ {
 		container := machine.GetContainer(ctx, b)
 		defer container.CleanUp(ctx)
 		if err := container.Spawn(ctx, dockerutil.RunOpts{
@@ -84,7 +84,7 @@ func BenchmarkSizeNginx(b *testing.B) {
 	}
 	const port = 80
 	var sumMemoryUsage uint64
-	for i := 0; i < b.N; i++ {
+	for i := 0; b.Loop(); i++ {
 		server, err := base.StartServer(ctx, b,
 			base.ServerArgs{
 				Machine: machine,
@@ -134,7 +134,7 @@ func BenchmarkSizeNode(b *testing.B) {
 	nodeCmd := []string{"node", "index.js", "redis"}
 	const port = 8080
 	var sumMemoryUsage uint64
-	for i := 0; i < b.N; i++ {
+	for i := 0; b.Loop(); i++ {
 		server, err := base.StartServer(ctx, b,
 			base.ServerArgs{
 				Machine: machine,

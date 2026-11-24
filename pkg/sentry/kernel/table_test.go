@@ -80,15 +80,12 @@ func TestTable(t *testing.T) {
 func BenchmarkTableLookup(b *testing.B) {
 	table := createSyscallTable()
 
-	b.ResetTimer()
-
 	j := uintptr(0)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		table.Lookup(j)
 		j = (j + 1) % 310
 	}
 
-	b.StopTimer()
 	// Cleanup registered tables to keep tests separate.
 	allSyscallTables = []*SyscallTable{}
 }
@@ -96,15 +93,12 @@ func BenchmarkTableLookup(b *testing.B) {
 func BenchmarkTableMapLookup(b *testing.B) {
 	table := createSyscallTable()
 
-	b.ResetTimer()
-
 	j := uintptr(0)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		table.mapLookup(j)
 		j = (j + 1) % 310
 	}
 
-	b.StopTimer()
 	// Cleanup registered tables to keep tests separate.
 	allSyscallTables = []*SyscallTable{}
 }
