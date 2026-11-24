@@ -103,6 +103,14 @@ steps:
 
   - <<: *common
     <<: *source_test
+    label: ":soap: Lint (C++, ARM64)"
+    command: make lint-cc
+    agents:
+      arch: "arm64"
+      queue: "arm64"
+
+  - <<: *common
+    <<: *source_test
     label: ":speedboat: Compile runsc-plugin-stack (AMD64)"
     command: make runsc-plugin-stack
     agents:
