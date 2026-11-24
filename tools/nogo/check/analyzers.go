@@ -236,7 +236,8 @@ func init() {
 			"slicessort",
 			"slicesclip",
 			"slicescontains",
-			"mapsloop":
+			"mapsloop",
+			"atomictypes":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}
