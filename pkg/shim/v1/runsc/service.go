@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -883,8 +884,8 @@ func setPodCgroup(spec *specs.Spec) bool {
 	// Search backwards for the pod cgroup path to make the sandbox use it,
 	// instead of the pause container's cgroup.
 	parts := strings.Split(spec.Linux.CgroupsPath, string(filepath.Separator))
-	for i := len(parts) - 1; i >= 0; i-- {
-		if strings.HasPrefix(parts[i], "pod") {
+	for i, part := range slices.Backward(parts) {
+		if strings.HasPrefix(part, "pod") {
 			var path string
 			for j := 0; j <= i; j++ {
 				path = filepath.Join(path, parts[j])

@@ -19,6 +19,7 @@ package locking
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 
 	"gvisor.dev/gvisor/pkg/goid"
@@ -95,16 +96,16 @@ func checkLock(class *MutexClass, prevClass *MutexClass, chain []*MutexClass) {
 
 		fmt.Fprintf(&b, "known lock chain: ")
 		c := class
-		for i := len(chain) - 1; i >= 0; i-- {
+		for _, c0 := range slices.Backward(chain) {
 			fmt.Fprintf(&b, "%s -> ", c)
-			c = chain[i]
+			c = c0
 		}
 		fmt.Fprintf(&b, "%s\n", chain[0])
 		c = class
-		for i := len(chain) - 1; i >= 0; i-- {
+		for _, c0 := range slices.Backward(chain) {
 			fmt.Fprintf(&b, "\n====== %s -> %s =====\n%s",
-				c, chain[i], *chain[i].ancestors.Load(c))
-			c = chain[i]
+				c, c0, *c0.ancestors.Load(c))
+			c = c0
 		}
 		panic(b.String())
 	}

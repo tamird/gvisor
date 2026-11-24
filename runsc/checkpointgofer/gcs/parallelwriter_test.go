@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 
@@ -122,8 +123,8 @@ func TestParallelWriterWriteCompositionGraph(t *testing.T) {
 
 		clear(seenLeaves)
 		clear(highestPartIndex)
-		for levelIndex := len(w.levels) - 1; levelIndex >= 0; levelIndex-- {
-			if node := w.levels[levelIndex].firstPart; node != nil {
+		for levelIndex, v := range slices.Backward(w.levels) {
+			if node := v.firstPart; node != nil {
 				highestPartIndexForLevel, ok := highestPartIndex[levelIndex]
 				nextPartIndex := uint64(0)
 				if ok {

@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	"reflect"
+	"slices"
 	"testing"
 	"time"
 	"unsafe"
@@ -425,8 +426,8 @@ func TestRestoreListenWithPreexistingConnection(t *testing.T) {
 
 					if reverse {
 						var reordered []stack.RestoredEndpoint
-						for i := len(restoredEndpoints) - 1; i >= 0; i-- {
-							reordered = append(reordered, restoredEndpoints[i])
+						for _, restoredEndpoint := range slices.Backward(restoredEndpoints) {
+							reordered = append(reordered, restoredEndpoint)
 						}
 						*restoredEndpointsPtr = reordered
 					}

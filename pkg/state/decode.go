@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"slices"
 
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
@@ -250,8 +251,8 @@ func (ds *decodeState) waitObject(ods *objectDecodeState, encoded wire.Object, c
 // directly assignable. See decode_unsafe.go.
 func walkChild(path []wire.Dot, obj reflect.Value) reflect.Value {
 	// See wire.Ref.Dots. The path here is specified in reverse order.
-	for i := len(path) - 1; i >= 0; i-- {
-		switch pc := path[i].(type) {
+	for _, dot := range slices.Backward(path) {
+		switch pc := dot.(type) {
 		case *wire.FieldName: // Must be a pointer.
 			if obj.Kind() != reflect.Struct {
 				Failf("next component in child path is a field name, but the current object is not a struct. Path: %v, current obj: %#v", path, obj)

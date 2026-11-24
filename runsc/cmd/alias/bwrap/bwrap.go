@@ -25,6 +25,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -218,8 +219,8 @@ func (c *bwrapConfig) mapCWD() (string, error) {
 // type, or no mount at all, means the path exists only inside the sandbox.
 func (c *bwrapConfig) hostPath(path string) (bind sandbox.Mount, host string, ok bool) {
 	path = filepath.Clean(path)
-	for i := len(c.Mounts) - 1; i >= 0; i-- {
-		m := c.Mounts[i]
+	for _, m := range slices.Backward(c.Mounts) {
+
 		rel, err := filepath.Rel(m.Destination, path)
 		if err != nil || rel == ".." || strings.HasPrefix(rel, "../") {
 			continue
@@ -413,8 +414,8 @@ func (d HostDir) make(uid, gid int) error {
 		}
 		parents = append(parents, p)
 	}
-	for i := len(parents) - 1; i >= 0; i-- {
-		if err := mkdir(parents[i], d.parentPerms(), uid, gid); err != nil {
+	for _, parent := range slices.Backward(parents) {
+		if err := mkdir(parent, d.parentPerms(), uid, gid); err != nil {
 			return err
 		}
 	}

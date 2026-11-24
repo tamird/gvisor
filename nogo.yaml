@@ -143,6 +143,11 @@ analyzers:
       exclude:
         # The NBSP fixture verifies that malformed whitespace does not grant nosplit.
         - '^bazel-out/[^/]+/bin/tools/checkescape/test1/nosplit\.go:'
+  slicesbackward:
+    internal:
+      exclude:
+        # Reverse indexing keeps mountMu checks in the locked function.
+        - '^pkg/sentry/vfs/propagation\.go:530:6$'
   rangeint:
     internal:
       exclude:

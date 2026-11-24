@@ -23,6 +23,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -79,9 +80,9 @@ type topology struct {
 
 // cleanUp tears down all nodes in reverse creation order.
 func (t *topology) cleanUp(ctx context.Context) {
-	for i := len(t.nodes) - 1; i >= 0; i-- {
-		if t.nodes[i].cleanUp != nil {
-			t.nodes[i].cleanUp(ctx)
+	for _, v := range slices.Backward(t.nodes) {
+		if v.cleanUp != nil {
+			v.cleanUp(ctx)
 		}
 	}
 }

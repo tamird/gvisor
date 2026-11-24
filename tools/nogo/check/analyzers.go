@@ -231,7 +231,8 @@ func init() {
 			"minmax",
 			"stringsbuilder",
 			"rangeint",
-			"stditerators":
+			"stditerators",
+			"slicesbackward":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}

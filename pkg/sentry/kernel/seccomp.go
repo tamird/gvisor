@@ -16,6 +16,7 @@ package kernel
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"golang.org/x/sys/unix"
@@ -343,8 +344,8 @@ func (t *Task) evaluateSyscallFilters(sysno int32, args arch.SyscallArguments, i
 
 	// "Every filter successfully installed will be evaluated (in reverse
 	// order) for each system call the task makes." - kernel/seccomp.c
-	for i := len(ts.filters) - 1; i >= 0; i-- {
-		thisRet, err := ts.filters[i].Evaluate(input)
+	for i, v := range slices.Backward(ts.filters) {
+		thisRet, err := v.Evaluate(input)
 		if err != nil {
 			t.Debugf("seccomp-bpf filter %d returned error: %v", i, err)
 			thisRet = uint32(linux.SECCOMP_RET_KILL_THREAD)
