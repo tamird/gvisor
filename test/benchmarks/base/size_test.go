@@ -38,6 +38,9 @@ func BenchmarkSizeEmpty(b *testing.B) {
 	meminfo := tools.Meminfo{}
 	ctx := context.Background()
 	containers := make([]*dockerutil.Container, 0, b.N)
+	defer func() {
+		base.CleanUpContainers(ctx, containers)
+	}()
 
 	// DropCaches before the test.
 	harness.DropCaches(machine)
@@ -56,14 +59,12 @@ func BenchmarkSizeEmpty(b *testing.B) {
 		if err := container.Spawn(ctx, dockerutil.RunOpts{
 			Image: "benchmarks/alpine",
 		}, "sh", "-c", "echo Hello && sleep 1000"); err != nil {
-			base.CleanUpContainers(ctx, containers)
 			b.Fatalf("failed to run container: %v", err)
 		}
 		if i == 0 {
 			defer metricsviz.FromContainerLogs(ctx, b, container)
 		}
 		if _, err := container.WaitForOutputSubmatch(ctx, "Hello", 5*time.Second); err != nil {
-			base.CleanUpContainers(ctx, containers)
 			b.Fatalf("failed to read container output: %v", err)
 		}
 	}
@@ -73,7 +74,6 @@ func BenchmarkSizeEmpty(b *testing.B) {
 
 	// Check available memory after containers are up.
 	after, err := machine.RunCommand(cmd, args...)
-	base.CleanUpContainers(ctx, containers)
 	if err != nil {
 		b.Fatalf("failed to get meminfo: %v", err)
 	}
