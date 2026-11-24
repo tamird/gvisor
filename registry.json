@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T06:11:40.779524+00:00",
+    "updatedAt": "2026-11-24T06:29:25.808085+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41306,14 +41306,14 @@
       "url": "https://github.com/google/gvisor/pull/16516",
       "group": "bazel",
       "status": "open",
-      "summary": "Main55748 retains a32-bit Linux chain of11 Go-history-fetch/cancel attempts; Windows remains live. No terminal whole-build verdict or new source failure is established.",
-      "updatedAt": "2026-11-17T17:42:43.236533Z",
+      "summary": "Main55748 at a959 is terminal FAILED. The final Windows attempt also timed out during local-origin Go-history fetch, before Windows compilation; known Go/32-bit fetch and APT setup failures remain. No new source failure is demonstrated. Shared Go-export candidatef850 is tracked separately under issue17832.",
+      "updatedAt": "2026-11-24T06:27:10.701611+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "a9594385d15d2e17e5dd7491be94d774f47fa80e",
-        "observedAt": "2026-11-24T04:47:08.376554+00:00",
-        "disposition": "Main55748 retains a32-bit Linux chain of11 Go-history-fetch/cancel attempts; Windows remains live. No terminal whole-build verdict or new source failure is established.",
-        "nextAction": "Existing rbe_parallel_evidence owner retains only live55748/55757 follow-through at05:20 or actual new diagnostic events. Preserve source qualification and unrelated holds; no duplicate watcher, unchanged retry, source churn or outreach.",
+        "observedAt": "2026-11-24T05:25:45.034658+00:00",
+        "disposition": "Main55748 at a959 is terminal FAILED. The final Windows attempt also timed out during local-origin Go-history fetch, before Windows compilation; known Go/32-bit fetch and APT setup failures remain. No new source failure is demonstrated. Shared Go-export candidatef850 is tracked separately under issue17832.",
+        "nextAction": "Root advances the separate Go-export proposal at issue17832 and follows the existing APT17854/shared provider blockers. Regular CI watching is retired; preserve exact-source validation and await actual changed provider/review/import evidence.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16516#pullrequestreview-5895770949",
           "https://github.com/gvisor/gvisor/pull/16516#pullrequestreview-5943223023",
@@ -41325,7 +41325,8 @@
           "https://github.com/tamird/gvisor/actions/runs/44956733840",
           "https://buildkite.com/gvisor/first-pass/builds/2303#01a2003f-e1ce-4a4c-acb9-5a30df33af5d",
           "https://github.com/google/gvisor/pull/16516#pullrequestreview-6030082805",
-          "https://buildkite.com/gvisor/pipeline/builds/55748"
+          "https://buildkite.com/gvisor/pipeline/builds/55748",
+          "https://github.com/tamird/gvisor/commit/f8500dffed4bace8841b900232beb6fd19740cd7"
         ],
         "nativeReviewRequest": {
           "reviewer": "manninglucas",
@@ -41334,7 +41335,7 @@
           "delivered": true,
           "endpoint": "/repos/gvisor/gvisor/pulls/16516/requested_reviewers/rerequest"
         },
-        "recheckCondition": "Existing CI owner terminal complete-chain evidence or actual new review/source/provider event.",
+        "recheckCondition": "Actual Go-export/APT prerequisite delivery, replacement CI, agent diagnostics or substantive review/import/source event.",
         "mergeable": "MERGEABLE",
         "attentionDispositions": [],
         "providerHead": "a9594385d15d2e17e5dd7491be94d774f47fa80e"
@@ -41398,7 +41399,9 @@
           "at": "2026-11-17T17:20:44.991697Z",
           "postedURL": "https://github.com/gvisor/gvisor/pull/16516#pullrequestreview-5943223023"
         }
-      ]
+      ],
+      "nextStep": "Root advances the separate Go-export proposal at issue17832 and follows the existing APT17854/shared provider blockers. Regular CI watching is retired; preserve exact-source validation and await actual changed provider/review/import evidence.",
+      "recheckCondition": "Actual Go-export/APT prerequisite delivery, replacement CI, agent diagnostics or substantive review/import/source event."
     },
     {
       "id": "branch:hermetic-arch-copy",
@@ -77995,7 +77998,7 @@
       "group": "bazel",
       "head": "ef6f0e2f8c9cd1ca1b2b277261f68ef5509d225e",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:53.479529+00:00",
+      "updatedAt": "2026-11-24T06:27:10.701611+00:00",
       "summary": "Delivered unchanged-patch rebase ef6f0e2f8 and saved notice are verified in the current API sample. FirstPass2578 and all reported native GitHub contexts are SUCCESS; no current-head main-pipeline context is reported. Provider binds the retained approval to the rebased head with its original submission time; this is not a newly submitted review. Provider remains REVIEW_REQUIRED. Old main upload failures were before-tests obsolete-hook errors; parent5004 contains the hook correction by content, without a literal909 ancestry claim.",
       "evidence": [
         {
@@ -78055,7 +78058,7 @@
       "followup": {
         "sourceHead": "ef6f0e2f8c9cd1ca1b2b277261f68ef5509d225e",
         "owner": "root / approved_rebase_queue",
-        "nextAction": "Root follows remaining maintainer/import review and actual new-head main/check events; existing rbe_parallel_evidence owner retains the01:45 checkpoint. Rebase, notice and affected qualification are complete. No duplicate source approval, notice, retry, outreach or merge.",
+        "nextAction": "Root follows existing maintainer/import review and actual new-head CI events through the canonical collector. The bounded CI watch is retired; delivered rebase, notice and affected qualification retain their recorded source scope.",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-24T01:32:50.502686+00:00",
         "recheckCondition": "Actual new-head main result, substantive review/import event or source/base change.",
@@ -78137,7 +78140,8 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
-      }
+      },
+      "nextStep": "Root follows existing maintainer/import review and actual new-head CI events through the canonical collector. The bounded CI watch is retired; delivered rebase, notice and affected qualification retain their recorded source scope."
     },
     {
       "id": "pr:17105",
@@ -99883,7 +99887,7 @@
       "url": "https://github.com/google/gvisor/pull/17484",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-11-17T19:05:00.391405+00:00",
+      "updatedAt": "2026-11-24T06:27:10.701611+00:00",
       "summary": "Current f6fa main55752 is terminal FAILED with the known Mac cancellation/fetch chain. Across11 attempts on different agents, six passed gopath then stopped logging during local-origin Go history fetch; one timed out after55 minutes. Final output-base lock/cancel lacks PID-to-command, progress and cancellation data. No demonstrated PTY source failure or identified single lock cause.",
       "evidence": [
         {
@@ -99897,11 +99901,11 @@
       ],
       "followup": {
         "sourceHead": "f6fa027fbfaa28e930d3a288c3a78e9d35b53738",
-        "owner": "root / rbe_parallel_evidence",
-        "nextAction": "Root/rbe retain the external agent-data blocker; no accepted operator investigation is invented. Recheck actual agent lifecycle evidence or a new authorized provider/source event, without source fix, retry or outreach.",
+        "owner": "root",
+        "nextAction": "Root advances the separately reviewed Go-export proposal at issue17832. The original Mac lock/cancellation origin remains an external agent-data blocker; the proposal does not establish that cause or authorize an unchanged retry.",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-24T04:47:08.376554+00:00",
-        "recheckCondition": "Actual agent progress/cancellation/lock evidence, replacement run or substantive source/review event.",
+        "recheckCondition": "Actual Go-export delivery, agent progress/cancellation/lock evidence, replacement run or substantive source/review/import event.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17484",
           "https://github.com/tamird/gvisor/commit/8a64c10e33211d4e255aa6ad43d8131f344558d4",
@@ -99916,7 +99920,8 @@
           "https://buildkite.com/gvisor/pipeline/builds/55739#01a20a30-0b56-4062-ab3b-8c3a5372a7b6",
           "https://buildkite.com/gvisor/pipeline/builds/55739#01a20a32-1ffd-4ccf-97d3-b2ad4f78eea7",
           "https://github.com/google/gvisor/pull/17484#issuecomment-7115536743",
-          "https://buildkite.com/gvisor/pipeline/builds/55752"
+          "https://buildkite.com/gvisor/pipeline/builds/55752",
+          "https://github.com/tamird/gvisor/commit/f8500dffed4bace8841b900232beb6fd19740cd7"
         ],
         "attentionDispositions": [
           {
@@ -99965,7 +99970,9 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
-      }
+      },
+      "nextStep": "Root advances the separately reviewed Go-export proposal at issue17832. The original Mac lock/cancellation origin remains an external agent-data blocker; the proposal does not establish that cause or authorize an unchanged retry.",
+      "recheckCondition": "Actual Go-export delivery, agent progress/cancellation/lock evidence, replacement run or substantive source/review/import event."
     },
     {
       "id": "pr:17486",
@@ -102573,7 +102580,7 @@
       "url": "https://github.com/google/gvisor/pull/17568",
       "group": "ci-flakes",
       "status": "open",
-      "updatedAt": "2026-11-21T02:33:33.655Z",
+      "updatedAt": "2026-11-24T06:27:10.701611+00:00",
       "summary": "Current00c5cd11 main55777 is terminal FAILED: ARM Docker index6 exhausted three attempts, with image_test timing out15 minutes in privileged bridge TestDockerWithVFS at dockerInGvisorExecOutput→Process.Logs. This matches the reporting/cancellation boundary addressed by open #17836; the underlying Docker stall remains unknown.",
       "evidence": [
         {
@@ -102784,8 +102791,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Root follows actor-owned remaining GitHub checks and existing reviewer/import events; recheck2208 only on actual provider admission recovery or new source/check evidence. No duplicate CI diagnosis, retry, notification or source-approval question. The pretest-worker mismatch is closed by the canonical remote runner.",
-      "recheckCondition": "Genuine exact-head check/reviewer/import change or independently evidenced provider admission recovery.",
+      "nextStep": "Root follows existing #17836 maintainer review/import/landing and actual changed provider evidence. #17836 is OPEN/MERGEABLE with prior green qualification and requested carzh/shailend-g; no duplicate patch, retry, outreach or merge authority is implied.",
+      "recheckCondition": "Actual #17836 review/import/landing or new bounded source-bound failure evidence.",
       "settledReviews": [
         {
           "kind": "amendment",
@@ -105865,13 +105872,13 @@
       "url": "https://github.com/gvisor/gvisor/issues/17832",
       "group": "rbe",
       "status": "open",
-      "summary": "Cache-first implementation86cff is signed, durably published and tree-identical to tested534d. All six existing Bazel caller gates pass; cold/warm preflight showed50 sandbox executions then50 disk-cache hits without RBE credentials. Two final reviews are clear; C++ lint was not run because no C++ source changed. The actual opening question is unanswered. The RBE discussion rewrite remains held pending the cache/evidence decision; no end-to-end speedup or movable-fraction claim.",
+      "summary": "Cache86cff, the measured-scope issue rewrite and Go-exportf850 have three separate unanswered publication decisions. The Go-export Git/syntax checks, source guards, cleanup and independent reviews are complete. Canonical make lint/lint-cc reuse passing exact-parent5cc evidence because their selected inputs are unchanged. Full export assembly was not rebuilt, shallow-source limitations remain, and no RBE speedup is established. The Go-export fork ref is unpublished.",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-11-23T20:29:42.991432+00:00",
-        "disposition": "Cache-first implementation86cff is signed, durably published and tree-identical to tested534d. All six existing Bazel caller gates pass; cold/warm preflight showed50 sandbox executions then50 disk-cache hits without RBE credentials. Two final reviews are clear; C++ lint was not run because no C++ source changed. The actual opening question is unanswered. The RBE discussion rewrite remains held pending the cache/evidence decision; no end-to-end speedup or movable-fraction claim.",
-        "nextAction": "Await the actual cache86cff opening decision. Root retains the separate critical-path, trust and free-OSS funding explanation for the RBE discussion. Do not post the superseded rewrite, introduce RBE credentials or infer infrastructure/merge authority.",
-        "recheckCondition": "Actual cache publication decision or new maintainer/evidence event.",
+        "observedAt": "2026-11-24T06:29:20.083295+00:00",
+        "disposition": "Cache86cff, the measured-scope issue rewrite and Go-exportf850 have three separate unanswered publication decisions. The Go-export Git/syntax checks, source guards, cleanup and independent reviews are complete. Canonical make lint/lint-cc reuse passing exact-parent5cc evidence because their selected inputs are unchanged. Full export assembly was not rebuilt, shallow-source limitations remain, and no RBE speedup is established. The Go-export fork ref is unpublished.",
+        "nextAction": "Root consumes each existing decision independently: open the cache86cff PR, replace the issue body with the current measured-scope draft, and open the Go-exportf850 PR. Canonical lint coverage is reconciled through unchanged-input parent evidence. Deliver approved changes through the existing authorized routes; the unpublished Go-export fork ref still needs its SSH/HTTPS execution blocker to clear.",
+        "recheckCondition": "Actual response to any of the three existing publication questions, fork delivery recovery, or substantive maintainer/source/CI evidence.",
         "evidence": [
           "https://github.com/gvisor/gvisor/issues/17832",
           "https://github.com/google/gvisor/issues/17832#issuecomment-7097716495",
@@ -105884,13 +105891,19 @@
           "https://github.com/tamird/gvisor/actions/runs/45251482697",
           "https://github.com/tamird/gvisor/actions/runs/45251482253",
           "https://github.com/tamird/gvisor/actions/runs/45251693636",
-          "https://github.com/tamird/gvisor/actions/runs/45251888529"
+          "https://github.com/tamird/gvisor/actions/runs/45251888529",
+          "https://github.com/tamird/gvisor/commit/f8500dffed4bace8841b900232beb6fd19740cd7",
+          "https://github.com/tamird/gvisor/actions/runs/45338327165",
+          "https://github.com/tamird/gvisor/actions/runs/45335764865",
+          "https://github.com/tamird/gvisor/actions/runs/45337010015",
+          "https://github.com/gvisor/gvisor/actions/runs/45332448383/job/138236559759",
+          "https://buildkite.com/gvisor/pipeline/builds/55802#01a20bff-5c2f-4bc4-aa29-331c9ed53e14"
         ],
         "curatedAt": "2026-11-21T00:26:41.755Z"
       },
-      "updatedAt": "2026-11-21T00:26:41.755Z",
-      "nextStep": "Await the actual cache86cff opening decision. Root retains the separate critical-path, trust and free-OSS funding explanation for the RBE discussion. Do not post the superseded rewrite, introduce RBE credentials or infer infrastructure/merge authority.",
-      "recheckCondition": "New issue feedback or an accepted concrete pilot.",
+      "updatedAt": "2026-11-24T06:29:20.083295+00:00",
+      "nextStep": "Root consumes each existing decision independently: open the cache86cff PR, replace the issue body with the current measured-scope draft, and open the Go-exportf850 PR. Canonical lint coverage is reconciled through unchanged-input parent evidence. Deliver approved changes through the existing authorized routes; the unpublished Go-export fork ref still needs its SSH/HTTPS execution blocker to clear.",
+      "recheckCondition": "Actual response to any of the three existing publication questions, fork delivery recovery, or substantive maintainer/source/CI evidence.",
       "reviewWatch": {
         "inspected": [
           {
@@ -105932,6 +105945,18 @@
           "body": "Reduce PR CI latency with Bazel reuse and remote execution\n\nKeep Buildkite as the orchestrator. First enable caching for the existing GitHub Actions builds, then measure whether remote execution reduces the remaining build and test time. Replacing Buildkite is a separate decision. Buildkite already shares Bazel action results; the proposed RBE benefit is concurrent execution of independent cache misses.\n\nThe [cache-only patch](https://github.com/tamird/gvisor/commit/86cffbf727d4a5628ca2a324fe3c06ec21d7c24c) covers all six existing Bazel jobs in GitHub Actions. All six caller paths passed qualification. In a [cold](https://github.com/tamird/gvisor/actions/runs/45248674493)/[warm](https://github.com/tamird/gvisor/actions/runs/45249651348) check, a Docker-built target changed from 50 sandbox executions to 50 disk-cache hits. This uses GitHub-managed caches and adds no BuildBuddy credentials to PR-controlled jobs. The patch is proposed, not landed; these are cache results, not RBE speedups.\n\nWe have observed remote parallelism, but have not measured its speedup against a cache-enabled local baseline. One [fork invocation](https://app.buildbuddy.io/invocation/6c83284e-f123-43a2-8063-4a633b20dba7) recorded up to 14 simultaneous remote executions: 1,866 seconds of recorded action intervals within a 348-second span. The complete build took 396 seconds. Summed action time is not a serial baseline, and the profile captured only part of the executions. A controlled comparison remains necessary.\n\nTwo recent builds illustrate delays beyond compilation. [Build 55727](https://buildkite.com/gvisor/pipeline/builds/55727) took 62m53s; its last Go-runtime workload used nine attempts spanning 60m24s. [Build 55724](https://buildkite.com/gvisor/pipeline/builds/55724) took 51m47s; its last ARM64 Docker workload used six attempts spanning 47m59s. These examples identify finish-determining retry chains, not a representative latency distribution or a reconstructed dependency critical path. Separately, [build 55748's Windows attempt](https://buildkite.com/gvisor/pipeline/builds/55748#01a20ba6-9ca1-4088-96df-d29b12cd33fa) timed out fetching Go-export history after Bazel's work. RBE cannot remove that Git phase. Its fix is being qualified separately. We still need to establish how much of the complete PR critical path is eligible for RBE.\n\nBefore enabling untrusted PR execution, validate the trust boundary in a disposable environment with no release consumers:\n\n- PR-controlled repository rules and actions receive no trusted cache-write or release credential.\n- Server policy prevents untrusted clients and executor result publication from replacing trusted action results, even when the PR changes flags or instance names. Read results back with a trusted identity to verify denied writes.\n- Workers and snapshots isolate trust domains. Different API keys alone do not establish this.\n\nBuildBuddy's pinned source [accepts CAS-write-only execution keys](https://github.com/buildbuddy-io/buildbuddy/blob/c622472f1/enterprise/server/remote_execution/execution_server/execution_server.go#L1242-L1246), [uses the submitting task's identity for execution](https://github.com/buildbuddy-io/buildbuddy/blob/c622472f1/enterprise/server/scheduling/priority_task_scheduler/priority_task_scheduler.go#L633-L644), and [requires CACHE_WRITE for action-cache writes](https://github.com/buildbuddy-io/buildbuddy/blob/c622472f1/server/remote_cache/action_cache_server/action_cache_server.go#L386-L395). This identifies mechanisms to test; it does not prove the hosted configuration. The [OCI network-isolation correction](https://github.com/buildbuddy-io/buildbuddy/pull/14275) is merged, but deployment to the hosted workers remains unverified.\n\nPrivileged tests are not categorically excluded: existing fork qualification ran namespace tests remotely on [AMD64](https://github.com/tamird/gvisor/actions/runs/44905173511/artifacts/14706968774) and [ARM64](https://github.com/tamird/gvisor/actions/runs/44905178697/artifacts/14707548246), and [native/systrap PTY syscall targets](https://github.com/tamird/gvisor/actions/runs/45261803627/artifacts/14861107334) passed on AMD64. These prove specific worker configurations, not support for the full syscall, runtime, KVM or GPU matrix. Keep unsupported device workloads on existing capacity.\n\nAfter the security gate, compare cache-enabled local execution with RBE at the same source, toolchain, configuration and workload. Preflight actual permissions, devices and cleanup first. Report complete job latency, retries, setup, analysis, cache hits and execution overlap separately. Keep required checks until coverage and reporting match; keep fresh benchmark measurements separate from cacheable builds. Under-five-minute ordinary PR validation remains a target, not a demonstrated result.\n\nBuildBuddy's [published free plan](https://www.buildbuddy.io/pricing/) includes open-source projects, 100 GB of cache transfer and up to 80 Linux execution cores. No paid migration is proposed; extra project capacity or commitments need confirmation. Bazel's Remote Execution API permits other providers, while provider-specific worker properties and isolation still require validation when switching.\n\nPosted by Codex on behalf of @tamird.\n",
           "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/rbe-proposal-critical-path-rewrite.md",
           "sourceSha256": "d270daa859d44375e3e07bfa8dcc2dfa289cab1e34ad09220ddfee4f41921fe8"
+        },
+        {
+          "kind": "proposal",
+          "status": "pending",
+          "head": "f8500dffed4bace8841b900232beb6fd19740cd7",
+          "baseHead": "5cc6d039453de0dc46ecb3f0a7c0a55cdc529ee1",
+          "url": "https://github.com/tamird/gvisor/commit/f8500dffed4bace8841b900232beb6fd19740cd7",
+          "title": "Retain promisor sources in Go export clones",
+          "summary": "Existing PR-opening question is unanswered. Two independent source reviews accepted the exact change; the relative-path finding is confirmed resolved. Git behavior, syntax/diff, source guards and cleanup passed. Canonical make lint and make lint-cc results are reused from exact parent5cc (Actions45332448383 and Buildkite55802 C++ lint): their selected source, tooling and configuration are unchanged; this shell file is not a lint input. Full generated-export assembly was not rebuilt; shallow-source limitations remain. The fork ref remains unpublished after SSH/HTTPS execution failures.",
+          "body": "Go export fetched its selected Go commit from a temporary local clone even when cloning had already copied that commit. With Buildkite's blobless checkout, that fetch enumerated about 189,000 objects; the Windows attempt in build 55748 timed out in this phase.\n\nKeep the original fetch when the commit is absent. Otherwise, let checkout retrieve the missing Go-tip blobs through the original promisor sources. Local cloning copies their packs without their remote configuration, so register those object-source URLs in the temporary clone and resolve relative local paths against the source repository. Keep invalid boolean configuration fatal. Export assembly and merge construction are unchanged.\n\nShallow-source merge limitations remain. Full generated-export assembly has not been rebuilt; this patch does not explain unrelated CI cancellations.\n\nPosted by Codex on behalf of @tamird.\n",
+          "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/go-export-promisor-pr-body.txt",
+          "sourceSha256": "6e4c040184c00fa0f58e930703680dcbb289d12b163941e61ad9308e38656302"
         }
       ]
     },
@@ -106726,16 +106751,16 @@
       "url": "https://github.com/google/gvisor/pull/17885",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-23T18:40:13.679878+00:00",
-      "summary": "Main55757 is failing with Node index8 eleven attempts ending in checkout cancellation before tests; cause unknown. Two Node jobs remain live, so this is not a terminal whole-build or Node-test verdict.",
+      "updatedAt": "2026-11-24T06:27:10.701611+00:00",
+      "summary": "Main55757 at057d is terminal FAILED at05:40:01UTC. Node index4 exhausted12 attempts; its final attempt was canceled during Node22.2.0/V8 image compilation. Known index1 compilation and index8 checkout cancellations remain. Cancellation origin is unknown; no new gVisor source failure is demonstrated.",
       "followup": {
         "owner": "root",
         "sourceHead": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
         "providerHead": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
-        "observedAt": "2026-11-24T04:47:08.376554+00:00",
-        "disposition": "Main55757 is failing with Node index8 eleven attempts ending in checkout cancellation before tests; cause unknown. Two Node jobs remain live, so this is not a terminal whole-build or Node-test verdict.",
-        "nextAction": "Existing rbe_parallel_evidence owner retains only live55748/55757 follow-through at05:20 or actual new diagnostic events. Preserve source qualification and unrelated holds; no duplicate watcher, unchanged retry, source churn or outreach.",
-        "recheckCondition": "Existing CI owner terminal complete-chain evidence or actual new review/source/provider event.",
+        "observedAt": "2026-11-24T06:20:46.557823+00:00",
+        "disposition": "Main55757 at057d is terminal FAILED at05:40:01UTC. Node index4 exhausted12 attempts; its final attempt was canceled during Node22.2.0/V8 image compilation. Known index1 compilation and index8 checkout cancellations remain. Cancellation origin is unknown; no new gVisor source failure is demonstrated.",
+        "nextAction": "Root retains the external agent/cancellation evidence blocker and existing maintainer/import follow-through. Retire regular job watching; advance only actual replacement-CI or diagnostic evidence, without an unchanged retry or source churn.",
+        "recheckCondition": "Actual new CI/review/import/source event or agent/cancellation diagnostics through the canonical collector.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17885",
           "https://buildkite.com/gvisor/first-pass/builds/2468",
@@ -106743,7 +106768,9 @@
           "https://github.com/google/gvisor/pull/17885#pullrequestreview-6031127244",
           "https://buildkite.com/gvisor/pipeline/builds/55757"
         ]
-      }
+      },
+      "nextStep": "Root retains the external agent/cancellation evidence blocker and existing maintainer/import follow-through. Retire regular job watching; advance only actual replacement-CI or diagnostic evidence, without an unchanged retry or source churn.",
+      "recheckCondition": "Actual new CI/review/import/source event or agent/cancellation diagnostics through the canonical collector."
     },
     {
       "id": "pr:buildbuddy-io/buildbuddy:14275",
@@ -132046,7 +132073,7 @@
       "owner": "analysis_pass_inventory / root",
       "updatedAt": "2026-11-23T22:28:52.692599+00:00",
       "group": "analysis",
-      "summary": "Corrected full corpus45332368082 executed891 results:879 PASS and12 finding wrappers, with four architecture records at two higher-parent declarations, unlinkRaceFD and Loader. Remaining findings are fieldalignment only; no compiler/API/setup failures. Existing owner is actively recovering those two declarations; audit closure is not established. PinRing exact1e66 AMD45327433523 passes AFPacket and KVM (2XML,0skip); ARM45328185109 passes AFPacket (1XML,0skip), with /dev/kvm absent. Exactd946 profile full3-case suites pass both architectures with zero skips. These proofs do not transfer to an unqualified later source or performance closure.",
+      "summary": "Native aae2569e23bc7ed3203e1189a988ea86f89799b2 has a complete clean corpus: run45338108931/artifact14895932437 executed891 targets, all891 PASS with zero findings, failures, skips or aborts; guards passed. CI8ccfde11c988df8ca617621bce102fe7199e6d0a differs only by18 reviewed support paths. Both release/caller runs45338245187 and45338247735 pass, with nine-member opaque manifests and one TestFindings XML case per ISA. Native checker and five source checks pass. This establishes source-bound static/build/caller qualification, not runtime or performance closure.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132418,7 +132445,7 @@
           ]
         }
       ],
-      "nextStep": "Primary analyzer owner recovers the two higher-parent declarations and verifies exact diagnostic closure/final source. Preserve PinRing architecture/KVM limits and separate pending header/npm decisions. No repeated completed PinRing/profile jobs, extra corpus observer or final green/publication-ready claim.",
+      "nextStep": "Root completes final adversarial review. Remaining prerequisites are unmerged #17884/provider admission, required comparative performance with no demonstrated stable same-source A/A route, and retained Netgofer AMD cleanup/runtime/hardware limits. Preserve scoped prior proofs; no human DCO gate, invented publication approval or final readiness claim.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132756,7 +132783,7 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T05:47:43.330769+00:00",
+        "observedAt": "2026-11-24T06:29:25.808085+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45274157128/artifacts/14868766183",
           "https://github.com/tamird/gvisor/actions/runs/45286918461",
@@ -132771,12 +132798,16 @@
           "https://github.com/tamird/gvisor/actions/runs/45319927699",
           "https://github.com/tamird/gvisor/actions/runs/45332368082/artifacts/14892554106",
           "https://github.com/tamird/gvisor/actions/runs/45327433523",
-          "https://github.com/tamird/gvisor/actions/runs/45328185109"
+          "https://github.com/tamird/gvisor/actions/runs/45328185109",
+          "https://github.com/tamird/gvisor/commit/aae2569e23bc7ed3203e1189a988ea86f89799b2",
+          "https://github.com/tamird/gvisor/actions/runs/45338108931/artifacts/14895932437",
+          "https://github.com/tamird/gvisor/actions/runs/45338245187",
+          "https://github.com/tamird/gvisor/actions/runs/45338247735"
         ],
         "owner": "root",
-        "disposition": "Corrected full corpus45332368082 executed891 results:879 PASS and12 finding wrappers, with four architecture records at two higher-parent declarations, unlinkRaceFD and Loader. Remaining findings are fieldalignment only; no compiler/API/setup failures. Existing owner is actively recovering those two declarations; audit closure is not established. PinRing exact1e66 AMD45327433523 passes AFPacket and KVM (2XML,0skip); ARM45328185109 passes AFPacket (1XML,0skip), with /dev/kvm absent. Exactd946 profile full3-case suites pass both architectures with zero skips. These proofs do not transfer to an unqualified later source or performance closure.",
-        "nextAction": "Primary analyzer owner recovers the two higher-parent declarations and verifies exact diagnostic closure/final source. Preserve PinRing architecture/KVM limits and separate pending header/npm decisions. No repeated completed PinRing/profile jobs, extra corpus observer or final green/publication-ready claim.",
-        "recheckCondition": "Existing owner supplies exact repaired source and affected/full-corpus closure, actual final review or a pending source-publication answer."
+        "disposition": "Native aae2569e23bc7ed3203e1189a988ea86f89799b2 has a complete clean corpus: run45338108931/artifact14895932437 executed891 targets, all891 PASS with zero findings, failures, skips or aborts; guards passed. CI8ccfde11c988df8ca617621bce102fe7199e6d0a differs only by18 reviewed support paths. Both release/caller runs45338245187 and45338247735 pass, with nine-member opaque manifests and one TestFindings XML case per ISA. Native checker and five source checks pass. This establishes source-bound static/build/caller qualification, not runtime or performance closure.",
+        "nextAction": "Root completes final adversarial review. Remaining prerequisites are unmerged #17884/provider admission, required comparative performance with no demonstrated stable same-source A/A route, and retained Netgofer AMD cleanup/runtime/hardware limits. Preserve scoped prior proofs; no human DCO gate, invented publication approval or final readiness claim.",
+        "recheckCondition": "Root final review result, actual #17884 landing/admission, qualified performance-route evidence, or source-bound runtime/cleanup/hardware recovery."
       },
       "contributorReview": {
         "kind": "proposal",
@@ -144022,5 +144053,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-20T23:41:26.383263+00:00"
+  "updatedAt": "2026-11-24T06:29:20.083295+00:00"
 }
