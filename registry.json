@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T07:44:23.340604+00:00",
+    "updatedAt": "2026-11-24T08:04:02.159571+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -132073,7 +132073,7 @@
       "owner": "benchmark_measurement_review / root",
       "updatedAt": "2026-11-24T07:01:47.154032+00:00",
       "group": "analysis",
-      "summary": "Current native source is 2fb0ac53 (tree 8b006d3f). Cleanup 8fc passed 10 owning targets per ISA: 499 AMD XML results with 5 environment skips, and 524 ARM results with 6 skips; zero failures and five source checks passed. Matched Go1.27.3 compiler evidence identified a newly escaping AIO callback through non-inlined WaitGroup.Go and a standard-library wrapper. Root approved the exact original aio.go plus only waitgroupgo:29:2 exception; the performance reviewer confirmed that fix. This is static compiler evidence, not measured allocations, bytes or speedup. The complete 891-target corpus remains proven on aae, supplemented by targeted cleanup/AIO closure rather than silently transferred to the current source.",
+      "summary": "Final native analyzer preview a3f52992 is one commit on approved-prerequisite parent0c7, with tree8b006d3f identical to qualified2fb. Root verified the public commit/tree/parent; no branch, PR, workflow or access change was made. Both final AMD/ARM gates passed kernel unit and Nogo targets with215 XML cases per ISA and zero failures/skips; complete release builds produced nine-file opaque manifests each. All five source checks and guards passed. CI891 adds only18 reviewed support paths and explicitly uses --nostamp: no a3f-stamped or raw-default product equivalence is claimed. The full891-target proof remains on aae, supplemented by targeted cleanup and final kernel closure. Final source reviews are complete and all findings resolved.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132445,7 +132445,7 @@
           ]
         }
       ],
-      "nextStep": "The source owner runs final kernel/Nogo/opaque-release gates on AMD45349683050 and ARM45349685813, with source checks45349688596. CI89131644f36ede7aedd9ca0a54bdf0f25e5bc4ea adds only 18 reviewed support paths. Its sole observer rechecks at07:47. Keep #17884/provider admission, comparative performance and stable-A/A-route, runtime and hardware limits explicit. Netgofer passes qualify only unchanged source8fc; no obsolete unqualified-8fc functional gate remains. No final publication approval is inferred.",
+      "nextStep": "Root presents the completed code preview with the real remaining blocks: #17884 at0c7 is OPEN/unmerged and already has reviewers requested; comparative performance still lacks a stable same-source A/A route, and runtime/hardware limits remain. Retain the exact8fc Netgofer67-case pass scope. No new audit-opening question, human DCO gate, duplicate review request, rebuild or unchanged timing retry is warranted.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132674,6 +132674,10 @@
         {
           "label": "Delivered supporting checker fix",
           "url": "https://github.com/gvisor/gvisor/pull/17884"
+        },
+        {
+          "label": "Final one-commit analyzer code preview",
+          "url": "https://github.com/tamird/gvisor/commit/a3f52992b34ef2873195b97b0856f20d061d0832"
         }
       ],
       "reviewWatch": {
@@ -132702,7 +132706,7 @@
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
       },
-      "head": "2fb0ac53acc45b2f0075dbdbe85148d6ceb7d2ae",
+      "head": "a3f52992b34ef2873195b97b0856f20d061d0832",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -132783,7 +132787,7 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T07:44:23.340604+00:00",
+        "observedAt": "2026-11-24T08:04:02.159571+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45338108931",
           "https://github.com/tamird/gvisor/actions/runs/45344645597",
@@ -132797,13 +132801,15 @@
           "https://github.com/tamird/gvisor/commit/2fb0ac53acc45b2f0075dbdbe85148d6ceb7d2ae",
           "https://github.com/tamird/gvisor/actions/runs/45349683050",
           "https://github.com/tamird/gvisor/actions/runs/45349685813",
-          "https://github.com/tamird/gvisor/actions/runs/45349688596"
+          "https://github.com/tamird/gvisor/actions/runs/45349688596",
+          "https://github.com/tamird/gvisor/commit/a3f52992b34ef2873195b97b0856f20d061d0832"
         ],
-        "owner": "benchmark_measurement_review / root",
-        "disposition": "Current native source is 2fb0ac53 (tree 8b006d3f). Cleanup 8fc passed 10 owning targets per ISA: 499 AMD XML results with 5 environment skips, and 524 ARM results with 6 skips; zero failures and five source checks passed. Matched Go1.27.3 compiler evidence identified a newly escaping AIO callback through non-inlined WaitGroup.Go and a standard-library wrapper. Root approved the exact original aio.go plus only waitgroupgo:29:2 exception; the performance reviewer confirmed that fix. This is static compiler evidence, not measured allocations, bytes or speedup. The complete 891-target corpus remains proven on aae, supplemented by targeted cleanup/AIO closure rather than silently transferred to the current source.",
-        "nextAction": "The source owner runs final kernel/Nogo/opaque-release gates on AMD45349683050 and ARM45349685813, with source checks45349688596. CI89131644f36ede7aedd9ca0a54bdf0f25e5bc4ea adds only 18 reviewed support paths. Its sole observer rechecks at07:47. Keep #17884/provider admission, comparative performance and stable-A/A-route, runtime and hardware limits explicit. Netgofer passes qualify only unchanged source8fc; no obsolete unqualified-8fc functional gate remains. No final publication approval is inferred.",
-        "recheckCondition": "Existing source owner supplies final source-bound gates at07:47, or actual prerequisite/performance/runtime/hardware evidence changes.",
-        "sourceHead": "2fb0ac53acc45b2f0075dbdbe85148d6ceb7d2ae"
+        "owner": "root",
+        "disposition": "Final native analyzer preview a3f52992 is one commit on approved-prerequisite parent0c7, with tree8b006d3f identical to qualified2fb. Root verified the public commit/tree/parent; no branch, PR, workflow or access change was made. Both final AMD/ARM gates passed kernel unit and Nogo targets with215 XML cases per ISA and zero failures/skips; complete release builds produced nine-file opaque manifests each. All five source checks and guards passed. CI891 adds only18 reviewed support paths and explicitly uses --nostamp: no a3f-stamped or raw-default product equivalence is claimed. The full891-target proof remains on aae, supplemented by targeted cleanup and final kernel closure. Final source reviews are complete and all findings resolved.",
+        "nextAction": "Root presents the completed code preview with the real remaining blocks: #17884 at0c7 is OPEN/unmerged and already has reviewers requested; comparative performance still lacks a stable same-source A/A route, and runtime/hardware limits remain. Retain the exact8fc Netgofer67-case pass scope. No new audit-opening question, human DCO gate, duplicate review request, rebuild or unchanged timing retry is warranted.",
+        "recheckCondition": "Actual #17884 landing/admission, qualified performance-route evidence, scoped runtime/hardware recovery, or an actual new publication decision.",
+        "sourceHead": "a3f52992b34ef2873195b97b0856f20d061d0832",
+        "technicalOwner": "benchmark_measurement_review (completed source qualification)"
       },
       "contributorReview": {
         "kind": "proposal",
