@@ -73,10 +73,10 @@ type MemoryEntry struct {
 // Memory contains stats on memory.
 type Memory struct {
 	Cache     uint64            `json:"cache,omitempty"`
-	Usage     MemoryEntry       `json:"usage,omitempty"`
-	Swap      MemoryEntry       `json:"swap,omitempty"`
-	Kernel    MemoryEntry       `json:"kernel,omitempty"`
-	KernelTCP MemoryEntry       `json:"kernelTCP,omitempty"`
+	Usage     MemoryEntry       `json:"usage"`
+	Swap      MemoryEntry       `json:"swap"`
+	Kernel    MemoryEntry       `json:"kernel"`
+	KernelTCP MemoryEntry       `json:"kernelTCP"`
 	Raw       map[string]uint64 `json:"raw,omitempty"`
 }
 

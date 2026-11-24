@@ -217,7 +217,8 @@ func init() {
 			"importcomment",
 			"reflecttypefor",
 			"reflecttypeassert",
-			"testingcontext":
+			"testingcontext",
+			"omitzero":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}
