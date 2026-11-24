@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T04:47:08.376554+00:00",
+    "updatedAt": "2026-11-24T05:38:52.083534+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32346,23 +32346,19 @@
       "title": "Use the pinned official Nginx image for benchmarks",
       "url": "https://github.com/tamird/gvisor/commit/33a66c674d55deb90ec6e6bfecc4a55e738b2af4",
       "group": "bazel",
-      "status": "Contributor approved; waiting for Apache payload layer",
-      "updatedAt": "2026-11-17T20:32:28.027492+00:00",
+      "status": "Approved and qualified; SSH transport blocked",
+      "updatedAt": "2026-11-24T05:35:00.184573+00:00",
       "summary": "The approved Nginx proposal retains source33a66c674; Apache shared-payload prerequisite #16466 is now merged. Existing foundation/mirror prerequisites are satisfied. Historical image/workload comparisons remain source-bound; no new current-base, ARM-runtime or general-speedup qualification is claimed.",
       "followup": {
-        "owner": "approved_rebase_queue / root",
+        "owner": "root / approved_rebase_queue",
         "sourceHead": "33a66c674d55deb90ec6e6bfecc4a55e738b2af4",
-        "observedAt": "2026-11-24T04:47:08.376554+00:00",
-        "disposition": "The approved Nginx proposal retains source33a66c674; Apache shared-payload prerequisite #16466 is now merged. Existing foundation/mirror prerequisites are satisfied. Historical image/workload comparisons remain source-bound; no new current-base, ARM-runtime or general-speedup qualification is claimed.",
-        "nextAction": "Assigned approved_rebase_queue is actively assessing the already-approved Nginx child and preparing isolated objects against the landed Apache prerequisite. Preserve contributor/workload limits and final source/publication review boundaries; do not wait passively for main-checkout allocation or infer a new unchanged-input runtime result.",
+        "observedAt": "2026-11-24T05:35:00.184573+00:00",
+        "disposition": "Rebase source and dual-architecture archive construction passed; two independent final reviews clear. Authorized publication failed: SSH timed out, then GitHub explicitly refused HTTPS because the existing OAuth credential lacks workflow scope for .github/workflows/gazelle.yml. Remote head unchanged; no notice or new PR posted. Fresh runtime/performance validation is not claimed.",
+        "nextAction": "Resume the already-authorized exact-lease publication when SSH authentication recovers, then verify published heads, post factual rebase notices and preserve existing review requests. Nginx opening approval and DCO remain settled; no renewed publication approval is required.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/34ae8afe757c6dd9e4ebefb9352bf407040c3830",
-          "https://github.com/tamird/gvisor/commit/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d",
-          "https://app.buildbuddy.io/invocation/35d94ab7-743f-427a-a755-5997c9f26c4b",
-          "https://github.com/tamird/gvisor/commit/33a66c674d55deb90ec6e6bfecc4a55e738b2af4",
-          "https://github.com/tamird/gvisor/compare/34ae8afe757c6dd9e4ebefb9352bf407040c3830...33a66c674d55deb90ec6e6bfecc4a55e738b2af4",
-          "https://github.com/google/gvisor/pull/16379",
-          "https://github.com/google/gvisor/pull/16430"
+          "https://github.com/tamird/gvisor/commit/cafd7c0bb1ba8f37a32facc212e778ac84a1a3df",
+          "https://github.com/tamird/gvisor/actions/runs/45330792075",
+          "https://github.com/tamird/gvisor/actions/runs/45330795848"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -32375,7 +32371,8 @@
           "recheckCondition": "Exact ref/head change, canonical PR feedback/check/import or terminal-state change, dependency landing or contributor decision.",
           "owner": "root"
         },
-        "recheckCondition": "Assigned owner returns exact current-state/integration preparation and qualification, or actual source/prerequisite change."
+        "recheckCondition": "User reports SSH agent unlocked, or existing authorized transport capability recovers; then one normal publication attempt. Reconcile any intervening source, review or prerequisite change before updating refs.",
+        "candidateHead": "cafd7c0bb1ba8f37a32facc212e778ac84a1a3df"
       },
       "evidence": [
         {
@@ -37771,52 +37768,21 @@
       "url": "https://github.com/google/gvisor/pull/16458",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:43.853615+00:00",
+      "updatedAt": "2026-11-24T05:35:00.184573+00:00",
       "summary": "Current exact303aee0fb is CONFLICTING. The earlier mergeable-only wait is obsolete. Prior source qualification/approvals and separate import boundaries remain historical and source-bound.",
       "followup": {
-        "owner": "approved_rebase_queue / root",
+        "owner": "root / approved_rebase_queue",
         "sourceHead": "303aee0fb294bcf676c2579d24b6821d0578a603",
-        "observedAt": "2026-11-24T04:47:08.376554+00:00",
-        "disposition": "Current exact303aee0fb is CONFLICTING. The earlier mergeable-only wait is obsolete. Prior source qualification/approvals and separate import boundaries remain historical and source-bound.",
-        "nextAction": "Assigned approved_rebase_queue is actively performing bounded current-state review and isolated object preparation while the analyzer retains the main checkout. Preserve approved image/build semantics and separate import/review boundaries; qualify/review any real integration delta before publication. No blind retry, automatic source approval or competing checkout writer.",
+        "observedAt": "2026-11-24T05:35:00.184573+00:00",
+        "disposition": "Rebase source and dual-architecture archive construction passed; two independent final reviews clear. Authorized publication failed: SSH timed out, then GitHub explicitly refused HTTPS because the existing OAuth credential lacks workflow scope for .github/workflows/gazelle.yml. Remote head unchanged; no notice or new PR posted. Fresh runtime/performance validation is not claimed.",
+        "nextAction": "Resume the already-authorized exact-lease publication when SSH authentication recovers, then verify published heads, post factual rebase notices and preserve existing review requests. Nginx opening approval and DCO remain settled; no renewed publication approval is required.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16458",
-          "https://github.com/tamird/gvisor/actions/runs/43013691770/job/130499353612",
-          "https://github.com/google/gvisor/pull/17300",
-          "https://github.com/gvisor/gvisor/pull/16458",
-          "https://github.com/tamird/gvisor/commit/25b9e2c269c513045f9c0f9232ae5b9846d2facb",
-          "https://github.com/tamird/gvisor/commit/303aee0fb294bcf676c2579d24b6821d0578a603",
-          "https://buildkite.com/gvisor/first-pass/builds/1466",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02a8-4db5-9f69-30aa51fc177e",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02a8-4087-9b11-059a6bb8c0f5",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02a9-48f4-bb6c-cc9a0a9a0511",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02aa-4ca4-b0b4-6635eab44935",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02aa-45eb-81fd-8e1417abab87",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02ab-4063-b8ac-f21b3392cbd1",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02ab-4b08-a0a3-a9afc6e61bbf",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02ad-445a-81a1-4f1727cf5b3f",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02ad-4fce-970b-18dac9c60d82",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02ad-4fad-9b8d-44038231d717",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02ad-4855-8d8d-00ee2f6d14cc",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02ae-4afb-ae49-37a3354c36d2",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02ae-4d1b-b2a7-cafe7ca370bc",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02ae-4780-a3e6-86ef3617072f",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02ae-4257-a32c-ce01d0befa1c",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02ae-4618-b8f8-9cbee1e77b20",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02ae-46e7-9110-b5b75c290b2e",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02ae-459d-a56e-9beffc084b03",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02af-4d20-b842-8062ae6bb288",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02af-4279-88d9-e053d2f3ab8e",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02af-4540-a1f4-2020b889132d",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02af-4edd-b1e1-4b7605c30374",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02af-494f-9287-4300d1e87e7a",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02b0-4005-9ef9-83e26e8bc63e",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02b0-41ea-8dd0-2ccc3b6a4450",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02b0-4d18-9e67-4a219c319643",
-          "https://buildkite.com/gvisor/first-pass/builds/1466#01a1ead6-02b1-48a6-b293-d9ab5f4c14b4"
+          "https://github.com/tamird/gvisor/commit/f9f6e3261d13800cb3bdbdaf713d44fc142811ac",
+          "https://github.com/tamird/gvisor/actions/runs/45330766710",
+          "https://github.com/tamird/gvisor/actions/runs/45330770949"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Assigned owner supplies current-state/context preparation and exact source-bound integration/qualification evidence, or actual head/base/review/import change.",
+        "recheckCondition": "User reports SSH agent unlocked, or existing authorized transport capability recovers; then one normal publication attempt. Reconcile any intervening source, review or prerequisite change before updating refs.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -37865,7 +37831,8 @@
               ]
             }
           }
-        ]
+        ],
+        "candidateHead": "f9f6e3261d13800cb3bdbdaf713d44fc142811ac"
       },
       "evidence": [
         {
@@ -38023,43 +37990,21 @@
       "url": "https://github.com/google/gvisor/pull/16462",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:46.312467+00:00",
+      "updatedAt": "2026-11-24T05:35:00.184573+00:00",
       "summary": "Current exact9354eb0ee is CONFLICTING. The earlier mergeable-only wait is obsolete. Prior source qualification/approvals and separate import boundaries remain historical and source-bound.",
       "followup": {
-        "owner": "approved_rebase_queue / root",
+        "owner": "root / approved_rebase_queue",
         "sourceHead": "9354eb0eeba8d44da40cdae3235e51e890e82b63",
-        "observedAt": "2026-11-24T04:47:08.376554+00:00",
-        "disposition": "Current exact9354eb0ee is CONFLICTING. The earlier mergeable-only wait is obsolete. Prior source qualification/approvals and separate import boundaries remain historical and source-bound.",
-        "nextAction": "Assigned approved_rebase_queue is actively performing bounded current-state review and isolated object preparation while the analyzer retains the main checkout. Preserve approved image/build semantics and separate import/review boundaries; qualify/review any real integration delta before publication. No blind retry, automatic source approval or competing checkout writer.",
+        "observedAt": "2026-11-24T05:35:00.184573+00:00",
+        "disposition": "Rebase source and dual-architecture archive construction passed; two independent final reviews clear. Authorized publication failed: SSH timed out, then GitHub explicitly refused HTTPS because the existing OAuth credential lacks workflow scope for .github/workflows/gazelle.yml. Remote head unchanged; no notice or new PR posted. Fresh runtime/performance validation is not claimed.",
+        "nextAction": "Resume the already-authorized exact-lease publication when SSH authentication recovers, then verify published heads, post factual rebase notices and preserve existing review requests. Nginx opening approval and DCO remain settled; no renewed publication approval is required.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16462",
-          "https://github.com/tamird/gvisor/actions/runs/43013691770/job/130499353612",
-          "https://github.com/gvisor/gvisor/pull/16462",
-          "https://github.com/tamird/gvisor/commit/71dff5de7d5ed7441915d2425b7ba64c19de1c13",
-          "https://github.com/tamird/gvisor/commit/9354eb0eeba8d44da40cdae3235e51e890e82b63",
-          "https://buildkite.com/gvisor/first-pass/builds/1467",
-          "https://buildkite.com/gvisor/first-pass/builds/1467#01a1ead6-137c-40ab-a7c1-fe4f235bb735",
-          "https://buildkite.com/gvisor/first-pass/builds/1467#01a1ead6-137e-4590-a8f6-7d2c00d6ce07",
-          "https://buildkite.com/gvisor/first-pass/builds/1467#01a1ead6-137f-4327-bf4c-ad6778aacc67",
-          "https://buildkite.com/gvisor/first-pass/builds/1467#01a1ead6-1382-4580-a783-2a87783fb469",
-          "https://buildkite.com/gvisor/first-pass/builds/1467#01a1ead6-1382-40d9-a208-10051385c378",
-          "https://buildkite.com/gvisor/first-pass/builds/1467#01a1ead6-1383-4651-bdae-d603c14fecc5",
-          "https://buildkite.com/gvisor/first-pass/builds/1467#01a1ead6-1383-435f-baef-3de968eb0a2d",
-          "https://buildkite.com/gvisor/first-pass/builds/1467#01a1ead6-1383-49ff-bf42-67dd148bca32",
-          "https://buildkite.com/gvisor/first-pass/builds/1467#01a1ead6-1383-43bf-9ff5-ee43d5dd575f",
-          "https://buildkite.com/gvisor/first-pass/builds/1467#01a1ead6-1384-47ec-857a-db88e8533463",
-          "https://buildkite.com/gvisor/first-pass/builds/1467#01a1ead6-1384-4b27-ad32-a1dfaa5d95b5",
-          "https://buildkite.com/gvisor/first-pass/builds/1467#01a1ead6-1384-46ec-9c0d-6a81d55a3ad0",
-          "https://buildkite.com/gvisor/first-pass/builds/1467#01a1ead6-1384-4caf-b504-cc8ee94e9ae0",
-          "https://buildkite.com/gvisor/first-pass/builds/1467#01a1ead6-1384-4028-bdf7-7d387e7eb354",
-          "https://buildkite.com/gvisor/first-pass/builds/1467#01a1ead6-1384-47ac-804a-9967f04d8b5c",
-          "https://buildkite.com/gvisor/first-pass/builds/1467#01a1ead6-1384-438b-af46-e4858166c342",
-          "https://buildkite.com/gvisor/first-pass/builds/1467#01a1ead6-1384-4e18-a1c8-bf589bd55cb0",
-          "https://buildkite.com/gvisor/first-pass/builds/1467#01a1ead6-1384-4c55-bc63-e06c15d0ffc2",
-          "https://buildkite.com/gvisor/first-pass/builds/1467#01a1ead6-1385-4b63-9360-bf101b85a533"
+          "https://github.com/tamird/gvisor/commit/ce539633fa36f5f73f9e85a1cdc907be23ef1be5",
+          "https://github.com/tamird/gvisor/actions/runs/45330776339",
+          "https://github.com/tamird/gvisor/actions/runs/45330779851"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Assigned owner supplies current-state/context preparation and exact source-bound integration/qualification evidence, or actual head/base/review/import change.",
+        "recheckCondition": "User reports SSH agent unlocked, or existing authorized transport capability recovers; then one normal publication attempt. Reconcile any intervening source, review or prerequisite change before updating refs.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -38100,7 +38045,8 @@
               ]
             }
           }
-        ]
+        ],
+        "candidateHead": "ce539633fa36f5f73f9e85a1cdc907be23ef1be5"
       },
       "evidence": [
         {
@@ -82893,14 +82839,14 @@
           "url": "https://github.com/tamird/gvisor/blob/208cd127d/.github/qualification/tcp_benchmark_go.result.json"
         }
       ],
-      "updatedAt": "2026-11-23T18:40:13.679878+00:00",
+      "updatedAt": "2026-11-24T05:38:02.473380+00:00",
       "followup": {
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
         "owner": "root",
-        "nextAction": "Root owns final exact-source review and eventual publication boundary, using the completed before/after record. Do not schedule implementation/allocation as unfinished, transfer oldf26 review clearance, create a pending approval card, run timings or update the public PR.",
+        "nextAction": "Retain reviewed source and existing functional evidence. Complete comparative performance only when a demonstrated stable same-source A/A route is available; do not expand samples or retry unchanged timings. Present any final publication proposal only after its remaining evidence and scope are concrete.",
         "mergeable": "CONFLICTING",
-        "observedAt": "2026-11-24T04:47:08.376554+00:00",
-        "recheckCondition": "Root completes final exact-source review and actual qualified performance-route evidence becomes available; only then prepare a real publication question.",
+        "observedAt": "2026-11-24T05:38:02.473380+00:00",
+        "recheckCondition": "A qualified stable performance route, new source-bound measurement evidence, a concrete source finding or a user decision changes the next action. No additional execution approval is needed for otherwise authorized validation.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17184",
           "https://github.com/tamird/gvisor/commit/9c541c3ae1cd68df1741882480d5bf184396e695",
@@ -82944,10 +82890,11 @@
           "https://github.com/tamird/gvisor/actions/runs/45004532751",
           "https://github.com/tamird/gvisor/blob/ab856ed6063d63de247adbb26e01617a7a50c02d/registry.json"
         ],
-        "disposition": "Private4aba6f94689dc7f185c524b10a4c903c401cf5d2 already has functional/source/cleanup evidence and the requested before/after record at existing temp/tcp-4aba-before-after-record.md. Final exact-source adversarial review remains required: oldf26 reviews do not cover changed cancellation semantics. Performance A/A/qualified-route gate is unmet. Public2aa remains unchanged; old asks are superseded and no4aba publication question exists.",
+        "disposition": "Exact 4aba completed two independent full-source final reviews without source blockers. Production replaces 582 shell lines with 580 Go lines; full change is net +164, including 163 lines of distinct lifecycle coverage. Functional qualification does not establish comparative performance. Public head and rejected-draft publication boundary remain unchanged.",
         "curatedAt": "2026-11-22T14:02:28.619749+00:00",
         "implementationOwner": "approved_rebase_queue",
-        "base": "eb263e1f414d0bceaf10decea6c73e2c77332112"
+        "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+        "candidateHead": "4aba6f94689dc7f185c524b10a4c903c401cf5d2"
       },
       "dcoAmendment": {
         "oldHead": "9c541c3ae1cd68df1741882480d5bf184396e695",
@@ -100486,7 +100433,7 @@
       "group": "bazel",
       "status": "open",
       "head": "37ea324587c5a41ba85048ef960dc0763f007a31",
-      "updatedAt": "2026-11-17T19:04:51.199074+00:00",
+      "updatedAt": "2026-11-24T05:35:00.184573+00:00",
       "summary": "Current exact37ea32458 is CONFLICTING. The earlier mergeable-only wait is obsolete. Prior source qualification/approvals and separate import boundaries remain historical and source-bound.",
       "refinement": {
         "before": {
@@ -100499,32 +100446,18 @@
         }
       },
       "followup": {
-        "owner": "approved_rebase_queue / root",
+        "owner": "root / approved_rebase_queue",
         "sourceHead": "37ea324587c5a41ba85048ef960dc0763f007a31",
-        "observedAt": "2026-11-24T04:47:08.376554+00:00",
+        "observedAt": "2026-11-24T05:35:00.184573+00:00",
         "mergeable": "CONFLICTING",
-        "disposition": "Current exact37ea32458 is CONFLICTING. The earlier mergeable-only wait is obsolete. Prior source qualification/approvals and separate import boundaries remain historical and source-bound.",
-        "nextAction": "Assigned approved_rebase_queue is actively performing bounded current-state review and isolated object preparation while the analyzer retains the main checkout. Preserve approved image/build semantics and separate import/review boundaries; qualify/review any real integration delta before publication. No blind retry, automatic source approval or competing checkout writer.",
+        "disposition": "Rebase source and dual-architecture archive construction passed; two independent final reviews clear. Authorized publication failed: SSH timed out, then GitHub explicitly refused HTTPS because the existing OAuth credential lacks workflow scope for .github/workflows/gazelle.yml. Remote head unchanged; no notice or new PR posted. Fresh runtime/performance validation is not claimed.",
+        "nextAction": "Resume the already-authorized exact-lease publication when SSH authentication recovers, then verify published heads, post factual rebase notices and preserve existing review requests. Nginx opening approval and DCO remain settled; no renewed publication approval is required.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16871",
-          "https://github.com/tamird/gvisor/actions/runs/43133311587/job/130902467001",
-          "https://github.com/gvisor/gvisor/pull/16871",
-          "https://github.com/tamird/gvisor/commit/8dc316391447193c51882d606da918974087f372",
-          "https://github.com/tamird/gvisor/commit/37ea324587c5a41ba85048ef960dc0763f007a31",
-          "https://buildkite.com/gvisor/first-pass/builds/1513",
-          "https://buildkite.com/gvisor/first-pass/builds/1513#01a1ead6-8f32-451d-b050-9a2adfb64b94",
-          "https://buildkite.com/gvisor/first-pass/builds/1513#01a1ead6-8f38-44c0-b2d5-5ce7986f70b5",
-          "https://buildkite.com/gvisor/first-pass/builds/1513#01a1ead6-8f38-4bde-9b88-19119bdb86c7",
-          "https://buildkite.com/gvisor/first-pass/builds/1513#01a1ead6-8f39-4732-85d3-c9512a1e3d1a",
-          "https://buildkite.com/gvisor/first-pass/builds/1513#01a1ead6-8f3a-4561-aa8f-06ba6e2d6228",
-          "https://buildkite.com/gvisor/first-pass/builds/1513#01a1ead6-8f3a-488c-9b06-3094d7d031a0",
-          "https://buildkite.com/gvisor/first-pass/builds/1513#01a1ead6-8f3a-4f78-9710-5a80c5b6b2fb",
-          "https://buildkite.com/gvisor/first-pass/builds/1513#01a1ead6-8f3b-4b03-957e-eae326bdd7b5",
-          "https://buildkite.com/gvisor/first-pass/builds/1513#01a1ead6-8f3b-4faf-b8b0-f33e3a2e11fa",
-          "https://buildkite.com/gvisor/first-pass/builds/1513#01a1ead6-8f3b-44c0-b489-2a20387bbccc",
-          "https://buildkite.com/gvisor/first-pass/builds/1513#01a1ead6-8f3c-403a-9f79-53063d4fd024"
+          "https://github.com/tamird/gvisor/commit/24959d472baf3aa7405ac1d3d3b88e47af8f7f76",
+          "https://github.com/tamird/gvisor/actions/runs/45330782866",
+          "https://github.com/tamird/gvisor/actions/runs/45330786240"
         ],
-        "recheckCondition": "Assigned owner supplies current-state/context preparation and exact source-bound integration/qualification evidence, or actual head/base/review/import change.",
+        "recheckCondition": "User reports SSH agent unlocked, or existing authorized transport capability recovers; then one normal publication attempt. Reconcile any intervening source, review or prerequisite change before updating refs.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -100557,7 +100490,8 @@
               ]
             }
           }
-        ]
+        ],
+        "candidateHead": "24959d472baf3aa7405ac1d3d3b88e47af8f7f76"
       },
       "evidence": [
         {

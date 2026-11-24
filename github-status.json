@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-24T04:41:01.877891+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-24T04:47:08.376554+00:00",
+  "registryDate": "2026-11-24T05:38:52.083534+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -456680,7 +456680,7 @@
       "number": 16462,
       "head": "9354eb0eeba8d44da40cdae3235e51e890e82b63",
       "sourceNumber": 16462,
-      "owner": "approved_rebase_queue / root",
+      "owner": "root / approved_rebase_queue",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABhZ6GfQ",
       "needsTriage": false,
@@ -457410,7 +457410,7 @@
       "number": 16458,
       "head": "303aee0fb294bcf676c2579d24b6821d0578a603",
       "sourceNumber": 16458,
-      "owner": "approved_rebase_queue / root",
+      "owner": "root / approved_rebase_queue",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABk8iBdA",
       "needsTriage": false,
@@ -457756,7 +457756,7 @@
       "number": 16458,
       "head": "303aee0fb294bcf676c2579d24b6821d0578a603",
       "sourceNumber": 16458,
-      "owner": "approved_rebase_queue / root",
+      "owner": "root / approved_rebase_queue",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABlh1Mpw",
       "needsTriage": false,
@@ -458507,13 +458507,13 @@
       "checkedAt": "2026-11-24T04:40:54.661885+00:00",
       "mergeabilityCheckedAt": "2026-11-24T04:40:54.661885+00:00",
       "sourceBranchMismatch": false,
-      "owner": "approved_rebase_queue / root",
-      "action": "Assigned approved_rebase_queue is actively performing bounded current-state review and isolated object preparation while the analyzer retains the main checkout. Preserve approved image/build semantics and separate import/review boundaries; qualify/review any real integration delta before publication. No blind retry, automatic source approval or competing checkout writer.",
+      "owner": "root / approved_rebase_queue",
+      "action": "Resume the already-authorized exact-lease publication when SSH authentication recovers, then verify published heads, post factual rebase notices and preserve existing review requests. Nginx opening approval and DCO remain settled; no renewed publication approval is required.",
       "recordedFollowup": {
-        "owner": "approved_rebase_queue / root",
+        "owner": "root / approved_rebase_queue",
         "sourceHead": "303aee0fb294bcf676c2579d24b6821d0578a603",
-        "disposition": "Current exact303aee0fb is CONFLICTING. The earlier mergeable-only wait is obsolete. Prior source qualification/approvals and separate import boundaries remain historical and source-bound.",
-        "nextAction": "Assigned approved_rebase_queue is actively performing bounded current-state review and isolated object preparation while the analyzer retains the main checkout. Preserve approved image/build semantics and separate import/review boundaries; qualify/review any real integration delta before publication. No blind retry, automatic source approval or competing checkout writer."
+        "disposition": "Rebase source and dual-architecture archive construction passed; two independent final reviews clear. Authorized publication failed: SSH timed out, then GitHub explicitly refused HTTPS because the existing OAuth credential lacks workflow scope for .github/workflows/gazelle.yml. Remote head unchanged; no notice or new PR posted. Fresh runtime/performance validation is not claimed.",
+        "nextAction": "Resume the already-authorized exact-lease publication when SSH authentication recovers, then verify published heads, post factual rebase notices and preserve existing review requests. Nginx opening approval and DCO remain settled; no renewed publication approval is required."
       },
       "conflictObservedSince": "2026-11-24T04:40:54.661885+00:00"
     },
@@ -458531,13 +458531,13 @@
       "checkedAt": "2026-11-24T04:40:54.661885+00:00",
       "mergeabilityCheckedAt": "2026-11-24T04:40:54.661885+00:00",
       "sourceBranchMismatch": false,
-      "owner": "approved_rebase_queue / root",
-      "action": "Assigned approved_rebase_queue is actively performing bounded current-state review and isolated object preparation while the analyzer retains the main checkout. Preserve approved image/build semantics and separate import/review boundaries; qualify/review any real integration delta before publication. No blind retry, automatic source approval or competing checkout writer.",
+      "owner": "root / approved_rebase_queue",
+      "action": "Resume the already-authorized exact-lease publication when SSH authentication recovers, then verify published heads, post factual rebase notices and preserve existing review requests. Nginx opening approval and DCO remain settled; no renewed publication approval is required.",
       "recordedFollowup": {
-        "owner": "approved_rebase_queue / root",
+        "owner": "root / approved_rebase_queue",
         "sourceHead": "9354eb0eeba8d44da40cdae3235e51e890e82b63",
-        "disposition": "Current exact9354eb0ee is CONFLICTING. The earlier mergeable-only wait is obsolete. Prior source qualification/approvals and separate import boundaries remain historical and source-bound.",
-        "nextAction": "Assigned approved_rebase_queue is actively performing bounded current-state review and isolated object preparation while the analyzer retains the main checkout. Preserve approved image/build semantics and separate import/review boundaries; qualify/review any real integration delta before publication. No blind retry, automatic source approval or competing checkout writer."
+        "disposition": "Rebase source and dual-architecture archive construction passed; two independent final reviews clear. Authorized publication failed: SSH timed out, then GitHub explicitly refused HTTPS because the existing OAuth credential lacks workflow scope for .github/workflows/gazelle.yml. Remote head unchanged; no notice or new PR posted. Fresh runtime/performance validation is not claimed.",
+        "nextAction": "Resume the already-authorized exact-lease publication when SSH authentication recovers, then verify published heads, post factual rebase notices and preserve existing review requests. Nginx opening approval and DCO remain settled; no renewed publication approval is required."
       },
       "conflictObservedSince": "2026-11-24T04:40:54.661885+00:00"
     },
@@ -458675,13 +458675,13 @@
       "checkedAt": "2026-11-24T04:40:57.352517+00:00",
       "mergeabilityCheckedAt": "2026-11-24T04:40:57.352517+00:00",
       "sourceBranchMismatch": false,
-      "owner": "approved_rebase_queue / root",
-      "action": "Assigned approved_rebase_queue is actively performing bounded current-state review and isolated object preparation while the analyzer retains the main checkout. Preserve approved image/build semantics and separate import/review boundaries; qualify/review any real integration delta before publication. No blind retry, automatic source approval or competing checkout writer.",
+      "owner": "root / approved_rebase_queue",
+      "action": "Resume the already-authorized exact-lease publication when SSH authentication recovers, then verify published heads, post factual rebase notices and preserve existing review requests. Nginx opening approval and DCO remain settled; no renewed publication approval is required.",
       "recordedFollowup": {
-        "owner": "approved_rebase_queue / root",
+        "owner": "root / approved_rebase_queue",
         "sourceHead": "37ea324587c5a41ba85048ef960dc0763f007a31",
-        "disposition": "Current exact37ea32458 is CONFLICTING. The earlier mergeable-only wait is obsolete. Prior source qualification/approvals and separate import boundaries remain historical and source-bound.",
-        "nextAction": "Assigned approved_rebase_queue is actively performing bounded current-state review and isolated object preparation while the analyzer retains the main checkout. Preserve approved image/build semantics and separate import/review boundaries; qualify/review any real integration delta before publication. No blind retry, automatic source approval or competing checkout writer."
+        "disposition": "Rebase source and dual-architecture archive construction passed; two independent final reviews clear. Authorized publication failed: SSH timed out, then GitHub explicitly refused HTTPS because the existing OAuth credential lacks workflow scope for .github/workflows/gazelle.yml. Remote head unchanged; no notice or new PR posted. Fresh runtime/performance validation is not claimed.",
+        "nextAction": "Resume the already-authorized exact-lease publication when SSH authentication recovers, then verify published heads, post factual rebase notices and preserve existing review requests. Nginx opening approval and DCO remain settled; no renewed publication approval is required."
       },
       "conflictObservedSince": "2026-11-24T04:40:57.352517+00:00"
     },
@@ -458796,12 +458796,12 @@
       "mergeabilityCheckedAt": "2026-11-24T04:41:00.339016+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Root owns final exact-source review and eventual publication boundary, using the completed before/after record. Do not schedule implementation/allocation as unfinished, transfer oldf26 review clearance, create a pending approval card, run timings or update the public PR.",
+      "action": "Retain reviewed source and existing functional evidence. Complete comparative performance only when a demonstrated stable same-source A/A route is available; do not expand samples or retry unchanged timings. Present any final publication proposal only after its remaining evidence and scope are concrete.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
-        "disposition": "Private4aba6f94689dc7f185c524b10a4c903c401cf5d2 already has functional/source/cleanup evidence and the requested before/after record at existing temp/tcp-4aba-before-after-record.md. Final exact-source adversarial review remains required: oldf26 reviews do not cover changed cancellation semantics. Performance A/A/qualified-route gate is unmet. Public2aa remains unchanged; old asks are superseded and no4aba publication question exists.",
-        "nextAction": "Root owns final exact-source review and eventual publication boundary, using the completed before/after record. Do not schedule implementation/allocation as unfinished, transfer oldf26 review clearance, create a pending approval card, run timings or update the public PR."
+        "disposition": "Exact 4aba completed two independent full-source final reviews without source blockers. Production replaces 582 shell lines with 580 Go lines; full change is net +164, including 163 lines of distinct lifecycle coverage. Functional qualification does not establish comparative performance. Public head and rejected-draft publication boundary remain unchanged.",
+        "nextAction": "Retain reviewed source and existing functional evidence. Complete comparative performance only when a demonstrated stable same-source A/A route is available; do not expand samples or retry unchanged timings. Present any final publication proposal only after its remaining evidence and scope are concrete."
       },
       "conflictObservedSince": "2026-11-20T00:41:37.337032+00:00"
     },
@@ -470870,7 +470870,7 @@
         "since": "2026-11-24T02:57:05.420540+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T04:47:08.376554+00:00"
+        "observedAt": "2026-11-24T05:38:52.083534+00:00"
       }
     },
     "pr:16539": {
@@ -473012,7 +473012,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T04:47:08.376554+00:00"
+        "observedAt": "2026-11-24T05:38:52.083534+00:00"
       }
     },
     "pr:17082": {
@@ -475551,7 +475551,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T04:47:08.376554+00:00"
+        "observedAt": "2026-11-24T05:38:52.083534+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -475560,7 +475560,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T04:47:08.376554+00:00"
+        "observedAt": "2026-11-24T05:38:52.083534+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -475569,7 +475569,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T04:47:08.376554+00:00"
+        "observedAt": "2026-11-24T05:38:52.083534+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -475578,7 +475578,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T04:47:08.376554+00:00"
+        "observedAt": "2026-11-24T05:38:52.083534+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -475587,7 +475587,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T04:47:08.376554+00:00"
+        "observedAt": "2026-11-24T05:38:52.083534+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -475596,7 +475596,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T04:47:08.376554+00:00"
+        "observedAt": "2026-11-24T05:38:52.083534+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -475605,7 +475605,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T04:47:08.376554+00:00"
+        "observedAt": "2026-11-24T05:38:52.083534+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -475614,7 +475614,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T04:47:08.376554+00:00"
+        "observedAt": "2026-11-24T05:38:52.083534+00:00"
       }
     },
     "issue:17832": {
@@ -475623,7 +475623,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T04:47:08.376554+00:00"
+        "observedAt": "2026-11-24T05:38:52.083534+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -475632,7 +475632,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T04:47:08.376554+00:00"
+        "observedAt": "2026-11-24T05:38:52.083534+00:00"
       }
     },
     "investigation:repository-lint": {
@@ -475641,7 +475641,7 @@
         "since": "2026-11-24T00:13:57.833052+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T04:47:08.376554+00:00"
+        "observedAt": "2026-11-24T05:38:52.083534+00:00"
       }
     },
     "investigation:ci-flake-node-worker-arraybuffer-zerofill": {
@@ -475650,7 +475650,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T04:47:08.376554+00:00"
+        "observedAt": "2026-11-24T05:38:52.083534+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -475659,7 +475659,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T04:47:08.376554+00:00",
+        "observedAt": "2026-11-24T05:38:52.083534+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     }
