@@ -62,6 +62,10 @@ cleanup() {
   fi
   test "$(docker info --format '{{json .Runtimes}}')" = "$initial_runtimes" || ret=1
   test "$(docker ps -aq)" = "$initial_containers" || ret=1
+  if test "$ret" -ne 0; then
+    echo "HOST_DOCKER_CLEANUP_BLOCKED: daemon restoration failed; preserving $work" >&2
+    exit 1
+  fi
   sudo python3 - "$docker_root/runtimes" "$runtime" <<'PY' || ret=1
 import pathlib, sys
 for path in pathlib.Path(sys.argv[1]).glob(sys.argv[2] + ".*"):
