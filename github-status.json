@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-24T17:33:41.585872+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-24T18:07:30.803456+00:00",
+  "registryDate": "2026-11-24T18:11:40.232007+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -476217,7 +476217,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T18:07:30.803456+00:00"
+        "observedAt": "2026-11-24T18:11:40.232007+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -476226,7 +476226,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T18:07:30.803456+00:00"
+        "observedAt": "2026-11-24T18:11:40.232007+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -476235,7 +476235,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T18:07:30.803456+00:00"
+        "observedAt": "2026-11-24T18:11:40.232007+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -476244,7 +476244,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T18:07:30.803456+00:00"
+        "observedAt": "2026-11-24T18:11:40.232007+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -476253,7 +476253,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T18:07:30.803456+00:00"
+        "observedAt": "2026-11-24T18:11:40.232007+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -476262,7 +476262,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T18:07:30.803456+00:00"
+        "observedAt": "2026-11-24T18:11:40.232007+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -476271,7 +476271,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T18:07:30.803456+00:00"
+        "observedAt": "2026-11-24T18:11:40.232007+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -476280,7 +476280,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T18:07:30.803456+00:00"
+        "observedAt": "2026-11-24T18:11:40.232007+00:00"
       }
     },
     "issue:17832": {
@@ -476289,7 +476289,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T18:07:30.803456+00:00"
+        "observedAt": "2026-11-24T18:11:40.232007+00:00"
       }
     },
     "branch:arm-premerge-cpp-lint": {
@@ -476298,7 +476298,7 @@
         "since": "2026-11-24T18:07:30.803456+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T18:07:30.803456+00:00"
+        "observedAt": "2026-11-24T18:11:40.232007+00:00"
       }
     },
     "branch:clang-tidy-process-failures": {
@@ -476307,7 +476307,7 @@
         "since": "2026-11-24T18:07:30.803456+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T18:07:30.803456+00:00"
+        "observedAt": "2026-11-24T18:11:40.232007+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -476316,7 +476316,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T18:07:30.803456+00:00"
+        "observedAt": "2026-11-24T18:11:40.232007+00:00"
       }
     },
     "investigation:ci-flake-node-worker-arraybuffer-zerofill": {
@@ -476325,7 +476325,7 @@
         "since": "2026-11-24T18:06:03.132845+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T18:07:30.803456+00:00"
+        "observedAt": "2026-11-24T18:11:40.232007+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -476334,7 +476334,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T18:07:30.803456+00:00",
+        "observedAt": "2026-11-24T18:11:40.232007+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     }

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T18:07:30.803456+00:00",
+    "updatedAt": "2026-11-24T18:11:40.232007+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -132329,9 +132329,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-24T18:03:34.004856+00:00",
+      "updatedAt": "2026-11-24T18:11:40.232007+00:00",
       "group": "analysis",
-      "summary": "54-commit series at 26090b334: dependencies first, then one analyzer and its fixes per commit. Focused AMD64/ARM64 checker and source checks pass. Broader behavioral and performance qualification remains incomplete; prerequisite #17884 is still open.",
+      "summary": "54-commit series at 26090b334: dependencies first, then one analyzer and its fixes per commit. Focused AMD64/ARM64 checker and source checks pass. The first matched startup category passed stability and comparison checks on the observed route, with no detected timing difference; this is not equivalence or full-workload clearance. Module-aware corpus validation and broader qualification remain incomplete; prerequisite #17884 is still open.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132703,7 +132703,7 @@
           ]
         }
       ],
-      "nextStep": "Finish the current same-worker startup A/A then A/B run and remaining required workload qualification, then request publication review. Four behavioral targets remain unresolved.",
+      "nextStep": "Finish the remaining required workload qualification and Module-aware canonical NoGo corpus validation, then request publication review. Four behavioral targets remain unresolved. benchmark_measurement_review owns the remaining performance categories; analysis_pass_inventory owns the corpus checks.",
       "evidence": [
         {
           "label": "Current reviewed analyzer series",
@@ -133061,7 +133061,7 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T18:03:34.004856+00:00",
+        "observedAt": "2026-11-24T18:11:40.232007+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45338108931",
           "https://github.com/tamird/gvisor/actions/runs/45344645597",
@@ -133114,12 +133114,15 @@
           "https://github.com/tamird/gvisor/actions/runs/45441968934",
           "https://github.com/tamird/gvisor/actions/runs/45441979500",
           "https://github.com/gvisor/gvisor/pull/17920",
-          "https://github.com/tamird/gvisor/actions/runs/45452628262"
+          "https://github.com/tamird/gvisor/actions/runs/45452628262",
+          "https://github.com/tamird/gvisor/actions/runs/45452628262/artifacts/14950101874",
+          "https://github.com/tamird/gvisor/actions/runs/45456241172",
+          "https://github.com/tamird/gvisor/actions/runs/45456255734"
         ],
         "owner": "root",
-        "disposition": "54-commit series at 26090b334: dependencies first, then one analyzer and its fixes per commit. Focused AMD64/ARM64 checker and source checks pass. Broader behavioral and performance qualification remains incomplete; prerequisite #17884 is still open.",
-        "nextAction": "Finish the current same-worker startup A/A then A/B run and remaining required workload qualification, then request publication review. Four behavioral targets remain unresolved.",
-        "recheckCondition": "Existing performance owner returns the current same-worker run result; actual remaining-workload qualification or #17884 landing. No publication question has been asked for this series.",
+        "disposition": "54-commit series at 26090b334: dependencies first, then one analyzer and its fixes per commit. Focused AMD64/ARM64 checker and source checks pass. The first matched startup category passed stability and comparison checks on the observed route, with no detected timing difference; this is not equivalence or full-workload clearance. Module-aware corpus validation and broader qualification remain incomplete; prerequisite #17884 is still open.",
+        "nextAction": "Finish the remaining required workload qualification and Module-aware canonical NoGo corpus validation, then request publication review. Four behavioral targets remain unresolved. benchmark_measurement_review owns the remaining performance categories; analysis_pass_inventory owns the corpus checks.",
+        "recheckCondition": "Actual remaining-workload results, Module-aware corpus results or #17884 landing. No publication question has been asked for this series.",
         "sourceHead": "26090b334cf9c5f4657ec33aef64efc6fa86ef82",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4"
