@@ -41,6 +41,11 @@ fi
 image=gvisor.dev/images/benchmarks/alpine:latest
 sudo -n true
 docker info >/dev/null
+# Removing our last tag must not delete an image that was already dangling.
+if test -n "$(docker image ls -q --filter dangling=true)"; then
+  echo "HOST_DOCKER_UNSUPPORTED: dangling images must be removed before admission" >&2
+  exit 1
+fi
 initial_containers=$(docker ps -aq)
 test -z "$initial_containers" # Require an otherwise unused daemon.
 initial_experimental=$(docker info --format '{{.ExperimentalBuild}}')
@@ -88,14 +93,38 @@ dropin_dir=/run/systemd/system/docker.service.d
 dropin="$dropin_dir/$runtime.conf"
 dropin_dir_existed=false
 if test -d "$dropin_dir"; then dropin_dir_existed=true; fi
+# Roll back only to the original unit; never retry a failing temporary engine.
+restart_original_service() {
+  test "$(systemctl show docker --property=DropInPaths --value)" = '' || return 1
+  if timeout 90s sudo systemctl restart docker; then return 0; fi
+  result=$(systemctl show docker --property=Result --value)
+  systemctl show docker --property=Result,ExecMainStatus,StartLimitBurst,StartLimitIntervalUSec
+  sudo journalctl -u docker.service --no-pager -n 20
+  if test "$result" != start-limit-hit; then return 1; fi
+  sudo systemctl reset-failed docker || return 1
+  timeout 90s sudo systemctl restart docker
+}
 cleanup() {
   command_status=$?
   ret=0
   trap - EXIT
   # The daemon started empty and is exclusively owned for this invocation.
-  if ! docker ps -aq | xargs -r docker rm -f >/dev/null; then
-    echo "HOST_DOCKER_CLEANUP_BLOCKED: containers remain; preserving $work" >&2
-    exit 1
+  if ! timeout 15s docker ps -aq | xargs -r timeout 30s docker rm -f >/dev/null; then
+    if $engine_changed; then
+      systemctl show docker --property=Result,ExecMainStatus,StartLimitBurst,StartLimitIntervalUSec
+      sudo journalctl -u docker.service --no-pager -n 20
+      # Keep the runtime/config intact while recovering the API and containers.
+      if ! sudo rm -f "$dropin" || ! sudo systemctl daemon-reload ||
+          ! restart_original_service || ! timeout 15s docker info >/dev/null; then
+        echo "HOST_DOCKER_CLEANUP_BLOCKED: original service recovery failed; preserving $work" >&2
+        exit 1
+      fi
+      echo HOST_DOCKER_ORIGINAL_SERVICE_RECOVERED
+    fi
+    if ! timeout 15s docker ps -aq | xargs -r timeout 30s docker rm -f >/dev/null; then
+      echo "HOST_DOCKER_CLEANUP_BLOCKED: containers remain; preserving $work" >&2
+      exit 1
+    fi
   fi
   if $configured; then
     # Canonical uninstall leaves an explicit runtime map for daemon reload.
@@ -118,7 +147,7 @@ PYCONFIG
       sudo systemctl daemon-reload || ret=1
     fi
     if $restart_experimental || $engine_changed; then
-      timeout 90s sudo systemctl restart docker || ret=1
+      restart_original_service || ret=1
     else
       sudo systemctl reload docker || ret=1
     fi

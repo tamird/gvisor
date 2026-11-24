@@ -49,15 +49,9 @@ bazel test --nostamp --noincompatible_bazel_test_exec_run_under \
   //test/benchmarks/base:startup_test
 ```
 
-This profile requires passwordless sudo and the standard `docker.service` unit.
-It selects the declared Docker 27.5.1 executable for the known Docker 28.0.4 host
-unit because [Moby #50750](https://github.com/moby/moby/issues/50750) prevents
-restores with the default network on Docker 28. It uses the existing daemon,
-socket, containerd and storage, then restores the original configuration and
-engine. Other host engine versions or a modified Docker 28 unit must be
-qualified separately.
-The ordinary `host_docker` target keeps the host engine and Alpine-only inputs.
-One iteration verifies functionality; it is not performance evidence.
+This profile requires passwordless sudo and the standard Docker 28.0.4
+`docker.service` unit, no existing containers and no dangling images. Other host engine versions or a modified unit must be
+qualified separately. One iteration verifies functionality, not performance.
 
 ## Writing benchmarks
 
