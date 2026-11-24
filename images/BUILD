@@ -111,3 +111,31 @@ image_outputs(
     image_name = "benchmarks/util",
     visibility = ["//test/benchmarks/harness:__pkg__"],
 )
+
+image_outputs(
+    name = "benchmark_iperf",
+    image = "@benchmark_iperf_amd64",
+    image_name = "benchmarks/iperf",
+    visibility = ["//test/benchmarks/harness:__pkg__"],
+)
+
+image_outputs(
+    name = "benchmark_httpd",
+    image = "@benchmark_httpd_amd64",
+    image_name = "benchmarks/httpd",
+    visibility = ["//test/benchmarks/harness:__pkg__"],
+)
+
+image_outputs(
+    name = "benchmark_ruby",
+    image = "@benchmark_ruby_amd64",
+    image_name = "benchmarks/ruby",
+    visibility = ["//test/benchmarks/harness:__pkg__"],
+)
+
+image_outputs(
+    name = "benchmark_hey",
+    image = "@benchmark_hey_amd64",
+    image_name = "benchmarks/hey",
+    visibility = ["//test/benchmarks/harness:__pkg__"],
+)
