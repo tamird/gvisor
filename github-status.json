@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-24T14:47:11.369592+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-24T14:47:59.067163+00:00",
+  "registryDate": "2026-11-24T15:33:12.099125+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -236663,20 +236663,20 @@
       "url": "https://github.com/google/gvisor/pull/16522",
       "status": "open",
       "ref": "qualification/native-sidecar-cc",
-      "head": "8585cf9fc70d84fa7cc92d9a4fbb799f1b0f17ce",
+      "head": "c125b0e272ddb337b4c78588c79a86b2f5e228b6",
       "base": "63d5036dbffe387923ac59f4d69c05f64bb86b4d",
-      "branchHead": "8585cf9fc70d84fa7cc92d9a4fbb799f1b0f17ce",
+      "branchHead": "c125b0e272ddb337b4c78588c79a86b2f5e228b6",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
-      "mergeabilityCheckedAt": "2026-11-24T14:43:52.628276+00:00",
-      "headCommittedAt": "2026-11-20T22:46:06Z",
+      "mergeabilityCheckedAt": "2026-11-24T15:30:56.061425+00:00",
+      "headCommittedAt": "2026-11-24T02:45:23Z",
       "headHistoryComplete": true,
-      "headRebasedFrom": "ce4d7247286c0bce2a9e445f5be52b81784d02fc",
-      "headIntroducedAt": "2026-11-20T23:07:03Z",
+      "headRebasedFrom": "8585cf9fc70d84fa7cc92d9a4fbb799f1b0f17ce",
+      "headIntroducedAt": "2026-11-24T15:24:16Z",
       "headOwner": "tamird",
       "headRepo": "tamird/gvisor",
       "authorLogin": "tamird",
-      "updatedAt": "2026-11-24T01:43:15Z",
+      "updatedAt": "2026-11-24T15:25:04Z",
       "createdAt": "2026-10-27T19:52:58Z",
       "mergedAt": null,
       "closedAt": null,
@@ -236686,12 +236686,25 @@
       "commentsComplete": true,
       "reviewDismissals": {
         "complete": true,
-        "items": []
+        "items": [
+          {
+            "id": "RDE_lADOB9IlXs8AAAABaZjU5M8AAAAIpiANpg",
+            "createdAt": "2026-11-24T15:24:16Z",
+            "previousReviewState": "APPROVED",
+            "review": {
+              "id": "PRR_kwDOB9IlXs8AAAABZ3KGwg"
+            }
+          }
+        ]
       },
       "reviewRequests": [
         {
           "__typename": "User",
           "login": "manninglucas"
+        },
+        {
+          "__typename": "User",
+          "login": "EtiennePerot"
         }
       ],
       "codeOwnerRequests": [],
@@ -236703,7 +236716,7 @@
         "items": []
       },
       "threads": {
-        "unresolved": 9,
+        "unresolved": 7,
         "total": 9,
         "complete": true
       },
@@ -236783,7 +236796,7 @@
             "state": "COMMENTED",
             "submittedAt": "2026-10-29T18:51:33Z",
             "updatedAt": "2026-10-29T18:51:33Z",
-            "authorAssociation": "CONTRIBUTOR",
+            "authorAssociation": "MEMBER",
             "author": {
               "login": "tamird",
               "__typename": "User"
@@ -236800,7 +236813,7 @@
             "state": "COMMENTED",
             "submittedAt": "2026-10-29T18:51:35Z",
             "updatedAt": "2026-10-29T18:51:35Z",
-            "authorAssociation": "CONTRIBUTOR",
+            "authorAssociation": "MEMBER",
             "author": {
               "login": "tamird",
               "__typename": "User"
@@ -236817,7 +236830,7 @@
             "state": "COMMENTED",
             "submittedAt": "2026-10-29T18:51:37Z",
             "updatedAt": "2026-10-29T18:51:37Z",
-            "authorAssociation": "CONTRIBUTOR",
+            "authorAssociation": "MEMBER",
             "author": {
               "login": "tamird",
               "__typename": "User"
@@ -236851,7 +236864,7 @@
             "state": "COMMENTED",
             "submittedAt": "2026-11-03T20:38:51Z",
             "updatedAt": "2026-11-03T20:38:51Z",
-            "authorAssociation": "CONTRIBUTOR",
+            "authorAssociation": "MEMBER",
             "author": {
               "login": "tamird",
               "__typename": "User"
@@ -236868,7 +236881,7 @@
             "state": "COMMENTED",
             "submittedAt": "2026-11-03T20:38:54Z",
             "updatedAt": "2026-11-03T20:38:54Z",
-            "authorAssociation": "CONTRIBUTOR",
+            "authorAssociation": "MEMBER",
             "author": {
               "login": "tamird",
               "__typename": "User"
@@ -236902,7 +236915,7 @@
             "state": "COMMENTED",
             "submittedAt": "2026-11-04T18:36:54Z",
             "updatedAt": "2026-11-04T18:36:54Z",
-            "authorAssociation": "CONTRIBUTOR",
+            "authorAssociation": "MEMBER",
             "author": {
               "login": "tamird",
               "__typename": "User"
@@ -237021,7 +237034,7 @@
             "state": "COMMENTED",
             "submittedAt": "2026-11-20T23:09:28Z",
             "updatedAt": "2026-11-20T23:09:28Z",
-            "authorAssociation": "CONTRIBUTOR",
+            "authorAssociation": "MEMBER",
             "author": {
               "login": "tamird",
               "__typename": "User"
@@ -237052,9 +237065,9 @@
             "id": "PRR_kwDOB9IlXs8AAAABZ3KGwg",
             "url": "https://github.com/google/gvisor/pull/16522#pullrequestreview-6030526146",
             "body": "",
-            "state": "APPROVED",
+            "state": "DISMISSED",
             "submittedAt": "2026-11-23T22:28:16Z",
-            "updatedAt": "2026-11-23T22:28:16Z",
+            "updatedAt": "2026-11-24T15:24:16Z",
             "authorAssociation": "MEMBER",
             "author": {
               "login": "rexren-gif",
@@ -237079,6 +237092,23 @@
             },
             "commit": {
               "oid": "8585cf9fc70d84fa7cc92d9a4fbb799f1b0f17ce"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABaCO9eQ",
+            "url": "https://github.com/google/gvisor/pull/16522#pullrequestreview-6042140025",
+            "body": "",
+            "state": "COMMENTED",
+            "submittedAt": "2026-11-24T15:24:47Z",
+            "updatedAt": "2026-11-24T15:24:47Z",
+            "authorAssociation": "MEMBER",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "c125b0e272ddb337b4c78588c79a86b2f5e228b6"
             }
           },
           {
@@ -237254,7 +237284,7 @@
           {
             "kind": "inline",
             "threadId": "PRRT_kwDOB9IlXs6zugEs",
-            "isResolved": false,
+            "isResolved": true,
             "isOutdated": false,
             "path": "runsc/sidecar.bzl",
             "line": 54,
@@ -237271,7 +237301,7 @@
           {
             "kind": "inline",
             "threadId": "PRRT_kwDOB9IlXs6zugEs",
-            "isResolved": false,
+            "isResolved": true,
             "isOutdated": false,
             "path": "runsc/sidecar.bzl",
             "line": 54,
@@ -237288,7 +237318,7 @@
           {
             "kind": "inline",
             "threadId": "PRRT_kwDOB9IlXs66MHhj",
-            "isResolved": false,
+            "isResolved": true,
             "isOutdated": false,
             "path": "runsc/sidecar.bzl",
             "line": 39,
@@ -237305,7 +237335,7 @@
           {
             "kind": "inline",
             "threadId": "PRRT_kwDOB9IlXs66MHhj",
-            "isResolved": false,
+            "isResolved": true,
             "isOutdated": false,
             "path": "runsc/sidecar.bzl",
             "line": 39,
@@ -237340,7 +237370,7 @@
             "kind": "inline",
             "threadId": "PRRT_kwDOB9IlXs67Jz63",
             "isResolved": false,
-            "isOutdated": false,
+            "isOutdated": true,
             "path": "runsc/fdparking/BUILD",
             "line": 14,
             "id": "PRRC_kwDOB9IlXs8AAAABFp4WkQ",
@@ -237352,108 +237382,165 @@
               "login": "EtiennePerot",
               "__typename": "User"
             }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs67Jz63",
+            "isResolved": false,
+            "isOutdated": true,
+            "path": "runsc/fdparking/BUILD",
+            "line": 14,
+            "id": "PRRC_kwDOB9IlXs8AAAABFxYBeQ",
+            "url": "https://github.com/google/gvisor/pull/16522#discussion_r4682285433",
+            "body": "Restored the `ignore_srcs` filegroups in all three BUILD files.\n\nPosted by Codex on behalf of @tamird.",
+            "createdAt": "2026-11-24T15:24:47Z",
+            "updatedAt": "2026-11-24T15:24:47Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
           }
         ]
       },
       "checks": {
-        "state": "SUCCESS",
-        "total": 9,
-        "reportedTotal": 9,
+        "state": "FAILURE",
+        "total": 10,
+        "reportedTotal": 10,
         "supersededContexts": [],
         "complete": true,
         "contexts": [
           {
-            "id": "CR_kwDOB9IlXs8AAAAfz5nYkw",
+            "id": "CR_kwDOB9IlXs8AAAAgQoRizw",
+            "name": "generate",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45425130048/job/138554925775",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Go",
+            "workflowId": "MDg6V29ya2Zsb3cxMjc5NTY5",
+            "runNumber": 68545,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAgQoRW5A",
+            "name": "license-check",
+            "state": "SUCCESS",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45425129603/job/138554922724",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Dependency licenses",
+            "workflowId": "W_kwDOB9IlXs4ZXufC",
+            "runNumber": 63,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAgQoRinw",
             "name": "gazelle",
             "state": "SUCCESS",
-            "url": "https://github.com/gvisor/gvisor/actions/runs/44834378893/job/136626952339",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45425129965/job/138554925727",
             "kind": "check-run",
             "app": "GitHub Actions",
             "appSlug": "github-actions",
             "appId": "MDM6QXBwMTUzNjg=",
             "workflow": "Gazelle",
             "workflowId": "W_kwDOB9IlXs4WaLny",
-            "runNumber": 8313,
+            "runNumber": 8699,
             "runAttempt": 1,
             "purpose": "validation"
           },
           {
-            "id": "CR_kwDOB9IlXs8AAAAfz5nZqw",
-            "name": "generate",
+            "id": "CR_kwDOB9IlXs8AAAAgQoRWsA",
+            "name": "governance-check",
             "state": "SUCCESS",
-            "url": "https://github.com/gvisor/gvisor/actions/runs/44834378898/job/136626952619",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45425129745/job/138554922672",
             "kind": "check-run",
             "app": "GitHub Actions",
             "appSlug": "github-actions",
             "appId": "MDM6QXBwMTUzNjg=",
-            "workflow": "Go",
-            "workflowId": "MDg6V29ya2Zsb3cxMjc5NTY5",
-            "runNumber": 68159,
+            "workflow": "Governance",
+            "workflowId": "W_kwDOB9IlXs4ZXufE",
+            "runNumber": 63,
             "runAttempt": 1,
             "purpose": "validation"
           },
           {
-            "id": "CR_kwDOB9IlXs8AAAAfz5nbUQ",
+            "id": "CR_kwDOB9IlXs8AAAAgQoRXVw",
             "name": "fileheader",
             "state": "SUCCESS",
-            "url": "https://github.com/gvisor/gvisor/actions/runs/44834379080/job/136626953041",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45425129769/job/138554922839",
             "kind": "check-run",
             "app": "GitHub Actions",
             "appSlug": "github-actions",
             "appId": "MDM6QXBwMTUzNjg=",
             "workflow": "License header",
             "workflowId": "W_kwDOB9IlXs4U0Mzi",
-            "runNumber": 10712,
+            "runNumber": 11037,
             "runAttempt": 1,
             "purpose": "validation"
           },
           {
-            "id": "CR_kwDOB9IlXs8AAAAfz5naDQ",
+            "id": "CR_kwDOB9IlXs8AAAAgQoRdsQ",
             "name": "lint",
             "state": "SUCCESS",
-            "url": "https://github.com/gvisor/gvisor/actions/runs/44834378896/job/136626952717",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45425129581/job/138554924465",
             "kind": "check-run",
             "app": "GitHub Actions",
             "appSlug": "github-actions",
             "appId": "MDM6QXBwMTUzNjg=",
             "workflow": "Lint",
             "workflowId": "W_kwDOB9IlXs4UkKPI",
-            "runNumber": 11722,
+            "runNumber": 12108,
             "runAttempt": 1,
             "purpose": "validation"
           },
           {
-            "id": "CR_kwDOB9IlXs8AAAAfz5nj7g",
+            "id": "CR_kwDOB9IlXs8AAAAgQoRuOw",
             "name": "build",
             "state": "SKIPPED",
-            "url": "https://github.com/gvisor/gvisor/actions/runs/44834378898/job/136626955246",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45425130048/job/138554928699",
             "kind": "check-run",
             "app": "GitHub Actions",
             "appSlug": "github-actions",
             "appId": "MDM6QXBwMTUzNjg=",
             "workflow": "Go",
             "workflowId": "MDg6V29ya2Zsb3cxMjc5NTY5",
-            "runNumber": 68159,
+            "runNumber": 68545,
             "runAttempt": 1,
             "purpose": "validation"
           },
           {
-            "id": "CR_kwDOB9IlXs8AAAAfz5ning",
+            "id": "CR_kwDOB9IlXs8AAAAgQoRznA",
             "name": "push",
             "state": "SKIPPED",
-            "url": "https://github.com/gvisor/gvisor/actions/runs/44834378898/job/136626954910",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45425130048/job/138554930076",
             "kind": "check-run",
             "app": "GitHub Actions",
             "appSlug": "github-actions",
             "appId": "MDM6QXBwMTUzNjg=",
             "workflow": "Go",
             "workflowId": "MDg6V29ya2Zsb3cxMjc5NTY5",
-            "runNumber": 68159,
+            "runNumber": 68545,
             "runAttempt": 1,
             "purpose": "validation"
           },
           {
-            "id": "CR_kwDOB9IlXs8AAAAfz5mj_w",
+            "id": "SC_kwDOB9IlXs8AAAAN6vJkAA",
+            "name": "buildkite/first-pass/pr",
+            "state": "FAILURE",
+            "url": "https://buildkite.com/gvisor/first-pass/builds/2658",
+            "description": "Build #2658 failed",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAgQoP7bg",
             "name": "DCO",
             "state": "SUCCESS",
             "url": "https://github.com/cncf/dco2",
@@ -237465,26 +237552,6 @@
             "workflowId": null,
             "runNumber": null,
             "runAttempt": null,
-            "purpose": "validation"
-          },
-          {
-            "id": "SC_kwDOB9IlXs8AAAAN5u49Vg",
-            "name": "buildkite/first-pass/pr",
-            "state": "SUCCESS",
-            "url": "https://buildkite.com/gvisor/first-pass/builds/2535",
-            "description": "Build #2535 passed (17 minutes, 48 seconds)",
-            "app": null,
-            "kind": "status",
-            "purpose": "validation"
-          },
-          {
-            "id": "SC_kwDOB9IlXs8AAAAN5_eJkg",
-            "name": "buildkite/pipeline/pr",
-            "state": "SUCCESS",
-            "url": "https://buildkite.com/gvisor/pipeline/builds/55753",
-            "description": "Build #55753 passed (5 hours, 12 minutes, 38 seconds)",
-            "app": null,
-            "kind": "status",
             "purpose": "validation"
           }
         ]
@@ -237581,6 +237648,19 @@
               "__typename": "User",
               "login": "rexren-gif"
             }
+          },
+          {
+            "kind": "request",
+            "id": "RRE_lADOB9IlXs8AAAABaZjU5M8AAAAIpiFn6w",
+            "at": "2026-11-24T15:25:04Z",
+            "actor": {
+              "login": "tamird",
+              "__typename": "User"
+            },
+            "reviewer": {
+              "__typename": "User",
+              "login": "EtiennePerot"
+            }
           }
         ]
       },
@@ -237598,16 +237678,10 @@
       "reviewDecision": "CHANGES_REQUESTED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-11-24T14:46:25.380360+00:00",
-      "mergeabilityObservation": {
-        "state": "MERGEABLE",
-        "head": "8585cf9fc70d84fa7cc92d9a4fbb799f1b0f17ce",
-        "base": "63d5036dbffe387923ac59f4d69c05f64bb86b4d",
-        "checkedAt": "2026-11-24T14:43:52.628276+00:00"
-      },
+      "checkedAt": "2026-11-24T15:30:56.061425+00:00",
+      "imports": [],
       "importsComplete": true,
       "importPolicy": "copybara",
-      "imports": [],
       "maintainerReviewers": [
         "etienneperot",
         "manninglucas",
@@ -237615,9 +237689,9 @@
       ],
       "publicImportDisposition": {
         "binding": {
-          "sourceHead": "8585cf9fc70d84fa7cc92d9a4fbb799f1b0f17ce",
+          "sourceHead": "c125b0e272ddb337b4c78588c79a86b2f5e228b6",
           "approvedHead": null,
-          "currentApproval": true,
+          "currentApproval": false,
           "complete": true,
           "labels": [],
           "labelsComplete": true,
@@ -457328,27 +457402,7 @@
     {
       "repo": "google/gvisor",
       "number": 16522,
-      "head": "8585cf9fc70d84fa7cc92d9a4fbb799f1b0f17ce",
-      "sourceNumber": 16522,
-      "owner": "root",
-      "claimed": true,
-      "overdue": false,
-      "kind": "inline",
-      "id": "PRRC_kwDOB9IlXs8AAAABFp4WkQ",
-      "createdAt": "2026-11-24T01:42:28Z",
-      "url": "https://github.com/google/gvisor/pull/16522#discussion_r4674426513",
-      "author": "EtiennePerot",
-      "updatedAt": "2026-11-24T01:43:15Z",
-      "newOrChanged": false,
-      "awaitingAuthor": true,
-      "assigned": true,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 16522,
-      "head": "8585cf9fc70d84fa7cc92d9a4fbb799f1b0f17ce",
+      "head": "c125b0e272ddb337b4c78588c79a86b2f5e228b6",
       "sourceNumber": 16522,
       "owner": "root",
       "claimed": true,
@@ -458946,7 +459000,7 @@
     {
       "repo": "google/gvisor",
       "number": 16522,
-      "head": "8585cf9fc70d84fa7cc92d9a4fbb799f1b0f17ce",
+      "head": "c125b0e272ddb337b4c78588c79a86b2f5e228b6",
       "sourceNumber": 16522,
       "owner": "root",
       "kind": "review",
@@ -471562,19 +471616,26 @@
       }
     },
     "pr:16522": {
-      "changes-requested": {
-        "scope": "8585cf9fc70d84fa7cc92d9a4fbb799f1b0f17ce",
-        "since": "2026-11-24T02:33:35.304157+00:00",
+      "failing": {
+        "scope": "16522:c125b0e272ddb337b4c78588c79a86b2f5e228b6",
+        "since": "2026-11-24T15:30:56.061425+00:00",
         "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-24T14:46:25.380360+00:00"
+        "qualifier": "Source checks failing",
+        "observedAt": "2026-11-24T15:30:56.061425+00:00"
       },
-      "contributor-review": {
-        "scope": "c125b0e272ddb337b4c78588c79a86b2f5e228b6",
-        "since": "2026-11-24T02:57:05.420540+00:00",
+      "checks-pending": {
+        "scope": "16522:c125b0e272ddb337b4c78588c79a86b2f5e228b6",
+        "since": "2026-11-24T15:30:56.061425+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T14:47:59.067163+00:00"
+        "observedAt": "2026-11-24T15:30:56.061425+00:00"
+      },
+      "changes-requested": {
+        "scope": "c125b0e272ddb337b4c78588c79a86b2f5e228b6",
+        "since": "2026-11-24T15:30:56.061425+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-24T15:30:56.061425+00:00"
       }
     },
     "pr:16539": {
@@ -473716,7 +473777,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T14:47:59.067163+00:00"
+        "observedAt": "2026-11-24T15:33:12.099125+00:00"
       }
     },
     "pr:17082": {
@@ -476264,7 +476325,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T14:47:59.067163+00:00"
+        "observedAt": "2026-11-24T15:33:12.099125+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -476273,7 +476334,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T14:47:59.067163+00:00"
+        "observedAt": "2026-11-24T15:33:12.099125+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -476282,7 +476343,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T14:47:59.067163+00:00"
+        "observedAt": "2026-11-24T15:33:12.099125+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -476291,7 +476352,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T14:47:59.067163+00:00"
+        "observedAt": "2026-11-24T15:33:12.099125+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -476300,7 +476361,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T14:47:59.067163+00:00"
+        "observedAt": "2026-11-24T15:33:12.099125+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -476309,7 +476370,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T14:47:59.067163+00:00"
+        "observedAt": "2026-11-24T15:33:12.099125+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -476318,7 +476379,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T14:47:59.067163+00:00"
+        "observedAt": "2026-11-24T15:33:12.099125+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -476327,7 +476388,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T14:47:59.067163+00:00"
+        "observedAt": "2026-11-24T15:33:12.099125+00:00"
       }
     },
     "issue:17832": {
@@ -476336,7 +476397,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T14:47:59.067163+00:00"
+        "observedAt": "2026-11-24T15:33:12.099125+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -476345,7 +476406,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T14:47:59.067163+00:00"
+        "observedAt": "2026-11-24T15:33:12.099125+00:00"
       }
     },
     "investigation:repository-lint": {
@@ -476354,7 +476415,7 @@
         "since": "2026-11-24T00:13:57.833052+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T14:47:59.067163+00:00"
+        "observedAt": "2026-11-24T15:33:12.099125+00:00"
       }
     },
     "investigation:ci-flake-node-worker-arraybuffer-zerofill": {
@@ -476363,7 +476424,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T14:47:59.067163+00:00"
+        "observedAt": "2026-11-24T15:33:12.099125+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -476372,7 +476433,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T14:47:59.067163+00:00",
+        "observedAt": "2026-11-24T15:33:12.099125+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     }

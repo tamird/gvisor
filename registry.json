@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T14:47:59.067163+00:00",
+    "updatedAt": "2026-11-24T15:33:12.099125+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41620,13 +41620,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "qualification/native-sidecar-cc",
-      "head": "8585cf9fc70d84fa7cc92d9a4fbb799f1b0f17ce",
+      "head": "c125b0e272ddb337b4c78588c79a86b2f5e228b6",
       "title": "Build the runsc sidecars with the C toolchain",
       "url": "https://github.com/google/gvisor/pull/16522",
       "group": "release",
       "status": "open",
       "updatedAt": "2026-11-20T15:15:34.980085+00:00",
-      "summary": "Qualified private amendment c125b0e27 restores exactly23 original ignore_srcs lines in three BUILD files; macro/runtime/tests are unchanged. AMD45314624404 and ARM45314627023 action JSONs are byte-identical to matching qualified8585/cbd; Buildifier45314629193/source guards and two final independent reviews pass. Prior unchanged-input runtime/source/strict-lint evidence is reused with private-cleaner/ThinLTO limits explicit. Public source remains8585; the actual amendment-plus-reply question is unanswered. Prewarmer curiosity requests no source change.",
+      "summary": "The user-approved ignore_srcs amendment c125b0e272 and exact reply are delivered. Publisher verified native/fork heads, MERGEABLE and DCO SUCCESS, with auto-merge off. Etienne re-review was requested and the existing Manning request preserved. New current-head CI is pending; prior byte-identical action/source qualification and private-cleaner/ThinLTO limits retain their scope. Exact-head FirstPass2658 is a pre-agent upload failure: structured metadata explicitly reports author1535036 rolling30-day360000 compute-minute quota, with no source tests run.",
       "evidence": [
         {
           "label": "Latest exact-head review",
@@ -41839,15 +41839,28 @@
           "observedAt": "2026-11-20T23:27:51.953187+00:00",
           "postedURL": "https://github.com/gvisor/gvisor/pull/16522",
           "note": "Root verified actual user approval call_b505c3a223bd43bfbf6e2567304b692c item1 and consumed it through expected-head amendment plus approved review/inline reply. This observation time is not an invented user-message timestamp."
+        },
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "head": "c125b0e272ddb337b4c78588c79a86b2f5e228b6",
+          "baseHead": "8585cf9fc70d84fa7cc92d9a4fbb799f1b0f17ce",
+          "url": "https://github.com/tamird/gvisor/commit/c125b0e272ddb337b4c78588c79a86b2f5e228b6",
+          "title": "Restore the sidecar ignore_srcs filegroups",
+          "summary": "Approved amendment and exact rule-retention reply delivered; re-review requested.",
+          "body": "Restore the original ignore_srcs filegroups in the three sidecar BUILD files, addressing the maintainer’s rule-retention objection. The candidate is one amended commit; prior unchanged-input runtime, source and strict-lint evidence is reused under its original limits.\n\ngit range-diff 8585cf9fc7^! c125b0e272^!",
+          "replyBody": "Restored the `ignore_srcs` filegroups in all three BUILD files.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "posted",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/16522#discussion_r4682285433"
         }
       ],
       "followup": {
         "owner": "root",
-        "observedAt": "2026-11-24T02:57:05.420540+00:00",
-        "sourceHead": "8585cf9fc70d84fa7cc92d9a4fbb799f1b0f17ce",
+        "observedAt": "2026-11-24T15:33:12.099125+00:00",
+        "sourceHead": "c125b0e272ddb337b4c78588c79a86b2f5e228b6",
         "mergeable": "MERGEABLE",
-        "disposition": "Qualified private amendment c125b0e27 restores exactly23 original ignore_srcs lines in three BUILD files; macro/runtime/tests are unchanged. AMD45314624404 and ARM45314627023 action JSONs are byte-identical to matching qualified8585/cbd; Buildifier45314629193/source guards and two final independent reviews pass. Prior unchanged-input runtime/source/strict-lint evidence is reused with private-cleaner/ThinLTO limits explicit. Public source remains8585; the actual amendment-plus-reply question is unanswered. Prewarmer curiosity requests no source change.",
-        "nextAction": "Root awaits the existing c125 amendment-and-reply decision before updating #16522 or posting the exact proposed reply. Candidate commit is publicly readable; new preview-ref creation alone remains provider workflow-check-timeout blocked. Existing topic publication has not been attempted, and no execution permission or additional approval question is missing.",
+        "disposition": "The user-approved ignore_srcs amendment c125b0e272 and exact reply are delivered. Publisher verified native/fork heads, MERGEABLE and DCO SUCCESS, with auto-merge off. Etienne re-review was requested and the existing Manning request preserved. New current-head CI is pending; prior byte-identical action/source qualification and private-cleaner/ThinLTO limits retain their scope. Exact-head FirstPass2658 is a pre-agent upload failure: structured metadata explicitly reports author1535036 rolling30-day360000 compute-minute quota, with no source tests run.",
+        "nextAction": "Root follows current-head Go generation, requested maintainer review and actual admission recovery or new admitted checks. No unchanged CI retry, quota outreach, duplicate source/reply/reviewer request or merge action.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16522",
           "https://github.com/tamird/gvisor/commit/4e034130e",
@@ -41869,9 +41882,11 @@
           "https://github.com/tamird/gvisor/commit/c125b0e272ddb337b4c78588c79a86b2f5e228b6",
           "https://github.com/tamird/gvisor/actions/runs/45314624404",
           "https://github.com/tamird/gvisor/actions/runs/45314627023",
-          "https://github.com/tamird/gvisor/actions/runs/45314629193"
+          "https://github.com/tamird/gvisor/actions/runs/45314629193",
+          "https://github.com/gvisor/gvisor/pull/16522#discussion_r4682285433",
+          "https://buildkite.com/gvisor/first-pass/builds/2658#01a20e28-74e2-4ef2-a44b-afbc66e4d452"
         ],
-        "recheckCondition": "Actual contributor answer, substantive new review/head evidence or working normal preview transport.",
+        "recheckCondition": "Actual current-head CI/review/landing, source or prerequisite change.",
         "curatedAt": "2026-11-20T23:27:51.953187+00:00",
         "implementationOwner": "sidecar_visibility_feedback",
         "attentionDispositions": [
@@ -42506,19 +42521,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
       },
-      "nextStep": "Root follows maintainer/import review and actual admission/check events; quota diagnosis is terminal with no rerun or CI ping. The Go export watchers are closed. Root handles any reporting-auth consideration within the existing export pilot without expanding permissions.",
-      "recheckCondition": "A genuine maintainer/import/check event or evidenced provider admission recovery.",
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "c125b0e272ddb337b4c78588c79a86b2f5e228b6",
-        "baseHead": "8585cf9fc70d84fa7cc92d9a4fbb799f1b0f17ce",
-        "url": "https://github.com/tamird/gvisor/commit/c125b0e272ddb337b4c78588c79a86b2f5e228b6",
-        "title": "Restore the sidecar ignore_srcs filegroups",
-        "summary": "Awaiting review of the #16522 amendment and reply. Restore 23 original ignore_srcs lines in three BUILD files; macro, runtime and tests are unchanged. Both architecture action JSONs match the qualified source byte-for-byte; Buildifier/source guards and two reviews pass. Private cleaner and ThinLTO evidence limits remain.",
-        "body": "Restore the original ignore_srcs filegroups in the three sidecar BUILD files, addressing the maintainer’s rule-retention objection. The candidate is one amended commit; prior unchanged-input runtime, source and strict-lint evidence is reused under its original limits.\n\ngit range-diff 8585cf9fc7^! c125b0e272^!",
-        "replyBody": "Restored the `ignore_srcs` filegroups in all three BUILD files.\n\nPosted by Codex on behalf of @tamird."
-      }
+      "nextStep": "Root follows current-head Go generation, requested maintainer review and actual admission recovery or new admitted checks. No unchanged CI retry, quota outreach, duplicate source/reply/reviewer request or merge action.",
+      "recheckCondition": "A genuine maintainer/import/check event or evidenced provider admission recovery."
     },
     {
       "id": "branch:licensecheck-native-bazel-mod",
@@ -132141,7 +132145,7 @@
       "owner": "benchmark_measurement_review / root",
       "updatedAt": "2026-11-24T07:01:47.154032+00:00",
       "group": "analysis",
-      "summary": "Audit a3f52992 remains the reviewed one-commit preview, tree 8b006d3f, with nine CI891 release products qualified under --nostamp. Fixed graph A/A remains on stability HOLD despite all 50 children passing integrity. Startup A/A 45396333524 passed all 50 children and 350 rows across seven N1 leaves on the observed AMD9V74 route, with natural CPU 4/9, exact nine products and cleanup0. Five native reports flagged 0/35 at alpha .01/35; pooled intervals were 2–9% and split restore intervals reached 91%. This is usable only for that observed route, not equivalence or regression clearance. Native artifact transport 45401725881 passed the 80KB checksum/authentication/redirect/three-declared-file checks without permission changes. Baseline 0c7 plus 18 support paths (CI b231e0bc, tree2aaa) built successfully in 212.2s with RBE 4483 actions (3081 hits/1280 internal/122 remote), but the uploader omitted its tar and BEP. Artifact 14925155816 is metadata only; a retained baseline product is not yet established.",
+      "summary": "The user requested one dependency-first, per-analyzer multi-commit PR with the final a3f52992/tree8b006d3f preserved; analysis_pass_inventory owns composition on the main checkout. Corrected canonical behavioral matrix has368 targets per ISA:363 PASS and5 FAIL. Version plus six additional ordinary unit owners passed65 XML cases per ISA with --stamp; four cgroup/overlay/route target prerequisites remain held. These behavioral results are distinct from the891 static NoGo passes. Baseline capture45425843883 is complete: the40,270,884-byte tar matches cb479886 SHA256 and all nine release files match the captured BEP digests/sizes;3203 remote hits plus1280 internal actions, zero compilation executions. Uploader fix5d504727 and actual SSH publication/capture fulfilled the former transport/unlock wait. Graph A/A remains on stability HOLD; startup A/A remains limited to its observed route.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132513,7 +132517,7 @@
           ]
         }
       ],
-      "nextStep": "benchmark_measurement_review owns cached baseline-product capture before comparison-helper growth. Reviewed local workflow-prefix fix 5d504727a0851a505875c8b7fc3ce85a8302a78a is prepared but unpublished: SSH timed out and HTTPS was rejected for workflow scope. The existing SSH-unlock question covers this lock episode; do not duplicate it or infer source approval/execution-policy rejection. Keep baseline tar SHA256 cb479886af63e2616c04640084fa8d4822a84716b8b6ee2996c2548d68d7a57e bound to its build, without calling the product retained or discarded. No retry, A/B, sample expansion, CPU override or causal claim is authorized. Broad performance, #17884, runtime/hardware and sensitive-feature limits remain.",
+      "nextStep": "analysis_pass_inventory composes the exact dependency-first/per-analyzer series without changing the final tree, then presents source and validation scope. Root retains the unresolved behavioral prerequisites and performance decision; baseline capture is fulfilled, not another approval or retry task. No new helper code, A/B measurement, unrelated sensitive work or transfer of static qualification to behavioral/performance clearance follows.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132855,7 +132859,7 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T13:43:16.568508+00:00",
+        "observedAt": "2026-11-24T15:33:12.099125+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45338108931",
           "https://github.com/tamird/gvisor/actions/runs/45344645597",
@@ -132894,12 +132898,14 @@
           "https://github.com/tamird/gvisor/actions/runs/45396333524/artifacts/14920984111",
           "https://github.com/tamird/gvisor/actions/runs/45398551863/artifacts/14922856009",
           "https://github.com/tamird/gvisor/actions/runs/45401725881/artifacts/14922939284",
-          "https://github.com/tamird/gvisor/actions/runs/45402869151/artifacts/14925155816"
+          "https://github.com/tamird/gvisor/actions/runs/45402869151/artifacts/14925155816",
+          "https://github.com/tamird/gvisor/commit/5d504727a0851a505875c8b7fc3ce85a8302a78a",
+          "https://github.com/tamird/gvisor/actions/runs/45425843883/artifacts/14935569879"
         ],
         "owner": "benchmark_measurement_review / root",
-        "disposition": "Audit a3f52992 remains the reviewed one-commit preview, tree 8b006d3f, with nine CI891 release products qualified under --nostamp. Fixed graph A/A remains on stability HOLD despite all 50 children passing integrity. Startup A/A 45396333524 passed all 50 children and 350 rows across seven N1 leaves on the observed AMD9V74 route, with natural CPU 4/9, exact nine products and cleanup0. Five native reports flagged 0/35 at alpha .01/35; pooled intervals were 2–9% and split restore intervals reached 91%. This is usable only for that observed route, not equivalence or regression clearance. Native artifact transport 45401725881 passed the 80KB checksum/authentication/redirect/three-declared-file checks without permission changes. Baseline 0c7 plus 18 support paths (CI b231e0bc, tree2aaa) built successfully in 212.2s with RBE 4483 actions (3081 hits/1280 internal/122 remote), but the uploader omitted its tar and BEP. Artifact 14925155816 is metadata only; a retained baseline product is not yet established.",
-        "nextAction": "benchmark_measurement_review owns cached baseline-product capture before comparison-helper growth. Reviewed local workflow-prefix fix 5d504727a0851a505875c8b7fc3ce85a8302a78a is prepared but unpublished: SSH timed out and HTTPS was rejected for workflow scope. The existing SSH-unlock question covers this lock episode; do not duplicate it or infer source approval/execution-policy rejection. Keep baseline tar SHA256 cb479886af63e2616c04640084fa8d4822a84716b8b6ee2996c2548d68d7a57e bound to its build, without calling the product retained or discarded. No retry, A/B, sample expansion, CPU override or causal claim is authorized. Broad performance, #17884, runtime/hardware and sensitive-feature limits remain.",
-        "recheckCondition": "Owner returns successful baseline artifact capture on the existing product source, actual authorized transport recovery, or new methodology/placement evidence. Do not repeat the SSH question or unchanged publication attempt.",
+        "disposition": "The user requested one dependency-first, per-analyzer multi-commit PR with the final a3f52992/tree8b006d3f preserved; analysis_pass_inventory owns composition on the main checkout. Corrected canonical behavioral matrix has368 targets per ISA:363 PASS and5 FAIL. Version plus six additional ordinary unit owners passed65 XML cases per ISA with --stamp; four cgroup/overlay/route target prerequisites remain held. These behavioral results are distinct from the891 static NoGo passes. Baseline capture45425843883 is complete: the40,270,884-byte tar matches cb479886 SHA256 and all nine release files match the captured BEP digests/sizes;3203 remote hits plus1280 internal actions, zero compilation executions. Uploader fix5d504727 and actual SSH publication/capture fulfilled the former transport/unlock wait. Graph A/A remains on stability HOLD; startup A/A remains limited to its observed route.",
+        "nextAction": "analysis_pass_inventory composes the exact dependency-first/per-analyzer series without changing the final tree, then presents source and validation scope. Root retains the unresolved behavioral prerequisites and performance decision; baseline capture is fulfilled, not another approval or retry task. No new helper code, A/B measurement, unrelated sensitive work or transfer of static qualification to behavioral/performance clearance follows.",
+        "recheckCondition": "Composition owner returns the exact multi-commit candidate; actual held-prerequisite, methodology or user-decision change.",
         "sourceHead": "a3f52992b34ef2873195b97b0856f20d061d0832",
         "technicalOwner": "benchmark_measurement_review (completed source qualification)"
       },
