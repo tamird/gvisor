@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T20:57:33.409415+00:00",
+    "updatedAt": "2026-11-24T23:06:03.539758+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37782,24 +37782,27 @@
       "url": "https://github.com/google/gvisor/pull/16458",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-24T12:39:14.280154+00:00",
-      "summary": "Delivered source f9f6e3261 is natively MERGEABLE/REVIEW_REQUIRED; GitHub validation and DCO pass. Exact-head FirstPass2648 failed before agent assignment/start: structured upload metadata explicitly reports author 1535036 rolling 30-day quota of 360000 compute-minutes. Exit 80 and empty logs establish no source build/test result; no source regression or FirstPass success is inferred. Source delivery and notices are complete; prior packaging/runtime/performance evidence retains its original scope.",
+      "updatedAt": "2026-11-24T23:06:03.539758+00:00",
+      "summary": "Exact source f9f6e326 has Konstantin approval 6047971133; the provider aggregate remains REVIEW_REQUIRED and relkochta is still requested. Native checks and DCO pass. New FirstPass 2722 and main 55849 are pending; the older 2648 quota result is historical, not a cause assigned to these runs.",
       "followup": {
         "owner": "root",
         "sourceHead": "f9f6e3261d13800cb3bdbdaf713d44fc142811ac",
-        "observedAt": "2026-11-24T13:45:26.628504+00:00",
-        "disposition": "Delivered source f9f6e3261 is natively MERGEABLE/REVIEW_REQUIRED; GitHub validation and DCO pass. Exact-head FirstPass2648 failed before agent assignment/start: structured upload metadata explicitly reports author 1535036 rolling 30-day quota of 360000 compute-minutes. Exit 80 and empty logs establish no source build/test result; no source regression or FirstPass success is inferred. Source delivery and notices are complete; prior packaging/runtime/performance evidence retains its original scope.",
-        "nextAction": "Root follows actual quota/admission recovery, a newly admitted current-head run, maintainer review or import. Canonical diagnosis is complete; no unchanged retry, duplicate diagnosis, quota outreach, source amendment or merge is authorized.",
+        "observedAt": "2026-11-24T23:06:03.539758+00:00",
+        "disposition": "Exact source f9f6e326 has Konstantin approval 6047971133; the provider aggregate remains REVIEW_REQUIRED and relkochta is still requested. Native checks and DCO pass. New FirstPass 2722 and main 55849 are pending; the older 2648 quota result is historical, not a cause assigned to these runs.",
+        "nextAction": "Root follows actual current-head CI/admission and maintainer-review events. Source and notice delivery are complete; no unchanged retry, duplicate request, source amendment or merge.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/f9f6e3261d13800cb3bdbdaf713d44fc142811ac",
           "https://github.com/tamird/gvisor/actions/runs/45330766710",
           "https://github.com/tamird/gvisor/actions/runs/45330770949",
           "https://github.com/gvisor/gvisor/pull/16458#issuecomment-7131665589",
           "https://buildkite.com/gvisor/first-pass/builds/2648",
-          "https://buildkite.com/gvisor/first-pass/builds/2648#01a20d8e-0f5b-42b2-8da2-769053d567cd"
+          "https://buildkite.com/gvisor/first-pass/builds/2648#01a20d8e-0f5b-42b2-8da2-769053d567cd",
+          "https://github.com/google/gvisor/pull/16458#pullrequestreview-6047971133",
+          "https://buildkite.com/gvisor/first-pass/builds/2722",
+          "https://buildkite.com/gvisor/pipeline/builds/55849"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Actual admitted build/check change, quota recovery or substantive maintainer/head/import event.",
+        "recheckCondition": "Actual terminal check, substantive review/head or landing event.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -37937,7 +37940,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
       },
-      "nextStep": "Root follows actual quota/admission recovery, a newly admitted current-head run, maintainer review or import. Canonical diagnosis is complete; no unchanged retry, duplicate diagnosis, quota outreach, source amendment or merge is authorized.",
+      "nextStep": "Root follows actual current-head CI/admission and maintainer-review events. Source and notice delivery are complete; no unchanged retry, duplicate request, source amendment or merge.",
       "sourceConflict": {
         "sourceHead": "303aee0fb294bcf676c2579d24b6821d0578a603",
         "owner": "root",
@@ -46761,8 +46764,8 @@
       "url": "https://github.com/google/gvisor/pull/16605",
       "group": "runtime",
       "status": "Open; reviewer feedback applied",
-      "updatedAt": "2026-11-08T13:23:11Z",
-      "summary": "On the 255th eligible duplicate SACK, stock wrapped its byte-sized multiplier to zero and eliminated the reordering window. The fix saturates the increment without changing which reports qualify. On native AMD64 the focused sender test retained 255 and a 100 ms window on rounds 255 and 256; three existing sequence-round controls passed on both revisions. Both Nogo owners passed AMD64 and ARM64 analysis. The combined run keeps its expected stock failure. No live Linux traffic, ARM runtime, or throughput was measured. A fresh duplicate SACK at saturation now has permanent test assertions for the round boundary and persistence. The TCP test is identical to the one in the prior 43-case passing suite. The new head has the same full patch as ba0eec12f. GitHub records the approval of that revision as dismissed.",
+      "updatedAt": "2026-11-24T23:06:03.539758+00:00",
+      "summary": "Exact source b214855f has rivera approval 6047995074 and aggregate APPROVED. Main 55850 exhausted three upload attempts before tests: its checked-out pre-command hook failed fetching remote ref tamird. The actual fork ref exists, so the deleted-branch claim is false. This is the obsolete hook fetch removed by merged #17735, not a new TCP test failure. FirstPass 2723 remains pending.",
       "evidence": [
         {
           "label": "Published pull request",
@@ -46829,9 +46832,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "b214855fa038fd770d1dc3e3a3984ba922282104",
-        "observedAt": "2026-11-08T13:23:11Z",
-        "disposition": "Patch equivalence verified; earlier review dismissed",
-        "nextAction": "Follow the public source and its earlier export. GitHub marks the approval of ba0eec12f as dismissed. DCO import coordination: Root coordinates #17301 at f7f233c54067. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
+        "observedAt": "2026-11-24T23:06:03.539758+00:00",
+        "disposition": "Exact source b214855f has rivera approval 6047995074 and aggregate APPROVED. Main 55850 exhausted three upload attempts before tests: its checked-out pre-command hook failed fetching remote ref tamird. The actual fork ref exists, so the deleted-branch claim is false. This is the obsolete hook fetch removed by merged #17735, not a new TCP test failure. FirstPass 2723 remains pending.",
+        "nextAction": "Root tracks required source refresh incorporating the existing hook fix, then new-head CI, while preserving the sensitive source/performance and explicit coordination holds. No protected source read/write, unchanged retry, duplicate fix, outreach or new approval question is authorized.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16605",
           "https://github.com/tamird/gvisor/commit/d73d52b39ef5e82b2264eda4a9aa6caa552f9b6c",
@@ -46846,9 +46849,14 @@
           "https://github.com/tamird/gvisor/actions/runs/40792990873/artifacts/12862527261",
           "https://github.com/google/gvisor/pull/16605#pullrequestreview-5691234151",
           "https://github.com/tamird/gvisor/actions/runs/41893190903/artifacts/13353444358",
-          "https://github.com/gvisor/gvisor/pull/17301"
+          "https://github.com/gvisor/gvisor/pull/17301",
+          "https://github.com/google/gvisor/pull/16605#pullrequestreview-6047995074",
+          "https://buildkite.com/gvisor/pipeline/builds/55850",
+          "https://buildkite.com/gvisor/first-pass/builds/2723",
+          "https://buildkite.com/gvisor/pipeline/builds/55850#01a20f8b-dcd0-4474-b8a9-9c038315d1b5",
+          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
         ],
-        "recheckCondition": "New substantive feedback or source/import status change. DCO coordination recheck: The listed exact import merges/closes, changes its footer source revision, or its importing maintainer explicitly confirms the source metadata rewrite can proceed. Recheck live source/fork heads immediately before any write."
+        "recheckCondition": "An authorized changed head incorporates the merged hook correction, then actual new-head CI; or new evidence within existing holds."
       },
       "reapproval": {
         "kind": "content-amendment",
@@ -46886,7 +46894,8 @@
         "nextAction": "Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "recheckCondition": "The listed exact import merges/closes, changes its footer source revision, or its importing maintainer explicitly confirms the source metadata rewrite can proceed. Recheck live source/fork heads immediately before any write.",
         "holdsPreserved": {}
-      }
+      },
+      "nextStep": "Root tracks required source refresh incorporating the existing hook fix, then new-head CI, while preserving the sensitive source/performance and explicit coordination holds. No protected source read/write, unchanged retry, duplicate fix, outreach or new approval question is authorized."
     },
     {
       "id": "branch:file-lock-wait-registration",
@@ -61542,8 +61551,8 @@
       "title": "netstack: end a lingering close when the peer acknowledges the FIN",
       "url": "https://github.com/google/gvisor/pull/16787",
       "status": "open",
-      "updatedAt": "2026-11-24T20:57:33.409415+00:00",
-      "summary": "Exact head6869e800 has Rex approval6045704912 and FirstPass2707 success. Main55839 exhausted three upload attempts before tests: the repository pre-command hook could not find remote ref adios-404. A deleted branch is not independently established; no TCP test or source failure is demonstrated. Sensitive implementation and performance holds remain.",
+      "updatedAt": "2026-11-24T23:06:03.539758+00:00",
+      "summary": "Main 55839 at 6869e800 failed before tests because its checked-out hook retains the obsolete fork-ref fetch removed by merged #17735. The actual fork ref exists, and current upstream lacks that block: this is not a deleted-branch or agent-deployment issue. Rex approval and FirstPass2707 success remain; no new TCP failure is established.",
       "evidence": [
         {
           "label": "Author’s offer to include the tested commit",
@@ -61586,10 +61595,10 @@
         "providerHead": "6869e8002ace5d787ef464938b49ba215fbd1693",
         "mergeable": "MERGEABLE",
         "sourceHead": "6869e8002ace5d787ef464938b49ba215fbd1693",
-        "observedAt": "2026-11-24T20:57:33.409415+00:00",
-        "disposition": "Exact head6869e800 has Rex approval6045704912 and FirstPass2707 success. Main55839 exhausted three upload attempts before tests: the repository pre-command hook could not find remote ref adios-404. A deleted branch is not independently established; no TCP test or source failure is demonstrated. Sensitive implementation and performance holds remain.",
-        "nextAction": "Root follows the existing hook-remedy integration or a changed author head/provider event. The new bootstrap diagnosis is complete; do not retry unchanged CI, read protected TCP implementation, change foreign source or send outreach.",
-        "recheckCondition": "Actual hook integration, changed author source or provider/check evidence.",
+        "observedAt": "2026-11-24T23:06:03.539758+00:00",
+        "disposition": "Main 55839 at 6869e800 failed before tests because its checked-out hook retains the obsolete fork-ref fetch removed by merged #17735. The actual fork ref exists, and current upstream lacks that block: this is not a deleted-branch or agent-deployment issue. Rex approval and FirstPass2707 success remain; no new TCP failure is established.",
+        "nextAction": "The foreign author owns branch refresh to incorporate the merged hook fix. Root and approved_rebase_queue track the dependency and new-head CI only. Foreign TCP edits/rebases and sensitive review remain held; no duplicate fix, unchanged retry or outreach.",
+        "recheckCondition": "An actual author head includes the merged hook correction, then new source-bound CI; or genuinely new provider evidence.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16787",
           "https://github.com/google/gvisor/pull/16787#pullrequestreview-6029118218",
@@ -61673,7 +61682,7 @@
           "reviewsAndGatesPreserved": true
         }
       },
-      "nextStep": "Root follows the existing hook-remedy integration or a changed author head/provider event. The new bootstrap diagnosis is complete; do not retry unchanged CI, read protected TCP implementation, change foreign source or send outreach."
+      "nextStep": "The foreign author owns branch refresh to incorporate the merged hook fix. Root and approved_rebase_queue track the dependency and new-head CI only. Foreign TCP edits/rebases and sensitive review remain held; no duplicate fix, unchanged retry or outreach."
     },
     {
       "id": "branch:hostinet-exit-linger",
@@ -122467,8 +122476,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-24T20:51:36.949756+00:00",
-      "summary": "The single snapshot-only fallback 45476428340 completed at 20:05:40 UTC and published API observations at 20:05:23, before the 20:16:20 freshness deadline. Its dispatch response timed out, but the actual run was found and reused; no duplicate dispatch or observer was created. Later reconciliation resumed after an unexplained external wall-clock gap, not a long-running collector.",
+      "updatedAt": "2026-11-24T23:06:03.539758+00:00",
+      "summary": "The single recovery collector 45497289229 completed at 22:07:45 UTC and published API observations at 22:07:29. The due-guard dispatch tool call crossed an external wall-clock gap: GitHub created the run only at 22:04, after the 21:35 deadline. CI then took 3m45s. No duplicate collector or observer was created; the hidden pre-provider delay has no exposed approval-duration trace.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122711,7 +122720,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground supervision owns the next native-first guard at 21:05:23 UTC, deadline 21:35:23. Reuse an actual fresh/live native generation before at most one existing fallback. Preserve the deployed bounded HTTP503 read retry and current authorizations.",
+      "nextStep": "Root foreground supervision owns the next native-first guard at 23:07:29 UTC, deadline 23:37:29. Reuse an actual fresh/live native generation before at most one existing snapshot-only fallback. Metadata publication does not advance the API clock.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122849,11 +122858,12 @@
           "https://github.com/tamird/gvisor/actions/runs/45443163776",
           "https://github.com/tamird/gvisor/actions/runs/45449232722",
           "https://github.com/tamird/gvisor/actions/runs/45460996764",
-          "https://github.com/tamird/gvisor/actions/runs/45476428340"
+          "https://github.com/tamird/gvisor/actions/runs/45476428340",
+          "https://github.com/tamird/gvisor/actions/runs/45497289229"
         ],
-        "observedAt": "2026-11-24T20:51:36.949756+00:00",
-        "disposition": "The single snapshot-only fallback 45476428340 completed at 20:05:40 UTC and published API observations at 20:05:23, before the 20:16:20 freshness deadline. Its dispatch response timed out, but the actual run was found and reused; no duplicate dispatch or observer was created. Later reconciliation resumed after an unexplained external wall-clock gap, not a long-running collector.",
-        "nextAction": "Root foreground supervision owns the next native-first guard at 21:05:23 UTC, deadline 21:35:23. Reuse an actual fresh/live native generation before at most one existing fallback. Preserve the deployed bounded HTTP503 read retry and current authorizations.",
+        "observedAt": "2026-11-24T23:06:03.539758+00:00",
+        "disposition": "The single recovery collector 45497289229 completed at 22:07:45 UTC and published API observations at 22:07:29. The due-guard dispatch tool call crossed an external wall-clock gap: GitHub created the run only at 22:04, after the 21:35 deadline. CI then took 3m45s. No duplicate collector or observer was created; the hidden pre-provider delay has no exposed approval-duration trace.",
+        "nextAction": "Root foreground supervision owns the next native-first guard at 23:07:29 UTC, deadline 23:37:29. Reuse an actual fresh/live native generation before at most one existing snapshot-only fallback. Metadata publication does not advance the API clock.",
         "recheckCondition": "Actual fresh/live native delivery or next due guard.",
         "owner": "root"
       }
@@ -132380,9 +132390,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-24T20:57:33.409415+00:00",
+      "updatedAt": "2026-11-24T23:06:03.539758+00:00",
       "group": "analysis",
-      "summary": "54-commit analyzer series at 26090b334; the full Module-aware NoGo matrix passes 891 validators per ISA, and focused source checks pass. Scoped startup and four Node variants completed matched A/A and A/B. Node C1 has nominal timing/QPS findings (p=.009/.001); none survive global adjustment. Twenty-one remaining disjoint groups are running. Four behavioral targets and prerequisite #17884 remain open.",
+      "summary": "54-commit analyzer series at 26090b334; Module-aware NoGo passes 891 validators per ISA and focused source checks pass. Scoped startup and four Node variants completed matched A/A and A/B. Node C1 has nominal timing/QPS findings (p=.009/.001); none survive global adjustment. Size/Empty functional recovery and independent reviews pass; remaining network/MM matched qualification is incomplete. Four behavioral targets and #17884 remain open.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132754,7 +132764,7 @@
           ]
         }
       ],
-      "nextStep": "benchmark_measurement_review owns the 21 remaining disjoint workload groups. Finish required qualification, then request publication review. Completed startup and four-variant Node results do not establish equivalence or full workload clearance.",
+      "nextStep": "Existing category owners finish remaining required matched-workload qualification, then root requests publication review. benchmark_measurement_review owns network groups; benchmark_general_review owns the remaining MM leaves and measurements. Functional Size/Empty proof is not full MM timing or broad equivalence clearance.",
       "evidence": [
         {
           "label": "Current reviewed analyzer series",
@@ -133112,7 +133122,7 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T20:57:33.409415+00:00",
+        "observedAt": "2026-11-24T23:06:03.539758+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45338108931",
           "https://github.com/tamird/gvisor/actions/runs/45344645597",
@@ -133171,12 +133181,13 @@
           "https://github.com/tamird/gvisor/actions/runs/45456255734",
           "https://github.com/tamird/gvisor/actions/runs/45456834454/artifacts/14952383343",
           "https://github.com/tamird/gvisor/actions/runs/45456849968/artifacts/14952872436",
-          "https://github.com/tamird/gvisor/actions/runs/45471808094/artifacts/14959282175"
+          "https://github.com/tamird/gvisor/actions/runs/45471808094/artifacts/14959282175",
+          "https://github.com/tamird/gvisor/actions/runs/45484537300/artifacts/14962947037"
         ],
         "owner": "root",
-        "disposition": "54-commit analyzer series at 26090b334; the full Module-aware NoGo matrix passes 891 validators per ISA, and focused source checks pass. Scoped startup and four Node variants completed matched A/A and A/B. Node C1 has nominal timing/QPS findings (p=.009/.001); none survive global adjustment. Twenty-one remaining disjoint groups are running. Four behavioral targets and prerequisite #17884 remain open.",
-        "nextAction": "benchmark_measurement_review owns the 21 remaining disjoint workload groups. Finish required qualification, then request publication review. Completed startup and four-variant Node results do not establish equivalence or full workload clearance.",
-        "recheckCondition": "Existing owners return remaining matched-workload results, actual behavioral/prerequisite changes or publication-review milestone.",
+        "disposition": "54-commit analyzer series at 26090b334; Module-aware NoGo passes 891 validators per ISA and focused source checks pass. Scoped startup and four Node variants completed matched A/A and A/B. Node C1 has nominal timing/QPS findings (p=.009/.001); none survive global adjustment. Size/Empty functional recovery and independent reviews pass; remaining network/MM matched qualification is incomplete. Four behavioral targets and #17884 remain open.",
+        "nextAction": "Existing category owners finish remaining required matched-workload qualification, then root requests publication review. benchmark_measurement_review owns network groups; benchmark_general_review owns the remaining MM leaves and measurements. Functional Size/Empty proof is not full MM timing or broad equivalence clearance.",
+        "recheckCondition": "Actual owner-returned remaining matched-workload results, behavioral/prerequisite changes or publication-review milestone.",
         "sourceHead": "26090b334cf9c5f4657ec33aef64efc6fa86ef82",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4"
