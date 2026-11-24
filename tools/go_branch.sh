@@ -76,7 +76,26 @@ git config user.email "gvisor-bot@google.com"
 git config user.name "gVisor bot"
 git config gc.auto 0
 git config maintenance.auto false
-git fetch origin "${go_branch}"
+# Local clones copy promisor packs but not their remote configuration. Keep
+# their object sources so checkout can fetch only the missing Go-tip blobs.
+declare promisor_remotes
+promisor_remotes=$(git -C "${repo_orig}" config --bool \
+  --get-regexp '^remote\..*\.promisor$') || [[ $? == 1 ]]
+while read -r key promisor; do
+  [[ "${promisor}" == true ]] || continue
+  remote="${key#remote.}"
+  remote="${remote%.promisor}"
+  url=$(git -C "${repo_orig}" remote get-url "${remote}")
+  # Resolve local paths before changing repository context.
+  case "${url%%/*}" in
+    ""|"~"*|*:*) ;;
+    *) url="${repo_orig}/${url}" ;;
+  esac
+  git config "remote.source-${remote}.url" "${url}"
+  git config "remote.source-${remote}.promisor" true
+done <<< "${promisor_remotes}"
+# Shallow source repositories use transport instead of local object copying.
+git cat-file -e "${go_branch}^{commit}" || git fetch origin "${go_branch}"
 git checkout -b go "${go_branch}"
 
 # Start working on a merge commit that combines the previous history with the
