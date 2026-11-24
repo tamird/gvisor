@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T05:38:52.083534+00:00",
+    "updatedAt": "2026-11-24T05:47:43.330769+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -68206,12 +68206,13 @@
         "providerHead": "bdf1068d1ad7ecd626d71553e361402f966e223d",
         "mergeable": "MERGEABLE",
         "sourceHead": "2b096ecc6cbe58cb80521653e28c60bf8fee3661",
-        "observedAt": "2026-11-18T20:06:11.890448+00:00",
-        "disposition": "Author source advanced to 2b096ecc6 with clang-format and linux/limits.h corrections and updated STREAM/SEQPACKET description. The author reports 31 peer-group cases passed on prior bdf1068 under systrap/save/save_resume and native root; sandbox-user-namespace setgroups EPERM also affects uidgid_test_native. Those prior-source claims are not new-head execution proof.",
+        "observedAt": "2026-11-24T05:47:43.330769+00:00",
+        "disposition": "New explicitly automated review6033934299 on exact2b096ecc reports no findings. It adds no source task or human approval; existing actual source-feedback/qualification and publication limits remain.",
         "nextAction": "Root follows the existing reviewer’s current-source reconciliation on 2b096ecc. FirstPass2324 now passes; DCO remains action-required with no diagnosis established here. Preserve the source-bound prior bdf qualification and actual source/access constraints; no foreign branch amendment or new sensitive-source test is inferred.",
         "recheckCondition": "Existing reviewer reconciliation, genuine new author feedback or exact-head CI result.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/14999"
+          "https://github.com/google/gvisor/pull/14999",
+          "https://github.com/google/gvisor/pull/14999#pullrequestreview-6033934299"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
         "curatedAt": "2026-11-18T21:49:57.504662+00:00",
@@ -69564,7 +69565,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:48.755399+00:00",
-      "summary": "With a small receive buffer, the fifth SYN-cookie connection on stock gVisor never made the listener readable when its final ACK carried 512 bytes. Linux and corrected gVisor delivered all eight such connections; all three delivered eight ordinary connections. The fix moves the receive charge from the listening socket to the accepted socket.",
+      "summary": "Exact42f14a3eda58cd5b40d590c15309ba44273195e1 is CONFLICTING. This source transfers TCP receive memory with the owning segment; root retains conflict ownership under the confirmed unrelated sensitive-feature hold. Current-base adaptation is not authorized by prior reviews or passing checks.",
       "evidence": [
         {
           "label": "Wire receipts: native Linux, stock gVisor, corrected gVisor and TCP Nogo",
@@ -69598,15 +69599,16 @@
       "followup": {
         "sourceHead": "42f14a3eda58cd5b40d590c15309ba44273195e1",
         "owner": "root",
-        "nextAction": "Follow maintainer review, exact published-head checks and any matching import; handle new substantive feedback in the existing workstream. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks.",
-        "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-17T19:04:48.755399+00:00",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.",
+        "nextAction": "Root keeps source assessment/rebase held until actual user hold release; do not read or edit protected TCP implementation, run tests, push, send outreach or re-ask Daybreak.",
+        "mergeable": "CONFLICTING",
+        "observedAt": "2026-11-24T05:47:43.330769+00:00",
+        "recheckCondition": "Actual user releases the sensitive-feature hold, or source/head/base/mergeability changes.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/16827",
           "https://github.com/tamird/gvisor/commit/3732b4758e2276a9e60ff9ed250ee0a10339e8db",
           "https://github.com/tamird/gvisor/commit/42f14a3eda58cd5b40d590c15309ba44273195e1"
-        ]
+        ],
+        "disposition": "Exact42f14a3eda58cd5b40d590c15309ba44273195e1 is CONFLICTING. This source transfers TCP receive memory with the owning segment; root retains conflict ownership under the confirmed unrelated sensitive-feature hold. Current-base adaptation is not authorized by prior reviews or passing checks."
       },
       "dcoAmendment": {
         "oldHead": "3732b4758e2276a9e60ff9ed250ee0a10339e8db",
@@ -69629,7 +69631,8 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
-      }
+      },
+      "nextStep": "Root keeps source assessment/rebase held until actual user hold release; do not read or edit protected TCP implementation, run tests, push, send outreach or re-ask Daybreak."
     },
     {
       "id": "pr:16828",
@@ -74063,13 +74066,13 @@
       "repo": "google/gvisor",
       "number": 17022,
       "ref": "carry-14458-spurious-recovery",
-      "head": "c890e891f753f5cb51f8c23a63e7342ae670a7aa",
+      "head": "881bcc233a023ac188d0c3dd8d8d4f3770b7e3f3",
       "title": "Review the slow-start threshold after a spurious timeout",
       "url": "https://github.com/google/gvisor/pull/17022",
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-18T12:23:47.992978+00:00",
-      "summary": "Kerumeto requests shorter function comments and clearer RFC names on the unchanged foreign TCP sourcec890. The foreign author owns those edits; root’s reviewer follow-through remains under the unrelated sensitive-feature hold. These external style requests are not adopted kernel edits or a release of the hold.",
+      "summary": "Foreign author adios-404 updated source to881bcc233 and replied on seven old threads claiming comment/header cleanup and removal. These are unverified author statements, including outdated-thread replies; no finding is deemed resolved because it is outdated or answered. Root current-source reviewer follow-through remains sensitive-held; prior reviews do not qualify this head.",
       "evidence": [
         {
           "label": "Aditya confirmed the resolution with #16596 after rebasing",
@@ -74190,11 +74193,11 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "c890e891f753f5cb51f8c23a63e7342ae670a7aa",
-        "providerHead": "c890e891f753f5cb51f8c23a63e7342ae670a7aa",
-        "observedAt": "2026-11-23T19:35:06.669147+00:00",
-        "disposition": "Kerumeto requests shorter function comments and clearer RFC names on the unchanged foreign TCP sourcec890. The foreign author owns those edits; root’s reviewer follow-through remains under the unrelated sensitive-feature hold. These external style requests are not adopted kernel edits or a release of the hold.",
-        "nextAction": "Retain the author-owned comment revision and root-held reviewer obligation separately. Recheck actual author revision or user hold release; do not read/edit protected implementation, run tests or post unapproved prose.",
+        "sourceHead": "881bcc233a023ac188d0c3dd8d8d4f3770b7e3f3",
+        "providerHead": "881bcc233a023ac188d0c3dd8d8d4f3770b7e3f3",
+        "observedAt": "2026-11-24T05:47:43.330769+00:00",
+        "disposition": "Foreign author adios-404 updated source to881bcc233 and replied on seven old threads claiming comment/header cleanup and removal. These are unverified author statements, including outdated-thread replies; no finding is deemed resolved because it is outdated or answered. Root current-source reviewer follow-through remains sensitive-held; prior reviews do not qualify this head.",
+        "nextAction": "Retain foreign implementation ownership and root held reviewer obligation separately. Recheck actual author evidence or user hold release, without protected source reads/tests, claimed-fix verification, reply, or transferred approval.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17022#issuecomment-6850802221",
           "https://github.com/google/gvisor/pull/17022#issuecomment-6702500777",
@@ -74212,12 +74215,19 @@
           "https://github.com/google/gvisor/pull/17022#discussion_r4670320709",
           "https://github.com/google/gvisor/pull/17022#discussion_r4670345881",
           "https://github.com/google/gvisor/pull/17022#discussion_r4670401002",
-          "https://github.com/google/gvisor/pull/17022#discussion_r4670418466"
+          "https://github.com/google/gvisor/pull/17022#discussion_r4670418466",
+          "https://github.com/google/gvisor/pull/17022#discussion_r4675899835",
+          "https://github.com/google/gvisor/pull/17022#discussion_r4675900037",
+          "https://github.com/google/gvisor/pull/17022#discussion_r4675900213",
+          "https://github.com/google/gvisor/pull/17022#discussion_r4675900409",
+          "https://github.com/google/gvisor/pull/17022#discussion_r4675900628",
+          "https://github.com/google/gvisor/pull/17022#discussion_r4675900872",
+          "https://github.com/google/gvisor/pull/17022#discussion_r4675901101"
         ],
         "currentStateObservedAt": "2026-11-21T03:42:31.212198+00:00",
         "mergeable": "MERGEABLE",
         "priorSourceHead": "f38afb60d50809b6c44618f637ebbb6e56e3a750",
-        "recheckCondition": "Actual foreign-author response/revision or user release of the sensitive-feature hold.",
+        "recheckCondition": "Actual foreign-author/source/review evidence or user release of the sensitive-feature hold.",
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
         "qualificationHistory": [
           {
@@ -74246,7 +74256,7 @@
           "qualification": "Original reviews and declined draft retain their original heads; no new code review or performance approval."
         }
       },
-      "nextStep": "Root follows adios-404’s source refresh and re-evaluates the exact resulting source composition and retained review/performance obligations. Preserve author ownership; no foreign push, speculative fix or automatic notification.",
+      "nextStep": "Retain foreign implementation ownership and root held reviewer obligation separately. Recheck actual author evidence or user hold release, without protected source reads/tests, claimed-fix verification, reply, or transferred approval.",
       "recheckCondition": "The author’s changed source/base/mergeability or substantive review/dependency evidence."
     },
     {
@@ -80648,7 +80658,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-18T12:19:41.750038+00:00",
-      "summary": "The revised queue checks and charges memory under q.mu. Queued ACKs, FINs and resets have their own budget so unread data cannot crowd them out. The author added a test in which eight callers contend for one remaining data slot. Tamir has replied on the original thread.",
+      "summary": "Foreign source98b52778 is natively MERGED as44cb4f5896577c8df71ead23a7f52ccf15314434, with Etienne approval. Current open-PR/reviewer/import wait is fulfilled. No dependency edge or predecessor branch alias exists in the current registry. Earlier source/performance assessment remains historical and is not a new technical or performance clearance.",
       "evidence": [
         {
           "label": "Posted inline review on TCP queue admission",
@@ -80703,20 +80713,21 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "1faa3f53bf78f5c45bf41cf25a525c6dd78fa8ac",
-        "observedAt": "2026-11-18T05:33:28.596246+00:00",
-        "disposition": "Root and independent peer reconciled the complete old topic (merge-base f51a205 to f8153ee) with current squashed topic1faa3f. All353 topic change lines match except eight int/int64 adaptation groups required by upstream int64 buffer/accounting types. Thresholds, locking, ownership actions and test bodies otherwise unchanged. This is a rebase assessment only; no new full-PR approval, execution or performance claim.",
-        "nextAction": "Do not post the withdrawn review or a replacement reply. Retain current-source review and the outstanding broad network-category before/after performance evidence requirement; follow actual source, review, CI or import changes.",
+        "sourceHead": "98b52778ff1c9364ec20e7b368fcb27a7d614a4e",
+        "observedAt": "2026-11-24T05:47:43.330769+00:00",
+        "disposition": "Foreign source98b52778 is natively MERGED as44cb4f5896577c8df71ead23a7f52ccf15314434, with Etienne approval. Current open-PR/reviewer/import wait is fulfilled. No dependency edge or predecessor branch alias exists in the current registry. Earlier source/performance assessment remains historical and is not a new technical or performance clearance.",
+        "nextAction": "No reply is needed, as the user instructed for the earlier threads. Close the merged lifecycle without another comment, source work or claimed independent performance verification.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17118#discussion_r4497821040",
           "https://github.com/google/gvisor/pull/17118#pullrequestreview-5807281816",
-          "https://github.com/google/gvisor/pull/17118"
+          "https://github.com/google/gvisor/pull/17118",
+          "https://github.com/google/gvisor/commit/44cb4f5896577c8df71ead23a7f52ccf15314434"
         ],
         "currentStateObservedAt": "2026-11-18T05:28:47.492315+00:00",
-        "providerHead": "1faa3f53bf78f5c45bf41cf25a525c6dd78fa8ac",
+        "providerHead": "98b52778ff1c9364ec20e7b368fcb27a7d614a4e",
         "mergeable": "MERGEABLE",
         "priorSourceHead": "f8153eea979205e41395d1794d37d4e723b5f140",
-        "recheckCondition": "Current source/CI/human feedback changes, reviewer decision or import/merge.",
+        "recheckCondition": "Actual merge/source discrepancy only.",
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
         "qualificationHistory": [
           {
@@ -80757,7 +80768,8 @@
           "reportedAction": "User reports thumbs-up reactions",
           "externalMessagePosted": false
         }
-      }
+      },
+      "nextStep": "No reply is needed, as the user instructed for the earlier threads. Close the merged lifecycle without another comment, source work or claimed independent performance verification."
     },
     {
       "id": "branch:declare-x-text-direct",
@@ -122118,7 +122130,7 @@
       "status": "active",
       "owner": "root",
       "updatedAt": "2026-11-23T22:28:52.692599+00:00",
-      "summary": "Due native-first guard found no fresh/live native collection. Sole snapshot-only fallback45327740285 succeeded and delivered API2026-11-24T04:41:01.877891+00:00 with outreach disabled. Native cadence irregularity has no established provider cause or demonstrated configuration defect.",
+      "summary": "Due native-first guard found no fresh/live native collection. Sole snapshot-only fallback45335115034 succeeded and delivered API2026-11-24T05:44:40.742979+00:00 with outreach disabled. Native cadence irregularity has no established provider cause or demonstrated configuration defect.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122361,7 +122373,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground/active-goal supervision owns next native-first guard05:41:01 UTC and deadline06:11:01. Reuse fresh/live native delivery before one fallback; preserve60/90-minute policy and2-hour UI threshold without reset or competing monitor.",
+      "nextStep": "Root foreground/active-goal supervision owns next native-first guard06:44:40 UTC and deadline07:14:40. Reuse fresh/live native delivery before one fallback; preserve60/90-minute policy and2-hour UI threshold, without reset or competing monitor.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122491,7 +122503,11 @@
           "https://github.com/tamird/gvisor/actions/runs/45287620194",
           "https://github.com/tamird/gvisor/actions/runs/45296589443"
         ],
-        "observedAt": "2026-11-23T22:28:52.692599+00:00"
+        "observedAt": "2026-11-24T05:47:43.330769+00:00",
+        "disposition": "Due native-first guard found no fresh/live native collection. Sole snapshot-only fallback45335115034 succeeded and delivered API2026-11-24T05:44:40.742979+00:00 with outreach disabled. Native cadence irregularity has no established provider cause or demonstrated configuration defect.",
+        "nextAction": "Root foreground/active-goal supervision owns next native-first guard06:44:40 UTC and deadline07:14:40. Reuse fresh/live native delivery before one fallback; preserve60/90-minute policy and2-hour UI threshold, without reset or competing monitor.",
+        "recheckCondition": "Fresh/live native delivery or the next due guard.",
+        "owner": "root"
       }
     },
     {
@@ -132018,7 +132034,7 @@
       "owner": "analysis_pass_inventory / root",
       "updatedAt": "2026-11-23T22:28:52.692599+00:00",
       "group": "analysis",
-      "summary": "Original724 captured spans account for716 migrations and eight explicit contracts, with two additional compression-finalizer exceptions kept distinct. Source5003 plus formatting has final-corpus dispatch in flight; this is not final readiness or diagnostic/performance closure. Exact d946 profile now passes full3-case suites on both architectures with zero skips; current source migrations require their own qualification. PinRing nativeAMD preflight established root/CAP_NET_RAW/KVM/io_uring; eligible-case and ARM admission jobs remain with their sole owner.",
+      "summary": "Corrected full corpus45332368082 executed891 results:879 PASS and12 finding wrappers, with four architecture records at two higher-parent declarations, unlinkRaceFD and Loader. Remaining findings are fieldalignment only; no compiler/API/setup failures. Existing owner is actively recovering those two declarations; audit closure is not established. PinRing exact1e66 AMD45327433523 passes AFPacket and KVM (2XML,0skip); ARM45328185109 passes AFPacket (1XML,0skip), with /dev/kvm absent. Exactd946 profile full3-case suites pass both architectures with zero skips. These proofs do not transfer to an unqualified later source or performance closure.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132390,7 +132406,7 @@
           ]
         }
       ],
-      "nextStep": "Primary owner closes actual final-corpus/affected diagnostics and source review. Approved_delivery_batch owns PinRing runs45327433523/45327436410; consume its terminal result without a second observer. Preserve explicit contracts/exceptions, separate pending publication questions and unrelated sensitive-feature holds.",
+      "nextStep": "Primary analyzer owner recovers the two higher-parent declarations and verifies exact diagnostic closure/final source. Preserve PinRing architecture/KVM limits and separate pending header/npm decisions. No repeated completed PinRing/profile jobs, extra corpus observer or final green/publication-ready claim.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132728,7 +132744,7 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T04:47:08.376554+00:00",
+        "observedAt": "2026-11-24T05:47:43.330769+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45274157128/artifacts/14868766183",
           "https://github.com/tamird/gvisor/actions/runs/45286918461",
@@ -132740,12 +132756,15 @@
           "https://github.com/tamird/gvisor/actions/runs/45292273315",
           "https://github.com/tamird/gvisor/commit/12fd1be7cdeb8c5eaaff0e0f565860d3862099ca",
           "https://github.com/tamird/gvisor/actions/runs/45319022026",
-          "https://github.com/tamird/gvisor/actions/runs/45319927699"
+          "https://github.com/tamird/gvisor/actions/runs/45319927699",
+          "https://github.com/tamird/gvisor/actions/runs/45332368082/artifacts/14892554106",
+          "https://github.com/tamird/gvisor/actions/runs/45327433523",
+          "https://github.com/tamird/gvisor/actions/runs/45328185109"
         ],
         "owner": "root",
-        "disposition": "Original724 captured spans account for716 migrations and eight explicit contracts, with two additional compression-finalizer exceptions kept distinct. Source5003 plus formatting has final-corpus dispatch in flight; this is not final readiness or diagnostic/performance closure. Exact d946 profile now passes full3-case suites on both architectures with zero skips; current source migrations require their own qualification. PinRing nativeAMD preflight established root/CAP_NET_RAW/KVM/io_uring; eligible-case and ARM admission jobs remain with their sole owner.",
-        "nextAction": "Primary owner closes actual final-corpus/affected diagnostics and source review. Approved_delivery_batch owns PinRing runs45327433523/45327436410; consume its terminal result without a second observer. Preserve explicit contracts/exceptions, separate pending publication questions and unrelated sensitive-feature holds.",
-        "recheckCondition": "Actual analyzer validation/migration milestone, existing header-publication answer or working normal preview transport."
+        "disposition": "Corrected full corpus45332368082 executed891 results:879 PASS and12 finding wrappers, with four architecture records at two higher-parent declarations, unlinkRaceFD and Loader. Remaining findings are fieldalignment only; no compiler/API/setup failures. Existing owner is actively recovering those two declarations; audit closure is not established. PinRing exact1e66 AMD45327433523 passes AFPacket and KVM (2XML,0skip); ARM45328185109 passes AFPacket (1XML,0skip), with /dev/kvm absent. Exactd946 profile full3-case suites pass both architectures with zero skips. These proofs do not transfer to an unqualified later source or performance closure.",
+        "nextAction": "Primary analyzer owner recovers the two higher-parent declarations and verifies exact diagnostic closure/final source. Preserve PinRing architecture/KVM limits and separate pending header/npm decisions. No repeated completed PinRing/profile jobs, extra corpus observer or final green/publication-ready claim.",
+        "recheckCondition": "Existing owner supplies exact repaired source and affected/full-corpus closure, actual final review or a pending source-publication answer."
       },
       "contributorReview": {
         "kind": "proposal",
@@ -140359,7 +140378,7 @@
       "status": "active",
       "owner": "benchmark_measurement_review / root",
       "updatedAt": "2026-11-23T20:29:42.991432+00:00",
-      "summary": "The combined6a ask is superseded by three independently documented, durably published proposals: runtime output f05f486d, Node TAP8044063a and pinned AMD64 image outputs e17f88ff. Their source trees/parents are unchanged from the reviewed split; combined-source functional evidence and known FLAKY annotations retain their original limits. The actual question to open three one-commit PRs is pending; no upstream PR is opened.",
+      "summary": "The old combined6a question is superseded. Three independently documented published proposals f05f486d,8044063a,e17f88ff have actual unanswered opening questions. Source/parent identity and reused combined-source functional evidence retain their limits, including original FLAKY annotations. No upstream PR is opened.",
       "findings": [
         {
           "text": "The same shard also timed out in debugger-random-port. The log does not identify where the ArrayBuffer test stopped.",
@@ -140375,7 +140394,7 @@
           ]
         }
       ],
-      "nextStep": "Await the actual three-source opening decision recorded on the worker-arraybuffer investigation. Do not transfer the old6a question or invent fresh independent validation; retain original timeout natural-recurrence and runtime/image limits.",
+      "nextStep": "Root awaits the existing three-source opening decision; causal documentation and splitting are complete. Preserve original timeout natural-recurrence and image/runtime limits, with no transfer of old6a approval, duplicate question or new validation claim.",
       "evidence": [
         {
           "label": "Original Node shard",
@@ -140429,10 +140448,10 @@
       ],
       "followup": {
         "owner": "root",
-        "observedAt": "2026-11-23T18:40:13.679878+00:00",
-        "disposition": "The prior6a opening proposal is superseded by the user’s request for clearer causal documentation and assessment of its three independent changes; it was not approved.",
-        "nextAction": "Root owns the causal explanation and splitting assessment before any revised source/proposal. Keep existing qualification and original natural-recurrence limits; do not open the old proposal or invent a replacement question.",
-        "recheckCondition": "Root’s actual revised source/explanation or actual provider evidence; no invented pending approval."
+        "observedAt": "2026-11-24T05:47:43.330769+00:00",
+        "disposition": "The old combined6a question is superseded. Three independently documented published proposals f05f486d,8044063a,e17f88ff have actual unanswered opening questions. Source/parent identity and reused combined-source functional evidence retain their limits, including original FLAKY annotations. No upstream PR is opened.",
+        "nextAction": "Root awaits the existing three-source opening decision; causal documentation and splitting are complete. Preserve original timeout natural-recurrence and image/runtime limits, with no transfer of old6a approval, duplicate question or new validation claim.",
+        "recheckCondition": "Actual contributor answer or substantive source/review/provider evidence."
       },
       "contributorReview": {
         "kind": "proposal",
@@ -143266,7 +143285,7 @@
       "owner": "root",
       "technicalOwner": "compdb_final_correctness",
       "updatedAt": "2026-11-21T12:00:06.633567+00:00",
-      "summary": "Exact LLVM producer44774d5c6b106d09460c5bb85ac64506a712c35b is user-approved. Supplier parent PR236 remains OPEN, so publication is still prerequisite-blocked; no upstream producer PR or gVisor adoption approval is inferred. Scoped product/caller proof remains valid.",
+      "summary": "Exact LLVM producer44774d5c6b106d09460c5bb85ac64506a712c35b is user-approved and its scoped product/caller proof is complete. Supplier #236 remains OPEN/unmerged at324cf87, with substantive checks passing and only release upload skipped. Producer publication remains prerequisite-blocked; no gVisor adoption or permanent fork pin is approved.",
       "findings": [
         {
           "text": "All Linux owning/style gates and all three native Windows cases passed, and two final independent reviewers found no blocker. The coordinator’s independent source-tree comparison found only .github/workflows/main.yaml different between test CI7f and intended55; this supports the exact tested-source binding, not new publication authority.",
@@ -143300,21 +143319,23 @@
           "url": "https://github.com/tamird/bazel-compile-commands/commit/44774d5c6b106d09460c5bb85ac64506a712c35b"
         }
       ],
-      "nextStep": "Root waits for upstream236 landing, then performs the authorized one-commit producer publication and follows compatible release/adoption. No repeated approval question or permanent fork pin.",
+      "nextStep": "Root waits for supplier #236 landing, then performs the already-authorized one-commit producer publication and follows compatible release/adoption. Do not repeat approval, startup/caller qualification, builds or outreach.",
       "recheckCondition": "Actual LLVM startup/caller/source-review evidence and user direction, followed by a compatible upstream release/pin.",
       "head": "44774d5c6b106d09460c5bb85ac64506a712c35b",
       "followup": {
         "owner": "root",
         "implementationOwner": "root",
-        "observedAt": "2026-11-20T23:41:26.383263+00:00",
-        "disposition": "The user’s musl-versus-hermetic-LLVM challenge keeps f611 publication superseded/HOLD. Local LLVM producer447 has passing product gates, while startup and actual caller qualification are still ongoing under compdb_final_correctness; it is not review-ready or approved for publication. Prior completed musl/caller proofs remain scoped to that baseline and do not qualify LLVM. Compatible upstream producer/release adoption remains open.",
-        "nextAction": "compdb_final_correctness closes the LLVM startup/caller and source review boundary before any new proposal. Root retains the user’s toolchain/consolidation direction and actual publication authority; do not reopen f611’s superseded question or infer a permanent fork pin.",
-        "recheckCondition": "Actual LLVM startup/caller/source-review evidence and user direction, followed by a compatible upstream release/pin.",
+        "observedAt": "2026-11-24T05:47:43.330769+00:00",
+        "disposition": "Exact LLVM producer44774d5c6b106d09460c5bb85ac64506a712c35b is user-approved and its scoped product/caller proof is complete. Supplier #236 remains OPEN/unmerged at324cf87, with substantive checks passing and only release upload skipped. Producer publication remains prerequisite-blocked; no gVisor adoption or permanent fork pin is approved.",
+        "nextAction": "Root waits for supplier #236 landing, then performs the already-authorized one-commit producer publication and follows compatible release/adoption. Do not repeat approval, startup/caller qualification, builds or outreach.",
+        "recheckCondition": "Actual supplier #236 landing/release or changed source/review evidence.",
         "evidence": [
           "https://github.com/tamird/bazel-compile-commands/commit/df68514d2c922a7ecf8026f3954f615ec21251b7",
-          "https://github.com/tamird/gvisor/blob/040e89ac391d29bdbc3f5a517eb2ef659055e068/registry.json"
+          "https://github.com/tamird/gvisor/blob/040e89ac391d29bdbc3f5a517eb2ef659055e068/registry.json",
+          "https://github.com/kiron1/bazel-compile-commands/pull/236",
+          "https://github.com/kiron1/bazel-compile-commands/actions/runs/44807549343"
         ],
-        "publicationQuestionStatus": "Superseded by readiness withdrawal; the immutable earlier record preserves the actual question. No direct user response or settled human decision is inferred.",
+        "publicationQuestionStatus": "Exact447 publication is approved, prerequisite-blocked by236; earlierf611 readiness-withdrawn proposal remains superseded.",
         "curatedAt": "2026-11-20T23:41:26.383263+00:00"
       },
       "settledReviews": [
