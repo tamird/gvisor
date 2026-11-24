@@ -15,6 +15,8 @@
 
 # Installs an opaque release in the existing Docker daemon for one caller.
 # Requires exclusive ownership of the host daemon for the entire invocation.
+# With bazel test --run_under, use --noincompatible_bazel_test_exec_run_under
+# to keep the complete release in the target configuration.
 # With no caller, checks the native and installed runtimes using Alpine.
 set -euo pipefail
 export RUNFILES_DIR="${TEST_SRCDIR:-${RUNFILES_DIR:-$0.runfiles}}"
