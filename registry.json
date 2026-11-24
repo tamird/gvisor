@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-23T23:26:26.059838+00:00",
+    "updatedAt": "2026-11-24T00:13:57.833052+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -25158,7 +25158,7 @@
       "group": "release",
       "status": "LicenseRef integration publication review requested",
       "updatedAt": "2026-11-23T23:03:59.853434+00:00",
-      "summary": "LicenseRef integration9c of the approved8fac logic is qualified through source-preserving CI32b: AMD/ARM owning tests passed76 cases each, full Go/C++ lint passed and catalog Verify passed225 dependencies. Two final full-change reviews are clear; DCO is included and the public commit is readable. The actual upstream-opening question is unanswered. Declaration-only preflight verified the pinned Node archive and enumerated552 lock entries (317 documentation/235 ESLint), with expected exit1 for552 missing catalog entries. This is not live package Fetch, classification or policy acceptance; Node image467 owns the separate catalog scope.",
+      "summary": "LicenseRef integration 9c retains 76 owning cases per architecture, default source lint 45278912706 and catalog Verify of 225 dependencies passing; two final reviews are clear. Default lint excludes mandatory clang-tidy. Separate full AMD strict C++ run 45289804407 passed 374 sources, while ARM 45289807217 failed on the pre-existing signalfd.cc missing direct sys/types.h include for ssize_t. Native npm 9c/CI32b ARM strict is not green. Independent header fix ac0439 is qualified and awaiting its own publication review; it is not bundled into npm. Declaration-only Node preflight enumerated 552 entries (317 documentation/235 ESLint), with expected missing-catalog exit1; no live Fetch, classification or policy acceptance is established.",
       "evidence": [
         {
           "label": "Owning checks and lint PASS",
@@ -25167,10 +25167,10 @@
       ],
       "followup": {
         "owner": "root",
-        "disposition": "LicenseRef integration9c of the approved8fac logic is qualified through source-preserving CI32b: AMD/ARM owning tests passed76 cases each, full Go/C++ lint passed and catalog Verify passed225 dependencies. Two final full-change reviews are clear; DCO is included and the public commit is readable. The actual upstream-opening question is unanswered. Declaration-only preflight verified the pinned Node archive and enumerated552 lock entries (317 documentation/235 ESLint), with expected exit1 for552 missing catalog entries. This is not live package Fetch, classification or policy acceptance; Node image467 owns the separate catalog scope.",
+        "disposition": "LicenseRef integration 9c retains 76 owning cases per architecture, default source lint 45278912706 and catalog Verify of 225 dependencies passing; two final reviews are clear. Default lint excludes mandatory clang-tidy. Separate full AMD strict C++ run 45289804407 passed 374 sources, while ARM 45289807217 failed on the pre-existing signalfd.cc missing direct sys/types.h include for ssize_t. Native npm 9c/CI32b ARM strict is not green. Independent header fix ac0439 is qualified and awaiting its own publication review; it is not bundled into npm. Declaration-only Node preflight enumerated 552 entries (317 documentation/235 ESLint), with expected missing-catalog exit1; no live Fetch, classification or policy acceptance is established.",
         "sourceHead": "9c63274cbc2a17dfabac062d229c3ac45ed8a4e9",
-        "observedAt": "2026-11-23T23:03:59.853434+00:00",
-        "nextAction": "Await review of the new LicenseRef integration before opening its preparatory PR. Root owns publication. Independently, a durable preview ref remains blocked by GitHub workflow-check timeout after bounded normal transport attempts; no new credential scope or human execution permission is proved necessary. Recheck only actual user answer or provider/SSH recovery, without blind retries. Live Node catalog Fetch/policy work remains outside this PR.",
+        "observedAt": "2026-11-24T00:13:57.833052+00:00",
+        "nextAction": "Root awaits the unanswered npm LicenseRef opening decision and separate header-fix decision. Preserve the original ARM strict failure until the independent remedy is adopted and qualified in the relevant integration. A durable npm preview ref remains blocked by provider workflow-check timeout; no human execution/access permission is pending. No duplicate tests, source changes, permission question or unchanged transport retry.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/8facdc0012a7714662f8c40a9cc5db1030ee2864",
           "https://github.com/gvisor/gvisor/commit/0cf6f98cb89bf2d9fbc6886bc11085a895b4eb23",
@@ -25181,7 +25181,9 @@
           "https://github.com/tamird/gvisor/actions/runs/45278909846",
           "https://github.com/tamird/gvisor/actions/runs/45278912706",
           "https://github.com/tamird/gvisor/actions/runs/45278916135",
-          "https://github.com/tamird/gvisor/actions/runs/45281690189"
+          "https://github.com/tamird/gvisor/actions/runs/45281690189",
+          "https://github.com/tamird/gvisor/actions/runs/45289804407",
+          "https://github.com/tamird/gvisor/actions/runs/45289807217"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -25195,7 +25197,7 @@
           "owner": "root"
         },
         "technicalOwner": "approved_delivery_batch",
-        "recheckCondition": "Actual source-publication answer or normal provider/ref availability; no duplicate qualification or new permission question."
+        "recheckCondition": "Actual source-publication answer, adoption/integration of the independent header remedy, or normal provider/SSH recovery."
       },
       "refinement": {
         "before": {
@@ -25212,7 +25214,7 @@
         "baseHead": "1325ee6d79bd838f43a08c437ef220fdc81de811",
         "url": "https://github.com/tamird/gvisor/commit/9c63274cbc2a17dfabac062d229c3ac45ed8a4e9",
         "title": "Audit npm archives from declared Node sources",
-        "summary": "Awaiting review of the LicenseRef integration. Owning tests/build, full lint, catalog Verify and two final reviews pass; declared-only Node enumeration is not live package Fetch or policy acceptance.",
+        "summary": "Awaiting review of the LicenseRef integration. Owning tests, default source lint and catalog Verify pass; full AMD strict C++ passes, but original ARM strict fails on a separately qualified baseline header defect. Two reviews are clear. Declaration-only enumeration is not live Fetch or policy acceptance.",
         "body": "The dependency audit covered Bazel and Go inputs, while declared Node runtime sources also install packages from upstream documentation and ESLint locks. Enumerate those canonical locks from the pinned Node source archive, verify each npm archive against its SHA512 integrity pin, and record its SHA256 and package notices. Identify bundled packages within their containing archive.\n\nRetain reviewed LicenseRef artifact terms only while the source and locked integrity match, and reject combining LicenseRef with an explicit license_source. Explicit notice sources remain a separate fetch path. Images without a source checksum declaration keep their existing audit inputs.\n\nPosted by Codex on behalf of @tamird.\n"
       }
     },
@@ -132368,7 +132370,7 @@
           ]
         }
       ],
-      "nextStep": "Existing analyzer owner completes migrations and exact affected/full-corpus validation. The RBE owner owns sandbox runs 45288110135 and 45288103200; consume its terminal results without a second observer. Preserve narrow migration authorization and unrelated protected-feature holds; no readiness, performance or final corpus-green claim.",
+      "nextStep": "Existing analyzer owner completes the unified migrations and source-bound validation; unrelated protected features remain held. Separately, root awaits the one-include header proposal answer. Its qualified strict-C++ repair does not make the original npm ARM result green or replace the npm source decision.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132706,13 +132708,31 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-23T22:28:52.692599+00:00",
+        "observedAt": "2026-11-24T00:13:57.833052+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45274157128/artifacts/14868766183",
           "https://github.com/tamird/gvisor/actions/runs/45286918461",
           "https://github.com/tamird/gvisor/actions/runs/45288110135",
-          "https://github.com/tamird/gvisor/actions/runs/45288103200"
-        ]
+          "https://github.com/tamird/gvisor/actions/runs/45288103200",
+          "https://github.com/tamird/gvisor/actions/runs/45292265635",
+          "https://github.com/tamird/gvisor/actions/runs/45292268167",
+          "https://github.com/tamird/gvisor/actions/runs/45292270599",
+          "https://github.com/tamird/gvisor/actions/runs/45292273315"
+        ],
+        "owner": "root",
+        "disposition": "Unified analyzer migrations and source-bound validation remain active. Latest reported source 98a11 has 1,030 owning cases per architecture passing; this is affected-package coverage, not a full current-source corpus pass. The prior complete 4dd run reported 891 results, 226 passes and 665 findings with zero build failures. Sandbox worker recovery now has TestSandboxEnv passing through the approved Firecracker helper; both full 50-case architecture runs remain owner-observed and pending. Separately, supporting strict-C++ header repair ac0439 is qualified and awaiting its own source-publication decision; no upstream PR is opened.",
+        "nextAction": "Existing analyzer owner completes the unified migrations and source-bound validation; unrelated protected features remain held. Separately, root awaits the one-include header proposal answer. Its qualified strict-C++ repair does not make the original npm ARM result green or replace the npm source decision.",
+        "recheckCondition": "Actual analyzer validation/migration milestone, existing header-publication answer or working normal preview transport."
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "ac0439e2b8f91f764841ff02fd3b511c1842a276",
+        "baseHead": "5004cb3b543d351758717a7cd8d2ec42c5a6cb70",
+        "url": "https://github.com/tamird/gvisor/commit/ac0439e2b8f91f764841ff02fd3b511c1842a276",
+        "title": "Include the ssize_t header in signalfd tests",
+        "summary": "Separate strict-C++ baseline repair awaiting source-publication review. One direct include; AMD/ARM native cases, full ARM strict C++, AMD affected translation units and formatting pass, with unchanged AMD coverage reused. Two final reviews are clear; npm source and its original ARM strict result remain separate.",
+        "body": "Include `sys/types.h` for `ssize_t` in the signalfd test's concurrent read loop. This fixes the ARM clang-tidy `misc-include-cleaner` finding.\n\nPosted by Codex on behalf of @tamird.\n"
       }
     },
     {
