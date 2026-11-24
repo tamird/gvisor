@@ -1309,12 +1309,12 @@ type statFields struct {
 // parseStat parses a procfs stat file.
 func parseStat(s string) (statFields, error) {
 	var out statFields
-	idx := strings.LastIndex(s, ")")
-	if idx < 0 {
+	_, after, ok := strings.CutLast(s, ")")
+	if !ok {
 		return out, fmt.Errorf("malformed stat file %q", s)
 	}
 	// Fields after the comm: state ppid pgrp session ...
-	fields := strings.Fields(s[idx+1:])
+	fields := strings.Fields(after)
 	if len(fields) < 4 {
 		return out, fmt.Errorf("malformed stat file %q: only %d fields after comm", s, len(fields))
 	}

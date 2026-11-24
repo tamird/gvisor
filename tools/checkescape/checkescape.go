@@ -749,9 +749,9 @@ func loadObjdump(binary io.Reader) (*compiledCode, error) {
 		if len(fields) >= 4 && line[0] == ' ' {
 			site := fields[0]
 			filename, line, located := "", 0, false
-			if i := strings.LastIndexByte(site, ':'); i >= 0 {
-				filename = site[:i]
-				line, _ = strconv.Atoi(site[i+1:])
+			if file, position, ok := strings.CutLast(site, ":"); ok {
+				filename = file
+				line, _ = strconv.Atoi(position)
 				located = line > 0 && filename != "" && !strings.HasPrefix(filename, "<")
 			}
 			if entryPending {

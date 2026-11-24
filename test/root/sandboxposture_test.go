@@ -389,11 +389,11 @@ func goferPIDsUnder(root int) ([]int, error) {
 // isZombie reports whether a `/proc/<pid>/stat` line describes an exited but
 // unreaped process.
 func isZombie(stat string) bool {
-	i := strings.LastIndex(stat, ")")
-	if i < 0 {
+	_, after, ok := strings.CutLast(stat, ")")
+	if !ok {
 		return false
 	}
-	return strings.HasPrefix(strings.TrimSpace(stat[i+1:]), "Z")
+	return strings.HasPrefix(strings.TrimSpace(after), "Z")
 }
 
 // findSandboxUnder returns the PID of the sandbox process descended from the

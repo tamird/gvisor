@@ -52,7 +52,7 @@ func TestWarnOn(t *testing.T) {
 			}
 		},
 		"testStringFormat": func(t *testing.T) {
-			expectStr1 := strings.SplitN(warnFmtStr, "%", 2)[0]
+			expectStr1, _, _ := strings.Cut(warnFmtStr, "%")
 			expectStr2 := "This is just a test warning"
 			BugTracebackf("This is just a test warning: %s", "with another string")
 
@@ -70,7 +70,7 @@ func TestWarnOn(t *testing.T) {
 			}
 		},
 		"testWarnErr": func(t *testing.T) {
-			expectStr1 := strings.SplitN(warnFmtStr, "%", 2)[0]
+			expectStr1, _, _ := strings.Cut(warnFmtStr, "%")
 			expectStr2 := "My little error string"
 			var err error
 			BugTraceback(err)

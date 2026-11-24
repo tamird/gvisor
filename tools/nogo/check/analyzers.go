@@ -223,7 +223,8 @@ func init() {
 			"reflecttypeassert",
 			"testingcontext",
 			"omitzero",
-			"forvar":
+			"forvar",
+			"stringscut":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}
