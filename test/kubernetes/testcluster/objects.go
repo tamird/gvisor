@@ -23,7 +23,6 @@ import (
 	"time"
 
 	cspb "cloud.google.com/go/container/apiv1/containerpb"
-	"google.golang.org/protobuf/proto"
 	v13 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -566,14 +565,14 @@ func (t RuntimeType) ApplyPodSpec(podSpec *v13.PodSpec) {
 	}
 	switch t {
 	case RuntimeTypeGVisor, RuntimeTypeGVisorCapped:
-		podSpec.RuntimeClassName = proto.String(gvisorRuntimeClass)
+		podSpec.RuntimeClassName = new(gvisorRuntimeClass)
 		podSpec.NodeSelector[NodepoolRuntimeKey] = string(t)
 		addToleration(podSpec, v13.Toleration{
 			Key:      "nvidia.com/gpu",
 			Operator: v13.TolerationOpExists,
 		})
 	case RuntimeTypeMicroVM:
-		podSpec.RuntimeClassName = proto.String(microvmRuntimeClass)
+		podSpec.RuntimeClassName = new(microvmRuntimeClass)
 		podSpec.NodeSelector[NodepoolRuntimeKey] = string(t)
 		addToleration(podSpec, v13.Toleration{
 			Effect:   v13.TaintEffectNoSchedule,
@@ -604,7 +603,7 @@ func (t RuntimeType) ApplyPodSpec(podSpec *v13.PodSpec) {
 			Value:    microvmRuntimeClass,
 		})
 	case RuntimeTypeGVisorTPU:
-		podSpec.RuntimeClassName = proto.String(gvisorRuntimeClass)
+		podSpec.RuntimeClassName = new(gvisorRuntimeClass)
 		podSpec.NodeSelector[NodepoolRuntimeKey] = string(RuntimeTypeGVisorTPU)
 		addToleration(podSpec, v13.Toleration{
 			Key:      "google.com/tpu",
@@ -633,7 +632,7 @@ func (t RuntimeType) ApplyPodSpec(podSpec *v13.PodSpec) {
 			// Logically impossible since we already checked that t is a Kata runtime, so panic is appropriate.
 			panic(fmt.Sprintf("failed to get Kata shim name for runtime %q: %v", t, err))
 		}
-		podSpec.RuntimeClassName = proto.String(shimName)
+		podSpec.RuntimeClassName = new(shimName)
 		podSpec.NodeSelector["katacontainers.io/kata-runtime"] = "true"
 		podSpec.NodeSelector[NodepoolRuntimeKey] = string(t)
 	default:

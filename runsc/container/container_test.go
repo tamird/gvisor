@@ -5651,10 +5651,6 @@ func TestLookupEROFS(t *testing.T) {
 	}
 }
 
-func int64Ptr(v int64) *int64 {
-	return &v
-}
-
 func TestSpecValidation(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -5855,18 +5851,18 @@ func TestSpecValidation(t *testing.T) {
 				spec.Linux = &specs.Linux{
 					Resources: &specs.LinuxResources{
 						Memory: &specs.LinuxMemory{
-							Limit:       int64Ptr(1),
-							Swap:        int64Ptr(2),
-							Reservation: int64Ptr(3),
+							Limit:       new(int64(1)),
+							Swap:        new(int64(2)),
+							Reservation: new(int64(3)),
 						},
 					},
 				}
 				restoreSpec.Linux = &specs.Linux{
 					Resources: &specs.LinuxResources{
 						Memory: &specs.LinuxMemory{
-							Limit:       int64Ptr(1),
-							Swap:        int64Ptr(2),
-							Reservation: int64Ptr(5),
+							Limit:       new(int64(1)),
+							Swap:        new(int64(2)),
+							Reservation: new(int64(5)),
 						},
 					},
 				}

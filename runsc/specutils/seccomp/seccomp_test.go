@@ -51,12 +51,6 @@ func testInput(arch uint32, syscallName string, args *[6]uint64) bpf.Input {
 	return seccomp.DataAsBPFInput(&data, make([]byte, data.SizeBytes()))
 }
 
-// errnoRetPtr returns a pointer to errno, for use as an OCI errnoRet or
-// defaultErrnoRet field.
-func errnoRetPtr(errno uint) *uint {
-	return &errno
-}
-
 // testCase holds a seccomp test case.
 type testCase struct {
 	name     string
@@ -398,7 +392,7 @@ var (
 			name: "default_errno_ret",
 			config: specs.LinuxSeccomp{
 				DefaultAction:   specs.ActErrno,
-				DefaultErrnoRet: errnoRetPtr(uint(unix.ENOSYS)),
+				DefaultErrnoRet: new(uint(unix.ENOSYS)),
 			},
 			input:    testInput(nativeArchAuditNo, "read", nil),
 			expected: uint32(linux.SECCOMP_RET_ERRNO.WithReturnCode(uint16(unix.ENOSYS))),
@@ -409,7 +403,7 @@ var (
 			name: "default_errno_ret_zero",
 			config: specs.LinuxSeccomp{
 				DefaultAction:   specs.ActErrno,
-				DefaultErrnoRet: errnoRetPtr(0),
+				DefaultErrnoRet: new(uint(0)),
 			},
 			input:    testInput(nativeArchAuditNo, "read", nil),
 			expected: uint32(linux.SECCOMP_RET_ERRNO.WithReturnCode(0)),
@@ -420,7 +414,7 @@ var (
 			name: "default_errno_ret_ignored_for_allow",
 			config: specs.LinuxSeccomp{
 				DefaultAction:   specs.ActAllow,
-				DefaultErrnoRet: errnoRetPtr(uint(unix.ENOSYS)),
+				DefaultErrnoRet: new(uint(unix.ENOSYS)),
 			},
 			input:    testInput(nativeArchAuditNo, "read", nil),
 			expected: uint32(linux.SECCOMP_RET_ALLOW),
@@ -430,7 +424,7 @@ var (
 			name: "default_errno_ret_ignored_for_kill",
 			config: specs.LinuxSeccomp{
 				DefaultAction:   specs.ActKill,
-				DefaultErrnoRet: errnoRetPtr(uint(unix.ENOSYS)),
+				DefaultErrnoRet: new(uint(unix.ENOSYS)),
 			},
 			input:    testInput(nativeArchAuditNo, "read", nil),
 			expected: uint32(linux.SECCOMP_RET_KILL_THREAD),
@@ -446,7 +440,7 @@ var (
 					{
 						Names:    []string{"clone3"},
 						Action:   specs.ActErrno,
-						ErrnoRet: errnoRetPtr(uint(unix.ENOSYS)),
+						ErrnoRet: new(uint(unix.ENOSYS)),
 					},
 					{
 						// No ErrnoRet: must fall back to EPERM, not
@@ -469,7 +463,7 @@ var (
 					{
 						Names:    []string{"clone3"},
 						Action:   specs.ActErrno,
-						ErrnoRet: errnoRetPtr(uint(unix.ENOSYS)),
+						ErrnoRet: new(uint(unix.ENOSYS)),
 					},
 					{
 						Names:  []string{"getcwd"},
@@ -488,7 +482,7 @@ var (
 					{
 						Names:    []string{"clone3"},
 						Action:   specs.ActErrno,
-						ErrnoRet: errnoRetPtr(0),
+						ErrnoRet: new(uint(0)),
 					},
 				},
 			},
@@ -503,7 +497,7 @@ var (
 					{
 						Names:    []string{"write"},
 						Action:   specs.ActTrace,
-						ErrnoRet: errnoRetPtr(uint(unix.ENOSYS)),
+						ErrnoRet: new(uint(unix.ENOSYS)),
 					},
 				},
 			},
@@ -520,7 +514,7 @@ var (
 					{
 						Names:    []string{"getcwd"},
 						Action:   specs.ActAllow,
-						ErrnoRet: errnoRetPtr(uint(unix.ENOSYS)),
+						ErrnoRet: new(uint(unix.ENOSYS)),
 					},
 				},
 			},
@@ -536,7 +530,7 @@ var (
 					{
 						Names:    []string{"getcwd"},
 						Action:   specs.ActTrap,
-						ErrnoRet: errnoRetPtr(uint(unix.ENOSYS)),
+						ErrnoRet: new(uint(unix.ENOSYS)),
 					},
 				},
 			},
@@ -585,7 +579,7 @@ var (
 			name: "default_errno_ret_does_not_leak_to_rules",
 			config: specs.LinuxSeccomp{
 				DefaultAction:   specs.ActAllow,
-				DefaultErrnoRet: errnoRetPtr(uint(unix.ENOSYS)),
+				DefaultErrnoRet: new(uint(unix.ENOSYS)),
 				Syscalls: []specs.LinuxSyscall{
 					{
 						Names:  []string{"getcwd"},
@@ -612,7 +606,7 @@ func TestErrnoRetOutOfRange(t *testing.T) {
 			name: "default",
 			config: specs.LinuxSeccomp{
 				DefaultAction:   specs.ActErrno,
-				DefaultErrnoRet: errnoRetPtr(math.MaxUint16 + 1),
+				DefaultErrnoRet: new(uint(math.MaxUint16 + 1)),
 			},
 		},
 		{
@@ -623,7 +617,7 @@ func TestErrnoRetOutOfRange(t *testing.T) {
 					{
 						Names:    []string{"getcwd"},
 						Action:   specs.ActErrno,
-						ErrnoRet: errnoRetPtr(math.MaxUint16 + 1),
+						ErrnoRet: new(uint(math.MaxUint16 + 1)),
 					},
 				},
 			},
@@ -738,7 +732,7 @@ var orderingTests = []struct {
 		name: "args_only_other_action",
 		config: specs.LinuxSeccomp{
 			DefaultAction:   specs.ActErrno,
-			DefaultErrnoRet: errnoRetPtr(uint(unix.ENOSYS)),
+			DefaultErrnoRet: new(uint(unix.ENOSYS)),
 			Syscalls: []specs.LinuxSyscall{
 				{Names: []string{"clone"}, Action: specs.ActAllow, Args: []specs.LinuxSeccompArg{{Index: 0, Value: 0x7e020000, Op: specs.OpMaskedEqual}}},
 				{Names: []string{"socket"}, Action: specs.ActLog, Args: []specs.LinuxSeccompArg{{Index: 0, Value: 16, Op: specs.OpNotEqual}, {Index: 2, Value: 9, Op: specs.OpLessThan}}},
@@ -795,7 +789,7 @@ var orderingTests = []struct {
 		config: specs.LinuxSeccomp{
 			DefaultAction: specs.ActErrno,
 			Syscalls: []specs.LinuxSyscall{
-				{Names: []string{"personality"}, Action: specs.ActErrno, ErrnoRet: errnoRetPtr(uint(unix.ENOSYS)), Args: []specs.LinuxSeccompArg{{Index: 0, Value: 8, Op: specs.OpEqualTo}}},
+				{Names: []string{"personality"}, Action: specs.ActErrno, ErrnoRet: new(uint(unix.ENOSYS)), Args: []specs.LinuxSeccompArg{{Index: 0, Value: 8, Op: specs.OpEqualTo}}},
 			},
 		},
 		argDependent: []string{"personality"},
@@ -805,7 +799,7 @@ var orderingTests = []struct {
 		config: specs.LinuxSeccomp{
 			DefaultAction: specs.ActErrno,
 			Syscalls: []specs.LinuxSyscall{
-				{Names: []string{"personality"}, Action: specs.ActErrno, ErrnoRet: errnoRetPtr(uint(unix.ENOSYS)), Args: []specs.LinuxSeccompArg{{Index: 0, Value: 8, Op: specs.OpEqualTo}}},
+				{Names: []string{"personality"}, Action: specs.ActErrno, ErrnoRet: new(uint(unix.ENOSYS)), Args: []specs.LinuxSeccompArg{{Index: 0, Value: 8, Op: specs.OpEqualTo}}},
 				// A name that is present twice has the same result as a name
 				// that is present once.
 				{Names: []string{"personality", "personality"}, Action: specs.ActErrno},
@@ -957,7 +951,7 @@ func TestRandomFilterMatchesFullProgram(t *testing.T) {
 	rng := rand.New(rand.NewSource(1))
 	names := []string{"read", "write", "personality", "clone", "not_a_syscall"}
 	actions := []specs.LinuxSeccompAction{specs.ActKill, specs.ActTrap, specs.ActErrno, specs.ActTrace, specs.ActLog, specs.ActAllow}
-	errnoRets := []*uint{nil, errnoRetPtr(0), errnoRetPtr(uint(unix.EPERM)), errnoRetPtr(uint(unix.ENOSYS))}
+	errnoRets := []*uint{nil, new(uint(0)), new(uint(unix.EPERM)), new(uint(unix.ENOSYS))}
 	ops := []specs.LinuxSeccompOperator{specs.OpEqualTo, specs.OpNotEqual, specs.OpGreaterThan, specs.OpGreaterEqual, specs.OpLessThan, specs.OpLessEqual, specs.OpMaskedEqual}
 	values := []uint64{0, 1, 2, 3}
 	sysnos := []int32{-1, sentry.MaxSyscallNum + 1}

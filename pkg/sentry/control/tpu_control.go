@@ -188,7 +188,7 @@ func controlTPUTask(sctx context.Context, info *tpuTaskInfo, action tpu_pb.Contr
 
 	req := tpu_pb.ControlRequest_builder{
 		Action:      action.Enum(),
-		TimeoutSecs: proto.Int32(int32(libtpuResponseTimeout.Seconds())),
+		TimeoutSecs: new(int32(libtpuResponseTimeout.Seconds())),
 	}.Build()
 
 	log.Debugf("Writing request %v to FD %d of task %d", req, info.reqWriteFd, t.ThreadID())

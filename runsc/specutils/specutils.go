@@ -1120,10 +1120,6 @@ func AnnotationToBool(spec *specs.Spec, annotation string) bool {
 	return ret
 }
 
-func boolPtr(b bool) *bool {
-	return &b
-}
-
 // Features returns the features supported by the runtime.
 func Features() *features.Features {
 	featuresOnce.Do(func() {
@@ -1143,14 +1139,14 @@ func Features() *features.Features {
 				Namespaces:   KnownNamespaces(),
 				Capabilities: AllCapabilities().Bounding,
 				Cgroup: &features.Cgroup{
-					V1:          boolPtr(true),
-					V2:          boolPtr(false),
-					Systemd:     boolPtr(false),
-					SystemdUser: boolPtr(false),
-					Rdma:        boolPtr(false),
+					V1:          new(true),
+					V2:          new(false),
+					Systemd:     new(false),
+					SystemdUser: new(false),
+					Rdma:        new(false),
 				},
 				Seccomp: &features.Seccomp{
-					Enabled:        boolPtr(true),
+					Enabled:        new(true),
 					Actions:        knownSeccompActions(),
 					Operators:      knownSeccompOperators(),
 					Archs:          knownSeccompArchs(),
@@ -1158,17 +1154,17 @@ func Features() *features.Features {
 					SupportedFlags: supportedSeccompFlags(),
 				},
 				Apparmor: &features.Apparmor{
-					Enabled: boolPtr(false),
+					Enabled: new(false),
 				},
 				Selinux: &features.Selinux{
-					Enabled: boolPtr(false),
+					Enabled: new(false),
 				},
 				IntelRdt: &features.IntelRdt{
-					Enabled: boolPtr(false),
+					Enabled: new(false),
 				},
 				MountExtensions: &features.MountExtensions{
 					IDMap: &features.IDMap{
-						Enabled: boolPtr(true),
+						Enabled: new(true),
 					},
 				},
 			},

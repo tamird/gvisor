@@ -21,7 +21,6 @@ import (
 	"slices"
 	"strings"
 
-	"google.golang.org/protobuf/proto"
 	appsv1 "k8s.io/api/apps/v1"
 	v13 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -121,7 +120,7 @@ func RunscInstallDaemonSet(image string, options InstallOptions) *appsv1.DaemonS
 								Capabilities: &v13.Capabilities{
 									Add: []v13.Capability{"CAP_SYS_ADMIN"},
 								},
-								Privileged: proto.Bool(true),
+								Privileged: new(true),
 							},
 						},
 					},

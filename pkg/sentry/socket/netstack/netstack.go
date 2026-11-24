@@ -35,7 +35,6 @@ import (
 	"time"
 
 	"golang.org/x/sys/unix"
-	"google.golang.org/protobuf/proto"
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/abi/linux/errno"
 	"gvisor.dev/gvisor/pkg/context"
@@ -948,7 +947,7 @@ func (s *sock) Listen(_ *kernel.Task, backlog int) *syserr.Error {
 		panic(fmt.Sprintf("GetLocalAddress failed for tcp socket: %s", err))
 	}
 	eventchannel.Emit(&epb.SentryTcpListenEvent{
-		Port: proto.Int32(int32(addr.Port)),
+		Port: new(int32(addr.Port)),
 	})
 	return nil
 }

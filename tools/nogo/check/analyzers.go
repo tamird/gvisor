@@ -226,7 +226,8 @@ func init() {
 			"forvar",
 			"stringscut",
 			"stringscutprefix",
-			"stringsseq":
+			"stringsseq",
+			"newexpr":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}

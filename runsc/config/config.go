@@ -836,10 +836,6 @@ const (
 	FileAccessShared
 )
 
-func fileAccessTypePtr(v FileAccessType) *FileAccessType {
-	return &v
-}
-
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (f *FileAccessType) Set(v string) error {
 	switch v {
@@ -885,10 +881,6 @@ const (
 	// NetworkPlugin uses third-party network stack.
 	NetworkPlugin
 )
-
-func networkTypePtr(v NetworkType) *NetworkType {
-	return &v
-}
 
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (n *NetworkType) Set(v string) error {
@@ -948,10 +940,6 @@ const (
 	GoferNetworkNamespaceNull GoferNetworkNamespace = "null"
 )
 
-func goferNetworkNamespacePtr(v GoferNetworkNamespace) *GoferNetworkNamespace {
-	return &v
-}
-
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (n *GoferNetworkNamespace) Set(v string) error {
 	switch v {
@@ -986,10 +974,6 @@ const (
 	// InSandboxCgroupV2 mounts cgroup v2 inside the sandbox.
 	InSandboxCgroupV2
 )
-
-func inSandboxCgroupTypePtr(v InSandboxCgroupType) *InSandboxCgroupType {
-	return &v
-}
 
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (c *InSandboxCgroupType) Set(v string) error {
@@ -1035,10 +1019,6 @@ const (
 	QDiscTBF
 )
 
-func queueingDisciplinePtr(v QueueingDiscipline) *QueueingDiscipline {
-	return &v
-}
-
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (q *QueueingDiscipline) Set(v string) error {
 	switch v {
@@ -1072,10 +1052,6 @@ func (q QueueingDiscipline) String() string {
 	panic(fmt.Sprintf("Invalid qdisc %d", q))
 }
 
-func leakModePtr(v refs.LeakMode) *refs.LeakMode {
-	return &v
-}
-
 // HostUDS tells how much of the host UDS the file system has access to.
 type HostUDS int
 
@@ -1092,10 +1068,6 @@ const (
 	// HostUDSAll allows all form of communication with the host through UDS.
 	HostUDSAll = HostUDSOpen | HostUDSCreate
 )
-
-func hostUDSPtr(v HostUDS) *HostUDS {
-	return &v
-}
 
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (g *HostUDS) Set(v string) error {
@@ -1157,10 +1129,6 @@ const (
 	HostFifoOpen HostFifo = 0x1
 )
 
-func hostFifoPtr(v HostFifo) *HostFifo {
-	return &v
-}
-
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (g *HostFifo) Set(v string) error {
 	switch v {
@@ -1217,10 +1185,6 @@ const (
 	// exposing the host device to the container.
 	CharDevPassthrough
 )
-
-func charDevicePolicyPtr(v CharacterDevicePolicy) *CharacterDevicePolicy {
-	return &v
-}
 
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (p *CharacterDevicePolicy) Set(v string) error {
@@ -1280,10 +1244,6 @@ const (
 	InodeNumbersVirtual
 )
 
-func inodeNumbersPtr(v InodeNumbers) *InodeNumbers {
-	return &v
-}
-
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (n *InodeNumbers) Set(v string) error {
 	switch v {
@@ -1328,10 +1288,6 @@ const (
 	TCPDelayedACKDisabled
 )
 
-func tcpDelayedACKPtr(v TCPDelayedACK) *TCPDelayedACK {
-	return &v
-}
-
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (d *TCPDelayedACK) Set(v string) error {
 	switch v {
@@ -1374,10 +1330,6 @@ const (
 	// entry gets a PAX extended header, which adds about 1 KiB per entry.
 	TarTimestampNanoseconds
 )
-
-func tarTimestampResolutionPtr(v TarTimestampResolution) *TarTimestampResolution {
-	return &v
-}
 
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (r *TarTimestampResolution) Set(v string) error {
