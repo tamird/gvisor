@@ -658,23 +658,12 @@ func logImageWithFrameAndPrefix(ctx context.Context, img image.Image, title, pre
 	if err != nil {
 		return fmt.Errorf("ascii-image-converter failed: %v (output: %q)", err, strings.Join(stderr, "\n"))
 	}
-	header := "┍"
-	footer := "╰"
 	numHeaderHorizontalLines := imageWidth - len(title) - 2
 	leftHeaderHorizontalLines := numHeaderHorizontalLines / 2
 	rightHeaderHorizontalLines := numHeaderHorizontalLines - leftHeaderHorizontalLines
-	for i := 0; i < leftHeaderHorizontalLines; i++ {
-		header += "━"
-	}
-	header += fmt.Sprintf(" %s ", title)
-	for i := 0; i < rightHeaderHorizontalLines; i++ {
-		header += "━"
-	}
-	for i := 0; i < imageWidth; i++ {
-		footer += "─"
-	}
-	header += "┑"
-	footer += "╯"
+	header := "┍" + strings.Repeat("━", max(0, leftHeaderHorizontalLines)) +
+		fmt.Sprintf(" %s ", title) + strings.Repeat("━", max(0, rightHeaderHorizontalLines)) + "┑"
+	footer := "╰" + strings.Repeat("─", max(0, imageWidth)) + "╯"
 	logDo(func() {
 		fmt.Fprintf(os.Stderr, "%s%s\n", prefix, header)
 		for _, line := range stdout {

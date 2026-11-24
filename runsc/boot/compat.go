@@ -17,6 +17,7 @@ package boot
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"golang.org/x/sys/unix"
 	"google.golang.org/protobuf/proto"
@@ -186,11 +187,11 @@ func newArgsTracker(argIdx ...int) *argsTracker {
 
 // key returns the command based on the syscall argument index.
 func (a *argsTracker) key(regs *rpb.Registers) string {
-	var rv string
+	var rv strings.Builder
 	for _, idx := range a.argsIdx {
-		rv += fmt.Sprintf("%d|", argVal(idx, regs))
+		fmt.Fprintf(&rv, "%d|", argVal(idx, regs))
 	}
-	return rv
+	return rv.String()
 }
 
 func (a *argsTracker) shouldReport(regs *rpb.Registers) bool {

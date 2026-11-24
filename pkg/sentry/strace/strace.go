@@ -289,15 +289,16 @@ func stringVector(t *kernel.Task, addr hostarch.Addr) string {
 	if err != nil {
 		return fmt.Sprintf("%#x {error copying vector: %v}", addr, err)
 	}
-	s := fmt.Sprintf("%#x [", addr)
+	var s strings.Builder
+	fmt.Fprintf(&s, "%#x [", addr)
 	for i, v := range vec {
 		if i != 0 {
-			s += ", "
+			s.WriteString(", ")
 		}
-		s += fmt.Sprintf("%q", v)
+		fmt.Fprintf(&s, "%q", v)
 	}
-	s += "]"
-	return s
+	s.WriteString("]")
+	return s.String()
 }
 
 func rusage(t *kernel.Task, addr hostarch.Addr) string {

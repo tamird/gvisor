@@ -18,6 +18,7 @@ package gro
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
@@ -566,16 +567,17 @@ func (gd *GRO) handlePacket(pkt *stack.PacketBuffer) {
 
 // String implements fmt.Stringer.
 func (gd *GRO) String() string {
-	ret := "GRO state: \n"
+	var ret strings.Builder
+	ret.WriteString("GRO state: \n")
 	for i := range gd.buckets {
 		bucket := &gd.buckets[i]
-		ret += fmt.Sprintf("bucket %d: %d packets: ", i, bucket.count)
+		fmt.Fprintf(&ret, "bucket %d: %d packets: ", i, bucket.count)
 		for groPkt := bucket.packets.Front(); groPkt != nil; groPkt = groPkt.Next() {
-			ret += fmt.Sprintf("%d, ", groPkt.pkt.Data().Size())
+			fmt.Fprintf(&ret, "%d, ", groPkt.pkt.Data().Size())
 		}
-		ret += "\n"
+		ret.WriteString("\n")
 	}
-	return ret
+	return ret.String()
 }
 
 // shouldFlushTCP returns whether the TCP headers indicate that groPkt should

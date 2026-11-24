@@ -1584,7 +1584,7 @@ func (ls *Layers) diff(other Layers) string {
 		})
 	}
 
-	output := ""
+	var output strings.Builder
 	// These are for output formatting.
 	maxLabelLen, maxFieldLen, maxGotLen, maxWantLen := 0, 0, 0, 0
 	foundOne := false
@@ -1612,7 +1612,7 @@ func (ls *Layers) diff(other Layers) string {
 	}
 	for _, l := range allDiffs {
 		if len(l.rows) == 0 {
-			output += "(" + l.label + ")\n"
+			output.WriteString("(" + l.label + ")\n")
 			continue
 		}
 		for i, r := range l.rows {
@@ -1620,16 +1620,14 @@ func (ls *Layers) diff(other Layers) string {
 			if i == 0 {
 				label = l.label + ":"
 			}
-			output += fmt.Sprintf(
-				"%*s %*s %*v %*v\n",
+			fmt.Fprintf(&output, "%*s %*s %*v %*v\n",
 				maxLabelLen+1, label,
 				maxFieldLen+1, r.field+":",
 				maxGotLen, r.got,
-				maxWantLen, r.want,
-			)
+				maxWantLen, r.want)
 		}
 	}
-	return output
+	return output.String()
 }
 
 // merge merges the other Layers into ls. If the other Layers is longer, those
