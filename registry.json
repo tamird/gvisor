@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T17:06:51.520893+00:00",
+    "updatedAt": "2026-11-24T17:17:08.041093+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -132152,10 +132152,10 @@
       "id": "investigation:repository-lint",
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
-      "owner": "benchmark_measurement_review / root",
-      "updatedAt": "2026-11-24T07:01:47.154032+00:00",
+      "owner": "root / analysis_pass_inventory",
+      "updatedAt": "2026-11-24T17:17:08.041093+00:00",
       "group": "analysis",
-      "summary": "The user requested one dependency-first, per-analyzer multi-commit PR with the final a3f52992/tree8b006d3f preserved; analysis_pass_inventory owns composition on the main checkout. Corrected canonical behavioral matrix has368 targets per ISA:363 PASS and5 FAIL. Version plus six additional ordinary unit owners passed65 XML cases per ISA with --stamp; four cgroup/overlay/route target prerequisites remain held. These behavioral results are distinct from the891 static NoGo passes. Baseline capture45425843883 is complete: the40,270,884-byte tar matches cb479886 SHA256 and all nine release files match the captured BEP digests/sizes;3203 remote hits plus1280 internal actions, zero compilation executions. Uploader fix5d504727 and actual SSH publication/capture fulfilled the former transport/unlock wait. Graph A/A remains on stability HOLD; startup A/A remains limited to its observed route.",
+      "summary": "Prepared native series 26090b334 contains 54 commits on 0c7e69e359: dependency update first, then 53 analyzer activation/fix commits. Stable preview qualification/x-tools-module-input-20261124 is verified. Runtime postimages match reviewed a3f; only 10 checker/config paths differ, including required module inputs. Independent module and series reviews are accepted. Functional driver/check/CLI/sanity evidence passes 32 XML cases per ISA under accepted unchanged-input reuse for the three CLI declaration-order moves. Final cli_nogo and cli_test_nogo pass on both ISAs, two XML commands each with no errors; source gates and source-preservation steps pass. Earlier three check/check_test/sanity NoGo validators per ISA also pass. This closes focused checker/source qualification, not the full behavioral or performance gates.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132527,8 +132527,12 @@
           ]
         }
       ],
-      "nextStep": "analysis_pass_inventory composes the exact dependency-first/per-analyzer series without changing the final tree, then presents source and validation scope. Root retains the unresolved behavioral prerequisites and performance decision; baseline capture is fulfilled, not another approval or retry task. No new helper code, A/B measurement, unrelated sensitive work or transfer of static qualification to behavioral/performance clearance follows.",
+      "nextStep": "Root presents the exact reviewed 54-commit series for publication review; no new-series publication question has yet been asked or granted. Depends on open #17884. Four provider/route behavioral targets and broader performance qualification remain explicit limitations. benchmark_measurement_review owns resumed startup comparison with retained baseline 45425843883 and the established route; no completed A/B result is claimed. Preserve unrelated sensitive-feature holds and separate actual pending decisions.",
       "evidence": [
+        {
+          "label": "Current reviewed analyzer series",
+          "url": "https://github.com/tamird/gvisor/compare/0c7e69e359dbfc284a7d109ad007395086a70cd4...26090b334cf9c5f4657ec33aef64efc6fa86ef82"
+        },
         {
           "label": "Ryan explains the first-pass cache policy",
           "url": "https://github.com/google/gvisor/pull/17612#issuecomment-6858919995"
@@ -132788,7 +132792,7 @@
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
       },
-      "head": "a3f52992b34ef2873195b97b0856f20d061d0832",
+      "head": "26090b334cf9c5f4657ec33aef64efc6fa86ef82",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -132869,7 +132873,7 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T15:33:12.099125+00:00",
+        "observedAt": "2026-11-24T17:17:08.041093+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45338108931",
           "https://github.com/tamird/gvisor/actions/runs/45344645597",
@@ -132910,14 +132914,25 @@
           "https://github.com/tamird/gvisor/actions/runs/45401725881/artifacts/14922939284",
           "https://github.com/tamird/gvisor/actions/runs/45402869151/artifacts/14925155816",
           "https://github.com/tamird/gvisor/commit/5d504727a0851a505875c8b7fc3ce85a8302a78a",
-          "https://github.com/tamird/gvisor/actions/runs/45425843883/artifacts/14935569879"
+          "https://github.com/tamird/gvisor/actions/runs/45425843883/artifacts/14935569879",
+          "https://github.com/tamird/gvisor/commit/26090b334cf9c5f4657ec33aef64efc6fa86ef82",
+          "https://github.com/tamird/gvisor/compare/0c7e69e359dbfc284a7d109ad007395086a70cd4...26090b334cf9c5f4657ec33aef64efc6fa86ef82",
+          "https://github.com/tamird/gvisor/tree/qualification/x-tools-module-input-20261124",
+          "https://github.com/gvisor/gvisor/pull/17884",
+          "https://github.com/tamird/gvisor/actions/runs/45444362496",
+          "https://github.com/tamird/gvisor/actions/runs/45444354403/artifacts/14944318725",
+          "https://github.com/tamird/gvisor/actions/runs/45444358730/artifacts/14945044229",
+          "https://github.com/tamird/gvisor/actions/runs/45444362496/artifacts/14944952935",
+          "https://github.com/tamird/gvisor/actions/runs/45441968934",
+          "https://github.com/tamird/gvisor/actions/runs/45441979500"
         ],
-        "owner": "benchmark_measurement_review / root",
-        "disposition": "The user requested one dependency-first, per-analyzer multi-commit PR with the final a3f52992/tree8b006d3f preserved; analysis_pass_inventory owns composition on the main checkout. Corrected canonical behavioral matrix has368 targets per ISA:363 PASS and5 FAIL. Version plus six additional ordinary unit owners passed65 XML cases per ISA with --stamp; four cgroup/overlay/route target prerequisites remain held. These behavioral results are distinct from the891 static NoGo passes. Baseline capture45425843883 is complete: the40,270,884-byte tar matches cb479886 SHA256 and all nine release files match the captured BEP digests/sizes;3203 remote hits plus1280 internal actions, zero compilation executions. Uploader fix5d504727 and actual SSH publication/capture fulfilled the former transport/unlock wait. Graph A/A remains on stability HOLD; startup A/A remains limited to its observed route.",
-        "nextAction": "analysis_pass_inventory composes the exact dependency-first/per-analyzer series without changing the final tree, then presents source and validation scope. Root retains the unresolved behavioral prerequisites and performance decision; baseline capture is fulfilled, not another approval or retry task. No new helper code, A/B measurement, unrelated sensitive work or transfer of static qualification to behavioral/performance clearance follows.",
-        "recheckCondition": "Composition owner returns the exact multi-commit candidate; actual held-prerequisite, methodology or user-decision change.",
-        "sourceHead": "a3f52992b34ef2873195b97b0856f20d061d0832",
-        "technicalOwner": "benchmark_measurement_review (completed source qualification)"
+        "owner": "root / analysis_pass_inventory",
+        "disposition": "Prepared native series 26090b334 contains 54 commits on 0c7e69e359: dependency update first, then 53 analyzer activation/fix commits. Stable preview qualification/x-tools-module-input-20261124 is verified. Runtime postimages match reviewed a3f; only 10 checker/config paths differ, including required module inputs. Independent module and series reviews are accepted. Functional driver/check/CLI/sanity evidence passes 32 XML cases per ISA under accepted unchanged-input reuse for the three CLI declaration-order moves. Final cli_nogo and cli_test_nogo pass on both ISAs, two XML commands each with no errors; source gates and source-preservation steps pass. Earlier three check/check_test/sanity NoGo validators per ISA also pass. This closes focused checker/source qualification, not the full behavioral or performance gates.",
+        "nextAction": "Root presents the exact reviewed 54-commit series for publication review; no new-series publication question has yet been asked or granted. Depends on open #17884. Four provider/route behavioral targets and broader performance qualification remain explicit limitations. benchmark_measurement_review owns resumed startup comparison with retained baseline 45425843883 and the established route; no completed A/B result is claimed. Preserve unrelated sensitive-feature holds and separate actual pending decisions.",
+        "recheckCondition": "Actual new-series publication review, prerequisite #17884 landing, remaining-workload inventory or qualified performance result; no repeated focused gate.",
+        "sourceHead": "26090b334cf9c5f4657ec33aef64efc6fa86ef82",
+        "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
+        "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4"
       },
       "contributorReview": {
         "kind": "proposal",
