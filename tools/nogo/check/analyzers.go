@@ -227,7 +227,8 @@ func init() {
 			"stringscut",
 			"stringscutprefix",
 			"stringsseq",
-			"newexpr":
+			"newexpr",
+			"minmax":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}

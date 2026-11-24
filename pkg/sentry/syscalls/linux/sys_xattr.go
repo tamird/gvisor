@@ -99,11 +99,7 @@ func getxattr(t *kernel.Task, args arch.SyscallArguments, shouldFollowFinalSymli
 	pathAddr := args[0].Pointer()
 	nameAddr := args[1].Pointer()
 	valueAddr := args[2].Pointer()
-	size := args[3].SizeT()
-
-	if size > linux.XATTR_SIZE_MAX {
-		size = linux.XATTR_SIZE_MAX
-	}
+	size := min(args[3].SizeT(), linux.XATTR_SIZE_MAX)
 	path, err := copyInPath(t, pathAddr)
 	if err != nil {
 		return 0, nil, err
@@ -138,11 +134,7 @@ func Fgetxattr(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (uintp
 	fd := args[0].Int()
 	nameAddr := args[1].Pointer()
 	valueAddr := args[2].Pointer()
-	size := args[3].SizeT()
-
-	if size > linux.XATTR_SIZE_MAX {
-		size = linux.XATTR_SIZE_MAX
-	}
+	size := min(args[3].SizeT(), linux.XATTR_SIZE_MAX)
 
 	file := t.GetFile(fd)
 	if file == nil {

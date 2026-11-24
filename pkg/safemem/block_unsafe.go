@@ -195,10 +195,7 @@ func Copy(dst, src Block) (int, error) {
 		return copy(dst.ToSlice(), src.ToSlice()), nil
 	}
 
-	n := dst.length
-	if n > src.length {
-		n = src.length
-	}
+	n := min(dst.length, src.length)
 	if n == 0 {
 		return 0, nil
 	}

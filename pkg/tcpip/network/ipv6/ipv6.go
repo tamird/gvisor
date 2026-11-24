@@ -2947,10 +2947,7 @@ func calculateNetworkMTU(linkMTU, networkHeadersLen uint32) (uint32, tcpip.Error
 		return 0, &tcpip.ErrMalformedHeader{}
 	}
 
-	networkMTU := linkMTU - networkHeadersLen
-	if networkMTU > maxPayloadSize {
-		networkMTU = maxPayloadSize
-	}
+	networkMTU := min(linkMTU-networkHeadersLen, maxPayloadSize)
 	return networkMTU, nil
 }
 

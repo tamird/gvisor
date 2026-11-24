@@ -804,14 +804,8 @@ func (t *TestCluster) applyCommonPodConfigurations(ctx context.Context, np *Node
 		if targetMemoryMiB == 0 {
 			targetMemoryMiB = int(float64(np.spec.MemoryGiB*1024) * defaultMaxResourceUtilization)
 		}
-		requestCores := int(float64(targetCores) * defaultMaxResourceUtilization)
-		if requestCores < 1 {
-			requestCores = 1
-		}
-		requestMemoryMiB := int(float64(targetMemoryMiB) * defaultMaxResourceUtilization)
-		if requestMemoryMiB < 1 {
-			requestMemoryMiB = 1
-		}
+		requestCores := max(int(float64(targetCores)*defaultMaxResourceUtilization), 1)
+		requestMemoryMiB := max(int(float64(targetMemoryMiB)*defaultMaxResourceUtilization), 1)
 		resLimitCPU := resource.MustParse(fmt.Sprintf("%d", targetCores))
 		resRequestCPU := resource.MustParse(fmt.Sprintf("%d", requestCores))
 		resLimitMem := resource.MustParse(fmt.Sprintf("%dMi", targetMemoryMiB))

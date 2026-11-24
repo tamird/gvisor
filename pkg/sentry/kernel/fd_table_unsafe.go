@@ -116,10 +116,7 @@ func (f *FDTable) swap(fd int32, file *vfs.FileDescription, flags FDFlags) *vfs.
 		newLen := int(bucketN) + 1
 		if newLen < 2*length {
 			// Ensure the table at least doubles in size without going over the limit.
-			newLen = 2 * length
-			if newLen > int(MaxFdLimit) {
-				newLen = int(MaxFdLimit)
-			}
+			newLen = min(2*length, int(MaxFdLimit))
 		}
 		newSlice := append(*slicePtr, make([]descriptorBucketAtomicPtr, newLen-length)...)
 		slicePtr = &newSlice

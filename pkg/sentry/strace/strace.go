@@ -497,10 +497,7 @@ func (i *SyscallInfo) post(t *kernel.Task, args arch.SyscallArguments, rval uint
 		case ReadBuffer:
 			output[arg] = dump(t, args[arg].Pointer(), uint(rval), maximumBlobSize, LogAppDataAllowed /* content */)
 		case ReadIOVec:
-			printLength := uint64(rval)
-			if printLength > uint64(maximumBlobSize) {
-				printLength = uint64(maximumBlobSize)
-			}
+			printLength := min(uint64(rval), uint64(maximumBlobSize))
 			output[arg] = iovecs(t, args[arg].Pointer(), int(args[arg+1].Int()), LogAppDataAllowed /* content */, printLength)
 		case WriteIOVec, IOVec, WriteBuffer:
 			// We already have a big blast from write.

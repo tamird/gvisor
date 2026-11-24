@@ -48,10 +48,7 @@ func (t *Task) BlockWithTimeout(C chan struct{}, haveTimeout bool, timeout time.
 	// since then. We cap the remaining timeout to 0 to make it easier to
 	// directly use the returned duration.
 	end := clock.Now()
-	remainingTimeout := timeout - end.Sub(start)
-	if remainingTimeout < 0 {
-		remainingTimeout = 0
-	}
+	remainingTimeout := max(timeout-end.Sub(start), 0)
 
 	return remainingTimeout, err
 }

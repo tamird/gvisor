@@ -58,10 +58,7 @@ func (p *pcapPacket) MarshalBinary() ([]byte, error) {
 	pkt := trimmedClone(p.packet)
 	defer pkt.DecRef()
 	packetSize := pkt.Size()
-	captureLen := p.maxCaptureLen
-	if packetSize < captureLen {
-		captureLen = packetSize
-	}
+	captureLen := min(packetSize, p.maxCaptureLen)
 	b := make([]byte, 16+captureLen)
 	binary.LittleEndian.PutUint32(b[0:4], uint32(p.timestamp.Unix()))
 	binary.LittleEndian.PutUint32(b[4:8], uint32(p.timestamp.Nanosecond()/1000))

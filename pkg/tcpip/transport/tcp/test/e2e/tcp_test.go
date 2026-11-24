@@ -7872,10 +7872,7 @@ func TestReceiveBufferAutoTuningApplicationLimited(t *testing.T) {
 	end := payloadSize / 2
 	packetsSent := 0
 	for ; start < end; start += mss {
-		packetEnd := start + mss
-		if start+mss > end {
-			packetEnd = end
-		}
+		packetEnd := min(start+mss, end)
 		rawEP.SendPacketWithTS(b[start:packetEnd], tsVal)
 		packetsSent++
 	}

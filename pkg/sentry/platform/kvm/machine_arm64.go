@@ -162,10 +162,7 @@ func archPhysicalRegions(physicalRegions []physicalRegion) []physicalRegion {
 				continue
 			}
 			if rdStart > start {
-				newEnd := rdStart
-				if end < rdStart {
-					newEnd = end
-				}
+				newEnd := min(end, rdStart)
 				addValidRegion(&pr, start, newEnd-start, pr.mmio, false)
 				start = rdStart
 				continue
@@ -238,11 +235,7 @@ func (m *machine) getMaxVCPU() {
 	if errno != 0 {
 		m.maxVCPUs = rmaxVCPUs
 	} else {
-		if rmaxVCPUs < int(smaxVCPUs) {
-			m.maxVCPUs = rmaxVCPUs
-		} else {
-			m.maxVCPUs = int(smaxVCPUs)
-		}
+		m.maxVCPUs = min(rmaxVCPUs, int(smaxVCPUs))
 	}
 }
 

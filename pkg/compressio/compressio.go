@@ -909,10 +909,7 @@ func (w *Writer) Write(p []byte) (done int, err error) {
 		}
 
 		// Read from p into w.buf.
-		toWrite := len(p) - done
-		if toWrite > left {
-			toWrite = left
-		}
+		toWrite := min(len(p)-done, left)
 		n, err := w.buf.Write(p[done : done+toWrite])
 		done += n
 		if err != nil {

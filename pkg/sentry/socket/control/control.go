@@ -121,10 +121,7 @@ func putCmsg(buf []byte, flags int, msgType uint32, align uint, data []int32) ([
 		return buf, flags
 	}
 
-	length := 4*len(data) + linux.SizeOfControlMessageHeader
-	if length > space {
-		length = space
-	}
+	length := min(4*len(data)+linux.SizeOfControlMessageHeader, space)
 	buf = putUint64(buf, uint64(length))
 	buf = putUint32(buf, linux.SOL_SOCKET)
 	buf = putUint32(buf, msgType)

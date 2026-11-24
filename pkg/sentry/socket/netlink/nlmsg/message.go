@@ -73,12 +73,10 @@ func ParseMessage(buf []byte) (msg *Message, rest []byte, ok bool) {
 	}
 
 	// Padding.
-	numPad := alignPad(totalMsgLen, linux.NLMSG_ALIGNTO)
-	// Linux permits the last message not being aligned, just consume all of it.
-	// Ref: net/netlink/af_netlink.c:netlink_rcv_skb
-	if numPad > len(b) {
-		numPad = len(b)
-	}
+	numPad := min(
+		// Linux permits the last message not being aligned, just consume all of it.
+		// Ref: net/netlink/af_netlink.c:netlink_rcv_skb
+		alignPad(totalMsgLen, linux.NLMSG_ALIGNTO), len(b))
 	_, ok = b.Extract(numPad)
 	if !ok {
 		return
@@ -130,12 +128,10 @@ func (m *Message) GetData(msg marshal.Marshallable) (AttrsView, bool) {
 	}
 	msg.UnmarshalUnsafe(msgBytes)
 
-	numPad := alignPad(linux.NetlinkMessageHeaderSize+size, linux.NLMSG_ALIGNTO)
-	// Linux permits the last message not being aligned, just consume all of it.
-	// Ref: net/netlink/af_netlink.c:netlink_rcv_skb
-	if numPad > len(b) {
-		numPad = len(b)
-	}
+	numPad := min(
+		// Linux permits the last message not being aligned, just consume all of it.
+		// Ref: net/netlink/af_netlink.c:netlink_rcv_skb
+		alignPad(linux.NetlinkMessageHeaderSize+size, linux.NLMSG_ALIGNTO), len(b))
 	_, ok = b.Extract(numPad)
 	if !ok {
 		return nil, false

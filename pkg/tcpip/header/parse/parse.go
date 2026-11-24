@@ -47,13 +47,11 @@ func IPv4(pkt *stack.PacketBuffer) bool {
 	ipHdr := header.IPv4(hdr)
 
 	// Header may have options, determine the true header length.
-	headerLen := int(ipHdr.HeaderLength())
-	if headerLen < header.IPv4MinimumSize {
+	headerLen := max(int(ipHdr.HeaderLength()),
 		// TODO(gvisor.dev/issue/2404): Per RFC 791, IHL needs to be at least 5 in
 		// order for the packet to be valid. Figure out if we want to reject this
 		// case.
-		headerLen = header.IPv4MinimumSize
-	}
+		header.IPv4MinimumSize)
 	hdr, ok = pkt.NetworkHeader().Consume(headerLen)
 	if !ok {
 		return false

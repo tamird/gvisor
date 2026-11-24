@@ -376,10 +376,7 @@ func doSelect(t *kernel.Task, nfds int, readFDs, writeFDs, exceptFDs hostarch.Ad
 // startNs must be from CLOCK_MONOTONIC.
 func timeoutRemaining(t *kernel.Task, startNs ktime.Time, timeout time.Duration) time.Duration {
 	now := t.Kernel().MonotonicClock().Now()
-	remaining := timeout - now.Sub(startNs)
-	if remaining < 0 {
-		remaining = 0
-	}
+	remaining := max(timeout-now.Sub(startNs), 0)
 	return remaining
 }
 

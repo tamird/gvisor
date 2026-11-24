@@ -1200,10 +1200,7 @@ func (p *protocol) returnError(reason icmpReason, pkt *stack.PacketBuffer, deliv
 	if available < header.IPv6MinimumSize {
 		return nil
 	}
-	payloadLen := network.Size() + transport.Size() + pkt.Data().Size()
-	if payloadLen > available {
-		payloadLen = available
-	}
+	payloadLen := min(network.Size()+transport.Size()+pkt.Data().Size(), available)
 	payload := buffer.MakeWithView(network)
 	payload.Append(transport)
 	dataBuf := pkt.Data().ToBuffer()

@@ -149,10 +149,7 @@ func (nt *NoTask) BlockWithTimeout(C chan struct{}, haveTimeout bool, timeout ti
 	}
 	start := time.Now() // In system time.
 	remainingTimeout := func() time.Duration {
-		rt := timeout - time.Since(start)
-		if rt < 0 {
-			rt = 0
-		}
+		rt := max(timeout-time.Since(start), 0)
 		return rt
 	}
 	select {

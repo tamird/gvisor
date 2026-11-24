@@ -1163,10 +1163,7 @@ func (fs *filesystem) accountPagesPartial(pagesInc uint64) uint64 {
 		}
 
 		pagesFree := fs.maxSizeInPages - pagesUsed
-		toInc := pagesInc
-		if pagesFree < pagesInc {
-			toInc = pagesFree
-		}
+		toInc := min(pagesFree, pagesInc)
 
 		if fs.pagesUsed.CompareAndSwap(pagesUsed, pagesUsed+toInc) {
 			return toInc

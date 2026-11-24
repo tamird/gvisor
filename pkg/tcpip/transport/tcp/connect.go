@@ -915,10 +915,7 @@ func sendTCPBatch(r *stack.Route, tf tcpFields, pkt *stack.PacketBuffer, gso sta
 	size := pkt.Data().Size()
 	hdrSize := header.TCPMinimumSize + int(r.MaxHeaderLength()) + optLen
 	for i := 0; i < n; i++ {
-		packetSize := mss
-		if packetSize > size {
-			packetSize = size
-		}
+		packetSize := min(mss, size)
 		size -= packetSize
 
 		pkt := pkt

@@ -316,10 +316,7 @@ func (d *commData) Generate(ctx context.Context, buf *bytes.Buffer) error {
 // Write implements vfs.WritableDynamicBytesSource.Write.
 func (d *commData) Write(ctx context.Context, _ *vfs.FileDescription, src usermem.IOSequence, offset int64) (int64, error) {
 	srclen := src.NumBytes()
-	nameLen := int64(linux.TASK_COMM_LEN - 1)
-	if srclen < nameLen {
-		nameLen = srclen
-	}
+	nameLen := min(srclen, int64(linux.TASK_COMM_LEN-1))
 	name := make([]byte, nameLen)
 	if _, err := src.CopyIn(ctx, name); err != nil {
 		return 0, err

@@ -167,10 +167,7 @@ func (r *SimpleReader) Read(p []byte) (int, error) {
 	}
 
 	// The chunk is too large to hold. Read it directly.
-	toRead := uint32(len(p))
-	if toRead > r.streamLeft {
-		toRead = r.streamLeft
-	}
+	toRead := min(uint32(len(p)), r.streamLeft)
 	n, err := r.bin.Read(p[:toRead])
 	if n > 0 {
 		_, _ = r.h.Write(p[:n])

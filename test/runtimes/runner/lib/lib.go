@@ -208,10 +208,7 @@ func getTests(ctx context.Context, d *dockerutil.Container, lang, image string, 
 	var itests []testing.InternalTest
 	for i := 0; i < len(indices); i += batchSize {
 		var tcs []string
-		end := i + batchSize
-		if end > len(indices) {
-			end = len(indices)
-		}
+		end := min(i+batchSize, len(indices))
 		for _, tc := range indices[i:end] {
 			// Add test if not filtered.
 			if filter != nil && !filter(tests[tc]) {

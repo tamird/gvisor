@@ -396,10 +396,7 @@ func logicalLenSyn(tcp header.TCP, dataLen int) seqnum.Size {
 // logicalLen calculates the logical length of the TCP segment.
 func logicalLen(tcp header.TCP, dataLen int, windowSize seqnum.Size) seqnum.Size {
 	// If the segment is too large, TCP trims the payload per RFC 793 page 70.
-	length := logicalLenSyn(tcp, dataLen)
-	if length > windowSize {
-		length = windowSize
-	}
+	length := min(logicalLenSyn(tcp, dataLen), windowSize)
 	return length
 }
 

@@ -388,10 +388,7 @@ func (rc *rackControl) updateRACKReorderWindow() {
 	snd.rtt.Lock()
 	srtt := snd.rtt.TCPRTTState.SRTT
 	snd.rtt.Unlock()
-	rc.ReoWnd = time.Duration((int64(rc.minRTT) / 4) * int64(rc.ReoWndIncr))
-	if srtt < rc.ReoWnd {
-		rc.ReoWnd = srtt
-	}
+	rc.ReoWnd = min(srtt, time.Duration((int64(rc.minRTT)/4)*int64(rc.ReoWndIncr)))
 }
 
 func (rc *rackControl) exitRecovery() {

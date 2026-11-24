@@ -363,13 +363,6 @@ func newICMPEchoPacket(t *testing.T, srcAddr, dstAddr tcpip.Address, ttl uint8, 
 	return pkt, hdr.View()[:expectedICMPPayloadLength()]
 }
 
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 func checkFragements(t *testing.T, ep *channel.Endpoint, expectedFragments []fragmentInfo, requestPkt *stack.PacketBuffer) {
 	t.Helper()
 	var fragmentedPackets []*stack.PacketBuffer

@@ -140,13 +140,8 @@ func (conn *connection) initProcessReply(out *linux.FUSEInitOut, hasSysAdminCap 
 		// TODO(gvisor.dev/issue/3195): figure out how to use TimeGran (0 < TimeGran <= fuseMaxTimeGranNs).
 
 		if out.Flags&linux.FUSE_MAX_PAGES != 0 {
-			maxPages := out.MaxPages
-			if maxPages < 1 {
-				maxPages = 1
-			}
-			if maxPages > fuseMaxMaxPages {
-				maxPages = fuseMaxMaxPages
-			}
+			maxPages := max(out.MaxPages, 1)
+			maxPages = min(maxPages, fuseMaxMaxPages)
 			conn.maxPages = maxPages
 		}
 	}
