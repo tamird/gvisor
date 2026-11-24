@@ -21,6 +21,30 @@ more_shards = 4
 most_shards = 8
 version = "//tools/bazeldefs:version"
 
+def requires_cap_sys_admin(ipv6 = False):
+    """Returns test execution properties for CAP_SYS_ADMIN operations.
+
+    Args:
+      ipv6: Whether the test also needs guest IPv6 support.
+
+    Returns:
+      Test properties; build actions keep the execution platform's defaults.
+    """
+
+    # BuildBuddy's default OCI capabilities omit CAP_SYS_ADMIN:
+    # https://github.com/buildbuddy-io/buildbuddy/blob/168813c94/enterprise/server/remote_execution/containers/ociruntime/ociruntime.go#L157-L173
+    # Its microVM runner supports privileged operations inside the guest:
+    # https://www.buildbuddy.io/docs/rbe-microvms/
+    properties = {
+        "test.dockerUser": "root",
+        "test.workload-isolation-type": "firecracker",
+    }
+    if ipv6:
+        # BuildBuddy disables guest IPv6 unless requested:
+        # https://github.com/buildbuddy-io/buildbuddy/commit/4e518df00
+        properties["test.network-enable-ipv6"] = "true"
+    return properties
+
 def short_path(path):
     return path
 
