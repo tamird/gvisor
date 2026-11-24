@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T07:04:01.624871+00:00",
+    "updatedAt": "2026-11-24T07:14:02.616377+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -122169,7 +122169,7 @@
       "status": "active",
       "owner": "root",
       "updatedAt": "2026-11-23T22:28:52.692599+00:00",
-      "summary": "Due native-first guard found no fresh/live native collection. Sole snapshot-only fallback45335115034 succeeded and delivered API2026-11-24T05:44:40.742979+00:00 with outreach disabled. Native cadence irregularity has no established provider cause or demonstrated configuration defect.",
+      "summary": "Due native-first guard found no newer/live native delivery after the06:07 sample. Sole snapshot-only fallback45345691175 succeeded and delivered API2026-11-24T07:11:36.721580+00:00 with outreach disabled. No new human feedback, source heads, incoming review requests or substantive tracked issue events appeared. Native cadence irregularity remains provider-unexplained, with no demonstrated configuration defect.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122412,7 +122412,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground/active-goal supervision owns next native-first guard06:44:40 UTC and deadline07:14:40. Reuse fresh/live native delivery before one fallback; preserve60/90-minute policy and2-hour UI threshold, without reset or competing monitor.",
+      "nextStep": "Root foreground/active-goal supervision owns next native-first guard08:11:36 UTC and deadline08:41:36. Reuse fresh/live native delivery before one fallback; preserve60/90-minute policy and2-hour UI threshold, without reset or competing observer.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122542,10 +122542,10 @@
           "https://github.com/tamird/gvisor/actions/runs/45287620194",
           "https://github.com/tamird/gvisor/actions/runs/45296589443"
         ],
-        "observedAt": "2026-11-24T05:47:43.330769+00:00",
-        "disposition": "Due native-first guard found no fresh/live native collection. Sole snapshot-only fallback45335115034 succeeded and delivered API2026-11-24T05:44:40.742979+00:00 with outreach disabled. Native cadence irregularity has no established provider cause or demonstrated configuration defect.",
-        "nextAction": "Root foreground/active-goal supervision owns next native-first guard06:44:40 UTC and deadline07:14:40. Reuse fresh/live native delivery before one fallback; preserve60/90-minute policy and2-hour UI threshold, without reset or competing monitor.",
-        "recheckCondition": "Fresh/live native delivery or the next due guard.",
+        "observedAt": "2026-11-24T07:14:02.616377+00:00",
+        "disposition": "Due native-first guard found no newer/live native delivery after the06:07 sample. Sole snapshot-only fallback45345691175 succeeded and delivered API2026-11-24T07:11:36.721580+00:00 with outreach disabled. No new human feedback, source heads, incoming review requests or substantive tracked issue events appeared. Native cadence irregularity remains provider-unexplained, with no demonstrated configuration defect.",
+        "nextAction": "Root foreground/active-goal supervision owns next native-first guard08:11:36 UTC and deadline08:41:36. Reuse fresh/live native delivery before one fallback; preserve60/90-minute policy and2-hour UI threshold, without reset or competing observer.",
+        "recheckCondition": "Fresh/live native generation or the next due guard.",
         "owner": "root"
       }
     },
@@ -132073,7 +132073,7 @@
       "owner": "benchmark_measurement_review / root",
       "updatedAt": "2026-11-24T07:01:47.154032+00:00",
       "group": "analysis",
-      "summary": "Current native review-fix source is 8fc45ed322c5e75f782505aea016dbdfbc5acfe4. The earlier aae2569e23 corpus executed 891 targets with zero findings, and both release/caller builds passed, but complete coverage acceptance is open: five cgroup test helpers still appear diagnosable by newexpr. Security/hardening review found no blocker; final general review accepted documentation/dead-symbol cleanup. Six-file cleanup removes 78 net lines without replacement tests. The source owner is reconciling actual cgroup sources/version through canonical aquery run 45344645597; prior copied-wrapper attempts supplied no decisive metadata.",
+      "summary": "Current native source remains 8fc45ed322c5e75f782505aea016dbdfbc5acfe4. Canonical metadata query45345401016/artifact14898435114 proves both architecture cgroup test actions include all four test files and Go1.27.3. Missing-source and wrong-version explanations are rejected. Coverage acceptance is still open: actual newexpr execution, guards and filtering must explain the five apparently diagnosable helpers. Earlier clean891-target corpus and release/caller proofs remain source-bound; accepted cleanup is not final diagnostic/performance closure.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132445,7 +132445,7 @@
           ]
         }
       ],
-      "nextStep": "benchmark_measurement_review resolves cgroup target/source/version coverage before broad reruns, qualifies the actual cleanup, and then checks QueueAIO allocation risk using pinned-compiler evidence. Root completes narrow finding confirmation and final audit packaging. Preserve #17884, comparative performance, Netgofer/runtime and hardware limits; DCO is already authorized.",
+      "nextStep": "benchmark_measurement_review and the resumed general reviewer resolve actual newexpr execution/guard/filtering on unchanged8fc before broad reruns or an aspect fix. Then qualify the actual cleanup and check QueueAIO allocation risk using pinned-compiler evidence. Root retains final packaging and #17884/performance/Netgofer/runtime/hardware limits; no new publication question.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132783,15 +132783,16 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T07:01:47.154032+00:00",
+        "observedAt": "2026-11-24T07:14:02.616377+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45338108931",
-          "https://github.com/tamird/gvisor/actions/runs/45344645597"
+          "https://github.com/tamird/gvisor/actions/runs/45344645597",
+          "https://github.com/tamird/gvisor/actions/runs/45345401016/artifacts/14898435114"
         ],
         "owner": "benchmark_measurement_review / root",
-        "disposition": "Current native review-fix source is 8fc45ed322c5e75f782505aea016dbdfbc5acfe4. The earlier aae2569e23 corpus executed 891 targets with zero findings, and both release/caller builds passed, but complete coverage acceptance is open: five cgroup test helpers still appear diagnosable by newexpr. Security/hardening review found no blocker; final general review accepted documentation/dead-symbol cleanup. Six-file cleanup removes 78 net lines without replacement tests. The source owner is reconciling actual cgroup sources/version through canonical aquery run 45344645597; prior copied-wrapper attempts supplied no decisive metadata.",
-        "nextAction": "benchmark_measurement_review resolves cgroup target/source/version coverage before broad reruns, qualifies the actual cleanup, and then checks QueueAIO allocation risk using pinned-compiler evidence. Root completes narrow finding confirmation and final audit packaging. Preserve #17884, comparative performance, Netgofer/runtime and hardware limits; DCO is already authorized.",
-        "recheckCondition": "Canonical aquery 45344645597 result at 07:05 UTC, then an actual source/coverage/compiler milestone; no unchanged timing retry or new publication question.",
+        "disposition": "Current native source remains 8fc45ed322c5e75f782505aea016dbdfbc5acfe4. Canonical metadata query45345401016/artifact14898435114 proves both architecture cgroup test actions include all four test files and Go1.27.3. Missing-source and wrong-version explanations are rejected. Coverage acceptance is still open: actual newexpr execution, guards and filtering must explain the five apparently diagnosable helpers. Earlier clean891-target corpus and release/caller proofs remain source-bound; accepted cleanup is not final diagnostic/performance closure.",
+        "nextAction": "benchmark_measurement_review and the resumed general reviewer resolve actual newexpr execution/guard/filtering on unchanged8fc before broad reruns or an aspect fix. Then qualify the actual cleanup and check QueueAIO allocation risk using pinned-compiler evidence. Root retains final packaging and #17884/performance/Netgofer/runtime/hardware limits; no new publication question.",
+        "recheckCondition": "Actual owner/reviewer execution or filtering finding, scoped cleanup/compiler proof, or a genuine prerequisite/source/publication decision.",
         "sourceHead": "8fc45ed322c5e75f782505aea016dbdfbc5acfe4"
       },
       "contributorReview": {
