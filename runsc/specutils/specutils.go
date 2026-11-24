@@ -1011,8 +1011,8 @@ func EnvVar(env []string, name string) (string, bool) {
 	}
 	prefix := name + "="
 	for _, e := range env {
-		if strings.HasPrefix(e, prefix) {
-			return strings.TrimPrefix(e, prefix), true
+		if after, ok := strings.CutPrefix(e, prefix); ok {
+			return after, true
 		}
 	}
 	return "", false

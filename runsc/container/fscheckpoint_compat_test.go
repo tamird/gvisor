@@ -111,8 +111,8 @@ func detectRunscVersion(t *testing.T, runscBin string) string {
 		t.Fatalf("Failed to run %q --version: %v", runscBin, err)
 	}
 	for _, line := range strings.Split(string(out), "\n") {
-		if strings.HasPrefix(line, "runsc version ") {
-			return strings.TrimSpace(strings.TrimPrefix(line, "runsc version "))
+		if after, ok := strings.CutPrefix(line, "runsc version "); ok {
+			return strings.TrimSpace(after)
 		}
 	}
 	return strings.TrimSpace(string(out))

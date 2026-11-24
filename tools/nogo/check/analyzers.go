@@ -224,7 +224,8 @@ func init() {
 			"testingcontext",
 			"omitzero",
 			"forvar",
-			"stringscut":
+			"stringscut",
+			"stringscutprefix":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}

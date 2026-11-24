@@ -1310,8 +1310,8 @@ func TestMetricProfiling(t *testing.T) {
 					}
 					line = strings.TrimSuffix(line, "\t"+gotLineChecksum)
 				}
-				if strings.HasPrefix(line, MetricsMetaIndicator) {
-					line = strings.TrimPrefix(line, MetricsMetaIndicator)
+				if after, ok := strings.CutPrefix(line, MetricsMetaIndicator); ok {
+					line = after
 					components := strings.Split(line, "\t")
 					if len(components) != 2 {
 						t.Fatalf("got %d components in metadata line %q, want 2", len(components), line)

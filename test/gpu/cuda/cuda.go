@@ -140,8 +140,8 @@ func GetEnvironment(ctx context.Context, t *testing.T, image string) (*TestEnvir
 		foundNVCaps := ""
 		const nvCapsPrefixFlag = "--nvproxy-allowed-driver-capabilities"
 		for i, arg := range runtimeArgs {
-			if strings.HasPrefix(arg, nvCapsPrefixFlag+"=") {
-				foundNVCaps = strings.TrimPrefix(arg, nvCapsPrefixFlag+"=")
+			if after, ok := strings.CutPrefix(arg, nvCapsPrefixFlag+"="); ok {
+				foundNVCaps = after
 			} else if arg == "--nvproxy-allowed-driver-capabilities" && i < len(runtimeArgs)-1 {
 				foundNVCaps = runtimeArgs[i+1]
 			}

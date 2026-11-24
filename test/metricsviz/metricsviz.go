@@ -553,8 +553,8 @@ func Parse(logs string, hasPrefix bool) (*Data, error) {
 		lineData := strings.TrimPrefix(line, metric.MetricsPrefix)
 
 		// Check for hash match.
-		if strings.HasPrefix(lineData, metric.MetricsHashIndicator) {
-			hash := strings.TrimPrefix(lineData, metric.MetricsHashIndicator)
+		if after, ok := strings.CutPrefix(lineData, metric.MetricsHashIndicator); ok {
+			hash := after
 			wantHashInt64, err := strconv.ParseUint(strings.TrimPrefix(hash, "0x"), 16, 32)
 			if err != nil {
 				gotErrs = append(gotErrs, fmt.Errorf("invalid hash line: %q: %w", line, err))
@@ -596,8 +596,8 @@ func Parse(logs string, hasPrefix bool) (*Data, error) {
 			lineData = strings.Join(tabSplit[:len(tabSplit)-1], "\t")
 		}
 
-		if strings.HasPrefix(lineData, metric.MetricsMetaIndicator) {
-			lineMetadata := strings.TrimPrefix(lineData, metric.MetricsMetaIndicator)
+		if after, ok := strings.CutPrefix(lineData, metric.MetricsMetaIndicator); ok {
+			lineMetadata := after
 			components := strings.Split(lineMetadata, "\t")
 			if len(components) != 2 {
 				return nil, fmt.Errorf("invalid meta line: %q", line)
@@ -614,8 +614,8 @@ func Parse(logs string, hasPrefix bool) (*Data, error) {
 			continue
 		}
 
-		if strings.HasPrefix(lineData, metric.MetricsStartTimeIndicator) {
-			timestamp, err := strconv.ParseUint(strings.TrimPrefix(lineData, metric.MetricsStartTimeIndicator), 10, 64)
+		if after, ok := strings.CutPrefix(lineData, metric.MetricsStartTimeIndicator); ok {
+			timestamp, err := strconv.ParseUint(after, 10, 64)
 			if err != nil {
 				return nil, fmt.Errorf("invalid start time line: %q: %w", line, err)
 			}
@@ -873,11 +873,11 @@ func fromFile(ctx context.Context, name, logFile string, logContents []byte, has
 	if err != nil {
 		return fmt.Errorf("failed to generate HTML: %w", err)
 	}
-	if strings.HasSuffix(logFile, ".log") {
+	if before, ok := strings.CutSuffix(logFile, ".log"); ok {
 		// Best-effort conversion to HTML next to the .log file in the directory,
 		// if permissions allow that. Ignore errors, what matters more is the
 		// publishing step later on.
-		_ = os.WriteFile(strings.TrimSuffix(logFile, ".log")+".html", []byte(html), 0644)
+		_ = os.WriteFile(before+".html", []byte(html), 0644)
 	}
 	if err := publishHTMLFn(ctx, logFn, htmlOptions, html); err != nil {
 		return fmt.Errorf("failed to publish HTML: %w", err)

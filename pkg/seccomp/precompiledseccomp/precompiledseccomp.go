@@ -79,10 +79,10 @@ func (v Values) PopUint64(varName string) uint64 {
 // Returns the empty string if the variable name is not a suffixed 32-bit
 // variable name.
 func (v Values) Uint64VarName(varName string) string {
-	if strings.HasSuffix(varName, uint64VarSuffixHigh) {
-		varName = strings.TrimSuffix(varName, uint64VarSuffixHigh)
-	} else if strings.HasSuffix(varName, uint64VarSuffixLow) {
-		varName = strings.TrimSuffix(varName, uint64VarSuffixLow)
+	if before, ok := strings.CutSuffix(varName, uint64VarSuffixHigh); ok {
+		varName = before
+	} else if before, ok := strings.CutSuffix(varName, uint64VarSuffixLow); ok {
+		varName = before
 	} else {
 		return "" // Not a suffixed variable.
 	}
