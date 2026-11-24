@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T08:04:02.159571+00:00",
+    "updatedAt": "2026-11-24T08:26:59.342576+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -44661,7 +44661,7 @@
       ],
       "updatedAt": "2026-11-17T19:04:46.312467+00:00",
       "status": "closed",
-      "summary": "Closed after the complete change landed in 3767e597a. No replacement rebase is needed.",
+      "summary": "Closed after the complete change landed in3767e597a; the approved closure comment7079160484 was posted. The retained source-owner/root comparison and native closure satisfy the old terminal-import inspection. No replacement rebase, new comparison, reply or closure action remains.",
       "refinement": {
         "before": {
           "head": "28a27e004b8e42d9f5b0aed4fbfadff0facaa8cd"
@@ -44739,7 +44739,7 @@
         "owner": "approved_rebase_queue / root",
         "nextAction": "No source or closure action remains. Preserve independent historical checkpoint-dump evidence in its existing investigation.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-17T19:29:29.454062+00:00",
+        "observedAt": "2026-11-24T08:26:59.342576+00:00",
         "recheckCondition": "Genuine post-closure feedback or a demonstrated import problem.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/16591",
@@ -44776,9 +44776,11 @@
           "https://storage.googleapis.com/gvisor-buildkite/01a1ead1-7a99-4650-92a8-23a3f0e3fe6d/01a1ead6-82ef-45b4-8310-7e324ca74506/home/agent-111726-184811/.cache/bazel/_bazel_agent-111726-184811/73df0d6a229fc84d640625285449c629/execroot/_main/bazel-out/k8-fastbuild/testlogs/runsc/container/container_test/shard_5_of_8/test.log",
           "https://buildkite.com/gvisor/pipeline/builds/55465",
           "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321",
-          "https://github.com/gvisor/gvisor/commit/3767e597a341236280bff142471f063a755ec2ff"
+          "https://github.com/gvisor/gvisor/commit/3767e597a341236280bff142471f063a755ec2ff",
+          "https://github.com/google/gvisor/pull/17404",
+          "https://github.com/gvisor/gvisor/pull/16591#issuecomment-7079160484"
         ],
-        "disposition": "Closed after the complete change landed in 3767e597a. No replacement rebase is needed."
+        "disposition": "Closed after the complete change landed in3767e597a; the approved closure comment7079160484 was posted. The retained source-owner/root comparison and native closure satisfy the old terminal-import inspection. No replacement rebase, new comparison, reply or closure action remains."
       },
       "dcoAmendment": {
         "oldHead": "49fcf45ec2560828be233cfd6499f5bb3f7f8373",
@@ -44801,7 +44803,8 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
-      }
+      },
+      "nextStep": "No source or closure action remains. Preserve independent historical checkpoint-dump evidence in its existing investigation."
     },
     {
       "id": "pr:16592",
@@ -122169,7 +122172,7 @@
       "status": "active",
       "owner": "root",
       "updatedAt": "2026-11-23T22:28:52.692599+00:00",
-      "summary": "Due native-first guard found no newer/live native delivery after the06:07 sample. Sole snapshot-only fallback45345691175 succeeded and delivered API2026-11-24T07:11:36.721580+00:00 with outreach disabled. No new human feedback, source heads, incoming review requests or substantive tracked issue events appeared. Native cadence irregularity remains provider-unexplained, with no demonstrated configuration defect.",
+      "summary": "The due native-first guard found no newer/live native collection. Sole snapshot-only fallback45354455465 completed successfully and delivered API2026-11-24T08:18:23.599668+00:00 with outreach disabled. No new substantive tracked feedback, source heads, CI, conflict, issue or incoming-review events appeared. Native cadence irregularity has no established provider cause or demonstrated configuration defect.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122412,7 +122415,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground/active-goal supervision owns next native-first guard08:11:36 UTC and deadline08:41:36. Reuse fresh/live native delivery before one fallback; preserve60/90-minute policy and2-hour UI threshold, without reset or competing observer.",
+      "nextStep": "Root foreground/active-goal supervision owns next native-first guard09:18:23 UTC and deadline09:48:23. Reuse a fresh/live native generation before one fallback; preserve60/90-minute policy and2-hour UI threshold without reset or a competing monitor.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122542,10 +122545,10 @@
           "https://github.com/tamird/gvisor/actions/runs/45287620194",
           "https://github.com/tamird/gvisor/actions/runs/45296589443"
         ],
-        "observedAt": "2026-11-24T07:14:02.616377+00:00",
-        "disposition": "Due native-first guard found no newer/live native delivery after the06:07 sample. Sole snapshot-only fallback45345691175 succeeded and delivered API2026-11-24T07:11:36.721580+00:00 with outreach disabled. No new human feedback, source heads, incoming review requests or substantive tracked issue events appeared. Native cadence irregularity remains provider-unexplained, with no demonstrated configuration defect.",
-        "nextAction": "Root foreground/active-goal supervision owns next native-first guard08:11:36 UTC and deadline08:41:36. Reuse fresh/live native delivery before one fallback; preserve60/90-minute policy and2-hour UI threshold, without reset or competing observer.",
-        "recheckCondition": "Fresh/live native generation or the next due guard.",
+        "observedAt": "2026-11-24T08:23:29.542165+00:00",
+        "disposition": "The due native-first guard found no newer/live native collection. Sole snapshot-only fallback45354455465 completed successfully and delivered API2026-11-24T08:18:23.599668+00:00 with outreach disabled. No new substantive tracked feedback, source heads, CI, conflict, issue or incoming-review events appeared. Native cadence irregularity has no established provider cause or demonstrated configuration defect.",
+        "nextAction": "Root foreground/active-goal supervision owns next native-first guard09:18:23 UTC and deadline09:48:23. Reuse a fresh/live native generation before one fallback; preserve60/90-minute policy and2-hour UI threshold without reset or a competing monitor.",
+        "recheckCondition": "Fresh/live native delivery, an actual new event or the next due guard.",
         "owner": "root"
       }
     },
@@ -133472,8 +133475,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-17T19:17:00.935682+00:00",
-      "summary": "Follow intermittent failures on source PRs, Copybara imports, master, and release builds. The individual investigations link to the first useful error and the retry and name the next diagnostic.",
+      "updatedAt": "2026-11-24T08:14:16.668124+00:00",
+      "summary": "The approved bootstrap rebases for #15106 and #17416 were delivered. #16591 is closed after its complete change landed in 3767e597a; its approved closure comment was posted. No closure approval remains for that PR. Canonical PR records own current heads, checks, feedback and imports; this umbrella no longer repeats transient CI states. Separate incident records retain their source-bound causes, uncertainties and explicit sensitive/performance holds.",
       "findings": [
         {
           "text": "Buildkite #54191 recovered an ARM64 unit job and four syscall shards. Each original log records agent cancellation. The first unit retry also exited −1 and its log ends during compilation. The next unit attempt and all four final syscall attempts passed.",
@@ -134120,7 +134123,7 @@
           ]
         }
       ],
-      "nextStep": "The equivalent #15106/#17416 bootstrap rebases are delivered. #17416 current FirstPass2320/native GHA/DCO passed; #15106 FirstPass2319 is progressing while its wrong-range DCO check remains linked to issue126. New-head main/import gates remain distinct. #16591 is already imported with closure approval pending; no empty rebase. Preserve #16957 sensitive-source/performance and #16507/#17067 replacement holds, and all historical target evidence. No unchanged-head retries, quota sweeps or automatic merge.",
+      "nextStep": "Consume actual new CI, review and import events through the existing canonical PR owners and incident records. Preserve #16957 sensitive/performance and #16507/#17067 replacement holds. Do not revive consumed #16591 decisions, retry unchanged heads, duplicate quota outreach, or merge automatically.",
       "evidence": [
         {
           "label": "GitHub issues mentioning “flaky”",
@@ -134167,11 +134170,23 @@
           "url": "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
         }
       ],
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
+      "recheckCondition": "A new canonical CI/review/import event or the next existing collector sweep; no source action follows from the already-completed closure.",
       "lifecycleCoordination": {
         "owner": "root",
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+      },
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-11-24T08:14:16.668124+00:00",
+        "disposition": "The approved bootstrap rebases for #15106 and #17416 were delivered. #16591 is closed after its complete change landed in 3767e597a; its approved closure comment was posted. No closure approval remains for that PR. Canonical PR records own current heads, checks, feedback and imports; this umbrella no longer repeats transient CI states. Separate incident records retain their source-bound causes, uncertainties and explicit sensitive/performance holds.",
+        "nextAction": "Consume actual new CI, review and import events through the existing canonical PR owners and incident records. Preserve #16957 sensitive/performance and #16507/#17067 replacement holds. Do not revive consumed #16591 decisions, retry unchanged heads, duplicate quota outreach, or merge automatically.",
+        "recheckCondition": "A new canonical CI/review/import event or the next existing collector sweep; no source action follows from the already-completed closure.",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/16591",
+          "https://github.com/gvisor/gvisor/pull/16591#issuecomment-7079160484",
+          "https://github.com/gvisor/gvisor/commit/3767e597a341236280bff142471f063a755ec2ff"
+        ]
       }
     },
     {
