@@ -48,11 +48,11 @@ var (
 )
 
 type snapshotMetadata struct {
-	CommitTimestampUnix int64      `json:"commit_timestamp_unix"`
 	CommitHash          string     `json:"commit_hash,omitempty"`
 	RunscVersion        string     `json:"runsc_version,omitempty"`
-	ManifestVersion     uint64     `json:"manifest_version,omitempty"`
 	FSTreeArgs          [][]string `json:"fs_tree_args,omitempty"`
+	CommitTimestampUnix int64      `json:"commit_timestamp_unix"`
+	ManifestVersion     uint64     `json:"manifest_version,omitempty"`
 }
 
 func readManifestVersion(manifestPath string) (uint64, error) {

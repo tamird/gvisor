@@ -715,11 +715,10 @@ func CopyFileRange(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (u
 type dualWaiter struct {
 	inFile  *vfs.FileDescription
 	outFile *vfs.FileDescription
-
-	inW   waiter.Entry
-	inCh  chan struct{}
-	outW  waiter.Entry
-	outCh chan struct{}
+	inCh    chan struct{}
+	outCh   chan struct{}
+	inW     waiter.Entry
+	outW    waiter.Entry
 }
 
 // waitForBoth waits for both dw.inFile and dw.outFile to be ready.

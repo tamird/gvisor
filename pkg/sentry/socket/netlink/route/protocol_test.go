@@ -347,11 +347,11 @@ func TestParseForDestinationFamily(t *testing.T) {
 	v6 := net.ParseIP("2001:db8::1").To16()
 
 	tests := []struct {
+		wantErr *syserr.Error
 		name    string
-		family  uint8
 		dst     []byte
 		wantDst []byte
-		wantErr *syserr.Error
+		family  uint8
 	}{
 		{
 			name:    "ipv4",
@@ -621,8 +621,8 @@ func TestProcessMessageUnsupported(t *testing.T) {
 // family dumps everything, like Linux's fallback to the AF_UNSPEC handler.
 func TestDumpFamily(t *testing.T) {
 	for _, tc := range []struct {
-		name    string
 		payload func(*nlmsg.Message)
+		name    string
 		want    uint8
 	}{
 		{

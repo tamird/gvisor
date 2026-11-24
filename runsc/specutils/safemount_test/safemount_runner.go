@@ -33,8 +33,8 @@ func main() {
 	tempdir := os.Args[1]
 
 	tcs := []struct {
-		name     string
 		testfunc func() error
+		name     string
 	}{{
 		name: "unix.Mount to folder succeeds",
 		testfunc: func() error {

@@ -244,15 +244,15 @@ func (rw *readWriter) Read([]byte) (int, error) {
 
 func TestReadWriteError(t *testing.T) {
 	tests := []struct {
-		name string
 		f    func(rw io.ReadWriter) error
+		name string
 	}{
-		{"WriteUint16", func(rw io.ReadWriter) error { return WriteUint16(rw, LittleEndian, 0) }},
-		{"ReadUint16", func(rw io.ReadWriter) error { _, err := ReadUint16(rw, LittleEndian); return err }},
-		{"WriteUint32", func(rw io.ReadWriter) error { return WriteUint32(rw, LittleEndian, 0) }},
-		{"ReadUint32", func(rw io.ReadWriter) error { _, err := ReadUint32(rw, LittleEndian); return err }},
-		{"WriteUint64", func(rw io.ReadWriter) error { return WriteUint64(rw, LittleEndian, 0) }},
-		{"ReadUint64", func(rw io.ReadWriter) error { _, err := ReadUint64(rw, LittleEndian); return err }},
+		{name: "WriteUint16", f: func(rw io.ReadWriter) error { return WriteUint16(rw, LittleEndian, 0) }},
+		{name: "ReadUint16", f: func(rw io.ReadWriter) error { _, err := ReadUint16(rw, LittleEndian); return err }},
+		{name: "WriteUint32", f: func(rw io.ReadWriter) error { return WriteUint32(rw, LittleEndian, 0) }},
+		{name: "ReadUint32", f: func(rw io.ReadWriter) error { _, err := ReadUint32(rw, LittleEndian); return err }},
+		{name: "WriteUint64", f: func(rw io.ReadWriter) error { return WriteUint64(rw, LittleEndian, 0) }},
+		{name: "ReadUint64", f: func(rw io.ReadWriter) error { _, err := ReadUint64(rw, LittleEndian); return err }},
 	}
 
 	for _, test := range tests {

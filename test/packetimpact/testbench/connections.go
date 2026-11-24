@@ -248,9 +248,9 @@ func (s *ipv6State) close() error {
 
 // tcpState maintains state about a TCP connection.
 type tcpState struct {
-	out, in                   TCP
 	localSeqNum, remoteSeqNum *seqnum.Value
 	synAck                    *TCP
+	out, in                   TCP
 	portPickerFD              int
 	finSent                   bool
 }

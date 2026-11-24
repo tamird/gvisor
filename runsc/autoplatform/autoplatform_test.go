@@ -41,10 +41,10 @@ func TestChoosePlatform(t *testing.T) {
 	all := []string{"kvm", "systrap"}
 	for _, tc := range []struct {
 		name       string
-		env        hostEnv
-		available  []string
 		want       string
 		wantDevice string
+		available  []string
+		env        hostEnv
 	}{
 		{name: "bare metal prefers kvm", available: all, want: "kvm", wantDevice: "/dev/kvm"},
 		{name: "no kvm device uses systrap", available: []string{"systrap"}, want: "systrap"},
@@ -63,11 +63,11 @@ func TestChoosePlatform(t *testing.T) {
 
 func TestChoosePlatformDevicePath(t *testing.T) {
 	for _, tc := range []struct {
-		name       string
 		devices    map[string]string
-		available  []string
+		name       string
 		want       string
 		wantDevice string
+		available  []string
 	}{
 		{name: "pair replaces default device", devices: map[string]string{"kvm": "/dev/kvm2"}, available: []string{"kvm", "systrap"}, want: "kvm", wantDevice: "/dev/kvm2"},
 		{name: "pair for other platform is ignored", devices: map[string]string{"nosuch": "/dev/nosuch"}, available: []string{"kvm", "systrap"}, want: "kvm", wantDevice: "/dev/kvm"},

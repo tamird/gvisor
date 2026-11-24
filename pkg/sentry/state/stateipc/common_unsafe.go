@@ -56,11 +56,10 @@ func getDataSize(maxRanges, maxParallel uint32, mode int) uint32 {
 // ioEndpoint wraps a flipcall.Endpoint used for file I/O with the ability to
 // read/write file I/O fields in the connection packet window.
 type ioEndpoint struct {
-	flipcall.Endpoint
-
 	// ptr is the pointer into the datagram part of the Flipcall packet window
 	// where the next field will be read or written.
 	ptr unsafe.Pointer
+	flipcall.Endpoint
 }
 
 func (ioep *ioEndpoint) Destroy() {

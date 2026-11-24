@@ -601,18 +601,18 @@ func (ct *ConnTrack) connForTID(tid tupleID) *tuple {
 
 // ConnTrackInfo holds connection tracking information for a packet.
 type ConnTrackInfo struct {
-	State      ConnTrackState
-	Direction  ConnTrackDirection
 	SrcAddr    tcpip.Address
 	DstAddr    tcpip.Address
-	SrcPort    uint16
-	DstPort    uint16
-	NetProto   tcpip.NetworkProtocolNumber
-	TransProto tcpip.TransportProtocolNumber
+	State      ConnTrackState
 	Expiration time.Duration
-	PseudoID   uint32
 	Bytes      uint64
 	Packets    uint64
+	NetProto   tcpip.NetworkProtocolNumber
+	TransProto tcpip.TransportProtocolNumber
+	PseudoID   uint32
+	SrcPort    uint16
+	DstPort    uint16
+	Direction  ConnTrackDirection
 }
 
 // ConnTrackInfoOpts holds options for GetConnTrackInfo.

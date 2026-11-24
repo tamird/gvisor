@@ -38,14 +38,17 @@ const (
 
 // Mitigate implements subcommands.Command for the "mitigate" command.
 type Mitigate struct {
-	// Run the command without changing the underlying system.
-	dryRun bool
-	// Reverse mitigate by turning on all CPU cores.
-	reverse bool
-	// Extra data for post mitigate operations.
-	data string
 	// Control to mitigate/reverse smt.
 	control machineControl
+
+	// Extra data for post mitigate operations.
+	data string
+
+	// Run the command without changing the underlying system.
+	dryRun bool
+
+	// Reverse mitigate by turning on all CPU cores.
+	reverse bool
 }
 
 // Name implements subcommands.command.name.

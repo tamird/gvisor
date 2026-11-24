@@ -33,11 +33,11 @@ import (
 )
 
 type pipePair struct {
+	reqWriteFile *os.File
+	rspReadFile  *os.File
 	threadName   string
 	reqWriteFD   int
 	rspReadFD    int
-	reqWriteFile *os.File
-	rspReadFile  *os.File
 }
 
 func setupPipeTest(t *testing.T, pid int, pipes []pipePair) {

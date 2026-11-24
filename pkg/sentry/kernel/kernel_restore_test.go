@@ -57,8 +57,8 @@ func TestCheckpointRegistrationDuringNotification(t *testing.T) {
 	gen := CheckpointGeneration{Count: 1}
 	wantErr := errors.New("checkpoint failed")
 	type result struct {
-		gen CheckpointGeneration
 		err error
+		gen CheckpointGeneration
 	}
 	results := make(chan result, 2)
 	registered := make(chan any, 1)
@@ -70,7 +70,7 @@ func TestCheckpointRegistrationDuringNotification(t *testing.T) {
 	k.checkpointGen = gen
 	go func() {
 		registered <- w.Register(func(gen CheckpointGeneration, err error) {
-			results <- result{gen, err}
+			results <- result{gen: gen, err: err}
 		}, gen.Count)
 	}()
 	go func() {

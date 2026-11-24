@@ -28,12 +28,14 @@ import (
 
 // SyntaxError is an interpretation error due to incorrect syntax.
 type SyntaxError struct {
-	// lnIdx is the index of the line where the error occurred.
-	lnIdx int
-	// tkIdx is the index of the token where the error occurred.
-	tkIdx int
 	// msg is the error message, defined locally.
 	msg string
+
+	// lnIdx is the index of the line where the error occurred.
+	lnIdx int
+
+	// tkIdx is the index of the token where the error occurred.
+	tkIdx int
 }
 
 // Error implements error interface for SyntaxError to return an error message.
@@ -44,12 +46,14 @@ func (e *SyntaxError) Error() string {
 
 // LogicError is an interpretation error from modifying the NFTables state.
 type LogicError struct {
-	// lnIdx is the index of the line where the error occurred.
-	lnIdx int
-	// tkIdx is the index of the token where the error occurred.
-	tkIdx int
 	// error is the error returned from modifying the NFTables state.
 	err error
+
+	// lnIdx is the index of the line where the error occurred.
+	lnIdx int
+
+	// tkIdx is the index of the token where the error occurred.
+	tkIdx int
 }
 
 // Error implements error interface for LogicError to return an error message.

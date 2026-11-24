@@ -25,17 +25,15 @@ import (
 // Broadcaster is not copyable by value.
 //
 // All Broadcaster methods may be called concurrently from multiple goroutines.
+//
+// Broadcaster is implemented as a hash table where keys are assigned by
+// the Broadcaster and returned as SubscriptionIDs, making it safe to use
+// the identity function for hashing. The hash table resolves collisions
+// using linear probing and features Robin Hood insertion and backward
+// shift deletion in order to support a relatively high load factor
+// efficiently, which matters since the cost of Broadcast is linear in the
+// size of the table.
 type Broadcaster struct {
-	// Broadcaster is implemented as a hash table where keys are assigned by
-	// the Broadcaster and returned as SubscriptionIDs, making it safe to use
-	// the identity function for hashing. The hash table resolves collisions
-	// using linear probing and features Robin Hood insertion and backward
-	// shift deletion in order to support a relatively high load factor
-	// efficiently, which matters since the cost of Broadcast is linear in the
-	// size of the table.
-
-	mu sync.Mutex
-
 	// Invariants: len(table) is 0 or a power of 2.
 	//
 	// +checklocks:mu
@@ -48,6 +46,8 @@ type Broadcaster struct {
 
 	// +checklocks:mu
 	lastID SubscriptionID
+
+	mu sync.Mutex
 }
 
 // broadcasterSlot fields in a published table are protected by the owning

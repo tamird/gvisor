@@ -221,9 +221,9 @@ func TestCopyStringInTruncatedByMaxlen(t *testing.T) {
 func TestCopyInt32StringsInVec(t *testing.T) {
 	for _, test := range []struct {
 		str     string
-		n       int
 		initial []int32
 		final   []int32
+		n       int
 	}{
 		{
 			str:     "100 200",

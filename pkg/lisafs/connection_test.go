@@ -40,8 +40,8 @@ var handlers = [...]lisafs.RPCHandler{
 }
 
 type testControlFD struct {
-	lisafs.ControlFD
 	lisafs.ControlFDImpl
+	lisafs.ControlFD
 }
 
 func (fd *testControlFD) FD() *lisafs.ControlFD {
@@ -218,10 +218,10 @@ func (*walkTestConnImpl) SupportedMessages() []lisafs.MID {
 func TestWalkMultipleResponseValidation(t *testing.T) {
 	names := []string{"a", "b"}
 	for _, tc := range []struct {
-		name      string
-		status    lisafs.WalkStatus
-		numInodes int
 		wantErr   error
+		name      string
+		numInodes int
+		status    lisafs.WalkStatus
 	}{
 		{
 			name:      "success",
@@ -342,9 +342,9 @@ func TestWalkMultipleResponseValidation(t *testing.T) {
 
 // unlinkRaceFD implements lisafs.ControlFDImpl for TestUnlinkCloseRace.
 type unlinkRaceFD struct {
-	testControlFD
 	onWalk   func(parent *unlinkRaceFD, name string) (*unlinkRaceFD, bool)
 	onUnlink func(parent *unlinkRaceFD, name string) error
+	testControlFD
 }
 
 // Walk implements lisafs.ControlFDImpl.Walk.

@@ -75,11 +75,11 @@ func (m *mockServer) Version(ctx context.Context, req *pb.VersionRequest) (*pb.V
 }
 
 type serverTest struct {
+	want        any
+	check       func(t *testing.T, client *ttrpc.Client, data string) (any, error)
 	name        string
 	data        string
-	want        any
 	wantErrDesc string
-	check       func(t *testing.T, client *ttrpc.Client, data string) (any, error)
 }
 
 func testCheckpoint(t *testing.T, client *ttrpc.Client, data string) (any, error) {

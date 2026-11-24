@@ -166,9 +166,9 @@ func postResumeCuda(k *kernel.Kernel, timeline *timing.Timeline) error {
 }
 
 type checkpointProc struct {
-	desc string
 	tg   *kernel.ThreadGroup
 	out  *fdcollector.Agent
+	desc string
 }
 
 // invokeCudaCheckpoint invokes cuda-checkpoint on the given CUDA process with

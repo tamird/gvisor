@@ -625,10 +625,10 @@ type blockingBuffer struct {
 	// A send to readCh indicates that a previously empty buffer now has
 	// data for reading.
 	readCh chan struct{}
+	buf    bytes.Buffer
 
 	// mu protects buf.
-	mu  sync.Mutex
-	buf bytes.Buffer
+	mu sync.Mutex
 }
 
 func newBlockingBuffer() *blockingBuffer {
@@ -855,8 +855,8 @@ func processTTY(t *testing.T, c *Container, pid int32) string {
 
 // lockedBuffer is a thread-safe bytes.Buffer.
 type lockedBuffer struct {
-	mu  sync.Mutex
 	buf bytes.Buffer
+	mu  sync.Mutex
 }
 
 // Write implements io.Writer.Write.

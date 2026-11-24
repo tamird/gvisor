@@ -550,11 +550,11 @@ func TestExternalLoopbackTraffic(t *testing.T) {
 	}
 
 	tests := []struct {
+		rxICMP                func(*channel.Endpoint)
+		invalidAddressStat    func(tcpip.IPStats) *tcpip.StatCounter
 		name                  string
 		allowExternalLoopback bool
 		forwarding            bool
-		rxICMP                func(*channel.Endpoint)
-		invalidAddressStat    func(tcpip.IPStats) *tcpip.StatCounter
 		shouldAccept          bool
 	}{
 		{
@@ -973,9 +973,9 @@ func TestIPv6DisabledLoopback(t *testing.T) {
 	)
 
 	tests := []struct {
-		name    string
 		disable func(*stack.Stack, tcpip.NICID) tcpip.Error
 		enable  func(*stack.Stack, tcpip.NICID) tcpip.Error
+		name    string
 	}{
 		{
 			name:    "NIC disabled",

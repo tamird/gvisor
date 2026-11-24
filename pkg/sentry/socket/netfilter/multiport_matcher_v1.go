@@ -35,10 +35,10 @@ type multiportMarshalerV1 struct{}
 // source and/or destination ports, per-port flags, and an
 // inversion flag.
 type multiportMatcherV1 struct {
-	flags  uint8    // Port match flag (source/destination/either).
-	count  uint8    // Number of ports.
 	ports  []uint16 // List of ports to match against.
 	pflags []uint8  // Per-port flags (for range matches).
+	flags  uint8    // Port match flag (source/destination/either).
+	count  uint8    // Number of ports.
 	invert bool     // Invert match result.
 }
 

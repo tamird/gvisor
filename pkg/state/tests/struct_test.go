@@ -107,14 +107,14 @@ func TestEmbeddedPointers(t *testing.T) {
 
 func TestZeroSizedFieldPointers(t *testing.T) {
 	for _, test := range []struct {
-		name  string
 		child func(*zeroSizedFields) any
+		name  string
 	}{
-		{"leading", func(p *zeroSizedFields) any { return &p.leading }},
-		{"duplicate", func(p *zeroSizedFields) any { return &p.duplicate }},
-		{"other_type", func(p *zeroSizedFields) any { return &p.other }},
-		{"nested", func(p *zeroSizedFields) any { return &p.nested.child }},
-		{"array_element", func(p *zeroSizedFields) any { return &p.array[1] }},
+		{name: "leading", child: func(p *zeroSizedFields) any { return &p.leading }},
+		{name: "duplicate", child: func(p *zeroSizedFields) any { return &p.duplicate }},
+		{name: "other_type", child: func(p *zeroSizedFields) any { return &p.other }},
+		{name: "nested", child: func(p *zeroSizedFields) any { return &p.nested.child }},
+		{name: "array_element", child: func(p *zeroSizedFields) any { return &p.array[1] }},
 	} {
 		for _, order := range []string{"child_first", "parent_first"} {
 			t.Run(test.name+"/"+order, func(t *testing.T) {

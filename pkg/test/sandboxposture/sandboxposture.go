@@ -183,39 +183,39 @@ const (
 // Posture is a normalized, comparable view of a process's
 // externally-observable Linux security posture.
 type Posture struct {
-	// Creds is the process's user and group identity.
-	Creds Credentials
 
-	// Caps is the process's capability sets.
-	Caps Capabilities
-
-	// Seccomp is the process's seccomp status.
-	Seccomp Seccomp
+	// Children counts the process's direct children by command name.
+	// Useful for debugging, not used for comparison.
+	Children map[string]int `posture:"info"`
 
 	// Namespaces classifies each namespace the process is in.
 	Namespaces Namespaces
 
 	// FS is the process's view of the filesystem.
 	FS Filesystem
-
-	// FDs describes what the process holds open.
-	FDs FDTable
-
-	// Attrs holds the process attributes.
-	Attrs Attrs
-
-	// Threads reports whether every thread in the process all share the
-	// same process-level credentials, capabilities and seccomp state.
-	Threads Threads
+	// Creds is the process's user and group identity.
+	Creds Credentials
 
 	// CoreTag classifies the core scheduling cookies of the threads of the
 	// process and of its descendants (e.g. systrap stubs), or describes them
 	// if they are mixed.
 	CoreTag string
 
-	// Children counts the process's direct children by command name.
-	// Useful for debugging, not used for comparison.
-	Children map[string]int `posture:"info"`
+	// Attrs holds the process attributes.
+	Attrs Attrs
+
+	// Caps is the process's capability sets.
+	Caps Capabilities
+
+	// FDs describes what the process holds open.
+	FDs FDTable
+
+	// Threads reports whether every thread in the process all share the
+	// same process-level credentials, capabilities and seccomp state.
+	Threads Threads
+
+	// Seccomp is the process's seccomp status.
+	Seccomp Seccomp
 }
 
 // Credentials is a process's user and group identity.
@@ -226,12 +226,12 @@ type Credentials struct {
 	// GID is the group equivalent of `UID`.
 	GID string
 
+	// Groups is the raw supplementary group list. Informational only.
+	Groups string `posture:"info"`
+
 	// ExtraGroups is the sorted set of supplementary groups the process holds
 	// that the reference process did not (excluding the overflow GID).
 	ExtraGroups []string
-
-	// Groups is the raw supplementary group list. Informational only.
-	Groups string `posture:"info"`
 }
 
 // overflowID is the kernel's overflowuid/overflowgid.
@@ -285,6 +285,12 @@ type Filesystem struct {
 	// Root is `RootOwn` or `RootSameAsRef`.
 	Root string
 
+	// Cwd is the working directory as seen from inside the process's own root.
+	Cwd string
+
+	// RootLink is the raw target of `/proc/<pid>/root`, for debugging.
+	RootLink string `posture:"info"`
+
 	// Entries is a recursive listing of the process's root directory, sorted,
 	// with paths relative to that root and directories suffixed with "/".
 	// Does not cross mountpoints.
@@ -293,24 +299,21 @@ type Filesystem struct {
 	// but never more.
 	Entries []string `posture:"subset"`
 
-	// Cwd is the working directory as seen from inside the process's own root.
-	Cwd string
-
-	// ReadOnly reports whether the filesystem mounted at the process's root is
-	// read-only.
-	ReadOnly bool
-
 	// Mounts is the process's mount table, one entry per line, normalized to
 	// "<mountpoint> <fstype> <flags>" with flags restricted to the
 	// security-relevant ones + deduped + sorted.
 	Mounts []string
 
-	// RootLink is the raw target of `/proc/<pid>/root`, for debugging.
-	RootLink string `posture:"info"`
+	// ReadOnly reports whether the filesystem mounted at the process's root is
+	// read-only.
+	ReadOnly bool
 }
 
 // FDTable describes a process's open file descriptors.
 type FDTable struct {
+
+	// Counts is the number of FDs in each class. Informational.
+	Counts map[string]int `posture:"info"`
 	// Classes is the sorted set of distinct FD classes the process holds.
 	// It is a set, not a count, because the number of memfds or eventfds a
 	// sandbox holds is an implementation detail while the *kind* of thing it
@@ -320,46 +323,28 @@ type FDTable struct {
 	// than expected is not a regression.
 	Classes []string `posture:"subset"`
 
+	// Links is the sorted set of readlink targets with inode numbers stripped,
+	// so that a failure report says what the unexpected FD actually was.
+	Links []string `posture:"info"`
+
 	// HasDirectories reports whether the process holds any directory FD.
 	//
 	// This is critical because a directory FD grants the ability to reach
 	// anything under it, and survives `chroot` and `pivot_root`.
 	HasDirectories bool
-
-	// Counts is the number of FDs in each class. Informational.
-	Counts map[string]int `posture:"info"`
-
-	// Links is the sorted set of readlink targets with inode numbers stripped,
-	// so that a failure report says what the unexpected FD actually was.
-	Links []string `posture:"info"`
 }
 
 // Attrs holds per-process attributes that do not group naturally elsewhere.
 type Attrs struct {
-	// Umask is the process's file mode creation mask, e.g. "0022".
-	Umask string
-
-	// SessionLeader reports whether the process is its own session leader.
-	SessionLeader bool
-
-	// ProcessGroupLeader reports whether the process is its own group leader.
-	ProcessGroupLeader bool
-
-	// ChildOfRef reports whether the process's parent is the reference
-	// process. False under shim.
-	ChildOfRef bool
-
-	// Environ is the environment, sorted, with variables like
-	// `RUNSC_START_TIME_NANOS` and `GVISOR_ENFORCE_RELEASE` removed, and
-	// others like `GOMAXPROCS` normalized.
-	Environ []string
-
-	// Argv0 is argv[0], which `runsc` should set to "runsc-sandbox".
-	Argv0 string
 
 	// Limits maps resource names to normalized "<soft>/<hard>" strings, or to
 	// `LimitSameAsRef`.
 	Limits map[string]string
+	// Umask is the process's file mode creation mask, e.g. "0022".
+	Umask string
+
+	// Argv0 is argv[0], which `runsc` should set to "runsc-sandbox".
+	Argv0 string
 
 	// UIDMap and GIDMap classify the process's user namespace ID mappings.
 	UIDMap string
@@ -375,19 +360,34 @@ type Attrs struct {
 	// `DeviceCgroupUnknown` or `DeviceCgroupSameAsRef`.
 	DeviceCgroup string
 
+	// Environ is the environment, sorted, with variables like
+	// `RUNSC_START_TIME_NANOS` and `GVISOR_ENFORCE_RELEASE` removed, and
+	// others like `GOMAXPROCS` normalized.
+	Environ []string
+
 	// Argv is the full command line. Informational only.
 	Argv []string `posture:"info"`
+
+	// SessionLeader reports whether the process is its own session leader.
+	SessionLeader bool
+
+	// ProcessGroupLeader reports whether the process is its own group leader.
+	ProcessGroupLeader bool
+
+	// ChildOfRef reports whether the process's parent is the reference
+	// process. False under shim.
+	ChildOfRef bool
 }
 
 // Threads reports whether the process's threads share its posture.
 type Threads struct {
-	// Uniform reports whether every thread's credentials, capabilities and
-	// seccomp state match process-wide values.
-	Uniform bool
 
 	// Divergences describes each mismatch found.
 	// Empty when `Uniform` is true.
 	Divergences []string
+	// Uniform reports whether every thread's credentials, capabilities and
+	// seccomp state match process-wide values.
+	Uniform bool
 }
 
 // PlatformCapSysPtrace contains which platforms need CAP_SYS_PTRACE.
@@ -419,11 +419,6 @@ func GoDebug(platform string, profile bool) string {
 
 // Opts is the set of options to `Collect`.
 type Opts struct {
-	// PID is the process to collect.
-	PID int
-
-	// RefPID is the reference process that posture is expressed relative to.
-	RefPID int
 
 	// NamespaceTargets maps a name to a path naming a namespace, such as
 	// {"container-netns": "/var/run/docker/netns/abc123"}.
@@ -432,6 +427,11 @@ type Opts struct {
 	// ProcRoot is the procfs mount to read through. Defaults to "/proc".
 	// Its PID namespace must be the caller's, as `CoreTag` is collected by PID.
 	ProcRoot string
+	// PID is the process to collect.
+	PID int
+
+	// RefPID is the reference process that posture is expressed relative to.
+	RefPID int
 }
 
 // Collect gathers the posture of `opts.PID`.
@@ -1707,8 +1707,8 @@ type cgroupMount struct {
 	// root is the cgroup at mountpoint, as named in /proc/<pid>/cgroup.
 	root        string
 	mountpoint  string
-	v2          bool
 	controllers []string
+	v2          bool
 }
 
 // defaultCgroupMounts is the standard host layout, used when mountinfo can't

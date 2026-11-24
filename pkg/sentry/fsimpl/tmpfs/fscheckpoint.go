@@ -59,8 +59,8 @@ type fsckptTarWriterCallbacks struct {
 }
 
 type fsckptRegularFile struct {
-	size uint64
 	data []fsckptRegularFileSegment
+	size uint64
 }
 
 // fsckptRegularFileSegment is equivalent to fsutil.FileRangeFlatSegment, but

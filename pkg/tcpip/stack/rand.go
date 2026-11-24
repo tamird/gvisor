@@ -22,10 +22,9 @@ import (
 
 // lockedRandomSource provides a threadsafe rand.Source.
 type lockedRandomSource struct {
-	mu sync.Mutex
-
 	// +checklocks:mu
 	src rand.Source
+	mu  sync.Mutex
 }
 
 // +checklocksexclude:r.mu

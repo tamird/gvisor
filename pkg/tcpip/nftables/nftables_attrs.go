@@ -49,8 +49,8 @@ var nlaTypeToString = [...]string{
 // NlaPolicy represents the policy for a netlink attribute.
 // Similar to struct nla_policy defined in include/net/netlink.h.
 type NlaPolicy struct {
-	nlaType   uint8
 	validator NlaPolicyValidator
+	nlaType   uint8
 }
 
 // NlaPolicyValidator is used to validate the data for a netlink attribute.
@@ -172,8 +172,8 @@ func AttrMaxLenValidator(maxLen int) NlaPolicyValidator {
 }
 
 type arrayValidatorRuntimeOpts struct {
-	stackDepth int
 	data       nlmsg.AttrsView
+	stackDepth int
 }
 
 // AttrArrayValidator validates if each element in the attribute array matches the given policy.

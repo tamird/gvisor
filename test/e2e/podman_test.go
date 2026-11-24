@@ -31,9 +31,9 @@ type podmanTestVariant struct {
 	Name       string
 	User       string
 	WorkDir    string
+	SkipReason string
 	PodmanArgs []string
 	Enabled    bool
-	SkipReason string
 }
 
 // podmanTestVariants returns all Podman integration test variants.

@@ -688,10 +688,10 @@ func TestEvaluateImmediateBytesData(t *testing.T) {
 // Note: Relies on expected behavior of the Immediate operation.
 func TestEvaluateComparison(t *testing.T) {
 	for _, test := range []struct {
-		tname string
 		op1   operation // will be nil if unused
 		op2   operation // will be nil if unused
-		res   bool      // should be true if we reach end of the rule (no breaks)
+		tname string
+		res   bool // should be true if we reach end of the rule (no breaks)
 	}{
 		// 4-byte data comparisons, alternates between 4-byte and 16-byte registers.
 		{
@@ -1182,10 +1182,10 @@ func TestEvaluateComparison(t *testing.T) {
 // Note: Relies on expected behavior of the Immediate operation.
 func TestEvaluateRanged(t *testing.T) {
 	for _, test := range []struct {
-		tname string
 		op1   operation // Immediate operation that sets the source register.
 		op2   operation // Ranged operation to test.
-		res   bool      // should be true if we reach end of the rule (no breaks)
+		tname string
+		res   bool // should be true if we reach end of the rule (no breaks)
 	}{
 		// 4-byte ranges, alternates between 4-byte and 16-byte registers.
 		{
@@ -1421,11 +1421,11 @@ func TestEvaluatePayloadLoad(t *testing.T) {
 	tcpPacket := makeIPv4TCPPacket(header.IPv4MinimumSize+header.TCPMinimumSize, arbitraryIPv4Fields(), arbitraryTCPFields())
 
 	for _, test := range []struct {
-		tname string
-		pkt   *stack.PacketBuffer
-		op1   operation // Payload Load operation to test.
-		op2   operation // Comparison operation to check resulting data in register,
+		op1 operation // Payload Load operation to test.
+		op2 operation // Comparison operation to check resulting data in register,
 		// nil if expecting a break during evaluation.
+		pkt   *stack.PacketBuffer
+		tname string
 	}{
 		// Ethernet header expression commands.
 		{ // cmd: add rule ip tab ch ether saddr 02:02:03:04:05:06
@@ -1652,12 +1652,12 @@ func TestEvaluatePayloadLoad(t *testing.T) {
 // TODO(b/339691111): Add tests for VLAN, ARP, ICMP, ICMPv6, IGMP, UDP headers.
 func TestEvaluatePayloadSet(t *testing.T) {
 	for _, test := range []struct {
-		tname            string
-		pkt              *stack.PacketBuffer
-		outPkt           *stack.PacketBuffer // nil if expecting a break during evaluation.
-		unchangedOnBreak bool
 		op1              operation // Immediate operation to load source register.
 		op2              operation // Payload Set operation to test.
+		pkt              *stack.PacketBuffer
+		outPkt           *stack.PacketBuffer // nil if expecting a break during evaluation.
+		tname            string
+		unchangedOnBreak bool
 	}{
 		// Ethernet header statement commands.
 		{ // cmd: add rule ip tab ch ether saddr set 02:02:03:04:05:07
@@ -2184,10 +2184,10 @@ func TestEvaluatePayloadSet(t *testing.T) {
 // Note: Relies on expected behavior of the Immediate and Comparison operation.
 func TestEvaluateBitwise(t *testing.T) {
 	for _, test := range []struct {
-		tname string
 		op1   operation // Immediate operation to set source register.
 		op2   operation // Bitwise operation to test.
 		op3   operation // Comparison operation to validate result.
+		tname string
 	}{
 		// Bitwise bool operations.
 		// cmd: add rule ip filter input ip saddr and _ or _ == 105
@@ -2504,10 +2504,10 @@ func TestEvaluateLast(t *testing.T) {
 // Note: Relies on expected behavior of the Comparison operation.
 func TestEvaluateRoute(t *testing.T) {
 	for _, test := range []struct {
-		tname string
-		pkt   *stack.PacketBuffer
 		op1   operation // Route operation to test.
 		op2   operation // Comparison operation to check resulting data in register,
+		pkt   *stack.PacketBuffer
+		tname string
 	}{
 		// IPv4 Next Hop Commands
 		{ // cmd: add rule ip filter output rt nexthop 192.168.1.1
@@ -2609,10 +2609,10 @@ func TestEvaluateRoute(t *testing.T) {
 func TestFIBResultStorage(t *testing.T) {
 	for _, test := range []struct {
 		name     string
+		want     []byte
 		result   int
 		present  bool
 		loopback bool
-		want     []byte
 	}{
 		{name: "loopback_name", result: linux.NFT_FIB_RESULT_OIFNAME, loopback: true, want: append([]byte("lo"), make([]byte, linux.IFNAMSIZ-2)...)},
 		{name: "lookup_failure_name", result: linux.NFT_FIB_RESULT_OIFNAME, want: make([]byte, linux.IFNAMSIZ)},
@@ -2678,10 +2678,10 @@ func TestEvaluateByteorder(t *testing.T) {
 		return chooseOrder(numToBE(big, size), numToBE(little, size))
 	}
 	for _, test := range []struct {
-		tname string
 		op1   operation // Immediate operation to set source register.
 		op2   operation // Byteorder operation to test.
 		op3   operation // Comparison operation to validate result.
+		tname string
 	}{
 		// Size 2 tests (Lengths 2, 3, 4, 6, 8, 16)
 		{
@@ -2940,11 +2940,11 @@ func TestEvaluateMetaLoad(t *testing.T) {
 	seededRandUint32 := fixedRNG.Uint32() // fixes rng
 
 	for _, test := range []struct {
-		tname string
-		pkt   *stack.PacketBuffer
-		op1   operation // Meta Load operation to test.
-		op2   operation // Comparison operation to check result data in register.
+		op1 operation // Meta Load operation to test.
+		op2 operation // Comparison operation to check result data in register.
 		// Note: op2 should be nil if expecting a break during evaluation.
+		pkt   *stack.PacketBuffer
+		tname string
 	}{
 		{ // cmd: add rule ip6 tab ch meta length 60
 			tname: "meta load len test",
@@ -3100,11 +3100,11 @@ func TestEvaluateMetaSet(t *testing.T) {
 	// Packet type to set anc test for.
 	testPktType := tcpip.PacketMulticast
 	for _, test := range []struct {
-		tname  string
-		pkt    *stack.PacketBuffer
-		outPkt *stack.PacketBuffer
 		op1    operation // Immediate operation to load source register.
 		op2    operation // Meta set operation to test.
+		pkt    *stack.PacketBuffer
+		outPkt *stack.PacketBuffer
+		tname  string
 	}{
 		// cmd: nft --debug=netlink add rule ip tab ch meta pkttype set 34
 		{
@@ -3680,9 +3680,9 @@ func TestLoopCheckOnRegisterAndUnregister(t *testing.T) {
 func TestMaxNestedJumps(t *testing.T) {
 	for _, test := range []struct {
 		tname         string
-		useJumpOp     bool
-		numberOfJumps int
 		verdict       Verdict
+		numberOfJumps int
+		useJumpOp     bool
 		expectErr     bool
 	}{
 		{
@@ -4010,10 +4010,10 @@ func createEmptyNlMsg() *nlmsg.Message {
 
 func TestNfAttrParser(t *testing.T) {
 	tests := []struct {
-		name   string
 		msg    *nlmsg.Message
-		policy []NlaPolicy
 		want   map[uint16]nlmsg.BytesView
+		name   string
+		policy []NlaPolicy
 	}{
 		{
 			name: "validAttrs",
@@ -4111,8 +4111,8 @@ func TestNfAttrParserNestedArray(t *testing.T) {
 	}
 
 	tests := []struct {
-		name  string
 		setup func() (msg *nlmsg.Message, policy []NlaPolicy, want map[uint16]nlmsg.BytesView)
+		name  string
 	}{
 		{
 			name: "validArray",
@@ -4288,10 +4288,10 @@ func TestNfAttrParserNestedArray(t *testing.T) {
 func TestAttrNetToHost(t *testing.T) {
 	const attr uint16 = 1
 	tests := []struct {
-		name   string
-		attrs  map[uint16]nlmsg.BytesView
-		wantOK bool
 		want   any
+		attrs  map[uint16]nlmsg.BytesView
+		name   string
+		wantOK bool
 	}{
 		{
 			name:   "uint8",
@@ -4374,9 +4374,9 @@ func TestAttrNetToHost(t *testing.T) {
 
 func TestDumpOperations(t *testing.T) {
 	tests := []struct {
-		name     string
 		op       operation
 		validate func([]byte) error
+		name     string
 	}{
 		{
 			name: "immediate",
@@ -4865,9 +4865,9 @@ func TestBaseChainEvalOrder(t *testing.T) {
 
 func TestDeepCopyIsolatesOperations(t *testing.T) {
 	tests := []struct {
-		name        string
 		op          operation
 		valuesEqual func(op1, op2 operation) bool
+		name        string
 	}{
 		{
 			name: "immediate",
@@ -4991,12 +4991,12 @@ func TestGetSet(t *testing.T) {
 	setName := "test_set"
 
 	tests := []struct {
-		name         string
 		setAttrs     map[uint16]nlmsg.BytesView
 		getAttrs     map[uint16]nlmsg.BytesView
-		getFlags     uint16
 		expectGetErr *syserr.Error
 		verifyMsg    func(*testing.T, *nlmsg.MessageSet)
+		name         string
+		getFlags     uint16
 	}{
 		{
 			name: "GetSet",
@@ -5116,9 +5116,9 @@ func TestGetSet(t *testing.T) {
 }
 
 type wantSetElem struct {
+	verdict    *Verdict
 	key        []byte
 	userData   []byte
-	verdict    *Verdict
 	isCatchAll bool
 }
 
@@ -5225,13 +5225,13 @@ func TestGetSetElements(t *testing.T) {
 	qElem3.PutAttr(linux.NFTA_SET_ELEM_DATA, primitive.AsByteSlice(verdict1))
 
 	tests := []struct {
-		name             string
-		elemAttrs        nlmsg.AttrsView            // elements to create via NewSetElements
 		getAttrs         map[uint16]nlmsg.BytesView // elements to get via GetSetElements
-		getFlags         uint16
 		expectNewElemErr *syserr.Error
 		expectGetErr     *syserr.Error
+		name             string
+		elemAttrs        nlmsg.AttrsView // elements to create via NewSetElements
 		wanted           []wantSetElem
+		getFlags         uint16
 	}{
 		{
 			name:      "GetEmptyElements",
@@ -5418,12 +5418,12 @@ func TestSetMapRemoveElement(t *testing.T) {
 	keyNone := []byte{1, 2, 3, 4}
 
 	testCases := []struct {
+		wantErr        *syserr.Error
+		wantBackendMap map[string]int
 		name           string
 		initialElems   [][]byte
 		keyToRemove    []byte
-		wantErr        *syserr.Error
 		wantElems      [][]byte
-		wantBackendMap map[string]int
 	}{
 		{
 			name:         "delete first element",
@@ -5787,9 +5787,9 @@ func TestNFTablesConcurrentUpdateAndEvaluate(t *testing.T) {
 // Tests compat operation deepCopy functionality.
 func TestCompatOperationDeepCopy(t *testing.T) {
 	for _, tc := range []struct {
-		name string
 		op   operation
 		opts cmp.Option
+		name string
 	}{
 		{
 			name: "conntrack match",
@@ -5901,9 +5901,9 @@ func TestCompatOpCompatibility(t *testing.T) {
 	}
 
 	for _, tc := range []struct {
-		name    string
 		op      operation
 		cCtx    *opCompatCtx
+		name    string
 		wantErr bool
 	}{
 		// Addrtype limitIfaceIn
@@ -6223,12 +6223,12 @@ func TestCompatCTMatchEvaluation(t *testing.T) {
 func TestCompatAddrtypeMatchEvaluation(t *testing.T) {
 	for _, tc := range []struct {
 		name        string
-		matchInfo   addrTypeMatchInfo
 		srcAddr     tcpip.Address
 		dstAddr     tcpip.Address
+		wantVerdict uint32
+		matchInfo   addrTypeMatchInfo
 		hasRoute    bool
 		noNetHeader bool
-		wantVerdict uint32
 	}{
 		{
 			name: "source broadcast match",
@@ -6437,9 +6437,9 @@ func newOutputInterfaceStack(t *testing.T) *stack.Stack {
 		NetworkProtocols: []stack.NetworkProtocolFactory{ipv4.NewProtocol},
 	})
 	for _, nic := range []struct {
-		id   tcpip.NICID
 		name string
 		addr tcpip.Address
+		id   tcpip.NICID
 	}{
 		{id: oifEth0NIC, name: "eth0", addr: oifEth0Addr},
 		{id: oifBr0NIC, name: "br0", addr: oifBr0Addr},
@@ -6499,14 +6499,14 @@ func TestMetaOutputInterface(t *testing.T) {
 	}
 	for _, test := range []struct {
 		name     string
-		key      metaKey
-		dreg     uint8
 		data     []byte
+		key      metaKey
 		outNICID tcpip.NICID
-		// route selects a route through eth0, whatever outNICID is.
-		route bool
 		// Drop means the loaded value equals data.
 		want uint32
+		dreg uint8
+		// route selects a route through eth0, whatever outNICID is.
+		route bool
 	}{
 		{name: "oifname", key: linux.NFT_META_OIFNAME, dreg: linux.NFT_REG_1, data: ifname("br0"), outNICID: oifBr0NIC, want: VC(linux.NF_DROP)},
 		{name: "oifname follows output interface over route", key: linux.NFT_META_OIFNAME, dreg: linux.NFT_REG_1, data: ifname("br0"), outNICID: oifBr0NIC, route: true, want: VC(linux.NF_DROP)},
@@ -6553,8 +6553,8 @@ func TestMetaOutputInterface(t *testing.T) {
 // net/netfilter/nf_nat_masquerade.c:nf_nat_masquerade_ipv4.
 func TestMasqueradeOutputInterface(t *testing.T) {
 	for _, target := range []struct {
-		name string
 		op   func(t *testing.T) operation
+		name string
 	}{
 		{name: "masq", op: func(t *testing.T) operation {
 			op, err := newMasqOp(-1, -1, 0)

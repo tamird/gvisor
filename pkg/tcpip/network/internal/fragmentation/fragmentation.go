@@ -327,8 +327,8 @@ func (f *Fragmentation) releaseReassemblersLocked() {
 
 // PacketFragmenter is the book-keeping struct for packet fragmentation.
 type PacketFragmenter struct {
-	transportHeader    []byte
 	data               buffer.Buffer
+	transportHeader    []byte
 	reserve            int
 	fragmentPayloadLen int
 	fragmentCount      int

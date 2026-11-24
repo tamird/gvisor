@@ -22,8 +22,8 @@ import (
 // Tests that ProcessData.Table() prints with the correct format.
 func TestProcessListTable(t *testing.T) {
 	testCases := []struct {
-		pl       []*Process
 		expected string
+		pl       []*Process
 	}{
 		{
 			pl:       []*Process{},
@@ -71,8 +71,8 @@ func TestProcessListTable(t *testing.T) {
 
 func TestProcessListJSON(t *testing.T) {
 	testCases := []struct {
-		pl       []*Process
 		expected string
+		pl       []*Process
 	}{
 		{
 			pl:       []*Process{},

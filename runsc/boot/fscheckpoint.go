@@ -233,20 +233,18 @@ type fsRestoreBundle struct {
 
 // fsRestore holds the state of a filesystem restore.
 type fsRestore struct {
-	wg sync.WaitGroup
-
 	// immutable after wg.Wait()
 	manifestErr error
 	mfs         map[checkpoint.ResourceID]*fscheckpoint.MemoryFile
 	tmpfs       map[checkpoint.ResourceID]*fscheckpoint.Tmpfs
 	fsBundles   map[checkpoint.ResourceID]*fsRestoreBundle
 
-	waitMu sync.Mutex
-
 	// waitMap tracks restore completion by container ID.
 	//
 	// +checklocks:waitMu
 	waitMap map[string]*fsRestoreContainer
+	wg      sync.WaitGroup
+	waitMu  sync.Mutex
 }
 
 type fsRestoreContainer struct {
@@ -255,15 +253,15 @@ type fsRestoreContainer struct {
 	// +checklocks:cond.L
 	err error
 
-	// asyncLoads counts MemoryFiles currently in async page loading.
-	//
-	// +checklocks:cond.L
-	asyncLoads int
-
 	// cond wakes waiters when an error occurs or all async loads complete.
 	// ensureContainer sets L to the owning fsRestore's waitMu before
 	// publishing the entry in waitMap; L is not reassigned afterwards.
 	cond sync.Cond
+
+	// asyncLoads counts MemoryFiles currently in async page loading.
+	//
+	// +checklocks:cond.L
+	asyncLoads int
 }
 
 // fsRestoreOpts holds options to startFSRestore.

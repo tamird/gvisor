@@ -32,28 +32,28 @@ type Mount struct {
 
 // CreateConfig hold task creation configuration.
 type CreateConfig struct {
-	ID       string
-	Bundle   string
-	Runtime  string
-	Rootfs   []Mount
-	Terminal bool
-	Stdin    string
-	Stdout   string
-	Stderr   string
+	ID      string
+	Bundle  string
+	Runtime string
+	Stdin   string
+	Stdout  string
+	Stderr  string
 
-	// FS checkpoint configuration.
+	// FSRestoreImagePath and FSRestoreDirect configure filesystem checkpoint restore.
 	FSRestoreImagePath string
+	Rootfs             []Mount
+	Terminal           bool
 	FSRestoreDirect    bool
 }
 
 // ExecConfig holds exec creation configuration.
 type ExecConfig struct {
+	Spec     *types.Any
 	ID       string
-	Terminal bool
 	Stdin    string
 	Stdout   string
 	Stderr   string
-	Spec     *types.Any
+	Terminal bool
 }
 
 // Exit is the type of exit events.

@@ -128,8 +128,8 @@ func (vfs *VirtualFilesystem) NewMountNamespace(
 }
 
 type namespaceDefaultRefs struct {
-	namespaceRefs
 	destroy func(ctx context.Context)
+	namespaceRefs
 }
 
 func (r *namespaceDefaultRefs) DecRef(ctx context.Context) {

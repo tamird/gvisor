@@ -23,8 +23,8 @@ import (
 
 // A FlagSet is a slice of bit-flags and their name.
 type FlagSet []struct {
-	Flag uint64
 	Name string
+	Flag uint64
 }
 
 // Parse returns a pretty version of val, using the flag names for known flags.

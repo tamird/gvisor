@@ -36,9 +36,9 @@ type zeroCrossRoot struct {
 type zeroHookRecorderKey struct{}
 
 type zeroHookRecorder struct {
+	events     []string
 	wantVal    int64
 	gotVal     int64
-	events     []string
 	targetDone bool
 }
 

@@ -154,8 +154,8 @@ func randomAddress(size int) tcpip.Address {
 
 func TestChecksummableNetworkUpdateAddress(t *testing.T) {
 	tests := []struct {
-		name   string
 		update func(header.IPv4, tcpip.Address)
+		name   string
 	}{
 		{
 			name:   "SetSourceAddressWithChecksumUpdate",
@@ -217,8 +217,8 @@ func TestChecksummableTransportUpdatePort(t *testing.T) {
 	const pseudoHeaderXSum = 0
 
 	tests := []struct {
-		name         string
 		transportHdr func(_, _ uint16) (header.ChecksummableTransport, func(uint16) uint16)
+		name         string
 		proto        tcpip.TransportProtocolNumber
 	}{
 		{
@@ -263,8 +263,8 @@ func TestChecksummableTransportUpdatePort(t *testing.T) {
 			for _, test := range tests {
 				t.Run(test.name, func(t *testing.T) {
 					for _, subTest := range []struct {
-						name   string
 						update func(header.ChecksummableTransport)
+						name   string
 					}{
 						{
 							name:   "Source port",
@@ -305,8 +305,8 @@ func TestChecksummableTransportUpdatePseudoHeaderAddress(t *testing.T) {
 	const addressSize = 16
 
 	tests := []struct {
-		name         string
 		transportHdr func() header.ChecksummableTransport
+		name         string
 		proto        tcpip.TransportProtocolNumber
 	}{
 		{
@@ -358,10 +358,10 @@ func TestChecksummableTransportUpdatePseudoHeaderAddress(t *testing.T) {
 func TestUDPChecksumIncrementalUpdate(t *testing.T) {
 	tests := []struct {
 		name            string
-		initialChecksum uint16
-		newPort         uint16
 		oldAddr         tcpip.Address
 		newAddr         tcpip.Address
+		initialChecksum uint16
+		newPort         uint16
 		wantChecksum    uint16
 	}{
 		{

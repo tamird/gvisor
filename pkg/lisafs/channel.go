@@ -46,9 +46,9 @@ func maxChannels() int {
 // communicating data, a channel is also capable of donating file descriptors.
 type channel struct {
 	fdTracker
-	dead   bool
-	data   flipcall.Endpoint
 	fdChan fdchannel.Endpoint
+	data   flipcall.Endpoint
+	dead   bool
 }
 
 var _ Communicator = (*channel)(nil)

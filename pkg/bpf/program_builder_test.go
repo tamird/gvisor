@@ -198,8 +198,6 @@ func TestProgramBuilderOutcomes(t *testing.T) {
 		return f
 	}
 	for _, test := range []struct {
-		// Name of the sub-test.
-		name string
 
 		// Function that adds statements to `p`.
 		build func()
@@ -208,12 +206,14 @@ func TestProgramBuilderOutcomes(t *testing.T) {
 		// by `build` alone.
 		wantLocal FragmentOutcomes
 
-		// Expected value of calling `MayReturn` on the local fragment.
-		wantLocalMayReturn bool
-
 		// Expected outcomes from recording the instructions added
 		// to the program since the test began.
 		wantOverall FragmentOutcomes
+		// Name of the sub-test.
+		name string
+
+		// Expected value of calling `MayReturn` on the local fragment.
+		wantLocalMayReturn bool
 	}{
 		{
 			name:        "empty program",

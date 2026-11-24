@@ -204,24 +204,11 @@ func validPrefix(p string) bool {
 	return true
 }
 
-// Manifest is the type of the JSON object stored in the manifest file.
+// Manifest describes filesystem checkpoint metadata.
 type Manifest struct {
-	// Version is the checkpoint format version.
-	Version uint64 `json:"version,omitzero"`
-
 	// RunscVersion is the version of the runsc binary that produced this
 	// checkpoint.
 	RunscVersion string `json:"runsc_version,omitzero"`
-
-	// PageSize is hostarch.PageSize for the sandbox that produced this
-	// checkpoint.
-	//
-	// TODO: NOLINT - Currently this must match during restore. Technically,
-	// it's already permissible for PageSize to shrink (as long as both old and
-	// new sizes remain powers of 2). Allowing PageSize to increase may require
-	// being able to relocate pgalloc.MemoryFile pages during restore based on
-	// information provided by tmpfs.
-	PageSize uint64 `json:"page_size"`
 
 	// Endian is hostarch.EndianString() for the sandbox that produced this
 	// checkpoint.
@@ -239,6 +226,19 @@ type Manifest struct {
 	// Information about filesystems stored in the checkpoint, in order of
 	// increasing file offsets in the multi-tar file.
 	Tmpfs []Tmpfs `json:"tmpfs"`
+
+	// Version is the checkpoint format version.
+	Version uint64 `json:"version,omitzero"`
+
+	// PageSize is hostarch.PageSize for the sandbox that produced this
+	// checkpoint.
+	//
+	// TODO: NOLINT - Currently this must match during restore. Technically,
+	// it's already permissible for PageSize to shrink (as long as both old and
+	// new sizes remain powers of 2). Allowing PageSize to increase may require
+	// being able to relocate pgalloc.MemoryFile pages during restore based on
+	// information provided by tmpfs.
+	PageSize uint64 `json:"page_size"`
 }
 
 // MemoryFile represents a pgalloc.MemoryFile stored in a filesystem

@@ -24,9 +24,9 @@ import (
 
 func TestIDMapSlice(t *testing.T) {
 	for _, tc := range []struct {
+		wantErr error
 		input   string
 		want    idMapSlice
-		wantErr error
 	}{
 		{input: "0 1000 1", want: idMapSlice{{ContainerID: 0, HostID: 1000, Size: 1}}},
 		{input: "2147483648 4294967294 1", want: idMapSlice{{ContainerID: 2147483648, HostID: 4294967294, Size: 1}}},

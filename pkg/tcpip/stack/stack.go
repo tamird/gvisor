@@ -237,16 +237,53 @@ type TransportProtocolFactory func(*Stack) TransportProtocol
 
 // Options contains optional Stack configuration.
 type Options struct {
+	// Stats are optional statistic counters.
+	Stats tcpip.Stats
+
+	// RawFactory produces raw endpoints. Raw endpoints are enabled only if
+	// this is non-nil.
+	RawFactory RawFactory
+
+	// NUDDisp is the NUD event dispatcher that an integrator can provide to
+	// receive NUD related events.
+	NUDDisp NUDDispatcher
+
+	// SecureRNG is a cryptographically secure random number generator.
+	SecureRNG io.Reader
+
+	// NFTables is the nftables interface for packet filtering and manipulation rules.
+	NFTables NFTablesInterface
+
+	// Clock is an optional clock used for timekeeping.
+	//
+	// If Clock is nil, tcpip.NewStdClock() will be used.
+	Clock tcpip.Clock
+
+	// RandSource is an optional source to use to generate random
+	// numbers. If omitted it defaults to a Source seeded by the data
+	// returned by the stack secure RNG.
+	//
+	// RandSource must be thread-safe.
+	RandSource rand.Source
+
+	// DefaultIPTables is an optional iptables rules constructor that is called
+	// if IPTables is nil. If both fields are nil, iptables will allow all
+	// traffic.
+	DefaultIPTables func(clock tcpip.Clock, rand *rand.Rand) *IPTables
+
+	// IPTables are the initial iptables rules. If nil, DefaultIPTables will be
+	// used to construct the initial iptables rules.
+	// all traffic.
+	IPTables *IPTables
+
 	// NetworkProtocols lists the network protocols to enable.
 	NetworkProtocols []NetworkProtocolFactory
 
 	// TransportProtocols lists the transport protocols to enable.
 	TransportProtocols []TransportProtocolFactory
 
-	// Clock is an optional clock used for timekeeping.
-	//
-	// If Clock is nil, tcpip.NewStdClock() will be used.
-	Clock tcpip.Clock
+	// NUDConfigs is the default NUD configurations used by interfaces.
+	NUDConfigs NUDConfigurations
 
 	// ClockResolution is an upper bound on the quantization interval of
 	// timestamps returned by Clock.NowMonotonic. It should be set when the
@@ -259,24 +296,10 @@ type Options struct {
 	// Values less than zero are clamped to zero.
 	ClockResolution time.Duration
 
-	// Stats are optional statistic counters.
-	Stats tcpip.Stats
-
 	// HandleLocal indicates whether packets destined to their source
 	// should be handled by the stack internally (true) or outside the
 	// stack (false).
 	HandleLocal bool
-
-	// NUDConfigs is the default NUD configurations used by interfaces.
-	NUDConfigs NUDConfigurations
-
-	// NUDDisp is the NUD event dispatcher that an integrator can provide to
-	// receive NUD related events.
-	NUDDisp NUDDispatcher
-
-	// RawFactory produces raw endpoints. Raw endpoints are enabled only if
-	// this is non-nil.
-	RawFactory RawFactory
 
 	// AllowPacketEndpointWrite determines if packet endpoints support write
 	// operations.
@@ -286,29 +309,6 @@ type Options struct {
 	// If false, any connected TCP endpoints will be terminated
 	// during save/restore.
 	AllowLiveTCPMigration bool
-
-	// RandSource is an optional source to use to generate random
-	// numbers. If omitted it defaults to a Source seeded by the data
-	// returned by the stack secure RNG.
-	//
-	// RandSource must be thread-safe.
-	RandSource rand.Source
-
-	// IPTables are the initial iptables rules. If nil, DefaultIPTables will be
-	// used to construct the initial iptables rules.
-	// all traffic.
-	IPTables *IPTables
-
-	// NFTables is the nftables interface for packet filtering and manipulation rules.
-	NFTables NFTablesInterface
-
-	// DefaultIPTables is an optional iptables rules constructor that is called
-	// if IPTables is nil. If both fields are nil, iptables will allow all
-	// traffic.
-	DefaultIPTables func(clock tcpip.Clock, rand *rand.Rand) *IPTables
-
-	// SecureRNG is a cryptographically secure random number generator.
-	SecureRNG io.Reader
 }
 
 // TransportEndpointInfo holds useful information about a transport endpoint
@@ -1044,17 +1044,6 @@ type NICContext any
 // NICOptions specifies the configuration of a NIC as it is being created.
 // The zero value creates an enabled, unnamed NIC.
 type NICOptions struct {
-	// Name specifies the name of the NIC.
-	Name string
-
-	// Disabled specifies whether to avoid calling Attach on the passed
-	// LinkEndpoint.
-	Disabled bool
-
-	// Multicast specifies whether the interface reports multicast support.
-	// It does not control reception of multicast packets.
-	Multicast bool
-
 	// Context specifies user-defined data that will be returned in stack.NICInfo
 	// for the NIC. Clients of this library can use it to add metadata that
 	// should be tracked alongside a NIC, to avoid having to keep a
@@ -1063,6 +1052,24 @@ type NICOptions struct {
 
 	// QDisc is the queue discipline to use for this NIC.
 	QDisc QueueingDiscipline
+	// Name specifies the name of the NIC.
+	Name string
+
+	// Kind specifies the link kind of the NIC (e.g. "veth", "bridge").
+	Kind string
+
+	// MinMTU and MaxMTU bound subsequent changes through SetNICMTU. A zero
+	// value leaves the corresponding bound unrestricted.
+	MinMTU uint32
+	MaxMTU uint32
+
+	// Disabled specifies whether to avoid calling Attach on the passed
+	// LinkEndpoint.
+	Disabled bool
+
+	// Multicast specifies whether the interface reports multicast support.
+	// It does not control reception of multicast packets.
+	Multicast bool
 
 	// DeliverLinkPackets specifies whether the NIC is responsible for
 	// delivering raw packets to packet sockets.
@@ -1076,14 +1083,6 @@ type NICOptions struct {
 	// (source or destination in 127.0.0.0/8) should be accepted from external
 	// networks on this NIC.
 	AllowExternalIPv4LoopbackTraffic bool
-
-	// Kind specifies the link kind of the NIC (e.g. "veth", "bridge").
-	Kind string
-
-	// MinMTU and MaxMTU bound subsequent changes through SetNICMTU. A zero
-	// value leaves the corresponding bound unrestricted.
-	MinMTU uint32
-	MaxMTU uint32
 }
 
 // GetNICByID return a network device associated with the specified ID.
@@ -1361,43 +1360,42 @@ func (s *Stack) SetNICMTU(id tcpip.NICID, mtu uint32) tcpip.Error {
 
 // NICInfo captures the name and addresses assigned to a NIC.
 type NICInfo struct {
-	Name              string
-	LinkAddress       tcpip.LinkAddress
-	ProtocolAddresses []tcpip.ProtocolAddress
-
-	// Flags indicate the state of the NIC.
-	Flags NICStateFlags
-
-	// MTU is the maximum transmission unit.
-	MTU uint32
-
 	Stats tcpip.NICStats
-
-	// NetworkStats holds the stats of each NetworkEndpoint bound to the NIC.
-	NetworkStats map[tcpip.NetworkProtocolNumber]NetworkEndpointStats
 
 	// Context is user-supplied data optionally supplied in CreateNICWithOptions.
 	// See type NICOptions for more details.
 	Context NICContext
+
+	// Forwarding holds the forwarding status for each network endpoint that
+	// supports forwarding.
+	Forwarding map[tcpip.NetworkProtocolNumber]bool
+
+	// NetworkStats holds the stats of each NetworkEndpoint bound to the NIC.
+	NetworkStats map[tcpip.NetworkProtocolNumber]NetworkEndpointStats
+
+	// MulticastForwarding holds the forwarding status for each network endpoint
+	// that supports multicast forwarding.
+	MulticastForwarding map[tcpip.NetworkProtocolNumber]bool
+	LinkAddress         tcpip.LinkAddress
+	Name                string
+
+	// Kind specifies the link kind of the NIC (e.g. "veth", "bridge").
+	Kind              string
+	ProtocolAddresses []tcpip.ProtocolAddress
+
+	// MTU is the maximum transmission unit.
+	MTU uint32
+
+	// Primary is the index of the main controlling interface in a bonded setup.
+	Primary tcpip.NICID
 
 	// ARPHardwareType holds the ARP Hardware type of the NIC. This is the
 	// value sent in haType field of an ARP Request sent by this NIC and the
 	// value expected in the haType field of an ARP response.
 	ARPHardwareType header.ARPHardwareType
 
-	// Forwarding holds the forwarding status for each network endpoint that
-	// supports forwarding.
-	Forwarding map[tcpip.NetworkProtocolNumber]bool
-
-	// MulticastForwarding holds the forwarding status for each network endpoint
-	// that supports multicast forwarding.
-	MulticastForwarding map[tcpip.NetworkProtocolNumber]bool
-
-	// Primary is the index of the main controlling interface in a bonded setup.
-	Primary tcpip.NICID
-
-	// Kind specifies the link kind of the NIC (e.g. "veth", "bridge").
-	Kind string
+	// Flags indicate the state of the NIC.
+	Flags NICStateFlags
 }
 
 // HasNIC returns true if the NICID is defined in the stack.
@@ -2045,8 +2043,8 @@ func (s *Stack) SetSpoofing(nicID tcpip.NICID, enable bool) tcpip.Error {
 
 // LinkResolutionResult is the result of a link address resolution attempt.
 type LinkResolutionResult struct {
-	LinkAddress tcpip.LinkAddress
 	Err         tcpip.Error
+	LinkAddress tcpip.LinkAddress
 }
 
 // GetLinkAddress finds the link address corresponding to a network address.

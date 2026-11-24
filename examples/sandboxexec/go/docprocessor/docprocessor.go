@@ -37,10 +37,10 @@ type ProcessConfig struct {
 	InputDir    string        // Host directory mounted read-only at /input.
 	OutputDir   string        // Host directory mounted read-write at /output.
 	Command     string        // Shell command to run (default: uppercase each input file).
-	Timeout     time.Duration // Time limit. The sandbox is killed when it expires.
 	Network     string        // Network mode: "none" (default), "host", or "sandbox".
 	WorkingDir  string        // Working directory inside the sandbox (default: /).
 	SnapshotDir string        // Directory that holds one pre-warmed snapshot to restore.
+	Timeout     time.Duration // Time limit. The sandbox is killed when it expires.
 }
 
 // ProcessDocuments runs cfg.Command in a new gVisor sandbox. The input

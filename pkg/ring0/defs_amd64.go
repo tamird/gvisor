@@ -16,6 +16,8 @@
 
 package ring0
 
+import "gvisor.dev/gvisor/pkg/ring0/pagetables"
+
 var (
 	// VirtualAddressBits is the number of bits available in the virtual
 	// address space.
@@ -79,13 +81,23 @@ var (
 	KernelDataSegment SegmentDescriptor
 )
 
+// Kernel is a global kernel object.
+//
+// This contains global state, shared by multiple CPUs.
+type Kernel struct {
+	// PageTables are the kernel pagetables; this must be provided.
+	PageTables *pagetables.PageTables
+
+	KernelArchState
+}
+
 // KernelArchState contains architecture-specific state.
 type KernelArchState struct {
-	// cpuEntries is array of kernelEntry for all cpus.
-	cpuEntries []kernelEntry
-
 	// globalIDT is our set of interrupt gates.
 	globalIDT *idt64
+
+	// cpuEntries is array of kernelEntry for all cpus.
+	cpuEntries []kernelEntry
 }
 
 // kernelEntry contains minimal CPU-specific arch state

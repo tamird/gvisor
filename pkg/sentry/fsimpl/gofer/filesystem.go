@@ -1975,8 +1975,8 @@ func (fs *filesystem) IsDescendant(vfsroot, vd vfs.VirtualDentry) bool {
 }
 
 type mopt struct {
-	key   string
 	value any
+	key   string
 }
 
 func (m mopt) String() string {
@@ -1989,44 +1989,44 @@ func (m mopt) String() string {
 // MountOptions implements vfs.FilesystemImpl.MountOptions.
 func (fs *filesystem) MountOptions() string {
 	optsKV := []mopt{
-		{moptTransport, transportModeFD}, // Only valid value, currently.
-		{moptReadFD, fs.opts.fd},         // Currently, read and write FD are the same.
-		{moptWriteFD, fs.opts.fd},        // Currently, read and write FD are the same.
-		{moptAname, fs.opts.aname},
-		{moptDfltUID, fs.opts.dfltuid},
-		{moptDfltGID, fs.opts.dfltgid},
+		{key: moptTransport, value: transportModeFD}, // Only valid value, currently.
+		{key: moptReadFD, value: fs.opts.fd},         // Currently, read and write FD are the same.
+		{key: moptWriteFD, value: fs.opts.fd},        // Currently, read and write FD are the same.
+		{key: moptAname, value: fs.opts.aname},
+		{key: moptDfltUID, value: fs.opts.dfltuid},
+		{key: moptDfltGID, value: fs.opts.dfltgid},
 	}
 
 	if globalDentryCache != nil {
-		optsKV = append(optsKV, mopt{moptDcache, fmt.Sprintf("%d-global", globalDentryCache.maxCachedDentries)})
+		optsKV = append(optsKV, mopt{key: moptDcache, value: fmt.Sprintf("%d-global", globalDentryCache.maxCachedDentries)})
 	} else {
-		optsKV = append(optsKV, mopt{moptDcache, fs.opts.dcache})
+		optsKV = append(optsKV, mopt{key: moptDcache, value: fs.opts.dcache})
 	}
 	switch fs.opts.interop {
 	case InteropModeExclusive:
-		optsKV = append(optsKV, mopt{moptCache, cacheFSCache})
+		optsKV = append(optsKV, mopt{key: moptCache, value: cacheFSCache})
 	case InteropModeWritethrough:
-		optsKV = append(optsKV, mopt{moptCache, cacheFSCacheWritethrough})
+		optsKV = append(optsKV, mopt{key: moptCache, value: cacheFSCacheWritethrough})
 	case InteropModeShared:
-		optsKV = append(optsKV, mopt{moptCache, cacheRemoteRevalidating})
+		optsKV = append(optsKV, mopt{key: moptCache, value: cacheRemoteRevalidating})
 	}
 	if fs.opts.regularFilesUseSpecialFileFD {
-		optsKV = append(optsKV, mopt{moptDisableFileHandleSharing, nil})
+		optsKV = append(optsKV, mopt{key: moptDisableFileHandleSharing, value: nil})
 	}
 	if fs.opts.disableFifoOpen {
-		optsKV = append(optsKV, mopt{moptDisableFifoOpen, nil})
+		optsKV = append(optsKV, mopt{key: moptDisableFifoOpen, value: nil})
 	}
 	if fs.opts.forcePageCache {
-		optsKV = append(optsKV, mopt{moptForcePageCache, nil})
+		optsKV = append(optsKV, mopt{key: moptForcePageCache, value: nil})
 	}
 	if fs.opts.limitHostFDTranslation {
-		optsKV = append(optsKV, mopt{moptLimitHostFDTranslation, nil})
+		optsKV = append(optsKV, mopt{key: moptLimitHostFDTranslation, value: nil})
 	}
 	if fs.opts.overlayfsStaleRead {
-		optsKV = append(optsKV, mopt{moptOverlayfsStaleRead, nil})
+		optsKV = append(optsKV, mopt{key: moptOverlayfsStaleRead, value: nil})
 	}
 	if fs.opts.directfs.enabled {
-		optsKV = append(optsKV, mopt{moptDirectfs, nil})
+		optsKV = append(optsKV, mopt{key: moptDirectfs, value: nil})
 	}
 
 	opts := make([]string, 0, len(optsKV))

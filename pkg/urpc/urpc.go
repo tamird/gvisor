@@ -112,8 +112,8 @@ type filePayloader interface {
 
 // clientCall is the client=>server method call on the client side.
 type clientCall struct {
-	Method string `json:"method"`
 	Arg    any    `json:"arg"`
+	Method string `json:"method"`
 }
 
 // serverCall is the client=>server method call on the server side.
@@ -124,24 +124,24 @@ type serverCall struct {
 
 // callResult is the server=>client method call result.
 type callResult struct {
-	Success bool   `json:"success"`
-	Err     string `json:"err"`
 	Result  any    `json:"result"`
+	Err     string `json:"err"`
+	Success bool   `json:"success"`
 }
 
 // registeredMethod is method registered with the server.
 type registeredMethod struct {
-	// fn is the underlying function.
-	fn reflect.Value
-
-	// rcvr is the receiver value.
-	rcvr reflect.Value
 
 	// argType is a typed argument.
 	argType reflect.Type
 
 	// resultType is also a type result.
 	resultType reflect.Type
+	// fn is the underlying function.
+	fn reflect.Value
+
+	// rcvr is the receiver value.
+	rcvr reflect.Value
 }
 
 // clientState is client metadata.
@@ -170,29 +170,29 @@ const (
 
 // Server is an RPC server.
 type Server struct {
-	mu sync.Mutex
 
 	// methods is the set of server methods.
 	//
 	// +checklocks:mu
 	methods map[string]registeredMethod
 
-	// stoppers are all registered stoppers.
-	//
-	// +checklocks:mu
-	stoppers []Stopper
-
 	// clients is a map of clients.
 	//
 	// +checklocks:mu
 	clients map[*unet.Socket]clientState
 
-	// wg is a wait group for all outstanding clients.
-	wg sync.WaitGroup
-
 	// afterRPCCallback is called after handling each unmarshalled RPC.
 	// It is immutable after initialization.
 	afterRPCCallback func()
+
+	// stoppers are all registered stoppers.
+	//
+	// +checklocks:mu
+	stoppers []Stopper
+
+	// wg is a wait group for all outstanding clients.
+	wg sync.WaitGroup
+	mu sync.Mutex
 }
 
 // NewServer returns a new server.
@@ -240,7 +240,6 @@ func (s *Server) Register(obj any) {
 
 	for m := range typ.NumMethod() {
 		method := typ.Method(m)
-
 		if typDeref.Name() == "" {
 			// Can't be anonymous.
 			panic("type not named.")
@@ -563,14 +562,14 @@ func (s *Server) Stop(timeout time.Duration) {
 
 // Client is a urpc client.
 type Client struct {
-	// mu serializes Call and Close, enforcing single-call semantics.
-	mu sync.Mutex
 
 	// Socket is the underlying socket for this client.
 	//
 	// The pointer must be set at initialization and must not be replaced.
 	// The socket must be closed manually by calling Close.
 	Socket *unet.Socket
+	// mu serializes Call and Close, enforcing single-call semantics.
+	mu sync.Mutex
 }
 
 // NewClient returns a new client.

@@ -25,8 +25,8 @@ import (
 
 func TestTranslateErrno(t *testing.T) {
 	for _, test := range []struct {
-		errno      unix.Errno
 		translated Error
+		errno      unix.Errno
 	}{
 		{
 			errno:      unix.Errno(0),

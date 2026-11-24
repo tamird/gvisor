@@ -54,16 +54,12 @@ type genericFD interface {
 //
 // Reference Model:
 //   - Each control FD holds a ref on its Node for its entire lifetime.
+//
+// id, conn, ftype, and impl are immutable.
 type ControlFD struct {
-	controlFDRefs
 	// These generated links use the associated node.controlFDsMu. Their
 	// generic accessors cannot express the enclosing ControlFD's node owner.
 	controlFDEntry
-
-	// node is the filesystem node this FD is immutably associated with.
-	node *Node
-
-	openFDsMu sync.RWMutex
 
 	// openFDs is a linked list of all FDs opened on this FD. As per reference
 	// model, all open FDs hold a ref on this FD.
@@ -71,20 +67,23 @@ type ControlFD struct {
 	// +checklocks:openFDsMu
 	openFDs openFDList
 
-	// All the following fields are immutable.
-
-	// id is the unique FD identifier which identifies this FD on its connection.
-	id FDID
-
-	// conn is the backing connection owning this FD.
-	conn *Connection
-
-	// ftype is the file type of the backing inode. ftype.FileType() == ftype.
-	ftype linux.FileMode
-
 	// impl is the control FD implementation which embeds this struct. It
 	// contains all the implementation specific details.
 	impl ControlFDImpl
+
+	// node is the filesystem node this FD is immutably associated with.
+	node *Node
+
+	// conn is the backing connection owning this FD.
+	conn *Connection
+	controlFDRefs
+
+	// id is the unique FD identifier which identifies this FD on its connection.
+	id        FDID
+	openFDsMu sync.RWMutex
+
+	// ftype is the file type of the backing inode. ftype.FileType() == ftype.
+	ftype linux.FileMode
 }
 
 var _ genericFD = (*ControlFD)(nil)
@@ -253,17 +252,21 @@ func (fd *ControlFD) forEachOpenFD(fn func(ofd *OpenFD)) {
 //
 // Reference Model:
 //   - An OpenFD takes a reference on the control FD it was opened on.
+//
+// controlFD, id, readable, writable, and impl are immutable.
 type OpenFD struct {
-	openFDRefs
 	// These generated links use controlFD.openFDsMu. Entry accessors have
 	// no back-reference to the enclosing OpenFD to name that owner lock.
 	openFDEntry
 
-	// All the following fields are immutable.
+	// impl is the open FD implementation which embeds this struct. It
+	// contains all the implementation specific details.
+	impl OpenFDImpl
 
 	// controlFD is the ControlFD on which this FD was opened. OpenFD holds a ref
 	// on controlFD for its entire lifetime.
 	controlFD *ControlFD
+	openFDRefs
 
 	// id is the unique FD identifier which identifies this FD on its connection.
 	id FDID
@@ -271,10 +274,6 @@ type OpenFD struct {
 	// Access mode for this FD.
 	readable bool
 	writable bool
-
-	// impl is the open FD implementation which embeds this struct. It
-	// contains all the implementation specific details.
-	impl OpenFDImpl
 }
 
 var _ genericFD = (*OpenFD)(nil)
@@ -323,21 +322,20 @@ func (fd *OpenFD) Init(cfd *ControlFD, flags uint32, impl OpenFDImpl) {
 //
 // Reference Model:
 //   - A BoundSocketFD takes a reference on the control FD it is bound to.
+//
+// controlFD, id, and impl are immutable.
 type BoundSocketFD struct {
-	boundSocketFDRefs
-
-	// All the following fields are immutable.
+	// impl is the socket FD implementation which embeds this struct. It
+	// contains all the implementation specific details.
+	impl BoundSocketFDImpl
 
 	// controlFD is the ControlFD on which this FD was bound. BoundSocketFD
 	// holds a ref on controlFD for its entire lifetime.
 	controlFD *ControlFD
+	boundSocketFDRefs
 
 	// id is the unique FD identifier which identifies this FD on its connection.
 	id FDID
-
-	// impl is the socket FD implementation which embeds this struct. It
-	// contains all the implementation specific details.
-	impl BoundSocketFDImpl
 }
 
 var _ genericFD = (*BoundSocketFD)(nil)

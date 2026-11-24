@@ -56,15 +56,15 @@ func vfsCapDataFrom(effective bool, permitted, inheritable CapabilitySet) linux.
 
 func TestComputeCredsForExec(t *testing.T) {
 	for _, tst := range []struct {
+		wantErr       error
+		creds         *Credentials
 		name          string
 		filePrivs     FilePrivileges
-		creds         *Credentials
+		wantPermitted CapabilitySet
 		noNewPrivs    bool
 		stopPrivGain  bool
 		allowSUID     bool
-		wantPermitted CapabilitySet
 		wantEffective bool
-		wantErr       error
 	}{
 		{
 			name: "TestSamePermittedAndInheritableCaps",
@@ -220,10 +220,10 @@ func TestComputeCredsForExec(t *testing.T) {
 
 func TestVfsCapData(t *testing.T) {
 	for _, tst := range []struct {
+		wantErr error
 		name    string
 		data    []byte
 		capData linux.VfsNsCapData
-		wantErr error
 	}{
 		{
 			name:    "VfsCapRevision1",

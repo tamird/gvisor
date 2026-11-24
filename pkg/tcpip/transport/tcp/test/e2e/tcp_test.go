@@ -1201,10 +1201,10 @@ func TestUserSuppliedMSSOnConnect(t *testing.T) {
 	const mtu = 5000
 
 	ips := []struct {
-		name        string
 		createEP    func(*context.Context)
-		connectAddr tcpip.Address
 		checker     func(*testing.T, *context.Context, uint16, int)
+		name        string
+		connectAddr tcpip.Address
 		maxMSS      uint16
 	}{
 		{
@@ -1304,10 +1304,10 @@ func TestUserSuppliedMSSOnListenAccept(t *testing.T) {
 	const mtu = 5000
 
 	ips := []struct {
-		name     string
 		createEP func(*context.Context)
 		sendPkt  func(*context.Context, *context.Headers)
 		checker  func(*testing.T, *context.Context, uint16, uint16)
+		name     string
 		maxMSS   uint16
 	}{
 		{
@@ -3648,25 +3648,25 @@ func TestZeroScaledWindowReceive(t *testing.T) {
 
 func TestSegmentMerging(t *testing.T) {
 	tests := []struct {
-		name   string
 		stop   func(tcpip.Endpoint)
 		resume func(tcpip.Endpoint)
+		name   string
 	}{
 		{
-			"stop work",
-			func(ep tcpip.Endpoint) {
+			name: "stop work",
+			stop: func(ep tcpip.Endpoint) {
 				ep.(interface{ StopWork() }).StopWork()
 			},
-			func(ep tcpip.Endpoint) {
+			resume: func(ep tcpip.Endpoint) {
 				ep.(interface{ ResumeWork() }).ResumeWork()
 			},
 		},
 		{
-			"cork",
-			func(ep tcpip.Endpoint) {
+			name: "cork",
+			stop: func(ep tcpip.Endpoint) {
 				ep.SocketOptions().SetCorkOption(true)
 			},
-			func(ep tcpip.Endpoint) {
+			resume: func(ep tcpip.Endpoint) {
 				ep.SocketOptions().SetCorkOption(false)
 			},
 		},
@@ -3883,12 +3883,12 @@ func TestUndelay(t *testing.T) {
 
 func TestMSSNotDelayed(t *testing.T) {
 	tests := []struct {
-		name string
 		fn   func(tcpip.Endpoint)
+		name string
 	}{
-		{"no-op", func(tcpip.Endpoint) {}},
-		{"delay", func(ep tcpip.Endpoint) { ep.SocketOptions().SetDelayOption(true) }},
-		{"cork", func(ep tcpip.Endpoint) { ep.SocketOptions().SetCorkOption(true) }},
+		{name: "no-op", fn: func(tcpip.Endpoint) {}},
+		{name: "delay", fn: func(ep tcpip.Endpoint) { ep.SocketOptions().SetDelayOption(true) }},
+		{name: "cork", fn: func(ep tcpip.Endpoint) { ep.SocketOptions().SetCorkOption(true) }},
 	}
 
 	for _, test := range tests {
@@ -4105,14 +4105,14 @@ func TestPartialSegmentDelayed(t *testing.T) {
 		for _, gso := range []bool{false, true} {
 			for _, test := range []struct {
 				name           string
-				window         seqnum.Size
-				dataSize       int
-				queuedPrefix   int
-				openWindow     bool
 				wantCork       sendCounts
 				wantNagle      sendCounts
 				wantNoDelay    sendCounts
 				wantNoDelayGSO sendCounts
+				dataSize       int
+				queuedPrefix   int
+				window         seqnum.Size
+				openWindow     bool
 			}{
 				{
 					name: "full-and-partial", window: 30000, dataSize: 201,
@@ -6074,15 +6074,15 @@ func TestBindToDeviceOption(t *testing.T) {
 	}
 
 	testActions := []struct {
-		name                 string
-		setBindToDevice      *tcpip.NICID
 		setBindToDeviceError tcpip.Error
+		setBindToDevice      *tcpip.NICID
+		name                 string
 		getBindToDevice      int32
 	}{
-		{"GetDefaultValue", nil, nil, 0},
-		{"BindToNonExistent", nicIDPtr(999), &tcpip.ErrUnknownDevice{}, 0},
-		{"BindToExistent", nicIDPtr(321), nil, 321},
-		{"UnbindToDevice", nicIDPtr(0), nil, 0},
+		{name: "GetDefaultValue", setBindToDevice: nil, setBindToDeviceError: nil, getBindToDevice: 0},
+		{name: "BindToNonExistent", setBindToDevice: nicIDPtr(999), setBindToDeviceError: &tcpip.ErrUnknownDevice{}, getBindToDevice: 0},
+		{name: "BindToExistent", setBindToDevice: nicIDPtr(321), setBindToDeviceError: nil, getBindToDevice: 321},
+		{name: "UnbindToDevice", setBindToDevice: nicIDPtr(0), setBindToDeviceError: nil, getBindToDevice: 0},
 	}
 	for _, testAction := range testActions {
 		t.Run(testAction.name, func(t *testing.T) {
@@ -6474,12 +6474,12 @@ func TestTCPEndpointProbe(t *testing.T) {
 
 func TestStackSetCongestionControl(t *testing.T) {
 	testCases := []struct {
-		cc  tcpip.CongestionControlOption
 		err tcpip.Error
+		cc  tcpip.CongestionControlOption
 	}{
-		{"reno", nil},
-		{"cubic", nil},
-		{"blahblah", &tcpip.ErrNoSuchFile{}},
+		{cc: "reno", err: nil},
+		{cc: "cubic", err: nil},
+		{cc: "blahblah", err: &tcpip.ErrNoSuchFile{}},
 	}
 
 	for _, tc := range testCases {
@@ -6560,12 +6560,12 @@ func TestStackSetAvailableCongestionControl(t *testing.T) {
 
 func TestEndpointSetCongestionControl(t *testing.T) {
 	testCases := []struct {
-		cc  tcpip.CongestionControlOption
 		err tcpip.Error
+		cc  tcpip.CongestionControlOption
 	}{
-		{"reno", nil},
-		{"cubic", nil},
-		{"blahblah", &tcpip.ErrNoSuchFile{}},
+		{cc: "reno", err: nil},
+		{cc: "cubic", err: nil},
+		{cc: "blahblah", err: &tcpip.ErrNoSuchFile{}},
 	}
 
 	for _, connected := range []bool{false, true} {
@@ -9438,14 +9438,14 @@ func TestSetStackTimeWaitReuse(t *testing.T) {
 
 	s := c.Stack()
 	testCases := []struct {
-		v   int
 		err tcpip.Error
+		v   int
 	}{
-		{int(tcpip.TCPTimeWaitReuseDisabled), nil},
-		{int(tcpip.TCPTimeWaitReuseGlobal), nil},
-		{int(tcpip.TCPTimeWaitReuseLoopbackOnly), nil},
-		{int(tcpip.TCPTimeWaitReuseLoopbackOnly) + 1, &tcpip.ErrInvalidOptionValue{}},
-		{int(tcpip.TCPTimeWaitReuseDisabled) - 1, &tcpip.ErrInvalidOptionValue{}},
+		{v: int(tcpip.TCPTimeWaitReuseDisabled), err: nil},
+		{v: int(tcpip.TCPTimeWaitReuseGlobal), err: nil},
+		{v: int(tcpip.TCPTimeWaitReuseLoopbackOnly), err: nil},
+		{v: int(tcpip.TCPTimeWaitReuseLoopbackOnly) + 1, err: &tcpip.ErrInvalidOptionValue{}},
+		{v: int(tcpip.TCPTimeWaitReuseDisabled) - 1, err: &tcpip.ErrInvalidOptionValue{}},
 	}
 
 	for _, tc := range testCases {
@@ -9549,11 +9549,11 @@ func TestSetRTO(t *testing.T) {
 	minRTO, maxRTO := tcpRTOMinMax(t, c)
 	c.Cleanup()
 	for _, tt := range []struct {
+		err    tcpip.Error
 		name   string
 		RTO    time.Duration
 		minRTO time.Duration
 		maxRTO time.Duration
-		err    tcpip.Error
 	}{
 		{
 			name:   "invalid minRTO",

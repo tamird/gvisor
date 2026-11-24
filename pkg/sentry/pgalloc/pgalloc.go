@@ -349,6 +349,9 @@ type evictableMemoryUserInfo struct {
 
 // MemoryFileOpts provides options to NewMemoryFile.
 type MemoryFileOpts struct {
+	// ResourceID is used to reassociate the MemoryFile with its replacement
+	// during restore.
+	ResourceID checkpoint.ResourceID
 	// DelayedEviction controls the extent to which the MemoryFile may delay
 	// eviction of evictable allocations.
 	DelayedEviction DelayedEvictionType
@@ -369,10 +372,6 @@ type MemoryFileOpts struct {
 
 	// DiskBackedFile indicates that the MemoryFile is backed by a file on disk.
 	DiskBackedFile bool
-
-	// ResourceID is used to reassociate the MemoryFile with its replacement
-	// during restore.
-	ResourceID checkpoint.ResourceID
 
 	// If ExpectHugepages is true, MemoryFile will expect that the host will
 	// attempt to back AllocOpts.Huge == true allocations with huge pages. If
@@ -530,28 +529,27 @@ func (f *MemoryFile) releaserDestroyLocked() {
 
 // AllocOpts are options used in MemoryFile.Allocate.
 type AllocOpts struct {
-	// Kind is the allocation's memory accounting type.
-	Kind usage.MemoryKind
-
-	// MemCgID is the memory cgroup ID and the zero value indicates that
-	// the memory will not be accounted to any cgroup.
-	MemCgID uint32
-
-	// Mode controls the commitment status of returned pages.
-	Mode AllocationMode
-
-	// If Huge is true, the allocation should be hugepage-backed if possible.
-	Huge bool
-
-	// Dir indicates the direction in which offsets are allocated.
-	Dir Direction
-
 	// If ReaderFunc is provided, the allocated memory is filled by calling it
 	// repeatedly until either length bytes are read or a non-nil error is
 	// returned. It returns the allocated memory, truncated down to the nearest
 	// page. If this is shorter than length bytes due to an error returned by
 	// ReaderFunc, it returns the partially filled fr and error.
 	ReaderFunc safemem.ReaderFunc
+	// Kind is the allocation's memory accounting type.
+	Kind usage.MemoryKind
+
+	// Mode controls the commitment status of returned pages.
+	Mode AllocationMode
+
+	// MemCgID is the memory cgroup ID and the zero value indicates that
+	// the memory will not be accounted to any cgroup.
+	MemCgID uint32
+
+	// If Huge is true, the allocation should be hugepage-backed if possible.
+	Huge bool
+
+	// Dir indicates the direction in which offsets are allocated.
+	Dir Direction
 }
 
 // Direction is the type of AllocOpts.Dir.
@@ -603,8 +601,8 @@ const (
 
 // allocState holds the state of a call to MemoryFile.Allocate().
 type allocState struct {
-	length     uint64
 	opts       AllocOpts
+	length     uint64
 	willCommit bool // either us or our caller
 	recycled   bool
 	huge       bool

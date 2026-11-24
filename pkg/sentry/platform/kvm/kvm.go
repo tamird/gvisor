@@ -64,11 +64,11 @@ type runData struct {
 
 // KVM represents a lightweight VM context.
 type KVM struct {
-	// KVM never changes mm_structs.
-	platform.UseHostProcessMemoryBarrier
-
 	// machine is the backing VM.
 	machine *machine
+
+	// KVM never changes mm_structs.
+	platform.UseHostProcessMemoryBarrier
 }
 
 var (

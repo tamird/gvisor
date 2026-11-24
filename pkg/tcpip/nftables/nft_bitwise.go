@@ -51,12 +51,12 @@ func (bop bitwiseOp) String() string {
 // a given register, storing the result in a destination register.
 // Note: bitwise operations are not supported for the verdict register.
 type bitwise struct {
+	mask    []byte    // Mask to apply bitwise & for boolean operations (before ^).
+	xor     []byte    // Xor to apply bitwise ^ for boolean operations (after &).
 	sregIdx int       // Index of the source register in registerSet.data.
 	dregIdx int       // Index of the destination register in registerSet.data.
 	bop     bitwiseOp // Bitwise operator to use.
 	blen    int       // Number of bytes to apply bitwise operation to.
-	mask    []byte    // Mask to apply bitwise & for boolean operations (before ^).
-	xor     []byte    // Xor to apply bitwise ^ for boolean operations (after &).
 	shift   uint32    // Shift to apply bitwise <</>> for non-boolean operations.
 
 	// Note: Technically, the linux kernel has defined bool, lshift, and rshift

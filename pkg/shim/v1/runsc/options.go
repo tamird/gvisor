@@ -55,14 +55,11 @@ func GetRuntimeOptions() *Options {
 
 // Options is runtime options for io.containerd.runsc.v1.
 type Options struct {
+	// RunscConfig is a key/value map of all runsc flags.
+	RunscConfig map[string]string `toml:"runsc_config" json:"runscConfig"`
+
 	// ShimCgroup is the cgroup the shim should be in.
 	ShimCgroup string `toml:"shim_cgroup" json:"shimCgroup"`
-
-	// IoUID is the I/O's pipes uid.
-	IoUID uint32 `toml:"io_uid" json:"ioUid"`
-
-	// IoGID is the I/O's pipes gid.
-	IoGID uint32 `toml:"io_gid" json:"ioGid"`
 
 	// BinaryName is the binary name of the runsc binary.
 	BinaryName string `toml:"binary_name" json:"binaryName"`
@@ -82,12 +79,15 @@ type Options struct {
 	// This configuration only applies when the shim is running as a service.
 	LogPath string `toml:"log_path" json:"logPath"`
 
+	// IoUID is the I/O's pipes uid.
+	IoUID uint32 `toml:"io_uid" json:"ioUid"`
+
+	// IoGID is the I/O's pipes gid.
+	IoGID uint32 `toml:"io_gid" json:"ioGid"`
+
 	// Grouping indicates if shim grouping should be enabled.
 	Grouping bool `toml:"grouping" json:"grouping"`
 
 	// EnableHibernateServer indicates if the hibernate server should be started.
 	EnableHibernateServer bool `toml:"enable_hibernate_server" json:"enableHibernateServer"`
-
-	// RunscConfig is a key/value map of all runsc flags.
-	RunscConfig map[string]string `toml:"runsc_config" json:"runscConfig"`
 }

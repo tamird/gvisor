@@ -161,35 +161,36 @@ type Stack interface {
 
 // Interface contains information about a network interface.
 type Interface struct {
-	// DeviceType is the device type, a Linux ARPHRD_* constant.
-	DeviceType uint16
-
-	// Flags is the device flags; see netdevice(7), under "Ioctls",
-	// "SIOCGIFFLAGS, SIOCSIFFLAGS".
-	Flags uint32
-
 	// Name is the device name.
 	Name string
 
+	// Kind is the link kind (e.g. "veth", "bridge").
+	Kind string
+
 	// Addr is the hardware device address.
 	Addr []byte
-
-	// MTU is the maximum transmission unit.
-	MTU uint32
 
 	// Features are the device features queried from the host at
 	// stack creation time. These are immutable after startup.
 	Features []linux.EthtoolGetFeaturesBlock
 
+	// Flags is the device flags; see netdevice(7), under "Ioctls",
+	// "SIOCGIFFLAGS, SIOCSIFFLAGS".
+	Flags uint32
+
+	// MTU is the maximum transmission unit.
+	MTU uint32
+
 	// Master is the index of the main controlling interface in a bonded setup.
 	Master uint32
-
-	// Kind is the link kind (e.g. "veth", "bridge").
-	Kind string
+	// DeviceType is the device type, a Linux ARPHRD_* constant.
+	DeviceType uint16
 }
 
 // InterfaceAddr contains information about a network interface address.
 type InterfaceAddr struct {
+	// Addr is the actual address.
+	Addr []byte
 	// Family is the address family, a Linux AF_* constant.
 	Family uint8
 
@@ -198,9 +199,6 @@ type InterfaceAddr struct {
 
 	// Flags is the address flags.
 	Flags uint8
-
-	// Addr is the actual address.
-	Addr []byte
 }
 
 // TCPBufferSize contains settings controlling TCP buffer sizing.
@@ -223,6 +221,21 @@ type StatDev [16]uint64
 
 // Route contains information about a network route.
 type Route struct {
+	// DstAddr is the route destination address (RTA_DST).
+	DstAddr []byte
+
+	// SrcAddr is the route source address (RTA_SRC).
+	SrcAddr []byte
+
+	// GatewayAddr is the route gateway address (RTA_GATEWAY).
+	GatewayAddr []byte
+
+	// Flags are route flags. See rtnetlink(7) under "rtm_flags".
+	Flags uint32
+
+	// OutputInterface is the output interface index (RTA_OIF).
+	OutputInterface int32
+
 	// Family is the address family, a Linux AF_* constant.
 	Family uint8
 
@@ -246,21 +259,6 @@ type Route struct {
 
 	// Type is the route origin, a Linux RTN_* constant.
 	Type uint8
-
-	// Flags are route flags. See rtnetlink(7) under "rtm_flags".
-	Flags uint32
-
-	// DstAddr is the route destination address (RTA_DST).
-	DstAddr []byte
-
-	// SrcAddr is the route source address (RTA_SRC).
-	SrcAddr []byte
-
-	// OutputInterface is the output interface index (RTA_OIF).
-	OutputInterface int32
-
-	// GatewayAddr is the route gateway address (RTA_GATEWAY).
-	GatewayAddr []byte
 }
 
 // Below SNMP metrics are from Linux/usr/include/linux/snmp.h.
@@ -296,6 +294,8 @@ const (
 
 // InterfaceRequest contains information about an adding interface.
 type InterfaceRequest struct {
+	// Data is link type specific device properties.
+	Data any
 	// Kind is the link type.
 	Kind string
 	// Name is the interface name.
@@ -304,16 +304,15 @@ type InterfaceRequest struct {
 	Addr []byte
 	// MTU is the maximum transmission unit.
 	MTU uint32
-	// Data is link type specific device properties.
-	Data any
 }
 
 // VethPeerReq contains information about a second interface of a new veth pair.
 type VethPeerReq struct {
-	// Req is information about the second end of the new veth pair.
-	Req InterfaceRequest
 	// Stack is the stack where the second end has to be added.
 	Stack Stack
+
+	// Req is information about the second end of the new veth pair.
+	Req InterfaceRequest
 }
 
 // NetworkArgs configures a network stack directly.

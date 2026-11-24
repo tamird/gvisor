@@ -27,10 +27,10 @@ import (
 // Finding is a single finding.
 type Finding struct {
 	Category string
-	Position token.Position
 	Message  string
 	GOARCH   string
 	GOOS     string
+	Position token.Position
 }
 
 // String implements fmt.Stringer.String.

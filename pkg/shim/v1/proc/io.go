@@ -41,8 +41,8 @@ var bufPool = sync.Pool{
 func copyPipes(ctx context.Context, rio runc.IO, stdin, stdout, stderr string, wg *sync.WaitGroup, closers *[]io.Closer) error {
 	var sameFile *countingWriteCloser
 	for _, i := range []struct {
-		name string
 		dest func(wc io.WriteCloser, rc io.Closer)
+		name string
 	}{
 		{
 			name: stdout,

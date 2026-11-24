@@ -230,13 +230,13 @@ func timeStampEnabledAccept(t *testing.T, cookieEnabled bool, wndScale int, wndS
 // SYN.
 func TestTimeStampEnabledAccept(t *testing.T) {
 	testCases := []struct {
-		cookieEnabled bool
 		wndScale      int
 		wndSize       uint16
+		cookieEnabled bool
 	}{
-		{true, -1, 0xffff}, // When cookie is used window scaling is disabled.
+		{cookieEnabled: true, wndScale: -1, wndSize: 0xffff}, // When cookie is used window scaling is disabled.
 		// DefaultReceiveBufferSize is 1MB >> 5. Advertised window will be 1/2 of that.
-		{false, 5, 0x4000},
+		{cookieEnabled: false, wndScale: 5, wndSize: 0x4000},
 	}
 	for _, tc := range testCases {
 		timeStampEnabledAccept(t, tc.cookieEnabled, tc.wndScale, tc.wndSize)
@@ -288,14 +288,14 @@ func timeStampDisabledAccept(t *testing.T, cookieEnabled bool, wndScale int, wnd
 // peer doesn't advertise it and connection is established with Accept().
 func TestTimeStampDisabledAccept(t *testing.T) {
 	testCases := []struct {
-		cookieEnabled bool
 		wndScale      int
 		wndSize       uint16
+		cookieEnabled bool
 	}{
-		{true, -1, 0xffff}, // When cookie is used window scaling is disabled.
+		{cookieEnabled: true, wndScale: -1, wndSize: 0xffff}, // When cookie is used window scaling is disabled.
 		// DefaultReceiveBufferSize is 1MB >> 5. Advertised window will be half of
 		// that.
-		{false, 5, 0x4000},
+		{cookieEnabled: false, wndScale: 5, wndSize: 0x4000},
 	}
 	for _, tc := range testCases {
 		timeStampDisabledAccept(t, tc.cookieEnabled, tc.wndScale, tc.wndSize)

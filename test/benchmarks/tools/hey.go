@@ -23,9 +23,9 @@ import (
 
 // Hey is for the client application 'hey'.
 type Hey struct {
+	Doc         string
 	Requests    int // Note: requests cannot be less than concurrency.
 	Concurrency int
-	Doc         string
 }
 
 // MakeCmd returns a 'hey' command.

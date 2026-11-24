@@ -243,17 +243,17 @@ func (*FieldName) isDot() {}
 
 // Ref is a reference to an object.
 type Ref struct {
-	// Root is the root object.
-	Root Uint
-
-	// Dots is the set of traversals required from the Root object above.
-	// Note that this will be stored in reverse order for efficiency.
-	Dots []Dot
-
 	// Type is the base type for the root object. This is non-nil iff Dots
 	// is non-zero length (that is, this is a complex reference). This is
 	// not *strictly* necessary, but can be used to simplify decoding.
 	Type TypeSpec
+
+	// Dots is the set of traversals required from the Root object.
+	// Note that this will be stored in reverse order for efficiency.
+	Dots []Dot
+
+	// Root is the root object.
+	Root Uint
 }
 
 // save implements Object.save.
@@ -293,9 +293,9 @@ func (Nil) save(w *Writer) {}
 
 // Slice is a slice value.
 type Slice struct {
+	Ref      Ref
 	Length   Uint
 	Capacity Uint
-	Ref      Ref
 }
 
 // save implements Object.save.
@@ -370,8 +370,8 @@ func (*TypeSpecPointer) isTypeSpec() {}
 
 // TypeSpecArray is an array type.
 type TypeSpecArray struct {
-	Count Uint
 	Type  TypeSpec
+	Count Uint
 }
 
 func (*TypeSpecArray) isTypeSpec() {}
@@ -488,8 +488,8 @@ func (noObjects) save(w *Writer) {}
 
 // Struct is a basic composite value.
 type Struct struct {
-	TypeID TypeID
 	fields Object // Optionally noObjects or *multipleObjects.
+	TypeID TypeID
 }
 
 // Field returns a pointer to the given field slot.

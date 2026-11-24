@@ -27,20 +27,26 @@ import (
 
 // natOp represents the NFT_NAT expression.
 type natOp struct {
-	// sregAddrMinIdx is the starting index in the register set to read/write address min data.
-	sregAddrMinIdx int8
-	// sregAddrMaxIdx is the starting index in the register set to read/write address max data.
-	sregAddrMaxIdx int8
-	// sregProtoMinIdx is the starting index in the register set to read/write proto min data.
-	sregProtoMinIdx int8
-	// sregProtoMaxIdx is the starting index in the register set to read/write proto max data.
-	sregProtoMaxIdx int8
 	// manipType is the type of NAT operation, either SNAT or DNAT.
 	manipType stack.NATType
-	// family is the Address family of the NAT operation, either IPv4 or IPv6.
-	family uint8
+
 	// flags is the flags for the NAT operation.
 	flags uint16
+
+	// sregAddrMinIdx is the starting index in the register set to read/write address min data.
+	sregAddrMinIdx int8
+
+	// sregAddrMaxIdx is the starting index in the register set to read/write address max data.
+	sregAddrMaxIdx int8
+
+	// sregProtoMinIdx is the starting index in the register set to read/write proto min data.
+	sregProtoMinIdx int8
+
+	// sregProtoMaxIdx is the starting index in the register set to read/write proto max data.
+	sregProtoMaxIdx int8
+
+	// family is the Address family of the NAT operation, either IPv4 or IPv6.
+	family uint8
 }
 
 // newNATOp creates a new NAT operation.

@@ -108,11 +108,11 @@ type Mappable interface {
 
 // Translations are returned by Mappable.Translate.
 type Translation struct {
-	// Source is the translated range in the Mappable.
-	Source MappableRange
-
 	// File is the mapped file.
 	File File
+
+	// Source is the translated range in the Mappable.
+	Source MappableRange
 
 	// Offset is the offset into File at which this Translation begins.
 	Offset uint64
@@ -308,9 +308,6 @@ const (
 
 // MMapOpts specifies a request to create a memory mapping.
 type MMapOpts struct {
-	// Length is the length of the mapping.
-	Length uint64
-
 	// MappingIdentity controls the lifetime of Mappable, and provides
 	// properties of the mapping shown in /proc/[pid]/maps. If MMapOpts is used
 	// to successfully create a memory mapping, a reference is taken on
@@ -322,12 +319,39 @@ type MMapOpts struct {
 	// reference is held on MappingIdentity.
 	Mappable Mappable
 
+	// Name is the name used for the mapping in /proc/[pid]/maps. If Name is
+	// empty, MappingIdentity.MappedName() will be used instead.
+	//
+	// TODO(jamieliu): Replace entirely with MappingIdentity?
+	Name string
+
+	// Length is the length of the mapping.
+	Length uint64
+
 	// Offset is the offset into Mappable to map. If Mappable is nil, Offset is
 	// ignored.
 	Offset uint64
 
 	// Addr is the suggested address for the mapping.
 	Addr hostarch.Addr
+
+	// MLockMode specifies the memory locking behavior of the mapping.
+	MLockMode MLockMode
+
+	// Perms is the set of permissions to the applied to this mapping.
+	Perms hostarch.AccessType
+
+	// MaxPerms limits the set of permissions that may ever apply to this
+	// mapping. If Mappable is not nil, all memmap.Translations returned by
+	// Mappable.Translate must support all accesses in MaxPerms.
+	//
+	// Preconditions: MaxAccessType should be an effective AccessType, as
+	// access cannot be limited beyond effective AccessTypes.
+	MaxPerms hostarch.AccessType
+
+	// PlatformEffect controls the synchronous effect of this call on the
+	// underlying platform.AddressSpace.
+	PlatformEffect MMapPlatformEffect
 
 	// Fixed specifies whether this is a fixed mapping (it must be located at
 	// Addr).
@@ -349,17 +373,6 @@ type MMapOpts struct {
 	// integer.) Map32Bit is ignored if Fixed is true.
 	Map32Bit bool
 
-	// Perms is the set of permissions to the applied to this mapping.
-	Perms hostarch.AccessType
-
-	// MaxPerms limits the set of permissions that may ever apply to this
-	// mapping. If Mappable is not nil, all memmap.Translations returned by
-	// Mappable.Translate must support all accesses in MaxPerms.
-	//
-	// Preconditions: MaxAccessType should be an effective AccessType, as
-	// access cannot be limited beyond effective AccessTypes.
-	MaxPerms hostarch.AccessType
-
 	// Private is true if writes to the mapping should be propagated to a copy
 	// that is exclusive to the MemoryManager.
 	Private bool
@@ -371,19 +384,6 @@ type MMapOpts struct {
 	// Stack is equivalent to MAP_STACK, which has no mandatory semantics in
 	// Linux.
 	Stack bool
-
-	// PlatformEffect controls the synchronous effect of this call on the
-	// underlying platform.AddressSpace.
-	PlatformEffect MMapPlatformEffect
-
-	// MLockMode specifies the memory locking behavior of the mapping.
-	MLockMode MLockMode
-
-	// Name is the name used for the mapping in /proc/[pid]/maps. If Name is
-	// empty, MappingIdentity.MappedName() will be used instead.
-	//
-	// TODO(jamieliu): Replace entirely with MappingIdentity?
-	Name string
 
 	// NameMut controls the effect of prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME)
 	// on this mapping.

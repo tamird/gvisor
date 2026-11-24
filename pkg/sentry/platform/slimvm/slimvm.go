@@ -33,14 +33,13 @@ type SlimVM struct {
 	// TODO: b/529809802 - Enable nogo. support CPU preemption detection.
 	platform.NoCPUPreemptionDetection
 
-	platform.UseHostProcessMemoryBarrier
-
 	// TODO: b/529809802 - Follow commit 0b9bde06d0 to
 	// add RSEQ support for SlimVM.
 	platform.NoCPUNumbers
 
 	// machine is the backing VM.
 	machine *machine
+	platform.UseHostProcessMemoryBarrier
 }
 
 var (

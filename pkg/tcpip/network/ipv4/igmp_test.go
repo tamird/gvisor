@@ -241,10 +241,10 @@ func TestIGMPV1Present(t *testing.T) {
 
 func TestSendQueuedIGMPReports(t *testing.T) {
 	tests := []struct {
-		name            string
-		v2Compatibility bool
 		validate        func(t *testing.T, e *channel.Endpoint, localAddress tcpip.Address, groupAddresses []tcpip.Address)
 		checkStats      func(*testing.T, *stack.Stack, uint64, uint64, uint64)
+		name            string
+		v2Compatibility bool
 	}{
 		{
 			name:            "V2 Compatibility",
@@ -367,14 +367,14 @@ func TestSendQueuedIGMPReports(t *testing.T) {
 
 func TestIGMPPacketValidation(t *testing.T) {
 	tests := []struct {
+		getMessageTypeStatValue  func(tcpip.Stats) uint64
 		name                     string
-		messageType              header.IGMPType
 		stackAddresses           []tcpip.AddressWithPrefix
 		srcAddr                  tcpip.Address
+		messageType              header.IGMPType
 		includeRouterAlertOption bool
 		ttl                      uint8
 		expectValidIGMP          bool
-		getMessageTypeStatValue  func(tcpip.Stats) uint64
 	}{
 		{
 			name:                     "valid",

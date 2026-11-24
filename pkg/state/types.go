@@ -44,8 +44,8 @@ func hasNaNComponent(c wire.Complex64) bool {
 
 // typeEntry is an entry in the typeDatabase.
 type typeEntry struct {
-	ID typeID
 	wire.Type
+	ID typeID
 }
 
 // reconciledTypeEntry is a reconciled entry in the typeDatabase.

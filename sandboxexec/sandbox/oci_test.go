@@ -153,8 +153,8 @@ func TestSpecMountMode(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		mount   sandbox.Mount
 		wantOpt string
+		mount   sandbox.Mount
 	}{
 		{
 			name:    "TmpfsWithMode",

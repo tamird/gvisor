@@ -31,13 +31,12 @@ type mockDADProtocol struct {
 	t *testing.T
 
 	mu struct {
-		sync.Mutex
-
 		// +checklocks:Mutex
 		dad ip.DAD
 
 		// +checklocks:Mutex
 		sentNonces map[tcpip.Address][][]byte
+		sync.Mutex
 	}
 }
 
@@ -113,8 +112,8 @@ var (
 )
 
 type dadResult struct {
-	Addr tcpip.Address
 	R    stack.DADResult
+	Addr tcpip.Address
 }
 
 func handler(ch chan<- dadResult, a tcpip.Address) func(stack.DADResult) {

@@ -99,31 +99,33 @@ func prefixSubnetAddr(offset uint8, linkAddr tcpip.LinkAddress) (tcpip.AddressWi
 // ndpDADEvent is a set of parameters that was passed to
 // ndpDispatcher.OnDuplicateAddressDetectionResult.
 type ndpDADEvent struct {
-	nicID tcpip.NICID
-	addr  tcpip.Address
 	res   stack.DADResult
+	addr  tcpip.Address
+	nicID tcpip.NICID
 }
 
 type ndpOffLinkRouteEvent struct {
-	nicID  tcpip.NICID
 	subnet tcpip.Subnet
 	router tcpip.Address
+	nicID  tcpip.NICID
 	prf    header.NDPRoutePreference
+
 	// true if route was updated, false if invalidated.
 	updated bool
 }
 
 type ndpPrefixEvent struct {
-	nicID  tcpip.NICID
 	prefix tcpip.Subnet
+	nicID  tcpip.NICID
+
 	// true if prefix was discovered, false if invalidated.
 	discovered bool
 }
 
 type ndpAutoGenAddrNewEvent struct {
-	nicID    tcpip.NICID
-	addr     tcpip.AddressWithPrefix
 	addrDisp *addressDispatcher
+	addr     tcpip.AddressWithPrefix
+	nicID    tcpip.NICID
 }
 
 type ndpAutoGenAddrEventType int
@@ -149,14 +151,14 @@ type ndpRDNSS struct {
 }
 
 type ndpRDNSSEvent struct {
-	nicID tcpip.NICID
 	rdnss ndpRDNSS
+	nicID tcpip.NICID
 }
 
 type ndpDNSSLEvent struct {
-	nicID       tcpip.NICID
 	domainNames []string
 	lifetime    time.Duration
+	nicID       tcpip.NICID
 }
 
 type ndpDHCPv6Event struct {
@@ -169,27 +171,28 @@ var _ ipv6.NDPDispatcher = (*ndpDispatcher)(nil)
 // ndpDispatcher implements NDPDispatcher so tests can know when various NDP
 // related events happen for test purposes.
 type ndpDispatcher struct {
-	dadC            chan ndpDADEvent
-	offLinkRouteC   chan ndpOffLinkRouteEvent
-	prefixC         chan ndpPrefixEvent
-	autoGenAddrC    chan ndpAutoGenAddrEvent
-	autoGenAddrNewC chan ndpAutoGenAddrNewEvent
-	// autoGenInstallDisp controls whether address dispatchers are installed for
-	// new auto-generated addresses.
-	autoGenInstallDisp   bool
+	dadC                 chan ndpDADEvent
+	offLinkRouteC        chan ndpOffLinkRouteEvent
+	prefixC              chan ndpPrefixEvent
+	autoGenAddrC         chan ndpAutoGenAddrEvent
+	autoGenAddrNewC      chan ndpAutoGenAddrNewEvent
 	rdnssC               chan ndpRDNSSEvent
 	dnsslC               chan ndpDNSSLEvent
-	routeTable           []tcpip.Route
 	dhcpv6ConfigurationC chan ndpDHCPv6Event
+	routeTable           []tcpip.Route
+
+	// autoGenInstallDisp controls whether address dispatchers are installed for
+	// new auto-generated addresses.
+	autoGenInstallDisp bool
 }
 
 // Implements ipv6.NDPDispatcher.OnDuplicateAddressDetectionResult.
 func (n *ndpDispatcher) OnDuplicateAddressDetectionResult(nicID tcpip.NICID, addr tcpip.Address, res stack.DADResult) {
 	if n.dadC != nil {
 		n.dadC <- ndpDADEvent{
-			nicID,
-			addr,
-			res,
+			nicID: nicID,
+			addr:  addr,
+			res:   res,
 		}
 	}
 }
@@ -198,11 +201,11 @@ func (n *ndpDispatcher) OnDuplicateAddressDetectionResult(nicID tcpip.NICID, add
 func (n *ndpDispatcher) OnOffLinkRouteUpdated(nicID tcpip.NICID, subnet tcpip.Subnet, router tcpip.Address, prf header.NDPRoutePreference) {
 	if c := n.offLinkRouteC; c != nil {
 		c <- ndpOffLinkRouteEvent{
-			nicID,
-			subnet,
-			router,
-			prf,
-			true,
+			nicID:   nicID,
+			subnet:  subnet,
+			router:  router,
+			prf:     prf,
+			updated: true,
 		}
 	}
 }
@@ -212,11 +215,11 @@ func (n *ndpDispatcher) OnOffLinkRouteInvalidated(nicID tcpip.NICID, subnet tcpi
 	if c := n.offLinkRouteC; c != nil {
 		var prf header.NDPRoutePreference
 		c <- ndpOffLinkRouteEvent{
-			nicID,
-			subnet,
-			router,
-			prf,
-			false,
+			nicID:   nicID,
+			subnet:  subnet,
+			router:  router,
+			prf:     prf,
+			updated: false,
 		}
 	}
 }
@@ -225,9 +228,9 @@ func (n *ndpDispatcher) OnOffLinkRouteInvalidated(nicID tcpip.NICID, subnet tcpi
 func (n *ndpDispatcher) OnOnLinkPrefixDiscovered(nicID tcpip.NICID, prefix tcpip.Subnet) {
 	if c := n.prefixC; c != nil {
 		c <- ndpPrefixEvent{
-			nicID,
-			prefix,
-			true,
+			nicID:      nicID,
+			prefix:     prefix,
+			discovered: true,
 		}
 	}
 }
@@ -236,9 +239,9 @@ func (n *ndpDispatcher) OnOnLinkPrefixDiscovered(nicID tcpip.NICID, prefix tcpip
 func (n *ndpDispatcher) OnOnLinkPrefixInvalidated(nicID tcpip.NICID, prefix tcpip.Subnet) {
 	if c := n.prefixC; c != nil {
 		c <- ndpPrefixEvent{
-			nicID,
-			prefix,
-			false,
+			nicID:      nicID,
+			prefix:     prefix,
+			discovered: false,
 		}
 	}
 }
@@ -246,9 +249,9 @@ func (n *ndpDispatcher) OnOnLinkPrefixInvalidated(nicID tcpip.NICID, prefix tcpi
 func (n *ndpDispatcher) OnAutoGenAddress(nicID tcpip.NICID, addr tcpip.AddressWithPrefix) stack.AddressDispatcher {
 	if c := n.autoGenAddrNewC; c != nil {
 		e := ndpAutoGenAddrNewEvent{
-			nicID,
-			addr,
-			nil,
+			nicID:    nicID,
+			addr:     addr,
+			addrDisp: nil,
 		}
 		if n.autoGenInstallDisp {
 			e.addrDisp = &addressDispatcher{
@@ -290,8 +293,8 @@ func (n *ndpDispatcher) OnAutoGenAddressInvalidated(nicID tcpip.NICID, addr tcpi
 func (n *ndpDispatcher) OnRecursiveDNSServerOption(nicID tcpip.NICID, addrs []tcpip.Address, lifetime time.Duration) {
 	if c := n.rdnssC; c != nil {
 		c <- ndpRDNSSEvent{
-			nicID,
-			ndpRDNSS{
+			nicID: nicID,
+			rdnss: ndpRDNSS{
 				addrs,
 				lifetime,
 			},
@@ -303,9 +306,9 @@ func (n *ndpDispatcher) OnRecursiveDNSServerOption(nicID tcpip.NICID, addrs []tc
 func (n *ndpDispatcher) OnDNSSearchListOption(nicID tcpip.NICID, domainNames []string, lifetime time.Duration) {
 	if n.dnsslC != nil {
 		n.dnsslC <- ndpDNSSLEvent{
-			nicID,
-			domainNames,
-			lifetime,
+			nicID:       nicID,
+			domainNames: domainNames,
+			lifetime:    lifetime,
 		}
 	}
 }
@@ -893,9 +896,9 @@ func TestDADStop(t *testing.T) {
 	const nicID = 1
 
 	tests := []struct {
-		name               string
 		stopFn             func(t *testing.T, s *stack.Stack)
 		verifyFn           func(t *testing.T, ad *addressDispatcher)
+		name               string
 		skipFinalAddrCheck bool
 	}{
 		// Tests to make sure that DAD stops when an address is removed.
@@ -1378,9 +1381,9 @@ func TestDynamicConfigurationsDisabled(t *testing.T) {
 	}
 
 	tests := []struct {
-		name   string
 		config func(bool) ipv6.NDPConfigurations
 		ra     *stack.PacketBuffer
+		name   string
 	}{
 		{
 			name: "No Router Discovery",
@@ -1563,13 +1566,13 @@ func TestOffLinkRouteDiscovery(t *testing.T) {
 
 	moreSpecificPrefix := tcpip.AddressWithPrefix{Address: testutil.MustParse6("a00::"), PrefixLen: 16}
 	tests := []struct {
+		ra   func(*testing.T, tcpip.Address, uint16, header.NDPRoutePreference) *stack.PacketBuffer
 		name string
+
+		dest tcpip.Subnet
 
 		discoverDefaultRouters     bool
 		discoverMoreSpecificRoutes bool
-
-		dest tcpip.Subnet
-		ra   func(*testing.T, tcpip.Address, uint16, header.NDPRoutePreference) *stack.PacketBuffer
 	}{
 		{
 			name:                       "Default router discovery",
@@ -2752,9 +2755,9 @@ func TestNoAutoGenTempAddrWithoutStableAddr(t *testing.T) {
 }
 
 type tempAddrState struct {
+	disp           *addressDispatcher
 	addrWithPrefix tcpip.AddressWithPrefix
 	generated      tcpip.MonotonicTime
-	disp           *addressDispatcher
 }
 
 // TestAutoGenTempAddrRegen tests that temporary SLAAC addresses are
@@ -3216,12 +3219,12 @@ func TestMixedSLAACAddrConflictRegen(t *testing.T) {
 	}
 
 	tests := []struct {
+		nicNameFromID func(tcpip.NICID, string) string
 		name          string
 		addrs         []tcpip.AddressWithPrefix
-		tempAddrs     bool
 		initialExpect tcpip.AddressWithPrefix
 		maxAddrs      int
-		nicNameFromID func(tcpip.NICID, string) string
+		tempAddrs     bool
 	}{
 		{
 			name:     "Stable addresses with opaque IIDs",
@@ -4421,11 +4424,11 @@ func TestAutoGenAddrInResponseToDADConflicts(t *testing.T) {
 	stableAddrForTempAddrTest := addrForSubnet(subnet, 0)
 
 	addrTypes := []struct {
+		prepareFn        func(t *testing.T, clock *faketime.ManualClock, ndpDisp *ndpDispatcher, e *channel.Endpoint, tempIIDHistory []byte) []tcpip.AddressWithPrefix
+		addrGenFn        func(dadCounter uint8, tempIIDHistory []byte) tcpip.AddressWithPrefix
 		name             string
 		ndpConfigs       ipv6.NDPConfigurations
 		autoGenLinkLocal bool
-		prepareFn        func(t *testing.T, clock *faketime.ManualClock, ndpDisp *ndpDispatcher, e *channel.Endpoint, tempIIDHistory []byte) []tcpip.AddressWithPrefix
-		addrGenFn        func(dadCounter uint8, tempIIDHistory []byte) tcpip.AddressWithPrefix
 	}{
 		{
 			name: "Global address",
@@ -4604,11 +4607,11 @@ func TestAutoGenAddrWithEUI64IIDNoDADRetries(t *testing.T) {
 	prefix, subnet, _ := prefixSubnetAddr(0, linkAddr1)
 
 	addrTypes := []struct {
+		triggerSLAACFn   func(e *channel.Endpoint)
 		name             string
 		ndpConfigs       ipv6.NDPConfigurations
-		autoGenLinkLocal bool
 		subnet           tcpip.Subnet
-		triggerSLAACFn   func(e *channel.Endpoint)
+		autoGenLinkLocal bool
 	}{
 		{
 			name: "Global address",
@@ -4847,53 +4850,53 @@ func TestAutoGenAddrContinuesLifetimesAfterRetry(t *testing.T) {
 // option with at least one valid address.
 func TestNDPRecursiveDNSServerDispatch(t *testing.T) {
 	tests := []struct {
+		expected *ndpRDNSS
 		name     string
 		opt      header.NDPRecursiveDNSServer
-		expected *ndpRDNSS
 	}{
 		{
-			"Unspecified",
-			header.NDPRecursiveDNSServer([]byte{
+			name: "Unspecified",
+			opt: header.NDPRecursiveDNSServer([]byte{
 				0, 0,
 				0, 0, 0, 2,
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 			}),
-			nil,
+			expected: nil,
 		},
 		{
-			"Multicast",
-			header.NDPRecursiveDNSServer([]byte{
+			name: "Multicast",
+			opt: header.NDPRecursiveDNSServer([]byte{
 				0, 0,
 				0, 0, 0, 2,
 				255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
 			}),
-			nil,
+			expected: nil,
 		},
 		{
-			"OptionTooSmall",
-			header.NDPRecursiveDNSServer([]byte{
+			name: "OptionTooSmall",
+			opt: header.NDPRecursiveDNSServer([]byte{
 				0, 0,
 				0, 0, 0, 2,
 				1, 2, 3, 4, 5, 6, 7, 8,
 			}),
-			nil,
+			expected: nil,
 		},
 		{
-			"0Addresses",
-			header.NDPRecursiveDNSServer([]byte{
+			name: "0Addresses",
+			opt: header.NDPRecursiveDNSServer([]byte{
 				0, 0,
 				0, 0, 0, 2,
 			}),
-			nil,
+			expected: nil,
 		},
 		{
-			"Valid1Address",
-			header.NDPRecursiveDNSServer([]byte{
+			name: "Valid1Address",
+			opt: header.NDPRecursiveDNSServer([]byte{
 				0, 0,
 				0, 0, 0, 2,
 				1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0, 0, 0, 0, 1,
 			}),
-			&ndpRDNSS{
+			expected: &ndpRDNSS{
 				[]tcpip.Address{
 					tcpip.AddrFromSlice([]byte("\x01\x02\x03\x04\x05\x06\x07\x08\x00\x00\x00\x00\x00\x00\x00\x01")),
 				},
@@ -4901,14 +4904,14 @@ func TestNDPRecursiveDNSServerDispatch(t *testing.T) {
 			},
 		},
 		{
-			"Valid2Addresses",
-			header.NDPRecursiveDNSServer([]byte{
+			name: "Valid2Addresses",
+			opt: header.NDPRecursiveDNSServer([]byte{
 				0, 0,
 				0, 0, 0, 1,
 				1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0, 0, 0, 0, 1,
 				1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0, 0, 0, 0, 2,
 			}),
-			&ndpRDNSS{
+			expected: &ndpRDNSS{
 				[]tcpip.Address{
 					tcpip.AddrFromSlice([]byte("\x01\x02\x03\x04\x05\x06\x07\x08\x00\x00\x00\x00\x00\x00\x00\x01")),
 					tcpip.AddrFromSlice([]byte("\x01\x02\x03\x04\x05\x06\x07\x08\x00\x00\x00\x00\x00\x00\x00\x02")),
@@ -4917,15 +4920,15 @@ func TestNDPRecursiveDNSServerDispatch(t *testing.T) {
 			},
 		},
 		{
-			"Valid3Addresses",
-			header.NDPRecursiveDNSServer([]byte{
+			name: "Valid3Addresses",
+			opt: header.NDPRecursiveDNSServer([]byte{
 				0, 0,
 				0, 0, 0, 0,
 				1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0, 0, 0, 0, 1,
 				1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0, 0, 0, 0, 2,
 				1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0, 0, 0, 0, 3,
 			}),
-			&ndpRDNSS{
+			expected: &ndpRDNSS{
 				[]tcpip.Address{
 					tcpip.AddrFromSlice([]byte("\x01\x02\x03\x04\x05\x06\x07\x08\x00\x00\x00\x00\x00\x00\x00\x01")),
 					tcpip.AddrFromSlice([]byte("\x01\x02\x03\x04\x05\x06\x07\x08\x00\x00\x00\x00\x00\x00\x00\x02")),
@@ -5213,10 +5216,10 @@ func TestCleanupNDPState(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                 string
 		cleanupFn            func(t *testing.T, s *stack.Stack)
-		keepAutoGenLinkLocal bool
+		name                 string
 		maxAutoGenAddrEvents int
+		keepAutoGenLinkLocal bool
 		skipFinalAddrCheck   bool
 	}{
 		// A NIC should cleanup all NDP state when it is disabled.
@@ -5677,16 +5680,16 @@ func TestRouterSolicitation(t *testing.T) {
 
 	tests := []struct {
 		name                        string
-		linkHeaderLen               uint16
 		linkAddr                    tcpip.LinkAddress
+		expectedNDPOpts             []header.NDPOption
 		nicAddr                     tcpip.Address
 		expectedSrcAddr             tcpip.Address
-		expectedNDPOpts             []header.NDPOption
-		maxRtrSolicit               uint8
 		rtrSolicitInt               time.Duration
 		effectiveRtrSolicitInt      time.Duration
 		maxRtrSolicitDelay          time.Duration
 		effectiveMaxRtrSolicitDelay time.Duration
+		linkHeaderLen               uint16
+		maxRtrSolicit               uint8
 	}{
 		{
 			name:                        "Single RS with 2s delay and interval",
@@ -5766,9 +5769,9 @@ func TestRouterSolicitation(t *testing.T) {
 	}
 
 	subTests := []struct {
+		afterFirstRS func(*testing.T, *stack.Stack)
 		name         string
 		handleRAs    ipv6.HandleRAsConfiguration
-		afterFirstRS func(*testing.T, *stack.Stack)
 	}{
 		{
 			name:         "Handle RAs when forwarding disabled",
@@ -5921,11 +5924,11 @@ func TestStopStartSolicitingRouters(t *testing.T) {
 	const maxRtrSolicitations = 3
 
 	tests := []struct {
-		name    string
 		startFn func(t *testing.T, s *stack.Stack)
 		// first is used to tell stopFn that it is being called for the first time
 		// after router solicitations were last enabled.
 		stopFn func(t *testing.T, s *stack.Stack, first bool)
+		name   string
 	}{
 		// Tests that when forwarding is enabled or disabled, router solicitations
 		// are stopped or started, respectively.

@@ -80,8 +80,8 @@ func RunRubyDev(ctx context.Context, t *testing.T, k8sCtx k8sctx.KubernetesConte
 	}
 
 	for _, test := range []struct {
-		name     string
 		volume   *v13.Volume
+		name     string
 		disabled bool
 	}{
 		{

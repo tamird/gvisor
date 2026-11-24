@@ -70,30 +70,30 @@ type Cli struct {
 	bind          string
 	roBind        string
 	tmpfs         string
-	unshareNet    bool
 	chdir         string
 	setEnv        string
-	clearEnv      bool
 	unsetEnv      string
+	hostname      string
+	proc          string
+	capDrop       string
+	capAdd        string
+	argv0         string
+	perms         string
+	dir           string
+	dev           string
 	uid           int
 	gid           int
+	unshareNet    bool
+	clearEnv      bool
 	unshareUser   bool
 	unshareIPC    bool
 	unsharePID    bool
 	unshareUTS    bool
 	unshareCgroup bool
 	unshareAll    bool
-	hostname      string
-	proc          string
-	capDrop       string
-	capAdd        string
 	newSession    bool
 	dieWithParent bool
-	argv0         string
-	perms         string
-	dir           string
 	asPID1        bool
-	dev           string
 }
 
 // Name implements subcommands.Command.Name.

@@ -38,10 +38,7 @@ const (
 type Client struct {
 	// sockComm is the main socket by which this connections is established.
 	// Communication over the socket is synchronized by sockMu.
-	sockMu   sync.Mutex
 	sockComm *sockCommunicator
-
-	channelsMu sync.Mutex
 
 	// channels tracks all the channels.
 	//
@@ -53,21 +50,9 @@ type Client struct {
 	// +checklocks:channelsMu
 	availableChannels []*channel
 
-	// activeWg represents active channels.
-	activeWg sync.WaitGroup
-
-	// watchdogWg only holds the watchdog goroutine.
-	watchdogWg sync.WaitGroup
-
 	// supported caches information about which messages are supported. It is
 	// indexed by MID. An MID is supported if supported[MID] is true.
 	supported []bool
-
-	// maxMessageSize is the maximum payload length (in bytes) that can be sent.
-	// It is initialized on Mount and is immutable.
-	maxMessageSize uint32
-
-	fdsMu sync.Mutex
 
 	// fdsToClose tracks the FDs to close. It caches the FDs no longer being used
 	// by the client and closes them in one shot. It is not preserved across
@@ -75,6 +60,20 @@ type Client struct {
 	//
 	// +checklocks:fdsMu
 	fdsToClose []FDID
+
+	// activeWg represents active channels.
+	activeWg sync.WaitGroup
+
+	// watchdogWg only holds the watchdog goroutine.
+	watchdogWg sync.WaitGroup
+
+	sockMu     sync.Mutex
+	channelsMu sync.Mutex
+	fdsMu      sync.Mutex
+
+	// maxMessageSize is the maximum payload length (in bytes) that can be sent.
+	// It is initialized on Mount and is immutable.
+	maxMessageSize uint32
 }
 
 // NewClient creates a new client for communication with the server. It mounts

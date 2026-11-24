@@ -98,8 +98,8 @@ func TestRecalculateChecksum(t *testing.T) {
 	defer r.Release()
 
 	tests := []struct {
-		name         string
 		pkt          *stack.PacketBuffer
+		name         string
 		wantChecksum uint16
 		wantErr      bool
 	}{

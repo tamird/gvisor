@@ -16,6 +16,9 @@ package check
 
 import (
 	"encoding/gob"
+	"go/ast"
+	"go/token"
+	"go/types"
 	"io"
 	"reflect"
 
@@ -34,6 +37,7 @@ import (
 	"golang.org/x/tools/go/analysis/passes/defers"
 	"golang.org/x/tools/go/analysis/passes/directive"
 	"golang.org/x/tools/go/analysis/passes/errorsas"
+	"golang.org/x/tools/go/analysis/passes/fieldalignment"
 	"golang.org/x/tools/go/analysis/passes/framepointer"
 	"golang.org/x/tools/go/analysis/passes/gofix"
 	"golang.org/x/tools/go/analysis/passes/hostport"
@@ -167,6 +171,56 @@ func register(analyzerSet map[*analysis.Analyzer]analyzer, a analyzer) {
 	analyzerSet[a.Legacy()] = a
 }
 
+// runFieldAlignment preserves layouts declared for host ABI or saved state.
+func runFieldAlignment(pass *analysis.Pass) (any, error) {
+	preserved := make(map[token.Pos]bool)
+	for _, file := range pass.Files {
+		// Match the declaration annotation consumed by go_stateify.
+		for _, decl := range file.Decls {
+			d, ok := decl.(*ast.GenDecl)
+			if !ok || d.Tok != token.TYPE || d.Doc == nil {
+				continue
+			}
+			for _, comment := range d.Doc.List {
+				if comment.Text != "// +stateify savable" {
+					continue
+				}
+				for _, spec := range d.Specs {
+					if st, ok := spec.(*ast.TypeSpec).Type.(*ast.StructType); ok {
+						preserved[st.Pos()] = true
+					}
+				}
+			}
+		}
+		ast.Inspect(file, func(node ast.Node) bool {
+			st, ok := node.(*ast.StructType)
+			if !ok {
+				return true
+			}
+			for _, field := range st.Fields.List {
+				typ := pass.TypesInfo.TypeOf(field.Type)
+				if typ == nil {
+					continue
+				}
+				if named, ok := types.Unalias(typ).(*types.Named); ok {
+					obj := named.Obj()
+					if obj.Pkg() != nil && obj.Pkg().Path() == "structs" && obj.Name() == "HostLayout" {
+						preserved[st.Pos()] = true
+					}
+				}
+			}
+			return true
+		})
+	}
+	filteredPass := *pass
+	filteredPass.Report = func(d analysis.Diagnostic) {
+		if !preserved[d.Pos] {
+			pass.Report(d)
+		}
+	}
+	return fieldalignment.Analyzer.Run(&filteredPass)
+}
+
 func init() {
 	// Standard & internal analyzers.
 	register(allAnalyzers, &plainAnalyzer{appends.Analyzer})
@@ -183,6 +237,9 @@ func init() {
 	register(allAnalyzers, &plainAnalyzer{defers.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{directive.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{errorsas.Analyzer})
+	fieldAlignment := *fieldalignment.Analyzer
+	fieldAlignment.Run = runFieldAlignment
+	register(allAnalyzers, &plainAnalyzer{&fieldAlignment})
 	register(allAnalyzers, &plainAnalyzer{framepointer.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{gofix.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{hostport.Analyzer})
@@ -213,6 +270,8 @@ func init() {
 	register(allAnalyzers, &plainAnalyzer{unreachable.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{unsafeptr.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{unusedresult.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{unusedwrite.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{waitgroup.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{modernize.AppendClippedAnalyzer})
 	register(allAnalyzers, &plainAnalyzer{modernize.BLoopAnalyzer})
 	register(allAnalyzers, &plainAnalyzer{modernize.FmtAppendfAnalyzer})
@@ -221,8 +280,6 @@ func init() {
 		register(allAnalyzers, &plainAnalyzer{a})
 	}
 	register(allAnalyzers, checkescape.Analyzer)
-	register(allAnalyzers, &plainAnalyzer{unusedwrite.Analyzer})
-	register(allAnalyzers, &plainAnalyzer{waitgroup.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{checkconst.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{checkimports.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{checklinkname.Analyzer})

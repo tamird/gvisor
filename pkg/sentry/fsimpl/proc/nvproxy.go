@@ -38,8 +38,8 @@ func (fs *filesystem) addNvproxyFiles(ctx context.Context, root *auth.Credential
 	// Build a dynamic filesystem tree ...
 	type dir struct {
 		parent   *dir
-		name     string
 		children map[string]any // *dir or string
+		name     string
 	}
 	dirName := func(d *dir) string {
 		var b fspath.Builder

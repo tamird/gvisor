@@ -40,8 +40,8 @@ import (
 // PortForward implements subcommands.Command for the "portforward" command.
 type PortForward struct {
 	containerLoader
-	portNum int
 	stream  string
+	portNum int
 }
 
 // Name implements subcommands.Command.Name.

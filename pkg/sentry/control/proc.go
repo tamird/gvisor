@@ -42,7 +42,9 @@ type Proc struct {
 
 // ExecArgs is the set of arguments to exec.
 type ExecArgs struct {
-	controlapi.ExecArgs
+	// InitialCgroupV2 is the cgroup2 node the process being executed starts
+	// in. If nil, it starts in the root cgroup.
+	InitialCgroupV2 kernel.Cgroup2
 
 	// MountNamespace is the mount namespace to execute the new process in.
 	// A reference on MountNamespace must be held for the lifetime of the
@@ -57,10 +59,6 @@ type ExecArgs struct {
 	// PIDNamespace is the pid namespace for the process being executed.
 	PIDNamespace *kernel.PIDNamespace
 
-	// InitialCgroupV2 is the cgroup2 node the process being executed starts
-	// in. If nil, it starts in the root cgroup.
-	InitialCgroupV2 kernel.Cgroup2
-
 	// CgroupNamespace is the cgroup namespace for the process being executed.
 	// If nil, the root cgroup namespace is used. A reference on
 	// CgroupNamespace must be held for the lifetime of the ExecArgs.
@@ -72,6 +70,7 @@ type ExecArgs struct {
 	// SeccompFilter is an optional seccomp filter to install on the new
 	// process.
 	SeccompFilter *kernel.SyscallFilter
+	controlapi.ExecArgs
 }
 
 // Exec runs a new task.

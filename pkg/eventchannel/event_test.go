@@ -26,11 +26,11 @@ import (
 // testEmitter is an emitter that can be used in tests. It records all events
 // emitted, and whether it has been closed.
 type testEmitter struct {
-	// mu protects all fields below.
-	mu sync.Mutex
-
 	// events contains all emitted events.
 	events []proto.Message
+
+	// mu protects events and closed.
+	mu sync.Mutex
 
 	// closed records whether Close() was called.
 	closed bool

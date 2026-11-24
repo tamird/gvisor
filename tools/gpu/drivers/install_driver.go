@@ -40,20 +40,19 @@ func init() {
 
 // Installer installs one supported driver on the host architecture.
 type Installer struct {
-	requestedVersion nvconf.DriverVersion
-	checksum         string
-	downloader       Downloader
-	tempDir          string
-
+	downloader           Downloader
 	getCurrentDriverFunc func(context.Context) (nvconf.DriverVersion, error)
 	checkHostFunc        func(context.Context) error
 	uninstallFunc        func(context.Context) error
 	installFunc          func(context.Context, string) error
+	checksum             string
+	tempDir              string
+	requestedVersion     nvconf.DriverVersion
 }
 
 type installableDriver struct {
-	version  nvconf.DriverVersion
 	checksum string
+	version  nvconf.DriverVersion
 }
 
 func hostDriver(version nvconf.DriverVersion, checksums nvproxy.Checksums) (installableDriver, error) {
@@ -68,7 +67,7 @@ func hostDriver(version nvconf.DriverVersion, checksums nvproxy.Checksums) (inst
 	if err != nil {
 		return installableDriver{}, fmt.Errorf("failed to get checksum for driver %q: %w", version, err)
 	}
-	return installableDriver{version, checksum}, nil
+	return installableDriver{version: version, checksum: checksum}, nil
 }
 
 // installableDrivers is the common host-architecture selection for installation

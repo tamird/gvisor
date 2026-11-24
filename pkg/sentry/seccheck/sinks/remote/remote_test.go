@@ -49,9 +49,9 @@ func waitForFile(path string) error {
 }
 
 type syncBuffer struct {
-	mu sync.Mutex
 	// +checklocks:mu
 	buf bytes.Buffer
+	mu  sync.Mutex
 }
 
 func (s *syncBuffer) Write(p []byte) (n int, err error) {

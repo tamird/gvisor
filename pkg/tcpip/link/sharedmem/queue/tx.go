@@ -50,9 +50,9 @@ type TxBuffer struct {
 //
 // This struct is thread-compatible.
 type Tx struct {
-	tx                 pipe.Tx
-	rx                 pipe.Rx
 	sharedEventFDState *atomicbitops.Uint32
+	rx                 pipe.Rx
+	tx                 pipe.Tx
 }
 
 // Init initializes the transmit queue with the given pipes.

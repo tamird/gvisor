@@ -23,9 +23,9 @@ import (
 )
 
 type interpretOperationTestAction struct {
+	expected operation // will be nil if an error is expected
 	tname    string
 	opStr    string
-	expected operation // will be nil if an error is expected
 }
 
 // checkOp is a generic operation validation function used for testing that
@@ -1088,9 +1088,9 @@ func checkMetaSetOp(tname string, expected operation, actual operation) error {
 // list of operations.
 func TestInterpretRule(t *testing.T) {
 	for _, test := range []struct {
+		expected *Rule // will be nil if an error is expected
 		tname    string
 		ruleStr  string
-		expected *Rule // will be nil if an error is expected
 	}{
 		{
 			tname:    "empty ruleset",

@@ -54,6 +54,9 @@ const (
 
 // Round is a single round of benchmarking.
 type Round struct {
+	// If set, only report the metric types listed here.
+	OnlyReport []MetricType
+
 	// NumThreads is the number of concurrent threads and connections to make.
 	NumThreads int
 
@@ -64,9 +67,6 @@ type Round struct {
 	// Duration is the total duration of the round. It should be longer than 10s
 	// as wrk2 uses the first 10 seconds as calibration period.
 	Duration time.Duration
-
-	// If set, only report the metric types listed here.
-	OnlyReport []MetricType
 }
 
 // HTTPBenchmark helps manage an HTTP-based benchmark.
@@ -74,10 +74,6 @@ type Round struct {
 // the HTTP server pod and a Kubernetes Service pointing at it, and this
 // library takes care of the rest.
 type HTTPBenchmark struct {
-	// Name is the name of the benchmark. It is used as a prefix for all
-	// benchstat output metrics.
-	Name string
-
 	// Cluster is the test cluster.
 	Cluster *testcluster.TestCluster
 
@@ -87,21 +83,25 @@ type HTTPBenchmark struct {
 	// Service is a Kubernetes service pointing to the HTTP server.
 	Service *v13.Service
 
-	// Port is the port that the HTTP server is bound to.
-	Port int
+	// Name is the name of the benchmark. It is used as a prefix for all
+	// benchstat output metrics.
+	Name string
 
 	// Path is the HTTP path that the benchmark should use in its requests.
 	// It should start by "/", e.g. "/index.html".
 	Path string
-
-	// Timeout is the maximum allowable duration of requests for Path.
-	Timeout time.Duration
 
 	// Rounds is the set of rounds to run the benchmark for. Must be non-empty.
 	Rounds []Round
 
 	// WantPercentiles is the list of percentiles to report.
 	WantPercentiles []int
+
+	// Port is the port that the HTTP server is bound to.
+	Port int
+
+	// Timeout is the maximum allowable duration of requests for Path.
+	Timeout time.Duration
 }
 
 // Run runs the HTTP-based benchmark.

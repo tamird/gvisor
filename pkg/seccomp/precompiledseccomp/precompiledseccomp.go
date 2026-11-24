@@ -32,15 +32,15 @@ import (
 // Program is a precompiled seccomp-bpf program.
 // To get actual BPF instructions, call the `RenderInstructions` function.
 type Program struct {
+	// VarOffsets maps variable names to the uint32-based offsets where these
+	// variables show up in `Bytecode32`.
+	VarOffsets map[string][]int
+
 	// Name is the name of this program within a set of embedded programs.
 	Name string
 
 	// Bytecode32 is the raw BPF bytecode represented as a sequence of uint32s.
 	Bytecode32 []uint32
-
-	// VarOffsets maps variable names to the uint32-based offsets where these
-	// variables show up in `Bytecode32`.
-	VarOffsets map[string][]int
 }
 
 // Values is an assignment of variables to uint32 values.

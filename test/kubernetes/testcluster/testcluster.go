@@ -33,7 +33,7 @@ import (
 	eventsv1 "k8s.io/api/events/v1"
 	nodev1 "k8s.io/api/node/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -212,9 +212,12 @@ var KnownMachineTypes = map[string]*MachineInfo{
 
 // TestCluster wraps clusters with their individual ClientSets so that helper methods can be called.
 type TestCluster struct {
-	clusterName string
-
 	client KubernetesClient
+
+	// nodepools is a map of NodePools that exist in this cluster.
+	// It is nil by default and initialized lazily.
+	nodepools   map[NodePoolType]*NodePool
+	clusterName string
 
 	// testNodepoolRuntimeOverride, if set, overrides the runtime used for pods
 	// running on the test nodepool. If unset, the test nodepool's default
@@ -223,10 +226,6 @@ type TestCluster struct {
 
 	// nodepoolsMu controls the initialization of `nodepools`.
 	nodepoolsMu sync.Mutex
-
-	// nodepools is a map of NodePools that exist in this cluster.
-	// It is nil by default and initialized lazily.
-	nodepools map[NodePoolType]*NodePool
 }
 
 // NodePool is a set of nodes in a TestCluster.
@@ -238,6 +237,9 @@ type TestCluster struct {
 // reasonably similar hardware) so that simple pod scheduling can determine
 // where to consume resources.
 type NodePool struct {
+	// spec is the machine spec of nodes in the nodepool.
+	spec *MachineInfo
+
 	// nodePoolType is the type of the nodepool.
 	// It is used to identify the nodes in the cluster, and therefore as a
 	// scheduling constraint for pods to run exclusively on these nodes.
@@ -250,20 +252,17 @@ type NodePool struct {
 	// cpuArchitecture is the CPU architecture of nodes in the nodepool.
 	cpuArchitecture CPUArchitecture
 
-	// spec is the machine spec of nodes in the nodepool.
-	spec *MachineInfo
-
 	// tpuAcceleratorType is the TPU accelerator type present on nodes in the nodepool.
 	// Empty string if the nodes have no accelerators.
 	tpuAcceleratorType AcceleratorType
 
-	// numAccelerators is the number of accelerators present on nodes in the
-	// nodepool.
-	numAccelerators int
-
 	// tpuTopology is the TPU topology used by the nodepool.
 	// Empty string if the nodepool has no TPU-based accelerators.
 	tpuTopology string
+
+	// numAccelerators is the number of accelerators present on nodes in the
+	// nodepool.
+	numAccelerators int
 }
 
 // NewTestClusterFromProto returns a new TestCluster client from a proto.

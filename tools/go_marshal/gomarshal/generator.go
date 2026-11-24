@@ -63,18 +63,23 @@ func init() {
 //
 // See Generator.run() as the entry point.
 type Generator struct {
-	// Paths to input go source files.
-	inputs []string
 	// Output file to write generated go source.
 	output *os.File
+
 	// Output file to write generated tests.
 	outputTest *os.File
+
 	// Output file to write unconditionally generated tests.
 	outputTestUC *os.File
-	// Package name for the generated file.
-	pkg string
+
 	// Set of extra packages to import in the generated file.
 	imports *importTable
+
+	// Package name for the generated file.
+	pkg string
+
+	// Paths to input go source files.
+	inputs []string
 }
 
 // NewGenerator creates a new code Generator.

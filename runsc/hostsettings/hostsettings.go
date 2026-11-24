@@ -88,6 +88,9 @@ type Setting interface {
 
 // Delta is a change to make to a host setting.
 type Delta struct {
+	// Apply applies the delta.
+	Apply func() error
+
 	// Name of the setting being changed.
 	Name string
 
@@ -97,22 +100,27 @@ type Delta struct {
 	// ToValue is the value of the setting after applying the delta.
 	ToValue string
 
+	// Purpose achieved by applying the delta.
+	Purpose string
+
 	// Mandatory indicates whether the delta *must* be applied.
 	// This should be set in cases where `runsc` will fail completely
 	// if the delta is not applied.
 	Mandatory bool
-
-	// Purpose achieved by applying the delta.
-	Purpose string
-
-	// Apply applies the delta.
-	Apply func() error
 }
 
 // pathSetting implements `Setting` for kernel settings controlled via files.
 type pathSetting struct {
+	// `delta` returns an empty string if the current value is optimal,
+	// or a value to write to `path` if not optimal.
+	// It also returns whether the delta is mandatory.
+	delta func(conf *config.Config, current string) (string, bool, error)
+
 	// path is the full path of the setting, either under /sys or /proc/sys.
 	path string
+
+	// purpose describes the intent behind setting this value.
+	purpose string
 
 	// mightNotExist indicates that the file may not exist on all systems.
 	// If the path does not exist, no delta is returned for this setting.
@@ -123,14 +131,6 @@ type pathSetting struct {
 	// in rootless mode, a message is logged but no delta is returned for this
 	// setting.
 	mightLackReadPerm bool
-
-	// purpose describes the intent behind setting this value.
-	purpose string
-
-	// `delta` returns an empty string if the current value is optimal,
-	// or a value to write to `path` if not optimal.
-	// It also returns whether the delta is mandatory.
-	delta func(conf *config.Config, current string) (string, bool, error)
 }
 
 // Name implements `Setting.Name`.

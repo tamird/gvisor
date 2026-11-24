@@ -199,18 +199,11 @@ var Global State
 
 // State is the type of global, and is separated out for testing.
 type State struct {
-	// registrationMu serializes all changes to the set of registered Sinks
-	// for all checkpoints.
-	registrationMu sync.RWMutex
+	pointFields map[Point]FieldSet
 
-	// enabledPoints is a bitmask of checkpoints for which at least one Sink
-	// is registered.
-	//
-	// Mutation of enabledPoints is serialized by registrationMu.
-	enabledPoints [numPointBitmaskUint32s]atomicbitops.Uint32
-
-	// registrationSeq supports store-free atomic reads of registeredSinks.
-	registrationSeq sync.SeqCount
+	// execveHashCache holds an atomic pointer to the active ExecveHashCache.
+	// Nil indicates that execve binary hash caching/computation is unregistered.
+	execveHashCache atomic.Pointer[ExecveHashCache]
 
 	// sinks is the set of all registered Sinks in order of execution.
 	//
@@ -224,11 +217,18 @@ type State struct {
 	// Mutation of syscallFlagListeners is serialized by registrationMu.
 	syscallFlagListeners []SyscallFlagListener
 
-	pointFields map[Point]FieldSet
+	// enabledPoints is a bitmask of checkpoints for which at least one Sink
+	// is registered.
+	//
+	// Mutation of enabledPoints is serialized by registrationMu.
+	enabledPoints [numPointBitmaskUint32s]atomicbitops.Uint32
 
-	// execveHashCache holds an atomic pointer to the active ExecveHashCache.
-	// Nil indicates that execve binary hash caching/computation is unregistered.
-	execveHashCache atomic.Pointer[ExecveHashCache]
+	// registrationMu serializes all changes to the set of registered Sinks
+	// for all checkpoints.
+	registrationMu sync.RWMutex
+
+	// registrationSeq supports store-free atomic reads of registeredSinks.
+	registrationSeq sync.SeqCount
 }
 
 // ExecveHashCache returns the active ExecveHashCache, or nil if unconfigured.

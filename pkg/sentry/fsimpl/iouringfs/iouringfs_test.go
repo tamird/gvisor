@@ -106,17 +106,17 @@ func TestUint32PtrAtOffsetEndOfSlice(t *testing.T) {
 
 func TestUint32PtrAtOffsetInvalidOffsets(t *testing.T) {
 	tests := []struct {
-		offset      int
 		panicSubstr string
+		offset      int
 	}{
-		{1, "unaligned"},
-		{511, "unaligned"},
-		{-1, "overrun"},
-		{4093, "overrun"},
-		{4094, "overrun"},
-		{4095, "overrun"},
-		{4096, "overrun"},
-		{5000, "overrun"},
+		{offset: 1, panicSubstr: "unaligned"},
+		{offset: 511, panicSubstr: "unaligned"},
+		{offset: -1, panicSubstr: "overrun"},
+		{offset: 4093, panicSubstr: "overrun"},
+		{offset: 4094, panicSubstr: "overrun"},
+		{offset: 4095, panicSubstr: "overrun"},
+		{offset: 4096, panicSubstr: "overrun"},
+		{offset: 5000, panicSubstr: "overrun"},
 	}
 	const sizeOfUint32 int = 4
 

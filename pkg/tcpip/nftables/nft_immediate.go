@@ -25,10 +25,10 @@ import (
 
 // immediate is an operation that sets the data in a register.
 type immediate struct {
+	verdict  Verdict // optional
+	data     []byte  // optional
 	dregIdx  int     // Index of the destination register in registerSet.data.
 	dataType uint32  // Type of data in the register (NFT_DATA_VALUE or NFT_DATA_VERDICT).
-	data     []byte  // optional
-	verdict  Verdict // optional
 }
 
 // evaluate for immediate sets the data in the destination register.

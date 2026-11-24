@@ -78,23 +78,23 @@ type HostDir struct {
 
 // bwrapConfig represents the configuration for the bwrap sandbox.
 type bwrapConfig struct {
-	Mounts      []sandbox.Mount
-	HostDirs    []HostDir
-	CapOps      []*CapOp
-	UnshareNet  bool
-	Args        []string
-	Chdir       string
+	nextPerms   *uint32
 	runscConfig *config.Config
-	Env         []string
-	UnsetEnv    []string
-	UID         int
-	GID         int
-	UnshareUser bool
+	Chdir       string
 	Hostname    string
 	Argv0       string
+	Args        []string
+	Mounts      []sandbox.Mount
+	Env         []string
+	UnsetEnv    []string
+	CapOps      []*CapOp
+	HostDirs    []HostDir
+	UID         int
+	GID         int
+	UnshareNet  bool
+	UnshareUser bool
 	AsPID1      bool
 	hasArgv0    bool
-	nextPerms   *uint32
 }
 
 // String returns a string representation of the bwrapConfig.

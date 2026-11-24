@@ -137,17 +137,17 @@ func checkSyscallVarsPrecompilable(prog *seccomp.Program, values Values) error {
 
 // VarSyscall is a syscall whose syscall number is only known at runtime.
 type VarSyscall struct {
-	// Name is the syscall name.
-	// Within a set of `VarSyscall`s, names must be in the same order as
-	// their syscall numbers.
-	Name string
+	// Rule is the rule for the syscall.
+	Rule seccomp.SyscallRule
 
 	// HostSysno returns the syscall number of the syscall on the current
 	// host, and whether the syscall may be used on the current host.
 	HostSysno func() (uintptr, bool)
 
-	// Rule is the rule for the syscall.
-	Rule seccomp.SyscallRule
+	// Name is the syscall name.
+	// Within a set of `VarSyscall`s, names must be in the same order as
+	// their syscall numbers.
+	Name string
 }
 
 // VarSyscallNumbers maps the names of `VarSyscall`s to their syscall number.

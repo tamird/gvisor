@@ -64,6 +64,16 @@ const (
 // A Timeline may be nil, in which case all methods are no-ops. This means all
 // code that takes in a Timeline parameter does not need to check for nilness.
 type Timeline struct {
+	// start is when the Timeline started.
+	start time.Time
+
+	// end is when the Timeline ended.
+	// The zero value means the Timeline has not yet ended.
+	end time.Time
+
+	// timer is the Timer that owns this Timeline.
+	// This is nil on orphaned Timelines.
+	timer *Timer
 	// name is the name of the Timeline.
 	name string
 
@@ -71,27 +81,16 @@ type Timeline struct {
 	// names of its ancestors.
 	fullName string
 
-	// timer is the Timer that owns this Timeline.
-	// This is nil on orphaned Timelines.
-	timer *Timer
-
-	// start is when the Timeline started.
-	start time.Time
+	// invalidReason, if non-empty, is the reason why this Timeline is invalid.
+	// A Timeline is also invalid if any of its children are invalid.
+	invalidReason string
 
 	// midpoints is a list of MidPoints that have been reached on this Timeline.
 	midpoints []MidPoint
 
-	// end is when the Timeline ended.
-	// The zero value means the Timeline has not yet ended.
-	end time.Time
-
 	// children is a list of forked timelines that are children of this one.
 	// Note that children do not necessarily need to end before the parent does.
 	children []*Timeline
-
-	// invalidReason, if non-empty, is the reason why this Timeline is invalid.
-	// A Timeline is also invalid if any of its children are invalid.
-	invalidReason string
 }
 
 // MidPoint is a named point in time on a Timeline.
@@ -593,24 +592,24 @@ func (t *Timer) End() {
 // ExportedTimeline is the JSON-encodable form of a Timeline and its children.
 // See Timer.Export.
 type ExportedTimeline struct {
-	Name  string    `json:"name"`
 	Start time.Time `json:"start"`
+
+	End  time.Time `json:"end"`
+	Name string    `json:"name"`
+
+	// InvalidReason is non-empty if the Timeline was invalidated.
+	InvalidReason string `json:"invalidReason,omitempty"`
 
 	// MidPoints are in the order they were recorded, which is not necessarily
 	// chronological (see Timeline.ReachedAt).
 	MidPoints []ExportedMidPoint `json:"midpoints,omitempty"`
-
-	End      time.Time          `json:"end"`
-	Children []ExportedTimeline `json:"children,omitempty"`
-
-	// InvalidReason is non-empty if the Timeline was invalidated.
-	InvalidReason string `json:"invalidReason,omitempty"`
+	Children  []ExportedTimeline `json:"children,omitempty"`
 }
 
 // ExportedMidPoint is the JSON-encodable form of a MidPoint.
 type ExportedMidPoint struct {
-	Name string    `json:"name"`
 	When time.Time `json:"when"`
+	Name string    `json:"name"`
 }
 
 // Reached returns when the Timeline reached the midpoint with the given name.
@@ -693,8 +692,8 @@ func (t *Timer) Log() {
 	)
 	type point struct {
 		timeline     *Timeline
-		pointType    pointType
 		midpointName string
+		pointType    pointType
 	}
 	type event struct {
 		when  time.Time

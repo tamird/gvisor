@@ -30,11 +30,6 @@ import (
 	"gvisor.dev/gvisor/test/secbench/secbenchdef"
 )
 
-type Options struct {
-	Name    string
-	Options config.Options
-}
-
 // BenchmarkSentrySystrap benchmarks the seccomp filters used by the Sentry
 // using the Systrap platform.
 func BenchmarkSentrySystrap(b *testing.B) {

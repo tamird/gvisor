@@ -45,8 +45,8 @@ var OpenPipeFile = func(path string, flag int) (*os.File, error) {
 
 // Result holds the outcome of an operation on a single PID.
 type Result struct {
-	PID      int
 	Err      error
+	PID      int
 	Duration time.Duration
 
 	// State is only set by GetState.

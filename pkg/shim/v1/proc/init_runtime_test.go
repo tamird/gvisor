@@ -170,13 +170,13 @@ func requireBounded(t *testing.T, start time.Time) {
 
 func TestRuntimeCallsAreBounded(t *testing.T) {
 	for _, tc := range []struct {
-		name string
 		call func(*Init) error
+		name string
 	}{
-		{"Status", func(p *Init) error { _, err := p.Status(context.Background()); return err }},
-		{"Stats", func(p *Init) error { _, err := p.Stats(context.Background(), "test"); return err }},
-		{"Kill", func(p *Init) error { return p.Kill(context.Background(), uint32(unix.SIGTERM), false) }},
-		{"Update", func(p *Init) error { return p.Update(context.Background(), &types.Any{Value: []byte(`{}`)}) }},
+		{name: "Status", call: func(p *Init) error { _, err := p.Status(context.Background()); return err }},
+		{name: "Stats", call: func(p *Init) error { _, err := p.Stats(context.Background(), "test"); return err }},
+		{name: "Kill", call: func(p *Init) error { return p.Kill(context.Background(), uint32(unix.SIGTERM), false) }},
+		{name: "Update", call: func(p *Init) error { return p.Update(context.Background(), &types.Any{Value: []byte(`{}`)}) }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			p := newRuntimeWedgedInit(t)
@@ -596,18 +596,18 @@ func TestInitCallsObserveCancellationWhileLocked(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	for _, tc := range []struct {
-		name string
 		call func(context.Context) error
+		name string
 	}{
-		{"Status", func(ctx context.Context) error { _, err := p.Status(ctx); return err }},
-		{"Stats", func(ctx context.Context) error { _, err := p.Stats(ctx, p.id); return err }},
-		{"Update", func(ctx context.Context) error { return p.Update(ctx, nil) }},
-		{"Start", p.Start},
-		{"Restore", func(ctx context.Context) error { return p.Restore(ctx, &extension.RestoreConfig{}) }},
-		{"Checkpoint", func(ctx context.Context) error { return p.CheckpointSandbox(ctx, nil) }},
-		{"Delete", p.Delete},
-		{"Kill", func(ctx context.Context) error { return p.Kill(ctx, uint32(unix.SIGKILL), true) }},
-		{"Exec", func(ctx context.Context) error { _, err := p.Exec(ctx, "", nil); return err }},
+		{name: "Status", call: func(ctx context.Context) error { _, err := p.Status(ctx); return err }},
+		{name: "Stats", call: func(ctx context.Context) error { _, err := p.Stats(ctx, p.id); return err }},
+		{name: "Update", call: func(ctx context.Context) error { return p.Update(ctx, nil) }},
+		{name: "Start", call: p.Start},
+		{name: "Restore", call: func(ctx context.Context) error { return p.Restore(ctx, &extension.RestoreConfig{}) }},
+		{name: "Checkpoint", call: func(ctx context.Context) error { return p.CheckpointSandbox(ctx, nil) }},
+		{name: "Delete", call: p.Delete},
+		{name: "Kill", call: func(ctx context.Context) error { return p.Kill(ctx, uint32(unix.SIGKILL), true) }},
+		{name: "Exec", call: func(ctx context.Context) error { _, err := p.Exec(ctx, "", nil); return err }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			start := time.Now()
@@ -775,11 +775,11 @@ func TestInitExitRetainsLiveSandboxForExplicitDelete(t *testing.T) {
 func TestOnlyExplicitSandboxTeardownEscalates(t *testing.T) {
 	for _, tc := range []struct {
 		name           string
+		operation      string
+		signal         uint32
 		sandbox        bool
 		locked         bool
-		signal         uint32
 		all            bool
-		operation      string
 		callerTimeout  bool
 		callerCanceled bool
 		withoutPidfd   bool

@@ -68,21 +68,26 @@ const (
 
 // Syscall includes the syscall implementation and compatibility information.
 type Syscall struct {
-	// Name is the syscall name.
-	Name string
 	// Fn is the implementation of the syscall.
 	Fn SyscallFn
-	// SupportLevel is the level of support implemented in gVisor.
-	SupportLevel SyscallSupportLevel
-	// Note describes the compatibility of the syscall.
-	Note string
-	// URLs is set of URLs to any relevant bugs or issues.
-	URLs []string
+
 	// PointCallback is an optional callback that converts syscall arguments
 	// to a proto that can be used with seccheck.Sink.
 	// Callback functions must follow this naming convention:
 	//   PointSyscallNameInCamelCase, e.g. PointReadat, PointRtSigaction.
 	PointCallback SyscallToProto
+
+	// Name is the syscall name.
+	Name string
+
+	// Note describes the compatibility of the syscall.
+	Note string
+
+	// URLs is set of URLs to any relevant bugs or issues.
+	URLs []string
+
+	// SupportLevel is the level of support implemented in gVisor.
+	SupportLevel SyscallSupportLevel
 }
 
 // SyscallFn is a syscall implementation.
@@ -279,20 +284,6 @@ type Stracer interface {
 // Note that a SyscallTable is not savable directly. Instead, they are saved as
 // an OS/Arch pair and lookup happens again on restore.
 type SyscallTable struct {
-	// OS is the operating system that this syscall table implements.
-	OS abi.OS
-
-	// Arch is the architecture that this syscall table targets.
-	Arch arch.Arch
-
-	// AuditNumber is a numeric constant that represents the syscall table. If
-	// non-zero, auditNumber must be one of the AUDIT_ARCH_* values defined by
-	// linux/audit.h.
-	AuditNumber uint32
-
-	// Table is the collection of functions.
-	Table map[uintptr]Syscall
-
 	// lookup is a fixed-size array that holds the syscalls (indexed by
 	// their numbers). It is used for fast look ups.
 	lookup [sentry.MaxSyscallNum + 1]SyscallFn
@@ -302,15 +293,18 @@ type SyscallTable struct {
 	// seccheck.Point is enabled for the syscall.
 	pointCallbacks [sentry.MaxSyscallNum + 1]SyscallToProto
 
+	// Stracer traces this syscall table.
+	Stracer Stracer
+
 	// Emulate is a collection of instruction addresses to emulate. The
 	// keys are addresses, and the values are system call numbers.
 	Emulate map[hostarch.Addr]uintptr
 
+	// Table is the collection of functions.
+	Table map[uintptr]Syscall
+
 	// The function to call in case of a missing system call.
 	Missing MissingFn
-
-	// Stracer traces this syscall table.
-	Stracer Stracer
 
 	// External is used to handle an external callback.
 	External func(*Kernel)
@@ -323,8 +317,19 @@ type SyscallTable struct {
 	// External is not called if it returns false.
 	ExternalFilterAfter func(*Task, uintptr, arch.SyscallArguments) bool
 
+	// OS is the operating system that this syscall table implements.
+	OS abi.OS
+
+	// Arch is the architecture that this syscall table targets.
+	Arch arch.Arch
+
 	// FeatureEnable stores the strace and one-shot enable bits.
 	FeatureEnable SyscallFlagsTable
+
+	// AuditNumber is a numeric constant that represents the syscall table. If
+	// non-zero, auditNumber must be one of the AUDIT_ARCH_* values defined by
+	// linux/audit.h.
+	AuditNumber uint32
 }
 
 // MaxSysno returns the largest system call number.

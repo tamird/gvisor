@@ -80,8 +80,8 @@ func TestClone(t *testing.T) {
 
 func TestWrite(t *testing.T) {
 	for _, tc := range []struct {
-		name      string
 		view      *View
+		name      string
 		initSize  int
 		writeSize int
 	}{
@@ -192,9 +192,9 @@ func TestWriteTo(t *testing.T) {
 
 func TestReadFrom(t *testing.T) {
 	for _, tc := range []struct {
+		view *View
 		name string
 		data []byte
-		view *View
 	}{
 		{
 			name: "basic",

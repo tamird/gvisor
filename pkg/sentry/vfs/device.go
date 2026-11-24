@@ -299,8 +299,8 @@ func (vfs *VirtualFilesystem) GenerateProcDevices(buf *bytes.Buffer) error {
 		for _, major := range majors {
 			rdg := devsByMajor[major]
 			type minorGroup struct {
-				lowestMinor uint32
 				groupName   string
+				lowestMinor uint32
 			}
 			minors := make([]minorGroup, 0, len(rdg.lowestMinorByName))
 			for name, minor := range rdg.lowestMinorByName {

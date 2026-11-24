@@ -322,8 +322,8 @@ type benchmarkableMap interface {
 
 // rwMutexMap implements benchmarkableMap for a RWMutex-protected Go map.
 type rwMutexMap struct {
-	mu sync.RWMutex
 	m  map[int64]*testValue
+	mu sync.RWMutex
 }
 
 func (m *rwMutexMap) Load(key int64) *testValue {
@@ -435,8 +435,8 @@ func (m *benchmarkableAtomicPtrMapSharded) Delete(key int64) {
 }
 
 var mapImpls = [...]struct {
-	name string
 	ctor func() benchmarkableMap
+	name string
 }{
 	{
 		name: "RWMutexMap",

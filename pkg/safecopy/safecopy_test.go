@@ -500,12 +500,12 @@ func TestZeroOutBusError(t *testing.T) {
 // on amd64. faultOffs are offsets at which to test faults, rounded up to the
 // page size.
 var zeroOutCases = []struct {
-	length    int
 	faultOffs []int
+	length    int
 }{
-	{2000, []int{pageSize}},
-	{64 << 10, []int{pageSize, 32 << 10}},
-	{33 << 20, []int{pageSize, 16 << 20, 32 << 20}},
+	{length: 2000, faultOffs: []int{pageSize}},
+	{length: 64 << 10, faultOffs: []int{pageSize, 32 << 10}},
+	{length: 33 << 20, faultOffs: []int{pageSize, 16 << 20, 32 << 20}},
 }
 
 func TestZeroOutLengths(t *testing.T) {

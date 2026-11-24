@@ -194,10 +194,10 @@ func TestCgroupV1(t *testing.T) {
 	// CPU available in our current set, and every container's set.
 	attrs := []struct {
 		field          string
-		value          int64
 		ctrl           string
 		file           string
 		want           string
+		value          int64
 		skipIfNotFound bool
 	}{
 		{
@@ -338,10 +338,10 @@ func TestCgroupV1(t *testing.T) {
 	// Lower the limit while keeping it above the 500 MiB reservation.
 	updatedMemory := struct {
 		field          string
-		value          int64
 		ctrl           string
 		file           string
 		want           string
+		value          int64
 		skipIfNotFound bool
 	}{
 		field: "memory",
@@ -404,9 +404,9 @@ func TestCgroupV2(t *testing.T) {
 	// CPU available in our current set, and every container's set.
 	attrs := []struct {
 		field          string
-		value          int64
 		file           string
 		want           string
+		value          int64
 		skipIfNotFound bool
 	}{
 		{
@@ -548,9 +548,9 @@ func TestCgroupV2(t *testing.T) {
 	// Update pids-limit.
 	updatedPidsLimit := struct {
 		field          string
-		value          int64
 		file           string
 		want           string
+		value          int64
 		skipIfNotFound bool
 	}{
 		field: "pids-limit",
@@ -636,12 +636,12 @@ func TestCgroupDevicesShared(t *testing.T) {
 	}
 	defer restore()
 	for _, tc := range []struct {
-		major, minor uint32
 		want         error
+		major, minor uint32
 	}{
-		{195, 255, nil},
-		{10, 232, nil},
-		{199, 0, unix.EPERM},
+		{major: 195, minor: 255, want: nil},
+		{major: 10, minor: 232, want: nil},
+		{major: 199, minor: 0, want: unix.EPERM},
 	} {
 		path := filepath.Join(t.TempDir(), "dev")
 		if err := unix.Mknod(path, unix.S_IFCHR|0600, int(unix.Mkdev(tc.major, tc.minor))); !errors.Is(err, tc.want) {

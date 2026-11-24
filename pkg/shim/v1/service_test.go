@@ -110,11 +110,10 @@ func TestShutdownSocketCleanup(t *testing.T) {
 // methods needed by tests in this file. Calling any other method panics.
 type fakeTaskService struct {
 	extension.TaskServiceExt
-
+	shutdownErr  error
+	shutdownResp *types.Empty
 	creates      int
 	createPid    uint32
-	shutdownResp *types.Empty
-	shutdownErr  error
 }
 
 func (f *fakeTaskService) Create(context.Context, *task.CreateTaskRequest) (*task.CreateTaskResponse, error) {
@@ -148,8 +147,8 @@ func (f *fakeShutdownService) Shutdown() {
 // services any container.
 func TestShutdownResponse(t *testing.T) {
 	for _, tc := range []struct {
-		name         string
 		main         *fakeTaskService
+		name         string
 		wantShutdown bool
 	}{
 		{

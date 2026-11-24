@@ -46,6 +46,7 @@ go_library(
         "@org_golang_x_tools//go/analysis/passes/defers:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/directive:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/errorsas:go_default_library",
+        "@org_golang_x_tools//go/analysis/passes/fieldalignment:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/framepointer:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/gofix:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/hostport:go_default_library",

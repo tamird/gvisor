@@ -128,8 +128,8 @@ type fileLine struct {
 type stackKey [maxStackFrames]fileLine
 
 var stackCache = struct {
-	sync.Mutex
 	entries map[stackKey][]uintptr
+	sync.Mutex
 }{entries: map[stackKey][]uintptr{}}
 
 func makeStackKey(pcs []uintptr) stackKey {

@@ -84,12 +84,11 @@ func HaveEmitters() bool {
 // callbacks must not reenter this multiEmitter. checklocks cannot recover that
 // owner through the Emitter interface.
 type multiEmitter struct {
-	mu sync.Mutex
-
 	// emitters is initialized lazily in AddEmitter.
 	//
 	// +checklocks:mu
 	emitters map[Emitter]struct{}
+	mu       sync.Mutex
 }
 
 // Emit emits a message using all added emitters.

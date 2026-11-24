@@ -256,7 +256,11 @@ func getCgroupEntries(t *kernel.Task) []procfs.CgroupEntry {
 	entries := t.GetCgroupEntries()
 	out := make([]procfs.CgroupEntry, 0, len(entries))
 	for _, e := range entries {
-		out = append(out, procfs.CgroupEntry(e))
+		out = append(out, procfs.CgroupEntry{
+			HierarchyID: e.HierarchyID,
+			Controllers: e.Controllers,
+			Path:        e.Path,
+		})
 	}
 	return out
 }

@@ -63,8 +63,8 @@ func (f *Forwarder) HandlePacket(id stack.TransportEndpointID, pkt *stack.Packet
 // it via CreateEndpoint.
 type ForwarderRequest struct {
 	stack *stack.Stack
-	id    stack.TransportEndpointID
 	pkt   *stack.PacketBuffer
+	id    stack.TransportEndpointID
 }
 
 // NewForwarderRequest creates a new ForwarderRequest and takes a reference on

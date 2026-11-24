@@ -77,19 +77,19 @@ type mockApplicationFDImpl struct {
 	vfs.FileDescriptionDefaultImpl
 	vfs.NoLockFD
 	vfs.DentryMetadataFileDescriptionImpl
-	mu sync.Mutex
+	notifyStop chan struct{}
+
+	queue waiter.Queue
 
 	// +checklocks:mu
 	readBuf bytes.Buffer
 
 	// +checklocks:mu
 	writeBuf bytes.Buffer
+	mu       sync.Mutex
 
 	// +checklocks:mu
 	released bool
-
-	queue      waiter.Queue
-	notifyStop chan struct{}
 }
 
 var _ vfs.FileDescriptionImpl = (*mockApplicationFDImpl)(nil)

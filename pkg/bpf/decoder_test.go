@@ -20,8 +20,8 @@ import (
 
 func TestDecode(t *testing.T) {
 	for _, test := range []struct {
-		filter   Instruction
 		expected string
+		filter   Instruction
 		fail     bool
 	}{
 		{filter: Stmt(Ld+Imm, 10), expected: "A <- 10"},
@@ -94,8 +94,8 @@ func TestDecode(t *testing.T) {
 func TestDecodeInstructions(t *testing.T) {
 	for _, test := range []struct {
 		name     string
-		program  []Instruction
 		expected string
+		program  []Instruction
 		fail     bool
 	}{
 		{name: "basic with jump indexes",

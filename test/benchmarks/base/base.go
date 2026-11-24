@@ -28,9 +28,9 @@ import (
 // ServerArgs wraps args for startServers and runServerWorkload.
 type ServerArgs struct {
 	Machine harness.Machine
-	Port    int
-	RunOpts dockerutil.RunOpts
 	Cmd     []string
+	RunOpts dockerutil.RunOpts
+	Port    int
 }
 
 // StartServers starts b.N containers defined by 'runOpts' and 'cmd' and uses

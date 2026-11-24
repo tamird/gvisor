@@ -22,10 +22,10 @@ import (
 
 // FDInfo contains information about an application file descriptor.
 type FDInfo struct {
-	// Number is the FD number.
-	Number int32 `json:"number"`
 	// Path is the path of the file that FD represents.
 	Path string `json:"path,omitempty"`
+	// Number is the FD number.
+	Number int32 `json:"number"`
 	// Mode is the file mode.
 	Mode uint16 `json:"mode"`
 }
@@ -57,50 +57,50 @@ type Stat struct {
 
 // Mapping contains information for /proc/[pid]/maps.
 type Mapping struct {
-	Address     hostarch.AddrRange  `json:"address"`
-	Permissions hostarch.AccessType `json:"permissions"`
 	Private     string              `json:"private,omitempty"`
+	Pathname    string              `json:"pathname,omitempty"`
+	Address     hostarch.AddrRange  `json:"address"`
 	Offset      uint64              `json:"offset"`
+	Inode       uint64              `json:"inode,omitempty"`
 	DevMajor    uint32              `json:"deviceMajor,omitempty"`
 	DevMinor    uint32              `json:"deviceMinor,omitempty"`
-	Inode       uint64              `json:"inode,omitempty"`
-	Pathname    string              `json:"pathname,omitempty"`
+	Permissions hostarch.AccessType `json:"permissions"`
 }
 
 // CgroupEntry is one line of /proc/[pid]/cgroup.
 type CgroupEntry struct {
-	HierarchyID uint32 `json:"hierarchy_id"`
 	Controllers string `json:"controllers,omitempty"`
 	Path        string `json:"path,omitempty"`
+	HierarchyID uint32 `json:"hierarchy_id"`
 }
 
 // ProcessProcfsDump contains the procfs dump for one process. For more details
 // on fields that directly correspond to /proc fields, see proc(5).
 type ProcessProcfsDump struct {
+	// Limits constrains resource limits for this process. Currently only
+	// RLIMIT_NOFILE is supported.
+	Limits map[string]limits.Limit `json:"limits,omitempty"`
 	// Exe is the symlink target of /proc/[pid]/exe.
 	Exe string `json:"exe,omitempty"`
+	// CWD is the symlink target of /proc/[pid]/cwd.
+	CWD string `json:"cwd,omitempty"`
+	// Root is /proc/[pid]/root.
+	Root string `json:"root,omitempty"`
 	// Args is /proc/[pid]/cmdline split into an array.
 	Args []string `json:"args,omitempty"`
 	// Env is /proc/[pid]/environ split into an array.
 	Env []string `json:"env,omitempty"`
-	// CWD is the symlink target of /proc/[pid]/cwd.
-	CWD string `json:"cwd,omitempty"`
 	// FDs contains the directory entries of /proc/[pid]/fd and also contains the
 	// symlink target for each FD.
 	FDs []FDInfo `json:"fdlist,omitempty"`
-	// StartTime is the process start time in nanoseconds since Unix epoch.
-	StartTime int64 `json:"clone_ts,omitempty"`
-	// Root is /proc/[pid]/root.
-	Root string `json:"root,omitempty"`
-	// Limits constrains resource limits for this process. Currently only
-	// RLIMIT_NOFILE is supported.
-	Limits map[string]limits.Limit `json:"limits,omitempty"`
 	// Cgroup is /proc/[pid]/cgroup split into an array.
 	Cgroup []CgroupEntry `json:"cgroup,omitempty"`
-	// Status is /proc/[pid]/status.
-	Status Status `json:"status"`
-	// Stat is /proc/[pid]/stat.
-	Stat Stat `json:"stat"`
 	// Maps is /proc/[pid]/maps.
 	Maps []Mapping `json:"maps,omitempty"`
+	// Status is /proc/[pid]/status.
+	Status Status `json:"status"`
+	// StartTime is the process start time in nanoseconds since Unix epoch.
+	StartTime int64 `json:"clone_ts,omitempty"`
+	// Stat is /proc/[pid]/stat.
+	Stat Stat `json:"stat"`
 }

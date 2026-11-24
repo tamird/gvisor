@@ -300,9 +300,9 @@ func (kcov *Kcov) ConfigureMMap(ctx context.Context, opts *memmap.MMapOpts) erro
 
 // kcovReadWriter implements safemem.Reader and safemem.Writer.
 type kcovReadWriter struct {
-	off uint64
 	mf  *pgalloc.MemoryFile
 	fr  memmap.FileRange
+	off uint64
 }
 
 // ReadToBlocks implements safemem.Reader.ReadToBlocks.

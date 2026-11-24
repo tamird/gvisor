@@ -26,9 +26,9 @@ import (
 )
 
 type testCase struct {
+	test    tools.Sysbench
 	name    string
 	threads int
-	test    tools.Sysbench
 }
 
 // BenchmarkSysbench runs sysbench on the runtime.

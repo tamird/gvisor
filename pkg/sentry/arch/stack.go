@@ -27,20 +27,20 @@ import (
 //
 // Stack is not thread-safe.
 type Stack struct {
+	// The interface used to actually copy user memory.
+	IO usermem.IO
+
 	// Our arch info.
 	// We use this for automatic Native conversion of hostarch.Addrs during
 	// Push() and Pop().
 	Arch *Context64
 
-	// The interface used to actually copy user memory.
-	IO usermem.IO
-
-	// Our current stack bottom.
-	Bottom hostarch.Addr
-
 	// Scratch buffer used for marshalling to avoid having to repeatedly
 	// allocate scratch memory.
 	scratchBuf []byte
+
+	// Our current stack bottom.
+	Bottom hostarch.Addr
 }
 
 // scratchBufLen is the default length of Stack.scratchBuf. The

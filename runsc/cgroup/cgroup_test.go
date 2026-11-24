@@ -207,9 +207,9 @@ func makeLinuxThrottleDevice(major, minor int64, rate uint64) specs.LinuxThrottl
 
 func TestBlockIO(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
 		spec  *specs.LinuxBlockIO
 		wants map[string]string
+		name  string
 	}{
 		{
 			name: "simple",
@@ -297,9 +297,9 @@ func TestBlockIO(t *testing.T) {
 
 func TestCPU(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
 		spec  *specs.LinuxCPU
 		wants map[string]string
+		name  string
 	}{
 		{
 			name: "all",
@@ -350,9 +350,9 @@ func TestCPU(t *testing.T) {
 
 func TestCPUSet(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
 		spec  *specs.LinuxCPU
 		wants map[string]string
+		name  string
 	}{
 		{
 			name: "all",
@@ -409,8 +409,8 @@ func TestCPUSetAncestor(t *testing.T) {
 	}
 
 	for _, tc := range []struct {
-		name string
 		spec *specs.LinuxCPU
+		name string
 	}{
 		{
 			name: "nil_values",
@@ -467,9 +467,9 @@ func TestCPUSetAncestor(t *testing.T) {
 
 func TestHugeTlb(t *testing.T) {
 	for _, tc := range []struct {
+		wants map[string]string
 		name  string
 		spec  []specs.LinuxHugepageLimit
-		wants map[string]string
 	}{
 		{
 			name: "single",
@@ -533,9 +533,9 @@ func TestHugeTlb(t *testing.T) {
 
 func TestMemory(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
 		spec  *specs.LinuxMemory
 		wants map[string]string
+		name  string
 	}{
 		{
 			name: "all",
@@ -597,9 +597,9 @@ func TestMemory(t *testing.T) {
 
 func TestNetworkClass(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
 		spec  *specs.LinuxNetwork
 		wants map[string]string
+		name  string
 	}{
 		{
 			name: "all",
@@ -642,9 +642,9 @@ func TestNetworkClass(t *testing.T) {
 
 func TestNetworkPriority(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
 		spec  *specs.LinuxNetwork
 		wants map[string]string
+		name  string
 	}{
 		{
 			name: "all",
@@ -692,9 +692,9 @@ func TestNetworkPriority(t *testing.T) {
 
 func TestPids(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
 		spec  *specs.LinuxPids
 		wants map[string]string
+		name  string
 	}{
 		{
 			name: "all",

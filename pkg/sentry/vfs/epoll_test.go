@@ -27,9 +27,9 @@ import (
 // Host-backed file descriptions queue the waiter before asking the host to
 // monitor the FD. A notification can arrive before that request fails.
 type falliblePollFD struct {
-	testFD
-	waiter.Queue
 	err error
+	waiter.Queue
+	testFD
 }
 
 func (*falliblePollFD) Epollable() bool { return true }

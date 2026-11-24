@@ -38,12 +38,12 @@ func TestReceiveControlMessage(t *testing.T) {
 	for _, flow := range []context.TestFlow{context.UnicastV4, context.UnicastV6, context.UnicastV6Only, context.MulticastV4, context.MulticastV6, context.MulticastV6Only, context.Broadcast} {
 		t.Run(flow.String(), func(t *testing.T) {
 			for _, test := range []struct {
-				name             string
-				optionProtocol   tcpip.NetworkProtocolNumber
 				getReceiveOption func(tcpip.Endpoint) bool
 				setReceiveOption func(tcpip.Endpoint, bool)
 				presenceChecker  checker.ControlMessagesChecker
 				absenceChecker   checker.ControlMessagesChecker
+				name             string
+				optionProtocol   tcpip.NetworkProtocolNumber
 			}{
 				{
 					name:             "TOS",

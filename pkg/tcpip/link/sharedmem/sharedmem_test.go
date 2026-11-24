@@ -45,8 +45,8 @@ const (
 
 type queueBuffers struct {
 	data []byte
-	rx   pipe.Tx
 	tx   pipe.Rx
+	rx   pipe.Tx
 }
 
 func initQueue(t *testing.T, q *queueBuffers, c *QueueConfig) {
@@ -78,22 +78,21 @@ func (q *queueBuffers) cleanup() {
 }
 
 type packetInfo struct {
-	proto      tcpip.NetworkProtocolNumber
 	data       []byte
 	linkHeader []byte
+	proto      tcpip.NetworkProtocolNumber
 }
 
 type testContext struct {
-	t     *testing.T
-	ep    *endpoint
-	txCfg QueueConfig
-	rxCfg QueueConfig
-	txq   queueBuffers
-	rxq   queueBuffers
-
+	t        *testing.T
+	ep       *endpoint
 	packetCh chan struct{}
-	mu       sync.Mutex
 	packets  []packetInfo
+	txCfg    QueueConfig
+	rxCfg    QueueConfig
+	txq      queueBuffers
+	rxq      queueBuffers
+	mu       sync.Mutex
 }
 
 func newTestContext(t *testing.T, mtu, bufferSize uint32, addr tcpip.LinkAddress) *testContext {

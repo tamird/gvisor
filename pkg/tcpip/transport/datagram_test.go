@@ -42,8 +42,8 @@ func TestStateUpdates(t *testing.T) {
 	const nicID = 1
 
 	for _, test := range []struct {
-		name           string
 		createEndpoint func(*stack.Stack) (tcpip.Endpoint, error)
+		name           string
 	}{
 		{
 			name: "UDP",
@@ -135,8 +135,8 @@ func TestStateUpdates(t *testing.T) {
 
 type mockEndpoint struct {
 	disp     stack.NetworkDispatcher
-	pkts     stack.PacketBufferList
 	writeErr tcpip.Error
+	pkts     stack.PacketBufferList
 }
 
 func (*mockEndpoint) MTU() uint32 {
@@ -197,8 +197,8 @@ func TestSndBuf(t *testing.T) {
 	header.ICMPv4(buf).SetType(header.ICMPv4Echo)
 
 	for _, test := range []struct {
-		name           string
 		createEndpoint func(*stack.Stack, *waiter.Queue) (tcpip.Endpoint, error)
+		name           string
 	}{
 		{
 			name: "UDP",
@@ -369,10 +369,10 @@ func TestDeviceReturnErrNoBufferSpace(t *testing.T) {
 
 	for _, networkTest := range []struct {
 		name       string
-		netProto   tcpip.NetworkProtocolNumber
+		buf        []byte
 		localAddr  tcpip.Address
 		remoteAddr tcpip.Address
-		buf        []byte
+		netProto   tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:       "IPv4",
@@ -399,8 +399,8 @@ func TestDeviceReturnErrNoBufferSpace(t *testing.T) {
 	} {
 		t.Run(networkTest.name, func(t *testing.T) {
 			for _, test := range []struct {
-				name           string
 				createEndpoint func(*stack.Stack) (tcpip.Endpoint, error)
+				name           string
 			}{
 				// TODO(https://gvisor.dev/issues/7656): Also test ping sockets.
 				{
@@ -561,8 +561,8 @@ func TestMulticastLoop(t *testing.T) {
 	} {
 		t.Run(netProto.name, func(t *testing.T) {
 			for _, test := range []struct {
-				name             string
 				createEndpoint   func(*stack.Stack, *waiter.Queue) (tcpip.Endpoint, error)
+				name             string
 				includedHdrBytes int
 			}{
 				{
@@ -688,16 +688,15 @@ func TestIPv6PacketInfo(t *testing.T) {
 	}
 
 	type testCase struct {
-		name        string
-		boundNICID  tcpip.NICID
-		bindAddr    tcpip.FullAddress
-		connectAddr tcpip.FullAddress
-		toAddr      tcpip.FullAddress
-		pktInfo     tcpip.IPv6PacketInfo
-
 		expectedErr        tcpip.Error
+		bindAddr           tcpip.FullAddress
+		connectAddr        tcpip.FullAddress
+		toAddr             tcpip.FullAddress
+		name               string
+		pktInfo            tcpip.IPv6PacketInfo
 		expectedLocalAddr  tcpip.Address
 		expectedRemoteAddr tcpip.Address
+		boundNICID         tcpip.NICID
 	}
 
 	ipv6Addr1 := testutil.MustParse6("1::1")
@@ -996,8 +995,8 @@ func TestIPv6PacketInfo(t *testing.T) {
 	}
 
 	for _, transProto := range []struct {
-		name           string
 		createEndpoint func(*stack.Stack, *waiter.Queue) (tcpip.Endpoint, error)
+		name           string
 	}{
 		{
 			name: "UDP",

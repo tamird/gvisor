@@ -770,6 +770,6 @@ func OptimizeSyscalls(rule SyscallRule, c *OptimizedRuleCache) SyscallRule {
 // OptimizedRuleCache memoizes optimizeSyscallRule by the structure of the
 // un-optimized rule.
 type OptimizedRuleCache struct {
-	mu    sync.Mutex
 	rules map[string]SyscallRule
+	mu    sync.Mutex
 }

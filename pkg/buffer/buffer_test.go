@@ -105,10 +105,10 @@ func testReadAt(t *testing.T, b *Buffer, offset int64, n int, wantStr string, wa
 
 func TestBuffer(t *testing.T) {
 	testCases := []struct {
+		op     func(*testing.T, *Buffer)
 		name   string
 		input  string
 		output string
-		op     func(*testing.T, *Buffer)
 	}{
 		// Preconditions.
 		{
@@ -531,13 +531,13 @@ func TestBuffer(t *testing.T) {
 func TestBufferPullUp(t *testing.T) {
 	for _, tc := range []struct {
 		desc   string
-		inputs []string
-		offset int
-		length int
 		output string
-		failed bool
+		inputs []string
 		// lengths is the lengths of each buffer node after the pull up.
 		lengths []int
+		offset  int
+		length  int
+		failed  bool
 	}{
 		{
 			desc: "whole empty view",

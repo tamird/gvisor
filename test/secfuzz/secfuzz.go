@@ -32,16 +32,15 @@ type Fuzzee struct {
 	// Name is a human-friendly name for the program.
 	Name string
 
+	// Instructions is the set of instructions in the program.
+	Instructions []bpf.Instruction
+	coverage     [bpf.MaxInstructions]atomicbitops.Bool
+
 	// If `EnforceFullCoverage` is set, the fuzz test will
 	// fail if any instruction in the program is not covered.
 	// The caller must ensure that the seed corpus is sufficient
 	// to fully cover the program.
 	EnforceFullCoverage bool
-
-	// Instructions is the set of instructions in the program.
-	Instructions []bpf.Instruction
-
-	coverage [bpf.MaxInstructions]atomicbitops.Bool
 }
 
 // FuzzLike represents a fuzzer.

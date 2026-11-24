@@ -210,13 +210,13 @@ func TestMapChunks(t *testing.T) {
 
 func TestInvalidChunks(t *testing.T) {
 	for _, tc := range []struct {
-		name     string
-		format   uint16
-		size     uint64
-		blocks   []uint32
-		off      uint64
 		inodeErr error
 		mapErr   error
+		name     string
+		blocks   []uint32
+		size     uint64
+		off      uint64
+		format   uint16
 	}{
 		{name: "48-bit addresses", format: 0x40, size: uint64(hostarch.PageSize), inodeErr: linuxerr.ENOTSUP},
 		{name: "oversized file", size: math.MaxUint64, inodeErr: linuxerr.EUCLEAN},

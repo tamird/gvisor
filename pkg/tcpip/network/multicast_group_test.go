@@ -335,12 +335,12 @@ func createAndInjectMLDPacket(e *channel.Endpoint, mldType uint8, maxRespDelay b
 // default.
 func TestMGPDisabled(t *testing.T) {
 	tests := []struct {
-		name              string
-		protoNum          tcpip.NetworkProtocolNumber
-		multicastAddr     tcpip.Address
 		sentReportStat    func(*stack.Stack) *tcpip.StatCounter
 		receivedQueryStat func(*stack.Stack) *tcpip.StatCounter
 		rxQuery           func(*channel.Endpoint)
+		name              string
+		multicastAddr     tcpip.Address
+		protoNum          tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:          "IGMP",
@@ -420,12 +420,12 @@ func TestMGPDisabled(t *testing.T) {
 
 func TestMGPReceiveCounters(t *testing.T) {
 	tests := []struct {
-		name         string
-		headerType   uint8
-		maxRespTime  byte
-		groupAddress tcpip.Address
 		statCounter  func(*stack.Stack) *tcpip.StatCounter
 		rxMGPkt      func(*channel.Endpoint, byte, byte, tcpip.Address, int)
+		name         string
+		groupAddress tcpip.Address
+		headerType   uint8
+		maxRespTime  byte
 	}{
 		{
 			name:         "IGMP Membership Query",
@@ -516,20 +516,20 @@ func TestMGPReceiveCounters(t *testing.T) {
 // stack schedules and sends correct Membership Reports.
 func TestMGPJoinGroup(t *testing.T) {
 	type subTest struct {
-		name           string
 		enterVersion   func(e *channel.Endpoint)
 		validateReport func(*testing.T, *stack.PacketBuffer)
 		checkStats     func(*testing.T, *stack.Stack, uint64, uint64, uint64)
+		name           string
 	}
 
 	tests := []struct {
-		name                        string
-		protoNum                    tcpip.NetworkProtocolNumber
-		multicastAddr               tcpip.Address
-		maxUnsolicitedResponseDelay time.Duration
 		receivedQueryStat           func(*stack.Stack) *tcpip.StatCounter
 		checkInitialGroups          func(*testing.T, *channel.Endpoint, *stack.Stack, *faketime.ManualClock) uint64
+		name                        string
 		subTests                    []subTest
+		multicastAddr               tcpip.Address
+		maxUnsolicitedResponseDelay time.Duration
+		protoNum                    tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:                        "IGMP",
@@ -667,21 +667,21 @@ func TestMGPJoinGroup(t *testing.T) {
 // group the stack sends a leave/done message.
 func TestMGPLeaveGroup(t *testing.T) {
 	type subTest struct {
-		name           string
 		enterVersion   func(e *channel.Endpoint)
 		validateReport func(*testing.T, *stack.PacketBuffer)
 		validateLeave  func(*testing.T, *stack.PacketBuffer)
-		leaveCount     uint8
 		checkStats     func(*testing.T, *stack.Stack, uint64, uint64, uint64)
+		name           string
+		leaveCount     uint8
 	}
 
 	tests := []struct {
+		checkInitialGroups          func(*testing.T, *channel.Endpoint, *stack.Stack, *faketime.ManualClock) uint64
 		name                        string
-		protoNum                    tcpip.NetworkProtocolNumber
+		subTests                    []subTest
 		multicastAddr               tcpip.Address
 		maxUnsolicitedResponseDelay time.Duration
-		checkInitialGroups          func(*testing.T, *channel.Endpoint, *stack.Stack, *faketime.ManualClock) uint64
-		subTests                    []subTest
+		protoNum                    tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:                        "IGMP",
@@ -835,22 +835,22 @@ func TestMGPLeaveGroup(t *testing.T) {
 // messages.
 func TestMGPQueryMessages(t *testing.T) {
 	type subTest struct {
-		name           string
 		enterVersion   func(e *channel.Endpoint)
 		validateReport func(*testing.T, *stack.PacketBuffer, bool)
 		checkStats     func(*testing.T, *stack.Stack, uint64, uint64, uint64)
 		rxQuery        func(*channel.Endpoint, uint8, tcpip.Address)
+		name           string
 	}
 
 	tests := []struct {
-		name                        string
-		protoNum                    tcpip.NetworkProtocolNumber
-		multicastAddr               tcpip.Address
-		maxUnsolicitedResponseDelay time.Duration
 		receivedQueryStat           func(*stack.Stack) *tcpip.StatCounter
 		maxRespTimeToDuration       func(uint16) time.Duration
 		checkInitialGroups          func(*testing.T, *channel.Endpoint, *stack.Stack, *faketime.ManualClock) uint64
+		name                        string
 		subTests                    []subTest
+		multicastAddr               tcpip.Address
+		maxUnsolicitedResponseDelay time.Duration
+		protoNum                    tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:                        "IGMP",
@@ -1057,22 +1057,22 @@ func TestMGPQueryMessages(t *testing.T) {
 // are sent after receiving a report.
 func TestMGPReportMessages(t *testing.T) {
 	type subTest struct {
-		name           string
 		enterVersion   func(e *channel.Endpoint)
 		validateReport func(*testing.T, *stack.PacketBuffer)
 		validateLeave  func(*testing.T, *stack.PacketBuffer)
-		leaveCount     uint8
 		checkStats     func(*testing.T, *stack.Stack, uint64, uint64, uint64)
+		name           string
+		leaveCount     uint8
 	}
 
 	tests := []struct {
-		name                        string
-		protoNum                    tcpip.NetworkProtocolNumber
-		multicastAddr               tcpip.Address
-		maxUnsolicitedResponseDelay time.Duration
 		rxReport                    func(*channel.Endpoint)
 		checkInitialGroups          func(*testing.T, *channel.Endpoint, *stack.Stack, *faketime.ManualClock) uint64
+		name                        string
 		subTests                    []subTest
+		multicastAddr               tcpip.Address
+		maxUnsolicitedResponseDelay time.Duration
+		protoNum                    tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:          "IGMP",
@@ -1235,27 +1235,27 @@ func TestMGPReportMessages(t *testing.T) {
 
 func TestMGPWithNICLifecycle(t *testing.T) {
 	type subTest struct {
-		name            string
-		v1Compatibility bool
 		enterVersion    func(e *channel.Endpoint)
 		validateReport  func(*testing.T, *stack.PacketBuffer, tcpip.Address)
 		validateLeave   func(*testing.T, *channel.Endpoint, []tcpip.Address)
 		checkStats      func(*testing.T, *stack.Stack, uint64, uint64, uint64)
+		name            string
+		v1Compatibility bool
 	}
 
 	tests := []struct {
-		name                        string
-		protoNum                    tcpip.NetworkProtocolNumber
-		multicastAddrs              []tcpip.Address
-		finalMulticastAddr          tcpip.Address
-		maxUnsolicitedResponseDelay time.Duration
 		sentReportStat              func(*stack.Stack) *tcpip.StatCounter
 		sentLeaveStat               func(*stack.Stack) *tcpip.StatCounter
 		validateReport              func(*testing.T, *channel.Endpoint, []tcpip.Address)
 		validateLeave               func(*testing.T, *stack.PacketBuffer, tcpip.Address)
 		checkInitialGroups          func(*testing.T, *channel.Endpoint, *stack.Stack, *faketime.ManualClock) uint64
 		checkStats                  func(*testing.T, *stack.Stack, uint64, uint64, uint64)
+		name                        string
+		multicastAddrs              []tcpip.Address
 		subTests                    []subTest
+		finalMulticastAddr          tcpip.Address
+		maxUnsolicitedResponseDelay time.Duration
+		protoNum                    tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:                        "IGMP",
@@ -1500,10 +1500,10 @@ func TestMGPWithNICLifecycle(t *testing.T) {
 // performed on loopback interfaces since they have no neighbours.
 func TestMGPDisabledOnLoopback(t *testing.T) {
 	tests := []struct {
-		name           string
-		protoNum       tcpip.NetworkProtocolNumber
-		multicastAddr  tcpip.Address
 		sentReportStat func(*stack.Stack) *tcpip.StatCounter
+		name           string
+		multicastAddr  tcpip.Address
+		protoNum       tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:          "IGMP",
@@ -1558,13 +1558,6 @@ func TestMGPDisabledOnLoopback(t *testing.T) {
 func TestMGPCoalescedQueryResponseRecords(t *testing.T) {
 	const igmpv3MLDv2ReportRecordHeaderLen = 4
 
-	type subTest struct {
-		name           string
-		enterVersion   func(e *channel.Endpoint)
-		validateReport func(*testing.T, *stack.PacketBuffer)
-		checkStats     func(*testing.T, *stack.Stack, uint64, uint64, uint64)
-	}
-
 	genAddr := func(bytes []byte, i uint16) tcpip.Address {
 		bytes[len(bytes)-1] = byte(i & 0xFF)
 		bytes[len(bytes)-2] = byte(i >> 8)
@@ -1576,17 +1569,17 @@ func TestMGPCoalescedQueryResponseRecords(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                              string
-		protoNum                          tcpip.NetworkProtocolNumber
-		maxUnsolicitedResponseDelay       time.Duration
 		receivedQueryStat                 func(*stack.Stack) *tcpip.StatCounter
 		checkInitialGroups                func(*testing.T, *channel.Endpoint, *stack.Stack, *faketime.ManualClock) uint64
 		validateReport                    func(*testing.T, *stack.PacketBuffer, tcpip.Address)
 		checkStats                        func(*testing.T, *stack.Stack, uint64)
 		genAddr                           func(uint16) tcpip.Address
-		maxRecordsPerMessage              uint16
 		rxQuery                           func(*channel.Endpoint, uint8)
 		validateReportWithMultipleRecords func(*testing.T, *channel.Endpoint, []tcpip.Address)
+		name                              string
+		maxUnsolicitedResponseDelay       time.Duration
+		protoNum                          tcpip.NetworkProtocolNumber
+		maxRecordsPerMessage              uint16
 	}{
 		{
 			name:                        "IGMP",

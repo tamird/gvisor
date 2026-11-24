@@ -111,10 +111,10 @@ func (c ioeventfdMMIOController) Close(ev eventfd.Eventfd) {
 // the guest physical address space (so that guest accesses to it trigger MMIO
 // exits), allowing those addresses to be used for ioeventfds.
 var ioeventfdMMIO struct {
-	initOnce sync.Once
-	mapping  uintptr
-	mu       sync.Mutex
 	inuse    bitmap.Bitmap
+	mapping  uintptr
+	initOnce sync.Once
+	mu       sync.Mutex
 }
 
 // kvmIoeventfd is struct kvm_ioeventfd.

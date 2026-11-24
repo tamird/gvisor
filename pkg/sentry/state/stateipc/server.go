@@ -39,13 +39,11 @@ type AsyncFileServer struct {
 }
 
 type asyncFileServer struct {
-	filesMu        sync.Mutex
+	impl           AsyncFileServerImpl
 	files          map[uint32]*openFile
+	pwa            flipcall.PacketWindowAllocator
+	filesMu        sync.Mutex
 	nextFileHandle uint32
-
-	pwa flipcall.PacketWindowAllocator
-
-	impl AsyncFileServerImpl
 }
 
 // AsyncFileServerImpl contains implementation details for an AsyncFileServer.
@@ -271,28 +269,15 @@ func (s *AsyncFileServer) RegisterClientFile(req *RegisterClientFileRequest, res
 
 // openFile represents an opened server file.
 type openFile struct {
-	// Immutable fields:
-	server      *AsyncFileServer
-	path        string
-	maxIOBytes  uint32
-	maxRanges   uint32
-	maxParallel uint32
+	// impl is the containing readFile or writeFile. impl is immutable.
+	impl openFileImpl
 
-	// destroyed is true if ioep.Destroy() has been called. destroyed is
-	// protected by server.filesMu.
-	destroyed bool
-
-	// wg is 1 if the reader goroutine is running.
-	wg sync.WaitGroup
-
-	// closeErr is the error returned by ar.Close().
+	// closeErr is the error returned by the underlying reader or writer's Close.
 	closeErr error
 
-	ioep ioEndpoint
-
-	// ids tracks in-use IDs. ids is exclusive to the reader or writer
-	// goroutine.
-	ids idsSet
+	// server, path, maxIOBytes, maxRanges, and maxParallel are immutable.
+	server *AsyncFileServer
+	path   string
 
 	// slicesUsed maps in-use IDs to the slices that they are using. slicesUsed
 	// is exclusive to the reader or writer goroutine.
@@ -302,8 +287,20 @@ type openFile struct {
 	// exclusive to the reader or writer goroutine.
 	slicesUnused []asyncIOSlices
 
-	// impl is the containing readFile or writeFile. impl is immutable.
-	impl openFileImpl
+	// ids tracks in-use IDs. ids is exclusive to the reader or writer
+	// goroutine.
+	ids  idsSet
+	ioep ioEndpoint
+
+	// wg is 1 if the reader goroutine is running.
+	wg          sync.WaitGroup
+	maxIOBytes  uint32
+	maxRanges   uint32
+	maxParallel uint32
+
+	// destroyed is true if ioep.Destroy() has been called. destroyed is
+	// protected by server.filesMu.
+	destroyed bool
 }
 
 type openFileImpl interface {
@@ -313,9 +310,9 @@ type openFileImpl interface {
 
 // readFile represents a server file opened for reading.
 type readFile struct {
+	ar       stateio.AsyncReader
+	dstFiles destinationFileAtomicPtrMap
 	openFile
-	ar                stateio.AsyncReader
-	dstFiles          destinationFileAtomicPtrMap
 	nextDstFileHandle uint32
 }
 
@@ -490,12 +487,12 @@ func (df *destinationFile) destroy() {
 
 // writeFile represents a server file opened for writing.
 type writeFile struct {
+	aw       stateio.AsyncWriter
+	srcFiles sourceFileAtomicPtrMap
 	openFile
-	aw                stateio.AsyncWriter
-	srcFiles          sourceFileAtomicPtrMap
-	nextSrcFileHandle uint32
 	numInflight       int
 	maxReserve        uint64
+	nextSrcFileHandle uint32
 }
 
 func (f *writeFile) startServing(handle uint32) {

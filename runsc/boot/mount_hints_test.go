@@ -25,9 +25,9 @@ import (
 func TestHintsCheckCompatible(t *testing.T) {
 	for _, tc := range []struct {
 		name        string
+		err         string
 		masterOpts  []string
 		replicaOpts []string
-		err         string
 	}{
 		{
 			name: "empty",

@@ -82,12 +82,12 @@ func TestProcessAfterRelease(t *testing.T) {
 }
 
 type processInput struct {
+	pkt   *stack.PacketBuffer
 	id    FragmentID
 	first uint16
 	last  uint16
 	more  bool
 	proto uint8
-	pkt   *stack.PacketBuffer
 }
 
 type processOutput struct {
@@ -191,13 +191,17 @@ func TestReassemblingTimeout(t *testing.T) {
 	)
 
 	type fragment struct {
+		data  string
 		first uint16
 		last  uint16
 		more  bool
-		data  string
 	}
 
 	type event struct {
+		// fragment is a fragment to process. This can be nil if there is no
+		// fragment to process.
+		fragment *fragment
+
 		// name is a nickname of this event.
 		name string
 
@@ -205,17 +209,13 @@ func TestReassemblingTimeout(t *testing.T) {
 		// before a fragment specified in the fragment field is processed.
 		clockAdvance time.Duration
 
-		// fragment is a fragment to process. This can be nil if there is no
-		// fragment to process.
-		fragment *fragment
+		// memSizeAfterEvent is the expected memory size of the fragmentation
+		// instance after the event.
+		memSizeAfterEvent int
 
 		// expectDone is true if the fragmentation instance should report the
 		// reassembly is done after the fragment is processd.
 		expectDone bool
-
-		// memSizeAfterEvent is the expected memory size of the fragmentation
-		// instance after the event.
-		memSizeAfterEvent int
 	}
 
 	memSizeOfFrags := func(frags ...*fragment) int {
@@ -403,13 +403,13 @@ func TestMemoryLimitsIgnoresDuplicates(t *testing.T) {
 
 func TestErrors(t *testing.T) {
 	tests := []struct {
+		err       error
 		name      string
+		data      string
 		blockSize uint16
 		first     uint16
 		last      uint16
 		more      bool
-		data      string
-		err       error
 	}{
 		{
 			name:      "exact block size without more",
@@ -519,10 +519,10 @@ func TestPacketFragmenter(t *testing.T) {
 
 	tests := []struct {
 		name               string
-		fragmentPayloadLen uint32
+		wantFragments      []fragmentInfo
 		transportHeaderLen int
 		payloadSize        int
-		wantFragments      []fragmentInfo
+		fragmentPayloadLen uint32
 	}{
 		{
 			name:               "Packet exactly fits in MTU",
@@ -643,17 +643,17 @@ func TestTimeoutHandler(t *testing.T) {
 	defer pk2.DecRef()
 
 	type processParam struct {
+		pkt   *stack.PacketBuffer
 		first uint16
 		last  uint16
 		more  bool
-		pkt   *stack.PacketBuffer
 	}
 
 	tests := []struct {
+		wantPkt   *stack.PacketBuffer
 		name      string
 		params    []processParam
 		wantError bool
-		wantPkt   *stack.PacketBuffer
 	}{
 		{
 			name: "onTimeout runs",

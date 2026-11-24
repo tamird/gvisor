@@ -33,10 +33,10 @@ var _ stack.LinkEndpoint = (*parentEndpoint)(nil)
 var _ stack.NetworkDispatcher = (*parentEndpoint)(nil)
 
 type childEndpoint struct {
-	mtu  uint32
-	addr tcpip.LinkAddress
 	stack.LinkEndpoint
 	dispatcher stack.NetworkDispatcher
+	addr       tcpip.LinkAddress
+	mtu        uint32
 }
 
 var _ stack.LinkEndpoint = (*childEndpoint)(nil)

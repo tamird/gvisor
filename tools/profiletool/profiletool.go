@@ -226,8 +226,8 @@ type comparisonKey struct {
 	Filename              string
 	FunctionName          string
 	SystemName            string
-	LineFromFunctionStart int64
 	InlineTrace           string
+	LineFromFunctionStart int64
 }
 
 func (k comparisonKey) isGoRuntime() bool {

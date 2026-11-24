@@ -28,8 +28,12 @@ import (
 // address range. This is the value type for addrSet, and the intrusive entry
 // for the deferred list.
 type objectEncodeState struct {
-	// id is the assigned ID for this object.
-	id objectID
+
+	// encoded is the encoded value of this object. Note that this may not
+	// be up to date if this object is still in the deferred list.
+	encoded wire.Object
+
+	deferredEntry
 
 	// obj is the object value. Note that this may be replaced if we
 	// encounter an object that contains this object. When this happens (in
@@ -37,20 +41,16 @@ type objectEncodeState struct {
 	// and defer a re-encoding of the object.
 	obj reflect.Value
 
-	// encoded is the encoded value of this object. Note that this may not
-	// be up to date if this object is still in the deferred list.
-	encoded wire.Object
-
-	// how indicates whether this object should be encoded as a value. This
-	// is used only for deferred encoding.
-	how encodeStrategy
-
 	// refs are the list of reference objects used by other objects
 	// referring to this object. When the object is updated, these
 	// references may be updated directly and automatically.
 	refs []*wire.Ref
+	// id is the assigned ID for this object.
+	id objectID
 
-	deferredEntry
+	// how indicates whether this object should be encoded as a value. This
+	// is used only for deferred encoding.
+	how encodeStrategy
 }
 
 // encodeState is state used for encoding.
@@ -67,9 +67,6 @@ type encodeState struct {
 
 	// types is the type database.
 	types typeEncodeDatabase
-
-	// lastID is the last allocated object ID.
-	lastID objectID
 
 	// values tracks the address ranges occupied by objects, along with the
 	// types of these objects. This is used to locate pointer targets,
@@ -111,6 +108,8 @@ type encodeState struct {
 
 	// stats tracks time data.
 	stats Stats
+	// lastID is the last allocated object ID.
+	lastID objectID
 }
 
 // isSameSizeParent returns true if child is a field value or element within
@@ -284,9 +283,9 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 			obj: obj,
 		}
 		type elementEncodeState struct {
-			addr uintptr
 			typ  reflect.Type
 			refs []*wire.Ref
+			addr uintptr
 		}
 		var (
 			elems []elementEncodeState

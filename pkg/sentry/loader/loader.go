@@ -42,20 +42,20 @@ import (
 
 // LoadArgs holds specifications for an executable file to be loaded.
 type LoadArgs struct {
-	// MemoryManager is the memory manager to load the executable into.
-	MemoryManager *mm.MemoryManager
+	// Root is the current filesystem root.
+	Root vfs.VirtualDentry
+
+	// WorkingDir is the current working directory.
+	WorkingDir vfs.VirtualDentry
 
 	// RemainingTraversals is the maximum number of symlinks to follow to
 	// resolve Filename. This counter is passed by reference to keep it
 	// updated throughout the call stack.
 	RemainingTraversals *uint
 
-	// ResolveFinal indicates whether the final link of Filename should be
-	// resolved, if it is a symlink.
-	ResolveFinal bool
-
-	// Filename is the path for the executable.
-	Filename string
+	// StartupTimeline tracks this load as part of overall sandbox startup.
+	// Only set when loading the initial task image of the root container.
+	StartupTimeline *timing.Timeline
 
 	// File is an open FD of the executable. If File is not nil, then File will
 	// be loaded and Filename will be ignored.
@@ -63,21 +63,15 @@ type LoadArgs struct {
 	// The caller is responsible for checking that the user can execute this file.
 	File *vfs.FileDescription
 
-	// Root is the current filesystem root.
-	Root vfs.VirtualDentry
-
-	// WorkingDir is the current working directory.
-	WorkingDir vfs.VirtualDentry
-
 	// If AfterOpen is not nil, it is called after every successful call to
 	// Opener.OpenPath().
 	AfterOpen func(f *vfs.FileDescription)
 
-	// CloseOnExec indicates that the executable (or one of its parent
-	// directories) was opened with O_CLOEXEC. If the executable is an
-	// interpreter script, then cause an ENOENT error to occur, since the
-	// script would otherwise be inaccessible to the interpreter.
-	CloseOnExec bool
+	// MemoryManager is the memory manager to load the executable into.
+	MemoryManager *mm.MemoryManager
+
+	// Filename is the path for the executable.
+	Filename string
 
 	// Argv is the vector of arguments to pass to the executable.
 	Argv []string
@@ -89,6 +83,16 @@ type LoadArgs struct {
 	// Features specifies the CPU feature set for the executable.
 	Features cpuid.FeatureSet
 
+	// ResolveFinal indicates whether the final link of Filename should be
+	// resolved, if it is a symlink.
+	ResolveFinal bool
+
+	// CloseOnExec indicates that the executable (or one of its parent
+	// directories) was opened with O_CLOEXEC. If the executable is an
+	// interpreter script, then cause an ENOENT error to occur, since the
+	// script would otherwise be inaccessible to the interpreter.
+	CloseOnExec bool
+
 	// NoNewPrivs is the prctl NO_NEW_PRIVS state of the calling task.
 	NoNewPrivs bool
 
@@ -97,10 +101,6 @@ type LoadArgs struct {
 
 	// AllowSUID indicates whether to allow ID elevation during execve.
 	AllowSUID bool
-
-	// StartupTimeline tracks this load as part of overall sandbox startup.
-	// Only set when loading the initial task image of the root container.
-	StartupTimeline *timing.Timeline
 }
 
 // openPath opens args.Filename and checks that it is valid for loading.
@@ -145,15 +145,14 @@ func openPath(ctx context.Context, args LoadArgs) (*vfs.FileDescription, error) 
 // wouldDumpState tracks the effect of Linux's fs/exec.c:would_dump() across
 // the files opened while loading a single image.
 type wouldDumpState struct {
-	// notDumpable is true if some file in the executable/interpreter chain
-	// was not readable by the caller, requiring the task to be made
-	// non-dumpable.
-	notDumpable bool
-
 	// userNS is the value for the image's mm_struct::user_ns: the caller's
 	// user namespace, lowered to the nearest ancestor privileged with respect
 	// to the owner of each non-readable file.
 	userNS *auth.UserNamespace
+	// notDumpable is true if some file in the executable/interpreter chain
+	// was not readable by the caller, requiring the task to be made
+	// non-dumpable.
+	notDumpable bool
 }
 
 // wouldDump applies Linux's fs/exec.c:would_dump() for fd: if the credentials
@@ -299,18 +298,18 @@ func loadExecutable(ctx context.Context, args LoadArgs, wds *wouldDumpState) (lo
 
 // ImageInfo represents the information for the loaded image.
 type ImageInfo struct {
-	// The target operating system of the image.
-	OS abi.OS
 	// AMD64 context.
 	Arch *arch.Context64
-	// The base name of the binary.
-	Name string
-	// NotDumpable is true if the task must be made non-dumpable, see
-	// fs/exec.c:would_dump().
-	NotDumpable bool
 	// UserNamespace is the value for the image's mm_struct::user_ns, see
 	// fs/exec.c:would_dump().
 	UserNamespace *auth.UserNamespace
+	// The base name of the binary.
+	Name string
+	// The target operating system of the image.
+	OS abi.OS
+	// NotDumpable is true if the task must be made non-dumpable, see
+	// fs/exec.c:would_dump().
+	NotDumpable bool
 }
 
 // Load loads args.File into a MemoryManager. If args.File is nil, the path

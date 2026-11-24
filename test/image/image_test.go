@@ -484,15 +484,15 @@ type dockerCommandOptions struct {
 }
 
 type dockerComposeConfig struct {
-	Name     string                   `yaml:"name,omitempty"`
 	Services map[string]dockerService `yaml:"services,omitempty"`
+	Name     string                   `yaml:"name,omitempty"`
 }
 
 type dockerService struct {
-	Image        string      `yaml:"image,omitempty"`
 	Build        dockerBuild `yaml:"build,omitempty"`
-	Privileged   bool        `yaml:"privileged,omitempty"`
+	Image        string      `yaml:"image,omitempty"`
 	NetworkdMode string      `yaml:"network_mode,omitempty"`
+	Privileged   bool        `yaml:"privileged,omitempty"`
 }
 
 type dockerBuild struct {
@@ -517,16 +517,16 @@ func testDockerMatrix(t *testing.T, overlay bool) {
 	}()
 
 	definitions := []struct {
-		name            string
 		testFunc        func(ctx context.Context, t *testing.T, d *dockerutil.Container, opts dockerCommandOptions)
+		name            string
 		testHostNetwork bool
 		testPrivileged  bool
 	}{
-		{"docker_run", testDockerRun, true, true},
-		{"docker_build", testDockerBuild, true, false},
-		{"docker_exec", testDockerExec, false, true},
-		{"docker_compose_run", testDockerComposeRun, true, true},
-		{"docker_compose_build", testDockerComposeBuild, true, false},
+		{name: "docker_run", testFunc: testDockerRun, testHostNetwork: true, testPrivileged: true},
+		{name: "docker_build", testFunc: testDockerBuild, testHostNetwork: true, testPrivileged: false},
+		{name: "docker_exec", testFunc: testDockerExec, testHostNetwork: false, testPrivileged: true},
+		{name: "docker_compose_run", testFunc: testDockerComposeRun, testHostNetwork: true, testPrivileged: true},
+		{name: "docker_compose_build", testFunc: testDockerComposeBuild, testHostNetwork: true, testPrivileged: false},
 	}
 	for _, def := range definitions {
 		hostNetworkOpts := []bool{false}

@@ -39,8 +39,8 @@ func (c *quantizedClock) NowMonotonic() tcpip.MonotonicTime {
 
 type rackTestContext struct {
 	clock tcpip.Clock
-	snd   sender
 	segs  []*segment
+	snd   sender
 }
 
 func newRACKTestContext(clock tcpip.Clock, resolution time.Duration) *rackTestContext {

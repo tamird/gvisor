@@ -697,9 +697,9 @@ func TestContainerCapabilityFilter(t *testing.T) {
 	}
 
 	for _, test := range []struct {
+		want   map[linux.Capability]bool
 		name   string
 		filter string
-		want   map[linux.Capability]bool
 	}{
 		{
 			name:   "unfiltered",

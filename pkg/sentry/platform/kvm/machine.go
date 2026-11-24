@@ -39,40 +39,38 @@ import (
 
 // machine contains state associated with the VM as a whole.
 type machine struct {
-	// fd is the vm fd.
-	fd int
-
-	// machinePoolIndex is the index in the machinePool array.
-	machinePoolIndex uint32
-
-	// nextSlot is the next slot for setMemoryRegion.
-	//
-	// If nextSlot is ^uint32(0), then slots are currently being updated, and the
-	// caller should retry.
-	nextSlot atomicbitops.Uint32
-
-	// upperSharedPageTables tracks the read-only shared upper of all the pagetables.
-	upperSharedPageTables *pagetables.PageTables
-
 	// kernel is the set of global structures.
 	kernel ring0.Kernel
 
-	// applicationCores is used to calculate maxVCPUs.
-	applicationCores int
-
-	// mu protects vCPUs.
-	mu sync.RWMutex
-
-	// available is notified when vCPUs are available.
-	available sync.Cond
+	// upperSharedPageTables tracks the read-only shared upper of all the pagetables.
+	upperSharedPageTables *pagetables.PageTables
 
 	// vCPUsByTID are the machine vCPUs.
 	//
 	// These are populated dynamically.
 	vCPUsByTID map[uint64]*vCPU
 
+	// available is notified when vCPUs are available.
+	available sync.Cond
+
+	// shadowVDSO is a binary-patched copy of the host [vdso] mapped at vdsoVirt
+	// in the guest page tables when tscOffset != 0.
+	shadowVDSO []byte
+
+	// usedSlots is the set of used physical addresses (not sorted).
+	usedSlots []uintptr
+
 	// vCPUsByID are the machine vCPUs, can be indexed by the vCPU's ID.
 	vCPUsByID []*vCPU
+
+	// fd is the vm fd.
+	fd int
+
+	// tscOffset is the offset to apply to the guest TSC.
+	tscOffset uint64
+
+	// applicationCores is used to calculate maxVCPUs.
+	applicationCores int
 
 	// usedVCPUs is the number of vCPUs that have been used from the
 	// vCPUsByID pool.
@@ -84,26 +82,6 @@ type machine struct {
 	// maxSlots is the maximum number of memory slots supported by the machine.
 	maxSlots int
 
-	// tscControl checks whether cpu supports TSC scaling
-	tscControl bool
-
-	// usedSlots is the set of used physical addresses (not sorted).
-	usedSlots []uintptr
-
-	// useCPUNums indicates whether to enable the use vCPU numbers as CPU numbers.
-	useCPUNums bool
-
-	// tscOffset is the offset to apply to the guest TSC.
-	tscOffset uint64
-
-	// tscFrequency is the frequency in Hz at which the host TSC advances,
-	// or zero if it could not be determined.
-	tscFrequency uint64
-
-	// shadowVDSO is a binary-patched copy of the host [vdso] mapped at vdsoVirt
-	// in the guest page tables when tscOffset != 0.
-	shadowVDSO []byte
-
 	// vdsoVirt is the host virtual address of [vdso].
 	vdsoVirt uintptr
 
@@ -113,6 +91,28 @@ type machine struct {
 	// tscOffsetGuestVA.
 	tscOffsetHostVA  uintptr
 	tscOffsetGuestVA uintptr
+
+	// tscFrequency is the frequency in Hz at which the host TSC advances,
+	// or zero if it could not be determined.
+	tscFrequency uint64
+
+	// mu protects vCPUs.
+	mu sync.RWMutex
+
+	// machinePoolIndex is the index in the machinePool array.
+	machinePoolIndex uint32
+
+	// nextSlot is the next slot for setMemoryRegion.
+	//
+	// If nextSlot is ^uint32(0), then slots are currently being updated, and the
+	// caller should retry.
+	nextSlot atomicbitops.Uint32
+
+	// tscControl checks whether cpu supports TSC scaling
+	tscControl bool
+
+	// useCPUNums indicates whether to enable the use vCPU numbers as CPU numbers.
+	useCPUNums bool
 }
 
 const (
@@ -202,11 +202,24 @@ type vCPU struct {
 	// by the bluepill code (see bluepill_amd64.s).
 	ring0.CPU
 
-	// id is the vCPU id.
-	id int
+	// runData for this vCPU.
+	runData *runData
 
-	// fd is the vCPU fd.
-	fd int
+	// lastCtx is the last context that was scheduled on this vCPU
+	lastCtx atomic.Pointer[platformContext]
+
+	// active is the current addressSpace: this is set and read atomically,
+	// it is used to elide unnecessary interrupts due to invalidations.
+	active atomicAddressSpace
+
+	// machine associated with this vCPU.
+	machine *machine
+
+	// vCPUArchState is the architecture-specific state.
+	vCPUArchState
+
+	// dieState holds state related to vCPU death.
+	dieState dieState
 
 	// tid is the last set tid.
 	tid atomicbitops.Uint64
@@ -217,32 +230,19 @@ type vCPU struct {
 	// guestExits is the count of guest to host world switches.
 	guestExits atomicbitops.Uint64
 
-	// faults is a count of world faults (informational only).
-	faults uint32
+	// id is the vCPU id.
+	id int
+
+	// fd is the vCPU fd.
+	fd int
 
 	// state is the vCPU state.
 	//
 	// This is a bitmask of the three fields (vCPU*) described above.
 	state atomicbitops.Uint32
 
-	// runData for this vCPU.
-	runData *runData
-
-	// machine associated with this vCPU.
-	machine *machine
-
-	// active is the current addressSpace: this is set and read atomically,
-	// it is used to elide unnecessary interrupts due to invalidations.
-	active atomicAddressSpace
-
-	// vCPUArchState is the architecture-specific state.
-	vCPUArchState
-
-	// dieState holds state related to vCPU death.
-	dieState dieState
-
-	// lastCtx is the last context that was scheduled on this vCPU
-	lastCtx atomic.Pointer[platformContext]
+	// faults is a count of world faults (informational only).
+	faults uint32
 }
 
 type dieState struct {

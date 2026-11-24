@@ -97,13 +97,13 @@ func (c CPUSet) String() string {
 
 // CPU represents pertinent info about a single hyperthread in a pair.
 type CPU struct {
-	processorNumber int64               // the processor number of this CPU.
+	bugs            map[string]struct{} // map of vulnerabilities parsed from the 'bugs' field.
 	vendorID        string              // the vendorID of CPU (e.g. AuthenticAMD).
+	processorNumber int64               // the processor number of this CPU.
 	cpuFamily       int64               // CPU family number (e.g. 6 for CascadeLake/Skylake).
 	model           int64               // CPU model number (e.g. 85 for CascadeLake/Skylake).
 	physicalID      int64               // Physical ID of this CPU.
 	coreID          int64               // Core ID of this CPU.
-	bugs            map[string]struct{} // map of vulnerabilities parsed from the 'bugs' field.
 }
 
 func newCPU(data string) (*CPU, error) {

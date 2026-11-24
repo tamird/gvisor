@@ -508,8 +508,8 @@ type AddressLifetimes struct {
 // AddressProperties contains additional properties that can be configured when
 // adding an address.
 type AddressProperties struct {
-	PEB        PrimaryEndpointBehavior
-	ConfigType AddressConfigType
+	Disp AddressDispatcher
+
 	// Lifetimes encodes the address' lifetimes.
 	//
 	// Lifetimes.PreferredUntil and Lifetimes.ValidUntil are informational, i.e.
@@ -517,13 +517,15 @@ type AddressProperties struct {
 	// these timestamps.
 	//
 	// If Lifetimes.Deprecated is true, the address will be added as deprecated.
-	Lifetimes AddressLifetimes
+	Lifetimes  AddressLifetimes
+	PEB        PrimaryEndpointBehavior
+	ConfigType AddressConfigType
+
 	// Temporary is as defined in RFC 4941, but applies not only to addresses
 	// added via SLAAC, e.g. DHCPv6 can also add temporary addresses. Temporary
 	// addresses are short-lived and are not to be valid (or preferred)
 	// forever; hence the term temporary.
 	Temporary bool
-	Disp      AddressDispatcher
 }
 
 // AddressInfo contains information about an address assigned to an
@@ -539,8 +541,8 @@ type AddressInfo struct {
 // ProtocolAddressInfo contains information about a protocol address assigned to
 // a NIC.
 type ProtocolAddressInfo struct {
-	Protocol tcpip.NetworkProtocolNumber
 	tcpip.AddressWithPrefix
+	Protocol tcpip.NetworkProtocolNumber
 
 	// Permanent is true if the address is configured with an infinite valid
 	// lifetime and is not a temporary (RFC 4941) address.
@@ -1075,15 +1077,15 @@ type MulticastRouteOutgoingInterface struct {
 
 // MulticastRoute is a multicast route.
 type MulticastRoute struct {
-	// ExpectedInputInterface is the interface on which packets using this route
-	// are expected to ingress.
-	ExpectedInputInterface tcpip.NICID
-
 	// OutgoingInterfaces is the set of interfaces that a multicast packet should
 	// be forwarded out of.
 	//
 	// This field should not be empty.
 	OutgoingInterfaces []MulticastRouteOutgoingInterface
+
+	// ExpectedInputInterface is the interface on which packets using this route
+	// are expected to ingress.
+	ExpectedInputInterface tcpip.NICID
 }
 
 // MulticastForwardingNetworkProtocol is the interface that needs to be

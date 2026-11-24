@@ -85,35 +85,37 @@ func (w *logWriter) Write(p []byte) (n int, err error) {
 
 // Command wraps a command with some niceties for stdout/stderr handling.
 type Command struct {
+	// waitErr is the error returned by `Cmd.Wait`.
+	waitErr error
+
 	// Cmd is the wrapped command.
 	Cmd *exec.Cmd
 
-	// Option fields.
-	// If non-nil, this data will be fed to the command's stdin.
-	Stdin []byte
-	// ForwardStdout and ForwardStderr control whether stdout/stderr are
-	// forwarded to the user's console.
-	ForwardStdout, ForwardStderr bool
+	// doneCh is closed when the command is done running.
+	doneCh chan struct{}
+
 	// PrefixStdout and PrefixStderr are prefixes for forwarded logs.
 	PrefixStdout, PrefixStderr string
+
+	// Sets of stdout/stderr/combined output lines.
+	stdoutLines, stderrLines, combined []string
+
+	// If non-nil, this data will be fed to the command's stdin.
+	Stdin []byte
 
 	// streamWG waits for stdout/stderr capturing goroutines.
 	streamWG sync.WaitGroup
 
-	// mu protects the fields below.
+	// mu protects started, stdoutLines, stderrLines, combined, waitErr and doneCh.
 	mu sync.Mutex
 
 	// started is `true` if the command has started.
 	started bool
 
-	// Sets of stdout/stderr/combined output lines.
-	stdoutLines, stderrLines, combined []string
+	// ForwardStdout and ForwardStderr control whether stdout/stderr are
 
-	// waitErr is the error returned by `Cmd.Wait`.
-	waitErr error
-
-	// doneCh is closed when the command is done running.
-	doneCh chan struct{}
+	// forwarded to the user's console.
+	ForwardStdout, ForwardStderr bool
 }
 
 // Start starts a command in the background.
@@ -143,14 +145,14 @@ func (c *Command) Start(ctx context.Context) error {
 	c.started = true
 
 	for _, stream := range []struct {
-		forward bool
-		prefix  string
 		from    io.ReadCloser
 		to      io.Writer
 		lines   *[]string
+		prefix  string
+		forward bool
 	}{
-		{c.ForwardStdout, c.PrefixStdout, stdout, os.Stdout, &c.stdoutLines},
-		{c.ForwardStderr, c.PrefixStderr, stderr, &logWriter{}, &c.stderrLines},
+		{forward: c.ForwardStdout, prefix: c.PrefixStdout, from: stdout, to: os.Stdout, lines: &c.stdoutLines},
+		{forward: c.ForwardStderr, prefix: c.PrefixStderr, from: stderr, to: &logWriter{}, lines: &c.stderrLines},
 	} {
 		c.streamWG.Add(1)
 		go func(forward bool, prefix string, from io.ReadCloser, to io.Writer, lines *[]string) {

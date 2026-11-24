@@ -46,8 +46,8 @@ func (b *responseBody) Close() error {
 }
 
 type downloadWriter struct {
+	err error
 	bytes.Buffer
-	err    error
 	closes int
 }
 
@@ -70,22 +70,22 @@ func checksum(data string) string {
 func TestDownload(t *testing.T) {
 	const content = "complete driver contents"
 	for _, test := range []struct {
-		name      string
-		reader    func() io.Reader
-		status    int
 		writeErr  error
 		wantErr   error
+		reader    func() io.Reader
+		name      string
 		wantBytes string
+		status    int
 	}{
-		{"ordinary", func() io.Reader { return strings.NewReader(content) }, http.StatusOK, nil, nil, content},
-		{"final_data_with_eof", func() io.Reader { return iotest.DataErrReader(strings.NewReader(content)) }, http.StatusOK, nil, nil, content},
-		{"empty", func() io.Reader { return strings.NewReader("") }, http.StatusOK, nil, nil, ""},
-		{"read_error", func() io.Reader { return iotest.ErrReader(io.ErrUnexpectedEOF) }, http.StatusOK, nil, io.ErrUnexpectedEOF, ""},
-		{"partial_read_error", func() io.Reader {
+		{name: "ordinary", reader: func() io.Reader { return strings.NewReader(content) }, status: http.StatusOK, writeErr: nil, wantErr: nil, wantBytes: content},
+		{name: "final_data_with_eof", reader: func() io.Reader { return iotest.DataErrReader(strings.NewReader(content)) }, status: http.StatusOK, writeErr: nil, wantErr: nil, wantBytes: content},
+		{name: "empty", reader: func() io.Reader { return strings.NewReader("") }, status: http.StatusOK, writeErr: nil, wantErr: nil, wantBytes: ""},
+		{name: "read_error", reader: func() io.Reader { return iotest.ErrReader(io.ErrUnexpectedEOF) }, status: http.StatusOK, writeErr: nil, wantErr: io.ErrUnexpectedEOF, wantBytes: ""},
+		{name: "partial_read_error", reader: func() io.Reader {
 			return io.MultiReader(strings.NewReader(content), iotest.ErrReader(io.ErrUnexpectedEOF))
-		}, http.StatusOK, nil, io.ErrUnexpectedEOF, content},
-		{"write_error", func() io.Reader { return strings.NewReader(content) }, http.StatusOK, io.ErrClosedPipe, io.ErrClosedPipe, ""},
-		{"not_found", func() io.Reader { return strings.NewReader("missing") }, http.StatusNotFound, nil, nil, ""},
+		}, status: http.StatusOK, writeErr: nil, wantErr: io.ErrUnexpectedEOF, wantBytes: content},
+		{name: "write_error", reader: func() io.Reader { return strings.NewReader(content) }, status: http.StatusOK, writeErr: io.ErrClosedPipe, wantErr: io.ErrClosedPipe, wantBytes: ""},
+		{name: "not_found", reader: func() io.Reader { return strings.NewReader("missing") }, status: http.StatusNotFound, writeErr: nil, wantErr: nil, wantBytes: ""},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			body := &responseBody{Reader: test.reader()}
@@ -143,27 +143,27 @@ func TestValidateChecksum(t *testing.T) {
 	emptyARM := unavailableARM
 	emptyARM.ARM64 = ""
 	for _, test := range []struct {
+		armError  error
 		name      string
+		wantErr   string
 		checksums nvproxy.Checksums
 		amdStatus int
 		armStatus int
-		wantErr   string
 		requests  int
-		armError  error
 	}{
-		{"both_present", nvproxy.NewChecksums(checksum(content), checksum(content)), http.StatusOK, http.StatusOK, "", 2, nil},
-		{"first_missing", nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, checksum(content)), http.StatusNotFound, http.StatusOK, "", 2, nil},
-		{"second_mismatch", nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, "wrong"), http.StatusNotFound, http.StatusOK, "checksum mismatch", 2, nil},
-		{"both_missing", nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, nvproxy.ChecksumNoDriver), http.StatusNotFound, http.StatusNotFound, "", 2, nil},
-		{"missing_is_not_forbidden", nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, checksum(content)), http.StatusForbidden, http.StatusOK, "HTTP 403", 1, nil},
-		{"unexpected_installer", nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, checksum(content)), http.StatusOK, http.StatusOK, "unexpected NVIDIA .run installer", 1, nil},
-		{"unavailable_arm", unavailableARM, http.StatusNotFound, http.StatusNotFound, "", 2, nil},
-		{"unavailable_arm_public_amd", unavailableARMWithPublicAMD, http.StatusOK, http.StatusNotFound, "", 2, nil},
-		{"unavailable_amd_public_arm", unavailableAMD, http.StatusNotFound, http.StatusOK, "", 2, nil},
-		{"unavailable_arm_published", unavailableARM, http.StatusNotFound, http.StatusOK, "unexpected NVIDIA .run installer", 2, nil},
-		{"unavailable_arm_forbidden", unavailableARM, http.StatusNotFound, http.StatusForbidden, "HTTP 403", 2, nil},
-		{"unavailable_arm_transport_error", unavailableARM, http.StatusNotFound, 0, "context deadline exceeded", 2, context.DeadlineExceeded},
-		{"unavailable_arm_empty_checksum", emptyARM, http.StatusNotFound, http.StatusNotFound, "empty NVIDIA installer checksum", 0, nil},
+		{name: "both_present", checksums: nvproxy.NewChecksums(checksum(content), checksum(content)), amdStatus: http.StatusOK, armStatus: http.StatusOK, wantErr: "", requests: 2, armError: nil},
+		{name: "first_missing", checksums: nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, checksum(content)), amdStatus: http.StatusNotFound, armStatus: http.StatusOK, wantErr: "", requests: 2, armError: nil},
+		{name: "second_mismatch", checksums: nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, "wrong"), amdStatus: http.StatusNotFound, armStatus: http.StatusOK, wantErr: "checksum mismatch", requests: 2, armError: nil},
+		{name: "both_missing", checksums: nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, nvproxy.ChecksumNoDriver), amdStatus: http.StatusNotFound, armStatus: http.StatusNotFound, wantErr: "", requests: 2, armError: nil},
+		{name: "missing_is_not_forbidden", checksums: nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, checksum(content)), amdStatus: http.StatusForbidden, armStatus: http.StatusOK, wantErr: "HTTP 403", requests: 1, armError: nil},
+		{name: "unexpected_installer", checksums: nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, checksum(content)), amdStatus: http.StatusOK, armStatus: http.StatusOK, wantErr: "unexpected NVIDIA .run installer", requests: 1, armError: nil},
+		{name: "unavailable_arm", checksums: unavailableARM, amdStatus: http.StatusNotFound, armStatus: http.StatusNotFound, wantErr: "", requests: 2, armError: nil},
+		{name: "unavailable_arm_public_amd", checksums: unavailableARMWithPublicAMD, amdStatus: http.StatusOK, armStatus: http.StatusNotFound, wantErr: "", requests: 2, armError: nil},
+		{name: "unavailable_amd_public_arm", checksums: unavailableAMD, amdStatus: http.StatusNotFound, armStatus: http.StatusOK, wantErr: "", requests: 2, armError: nil},
+		{name: "unavailable_arm_published", checksums: unavailableARM, amdStatus: http.StatusNotFound, armStatus: http.StatusOK, wantErr: "unexpected NVIDIA .run installer", requests: 2, armError: nil},
+		{name: "unavailable_arm_forbidden", checksums: unavailableARM, amdStatus: http.StatusNotFound, armStatus: http.StatusForbidden, wantErr: "HTTP 403", requests: 2, armError: nil},
+		{name: "unavailable_arm_transport_error", checksums: unavailableARM, amdStatus: http.StatusNotFound, armStatus: 0, wantErr: "context deadline exceeded", requests: 2, armError: context.DeadlineExceeded},
+		{name: "unavailable_arm_empty_checksum", checksums: emptyARM, amdStatus: http.StatusNotFound, armStatus: http.StatusNotFound, wantErr: "empty NVIDIA installer checksum", requests: 0, armError: nil},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			var bodies []*responseBody

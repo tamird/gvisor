@@ -21,8 +21,8 @@ import (
 
 // Error represents a syscall errno with a descriptive message.
 type Error struct {
-	errno   errno.Errno
 	message string
+	errno   errno.Errno
 }
 
 // New creates a new *Error.

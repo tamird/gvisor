@@ -218,9 +218,9 @@ const (
 //	|                                                               |
 //	+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 type IGMPv3ReportGroupAddressRecordSerializer struct {
-	RecordType   IGMPv3ReportRecordType
-	GroupAddress tcpip.Address
 	Sources      []tcpip.Address
+	GroupAddress tcpip.Address
+	RecordType   IGMPv3ReportRecordType
 }
 
 // Length returns the number of bytes this serializer would occupy.
@@ -448,8 +448,8 @@ func (i IGMPv3Report) Checksum() uint16 {
 // IGMPv3ReportGroupAddressRecordIterator is an iterator over IGMPv3 Multicast
 // Address Records.
 type IGMPv3ReportGroupAddressRecordIterator struct {
-	recordsLeft uint16
 	buf         *bytes.Buffer
+	recordsLeft uint16
 }
 
 // IGMPv3ReportGroupAddressRecordIteratorNextDisposition is the possible

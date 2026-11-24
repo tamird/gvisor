@@ -402,7 +402,7 @@ func (t *Task) doVsyscall(addr hostarch.Addr, sysno uintptr) taskRunState {
 			// ok
 		case linux.SECCOMP_RET_TRACE:
 			t.Debugf("vsyscall %d, caller %x: stopping for PTRACE_EVENT_SECCOMP", sysno, t.Arch().Value(caller))
-			return &runVsyscallAfterPtraceEventSeccomp{addr, sysno, caller}
+			return &runVsyscallAfterPtraceEventSeccomp{addr: addr, sysno: sysno, caller: caller}
 		case linux.SECCOMP_RET_KILL_PROCESS:
 			t.Debugf("vsyscall %d: killed by seccomp (process)", sysno)
 			t.PrepareGroupExit(linux.WaitStatusTerminationSignal(linux.SIGSYS))
@@ -420,9 +420,9 @@ func (t *Task) doVsyscall(addr hostarch.Addr, sysno uintptr) taskRunState {
 }
 
 type runVsyscallAfterPtraceEventSeccomp struct {
+	caller marshal.Marshallable
 	addr   hostarch.Addr
 	sysno  uintptr
-	caller marshal.Marshallable
 }
 
 func (r *runVsyscallAfterPtraceEventSeccomp) execute(t *Task) taskRunState {

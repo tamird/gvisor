@@ -42,16 +42,16 @@ type proxyConn interface {
 // connections and is responsible for cleaning up their resources (i.e. calling their Close method).
 // Proxy(s) all run internal to the sandbox on the supervisor context.
 type Proxy struct {
-	// containerID for this proxy.
-	cid string
 	// "to" and "from" are the two connections on which this Proxy copies.
 	to         proxyConn
 	from       proxyConn
-	once       sync.Once
 	cancelFrom chan struct{}
 	cancelTo   chan struct{}
-	wg         sync.WaitGroup
-	cu         cleanup.Cleanup
+	// containerID for this proxy.
+	cid  string
+	cu   cleanup.Cleanup
+	wg   sync.WaitGroup
+	once sync.Once
 }
 
 // ProxyPair wraps the to/from arguments for NewProxy so that the user explicitly labels to/from.

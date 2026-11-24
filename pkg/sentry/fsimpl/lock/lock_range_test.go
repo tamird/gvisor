@@ -22,8 +22,14 @@ import (
 
 func TestComputeRange(t *testing.T) {
 	tests := []struct {
+		// Expected error.
+		err error
+
 		// Description of test.
 		name string
+
+		// If error is nil, the expected LockRange.
+		LockRange
 
 		// Requested start of the lock range.
 		start int64
@@ -35,12 +41,6 @@ func TestComputeRange(t *testing.T) {
 		// Pre-computed file offset based on whence.
 		// Will be added to start.
 		offset int64
-
-		// Expected error.
-		err error
-
-		// If error is nil, the expected LockRange.
-		LockRange
 	}{
 		{
 			name:  "offset, start, and length all zero",

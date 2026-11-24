@@ -71,22 +71,26 @@ const (
 type server struct {
 	// stack is safe for concurrent use.
 	stack *BuildkiteStack
+
 	// tc is safe for concurrent use.
 	tc *TimeoutController
+
 	// rc is safe for concurrent use.
 	rc *RateLimitController
+
 	// artifactTokenController is safe for concurrent use.
 	artifactTokenController *BucketTokenController
+
 	// gh is safe for concurrent use.
 	gh *githubClient
 
 	// pool is safe for concurrent use.
-	pool *JobPool
-
-	// The following fields are immutable.
-	cfg           config
+	pool          *JobPool
 	computeSvc    *compute.Service
 	monitoringSvc *monitoring.Service
+
+	// cfg, computeSvc, and monitoringSvc are immutable.
+	cfg config
 }
 
 func newServer(ctx context.Context) *server {
@@ -441,8 +445,8 @@ func fetchMaintainers(ctx context.Context, cfg *config, gh *githubClient) (map[a
 	var file struct {
 		Maintainers []struct {
 			GitHub   string   `yaml:"github"`
-			GitHubID authorID `yaml:"github_id"`
 			Status   string   `yaml:"status"`
+			GitHubID authorID `yaml:"github_id"`
 		} `yaml:"maintainers"`
 	}
 	if err := yaml.Unmarshal(data, &file); err != nil {

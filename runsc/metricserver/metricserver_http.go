@@ -29,8 +29,8 @@ const httpTimeout = 1 * time.Minute
 
 // httpResult is returned by HTTP handlers.
 type httpResult struct {
-	code int
 	err  error
+	code int
 }
 
 // httpOK is the "everything went fine" HTTP result.
@@ -51,7 +51,7 @@ func (m *metricServer) serveIndex(w *httpResponseWriter, req *http.Request) http
 			req.URL.Path = "/metrics"
 			return m.serveMetrics(w, req)
 		}
-		return httpResult{http.StatusNotFound, errors.New("path not found")}
+		return httpResult{code: http.StatusNotFound, err: errors.New("path not found")}
 	}
 	w.WriteString("<html><head><title>runsc metrics</title></head><body>")
 	w.WriteString("<p>You have reached the runsc metrics server page!</p>")

@@ -252,17 +252,17 @@ func StackHook(family stack.AddressFamily, hook uint32) (stack.NFHook, *syserr.A
 // Note: unlike iptables, nftables doesn't start with any initialized tables.
 type NFTables struct {
 	filters            [stack.NumAFs]*addressFamilyFilter  // Filters for each address family.
+	startTime          time.Time                           // Time NFTables object was created.
+	clock              tcpip.Clock                         // Clock for timing evaluations.
+	rng                rand.RNG                            // Random number generator.
+	connTrackReaper    tcpip.Timer                         // Reaper timer for reaping timed out connections.
+	connTrack          *stack.ConnTrack                    // Conntrack object for tracking connections.
+	stack              *stack.Stack                        // Parent stack object.
 	ip4InetBaseChains  [stack.NFNumHooks]hookFunctionStack // List of base chains for each hook in the IPv4-inet family.
 	ip6InetBaseChains  [stack.NFNumHooks]hookFunctionStack // List of base chains for each hook in the IPv6-inet family.
-	clock              tcpip.Clock                         // Clock for timing evaluations.
-	startTime          time.Time                           // Time NFTables object was created.
-	rng                rand.RNG                            // Random number generator.
 	tableHandleCounter atomicbitops.Uint64                 // Table handle counter.
 	genid              uint32                              // Generation ID for nftables.
-	connTrack          *stack.ConnTrack                    // Conntrack object for tracking connections.
-	connTrackReaper    tcpip.Timer                         // Reaper timer for reaping timed out connections.
 	natEnabled         bool                                // Whether the nat module is enabled.
-	stack              *stack.Stack                        // Parent stack object.
 }
 
 // Ensures NFTables implements the NFTablesInterface.
@@ -271,9 +271,6 @@ var _ stack.NFTablesInterface = (*NFTables)(nil)
 // addressFamilyFilter represents the nftables state for a specific address
 // family.
 type addressFamilyFilter struct {
-	// family is the address family of the filter.
-	family stack.AddressFamily
-
 	// nftState is the NFTables object the filter belongs to.
 	nftState *NFTables
 
@@ -286,15 +283,15 @@ type addressFamilyFilter struct {
 	// hfStacks is a map of hook function stacks (slice of base chains for a
 	// given hook ordered by priority).
 	hfStacks map[stack.NFHook]*hookFunctionStack
+
+	// family is the address family of the filter.
+	family stack.AddressFamily
 }
 
 // Table represents a single table as a collection of named chains.
 // Note: as tables are simply collections of chains, evaluations aren't done on
 // the table-level and instead are done on the chain- and hook- level.
 type Table struct {
-	// name is the name of the table.
-	name string
-
 	// afFilter is the address family filter that the table belongs to.
 	// Note: this is used to reference the hook function stack as necessary.
 	afFilter *addressFamilyFilter
@@ -316,6 +313,13 @@ type Table struct {
 	sets       map[string]*nftSet
 	setHandles map[uint64]*nftSet
 
+	// name is the name of the table.
+	name string
+
+	// userData is the user-specified metadata for the table. This is not used
+	// by the kernel, but rather userspace applications like nft binary.
+	userData []byte
+
 	// handleCounter is the counter for chain and rule handles.
 	handleCounter atomicbitops.Uint64
 
@@ -324,10 +328,6 @@ type Table struct {
 
 	// owner is the port id of the table's owner, if it is specified.
 	owner uint32
-
-	// userData is the user-specified metadata for the table. This is not used
-	// by the kernel, but rather userspace applications like nft binary.
-	userData []byte
 }
 
 // TableInfo represents data between an AFfilter and a Table.
@@ -369,42 +369,42 @@ const (
 // Regular chains have a nil hook and must be called by base chains for
 // evaluation.
 type Chain struct {
-	// name is the name of the chain.
-	name string
-
 	// table is a pointer to the table that the chain belongs to.
 	// Note: this is tracked to check if the table is dormant.
 	table *Table
-
-	// handle is the id of the chain.
-	handle uint64
-
-	// flags is the set of optional flags for the chain.
-	flags uint8
 
 	// baseChainInfo is the base chain info for the chain if it is a base chain.
 	// Otherwise, it is nil.
 	baseChainInfo *BaseChainInfo
 
-	// rules is a list of rules for the chain.
-	rules []*Rule
-
 	// handleToRule is a map of rule handles to rules for the chain.
 	handleToRule map[uint64]*Rule
+
+	// counter is the counter for base chains with NFTA_CHAIN_COUNTERS attached.
+	counter *ChainCounter
+
+	// name is the name of the chain.
+	name string
+
+	// comment is the optional comment for the table.
+	comment string
+
+	// rules is a list of rules for the chain.
+	rules []*Rule
 
 	// userData is the user-specified metadata for the chain. This is not used
 	// by the kernel, but rather userspace applications like nft binary.
 	userData []byte
 
+	// handle is the id of the chain.
+	handle uint64
+
 	// From net/netfilter/nf_tables_api.c: nft_data_hold
 	// chainUse is the number of jump references to this chain.
 	chainUse uint32
 
-	// comment is the optional comment for the table.
-	comment string
-
-	// counter is the counter for base chains with NFTA_CHAIN_COUNTERS attached.
-	counter *ChainCounter
+	// flags is the set of optional flags for the chain.
+	flags uint8
 }
 
 // ChainCounter maintains thread-safe packet and byte counters for base chains.
@@ -439,25 +439,24 @@ func (c *ChainCounter) Add(pkts, bytes uint64) {
 type BaseChainInfo struct {
 	// LINT.IfChange(base_chain_info)
 
-	// BcType is the base chain type of the chain (filter, nat, route).
-	BcType BaseChainType
-
-	// Hook is the hook to attach the chain to in the netfilter pipeline
-	Hook stack.NFHook
-
-	// LinuxHookNum is the linux hook number for the hook. Used for filling out the information
-	// for a retrieved base chain.
-	LinuxHookNum uint32
-
+	// Device is an optional parameter and is mainly relevant to the bridge and
+	// netdev address families. It specifies the device associated with chain.
+	Device string
 	// Priority determines the order in which base chains with the same hook are
 	// traversed. Each priority is associated with a signed integer priority value
 	// which rank base chains in ascending order. See the Priority struct below
 	// for more details.
 	Priority Priority
 
-	// Device is an optional parameter and is mainly relevant to the bridge and
-	// netdev address families. It specifies the device associated with chain.
-	Device string
+	// BcType is the base chain type of the chain (filter, nat, route).
+	BcType BaseChainType
+
+	// LinuxHookNum is the linux hook number for the hook. Used for filling out the information
+	// for a retrieved base chain.
+	LinuxHookNum uint32
+
+	// Hook is the hook to attach the chain to in the netfilter pipeline
+	Hook stack.NFHook
 
 	// PolicyDrop determines whether to change the chain's policy from Accept to
 	// Drop. The policy of a chain is the verdict to issue when a packet is not
@@ -554,14 +553,14 @@ var supportedHooksForBaseChainTypes [NumBaseChainTypes][]stack.NFHook = [NumBase
 type Priority struct {
 	// Contents are hidden to prevent creating invalid Priority objects.
 
+	// standardPriority is the standard priority name if the priority is a
+	// predefined standard priority name, otherwise it is the empty string.
+	standardPriorityName string
+
 	// value is the priority value of the base chain (in ascending order). This is
 	// set whether the priority is represented by a simple signed integer value or
 	// a standard priority name.
 	value int
-
-	// standardPriority is the standard priority name if the priority is a
-	// predefined standard priority name, otherwise it is the empty string.
-	standardPriorityName string
 }
 
 // NewIntPriority creates a new Priority object given a simple signed integer
@@ -640,10 +639,12 @@ func (p Priority) String() string {
 type standardPriority struct {
 	// name is the standard priority name.
 	name string
-	// value is the priority value of the standard priority name.
-	value int
+
 	// hooks are the hooks that are compatible with the standard priority name.
 	hooks []stack.NFHook
+
+	// value is the priority value of the standard priority name.
+	value int
 }
 
 // standardPriorityMatrix is used to look up information for the predefined
@@ -724,8 +725,8 @@ func validateBaseChainInfo(info *BaseChainInfo, family stack.AddressFamily) *sys
 type Rule struct {
 	chain  *Chain
 	ops    []operation
-	handle uint64
 	udata  []byte
+	handle uint64
 }
 
 // ExprInfo represents the information for a single expression nested under
@@ -741,11 +742,11 @@ type opCompatCtx struct {
 
 type opEvalCtx struct {
 	pkt      *stack.PacketBuffer
-	hook     stack.NFHook
 	rule     *Rule
 	route    *stack.Route
-	outNICID tcpip.NICID // Output interface (nf_hook_state.out), or 0.
 	nftState *NFTables
+	outNICID tcpip.NICID // Output interface (nf_hook_state.out), or 0.
+	hook     stack.NFHook
 }
 
 // operation represents a single operation in a rule.
@@ -1024,72 +1025,93 @@ type NftSetBackend interface {
 // Set represents an nftables set.
 // Ref: include/net/netfilter/nf_tables.h:nft_set
 type nftSet struct {
+	// backend represents the backend object that handles the set operations.
+	backend NftSetBackend
+
+	// catchAllElem is a default element that is used when the key
+	// does not match any of the other elements.
+	catchAllElem *nftSetElem
+
 	// name represents the unique name for this set.
 	name string
-	// keyType represents the type of key; i.e. IPv4, IPv6, port, etc.
-	keyType uint32
-	// dataType represents the type of data; i.e. VERDICT or DATA.
-	dataType uint32
-	// objType represents the type of object that the set is storing.
-	objType uint32
-	// descSize represents the max number of elements.
-	// If 0, then the set has no bounds on the number of elements.
-	descSize uint32
+
+	// elements represents the stored key-value elements in the set.
+	elements []nftSetElem
+
 	// fieldLen represents the length of each sub-key.
 	fieldLen []uint8
-	// fieldCount represents the number of sub-keys.
-	fieldCount uint8
-	// bindings represents the list of lookupOps that use this set.
-	bindings []*lookupOp
-	// timeout represents the timeout for the elements in the set.
-	// TODO: b/505409691 - Add support for set timeout.
-	timeout uint64
-	// gcInterval represents the interval for garbage collection.
-	// GC gets rid of expired elements in the set.
-	// TODO: b/505409691 - Add support for gc interval.
-	gcInterval uint32
-	// policy passed by the user hints at
-	// whether the set should be memory or performance optimized.
-	// TODO: b/505409691 - Add support for set policy.
-	policy uint32
-	// udata represents the user data of the set.
-	udata []byte
+
 	// exprInfos represents the stateful nft expressions/ops;
 	// counter, limit, etc.
 	// that are directly associated with the individual set elements.
 	// TODO: b/505409691 - Add support for expressions other than the counters.
 	exprInfos []ExprInfo
+
+	// bindings represents the list of lookupOps that use this set.
+	bindings []*lookupOp
+
+	// udata represents the user data of the set.
+	udata []byte
+
+	// timeout represents the timeout for the elements in the set.
+	// TODO: b/505409691 - Add support for set timeout.
+	timeout uint64
+
+	// handle is the NFTables unique identifier for this set.
+	handle uint64
+
+	// keyType represents the type of key; i.e. IPv4, IPv6, port, etc.
+	keyType uint32
+
+	// dataType represents the type of data; i.e. VERDICT or DATA.
+	dataType uint32
+
+	// objType represents the type of object that the set is storing.
+	objType uint32
+
+	// descSize represents the max number of elements.
+	// If 0, then the set has no bounds on the number of elements.
+	descSize uint32
+
+	// gcInterval represents the interval for garbage collection.
+	// GC gets rid of expired elements in the set.
+	// TODO: b/505409691 - Add support for gc interval.
+	gcInterval uint32
+
+	// policy passed by the user hints at
+	// whether the set should be memory or performance optimized.
+	// TODO: b/505409691 - Add support for set policy.
+	policy uint32
+
 	// flags determines the set's configuration.
 	flags uint16
-	// dead marks the set as deleted.
-	dead uint8
+
 	// genmask links to nftables generation.
 	// We don't need to support this as we make a full copy of
 	// the set on each transaction; so each NFTables instance
 	// is it's own "generation".
 	genmask uint16
+
+	// fieldCount represents the number of sub-keys.
+	fieldCount uint8
+
+	// dead marks the set as deleted.
+	dead uint8
+
 	// keyLen is the length of the key,
 	// or the combined length of all the sub-keys.
 	keyLen uint8
+
 	// dataLen is the length of the data;
 	// in case of a verdict set, this is not required.
 	dataLen uint8
-	// handle is the NFTables unique identifier for this set.
-	handle uint64
-	// elements represents the stored key-value elements in the set.
-	elements []nftSetElem
-	// catchAllElem is a default element that is used when the key
-	// does not match any of the other elements.
-	catchAllElem *nftSetElem
-	// backend represents the backend object that handles the set operations.
-	backend NftSetBackend
 }
 
 // dataOrVerdict represents the data or verdict of the set element.
 type dataOrVerdict struct {
-	isVerdict bool
 	verdict   Verdict
 	data      []byte
+	isVerdict bool
 }
 
 // nftSetElem represents an element in an nftables set.
@@ -1099,24 +1121,30 @@ type nftSetElem struct {
 	// For a simple set, this is the key itself.
 	// For a set range, this is the lower bound of the range.
 	startKey []byte
+
 	// endKey represents the upper bound key for the element.
 	// Only required for ranged sets.
 	// TODO: b/505409691 - Add support for ranged sets.
 	endKey []byte
-	// data represents the data or verdict of the set element.
-	data dataOrVerdict
+
 	// ops represents the Nftables ops(counter, limit, etc.)
 	// that are associated with the set element.
 	ops []operation
-	// timeout represents the timeout for the element.
-	// TODO: b/505409691 - Add support for set element timeout.
-	timeout uint64
-	// expiration represents the expiration time of the element.
-	// TODO: b/505409691 - Add support for set element expiration.
-	expiration uint64
+
 	// userData represents the user data that can be associated with the element.
 	// It's only for the user to see and has no affect on the set element.
 	userData []byte
+
+	// data represents the data or verdict of the set element.
+	data dataOrVerdict
+
+	// timeout represents the timeout for the element.
+	// TODO: b/505409691 - Add support for set element timeout.
+	timeout uint64
+
+	// expiration represents the expiration time of the element.
+	// TODO: b/505409691 - Add support for set element expiration.
+	expiration uint64
 }
 
 // AFtoNetlinkAF converts a generic address family to a netfilter address family.
@@ -1322,8 +1350,8 @@ func deepCopyChain(chain *Chain, tableCopy *Table) *Chain {
 
 	// LINT.IfChange(base_chain_info_copy)
 
-	// BaseChainInfo is immutable after creation and it only contains
-	// primitives, so we can safely copy it.
+	// BaseChainInfo is immutable after creation. A shallow value copy
+	// preserves all fields.
 	if chain.baseChainInfo != nil {
 		chainCopy.baseChainInfo = &BaseChainInfo{}
 		*chainCopy.baseChainInfo = *chain.baseChainInfo
@@ -1541,9 +1569,10 @@ func (nf *NFTables) DeepCopy() *NFTables {
 
 // Verdict represents the result of evaluating a packet against a rule or chain.
 type Verdict struct {
-	// Code is the numeric code that represents the verdict issued.
-	Code uint32
 	// Chain is the resolved chain to continue evaluation if the verdict is
 	// Jump or Goto. It allows fast pointer traversal during packet ruleset processing.
 	Chain *Chain
+
+	// Code is the numeric code that represents the verdict issued.
+	Code uint32
 }

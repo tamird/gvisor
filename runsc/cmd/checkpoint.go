@@ -36,15 +36,15 @@ import (
 type Checkpoint struct {
 	containerLoader
 	imagePath                 string
-	leaveRunning              bool
 	compression               CheckpointCompression
-	excludeCommittedZeroPages bool
 	cudaCheckpointPath        string
-	cudaCheckpointSequential  bool
 	saveRestoreExecArgv       string
-	saveRestoreExecTimeout    time.Duration
 	splitFSCheckpointPaths    pathVar
 	stateEngine               optionalStateEnginePolicy
+	saveRestoreExecTimeout    time.Duration
+	leaveRunning              bool
+	excludeCommittedZeroPages bool
+	cudaCheckpointSequential  bool
 
 	// direct indicates whether O_DIRECT should be used for writing the
 	// checkpoint pages file. It bypasses the kernel page cache. It is beneficial

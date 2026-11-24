@@ -29,12 +29,12 @@ const (
 
 // tx holds all state associated with a tx queue.
 type tx struct {
+	eventFD      eventfd.Eventfd
 	data         []byte
-	q            queue.Tx
+	sharedData   []byte
 	ids          idManager
 	bufs         bufferManager
-	eventFD      eventfd.Eventfd
-	sharedData   []byte
+	q            queue.Tx
 	sharedDataFD int
 }
 

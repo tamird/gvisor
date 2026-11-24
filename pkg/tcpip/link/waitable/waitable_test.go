@@ -27,16 +27,14 @@ import (
 var _ stack.LinkEndpoint = (*countedEndpoint)(nil)
 
 type countedEndpoint struct {
+	dispatcher    stack.NetworkDispatcher
+	linkAddr      tcpip.LinkAddress
 	dispatchCount int
 	writeCount    int
 	attachCount   int
-
-	mtu          uint32
-	capabilities stack.LinkEndpointCapabilities
-	hdrLen       uint16
-	linkAddr     tcpip.LinkAddress
-
-	dispatcher stack.NetworkDispatcher
+	capabilities  stack.LinkEndpointCapabilities
+	mtu           uint32
+	hdrLen        uint16
 }
 
 func (e *countedEndpoint) DeliverNetworkPacket(protocol tcpip.NetworkProtocolNumber, pkt *stack.PacketBuffer) {

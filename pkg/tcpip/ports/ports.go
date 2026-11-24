@@ -35,27 +35,27 @@ var (
 
 // Reservation describes a port reservation.
 type Reservation struct {
+	// Dest is the destination address.
+	Dest tcpip.FullAddress
+
 	// Networks is a list of network protocols to which the reservation
 	// applies. Can be IPv4, IPv6, or both.
 	Networks []tcpip.NetworkProtocolNumber
 
+	// Addr is the address of the local endpoint.
+	Addr tcpip.Address
+
 	// Transport is the transport protocol to which the reservation applies.
 	Transport tcpip.TransportProtocolNumber
 
-	// Addr is the address of the local endpoint.
-	Addr tcpip.Address
+	// BindToDevice is the NIC to which the reservation applies.
+	BindToDevice tcpip.NICID
 
 	// Port is the local port number.
 	Port uint16
 
 	// Flags describe features of the reservation.
 	Flags Flags
-
-	// BindToDevice is the NIC to which the reservation applies.
-	BindToDevice tcpip.NICID
-
-	// Dest is the destination address.
-	Dest tcpip.FullAddress
 }
 
 func (rs Reservation) dst() destination {

@@ -26,25 +26,6 @@ import (
 //
 // TXQueue is not thread-safe and requires external synchronization
 type TXQueue struct {
-	// sockfd is the underlying AF_XDP socket.
-	sockfd uint32
-
-	// mem is the mmap'd area shared with the kernel. Many other fields of
-	// this struct point into mem.
-	mem []byte
-
-	// ring is the actual ring buffer. It is a list of XDP descriptors
-	// pointing to ready-to-transmit packets.
-	//
-	// len(ring) must be a power of 2.
-	ring []unix.XDPDesc
-
-	// mask is used whenever indexing into ring. It is always len(ring)-1.
-	// It prevents index out of bounds errors while allowing the producer
-	// and consumer pointers to repeatedly "overflow" and loop back around
-	// the ring.
-	mask uint32
-
 	// producer points to the shared atomic value that indicates the last
 	// produced descriptor. Only we update this value.
 	producer *atomicbitops.Uint32
@@ -57,6 +38,25 @@ type TXQueue struct {
 	// queue.
 	flags *atomicbitops.Uint32
 
+	// mem is the mmap'd area shared with the kernel. Many other fields of
+	// this struct point into mem.
+	mem []byte
+
+	// ring is the actual ring buffer. It is a list of XDP descriptors
+	// pointing to ready-to-transmit packets.
+	//
+	// len(ring) must be a power of 2.
+	ring []unix.XDPDesc
+
+	// sockfd is the underlying AF_XDP socket.
+	sockfd uint32
+
+	// mask is used whenever indexing into ring. It is always len(ring)-1.
+	// It prevents index out of bounds errors while allowing the producer
+	// and consumer pointers to repeatedly "overflow" and loop back around
+	// the ring.
+	mask uint32
+
 	// Cached values are used to avoid relatively expensive atomic
 	// operations. They are used, incremented, and decremented multiple
 	// times with non-atomic operations, and then "batch-updated" by
@@ -64,6 +64,7 @@ type TXQueue struct {
 
 	// cachedProducer is used to atomically write *producer.
 	cachedProducer uint32
+
 	// cachedConsumer is updated when we atomically read *consumer.
 	// cachedConsumer is actually len(ring) larger than the real consumer
 	// value. See free() for details.

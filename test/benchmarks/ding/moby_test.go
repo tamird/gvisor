@@ -58,9 +58,9 @@ func (l namedLogger) Name() string {
 
 // node represents Host, DING, or DINGSubContainer.
 type node struct {
-	ip      string
 	runCmd  func(ctx context.Context, cmd ...string) (string, error)
 	cleanUp func(ctx context.Context)
+	ip      string
 }
 
 // dingNode represents a gVisor DING container running dockerd.
@@ -73,9 +73,9 @@ type dingNode struct {
 type topology struct {
 	machine   harness.Machine
 	logger    testutil.Logger
-	isGVisor  bool
-	dingCount int
 	nodes     []*node
+	dingCount int
+	isGVisor  bool
 }
 
 // cleanUp tears down all nodes in reverse creation order.
@@ -272,9 +272,9 @@ func BenchmarkDockerNetwork(b *testing.B) {
 	}
 
 	for _, tc := range []struct {
+		setup func(ctx context.Context, t *topology) (client *node, targetIP string, err error)
 		name  string
 		port  int
-		setup func(ctx context.Context, t *topology) (client *node, targetIP string, err error)
 	}{
 		{
 			// DING -> DING.

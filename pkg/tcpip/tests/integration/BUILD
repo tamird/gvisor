@@ -161,7 +161,6 @@ go_test(
     size = "small",
     srcs = ["istio_test.go"],
     deps = [
-        "//pkg/context",
         "//pkg/rand",
         "//pkg/sync",
         "//pkg/tcpip",

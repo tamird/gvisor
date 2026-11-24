@@ -28,11 +28,11 @@ import (
 func TestPacketHeaderPush(t *testing.T) {
 	for _, test := range []struct {
 		name      string
-		reserved  int
 		link      []byte
 		network   []byte
 		transport []byte
 		data      []byte
+		reserved  int
 	}{
 		{
 			name: "construct empty packet",
@@ -843,11 +843,11 @@ func TestCalculateTransportChecksumUDPZero(t *testing.T) {
 
 func TestPacketDataReadToPreservesHeaders(t *testing.T) {
 	for _, tc := range []struct {
+		wantErr error
 		name    string
+		pieces  []string
 		size    int
 		peek    bool
-		wantErr error
-		pieces  []string
 	}{
 		{name: "partial read", size: 3, wantErr: io.ErrShortWrite},
 		{name: "full read", size: 6},

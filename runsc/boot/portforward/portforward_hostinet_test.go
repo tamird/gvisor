@@ -155,8 +155,8 @@ func (nc *netConnMockEndpoint) write(buf []byte) (int, error) {
 
 func TestHostInetProxy(t *testing.T) {
 	for _, tc := range []struct {
-		name     string
 		requests map[string]string
+		name     string
 	}{
 		{
 			name: "single",

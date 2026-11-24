@@ -520,8 +520,8 @@ const (
 
 // InitKernelArgs holds arguments to Init.
 type InitKernelArgs struct {
-	// FeatureSet is the emulated CPU feature set.
-	FeatureSet cpuid.FeatureSet
+	// RootPIDNamespace is the root PID namespace.
+	RootPIDNamespace *PIDNamespace
 
 	// Timekeeper manages time for all tasks in the system.
 	Timekeeper *Timekeeper
@@ -533,21 +533,8 @@ type InitKernelArgs struct {
 	// will be available.
 	RootNetworkNamespace *inet.Namespace
 
-	// ApplicationCores is the number of logical CPUs visible to sandboxed
-	// applications. The set of logical CPU IDs is [0, ApplicationCores); thus
-	// ApplicationCores is analogous to Linux's nr_cpu_ids, the index of the
-	// most significant bit in cpu_possible_mask + 1.
-	ApplicationCores uint
-
-	// If UseHostCores is true, Task.CPU() returns the task goroutine's CPU
-	// instead of a virtualized CPU number, and Task.CopyToCPUMask() is a
-	// no-op. If ApplicationCores is less than hostcpu.MaxPossibleCPU(), it
-	// will be overridden.
-	UseHostCores bool
-
-	// ExtraAuxv contains additional auxiliary vector entries that are added to
-	// each process by the ELF loader.
-	ExtraAuxv []arch.AuxEntry
+	// Cgroup2FSInit initializes the cgroup2fs filesystem singleton.
+	Cgroup2FSInit func(ctx context.Context, k *Kernel, vfsObj *vfs.VirtualFilesystem) (*vfs.Filesystem, error)
 
 	// Vdso holds the VDSO and its parameter page.
 	Vdso *loader.VDSO
@@ -561,16 +548,18 @@ type InitKernelArgs struct {
 	// RootIPCNamespace is the root IPC namespace.
 	RootIPCNamespace *IPCNamespace
 
-	// RootPIDNamespace is the root PID namespace.
-	RootPIDNamespace *PIDNamespace
+	// ExtraAuxv contains additional auxiliary vector entries that are added to
+	// each process by the ELF loader.
+	ExtraAuxv []arch.AuxEntry
 
-	// MaxFDLimit specifies the maximum file descriptor number that can be
-	// used by processes.  If it is zero, the limit will be set to
-	// unlimited.
-	MaxFDLimit int32
+	// FeatureSet is the emulated CPU feature set.
+	FeatureSet cpuid.FeatureSet
 
-	// Cgroup2FSInit initializes the cgroup2fs filesystem singleton.
-	Cgroup2FSInit func(ctx context.Context, k *Kernel, vfsObj *vfs.VirtualFilesystem) (*vfs.Filesystem, error)
+	// ApplicationCores is the number of logical CPUs visible to sandboxed
+	// applications. The set of logical CPU IDs is [0, ApplicationCores); thus
+	// ApplicationCores is analogous to Linux's nr_cpu_ids, the index of the
+	// most significant bit in cpu_possible_mask + 1.
+	ApplicationCores uint
 
 	// SignalUnkillable controls protection of PID namespace init processes from
 	// signals under Linux SIGNAL_UNKILLABLE semantics.
@@ -579,6 +568,17 @@ type InitKernelArgs struct {
 	// DumpGoroutinesSignal is the signal that triggers a non-fatal goroutine
 	// stack dump. If 0, goroutine dumping on signal is disabled.
 	DumpGoroutinesSignal linux.Signal
+
+	// MaxFDLimit specifies the maximum file descriptor number that can be
+	// used by processes.  If it is zero, the limit will be set to
+	// unlimited.
+	MaxFDLimit int32
+
+	// If UseHostCores is true, Task.CPU() returns the task goroutine's CPU
+	// instead of a virtualized CPU number, and Task.CopyToCPUMask() is a
+	// no-op. If ApplicationCores is less than hostcpu.MaxPossibleCPU(), it
+	// will be overridden.
+	UseHostCores bool
 }
 
 // Init initializes the Kernel with no tasks.
@@ -1286,80 +1286,10 @@ func (k *Kernel) UniqueID() uint64 {
 
 // CreateProcessArgs holds arguments to kernel.CreateProcess.
 type CreateProcessArgs struct {
-	// Filename is the filename to load as the init binary.
-	//
-	// If this is provided as "", File will be checked, then the file will be
-	// guessed via Argv[0].
-	Filename string
-
-	// File is a passed host FD pointing to a file to load as the init binary.
-	//
-	// This is checked if and only if Filename is "".
-	File *vfs.FileDescription
-
-	// Argv is a list of arguments.
-	Argv []string
-
-	// Envv is a list of environment variables.
-	Envv []string
-
-	// WorkingDirectory is the initial working directory.
-	//
-	// This defaults to the root if empty.
-	WorkingDirectory string
-
-	// Credentials is the initial credentials.
-	Credentials *auth.Credentials
-
-	// NoNewPrivs is the initial prctl NO_NEW_PRIVS state.
-	NoNewPrivs bool
-
-	// FDTable is the initial set of file descriptors. If CreateProcess succeeds,
-	// it takes a reference on FDTable.
-	FDTable *FDTable
-
-	// Umask is the initial umask.
-	Umask uint
-
-	// Limits are the initial resource limits.
-	Limits *limits.LimitSet
-
-	// MaxSymlinkTraversals is the maximum number of symlinks to follow
-	// during resolution.
-	MaxSymlinkTraversals uint
-
-	// UTSNamespace is the initial UTS namespace.
-	UTSNamespace *UTSNamespace
-
-	// IPCNamespace is the initial IPC namespace.
-	IPCNamespace *IPCNamespace
-
-	// PIDNamespace is the initial PID Namespace.
-	PIDNamespace *PIDNamespace
-
-	// MountNamespace optionally contains the mount namespace for this
-	// process. If nil, the init process's mount namespace is used.
-	//
-	// Anyone setting MountNamespace must donate a reference (i.e.
-	// increment it).
-	MountNamespace *vfs.MountNamespace
-
-	// ContainerID is the container that the process belongs to.
-	ContainerID string
-
-	// InitialCgroups are the cgroups the container is initialized to.
-	InitialCgroups map[Cgroup]struct{}
 
 	// InitialCgroupV2 is the cgroup2 node the new process starts in. If nil,
 	// the process starts in the root cgroup.
 	InitialCgroupV2 Cgroup2
-
-	// CgroupNamespace is the cgroup namespace of the new process. If nil, the
-	// root cgroup namespace is used.
-	CgroupNamespace *CgroupNamespace
-
-	// Origin indicates how the task was first created.
-	Origin TaskOrigin
 
 	// TTY is the optional controlling TTY to associate with this process.
 	TTY *TTY
@@ -1368,6 +1298,76 @@ type CreateProcessArgs struct {
 	// sandbox startup. CreateProcess records midpoints on it, but ownership
 	// remains with its caller.
 	StartupTimeline *timing.Timeline
+
+	// PIDNamespace is the initial PID Namespace.
+	PIDNamespace *PIDNamespace
+
+	// CgroupNamespace is the cgroup namespace of the new process. If nil, the
+	// root cgroup namespace is used.
+	CgroupNamespace *CgroupNamespace
+
+	// Credentials is the initial credentials.
+	Credentials *auth.Credentials
+
+	// File is a passed host FD pointing to a file to load as the init binary.
+	//
+	// This is checked if and only if Filename is "".
+	File *vfs.FileDescription
+
+	// FDTable is the initial set of file descriptors. If CreateProcess succeeds,
+	// it takes a reference on FDTable.
+	FDTable *FDTable
+
+	// InitialCgroups are the cgroups the container is initialized to.
+	InitialCgroups map[Cgroup]struct{}
+
+	// Limits are the initial resource limits.
+	Limits *limits.LimitSet
+
+	// MountNamespace optionally contains the mount namespace for this
+	// process. If nil, the init process's mount namespace is used.
+	//
+	// Anyone setting MountNamespace must donate a reference (i.e.
+	// increment it).
+	MountNamespace *vfs.MountNamespace
+
+	// UTSNamespace is the initial UTS namespace.
+	UTSNamespace *UTSNamespace
+
+	// IPCNamespace is the initial IPC namespace.
+	IPCNamespace *IPCNamespace
+
+	// ContainerID is the container that the process belongs to.
+	ContainerID string
+	// Filename is the filename to load as the init binary.
+	//
+	// If this is provided as "", File will be checked, then the file will be
+	// guessed via Argv[0].
+	Filename string
+
+	// WorkingDirectory is the initial working directory.
+	//
+	// This defaults to the root if empty.
+	WorkingDirectory string
+
+	// Envv is a list of environment variables.
+	Envv []string
+
+	// Argv is a list of arguments.
+	Argv []string
+
+	// MaxSymlinkTraversals is the maximum number of symlinks to follow
+	// during resolution.
+	MaxSymlinkTraversals uint
+
+	// Umask is the initial umask.
+	Umask uint
+
+	// Origin indicates how the task was first created.
+	Origin TaskOrigin
+
+	// NoNewPrivs is the initial prctl NO_NEW_PRIVS state.
+	NoNewPrivs bool
 }
 
 // NewContext returns a context.Context that represents the task that will be

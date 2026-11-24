@@ -175,26 +175,26 @@ func doVLLMTest(b *testing.B) {
 
 // Modeled after the metrics reported here: https://github.com/vllm-project/vllm/blob/main/benchmarks/benchmark_serving.py#L338-L358
 type metrics struct {
-	Duration          float64 `json:"duration"`
-	Completed         int     `json:"completed"`
-	TotalInputTokens  int     `json:"total_input_tokens"`
-	TotalOutputTokens int     `json:"total_output_tokens"`
-	RequestsPerSec    float64 `json:"request_throughput"`
-	InputToksPerSec   float64 `json:"input_throughput"`
-	OutputToksPerSec  float64 `json:"output_throughput"`
-	TTFTAvgMS         float64 `json:"mean_ttft_ms"`
-	TTFTP50MS         float64 `json:"median_ttft_ms"`
-	TTFTP99MS         float64 `json:"p99_ttft_ms"`
-	TPOTAvgMS         float64 `json:"mean_tpot_ms"`
-	TPOTP50MS         float64 `json:"median_tpot_ms"`
-	TPOTP99MS         float64 `json:"p99_tpot_ms"`
+	Errors            []string `json:"errors"`
+	Duration          float64  `json:"duration"`
+	Completed         int      `json:"completed"`
+	TotalInputTokens  int      `json:"total_input_tokens"`
+	TotalOutputTokens int      `json:"total_output_tokens"`
+	RequestsPerSec    float64  `json:"request_throughput"`
+	InputToksPerSec   float64  `json:"input_throughput"`
+	OutputToksPerSec  float64  `json:"output_throughput"`
+	TTFTAvgMS         float64  `json:"mean_ttft_ms"`
+	TTFTP50MS         float64  `json:"median_ttft_ms"`
+	TTFTP99MS         float64  `json:"p99_ttft_ms"`
+	TPOTAvgMS         float64  `json:"mean_tpot_ms"`
+	TPOTP50MS         float64  `json:"median_tpot_ms"`
+	TPOTP99MS         float64  `json:"p99_tpot_ms"`
 	// metrics that are available but unused so far.
 	// InputLens         []int   `json:"input_lens"`
 	// OutputLens        []int   `json:"output_lens"`
 	// TTFTs             []float64   `json:"ttfts"`
 	// ITLS              [][]float64 `json:"itls"`
 	// GeneratedTexts    []string `json:"generated_texts"`
-	Errors []string `json:"errors"`
 }
 
 // parseVLLMJSON expects a path that contains only one json file.

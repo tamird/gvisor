@@ -813,11 +813,11 @@ func (mm *MemoryManager) Pin(ctx context.Context, ar hostarch.AddrRange, at host
 
 // PinnedRanges are returned by MemoryManager.Pin.
 type PinnedRange struct {
-	// Source is the corresponding range of addresses.
-	Source hostarch.AddrRange
-
 	// File is the mapped file.
 	File memmap.File
+
+	// Source is the corresponding range of addresses.
+	Source hostarch.AddrRange
 
 	// Offset is the offset into File at which this PinnedRange begins.
 	Offset uint64
@@ -863,8 +863,8 @@ func (mm *MemoryManager) movePMAsLocked(oldAR, newAR hostarch.AddrRange) {
 	}
 
 	type movedPMA struct {
-		oldAR hostarch.AddrRange
 		pma   pma
+		oldAR hostarch.AddrRange
 	}
 	var movedPMAs []movedPMA
 	pseg := mm.pmas.LowerBoundSegment(oldAR.Start)

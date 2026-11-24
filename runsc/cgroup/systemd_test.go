@@ -37,9 +37,9 @@ var (
 
 func TestIsValidSlice(t *testing.T) {
 	for _, tc := range []struct {
+		err   error
 		name  string
 		slice string
-		err   error
 	}{
 		{
 			name:  "success",
@@ -89,12 +89,12 @@ func TestExpandSlice(t *testing.T) {
 
 func TestInstall(t *testing.T) {
 	for _, tc := range []struct {
-		name             string
-		res              *specs.LinuxResources
-		wantProps        []systemdDbus.Property
-		updatedRes       *specs.LinuxResources
-		wantUpdatedProps []systemdDbus.Property
 		err              error
+		res              *specs.LinuxResources
+		updatedRes       *specs.LinuxResources
+		name             string
+		wantProps        []systemdDbus.Property
+		wantUpdatedProps []systemdDbus.Property
 	}{
 		{
 			name: "defaults",

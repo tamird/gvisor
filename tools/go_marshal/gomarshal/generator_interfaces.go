@@ -25,13 +25,9 @@ import (
 //
 // getState is not thread-safe.
 type interfaceGenerator struct {
-	sourceBuffer
 
 	// The type we're serializing.
 	t *ast.TypeSpec
-
-	// Receiver argument for generated methods.
-	r string
 
 	// FileSet containing the tokens for the type we're processing.
 	f *token.FileSet
@@ -46,6 +42,10 @@ type interfaceGenerator struct {
 	// as records fields in t that are potentially not packed. The key is the
 	// accessor for the field.
 	as map[string]struct{}
+
+	// Receiver argument for generated methods.
+	r string
+	sourceBuffer
 }
 
 // typeName returns the name of the type this g represents.

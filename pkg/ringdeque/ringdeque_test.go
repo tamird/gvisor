@@ -22,9 +22,9 @@ const numElems = 100
 
 func TestDeque(t *testing.T) {
 	for _, test := range []struct {
-		desc     string
 		push     func(d *Deque[int], val int)
 		pop      func(d *Deque[int]) int
+		desc     string
 		reversed bool
 	}{
 		{

@@ -45,12 +45,12 @@ import (
 // MetricClient implements an HTTP client that can spawn and connect to a running runsc metrics
 // server process and register/unregister sandbox metrics.
 type MetricClient struct {
-	addr    string
-	rootDir string
+	server  *exec.Cmd
 	dialer  net.Dialer
 	client  http.Client
+	addr    string
+	rootDir string
 	mu      sync.Mutex
-	server  *exec.Cmd
 }
 
 // NewMetricClient creates a new MetricClient that can talk to the metric server at address addr.
@@ -368,15 +368,18 @@ func (m MetricData) GetPrometheusInteger(metricName string, wantLabels map[strin
 
 // WantMetric designates the metadata required to select a single metric from a single sandbox.
 type WantMetric struct {
+	// ExtraLabels are additional key-value labels that must match.
+	ExtraLabels map[string]string
+
 	// Metric is the name of the metric to get.
 	Metric string
+
 	// Sandbox is the ID of the sandbox to look up the metric for.
 	Sandbox string
+
 	// Pod and Namespace are the pod and namespace labels associated with the sandbox.
 	// Leave empty if the sandbox metadata doesn't contain this information.
 	Pod, Namespace string
-	// ExtraLabels are additional key-value labels that must match.
-	ExtraLabels map[string]string
 }
 
 // GetPrometheusContainerInteger returns the integer value of a Prometheus metric from the

@@ -33,8 +33,8 @@ const endpoint = "https://agent.buildkite.com/v3"
 //
 // Safe for concurrent use.
 type Client struct {
-	agentToken string
 	client     *http.Client
+	agentToken string
 }
 
 // NewClient returns a client that authenticates with the given agent token.

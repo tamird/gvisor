@@ -91,8 +91,8 @@ func (t *Trie) SetValue(key string, value any) {
 }
 
 type queueEntry struct {
-	key   string
 	value *node
+	key   string
 }
 
 // FindSuffixes invokes the Visitor with all key-value pairs where the key is prefixed by `key`,

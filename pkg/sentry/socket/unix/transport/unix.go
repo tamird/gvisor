@@ -128,14 +128,6 @@ func (c *ControlMessages) Release(ctx context.Context) {
 
 // RecvArgs are the arguments to Endpoint.RecvMsg and Receiver.Recv.
 type RecvArgs struct {
-	// Creds indicates if credential control messages are requested by the
-	// caller. This is useful for determining if control messages can be
-	// coalesced. Creds is a hint and can be safely ignored by the
-	// implementation if no coalescing is possible. It is fine to return
-	// credential control messages when none were requested or to not
-	// return credential control messages when they were requested.
-	Creds bool
-
 	// NumRights is the number of SCM_RIGHTS FDs requested by the caller.
 	// This is useful if one must allocate a buffer to receive a SCM_RIGHTS
 	// message or determine if control messages can be coalesced. numRights
@@ -145,6 +137,14 @@ type RecvArgs struct {
 	// either higher or lower than the requested number.
 	NumRights int
 
+	// Creds indicates if credential control messages are requested by the
+	// caller. This is useful for determining if control messages can be
+	// coalesced. Creds is a hint and can be safely ignored by the
+	// implementation if no coalescing is possible. It is fine to return
+	// credential control messages when none were requested or to not
+	// return credential control messages when they were requested.
+	Creds bool
+
 	// If Peek is true, no data should be consumed from the Endpoint. Any and
 	// all data returned from a peek should be available in the next call to
 	// Recv or RecvMsg.
@@ -153,6 +153,16 @@ type RecvArgs struct {
 
 // RecvOutput is the output from Endpoint.RecvMsg and Receiver.Recv.
 type RecvOutput struct {
+	// Control is the ControlMessages read.
+	Control ControlMessages
+
+	// Source is the source address we received from.
+	Source Address
+
+	// UnusedRights is a slice of unused RightsControlMessage which should
+	// be Release()d.
+	UnusedRights []RightsControlMessage
+
 	// RecvLen is the number of bytes copied into RecvArgs.Data.
 	RecvLen int64
 
@@ -160,20 +170,10 @@ type RecvOutput struct {
 	// MsgLen is always the same as RecvLen for stream Endpoints.
 	MsgLen int64
 
-	// Source is the source address we received from.
-	Source Address
-
-	// Control is the ControlMessages read.
-	Control ControlMessages
-
 	// ControlTrunc indicates that the NumRights hint was used to receive
 	// fewer than the total available SCM_RIGHTS FDs. Additional truncation
 	// may be required by the caller.
 	ControlTrunc bool
-
-	// UnusedRights is a slice of unused RightsControlMessage which should
-	// be Release()d.
-	UnusedRights []RightsControlMessage
 }
 
 // Endpoint is the interface implemented by Unix transport protocol

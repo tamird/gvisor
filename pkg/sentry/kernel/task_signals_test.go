@@ -88,15 +88,15 @@ func TestSignalForcedFrom(t *testing.T) {
 	}
 
 	for _, tc := range []struct {
-		name   string
 		sender *Task
+		name   string
 		want   bool
 	}{
-		{"peer in the same namespace", taskIn(child), false},
-		{"descendant namespace", taskIn(grandchild), false},
-		{"ancestor namespace", taskIn(root), true},
-		{"sibling namespace", taskIn(sibling), true},
-		{"sentry itself", nil, true},
+		{name: "peer in the same namespace", sender: taskIn(child), want: false},
+		{name: "descendant namespace", sender: taskIn(grandchild), want: false},
+		{name: "ancestor namespace", sender: taskIn(root), want: true},
+		{name: "sibling namespace", sender: taskIn(sibling), want: true},
+		{name: "sentry itself", sender: nil, want: true},
 	} {
 		if got := tg.signalForcedFrom(tc.sender); got != tc.want {
 			t.Errorf("%s: signalForcedFrom = %t, want %t", tc.name, got, tc.want)
@@ -248,10 +248,10 @@ func TestInitSignalDropped(t *testing.T) {
 
 	for _, tc := range []struct {
 		name    string
-		policy  SignalUnkillablePolicy
-		nonInit bool
-		sig     linux.Signal
 		act     linux.SigAction
+		policy  SignalUnkillablePolicy
+		sig     linux.Signal
+		nonInit bool
 		want    bool
 	}{
 		{name: "unhandled SIGTERM dropped", policy: SignalUnkillableLinux, sig: linux.SIGTERM, act: dflAct, want: true},
@@ -376,8 +376,8 @@ func TestFatalSignalPending(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
 		sig     linux.Signal
-		shared  bool // pending for the thread group rather than the task
 		handler uintptr
+		shared  bool // pending for the thread group rather than the task
 		blocked bool
 		traced  bool
 		want    bool

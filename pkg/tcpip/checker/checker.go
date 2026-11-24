@@ -1817,8 +1817,8 @@ var _ header.Network = (*ipv6HeaderWithExtHdr)(nil)
 // header.IPv6.
 type ipv6HeaderWithExtHdr struct {
 	header.IPv6
-	transport tcpip.TransportProtocolNumber
 	payload   []byte
+	transport tcpip.TransportProtocolNumber
 }
 
 // TransportProtocol implements header.Network.

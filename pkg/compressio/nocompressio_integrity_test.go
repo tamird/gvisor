@@ -294,9 +294,9 @@ func TestVerifyGivesReadError(t *testing.T) {
 	stream := writeKeyed(t, data, 1024)
 
 	for _, tc := range []struct {
+		want   error
 		name   string
 		stream []byte
-		want   error
 	}{
 		{
 			name: "hash-mismatch",

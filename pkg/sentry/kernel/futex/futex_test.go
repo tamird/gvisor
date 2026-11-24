@@ -463,9 +463,9 @@ const (
 // Beyond being used as a Locker, this is a simple mechanism for
 // changing the underlying values for simpler tests.
 type testMutex struct {
-	a hostarch.Addr
-	d testData
 	m *Manager
+	d testData
+	a hostarch.Addr
 }
 
 func newTestMutex(addr hostarch.Addr, d testData, m *Manager) *testMutex {

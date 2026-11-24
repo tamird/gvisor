@@ -35,14 +35,14 @@ type context struct {
 	// machine is the parent machine, and is immutable.
 	machine *machine
 
-	// info is the linux.SignalInfo cached for this context.
-	info linux.SignalInfo
+	// cpu is the vCPU this context acquired for its last switch.
+	cpu atomic.Pointer[vCPU]
 
 	// interrupt is the interrupt context.
 	interrupt interrupt.Forwarder
 
-	// cpu is the vCPU this context acquired for its last switch.
-	cpu atomic.Pointer[vCPU]
+	// info is the linux.SignalInfo cached for this context.
+	info linux.SignalInfo
 }
 
 // NotifyInterrupt implements interrupt.Receiver.NotifyInterrupt.

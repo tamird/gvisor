@@ -276,9 +276,9 @@ func TestNATedConnectionReap(t *testing.T) {
 // generated traffic do not clash with ports used by forwarded traffic.
 func TestNATAlwaysPerformed(t *testing.T) {
 	tests := []struct {
-		name     string
 		dnatHook func(*testing.T, *IPTables, *PacketBuffer)
 		snatHook func(*testing.T, *IPTables, *PacketBuffer)
+		name     string
 	}{
 		{
 			name: "Prerouting and Input",
@@ -496,8 +496,8 @@ func TestNATConflict(t *testing.T) {
 	otherSrcAddr := testutil.MustParse6("d::4")
 
 	tests := []struct {
-		name          string
 		checkIPTables func(*testing.T, *IPTables, *PacketBuffer, bool)
+		name          string
 	}{
 		{
 			name: "Prerouting and Input",

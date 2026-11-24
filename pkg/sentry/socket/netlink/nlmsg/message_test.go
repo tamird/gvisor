@@ -29,13 +29,13 @@ import (
 func TestParseMessage(t *testing.T) {
 	dummyNetlinkMsg := primitive.Uint16(0x3130)
 	tests := []struct {
-		desc  string
-		input []byte
-
-		header  linux.NetlinkMessageHeader
 		dataMsg marshal.Marshallable
+		desc    string
+		input   []byte
 		restLen int
-		ok      bool
+
+		header linux.NetlinkMessageHeader
+		ok     bool
 	}{
 		{
 			desc: "valid",
@@ -189,14 +189,14 @@ func TestParseMessage(t *testing.T) {
 
 func TestAttrView(t *testing.T) {
 	tests := []struct {
-		desc  string
-		input []byte
-
-		// Outputs for ParseFirst.
-		hdr     linux.NetlinkAttrHeader
+		desc    string
+		input   []byte
 		value   []byte
 		restLen int
-		ok      bool
+
+		// Outputs for ParseFirst.
+		hdr linux.NetlinkAttrHeader
+		ok  bool
 
 		// Outputs for Empty.
 		isEmpty bool
@@ -304,10 +304,10 @@ func TestAttrView(t *testing.T) {
 }
 
 type bytesViewTest[T any] struct {
+	value T
 	desc  string
 	input nlmsg.BytesView
 	ok    bool
-	value T
 }
 
 func TestBytesView(t *testing.T) {
@@ -454,8 +454,8 @@ func TestBytesView(t *testing.T) {
 
 func TestHostToNet(t *testing.T) {
 	tests := []struct {
-		name     string
 		validate func() error
+		name     string
 	}{
 		{
 			name: "U16",
@@ -499,8 +499,8 @@ func TestHostToNet(t *testing.T) {
 
 func TestNetToHost(t *testing.T) {
 	tests := []struct {
-		name     string
 		validate func() error
+		name     string
 	}{
 		{
 			name: "U16",

@@ -80,8 +80,8 @@ func newTestSystem(t *testing.T, pciTestDir string) *testutil.System {
 
 func TestReadCPUFile(t *testing.T) {
 	for _, tc := range []struct {
-		cores int
 		want  string
+		cores int
 	}{
 		{cores: 1, want: "0\n"},
 		{cores: 2, want: "0-1\n"},
@@ -288,9 +288,9 @@ func TestNUMATopology(t *testing.T) {
 
 func TestNUMATopologyCPUFormats(t *testing.T) {
 	for _, tc := range []struct {
-		cores       int
 		wantCPUList string
 		wantCPUMap  string
+		cores       int
 	}{
 		{cores: 1, wantCPUList: "0\n", wantCPUMap: "1\n"},
 		{cores: 64, wantCPUList: "0-63\n", wantCPUMap: "ffffffff,ffffffff\n"},

@@ -155,8 +155,8 @@ func main() {
 }
 
 type fieldEnumTypeInfo struct {
-	prefix     string
 	structType *ast.StructType
+	prefix     string
 }
 
 // structInfo contains information about the code generated for a given struct.

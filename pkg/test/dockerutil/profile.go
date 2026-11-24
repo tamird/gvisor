@@ -35,12 +35,12 @@ import (
 
 // profile is for running profiles with 'runsc debug'.
 type profile struct {
+	cmd         *exec.Cmd
 	BasePath    string
 	Types       []string
-	Duration    time.Duration
 	errorBuf    bytes.Buffer
+	Duration    time.Duration
 	isProfiling bool
-	cmd         *exec.Cmd
 }
 
 // profileInit initializes a profile object, if required.

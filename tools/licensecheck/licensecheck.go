@@ -66,15 +66,15 @@ type Paths struct {
 
 // Entry records the license of a single dependency.
 type Entry struct {
-	Dependency string   `yaml:"dependency"`
-	Version    string   `yaml:"version"`
-	Retrieved  string   `yaml:"retrieved"`
-	Commit     string   `yaml:"commit"`
-	SHA256     string   `yaml:"sha256"`
-	License    Licenses `yaml:"license"`
+	Dependency string `yaml:"dependency"`
+	Version    string `yaml:"version"`
+	Retrieved  string `yaml:"retrieved"`
+	Commit     string `yaml:"commit"`
+	SHA256     string `yaml:"sha256"`
 	// LicenseSource pins the notice for an executable distributed by a
 	// differently licensed builder repository. It is bound to Version/SHA256.
-	LicenseSource string `yaml:"license_source,omitempty"`
+	LicenseSource string   `yaml:"license_source,omitempty"`
+	License       Licenses `yaml:"license"`
 }
 
 // License is an SPDX license identifier (https://spdx.org/licenses/), one of
@@ -188,10 +188,10 @@ const (
 // dep is a single external dependency.
 type dep struct {
 	name    string
-	kind    depKind
 	version string // kindGoModule.
 	url     string // kindArchive.
 	sha256  string // kindArchive: the hash Bazel pins for the archive.
+	kind    depKind
 }
 
 // source identifies the audited version of a dependency: the Go module
@@ -603,8 +603,8 @@ func parseModGraph(out string) (*modGraph, error) {
 // repository rule name and, for each attribute, the string literals in its
 // value.
 type repoInfo struct {
-	rule  string
 	attrs map[string][]string
+	rule  string
 }
 
 func (r repoInfo) first(attr string) string {
@@ -1053,8 +1053,8 @@ type Policy struct {
 // so that license changes appear during review.
 type Exception struct {
 	Dependency         string   `yaml:"dependency"`
-	License            Licenses `yaml:"license"`
 	ExceptionRationale string   `yaml:"exception_rationale"`
+	License            Licenses `yaml:"license"`
 }
 
 // ReadPolicy loads a licensing policy file.

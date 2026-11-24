@@ -66,34 +66,34 @@ func TestCollateXMLs(t *testing.T) {
 	}
 	var got struct {
 		Name       string     `xml:"name,attr"`
-		Tests      int        `xml:"tests,attr"`
-		Failures   int        `xml:"failures,attr"`
-		Errors     int        `xml:"errors,attr"`
-		Disabled   int        `xml:"disabled,attr"`
 		Time       string     `xml:"time,attr"`
 		Timestamp  string     `xml:"timestamp,attr"`
 		Properties []property `xml:"properties>property"`
 		Suites     []struct {
 			Name       string     `xml:"name,attr"`
-			Tests      int        `xml:"tests,attr"`
-			Failures   int        `xml:"failures,attr"`
-			Skipped    int        `xml:"skipped,attr"`
 			Time       string     `xml:"time,attr"`
 			Properties []property `xml:"properties>property"`
 			Cases      []struct {
+				Skipped *struct {
+					Message string `xml:"message,attr"`
+				} `xml:"skipped"`
 				Name     string `xml:"name,attr"`
 				Class    string `xml:"classname,attr"`
 				File     string `xml:"file,attr"`
-				Line     int    `xml:"line,attr"`
 				Failures []struct {
 					Message string `xml:"message,attr"`
 					Text    string `xml:",chardata"`
 				} `xml:"failure"`
-				Skipped *struct {
-					Message string `xml:"message,attr"`
-				} `xml:"skipped"`
+				Line int `xml:"line,attr"`
 			} `xml:"testcase"`
+			Tests    int `xml:"tests,attr"`
+			Failures int `xml:"failures,attr"`
+			Skipped  int `xml:"skipped,attr"`
 		} `xml:"testsuite"`
+		Tests    int `xml:"tests,attr"`
+		Failures int `xml:"failures,attr"`
+		Errors   int `xml:"errors,attr"`
+		Disabled int `xml:"disabled,attr"`
 	}
 	if err := xml.Unmarshal(data, &got); err != nil {
 		t.Fatal(err)

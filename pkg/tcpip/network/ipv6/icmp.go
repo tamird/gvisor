@@ -987,8 +987,6 @@ type icmpReason interface {
 // icmpReasonParameterProblem is an error during processing of extension headers
 // or the fixed header defined in RFC 4443 section 3.4.
 type icmpReasonParameterProblem struct {
-	code header.ICMPv6Code
-
 	// pointer is defined in the RFC 4443 section 3.4 which reads:
 	//
 	//  Pointer         Identifies the octet offset within the invoking packet
@@ -997,8 +995,8 @@ type icmpReasonParameterProblem struct {
 	//                  The pointer will point beyond the end of the ICMPv6
 	//                  packet if the field in error is beyond what can fit
 	//                  in the maximum size of an ICMPv6 error message.
-	pointer uint32
-
+	pointer            uint32
+	code               header.ICMPv6Code
 	respondToMulticast bool
 }
 

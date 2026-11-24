@@ -21,13 +21,21 @@ import (
 // LoggingArgs are the arguments to use for changing the logging
 // level and strace list.
 type LoggingArgs struct {
+	// Strace is the allowlist of syscalls to trace to log. If this
+	// and StraceEventAllowlist are empty trace all system calls.
+	StraceAllowlist []string
+
+	// StraceEventAllowlist is the allowlist of syscalls to trace
+	// to event log.
+	StraceEventAllowlist []string
+
+	// Level is the log level that will be set if SetLevel is true.
+	Level log.Level
+
 	// SetLevel is a flag used to indicate that we should update
 	// the logging level. We should be able to change the strace
 	// list without affecting the logging level and vice versa.
 	SetLevel bool
-
-	// Level is the log level that will be set if SetLevel is true.
-	Level log.Level
 
 	// SetLogPackets indicates that we should update the log packets flag.
 	SetLogPackets bool
@@ -48,15 +56,7 @@ type LoggingArgs struct {
 	// allowlist meaning trace all system calls.
 	EnableStrace bool
 
-	// Strace is the allowlist of syscalls to trace to log. If this
-	// and StraceEventAllowlist are empty trace all system calls.
-	StraceAllowlist []string
-
 	// SetEventStrace is a flag used to indicate that event strace
 	// related arguments were passed in.
 	SetEventStrace bool
-
-	// StraceEventAllowlist is the allowlist of syscalls to trace
-	// to event log.
-	StraceEventAllowlist []string
 }

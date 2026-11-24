@@ -26,12 +26,12 @@ import (
 
 type fakeGoferCgroup struct {
 	cgroup.Cgroup
-	numCPU       int
 	numCPUErr    error
-	cpuQuota     int64
 	cpuQuotaErr  error
-	cpuPeriod    int64
 	cpuPeriodErr error
+	numCPU       int
+	cpuQuota     int64
+	cpuPeriod    int64
 }
 
 func (f *fakeGoferCgroup) NumCPU() (int, error) {
@@ -50,10 +50,10 @@ func TestGoferGOMAXPROCS(t *testing.T) {
 	hostCap := max(1, min(runtime.NumCPU(), goferMaxProcs))
 
 	for _, tc := range []struct {
-		name   string
 		cg     cgroup.Cgroup
 		selfCg func() (cgroup.Cgroup, error)
 		limits *sandbox.CPULimits
+		name   string
 		want   int
 	}{
 		{

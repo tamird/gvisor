@@ -29,8 +29,8 @@ import (
 // struct and its first field (or an array and its first element) share an
 // address.
 type addrKey struct {
-	addr uintptr
 	typ  reflect.Type
+	addr uintptr
 }
 
 // isoChecker checks that two object graphs are isomorphic: they have equal
@@ -142,7 +142,7 @@ func (c *isoChecker) errorf(path, format string, args ...any) {
 // if this correspondence was already known, in which case the values need not
 // be compared again.
 func (c *isoChecker) record(path string, typ reflect.Type, a, b uintptr) bool {
-	ka, kb := addrKey{a, typ}, addrKey{b, typ}
+	ka, kb := addrKey{addr: a, typ: typ}, addrKey{addr: b, typ: typ}
 	fb, okF := c.fwd[ka]
 	fa, okR := c.rev[kb]
 	switch {
@@ -237,7 +237,7 @@ func (c *isoChecker) visit(path string, a, b reflect.Value) {
 		if et := typ.Elem(); et.Size() != 0 {
 			fa, fb := a.Slice3(0, a.Cap(), a.Cap()), b.Slice3(0, b.Cap(), b.Cap())
 			for i := a.Len(); i < a.Cap(); i++ {
-				ka := addrKey{fa.Index(i).UnsafeAddr(), et}
+				ka := addrKey{addr: fa.Index(i).UnsafeAddr(), typ: et}
 				_, existed := c.fwd[ka]
 				wasShallow := c.shallow[ka]
 				if c.record(fmt.Sprintf("%s[%d]", path, i), et, ka.addr, fb.Index(i).UnsafeAddr()) && (!existed || wasShallow) {
@@ -445,7 +445,7 @@ func fingerprint(buf *bytes.Buffer, v reflect.Value, translate func(addrKey) uin
 	case reflect.Pointer:
 		p := v.Pointer()
 		if translate != nil && p != 0 && v.Type().Elem().Size() != 0 {
-			p = translate(addrKey{p, v.Type().Elem()})
+			p = translate(addrKey{addr: p, typ: v.Type().Elem()})
 		}
 		fmt.Fprintf(buf, "%#x", p)
 	case reflect.Interface:

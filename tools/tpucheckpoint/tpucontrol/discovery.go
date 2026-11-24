@@ -38,8 +38,8 @@ var ProcRoot = "/proc"
 // PipeInfo holds the pipe file descriptor numbers extracted from a libtpu
 // thread name.
 type PipeInfo struct {
-	TID        int
 	ThreadName string
+	TID        int
 	ReqWriteFD int
 	RspReadFD  int
 }

@@ -300,9 +300,9 @@ type icmpError struct {
 }
 
 type packetOptions struct {
-	ipFlags       uint8
-	payloadLength int
 	options       header.IPv4Options
+	payloadLength int
+	ipFlags       uint8
 }
 
 func newICMPEchoPacket(t *testing.T, srcAddr, dstAddr tcpip.Address, ttl uint8, options packetOptions) (*stack.PacketBuffer, []byte) {
@@ -396,14 +396,12 @@ func TestForwarding(t *testing.T) {
 	unreachableIPv4Addr := testutil.MustParse4("12.0.0.2")
 
 	tests := []struct {
+		icmpError                            *icmpError
 		name                                 string
-		TTL                                  uint8
-		srcAddr                              tcpip.Address
-		dstAddr                              tcpip.Address
 		options                              header.IPv4Options
 		forwardedOptions                     header.IPv4Options
-		icmpError                            *icmpError
-		closeOutgoingEndpoint                bool
+		srcAddr                              tcpip.Address
+		dstAddr                              tcpip.Address
 		expectedPacketUnrouteableErrors      uint64
 		expectedInitializingSourceErrors     uint64
 		expectedLinkLocalSourceErrors        uint64
@@ -411,6 +409,8 @@ func TestForwarding(t *testing.T) {
 		expectedMalformedPacketErrors        uint64
 		expectedExhaustedTTLErrors           uint64
 		expectedOutgoingEndpointClosedErrors uint64
+		closeOutgoingEndpoint                bool
+		TTL                                  uint8
 		expectPacketForwarded                bool
 	}{
 		{
@@ -708,11 +708,11 @@ func TestFragmentForwarding(t *testing.T) {
 	)
 
 	tests := []struct {
-		name                       string
-		ipFlags                    uint8
 		icmpError                  *icmpError
-		expectedPacketTooBigErrors uint64
+		name                       string
 		expectedFragmentsForwarded []fragmentInfo
+		expectedPacketTooBigErrors uint64
+		ipFlags                    uint8
 	}{
 		{
 			name:    "Fragmentation needed and DF set",
@@ -859,11 +859,11 @@ func TestMulticastFragmentForwarding(t *testing.T) {
 	)
 
 	tests := []struct {
-		name                       string
-		ipFlags                    uint8
 		icmpError                  *icmpError
-		expectedPacketTooBigErrors uint64
+		name                       string
 		expectedFragmentsForwarded []fragmentInfo
+		expectedPacketTooBigErrors uint64
+		ipFlags                    uint8
 	}{
 		{
 			name:    "Fragmentation needed and DF set",
@@ -1208,13 +1208,13 @@ func TestIPv4Sanity(t *testing.T) {
 
 	tests := []struct {
 		name                string
-		headerLength        uint8 // value of 0 means "use correct size"
-		badHeaderChecksum   bool
-		maxTotalLength      uint16
-		transportProtocol   uint8
-		TTL                 uint8
 		options             header.IPv4Options
 		replyOptions        header.IPv4Options // reply should look like this
+		maxTotalLength      uint16
+		headerLength        uint8 // value of 0 means "use correct size"
+		transportProtocol   uint8
+		badHeaderChecksum   bool
+		TTL                 uint8
 		shouldFail          bool
 		expectErrorICMP     bool
 		ICMPType            header.ICMPv4Type
@@ -2097,10 +2097,10 @@ type fragmentInfo struct {
 
 var fragmentationTests = []struct {
 	description           string
-	mtu                   uint32
+	wantFragments         []fragmentInfo
 	transportHeaderLength int
 	payloadSize           int
-	wantFragments         []fragmentInfo
+	mtu                   uint32
 }{
 	{
 		description:           "No fragmentation",
@@ -2224,14 +2224,14 @@ func TestFragmentationErrors(t *testing.T) {
 	const ttl = 42
 
 	tests := []struct {
+		mockError             tcpip.Error
+		wantError             tcpip.Error
 		description           string
-		mtu                   uint32
 		transportHeaderLength int
 		payloadSize           int
 		allowPackets          int
 		outgoingErrors        int
-		mockError             tcpip.Error
-		wantError             tcpip.Error
+		mtu                   uint32
 	}{
 		{
 			description:           "No frag",
@@ -2338,10 +2338,11 @@ func TestInvalidFragments(t *testing.T) {
 	}
 
 	type fragmentData struct {
+		payload    []byte
 		ipv4fields header.IPv4Fields
+
 		// 0 means insert the correct IHL. Non 0 means override the correct IHL.
-		overrideIHL  int // For 0 use 1 as it is an int and will be divided by 4.
-		payload      []byte
+		overrideIHL  int  // For 0 use 1 as it is an int and will be divided by 4.
 		autoChecksum bool // If true, the Checksum field will be overwritten.
 	}
 
@@ -2655,8 +2656,8 @@ func TestFragmentReassemblyTimeout(t *testing.T) {
 	)
 
 	type fragmentData struct {
-		ipv4fields header.IPv4Fields
 		payload    []byte
+		ipv4fields header.IPv4Fields
 	}
 
 	tests := []struct {
@@ -2948,12 +2949,12 @@ func TestReceiveFragments(t *testing.T) {
 	udpPayload4Addr1ToAddr2 := ipv4Payload4Addr1ToAddr2[header.UDPMinimumSize:]
 
 	type fragmentData struct {
+		payload        []byte
 		srcAddr        tcpip.Address
 		dstAddr        tcpip.Address
 		id             uint16
-		flags          uint8
 		fragmentOffset uint16
-		payload        []byte
+		flags          uint8
 	}
 
 	tests := []struct {
@@ -3405,8 +3406,8 @@ func TestWriteStats(t *testing.T) {
 	const nPackets = 3
 
 	tests := []struct {
-		name                     string
 		setup                    func(*testing.T, *stack.Stack)
+		name                     string
 		allowPackets             int
 		expectSent               int
 		expectOutputDropped      int
@@ -3622,9 +3623,9 @@ func TestPacketQueuing(t *testing.T) {
 	)
 
 	tests := []struct {
-		name      string
 		rxPkt     func(*channel.Endpoint)
 		checkResp func(*testing.T, *channel.Endpoint)
+		name      string
 	}{
 		{
 			name: "ICMP Error",
@@ -4287,9 +4288,9 @@ func TestIcmpRateLimit(t *testing.T) {
 		},
 	})
 	tests := []struct {
-		name         string
 		createPacket func() []byte
 		check        func(*testing.T, *channel.Endpoint, int)
+		name         string
 	}{
 		{
 			name: "echo",
@@ -4628,10 +4629,10 @@ func TestOversizedFragmentedICMPEchoRequestDoesNotPanic(t *testing.T) {
 
 			const firstFragPayloadLen = 8
 			fragments := []struct {
-				offset  uint16
-				more    bool
 				options header.IPv4OptionsSerializer
 				payload []byte
+				offset  uint16
+				more    bool
 			}{
 				{
 					offset:  0,

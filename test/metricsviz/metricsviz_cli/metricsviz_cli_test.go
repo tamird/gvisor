@@ -36,8 +36,8 @@ import (
 
 func TestTimestampOffset(t *testing.T) {
 	for _, tc := range []struct {
-		offset  uint64
 		wantErr error
+		offset  uint64
 	}{
 		{offset: 0},
 		{offset: math.MaxInt64},

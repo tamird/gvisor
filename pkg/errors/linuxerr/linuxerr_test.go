@@ -139,8 +139,8 @@ func BenchmarkConvertUnixLinuxerrZero(b *testing.B) {
 
 type translationTestTable struct {
 	errIn               error
-	expectedBool        bool
 	expectedTranslation *gErrors.Error
+	expectedBool        bool
 }
 
 func TestErrorTranslation(t *testing.T) {
@@ -177,8 +177,8 @@ func TestErrorTranslation(t *testing.T) {
 
 func TestSyscallErrnoToErrors(t *testing.T) {
 	for _, tc := range []struct {
-		errno syscall.Errno
 		err   error
+		errno syscall.Errno
 	}{
 		{errno: syscall.EACCES, err: linuxerr.EACCES},
 		{errno: syscall.EAGAIN, err: linuxerr.EAGAIN},
@@ -269,10 +269,10 @@ func TestEqualsMethod(t *testing.T) {
 
 func TestConvertIntr(t *testing.T) {
 	for _, tc := range []struct {
-		name     string
 		err      error
 		intr     error
 		expected error
+		name     string
 	}{
 		{
 			name:     "nil error",

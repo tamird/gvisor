@@ -26,17 +26,21 @@ import (
 // lookup represents a lookup operation.
 // Matches Linux net/netfilter/nft_lookup.c.
 type lookupOp struct {
-	// sregIdx represents the index of the key in the register set.
-	sregIdx int
 	// set represents the nftSet to lookup key in.
 	set *nftSet
+
+	// sregIdx represents the index of the key in the register set.
+	sregIdx int
+
+	// dregIdx represents the index of the data in the register set.
+	dregIdx int
+
 	// invert represents whether to invert the result of the lookup.
 	invert bool
+
 	// fillData represents whether to fill value from the set element
 	// into the register set.
 	fillData bool
-	// dregIdx represents the index of the data in the register set.
-	dregIdx int
 }
 
 // evaluate implements operation.evaluate.

@@ -325,13 +325,13 @@ func TestDelayedACKRead(t *testing.T) {
 	const mss = 536
 	for _, tc := range []struct {
 		name    string
-		flags   header.TCPFlags
 		size    int
+		flags   header.TCPFlags
 		wantACK bool
 	}{
-		{"Small", header.TCPFlagAck, 1, true},
-		{"FullSizedPushed", header.TCPFlagAck | header.TCPFlagPsh, mss, true},
-		{"FullSized", header.TCPFlagAck, mss, false},
+		{name: "Small", flags: header.TCPFlagAck, size: 1, wantACK: true},
+		{name: "FullSizedPushed", flags: header.TCPFlagAck | header.TCPFlagPsh, size: mss, wantACK: true},
+		{name: "FullSized", flags: header.TCPFlagAck, size: mss, wantACK: false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			c := newDelayedAckContext(t, context.Options{}, nil)

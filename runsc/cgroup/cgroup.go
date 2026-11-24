@@ -402,9 +402,9 @@ type Cgroup interface {
 //	Name='foo/bar' and Parent[ctrl]="/user.slice", then it will map to
 //	/sys/fs/cgroup/<ctrl>/user.slice/foo/bar
 type cgroupV1 struct {
-	Name    string            `json:"name"`
 	Parents map[string]string `json:"parents"`
 	Own     map[string]bool   `json:"own"`
+	Name    string            `json:"name"`
 }
 
 // NewFromPath creates a new Cgroup instance from the specified relative path.

@@ -59,11 +59,11 @@ func TestNUDFunctions(t *testing.T) {
 	const nicID = 1
 
 	tests := []struct {
+		expectedErr           tcpip.Error
 		name                  string
-		nicID                 tcpip.NICID
 		netProtoFactory       []stack.NetworkProtocolFactory
 		extraLinkCapabilities stack.LinkEndpointCapabilities
-		expectedErr           tcpip.Error
+		nicID                 tcpip.NICID
 	}{
 		{
 			name:                  "Invalid NICID",

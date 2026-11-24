@@ -43,13 +43,7 @@ import (
 // Exec implements subcommands.Command for the "exec" command.
 type Exec struct {
 	containerLoader
-	cwd string
-	env stringSlice
-	// user contains the UID and GID with which to run the new process.
-	user            user
-	extraKGIDs      stringSlice
-	caps            stringSlice
-	detach          bool
+	cwd             string
 	processPath     string
 	pidFile         string
 	internalPidFile string
@@ -59,6 +53,13 @@ type Exec struct {
 	// pseudoterminal.
 	consoleSocket string
 
+	// execPath is the path of the program to execute. If empty, the program is
+	// resolved from argv[0]. Mutually exclusive with --exec-fd.
+	execPath   string
+	env        stringSlice
+	extraKGIDs stringSlice
+	caps       stringSlice
+
 	// passFDs are user-supplied FDs from the host to be exposed to the
 	// sandboxed app.
 	passFDs sandboxsetup.FDMappings
@@ -66,9 +67,9 @@ type Exec struct {
 	// execFD is the host file descriptor used for program execution.
 	execFD int
 
-	// execPath is the path of the program to execute. If empty, the program is
-	// resolved from argv[0]. Mutually exclusive with --exec-fd.
-	execPath string
+	// user contains the UID and GID with which to run the new process.
+	user   user
+	detach bool
 
 	// newPIDNS runs the process as PID 1 of a new PID namespace that is a
 	// child of the container's PID namespace.
@@ -533,8 +534,8 @@ func (ss *stringSlice) Set(s string) error {
 // colon.
 type user struct {
 	kuid    auth.KUID
-	kuidSet bool
 	kgid    auth.KGID
+	kuidSet bool
 	kgidSet bool
 }
 

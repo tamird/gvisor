@@ -68,6 +68,9 @@ func progFlagsAsPerms(f elf.ProgFlag) hostarch.AccessType {
 
 // elfInfo contains the metadata needed to load an ELF binary.
 type elfInfo struct {
+	// phdrs are the program headers.
+	phdrs []elf.ProgHeader
+
 	// os is the target OS of the ELF.
 	os abi.OS
 
@@ -76,9 +79,6 @@ type elfInfo struct {
 
 	// entry is the program entry point.
 	entry hostarch.Addr
-
-	// phdrs are the program headers.
-	phdrs []elf.ProgHeader
 
 	// phdrSize is the size of a single program header in the ELF.
 	phdrSize int
@@ -360,6 +360,17 @@ func mapSegment(ctx context.Context, m *mm.MemoryManager, fd *vfs.FileDescriptio
 
 // loadedELF describes an ELF that has been successfully loaded.
 type loadedELF struct {
+	// interpter is the path to the ELF interpreter.
+	interpreter string
+
+	// auxv contains a subset of ELF-specific auxiliary vector entries:
+	//	* AT_PHDR
+	//	* AT_PHENT
+	//	* AT_PHNUM
+	//	* AT_BASE
+	//	* AT_ENTRY
+	auxv arch.Auxv
+
 	// os is the target OS of the ELF.
 	os abi.OS
 
@@ -375,9 +386,6 @@ type loadedELF struct {
 	// end is the end of the ELF.
 	end hostarch.Addr
 
-	// interpter is the path to the ELF interpreter.
-	interpreter string
-
 	// phdrAddr is the address of the ELF program headers.
 	phdrAddr hostarch.Addr
 
@@ -386,14 +394,6 @@ type loadedELF struct {
 
 	// phdrNum is the number of program headers.
 	phdrNum int
-
-	// auxv contains a subset of ELF-specific auxiliary vector entries:
-	//	* AT_PHDR
-	//	* AT_PHENT
-	//	* AT_PHNUM
-	//	* AT_BASE
-	//	* AT_ENTRY
-	auxv arch.Auxv
 }
 
 // loadParsedELF loads f into mm.

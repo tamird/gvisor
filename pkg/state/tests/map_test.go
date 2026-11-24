@@ -159,10 +159,10 @@ func loadMapEntries(t *testing.T, dst any, entries *wire.Map, objects ...wire.Ob
 func TestMapNilValues(t *testing.T) {
 	seven := 7
 	for _, test := range []struct {
-		name    string
-		values  []wire.Object
 		backing wire.Object
 		want    any
+		name    string
+		values  []wire.Object
 	}{
 		{
 			name:    "pointer",
@@ -252,15 +252,15 @@ func TestMapNilKeys(t *testing.T) {
 
 func TestMapLoadHookReceivers(t *testing.T) {
 	for _, test := range []struct {
-		name  string
 		value any
+		name  string
 	}{
-		{"struct keys", map[mapLoadHook]int{{1}: 1, {2}: 2}},
-		{"struct values", map[int]mapLoadHook{1: {1}, 2: {2}}},
-		{"array keys", map[[1]mapLoadHook]int{{{1}}: 1, {{2}}: 2}},
-		{"array values", map[int][1]mapLoadHook{1: {{1}}, 2: {{2}}}},
-		{"interface keys", map[any]int{mapLoadHook{1}: 1, mapLoadHook{2}: 2}},
-		{"interface values", map[int]any{1: mapLoadHook{1}, 2: mapLoadHook{2}}},
+		{name: "struct keys", value: map[mapLoadHook]int{{1}: 1, {2}: 2}},
+		{name: "struct values", value: map[int]mapLoadHook{1: {1}, 2: {2}}},
+		{name: "array keys", value: map[[1]mapLoadHook]int{{{1}}: 1, {{2}}: 2}},
+		{name: "array values", value: map[int][1]mapLoadHook{1: {{1}}, 2: {{2}}}},
+		{name: "interface keys", value: map[any]int{mapLoadHook{1}: 1, mapLoadHook{2}: 2}},
+		{name: "interface values", value: map[int]any{1: mapLoadHook{1}, 2: mapLoadHook{2}}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			// Both hooks run after the map entries have been decoded. If

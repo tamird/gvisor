@@ -87,9 +87,49 @@ var (
 // new sandbox. It should not be called directly.
 type Boot struct {
 	util.InternalSubCommand
+	hostTHP boot.HostTHP
 
 	// bundleDir is the directory containing the OCI spec.
 	bundleDir string
+
+	// productName is the value to show in
+	// /sys/devices/virtual/dmi/id/product_name.
+	productName string
+
+	// nvidiaDriverVersion is the Nvidia driver ABI version to use, or "latest"
+	// for the newest supported one.
+	nvidiaDriverVersion string
+
+	// These correspond to fields in nvconf.HostSettings, which is not used
+	// here because nvconf.HostSettings.FabricIMEXManagementDevMinor in
+	// particular is uint32 and there is no flag.Uint32Var().
+	procDriverNvidiaParams string
+
+	// ioFDs is the list of FDs used to connect to FS gofers.
+	ioFDs sandboxsetup.IntFlags
+
+	// goferFilestoreFDs are FDs to the regular files that will back the tmpfs or
+	// overlayfs mount for certain gofer mounts.
+	goferFilestoreFDs sandboxsetup.IntFlags
+
+	// stdioFDs are the fds for stdin, stdout, and stderr. They must be
+	// provided in that order.
+	stdioFDs sandboxsetup.IntFlags
+
+	// goferMountConfs contains information about how the gofer mounts have been
+	// configured. The first entry is for rootfs and the following entries are
+	// for bind mounts in Spec.Mounts (in the same order).
+	goferMountConfs specutils.GoferMountConfFlags
+	sinkFDs         sandboxsetup.IntFlags
+
+	// passFDs are mappings of user-supplied host to guest file descriptors.
+	passFDs      sandboxsetup.FDMappings
+	saveFDs      sandboxsetup.IntFlags
+	fsSaveFDs    sandboxsetup.IntFlags
+	fsRestoreFDs sandboxsetup.IntFlags
+
+	// FDs for profile data.
+	profileFDs profile.FDArgs
 
 	// specFD is the file descriptor that the spec will be read from.
 	specFD int
@@ -98,56 +138,9 @@ type Boot struct {
 	// control server that is donated to this process.
 	controllerFD int
 
-	// deviceFD is the file descriptor for the platform device file.
-	deviceFD int
-
-	// pinRingFD is the file descriptor of the donated pin ring.
-	// See `//pkg/pinring`.
-	pinRingFD int
-
-	// ioFDs is the list of FDs used to connect to FS gofers.
-	ioFDs sandboxsetup.IntFlags
-
-	// devIoFD is the FD to connect to dev gofer.
-	devIoFD int
-
-	// goferFilestoreFDs are FDs to the regular files that will back the tmpfs or
-	// overlayfs mount for certain gofer mounts.
-	goferFilestoreFDs sandboxsetup.IntFlags
-
-	// goferMountConfs contains information about how the gofer mounts have been
-	// configured. The first entry is for rootfs and the following entries are
-	// for bind mounts in Spec.Mounts (in the same order).
-	goferMountConfs specutils.GoferMountConfFlags
-
-	// stdioFDs are the fds for stdin, stdout, and stderr. They must be
-	// provided in that order.
-	stdioFDs sandboxsetup.IntFlags
-
-	// passFDs are mappings of user-supplied host to guest file descriptors.
-	passFDs sandboxsetup.FDMappings
-
-	// execFD is the host file descriptor used for program execution.
-	execFD int
-
-	// applyCaps determines if capabilities defined in the spec should be applied
-	// to the process.
-	applyCaps bool
-
-	// setUpChroot is set to true if the sandbox is started in an empty root.
-	setUpRoot bool
-
-	// cpuNum number of CPUs to create inside the sandbox.
-	cpuNum int
-
-	// lifecycleCPUNum is the number of CPUs that the sandbox can use during
-	// checkpoint and restore.
-	lifecycleCPUNum int
-
 	// cpuQuota and cpuPeriod carry the raw host CFS CPU settings that should be
 	// exposed through sandbox cgroupfs.
-	cpuQuota  int64
-	cpuPeriod int64
+	cpuQuota int64
 
 	// totalMem sets the initial amount of total memory to report back to the
 	// container.
@@ -155,6 +148,26 @@ type Boot struct {
 
 	// totalHostMem is the total memory reported by host /proc/meminfo.
 	totalHostMem uint64
+
+	// deviceFD is the file descriptor for the platform device file.
+	deviceFD int
+
+	// pinRingFD is the file descriptor of the donated pin ring.
+	// See `//pkg/pinring`.
+	pinRingFD int
+
+	// devIoFD is the FD to connect to dev gofer.
+	devIoFD int
+
+	// execFD is the host file descriptor used for program execution.
+	execFD int
+
+	// cpuNum number of CPUs to create inside the sandbox.
+	cpuNum int
+
+	// lifecycleCPUNum is the number of CPUs that the sandbox can use during
+	// checkpoint and restore.
+	lifecycleCPUNum int
 
 	// userLogFD is the file descriptor to write user logs to.
 	userLogFD int
@@ -164,38 +177,15 @@ type Boot struct {
 	// sandbox (e.g. gofer) and sent through this FD. When mountsFD is not
 	// provided, there is no cleaning required for mounts and the mounts in
 	// the spec can be used as is.
-	mountsFD int
-
-	podInitConfigFD int
-
-	sinkFDs sandboxsetup.IntFlags
-
-	saveFDs             sandboxsetup.IntFlags
-	saveCheckpointGofer bool
-
-	fsSaveFDs             sandboxsetup.IntFlags
-	fsSaveCheckpointGofer bool
-
-	fsRestoreFDs             sandboxsetup.IntFlags
-	fsRestoreCheckpointGofer bool
-
-	// attached is set to true to kill the sandbox process when the parent process
-	// terminates. This flag is set when the command execve's itself because
-	// parent death signal doesn't propagate through execve when uid/gid changes.
-	attached bool
-
-	// productName is the value to show in
-	// /sys/devices/virtual/dmi/id/product_name.
-	productName string
-
-	hostTHP boot.HostTHP
-
-	// FDs for profile data.
-	profileFDs profile.FDArgs
+	mountsFD                           int
+	cpuPeriod                          int64
+	nvidiaFabricIMEXManagementDevMinor int64
+	podInitConfigFD                    int
 
 	// finalMetricsFD is a file descriptor to write metric data to upon sandbox
 	// termination.
-	finalMetricsFD int
+	finalMetricsFD               int
+	nvidiaMNCCManagementDevMinor int64
 
 	// bootTimesFD is a file descriptor to write the startup timeline of the
 	// sandbox to, as JSON, when the sandbox starts (see timing.Timer.Export).
@@ -203,10 +193,6 @@ type Boot struct {
 
 	// profilingMetricsFD is a file descriptor to write Sentry metrics data to.
 	profilingMetricsFD int
-
-	// profilingMetricsLossy sets whether profilingMetricsFD is a lossy channel.
-	// If so, the format used to write to it will contain a checksum.
-	profilingMetricsLossy bool
 
 	// cpuDMALatencyFD is a file descriptor holding /dev/cpu_dma_latency
 	// open to prevent host CPUs from entering deep idle states for the
@@ -227,17 +213,6 @@ type Boot struct {
 	// used to synchronize rootless user namespace initialization.
 	syncUsernsFD int
 
-	// nvidiaDriverVersion is the Nvidia driver ABI version to use, or "latest"
-	// for the newest supported one.
-	nvidiaDriverVersion string
-
-	// These correspond to fields in nvconf.HostSettings, which is not used
-	// here because nvconf.HostSettings.FabricIMEXManagementDevMinor in
-	// particular is uint32 and there is no flag.Uint32Var().
-	procDriverNvidiaParams             string
-	nvidiaFabricIMEXManagementDevMinor int64
-	nvidiaMNCCManagementDevMinor       int64
-
 	// uid and gid are the user and group IDs to switch to after setting up the
 	// user namespace.
 	uid int
@@ -245,6 +220,25 @@ type Boot struct {
 
 	// rootfsUpperTarFD is the file descriptor to a tar file that has rootfs change at startup.
 	rootfsUpperTarFD int
+
+	// applyCaps determines if capabilities defined in the spec should be applied
+	// to the process.
+	applyCaps bool
+
+	// setUpChroot is set to true if the sandbox is started in an empty root.
+	setUpRoot                bool
+	saveCheckpointGofer      bool
+	fsSaveCheckpointGofer    bool
+	fsRestoreCheckpointGofer bool
+
+	// attached is set to true to kill the sandbox process when the parent process
+	// terminates. This flag is set when the command execve's itself because
+	// parent death signal doesn't propagate through execve when uid/gid changes.
+	attached bool
+
+	// profilingMetricsLossy sets whether profilingMetricsFD is a lossy channel.
+	// If so, the format used to write to it will contain a checksum.
+	profilingMetricsLossy bool
 
 	// noRootContainer boots without a root container. See Create.noRootContainer.
 	noRootContainer bool

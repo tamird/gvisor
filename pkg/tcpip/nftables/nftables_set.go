@@ -281,8 +281,8 @@ var setDescPolicy = []NlaPolicy{
 }
 
 type setDesc struct {
-	size   uint32
 	concat []uint8
+	size   uint32
 }
 
 // parseSetDescAttr parses the set description attributes.
@@ -1470,9 +1470,9 @@ func (nf *NFTables) GetSetElements(attrs map[uint16]nlmsg.BytesView, family stac
 
 // setMapBackend is a backend to handle map operations.
 type setMapBackend struct {
+	m       map[string]int
 	keyLen  int
 	dataLen int
-	m       map[string]int
 }
 
 // Lookup implements NftSetBackend.Lookup.

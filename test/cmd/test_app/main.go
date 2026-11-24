@@ -82,13 +82,13 @@ type fsTreeCreator struct {
 }
 
 type fsTreeCommon struct {
+	targetDir        string
 	depth            uint
 	numFilesPerLevel uint
 	fileSize         uint
-	targetDir        string
+	seed             uint64
 	createSymlink    bool
 	addEmptyFiles    bool
-	seed             uint64
 }
 
 // Name implements subcommands.Command.Name.

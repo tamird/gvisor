@@ -44,9 +44,9 @@ type openMountRequest struct {
 // calls outside of its namespace container. It is used to configure sandbox
 // mounts.
 type goferToHostRPC struct {
-	mu                sync.Mutex
 	openMountRequests chan *openMountRequest
 	goferPID          int
+	mu                sync.Mutex
 }
 
 // OpenMountResult is a result of the rpcp.OpenMount call.

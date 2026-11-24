@@ -38,28 +38,28 @@ import (
 )
 
 type execProcess struct {
-	wg sync.WaitGroup
+	spec   specs.Process
+	exited time.Time
+
+	mu runtimeMutex
 
 	execState execState
-
-	mu          runtimeMutex
-	id          string
-	console     console.Console
-	io          runc.IO
-	status      int
-	exited      time.Time
-	pid         int
-	internalPid int
-	closers     []io.Closer
-	stdin       io.Closer
-	stdio       stdio.Stdio
-	path        string
-	spec        specs.Process
+	console   console.Console
+	io        runc.IO
+	stdin     io.Closer
 
 	parent      *Init
 	waitBlock   chan struct{}
-	ioWaitOnce  sync.Once
 	ioDone      chan struct{}
+	path        string
+	id          string
+	stdio       stdio.Stdio
+	closers     []io.Closer
+	wg          sync.WaitGroup
+	pid         int
+	internalPid int
+	status      int
+	ioWaitOnce  sync.Once
 	ioCloseOnce sync.Once
 }
 

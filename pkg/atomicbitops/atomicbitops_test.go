@@ -365,13 +365,13 @@ func TestAddFloat64(t *testing.T) {
 			wg.Wait()
 			for _, f := range []struct {
 				name string
-				val  float64
 				want []float64
+				val  float64
 			}{
-				{"linear", fLinear.Load(), []float64{fCanonical}},
-				{"linear reverse", fLinearReverse.Load(), []float64{fCanonicalReverse}},
-				{"parallel 1", fParallel1.Load(), []float64{fCanonical, fCanonicalReverse}},
-				{"parallel 2", fParallel2.Load(), []float64{fCanonical, fCanonicalReverse}},
+				{name: "linear", val: fLinear.Load(), want: []float64{fCanonical}},
+				{name: "linear reverse", val: fLinearReverse.Load(), want: []float64{fCanonicalReverse}},
+				{name: "parallel 1", val: fParallel1.Load(), want: []float64{fCanonical, fCanonicalReverse}},
+				{name: "parallel 2", val: fParallel2.Load(), want: []float64{fCanonical, fCanonicalReverse}},
 			} {
 				found := false
 				for _, want := range f.want {

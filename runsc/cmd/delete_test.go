@@ -74,11 +74,11 @@ func writeStateFile(t *testing.T, rootDir, sbID, cid string, status container.St
 // requireForce.
 func TestDeleteRunningRequiresForce(t *testing.T) {
 	for _, tc := range []struct {
-		name            string
-		noRootContainer bool
+		name string
 		// subcontainers holds the status of each container in the sandbox.
-		subcontainers []container.Status
-		wantErr       bool
+		subcontainers   []container.Status
+		noRootContainer bool
+		wantErr         bool
 	}{
 		{name: "regular container", wantErr: true},
 		{name: "empty sandbox", noRootContainer: true},

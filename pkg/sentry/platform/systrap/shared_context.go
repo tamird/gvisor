@@ -47,9 +47,7 @@ type sharedContext struct {
 
 	// subprocess is the subprocess that this sharedContext instance belongs to.
 	subprocess *subprocess
-	// contextID is the ID corresponding to the sysmsg.ThreadContext memory slot
-	// that is used for this sharedContext.
-	contextID uint32
+
 	// shared is the handle to the shared memory that the sentry task go-routine
 	// reads from and writes to.
 	// NOTE: Using this handle directly without a getter from this function should
@@ -60,7 +58,12 @@ type sharedContext struct {
 	// dispatcher.
 	sync           syncevent.Waiter
 	startWaitingTS int64
-	kicked         bool
+
+	// contextID is the ID corresponding to the sysmsg.ThreadContext memory slot
+	// that is used for this sharedContext.
+	contextID uint32
+	kicked    bool
+
 	// The task associated with the context fell asleep.
 	sleeping bool
 }
@@ -350,15 +353,14 @@ type fastPathDispatcher struct {
 	// any lock.
 	list contextList
 
-	mu sync.Mutex
+	// entrants contains new contexts that haven't been added to `list` yet.
+	// +checklocks:mu
+	entrants contextList
 
 	// nr is the number of contexts in the queue.
 	// +checklocks:mu
 	nr int
-
-	// entrants contains new contexts that haven't been added to `list` yet.
-	// +checklocks:mu
-	entrants contextList
+	mu sync.Mutex
 }
 
 var dispatcher fastPathDispatcher

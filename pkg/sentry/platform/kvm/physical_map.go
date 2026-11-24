@@ -31,9 +31,9 @@ type region struct {
 }
 
 type specialVirtualRegion struct {
-	region
 	filename string
-	mmio     bool // if false, region is excluded
+	region
+	mmio bool // if false, region is excluded
 }
 
 type physicalRegion struct {

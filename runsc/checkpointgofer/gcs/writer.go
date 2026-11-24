@@ -28,20 +28,19 @@ import (
 // Writer implements stateio.AsyncWriter for a GCS object.
 type Writer struct {
 	stateio.NoRegisterClientFD
-
-	maxWriteBytes uint64
-	maxRanges     int
 	obj           *storage.ObjectHandle
 	writer        *storage.Writer
 	subs          chan writeSubmission
 	cmps          chan stateio.Completion
 	cancel        context.CancelCauseFunc
 	worker        sync.WaitGroup
+	maxWriteBytes uint64
+	maxRanges     int
 }
 
 type writeSubmission struct {
-	id  int
 	src stateio.LocalClientRanges
+	id  int
 }
 
 // NewWriter returns a Writer that writes to the given GCS object.

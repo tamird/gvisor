@@ -239,11 +239,11 @@ func Disable() error {
 
 // Uint64Metadata is the metadata for a uint64 metric.
 type Uint64Metadata struct {
-	Cumulative  bool
-	Sync        bool
-	Unit        pb.MetricMetadata_Units
 	Description string
 	Fields      []Field
+	Unit        pb.MetricMetadata_Units
+	Cumulative  bool
+	Sync        bool
 }
 
 type customUint64Metric struct {
@@ -252,13 +252,6 @@ type customUint64Metric struct {
 
 	// prometheusMetric describes the metric in Prometheus format. It is immutable.
 	prometheusMetric *prometheus.Metric
-
-	// fields is the set of fields of the metric.
-	fields []Field
-
-	// fieldMapper is used to generate index keys for the fields array (above)
-	// based on field value combinations, and vice-versa.
-	fieldMapper fieldMapper
 
 	// value returns the current value of the metric for the given set of
 	// fields. It takes a variadic number of field values as argument.
@@ -272,6 +265,13 @@ type customUint64Metric struct {
 	// consistent snapshot of this metric's values.
 	// `forEachNonZero` may be nil.
 	forEachNonZero func(f func(fields []*FieldValue, val uint64))
+
+	// fields is the set of fields of the metric.
+	fields []Field
+
+	// fieldMapper is used to generate index keys for the fields array (above)
+	// based on field value combinations, and vice-versa.
+	fieldMapper fieldMapper
 }
 
 // FieldValue is a string that can be used as a value for a Field.
@@ -762,6 +762,13 @@ type Bucketer interface {
 // wider by a scaled exponentially-growing series, until `NumFiniteBuckets`
 // buckets exist.
 type ExponentialBucketer struct {
+	// lowerbounds is a precomputed set of lower bounds of the buckets.
+	// The "underflow" bucket has no lower bound, so it is not included here.
+	// lowerBounds[0] is the lower bound of the first finite bucket, which is
+	// also the upper bound of the underflow bucket.
+	// lowerBounds[numFiniteBuckets] is the lower bound of the overflow bucket.
+	lowerBounds []int64
+
 	// numFinitebuckets is the total number of finite buckets in the scheme.
 	numFiniteBuckets int
 
@@ -785,13 +792,6 @@ type ExponentialBucketer struct {
 	// maxSample is the max sample value which can be represented in a finite
 	// bucket.
 	maxSample int64
-
-	// lowerbounds is a precomputed set of lower bounds of the buckets.
-	// The "underflow" bucket has no lower bound, so it is not included here.
-	// lowerBounds[0] is the lower bound of the first finite bucket, which is
-	// also the upper bound of the underflow bucket.
-	// lowerBounds[numFiniteBuckets] is the lower bound of the overflow bucket.
-	lowerBounds []int64
 }
 
 // Minimum/maximum finite buckets for exponential bucketers.
@@ -893,10 +893,6 @@ type DistributionMetric struct {
 	// prometheusMetric describes the metric in Prometheus format. It is immutable.
 	prometheusMetric *prometheus.Metric
 
-	// fieldsToKey converts a multi-dimensional fields to a single string to use
-	// as key for `samples`.
-	fieldsToKey fieldMapper
-
 	// samples is the number of samples that fell within each bucket.
 	// It is mapped by the concatenation of the fields using `fieldsToKey`.
 	// The value is a list of bucket sample counts, with the 0-th being the
@@ -911,6 +907,10 @@ type DistributionMetric struct {
 	// statistics is a set of statistics about each distribution.
 	// It is mapped by the concatenation of the fields using `fieldsToKey`.
 	statistics []distributionStatistics
+
+	// fieldsToKey converts a multi-dimensional fields to a single string to use
+	// as key for `samples`.
+	fieldsToKey fieldMapper
 }
 
 // NewDistributionMetric creates and registers a new distribution metric.
@@ -1229,10 +1229,11 @@ func (o TimedOperation) Finish(extraFields ...*FieldValue) {
 
 // stageTiming contains timing data for an initialization stage.
 type stageTiming struct {
-	stage   InitStage
 	started time.Time
+
 	// ended is the zero time when the stage has not ended yet.
 	ended time.Time
+	stage InitStage
 }
 
 // inProgress returns whether this stage hasn't ended yet.
@@ -1242,6 +1243,11 @@ func (s stageTiming) inProgress() bool {
 
 // metricSet holds metric data.
 type metricSet struct {
+	// The current stage in progress.
+	//
+	// +checklocks:mu
+	currentStage stageTiming
+
 	// Metric registration data for all the metrics below.
 	registration *pb.MetricRegistration
 
@@ -1251,19 +1257,13 @@ type metricSet struct {
 	// Map of distribution metrics.
 	distributionMetrics map[string]*DistributionMetric
 
-	mu sync.RWMutex
-
 	// finished records completed Sentry initialization stages. Its slice header
 	// is copied under mu; existing elements are immutable, so the copied prefix
 	// can be read after releasing mu.
 	//
 	// +checklocks:mu
 	finished []stageTiming
-
-	// The current stage in progress.
-	//
-	// +checklocks:mu
-	currentStage stageTiming
+	mu       sync.RWMutex
 }
 
 // makeMetricSet returns a new metricSet.

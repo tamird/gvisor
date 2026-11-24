@@ -71,9 +71,9 @@ func TestBasic(t *testing.T) {
 	for _, test := range []struct {
 		name      string
 		ruleSets  []RuleSet
-		wantPanic bool
-		options   ProgramOptions
 		specs     []spec
+		options   ProgramOptions
+		wantPanic bool
 	}{
 		{
 			name: "Single syscall",
@@ -1133,8 +1133,8 @@ func TestRandom(t *testing.T) {
 func TestRealDeal(t *testing.T) {
 	for _, test := range []struct {
 		name string
-		die  bool
 		want string
+		die  bool
 	}{
 		{name: "bad syscall", die: true, want: "bad system call"},
 		{name: "allowed syscall", die: false, want: "Syscall was allowed!!!"},
@@ -1181,10 +1181,10 @@ func TestRealDeal(t *testing.T) {
 // TestMerge ensures that empty rules are not erased when rules are merged.
 func TestMerge(t *testing.T) {
 	for _, tst := range []struct {
-		name  string
 		main  SyscallRule
 		merge SyscallRule
 		want  SyscallRule
+		name  string
 	}{
 		{
 			name:  "MatchAll both",
@@ -1259,10 +1259,10 @@ func TestOptimizeSyscallRule(t *testing.T) {
 	}
 
 	for _, test := range []struct {
-		name       string
 		rule       SyscallRule
-		optimizers []ruleOptimizerFunc
 		want       SyscallRule
+		name       string
+		optimizers []ruleOptimizerFunc
 	}{
 		{
 			name: "do nothing to a simple rule",
@@ -1536,9 +1536,9 @@ func TestOptimizeSyscallRule(t *testing.T) {
 func TestOrderRuleSets(t *testing.T) {
 	for _, test := range []struct {
 		name     string
+		want     orderedRuleSets
 		ruleSets []RuleSet
 		options  ProgramOptions // Optimizations are always enabled regardless of this
-		want     orderedRuleSets
 		wantErr  bool
 	}{
 		{

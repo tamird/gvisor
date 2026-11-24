@@ -67,19 +67,19 @@ func (a HostFSAccess) String() string {
 // Options are seccomp filter related options.
 type Options struct {
 	Platform              platform.SeccompInfo
-	HostNetwork           bool
-	HostNetworkRawSockets bool
+	VendorSyscalls        precompiledseccomp.VarSyscallNumbers
 	HostFS                HostFSAccess
 	ProcSelfFD            uint32
+	ControllerFD          uint32
+	NVProxyCaps           nvconf.DriverCaps
+	HostNetwork           bool
+	HostNetworkRawSockets bool
 	ProfileEnable         bool
 	NVProxy               bool
-	NVProxyCaps           nvconf.DriverCaps
 	TPUProxy              bool
 	RDMAProxy             bool
-	ControllerFD          uint32
 	CgoEnabled            bool
 	PluginNetwork         bool
-	VendorSyscalls        precompiledseccomp.VarSyscallNumbers
 }
 
 // vendorSyscalls is the set of vendor-specific syscalls that the Sentry may

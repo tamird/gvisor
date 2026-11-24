@@ -29,9 +29,9 @@ const sizeofUint64 = 8
 
 // Eventfd represents a Linux eventfd object.
 type Eventfd struct {
+	mmioCtrl MMIOController
 	fd       int
 	mmioAddr uintptr
-	mmioCtrl MMIOController
 }
 
 // Create returns an initialized eventfd.

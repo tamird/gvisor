@@ -22,12 +22,12 @@ import (
 
 // Request provides inputs to an asynchronous I/O operation.
 type Request struct {
-	ID  uint64 // copied to Completion.ID in the corresponding Completion
-	Op  Op
-	FD  int32          // host file descriptor
-	Off int64          // offset into FD
 	Buf unsafe.Pointer // depends on Op
-	Len int            // depends on Op
+	ID  uint64         // copied to Completion.ID in the corresponding Completion
+	Op  Op
+	FD  int32 // host file descriptor
+	Off int64 // offset into FD
+	Len int   // depends on Op
 }
 
 // Read enqueues a read. The caller must ensure that the memory referred to by

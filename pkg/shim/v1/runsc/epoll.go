@@ -42,18 +42,17 @@ func newOOMEpoller(publisher events.Publisher) (*epoller, error) {
 }
 
 type epoller struct {
-	mu sync.Mutex
-
-	fd        int
 	publisher events.Publisher
 
 	// +checklocks:mu
 	set map[uintptr]*item
+	fd  int
+	mu  sync.Mutex
 }
 
 type item struct {
-	id string
 	cg cgroups.Cgroup
+	id string
 }
 
 func (e *epoller) Close() error {

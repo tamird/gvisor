@@ -52,10 +52,11 @@ type MetricName string
 
 // Metric is the full metadata about a metric.
 type Metric struct {
-	// Name is the name of the metric.
-	Name MetricName
 	// Metadata is the metadata of the metric.
 	Metadata *mpb.MetricMetadata
+
+	// Name is the name of the metric.
+	Name MetricName
 }
 
 // MetricAndFields is a metric name and a set of field values.
@@ -123,14 +124,17 @@ func (ts *TimeSeries) ChartTitle() string {
 // Data maps metrics and field values to timeseries.
 type Data struct {
 	startTime       time.Time
-	rawLogs         string
 	data            map[MetricAndFields]*TimeSeries
 	collectionStats *metric.CollectionStats
+	rawLogs         string
 }
 
 // HTMLOptions are options for generating an HTML page with charts of the
 // metrics data.
 type HTMLOptions struct {
+	// When is the time at which the measurements were taken.
+	When time.Time
+
 	// Title is the title of this set of charts.
 	Title string
 
@@ -138,9 +142,6 @@ type HTMLOptions struct {
 	// collected. May be empty; usually only specified when there are more
 	// than one container involved in a single test or benchmark.
 	ContainerName string
-
-	// When is the time at which the measurements were taken.
-	When time.Time
 }
 
 type chart struct {

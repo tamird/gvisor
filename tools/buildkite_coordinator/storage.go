@@ -42,15 +42,16 @@ const (
 //
 // Safe for concurrent use.
 type BucketTokenController struct {
-	// The following fields are immutable.
+	creds  *auth.Credentials
+	tokens map[string]*auth.Token
+
+	// bucket, availablePermissions, serviceAccount, and creds are immutable.
 	bucket               string
-	availablePermissions []string
 	serviceAccount       string
-	creds                *auth.Credentials
+	availablePermissions []string
 
 	// mu protects tokens.
-	mu     sync.Mutex
-	tokens map[string]*auth.Token
+	mu sync.Mutex
 }
 
 // NewBucketTokenController returns a BucketTokenController that issues tokens for the given

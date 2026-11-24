@@ -25,10 +25,10 @@ import (
 
 // rx holds all state associated with an rx queue.
 type rx struct {
+	eventFD    eventfd.Eventfd
 	data       []byte
 	sharedData []byte
 	q          queue.Rx
-	eventFD    eventfd.Eventfd
 }
 
 // init initializes all state needed by the rx queue based on the information

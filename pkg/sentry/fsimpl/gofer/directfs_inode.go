@@ -164,8 +164,8 @@ func (fs *filesystem) newDirectfsDentry(controlFD int) (*dentry, error) {
 	// Obviously in case of hard link and if the inode already exists,
 	// we just reuse the inode and heap allocate just the dentry struct.
 	temp := struct {
-		d dentry
 		i directfsInode
+		d dentry
 	}{}
 	// Force new inode creation for directory inodes to avoid hard-linking directories.
 	// This also avoids a correctness issue when a directory is bind-mounted on the host:

@@ -30,8 +30,8 @@ import (
 
 // Connection is a connection to the sniffer hook.
 type Connection struct {
-	protoBytesBuf []byte
 	conn          net.Conn
+	protoBytesBuf []byte
 }
 
 // readFullWithContext tries to fill the buffer with data from the connection. It returns an error
@@ -103,9 +103,9 @@ func (c *Connection) ReadIoctlProto(ctx context.Context) (*pb.Ioctl, error) {
 // Server is a server that accepts connections from the sniffer hook. It reads ioctl protos from
 // each connection and sends them to the results channel.
 type Server struct {
+	listener      net.Listener
 	resultsChan   chan *Results
 	connectionsWG sync.WaitGroup
-	listener      net.Listener
 }
 
 // NewServer creates a new Server.

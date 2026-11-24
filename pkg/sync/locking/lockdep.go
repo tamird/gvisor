@@ -48,17 +48,19 @@ type MutexClass struct {
 	// Name of the nested lock of the above type.
 	lockName string
 
-	// ancestors are locks that are locked before the current class.
-	ancestors ancestorsAtomicPtrMap
 	// nestedLockNames is a list of names for nested locks which are considered difference instances
 	// of the same lock class.
 	nestedLockNames []string
+
 	// namedLockClasses is a list of MutexClass instances of the same mutex class, but that are
 	// considered OK to lock simultaneously with each other, as well as with this mutex class.
 	// This is used for nested locking, where multiple instances of the same lock class are used
 	// simultaneously.
 	// Maps one-to-one with nestedLockNames.
 	nestedLockClasses []*MutexClass
+
+	// ancestors are locks that are locked before the current class.
+	ancestors ancestorsAtomicPtrMap
 }
 
 func (m *MutexClass) String() string {

@@ -26,8 +26,8 @@ func TestTotalSystemMemory(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
 		content string
-		want    uint64
 		err     string
+		want    uint64
 	}{
 		{
 			name:    "simple",

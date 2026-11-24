@@ -237,13 +237,6 @@ type RTMemoryStats struct {
 
 // MemoryLocked serializes aggregate and per-cgroup memory accounting.
 type MemoryLocked struct {
-	mu memoryMutex
-
-	// memoryStats records the aggregate memory stats.
-	//
-	// +checklocks:mu
-	memoryStats
-
 	// RTMemoryStats records the memory stats that need to be exposed through
 	// shared page.
 	*RTMemoryStats
@@ -255,6 +248,12 @@ type MemoryLocked struct {
 	//
 	// +checklocks:mu
 	MemCgIDToMemStats map[uint32]*memoryStats
+
+	// memoryStats records the aggregate memory stats.
+	//
+	// +checklocks:mu
+	memoryStats
+	mu memoryMutex
 }
 
 var (

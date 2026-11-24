@@ -169,8 +169,8 @@ type IPv6PayloadHeader interface {
 // header. The caller is responsible for releasing the underlying buffer after
 // it's no longer needed.
 type IPv6RawPayloadHeader struct {
-	Identifier IPv6ExtensionHeaderIdentifier
 	Buf        buffer.Buffer
+	Identifier IPv6ExtensionHeaderIdentifier
 }
 
 // isIPv6PayloadHeader implements IPv6PayloadHeader.isIPv6PayloadHeader.
@@ -305,8 +305,8 @@ var ErrMalformedIPv6ExtHdrOption = errors.New("malformed IPv6 extension header o
 // IPv6UnknownExtHdrOption holds the identifier and data for an IPv6 extension
 // header option that is unknown by the parsing utilities.
 type IPv6UnknownExtHdrOption struct {
-	Identifier IPv6ExtHdrOptionIdentifier
 	Data       *buffer.View
+	Identifier IPv6ExtHdrOptionIdentifier
 }
 
 // UnknownAction implements IPv6OptionUnknownAction.UnknownAction.
@@ -503,14 +503,7 @@ func (b IPv6FragmentExtHdr) IsAtomic() bool {
 // over the first few headers then modify the backing payload so long as the
 // IPv6PayloadIterator obtained before modification is no longer used.
 type IPv6PayloadIterator struct {
-	// The identifier of the next header to parse.
-	nextHdrIdentifier IPv6ExtensionHeaderIdentifier
-
 	payload buffer.Buffer
-
-	// Indicates to the iterator that it should return the remaining payload as a
-	// raw payload on the next call to Next.
-	forceRaw bool
 
 	// headerOffset is the offset of the beginning of the current extension
 	// header starting from the beginning of the fixed header.
@@ -523,6 +516,13 @@ type IPv6PayloadIterator struct {
 
 	// nextOffset is the offset of the next header.
 	nextOffset uint32
+
+	// The identifier of the next header to parse.
+	nextHdrIdentifier IPv6ExtensionHeaderIdentifier
+
+	// Indicates to the iterator that it should return the remaining payload as a
+	// raw payload on the next call to Next.
+	forceRaw bool
 }
 
 // HeaderOffset returns the offset to the start of the extension

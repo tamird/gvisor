@@ -34,8 +34,8 @@ func TestRuntimeTypeHelpers(t *testing.T) {
 		reflect.TypeFor[[3]uint16](),
 		reflect.TypeFor[map[string]int](),
 		reflect.TypeFor[struct {
-			a int32
 			b string
+			a int32
 		}](),
 		reflect.TypeFor[any](),
 		reflect.TypeFor[io.Reader](),

@@ -28,8 +28,8 @@ import (
 func TestGetMountAccessType(t *testing.T) {
 	const source = "foo"
 	for _, tst := range []struct {
-		name        string
 		annotations map[string]string
+		name        string
 		want        config.FileAccessType
 	}{
 		{
@@ -103,9 +103,9 @@ func TestGetMountAccessType(t *testing.T) {
 
 func TestNUMATopologyBootGate(t *testing.T) {
 	for _, tc := range []struct {
-		name string
 		spec *specs.Spec
 		conf *config.Config
+		name string
 		want bool
 	}{
 		{

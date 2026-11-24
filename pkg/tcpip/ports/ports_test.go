@@ -35,13 +35,13 @@ var (
 )
 
 type portReserveTestAction struct {
-	port    uint16
-	ip      tcpip.Address
 	want    tcpip.Error
+	dest    tcpip.FullAddress
+	ip      tcpip.Address
+	device  tcpip.NICID
+	port    uint16
 	flags   Flags
 	release bool
-	device  tcpip.NICID
-	dest    tcpip.FullAddress
 }
 
 func TestPortReservation(t *testing.T) {
@@ -376,9 +376,9 @@ func TestPickEphemeralPort(t *testing.T) {
 	)
 
 	for _, test := range []struct {
-		name     string
-		f        func(port uint16) (bool, tcpip.Error)
 		wantErr  tcpip.Error
+		f        func(port uint16) (bool, tcpip.Error)
+		name     string
 		wantPort uint16
 	}{
 		{

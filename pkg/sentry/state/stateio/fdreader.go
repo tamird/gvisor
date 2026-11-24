@@ -28,21 +28,21 @@ import (
 type FDReader struct {
 	NoRegisterClientFD
 
+	// aio.GoQueue is preferred over aio.LinuxQueue for our use cases since it
+	// can allocate and zero destination pages in parallel.
+	q            *aio.GoQueue
+	inflight     []fdRead
+	cs           []aio.Completion
 	fd           int32
 	maxReadBytes uint32
 	maxRanges    uint32
-	// aio.GoQueue is preferred over aio.LinuxQueue for our use cases since it
-	// can allocate and zero destination pages in parallel.
-	q        *aio.GoQueue
-	inflight []fdRead
-	cs       []aio.Completion
 }
 
 type fdRead struct {
+	dst   LocalClientRanges
 	off   int64
 	done  uint64
 	total uint64
-	dst   LocalClientRanges
 }
 
 // NewFDReader returns a FDReader that reads from the given host

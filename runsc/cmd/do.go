@@ -44,19 +44,18 @@ var errNoDefaultInterface = errors.New("no default interface found")
 // Do implements subcommands.Command for the "do" command. It sets up a simple
 // sandbox and executes the command inside it. See Usage() for more details.
 type Do struct {
+	// cached values for FetchSpec().
+	spec    *specs.Spec
 	root    string
 	cwd     string
 	erofs   string
 	ip      string
-	quiet   bool
-	overlay bool
+	cid     string
 	uidMap  idMapSlice
 	gidMap  idMapSlice
 	volumes volumes
-
-	// cached values for FetchSpec().
-	spec *specs.Spec
-	cid  string
+	quiet   bool
+	overlay bool
 }
 
 // Name implements subcommands.Command.Name.
