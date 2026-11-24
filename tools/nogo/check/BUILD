@@ -74,6 +74,7 @@ go_library(
         "@org_golang_x_tools//go/analysis/passes/unreachable:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/unsafeptr:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/unusedresult:go_default_library",
+        "@org_golang_x_tools//go/analysis/passes/unusedwrite:go_default_library",
         "@org_golang_x_tools//go/gcexportdata:go_default_library",
     ],
 )
