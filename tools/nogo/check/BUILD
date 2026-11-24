@@ -59,6 +59,7 @@ go_library(
         "@org_golang_x_tools//go/analysis/passes/sigchanyzer:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/slog:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/sortslice:go_default_library",
+        "@org_golang_x_tools//go/analysis/passes/sqlrowserr:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/stdmethods:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/stringintconv:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/structtag:go_default_library",
