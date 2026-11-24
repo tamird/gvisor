@@ -97,10 +97,8 @@ if test -d "$dropin_dir"; then dropin_dir_existed=true; fi
 restart_original_service() {
   test "$(systemctl show docker --property=DropInPaths --value)" = '' || return 1
   if timeout 90s sudo systemctl restart docker; then return 0; fi
-  result=$(systemctl show docker --property=Result --value)
   systemctl show docker --property=Result,ExecMainStatus,StartLimitBurst,StartLimitIntervalUSec
   sudo journalctl -u docker.service --no-pager -n 20
-  if test "$result" != start-limit-hit; then return 1; fi
   sudo systemctl reset-failed docker || return 1
   timeout 90s sudo systemctl restart docker
 }
