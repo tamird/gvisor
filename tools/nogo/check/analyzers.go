@@ -218,34 +218,7 @@ func init() {
 	register(allAnalyzers, &plainAnalyzer{modernize.FmtAppendfAnalyzer})
 	register(allAnalyzers, &plainAnalyzer{modernize.SlicesDeleteAnalyzer})
 	for _, a := range modernize.Suite {
-		switch a.Name {
-		case "any",
-			"plusbuild",
-			"errorsastype",
-			"importcomment",
-			"reflecttypefor",
-			"reflecttypeassert",
-			"testingcontext",
-			"omitzero",
-			"forvar",
-			"stringscut",
-			"stringscutprefix",
-			"stringsseq",
-			"newexpr",
-			"minmax",
-			"stringsbuilder",
-			"rangeint",
-			"stditerators",
-			"slicesbackward",
-			"slicessort",
-			"slicesclip",
-			"slicescontains",
-			"mapsloop",
-			"atomictypes",
-			"unsafefuncs",
-			"waitgroupgo":
-			register(allAnalyzers, &plainAnalyzer{a})
-		}
+		register(allAnalyzers, &plainAnalyzer{a})
 	}
 	register(allAnalyzers, checkescape.Analyzer)
 	register(allAnalyzers, &plainAnalyzer{unusedwrite.Analyzer})

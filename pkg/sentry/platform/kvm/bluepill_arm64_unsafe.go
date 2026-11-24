@@ -94,9 +94,7 @@ func getHypercallID(addr uintptr) int {
 func bluepillStopGuest(c *vCPU) {
 	// vcpuSErrBounce is the event of system error for bouncing KVM.
 	vcpuSErrBounce := &kvmVcpuEvents{
-		exception: exception{
-			sErrPending: 1,
-		},
+		sErrPending: 1,
 	}
 
 	if errno := hostsyscall.RawSyscallErrno( // escapes: no.
@@ -114,11 +112,9 @@ func bluepillStopGuest(c *vCPU) {
 func bluepillSigBus(c *vCPU) {
 	// vcpuSErrNMI is the event of system error to trigger sigbus.
 	vcpuSErrNMI := &kvmVcpuEvents{
-		exception: exception{
-			sErrPending: 1,
-			sErrHasEsr:  1,
-			sErrEsr:     _ESR_ELx_SERR_NMI,
-		},
+		sErrPending: 1,
+		sErrHasEsr:  1,
+		sErrEsr:     _ESR_ELx_SERR_NMI,
 	}
 
 	if !c.switchingToUser.Load() {
@@ -148,9 +144,7 @@ func bluepillSigBus(c *vCPU) {
 func bluepillExtDabt(c *vCPU) {
 	// vcpuExtDabt is the event of ext_dabt.
 	vcpuExtDabt := &kvmVcpuEvents{
-		exception: exception{
-			extDabtPending: 1,
-		},
+		extDabtPending: 1,
 	}
 
 	if errno := hostsyscall.RawSyscallErrno( // escapes: no.

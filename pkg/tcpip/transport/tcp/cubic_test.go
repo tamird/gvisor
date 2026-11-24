@@ -32,11 +32,9 @@ func newTestCubic(t *testing.T, clock *faketime.ManualClock, rtt time.Duration) 
 		s.Wait()
 	})
 	snd := &sender{
-		ep: &Endpoint{stack: s},
-		TCPSenderState: TCPSenderState{
-			SndCwnd:  InitialCwnd,
-			Ssthresh: InitialSsthresh,
-		},
+		ep:       &Endpoint{stack: s},
+		SndCwnd:  InitialCwnd,
+		Ssthresh: InitialSsthresh,
 	}
 	snd.ep.mu.Lock()
 	defer snd.ep.mu.Unlock()
@@ -362,12 +360,10 @@ func TestHyStartAckTrainOK(t *testing.T) {
 	}
 	iss := seqnum.Value(0)
 	snd := &sender{
-		ep: ep,
-		TCPSenderState: TCPSenderState{
-			SndUna:   iss + 1,
-			SndNxt:   iss + 1,
-			Ssthresh: InitialSsthresh,
-		},
+		ep:       ep,
+		SndUna:   iss + 1,
+		SndNxt:   iss + 1,
+		Ssthresh: InitialSsthresh,
 	}
 	snd.ep.mu.Lock()
 	uut := newCubicCC(snd)
@@ -447,12 +443,10 @@ func TestHyStartAckTrainTooSpread(t *testing.T) {
 	}
 	iss := seqnum.Value(0)
 	snd := &sender{
-		ep: ep,
-		TCPSenderState: TCPSenderState{
-			SndUna:   iss + 1,
-			SndNxt:   iss + 1,
-			Ssthresh: InitialSsthresh,
-		},
+		ep:       ep,
+		SndUna:   iss + 1,
+		SndNxt:   iss + 1,
+		Ssthresh: InitialSsthresh,
 	}
 	snd.ep.mu.Lock()
 	uut := newCubicCC(snd)
@@ -520,12 +514,10 @@ func TestHyStartDelayOK(t *testing.T) {
 	}
 	iss := seqnum.Value(0)
 	snd := &sender{
-		ep: ep,
-		TCPSenderState: TCPSenderState{
-			SndUna:   iss + 1,
-			SndNxt:   iss + 1,
-			Ssthresh: InitialSsthresh,
-		},
+		ep:       ep,
+		SndUna:   iss + 1,
+		SndNxt:   iss + 1,
+		Ssthresh: InitialSsthresh,
 	}
 	snd.ep.mu.Lock()
 	uut := newCubicCC(snd)
@@ -575,12 +567,10 @@ func TestHyStartDelay_BelowThresh(t *testing.T) {
 	}
 	iss := seqnum.Value(0)
 	snd := &sender{
-		ep: ep,
-		TCPSenderState: TCPSenderState{
-			SndUna:   iss + 1,
-			SndNxt:   iss + 1,
-			Ssthresh: InitialSsthresh,
-		},
+		ep:       ep,
+		SndUna:   iss + 1,
+		SndNxt:   iss + 1,
+		Ssthresh: InitialSsthresh,
 	}
 	snd.ep.mu.Lock()
 	uut := newCubicCC(snd)
@@ -642,12 +632,10 @@ func TestHyStartAckTrainUsesIngressTime(t *testing.T) {
 	}
 	iss := seqnum.Value(0)
 	snd := &sender{
-		ep: ep,
-		TCPSenderState: TCPSenderState{
-			SndUna:   iss + 1,
-			SndNxt:   iss + 1,
-			Ssthresh: InitialSsthresh,
-		},
+		ep:       ep,
+		SndUna:   iss + 1,
+		SndNxt:   iss + 1,
+		Ssthresh: InitialSsthresh,
 	}
 	snd.ep.mu.Lock()
 	uut := newCubicCC(snd)

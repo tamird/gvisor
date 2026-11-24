@@ -364,8 +364,8 @@ func New(opts platform.Options) (*Systrap, error) {
 	memBarrier := <-mbCh
 	opts.StartupTimer.Reached("host membarrier probed")
 	return &Systrap{
-		UseHostGlobalMemoryBarrier: platform.UseHostGlobalMemoryBarrier{MemBarrier: memBarrier},
-		memoryFile:                 mf,
+		MemBarrier: memBarrier,
+		memoryFile: mf,
 	}, nil
 }
 

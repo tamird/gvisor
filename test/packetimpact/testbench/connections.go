@@ -683,11 +683,9 @@ func (n *DUTTestNet) NewTCPIPv4(t *testing.T, outgoingTCP, incomingTCP TCP) TCPI
 	}
 
 	return TCPIPv4{
-		Connection: Connection{
-			layerStates: []layerState{etherState, ipv4State, tcpState},
-			injector:    injector,
-			sniffer:     sniffer,
-		},
+		layerStates: []layerState{etherState, ipv4State, tcpState},
+		injector:    injector,
+		sniffer:     sniffer,
 	}
 }
 
@@ -892,11 +890,9 @@ func (n *DUTTestNet) NewIPv4Conn(t *testing.T, outgoingIPv4, incomingIPv4 IPv4) 
 	}
 
 	return IPv4Conn{
-		Connection: Connection{
-			layerStates: []layerState{etherState, ipv4State},
-			injector:    injector,
-			sniffer:     sniffer,
-		},
+		layerStates: []layerState{etherState, ipv4State},
+		injector:    injector,
+		sniffer:     sniffer,
 	}
 }
 
@@ -936,11 +932,9 @@ func (n *DUTTestNet) NewIPv6Conn(t *testing.T, outgoingIPv6, incomingIPv6 IPv6) 
 	}
 
 	return IPv6Conn{
-		Connection: Connection{
-			layerStates: []layerState{etherState, ipv6State},
-			injector:    injector,
-			sniffer:     sniffer,
-		},
+		layerStates: []layerState{etherState, ipv6State},
+		injector:    injector,
+		sniffer:     sniffer,
 	}
 }
 
@@ -983,11 +977,9 @@ func (n *DUTTestNet) NewUDPIPv4(t *testing.T, outgoingUDP, incomingUDP UDP) UDPI
 	}
 
 	return UDPIPv4{
-		Connection: Connection{
-			layerStates: []layerState{etherState, ipv4State, udpState},
-			injector:    injector,
-			sniffer:     sniffer,
-		},
+		layerStates: []layerState{etherState, ipv4State, udpState},
+		injector:    injector,
+		sniffer:     sniffer,
 	}
 }
 
@@ -1109,11 +1101,9 @@ func (n *DUTTestNet) NewUDPIPv6(t *testing.T, outgoingUDP, incomingUDP UDP) UDPI
 		t.Fatalf("can't make sniffer: %s", err)
 	}
 	return UDPIPv6{
-		Connection: Connection{
-			layerStates: []layerState{etherState, ipv6State, udpState},
-			injector:    injector,
-			sniffer:     sniffer,
-		},
+		layerStates: []layerState{etherState, ipv6State, udpState},
+		injector:    injector,
+		sniffer:     sniffer,
 	}
 }
 
@@ -1237,11 +1227,9 @@ func (n *DUTTestNet) NewTCPIPv6(t *testing.T, outgoingTCP, incomingTCP TCP) TCPI
 	}
 
 	return TCPIPv6{
-		Connection: Connection{
-			layerStates: []layerState{etherState, ipv6State, tcpState},
-			injector:    injector,
-			sniffer:     sniffer,
-		},
+		layerStates: []layerState{etherState, ipv6State, tcpState},
+		injector:    injector,
+		sniffer:     sniffer,
 	}
 }
 

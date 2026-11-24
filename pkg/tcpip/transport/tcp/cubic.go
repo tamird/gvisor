@@ -76,24 +76,22 @@ type cubicState struct {
 func newCubicCC(s *sender) *cubicState {
 	now := s.ep.stack.Clock().NowMonotonic()
 	return &cubicState{
-		TCPCubicState: TCPCubicState{
-			T:    now,
-			Beta: 0.7,
-			C:    0.4,
-			// By this point, the sender has initialized it's initial sequence
-			// number.
-			EndSeq:  s.SndNxt,
-			LastRTT: effectivelyInfinity,
-			CurrRTT: effectivelyInfinity,
-			// LastAck/RoundStart are seeded here from processing time, but the
-			// HyStart ACK-train comparator that reads them is gated on
-			// LastRTT < effectivelyInfinity, which only becomes true after the
-			// first beginHyStartRound re-seeds both from an ACK's ingress time.
-			// So this initial processing-time seed is never compared.
-			LastAck:    now,
-			RoundStart: now,
-		},
-		s: s,
+		T:    now,
+		Beta: 0.7,
+		C:    0.4,
+		// By this point, the sender has initialized it's initial sequence
+		// number.
+		EndSeq:  s.SndNxt,
+		LastRTT: effectivelyInfinity,
+		CurrRTT: effectivelyInfinity,
+		// LastAck/RoundStart are seeded here from processing time, but the
+		// HyStart ACK-train comparator that reads them is gated on
+		// LastRTT < effectivelyInfinity, which only becomes true after the
+		// first beginHyStartRound re-seeds both from an ACK's ingress time.
+		// So this initial processing-time seed is never compared.
+		LastAck:    now,
+		RoundStart: now,
+		s:          s,
 	}
 }
 

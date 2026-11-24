@@ -352,9 +352,7 @@ func TestCgroupV1(t *testing.T) {
 	}
 	attrs[3] = updatedMemory
 	if err := d.Update(ctx, container.UpdateConfig{
-		Resources: container.Resources{
-			Memory: updatedMemory.value,
-		},
+		Memory: updatedMemory.value,
 	}); err != nil {
 		t.Fatalf("failed to update container: %v", err)
 	}
@@ -562,9 +560,7 @@ func TestCgroupV2(t *testing.T) {
 	}
 	attrs[len(attrs)-1] = updatedPidsLimit
 	if err := d.Update(ctx, container.UpdateConfig{
-		Resources: container.Resources{
-			PidsLimit: &updatedPidsLimit.value,
-		},
+		PidsLimit: &updatedPidsLimit.value,
 	}); err != nil {
 		t.Fatalf("failed to update container: %v", err)
 	}

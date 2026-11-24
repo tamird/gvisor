@@ -272,7 +272,7 @@ func NewWithOptions(opts platform.Options) (*PTrace, error) {
 	memBarrier := <-mbCh
 	opts.StartupTimer.Reached("host membarrier probed")
 	return &PTrace{
-		UseHostGlobalMemoryBarrier: platform.UseHostGlobalMemoryBarrier{MemBarrier: memBarrier},
+		MemBarrier: memBarrier,
 	}, nil
 }
 

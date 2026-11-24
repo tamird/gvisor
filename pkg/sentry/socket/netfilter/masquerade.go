@@ -145,10 +145,8 @@ func (mm *masqueradeTargetMaker) unmarshal(buf []byte, filter stack.IPHeaderFilt
 	}
 
 	target := &masqueradeTarget{
-		MasqueradeTarget: stack.MasqueradeTarget{
-			NetworkProtocol: netProto,
-		},
-		raw: slices.Concat[[]byte](buf),
+		NetworkProtocol: netProto,
+		raw:             slices.Concat[[]byte](buf),
 	}
 	if flags&linux.NF_NAT_RANGE_PROTO_SPECIFIED != 0 {
 		// Linux does not check the order, but iptables never builds an

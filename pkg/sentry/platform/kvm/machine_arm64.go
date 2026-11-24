@@ -128,10 +128,8 @@ func archPhysicalRegions(physicalRegions []physicalRegion) []physicalRegion {
 
 	// Add an unreachable region.
 	rdRegions = append(rdRegions, virtualRegion{
-		region: region{
-			virtual: 0xffffffffffffffff,
-			length:  0,
-		},
+		virtual: 0xffffffffffffffff,
+		length:  0,
 	})
 
 	var regions []physicalRegion
@@ -140,10 +138,8 @@ func archPhysicalRegions(physicalRegions []physicalRegion) []physicalRegion {
 			return
 		}
 		regions = append(regions, physicalRegion{
-			region: region{
-				virtual: virtual,
-				length:  length,
-			},
+			virtual:  virtual,
+			length:   length,
 			physical: r.physical + (virtual - r.virtual),
 			mmio:     mmio,
 			readOnly: readOnly,

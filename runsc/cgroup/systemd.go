@@ -413,9 +413,7 @@ func CreateMockSystemdCgroup() Cgroup {
 		Name:        "test",
 		ScopePrefix: "runsc",
 		Parent:      "system.slice",
-		cgroupV2: cgroupV2{
-			Mountpoint: "/sys/fs/cgroup",
-			Path:       "/a/random/path",
-		},
+		Mountpoint:  "/sys/fs/cgroup",
+		Path:        "/a/random/path",
 	}
 }

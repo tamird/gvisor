@@ -92,10 +92,8 @@ func marshalEntryMatch(name string, data []byte) []byte {
 	// We have to pad this struct size to a multiple of 8 bytes.
 	size := bits.AlignUp(linux.SizeOfXTEntryMatch+len(data), 8)
 	matcher := linux.KernelXTEntryMatch{
-		XTEntryMatch: linux.XTEntryMatch{
-			MatchSize: uint16(size),
-		},
-		Data: data,
+		MatchSize: uint16(size),
+		Data:      data,
 	}
 	copy(matcher.Name[:], name)
 

@@ -763,11 +763,9 @@ var _ io.Writer = (*Writer)(nil)
 // O(chunkSize * [1+GOMAXPROCS]).
 func NewWriter(out io.Writer, key []byte, chunkSize uint32, level int) (*Writer, error) {
 	w := &Writer{
-		pool: pool{
-			chunkSize: chunkSize,
-			buf:       bufPool.Get().(*bytes.Buffer),
-		},
-		out: out,
+		chunkSize: chunkSize,
+		buf:       bufPool.Get().(*bytes.Buffer),
+		out:       out,
 	}
 	// init registers a finalizer. Order subsequent initialization before
 	// finalizer cleanup, including when a header write fails.

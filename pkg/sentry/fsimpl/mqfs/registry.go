@@ -60,8 +60,8 @@ func NewRegistryImpl(ctx context.Context, vfsObj *vfs.VirtualFilesystem, creds *
 	}
 
 	fs := &filesystem{
-		devMinor:   devMinor,
-		Filesystem: kernfs.Filesystem{MaxCachedDentries: maxCachedDentries},
+		devMinor:          devMinor,
+		MaxCachedDentries: maxCachedDentries,
 	}
 	fs.VFSFilesystem().Init(vfsObj, &FilesystemType{}, fs)
 	vfsfs := fs.VFSFilesystem()

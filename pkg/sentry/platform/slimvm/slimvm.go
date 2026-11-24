@@ -79,8 +79,8 @@ func New(opts platform.Options) (*SlimVM, error) {
 	opts.StartupTimer.Reached("host membarrier probed")
 
 	return &SlimVM{
-		UseHostProcessMemoryBarrier: platform.UseHostProcessMemoryBarrier{MemBarrier: memBarrier},
-		machine:                     machine,
+		MemBarrier: memBarrier,
+		machine:    machine,
 	}, nil
 }
 

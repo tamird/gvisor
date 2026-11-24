@@ -131,8 +131,8 @@ func NewFilePayload(fdMap map[int]*os.File, execFile *os.File) FilePayload {
 	}
 
 	return FilePayload{
-		FilePayload: urpc.FilePayload{Files: files},
-		GuestFDs:    guestFDs,
+		Files:    files,
+		GuestFDs: guestFDs,
 	}
 }
 

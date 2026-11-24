@@ -76,15 +76,11 @@ var postProcessors []postProcessor
 
 func profileDSTemplate(cluster *testcluster.TestCluster) appsv1.DaemonSet {
 	return appsv1.DaemonSet{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "apps/v1",
-			Kind:       "DaemonSet",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: setupPodName,
-			Labels: map[string]string{
-				k8sApp: setupPodName,
-			},
+		APIVersion: "apps/v1",
+		Kind:       "DaemonSet",
+		Name:       setupPodName,
+		Labels: map[string]string{
+			k8sApp: setupPodName,
 		},
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
@@ -114,10 +110,8 @@ func profileDSTemplate(cluster *testcluster.TestCluster) appsv1.DaemonSet {
 					Volumes: []v13.Volume{
 						{
 							Name: "host",
-							VolumeSource: v13.VolumeSource{
-								HostPath: &v13.HostPathVolumeSource{
-									Path: "/",
-								},
+							HostPath: &v13.HostPathVolumeSource{
+								Path: "/",
 							},
 						},
 					},

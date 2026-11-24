@@ -272,10 +272,9 @@ func TestMasqueradeTargetMakerMarshalWithoutRaw(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			maker := masqueradeTargetMaker{NetworkProtocol: test.netProto}
-			target := &masqueradeTarget{MasqueradeTarget: stack.MasqueradeTarget{
+			target := &masqueradeTarget{
 				NetworkProtocol: test.netProto,
-				Ports:           test.ports,
-			}}
+				Ports:           test.ports}
 			if got, want := maker.marshal(target), marshal.Marshal(test.want); !bytes.Equal(got, want) {
 				t.Errorf("marshal() = %v, want %v", got, want)
 			}

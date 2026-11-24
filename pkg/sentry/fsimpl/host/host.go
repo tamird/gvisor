@@ -814,7 +814,7 @@ func (i *inode) OpenTTY(ctx context.Context, mnt *vfs.Mount, d *vfs.Dentry, opts
 		return nil, linuxerr.EIO
 	}
 	fd := &TTYFileDescription{
-		fileDescription: fileDescription{inode: i},
+		inode: i,
 	}
 	fd.LockFD.Init(&i.locks)
 	vfsfd := &fd.vfsfd

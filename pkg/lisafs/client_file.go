@@ -509,12 +509,10 @@ func (f *ClientFD) Connect(ctx context.Context, sockType linux.SockType, euid UI
 	)
 	if credsAvailable && f.client.IsSupported(ConnectWithGroups) {
 		reqWithGroups := ConnectWithGroupsReq{
-			ConnectWithCredsReq: ConnectWithCredsReq{
-				ConnectReq: req,
-				UID:        euid,
-				GID:        egid,
-			},
-			Groups: groups,
+			ConnectReq: req,
+			UID:        euid,
+			GID:        egid,
+			Groups:     groups,
 		}
 		ctx.UninterruptibleSleepStart()
 		err = f.client.SndRcvMessage(ConnectWithGroups, uint32(reqWithGroups.SizeBytes()), reqWithGroups.MarshalBytes, resp.CheckedUnmarshal, sockFD[:], reqWithGroups.String, resp.String)
@@ -564,13 +562,11 @@ func (f *ClientFD) RenameAt(ctx context.Context, oldName string, newDirFD FDID, 
 		}
 
 		req := RenameAt2Req{
-			RenameAtReq: RenameAtReq{
-				OldDir:  f.fd,
-				OldName: SizedString(oldName),
-				NewDir:  newDirFD,
-				NewName: SizedString(newName),
-			},
-			Flags: primitive.Uint32(flags),
+			OldDir:  f.fd,
+			OldName: SizedString(oldName),
+			NewDir:  newDirFD,
+			NewName: SizedString(newName),
+			Flags:   primitive.Uint32(flags),
 		}
 		var resp RenameAtResp
 		ctx.UninterruptibleSleepStart()

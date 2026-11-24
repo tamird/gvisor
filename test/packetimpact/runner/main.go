@@ -245,15 +245,11 @@ func newDUT(ctx context.Context, id int, dutBinary string, dutArgs dutArgList) (
 		dutSideIfaceName := dutSide.ifaceName(typ, id)
 		tbSideIfaceName := tbSide.ifaceName(typ, id)
 		dutVeth := netlink.Veth{
-			LinkAttrs: netlink.LinkAttrs{
-				Name: dutSideIfaceName,
-			},
+			Name:     dutSideIfaceName,
 			PeerName: tbSideIfaceName,
 		}
 		tbVeth := netlink.Veth{
-			LinkAttrs: netlink.LinkAttrs{
-				Name: tbSideIfaceName,
-			},
+			Name:     tbSideIfaceName,
 			PeerName: dutSideIfaceName,
 		}
 		if err := netlink.LinkAdd(&dutVeth); err != nil {
@@ -300,9 +296,7 @@ func newDUT(ctx context.Context, id int, dutBinary string, dutArgs dutArgList) (
 	for _, ns := range []netNS{currentNetNS, dutNetNS} {
 		if err := ns.Do(func() error {
 			return netlink.LinkSetUp(&netlink.Device{
-				LinkAttrs: netlink.LinkAttrs{
-					Name: "lo",
-				},
+				Name: "lo",
 			})
 		}); err != nil {
 			return nil, fmt.Errorf("failed to bring loopback up: %w", err)

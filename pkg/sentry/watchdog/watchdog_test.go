@@ -24,10 +24,8 @@ import (
 
 func TestStuckWatchdogUsesTaskAction(t *testing.T) {
 	w := &Watchdog{
-		Opts: Opts{
-			TaskTimeoutAction:    LogWarning,
-			StartupTimeoutAction: Panic,
-		},
+		TaskTimeoutAction:    LogWarning,
+		StartupTimeoutAction: Panic,
 		// Avoid an unrelated stack dump on the logging path.
 		lastStackDump: time.Now(),
 	}

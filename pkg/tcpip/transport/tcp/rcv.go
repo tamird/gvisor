@@ -98,12 +98,10 @@ type receiver struct {
 func newReceiver(ep *Endpoint, irs seqnum.Value, rcvWnd seqnum.Size, rcvWndScale uint8) *receiver {
 	now := ep.stack.Clock().NowMonotonic()
 	return &receiver{
-		ep: ep,
-		TCPReceiverState: TCPReceiverState{
-			RcvNxt:      irs + 1,
-			RcvAcc:      irs.Add(rcvWnd + 1),
-			RcvWndScale: rcvWndScale,
-		},
+		ep:               ep,
+		RcvNxt:           irs + 1,
+		RcvAcc:           irs.Add(rcvWnd + 1),
+		RcvWndScale:      rcvWndScale,
 		rcvWnd:           rcvWnd,
 		rcvWUP:           irs + 1,
 		lastRcvdAckTime:  now,

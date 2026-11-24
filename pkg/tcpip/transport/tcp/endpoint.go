@@ -872,12 +872,10 @@ type keepalive struct {
 
 func newEndpoint(s *stack.Stack, protocol *protocol, netProto tcpip.NetworkProtocolNumber, waiterQueue *waiter.Queue) *Endpoint {
 	e := &Endpoint{
-		stack:    s,
-		protocol: protocol,
-		TransportEndpointInfo: stack.TransportEndpointInfo{
-			NetProto:   netProto,
-			TransProto: header.TCPProtocolNumber,
-		},
+		stack:      s,
+		protocol:   protocol,
+		NetProto:   netProto,
+		TransProto: header.TCPProtocolNumber,
 		sndQueueInfo: sndQueueInfo{
 			TCPSndBufState: TCPSndBufState{
 				SndMTU: math.MaxInt32,

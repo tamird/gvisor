@@ -128,8 +128,8 @@ func New(deviceFile *fd.FD, config Config) (*KVM, error) {
 	config.StartupTimer.Reached("host membarrier probed")
 
 	return &KVM{
-		UseHostProcessMemoryBarrier: platform.UseHostProcessMemoryBarrier{MemBarrier: memBarrier},
-		machine:                     machine,
+		MemBarrier: memBarrier,
+		machine:    machine,
 	}, nil
 }
 

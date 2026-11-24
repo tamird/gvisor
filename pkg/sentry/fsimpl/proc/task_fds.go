@@ -116,11 +116,9 @@ var _ kernfs.Inode = (*fdDirInode)(nil)
 
 func (fs *filesystem) newFDDirInode(ctx context.Context, task *kernel.Task) kernfs.Inode {
 	inode := &fdDirInode{
-		fdDir: fdDir{
-			fs:             fs,
-			task:           task,
-			produceSymlink: true,
-		},
+		fs:             fs,
+		task:           task,
+		produceSymlink: true,
 	}
 	inode.InodeAttrs.Init(ctx, taskOwnerCreds(task), linux.UNNAMED_MAJOR, fs.devMinor, fs.NextIno(), linux.ModeDirectory|0500)
 	inode.InitRefs()
@@ -274,10 +272,8 @@ var _ kernfs.Inode = (*fdInfoDirInode)(nil)
 
 func (fs *filesystem) newFDInfoDirInode(ctx context.Context, task *kernel.Task) kernfs.Inode {
 	inode := &fdInfoDirInode{
-		fdDir: fdDir{
-			fs:   fs,
-			task: task,
-		},
+		fs:   fs,
+		task: task,
 	}
 	inode.InodeAttrs.Init(ctx, taskOwnerCreds(task), linux.UNNAMED_MAJOR, fs.devMinor, fs.NextIno(), linux.ModeDirectory|0555)
 	inode.InitRefs()

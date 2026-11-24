@@ -451,8 +451,8 @@ func (s *Sandbox) CreateSubcontainer(conf *config.Config, cid string, tty *os.Fi
 	}
 
 	args := sentryapi.CreateArgs{
-		CID:         cid,
-		FilePayload: urpc.FilePayload{Files: files},
+		CID:   cid,
+		Files: files,
 	}
 	if err := s.call(sentryapi.ContMgrCreateSubcontainer, &args, nil); err != nil {
 		return fmt.Errorf("creating sub-container %q: %w", cid, err)
@@ -902,9 +902,7 @@ func (s *Sandbox) CreateTraceSession(config *seccheck.SessionConfig, force bool)
 	arg := sentryapi.CreateTraceSessionArgs{
 		Config: *config,
 		Force:  force,
-		FilePayload: urpc.FilePayload{
-			Files: sinkFiles,
-		},
+		Files:  sinkFiles,
 	}
 	if err := s.call(sentryapi.ContMgrCreateTraceSession, &arg, nil); err != nil {
 		return fmt.Errorf("creating trace session: %w", err)
@@ -3019,8 +3017,8 @@ func (s *Sandbox) HeapProfile(f *os.File, delay time.Duration) error {
 	}
 	log.Debugf("Heap profile %q", s.ID)
 	opts := controlapi.HeapProfileOpts{
-		FilePayload: urpc.FilePayload{Files: []*os.File{f}},
-		Delay:       delay,
+		Files: []*os.File{f},
+		Delay: delay,
 	}
 	return s.call(sentryapi.ProfileHeap, &opts, nil)
 }
@@ -3029,7 +3027,7 @@ func (s *Sandbox) HeapProfile(f *os.File, delay time.Duration) error {
 func (s *Sandbox) GoroutineProfile(f *os.File) error {
 	log.Debugf("Goroutine profile %q", s.ID)
 	opts := controlapi.GoroutineProfileOpts{
-		FilePayload: urpc.FilePayload{Files: []*os.File{f}},
+		Files: []*os.File{f},
 	}
 	return s.call(sentryapi.ProfileGoroutine, &opts, nil)
 }
@@ -3038,8 +3036,8 @@ func (s *Sandbox) GoroutineProfile(f *os.File) error {
 func (s *Sandbox) CPUProfile(f *os.File, duration time.Duration) error {
 	log.Debugf("CPU profile %q", s.ID)
 	opts := controlapi.CPUProfileOpts{
-		FilePayload: urpc.FilePayload{Files: []*os.File{f}},
-		Duration:    duration,
+		Files:    []*os.File{f},
+		Duration: duration,
 	}
 	return s.call(sentryapi.ProfileCPU, &opts, nil)
 }
@@ -3048,8 +3046,8 @@ func (s *Sandbox) CPUProfile(f *os.File, duration time.Duration) error {
 func (s *Sandbox) BlockProfile(f *os.File, duration time.Duration) error {
 	log.Debugf("Block profile %q", s.ID)
 	opts := controlapi.BlockProfileOpts{
-		FilePayload: urpc.FilePayload{Files: []*os.File{f}},
-		Duration:    duration,
+		Files:    []*os.File{f},
+		Duration: duration,
 	}
 	return s.call(sentryapi.ProfileBlock, &opts, nil)
 }
@@ -3058,8 +3056,8 @@ func (s *Sandbox) BlockProfile(f *os.File, duration time.Duration) error {
 func (s *Sandbox) MutexProfile(f *os.File, duration time.Duration) error {
 	log.Debugf("Mutex profile %q", s.ID)
 	opts := controlapi.MutexProfileOpts{
-		FilePayload: urpc.FilePayload{Files: []*os.File{f}},
-		Duration:    duration,
+		Files:    []*os.File{f},
+		Duration: duration,
 	}
 	return s.call(sentryapi.ProfileMutex, &opts, nil)
 }
@@ -3068,8 +3066,8 @@ func (s *Sandbox) MutexProfile(f *os.File, duration time.Duration) error {
 func (s *Sandbox) Trace(f *os.File, duration time.Duration) error {
 	log.Debugf("Trace %q", s.ID)
 	opts := controlapi.TraceProfileOpts{
-		FilePayload: urpc.FilePayload{Files: []*os.File{f}},
-		Duration:    duration,
+		Files:    []*os.File{f},
+		Duration: duration,
 	}
 	return s.call(sentryapi.ProfileTrace, &opts, nil)
 }
@@ -3434,7 +3432,7 @@ func (s *Sandbox) Mount(cid, fstype, src, dest string) error {
 		Source:      src,
 		Destination: dest,
 		FsType:      fstype,
-		FilePayload: urpc.FilePayload{Files: files},
+		Files:       files,
 	}
 	return s.call(sentryapi.ContMgrMount, &args, nil)
 }
@@ -3457,7 +3455,7 @@ func (s *Sandbox) TarRootfsUpperLayer(containerID string, outFD *os.File) error 
 	log.Debugf("TarRootfsUpperLayer, sandbox: %q, container: %q", s.ID, containerID)
 	opts := controlapi.TarRootfsUpperLayerOpts{
 		ContainerID: containerID,
-		FilePayload: urpc.FilePayload{Files: []*os.File{outFD}},
+		Files:       []*os.File{outFD},
 	}
 	if err := s.call(sentryapi.FsTarRootfsUpperLayer, &opts, nil); err != nil {
 		return fmt.Errorf("serializing rootfs upper layer to tar: %w", err)
@@ -3473,7 +3471,7 @@ func (s *Sandbox) ReadFile(containerID, path string, offset, size int64, outFD *
 		Path:        path,
 		Offset:      offset,
 		Size:        size,
-		FilePayload: urpc.FilePayload{Files: []*os.File{outFD}},
+		Files:       []*os.File{outFD},
 	}
 	if err := s.call(sentryapi.FsRead, &opts, nil); err != nil {
 		return fmt.Errorf("reading file %q: %w", path, err)

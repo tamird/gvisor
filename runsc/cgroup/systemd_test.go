@@ -219,8 +219,8 @@ func TestInstall(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			cg := cgroupSystemd{Name: "123", Parent: "parent.slice"}
-			cg.Controllers = mandatoryControllers
+			cg := cgroupSystemd{Name: "123", Parent: "parent.slice",
+				Controllers: mandatoryControllers}
 			err := cg.Install(tc.res)
 			if !errors.Is(err, tc.err) {
 				t.Fatalf("Wrong error, got: %s, want: %s", err, tc.err)
@@ -266,11 +266,9 @@ func newCompatDirTestCgroup(t *testing.T) (*cgroupSystemd, string) {
 		Name:        "abc",
 		ScopePrefix: "cri-containerd",
 		Parent:      "parent.slice",
-		cgroupV2: cgroupV2{
-			Mountpoint: mountpoint,
-			// Path is set by newCgroupV2Systemd to expanded slice + unitName.
-			Path: filepath.Join(expandSlice("parent.slice"), "cri-containerd-abc.scope"),
-		},
+		Mountpoint:  mountpoint,
+		// Path is set by newCgroupV2Systemd to expanded slice + unitName.
+		Path: filepath.Join(expandSlice("parent.slice"), "cri-containerd-abc.scope"),
 	}
 	return cg, cg.MakePath("")
 }

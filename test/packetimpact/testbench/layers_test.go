@@ -30,8 +30,8 @@ func TestLayerMatch(t *testing.T) {
 	noPayload := &Payload{}
 	emptyPayload := &Payload{Bytes: []byte{}}
 	fullPayload := &Payload{Bytes: []byte{1, 2, 3}}
-	emptyTCP := &TCP{SrcPort: Uint16(1234), LayerBase: LayerBase{nextLayer: emptyPayload}}
-	fullTCP := &TCP{SrcPort: Uint16(1234), LayerBase: LayerBase{nextLayer: fullPayload}}
+	emptyTCP := &TCP{SrcPort: Uint16(1234), nextLayer: emptyPayload}
+	fullTCP := &TCP{SrcPort: Uint16(1234), nextLayer: fullPayload}
 	for _, tt := range []struct {
 		a, b Layer
 		want bool

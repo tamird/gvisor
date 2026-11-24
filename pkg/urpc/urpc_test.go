@@ -149,7 +149,7 @@ func TestSendFile(t *testing.T) {
 	if err := c.Call("test.FailNoFile", &testArg{}, &r); err == nil {
 		t.Errorf("expected non-nil err, got nil")
 	}
-	if err := c.Call("test.FailNoFile", &testArg{FilePayload: FilePayload{Files: []*os.File{os.Stdin, os.Stdout, os.Stdin}}}, &r); err != nil {
+	if err := c.Call("test.FailNoFile", &testArg{Files: []*os.File{os.Stdin, os.Stdout, os.Stdin}}, &r); err != nil {
 		t.Errorf("expected nil err, got %v", err)
 	}
 }

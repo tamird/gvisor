@@ -505,10 +505,8 @@ func (n *nic) WritePacket(r *Route, pkt *PacketBuffer) tcpip.Error {
 // WritePacketToRemote implements NetworkInterface.
 func (n *nic) WritePacketToRemote(remoteLinkAddr tcpip.LinkAddress, pkt *PacketBuffer) tcpip.Error {
 	pkt.EgressRoute = RouteInfo{
-		routeInfo: routeInfo{
-			NetProto:         pkt.NetworkProtocolNumber,
-			LocalLinkAddress: n.LinkAddress(),
-		},
+		NetProto:          pkt.NetworkProtocolNumber,
+		LocalLinkAddress:  n.LinkAddress(),
 		RemoteLinkAddress: remoteLinkAddr,
 	}
 	return n.writePacket(pkt)

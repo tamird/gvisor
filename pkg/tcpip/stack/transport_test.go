@@ -68,7 +68,7 @@ func (f *fakeTransportEndpoint) SocketOptions() *tcpip.SocketOptions {
 }
 
 func newFakeTransportEndpoint(proto *fakeTransportProtocol, netProto tcpip.NetworkProtocolNumber, s *stack.Stack) tcpip.Endpoint {
-	ep := &fakeTransportEndpoint{TransportEndpointInfo: stack.TransportEndpointInfo{NetProto: netProto}, proto: proto}
+	ep := &fakeTransportEndpoint{NetProto: netProto, proto: proto}
 	ep.ops.InitHandler(ep, s, tcpip.GetStackSendBufferLimits, tcpip.GetStackReceiveBufferLimits)
 	return ep
 }
@@ -227,10 +227,8 @@ func (f *fakeTransportEndpoint) HandlePacket(id stack.TransportEndpointID, pkt *
 	}
 
 	ep := &fakeTransportEndpoint{
-		TransportEndpointInfo: stack.TransportEndpointInfo{
-			ID:       f.ID,
-			NetProto: f.NetProto,
-		},
+		ID:       f.ID,
+		NetProto: f.NetProto,
 		proto:    f.proto,
 		peerAddr: route.RemoteAddress(),
 		route:    route,
