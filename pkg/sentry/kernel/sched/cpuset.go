@@ -14,7 +14,10 @@
 
 package sched
 
-import "math/bits"
+import (
+	"math/bits"
+	"slices"
+)
 
 const (
 	bitsPerByte  = 8
@@ -73,7 +76,7 @@ func (c CPUSet) NumCPUs() uint {
 
 // Copy returns a copy of the CPUSet.
 func (c CPUSet) Copy() CPUSet {
-	return append(CPUSet(nil), c...)
+	return slices.Concat(c)
 }
 
 // Set sets the bit corresponding to cpu.

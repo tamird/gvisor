@@ -463,7 +463,7 @@ func (s *Stack) RouteTable() []inet.Route {
 		return nil
 	}
 	// Prepend empty route.
-	return append([]inet.Route(nil), routes...)
+	return slices.Concat[[]inet.Route](routes)
 }
 
 // NewRoute implements inet.Stack.NewRoute.

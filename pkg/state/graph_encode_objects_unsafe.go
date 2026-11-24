@@ -319,7 +319,7 @@ func (es *graphEncodeState) absorb(parent, obj int32) {
 	if o.isArray && o.ti == p.ti && off%esz == 0 {
 		// The absorbed array's queued and encoded elements are elements of
 		// parent; its queued elements are still encoded as its own.
-		rs := append([]elemRange(nil), es.coveredList(o)...)
+		rs := slices.Clone(es.coveredList(o))
 		es.markCovered(parent, rs, off/esz)
 		return
 	}
@@ -329,7 +329,7 @@ func (es *graphEncodeState) absorb(parent, obj int32) {
 		if tElem == rElem && off/rElem.size+tCount <= rLen {
 			mul := o.ti.size / esz
 			base := off / esz
-			rs := append([]elemRange(nil), es.coveredList(o)...)
+			rs := slices.Clone(es.coveredList(o))
 			for _, r := range rs {
 				es.cover(parent, base+r.start*mul, base+r.end*mul)
 			}

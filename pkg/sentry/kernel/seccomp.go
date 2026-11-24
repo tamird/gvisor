@@ -214,7 +214,7 @@ type taskSeccomp struct {
 // check cacheAuditNumber before using entries for the current architecture.
 func (ts *taskSeccomp) copy() *taskSeccomp {
 	return &taskSeccomp{
-		filters:          append(([]SyscallFilter)(nil), ts.filters...),
+		filters:          slices.Concat[[]SyscallFilter](ts.filters),
 		cacheAuditNumber: ts.cacheAuditNumber,
 		cache:            ts.cache,
 	}

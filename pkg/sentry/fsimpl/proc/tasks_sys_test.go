@@ -392,7 +392,7 @@ func TestParseInt32Vec(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			originalBuf := append([]int32(nil), test.buf...)
+			originalBuf := slices.Concat[[]int32](test.buf)
 			n, err := ParseInt32Vec(ctx, usermem.BytesIOSequence(test.src), test.buf)
 			if !slices.Equal(test.buf, test.expectedBuf) || n != test.expectedBytes {
 				t.Errorf("ParseInt32Vec(ctx, %v, %v) returns %v, %v, result buffer is %v; expected: %v, %v", test.src, originalBuf, n, err, test.buf, test.expectedBuf, test.expectedBytes)

@@ -15,6 +15,7 @@
 package transport
 
 import (
+	"slices"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/context"
@@ -29,7 +30,7 @@ type mockRights struct {
 
 // Clone implements RightsControlMessage.Clone.
 func (m *mockRights) Clone() RightsControlMessage {
-	nrefs := append([]*int(nil), m.refs...)
+	nrefs := slices.Concat[[]*int](m.refs)
 	for _, r := range nrefs {
 		*r++
 	}
@@ -38,7 +39,7 @@ func (m *mockRights) Clone() RightsControlMessage {
 
 // TransferRights implements RightsControlMessage.TransferRights.
 func (m *mockRights) TransferRights() RightsControlMessage {
-	nrefs := append([]*int(nil), m.refs...)
+	nrefs := slices.Concat[[]*int](m.refs)
 	m.refs = nil
 	return &mockRights{refs: nrefs}
 }

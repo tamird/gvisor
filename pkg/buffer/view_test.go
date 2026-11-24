@@ -16,6 +16,7 @@ package buffer
 
 import (
 	"bytes"
+	"slices"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -111,7 +112,7 @@ func TestWrite(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.view.Grow(tc.initSize)
 			defer tc.view.Release()
-			orig := append([]byte(nil), tc.view.AsSlice()...)
+			orig := slices.Concat[[]byte](tc.view.AsSlice())
 			toWrite := make([]byte, tc.writeSize)
 			rand.Read(toWrite)
 

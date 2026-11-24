@@ -19,6 +19,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -349,7 +350,7 @@ func expectedFilesystem(opts ExpectedOpts) Filesystem {
 }
 
 func expectedFDs(opts ExpectedOpts) FDTable {
-	classes := append([]string(nil), baseFDClasses...)
+	classes := slices.Concat[[]string](baseFDClasses)
 	classes = append(classes, opts.Ref.StdioFDs...)
 	if opts.RequiresCapSysPtrace {
 		classes = append(classes,
@@ -547,7 +548,7 @@ func taggedFields(t reflect.Type, prefix string, index []int) (info []string, su
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
 		name := prefix + f.Name
-		idx := append(append([]int(nil), index...), i)
+		idx := append(slices.Concat[[]int](index), i)
 		switch f.Tag.Get(postureTag) {
 		case tagInfo:
 			info = append(info, name)

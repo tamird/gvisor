@@ -22,6 +22,7 @@ import (
 	"io"
 	"math/rand"
 	"runtime"
+	"slices"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/compressio"
@@ -143,7 +144,7 @@ func TestStatefile(t *testing.T) {
 
 							// Change the data and verify that it fails.
 							if key != nil {
-								b := append([]byte(nil), bufEncoded.Bytes()...)
+								b := slices.Concat[[]byte](bufEncoded.Bytes())
 								i := rand.Intn(len(b))
 								b[i]++
 								bufDecoded.Reset()
@@ -159,7 +160,7 @@ func TestStatefile(t *testing.T) {
 							// Change the key and verify that it fails.
 							newKey := integrityKey
 							if len(key) > 0 {
-								newKey = append([]byte{}, key...)
+								newKey = bytes.Clone(key)
 								newKey[rand.Intn(len(newKey))]++
 							}
 							bufDecoded.Reset()
@@ -185,7 +186,7 @@ func TestMetadataKeyVerification(t *testing.T) {
 	if err != nil {
 		t.Fatalf("randomKey: %v", err)
 	}
-	wrongKey := append([]byte(nil), key...)
+	wrongKey := slices.Concat[[]byte](key)
 	wrongKey[0] ^= 0xff
 
 	var keyedBuf bytes.Buffer
@@ -212,7 +213,7 @@ func TestMetadataKeyVerification(t *testing.T) {
 		t.Errorf("Metadata with wrong key = %v, want %v", err, compressio.ErrHashMismatch)
 	}
 
-	tampered := append([]byte(nil), keyedBuf.Bytes()...)
+	tampered := slices.Concat[[]byte](keyedBuf.Bytes())
 	idx := bytes.Index(tampered, []byte(`"v"`))
 	if idx < 0 {
 		t.Fatalf("metadata value not found in serialized header")

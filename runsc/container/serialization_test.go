@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -54,7 +55,7 @@ func checkSerializable(typ reflect.Type, fieldName []string) error {
 		return nil
 	}
 	field := func(s string) []string {
-		return append(append(([]string)(nil), fieldName...), s)
+		return append(slices.Concat[[]string](fieldName), s)
 	}
 	fieldPath := strings.Join(fieldName, ".")
 	if _, ignored := ignoreList[fieldPath]; ignored {

@@ -19,6 +19,7 @@ package control
 import (
 	"maps"
 	"math"
+	"slices"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
@@ -705,7 +706,7 @@ func (fs *RightsFiles) Files(ctx context.Context, max int) (RightsFiles, bool) {
 
 // Clone implements transport.RightsControlMessage.Clone.
 func (fs *RightsFiles) Clone() transport.RightsControlMessage {
-	nfs := append(RightsFiles(nil), *fs...)
+	nfs := slices.Concat[RightsFiles](*fs)
 	for _, nf := range nfs {
 		nf.IncRef()
 	}

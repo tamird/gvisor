@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"fmt"
 	"math"
+	"slices"
 	"testing"
 	"time"
 
@@ -2533,7 +2534,7 @@ func TestNATICMPError(t *testing.T) {
 									buf := transportType.buf
 
 									ep2.InjectInbound(test.netProto, stack.NewPacketBuffer(stack.PacketBufferOptions{
-										Payload: buffer.MakeWithData(append([]byte{}, buf...)),
+										Payload: buffer.MakeWithData(bytes.Clone(buf)),
 									}))
 
 									{
@@ -4005,7 +4006,7 @@ func genTCP4WithOpts(opts tcpOpts) *stack.PacketBuffer {
 	ip.SetChecksum(0)
 	ip.SetChecksum(^ip.CalculateChecksum())
 
-	buf := buffer.MakeWithData(append([]byte{}, hdr.View()...))
+	buf := buffer.MakeWithData(bytes.Clone(hdr.View()))
 	return stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: buf})
 }
 
@@ -4049,7 +4050,7 @@ func genTCP6WithOpts(opts tcpOpts) *stack.PacketBuffer {
 		DstAddr:           opts.dstAddr,
 	})
 
-	buf := buffer.MakeWithData(append([]byte{}, hdr.View()...))
+	buf := buffer.MakeWithData(bytes.Clone(hdr.View()))
 	return stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: buf})
 }
 
@@ -4104,7 +4105,7 @@ func genUDP4(offset int8) *stack.PacketBuffer {
 	ip.SetChecksum(0)
 	ip.SetChecksum(^ip.CalculateChecksum())
 
-	buf := buffer.MakeWithData(append([]byte{}, hdr.View()...))
+	buf := buffer.MakeWithData(bytes.Clone(hdr.View()))
 	return stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: buf})
 }
 
@@ -4129,7 +4130,7 @@ func genUDP6(offset int8) *stack.PacketBuffer {
 		DstAddr:           dstAddrV6,
 	})
 
-	buf := buffer.MakeWithData(append([]byte{}, hdr.View()...))
+	buf := buffer.MakeWithData(bytes.Clone(hdr.View()))
 	return stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: buf})
 }
 
@@ -4216,7 +4217,7 @@ func TestMasqueradePortRange(t *testing.T) {
 		} {
 			extended := test
 			extended.name += "/" + extension.name
-			extended.buf = append([]byte(nil), test.buf[:header.IPv6MinimumSize]...)
+			extended.buf = slices.Concat[[]byte](test.buf[:header.IPv6MinimumSize])
 			extended.buf = append(extended.buf, byte(test.transProto), 0, 0, 0, 0, 0, 0, 0)
 			extended.buf = append(extended.buf, test.buf[header.IPv6MinimumSize:]...)
 			ip := header.IPv6(extended.buf)

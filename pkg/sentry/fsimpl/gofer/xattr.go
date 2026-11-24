@@ -92,7 +92,7 @@ func (c *xattrCache) getList() ([]string, bool) {
 		return nil, false
 	}
 	// Return a copy to prevent the caller from modifying the cached list.
-	return append([]string(nil), c.list...), true
+	return slices.Concat[[]string](c.list), true
 }
 
 func (c *xattrCache) setList(names []string) {
@@ -100,6 +100,6 @@ func (c *xattrCache) setList(names []string) {
 		c.list = []string{}
 	} else {
 		// Save a copy to prevent the caller from modifying the cached list.
-		c.list = append([]string(nil), names...)
+		c.list = slices.Concat[[]string](names)
 	}
 }

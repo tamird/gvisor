@@ -81,6 +81,8 @@ func (p *Prependable) Prepend(size int) []byte {
 
 // DeepCopy copies p and the bytes backing it.
 func (p Prependable) DeepCopy() Prependable {
-	p.buf = append([]byte{}, p.buf...)
+	buf := make([]byte, len(p.buf))
+	copy(buf, p.buf)
+	p.buf = buf
 	return p
 }
