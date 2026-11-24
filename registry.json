@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T07:18:12.732705+00:00",
+    "updatedAt": "2026-11-24T07:44:23.340604+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -82840,7 +82840,7 @@
       "url": "https://github.com/google/gvisor/pull/17184",
       "group": "tests",
       "status": "open",
-      "summary": "Private4aba6f94689dc7f185c524b10a4c903c401cf5d2 already has functional/source/cleanup evidence and the requested before/after record at existing temp/tcp-4aba-before-after-record.md. Final exact-source adversarial review remains required: oldf26 reviews do not cover changed cancellation semantics. Performance A/A/qualified-route gate is unmet. Public2aa remains unchanged; old asks are superseded and no4aba publication question exists.",
+      "summary": "Exact 4aba completed two independent full-source final reviews without source blockers. Production replaces 582 shell lines with 580 Go lines; full change is net +164, including 163 lines of distinct lifecycle coverage. Functional qualification does not establish comparative performance. Public head and rejected-draft publication boundary remain unchanged.",
       "evidence": [
         {
           "label": "Published standalone benchmark correction",
@@ -82855,7 +82855,7 @@
           "url": "https://github.com/tamird/gvisor/blob/208cd127d/.github/qualification/tcp_benchmark_go.result.json"
         }
       ],
-      "updatedAt": "2026-11-24T05:38:02.473380+00:00",
+      "updatedAt": "2026-11-24T07:20:26.610975+00:00",
       "followup": {
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
         "owner": "root",
@@ -82934,8 +82934,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Root owns final exact-source review and eventual publication boundary, using the completed before/after record. Do not schedule implementation/allocation as unfinished, transfer oldf26 review clearance, create a pending approval card, run timings or update the public PR.",
-      "recheckCondition": "User answer to this actual question or substantive source/qualification change.",
+      "nextStep": "Retain reviewed source and existing functional evidence. Complete comparative performance only when a demonstrated stable same-source A/A route is available; do not expand samples or retry unchanged timings. Present any final publication proposal only after its remaining evidence and scope are concrete.",
+      "recheckCondition": "A qualified stable performance route, new source-bound measurement evidence, a concrete source finding or a user decision changes the next action. No additional execution approval is needed for otherwise authorized validation.",
       "refinement": {
         "before": {
           "head": "2aa840f4ffe655f0c749185070fba77e676186b5"
@@ -132073,7 +132073,7 @@
       "owner": "benchmark_measurement_review / root",
       "updatedAt": "2026-11-24T07:01:47.154032+00:00",
       "group": "analysis",
-      "summary": "Current native source remains8fc45ed322c5e75f782505aea016dbdfbc5acfe4. The cgroup coverage finding is resolved/withdrawn: both original reviewer and source owner verified package-level func new at cgroup.go:485 shadows the builtin across embedded tests, and pinned x/tools v0.53 newexpr correctly declines those rewrites. Both-ISA source/Go1.27.3 metadata and prior zero findings are consistent. No aspect/checker fix, fixture or full rerun is warranted. General review has no remaining correctness/testing/style/catch-all finding on all six cleanup paths; security/hardening clearance on aae is reused only for the unchanged-scope documentation/dead-symbol delta.",
+      "summary": "Current native source is 2fb0ac53 (tree 8b006d3f). Cleanup 8fc passed 10 owning targets per ISA: 499 AMD XML results with 5 environment skips, and 524 ARM results with 6 skips; zero failures and five source checks passed. Matched Go1.27.3 compiler evidence identified a newly escaping AIO callback through non-inlined WaitGroup.Go and a standard-library wrapper. Root approved the exact original aio.go plus only waitgroupgo:29:2 exception; the performance reviewer confirmed that fix. This is static compiler evidence, not measured allocations, bytes or speedup. The complete 891-target corpus remains proven on aae, supplemented by targeted cleanup/AIO closure rather than silently transferred to the current source.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132445,7 +132445,7 @@
           ]
         }
       ],
-      "nextStep": "Source owner owns live post-review unit/five-Nogo-per-ISA runs45346686981/45346689761, five source checks45346693758 and matched target-local QueueAIO compiler controls45346684875/45346731514. CI f29f5bbdbc06354b80c634bdfd2348f72426ba3b adds only18 reviewed support paths. Sole source observer38461 rechecks07:25; no duplicate monitoring. Preserve #17884, comparative-performance/stable-A/A, Netgofer/runtime and hardware limits; no final qualification or publication approval is inferred.",
+      "nextStep": "The source owner runs final kernel/Nogo/opaque-release gates on AMD45349683050 and ARM45349685813, with source checks45349688596. CI89131644f36ede7aedd9ca0a54bdf0f25e5bc4ea adds only 18 reviewed support paths. Its sole observer rechecks at07:47. Keep #17884/provider admission, comparative performance and stable-A/A-route, runtime and hardware limits explicit. Netgofer passes qualify only unchanged source8fc; no obsolete unqualified-8fc functional gate remains. No final publication approval is inferred.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132702,7 +132702,7 @@
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
       },
-      "head": "8fc45ed322c5e75f782505aea016dbdfbc5acfe4",
+      "head": "2fb0ac53acc45b2f0075dbdbe85148d6ceb7d2ae",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -132783,7 +132783,7 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T07:18:12.732705+00:00",
+        "observedAt": "2026-11-24T07:44:23.340604+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45338108931",
           "https://github.com/tamird/gvisor/actions/runs/45344645597",
@@ -132793,13 +132793,17 @@
           "https://github.com/tamird/gvisor/actions/runs/45346689761",
           "https://github.com/tamird/gvisor/actions/runs/45346693758",
           "https://github.com/tamird/gvisor/actions/runs/45346684875",
-          "https://github.com/tamird/gvisor/actions/runs/45346731514"
+          "https://github.com/tamird/gvisor/actions/runs/45346731514",
+          "https://github.com/tamird/gvisor/commit/2fb0ac53acc45b2f0075dbdbe85148d6ceb7d2ae",
+          "https://github.com/tamird/gvisor/actions/runs/45349683050",
+          "https://github.com/tamird/gvisor/actions/runs/45349685813",
+          "https://github.com/tamird/gvisor/actions/runs/45349688596"
         ],
         "owner": "benchmark_measurement_review / root",
-        "disposition": "Current native source remains8fc45ed322c5e75f782505aea016dbdfbc5acfe4. The cgroup coverage finding is resolved/withdrawn: both original reviewer and source owner verified package-level func new at cgroup.go:485 shadows the builtin across embedded tests, and pinned x/tools v0.53 newexpr correctly declines those rewrites. Both-ISA source/Go1.27.3 metadata and prior zero findings are consistent. No aspect/checker fix, fixture or full rerun is warranted. General review has no remaining correctness/testing/style/catch-all finding on all six cleanup paths; security/hardening clearance on aae is reused only for the unchanged-scope documentation/dead-symbol delta.",
-        "nextAction": "Source owner owns live post-review unit/five-Nogo-per-ISA runs45346686981/45346689761, five source checks45346693758 and matched target-local QueueAIO compiler controls45346684875/45346731514. CI f29f5bbdbc06354b80c634bdfd2348f72426ba3b adds only18 reviewed support paths. Sole source observer38461 rechecks07:25; no duplicate monitoring. Preserve #17884, comparative-performance/stable-A/A, Netgofer/runtime and hardware limits; no final qualification or publication approval is inferred.",
-        "recheckCondition": "Existing source owner supplies post-review and compiler-control results at07:25, or actual prerequisite/performance/runtime evidence changes.",
-        "sourceHead": "8fc45ed322c5e75f782505aea016dbdfbc5acfe4"
+        "disposition": "Current native source is 2fb0ac53 (tree 8b006d3f). Cleanup 8fc passed 10 owning targets per ISA: 499 AMD XML results with 5 environment skips, and 524 ARM results with 6 skips; zero failures and five source checks passed. Matched Go1.27.3 compiler evidence identified a newly escaping AIO callback through non-inlined WaitGroup.Go and a standard-library wrapper. Root approved the exact original aio.go plus only waitgroupgo:29:2 exception; the performance reviewer confirmed that fix. This is static compiler evidence, not measured allocations, bytes or speedup. The complete 891-target corpus remains proven on aae, supplemented by targeted cleanup/AIO closure rather than silently transferred to the current source.",
+        "nextAction": "The source owner runs final kernel/Nogo/opaque-release gates on AMD45349683050 and ARM45349685813, with source checks45349688596. CI89131644f36ede7aedd9ca0a54bdf0f25e5bc4ea adds only 18 reviewed support paths. Its sole observer rechecks at07:47. Keep #17884/provider admission, comparative performance and stable-A/A-route, runtime and hardware limits explicit. Netgofer passes qualify only unchanged source8fc; no obsolete unqualified-8fc functional gate remains. No final publication approval is inferred.",
+        "recheckCondition": "Existing source owner supplies final source-bound gates at07:47, or actual prerequisite/performance/runtime/hardware evidence changes.",
+        "sourceHead": "2fb0ac53acc45b2f0075dbdbe85148d6ceb7d2ae"
       },
       "contributorReview": {
         "kind": "proposal",
@@ -135653,7 +135657,7 @@
       "group": "ci-flakes",
       "owner": "root",
       "updatedAt": "2026-11-10T20:57:16+00:00",
-      "summary": "On #17390, the ARM64 TestProxyUDPIdleTimeout failed on its second flow with connection refused. Buildkite reran the same target on the same commit and it passed in 0.2 seconds.",
+      "summary": "Source owner image_refresh_correctness completed exact native8fc/CI f29 qualification: targeted45348573769 and full45349076760 passed 67 XML cases, zero failures/errors/skips, uncached; the full run took2.4s. The existing Go4s diagnostic cap and original fixture deadlines/source are unchanged. A connection-reset warning also appears in success, so it is not sufficient cause. The original12fd failure remains historical and unexplained; these passes establish no causal, pre-existing or fixed-bug conclusion.",
       "findings": [
         {
           "text": "The test signals that the first connection is closing before closing its host socket. The handler still has to finish both copy loops and release the only connection slot. The failure log does not identify which datagram prompted the refusal.",
@@ -135686,7 +135690,7 @@
           ]
         }
       ],
-      "nextStep": "Follow the published test fix on #17416 through upstream review.",
+      "nextStep": "Root retains event-driven natural-recurrence follow-through. Remove the unqualified-current8fc functional wait; preserve exact source scope and historical UDP failure/test-fix evidence. No blind baseline, retry, source change or additional observer is justified. The separate published fix lifecycle remains in its own PR record.",
       "evidence": [
         {
           "label": "Published netgofer test fix",
@@ -135713,12 +135717,25 @@
           "url": "https://github.com/google/gvisor/blob/4a8b59ea5/runsc/gofer/net/netgofer.go#L488-L494"
         }
       ],
-      "technicalOwner": "CI flake triage",
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
+      "technicalOwner": "image_refresh_correctness (completed source-bound qualification)",
+      "recheckCondition": "Natural recurrence or genuinely new source-bound diagnostic evidence only.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
-        "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+        "nextAction": "Root retains event-driven natural-recurrence follow-through. Remove the unqualified-current8fc functional wait; preserve exact source scope and historical UDP failure/test-fix evidence. No blind baseline, retry, source change or additional observer is justified. The separate published fix lifecycle remains in its own PR record.",
+        "recheckCondition": "Natural recurrence or genuinely new source-bound diagnostic evidence only."
+      },
+      "followup": {
+        "disposition": "Source owner image_refresh_correctness completed exact native8fc/CI f29 qualification: targeted45348573769 and full45349076760 passed 67 XML cases, zero failures/errors/skips, uncached; the full run took2.4s. The existing Go4s diagnostic cap and original fixture deadlines/source are unchanged. A connection-reset warning also appears in success, so it is not sufficient cause. The original12fd failure remains historical and unexplained; these passes establish no causal, pre-existing or fixed-bug conclusion.",
+        "nextAction": "Root retains event-driven natural-recurrence follow-through. Remove the unqualified-current8fc functional wait; preserve exact source scope and historical UDP failure/test-fix evidence. No blind baseline, retry, source change or additional observer is justified. The separate published fix lifecycle remains in its own PR record.",
+        "recheckCondition": "Natural recurrence or genuinely new source-bound diagnostic evidence only.",
+        "observedAt": "2026-11-24T07:44:23.340604+00:00",
+        "owner": "root",
+        "technicalOwner": "image_refresh_correctness",
+        "sourceHead": "8fc45ed322c5e75f782505aea016dbdfbc5acfe4",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/45348573769",
+          "https://github.com/tamird/gvisor/actions/runs/45349076760"
+        ]
       }
     },
     {
