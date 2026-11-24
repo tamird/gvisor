@@ -31,30 +31,34 @@ work=$(mktemp -d "${TEST_TMPDIR:-${TMPDIR:-/tmp}}/benchmark-runtime.XXXXXX")
 runtime=benchmark-$(basename "$work")
 container=$runtime-check
 config_existed=false
-image_existed=false
+initial_image=$(docker image inspect "$image" --format '{{.Id}}' 2>/dev/null || true)
+initial_images=$(docker image ls -aq --no-trunc)
+mkdir "$work/release"
+owned_config="$work/daemon.json"
 configured=false
 loaded=false
-if test -f "$config"; then sudo cp -a "$config" "$work/daemon.before"; config_existed=true; fi
-if docker image inspect "$image" >/dev/null 2>&1; then image_existed=true; fi
 cleanup() {
-  ret=$?
+  command_status=$?
+  ret=0
   trap - EXIT
-  if docker container inspect "$container" >/dev/null 2>&1; then docker rm -f "$container" >/dev/null || ret=1; fi
+  # The daemon started empty and is exclusively owned for this invocation.
+  if ! docker ps -aq | xargs -r docker rm -f >/dev/null; then
+    echo "HOST_DOCKER_CLEANUP_BLOCKED: containers remain; preserving $work" >&2
+    exit 1
+  fi
   if $configured; then
-    # Reload retains runtime entries when the runtimes key is omitted.
-    sudo python3 - "$work/daemon.before" "$config" <<'PY' || ret=1
-import json, pathlib, sys
-old = pathlib.Path(sys.argv[1])
-config = json.loads(old.read_text()) if old.exists() else {}
-config.setdefault("runtimes", {})
-pathlib.Path(sys.argv[2]).write_text(json.dumps(config))
-PY
+    # Canonical uninstall leaves an explicit runtime map for daemon reload.
+    if ! sudo "$work/release/runsc" uninstall --config_file="$owned_config" --runtime="$runtime"; then
+      echo "HOST_DOCKER_CLEANUP_BLOCKED: uninstall failed; preserving $work" >&2
+      exit 1
+    fi
+    sudo cp "$owned_config" "$config" || ret=1
     sudo systemctl reload docker || ret=1
     for i in {1..10}; do
       test "$(docker info --format '{{json .Runtimes}}')" = "$initial_runtimes" && break
       sleep 1
     done
-    if $config_existed; then sudo cp -a "$work/daemon.before" "$config" || ret=1; else sudo rm -f "$config" || ret=1; fi
+    if $config_existed; then sudo cp --preserve=all "$work/daemon.before" "$config" || ret=1; else sudo rm -f "$config" || ret=1; fi
   fi
   test "$(docker info --format '{{json .Runtimes}}')" = "$initial_runtimes" || ret=1
   test "$(docker ps -aq)" = "$initial_containers" || ret=1
@@ -63,35 +67,55 @@ import pathlib, sys
 for path in pathlib.Path(sys.argv[1]).glob(sys.argv[2] + ".*"):
     path.unlink()
 PY
-  if $loaded && ! $image_existed; then docker image rm "$image" >/dev/null || ret=1; fi
+  if $loaded; then
+    loaded_image=$(docker image inspect "$image" --format '{{.Id}}' 2>/dev/null || true)
+    if test -n "$initial_image"; then
+      docker tag "$initial_image" "$image" || ret=1
+    elif test -n "$loaded_image"; then
+      docker image rm "$image" >/dev/null || ret=1
+    fi
+    if test -n "$loaded_image" && ! grep -qxF "$loaded_image" <<<"$initial_images" && test -n "$initial_image"; then
+      docker image rm "$loaded_image" >/dev/null || ret=1
+    fi
+    test "$(docker image inspect "$image" --format '{{.Id}}' 2>/dev/null || true)" = "$initial_image" || ret=1
+  fi
   sudo rm -rf -- "$work" || ret=1
+  echo "HOST_DOCKER_COMMAND_EXIT=$command_status"
   echo "HOST_DOCKER_CLEANUP_EXIT=$ret"
-  exit "$ret"
+  if test "$ret" -ne 0; then exit "$ret"; fi
+  exit "$command_status"
 }
 trap cleanup EXIT
-"$runfiles/images/benchmark_alpine_load.exe"
+if test -e "$config"; then
+  # Snapshot target contents/metadata while leaving any daemon-config symlink intact.
+  sudo cp -aL "$config" "$work/daemon.before"
+  sudo cp -aL "$config" "$owned_config"
+  config_existed=true
+fi
 loaded=true
+"$runfiles/images/benchmark_alpine_load.exe"
 docker image inspect "$image" --format 'HOST_DOCKER_IMAGE {{.Id}} {{.Architecture}}'
 # Preserve the complete producer-owned layout, including every sidecar.
-cp -aL "$runfiles/release/." "$work/"
-chmod -R a+rx "$work"
-python3 - "$work" <<'PY'
+cp -aL "$runfiles/release/." "$work/release/"
+chmod -R a+rx "$work/release"
+python3 - "$work/release" <<'PY'
 import hashlib, pathlib, sys
 root = pathlib.Path(sys.argv[1])
 for path in sorted(root.rglob("*")):
-    if path.is_file() and path.name != "daemon.before":
+    if path.is_file():
         print("HOST_DOCKER_RELEASE", path.relative_to(root), hashlib.sha256(path.read_bytes()).hexdigest())
 PY
-"$work/runsc" --version
+"$work/release/runsc" --version
+sudo "$work/release/runsc" install --config_file="$owned_config" --runtime="$runtime" -- --platform=systrap
 configured=true
-sudo "$work/runsc" install --config_file="$config" --runtime="$runtime" -- --platform=systrap
+sudo cp "$owned_config" "$config"
 sudo systemctl reload docker
 for i in {1..10}; do
   actual=$(docker info --format "{{with index .Runtimes \"$runtime\"}}{{.Path}}{{end}}")
-  test "$actual" = "$work/runsc" && break
+  test "$actual" = "$work/release/runsc" && break
   sleep 1
 done
-test "$actual" = "$work/runsc"
+test "$actual" = "$work/release/runsc"
 export RUNTIME="$runtime"
 if test "$#" -eq 0; then
   for selected in runc "$runtime"; do
