@@ -158,3 +158,10 @@ image_outputs(
     image = ":tmpfile",
     image_name = "basic/tmpfile",
 )
+
+image_outputs(
+    name = "benchmark_redis",
+    image = ":redis",
+    image_name = "benchmarks/redis",
+    visibility = ["//test/benchmarks/harness:__pkg__"],
+)

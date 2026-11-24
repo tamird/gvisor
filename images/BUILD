@@ -90,3 +90,24 @@ image_outputs(
     image_name = "benchmarks/alpine",
     visibility = ["//test/benchmarks/harness:__pkg__"],
 )
+
+image_outputs(
+    name = "benchmark_nginx",
+    image = "@benchmark_nginx_amd64",
+    image_name = "benchmarks/nginx",
+    visibility = ["//test/benchmarks/harness:__pkg__"],
+)
+
+image_outputs(
+    name = "benchmark_node",
+    image = "@benchmark_node_amd64",
+    image_name = "benchmarks/node",
+    visibility = ["//test/benchmarks/harness:__pkg__"],
+)
+
+image_outputs(
+    name = "benchmark_util",
+    image = "@benchmark_util_amd64",
+    image_name = "benchmarks/util",
+    visibility = ["//test/benchmarks/harness:__pkg__"],
+)
