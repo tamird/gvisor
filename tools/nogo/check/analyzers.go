@@ -24,6 +24,7 @@ import (
 	"golang.org/x/tools/go/analysis/passes/asmdecl"
 	"golang.org/x/tools/go/analysis/passes/assign"
 	"golang.org/x/tools/go/analysis/passes/atomic"
+	"golang.org/x/tools/go/analysis/passes/atomicalign"
 	"golang.org/x/tools/go/analysis/passes/bools"
 	"golang.org/x/tools/go/analysis/passes/buildtag"
 	"golang.org/x/tools/go/analysis/passes/cgocall"
@@ -152,6 +153,7 @@ func init() {
 	register(allAnalyzers, &plainAnalyzer{asmdecl.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{assign.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{atomic.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{atomicalign.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{bools.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{buildtag.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{cgocall.Analyzer})
