@@ -85,6 +85,7 @@ sh_binary(
         "//images:benchmark_nginx_load",
         "//images:benchmark_node_load",
         "//images:benchmark_ruby_load",
+        "//images:benchmark_util_load",
         "//images/basic:benchmark_redis_load",
         "//tools/benchmark/paired",
         "@startup_baseline_release//:baseline-release.tar.bz2",

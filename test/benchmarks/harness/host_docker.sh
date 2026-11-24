@@ -44,7 +44,7 @@ network_mode=false
 if test "${1:-}" = --network; then
   shift
   network_mode=true
-  for name in nginx node iperf httpd ruby hey; do
+  for name in nginx node iperf httpd ruby hey util; do
     names+=("$name")
     loaders+=("images/benchmark_${name}_load.exe")
   done
