@@ -53,6 +53,7 @@ go_library(
         "@org_golang_x_tools//go/analysis/passes/ifaceassert:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/loopclosure:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/lostcancel:go_default_library",
+        "@org_golang_x_tools//go/analysis/passes/modernize:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/nilfunc:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/nilness:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/printf:go_default_library",
