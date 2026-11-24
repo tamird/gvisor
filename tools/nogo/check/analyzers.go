@@ -237,7 +237,8 @@ func init() {
 			"slicesclip",
 			"slicescontains",
 			"mapsloop",
-			"atomictypes":
+			"atomictypes",
+			"unsafefuncs":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}

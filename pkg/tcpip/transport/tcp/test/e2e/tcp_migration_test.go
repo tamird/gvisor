@@ -146,7 +146,7 @@ func TestTCPMigration(t *testing.T) {
 				t.Fatalf("Field restoredEndpoints not found")
 			}
 			offset := sf.Offset
-			ptr := unsafe.Pointer(uintptr(unsafe.Pointer(restoredStack)) + offset)
+			ptr := unsafe.Add(unsafe.Pointer(restoredStack), offset)
 			restoredEndpointsPtr := (*[]stack.RestoredEndpoint)(ptr)
 			restoredEndpoints := *restoredEndpointsPtr
 
@@ -403,7 +403,7 @@ func TestRestoreListenWithPreexistingConnection(t *testing.T) {
 						t.Fatalf("Field restoredEndpoints not found")
 					}
 					offset := sf.Offset
-					ptr := unsafe.Pointer(uintptr(unsafe.Pointer(restoredStack)) + offset)
+					ptr := unsafe.Add(unsafe.Pointer(restoredStack), offset)
 					restoredEndpointsPtr := (*[]stack.RestoredEndpoint)(ptr)
 					restoredEndpoints := *restoredEndpointsPtr
 
@@ -417,7 +417,7 @@ func TestRestoreListenWithPreexistingConnection(t *testing.T) {
 								if termField.IsValid() {
 									// Use unsafe to set unexported field terminateAtRestore
 									tf, _ := epVal.Elem().Type().FieldByName("terminateAtRestore")
-									tPtr := (*bool)(unsafe.Pointer(uintptr(epVal.UnsafePointer()) + tf.Offset))
+									tPtr := (*bool)(unsafe.Add(epVal.UnsafePointer(), tf.Offset))
 									*tPtr = true
 								}
 							}

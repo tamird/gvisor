@@ -178,7 +178,7 @@ loop:
 		offmask := mask * mountSlotBytes
 		for {
 			// This avoids bounds checking.
-			slot := (*mountSlot)(unsafe.Pointer(uintptr(slots) + off))
+			slot := (*mountSlot)(unsafe.Add(slots, off))
 			slotValue := atomic.LoadPointer(&slot.value)
 			slotHash := atomic.LoadUintptr(&slot.hash)
 			if !mt.seq.ReadOk(epoch) {
@@ -211,7 +211,7 @@ loop:
 func (mt *mountTable) Range(f func(*Mount) bool) {
 	tcap := uintptr(1) << (mt.size.Load() & mtSizeOrderMask)
 	slotPtr := mt.slots
-	last := unsafe.Pointer(uintptr(mt.slots) + ((tcap - 1) * mountSlotBytes))
+	last := unsafe.Add(mt.slots, ((tcap - 1) * mountSlotBytes))
 	for {
 		slot := (*mountSlot)(slotPtr)
 		if slot.value != nil {
@@ -222,7 +222,7 @@ func (mt *mountTable) Range(f func(*Mount) bool) {
 		if slotPtr == last {
 			return
 		}
-		slotPtr = unsafe.Pointer(uintptr(slotPtr) + mountSlotBytes)
+		slotPtr = unsafe.Add(slotPtr, mountSlotBytes)
 	}
 }
 
@@ -282,7 +282,7 @@ func (mt *mountTable) insertSeqed(mount *Mount) {
 		if oldCur == oldLast {
 			break
 		}
-		oldCur = unsafe.Pointer(uintptr(oldCur) + mountSlotBytes)
+		oldCur = unsafe.Add(oldCur, mountSlotBytes)
 	}
 	// Insert the new element into the new table.
 	mtInsertLocked(newSlots, newCap, unsafe.Pointer(mount), hash)
@@ -302,7 +302,7 @@ func mtInsertLocked(slots unsafe.Pointer, cap uintptr, value unsafe.Pointer, has
 	offmask := mask * mountSlotBytes
 	disp := uintptr(0)
 	for {
-		slot := (*mountSlot)(unsafe.Pointer(uintptr(slots) + off))
+		slot := (*mountSlot)(unsafe.Add(slots, off))
 		slotValue := slot.value
 		if slotValue == nil {
 			atomic.StorePointer(&slot.value, value)
@@ -349,7 +349,7 @@ func (mt *mountTable) removeSeqed(mount *Mount) {
 	off := (hash & mask) * mountSlotBytes
 	offmask := mask * mountSlotBytes
 	for {
-		slot := (*mountSlot)(unsafe.Pointer(uintptr(slots) + off))
+		slot := (*mountSlot)(unsafe.Add(slots, off))
 		slotValue := slot.value
 		if slotValue == unsafe.Pointer(mount) {
 			// Found the element to remove. Move all subsequent elements
@@ -358,7 +358,7 @@ func (mt *mountTable) removeSeqed(mount *Mount) {
 			// deletion.)
 			for {
 				nextOff := (off + mountSlotBytes) & offmask
-				nextSlot := (*mountSlot)(unsafe.Pointer(uintptr(slots) + nextOff))
+				nextSlot := (*mountSlot)(unsafe.Add(slots, nextOff))
 				nextSlotValue := nextSlot.value
 				if nextSlotValue == nil {
 					break
