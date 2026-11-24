@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T11:34:12.073058+00:00",
+    "updatedAt": "2026-11-24T12:40:36.478776+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32342,36 +32342,44 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/rules-img-nginx-benchmark-upstream-mirrors",
-      "head": "33a66c674d55deb90ec6e6bfecc4a55e738b2af4",
+      "head": "cafd7c0bb1ba8f37a32facc212e778ac84a1a3df",
       "title": "Use the pinned official Nginx image for benchmarks",
       "url": "https://github.com/tamird/gvisor/commit/33a66c674d55deb90ec6e6bfecc4a55e738b2af4",
       "group": "bazel",
-      "status": "Approved and qualified; SSH transport blocked",
-      "updatedAt": "2026-11-24T05:35:00.184573+00:00",
-      "summary": "The approved Nginx proposal retains source33a66c674; Apache shared-payload prerequisite #16466 is now merged. Existing foundation/mirror prerequisites are satisfied. Historical image/workload comparisons remain source-bound; no new current-base, ARM-runtime or general-speedup qualification is claimed.",
+      "status": "Delivered",
+      "updatedAt": "2026-11-24T12:39:14.280154+00:00",
+      "summary": "Approved Nginx source cafd7c0bb is delivered as PR17915; publication and the prior transport wait are fulfilled. Follow its canonical PR lifecycle. Historical image/runtime/performance evidence keeps its original scope.",
       "followup": {
-        "owner": "root / approved_rebase_queue",
-        "sourceHead": "33a66c674d55deb90ec6e6bfecc4a55e738b2af4",
-        "observedAt": "2026-11-24T05:35:00.184573+00:00",
-        "disposition": "Rebase source and dual-architecture archive construction passed; two independent final reviews clear. Authorized publication failed: SSH timed out, then GitHub explicitly refused HTTPS because the existing OAuth credential lacks workflow scope for .github/workflows/gazelle.yml. Remote head unchanged; no notice or new PR posted. Fresh runtime/performance validation is not claimed.",
-        "nextAction": "Resume the already-authorized exact-lease publication when SSH authentication recovers, then verify published heads, post factual rebase notices and preserve existing review requests. Nginx opening approval and DCO remain settled; no renewed publication approval is required.",
+        "owner": "root",
+        "sourceHead": "cafd7c0bb1ba8f37a32facc212e778ac84a1a3df",
+        "observedAt": "2026-11-24T12:39:14.280154+00:00",
+        "disposition": "Approved Nginx source cafd7c0bb is delivered as PR17915; publication and the prior transport wait are fulfilled. Follow its canonical PR lifecycle. Historical image/runtime/performance evidence keeps its original scope.",
+        "nextAction": "Follow pr:17915 for current-head CI, maintainer review and import; do not repeat opening or delivery.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/cafd7c0bb1ba8f37a32facc212e778ac84a1a3df",
           "https://github.com/tamird/gvisor/actions/runs/45330792075",
-          "https://github.com/tamird/gvisor/actions/runs/45330795848"
+          "https://github.com/tamird/gvisor/actions/runs/45330795848",
+          "https://github.com/gvisor/gvisor/pull/17915"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
           "ref": "review/rules-img-nginx-benchmark-upstream-mirrors",
-          "head": "33a66c674d55deb90ec6e6bfecc4a55e738b2af4",
-          "observedAt": "2026-11-17T19:58:25.301129+00:00",
+          "head": "cafd7c0bb1ba8f37a32facc212e778ac84a1a3df",
+          "observedAt": "2026-11-24T12:39:14.280154+00:00",
           "state": "present",
-          "canonicalPRs": [],
+          "canonicalPRs": [
+            {
+              "number": 17915,
+              "head": "cafd7c0bb1ba8f37a32facc212e778ac84a1a3df",
+              "state": "open",
+              "url": "https://github.com/gvisor/gvisor/pull/17915"
+            }
+          ],
           "nextAction": "Reverify this exact ref before delivery; follow the canonical PR alias where present.",
           "recheckCondition": "Exact ref/head change, canonical PR feedback/check/import or terminal-state change, dependency landing or contributor decision.",
           "owner": "root"
         },
-        "recheckCondition": "User reports SSH agent unlocked, or existing authorized transport capability recovers; then one normal publication attempt. Reconcile any intervening source, review or prerequisite change before updating refs.",
+        "recheckCondition": "Actual PR17915 source/check/review/import change.",
         "candidateHead": "cafd7c0bb1ba8f37a32facc212e778ac84a1a3df"
       },
       "evidence": [
@@ -32380,7 +32388,7 @@
           "url": "https://github.com/tamird/gvisor/compare/34ae8afe757c6dd9e4ebefb9352bf407040c3830...33a66c674d55deb90ec6e6bfecc4a55e738b2af4"
         }
       ],
-      "nextStep": "Assigned approved_rebase_queue is actively assessing the already-approved Nginx child and preparing isolated objects against the landed Apache prerequisite. Preserve contributor/workload limits and final source/publication review boundaries; do not wait passively for main-checkout allocation or infer a new unchanged-input runtime result."
+      "nextStep": "Follow pr:17915 for current-head CI, maintainer review and import; do not repeat opening or delivery."
     },
     {
       "id": "branch:tcp-cookie-sack-negotiation",
@@ -37763,26 +37771,27 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-mysql-upstream",
-      "head": "303aee0fb294bcf676c2579d24b6821d0578a603",
+      "head": "f9f6e3261d13800cb3bdbdaf713d44fc142811ac",
       "title": "Pin the basic MySQL image",
       "url": "https://github.com/google/gvisor/pull/16458",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-24T05:35:00.184573+00:00",
-      "summary": "Current exact303aee0fb is CONFLICTING. The earlier mergeable-only wait is obsolete. Prior source qualification/approvals and separate import boundaries remain historical and source-bound.",
+      "updatedAt": "2026-11-24T12:39:14.280154+00:00",
+      "summary": "Authorized source delivery is complete at f9f6e3261; the publisher verified the exact native PR head as MERGEABLE/REVIEW_REQUIRED and preserved existing reviewer requests. The factual rebase notice is posted. Dual-architecture archive/source checks and two final reviews retain their recorded scopes; historical runtime/performance results are not fresh qualification of this rebase. Transport is no longer blocking this delivery.",
       "followup": {
-        "owner": "root / approved_rebase_queue",
-        "sourceHead": "303aee0fb294bcf676c2579d24b6821d0578a603",
-        "observedAt": "2026-11-24T05:35:00.184573+00:00",
-        "disposition": "Rebase source and dual-architecture archive construction passed; two independent final reviews clear. Authorized publication failed: SSH timed out, then GitHub explicitly refused HTTPS because the existing OAuth credential lacks workflow scope for .github/workflows/gazelle.yml. Remote head unchanged; no notice or new PR posted. Fresh runtime/performance validation is not claimed.",
-        "nextAction": "Resume the already-authorized exact-lease publication when SSH authentication recovers, then verify published heads, post factual rebase notices and preserve existing review requests. Nginx opening approval and DCO remain settled; no renewed publication approval is required.",
+        "owner": "root",
+        "sourceHead": "f9f6e3261d13800cb3bdbdaf713d44fc142811ac",
+        "observedAt": "2026-11-24T12:39:14.280154+00:00",
+        "disposition": "Authorized source delivery is complete at f9f6e3261; the publisher verified the exact native PR head as MERGEABLE/REVIEW_REQUIRED and preserved existing reviewer requests. The factual rebase notice is posted. Dual-architecture archive/source checks and two final reviews retain their recorded scopes; historical runtime/performance results are not fresh qualification of this rebase. Transport is no longer blocking this delivery.",
+        "nextAction": "Root follows actual current-head CI, maintainer review and import. Delivery and notice are fulfilled; no duplicate push, reviewer request, outreach, source approval or merge action is authorized.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/f9f6e3261d13800cb3bdbdaf713d44fc142811ac",
           "https://github.com/tamird/gvisor/actions/runs/45330766710",
-          "https://github.com/tamird/gvisor/actions/runs/45330770949"
+          "https://github.com/tamird/gvisor/actions/runs/45330770949",
+          "https://github.com/gvisor/gvisor/pull/16458#issuecomment-7131665589"
         ],
-        "mergeable": "CONFLICTING",
-        "recheckCondition": "User reports SSH agent unlocked, or existing authorized transport capability recovers; then one normal publication attempt. Reconcile any intervening source, review or prerequisite change before updating refs.",
+        "mergeable": "MERGEABLE",
+        "recheckCondition": "Actual current-head CI/review/import or head/base event; classify failures only from source-bound provider evidence.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -37920,7 +37929,12 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
       },
-      "nextStep": "Assigned approved_rebase_queue is actively performing bounded current-state review and isolated object preparation while the analyzer retains the main checkout. Preserve approved image/build semantics and separate import/review boundaries; qualify/review any real integration delta before publication. No blind retry, automatic source approval or competing checkout writer."
+      "nextStep": "Root follows actual current-head CI, maintainer review and import. Delivery and notice are fulfilled; no duplicate push, reviewer request, outreach, source approval or merge action is authorized.",
+      "sourceConflict": {
+        "sourceHead": "303aee0fb294bcf676c2579d24b6821d0578a603",
+        "owner": "root",
+        "nextAction": "This conflict is the dated pre-delivery observation at 303aee0fb. The publisher verified delivered current source f9f6e3261 as MERGEABLE and posted its notice. Follow actual current-head CI/review/import; do not prepare another rebase from this older observation."
+      }
     },
     {
       "id": "pr:16460",
@@ -37985,26 +37999,27 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-tomcat-upstream-current",
-      "head": "9354eb0eeba8d44da40cdae3235e51e890e82b63",
+      "head": "ce539633fa36f5f73f9e85a1cdc907be23ef1be5",
       "title": "Pin the existing Tomcat fixture images",
       "url": "https://github.com/google/gvisor/pull/16462",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-24T05:35:00.184573+00:00",
-      "summary": "Current exact9354eb0ee is CONFLICTING. The earlier mergeable-only wait is obsolete. Prior source qualification/approvals and separate import boundaries remain historical and source-bound.",
+      "updatedAt": "2026-11-24T12:39:14.280154+00:00",
+      "summary": "Authorized source delivery is complete at ce539633f; the publisher verified the exact native PR head as MERGEABLE/REVIEW_REQUIRED and preserved existing reviewer requests. The factual rebase notice is posted. Dual-architecture archive/source checks and two final reviews retain their recorded scopes; historical runtime/performance results are not fresh qualification of this rebase. Transport is no longer blocking this delivery.",
       "followup": {
-        "owner": "root / approved_rebase_queue",
-        "sourceHead": "9354eb0eeba8d44da40cdae3235e51e890e82b63",
-        "observedAt": "2026-11-24T05:35:00.184573+00:00",
-        "disposition": "Rebase source and dual-architecture archive construction passed; two independent final reviews clear. Authorized publication failed: SSH timed out, then GitHub explicitly refused HTTPS because the existing OAuth credential lacks workflow scope for .github/workflows/gazelle.yml. Remote head unchanged; no notice or new PR posted. Fresh runtime/performance validation is not claimed.",
-        "nextAction": "Resume the already-authorized exact-lease publication when SSH authentication recovers, then verify published heads, post factual rebase notices and preserve existing review requests. Nginx opening approval and DCO remain settled; no renewed publication approval is required.",
+        "owner": "root",
+        "sourceHead": "ce539633fa36f5f73f9e85a1cdc907be23ef1be5",
+        "observedAt": "2026-11-24T12:39:14.280154+00:00",
+        "disposition": "Authorized source delivery is complete at ce539633f; the publisher verified the exact native PR head as MERGEABLE/REVIEW_REQUIRED and preserved existing reviewer requests. The factual rebase notice is posted. Dual-architecture archive/source checks and two final reviews retain their recorded scopes; historical runtime/performance results are not fresh qualification of this rebase. Transport is no longer blocking this delivery.",
+        "nextAction": "Root follows actual current-head CI, maintainer review and import. Delivery and notice are fulfilled; no duplicate push, reviewer request, outreach, source approval or merge action is authorized.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ce539633fa36f5f73f9e85a1cdc907be23ef1be5",
           "https://github.com/tamird/gvisor/actions/runs/45330776339",
-          "https://github.com/tamird/gvisor/actions/runs/45330779851"
+          "https://github.com/tamird/gvisor/actions/runs/45330779851",
+          "https://github.com/gvisor/gvisor/pull/16462#issuecomment-7131666012"
         ],
-        "mergeable": "CONFLICTING",
-        "recheckCondition": "User reports SSH agent unlocked, or existing authorized transport capability recovers; then one normal publication attempt. Reconcile any intervening source, review or prerequisite change before updating refs.",
+        "mergeable": "MERGEABLE",
+        "recheckCondition": "Actual current-head CI/review/import or head/base event; classify failures only from source-bound provider evidence.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -38126,7 +38141,12 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
       },
-      "nextStep": "Assigned approved_rebase_queue is actively performing bounded current-state review and isolated object preparation while the analyzer retains the main checkout. Preserve approved image/build semantics and separate import/review boundaries; qualify/review any real integration delta before publication. No blind retry, automatic source approval or competing checkout writer."
+      "nextStep": "Root follows actual current-head CI, maintainer review and import. Delivery and notice are fulfilled; no duplicate push, reviewer request, outreach, source approval or merge action is authorized.",
+      "sourceConflict": {
+        "sourceHead": "9354eb0eeba8d44da40cdae3235e51e890e82b63",
+        "owner": "root",
+        "nextAction": "This conflict is the dated pre-delivery observation at 9354eb0ee. The publisher verified delivered current source ce539633f as MERGEABLE and posted its notice. Follow actual current-head CI/review/import; do not prepare another rebase from this older observation."
+      }
     },
     {
       "id": "branch:proc-immutable-pid-dirs-synthetic",
@@ -92711,13 +92731,13 @@
       "repo": "google/gvisor",
       "number": 17264,
       "ref": "botir/tcp-msg-more-upstream",
-      "head": "b98b4d2f6f7d6f1381cf4b0305ce3d4b8a967554",
+      "head": "0f31a644c9bbc723443c46dfa5a99d2d2508c290",
       "title": "Honor MSG_MORE on TCP writes",
       "url": "https://github.com/google/gvisor/pull/17264",
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-19T16:20:03.380488+00:00",
-      "summary": "Current source b98b4d2f6 is MERGEABLE. Ayush inline 4673268482 requests a fresh capture timeout and reports a testbench-deadline reproduction on native Linux and netstack. This is unverified external evidence, not our source/test qualification or an adopted change. The foreign author owns repair; root current-source review remains sensitive-held. Earlier-head quota and review evidence do not qualify this head.",
+      "summary": "Foreign author botirkhaltaev advanced the source to 0f31a644c, native MERGEABLE/REVIEW_REQUIRED. Exact-head FirstPass2646 and GitHub validation passed. The existing capture-timeout finding4673268482 became outdated; no new feedback text or verified resolution is inferred. Root current-source review remains unfinished under the confirmed sensitive-feature hold; prior source reviews do not cover this head.",
       "evidence": [
         {
           "label": "Timer restore",
@@ -92779,13 +92799,13 @@
       "followup": {
         "owner": "root",
         "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
-        "providerHead": "b98b4d2f6f7d6f1381cf4b0305ce3d4b8a967554",
+        "providerHead": "0f31a644c9bbc723443c46dfa5a99d2d2508c290",
         "mergeable": "MERGEABLE",
-        "sourceHead": "b98b4d2f6f7d6f1381cf4b0305ce3d4b8a967554",
-        "observedAt": "2026-11-24T00:28:40.976210+00:00",
-        "disposition": "Current source b98b4d2f6 is MERGEABLE. Ayush inline 4673268482 requests a fresh capture timeout and reports a testbench-deadline reproduction on native Linux and netstack. This is unverified external evidence, not our source/test qualification or an adopted change. The foreign author owns repair; root current-source review remains sensitive-held. Earlier-head quota and review evidence do not qualify this head.",
-        "nextAction": "Root retains current b98 sensitive-held reviewer follow-through; the foreign author owns implementation and capture-timeout feedback. The old92e review-posting proposal is superseded unanswered, not approved or rejected. No held source review, tests, timings, outreach or renewed question.",
-        "recheckCondition": "Actual author source/results, substantive external review/check event or user hold release.",
+        "sourceHead": "0f31a644c9bbc723443c46dfa5a99d2d2508c290",
+        "observedAt": "2026-11-24T12:40:36.478776+00:00",
+        "disposition": "Foreign author botirkhaltaev advanced the source to 0f31a644c, native MERGEABLE/REVIEW_REQUIRED. Exact-head FirstPass2646 and GitHub validation passed. The existing capture-timeout finding4673268482 became outdated; no new feedback text or verified resolution is inferred. Root current-source review remains unfinished under the confirmed sensitive-feature hold; prior source reviews do not cover this head.",
+        "nextAction": "Root retains current-source reviewer follow-through under the sensitive hold; the foreign author owns implementation and timeout-feedback resolution. Do not transfer old approval, read held source, run tests/timings, send outreach or ask Daybreak again.",
+        "recheckCondition": "Actual new author evidence/source, current-head review event or user releases the sensitive-feature hold.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17264",
           "https://github.com/gvisor/gvisor/commit/e5f0f6f7fc500b646b4a0dbd738f142e1a9032a2",
@@ -92809,7 +92829,8 @@
           "https://github.com/google/gvisor/pull/17264#discussion_r4670804473",
           "https://github.com/google/gvisor/pull/17264#issuecomment-7113425267",
           "https://github.com/google/gvisor/pull/17264#discussion_r4673268482",
-          "https://github.com/google/gvisor/commit/b98b4d2f6f7d6f1381cf4b0305ce3d4b8a967554"
+          "https://github.com/google/gvisor/commit/b98b4d2f6f7d6f1381cf4b0305ce3d4b8a967554",
+          "https://buildkite.com/gvisor/first-pass/builds/2646"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
         "curatedAt": "2026-11-19T16:20:03.380488+00:00",
@@ -92831,22 +92852,24 @@
           "sha256": "37017384ce8cc638265d4feb82b08cc0c404b70ec5c8465a7a78d7665f134c2d"
         },
         "currentHeadCI": {
-          "head": "eee45755f4fe679a3151206250c55fbfde0efa67",
-          "state": "FAILURE",
+          "head": "0f31a644c9bbc723443c46dfa5a99d2d2508c290",
+          "state": "SUCCESS",
           "evidence": [
-            "https://github.com/gvisor/gvisor/actions/runs/45223032883/job/137862076273",
-            "https://github.com/gvisor/gvisor/actions/runs/45223032896/job/137862076557",
-            "https://github.com/gvisor/gvisor/actions/runs/45223032851/job/137862076015",
-            "https://github.com/gvisor/gvisor/actions/runs/45223032881/job/137862076064",
-            "https://github.com/gvisor/gvisor/actions/runs/45223032883/job/137862078805",
-            "https://github.com/gvisor/gvisor/actions/runs/45223032883/job/137862079662",
-            "https://buildkite.com/gvisor/first-pass/builds/2456",
-            "https://github.com/cncf/dco2"
+            "https://github.com/gvisor/gvisor/actions/runs/45385515070/job/138415266514",
+            "https://github.com/gvisor/gvisor/actions/runs/45385515165/job/138415267407",
+            "https://github.com/gvisor/gvisor/actions/runs/45385515339/job/138415268489",
+            "https://github.com/gvisor/gvisor/actions/runs/45385515228/job/138415267271",
+            "https://github.com/gvisor/gvisor/actions/runs/45385515117/job/138415266900",
+            "https://github.com/gvisor/gvisor/actions/runs/45385515089/job/138415267069",
+            "https://github.com/gvisor/gvisor/actions/runs/45385515339/job/138415271093",
+            "https://github.com/gvisor/gvisor/actions/runs/45385515339/job/138415271345",
+            "https://github.com/cncf/dco2",
+            "https://buildkite.com/gvisor/first-pass/builds/2646"
           ],
-          "limits": "Exact-head FirstPass2456 pre-agent daily quota; no tests. Go terminal success is owner-verified after the overall API sample, not a new full API refresh."
+          "limits": "Exact-current-head native validation success; it does not qualify sensitive source review, broad workloads or performance."
         }
       },
-      "nextStep": "Root retains current-source reviewer follow-through under the confirmed sensitive-work hold. The foreign author retains implementation ownership. Await actual author evidence or user hold release; no protected source read, tests, timings, retry, outreach or transfer of old-head approval."
+      "nextStep": "Root retains current-source reviewer follow-through under the sensitive hold; the foreign author owns implementation and timeout-feedback resolution. Do not transfer old approval, read held source, run tests/timings, send outreach or ask Daybreak again."
     },
     {
       "id": "pr:17265",
@@ -100454,9 +100477,9 @@
       "number": 16871,
       "group": "bazel",
       "status": "open",
-      "head": "37ea324587c5a41ba85048ef960dc0763f007a31",
-      "updatedAt": "2026-11-24T05:35:00.184573+00:00",
-      "summary": "Current exact37ea32458 is CONFLICTING. The earlier mergeable-only wait is obsolete. Prior source qualification/approvals and separate import boundaries remain historical and source-bound.",
+      "head": "24959d472baf3aa7405ac1d3d3b88e47af8f7f76",
+      "updatedAt": "2026-11-24T12:39:14.280154+00:00",
+      "summary": "Authorized source delivery is complete at 24959d472; the publisher verified the exact native PR head as MERGEABLE/REVIEW_REQUIRED and preserved existing reviewer requests. The factual rebase notice is posted. Dual-architecture archive/source checks and two final reviews retain their recorded scopes; historical runtime/performance results are not fresh qualification of this rebase. Transport is no longer blocking this delivery.",
       "refinement": {
         "before": {
           "head": "20b3a2343097da5c10c138d4cd5cd644c629a2a5",
@@ -100468,18 +100491,19 @@
         }
       },
       "followup": {
-        "owner": "root / approved_rebase_queue",
-        "sourceHead": "37ea324587c5a41ba85048ef960dc0763f007a31",
-        "observedAt": "2026-11-24T05:35:00.184573+00:00",
-        "mergeable": "CONFLICTING",
-        "disposition": "Rebase source and dual-architecture archive construction passed; two independent final reviews clear. Authorized publication failed: SSH timed out, then GitHub explicitly refused HTTPS because the existing OAuth credential lacks workflow scope for .github/workflows/gazelle.yml. Remote head unchanged; no notice or new PR posted. Fresh runtime/performance validation is not claimed.",
-        "nextAction": "Resume the already-authorized exact-lease publication when SSH authentication recovers, then verify published heads, post factual rebase notices and preserve existing review requests. Nginx opening approval and DCO remain settled; no renewed publication approval is required.",
+        "owner": "root",
+        "sourceHead": "24959d472baf3aa7405ac1d3d3b88e47af8f7f76",
+        "observedAt": "2026-11-24T12:39:14.280154+00:00",
+        "mergeable": "MERGEABLE",
+        "disposition": "Authorized source delivery is complete at 24959d472; the publisher verified the exact native PR head as MERGEABLE/REVIEW_REQUIRED and preserved existing reviewer requests. The factual rebase notice is posted. Dual-architecture archive/source checks and two final reviews retain their recorded scopes; historical runtime/performance results are not fresh qualification of this rebase. Transport is no longer blocking this delivery.",
+        "nextAction": "Root follows actual current-head CI, maintainer review and import. Delivery and notice are fulfilled; no duplicate push, reviewer request, outreach, source approval or merge action is authorized.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/24959d472baf3aa7405ac1d3d3b88e47af8f7f76",
           "https://github.com/tamird/gvisor/actions/runs/45330782866",
-          "https://github.com/tamird/gvisor/actions/runs/45330786240"
+          "https://github.com/tamird/gvisor/actions/runs/45330786240",
+          "https://github.com/gvisor/gvisor/pull/16871#issuecomment-7131666475"
         ],
-        "recheckCondition": "User reports SSH agent unlocked, or existing authorized transport capability recovers; then one normal publication attempt. Reconcile any intervening source, review or prerequisite change before updating refs.",
+        "recheckCondition": "Actual current-head CI/review/import or head/base event; classify failures only from source-bound provider evidence.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -100547,7 +100571,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
       },
-      "nextStep": "Assigned approved_rebase_queue is actively performing bounded current-state review and isolated object preparation while the analyzer retains the main checkout. Preserve approved image/build semantics and separate import/review boundaries; qualify/review any real integration delta before publication. No blind retry, automatic source approval or competing checkout writer."
+      "nextStep": "Root follows actual current-head CI, maintainer review and import. Delivery and notice are fulfilled; no duplicate push, reviewer request, outreach, source approval or merge action is authorized."
     },
     {
       "id": "pr:nodejs/node:67426",
@@ -106827,6 +106851,34 @@
             }
           }
         ]
+      }
+    },
+    {
+      "id": "pr:17915",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17915,
+      "ref": "review/rules-img-nginx-benchmark-upstream-mirrors",
+      "head": "cafd7c0bb1ba8f37a32facc212e778ac84a1a3df",
+      "title": "Use the pinned official Nginx image for benchmarks",
+      "url": "https://github.com/google/gvisor/pull/17915",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-24T12:39:14.280154+00:00",
+      "summary": "The approved Nginx image proposal is delivered as ready-for-review PR17915 at cafd7c0bb. Publisher verified the exact head, master base and native mergeable=true. The opening grant is consumed; source checks have started. Prior dual-architecture archive construction and source reviews retain their scopes; no fresh runtime, ARM workload or performance claim follows.",
+      "nextStep": "Root follows current-head CI, maintainer review and import on PR17915. No duplicate opening, source approval question, reviewer outreach or merge is authorized.",
+      "followup": {
+        "disposition": "The approved Nginx image proposal is delivered as ready-for-review PR17915 at cafd7c0bb. Publisher verified the exact head, master base and native mergeable=true. The opening grant is consumed; source checks have started. Prior dual-architecture archive construction and source reviews retain their scopes; no fresh runtime, ARM workload or performance claim follows.",
+        "nextAction": "Root follows current-head CI, maintainer review and import on PR17915. No duplicate opening, source approval question, reviewer outreach or merge is authorized.",
+        "recheckCondition": "Actual PR17915 head/check/review/import or prerequisite change.",
+        "observedAt": "2026-11-24T12:39:14.280154+00:00",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/17915",
+          "https://github.com/tamird/gvisor/commit/cafd7c0bb1ba8f37a32facc212e778ac84a1a3df"
+        ],
+        "owner": "root",
+        "sourceHead": "cafd7c0bb1ba8f37a32facc212e778ac84a1a3df",
+        "mergeable": "MERGEABLE"
       }
     }
   ],
@@ -122172,7 +122224,7 @@
       "status": "active",
       "owner": "root",
       "updatedAt": "2026-11-23T22:28:52.692599+00:00",
-      "summary": "The due native-first guard found no newer/live native delivery. Sole snapshot-only fallback45384586173 succeeded with outreach disabled and delivered API2026-11-24T11:32:44.024830+00:00. Current workflow/default branch are active and correct; the scheduled-run API exposes no event after the06:07 native completion. There is no freshness-suppression guard or demonstrated fallback preemption. Scheduler-side event delivery remains unknown, not an established configuration defect.",
+      "summary": "The due native-first guard found no newer/live native delivery. Sole snapshot-only fallback45394813634 succeeded with outreach disabled and delivered API 2026-11-24T12:38:00.986688+00:00. Current workflow/default branch are active and correct; the scheduled-run API exposes no event after the 06:07 native completion. There is no freshness-suppression guard or demonstrated fallback preemption. Scheduler-side event delivery remains unknown, not an established configuration defect.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122415,7 +122467,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground/active-goal supervision owns the next native-first guard12:32:44 UTC and deadline13:02:44. Reuse a fresh/live native generation before at most one fallback. Preserve60/90-minute policy and two-hour UI threshold; no reset, new scheduler or operator outreach.",
+      "nextStep": "Root foreground/active-goal supervision owns the next native-first guard 13:38:00 UTC and deadline 14:08:00. Reuse a fresh/live native generation before at most one fallback. Preserve 60/90-minute policy and two-hour UI threshold; no reset, new scheduler or operator outreach.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122545,11 +122597,12 @@
           "https://github.com/tamird/gvisor/actions/runs/45287620194",
           "https://github.com/tamird/gvisor/actions/runs/45296589443",
           "https://github.com/tamird/gvisor/actions/runs/45374435406",
-          "https://github.com/tamird/gvisor/actions/runs/45384586173"
+          "https://github.com/tamird/gvisor/actions/runs/45384586173",
+          "https://github.com/tamird/gvisor/actions/runs/45394813634"
         ],
-        "observedAt": "2026-11-24T11:34:12.073058+00:00",
-        "disposition": "The due native-first guard found no newer/live native delivery. Sole snapshot-only fallback45384586173 succeeded with outreach disabled and delivered API2026-11-24T11:32:44.024830+00:00. Current workflow/default branch are active and correct; the scheduled-run API exposes no event after the06:07 native completion. There is no freshness-suppression guard or demonstrated fallback preemption. Scheduler-side event delivery remains unknown, not an established configuration defect.",
-        "nextAction": "Root foreground/active-goal supervision owns the next native-first guard12:32:44 UTC and deadline13:02:44. Reuse a fresh/live native generation before at most one fallback. Preserve60/90-minute policy and two-hour UI threshold; no reset, new scheduler or operator outreach.",
+        "observedAt": "2026-11-24T12:39:14.280154+00:00",
+        "disposition": "The due native-first guard found no newer/live native delivery. Sole snapshot-only fallback45394813634 succeeded with outreach disabled and delivered API 2026-11-24T12:38:00.986688+00:00. Current workflow/default branch are active and correct; the scheduled-run API exposes no event after the 06:07 native completion. There is no freshness-suppression guard or demonstrated fallback preemption. Scheduler-side event delivery remains unknown, not an established configuration defect.",
+        "nextAction": "Root foreground/active-goal supervision owns the next native-first guard 13:38:00 UTC and deadline 14:08:00. Reuse a fresh/live native generation before at most one fallback. Preserve 60/90-minute policy and two-hour UI threshold; no reset, new scheduler or operator outreach.",
         "recheckCondition": "Actual fresh/live native delivery, substantive external event or the next due guard.",
         "owner": "root"
       }
@@ -132078,7 +132131,7 @@
       "owner": "benchmark_measurement_review / root",
       "updatedAt": "2026-11-24T07:01:47.154032+00:00",
       "group": "analysis",
-      "summary": "Audit a3f52992 remains the reviewed one-commit preview, tree8b006d3f, with nine CI891 release products qualified under --nostamp. Maintained profile1c917837a855a5cec6c2a5c85454af275552c70c is accepted by root and both final reviews. Its two host-state findings are resolved: the actual temporary-engine203/EXEC/API-loss fault preserved COMMAND_EXIT1 while cleanup returned0 and restored the original service, configuration, socket endpoint/type/access/unit, containerd, storage, images, runtimes and containers. Source checks passed; unsupported dangling initial state was rejected without mutation. Published-engine selection is maintained in the existing shared helper/Bazel profile, retiring the recurring86-line invocation prefix. The full seven startup/checkpoint/restore N1 leaves, default graph Save/Load N1, exact nine products and canonical license226 retain their source scopes. No A/A or performance clearance follows.",
+      "summary": "Audit a3f52992 remains the reviewed one-commit preview, tree 8b006d3f, with nine CI891 release products qualified under --nostamp. Maintained profile 1c917837 is accepted after restoration/fault checks and both final reviews. Recorder e7ec passed unit, AMD/ARM NoGo, source and license gates and both final reviews; natural-CPU preflight exercised six children and two rows with identical binaries. Fixed same-source graph A/A run 45391128573 passed integrity for all 50 children. Five native reports then returned stability HOLD: early/late Save -16.14% and Load -9.98%, both flagged at alpha .001. Integrity is not statistical equivalence or performance clearance; no cause is established. The seven-leaf startup/checkpoint/restore N1 qualification and graph functional proof retain their exact source/product scopes.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132450,7 +132503,7 @@
           ]
         }
       ],
-      "nextStep": "state_graph_functional owns the common-recorder execution/integrity preflight on immutable CI compositionbfa2b9a7972281f15c23e3d7a4897cfbc9624949 over891, plus existing unit/source checks. It is not qualified yet. Only the cheap two-pair/-benchtime1x preflight with default CPU/no pin is authorized; no24-pair A/A or statistical measurement, quiet-CPU1 substitution or workload reduction. Broad required categories, common-harness A/A-first and performance remain outstanding. Preserve #17884, runtime/hardware, --nostamp/raw-default and sensitive-feature limits, actual pending decisions and approved image transport blockers.",
+      "nextStep": "state_graph_functional and benchmark_measurement_review retain the completed graph integrity/report handoff; do not retry, expand samples, override CPU placement or start A/B. The independent all-seven startup preflight failed before tests or mutation because xperf was undeclared. benchmark_measurement_review is recovering only the existing recorder dependency/catalog integration, with cheap prerequisite verification before the fixed preflight. Native reporting run 45389685061 aggregates n=2 only and supplies no broader inference. Broad required workload, stable common-harness A/A-first and performance gates remain open. Preserve #17884, hardware/runtime, --nostamp/raw-default and unrelated sensitive-feature limits and all actual pending decisions.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132792,7 +132845,7 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T11:34:12.073058+00:00",
+        "observedAt": "2026-11-24T12:39:14.280154+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45338108931",
           "https://github.com/tamird/gvisor/actions/runs/45344645597",
@@ -132820,12 +132873,19 @@
           "https://github.com/tamird/gvisor/actions/runs/45381375790/artifacts/14913219263",
           "https://github.com/tamird/gvisor/actions/runs/45381380626/artifacts/14914276769",
           "https://github.com/tamird/gvisor/actions/runs/45378211321/artifacts/14911169440",
-          "https://github.com/tamird/gvisor/actions/runs/45375341994/artifacts/14910947831"
+          "https://github.com/tamird/gvisor/actions/runs/45375341994/artifacts/14910947831",
+          "https://github.com/tamird/gvisor/actions/runs/45385932095",
+          "https://github.com/tamird/gvisor/actions/runs/45385934816",
+          "https://github.com/tamird/gvisor/actions/runs/45385291971",
+          "https://github.com/tamird/gvisor/actions/runs/45384914428",
+          "https://github.com/tamird/gvisor/actions/runs/45391128573/artifacts/14919091620",
+          "https://github.com/tamird/gvisor/actions/runs/45392312706/artifacts/14919786342",
+          "https://github.com/tamird/gvisor/actions/runs/45393450840"
         ],
         "owner": "benchmark_measurement_review / root",
-        "disposition": "Audit a3f52992 remains the reviewed one-commit preview, tree8b006d3f, with nine CI891 release products qualified under --nostamp. Maintained profile1c917837a855a5cec6c2a5c85454af275552c70c is accepted by root and both final reviews. Its two host-state findings are resolved: the actual temporary-engine203/EXEC/API-loss fault preserved COMMAND_EXIT1 while cleanup returned0 and restored the original service, configuration, socket endpoint/type/access/unit, containerd, storage, images, runtimes and containers. Source checks passed; unsupported dangling initial state was rejected without mutation. Published-engine selection is maintained in the existing shared helper/Bazel profile, retiring the recurring86-line invocation prefix. The full seven startup/checkpoint/restore N1 leaves, default graph Save/Load N1, exact nine products and canonical license226 retain their source scopes. No A/A or performance clearance follows.",
-        "nextAction": "state_graph_functional owns the common-recorder execution/integrity preflight on immutable CI compositionbfa2b9a7972281f15c23e3d7a4897cfbc9624949 over891, plus existing unit/source checks. It is not qualified yet. Only the cheap two-pair/-benchtime1x preflight with default CPU/no pin is authorized; no24-pair A/A or statistical measurement, quiet-CPU1 substitution or workload reduction. Broad required categories, common-harness A/A-first and performance remain outstanding. Preserve #17884, runtime/hardware, --nostamp/raw-default and sensitive-feature limits, actual pending decisions and approved image transport blockers.",
-        "recheckCondition": "Existing recorder owner returns actual integrity/unit/source evidence; real prerequisite landing or authorized common-harness/A/A-first readiness. No duplicate observer or unchanged timing retry.",
+        "disposition": "Audit a3f52992 remains the reviewed one-commit preview, tree 8b006d3f, with nine CI891 release products qualified under --nostamp. Maintained profile 1c917837 is accepted after restoration/fault checks and both final reviews. Recorder e7ec passed unit, AMD/ARM NoGo, source and license gates and both final reviews; natural-CPU preflight exercised six children and two rows with identical binaries. Fixed same-source graph A/A run 45391128573 passed integrity for all 50 children. Five native reports then returned stability HOLD: early/late Save -16.14% and Load -9.98%, both flagged at alpha .001. Integrity is not statistical equivalence or performance clearance; no cause is established. The seven-leaf startup/checkpoint/restore N1 qualification and graph functional proof retain their exact source/product scopes.",
+        "nextAction": "state_graph_functional and benchmark_measurement_review retain the completed graph integrity/report handoff; do not retry, expand samples, override CPU placement or start A/B. The independent all-seven startup preflight failed before tests or mutation because xperf was undeclared. benchmark_measurement_review is recovering only the existing recorder dependency/catalog integration, with cheap prerequisite verification before the fixed preflight. Native reporting run 45389685061 aggregates n=2 only and supplies no broader inference. Broad required workload, stable common-harness A/A-first and performance gates remain open. Preserve #17884, hardware/runtime, --nostamp/raw-default and unrelated sensitive-feature limits and all actual pending decisions.",
+        "recheckCondition": "Existing startup owner returns the dependency recovery and authorized preflight result; actual new methodology/placement evidence or prerequisite landing. No unchanged graph retry, A/B or causal claim.",
         "sourceHead": "a3f52992b34ef2873195b97b0856f20d061d0832",
         "technicalOwner": "benchmark_measurement_review (completed source qualification)"
       },
@@ -138887,7 +138947,7 @@
       "group": "ci-flakes",
       "owner": "root",
       "updatedAt": "2026-11-12T02:48:00+00:00",
-      "summary": "On master builds 54540 and 54548, BenchmarkRestoreEmpty and BenchmarkRestoreNginx failed before recording restore samples on both KVM and systrap. Docker tried to bind-mount /proc/0/ns/net into its network namespace directory and got ENOENT.",
+      "summary": "The Docker28 restore failure is retained: both original restore leaves failed before samples with /proc/0/ns/net ENOENT, matching the open Moby50750 report; a Sentry regression is not established. The actual server version and compatible published route are now known. All seven maintained startup/checkpoint/restore leaves passed N1 without failure or skip on official Docker27.5.1, using the same containerd/storage and exact nine qualified CI891 release products. Original Docker28 service and full host state were restored. Maintained profile 1c917837 now owns published-engine selection and restoration; fault and unsupported-initial-state checks passed. These results do not retroactively explain the original Docker28 failures or the first host-restoration failure.",
       "findings": [
         {
           "text": "On native AMD64 with systrap, Docker 24.0.9 and overlay2, the restore benchmarks ran the same timed code as master. Empty completed 146 iterations at 289.30 ms/op. Nginx completed 84 iterations at 823.47 ms/op through HTTP 200. All seven XML test records passed. The earlier control ran 133 Empty iterations at 304.42 ms/op and 86 Nginx iterations at 502.66 ms/op with TCP readiness. The two Nginx measurements use different readiness checks.",
@@ -138988,7 +139048,7 @@
           ]
         }
       ],
-      "nextStep": "Identify the Docker server version and obtain its journal around the checkpoint task’s creation and network namespace lookup. The retained systrap logs end before runsc restore. Compare the daemon sequence with the supported Docker 24 run.",
+      "nextStep": "Root and benchmark_measurement_review retain the Docker28/Moby dependency separately from the accepted Docker27 functional route. Use the maintained profile for the already-authorized shared-harness prerequisites; do not repeat server-version discovery, weaken networking/confinement, rebuild an engine or infer performance clearance. Preserve the separate unanswered ce163 non-Bazel make rebuild-moby exception; released-engine qualification did not require it.",
       "evidence": [
         {
           "label": "Master build 54540, KVM and systrap benchmark log",
@@ -139057,6 +139117,19 @@
         "owner": "root",
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+      },
+      "followup": {
+        "disposition": "The Docker28 restore failure is retained: both original restore leaves failed before samples with /proc/0/ns/net ENOENT, matching the open Moby50750 report; a Sentry regression is not established. The actual server version and compatible published route are now known. All seven maintained startup/checkpoint/restore leaves passed N1 without failure or skip on official Docker27.5.1, using the same containerd/storage and exact nine qualified CI891 release products. Original Docker28 service and full host state were restored. Maintained profile 1c917837 now owns published-engine selection and restoration; fault and unsupported-initial-state checks passed. These results do not retroactively explain the original Docker28 failures or the first host-restoration failure.",
+        "nextAction": "Root and benchmark_measurement_review retain the Docker28/Moby dependency separately from the accepted Docker27 functional route. Use the maintained profile for the already-authorized shared-harness prerequisites; do not repeat server-version discovery, weaken networking/confinement, rebuild an engine or infer performance clearance. Preserve the separate unanswered ce163 non-Bazel make rebuild-moby exception; released-engine qualification did not require it.",
+        "recheckCondition": "Actual Moby50750 resolution, a changed supported-engine requirement or new naturally supplied restore evidence; common-harness qualification proceeds under its existing owner.",
+        "observedAt": "2026-11-24T12:39:14.280154+00:00",
+        "evidence": [
+          "https://github.com/moby/moby/issues/50750",
+          "https://github.com/tamird/gvisor/actions/runs/45372422612/artifacts/14910101961",
+          "https://github.com/tamird/gvisor/commit/1c917837a855a5cec6c2a5c85454af275552c70c",
+          "https://github.com/tamird/gvisor/actions/runs/45381375790/artifacts/14913219263"
+        ],
+        "owner": "benchmark_measurement_review / root"
       }
     },
     {

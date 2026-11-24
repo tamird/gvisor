@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-24T12:38:00.986688+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-24T11:34:12.073058+00:00",
+  "registryDate": "2026-11-24T12:40:36.478776+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -456990,7 +456990,7 @@
       "number": 16462,
       "head": "9354eb0eeba8d44da40cdae3235e51e890e82b63",
       "sourceNumber": 16462,
-      "owner": "root / approved_rebase_queue",
+      "owner": "root",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABhZ6GfQ",
       "needsTriage": false,
@@ -457720,7 +457720,7 @@
       "number": 16458,
       "head": "303aee0fb294bcf676c2579d24b6821d0578a603",
       "sourceNumber": 16458,
-      "owner": "root / approved_rebase_queue",
+      "owner": "root",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABk8iBdA",
       "needsTriage": false,
@@ -458066,7 +458066,7 @@
       "number": 16458,
       "head": "303aee0fb294bcf676c2579d24b6821d0578a603",
       "sourceNumber": 16458,
-      "owner": "root / approved_rebase_queue",
+      "owner": "root",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABlh1Mpw",
       "needsTriage": false,
@@ -458553,8 +458553,8 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "0f31a644c9bbc723443c46dfa5a99d2d2508c290",
-      "action": "Read the reply on this review and follow up on the current revision.",
-      "claimed": false,
+      "action": "Root retains current-source reviewer follow-through under the sensitive hold; the foreign author owns implementation and timeout-feedback resolution. Do not transfer old approval, read held source, run tests/timings, send outreach or ask Daybreak again.",
+      "claimed": true,
       "firstObservedHead": "e5f0f6f7fc500b646b4a0dbd738f142e1a9032a2",
       "reviewHead": null,
       "kind": "inline",
@@ -458565,7 +458565,7 @@
       "threadId": "PRRT_kwDOB9IlXs61UqSZ",
       "rootURL": "https://github.com/google/gvisor/pull/17264#discussion_r4514647899",
       "rootId": "PRRC_kwDOB9IlXs8AAAABDRgPWw",
-      "owner": "Netstack",
+      "owner": "root",
       "assigned": false,
       "feedbackComplete": true
     },
@@ -458573,8 +458573,8 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "0f31a644c9bbc723443c46dfa5a99d2d2508c290",
-      "action": "Read the reply on this review and follow up on the current revision.",
-      "claimed": false,
+      "action": "Root retains current-source reviewer follow-through under the sensitive hold; the foreign author owns implementation and timeout-feedback resolution. Do not transfer old approval, read held source, run tests/timings, send outreach or ask Daybreak again.",
+      "claimed": true,
       "firstObservedHead": "3389a2aa144abf8f474fc65bcabc84487564ee86",
       "reviewHead": null,
       "kind": "inline",
@@ -458585,7 +458585,7 @@
       "threadId": "PRRT_kwDOB9IlXs61UqSZ",
       "rootURL": "https://github.com/google/gvisor/pull/17264#discussion_r4514647899",
       "rootId": "PRRC_kwDOB9IlXs8AAAABDRgPWw",
-      "owner": "Netstack",
+      "owner": "root",
       "assigned": false,
       "feedbackComplete": true
     },
@@ -458593,8 +458593,8 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "0f31a644c9bbc723443c46dfa5a99d2d2508c290",
-      "action": "Read the reply on this review and follow up on the current revision.",
-      "claimed": false,
+      "action": "Root retains current-source reviewer follow-through under the sensitive hold; the foreign author owns implementation and timeout-feedback resolution. Do not transfer old approval, read held source, run tests/timings, send outreach or ask Daybreak again.",
+      "claimed": true,
       "firstObservedHead": "0ec767e4d4f1ec1bdf56d3675e06b860a02d7e19",
       "reviewHead": null,
       "kind": "inline",
@@ -458605,7 +458605,7 @@
       "threadId": "PRRT_kwDOB9IlXs61UqSZ",
       "rootURL": "https://github.com/google/gvisor/pull/17264#discussion_r4514647899",
       "rootId": "PRRC_kwDOB9IlXs8AAAABDRgPWw",
-      "owner": "Netstack",
+      "owner": "root",
       "assigned": false,
       "feedbackComplete": true
     }
@@ -458817,13 +458817,13 @@
       "checkedAt": "2026-11-24T12:37:21.435481+00:00",
       "mergeabilityCheckedAt": "2026-11-24T12:35:13.731602+00:00",
       "sourceBranchMismatch": false,
-      "owner": "root / approved_rebase_queue",
-      "action": "Resume the already-authorized exact-lease publication when SSH authentication recovers, then verify published heads, post factual rebase notices and preserve existing review requests. Nginx opening approval and DCO remain settled; no renewed publication approval is required.",
+      "owner": "root",
+      "action": "This conflict is the dated pre-delivery observation at 303aee0fb. The publisher verified delivered current source f9f6e3261 as MERGEABLE and posted its notice. Follow actual current-head CI/review/import; do not prepare another rebase from this older observation.",
       "recordedFollowup": {
-        "owner": "root / approved_rebase_queue",
-        "sourceHead": "303aee0fb294bcf676c2579d24b6821d0578a603",
-        "disposition": "Rebase source and dual-architecture archive construction passed; two independent final reviews clear. Authorized publication failed: SSH timed out, then GitHub explicitly refused HTTPS because the existing OAuth credential lacks workflow scope for .github/workflows/gazelle.yml. Remote head unchanged; no notice or new PR posted. Fresh runtime/performance validation is not claimed.",
-        "nextAction": "Resume the already-authorized exact-lease publication when SSH authentication recovers, then verify published heads, post factual rebase notices and preserve existing review requests. Nginx opening approval and DCO remain settled; no renewed publication approval is required."
+        "owner": "root",
+        "sourceHead": "f9f6e3261d13800cb3bdbdaf713d44fc142811ac",
+        "disposition": "Authorized source delivery is complete at f9f6e3261; the publisher verified the exact native PR head as MERGEABLE/REVIEW_REQUIRED and preserved existing reviewer requests. The factual rebase notice is posted. Dual-architecture archive/source checks and two final reviews retain their recorded scopes; historical runtime/performance results are not fresh qualification of this rebase. Transport is no longer blocking this delivery.",
+        "nextAction": "Root follows actual current-head CI, maintainer review and import. Delivery and notice are fulfilled; no duplicate push, reviewer request, outreach, source approval or merge action is authorized."
       },
       "conflictObservedSince": "2026-11-24T04:40:54.661885+00:00"
     },
@@ -458841,13 +458841,13 @@
       "checkedAt": "2026-11-24T12:37:21.435481+00:00",
       "mergeabilityCheckedAt": "2026-11-24T12:35:13.731603+00:00",
       "sourceBranchMismatch": false,
-      "owner": "root / approved_rebase_queue",
-      "action": "Resume the already-authorized exact-lease publication when SSH authentication recovers, then verify published heads, post factual rebase notices and preserve existing review requests. Nginx opening approval and DCO remain settled; no renewed publication approval is required.",
+      "owner": "root",
+      "action": "This conflict is the dated pre-delivery observation at 9354eb0ee. The publisher verified delivered current source ce539633f as MERGEABLE and posted its notice. Follow actual current-head CI/review/import; do not prepare another rebase from this older observation.",
       "recordedFollowup": {
-        "owner": "root / approved_rebase_queue",
-        "sourceHead": "9354eb0eeba8d44da40cdae3235e51e890e82b63",
-        "disposition": "Rebase source and dual-architecture archive construction passed; two independent final reviews clear. Authorized publication failed: SSH timed out, then GitHub explicitly refused HTTPS because the existing OAuth credential lacks workflow scope for .github/workflows/gazelle.yml. Remote head unchanged; no notice or new PR posted. Fresh runtime/performance validation is not claimed.",
-        "nextAction": "Resume the already-authorized exact-lease publication when SSH authentication recovers, then verify published heads, post factual rebase notices and preserve existing review requests. Nginx opening approval and DCO remain settled; no renewed publication approval is required."
+        "owner": "root",
+        "sourceHead": "ce539633fa36f5f73f9e85a1cdc907be23ef1be5",
+        "disposition": "Authorized source delivery is complete at ce539633f; the publisher verified the exact native PR head as MERGEABLE/REVIEW_REQUIRED and preserved existing reviewer requests. The factual rebase notice is posted. Dual-architecture archive/source checks and two final reviews retain their recorded scopes; historical runtime/performance results are not fresh qualification of this rebase. Transport is no longer blocking this delivery.",
+        "nextAction": "Root follows actual current-head CI, maintainer review and import. Delivery and notice are fulfilled; no duplicate push, reviewer request, outreach, source approval or merge action is authorized."
       },
       "conflictObservedSince": "2026-11-24T04:40:54.661885+00:00"
     },
@@ -471098,7 +471098,7 @@
         "since": "2026-11-24T02:57:05.420540+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T11:34:12.073058+00:00"
+        "observedAt": "2026-11-24T12:40:36.478776+00:00"
       }
     },
     "pr:16539": {
@@ -473240,7 +473240,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T11:34:12.073058+00:00"
+        "observedAt": "2026-11-24T12:40:36.478776+00:00"
       }
     },
     "pr:17082": {
@@ -475772,7 +475772,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T11:34:12.073058+00:00"
+        "observedAt": "2026-11-24T12:40:36.478776+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -475781,7 +475781,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T11:34:12.073058+00:00"
+        "observedAt": "2026-11-24T12:40:36.478776+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -475790,7 +475790,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T11:34:12.073058+00:00"
+        "observedAt": "2026-11-24T12:40:36.478776+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -475799,7 +475799,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T11:34:12.073058+00:00"
+        "observedAt": "2026-11-24T12:40:36.478776+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -475808,7 +475808,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T11:34:12.073058+00:00"
+        "observedAt": "2026-11-24T12:40:36.478776+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -475817,7 +475817,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T11:34:12.073058+00:00"
+        "observedAt": "2026-11-24T12:40:36.478776+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -475826,7 +475826,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T11:34:12.073058+00:00"
+        "observedAt": "2026-11-24T12:40:36.478776+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -475835,7 +475835,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T11:34:12.073058+00:00"
+        "observedAt": "2026-11-24T12:40:36.478776+00:00"
       }
     },
     "issue:17832": {
@@ -475844,7 +475844,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T11:34:12.073058+00:00"
+        "observedAt": "2026-11-24T12:40:36.478776+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -475853,7 +475853,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T11:34:12.073058+00:00"
+        "observedAt": "2026-11-24T12:40:36.478776+00:00"
       }
     },
     "investigation:repository-lint": {
@@ -475862,7 +475862,7 @@
         "since": "2026-11-24T00:13:57.833052+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T11:34:12.073058+00:00"
+        "observedAt": "2026-11-24T12:40:36.478776+00:00"
       }
     },
     "investigation:ci-flake-node-worker-arraybuffer-zerofill": {
@@ -475871,7 +475871,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T11:34:12.073058+00:00"
+        "observedAt": "2026-11-24T12:40:36.478776+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -475880,7 +475880,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T11:34:12.073058+00:00",
+        "observedAt": "2026-11-24T12:40:36.478776+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     }
