@@ -1063,3 +1063,35 @@ http_archive(
     type = "zip",
     urls = ["https://api.github.com/repos/tamird/gvisor/actions/artifacts/14935569879/zip"],
 )
+
+img_pull(
+    name = "benchmark_iperf_amd64",
+    digest = "sha256:09f17d4c701a4d09b78be8754105c216174f7c90f44a5a215a7f48aea998d66c",
+    layer_handling = "eager",
+    registries = ["us-central1-docker.pkg.dev"],
+    repository = "gvisor-presubmit/gvisor-presubmit-images/benchmarks/iperf_x86_64",
+)
+
+img_pull(
+    name = "benchmark_httpd_amd64",
+    digest = "sha256:d1d6abf28e00160e88a9993e2c19c7a60465e348031c5627442be0eda5364567",
+    layer_handling = "eager",
+    registries = ["us-central1-docker.pkg.dev"],
+    repository = "gvisor-presubmit/gvisor-presubmit-images/benchmarks/httpd_x86_64",
+)
+
+img_pull(
+    name = "benchmark_ruby_amd64",
+    digest = "sha256:45d578c499c01c7a1eae881d58966d00ff5b76b788f9d033f8f03d58d300f52c",
+    layer_handling = "eager",
+    registries = ["us-central1-docker.pkg.dev"],
+    repository = "gvisor-presubmit/gvisor-presubmit-images/benchmarks/ruby_x86_64",
+)
+
+img_pull(
+    name = "benchmark_hey_amd64",
+    digest = "sha256:4ee056774685f11df9503e9e67db54d5fcb1a9c9d9ffa9afa3b1ce93bb9e02b0",
+    layer_handling = "eager",
+    registries = ["us-central1-docker.pkg.dev"],
+    repository = "gvisor-presubmit/gvisor-presubmit-images/benchmarks/hey_x86_64",
+)
