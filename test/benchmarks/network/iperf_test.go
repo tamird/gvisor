@@ -42,9 +42,9 @@ func BenchmarkIperfOneConnection(b *testing.B) {
 	defer serverMachine.CleanUp()
 	ctx := context.Background()
 	for _, bm := range []struct {
-		name       string
 		clientFunc func(context.Context, testutil.Logger) *dockerutil.Container
 		serverFunc func(context.Context, testutil.Logger) *dockerutil.Container
+		name       string
 	}{
 		// We are either measuring the server or the client. The other should be
 		// runc. e.g. Upload sees how fast the runtime under test uploads to a native
@@ -121,12 +121,12 @@ func BenchmarkIperfManyConnections(b *testing.B) {
 	defer serverMachine.CleanUp()
 	ctx := context.Background()
 	for _, bm := range []struct {
-		name         string
-		enableForPGO bool
-		length       int
-		parallel     int
 		clientFunc   func(context.Context, testutil.Logger) *dockerutil.Container
 		serverFunc   func(context.Context, testutil.Logger) *dockerutil.Container
+		name         string
+		length       int
+		parallel     int
+		enableForPGO bool
 	}{
 		// We are either measuring the server or the client. The other should be
 		// runc. e.g. Upload sees how fast the runtime under test uploads to a native

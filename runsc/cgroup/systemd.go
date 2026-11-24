@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -55,20 +56,21 @@ var (
 
 // cgroupSystemd represents a cgroupv2 managed by systemd.
 type cgroupSystemd struct {
-	cgroupV2
-	// Name is the name of the of the systemd scope that controls the cgroups.
-	Name string
-	// Parent is the encapsulating slice.
-	Parent string
-	// ScopePrefix is the prefix for the scope name.
-	ScopePrefix string
-
 	// initialResources is retained from Install until a successful Join.
 	// It is not serialized; Update receives the current resources explicitly.
 	initialResources *specs.LinuxResources
+	dbusConn         *systemdDbus.Conn
 
+	// Name is the name of the of the systemd scope that controls the cgroups.
+	Name string
+
+	// Parent is the encapsulating slice.
+	Parent string
+
+	// ScopePrefix is the prefix for the scope name.
+	ScopePrefix string
+	cgroupV2
 	properties []systemdDbus.Property
-	dbusConn   *systemdDbus.Conn
 }
 
 func newCgroupV2Systemd(cgv2 *cgroupV2) (*cgroupSystemd, error) {
@@ -118,13 +120,7 @@ func (c *cgroupSystemd) installCompatDir(res *specs.LinuxResources) error {
 	if err := os.MkdirAll(path, 0o755); err != nil {
 		return fmt.Errorf("creating compat cgroup dir %q: %w", path, err)
 	}
-	alreadyTracked := false
-	for _, owned := range c.Own {
-		if owned == path {
-			alreadyTracked = true
-			break
-		}
-	}
+	alreadyTracked := slices.Contains(c.Own, path)
 	if !alreadyTracked {
 		c.Own = append(c.Own, path)
 	}
@@ -285,8 +281,7 @@ func (c *cgroupSystemd) Join() (func(), error) {
 // exists.
 func unitAlreadyExists(err error) bool {
 	if err != nil {
-		var derr dbus.Error
-		if errors.As(err, &derr) {
+		if derr, ok := errors.AsType[dbus.Error](err); ok {
 			return strings.Contains(derr.Name, "org.freedesktop.systemd1.UnitExists")
 		}
 	}
@@ -304,7 +299,7 @@ func expandSlice(slice string) string {
 	if sliceName == "-" {
 		return "/"
 	}
-	for _, component := range strings.Split(sliceName, "-") {
+	for component := range strings.SplitSeq(sliceName, "-") {
 		// Append the component to the path and to the prefix.
 		path += "/" + prefix + component + suffix
 		prefix += component + "-"
@@ -329,7 +324,7 @@ func validSlice(slice string) error {
 	if sliceName == "-" {
 		return nil
 	}
-	for _, component := range strings.Split(sliceName, "-") {
+	for component := range strings.SplitSeq(sliceName, "-") {
 		// test--a.slice isn't permitted, nor is -test.slice.
 		if component == "" {
 			return fmt.Errorf("%w: %s", ErrInvalidSlice, slice)
@@ -392,13 +387,7 @@ func (c *cgroupSystemd) resourceProps(res *specs.LinuxResources) ([]systemdDbus.
 	var resProps []systemdDbus.Property
 	for controllerName, ctrlr := range controllers2 {
 		// First check if our controller is found in the system.
-		found := false
-		for _, knownController := range c.Controllers {
-			if controllerName == knownController {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(c.Controllers, controllerName)
 		if found {
 			props, err := ctrlr.generateProperties(res)
 			if err != nil {
@@ -425,9 +414,7 @@ func CreateMockSystemdCgroup() Cgroup {
 		Name:        "test",
 		ScopePrefix: "runsc",
 		Parent:      "system.slice",
-		cgroupV2: cgroupV2{
-			Mountpoint: "/sys/fs/cgroup",
-			Path:       "/a/random/path",
-		},
+		Mountpoint:  "/sys/fs/cgroup",
+		Path:        "/a/random/path",
 	}
 }

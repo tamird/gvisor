@@ -35,14 +35,17 @@ var (
 // hostInetConn allows reading and writing to a local host socket for hostinet.
 // hostInetConn implements proxyConn.
 type hostInetConn struct {
-	// wq is the WaitQueue registered with fdnotifier for this fd.
-	wq waiter.Queue
 	// fd is the file descriptor for the socket.
 	fd *fileDescriptor.FD
-	// port is the port on which to connect.
-	port uint16
+
+	// wq is the WaitQueue registered with fdnotifier for this fd.
+	wq waiter.Queue
+
 	// once makes sure we close only once.
 	once sync.Once
+
+	// port is the port on which to connect.
+	port uint16
 }
 
 // NewHostInetConn creates a hostInetConn backed by a host socket on the localhost address.

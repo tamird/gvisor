@@ -16,6 +16,7 @@ package netfilter
 
 import (
 	"fmt"
+	"slices"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
@@ -88,7 +89,7 @@ func (c conntrackMarshaler) unmarshal(_ IDMapper, _ *stack.Stack, buf []byte, _ 
 			return nil, fmt.Errorf("conntrack rev1: unsupported match flags 0x%x (only --ctstate is supported)", mt.MatchFlags)
 		}
 		m.matchFlags, m.invertFlags, m.stateMask = mt.MatchFlags, mt.InvertFlags, uint16(mt.StateMask)
-		m.raw = append([]byte(nil), buf[:mt.SizeBytes()]...)
+		m.raw = slices.Concat[[]byte](buf[:mt.SizeBytes()])
 	case 2:
 		var mt linux.XTConntrackMtinfo2
 		if len(buf) < mt.SizeBytes() {
@@ -99,7 +100,7 @@ func (c conntrackMarshaler) unmarshal(_ IDMapper, _ *stack.Stack, buf []byte, _ 
 			return nil, fmt.Errorf("conntrack rev2: unsupported match flags 0x%x (only --ctstate is supported)", mt.MatchFlags)
 		}
 		m.matchFlags, m.invertFlags, m.stateMask = mt.MatchFlags, mt.InvertFlags, mt.StateMask
-		m.raw = append([]byte(nil), buf[:mt.SizeBytes()]...)
+		m.raw = slices.Concat[[]byte](buf[:mt.SizeBytes()])
 	case 3:
 		var mt linux.XTConntrackMtinfo3
 		if len(buf) < mt.SizeBytes() {
@@ -110,7 +111,7 @@ func (c conntrackMarshaler) unmarshal(_ IDMapper, _ *stack.Stack, buf []byte, _ 
 			return nil, fmt.Errorf("conntrack rev3: unsupported match flags 0x%x (only --ctstate is supported)", mt.MatchFlags)
 		}
 		m.matchFlags, m.invertFlags, m.stateMask = mt.MatchFlags, mt.InvertFlags, mt.StateMask
-		m.raw = append([]byte(nil), buf[:mt.SizeBytes()]...)
+		m.raw = slices.Concat[[]byte](buf[:mt.SizeBytes()])
 	default:
 		return nil, fmt.Errorf("conntrack: unsupported revision %d", c.rev)
 	}
@@ -119,11 +120,11 @@ func (c conntrackMarshaler) unmarshal(_ IDMapper, _ *stack.Stack, buf []byte, _ 
 
 // conntrackMatcher matches on the connection-tracking --ctstate of a packet.
 type conntrackMatcher struct {
-	rev         uint8
+	raw         []byte
 	matchFlags  uint16
 	invertFlags uint16
 	stateMask   uint16
-	raw         []byte
+	rev         uint8
 }
 
 // name implements matcher.name.

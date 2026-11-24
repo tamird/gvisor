@@ -117,22 +117,27 @@ func TestCountCpuset(t *testing.T) {
 	}
 }
 
+//go:fix inline
 func uint16Ptr(v uint16) *uint16 {
 	return &v
 }
 
+//go:fix inline
 func uint32Ptr(v uint32) *uint32 {
 	return &v
 }
 
+//go:fix inline
 func int64Ptr(v int64) *int64 {
 	return &v
 }
 
+//go:fix inline
 func uint64Ptr(v uint64) *uint64 {
 	return &v
 }
 
+//go:fix inline
 func boolPtr(v bool) *bool {
 	return &v
 }
@@ -185,26 +190,26 @@ func makeLinuxWeightDevice(major, minor int64, weight, leafWeight *uint16) specs
 	rv := specs.LinuxWeightDevice{
 		Weight:     weight,
 		LeafWeight: leafWeight,
-	}
-	rv.Major = major
-	rv.Minor = minor
+
+		Major: major,
+		Minor: minor}
 	return rv
 }
 
 func makeLinuxThrottleDevice(major, minor int64, rate uint64) specs.LinuxThrottleDevice {
 	rv := specs.LinuxThrottleDevice{
 		Rate: rate,
-	}
-	rv.Major = major
-	rv.Minor = minor
+
+		Major: major,
+		Minor: minor}
 	return rv
 }
 
 func TestBlockIO(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
 		spec  *specs.LinuxBlockIO
 		wants map[string]string
+		name  string
 	}{
 		{
 			name: "simple",
@@ -292,9 +297,9 @@ func TestBlockIO(t *testing.T) {
 
 func TestCPU(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
 		spec  *specs.LinuxCPU
 		wants map[string]string
+		name  string
 	}{
 		{
 			name: "all",
@@ -345,9 +350,9 @@ func TestCPU(t *testing.T) {
 
 func TestCPUSet(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
 		spec  *specs.LinuxCPU
 		wants map[string]string
+		name  string
 	}{
 		{
 			name: "all",
@@ -404,8 +409,8 @@ func TestCPUSetAncestor(t *testing.T) {
 	}
 
 	for _, tc := range []struct {
-		name string
 		spec *specs.LinuxCPU
+		name string
 	}{
 		{
 			name: "nil_values",
@@ -462,9 +467,9 @@ func TestCPUSetAncestor(t *testing.T) {
 
 func TestHugeTlb(t *testing.T) {
 	for _, tc := range []struct {
+		wants map[string]string
 		name  string
 		spec  []specs.LinuxHugepageLimit
-		wants map[string]string
 	}{
 		{
 			name: "single",
@@ -528,9 +533,9 @@ func TestHugeTlb(t *testing.T) {
 
 func TestMemory(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
 		spec  *specs.LinuxMemory
 		wants map[string]string
+		name  string
 	}{
 		{
 			name: "all",
@@ -592,9 +597,9 @@ func TestMemory(t *testing.T) {
 
 func TestNetworkClass(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
 		spec  *specs.LinuxNetwork
 		wants map[string]string
+		name  string
 	}{
 		{
 			name: "all",
@@ -637,9 +642,9 @@ func TestNetworkClass(t *testing.T) {
 
 func TestNetworkPriority(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
 		spec  *specs.LinuxNetwork
 		wants map[string]string
+		name  string
 	}{
 		{
 			name: "all",
@@ -687,9 +692,9 @@ func TestNetworkPriority(t *testing.T) {
 
 func TestPids(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
 		spec  *specs.LinuxPids
 		wants map[string]string
+		name  string
 	}{
 		{
 			name: "all",

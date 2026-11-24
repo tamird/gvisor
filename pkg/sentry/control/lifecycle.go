@@ -43,8 +43,6 @@ type Lifecycle struct {
 	// Kernel is the kernel where the tasks belong to.
 	Kernel *kernel.Kernel
 
-	mu sync.RWMutex
-
 	// ShutdownCh is the channel used to signal the sentry to shutdown
 	// the sentry/sandbox.
 	//
@@ -60,6 +58,8 @@ type Lifecycle struct {
 	//
 	// +checklocks:mu
 	containerMap map[string]*Container
+
+	mu sync.RWMutex
 }
 
 // ContainerNamespaces holds container namespaces that are constructed before
@@ -87,11 +87,11 @@ const (
 
 // Container contains the set of parameters to represent a container.
 type Container struct {
-	// containerID.
-	containerID string
-
 	// tg is the init(PID 1) threadgroup of the container.
 	tg *kernel.ThreadGroup
+
+	// containerID.
+	containerID string
 
 	// state is the current state of the container.
 	//
@@ -103,32 +103,19 @@ type Container struct {
 
 // StartContainerArgs is the set of arguments to start a container.
 type StartContainerArgs struct {
+	// Limits is the limit set for the process being executed.
+	Limits map[string]limits.Limit `json:"limits"`
+
+	// InitialCgroups is the set of cgroup controllers container needs to be initialised to.
+	InitialCgroups map[kernel.CgroupControllerType]string `json:"initial_cgroups"`
+
 	// Filename is the filename to load.
 	//
 	// If this is provided as "", then the file will be guessed via Argv[0].
 	Filename string `json:"filename"`
 
-	// Argv is a list of arguments.
-	Argv []string `json:"argv"`
-
-	// Envv is a list of environment variables.
-	Envv []string `json:"envv"`
-
-	// Secret_envv is a list of secret environment variables.
-	//
-	// NOTE: This field must never be logged!
-	SecretEnvv []string `json:"secret_envv"`
-
 	// WorkingDirectory defines the working directory for the new process.
 	WorkingDirectory string `json:"wd"`
-
-	// KUID is the UID to run with in the root user namespace. Defaults to
-	// root if not set explicitly.
-	KUID auth.KUID `json:"KUID"`
-
-	// KGID is the GID to run with in the root user namespace. Defaults to
-	// the root group if not set explicitly.
-	KGID auth.KGID `json:"KGID"`
 
 	// User is the user string used to retrieve UID/GID.
 	User string `json:"user"`
@@ -136,11 +123,31 @@ type StartContainerArgs struct {
 	// ContainerID is the container for the process being executed.
 	ContainerID string `json:"container_id"`
 
-	// InitialCgroups is the set of cgroup controllers container needs to be initialised to.
-	InitialCgroups map[kernel.CgroupControllerType]string `json:"initial_cgroups"`
+	// Argv is a list of arguments.
+	Argv []string `json:"argv"`
 
-	// Limits is the limit set for the process being executed.
-	Limits map[string]limits.Limit `json:"limits"`
+	// Envv is a list of environment variables.
+	Envv []string `json:"envv"`
+
+	// SecretEnvv is a list of secret environment variables.
+	//
+	// NOTE: This field must never be logged!
+	SecretEnvv []string `json:"secret_envv"`
+
+	// DonatedFDs lists Sentry-internal file descriptors to donate. They
+	// correspond to the donated files in FilePayload.
+	DonatedFDs []int `json:"donated_fds"`
+
+	// FilePayload determines the files to give to the new process.
+	urpc.FilePayload
+
+	// KGID is the GID to run with in the root user namespace. Defaults to
+	// the root group if not set explicitly.
+	KGID auth.KGID `json:"KGID"`
+
+	// KUID is the UID to run with in the root user namespace. Defaults to
+	// root if not set explicitly.
+	KUID auth.KUID `json:"KUID"`
 
 	// If HOME environment variable is not provided, and this flag is set,
 	// then the HOME environment variable will be set inside the container
@@ -154,13 +161,6 @@ type StartContainerArgs struct {
 	// 3) Otherwise, search the PATH environment variable for the first directory
 	//    that contains an executable file with name in binary_path.
 	ResolveBinaryPath bool `json:"resolve_binary_path"`
-
-	// DonatedFDs is the list of sentry-intrenal file descriptors that will
-	// donated. They correspond to the donated files in FilePayload.
-	DonatedFDs []int `json:"donated_fds"`
-
-	// FilePayload determines the files to give to the new process.
-	urpc.FilePayload
 }
 
 // String formats the StartContainerArgs without the SecretEnvv field.

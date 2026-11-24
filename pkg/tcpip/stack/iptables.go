@@ -353,8 +353,8 @@ const (
 
 type checkTable struct {
 	fn      checkTableFn
-	tableID TableID
 	table   Table
+	tableID TableID
 }
 
 // shouldSkipOrPopulateTables returns true iff IPTables should be skipped.

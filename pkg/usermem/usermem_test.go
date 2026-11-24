@@ -110,7 +110,7 @@ func TestBytesIOCopyOutFromSuccess(t *testing.T) {
 	n, err := b.CopyOutFrom(newContext(), hostarch.AddrRangeSeqFromSlice([]hostarch.AddrRange{
 		{Start: 4, End: 7},
 		{Start: 1, End: 4},
-	}), safemem.FromIOReader{bytes.NewBufferString("barfoo")}, IOOpts{})
+	}), safemem.FromIOReader{Reader: bytes.NewBufferString("barfoo")}, IOOpts{})
 	if wantN := int64(6); n != wantN || err != nil {
 		t.Errorf("CopyOutFrom: got (%v, %v), wanted (%v, nil)", n, err, wantN)
 	}
@@ -124,7 +124,7 @@ func TestBytesIOCopyOutFromFailure(t *testing.T) {
 	n, err := b.CopyOutFrom(newContext(), hostarch.AddrRangeSeqFromSlice([]hostarch.AddrRange{
 		{Start: 1, End: 4},
 		{Start: 4, End: 7},
-	}), safemem.FromIOReader{bytes.NewBufferString("foobar")}, IOOpts{})
+	}), safemem.FromIOReader{Reader: bytes.NewBufferString("foobar")}, IOOpts{})
 	if wantN, wantErr := int64(4), linuxerr.EFAULT; n != wantN || err != wantErr {
 		t.Errorf("CopyOutFrom: got (%v, %v), wanted (%v, %v)", n, err, wantN, wantErr)
 	}
@@ -139,7 +139,7 @@ func TestBytesIOCopyInToSuccess(t *testing.T) {
 	n, err := b.CopyInTo(newContext(), hostarch.AddrRangeSeqFromSlice([]hostarch.AddrRange{
 		{Start: 4, End: 7},
 		{Start: 1, End: 4},
-	}), safemem.FromIOWriter{&dst}, IOOpts{})
+	}), safemem.FromIOWriter{Writer: &dst}, IOOpts{})
 	if wantN := int64(6); n != wantN || err != nil {
 		t.Errorf("CopyInTo: got (%v, %v), wanted (%v, nil)", n, err, wantN)
 	}
@@ -154,7 +154,7 @@ func TestBytesIOCopyInToFailure(t *testing.T) {
 	n, err := b.CopyInTo(newContext(), hostarch.AddrRangeSeqFromSlice([]hostarch.AddrRange{
 		{Start: 1, End: 4},
 		{Start: 4, End: 7},
-	}), safemem.FromIOWriter{&dst}, IOOpts{})
+	}), safemem.FromIOWriter{Writer: &dst}, IOOpts{})
 	if wantN, wantErr := int64(4), linuxerr.EFAULT; n != wantN || err != wantErr {
 		t.Errorf("CopyOutFrom: got (%v, %v), wanted (%v, %v)", n, err, wantN, wantErr)
 	}
@@ -221,9 +221,9 @@ func TestCopyStringInTruncatedByMaxlen(t *testing.T) {
 func TestCopyInt32StringsInVec(t *testing.T) {
 	for _, test := range []struct {
 		str     string
-		n       int
 		initial []int32
 		final   []int32
+		n       int
 	}{
 		{
 			str:     "100 200",
@@ -255,7 +255,7 @@ func TestCopyInt32StringsInVec(t *testing.T) {
 	} {
 		t.Run(fmt.Sprintf("%q", test.str), func(t *testing.T) {
 			src := BytesIOSequence([]byte(test.str))
-			dsts := append([]int32(nil), test.initial...)
+			dsts := slices.Concat[[]int32](test.initial)
 			if n, err := CopyInt32StringsInVec(newContext(), src.IO, src.Addrs, dsts, src.Opts); n != int64(test.n) || err != nil {
 				t.Errorf("CopyInt32StringsInVec: got (%d, %v), wanted (%d, nil)", n, err, test.n)
 			}
@@ -271,7 +271,7 @@ func TestCopyInt32StringsInVecRequiresOneValidValue(t *testing.T) {
 		t.Run(fmt.Sprintf("%q", s), func(t *testing.T) {
 			src := BytesIOSequence([]byte(s))
 			initial := []int32{1, 2}
-			dsts := append([]int32(nil), initial...)
+			dsts := slices.Concat[[]int32](initial)
 			if n, err := CopyInt32StringsInVec(newContext(), src.IO, src.Addrs, dsts, src.Opts); !linuxerr.Equals(linuxerr.EINVAL, err) {
 				t.Errorf("CopyInt32StringsInVec: got (%d, %v), wanted (_, %v)", n, err, linuxerr.EINVAL)
 			}

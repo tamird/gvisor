@@ -100,12 +100,8 @@ func printGraph(w io.Writer, data []byte, graph int, asHTML bool) {
 
 // printer prints decoded objects.
 type printer struct {
-	w     io.Writer
-	ds    *graphDecodeState
-	graph int
-	html  bool
-	// byAddr are the non-zero-sized non-map objects, sorted by address.
-	byAddr []int
+	w  io.Writer
+	ds *graphDecodeState
 	// zeroObjs maps zero-sized object types to their object index.
 	zeroObjs map[reflect.Type]int
 	// maps maps map pointers to objects.
@@ -113,6 +109,10 @@ type printer struct {
 	// inlineMaps contains the maps that are not objects and are being
 	// printed, to stop at cycles.
 	inlineMaps map[unsafe.Pointer]struct{}
+	// byAddr are the non-zero-sized non-map objects, sorted by address.
+	byAddr []int
+	graph  int
+	html   bool
 }
 
 func (p *printer) index() {

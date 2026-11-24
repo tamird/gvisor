@@ -101,19 +101,18 @@ func (*attrs) SetStat(context.Context, *vfs.Filesystem, *auth.Credentials, vfs.S
 }
 
 type readonlyDir struct {
-	readonlyDirRefs
-	attrs
 	kernfs.InodeAlwaysValid
 	kernfs.InodeDirectoryNoNewChildren
 	kernfs.InodeNoStatFS
 	kernfs.InodeNotAnonymous
 	kernfs.InodeNotSymlink
 	kernfs.InodeTemporary
-	kernfs.InodeWatches
-	kernfs.OrderedChildren
 	kernfs.InodeFSOwned
-
+	kernfs.OrderedChildren
+	kernfs.InodeWatches
 	locks vfs.FileLocks
+	attrs
+	readonlyDirRefs
 }
 
 func (fs *filesystem) newReadonlyDir(ctx context.Context, creds *auth.Credentials, mode linux.FileMode, contents map[string]kernfs.Inode) kernfs.Inode {
@@ -140,20 +139,18 @@ func (d *readonlyDir) DecRef(ctx context.Context) {
 }
 
 type dir struct {
-	dirRefs
-	attrs
 	kernfs.InodeAlwaysValid
 	kernfs.InodeNoStatFS
 	kernfs.InodeNotAnonymous
 	kernfs.InodeNotSymlink
 	kernfs.InodeTemporary
-	kernfs.InodeWatches
-	kernfs.OrderedChildren
 	kernfs.InodeFSOwned
-
+	kernfs.OrderedChildren
+	kernfs.InodeWatches
 	locks vfs.FileLocks
-
-	fs *filesystem
+	fs    *filesystem
+	attrs
+	dirRefs
 }
 
 func (fs *filesystem) newDir(ctx context.Context, creds *auth.Credentials, mode linux.FileMode, contents map[string]kernfs.Inode) kernfs.Inode {
@@ -255,9 +252,9 @@ func (fst fsType) GetFilesystem(ctx context.Context, vfsObj *vfs.VirtualFilesyst
 }
 
 type inotifyEvent struct {
+	Name string
 	WD   int32
 	Mask uint32
-	Name string
 }
 
 func readInotifyEvents(t *testing.T, ctx context.Context, fd *vfs.FileDescription) []inotifyEvent {
@@ -650,9 +647,9 @@ func TestEvictCachedDentries(t *testing.T) {
 // lookupDir is a directory that creates a new file for every name on lookup,
 // so that only the file's dentry keeps it alive.
 type lookupDir struct {
-	readonlyDir
 	fs    *filesystem
 	creds *auth.Credentials
+	readonlyDir
 }
 
 func (fs *filesystem) newLookupDir(ctx context.Context, creds *auth.Credentials) kernfs.Inode {

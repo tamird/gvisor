@@ -331,9 +331,7 @@ type ThreadGroup struct {
 func (k *Kernel) NewThreadGroup(pidns *PIDNamespace, sh *SignalHandlers, terminationSignal linux.Signal, limits *limits.LimitSet) *ThreadGroup {
 	pidns.IncRef()
 	tg := &ThreadGroup{
-		threadGroupNode: threadGroupNode{
-			pidns: pidns,
-		},
+		pidns:                   pidns,
 		signalHandlers:          sh,
 		terminationSignal:       terminationSignal,
 		timers:                  make(map[linux.TimerID]*IntervalTimer),

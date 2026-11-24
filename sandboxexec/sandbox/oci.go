@@ -38,27 +38,23 @@ const defaultRootfsDir = "rootfs"
 // bundleConfig holds configuration for creating an OCI bundle. The zero value
 // of every field reproduces the default sandbox layout.
 type bundleConfig struct {
-	ID          string
-	RuntimeDir  string
-	Network     NetworkMode
-	Mounts      []Mount
-	Env         []string
-	Annotations map[string]string
-	WorkingDir  string
-	Hostname    string
-
-	// RootPath is the container's root filesystem.
-	RootPath string
-
-	// RootReadonly mounts the container's root filesystem read-only.
-	RootReadonly bool
-
 	// User is the user the init process runs as. Defaults to 0:0.
 	User *specs.User
 
 	// Capabilities is the capability set of the init process. When nil, the
 	// runtime applies its own default.
 	Capabilities *specs.LinuxCapabilities
+	Annotations  map[string]string
+	ID           string
+	Network      NetworkMode
+	RuntimeDir   string
+	WorkingDir   string
+	Hostname     string
+
+	// RootPath is the container's root filesystem.
+	RootPath string
+	Env      []string
+	Mounts   []Mount
 
 	// Namespaces are appended to the namespace set.
 	Namespaces []specs.LinuxNamespace
@@ -67,6 +63,9 @@ type bundleConfig struct {
 	// is non-nil.
 	UIDMappings []specs.LinuxIDMapping
 	GIDMappings []specs.LinuxIDMapping
+
+	// RootReadonly mounts the container's root filesystem read-only.
+	RootReadonly bool
 
 	// SkipDefaultNamespaces omits the automatic namespaces and the ID
 	// mappings that come with them.
@@ -116,14 +115,14 @@ func (m Mount) ociMount() (specs.Mount, error) {
 	}
 	var opts []string
 	for _, o := range []struct {
-		set  bool
 		name string
+		set  bool
 	}{
-		{m.Recursive, "rbind"},
-		{m.Private, "rprivate"},
-		{m.NoSuid, "nosuid"},
-		{m.NoDev, "nodev"},
-		{m.ReadOnly, "ro"},
+		{set: m.Recursive, name: "rbind"},
+		{set: m.Private, name: "rprivate"},
+		{set: m.NoSuid, name: "nosuid"},
+		{set: m.NoDev, name: "nodev"},
+		{set: m.ReadOnly, name: "ro"},
 	} {
 		if o.set {
 			opts = append(opts, o.name)

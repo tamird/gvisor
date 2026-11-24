@@ -80,8 +80,8 @@ func newTestSystem(t *testing.T, pciTestDir string) *testutil.System {
 
 func TestReadCPUFile(t *testing.T) {
 	for _, tc := range []struct {
-		cores int
 		want  string
+		cores int
 	}{
 		{cores: 1, want: "0\n"},
 		{cores: 2, want: "0-1\n"},
@@ -171,7 +171,7 @@ func TestCPUDir(t *testing.T) {
 		"possible": linux.DT_REG,
 		"present":  linux.DT_REG,
 	}
-	for i := uint(0); i < cores; i++ {
+	for i := range uint(cores) {
 		want[fmt.Sprintf("cpu%d", i)] = linux.DT_DIR
 	}
 	s.AssertAllDirentTypes(s.ListDirents(s.PathOpAtRoot("devices/system/cpu")), want)
@@ -205,7 +205,7 @@ func TestCPUDir(t *testing.T) {
 	}
 	fullMask := mask(func(uint) bool { return true })
 	fullList := fmt.Sprintf("0-%d\n", cores-1)
-	for i := uint(0); i < cores; i++ {
+	for i := range uint(cores) {
 		dir := fmt.Sprintf("devices/system/cpu/cpu%d", i)
 		s.AssertAllDirentTypes(s.ListDirents(s.PathOpAtRoot(dir)), map[string]testutil.DirentType{
 			"topology": linux.DT_DIR,
@@ -288,9 +288,9 @@ func TestNUMATopology(t *testing.T) {
 
 func TestNUMATopologyCPUFormats(t *testing.T) {
 	for _, tc := range []struct {
-		cores       int
 		wantCPUList string
 		wantCPUMap  string
+		cores       int
 	}{
 		{cores: 1, wantCPUList: "0\n", wantCPUMap: "1\n"},
 		{cores: 64, wantCPUList: "0-63\n", wantCPUMap: "ffffffff,ffffffff\n"},

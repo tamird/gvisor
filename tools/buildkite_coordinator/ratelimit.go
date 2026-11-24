@@ -64,15 +64,15 @@ type RateLimitController struct {
 	// It is immutable.
 	limits map[uint]uint
 
-	// maxDays is the longest window in limits.
-	//
-	// It is immutable.
-	maxDays uint
-
 	// collection is the Firestore collection holding one quotaDoc per author.
 	//
 	// It is immutable.
 	collection string
+
+	// maxDays is the longest window in limits.
+	//
+	// It is immutable.
+	maxDays uint
 }
 
 // NewRateLimitController returns a controller storing quotas in the given

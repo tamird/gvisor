@@ -506,10 +506,8 @@ func (e *SCMSender) Release(ctx context.Context) {
 // Sender.
 func NewSCMSender(hostFD int, queue *waiter.Queue, addr string) (*SCMSender, *syserr.Error) {
 	e := SCMSender{
-		HostSender: HostSender{
-			fd:   hostFD,
-			addr: addr,
-		},
+		fd:    hostFD,
+		addr:  addr,
 		queue: queue,
 	}
 

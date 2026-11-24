@@ -125,8 +125,8 @@ func NewPodMountHints(spec *specs.Spec) (*PodMountHints, error) {
 // It is part of the sandbox.Sandbox struct, so it must be serializable.
 type MountHint struct {
 	Name  string      `json:"name"`
-	Share ShareType   `json:"share"`
 	Mount specs.Mount `json:"mount"`
+	Share ShareType   `json:"share"`
 
 	// SuppressDirectFS suppresses the "directfs" gofer mount option for this
 	// mount even if --directfs is enabled globally. It does not enable directfs
@@ -237,12 +237,12 @@ func (p *PodMountHints) FindMount(mountSrc string) *MountHint {
 // RootfsHint represents extra information about rootfs that are provided via
 // annotations. They can provide mount source, mount type and overlay config.
 type RootfsHint struct {
-	Mount   specs.Mount
 	Overlay config.OverlayMedium
+
 	// Size of overlay tmpfs. Passed as `size={Size}` to tmpfs mount.
 	// Use default if unspecified.
-	Size string
-
+	Size             string
+	Mount            specs.Mount
 	SuppressDirectFS bool
 }
 
@@ -275,7 +275,7 @@ func (r *RootfsHint) setOption(key, val string) error {
 }
 
 func (r *RootfsHint) setOptions(val string) error {
-	for _, option := range strings.Split(val, ",") {
+	for option := range strings.SplitSeq(val, ",") {
 		parts := strings.SplitN(option, "=", 2)
 		if len(parts) != 2 {
 			return fmt.Errorf("rootfs options must be key=value: %s", option)

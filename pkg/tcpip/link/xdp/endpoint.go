@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 // Package xdp provides link layer endpoints backed by AF_XDP sockets.
 package xdp
@@ -74,15 +73,21 @@ type endpoint struct {
 
 // Options specify the details about the fd-based endpoint to be created.
 type Options struct {
-	// FD is used to read/write packets.
-	FD int
-
 	// ClosedFunc is a function to be called when an endpoint's peer (if
 	// any) closes its end of the communication pipe.
 	ClosedFunc func(tcpip.Error)
 
 	// Address is the link address for this endpoint.
 	Address tcpip.LinkAddress
+
+	// FD is used to read/write packets.
+	FD int
+
+	// InterfaceIndex is the interface index of the underlying device.
+	InterfaceIndex int
+
+	// QueueID is the ID of the RX queue to which the AF_XDP socket is attached.
+	QueueID uint32
 
 	// SaveRestore if true, indicates that this NIC capability set should
 	// include CapabilitySaveRestore
@@ -96,18 +101,12 @@ type Options struct {
 	// set should include CapabilityRXChecksumOffload.
 	RXChecksumOffload bool
 
-	// InterfaceIndex is the interface index of the underlying device.
-	InterfaceIndex int
-
 	// Bind is true when we're responsible for binding the AF_XDP socket to
 	// a device. When false, another process is expected to bind for us.
 	Bind bool
 
 	// GRO enables generic receive offload.
 	GRO bool
-
-	// QueueID is the ID of the RX queue to which the AF_XDP socket is attached.
-	QueueID uint32
 }
 
 // New creates a new endpoint from an AF_XDP socket.
@@ -193,9 +192,7 @@ func (ep *endpoint) Attach(networkDispatcher stack.NetworkDispatcher) {
 		// Link endpoints are not savable. When transportation endpoints are
 		// saved, they stop sending outgoing packets and all incoming packets
 		// are rejected.
-		ep.wg.Add(1)
-		go func() { // S/R-SAFE: See above.
-			defer ep.wg.Done()
+		ep.wg.Go(func() { // S/R-SAFE: See above.
 			for {
 				cont, err := ep.dispatch()
 				if err != nil || !cont {
@@ -205,7 +202,7 @@ func (ep *endpoint) Attach(networkDispatcher stack.NetworkDispatcher) {
 					return
 				}
 			}
-		}()
+		})
 	}
 }
 
@@ -369,7 +366,7 @@ func (ep *endpoint) dispatch() (bool, tcpip.Error) {
 			// Populate views quickly so that we can release frames
 			// back to the kernel.
 			ep.control.UMEM.Lock()
-			for i := uint32(0); i < nReceived; i++ {
+			for i := range uint32(nReceived) {
 				// Copy packet bytes into a view and free up the
 				// buffer.
 				descriptor := ep.control.RX.Get(rxIndex + i)
@@ -386,7 +383,7 @@ func (ep *endpoint) dispatch() (bool, tcpip.Error) {
 			ep.mu.RLock()
 			d := ep.networkDispatcher
 			ep.mu.RUnlock()
-			for i := uint32(0); i < nReceived; i++ {
+			for i := range uint32(nReceived) {
 				view := views[i]
 				data := view.AsSlice()
 

@@ -23,9 +23,9 @@ import (
 
 // ApacheBench is for the client application ApacheBench.
 type ApacheBench struct {
+	Doc         string
 	Requests    int
 	Concurrency int
-	Doc         string
 	// TODO(zkoopmans): support KeepAlive and pass option to enable.
 }
 

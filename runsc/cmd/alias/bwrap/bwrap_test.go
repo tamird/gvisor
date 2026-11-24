@@ -37,9 +37,6 @@ const (
 	sudoGID = 4343
 )
 
-// permsPtr returns a pointer to perms, for sandbox.Mount.Mode.
-func permsPtr(perms uint32) *uint32 { return &perms }
-
 // wantIDMappings returns the mappings bwrap is expected to build for an
 // unshared user namespace that runs as containerID.
 func wantIDMappings(containerID, hostID uint32) []specs.LinuxIDMapping {
@@ -224,11 +221,11 @@ func TestSandboxOptions(t *testing.T) {
 
 func TestSandboxOptionsSudoIDs(t *testing.T) {
 	for _, tc := range []struct {
-		name    string
+		wantErr error
 		env     map[string]string
+		name    string
 		wantUID uint32
 		wantGID uint32
-		wantErr error
 	}{
 		{
 			name:    "unset",
@@ -313,9 +310,9 @@ func TestParseArgs(t *testing.T) {
 
 	tests := []struct {
 		name        string
+		errContains string
 		args        []string
 		wantArgs    []string
-		errContains string
 	}{
 		{
 			name:     "NoFlags",
@@ -433,10 +430,10 @@ func TestParseFlags(t *testing.T) {
 	rootBind := sandbox.Mount{Type: sandbox.MountTypeBind, Source: "/", Destination: "/", ReadOnly: true, Recursive: true, Private: true, NoSuid: true, NoDev: true}
 
 	tests := []struct {
-		name        string
-		args        []string
 		wantCfg     *bwrapConfig
+		name        string
 		errContains string
+		args        []string
 	}{
 		{
 			name: "ClearEnv",
@@ -721,7 +718,7 @@ func TestParseFlags(t *testing.T) {
 				Env:    os.Environ(),
 				UID:    -1,
 				GID:    -1,
-				Mounts: []sandbox.Mount{{Type: sandbox.MountTypeTmpfs, Destination: "/foo", Mode: permsPtr(0700)}},
+				Mounts: []sandbox.Mount{{Type: sandbox.MountTypeTmpfs, Destination: "/foo", Mode: new(uint32(0700))}},
 				Args:   []string{"bash"},
 			},
 		},
@@ -745,7 +742,7 @@ func TestParseFlags(t *testing.T) {
 				Env:    os.Environ(),
 				UID:    -1,
 				GID:    -1,
-				Mounts: []sandbox.Mount{{Type: sandbox.MountTypeTmpfs, Destination: "/foo", Mode: permsPtr(0700)}},
+				Mounts: []sandbox.Mount{{Type: sandbox.MountTypeTmpfs, Destination: "/foo", Mode: new(uint32(0700))}},
 				Args:   []string{"bash"},
 			},
 		},
@@ -827,7 +824,7 @@ func TestParseFlags(t *testing.T) {
 				Env:    os.Environ(),
 				UID:    -1,
 				GID:    -1,
-				Mounts: []sandbox.Mount{{Type: sandbox.MountTypeTmpfs, Destination: "/mnt", Mode: permsPtr(0700)}},
+				Mounts: []sandbox.Mount{{Type: sandbox.MountTypeTmpfs, Destination: "/mnt", Mode: new(uint32(0700))}},
 				Args:   []string{"bash"},
 			},
 		},
@@ -999,18 +996,18 @@ func TestMakeHostDirs(t *testing.T) {
 	t.Cleanup(func() { unix.Umask(oldMask) })
 
 	tests := []struct {
-		name string
 		// setup prepares the host directory root and returns the --dir path
 		// under it, relative to root.
-		setup func(t *testing.T, root string) string
-		ro    bool
-		perms uint32
+		setup       func(t *testing.T, root string) string
+		name        string
+		errContains string
+		perms       uint32
 		// wantMode is the mode of the directory afterwards, 0 when no directory
 		// may exist at the path.
 		wantMode os.FileMode
 		// wantParentMode is the mode of the directory's parent afterwards.
 		wantParentMode os.FileMode
-		errContains    string
+		ro             bool
 	}{
 		{
 			name:           "Creates",

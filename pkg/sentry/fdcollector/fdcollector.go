@@ -34,11 +34,11 @@ import (
 type Agent struct {
 	ctx   context.Context
 	rfd   *vfs.FileDescription
-	desc  string
 	stopC chan struct{}
-	mu    sync.Mutex
+	desc  string
 	buf   bytes.Buffer
 	wg    sync.WaitGroup
+	mu    sync.Mutex
 }
 
 // NewAgent creates a new Fdcollector agent.

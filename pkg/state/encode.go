@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
-	"sort"
+	"slices"
 
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
@@ -28,8 +28,12 @@ import (
 // address range. This is the value type for addrSet, and the intrusive entry
 // for the deferred list.
 type objectEncodeState struct {
-	// id is the assigned ID for this object.
-	id objectID
+
+	// encoded is the encoded value of this object. Note that this may not
+	// be up to date if this object is still in the deferred list.
+	encoded wire.Object
+
+	deferredEntry
 
 	// obj is the object value. Note that this may be replaced if we
 	// encounter an object that contains this object. When this happens (in
@@ -37,20 +41,16 @@ type objectEncodeState struct {
 	// and defer a re-encoding of the object.
 	obj reflect.Value
 
-	// encoded is the encoded value of this object. Note that this may not
-	// be up to date if this object is still in the deferred list.
-	encoded wire.Object
-
-	// how indicates whether this object should be encoded as a value. This
-	// is used only for deferred encoding.
-	how encodeStrategy
-
 	// refs are the list of reference objects used by other objects
 	// referring to this object. When the object is updated, these
 	// references may be updated directly and automatically.
 	refs []*wire.Ref
+	// id is the assigned ID for this object.
+	id objectID
 
-	deferredEntry
+	// how indicates whether this object should be encoded as a value. This
+	// is used only for deferred encoding.
+	how encodeStrategy
 }
 
 // encodeState is state used for encoding.
@@ -67,9 +67,6 @@ type encodeState struct {
 
 	// types is the type database.
 	types typeEncodeDatabase
-
-	// lastID is the last allocated object ID.
-	lastID objectID
 
 	// values tracks the address ranges occupied by objects, along with the
 	// types of these objects. This is used to locate pointer targets,
@@ -111,6 +108,8 @@ type encodeState struct {
 
 	// stats tracks time data.
 	stats Stats
+	// lastID is the last allocated object ID.
+	lastID objectID
 }
 
 // isSameSizeParent returns true if child is a field value or element within
@@ -207,7 +206,7 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 	}
 
 	// If not a map, then the object must be a pointer.
-	if obj.Kind() != reflect.Ptr {
+	if obj.Kind() != reflect.Pointer {
 		Failf("attempt to record non-map and non-pointer object %#v", obj)
 	}
 
@@ -284,9 +283,9 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 			obj: obj,
 		}
 		type elementEncodeState struct {
-			addr uintptr
 			typ  reflect.Type
 			refs []*wire.Ref
+			addr uintptr
 		}
 		var (
 			elems []elementEncodeState
@@ -555,7 +554,7 @@ func (es *encodeState) encodeArray(obj reflect.Value, dest *wire.Object) {
 		Contents: make([]wire.Object, l),
 	}
 	*dest = a
-	for i := 0; i < l; i++ {
+	for i := range l {
 		// We need to encode the full value because arrays are encoded
 		// using the type information from only the first element.
 		es.encodeObject(obj.Index(i), encodeAsValue, &a.Contents[i])
@@ -576,7 +575,7 @@ func (es *encodeState) findType(typ reflect.Type) wire.TypeSpec {
 	}
 
 	switch typ.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		return &wire.TypeSpecPointer{
 			Type: es.findType(typ.Elem()),
 		}
@@ -655,7 +654,7 @@ func isPrimitiveZero(obj reflect.Value) bool {
 	case reflect.Struct:
 		// Even zero-valued structs must run their savers.
 		return false
-	case reflect.Ptr, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+	case reflect.Pointer, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
 		reflect.String, reflect.Slice, reflect.Interface, reflect.Map:
 		return obj.IsZero()
@@ -687,7 +686,7 @@ func (es *encodeState) encodeObject(obj reflect.Value, how encodeStrategy, dest 
 		return
 	}
 	switch obj.Kind() {
-	case reflect.Ptr: // Fast path: first.
+	case reflect.Pointer: // Fast path: first.
 		r := new(wire.Ref)
 		*dest = r
 		if obj.IsNil() {
@@ -814,9 +813,7 @@ func (es *encodeState) Save(obj reflect.Value) {
 		for id := range es.pending {
 			ids = append(ids, id)
 		}
-		sort.Slice(ids, func(i, j int) bool {
-			return ids[i] < ids[j]
-		})
+		slices.Sort(ids)
 		for _, id := range ids {
 			// Encode the id.
 			oes = nil

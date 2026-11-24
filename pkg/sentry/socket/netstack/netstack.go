@@ -35,7 +35,6 @@ import (
 	"time"
 
 	"golang.org/x/sys/unix"
-	"google.golang.org/protobuf/proto"
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/abi/linux/errno"
 	"gvisor.dev/gvisor/pkg/context"
@@ -104,12 +103,12 @@ const (
 )
 
 var (
-	socketLevelSocketFieldValue = metric.FieldValue{"SOCKET"}
-	socketLevelTCPFieldValue    = metric.FieldValue{"TCP"}
-	socketLevelICMPV6FieldValue = metric.FieldValue{"ICMPV6"}
-	socketLevelIPFieldValue     = metric.FieldValue{"IP"}
-	socketLevelIPV6FieldValue   = metric.FieldValue{"IPV6"}
-	socketLevelPacketFieldValue = metric.FieldValue{"PACKET"}
+	socketLevelSocketFieldValue = metric.FieldValue{Value: "SOCKET"}
+	socketLevelTCPFieldValue    = metric.FieldValue{Value: "TCP"}
+	socketLevelICMPV6FieldValue = metric.FieldValue{Value: "ICMPV6"}
+	socketLevelIPFieldValue     = metric.FieldValue{Value: "IP"}
+	socketLevelIPV6FieldValue   = metric.FieldValue{Value: "IPV6"}
+	socketLevelPacketFieldValue = metric.FieldValue{Value: "PACKET"}
 
 	allowedSocketOptionLevels     = []*metric.FieldValue{&socketLevelSocketFieldValue, &socketLevelTCPFieldValue, &socketLevelICMPV6FieldValue, &socketLevelIPFieldValue, &socketLevelIPV6FieldValue, &socketLevelPacketFieldValue}
 	allowedSocketOptionNameValues = initSocketMetricFields()
@@ -121,7 +120,7 @@ var (
 func initSocketMetricFields() []*metric.FieldValue {
 	values := make([]*metric.FieldValue, maxSocketOptionNameValue+1)
 	for i := 0; i <= maxSocketOptionNameValue; i++ {
-		values[i] = &metric.FieldValue{strconv.Itoa(i)}
+		values[i] = &metric.FieldValue{Value: strconv.Itoa(i)}
 	}
 	return values
 }
@@ -948,7 +947,7 @@ func (s *sock) Listen(_ *kernel.Task, backlog int) *syserr.Error {
 		panic(fmt.Sprintf("GetLocalAddress failed for tcp socket: %s", err))
 	}
 	eventchannel.Emit(&epb.SentryTcpListenEvent{
-		Port: proto.Int32(int32(addr.Port)),
+		Port: new(int32(addr.Port)),
 	})
 	return nil
 }
@@ -1048,11 +1047,7 @@ func GetSockOptSocket(t *kernel.Task, s socket.Socket, ep commonEndpoint, family
 			return nil, syserr.ErrInvalidArgument
 		}
 
-		size := ep.SocketOptions().GetSendBufferSize()
-
-		if size > math.MaxInt32 {
-			size = math.MaxInt32
-		}
+		size := min(ep.SocketOptions().GetSendBufferSize(), math.MaxInt32)
 
 		sizeP := primitive.Int32(size)
 		return &sizeP, nil
@@ -1062,11 +1057,7 @@ func GetSockOptSocket(t *kernel.Task, s socket.Socket, ep commonEndpoint, family
 			return nil, syserr.ErrInvalidArgument
 		}
 
-		size := ep.SocketOptions().GetReceiveBufferSize()
-
-		if size > math.MaxInt32 {
-			size = math.MaxInt32
-		}
+		size := min(ep.SocketOptions().GetReceiveBufferSize(), math.MaxInt32)
 
 		sizeP := primitive.Int32(size)
 		return &sizeP, nil
@@ -1336,10 +1327,7 @@ func (s *sock) getSockOptTCP(t *kernel.Task, ep commonEndpoint, name, outLen int
 		// This is Linux's net/tcp.h TCP_CA_NAME_MAX.
 		const tcpCANameMax = 16
 
-		toCopy := tcpCANameMax
-		if outLen < tcpCANameMax {
-			toCopy = outLen
-		}
+		toCopy := min(outLen, tcpCANameMax)
 		b := make([]byte, toCopy)
 		copy(b, v)
 
@@ -2352,10 +2340,7 @@ func (s *sock) setSockOptTCP(t *kernel.Task, ep commonEndpoint, name int, optVal
 		if len(optVal) < sizeOfInt32 {
 			return syserr.ErrInvalidArgument
 		}
-		v := int32(hostarch.ByteOrder.Uint32(optVal))
-		if v < 0 {
-			v = 0
-		}
+		v := max(int32(hostarch.ByteOrder.Uint32(optVal)), 0)
 		opt := tcpip.TCPDeferAcceptOption(time.Second * time.Duration(v))
 		return syserr.TranslateNetstackError(ep.SetSockOpt(&opt))
 
@@ -3182,10 +3167,7 @@ func (s *sock) nonBlockingRead(ctx context.Context, dst usermem.IOSequence, peek
 			if err != nil {
 				return 0, 0, nil, 0, socket.ControlMessages{}, syserr.TranslateNetstackError(err)
 			}
-			msgLen := int(dst.NumBytes())
-			if msgLen > rql {
-				msgLen = rql
-			}
+			msgLen := min(int(dst.NumBytes()), rql)
 			return msgLen, 0, nil, 0, socket.ControlMessages{}, nil
 		}
 	} else if n := res.Count; n != 0 {

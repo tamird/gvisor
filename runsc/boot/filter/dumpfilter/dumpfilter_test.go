@@ -29,7 +29,7 @@ func TestDumpFilter(t *testing.T) {
 		t.Fatalf("cannot locate dumpfilter: %v", err)
 	}
 	output, err := exec.Command(binPath).CombinedOutput()
-	for _, line := range strings.Split(string(output), "\n") {
+	for line := range strings.SplitSeq(string(output), "\n") {
 		t.Log(line)
 	}
 	if err != nil {

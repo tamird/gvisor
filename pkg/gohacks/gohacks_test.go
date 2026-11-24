@@ -134,7 +134,7 @@ func TestNoescape(t *testing.T) {
 
 	// Ensure referenced objects don't escape.
 	runtime.ReadMemStats(&beforeStats)
-	for i := 0; i < len(ptrs); i++ {
+	for i := range len(ptrs) {
 		ptrs[i] = uintptr(NoescapeAlloc())
 	}
 	runtime.ReadMemStats(&afterStats)

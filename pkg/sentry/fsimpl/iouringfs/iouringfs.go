@@ -547,10 +547,10 @@ type sqEntriesFile struct {
 // Translate implements memmap.Mappable.Translate.
 func (sqemf *sqEntriesFile) Translate(ctx context.Context, required, optional memmap.MappableRange, at hostarch.AccessType) ([]memmap.Translation, error) {
 	if required.End > sqemf.fr.Length() {
-		return nil, &memmap.BusError{linuxerr.EFAULT}
+		return nil, &memmap.BusError{Err: linuxerr.EFAULT}
 	}
 
-	if source := optional.Intersect(memmap.MappableRange{0, sqemf.fr.Length()}); source.Length() != 0 {
+	if source := optional.Intersect(memmap.MappableRange{Start: 0, End: sqemf.fr.Length()}); source.Length() != 0 {
 		return []memmap.Translation{
 			{
 				Source: source,
@@ -577,10 +577,10 @@ type ringsBufferFile struct {
 // Translate implements memmap.Mappable.Translate.
 func (rbmf *ringsBufferFile) Translate(ctx context.Context, required, optional memmap.MappableRange, at hostarch.AccessType) ([]memmap.Translation, error) {
 	if required.End > rbmf.fr.Length() {
-		return nil, &memmap.BusError{linuxerr.EFAULT}
+		return nil, &memmap.BusError{Err: linuxerr.EFAULT}
 	}
 
-	if source := optional.Intersect(memmap.MappableRange{0, rbmf.fr.Length()}); source.Length() != 0 {
+	if source := optional.Intersect(memmap.MappableRange{Start: 0, End: rbmf.fr.Length()}); source.Length() != 0 {
 		return []memmap.Translation{
 			{
 				Source: source,

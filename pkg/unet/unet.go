@@ -58,6 +58,15 @@ func socket(packet bool) (int, error) {
 
 // Socket is a connected unix domain socket.
 type Socket struct {
+	// race is an atomic variable used to avoid triggering the race
+	// detector. See comment in SocketPair below.
+	race *atomicbitops.Int32
+
+	// efd is an event FD that is signaled when the socket is closing.
+	//
+	// efd is immutable and remains valid until Close/Release.
+	efd eventfd.Eventfd
+
 	// gate protects use of fd.
 	gate sync.Gate
 
@@ -65,15 +74,6 @@ type Socket struct {
 	//
 	// fd only remains valid if read while within gate.
 	fd atomicbitops.Int32
-
-	// efd is an event FD that is signaled when the socket is closing.
-	//
-	// efd is immutable and remains valid until Close/Release.
-	efd eventfd.Eventfd
-
-	// race is an atomic variable used to avoid triggering the race
-	// detector. See comment in SocketPair below.
-	race *atomicbitops.Int32
 }
 
 // NewSocket returns a socket from an existing FD.
@@ -304,12 +304,12 @@ func (c *ControlMessage) UnpackFDs() {
 //
 // The normal entrypoint is WriteVec.
 type SocketWriter struct {
-	socket   *Socket
-	to       []byte
-	blocking bool
-	race     *atomicbitops.Int32
+	socket *Socket
+	race   *atomicbitops.Int32
+	to     []byte
 
 	ControlMessage
+	blocking bool
 }
 
 // Writer returns a writer for this socket.
@@ -402,12 +402,12 @@ func (s *Socket) GetPeerName() ([]byte, error) {
 //
 // One of ExtractFDs or DisposeFDs must be called if EnableFDs is used.
 type SocketReader struct {
-	socket   *Socket
-	source   []byte
-	blocking bool
-	race     *atomicbitops.Int32
+	socket *Socket
+	race   *atomicbitops.Int32
+	source []byte
 
 	ControlMessage
+	blocking bool
 }
 
 // Reader returns a reader for this socket.

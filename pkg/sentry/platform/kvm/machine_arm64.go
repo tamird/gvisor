@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build arm64
-// +build arm64
 
 package kvm
 
@@ -129,10 +128,8 @@ func archPhysicalRegions(physicalRegions []physicalRegion) []physicalRegion {
 
 	// Add an unreachable region.
 	rdRegions = append(rdRegions, virtualRegion{
-		region: region{
-			virtual: 0xffffffffffffffff,
-			length:  0,
-		},
+		virtual: 0xffffffffffffffff,
+		length:  0,
 	})
 
 	var regions []physicalRegion
@@ -141,10 +138,8 @@ func archPhysicalRegions(physicalRegions []physicalRegion) []physicalRegion {
 			return
 		}
 		regions = append(regions, physicalRegion{
-			region: region{
-				virtual: virtual,
-				length:  length,
-			},
+			virtual:  virtual,
+			length:   length,
 			physical: r.physical + (virtual - r.virtual),
 			mmio:     mmio,
 			readOnly: readOnly,
@@ -163,10 +158,7 @@ func archPhysicalRegions(physicalRegions []physicalRegion) []physicalRegion {
 				continue
 			}
 			if rdStart > start {
-				newEnd := rdStart
-				if end < rdStart {
-					newEnd = end
-				}
+				newEnd := min(end, rdStart)
 				addValidRegion(&pr, start, newEnd-start, pr.mmio, false)
 				start = rdStart
 				continue
@@ -239,11 +231,7 @@ func (m *machine) getMaxVCPU() {
 	if errno != 0 {
 		m.maxVCPUs = rmaxVCPUs
 	} else {
-		if rmaxVCPUs < int(smaxVCPUs) {
-			m.maxVCPUs = rmaxVCPUs
-		} else {
-			m.maxVCPUs = int(smaxVCPUs)
-		}
+		m.maxVCPUs = min(rmaxVCPUs, int(smaxVCPUs))
 	}
 }
 

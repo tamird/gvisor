@@ -36,10 +36,10 @@ func TestConfigFile(t *testing.T) {
 	}
 
 	for _, tc := range []struct {
-		name string
 		json any
-		want seccheck.SessionConfig
+		name string
 		err  string
+		want seccheck.SessionConfig
 	}{
 		{
 			name: "SessionConfig",

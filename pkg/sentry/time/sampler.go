@@ -99,17 +99,17 @@ type referenceClocks interface {
 // sampler collects samples from a reference system clock, minimizing
 // the overhead in each sample.
 type sampler struct {
-	// clockID is the reference clock ID (e.g., CLOCK_MONOTONIC).
-	clockID ClockID
-
 	// clocks provides raw samples.
 	clocks referenceClocks
+
+	// samples is a ring buffer of the latest samples collected.
+	samples []sample
 
 	// overhead is the estimated sample overhead in TSC cycles.
 	overhead TSCValue
 
-	// samples is a ring buffer of the latest samples collected.
-	samples []sample
+	// clockID is the reference clock ID (e.g., CLOCK_MONOTONIC).
+	clockID ClockID
 }
 
 // newSampler creates a sampler for clockID.
@@ -130,7 +130,7 @@ func (s *sampler) Reset() {
 // lowOverheadSample returns a reference clock sample with minimized syscall overhead.
 func (s *sampler) lowOverheadSample() (sample, error) {
 	for {
-		for i := 0; i < maxSampleLoops; i++ {
+		for range maxSampleLoops {
 			samp, err := s.clocks.Sample(s.clockID)
 			if err != nil {
 				return sample{}, err

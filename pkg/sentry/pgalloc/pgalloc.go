@@ -257,7 +257,7 @@ func (f *MemoryFile) forEachChunk(fr memmap.FileRange, fn func(chunk *chunkInfo,
 	i := int(fr.Start / chunkSize)
 	for chunkStart < fr.End {
 		chunkEnd := chunkStart + chunkSize
-		if !fn(&chunks[i], fr.Intersect(memmap.FileRange{chunkStart, chunkEnd})) {
+		if !fn(&chunks[i], fr.Intersect(memmap.FileRange{Start: chunkStart, End: chunkEnd})) {
 			return
 		}
 		chunkStart = chunkEnd
@@ -349,6 +349,9 @@ type evictableMemoryUserInfo struct {
 
 // MemoryFileOpts provides options to NewMemoryFile.
 type MemoryFileOpts struct {
+	// ResourceID is used to reassociate the MemoryFile with its replacement
+	// during restore.
+	ResourceID checkpoint.ResourceID
 	// DelayedEviction controls the extent to which the MemoryFile may delay
 	// eviction of evictable allocations.
 	DelayedEviction DelayedEvictionType
@@ -369,10 +372,6 @@ type MemoryFileOpts struct {
 
 	// DiskBackedFile indicates that the MemoryFile is backed by a file on disk.
 	DiskBackedFile bool
-
-	// ResourceID is used to reassociate the MemoryFile with its replacement
-	// during restore.
-	ResourceID checkpoint.ResourceID
 
 	// If ExpectHugepages is true, MemoryFile will expect that the host will
 	// attempt to back AllocOpts.Huge == true allocations with huge pages. If
@@ -475,7 +474,7 @@ func NewMemoryFile(file *os.File, opts MemoryFileOpts) (*MemoryFile, error) {
 
 func (f *MemoryFile) initFields() {
 	// Initially, all pages are void.
-	fullFR := memmap.FileRange{0, math.MaxUint64}
+	fullFR := memmap.FileRange{Start: 0, End: math.MaxUint64}
 	f.unwasteSmall.InsertRange(fullFR, unwasteInfo{})
 	f.unwasteHuge.InsertRange(fullFR, unwasteInfo{})
 	f.releaseCond.L = &f.mu
@@ -507,7 +506,7 @@ func (f *MemoryFile) releaserDestroyLocked() {
 
 	if f.opts.DecommitOnDestroy {
 		if chunks := f.chunksLoad(); len(chunks) != 0 {
-			if err := f.decommitFile(memmap.FileRange{0, uint64(len(chunks)) * chunkSize}); err != nil {
+			if err := f.decommitFile(memmap.FileRange{Start: 0, End: uint64(len(chunks)) * chunkSize}); err != nil {
 				panic(fmt.Sprintf("failed to decommit entire memory file during destruction: %v", err))
 			}
 		}
@@ -530,28 +529,27 @@ func (f *MemoryFile) releaserDestroyLocked() {
 
 // AllocOpts are options used in MemoryFile.Allocate.
 type AllocOpts struct {
-	// Kind is the allocation's memory accounting type.
-	Kind usage.MemoryKind
-
-	// MemCgID is the memory cgroup ID and the zero value indicates that
-	// the memory will not be accounted to any cgroup.
-	MemCgID uint32
-
-	// Mode controls the commitment status of returned pages.
-	Mode AllocationMode
-
-	// If Huge is true, the allocation should be hugepage-backed if possible.
-	Huge bool
-
-	// Dir indicates the direction in which offsets are allocated.
-	Dir Direction
-
 	// If ReaderFunc is provided, the allocated memory is filled by calling it
 	// repeatedly until either length bytes are read or a non-nil error is
 	// returned. It returns the allocated memory, truncated down to the nearest
 	// page. If this is shorter than length bytes due to an error returned by
 	// ReaderFunc, it returns the partially filled fr and error.
 	ReaderFunc safemem.ReaderFunc
+	// Kind is the allocation's memory accounting type.
+	Kind usage.MemoryKind
+
+	// Mode controls the commitment status of returned pages.
+	Mode AllocationMode
+
+	// MemCgID is the memory cgroup ID and the zero value indicates that
+	// the memory will not be accounted to any cgroup.
+	MemCgID uint32
+
+	// If Huge is true, the allocation should be hugepage-backed if possible.
+	Huge bool
+
+	// Dir indicates the direction in which offsets are allocated.
+	Dir Direction
 }
 
 // Direction is the type of AllocOpts.Dir.
@@ -603,8 +601,8 @@ const (
 
 // allocState holds the state of a call to MemoryFile.Allocate().
 type allocState struct {
-	length     uint64
 	opts       AllocOpts
+	length     uint64
 	willCommit bool // either us or our caller
 	recycled   bool
 	huge       bool
@@ -738,7 +736,7 @@ func (f *MemoryFile) Allocate(length uint64, opts AllocOpts) (memmap.FileRange, 
 		if un < length {
 			// Free unused memory and update fr to contain only the memory that is
 			// still allocated.
-			f.DecRef(memmap.FileRange{fr.Start + un, fr.End})
+			f.DecRef(memmap.FileRange{Start: fr.Start + un, End: fr.End})
 			fr.End = fr.Start + un
 		}
 		if err != nil {
@@ -1468,7 +1466,7 @@ func (f *MemoryFile) releaseLocked(fr memmap.FileRange, huge bool) {
 			if oldSubrel != 0 {
 				delete(f.subreleased, firstHugeStart)
 			}
-			hugeFR := memmap.FileRange{firstHugeStart, firstHugeEnd}
+			hugeFR := memmap.FileRange{Start: firstHugeStart, End: firstHugeEnd}
 			f.mu.Unlock()
 			f.decommitOrManuallyZero(hugeFR)
 			f.mu.Lock()
@@ -2003,9 +2001,7 @@ func (f *MemoryFile) startEvictionsLocked() bool {
 //   - f.mu must be locked.
 func (f *MemoryFile) startEvictionGoroutineLocked(user EvictableMemoryUser, info *evictableMemoryUserInfo) {
 	info.evicting = true
-	f.evictionWG.Add(1)
-	go func() { // S/R-SAFE: f.evictionWG
-		defer f.evictionWG.Done()
+	f.evictionWG.Go(func() { // S/R-SAFE: f.evictionWG
 		for {
 			f.mu.Lock()
 			info, ok := f.evictable[user]
@@ -2032,7 +2028,7 @@ func (f *MemoryFile) startEvictionGoroutineLocked(user EvictableMemoryUser, info
 			f.mu.Unlock()
 			user.Evict(context.Background(), er)
 		}
-	}()
+	})
 }
 
 // WaitForEvictions blocks until f is no longer evicting any evictable

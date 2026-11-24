@@ -1401,8 +1401,8 @@ func (e *endpoint) forwardMulticastPacket(h header.IPv6, pkt *stack.PacketBuffer
 	case multicast.NoRouteFoundAndPendingInserted:
 		e.emitMulticastEvent(func(disp stack.MulticastForwardingEventDispatcher) {
 			disp.OnMissingRoute(stack.MulticastPacketContext{
-				stack.UnicastSourceAndMulticastDestination{h.SourceAddress(), h.DestinationAddress()},
-				e.nic.ID(),
+				SourceAndDestination: stack.UnicastSourceAndMulticastDestination{Source: h.SourceAddress(), Destination: h.DestinationAddress()},
+				InputInterface:       e.nic.ID(),
 			})
 		})
 	case multicast.PacketQueuedInPendingRoute:
@@ -1427,8 +1427,8 @@ func (e *endpoint) forwardValidatedMulticastPacket(pkt *stack.PacketBuffer, inst
 		h := header.IPv6(pkt.NetworkHeader().Slice())
 		e.emitMulticastEvent(func(disp stack.MulticastForwardingEventDispatcher) {
 			disp.OnUnexpectedInputInterface(stack.MulticastPacketContext{
-				stack.UnicastSourceAndMulticastDestination{h.SourceAddress(), h.DestinationAddress()},
-				e.nic.ID(),
+				SourceAndDestination: stack.UnicastSourceAndMulticastDestination{Source: h.SourceAddress(), Destination: h.DestinationAddress()},
+				InputInterface:       e.nic.ID(),
 			}, installedRoute.ExpectedInputInterface)
 		})
 		return &ip.ErrUnexpectedMulticastInputInterface{}
@@ -2947,10 +2947,7 @@ func calculateNetworkMTU(linkMTU, networkHeadersLen uint32) (uint32, tcpip.Error
 		return 0, &tcpip.ErrMalformedHeader{}
 	}
 
-	networkMTU := linkMTU - networkHeadersLen
-	if networkMTU > maxPayloadSize {
-		networkMTU = maxPayloadSize
-	}
+	networkMTU := min(linkMTU-networkHeadersLen, maxPayloadSize)
 	return networkMTU, nil
 }
 
@@ -3024,7 +3021,7 @@ func NewProtocolWithOptions(opts Options) stack.NetworkProtocolFactory {
 		// Default: 0-1,3-127 (rate limit ICMPv6 errors except Packet Too Big)
 		// See https://www.kernel.org/doc/Documentation/networking/ip-sysctl.txt.
 		defaultIcmpTypes := make(map[header.ICMPv6Type]struct{})
-		for i := header.ICMPv6Type(0); i < header.ICMPv6EchoRequest; i++ {
+		for i := range header.ICMPv6Type(header.ICMPv6EchoRequest) {
 			switch i {
 			case header.ICMPv6PacketTooBig:
 				// Do not rate limit packet too big by default.

@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -39,12 +40,12 @@ var ignoreList = map[string]struct{}{
 // implementsSerializableInterface returns true if the given type implements
 // an interface which inherently provides serialization.
 func implementsSerializableInterface(typ reflect.Type) bool {
-	jsonMarshaler := reflect.TypeOf((*json.Marshaler)(nil)).Elem()
-	jsonUnmarshaler := reflect.TypeOf((*json.Unmarshaler)(nil)).Elem()
+	jsonMarshaler := reflect.TypeFor[json.Marshaler]()
+	jsonUnmarshaler := reflect.TypeFor[json.Unmarshaler]()
 	if typ.Implements(jsonMarshaler) && typ.Implements(jsonUnmarshaler) {
 		return true
 	}
-	protoMessage := reflect.TypeOf((*proto.Message)(nil)).Elem()
+	protoMessage := reflect.TypeFor[proto.Message]()
 	return typ.Implements(protoMessage)
 }
 
@@ -54,7 +55,7 @@ func checkSerializable(typ reflect.Type, fieldName []string) error {
 		return nil
 	}
 	field := func(s string) []string {
-		return append(append(([]string)(nil), fieldName...), s)
+		return append(slices.Concat[[]string](fieldName), s)
 	}
 	fieldPath := strings.Join(fieldName, ".")
 	if _, ignored := ignoreList[fieldPath]; ignored {
@@ -97,8 +98,7 @@ func checkSerializable(typ reflect.Type, fieldName []string) error {
 		// But all the value types are allowed.
 		return checkSerializable(typ.Elem(), field("{}"))
 	case reflect.Struct:
-		for i := 0; i < typ.NumField(); i++ {
-			f := typ.Field(i)
+		for f := range typ.Fields() {
 			if _, noJSON := f.Tag.Lookup("nojson"); noJSON {
 				if f.IsExported() {
 					return fmt.Errorf("struct field %q must not be exported since it is marked `nojson:\"true\"` in a serializable struct", strings.Join(field(f.Name), "."))
@@ -124,11 +124,11 @@ func checkSerializable(typ reflect.Type, fieldName []string) error {
 // serializable fields.
 func TestSerializable(t *testing.T) {
 	for _, test := range []struct {
-		name string
 		obj  any
+		name string
 	}{
-		{"Sandbox", sandbox.Sandbox{}},
-		{"Container", container.Container{}},
+		{name: "Sandbox", obj: sandbox.Sandbox{}},
+		{name: "Container", obj: container.Container{}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			if err := checkSerializable(reflect.TypeOf(test.obj), []string{test.name}); err != nil {

@@ -27,12 +27,12 @@ type ReadOpts struct {
 	// Path is the filesystem path for the file to read.
 	Path string `json:"path"`
 
+	// FilePayload contains the destination for output.
+	urpc.FilePayload
+
 	// Offset is the byte offset in the file to read from.
 	Offset int64 `json:"offset"`
 
 	// Size is the maximum number of bytes to read (0 means unlimited).
 	Size int64 `json:"size"`
-
-	// FilePayload contains the destination for output.
-	urpc.FilePayload
 }

@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -65,8 +66,8 @@ func TestStatefile(t *testing.T) {
 
 	for _, tc := range []struct {
 		name   string
-		engine config.StateEnginePolicy
 		want   string
+		engine config.StateEnginePolicy
 	}{
 		{name: "graph", engine: config.StateEngineGraph, want: "g1r0 = kernel.Kernel{"},
 		{name: "wire", engine: config.StateEngineWire, want: ".Kernel]{"},
@@ -221,7 +222,7 @@ func TestCheckpointStateEngineFlag(t *testing.T) {
 
 		// Explicit --state-engine=graph overrides boot-time wire engine.
 		graphDir := t.TempDir()
-		graphArgs := append(append([]string(nil), baseFlags...), "--state-engine=graph", "checkpoint", "--compression=flate-best-speed", "--leave-running", "--image-path="+graphDir, c.ID)
+		graphArgs := append(slices.Concat[[]string](baseFlags), "--state-engine=graph", "checkpoint", "--compression=flate-best-speed", "--leave-running", "--image-path="+graphDir, c.ID)
 		if out, err := runRunsc(graphArgs...); err != nil {
 			t.Fatalf("runsc --state-engine=graph checkpoint failed: %v\n%s", err, out)
 		}
@@ -232,7 +233,7 @@ func TestCheckpointStateEngineFlag(t *testing.T) {
 
 		// Omitting --state-engine on checkpoint preserves boot-time wire engine.
 		wireDir := t.TempDir()
-		wireArgs := append(append([]string(nil), baseFlags...), "checkpoint", "--compression=flate-best-speed", "--image-path="+wireDir, c.ID)
+		wireArgs := append(slices.Concat[[]string](baseFlags), "checkpoint", "--compression=flate-best-speed", "--image-path="+wireDir, c.ID)
 		if out, err := runRunsc(wireArgs...); err != nil {
 			t.Fatalf("runsc checkpoint failed: %v\n%s", err, out)
 		}
@@ -274,7 +275,7 @@ func TestCheckpointStateEngineAnnotationsAndSubcommand(t *testing.T) {
 
 		cid := testutil.RandomContainerID()
 		baseFlags := flagsWithoutStateEngine(conf)
-		runArgs := append(append([]string(nil), baseFlags...), "--state-engine=wire", "run", "--detach", "--bundle="+bundleDir, cid)
+		runArgs := append(slices.Concat[[]string](baseFlags), "--state-engine=wire", "run", "--detach", "--bundle="+bundleDir, cid)
 		runCmd := exec.Command(specutils.ExePath, runArgs...)
 		runCmd.Stdout = os.Stdout
 		runCmd.Stderr = os.Stderr
@@ -282,26 +283,26 @@ func TestCheckpointStateEngineAnnotationsAndSubcommand(t *testing.T) {
 			t.Fatalf("runsc run --detach failed: %v", err)
 		}
 		defer func() {
-			delArgs := append(append([]string(nil), baseFlags...), "delete", "--force", cid)
+			delArgs := append(slices.Concat[[]string](baseFlags), "delete", "--force", cid)
 			if out, err := runRunsc(delArgs...); err != nil {
 				t.Errorf("runsc delete --force failed: %v\n%s", err, out)
 			}
 		}()
 
 		for _, tc := range []struct {
-			name string
 			args func(dir string) []string
+			name string
 		}{
 			{
 				name: "top_level_flag",
 				args: func(dir string) []string {
-					return append(append([]string(nil), baseFlags...), "--state-engine=wire", "checkpoint", "--compression=flate-best-speed", "--leave-running", "--image-path="+dir, cid)
+					return append(slices.Concat[[]string](baseFlags), "--state-engine=wire", "checkpoint", "--compression=flate-best-speed", "--leave-running", "--image-path="+dir, cid)
 				},
 			},
 			{
 				name: "subcommand_flag",
 				args: func(dir string) []string {
-					return append(append([]string(nil), baseFlags...), "checkpoint", "--state-engine=wire", "--compression=flate-best-speed", "--leave-running", "--image-path="+dir, cid)
+					return append(slices.Concat[[]string](baseFlags), "checkpoint", "--state-engine=wire", "--compression=flate-best-speed", "--leave-running", "--image-path="+dir, cid)
 				},
 			},
 		} {
@@ -318,7 +319,7 @@ func TestCheckpointStateEngineAnnotationsAndSubcommand(t *testing.T) {
 		// Subsequent checkpoint without --state-engine must continue using the
 		// annotation-configured boot-time graph engine.
 		graphDir := t.TempDir()
-		graphArgs := append(append([]string(nil), baseFlags...), "checkpoint", "--compression=flate-best-speed", "--image-path="+graphDir, cid)
+		graphArgs := append(slices.Concat[[]string](baseFlags), "checkpoint", "--compression=flate-best-speed", "--image-path="+graphDir, cid)
 		if out, err := runRunsc(graphArgs...); err != nil {
 			t.Fatalf("runsc checkpoint failed: %v\n%s", err, out)
 		}
@@ -344,7 +345,7 @@ func TestCheckpointStateEngineAnnotationsAndSubcommand(t *testing.T) {
 
 		cid := testutil.RandomContainerID()
 		baseFlags := flagsWithoutStateEngine(conf)
-		runArgs := append(append([]string(nil), baseFlags...), "--state-engine=graph", "run", "--detach", "--bundle="+bundleDir, cid)
+		runArgs := append(slices.Concat[[]string](baseFlags), "--state-engine=graph", "run", "--detach", "--bundle="+bundleDir, cid)
 		runCmd := exec.Command(specutils.ExePath, runArgs...)
 		runCmd.Stdout = os.Stdout
 		runCmd.Stderr = os.Stderr
@@ -352,26 +353,26 @@ func TestCheckpointStateEngineAnnotationsAndSubcommand(t *testing.T) {
 			t.Fatalf("runsc run --detach failed: %v", err)
 		}
 		defer func() {
-			delArgs := append(append([]string(nil), baseFlags...), "delete", "--force", cid)
+			delArgs := append(slices.Concat[[]string](baseFlags), "delete", "--force", cid)
 			if out, err := runRunsc(delArgs...); err != nil {
 				t.Errorf("runsc delete --force failed: %v\n%s", err, out)
 			}
 		}()
 
 		for _, tc := range []struct {
-			name string
 			args func(dir string) []string
+			name string
 		}{
 			{
 				name: "top_level_flag",
 				args: func(dir string) []string {
-					return append(append([]string(nil), baseFlags...), "--state-engine=graph", "checkpoint", "--compression=flate-best-speed", "--leave-running", "--image-path="+dir, cid)
+					return append(slices.Concat[[]string](baseFlags), "--state-engine=graph", "checkpoint", "--compression=flate-best-speed", "--leave-running", "--image-path="+dir, cid)
 				},
 			},
 			{
 				name: "subcommand_flag",
 				args: func(dir string) []string {
-					return append(append([]string(nil), baseFlags...), "checkpoint", "--state-engine=graph", "--compression=flate-best-speed", "--leave-running", "--image-path="+dir, cid)
+					return append(slices.Concat[[]string](baseFlags), "checkpoint", "--state-engine=graph", "--compression=flate-best-speed", "--leave-running", "--image-path="+dir, cid)
 				},
 			},
 		} {
@@ -388,7 +389,7 @@ func TestCheckpointStateEngineAnnotationsAndSubcommand(t *testing.T) {
 		// Subsequent checkpoint without --state-engine must continue using the
 		// annotation-configured boot-time wire engine.
 		wireDir := t.TempDir()
-		wireArgs := append(append([]string(nil), baseFlags...), "checkpoint", "--compression=flate-best-speed", "--image-path="+wireDir, cid)
+		wireArgs := append(slices.Concat[[]string](baseFlags), "checkpoint", "--compression=flate-best-speed", "--image-path="+wireDir, cid)
 		if out, err := runRunsc(wireArgs...); err != nil {
 			t.Fatalf("runsc checkpoint failed: %v\n%s", err, out)
 		}
@@ -486,8 +487,8 @@ func TestStatefileEdgeCases(t *testing.T) {
 
 		for _, tc := range []struct {
 			name string
-			args []string
 			out  string
+			args []string
 		}{
 			{
 				name: "html_corrupt_payload",

@@ -36,7 +36,7 @@ func TestConsistencyWithGoMap(t *testing.T) {
 		m   = make(map[int64]*testValue)
 		apm testAtomicPtrMap
 	)
-	for i := 0; i < 100000; i++ {
+	for range 100000 {
 		// Apply a random operation to both m and apm and expect them to have
 		// the same result. Bias toward CompareAndSwap, which has the most
 		// cases; bias away from Range and RangeRepeatable, which are
@@ -141,7 +141,7 @@ func TestConcurrentHeterogeneous(t *testing.T) {
 
 	// These goroutines use keys not used by any other goroutine.
 	const numPrivateKeys = 3
-	for i := 0; i < numPrivateKeys; i++ {
+	for i := range numPrivateKeys {
 		key := int64(i)
 		var vals [numValuesPerKey]*testValue
 		for i := 1; /* leave vals[0] nil */ i < len(vals); i++ {
@@ -149,9 +149,7 @@ func TestConcurrentHeterogeneous(t *testing.T) {
 			vals[i] = val
 			addKeyValuePair(key, val)
 		}
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			r := rand.New(rand.NewSource(rand.Int63()))
 			var stored *testValue
 			for ctx.Err() == nil {
@@ -185,7 +183,7 @@ func TestConcurrentHeterogeneous(t *testing.T) {
 					}
 				}
 			}
-		}()
+		})
 	}
 
 	// These goroutines share a small set of keys.
@@ -213,10 +211,8 @@ func TestConcurrentHeterogeneous(t *testing.T) {
 		vals := sharedValues[key]
 		return vals[r.Intn(len(vals))]
 	}
-	for i := 0; i < 3; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 3 {
+		wg.Go(func() {
 			r := rand.New(rand.NewSource(rand.Int63()))
 			for ctx.Err() == nil {
 				keyIndex := r.Intn(len(sharedKeys))
@@ -244,13 +240,11 @@ func TestConcurrentHeterogeneous(t *testing.T) {
 					}
 				}
 			}
-		}()
+		})
 	}
 
 	// This goroutine repeatedly searches for unused keys.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		r := rand.New(rand.NewSource(rand.Int63()))
 		for ctx.Err() == nil {
 			key := -1 - r.Int63()
@@ -258,13 +252,11 @@ func TestConcurrentHeterogeneous(t *testing.T) {
 				t.Errorf("Load(%d): got %p, wanted nil", key, got)
 			}
 		}
-	}()
+	})
 
 	// This goroutine repeatedly calls RangeRepeatable() and checks that each
 	// key corresponds to an expected value.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		abort := false
 		for !abort && ctx.Err() == nil {
 			apm.RangeRepeatable(func(key int64, val *testValue) bool {
@@ -282,7 +274,7 @@ func TestConcurrentHeterogeneous(t *testing.T) {
 				return true
 			})
 		}
-	}()
+	})
 
 	// Finally, the main goroutine spins for the length of the test calling
 	// Range() and checking that each key that it observes is unique and
@@ -330,8 +322,8 @@ type benchmarkableMap interface {
 
 // rwMutexMap implements benchmarkableMap for a RWMutex-protected Go map.
 type rwMutexMap struct {
-	mu sync.RWMutex
 	m  map[int64]*testValue
+	mu sync.RWMutex
 }
 
 func (m *rwMutexMap) Load(key int64) *testValue {
@@ -443,8 +435,8 @@ func (m *benchmarkableAtomicPtrMapSharded) Delete(key int64) {
 }
 
 var mapImpls = [...]struct {
-	name string
 	ctor func() benchmarkableMap
+	name string
 }{
 	{
 		name: "RWMutexMap",
@@ -571,18 +563,16 @@ func benchmarkConcurrent(b *testing.B, mapCtor func() benchmarkableMap, opts ben
 	val := &testValue{}
 	// Insert a large number of unused elements into the map so that used
 	// elements are distributed throughout memory.
-	for i := 0; i < 10000; i++ {
+	for i := range 10000 {
 		m.Store(int64(-1-i), val)
 	}
 	// n := ceil(b.N / (opts.loadsPerMutationPair + 2))
 	n := (b.N + opts.loadsPerMutationPair + 1) / (opts.loadsPerMutationPair + 2)
 	for i, procs := 0, runtime.GOMAXPROCS(0); i < procs; i++ {
 		workerID := i
-		workers.Add(1)
-		go func() {
-			defer workers.Done()
+		workers.Go(func() {
 			started.Wait()
-			for i := 0; i < n; i++ {
+			for i := range n {
 				var key int64
 				if opts.changeKeys {
 					key = int64(workerID*n + i)
@@ -595,7 +585,7 @@ func benchmarkConcurrent(b *testing.B, mapCtor func() benchmarkableMap, opts ben
 				}
 				m.Delete(key)
 			}
-		}()
+		})
 	}
 
 	b.ResetTimer()

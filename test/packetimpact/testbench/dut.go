@@ -646,7 +646,7 @@ func (dut *DUT) SetSockOpt(t *testing.T, sockfd, level, optname int32, optval []
 func (dut *DUT) SetSockOptWithErrno(ctx context.Context, t *testing.T, sockfd, level, optname int32, optval []byte) (int32, error) {
 	t.Helper()
 
-	return dut.setSockOpt(ctx, t, sockfd, level, optname, &pb.SockOptVal{Val: &pb.SockOptVal_Bytesval{optval}})
+	return dut.setSockOpt(ctx, t, sockfd, level, optname, &pb.SockOptVal{Val: &pb.SockOptVal_Bytesval{Bytesval: optval}})
 }
 
 // SetSockOptInt calls setsockopt on the DUT and causes a fatal test failure
@@ -665,7 +665,7 @@ func (dut *DUT) SetSockOptInt(t *testing.T, sockfd, level, optname, optval int32
 func (dut *DUT) SetSockOptIntWithErrno(ctx context.Context, t *testing.T, sockfd, level, optname, optval int32) (int32, error) {
 	t.Helper()
 
-	return dut.setSockOpt(ctx, t, sockfd, level, optname, &pb.SockOptVal{Val: &pb.SockOptVal_Intval{optval}})
+	return dut.setSockOpt(ctx, t, sockfd, level, optname, &pb.SockOptVal{Val: &pb.SockOptVal_Intval{Intval: optval}})
 }
 
 // SetSockOptTimeval calls setsockopt on the DUT and causes a fatal test failure
@@ -689,7 +689,7 @@ func (dut *DUT) SetSockOptTimevalWithErrno(ctx context.Context, t *testing.T, so
 		Seconds:      int64(tv.Sec),
 		Microseconds: int64(tv.Usec),
 	}
-	return dut.setSockOpt(ctx, t, sockfd, level, optname, &pb.SockOptVal{Val: &pb.SockOptVal_Timeval{&timeval}})
+	return dut.setSockOpt(ctx, t, sockfd, level, optname, &pb.SockOptVal{Val: &pb.SockOptVal_Timeval{Timeval: &timeval}})
 }
 
 // Socket calls socket on the DUT and returns the file descriptor. If socket

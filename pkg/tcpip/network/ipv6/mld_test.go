@@ -110,9 +110,9 @@ func TestIPv6JoinLeaveSolicitedNodeAddressPerformsMLD(t *testing.T) {
 	const nicID = 1
 
 	tests := []struct {
+		validate        func(t *testing.T, v *buffer.View, localAddress tcpip.Address, groupAddress tcpip.Address, leave bool)
 		name            string
 		v1Compatibility bool
-		validate        func(t *testing.T, v *buffer.View, localAddress tcpip.Address, groupAddress tcpip.Address, leave bool)
 	}{
 		{
 			name:            "V1 Compatibility",
@@ -217,10 +217,10 @@ func TestSendQueuedMLDReports(t *testing.T) {
 	}
 
 	subTests := []struct {
-		name            string
-		v1Compatibility bool
 		validate        func(t *testing.T, e *channel.Endpoint, localAddress tcpip.Address, groupAddresses []tcpip.Address, leave bool)
 		checkStats      func(*testing.T, *stack.Stack, uint64, uint64, uint64)
+		name            string
+		v1Compatibility bool
 	}{
 		{
 			name:            "V1 Compatibility",
@@ -381,7 +381,7 @@ func TestSendQueuedMLDReports(t *testing.T) {
 					// We expect two batches of reports to be sent (1 batch when the
 					// link-local address is assigned, and another after the maximum
 					// unsolicited report interval.
-					for i := 0; i < 2; i++ {
+					for i := range 2 {
 						// MLDv1 always sends a single message per group.
 						//
 						// MLDv2 sends a single message per group when we first get an
@@ -466,14 +466,14 @@ func TestMLDPacketValidation(t *testing.T) {
 	linkLocalAddr2 := testutil.MustParse6("fe80::2")
 
 	tests := []struct {
+		getMessageTypeStatValue  func(tcpip.Stats) uint64
 		name                     string
-		messageType              header.ICMPv6Type
 		srcAddr                  tcpip.Address
-		includeRouterAlertOption bool
 		routerAlertValue         header.IPv6RouterAlertValue
+		messageType              header.ICMPv6Type
+		includeRouterAlertOption bool
 		hopLimit                 uint8
 		expectValidMLD           bool
-		getMessageTypeStatValue  func(tcpip.Stats) uint64
 	}{
 		{
 			name:                     "valid",
@@ -660,9 +660,9 @@ func TestMLDSkipProtocol(t *testing.T) {
 	}
 
 	subTests := []struct {
+		validate        func(t *testing.T, v *buffer.View, localAddress tcpip.Address, groupAddress tcpip.Address)
 		name            string
 		v1Compatibility bool
-		validate        func(t *testing.T, v *buffer.View, localAddress tcpip.Address, groupAddress tcpip.Address)
 	}{
 		{
 			name:            "V1 Compatibility",

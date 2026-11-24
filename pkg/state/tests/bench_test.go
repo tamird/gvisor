@@ -29,7 +29,7 @@ import (
 // buildPtrObject builds a benchmark object.
 func buildPtrObject(n int) any {
 	b := new(benchStruct)
-	for i := 0; i < n; i++ {
+	for range n {
 		b = &benchStruct{B: b}
 	}
 	return b
@@ -39,7 +39,7 @@ func buildPtrObject(n int) any {
 func buildMapObject(n int) any {
 	b := new(benchStruct)
 	m := make(map[int]*benchStruct)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		m[i] = b
 	}
 	return &m
@@ -49,7 +49,7 @@ func buildMapObject(n int) any {
 func buildSliceObject(n int) any {
 	b := new(benchStruct)
 	s := make([]*benchStruct, 0, n)
-	for i := 0; i < n; i++ {
+	for range n {
 		s = append(s, b)
 	}
 	return &s

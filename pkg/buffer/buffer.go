@@ -509,10 +509,7 @@ func (b *Buffer) WriteFromReaderAndLimitedReader(r io.Reader, count int64, lr *i
 
 	var done int64
 	for done < count {
-		vsize := count - done
-		if vsize > MaxChunkSize {
-			vsize = MaxChunkSize
-		}
+		vsize := min(count-done, MaxChunkSize)
 		v := NewView(int(vsize))
 		lr.R = r
 		lr.N = vsize
@@ -653,9 +650,6 @@ func (x Range) Offset(off int) Range {
 
 // Len returns the length of x.
 func (x Range) Len() int {
-	l := x.end - x.begin
-	if l < 0 {
-		l = 0
-	}
+	l := max(x.end-x.begin, 0)
 	return l
 }

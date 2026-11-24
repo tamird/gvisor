@@ -162,16 +162,13 @@ func ioctl(ctx context.Context, fd int, io usermem.IO, sysno uintptr, args arch.
 		}
 
 		// Copy out the feature blocks to the memory pointed to by ifrData.
-		blksToCopy := int(gfeatures.Size)
-		if blksToCopy > len(iface.Features) {
-			blksToCopy = len(iface.Features)
-		}
+		blksToCopy := min(int(gfeatures.Size), len(iface.Features))
 		gfeatures.Size = uint32(blksToCopy)
 		if _, err := gfeatures.CopyOut(cc, ifrData); err != nil {
 			return 0, err
 		}
 		next, ok := ifrData.AddLength(uint64(unsafe.Sizeof(linux.EthtoolGFeatures{})))
-		for i := 0; i < blksToCopy; i++ {
+		for i := range blksToCopy {
 			if !ok {
 				return 0, linuxerr.EFAULT
 			}

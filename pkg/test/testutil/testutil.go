@@ -327,8 +327,8 @@ func ConfigForBenchmark(b *testing.B) *config.Config {
 // PlatformConfig pairs a sub-test or sub-benchmark name with its sandbox
 // configuration.
 type PlatformConfig struct {
-	Name string
 	Conf *config.Config
+	Name string
 }
 
 // PlatformConfigs returns two sandbox configurations (created via newConf) for
@@ -338,7 +338,7 @@ type PlatformConfig struct {
 func PlatformConfigs(tb testing.TB, platforms string, newConf func() *config.Config) []PlatformConfig {
 	tb.Helper()
 	var ps []string
-	for _, p := range strings.Split(platforms, ",") {
+	for p := range strings.SplitSeq(platforms, ",") {
 		if p = strings.TrimSpace(p); p != "" {
 			ps = append(ps, p)
 		}
@@ -631,9 +631,10 @@ func RunCmd(cmd *exec.Cmd) error {
 
 // Reaper reaps child processes, except those started by StartCmd.
 type Reaper struct {
+	ch chan os.Signal
+
 	// mu protects ch, which will be nil if the reaper is not running.
 	mu sync.Mutex
-	ch chan os.Signal
 }
 
 // Start starts reaping child processes.
@@ -703,7 +704,7 @@ func childPIDs() []int {
 			// The thread exited.
 			continue
 		}
-		for _, field := range strings.Fields(string(data)) {
+		for field := range strings.FieldsSeq(string(data)) {
 			if pid, err := strconv.Atoi(field); err == nil {
 				pids = append(pids, pid)
 			}
@@ -754,6 +755,7 @@ func WaitUntilRead(r io.Reader, want string, timeout time.Duration) error {
 
 // readUntil owns the scanner and result channel. Its single result can be
 // published even after the waiter has canceled and stopped receiving.
+// EOF and read errors both mean the requested output was not found.
 func readUntil(r io.Reader, want string, cancel <-chan struct{}) <-chan bool {
 	sc := bufio.NewScanner(r)
 	result := make(chan bool, 1)
@@ -872,7 +874,7 @@ func TestIndicesForShard(numTests int) ([]int, error) {
 	// Calculate!
 	var indices []int
 	numBlocks := int(math.Ceil(float64(numTests) / float64(shardTotal)))
-	for i := 0; i < numBlocks; i++ {
+	for i := range numBlocks {
 		pick := i*shardTotal + shardIndex
 		if pick < numTests {
 			indices = append(indices, pick)

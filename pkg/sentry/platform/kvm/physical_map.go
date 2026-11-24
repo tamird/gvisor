@@ -31,9 +31,9 @@ type region struct {
 }
 
 type specialVirtualRegion struct {
-	region
 	filename string
-	mmio     bool // if false, region is excluded
+	region
+	mmio bool // if false, region is excluded
 }
 
 type physicalRegion struct {
@@ -172,10 +172,8 @@ func fillAddressSpace() (specialRegions []specialVirtualRegion) {
 		}
 		if addr != 0 {
 			specialRegions = append(specialRegions, specialVirtualRegion{
-				region: region{
-					virtual: addr,
-					length:  current,
-				},
+				virtual:  addr,
+				length:   current,
 				filename: "[anon]",
 			})
 			// See comment above.
@@ -235,10 +233,8 @@ func computePhysicalRegions(specialRegions []specialVirtualRegion) (physicalRegi
 			}
 		}
 		physicalRegions = append(physicalRegions, physicalRegion{
-			region: region{
-				virtual: virtual,
-				length:  length,
-			},
+			virtual:  virtual,
+			length:   length,
 			physical: physical,
 			mmio:     mmio,
 		})

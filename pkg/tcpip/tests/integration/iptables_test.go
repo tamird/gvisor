@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"fmt"
 	"math"
+	"slices"
 	"testing"
 	"time"
 
@@ -151,13 +152,13 @@ func genPacketV4() *stack.PacketBuffer {
 
 func TestIPTablesStatsForInput(t *testing.T) {
 	tests := []struct {
-		name               string
 		setupStack         func(*testing.T) (*stack.Stack, *channel.Endpoint)
 		setupFilter        func(*testing.T, *stack.Stack)
 		genPacket          func() *stack.PacketBuffer
-		proto              tcpip.NetworkProtocolNumber
+		name               string
 		expectReceived     int
 		expectInputDropped int
+		proto              tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:               "IPv6 Accept",
@@ -399,13 +400,13 @@ func TestIPTableWritePackets(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                string
 		setupFilter         func(*testing.T, *stack.Stack)
 		genPacket           func(*stack.Route) stack.PacketBufferList
-		proto               tcpip.NetworkProtocolNumber
+		name                string
 		remoteAddr          tcpip.Address
 		expectSent          uint64
 		expectOutputDropped uint64
+		proto               tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:        "IPv4 Accept",
@@ -472,7 +473,7 @@ func TestIPTableWritePackets(t *testing.T) {
 			genPacket: func(r *stack.Route) stack.PacketBufferList {
 				var pkts stack.PacketBufferList
 
-				for i := 0; i < acceptPackets; i++ {
+				for range acceptPackets {
 					pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 						ReserveHeaderBytes: int(r.MaxHeaderLength() + header.UDPMinimumSize),
 					})
@@ -480,7 +481,7 @@ func TestIPTableWritePackets(t *testing.T) {
 					udpHdr(hdr, r.LocalAddress(), r.RemoteAddress(), utils.LocalPort, utils.RemotePort)
 					pkts.PushBack(pkt)
 				}
-				for i := 0; i < dropPackets; i++ {
+				for range dropPackets {
 					pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 						ReserveHeaderBytes: int(r.MaxHeaderLength() + header.UDPMinimumSize),
 					})
@@ -561,7 +562,7 @@ func TestIPTableWritePackets(t *testing.T) {
 			genPacket: func(r *stack.Route) stack.PacketBufferList {
 				var pkts stack.PacketBufferList
 
-				for i := 0; i < acceptPackets; i++ {
+				for range acceptPackets {
 					pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 						ReserveHeaderBytes: int(r.MaxHeaderLength() + header.UDPMinimumSize),
 					})
@@ -569,7 +570,7 @@ func TestIPTableWritePackets(t *testing.T) {
 					udpHdr(hdr, r.LocalAddress(), r.RemoteAddress(), utils.LocalPort, utils.RemotePort)
 					pkts.PushBack(pkt)
 				}
-				for i := 0; i < dropPackets; i++ {
+				for range dropPackets {
 					pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 						ReserveHeaderBytes: int(r.MaxHeaderLength() + header.UDPMinimumSize),
 					})
@@ -725,12 +726,12 @@ func TestForwardingHook(t *testing.T) {
 	)
 
 	tests := []struct {
-		name             string
-		netProto         tcpip.NetworkProtocolNumber
-		local            bool
-		srcAddr, dstAddr tcpip.Address
 		rx               func(*channel.Endpoint, tcpip.Address, tcpip.Address)
 		checker          func(*testing.T, *buffer.View)
+		name             string
+		srcAddr, dstAddr tcpip.Address
+		netProto         tcpip.NetworkProtocolNumber
+		local            bool
 	}{
 		{
 			name:     "IPv4 remote",
@@ -773,8 +774,8 @@ func TestForwardingHook(t *testing.T) {
 	}
 
 	subTests := []struct {
-		name          string
 		setupFilter   func(*testing.T, *stack.Stack, tcpip.NetworkProtocolNumber)
+		name          string
 		expectForward bool
 	}{
 		{
@@ -972,10 +973,10 @@ func TestFilteringEchoPacketsWithLocalForwarding(t *testing.T) {
 	)
 
 	tests := []struct {
-		name     string
-		netProto tcpip.NetworkProtocolNumber
 		rx       func(*channel.Endpoint)
 		checker  func(*testing.T, *buffer.View)
+		name     string
+		netProto tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:     "IPv4",
@@ -1017,8 +1018,8 @@ func TestFilteringEchoPacketsWithLocalForwarding(t *testing.T) {
 	)
 
 	subTests := []struct {
-		name         string
 		setupFilter  func(*testing.T, *stack.Stack, tcpip.NetworkProtocolNumber)
+		name         string
 		expectResult droppedEcho
 	}{
 		{
@@ -1314,8 +1315,8 @@ func setupTwiceNAT(t *testing.T, s *stack.Stack, netProto tcpip.NetworkProtocolN
 }
 
 type natType struct {
-	name     string
 	setupNAT func(_ *testing.T, _ *stack.Stack, _ tcpip.NetworkProtocolNumber, _ tcpip.TransportProtocolNumber, snatAddr, dnatAddr tcpip.Address, dnatPort uint16)
+	name     string
 }
 
 var (
@@ -1443,13 +1444,13 @@ func TestNATEcho(t *testing.T) {
 	}
 
 	tests := []struct {
-		name         string
-		netProto     tcpip.NetworkProtocolNumber
-		transProto   tcpip.TransportProtocolNumber
 		echoPkt      func(srcAddr, dstAddr tcpip.Address, reply bool) []byte
 		checkEchoPkt func(t *testing.T, v *buffer.View, srcAddr, dstAddr tcpip.Address, reply bool)
+		name         string
 
-		natTypes []natTypeTest
+		natTypes   []natTypeTest
+		netProto   tcpip.NetworkProtocolNumber
+		transProto tcpip.TransportProtocolNumber
 	}{
 		{
 			name:         "IPv4",
@@ -1584,15 +1585,15 @@ func TestNAT(t *testing.T) {
 	const listenPort uint16 = 8080
 
 	type endpointAndAddresses struct {
-		serverEP          tcpip.Endpoint
-		serverAddr        tcpip.FullAddress
-		serverReadableCH  chan struct{}
-		serverConnectAddr tcpip.Address
+		serverEP tcpip.Endpoint
 
 		clientEP          tcpip.Endpoint
-		clientAddr        tcpip.Address
+		serverReadableCH  chan struct{}
 		clientReadableCH  chan struct{}
+		serverAddr        tcpip.FullAddress
 		clientConnectAddr tcpip.FullAddress
+		serverConnectAddr tcpip.Address
+		clientAddr        tcpip.Address
 	}
 
 	newEP := func(t *testing.T, s *stack.Stack, transProto tcpip.TransportProtocolNumber, netProto tcpip.NetworkProtocolNumber) (tcpip.Endpoint, chan struct{}) {
@@ -1614,8 +1615,6 @@ func TestNAT(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		netProto tcpip.NetworkProtocolNumber
 		// Setups up the stacks in such a way that:
 		//
 		//	- Host2 is the client for all tests.
@@ -1636,7 +1635,9 @@ func TestNAT(t *testing.T) {
 		//   + NAT will transform client-originating packets' source addresses to
 		//     the router's NIC1's address before reaching Host1.
 		epAndAddrs func(t *testing.T, host1Stack, routerStack, host2Stack *stack.Stack, proto tcpip.TransportProtocolNumber) endpointAndAddresses
+		name       string
 		natTypes   []natType
+		netProto   tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:     "IPv4 SNAT",
@@ -1841,11 +1842,11 @@ func TestNAT(t *testing.T) {
 	}
 
 	subTests := []struct {
-		name               string
-		proto              tcpip.TransportProtocolNumber
 		expectedConnectErr tcpip.Error
 		setupServer        func(t *testing.T, ep tcpip.Endpoint)
 		setupServerConn    func(t *testing.T, ep tcpip.Endpoint, ch <-chan struct{}, clientAddr tcpip.FullAddress) (tcpip.Endpoint, chan struct{})
+		name               string
+		proto              tcpip.TransportProtocolNumber
 		needRemoteAddr     bool
 	}{
 		{
@@ -2201,22 +2202,22 @@ func TestNATICMPError(t *testing.T) {
 	}
 
 	type transportTypeTest struct {
-		name       string
-		proto      tcpip.TransportProtocolNumber
-		buf        []byte
 		checkNATed func(*testing.T, *buffer.View)
+		name       string
+		buf        []byte
+		proto      tcpip.TransportProtocolNumber
 	}
 
 	tests := []struct {
-		name            string
-		netProto        tcpip.NetworkProtocolNumber
-		host1Addr       tcpip.Address
 		icmpError       func(*testing.T, []byte, uint8) []byte
 		decrementTTL    func([]byte)
 		checkNATedError func(*testing.T, *buffer.View, []byte, uint8)
+		name            string
 
 		transportTypes []transportTypeTest
 		icmpTypes      []icmpTypeTest
+		host1Addr      tcpip.Address
+		netProto       tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:      "IPv4",
@@ -2533,7 +2534,7 @@ func TestNATICMPError(t *testing.T) {
 									buf := transportType.buf
 
 									ep2.InjectInbound(test.netProto, stack.NewPacketBuffer(stack.PacketBufferOptions{
-										Payload: buffer.MakeWithData(append([]byte{}, buf...)),
+										Payload: buffer.MakeWithData(bytes.Clone(buf)),
 									}))
 
 									{
@@ -2632,11 +2633,11 @@ func TestSNATHandlePortOrIdentConflicts(t *testing.T) {
 	}
 
 	type transportTypeTest struct {
-		name                 string
-		proto                tcpip.TransportProtocolNumber
 		buf                  func(tcpip.Address, uint16) []byte
 		checkNATed           func(*testing.T, *buffer.View, uint16, bool, portOrIdentRange)
+		name                 string
 		srcPortOrIdentRanges []srcPortOrIdentRangeTest
+		proto                tcpip.TransportProtocolNumber
 	}
 
 	compareSrcPortOrIdent := func(t *testing.T, gotPort uint16, originalSrcPort uint16, firstPacket bool, expectedRange portOrIdentRange) {
@@ -2656,10 +2657,10 @@ func TestSNATHandlePortOrIdentConflicts(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		netProto       tcpip.NetworkProtocolNumber
-		routerNIC1Addr tcpip.Address
 		srcAddrs       []tcpip.Address
 		transportTypes []transportTypeTest
+		routerNIC1Addr tcpip.Address
+		netProto       tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:           "IPv4",
@@ -2815,8 +2816,8 @@ func TestSNATHandlePortOrIdentConflicts(t *testing.T) {
 	}
 
 	natTypes := []struct {
-		name   string
 		target func(tcpip.NetworkProtocolNumber, tcpip.Address) stack.Target
+		name   string
 	}{
 		{
 			name: "Masquerade",
@@ -3282,12 +3283,11 @@ func (m *icmpv6Matcher) Match(_ stack.Hook, pkt *stack.PacketBuffer, _, _ string
 
 func TestRejectWith(t *testing.T) {
 	type natHook struct {
-		hook    stack.Hook
-		dstAddr tcpip.Address
-		matcher stack.Matcher
-
-		errorICMPDstAddr tcpip.Address
+		matcher          stack.Matcher
 		errorICMPPayload []byte
+		dstAddr          tcpip.Address
+		errorICMPDstAddr tcpip.Address
+		hook             stack.Hook
 	}
 
 	type rejectWithVal struct {
@@ -3305,15 +3305,15 @@ func TestRejectWith(t *testing.T) {
 	}
 
 	tests := []struct {
-		name              string
-		netProto          tcpip.NetworkProtocolNumber
 		rxICMPEchoRequest func(tcpip.Address) []byte
 		icmpChecker       func(*testing.T, *buffer.View, tcpip.Address, uint8, uint8, []byte)
 
-		natHooks []natHook
+		rejectTarget func(*testing.T, stack.NetworkProtocol, int) stack.Target
+		name         string
 
-		rejectTarget   func(*testing.T, stack.NetworkProtocol, int) stack.Target
+		natHooks       []natHook
 		rejectWithVals []rejectWithVal
+		netProto       tcpip.NetworkProtocolNumber
 		errorICMPType  uint8
 	}{
 		{
@@ -3549,12 +3549,12 @@ func TestRejectWith(t *testing.T) {
 func TestRejectWithTCPReset(t *testing.T) {
 	const seq = 100
 	tests := []struct {
+		genTCP     func(src, dst tcpip.Address) *stack.PacketBuffer
 		name       string
-		netProto   tcpip.NetworkProtocolNumber
 		srcAddr    tcpip.Address
 		dstAddr    tcpip.Address
 		rejectWith int
-		genTCP     func(src, dst tcpip.Address) *stack.PacketBuffer
+		netProto   tcpip.NetworkProtocolNumber
 		wantReset  bool
 	}{
 		{
@@ -3889,9 +3889,9 @@ func TestRejectResetsConnect(t *testing.T) {
 // length/offset field) don't panic.
 func TestInvalidTransportHeader(t *testing.T) {
 	tests := []struct {
-		name       string
 		setupStack func(*testing.T) (*stack.Stack, *channel.Endpoint)
 		genPacket  func(int8) *stack.PacketBuffer
+		name       string
 		offset     int8
 	}{
 		{
@@ -3960,16 +3960,16 @@ func TestInvalidTransportHeader(t *testing.T) {
 }
 
 type tcpOpts struct {
-	offset         int8
-	flags          header.TCPFlags
-	seq            uint32
-	ack            uint32
 	checksum       *uint16
 	srcAddr        tcpip.Address
 	dstAddr        tcpip.Address
 	pktSize        int
-	dataOffset     uint8
+	seq            uint32
+	ack            uint32
 	fragmentOffset uint16
+	offset         int8
+	flags          header.TCPFlags
+	dataOffset     uint8
 	more           bool
 }
 
@@ -4005,7 +4005,7 @@ func genTCP4WithOpts(opts tcpOpts) *stack.PacketBuffer {
 	ip.SetChecksum(0)
 	ip.SetChecksum(^ip.CalculateChecksum())
 
-	buf := buffer.MakeWithData(append([]byte{}, hdr.View()...))
+	buf := buffer.MakeWithData(bytes.Clone(hdr.View()))
 	return stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: buf})
 }
 
@@ -4049,7 +4049,7 @@ func genTCP6WithOpts(opts tcpOpts) *stack.PacketBuffer {
 		DstAddr:           opts.dstAddr,
 	})
 
-	buf := buffer.MakeWithData(append([]byte{}, hdr.View()...))
+	buf := buffer.MakeWithData(bytes.Clone(hdr.View()))
 	return stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: buf})
 }
 
@@ -4104,7 +4104,7 @@ func genUDP4(offset int8) *stack.PacketBuffer {
 	ip.SetChecksum(0)
 	ip.SetChecksum(^ip.CalculateChecksum())
 
-	buf := buffer.MakeWithData(append([]byte{}, hdr.View()...))
+	buf := buffer.MakeWithData(bytes.Clone(hdr.View()))
 	return stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: buf})
 }
 
@@ -4129,7 +4129,7 @@ func genUDP6(offset int8) *stack.PacketBuffer {
 		DstAddr:           dstAddrV6,
 	})
 
-	buf := buffer.MakeWithData(append([]byte{}, hdr.View()...))
+	buf := buffer.MakeWithData(bytes.Clone(hdr.View()))
 	return stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: buf})
 }
 
@@ -4141,11 +4141,11 @@ func TestMasqueradePortRange(t *testing.T) {
 	)
 
 	tests := []struct {
+		check      func(*testing.T, *buffer.View)
 		name       string
+		buf        []byte
 		netProto   tcpip.NetworkProtocolNumber
 		transProto tcpip.TransportProtocolNumber
-		buf        []byte
-		check      func(*testing.T, *buffer.View)
 	}{
 		{
 			name:       "IPv4 UDP",
@@ -4216,7 +4216,7 @@ func TestMasqueradePortRange(t *testing.T) {
 		} {
 			extended := test
 			extended.name += "/" + extension.name
-			extended.buf = append([]byte(nil), test.buf[:header.IPv6MinimumSize]...)
+			extended.buf = slices.Concat[[]byte](test.buf[:header.IPv6MinimumSize])
 			extended.buf = append(extended.buf, byte(test.transProto), 0, 0, 0, 0, 0, 0, 0)
 			extended.buf = append(extended.buf, test.buf[header.IPv6MinimumSize:]...)
 			ip := header.IPv6(extended.buf)
@@ -4267,16 +4267,16 @@ func TestOutputDNATReroutesByDestination(t *testing.T) {
 	const port = 8080
 
 	tests := []struct {
+		check        func(*testing.T, *buffer.View, ...checker.NetworkChecker)
 		name         string
-		netProto     tcpip.NetworkProtocolNumber
 		defaultRoute tcpip.Subnet
 		// preDNATDst is reached through NIC1's default route, so the packet's
 		// source is NIC1's address.
 		preDNATDst tcpip.Address
 		srcAddr    tcpip.Address
 		// backend is only reachable through NIC2.
-		backend tcpip.Address
-		check   func(*testing.T, *buffer.View, ...checker.NetworkChecker)
+		backend  tcpip.Address
+		netProto tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:         "IPv4",

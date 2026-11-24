@@ -24,8 +24,8 @@ import (
 // ClangASTConfig is the format for compilation_commands.json.
 type ClangASTConfig struct {
 	Directory string   `json:"directory"`
-	Arguments []string `json:"arguments"`
 	Filename  string   `json:"file"`
+	Arguments []string `json:"arguments"`
 }
 
 // NewParserConfig creates a ClangASTConfig for the given file using the list of includes.

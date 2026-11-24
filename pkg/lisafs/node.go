@@ -36,6 +36,36 @@ const numStaticChildren = 5
 // Reference Model:
 //   - Each node holds a ref on its parent for its entire lifetime.
 type Node struct {
+	// Here is a performance hack. Past experience has shown that map allocations
+	// on each node for tracking children costs a lot of memory. More small
+	// allocations also fragment memory. To save allocations, statically track
+	// upto numStaticChildren children using hardcoded pointers. If more children
+	// are inserted then move to a map. Use dynamicChildren iff it is non-nil.
+
+	// staticChildren and dynamicChildren are protected by childrenMu.
+	staticChildren [numStaticChildren]struct {
+		node *Node
+		name string
+	}
+
+	// controlFDs is a linked list of all the ControlFDs opened on this node.
+	// Prefer this over a slice to avoid additional allocations. Each ControlFD
+	// is an implicit linked list node so there are no additional allocations
+	// needed to maintain the linked list.
+	// controlFDs is protected by controlFDsMu.
+	controlFDs controlFDList
+
+	// parent is this parent node which tracks this node as a child. parent is
+	// protected by the backing server's rename mutex.
+	parent *Node
+
+	dynamicChildren map[string]*Node
+
+	// name is the name of the file represented by this Node in parent. If this
+	// FD represents the root directory, then name is an empty string. name is
+	// protected by the backing server's rename mutex.
+	name string
+
 	// node's ref count is protected by its parent's childrenMu.
 	nodeRefs
 
@@ -62,6 +92,10 @@ type Node struct {
 	// this node is not possible while opMu is read locked.
 	opMu sync.RWMutex
 
+	controlFDsMu sync.Mutex
+
+	childrenMu sync.Mutex
+
 	// deleted indicates whether the backing file has been unlinked. This can be
 	// used to deny operations on FDs on this Node after deletion because it is
 	// not safe for FD implementations to do host walks up to this position
@@ -69,15 +103,6 @@ type Node struct {
 	// deleted is protected by opMu. deleted must only be accessed/mutated using
 	// atomics; see markDeletedRecursive for more details.
 	deleted atomicbitops.Uint32
-
-	// name is the name of the file represented by this Node in parent. If this
-	// FD represents the root directory, then name is an empty string. name is
-	// protected by the backing server's rename mutex.
-	name string
-
-	// parent is this parent node which tracks this node as a child. parent is
-	// protected by the backing server's rename mutex.
-	parent *Node
 
 	// linked indicates whether this Node is currently registered in
 	// parent's set of children.
@@ -89,27 +114,6 @@ type Node struct {
 	//
 	// linked is protected by parent.childrenMu.
 	linked bool
-
-	// controlFDs is a linked list of all the ControlFDs opened on this node.
-	// Prefer this over a slice to avoid additional allocations. Each ControlFD
-	// is an implicit linked list node so there are no additional allocations
-	// needed to maintain the linked list.
-	controlFDsMu sync.Mutex
-	controlFDs   controlFDList
-
-	// Here is a performance hack. Past experience has shown that map allocations
-	// on each node for tracking children costs a lot of memory. More small
-	// allocations also fragment memory. To save allocations, statically track
-	// upto numStaticChildren children using hardcoded pointers. If more children
-	// are inserted then move to a map. Use dynamicChildren iff it is non-nil.
-
-	// The following fields are protected by childrenMu.
-	childrenMu     sync.Mutex
-	staticChildren [numStaticChildren]struct {
-		name string
-		node *Node
-	}
-	dynamicChildren map[string]*Node
 }
 
 // DecRef implements refs.RefCounter.DecRef. Note that the context
@@ -162,7 +166,7 @@ func (n *Node) LookupChildLocked(name string) *Node {
 		return n.dynamicChildren[name]
 	}
 
-	for i := 0; i < numStaticChildren; i++ {
+	for i := range numStaticChildren {
 		if n.staticChildren[i].name == name {
 			return n.staticChildren[i].node
 		}
@@ -234,7 +238,7 @@ func (n *Node) removeChildLocked(name string) *Node {
 		return toRemove
 	}
 
-	for i := 0; i < numStaticChildren; i++ {
+	for i := range numStaticChildren {
 		if n.staticChildren[i].name == name {
 			toRemove := n.staticChildren[i].node
 			n.staticChildren[i].name = ""
@@ -255,7 +259,7 @@ func (n *Node) insertChildLocked(name string, child *Node) {
 	child.linked = true
 	// Try to insert statically first if staticChildren is still being used.
 	if n.dynamicChildren == nil {
-		for i := 0; i < numStaticChildren; i++ {
+		for i := range numStaticChildren {
 			if n.staticChildren[i].node == nil {
 				n.staticChildren[i].node = child
 				n.staticChildren[i].name = name
@@ -266,7 +270,7 @@ func (n *Node) insertChildLocked(name string, child *Node) {
 		// Ran out of static space. Need to start inserting dynamically.
 		// Shift everything to the map.
 		n.dynamicChildren = make(map[string]*Node)
-		for i := 0; i < numStaticChildren; i++ {
+		for i := range numStaticChildren {
 			// From above loop we know all staticChildren entries are non-nil.
 			n.dynamicChildren[n.staticChildren[i].name] = n.staticChildren[i].node
 			n.staticChildren[i].name = ""
@@ -288,7 +292,7 @@ func (n *Node) forEachChild(fn func(*Node)) {
 		return
 	}
 
-	for i := 0; i < numStaticChildren; i++ {
+	for i := range numStaticChildren {
 		if n.staticChildren[i].node != nil {
 			fn(n.staticChildren[i].node)
 		}

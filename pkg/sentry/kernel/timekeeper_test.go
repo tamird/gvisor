@@ -322,10 +322,8 @@ func TestTimekeeperRestoreClockError(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			const saveMonotonic = 100000
 			c := &driftingClocks{
-				mockClocks: mockClocks{
-					monotonic: 900000,
-					realtime:  600000,
-				},
+				monotonic: 900000,
+				realtime:  600000,
 			}
 
 			tk, params := stateTestClocklessTimekeeper(t)
@@ -403,9 +401,9 @@ func TestTimekeeperTimerLifecycle(t *testing.T) {
 	type actionFn func(tk *Timekeeper, timer tcpip.Timer, params *VDSOParamPage)
 
 	type step struct {
+		action     actionFn
 		desc       string
 		clockTime  time.Duration
-		action     actionFn
 		expectFire bool
 	}
 
@@ -451,8 +449,8 @@ func TestTimekeeperTimerLifecycle(t *testing.T) {
 
 	testCases := []struct {
 		name              string
-		afterFuncDuration time.Duration
 		steps             []step
+		afterFuncDuration time.Duration
 	}{
 		{
 			name:              "BasicAfterFunc",

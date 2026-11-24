@@ -564,17 +564,17 @@ func consumeIPPort(tokens *[]string) (netip.Addr, uint16, error) {
 		return netip.Addr{}, 0, fmt.Errorf("no tokens available to find address:port")
 	}
 	token := (*tokens)[0]
-	lastColon := strings.LastIndex(token, ":")
-	if lastColon < 0 {
+	before, after, ok := strings.CutLast(token, ":")
+	if !ok {
 		return netip.Addr{}, 0, fmt.Errorf("bad address:port %q", token)
 	}
-	address, err := netip.ParseAddr(token[:lastColon])
+	address, err := netip.ParseAddr(before)
 	if err != nil {
-		return netip.Addr{}, 0, fmt.Errorf("bad source address %q", token[:lastColon])
+		return netip.Addr{}, 0, fmt.Errorf("bad source address %q", before)
 	}
-	port, err := strconv.ParseUint(token[lastColon+1:], 10, 16)
+	port, err := strconv.ParseUint(after, 10, 16)
 	if err != nil {
-		return netip.Addr{}, 0, fmt.Errorf("bad source port %q", token[lastColon+1:])
+		return netip.Addr{}, 0, fmt.Errorf("bad source port %q", after)
 	}
 	*tokens = (*tokens)[1:]
 	return address, uint16(port), nil

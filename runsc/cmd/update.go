@@ -29,36 +29,26 @@ import (
 	"gvisor.dev/gvisor/runsc/flag"
 )
 
-func i64Ptr(i int64) *int64   { return &i }
-func u64Ptr(i uint64) *uint64 { return &i }
-func u16Ptr(i uint16) *uint16 { return &i }
-func boolPtr(b bool) *bool    { return &b }
-
 // Update implements subcommands.Command for the "update" command.
 type Update struct {
 	containerLoader
-	resources string
-
-	blkioWeight int
-
-	cpuBurst     string
-	cpuIdle      string
-	cpuPeriod    string
-	cpuQuota     string
-	cpuRtPeriod  string
-	cpuRtRuntime string
-	cpuShares    string
-	cpusetCpus   string
-	cpusetMems   string
-
+	resources         string
+	cpuBurst          string
+	cpuIdle           string
+	cpuPeriod         string
+	cpuQuota          string
+	cpuRtPeriod       string
+	cpuRtRuntime      string
+	cpuShares         string
+	cpusetCpus        string
+	cpusetMems        string
 	memory            string
 	memoryReservation string
 	memorySwap        string
-
-	pidsLimit int64
-
-	l3CacheSchema string
-	memBwSchema   string
+	l3CacheSchema     string
+	memBwSchema       string
+	pidsLimit         int64
+	blkioWeight       int
 }
 
 // Name implements subcommands.Command.Name.
@@ -159,7 +149,7 @@ func (u *Update) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcom
 
 	r := specs.LinuxResources{
 		Memory: &specs.LinuxMemory{
-			CheckBeforeUpdate: boolPtr(false),
+			CheckBeforeUpdate: new(false),
 		},
 		CPU:     &specs.LinuxCPU{},
 		BlockIO: &specs.LinuxBlockIO{},
@@ -188,20 +178,20 @@ func (u *Update) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcom
 		}
 
 		if u.blkioWeight != 0 {
-			r.BlockIO.Weight = u16Ptr(uint16(u.blkioWeight))
+			r.BlockIO.Weight = new(uint16(u.blkioWeight))
 		}
 
 		r.CPU.Cpus = u.cpusetCpus
 		r.CPU.Mems = u.cpusetMems
 
 		for _, pair := range []struct {
-			strval string
 			dest   **uint64
+			strval string
 		}{
-			{u.cpuBurst, &r.CPU.Burst},
-			{u.cpuPeriod, &r.CPU.Period},
-			{u.cpuRtPeriod, &r.CPU.RealtimePeriod},
-			{u.cpuShares, &r.CPU.Shares},
+			{strval: u.cpuBurst, dest: &r.CPU.Burst},
+			{strval: u.cpuPeriod, dest: &r.CPU.Period},
+			{strval: u.cpuRtPeriod, dest: &r.CPU.RealtimePeriod},
+			{strval: u.cpuShares, dest: &r.CPU.Shares},
 		} {
 			if pair.strval == "" {
 				continue
@@ -214,15 +204,15 @@ func (u *Update) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcom
 		}
 
 		for _, pair := range []struct {
-			strval string
 			dest   **int64
+			strval string
 		}{
-			{u.cpuIdle, &r.CPU.Idle},
-			{u.cpuQuota, &r.CPU.Quota},
-			{u.cpuRtRuntime, &r.CPU.RealtimeRuntime},
-			{u.memory, &r.Memory.Limit},
-			{u.memoryReservation, &r.Memory.Reservation},
-			{u.memorySwap, &r.Memory.Swap},
+			{strval: u.cpuIdle, dest: &r.CPU.Idle},
+			{strval: u.cpuQuota, dest: &r.CPU.Quota},
+			{strval: u.cpuRtRuntime, dest: &r.CPU.RealtimeRuntime},
+			{strval: u.memory, dest: &r.Memory.Limit},
+			{strval: u.memoryReservation, dest: &r.Memory.Reservation},
+			{strval: u.memorySwap, dest: &r.Memory.Swap},
 		} {
 			if pair.strval == "" {
 				continue

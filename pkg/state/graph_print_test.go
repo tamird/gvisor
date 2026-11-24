@@ -121,7 +121,7 @@ func TestPrintGraphSliceNotation(t *testing.T) {
 
 func TestPrintGraphDeterministic(t *testing.T) {
 	x := printMapHolder{m: make(map[int]string)}
-	for i := 0; i < 32; i++ {
+	for i := range 32 {
 		x.m[i] = strings.Repeat("x", i%5+1)
 	}
 	raw := encodeRawGraph(t, &x)
@@ -161,7 +161,7 @@ func TestPrintGraphUnexportedInlineMapAndTrailingData(t *testing.T) {
 		}
 	}
 
-	withTrailing := append(append([]byte(nil), raw...), 0xff)
+	withTrailing := append(bytes.Clone(raw), 0xff)
 	var out strings.Builder
 	if err := PrintGraph(&out, withTrailing, 0, false); err == nil || !strings.Contains(err.Error(), "trailing data") {
 		t.Fatalf("PrintGraph with trailing byte = %v, want trailing data error", err)

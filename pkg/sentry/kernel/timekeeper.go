@@ -349,9 +349,7 @@ func (t *Timekeeper) startUpdater(params *VDSOParamPage) {
 	}
 	t.updateMu.Unlock()
 
-	t.wg.Add(1)
-	go func() { // S/R-SAFE: stopped during save.
-		defer t.wg.Done()
+	t.wg.Go(func() { // S/R-SAFE: stopped during save.
 		defer t.timer.Stop()
 		for {
 			// wait until next tick or if parked until addRef is called
@@ -391,7 +389,7 @@ func (t *Timekeeper) startUpdater(params *VDSOParamPage) {
 			t.update(false)
 			t.updateMu.Unlock()
 		}
-	}()
+	})
 }
 
 // add a reference to the Timekeeper: as long as there are references,
@@ -744,11 +742,9 @@ func (t *Timekeeper) dispatchAfterFuncs() {
 	t.afterFuncQueue = nil
 	t.afterFuncQueueMu.Unlock()
 	for _, fn := range fns {
-		t.activeAfterFuncs.Add(1)
-		go func() {
-			defer t.activeAfterFuncs.Done()
+		t.activeAfterFuncs.Go(func() {
 			fn()
-		}()
+		})
 	}
 }
 

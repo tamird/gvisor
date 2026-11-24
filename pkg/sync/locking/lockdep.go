@@ -13,13 +13,13 @@
 // limitations under the License.
 
 //go:build lockdep
-// +build lockdep
 
 package locking
 
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 
 	"gvisor.dev/gvisor/pkg/goid"
@@ -48,17 +48,19 @@ type MutexClass struct {
 	// Name of the nested lock of the above type.
 	lockName string
 
-	// ancestors are locks that are locked before the current class.
-	ancestors ancestorsAtomicPtrMap
 	// nestedLockNames is a list of names for nested locks which are considered difference instances
 	// of the same lock class.
 	nestedLockNames []string
+
 	// namedLockClasses is a list of MutexClass instances of the same mutex class, but that are
 	// considered OK to lock simultaneously with each other, as well as with this mutex class.
 	// This is used for nested locking, where multiple instances of the same lock class are used
 	// simultaneously.
 	// Maps one-to-one with nestedLockNames.
 	nestedLockClasses []*MutexClass
+
+	// ancestors are locks that are locked before the current class.
+	ancestors ancestorsAtomicPtrMap
 }
 
 func (m *MutexClass) String() string {
@@ -96,16 +98,16 @@ func checkLock(class *MutexClass, prevClass *MutexClass, chain []*MutexClass) {
 
 		fmt.Fprintf(&b, "known lock chain: ")
 		c := class
-		for i := len(chain) - 1; i >= 0; i-- {
+		for _, c0 := range slices.Backward(chain) {
 			fmt.Fprintf(&b, "%s -> ", c)
-			c = chain[i]
+			c = c0
 		}
 		fmt.Fprintf(&b, "%s\n", chain[0])
 		c = class
-		for i := len(chain) - 1; i >= 0; i-- {
+		for _, c0 := range slices.Backward(chain) {
 			fmt.Fprintf(&b, "\n====== %s -> %s =====\n%s",
-				c, chain[i], *chain[i].ancestors.Load(c))
-			c = chain[i]
+				c, c0, *c0.ancestors.Load(c))
+			c = c0
 		}
 		panic(b.String())
 	}

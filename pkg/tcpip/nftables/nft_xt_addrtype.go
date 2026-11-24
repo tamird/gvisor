@@ -19,6 +19,7 @@ package nftables
 
 import (
 	"fmt"
+	"slices"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/marshal/primitive"
@@ -54,10 +55,12 @@ type addrTypeMatchInfo struct {
 // compatAddrtypeMatch implements the "addrtype" xtables match extension.
 // It evaluates source and destination routing address types against FIB route lookups.
 type compatAddrtypeMatch struct {
-	// revision is the XTables addrtype match extension revision (0 or 1).
-	revision uint32
 	// infoData is the raw netlink attribute payload for serialization (NFTA_MATCH_INFO).
 	infoData []byte
+
+	// revision is the XTables addrtype match extension revision (0 or 1).
+	revision uint32
+
 	// info holds the precomputed source/destination masks and interface limit flags.
 	info addrTypeMatchInfo
 }
@@ -136,7 +139,7 @@ func (op *compatAddrtypeMatch) checkCompatibility(cCtx *opCompatCtx) *syserr.Ann
 // deepCopy implements operation.deepCopy.
 func (op *compatAddrtypeMatch) deepCopy() operation {
 	opCopy := *op
-	opCopy.infoData = append([]byte(nil), op.infoData...)
+	opCopy.infoData = slices.Concat[[]byte](op.infoData)
 	return &opCopy
 }
 

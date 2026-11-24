@@ -17,6 +17,7 @@ package nftables
 import (
 	"bytes"
 	"fmt"
+	"maps"
 	"math"
 	"slices"
 
@@ -280,8 +281,8 @@ var setDescPolicy = []NlaPolicy{
 }
 
 type setDesc struct {
-	size   uint32
 	concat []uint8
+	size   uint32
 }
 
 // parseSetDescAttr parses the set description attributes.
@@ -1469,9 +1470,9 @@ func (nf *NFTables) GetSetElements(attrs map[uint16]nlmsg.BytesView, family stac
 
 // setMapBackend is a backend to handle map operations.
 type setMapBackend struct {
+	m       map[string]int
 	keyLen  int
 	dataLen int
-	m       map[string]int
 }
 
 // Lookup implements NftSetBackend.Lookup.
@@ -1547,9 +1548,7 @@ func (s *setMapBackend) RemoveAll() *syserr.AnnotatedError {
 // Clone implements NftSetBackend.Clone.
 func (s *setMapBackend) Clone() NftSetBackend {
 	mCopy := make(map[string]int, len(s.m))
-	for k, v := range s.m {
-		mCopy[k] = v
-	}
+	maps.Copy(mCopy, s.m)
 	return &setMapBackend{
 		keyLen:  s.keyLen,
 		dataLen: s.dataLen,

@@ -84,7 +84,7 @@ func (mm *MemoryManager) mapASLocked(ctx context.Context, pseg pmaIterator, ar h
 	}
 	// By default, map entire pmas at a time, under the assumption that there
 	// is no cost to mapping more of a pma than necessary.
-	mapAR := hostarch.AddrRange{0, ^hostarch.Addr(hostarch.PageSize - 1)}
+	mapAR := hostarch.AddrRange{Start: 0, End: ^hostarch.Addr(hostarch.PageSize - 1)}
 	setMapUnit := func(mapUnit uint64) {
 		mapMask := hostarch.Addr(mapUnit - 1)
 		mapAR.Start = ar.Start &^ mapMask
@@ -135,7 +135,7 @@ func (mm *MemoryManager) mapASLocked(ctx context.Context, pseg pmaIterator, ar h
 				}
 			} else {
 				for windowStart := pmaMapAR.Start &^ (singleMapThreshold - 1); windowStart < pmaMapAR.End; windowStart += singleMapThreshold {
-					windowAR := hostarch.AddrRange{windowStart, windowStart + singleMapThreshold}
+					windowAR := hostarch.AddrRange{Start: windowStart, End: windowStart + singleMapThreshold}
 					thisMapAR := pmaMapAR.Intersect(windowAR)
 					if err := mm.as.MapFile(thisMapAR.Start, pma.file, pseg.fileRangeOf(thisMapAR), perms, platformEffect == memmap.PlatformEffectCommit); err != nil {
 						return err

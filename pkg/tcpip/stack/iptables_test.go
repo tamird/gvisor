@@ -82,7 +82,7 @@ func TestDefaultMangleTableHasLinuxHooks(t *testing.T) {
 		if got := table.ValidHooks(); got != linuxMangleHooks {
 			t.Errorf("ipv6=%v DefaultTables mangle ValidHooks()=%#x, want %#x (Linux mangle is valid at all five NF_INET hooks)", ipv6, got, linuxMangleHooks)
 		}
-		for hook := Hook(0); hook < NumHooks; hook++ {
+		for hook := range Hook(NumHooks) {
 			if table.BuiltinChains[hook] == HookUnset {
 				t.Errorf("ipv6=%v default mangle BuiltinChains[%v]=HookUnset; SET_ENTRIES requires every valid hook", ipv6, hook)
 			}
@@ -191,10 +191,7 @@ func TestNATedConnectionReap(t *testing.T) {
 		t.Fatalf("expected bucket IDs to be different; got = %d", originalBktID)
 	}
 
-	lowerBktID := originalBktID
-	if lowerBktID > replyBktID {
-		lowerBktID = replyBktID
-	}
+	lowerBktID := min(originalBktID, replyBktID)
 
 	runReaper := func() {
 		// Reaping the bucket with the lower ID should reap both tuples of the
@@ -279,9 +276,9 @@ func TestNATedConnectionReap(t *testing.T) {
 // generated traffic do not clash with ports used by forwarded traffic.
 func TestNATAlwaysPerformed(t *testing.T) {
 	tests := []struct {
-		name     string
 		dnatHook func(*testing.T, *IPTables, *PacketBuffer)
 		snatHook func(*testing.T, *IPTables, *PacketBuffer)
+		name     string
 	}{
 		{
 			name: "Prerouting and Input",
@@ -484,7 +481,7 @@ func TestIsNATApplied(t *testing.T) {
 // everywhere else.
 func natTableWithRule(hook Hook, target Target) Table {
 	var table Table
-	for h := Hook(0); h < NumHooks; h++ {
+	for h := range Hook(NumHooks) {
 		table.BuiltinChains[h] = len(table.Rules)
 		if h == hook {
 			table.Rules = append(table.Rules, Rule{Target: target})
@@ -499,8 +496,8 @@ func TestNATConflict(t *testing.T) {
 	otherSrcAddr := testutil.MustParse6("d::4")
 
 	tests := []struct {
-		name          string
 		checkIPTables func(*testing.T, *IPTables, *PacketBuffer, bool)
+		name          string
 	}{
 		{
 			name: "Prerouting and Input",

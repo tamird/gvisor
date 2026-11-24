@@ -60,9 +60,9 @@ type MemoryUsageFile struct {
 
 // MemoryUsageRecord contains the mapping and platform memory file.
 type MemoryUsageRecord struct {
-	mmap  uintptr
 	stats *usage.RTMemoryStats
 	mf    os.File
+	mmap  uintptr
 }
 
 // NewMemoryUsageRecord creates a new MemoryUsageRecord from usageFile and

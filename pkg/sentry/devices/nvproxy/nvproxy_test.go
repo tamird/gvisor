@@ -60,21 +60,21 @@ func TestPublicInstallerUnavailable(t *testing.T) {
 	emptyARM.ARM64 = ""
 	for _, test := range []struct {
 		name        string
-		checksums   Checksums
 		arch        string
+		checksums   Checksums
 		unavailable bool
 		wantErr     bool
 	}{
-		{"public_amd", public, "amd64", false, false},
-		{"public_arm", public, "arm64", false, false},
-		{"no_driver", NewChecksums(ChecksumNoDriver, ChecksumNoDriver), "amd64", true, false},
-		{"unavailable_amd", noPublicAMD, "amd64", true, false},
-		{"unavailable_arm", noPublicARM, "arm64", true, false},
-		{"only_amd_unavailable", noPublicAMD, "arm64", false, false},
-		{"only_arm_unavailable", noPublicARM, "amd64", false, false},
-		{"empty_amd", emptyAMD, "amd64", false, true},
-		{"empty_arm", emptyARM, "arm64", false, true},
-		{"unknown_architecture", noPublicARM, "unknown", false, true},
+		{name: "public_amd", checksums: public, arch: "amd64", unavailable: false, wantErr: false},
+		{name: "public_arm", checksums: public, arch: "arm64", unavailable: false, wantErr: false},
+		{name: "no_driver", checksums: NewChecksums(ChecksumNoDriver, ChecksumNoDriver), arch: "amd64", unavailable: true, wantErr: false},
+		{name: "unavailable_amd", checksums: noPublicAMD, arch: "amd64", unavailable: true, wantErr: false},
+		{name: "unavailable_arm", checksums: noPublicARM, arch: "arm64", unavailable: true, wantErr: false},
+		{name: "only_amd_unavailable", checksums: noPublicAMD, arch: "arm64", unavailable: false, wantErr: false},
+		{name: "only_arm_unavailable", checksums: noPublicARM, arch: "amd64", unavailable: false, wantErr: false},
+		{name: "empty_amd", checksums: emptyAMD, arch: "amd64", unavailable: false, wantErr: true},
+		{name: "empty_arm", checksums: emptyARM, arch: "arm64", unavailable: false, wantErr: true},
+		{name: "unknown_architecture", checksums: noPublicARM, arch: "unknown", unavailable: false, wantErr: true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			unavailable, err := test.checksums.PublicInstallerUnavailable(test.arch)
@@ -146,11 +146,11 @@ func testHandler[Handler, Input any](
 ) {
 	t.Helper()
 	for _, test := range []struct {
-		name       string
 		handler    Handler
 		input      Input
-		wantResult uintptr
 		wantErr    error
+		name       string
+		wantResult uintptr
 	}{
 		{
 			name:       "valid",
@@ -300,7 +300,7 @@ func TestFilterCapabilities(t *testing.T) {
 		nvconf.SupportedDriverCaps,
 		nvconf.DefaultDriverCaps,
 	}
-	for _, capName := range strings.Split(nvconf.ValidCapabilities.String(), ",") {
+	for capName := range strings.SplitSeq(nvconf.ValidCapabilities.String(), ",") {
 		individualCap, _, err := nvconf.DriverCapsFromString(capName)
 		if err != nil {
 			t.Fatalf("nvconf.DriverCapsFromString(%q) failed: %v", capName, err)

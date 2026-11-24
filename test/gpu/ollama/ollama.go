@@ -21,8 +21,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -233,11 +234,11 @@ func (llm *Ollama) WaitUntilServing(ctx context.Context) error {
 
 // Model encodes a model and options for it.
 type Model struct {
-	// Name is the name of the ollama model, e.g. "codellama:7b".
-	Name string
 
 	// Options maps parameter names to JSON-compatible values.
 	Options map[string]any
+	// Name is the name of the ollama model, e.g. "codellama:7b".
+	Name string
 }
 
 // String returns the model's name.
@@ -267,9 +268,7 @@ func (m *Model) RaiseTemperature() {
 func (m *Model) Copy() *Model {
 	modelCopy := *m
 	modelCopy.Options = make(map[string]any, len(m.Options))
-	for k, v := range m.Options {
-		modelCopy.Options[k] = v
-	}
+	maps.Copy(modelCopy.Options, m.Options)
 	return &modelCopy
 }
 
@@ -289,12 +288,6 @@ type Prompt struct {
 	// Model is the model to query.
 	Model *Model
 
-	// If set, keep the model alive in memory for the given duration after this
-	// prompt is answered. A zero duration will use the ollama default (a few
-	// minutes). Note that model unloading is asynchronous, so the model will
-	// not be fully unloaded after only `KeepModelAlive` beyond prompt response.
-	KeepModelAlive time.Duration
-
 	// Query is the prompt string.
 	// Common leading whitespace will be removed.
 	Query string
@@ -306,6 +299,12 @@ type Prompt struct {
 	// Context is the conversational context to follow up on, if any.
 	// This is returned from `Response`.
 	Context ConversationContext
+
+	// If set, keep the model alive in memory for the given duration after this
+	// prompt is answered. A zero duration will use the ollama default (a few
+	// minutes). Note that model unloading is asynchronous, so the model will
+	// not be fully unloaded after only `KeepModelAlive` beyond prompt response.
+	KeepModelAlive time.Duration
 }
 
 // AddImage attaches an image to the prompt.
@@ -401,13 +400,13 @@ func (p *Prompt) WithHotterModel() *Prompt {
 
 // promptJSON encodes the JSON data for a query.
 type promptJSON struct {
+	Options   map[string]any      `json:"options"`
 	Model     string              `json:"model"`
 	Prompt    string              `json:"prompt,omitempty"`
-	Images    []string            `json:"images"`
-	Stream    bool                `json:"stream"`
-	Context   ConversationContext `json:"context"`
-	Options   map[string]any      `json:"options"`
 	KeepAlive string              `json:"keep_alive,omitempty"`
+	Images    []string            `json:"images"`
+	Context   ConversationContext `json:"context"`
+	Stream    bool                `json:"stream"`
 }
 
 // json encodes this prompt to the JSON format expected by Ollama.
@@ -436,23 +435,23 @@ func (p *Prompt) json() promptJSON {
 // To recover the whole response, all `Response` fields must be concatenated
 // until the last `responseJSON`, identified as such by the `Done` field.
 type responseJSON struct {
-	Model           string              `json:"model"`
 	CreatedAt       time.Time           `json:"created_at"`
+	Model           string              `json:"model"`
 	Response        string              `json:"response"`
-	Done            bool                `json:"done"`
+	Context         ConversationContext `json:"context"`
 	TotalNanos      int                 `json:"total_duration"`
 	LoadNanos       int                 `json:"load_duration"`
 	EvalCount       int                 `json:"eval_count"`
 	EvalNanos       int                 `json:"eval_duration"`
 	PromptEvalCount int                 `json:"prompt_eval_count"`
 	PromptEvalNanos int                 `json:"prompt_eval_duration"`
-	Context         ConversationContext `json:"context"`
+	Done            bool                `json:"done"`
 }
 
 // Response represents a response to a query from Ollama.
 type Response struct {
-	data    []*responseJSON
 	metrics llmutil.ResponseMetrics
+	data    []*responseJSON
 }
 
 // Done returns whether the response was completely generated.
@@ -562,7 +561,7 @@ func (r *Response) TimePerOutputTokenQuantile(quantile float64) time.Duration {
 		return -1
 	}
 	intervals := r.tokenIntervals()
-	sort.Slice(intervals, func(i, j int) bool { return intervals[i] < intervals[j] })
+	slices.Sort(intervals)
 	return intervals[int(quantile*float64(len(intervals)-1))]
 }
 
@@ -745,6 +744,10 @@ type Embedding struct {
 // EmbeddingResponse represents the result of running an embedding model
 // on a set of inputs.
 type EmbeddingResponse struct {
+
+	// ResponseMetrics contains HTTP response metrics as perceived by the
+	// client.
+	ResponseMetrics llmutil.ResponseMetrics
 	// Model is the model used to generate the embeddings.
 	Model *Model
 
@@ -762,10 +765,6 @@ type EmbeddingResponse struct {
 	// PromptEvalCount is the number of prompt evaluations performed by the
 	// server.
 	PromptEvalCount int
-
-	// ResponseMetrics contains HTTP response metrics as perceived by the
-	// client.
-	ResponseMetrics llmutil.ResponseMetrics
 }
 
 // Embed generates embeddings for each of the given inputs.

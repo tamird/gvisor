@@ -57,7 +57,7 @@ func (i *IntFlags) GetFDs() []*fd.FD {
 
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (i *IntFlags) Set(s string) error {
-	for _, sFD := range strings.Split(s, ",") {
+	for sFD := range strings.SplitSeq(s, ",") {
 		fd, err := strconv.Atoi(sFD)
 		if err != nil {
 			return fmt.Errorf("invalid flag value: %v", err)

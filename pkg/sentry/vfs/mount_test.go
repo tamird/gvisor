@@ -376,7 +376,7 @@ func BenchmarkMountTableParallelLookup(b *testing.B) {
 				var mt mountTable
 				mt.Init()
 				keys := make([]VirtualDentry, 0, numMounts)
-				for i := 0; i < numMounts; i++ {
+				for range numMounts {
 					mount := newBenchMount()
 					mt.Insert(mount)
 					keys = append(keys, mount.saveKey())
@@ -387,9 +387,7 @@ func BenchmarkMountTableParallelLookup(b *testing.B) {
 				var end sync.WaitGroup
 				for g := 0; g < numG; g++ {
 					ready.Add(1)
-					end.Add(1)
-					go func() {
-						defer end.Done()
+					end.Go(func() {
 						ready.Done()
 						<-begin
 						for i := 0; i < b.N; i++ {
@@ -408,7 +406,7 @@ func BenchmarkMountTableParallelLookup(b *testing.B) {
 								return
 							}
 						}
-					}()
+					})
 				}
 
 				ready.Wait()
@@ -432,7 +430,7 @@ func BenchmarkMountMapParallelLookup(b *testing.B) {
 				var mu sync.RWMutex
 				ms := make(map[VirtualDentry]*Mount)
 				keys := make([]VirtualDentry, 0, numMounts)
-				for i := 0; i < numMounts; i++ {
+				for range numMounts {
 					mount := newBenchMount()
 					key := mount.saveKey()
 					ms[key] = mount
@@ -444,9 +442,7 @@ func BenchmarkMountMapParallelLookup(b *testing.B) {
 				var end sync.WaitGroup
 				for g := 0; g < numG; g++ {
 					ready.Add(1)
-					end.Add(1)
-					go func() {
-						defer end.Done()
+					end.Go(func() {
 						ready.Done()
 						<-begin
 						for i := 0; i < b.N; i++ {
@@ -467,7 +463,7 @@ func BenchmarkMountMapParallelLookup(b *testing.B) {
 								return
 							}
 						}
-					}()
+					})
 				}
 
 				ready.Wait()
@@ -490,7 +486,7 @@ func BenchmarkMountSyncMapParallelLookup(b *testing.B) {
 			b.Run(desc, func(b *testing.B) {
 				var ms sync.Map
 				keys := make([]VirtualDentry, 0, numMounts)
-				for i := 0; i < numMounts; i++ {
+				for range numMounts {
 					mount := newBenchMount()
 					key := mount.getKey()
 					ms.Store(key, mount)
@@ -502,9 +498,7 @@ func BenchmarkMountSyncMapParallelLookup(b *testing.B) {
 				var end sync.WaitGroup
 				for g := 0; g < numG; g++ {
 					ready.Add(1)
-					end.Add(1)
-					go func() {
-						defer end.Done()
+					end.Go(func() {
 						ready.Done()
 						<-begin
 						for i := 0; i < b.N; i++ {
@@ -524,7 +518,7 @@ func BenchmarkMountSyncMapParallelLookup(b *testing.B) {
 								return
 							}
 						}
-					}()
+					})
 				}
 
 				ready.Wait()
@@ -542,11 +536,11 @@ func BenchmarkMountTableNegativeLookup(b *testing.B) {
 		b.Run(desc, func(b *testing.B) {
 			var mt mountTable
 			mt.Init()
-			for i := 0; i < numMounts; i++ {
+			for range numMounts {
 				mt.Insert(newBenchMount())
 			}
 			negkeys := make([]VirtualDentry, 0, numMounts)
-			for i := 0; i < numMounts; i++ {
+			for range numMounts {
 				negkeys = append(negkeys, VirtualDentry{
 					mount:  &Mount{},
 					dentry: &Dentry{},
@@ -575,12 +569,12 @@ func BenchmarkMountMapNegativeLookup(b *testing.B) {
 		b.Run(desc, func(b *testing.B) {
 			var mu sync.RWMutex
 			ms := make(map[VirtualDentry]*Mount)
-			for i := 0; i < numMounts; i++ {
+			for range numMounts {
 				mount := newBenchMount()
 				ms[mount.getKey()] = mount
 			}
 			negkeys := make([]VirtualDentry, 0, numMounts)
-			for i := 0; i < numMounts; i++ {
+			for range numMounts {
 				negkeys = append(negkeys, VirtualDentry{
 					mount:  &Mount{},
 					dentry: &Dentry{},
@@ -610,12 +604,12 @@ func BenchmarkMountSyncMapNegativeLookup(b *testing.B) {
 		desc := fmt.Sprintf("%d", numMounts)
 		b.Run(desc, func(b *testing.B) {
 			var ms sync.Map
-			for i := 0; i < numMounts; i++ {
+			for range numMounts {
 				mount := newBenchMount()
 				ms.Store(mount.saveKey(), mount)
 			}
 			negkeys := make([]VirtualDentry, 0, numMounts)
-			for i := 0; i < numMounts; i++ {
+			for range numMounts {
 				negkeys = append(negkeys, VirtualDentry{
 					mount:  &Mount{},
 					dentry: &Dentry{},
@@ -756,7 +750,7 @@ func BenchmarkSaveMounts(b *testing.B) {
 		b.Run(fmt.Sprintf("mounts=%d", count), func(b *testing.B) {
 			var vfs VirtualFilesystem
 			vfs.mounts.Init()
-			for i := 0; i < count; i++ {
+			for range count {
 				mount := &Mount{}
 				mount.setKey(VirtualDentry{&Mount{}, &Dentry{}})
 				vfs.mounts.Insert(mount)

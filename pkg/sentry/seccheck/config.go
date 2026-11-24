@@ -42,10 +42,18 @@ var sessionCounter = metric.MustCreateNewUint64Metric("/trace/sessions_created",
 // SessionConfig describes a new session configuration. A session consists of a
 // set of points to be enabled and sinks where the points are sent to.
 type SessionConfig struct {
+	// Options holds session-level configuration options.
+	Options map[string]any `json:"options,omitempty"`
+
 	// Name is the unique session name.
 	Name string `json:"name,omitempty"`
+
 	// Points is the set of points to enable in this session.
 	Points []PointConfig `json:"points,omitempty"`
+
+	// Sinks are the sinks that will process the points enabled above.
+	Sinks []SinkConfig `json:"sinks,omitempty"`
+
 	// IgnoreMissing skips point and optional/context fields not found. This can
 	// be used to apply a single configuration file with newer points/fields with
 	// older versions which do not have them yet. Note that it may hide typos in
@@ -53,10 +61,6 @@ type SessionConfig struct {
 	//
 	// This field does NOT apply to sinks.
 	IgnoreMissing bool `json:"ignore_missing,omitempty"`
-	// Sinks are the sinks that will process the points enabled above.
-	Sinks []SinkConfig `json:"sinks,omitempty"`
-	// Options holds session-level configuration options.
-	Options map[string]any `json:"options,omitempty"`
 }
 
 // PointConfig describes a point to be enabled in a given session.
@@ -72,17 +76,21 @@ type PointConfig struct {
 // SinkConfig describes the sink that will process the points in a given
 // session.
 type SinkConfig struct {
-	// Name is the sink to be created. The sink must exist in the system.
-	Name string `json:"name,omitempty"`
 	// Config is a opaque json object that is passed to the sink.
 	Config map[string]any `json:"config,omitempty"`
+
+	// FD is the endpoint returned from Setup. It may be nil.
+	FD *fd.FD `json:"-"`
+
+	// Name is the sink to be created. The sink must exist in the system.
+	Name string `json:"name,omitempty"`
+
+	// Status is the runtime status for the sink.
+	Status SinkStatus `json:"status"`
+
 	// IgnoreSetupError makes errors during sink setup to be ignored. Otherwise,
 	// failures will prevent the container from starting.
 	IgnoreSetupError bool `json:"ignore_setup_error,omitempty"`
-	// Status is the runtime status for the sink.
-	Status SinkStatus `json:"status,omitempty"`
-	// FD is the endpoint returned from Setup. It may be nil.
-	FD *fd.FD `json:"-"`
 }
 
 // Create reads the session configuration and applies it to the system.

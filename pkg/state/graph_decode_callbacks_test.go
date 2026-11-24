@@ -56,8 +56,8 @@ func (n *cycleStemNode) StateLoad(_ context.Context, s Source) {
 }
 
 type cycleCollectionNode struct {
-	s []*cycleCollectionNode
 	m map[int]*cycleCollectionNode
+	s []*cycleCollectionNode
 }
 
 func (*cycleCollectionNode) StateTypeName() string { return "state.cycleCollectionNode" }
@@ -156,18 +156,18 @@ func TestGraphDependencyCycle(t *testing.T) {
 type cbOrderLogKey struct{}
 
 type cbOrderNode struct {
+	valueRef  *cbOrderNode
 	name      string
 	early     []*cbOrderNode
 	waitFor   []*cbOrderNode
-	valueRef  *cbOrderNode
 	scalarVal int64
-
 	// Non-saved fields populated during Load callbacks.
+	computed int64
+
 	scalarDone    bool
 	valueRefDone  bool
 	afterStep1    bool
 	afterLoadDone bool
-	computed      int64
 }
 
 func (*cbOrderNode) StateTypeName() string { return "state.cbOrderNode" }
@@ -412,8 +412,8 @@ func (x *defHolder) StateLoad(_ context.Context, s Source) {
 
 type defRoot struct {
 	early1      *defInner
-	directSlice []defIface
 	holder      *defHolder
+	directSlice []defIface
 }
 
 func (*defRoot) StateTypeName() string { return "state.defRoot" }
@@ -716,15 +716,15 @@ func TestGraphDecodeValueIntegerOverflow(t *testing.T) {
 	unsigned := func(v uint64) func(*encBuf) { return func(b *encBuf) { b.uvarint(v) } }
 
 	for _, tc := range []struct {
-		name string
 		root any
 		enc  func(*encBuf)
+		name string
 	}{
-		{"int16", new(int16), signed(1 << 16)},
-		{"int16_negative", new(int16), signed(-1<<15 - 1)},
-		{"int32", new(int32), signed(1 << 32)},
-		{"uint16", new(uint16), unsigned(1 << 16)},
-		{"uint32", new(uint32), unsigned(1 << 32)},
+		{name: "int16", root: new(int16), enc: signed(1 << 16)},
+		{name: "int16_negative", root: new(int16), enc: signed(-1<<15 - 1)},
+		{name: "int32", root: new(int32), enc: signed(1 << 32)},
+		{name: "uint16", root: new(uint16), enc: unsigned(1 << 16)},
+		{name: "uint32", root: new(uint32), enc: unsigned(1 << 32)},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			rv := reflect.ValueOf(tc.root)
@@ -1138,17 +1138,17 @@ func (x *deferredSnapshotVal) StateLoad(_ context.Context, s Source) {
 }
 
 type loadValueSnapshotNode struct {
-	scalar      int64
-	pair        [2]int64
-	waitPair    [2]*int
-	refVal      refSnapshotVal
-	deferredVal deferredSnapshotVal
+	waitPair [2]*int
 
 	retainedScalar   any
 	retainedPair     any
 	retainedWait     any
 	retainedRef      any
 	retainedDeferred any
+	refVal           refSnapshotVal
+	pair             [2]int64
+	deferredVal      deferredSnapshotVal
+	scalar           int64
 }
 
 func (*loadValueSnapshotNode) StateTypeName() string { return "state.loadValueSnapshotNode" }
@@ -1398,7 +1398,7 @@ func TestPooledEncoderScratchReleasesPointers(t *testing.T) {
 		runtime.KeepAlive(held)
 	}()
 
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		runtime.GC()
 		select {
 		case <-collected:

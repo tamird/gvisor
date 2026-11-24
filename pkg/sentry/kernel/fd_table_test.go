@@ -36,10 +36,10 @@ const (
 
 // testFD is a read-only FileDescriptionImpl representing a regular file.
 type testFD struct {
-	vfsfd vfs.FileDescription
 	vfs.FileDescriptionDefaultImpl
 	vfs.DentryMetadataFileDescriptionImpl
 	vfs.NoLockFD
+	vfsfd vfs.FileDescription
 }
 
 // Release implements FileDescriptionImpl.Release.
@@ -58,7 +58,7 @@ func runTest(t testing.TB, fn func(ctx context.Context, fdTable *FDTable, fd *vf
 
 	// Create the limits and context.
 	limitSet := limits.NewLimitSet()
-	limitSet.Set(limits.NumberOfFiles, limits.Limit{maxFD, maxFD}, true)
+	limitSet.Set(limits.NumberOfFiles, limits.Limit{Cur: maxFD, Max: maxFD}, true)
 	ctx := contexttest.WithLimitSet(contexttest.Context(t), limitSet)
 
 	vfsObj := &vfs.VirtualFilesystem{}
@@ -84,7 +84,7 @@ func runTest(t testing.TB, fn func(ctx context.Context, fdTable *FDTable, fd *vf
 // one and add one that works too.
 func TestFDTableMany(t *testing.T) {
 	runTest(t, func(ctx context.Context, fdTable *FDTable, fd *vfs.FileDescription, _ *limits.LimitSet) {
-		for i := 0; i < maxFD; i++ {
+		for i := range maxFD {
 			if _, err := fdTable.NewFDs(ctx, 0, []*vfs.FileDescription{fd}, FDFlags{}); err != nil {
 				t.Fatalf("Allocated %v FDs but wanted to allocate %v", i, maxFD)
 			}
@@ -147,7 +147,7 @@ func TestFDTableOverLimit(t *testing.T) {
 func TestFDTable(t *testing.T) {
 	runTest(t, func(ctx context.Context, fdTable *FDTable, fd *vfs.FileDescription, limitSet *limits.LimitSet) {
 		// Cap the limit at one.
-		limitSet.Set(limits.NumberOfFiles, limits.Limit{1, maxFD}, true)
+		limitSet.Set(limits.NumberOfFiles, limits.Limit{Cur: 1, Max: maxFD}, true)
 
 		if _, err := fdTable.NewFDs(ctx, 0, []*vfs.FileDescription{fd}, FDFlags{}); err != nil {
 			t.Fatalf("Adding an FD to an empty 1-size map: got %v, want nil", err)
@@ -158,7 +158,7 @@ func TestFDTable(t *testing.T) {
 		}
 
 		// Remove the previous limit.
-		limitSet.Set(limits.NumberOfFiles, limits.Limit{maxFD, maxFD}, true)
+		limitSet.Set(limits.NumberOfFiles, limits.Limit{Cur: maxFD, Max: maxFD}, true)
 
 		if fds, err := fdTable.NewFDs(ctx, 0, []*vfs.FileDescription{fd}, FDFlags{}); err != nil {
 			t.Fatalf("Adding an FD to a resized map: got %v, want nil", err)
@@ -284,7 +284,7 @@ func BenchmarkNewFDAt(b *testing.B) {
 
 	runTest(b, func(ctx context.Context, fdTable *FDTable, fd *vfs.FileDescription, limitSet *limits.LimitSet) {
 		// Remove the previous limit.
-		limitSet.Set(limits.NumberOfFiles, limits.Limit{maxLimit, maxLimit}, true)
+		limitSet.Set(limits.NumberOfFiles, limits.Limit{Cur: maxLimit, Max: maxLimit}, true)
 
 		b.StartTimer() // Benchmark.
 		for i := 0; i < b.N; i++ {
@@ -300,7 +300,7 @@ func BenchmarkFork(b *testing.B) {
 	b.StopTimer() // Setup.
 
 	runTest(b, func(ctx context.Context, fdTable *FDTable, fd *vfs.FileDescription, limitSet *limits.LimitSet) {
-		for i := 0; i < maxFD; i++ {
+		for i := range maxFD {
 			_, err := fdTable.NewFDAt(ctx, int32(i), fd, FDFlags{})
 			if err != nil {
 				b.Fatalf("fdTable.NewFDs: got %v, wanted nil", err)
@@ -319,7 +319,7 @@ func BenchmarkCreateWithMaxFD(b *testing.B) {
 	const maxLimit = 1 << 31
 	runTest(b, func(ctx context.Context, _ *FDTable, fd *vfs.FileDescription, limitSet *limits.LimitSet) {
 		// Remove the previous limit.
-		limitSet.Set(limits.NumberOfFiles, limits.Limit{maxLimit, maxLimit}, true)
+		limitSet.Set(limits.NumberOfFiles, limits.Limit{Cur: maxLimit, Max: maxLimit}, true)
 
 		for i := 0; i < b.N; i++ {
 			fdTable := new(FDTable)
@@ -342,23 +342,18 @@ func BenchmarkFDLookupAndDecRefConcurrent(b *testing.B) {
 			b.Fatalf("fdTable.NewFDs: got %v, wanted nil", err)
 		}
 
-		concurrency := runtime.GOMAXPROCS(0)
-		if concurrency < 4 {
-			concurrency = 4
-		}
+		concurrency := max(runtime.GOMAXPROCS(0), 4)
 		each := b.N / concurrency
 
 		b.StartTimer() // Benchmark.
 		var wg sync.WaitGroup
-		for i := 0; i < concurrency; i++ {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				for i := 0; i < each; i++ {
+		for range concurrency {
+			wg.Go(func() {
+				for i := range each {
 					tf, _ := fdTable.Get(fds[i%len(fds)])
 					tf.DecRef(ctx)
 				}
-			}()
+			})
 		}
 		wg.Wait()
 	})
@@ -379,7 +374,7 @@ func TestSetFlagsForRange(t *testing.T) {
 
 	for _, test := range testCases {
 		runTest(t, func(ctx context.Context, fdTable *FDTable, fd *vfs.FileDescription, _ *limits.LimitSet) {
-			for i := 0; i < maxFD; i++ {
+			for range maxFD {
 				if _, err := fdTable.NewFDs(ctx, 0, []*vfs.FileDescription{fd}, FDFlags{}); err != nil {
 					t.Fatalf("testCase: %v\nfdTable.NewFDs(_, 0, %+v, FDFlags{}): %d, want: nil", test, []*vfs.FileDescription{fd}, err)
 				}

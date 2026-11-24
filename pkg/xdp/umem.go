@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build amd64 || arm64
-// +build amd64 arm64
 
 package xdp
 
@@ -36,8 +35,9 @@ type UMEM struct {
 	// mem is the mmap'd area shared with the kernel.
 	mem []byte
 
-	// sockfd is the underlying AF_XDP socket.
-	sockfd uint32
+	// frameAddresses is a stack of available frame addresses.
+	// +checklocks:mu
+	frameAddresses []uint64
 
 	// frameMask masks the lower bits of an address to get the frame's
 	// address.
@@ -46,9 +46,8 @@ type UMEM struct {
 	// mu protects frameAddresses and nFreeFrames.
 	mu sync.Mutex
 
-	// frameAddresses is a stack of available frame addresses.
-	// +checklocks:mu
-	frameAddresses []uint64
+	// sockfd is the underlying AF_XDP socket.
+	sockfd uint32
 
 	// nFreeFrames is the number of frames available and is used to index
 	// into frameAddresses.

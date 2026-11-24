@@ -39,13 +39,11 @@ type AsyncFileServer struct {
 }
 
 type asyncFileServer struct {
-	filesMu        sync.Mutex
+	impl           AsyncFileServerImpl
 	files          map[uint32]*openFile
+	pwa            flipcall.PacketWindowAllocator
+	filesMu        sync.Mutex
 	nextFileHandle uint32
-
-	pwa flipcall.PacketWindowAllocator
-
-	impl AsyncFileServerImpl
 }
 
 // AsyncFileServerImpl contains implementation details for an AsyncFileServer.
@@ -63,10 +61,8 @@ type AsyncFileServerImpl interface {
 // NewAsyncFileServer returns a new AsyncFileServer.
 func NewAsyncFileServer(impl AsyncFileServerImpl) (*AsyncFileServer, error) {
 	s := &AsyncFileServer{
-		asyncFileServer: asyncFileServer{
-			files: make(map[uint32]*openFile),
-			impl:  impl,
-		},
+		files: make(map[uint32]*openFile),
+		impl:  impl,
 	}
 	if err := s.pwa.Init(); err != nil {
 		return nil, fmt.Errorf("failed to initialize flipcall packet window allocator: %w", err)
@@ -109,15 +105,13 @@ func (s *AsyncFileServer) Open(req *OpenRequest, resp *OpenResponse) error {
 		cu.Add(func() { ar.Close() })
 		maxParallel := min(ar.MaxParallel(), maxMaxParallel)
 		rf := &readFile{
-			openFile: openFile{
-				server:      s,
-				path:        req.Path,
-				maxIOBytes:  uint32(min(ar.MaxReadBytes(), math.MaxUint32)),
-				maxRanges:   uint32(min(ar.MaxRanges(), maxMaxRanges)),
-				maxParallel: uint32(maxParallel),
-				slicesUsed:  make([]asyncIOSlices, maxParallel),
-			},
-			ar: ar,
+			server:      s,
+			path:        req.Path,
+			maxIOBytes:  uint32(min(ar.MaxReadBytes(), math.MaxUint32)),
+			maxRanges:   uint32(min(ar.MaxRanges(), maxMaxRanges)),
+			maxParallel: uint32(maxParallel),
+			slicesUsed:  make([]asyncIOSlices, maxParallel),
+			ar:          ar,
 		}
 		rf.impl = rf
 		f = &rf.openFile
@@ -129,15 +123,13 @@ func (s *AsyncFileServer) Open(req *OpenRequest, resp *OpenResponse) error {
 		cu.Add(func() { aw.Close() })
 		maxParallel := min(aw.MaxParallel(), maxMaxParallel)
 		wf := &writeFile{
-			openFile: openFile{
-				server:      s,
-				path:        req.Path,
-				maxIOBytes:  uint32(min(aw.MaxWriteBytes(), math.MaxUint32)),
-				maxRanges:   uint32(min(aw.MaxRanges(), maxMaxRanges)),
-				maxParallel: uint32(maxParallel),
-				slicesUsed:  make([]asyncIOSlices, maxParallel),
-			},
-			aw: aw,
+			server:      s,
+			path:        req.Path,
+			maxIOBytes:  uint32(min(aw.MaxWriteBytes(), math.MaxUint32)),
+			maxRanges:   uint32(min(aw.MaxRanges(), maxMaxRanges)),
+			maxParallel: uint32(maxParallel),
+			slicesUsed:  make([]asyncIOSlices, maxParallel),
+			aw:          aw,
 		}
 		wf.impl = wf
 		f = &wf.openFile
@@ -277,28 +269,15 @@ func (s *AsyncFileServer) RegisterClientFile(req *RegisterClientFileRequest, res
 
 // openFile represents an opened server file.
 type openFile struct {
-	// Immutable fields:
-	server      *AsyncFileServer
-	path        string
-	maxIOBytes  uint32
-	maxRanges   uint32
-	maxParallel uint32
+	// impl is the containing readFile or writeFile. impl is immutable.
+	impl openFileImpl
 
-	// destroyed is true if ioep.Destroy() has been called. destroyed is
-	// protected by server.filesMu.
-	destroyed bool
-
-	// wg is 1 if the reader goroutine is running.
-	wg sync.WaitGroup
-
-	// closeErr is the error returned by ar.Close().
+	// closeErr is the error returned by the underlying reader or writer's Close.
 	closeErr error
 
-	ioep ioEndpoint
-
-	// ids tracks in-use IDs. ids is exclusive to the reader or writer
-	// goroutine.
-	ids idsSet
+	// server, path, maxIOBytes, maxRanges, and maxParallel are immutable.
+	server *AsyncFileServer
+	path   string
 
 	// slicesUsed maps in-use IDs to the slices that they are using. slicesUsed
 	// is exclusive to the reader or writer goroutine.
@@ -308,8 +287,20 @@ type openFile struct {
 	// exclusive to the reader or writer goroutine.
 	slicesUnused []asyncIOSlices
 
-	// impl is the containing readFile or writeFile. impl is immutable.
-	impl openFileImpl
+	// ids tracks in-use IDs. ids is exclusive to the reader or writer
+	// goroutine.
+	ids  idsSet
+	ioep ioEndpoint
+
+	// wg is 1 if the reader goroutine is running.
+	wg          sync.WaitGroup
+	maxIOBytes  uint32
+	maxRanges   uint32
+	maxParallel uint32
+
+	// destroyed is true if ioep.Destroy() has been called. destroyed is
+	// protected by server.filesMu.
+	destroyed bool
 }
 
 type openFileImpl interface {
@@ -319,9 +310,9 @@ type openFileImpl interface {
 
 // readFile represents a server file opened for reading.
 type readFile struct {
+	ar       stateio.AsyncReader
+	dstFiles destinationFileAtomicPtrMap
 	openFile
-	ar                stateio.AsyncReader
-	dstFiles          destinationFileAtomicPtrMap
 	nextDstFileHandle uint32
 }
 
@@ -496,12 +487,12 @@ func (df *destinationFile) destroy() {
 
 // writeFile represents a server file opened for writing.
 type writeFile struct {
+	aw       stateio.AsyncWriter
+	srcFiles sourceFileAtomicPtrMap
 	openFile
-	aw                stateio.AsyncWriter
-	srcFiles          sourceFileAtomicPtrMap
-	nextSrcFileHandle uint32
 	numInflight       int
 	maxReserve        uint64
+	nextSrcFileHandle uint32
 }
 
 func (f *writeFile) startServing(handle uint32) {

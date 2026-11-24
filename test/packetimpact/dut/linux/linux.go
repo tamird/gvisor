@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 // Package linux provides utilities specific to bringing up linux DUTs.
 package linux

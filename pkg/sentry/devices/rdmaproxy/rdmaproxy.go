@@ -76,13 +76,13 @@ const uverbsClassDir = "/sys/class/infiniband_verbs"
 
 // uverbsDevice implements vfs.Device for /dev/infiniband/uverbs*.
 type uverbsDevice struct {
-	// devName is the device filename, e.g. "uverbs0". Distinct from the
-	// kernel minor number (e.g. 192) used for VFS registration.
-	devName string
 	// driver is the per-vendor plug-in attached to this device, looked up by
 	// name at Register time. Always non-nil: Register refuses to register a
 	// device whose host PCI driver has no plug-in.
 	driver Driver
+	// devName is the device filename, e.g. "uverbs0". Distinct from the
+	// kernel minor number (e.g. 192) used for VFS registration.
+	devName string
 }
 
 // Open implements vfs.Device.Open.
@@ -161,12 +161,12 @@ func (p *PinnedDMABufs) Release(ctx context.Context) {
 // FD's MRs/CQs/QPs. Handles are scoped to the uverbs context (the underlying
 // host FD), so this state lives per-uverbsFD.
 type pinnedResources struct {
-	mu  sync.Mutex
 	mrs map[uint32]*MirroredPages
 	// dmaBufs tracks CQ, QP, and SRQ mirrors together: object handles are
 	// unique within a uverbs context's IDR namespace, so their ids never
 	// collide.
 	dmaBufs map[uint32]*PinnedDMABufs
+	mu      sync.Mutex
 }
 
 // addMR records the page mirror for a successful REG_MR.
@@ -235,24 +235,24 @@ func (p *pinnedResources) releaseAll(ctx context.Context) {
 //
 // uverbsFD is not savable; RDMA state is not checkpoint/restored.
 type uverbsFD struct {
-	vfsfd vfs.FileDescription
 	vfs.FileDescriptionDefaultImpl
 	vfs.DentryMetadataFileDescriptionImpl
 	vfs.NoLockFD
 	memmap.MappableNoTrackMappings
 	memmap.MappableNoHugepages
-
-	hostFD     int32
-	queue      waiter.Queue
-	memmapFile fsutil.MmapNoInternalFile
-
-	// driver is the per-vendor plug-in inherited from the originating
-	// uverbsDevice at Open time. Always non-nil; see uverbsDevice.driver.
-	driver Driver
+	vfsfd vfs.FileDescription
 
 	// pinned tracks app memory mirrored on behalf of MRs, CQs, and QPs
 	// registered or created through this uverbs FD.
 	pinned pinnedResources
+
+	// driver is the per-vendor plug-in inherited from the originating
+	// uverbsDevice at Open time. Always non-nil; see uverbsDevice.driver.
+	driver     Driver
+	memmapFile fsutil.MmapNoInternalFile
+	queue      waiter.Queue
+
+	hostFD int32
 }
 
 // Release implements vfs.FileDescriptionImpl.Release.
@@ -344,13 +344,13 @@ func Register(vfsObj *vfs.VirtualFilesystem, devName string, minor uint32, drive
 // table, which correctly handles FD-number recycling across application
 // processes.
 type eventFD struct {
-	vfsfd vfs.FileDescription
 	vfs.FileDescriptionDefaultImpl
 	vfs.DentryMetadataFileDescriptionImpl
 	vfs.NoLockFD
+	vfsfd vfs.FileDescription
+	queue waiter.Queue
 
 	hostFD int32
-	queue  waiter.Queue
 }
 
 // Release implements vfs.FileDescriptionImpl.Release.

@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/google/subcommands"
@@ -34,20 +35,19 @@ import (
 type FSCheckpoint struct {
 	containerLoader
 	imagePath    string
+	paths        pathVar
 	leaveRunning bool
 	direct       bool
-	paths        pathVar
 }
 
 // pathVar is a repeatable flag of [<prefix>=][<container>:]<path> filesystem
 // checkpoint targets.
 type pathVar struct {
-	targets []string
-
 	// defaultPrefix is the bundle prefix of targets without an explicit
 	// "<prefix>=". It must match the default prefix used by the command when
 	// saving, so that targets are validated as the command will group them.
 	defaultPrefix string
+	targets       []string
 }
 
 func (p *pathVar) String() string {
@@ -61,7 +61,7 @@ func (p *pathVar) Set(value string) error {
 	if strings.TrimSpace(value) == "" {
 		return fmt.Errorf("empty path: %q", value)
 	}
-	combined := append(append([]string(nil), p.targets...), value)
+	combined := append(slices.Concat[[]string](p.targets), value)
 	if _, err := fscheckpoint.ParseBundlesWithDefaultPrefix(combined, p.defaultPrefix); err != nil {
 		return err
 	}

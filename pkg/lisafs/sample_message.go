@@ -43,8 +43,8 @@ func (m *MsgSimple) Randomize() {
 //
 // +marshal dynamic
 type MsgDynamic struct {
-	N   primitive.Uint32
 	Arr []MsgSimple
+	N   primitive.Uint32
 }
 
 // String implements fmt.Stringer.String.
@@ -93,15 +93,15 @@ func (m *MsgDynamic) CheckedUnmarshal(src []byte) ([]byte, bool) {
 func (m *MsgDynamic) Randomize(arrLen int) {
 	m.N = primitive.Uint32(arrLen)
 	m.Arr = make([]MsgSimple, arrLen)
-	for i := 0; i < arrLen; i++ {
+	for i := range arrLen {
 		m.Arr[i].Randomize()
 	}
 }
 
 // P9Version mimics p9.TVersion and p9.Rversion.
 type P9Version struct {
-	MSize   primitive.Uint32
 	Version string
+	MSize   primitive.Uint32
 }
 
 // String implements fmt.Stringer.String.

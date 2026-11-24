@@ -293,15 +293,16 @@ const (
 
 // Completion indicates the result of a completed I/O operation.
 type Completion struct {
+	// Err is the error that terminated the operation after N bytes.
+	Err error
+
 	// ID is the ID passed to AsyncReader.AddRead, AsyncReader.AddReadv,
 	// AsyncWriter.AddWrite, or AsyncWriter.AddWritev.
 	ID int
 
-	// N is the number of bytes for which I/O was successfully performed. Err
-	// is the error that terminated I/O after N bytes.
+	// N is the number of bytes for which I/O was successfully performed.
 	//
 	// Invariant: If N is less than the number of bytes for which I/O was
 	// submitted, Err is non-nil.
-	N   uint64
-	Err error
+	N uint64
 }

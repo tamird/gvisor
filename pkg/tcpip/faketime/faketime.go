@@ -19,6 +19,7 @@ import (
 	"container/heap"
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -60,10 +61,9 @@ func (*NullClock) AfterFunc(time.Duration, func()) tcpip.Timer {
 
 type notificationChannels struct {
 	mu struct {
-		sync.Mutex
-
 		// +checklocks:Mutex
 		ch []<-chan struct{}
+		sync.Mutex
 	}
 }
 
@@ -95,22 +95,21 @@ func (n *notificationChannels) wait() {
 }
 
 type manualClockMutex struct {
-	sync.RWMutex
-
 	// now is the current (fake) time of the clock.
 	//
 	// +checklocks:RWMutex
 	now time.Time
 
-	// times is min-heap of times.
-	//
-	// +checklocks:RWMutex
-	times timeHeap
-
 	// timers holds the timers scheduled for each time.
 	//
 	// +checklocks:RWMutex
 	timers map[time.Time]map[*manualTimer]struct{}
+
+	// times is min-heap of times.
+	//
+	// +checklocks:RWMutex
+	times timeHeap
+	sync.RWMutex
 }
 
 // ManualClock implements tcpip.Clock and only advances manually with Advance
@@ -241,11 +240,12 @@ func (mc *ManualClock) stopTimerLocked(mt *manualTimer) {
 
 	timers, ok := mc.mu.timers[t]
 	if !ok {
-		err := fmt.Sprintf("tried to stop an active timer but the clock does not have anything scheduled for the timer @ t = %s %p\nScheduled timers @:", t.UTC(), mt)
+		var err strings.Builder
+		fmt.Fprintf(&err, "tried to stop an active timer but the clock does not have anything scheduled for the timer @ t = %s %p\nScheduled timers @:", t.UTC(), mt)
 		for t := range mc.mu.timers {
-			err += fmt.Sprintf("%s\n", t.UTC())
+			fmt.Fprintf(&err, "%s\n", t.UTC())
 		}
-		panic(err)
+		panic(err.String())
 	}
 
 	if _, ok := timers[mt]; !ok {
@@ -353,14 +353,13 @@ func (mc *ManualClock) stopTimer(mt *manualTimer) bool {
 }
 
 type manualTimerMu struct {
-	sync.Mutex
-
 	// firesAt is the time when the timer will fire.
 	//
 	// Zero only when the timer is not active.
 	//
 	// +checklocks:Mutex
 	firesAt time.Time
+	sync.Mutex
 }
 
 type manualTimer struct {

@@ -60,6 +60,16 @@ type syscallThread struct {
 	// thread is a thread identifier.
 	thread *thread
 
+	// sentryMessage is the first page of the share message that can't be
+	// modified by the stub thread.
+	sentryMessage *syscallSentryMessage
+
+	// stubMessage is the second page of the shared message that can be
+	// modified by the stub thread.
+	stubMessage       *syscallStubMessage
+	seccompNotify     *os.File
+	seccompNotifyResp linux.SeccompNotifResp
+
 	// stackRange is the range for the sentry syscall message in the memory
 	// file.
 	stackRange memmap.FileRange
@@ -67,19 +77,10 @@ type syscallThread struct {
 	// sentryAddr is the address of the shared memory region in the Sentry
 	// address space.
 	sentryAddr uintptr
+
 	// stubAddr is the address of the shared memory region in the stub
 	// address space.
 	stubAddr uintptr
-
-	// sentryMessage is the first page of the share message that can't be
-	// modified by the stub thread.
-	sentryMessage *syscallSentryMessage
-	// stubMessage is the second page of the shared message that can be
-	// modified by the stub thread.
-	stubMessage *syscallStubMessage
-
-	seccompNotify     *os.File
-	seccompNotifyResp linux.SeccompNotifResp
 }
 
 func (t *syscallThread) init(seccompNotify bool) error {
@@ -210,7 +211,7 @@ func (t *syscallThread) syscall(sysno uintptr, args ...arch.SyscallArgument) (ui
 	sentryMsg := t.sentryMessage
 	stubMsg := t.stubMessage
 	sentryMsg.sysno = uint64(sysno)
-	for i := 0; i < len(sentryMsg.args); i++ {
+	for i := range len(sentryMsg.args) {
 		if i < len(args) {
 			sentryMsg.args[i] = uint64(args[i].Value)
 		} else {

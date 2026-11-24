@@ -48,8 +48,8 @@ type SnapshotMetadata struct {
 
 // Snapshot groups SnapshotID and SnapshotStorage together.
 type Snapshot struct {
-	ID      SnapshotID
 	Storage SnapshotStorage
+	ID      SnapshotID
 }
 
 // Asset defines the type for snapshot asset names.

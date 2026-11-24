@@ -187,7 +187,7 @@ func (mm *MemoryManager) findAvailableLocked(length uint64, opts findAvailableOp
 	}
 	allowedAR := mm.applicationAddrRange()
 	if opts.Map32Bit {
-		allowedAR = allowedAR.Intersect(hostarch.AddrRange{map32Start, map32End})
+		allowedAR = allowedAR.Intersect(hostarch.AddrRange{Start: map32Start, End: map32End})
 	}
 
 	// Does the provided suggestion work?
@@ -246,7 +246,7 @@ func (mm *MemoryManager) findAvailableLocked(length uint64, opts findAvailableOp
 }
 
 func (mm *MemoryManager) applicationAddrRange() hostarch.AddrRange {
-	return hostarch.AddrRange{mm.layout.MinAddr, mm.layout.MaxAddr}
+	return hostarch.AddrRange{Start: mm.layout.MinAddr, End: mm.layout.MaxAddr}
 }
 
 // +checklocksread:mm.mappingMu
@@ -255,9 +255,9 @@ func (mm *MemoryManager) findAlignedAvailableLocked(length, alignment uint64, al
 		return mm.findLowestAvailableLocked(length, alignment, allowedAR)
 	}
 	if mm.layout.DefaultDirection == arch.MmapBottomUp {
-		return mm.findLowestAvailableLocked(length, alignment, hostarch.AddrRange{mm.layout.BottomUpBase, mm.layout.MaxAddr})
+		return mm.findLowestAvailableLocked(length, alignment, hostarch.AddrRange{Start: mm.layout.BottomUpBase, End: mm.layout.MaxAddr})
 	}
-	return mm.findHighestAvailableLocked(length, alignment, hostarch.AddrRange{mm.layout.MinAddr, mm.layout.TopDownBase})
+	return mm.findHighestAvailableLocked(length, alignment, hostarch.AddrRange{Start: mm.layout.MinAddr, End: mm.layout.TopDownBase})
 }
 
 // +checklocksread:mm.mappingMu
@@ -635,7 +635,7 @@ func (vseg vmaIterator) mappableRangeOf(ar hostarch.AddrRange) memmap.MappableRa
 
 	vma := vseg.ValuePtr()
 	vstart := vseg.Start()
-	return memmap.MappableRange{vma.off + uint64(ar.Start-vstart), vma.off + uint64(ar.End-vstart)}
+	return memmap.MappableRange{Start: vma.off + uint64(ar.Start-vstart), End: vma.off + uint64(ar.End-vstart)}
 }
 
 // Preconditions:
@@ -660,7 +660,7 @@ func (vseg vmaIterator) addrRangeOf(mr memmap.MappableRange) hostarch.AddrRange 
 
 	vma := vseg.ValuePtr()
 	vstart := vseg.Start()
-	return hostarch.AddrRange{vstart + hostarch.Addr(mr.Start-vma.off), vstart + hostarch.Addr(mr.End-vma.off)}
+	return hostarch.AddrRange{Start: vstart + hostarch.Addr(mr.Start-vma.off), End: vstart + hostarch.Addr(mr.End-vma.off)}
 }
 
 // seekNextLowerBound returns mm.vmas.LowerBoundSegment(addr), but does so by
@@ -695,7 +695,7 @@ func (vgap vmaGapIterator) availableRange() hostarch.AddrRange {
 	}
 	// Exclude guard pages.
 	if ar.Length() < guardBytes {
-		return hostarch.AddrRange{ar.Start, ar.Start}
+		return hostarch.AddrRange{Start: ar.Start, End: ar.Start}
 	}
 	ar.End -= guardBytes
 	return ar

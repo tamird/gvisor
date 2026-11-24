@@ -37,9 +37,9 @@ var (
 
 func TestIsValidSlice(t *testing.T) {
 	for _, tc := range []struct {
+		err   error
 		name  string
 		slice string
-		err   error
 	}{
 		{
 			name:  "success",
@@ -89,18 +89,18 @@ func TestExpandSlice(t *testing.T) {
 
 func TestInstall(t *testing.T) {
 	for _, tc := range []struct {
-		name             string
-		res              *specs.LinuxResources
-		wantProps        []systemdDbus.Property
-		updatedRes       *specs.LinuxResources
-		wantUpdatedProps []systemdDbus.Property
 		err              error
+		res              *specs.LinuxResources
+		updatedRes       *specs.LinuxResources
+		name             string
+		wantProps        []systemdDbus.Property
+		wantUpdatedProps []systemdDbus.Property
 	}{
 		{
 			name: "defaults",
 			res:  nil,
 			wantProps: []systemdDbus.Property{
-				{"Slice", dbus.MakeVariant("parent.slice")},
+				{Name: "Slice", Value: dbus.MakeVariant("parent.slice")},
 				{Name: "Description", Value: dbus.MakeVariant("Secure container 123")},
 				{Name: "MemoryAccounting", Value: dbus.MakeVariant(true)},
 				{Name: "CPUAccounting", Value: dbus.MakeVariant(true)},
@@ -120,9 +120,9 @@ func TestInstall(t *testing.T) {
 				},
 			},
 			wantProps: []systemdDbus.Property{
-				{"MemoryMax", dbus.MakeVariant(uint64(1))},
-				{"MemoryLow", dbus.MakeVariant(uint64(3))},
-				{"MemorySwapMax", dbus.MakeVariant(uint64(1))},
+				{Name: "MemoryMax", Value: dbus.MakeVariant(uint64(1))},
+				{Name: "MemoryLow", Value: dbus.MakeVariant(uint64(3))},
+				{Name: "MemorySwapMax", Value: dbus.MakeVariant(uint64(1))},
 			},
 		},
 		{
@@ -144,7 +144,7 @@ func TestInstall(t *testing.T) {
 				},
 			},
 			wantProps: []systemdDbus.Property{
-				{"CPUQuotaPerSecUSec", dbus.MakeVariant(uint64(10000))},
+				{Name: "CPUQuotaPerSecUSec", Value: dbus.MakeVariant(uint64(10000))},
 			},
 		},
 		{
@@ -159,11 +159,11 @@ func TestInstall(t *testing.T) {
 				},
 			},
 			wantProps: []systemdDbus.Property{
-				{"CPUWeight", dbus.MakeVariant(convertCPUSharesToCgroupV2Value(1))},
-				{"CPUQuotaPeriodUSec", dbus.MakeVariant(uint64(20000))},
-				{"CPUQuotaPerSecUSec", dbus.MakeVariant(uint64(15000000))},
-				{"AllowedCPUs", dbus.MakeVariant([]byte{1 << 4})},
-				{"AllowedMemoryNodes", dbus.MakeVariant([]byte{1 << 5})},
+				{Name: "CPUWeight", Value: dbus.MakeVariant(convertCPUSharesToCgroupV2Value(1))},
+				{Name: "CPUQuotaPeriodUSec", Value: dbus.MakeVariant(uint64(20000))},
+				{Name: "CPUQuotaPerSecUSec", Value: dbus.MakeVariant(uint64(15000000))},
+				{Name: "AllowedCPUs", Value: dbus.MakeVariant([]byte{1 << 4})},
+				{Name: "AllowedMemoryNodes", Value: dbus.MakeVariant([]byte{1 << 5})},
 			},
 			updatedRes: &specs.LinuxResources{
 				CPU: &specs.LinuxCPU{
@@ -175,11 +175,11 @@ func TestInstall(t *testing.T) {
 				},
 			},
 			wantUpdatedProps: []systemdDbus.Property{
-				{"CPUWeight", dbus.MakeVariant(convertCPUSharesToCgroupV2Value(1))},
-				{"CPUQuotaPeriodUSec", dbus.MakeVariant(uint64(10000))},
-				{"CPUQuotaPerSecUSec", dbus.MakeVariant(uint64(30000000))},
-				{"AllowedCPUs", dbus.MakeVariant([]byte{1 << 2})},
-				{"AllowedMemoryNodes", dbus.MakeVariant([]byte{1 << 3})},
+				{Name: "CPUWeight", Value: dbus.MakeVariant(convertCPUSharesToCgroupV2Value(1))},
+				{Name: "CPUQuotaPeriodUSec", Value: dbus.MakeVariant(uint64(10000))},
+				{Name: "CPUQuotaPerSecUSec", Value: dbus.MakeVariant(uint64(30000000))},
+				{Name: "AllowedCPUs", Value: dbus.MakeVariant([]byte{1 << 2})},
+				{Name: "AllowedMemoryNodes", Value: dbus.MakeVariant([]byte{1 << 3})},
 			},
 		},
 		{
@@ -191,8 +191,8 @@ func TestInstall(t *testing.T) {
 				},
 			},
 			wantProps: []systemdDbus.Property{
-				{"AllowedCPUs", dbus.MakeVariant([]byte{0b_101110})},
-				{"AllowedMemoryNodes", dbus.MakeVariant([]byte{0b_11100000, 1})},
+				{Name: "AllowedCPUs", Value: dbus.MakeVariant([]byte{0b_101110})},
+				{Name: "AllowedMemoryNodes", Value: dbus.MakeVariant([]byte{0b_11100000, 1})},
 			},
 		},
 		{
@@ -209,7 +209,7 @@ func TestInstall(t *testing.T) {
 				},
 			},
 			wantProps: []systemdDbus.Property{
-				{"AllowedCPUs", dbus.MakeVariant(func() []byte {
+				{Name: "AllowedCPUs", Value: dbus.MakeVariant(func() []byte {
 					bits := make([]byte, 24)
 					bits[1] = 1
 					bits[23] = 1
@@ -219,8 +219,8 @@ func TestInstall(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			cg := cgroupSystemd{Name: "123", Parent: "parent.slice"}
-			cg.Controllers = mandatoryControllers
+			cg := cgroupSystemd{Name: "123", Parent: "parent.slice",
+				Controllers: mandatoryControllers}
 			err := cg.Install(tc.res)
 			if !errors.Is(err, tc.err) {
 				t.Fatalf("Wrong error, got: %s, want: %s", err, tc.err)
@@ -266,11 +266,9 @@ func newCompatDirTestCgroup(t *testing.T) (*cgroupSystemd, string) {
 		Name:        "abc",
 		ScopePrefix: "cri-containerd",
 		Parent:      "parent.slice",
-		cgroupV2: cgroupV2{
-			Mountpoint: mountpoint,
-			// Path is set by newCgroupV2Systemd to expanded slice + unitName.
-			Path: filepath.Join(expandSlice("parent.slice"), "cri-containerd-abc.scope"),
-		},
+		Mountpoint:  mountpoint,
+		// Path is set by newCgroupV2Systemd to expanded slice + unitName.
+		Path: filepath.Join(expandSlice("parent.slice"), "cri-containerd-abc.scope"),
 	}
 	return cg, cg.MakePath("")
 }

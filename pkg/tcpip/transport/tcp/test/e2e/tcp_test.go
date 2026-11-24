@@ -102,7 +102,7 @@ func testCubicWindowGrowthAfterPacketLoss(t *testing.T, recovery string, segment
 	// earned by one ACK is then less than a segment. The old implementation
 	// truncated each such increase instead of accumulating it across ACKs.
 	receivedBytes := 0
-	for round := 0; round < slowStartRounds; round++ {
+	for round := range slowStartRounds {
 		for range tcp.InitialCwnd << round {
 			c.ReceiveAndCheckPacket(queuedData, receivedBytes, segmentBytes)
 			receivedBytes += segmentBytes
@@ -503,8 +503,7 @@ func BenchmarkWildcardBindClose(b *testing.B) {
 	}()
 	var wq waiter.Queue
 	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		ep, err := s.NewEndpoint(tcp.ProtocolNumber, ipv6.ProtocolNumber, &wq)
 		if err != nil {
 			b.Fatal(err)
@@ -1202,10 +1201,10 @@ func TestUserSuppliedMSSOnConnect(t *testing.T) {
 	const mtu = 5000
 
 	ips := []struct {
-		name        string
 		createEP    func(*context.Context)
-		connectAddr tcpip.Address
 		checker     func(*testing.T, *context.Context, uint16, int)
+		name        string
+		connectAddr tcpip.Address
 		maxMSS      uint16
 	}{
 		{
@@ -1305,10 +1304,10 @@ func TestUserSuppliedMSSOnListenAccept(t *testing.T) {
 	const mtu = 5000
 
 	ips := []struct {
-		name     string
 		createEP func(*context.Context)
 		sendPkt  func(*context.Context, *context.Headers)
 		checker  func(*testing.T, *context.Context, uint16, uint16)
+		name     string
 		maxMSS   uint16
 	}{
 		{
@@ -1399,7 +1398,7 @@ func TestUserSuppliedMSSOnListenAccept(t *testing.T) {
 						t.Fatalf("Listen(%d): %s:", backlog, err)
 					}
 
-					for i := 0; i < clientConnects; i++ {
+					for i := range clientConnects {
 						// Send a SYN requests.
 						iss := seqnum.Value(i)
 						srcPort := context.TestPort + uint16(i)
@@ -1639,7 +1638,7 @@ func TestNoSynCookieWithoutOverflow(t *testing.T) {
 		}
 	}
 
-	for i := 0; i < backlog*5; i++ {
+	for i := range backlog * 5 {
 		doOne(i)
 	}
 }
@@ -1710,7 +1709,7 @@ func TestNoSynCookieOnFailedHandshakes(t *testing.T) {
 
 	}
 
-	for i := 0; i < backlog*5; i++ {
+	for range backlog * 5 {
 		doOne()
 	}
 }
@@ -2439,7 +2438,7 @@ func TestOutOfOrderFlood(t *testing.T) {
 	// expected.
 	data := []byte{1, 2, 3, 4, 5, 6}
 	iss := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		c.SendPacket(data[3:], &context.Headers{
 			SrcPort: context.TestPort,
 			DstPort: c.Port,
@@ -3649,25 +3648,25 @@ func TestZeroScaledWindowReceive(t *testing.T) {
 
 func TestSegmentMerging(t *testing.T) {
 	tests := []struct {
-		name   string
 		stop   func(tcpip.Endpoint)
 		resume func(tcpip.Endpoint)
+		name   string
 	}{
 		{
-			"stop work",
-			func(ep tcpip.Endpoint) {
+			name: "stop work",
+			stop: func(ep tcpip.Endpoint) {
 				ep.(interface{ StopWork() }).StopWork()
 			},
-			func(ep tcpip.Endpoint) {
+			resume: func(ep tcpip.Endpoint) {
 				ep.(interface{ ResumeWork() }).ResumeWork()
 			},
 		},
 		{
-			"cork",
-			func(ep tcpip.Endpoint) {
+			name: "cork",
+			stop: func(ep tcpip.Endpoint) {
 				ep.SocketOptions().SetCorkOption(true)
 			},
-			func(ep tcpip.Endpoint) {
+			resume: func(ep tcpip.Endpoint) {
 				ep.SocketOptions().SetCorkOption(false)
 			},
 		},
@@ -3684,7 +3683,7 @@ func TestSegmentMerging(t *testing.T) {
 			// InitialWindow but don't ACK. That should prevent
 			// anymore packets from going out.
 			var r bytes.Reader
-			for i := 0; i < tcp.InitialCwnd; i++ {
+			for i := range tcp.InitialCwnd {
 				r.Reset([]byte{0})
 				if _, err := c.EP.Write(&r, tcpip.WriteOptions{}); err != nil {
 					t.Fatalf("Write #%d failed: %s", i+1, err)
@@ -3704,7 +3703,7 @@ func TestSegmentMerging(t *testing.T) {
 
 			// Check that we get tcp.InitialCwnd packets.
 			iss := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
-			for i := 0; i < tcp.InitialCwnd; i++ {
+			for i := range tcp.InitialCwnd {
 				b := c.GetPacket()
 				defer b.Release()
 				checker.IPv4(t, b,
@@ -3884,12 +3883,12 @@ func TestUndelay(t *testing.T) {
 
 func TestMSSNotDelayed(t *testing.T) {
 	tests := []struct {
-		name string
 		fn   func(tcpip.Endpoint)
+		name string
 	}{
-		{"no-op", func(tcpip.Endpoint) {}},
-		{"delay", func(ep tcpip.Endpoint) { ep.SocketOptions().SetDelayOption(true) }},
-		{"cork", func(ep tcpip.Endpoint) { ep.SocketOptions().SetCorkOption(true) }},
+		{name: "no-op", fn: func(tcpip.Endpoint) {}},
+		{name: "delay", fn: func(ep tcpip.Endpoint) { ep.SocketOptions().SetDelayOption(true) }},
+		{name: "cork", fn: func(ep tcpip.Endpoint) { ep.SocketOptions().SetCorkOption(true) }},
 	}
 
 	for _, test := range tests {
@@ -4106,14 +4105,14 @@ func TestPartialSegmentDelayed(t *testing.T) {
 		for _, gso := range []bool{false, true} {
 			for _, test := range []struct {
 				name           string
-				window         seqnum.Size
-				dataSize       int
-				queuedPrefix   int
-				openWindow     bool
 				wantCork       sendCounts
 				wantNagle      sendCounts
 				wantNoDelay    sendCounts
 				wantNoDelayGSO sendCounts
+				dataSize       int
+				queuedPrefix   int
+				window         seqnum.Size
+				openWindow     bool
 			}{
 				{
 					name: "full-and-partial", window: 30000, dataSize: 201,
@@ -4762,7 +4761,7 @@ func TestMaxRetransmitsTimeout(t *testing.T) {
 	}
 
 	// Expect first transmit and MaxRetries retransmits.
-	for i := 0; i < numRetries+1; i++ {
+	for range numRetries + 1 {
 		v := c.GetPacket()
 		defer v.Release()
 		checker.IPv4(t, v, checker.TCP(
@@ -4829,7 +4828,7 @@ func TestMaxRTO(t *testing.T) {
 		checker.TCPFlagsMatch(header.TCPFlagAck, ^header.TCPFlagPsh),
 	))
 	const numRetransmits = 2
-	for i := 0; i < numRetransmits; i++ {
+	for i := range numRetransmits {
 		start := time.Now()
 		v := c.GetPacket()
 		defer v.Release()
@@ -4872,7 +4871,7 @@ func TestZeroSizedWriteRetransmit(t *testing.T) {
 	}
 	// Do not ACK the packet and expect an original transmit and a
 	// retransmit. This should not cause a panic.
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		v := c.GetPacket()
 		defer v.Release()
 		checker.IPv4(t, v, checker.TCP(
@@ -5640,7 +5639,7 @@ func TestReceivedSegmentQueuing(t *testing.T) {
 	// Send 200 segments.
 	iss := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
 	data := []byte{1, 2, 3}
-	for i := 0; i < 200; i++ {
+	for i := range 200 {
 		c.SendPacket(data, &context.Headers{
 			SrcPort: context.TestPort,
 			DstPort: c.Port,
@@ -5930,9 +5929,7 @@ func TestTimeWaitAssassination(t *testing.T) {
 			var wg sync.WaitGroup
 			defer wg.Wait()
 
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				// The new endpoint will take over the binding.
 				c.Create(-1)
 				timeout := time.After(5 * time.Second)
@@ -5953,15 +5950,13 @@ func TestTimeWaitAssassination(t *testing.T) {
 						break connect
 					}
 				}
-			}()
+			})
 
 			// If the new endpoint does not properly transition to connecting before
 			// taking over the port reservation, sending acks will cause the processor
 			// to panic 1-5% of the time.
-			for i := 0; i < 5; i++ {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
+			for range 5 {
+				wg.Go(func() {
 					c.SendPacket(nil, &context.Headers{
 						SrcPort: context.TestPort,
 						DstPort: port,
@@ -5969,7 +5964,7 @@ func TestTimeWaitAssassination(t *testing.T) {
 						SeqNum:  seq,
 						AckNum:  ack,
 					})
-				}()
+				})
 			}
 		}(uint16(port))
 	}
@@ -6079,15 +6074,15 @@ func TestBindToDeviceOption(t *testing.T) {
 	}
 
 	testActions := []struct {
-		name                 string
-		setBindToDevice      *tcpip.NICID
 		setBindToDeviceError tcpip.Error
+		setBindToDevice      *tcpip.NICID
+		name                 string
 		getBindToDevice      int32
 	}{
-		{"GetDefaultValue", nil, nil, 0},
-		{"BindToNonExistent", nicIDPtr(999), &tcpip.ErrUnknownDevice{}, 0},
-		{"BindToExistent", nicIDPtr(321), nil, 321},
-		{"UnbindToDevice", nicIDPtr(0), nil, 0},
+		{name: "GetDefaultValue", setBindToDevice: nil, setBindToDeviceError: nil, getBindToDevice: 0},
+		{name: "BindToNonExistent", setBindToDevice: nicIDPtr(999), setBindToDeviceError: &tcpip.ErrUnknownDevice{}, getBindToDevice: 0},
+		{name: "BindToExistent", setBindToDevice: nicIDPtr(321), setBindToDeviceError: nil, getBindToDevice: 321},
+		{name: "UnbindToDevice", setBindToDevice: nicIDPtr(0), setBindToDeviceError: nil, getBindToDevice: 0},
 	}
 	for _, testAction := range testActions {
 		t.Run(testAction.name, func(t *testing.T) {
@@ -6479,12 +6474,12 @@ func TestTCPEndpointProbe(t *testing.T) {
 
 func TestStackSetCongestionControl(t *testing.T) {
 	testCases := []struct {
-		cc  tcpip.CongestionControlOption
 		err tcpip.Error
+		cc  tcpip.CongestionControlOption
 	}{
-		{"reno", nil},
-		{"cubic", nil},
-		{"blahblah", &tcpip.ErrNoSuchFile{}},
+		{cc: "reno", err: nil},
+		{cc: "cubic", err: nil},
+		{cc: "blahblah", err: &tcpip.ErrNoSuchFile{}},
 	}
 
 	for _, tc := range testCases {
@@ -6565,12 +6560,12 @@ func TestStackSetAvailableCongestionControl(t *testing.T) {
 
 func TestEndpointSetCongestionControl(t *testing.T) {
 	testCases := []struct {
-		cc  tcpip.CongestionControlOption
 		err tcpip.Error
+		cc  tcpip.CongestionControlOption
 	}{
-		{"reno", nil},
-		{"cubic", nil},
-		{"blahblah", &tcpip.ErrNoSuchFile{}},
+		{cc: "reno", err: nil},
+		{cc: "cubic", err: nil},
+		{cc: "blahblah", err: &tcpip.ErrNoSuchFile{}},
 	}
 
 	for _, connected := range []bool{false, true} {
@@ -6645,7 +6640,7 @@ func TestKeepalive(t *testing.T) {
 	// 5 unacked keepalives are sent. ACK each one, and check that the
 	// connection stays alive after 5.
 	iss := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		b := c.GetPacket()
 		defer b.Release()
 		checker.IPv4(t, b,
@@ -6723,7 +6718,7 @@ func TestKeepalive(t *testing.T) {
 
 	// Now receive 5 keepalives, but don't ACK them. The connection
 	// should be reset after 5.
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		b = c.GetPacket()
 		defer b.Release()
 		checker.IPv4(t, b,
@@ -6929,7 +6924,7 @@ func TestListenBacklogFull(t *testing.T) {
 	c.WQ.EventRegister(&we)
 	defer c.WQ.EventUnregister(&we)
 
-	for i := 0; i < listenBacklog; i++ {
+	for range listenBacklog {
 		_, _, err = c.EP.Accept(nil)
 		if cmp.Equal(&tcpip.ErrWouldBlock{}, err) {
 			// Wait for connection to be established.
@@ -7407,7 +7402,7 @@ func TestSYNRetransmit(t *testing.T) {
 	// Otherwise the demultiplexer can send later SYNs directly to that child.
 	listener := c.EP.(*tcp.Endpoint)
 	listener.LockUser()
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		c.SendPacket(nil, &context.Headers{
 			SrcPort: context.TestPort,
 			DstPort: context.StackPort,
@@ -7872,10 +7867,7 @@ func TestReceiveBufferAutoTuningApplicationLimited(t *testing.T) {
 	end := payloadSize / 2
 	packetsSent := 0
 	for ; start < end; start += mss {
-		packetEnd := start + mss
-		if start+mss > end {
-			packetEnd = end
-		}
+		packetEnd := min(start+mss, end)
 		rawEP.SendPacketWithTS(b[start:packetEnd], tsVal)
 		packetsSent++
 	}
@@ -7993,7 +7985,7 @@ func TestReceiveBufferAutoTuning(t *testing.T) {
 		ResumeWork()
 	})
 	latency := 1 * time.Millisecond
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		tsVal++
 
 		// Stop the worker goroutine.
@@ -9408,9 +9400,7 @@ func TestResetDuringClose(t *testing.T) {
 	// below is processed by the worker first.
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		c.SendPacket(nil, &context.Headers{
 			SrcPort: context.TestPort,
 			DstPort: c.Port,
@@ -9419,13 +9409,11 @@ func TestResetDuringClose(t *testing.T) {
 			RcvWnd:  30000,
 			Flags:   header.TCPFlagRst,
 		})
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		c.EP.Close()
-	}()
+	})
 
 	wg.Wait()
 }
@@ -9450,14 +9438,14 @@ func TestSetStackTimeWaitReuse(t *testing.T) {
 
 	s := c.Stack()
 	testCases := []struct {
-		v   int
 		err tcpip.Error
+		v   int
 	}{
-		{int(tcpip.TCPTimeWaitReuseDisabled), nil},
-		{int(tcpip.TCPTimeWaitReuseGlobal), nil},
-		{int(tcpip.TCPTimeWaitReuseLoopbackOnly), nil},
-		{int(tcpip.TCPTimeWaitReuseLoopbackOnly) + 1, &tcpip.ErrInvalidOptionValue{}},
-		{int(tcpip.TCPTimeWaitReuseDisabled) - 1, &tcpip.ErrInvalidOptionValue{}},
+		{v: int(tcpip.TCPTimeWaitReuseDisabled), err: nil},
+		{v: int(tcpip.TCPTimeWaitReuseGlobal), err: nil},
+		{v: int(tcpip.TCPTimeWaitReuseLoopbackOnly), err: nil},
+		{v: int(tcpip.TCPTimeWaitReuseLoopbackOnly) + 1, err: &tcpip.ErrInvalidOptionValue{}},
+		{v: int(tcpip.TCPTimeWaitReuseDisabled) - 1, err: &tcpip.ErrInvalidOptionValue{}},
 	}
 
 	for _, tc := range testCases {
@@ -9517,7 +9505,6 @@ func TestHandshakeRTT(t *testing.T) {
 		}
 	}
 	for _, tt := range testCases {
-		tt := tt
 		t.Run(fmt.Sprintf("connect=%t,TS=%t,cookie=%t,retrans=%t)", tt.connect, tt.tsEnabled, tt.useCookie, tt.retrans), func(t *testing.T) {
 			t.Parallel()
 			c := context.New(t, e2e.DefaultMTU)
@@ -9562,11 +9549,11 @@ func TestSetRTO(t *testing.T) {
 	minRTO, maxRTO := tcpRTOMinMax(t, c)
 	c.Cleanup()
 	for _, tt := range []struct {
+		err    tcpip.Error
 		name   string
 		RTO    time.Duration
 		minRTO time.Duration
 		maxRTO time.Duration
-		err    tcpip.Error
 	}{
 		{
 			name:   "invalid minRTO",
@@ -9899,7 +9886,7 @@ func TestReadAfterCloseWithBufferedData(t *testing.T) {
 	defer c.Cleanup()
 	con := c.CreateConnectedWithOptionsNoDelay(header.TCPSynOptions{})
 	// Fill up the receive queue.
-	for i := 0; i < 300; i++ {
+	for range 300 {
 		con.SendPacket([]byte{1, 2, 3, 4}, nil)
 	}
 

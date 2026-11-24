@@ -93,11 +93,9 @@ var StackV6AddrWithPrefix = tcpip.AddressWithPrefix{
 // Headers is used to represent the TCP header fields when building a
 // new packet.
 type Headers struct {
-	// SrcPort holds the src port value to be used in the packet.
-	SrcPort uint16
-
-	// DstPort holds the destination port value to be used in the packet.
-	DstPort uint16
+	// TCPOpts holds the options to be sent in the option field of the TCP
+	// header.
+	TCPOpts []byte
 
 	// SeqNum is the value of the sequence number field in the TCP header.
 	SeqNum seqnum.Value
@@ -105,43 +103,45 @@ type Headers struct {
 	// AckNum represents the acknowledgement number field in the TCP header.
 	AckNum seqnum.Value
 
-	// Flags are the TCP flags in the TCP header.
-	Flags header.TCPFlags
-
 	// RcvWnd is the window to be advertised in the ReceiveWindow field of
 	// the TCP header.
 	RcvWnd seqnum.Size
 
-	// TCPOpts holds the options to be sent in the option field of the TCP
-	// header.
-	TCPOpts []byte
+	// SrcPort holds the src port value to be used in the packet.
+	SrcPort uint16
+
+	// DstPort holds the destination port value to be used in the packet.
+	DstPort uint16
+
+	// Flags are the TCP flags in the TCP header.
+	Flags header.TCPFlags
 }
 
 // Options contains options for creating a new test context.
 type Options struct {
-	// EnableV4 indicates whether IPv4 should be enabled.
-	EnableV4 bool
-
-	// EnableV6 indicates whether IPv4 should be enabled.
-	EnableV6 bool
-
-	// MTU indicates the maximum transmission unit on the link layer.
-	MTU uint32
-
-	// RXChecksumOffload indicates that the link layer validates inbound
-	// checksums.
-	RXChecksumOffload bool
+	// Clock that is used by Stack.
+	Clock tcpip.Clock
 
 	// LinkWriteError, if not nil, is called with each batch of outbound
 	// packets. If it returns an error, the batch is dropped and the error is
 	// returned to the stack.
 	LinkWriteError func(stack.PacketBufferList) tcpip.Error
 
-	// Clock that is used by Stack.
-	Clock tcpip.Clock
-
 	// Probe is a probe function to attach to the stack.
 	Probe tcp.TCPProbeFunc
+
+	// MTU indicates the maximum transmission unit on the link layer.
+	MTU uint32
+
+	// EnableV4 indicates whether IPv4 should be enabled.
+	EnableV4 bool
+
+	// EnableV6 indicates whether IPv4 should be enabled.
+	EnableV6 bool
+
+	// RXChecksumOffload indicates that the link layer validates inbound
+	// checksums.
+	RXChecksumOffload bool
 
 	// EnableExperimentIPOption indicates whether the NIC is responsible for
 	// passing the experiment IP option.
@@ -165,9 +165,17 @@ func (e *writeErrorEndpoint) WritePackets(pkts stack.PacketBufferList) (int, tcp
 // Context provides an initialized Network stack and a link layer endpoint
 // for use in TCP tests.
 type Context struct {
+	// EP is the test endpoint in the stack owned by this context. This endpoint
+	// is used in various tests to either initiate an active connect or is used
+	// as a passive listening endpoint to accept inbound connections.
+	EP     tcpip.Endpoint
 	t      *testing.T
 	linkEP *channel.Endpoint
 	s      *stack.Stack
+
+	// Wq is the wait queue associated with EP and is used to block for events
+	// on EP.
+	WQ waiter.Queue
 
 	// IRS holds the initial sequence number in the SYN sent by endpoint in
 	// case of an active connect or the sequence number sent by the endpoint
@@ -178,15 +186,6 @@ type Context struct {
 	// Port holds the port bound by EP below in case of an active connect or
 	// the listening port number in case of a passive connect.
 	Port uint16
-
-	// EP is the test endpoint in the stack owned by this context. This endpoint
-	// is used in various tests to either initiate an active connect or is used
-	// as a passive listening endpoint to accept inbound connections.
-	EP tcpip.Endpoint
-
-	// Wq is the wait queue associated with EP and is used to block for events
-	// on EP.
-	WQ waiter.Queue
 
 	// TimeStampEnabled is true if ep is connected with the timestamp option
 	// enabled.

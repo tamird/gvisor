@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build amd64
-// +build amd64
 
 package cmd
 
@@ -27,8 +26,8 @@ import (
 )
 
 type mockMachineControl struct {
-	enabled bool
 	cpus    mitigate.CPUSet
+	enabled bool
 }
 
 func (m *mockMachineControl) enable() error {
@@ -59,9 +58,9 @@ type executeTestCase struct {
 	cpu                 mitigate.MockCPU
 	mitigateWantCPUs    int
 	mitigateError       subcommands.ExitStatus
-	mitigateWantEnabled bool
 	reverseWantCPUs     int
 	reverseError        subcommands.ExitStatus
+	mitigateWantEnabled bool
 	reverseWantEnabled  bool
 	dryrun              bool
 }

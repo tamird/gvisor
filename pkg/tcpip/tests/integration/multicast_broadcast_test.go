@@ -52,12 +52,12 @@ func TestPingMulticastBroadcast(t *testing.T) {
 	)
 
 	tests := []struct {
-		name        string
-		protoNum    tcpip.NetworkProtocolNumber
 		rxICMP      func(*channel.Endpoint, tcpip.Address, tcpip.Address, uint8)
+		name        string
 		srcAddr     tcpip.Address
 		dstAddr     tcpip.Address
 		expectedSrc tcpip.Address
+		protoNum    tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:        "IPv4 unicast",
@@ -245,13 +245,13 @@ func TestIncomingMulticastAndBroadcast(t *testing.T) {
 	data := []byte{1, 2, 3, 4}
 
 	tests := []struct {
-		name       string
-		proto      tcpip.NetworkProtocolNumber
-		remoteAddr tcpip.Address
-		localAddr  tcpip.AddressWithPrefix
 		rxUDP      func(*channel.Endpoint, tcpip.Address, tcpip.Address, []byte)
+		name       string
+		localAddr  tcpip.AddressWithPrefix
+		remoteAddr tcpip.Address
 		bindAddr   tcpip.Address
 		dstAddr    tcpip.Address
+		proto      tcpip.NetworkProtocolNumber
 		expectRx   bool
 	}{
 		{
@@ -510,7 +510,7 @@ func TestReuseAddrAndBroadcast(t *testing.T) {
 				// Create multiple endpoints for each type of "broadcast interested"
 				// endpoint so we can test that all endpoints receive the broadcast
 				// packet.
-				for i := 0; i < 2; i++ {
+				for range 2 {
 					var wq waiter.Queue
 					we, ch := waiter.NewChannelEntry(waiter.ReadableEvents)
 					wq.EventRegister(&we)
@@ -588,12 +588,12 @@ func TestUDPAddRemoveMembershipSocketOption(t *testing.T) {
 	data := []byte{1, 2, 3, 4}
 
 	tests := []struct {
-		name          string
-		proto         tcpip.NetworkProtocolNumber
-		remoteAddr    tcpip.Address
-		localAddr     tcpip.AddressWithPrefix
 		rxUDP         func(*channel.Endpoint, tcpip.Address, tcpip.Address, []byte)
+		name          string
+		localAddr     tcpip.AddressWithPrefix
+		remoteAddr    tcpip.Address
 		multicastAddr tcpip.Address
+		proto         tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:          "IPv4 unicast binding to unicast",

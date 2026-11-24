@@ -374,12 +374,10 @@ func SaveRestoreExec(k *kernel.Kernel, mode SaveRestoreExecMode) error {
 		Kernel: k,
 	}
 	execArgs := ExecArgs{
-		ExecArgs: controlapi.ExecArgs{
-			Filename:    argv[0],
-			Argv:        argv,
-			Envv:        append(envv, fmt.Sprintf("%s=%s", saveRestoreExecEnvVar, mode)),
-			ContainerID: contID,
-		},
+		Filename:       argv[0],
+		Argv:           argv,
+		Envv:           append(envv, fmt.Sprintf("%s=%s", saveRestoreExecEnvVar, mode)),
+		ContainerID:    contID,
 		MountNamespace: mntns,
 		PIDNamespace:   leader.PIDNamespace(),
 		Limits:         limits.NewLimitSet(),

@@ -75,10 +75,10 @@ var defaultInput = map[string]any{
 func TestInstall(t *testing.T) {
 
 	for _, tc := range []struct {
-		name   string
 		i      *Install
 		input  map[string]any
 		output map[string]any
+		name   string
 	}{
 		{
 			name: "clobber",
@@ -246,10 +246,10 @@ func TestWriteFileWithExplicitMode(t *testing.T) {
 
 func TestUninstall(t *testing.T) {
 	for _, tc := range []struct {
-		name    string
 		u       *Uninstall
 		input   map[string]any
 		output  map[string]any
+		name    string
 		wantErr bool
 	}{
 		{

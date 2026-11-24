@@ -158,7 +158,7 @@ func (c *capturedRmAllocParams) restore() error {
 	// Copy all parameters that might be driver-mutated to avoid modifying c.
 	ioctlParams := c.ioctlParams
 	rightsRequested := c.rightsRequested
-	allocParams := append([]byte{}, c.allocParams...)
+	allocParams := slices.Clone(c.allocParams)
 	if ioctlParams.PRightsRequested != 0 {
 		defer runtime.KeepAlive(rightsRequested)
 		ioctlParams.PRightsRequested = p64FromPtr(unsafe.Pointer(&rightsRequested))

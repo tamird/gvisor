@@ -88,8 +88,8 @@ func TestFileParsing(t *testing.T) {
 func TestCombine(t *testing.T) {
 	for _, test := range []struct {
 		name string
-		in   []string
 		out  string
+		in   []string
 	}{
 		{
 			name: "0",
@@ -132,6 +132,13 @@ func TestCombine(t *testing.T) {
 				} else if got != test.out {
 					t.Errorf("Combine(%v): got %q, wanted %q", test.in, got, test.out)
 				}
+			}
+			var wantLines string
+			if test.out != "" {
+				wantLines = "//go:build " + test.out + "\n\n"
+			}
+			if got := Lines(outexpr); got != wantLines {
+				t.Errorf("Lines(%v): got %q, want %q", outexpr, got, wantLines)
 			}
 		})
 	}

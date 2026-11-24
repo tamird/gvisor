@@ -158,7 +158,7 @@ func TestRACKDetectReorder(t *testing.T) {
 	clock.Advance(rtt)
 	start := c.IRS.Add(2*maxPayload + 1)
 	end := start.Add(maxPayload)
-	c.SendAckWithSACK(seq, maxPayload, []header.SACKBlock{{start, end}})
+	c.SendAckWithSACK(seq, maxPayload, []header.SACKBlock{{Start: start, End: end}})
 	state = nextState()
 	if got, want := state.RACKState.FACK, end; got != want {
 		t.Fatalf("FACK after SACK = %v, want %v", got, want)
@@ -246,7 +246,7 @@ func TestRACKTLPRecovery(t *testing.T) {
 	// Okay, let the sender know we got #8 using a SACK block.
 	eighthPStart := c.IRS.Add(1 + seqnum.Size(7*maxPayload))
 	eighthPEnd := eighthPStart.Add(maxPayload)
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{eighthPStart, eighthPEnd}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: eighthPStart, End: eighthPEnd}})
 
 	// The sender should be entering RACK based loss-recovery and sending #6 and
 	// #7 one after another.
@@ -381,7 +381,7 @@ func TestNoTLPRecoveryOnDSACK(t *testing.T) {
 	bytesRead += 3 * maxPayload
 	eighthPStart := c.IRS.Add(1 + seqnum.Size(7*maxPayload))
 	eighthPEnd := eighthPStart.Add(maxPayload)
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{eighthPStart, eighthPEnd}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: eighthPStart, End: eighthPEnd}})
 
 	// Wait for RTO and make sure that nothing else is received.
 	var info tcpip.TCPInfoOption
@@ -438,7 +438,7 @@ func TestNoTLPOnSACK(t *testing.T) {
 	bytesRead := 5 * maxPayload
 	seventhStart := c.IRS.Add(1 + seqnum.Size(6*maxPayload))
 	seventhEnd := seventhStart.Add(maxPayload)
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{seventhStart, seventhEnd}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: seventhStart, End: seventhEnd}})
 
 	// The sender should retransmit #6. If the sender sends a TLP, then #8 will
 	// received and fail this test.
@@ -566,7 +566,7 @@ func TestRACKMinPTO(t *testing.T) {
 			if n, err := c.EP.Write(&r, tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
 				t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, len(data))
 			}
-			for i := 0; i < numPackets; i++ {
+			for i := range numPackets {
 				c.ReceiveAndCheckPacketWithOptions(data, i*maxPayload, maxPayload, e2e.TSOptionSize)
 			}
 
@@ -667,7 +667,7 @@ func TestRACKDetectDSACK(t *testing.T) {
 	bytesRead := 5 * maxPayload
 	eighthPStart := c.IRS.Add(1 + seqnum.Size(7*maxPayload))
 	eighthPEnd := eighthPStart.Add(maxPayload)
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{eighthPStart, eighthPEnd}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: eighthPStart, End: eighthPEnd}})
 
 	// Expect retransmission of #6 packet after RTO expires.
 	c.ReceiveAndCheckPacketWithOptions(data, bytesRead, maxPayload, e2e.TSOptionSize)
@@ -678,7 +678,7 @@ func TestRACKDetectDSACK(t *testing.T) {
 	start := c.IRS.Add(1 + seqnum.Size(bytesRead))
 	end := start.Add(maxPayload)
 	bytesRead += 3 * maxPayload
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{start, end}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: start, End: end}})
 
 	// Wait for the probe function to finish processing the
 	// ACK before the test completes.
@@ -732,7 +732,7 @@ func TestRACKDetectDSACKWithOutOfOrder(t *testing.T) {
 	bytesRead := 5 * maxPayload
 	seventhPStart := c.IRS.Add(1 + seqnum.Size(6*maxPayload))
 	seventhPEnd := seventhPStart.Add(maxPayload)
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{seventhPStart, seventhPEnd}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: seventhPStart, End: seventhPEnd}})
 
 	// Expect retransmission of #6 packet.
 	c.ReceiveAndCheckPacketWithOptions(data, bytesRead, maxPayload, e2e.TSOptionSize)
@@ -747,7 +747,7 @@ func TestRACKDetectDSACKWithOutOfOrder(t *testing.T) {
 	// order #9 packet.
 	start1 := c.IRS.Add(1 + seqnum.Size(bytesRead) + maxPayload)
 	end1 := start1.Add(maxPayload)
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{start, end}, {start1, end1}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: start, End: end}, {Start: start1, End: end1}})
 
 	// Wait for the probe function to finish processing the
 	// ACK before the test completes.
@@ -783,16 +783,16 @@ func TestRACKDetectDSACKWithOutOfOrderDup(t *testing.T) {
 	offset := seqnum.Size(bytesRead + maxPayload)
 	start := c.IRS.Add(1 + offset)
 	end := start.Add(maxPayload)
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{start, end}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: start, End: end}})
 
 	// Send SACK with #6 packet is missing and received [7-8] packets.
 	end = start.Add(2 * maxPayload)
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{start, end}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: start, End: end}})
 
 	// Consider #8 packet is duplicated on the network and send DSACK.
 	dsackStart := c.IRS.Add(1 + offset + maxPayload)
 	dsackEnd := dsackStart.Add(maxPayload)
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{dsackStart, dsackEnd}, {start, end}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: dsackStart, End: dsackEnd}, {Start: start, End: end}})
 
 	// Wait for the probe function to finish processing the ACK before the
 	// test completes.
@@ -827,20 +827,20 @@ func TestRACKDetectDSACKSingleDup(t *testing.T) {
 	seq = seqnum.Value(context.TestInitialSequenceNumber).Add(1)
 	start := c.IRS.Add(1 + seqnum.Size(3*maxPayload))
 	end := start.Add(seqnum.Size(maxPayload))
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{start, end}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: start, End: end}})
 
 	// Expect retransmission of #2 packet.
 	c.ReceiveAndCheckPacketWithOptions(data, bytesRead, maxPayload, e2e.TSOptionSize)
 
 	// ACK for retransmitted #2 packet.
 	bytesRead += maxPayload
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{start, end}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: start, End: end}})
 
 	// Simulate receiving delayed subsegment of #2 packet and delayed #3 packet by
 	// sending DSACK block for the subsegment.
 	dsackStart := c.IRS.Add(1 + seqnum.Size(bytesRead))
 	dsackEnd := dsackStart.Add(seqnum.Size(maxPayload / 2))
-	c.SendAckWithSACK(seq, numPackets*maxPayload, []header.SACKBlock{{dsackStart, dsackEnd}})
+	c.SendAckWithSACK(seq, numPackets*maxPayload, []header.SACKBlock{{Start: dsackStart, End: dsackEnd}})
 
 	// Wait for the probe function to finish processing the ACK before the
 	// test completes.
@@ -898,25 +898,25 @@ func TestRACKDetectDSACKDupWithCumulativeACK(t *testing.T) {
 	seq = seqnum.Value(context.TestInitialSequenceNumber).Add(1)
 	start := c.IRS.Add(1 + seqnum.Size(5*maxPayload))
 	end := start.Add(seqnum.Size(maxPayload))
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{start, end}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: start, End: end}})
 
 	// Expect retransmission of #2 packet.
 	c.ReceiveAndCheckPacketWithOptions(data, bytesRead, maxPayload, e2e.TSOptionSize)
 
 	// Received delayed #2 packet.
 	bytesRead += maxPayload
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{start, end}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: start, End: end}})
 
 	// Received delayed #4 packet.
 	start1 := c.IRS.Add(1 + seqnum.Size(3*maxPayload))
 	end1 := start1.Add(seqnum.Size(maxPayload))
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{start1, end1}, {start, end}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: start1, End: end1}, {Start: start, End: end}})
 
 	// Simulate receiving retransmitted subsegment for #2 packet and delayed #3
 	// packet by sending DSACK block for #2 packet.
 	dsackStart := c.IRS.Add(1 + seqnum.Size(maxPayload))
 	dsackEnd := dsackStart.Add(seqnum.Size(maxPayload / 2))
-	c.SendAckWithSACK(seq, 4*maxPayload, []header.SACKBlock{{dsackStart, dsackEnd}, {start, end}})
+	c.SendAckWithSACK(seq, 4*maxPayload, []header.SACKBlock{{Start: dsackStart, End: dsackEnd}, {Start: start, End: end}})
 
 	// Wait for the probe function to finish processing the ACK before the
 	// test completes.
@@ -952,12 +952,12 @@ func TestRACKDetectDSACKDup(t *testing.T) {
 	seq = seqnum.Value(context.TestInitialSequenceNumber).Add(1)
 	start := c.IRS.Add(1 + seqnum.Size(6*maxPayload))
 	end := start.Add(seqnum.Size(maxPayload))
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{start, end}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: start, End: end}})
 
 	// Received delayed #3 packet.
 	start1 := c.IRS.Add(1 + seqnum.Size(2*maxPayload))
 	end1 := start1.Add(seqnum.Size(maxPayload))
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{start1, end1}, {start, end}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: start1, End: end1}, {Start: start, End: end}})
 
 	// Expect retransmission of #2 packet.
 	c.ReceiveAndCheckPacketWithOptions(data, bytesRead, maxPayload, e2e.TSOptionSize)
@@ -965,14 +965,14 @@ func TestRACKDetectDSACKDup(t *testing.T) {
 	// Consider #2 packet has been dropped and SACK #4 packet.
 	start2 := c.IRS.Add(1 + seqnum.Size(3*maxPayload))
 	end2 := start2.Add(seqnum.Size(maxPayload))
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{start2, end2}, {start1, end1}, {start, end}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: start2, End: end2}, {Start: start1, End: end1}, {Start: start, End: end}})
 
 	// Simulate receiving retransmitted subsegment for #3 packet and delayed #5
 	// packet by sending DSACK block for the subsegment.
 	dsackStart := c.IRS.Add(1 + seqnum.Size(2*maxPayload))
 	dsackEnd := dsackStart.Add(seqnum.Size(maxPayload / 2))
 	end1 = end1.Add(seqnum.Size(2 * maxPayload))
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{dsackStart, dsackEnd}, {start1, end1}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: dsackStart, End: dsackEnd}, {Start: start1, End: end1}})
 
 	// Wait for the probe function to finish processing the ACK before the
 	// test completes.
@@ -1016,7 +1016,7 @@ func TestRACKWithInvalidDSACKBlock(t *testing.T) {
 	bytesRead := 5 * maxPayload
 	seventhPStart := c.IRS.Add(1 + seqnum.Size(6*maxPayload))
 	seventhPEnd := seventhPStart.Add(maxPayload)
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{seventhPStart, seventhPEnd}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: seventhPStart, End: seventhPEnd}})
 
 	// Expect retransmission of #6 packet.
 	c.ReceiveAndCheckPacketWithOptions(data, bytesRead, maxPayload, e2e.TSOptionSize)
@@ -1031,7 +1031,7 @@ func TestRACKWithInvalidDSACKBlock(t *testing.T) {
 	// Send DSACK block as second block. The first block is a SACK for #9 packet.
 	start1 := c.IRS.Add(1 + seqnum.Size(bytesRead) + maxPayload)
 	end1 := start1.Add(maxPayload)
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{start1, end1}, {start, end}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: start1, End: end1}, {Start: start, End: end}})
 
 	// Wait for the probe function to finish processing the
 	// ACK before the test completes.
@@ -1084,7 +1084,7 @@ func TestRACKCheckReorderWindow(t *testing.T) {
 	// Missing [2-6] packets and SACK #7 packet.
 	start := c.IRS.Add(1 + seqnum.Size(6*maxPayload))
 	end := start.Add(seqnum.Size(maxPayload))
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{start, end}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: start, End: end}})
 
 	// Received delayed packets [2-6] which indicates there is reordering
 	// in the connection.
@@ -1111,8 +1111,8 @@ func TestRACKWithDuplicateACK(t *testing.T) {
 	seq := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
 	start := c.IRS.Add(1 + seqnum.Size(maxPayload))
 	end := start.Add(seqnum.Size(maxPayload))
-	for i := 0; i < 3; i++ {
-		c.SendAckWithSACK(seq, 0, []header.SACKBlock{{start, end}})
+	for range 3 {
+		c.SendAckWithSACK(seq, 0, []header.SACKBlock{{Start: start, End: end}})
 		end = end.Add(seqnum.Size(maxPayload))
 	}
 
@@ -1174,7 +1174,7 @@ func TestRACKUpdateSackedOut(t *testing.T) {
 	start := c.IRS.Add(seqnum.Size(1 + 3*maxPayload))
 	bytesRead := 2 * maxPayload
 	end := start.Add(seqnum.Size(bytesRead))
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{start, end}})
+	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{Start: start, End: end}})
 
 	bytesRead += 3 * maxPayload
 	c.SendAck(seq, bytesRead)
@@ -1207,7 +1207,7 @@ func TestRACKWithWindowFull(t *testing.T) {
 	}
 
 	bytesRead := 0
-	for i := 0; i < numPkts; i++ {
+	for range numPkts {
 		c.ReceiveAndCheckPacketWithOptions(data, bytesRead, maxPayload, e2e.TSOptionSize)
 		bytesRead += maxPayload
 	}
@@ -1220,7 +1220,7 @@ func TestRACKWithWindowFull(t *testing.T) {
 	end := start.Add(seqnum.Size(maxPayload))
 	dsackStart := c.IRS.Add(seqnum.Size(1 + (numPkts-1)*maxPayload))
 	dsackEnd := dsackStart.Add(seqnum.Size(maxPayload))
-	c.SendAckWithSACK(seq, 2*maxPayload, []header.SACKBlock{{dsackStart, dsackEnd}, {start, end}})
+	c.SendAckWithSACK(seq, 2*maxPayload, []header.SACKBlock{{Start: dsackStart, End: dsackEnd}, {Start: start, End: end}})
 
 	var info tcpip.TCPInfoOption
 	if err := c.EP.GetSockOpt(&info); err != nil {

@@ -80,14 +80,14 @@ func TestLocalPing(t *testing.T) {
 	}
 
 	tests := []struct {
+		expectedConnectErr tcpip.Error
+		linkEndpoint       func() stack.LinkEndpoint
+		icmpBuf            func(*testing.T) []byte
+		checkLinkEndpoint  func(t *testing.T, e stack.LinkEndpoint)
 		name               string
+		localAddr          tcpip.AddressWithPrefix
 		transProto         tcpip.TransportProtocolNumber
 		netProto           tcpip.NetworkProtocolNumber
-		linkEndpoint       func() stack.LinkEndpoint
-		localAddr          tcpip.AddressWithPrefix
-		icmpBuf            func(*testing.T) []byte
-		expectedConnectErr tcpip.Error
-		checkLinkEndpoint  func(t *testing.T, e stack.LinkEndpoint)
 	}{
 		{
 			name:              "IPv4 loopback",
@@ -275,9 +275,9 @@ func TestLocalUDP(t *testing.T) {
 	}
 
 	subTests := []struct {
+		expectedWriteErr tcpip.Error
 		name             string
 		addAddress       bool
-		expectedWriteErr tcpip.Error
 	}{
 		{
 			name:             "Unassigned local address",

@@ -41,8 +41,8 @@ func (fakeExtension) SeccompRules() seccomp.SyscallRules {
 }
 
 type flagExtension struct {
-	fakeExtension
 	setFlagsSeen *bool
+	fakeExtension
 }
 
 func (f flagExtension) SetFlags(*flag.FlagSet) {
@@ -52,8 +52,8 @@ func (f flagExtension) SetFlags(*flag.FlagSet) {
 }
 
 type prepareExtension struct {
-	fakeExtension
 	prepareGofer func(GoferPrepareContext) (GoferPrepareResult, error)
+	fakeExtension
 }
 
 func (f prepareExtension) PrepareGofer(ctx GoferPrepareContext) (GoferPrepareResult, error) {
@@ -85,7 +85,7 @@ func TestSetFlags(t *testing.T) {
 
 	called := false
 	Register(fakeExtension{name: "first"})
-	Register(flagExtension{fakeExtension: fakeExtension{name: "second"}, setFlagsSeen: &called})
+	Register(flagExtension{name: "second", setFlagsSeen: &called})
 	SetFlags(&flag.FlagSet{})
 
 	if !called {
@@ -98,7 +98,7 @@ func TestPrepareGofer(t *testing.T) {
 
 	Register(fakeExtension{name: "first"})
 	Register(prepareExtension{
-		fakeExtension: fakeExtension{name: "second"},
+		name: "second",
 		prepareGofer: func(ctx GoferPrepareContext) (GoferPrepareResult, error) {
 			if ctx.ContainerID != "container" || ctx.BundleDir != "/bundle" {
 				t.Fatalf("GoferPrepareContext = %+v", ctx)
@@ -107,7 +107,7 @@ func TestPrepareGofer(t *testing.T) {
 		},
 	})
 	Register(prepareExtension{
-		fakeExtension: fakeExtension{name: "third"},
+		name: "third",
 		prepareGofer: func(GoferPrepareContext) (GoferPrepareResult, error) {
 			return GoferPrepareResult{FlagOverrides: map[string]string{"second-fd": "4"}}, nil
 		},
@@ -126,7 +126,7 @@ func TestPrepareGoferError(t *testing.T) {
 	registered = nil
 	want := errors.New("setup failed")
 	Register(prepareExtension{
-		fakeExtension: fakeExtension{name: "first"},
+		name: "first",
 		prepareGofer: func(GoferPrepareContext) (GoferPrepareResult, error) {
 			return GoferPrepareResult{}, want
 		},

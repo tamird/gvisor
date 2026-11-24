@@ -39,7 +39,7 @@ func epollEvents(t *kernel.Task, eventsAddr hostarch.Addr, numEvents, maxBytes u
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "%#x {", eventsAddr)
 	addr := eventsAddr
-	for i := uint64(0); i < numEvents; i++ {
+	for range uint64(numEvents) {
 		var e linux.EpollEvent
 		if _, err := e.CopyIn(t, addr); err != nil {
 			fmt.Fprintf(&sb, "{error reading event at %#x: %v}", addr, err)

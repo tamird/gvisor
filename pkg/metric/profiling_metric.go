@@ -129,11 +129,11 @@ var (
 // snapshots is used to as temporary storage of metric data
 // before it's written to the writer.
 type snapshots struct {
+	// ringbuffer is used to store metric data.
+	ringbuffer [][]uint64
 	numEntries int
 	// startTime is the time at which collection started in nanoseconds.
 	startTime int64
-	// ringbuffer is used to store metric data.
-	ringbuffer [][]uint64
 	// curWriterIndex is the ringbuffer index currently being read by the
 	// writer. It should not be used by the collector.
 	curWriterIndex atomicbitops.Int32
@@ -166,17 +166,17 @@ type ProfilingMetricsOptions[T ProfilingMetricsWriter] struct {
 	// Sink is the sink to write the profiling metrics data to.
 	Sink T
 
-	// Lossy specifies whether the sink is lossy, i.e. data may be dropped from
-	// too large logging volume. In this case, data integrity is desirable at the
-	// expense of extra CPU cost at data-writing time. The data will be prefixed
-	// with `MetricsPrefix` and the hash of the data will be appended at the end.
-	Lossy bool
-
 	// Metrics is the comma-separated list of metrics to profile.
 	Metrics string
 
 	// Rate is the rate at which the metrics are collected.
 	Rate time.Duration
+
+	// Lossy specifies whether the sink is lossy, i.e. data may be dropped from
+	// too large logging volume. In this case, data integrity is desirable at the
+	// expense of extra CPU cost at data-writing time. The data will be prefixed
+	// with `MetricsPrefix` and the hash of the data will be appended at the end.
+	Lossy bool
 }
 
 // valueFunc returns the value of a single metric with a single field value
@@ -204,7 +204,7 @@ func StartProfilingMetrics[T ProfilingMetricsWriter](opts ProfilingMetricsOption
 	numEntries := 0
 
 	if len(opts.Metrics) > 0 {
-		for _, name := range strings.Split(opts.Metrics, ",") {
+		for name := range strings.SplitSeq(opts.Metrics, ",") {
 			name := strings.TrimSpace(name)
 			m, ok := allMetrics.uint64Metrics[name]
 			if !ok {
@@ -272,7 +272,7 @@ func StartProfilingMetrics[T ProfilingMetricsWriter](opts ProfilingMetricsOption
 		// a chance to start (as unlikely as that is).
 		curWriterIndex: atomicbitops.FromInt32(snapshotRingbufferSize - 1),
 	}
-	for i := 0; i < snapshotRingbufferSize; i++ {
+	for i := range snapshotRingbufferSize {
 		s.ringbuffer[i] = make([]uint64, snapshotBufferSize*(numEntries+1))
 	}
 
@@ -447,8 +447,8 @@ const (
 // ProfilingMetricsWriter.
 // It implements `bufferedMetricsWriter`.
 type bufferedWriter[T ProfilingMetricsWriter] struct {
-	buf        bytes.Buffer
 	underlying T
+	buf        bytes.Buffer
 }
 
 func newBufferedWriter[T ProfilingMetricsWriter](underlying T) *bufferedWriter[T] {
@@ -504,13 +504,13 @@ func (w *bufferedWriter[T]) Close() error {
 // line checksum itself at the end of the line.
 // `lossyBufferedWriter` implements `bufferedMetricsWriter`.
 type lossyBufferedWriter[T ProfilingMetricsWriter] struct {
-	lineBuf       bytes.Buffer
-	flushBuf      bytes.Buffer
 	lineHasher    hash.Hash32
 	overallHasher hash.Hash32
+	underlying    T
+	lineBuf       bytes.Buffer
+	flushBuf      bytes.Buffer
 	lines         int
 	longestLine   int
-	underlying    T
 }
 
 // newLossyBufferedWriter creates a new lossyBufferedWriter.

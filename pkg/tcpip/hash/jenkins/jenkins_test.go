@@ -23,13 +23,13 @@ import (
 
 func TestGolden32(t *testing.T) {
 	var golden32 = []struct {
-		out []byte
 		in  string
+		out []byte
 	}{
-		{[]byte{0x00, 0x00, 0x00, 0x00}, ""},
-		{[]byte{0xca, 0x2e, 0x94, 0x42}, "a"},
-		{[]byte{0x45, 0xe6, 0x1e, 0x58}, "ab"},
-		{[]byte{0xed, 0x13, 0x1f, 0x5b}, "abc"},
+		{out: []byte{0x00, 0x00, 0x00, 0x00}, in: ""},
+		{out: []byte{0xca, 0x2e, 0x94, 0x42}, in: "a"},
+		{out: []byte{0x45, 0xe6, 0x1e, 0x58}, in: "ab"},
+		{out: []byte{0xed, 0x13, 0x1f, 0x5b}, in: "abc"},
 	}
 
 	hash := New32()
@@ -93,8 +93,7 @@ func BenchmarkJenkins32KB(b *testing.B) {
 	}
 	in := make([]byte, 0, h.Size())
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		h.Reset()
 		h.Write(data)
 		h.Sum(in)

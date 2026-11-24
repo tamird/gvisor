@@ -334,7 +334,7 @@ func TestFillTxPipe(t *testing.T) {
 
 	const usedID = 1002
 	const usedTotalSize = 100
-	for i := uint64(0); i < 2; i++ {
+	for i := range uint64(2) {
 		if !q.Enqueue(usedID+i, usedTotalSize, 2, &b[0]) {
 			t.Fatalf("Failed to transmit buffer")
 		}
@@ -366,7 +366,7 @@ func TestFillRxPipe(t *testing.T) {
 		{100, 60, 1077, 0},
 	}
 
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		if !q.PostBuffers(b) {
 			t.Fatalf("PostBuffers failed on non-full queue")
 		}

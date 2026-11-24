@@ -22,8 +22,14 @@ import (
 
 func TestComputeRange(t *testing.T) {
 	tests := []struct {
+		// Expected error.
+		err error
+
 		// Description of test.
 		name string
+
+		// If error is nil, the expected LockRange.
+		LockRange
 
 		// Requested start of the lock range.
 		start int64
@@ -35,23 +41,17 @@ func TestComputeRange(t *testing.T) {
 		// Pre-computed file offset based on whence.
 		// Will be added to start.
 		offset int64
-
-		// Expected error.
-		err error
-
-		// If error is nil, the expected LockRange.
-		LockRange
 	}{
 		{
-			name:      "offset, start, and length all zero",
-			LockRange: LockRange{Start: 0, End: LockEOF},
+			name:  "offset, start, and length all zero",
+			Start: 0, End: LockEOF,
 		},
 		{
-			name:      "zero offset, zero start, positive length",
-			start:     0,
-			length:    4096,
-			offset:    0,
-			LockRange: LockRange{Start: 0, End: 4096},
+			name:   "zero offset, zero start, positive length",
+			start:  0,
+			length: 4096,
+			offset: 0,
+			Start:  0, End: 4096,
 		},
 		{
 			name:   "zero offset, negative start",
@@ -60,18 +60,18 @@ func TestComputeRange(t *testing.T) {
 			err:    unix.EINVAL,
 		},
 		{
-			name:      "large offset, negative start, positive length",
-			start:     -2048,
-			length:    2048,
-			offset:    4096,
-			LockRange: LockRange{Start: 2048, End: 4096},
+			name:   "large offset, negative start, positive length",
+			start:  -2048,
+			length: 2048,
+			offset: 4096,
+			Start:  2048, End: 4096,
 		},
 		{
-			name:      "large offset, negative start, zero length",
-			start:     -2048,
-			length:    0,
-			offset:    4096,
-			LockRange: LockRange{Start: 2048, End: LockEOF},
+			name:   "large offset, negative start, zero length",
+			start:  -2048,
+			length: 0,
+			offset: 4096,
+			Start:  2048, End: LockEOF,
 		},
 		{
 			name:   "zero offset, zero start, negative length",
@@ -81,32 +81,32 @@ func TestComputeRange(t *testing.T) {
 			err:    unix.EINVAL,
 		},
 		{
-			name:      "large offset, zero start, negative length",
-			start:     0,
-			length:    -4096,
-			offset:    4096,
-			LockRange: LockRange{Start: 0, End: 4096},
+			name:   "large offset, zero start, negative length",
+			start:  0,
+			length: -4096,
+			offset: 4096,
+			Start:  0, End: 4096,
 		},
 		{
-			name:      "offset, start, and length equal, length is negative",
-			start:     1024,
-			length:    -1024,
-			offset:    1024,
-			LockRange: LockRange{Start: 1024, End: 2048},
+			name:   "offset, start, and length equal, length is negative",
+			start:  1024,
+			length: -1024,
+			offset: 1024,
+			Start:  1024, End: 2048,
 		},
 		{
-			name:      "offset, start, and length equal, start is negative",
-			start:     -1024,
-			length:    1024,
-			offset:    1024,
-			LockRange: LockRange{Start: 0, End: 1024},
+			name:   "offset, start, and length equal, start is negative",
+			start:  -1024,
+			length: 1024,
+			offset: 1024,
+			Start:  0, End: 1024,
 		},
 		{
-			name:      "offset, start, and length equal, offset is negative",
-			start:     1024,
-			length:    1024,
-			offset:    -1024,
-			LockRange: LockRange{Start: 0, End: 1024},
+			name:   "offset, start, and length equal, offset is negative",
+			start:  1024,
+			length: 1024,
+			offset: -1024,
+			Start:  0, End: 1024,
 		},
 		{
 			name:   "offset, start, and length equal, all negative",
@@ -116,11 +116,11 @@ func TestComputeRange(t *testing.T) {
 			err:    unix.EINVAL,
 		},
 		{
-			name:      "offset, start, and length equal, all positive",
-			start:     1024,
-			length:    1024,
-			offset:    1024,
-			LockRange: LockRange{Start: 2048, End: 3072},
+			name:   "offset, start, and length equal, all positive",
+			start:  1024,
+			length: 1024,
+			offset: 1024,
+			Start:  2048, End: 3072,
 		},
 	}
 

@@ -39,8 +39,8 @@ const listCheckTimeout = 5 * time.Second
 
 // List implements subcommands.Command for the "list" command.
 type List struct {
-	quiet   bool
 	format  string
+	quiet   bool
 	sandbox bool
 }
 

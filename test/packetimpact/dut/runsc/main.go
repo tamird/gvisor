@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 // The runsc binary is used to bring up a gVisor DUT.
 package main
@@ -37,14 +36,14 @@ import (
 )
 
 type runsc struct {
-	dut.Ifaces
-	containerID      string
-	runscPath        string
-	runscLogsPath    string
-	bundleDir        string
-	rootDir          string
 	cleanupRootDir   func()
 	cleanupBundleDir func()
+	dut.Ifaces
+	containerID   string
+	runscPath     string
+	runscLogsPath string
+	bundleDir     string
+	rootDir       string
 }
 
 var _ dut.DUT = (*runsc)(nil)

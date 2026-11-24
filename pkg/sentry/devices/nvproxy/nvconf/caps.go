@@ -117,7 +117,7 @@ func (c DriverCaps) individualNVIDIAFlag() (string, bool) {
 // individualCapabilityFromString returns the individual capability for the
 // given string.
 func individualCapabilityFromString(capName string) (DriverCaps, bool) {
-	for i := 0; i < numValidCaps; i++ {
+	for i := range numValidCaps {
 		cap := DriverCaps(1 << i)
 		if cap.String() == capName {
 			return cap, true
@@ -135,7 +135,7 @@ func individualCapabilityFromString(capName string) (DriverCaps, bool) {
 func DriverCapsFromString(commaSeparatedCaps string) (DriverCaps, bool, error) {
 	cs := DriverCaps(0)
 	hasAll := false
-	for _, capName := range strings.Split(commaSeparatedCaps, ",") {
+	for capName := range strings.SplitSeq(commaSeparatedCaps, ",") {
 		capName = strings.TrimSpace(capName)
 		if capName == "" {
 			continue
@@ -160,7 +160,7 @@ func (c DriverCaps) String() string {
 	}
 	firstCap := true
 	var sb strings.Builder
-	for i := 0; i < numValidCaps; i++ {
+	for i := range numValidCaps {
 		cap := DriverCaps(1 << i)
 		if c&cap != 0 {
 			if !firstCap {
@@ -182,7 +182,7 @@ func (c DriverCaps) NVIDIAFlags() []string {
 		return nil
 	}
 	caps := make([]string, 0, numValidCaps)
-	for i := 0; i < numValidCaps; i++ {
+	for i := range numValidCaps {
 		cap := DriverCaps(1 << i)
 		if c&cap != 0 {
 			if flag, ok := cap.individualNVIDIAFlag(); ok {

@@ -61,16 +61,15 @@ func TestNDPNeighborSolicit(t *testing.T) {
 
 func TestNDPRouteInformationOption(t *testing.T) {
 	tests := []struct {
-		name string
-
-		length         uint8
-		prefixLength   uint8
-		prf            NDPRoutePreference
-		lifetimeS      uint32
+		expectedErr    error
+		name           string
 		prefixBytes    []byte
 		expectedPrefix tcpip.Subnet
+		lifetimeS      uint32
 
-		expectedErr error
+		length       uint8
+		prefixLength uint8
+		prf          NDPRoutePreference
 	}{
 		{
 			name:           "Length=1 with Prefix Length = 0",
@@ -430,23 +429,23 @@ func TestNDPRouterAdvert(t *testing.T) {
 func TestNDPSourceLinkLayerAddressOptionEthernetAddress(t *testing.T) {
 	tests := []struct {
 		name     string
-		buf      []byte
 		expected tcpip.LinkAddress
+		buf      []byte
 	}{
 		{
-			"ValidMAC",
-			[]byte{1, 2, 3, 4, 5, 6},
-			tcpip.LinkAddress("\x01\x02\x03\x04\x05\x06"),
+			name:     "ValidMAC",
+			buf:      []byte{1, 2, 3, 4, 5, 6},
+			expected: tcpip.LinkAddress("\x01\x02\x03\x04\x05\x06"),
 		},
 		{
-			"SLLBodyTooShort",
-			[]byte{1, 2, 3, 4, 5},
-			tcpip.LinkAddress([]byte(nil)),
+			name:     "SLLBodyTooShort",
+			buf:      []byte{1, 2, 3, 4, 5},
+			expected: tcpip.LinkAddress([]byte(nil)),
 		},
 		{
-			"SLLBodyLargerThanNeeded",
-			[]byte{1, 2, 3, 4, 5, 6, 7, 8},
-			tcpip.LinkAddress("\x01\x02\x03\x04\x05\x06"),
+			name:     "SLLBodyLargerThanNeeded",
+			buf:      []byte{1, 2, 3, 4, 5, 6, 7, 8},
+			expected: tcpip.LinkAddress("\x01\x02\x03\x04\x05\x06"),
 		},
 	}
 
@@ -465,23 +464,23 @@ func TestNDPSourceLinkLayerAddressOptionEthernetAddress(t *testing.T) {
 func TestNDPTargetLinkLayerAddressOptionEthernetAddress(t *testing.T) {
 	tests := []struct {
 		name     string
-		buf      []byte
 		expected tcpip.LinkAddress
+		buf      []byte
 	}{
 		{
-			"ValidMAC",
-			[]byte{1, 2, 3, 4, 5, 6},
-			tcpip.LinkAddress("\x01\x02\x03\x04\x05\x06"),
+			name:     "ValidMAC",
+			buf:      []byte{1, 2, 3, 4, 5, 6},
+			expected: tcpip.LinkAddress("\x01\x02\x03\x04\x05\x06"),
 		},
 		{
-			"TLLBodyTooShort",
-			[]byte{1, 2, 3, 4, 5},
-			tcpip.LinkAddress([]byte(nil)),
+			name:     "TLLBodyTooShort",
+			buf:      []byte{1, 2, 3, 4, 5},
+			expected: tcpip.LinkAddress([]byte(nil)),
 		},
 		{
-			"TLLBodyLargerThanNeeded",
-			[]byte{1, 2, 3, 4, 5, 6, 7, 8},
-			tcpip.LinkAddress("\x01\x02\x03\x04\x05\x06"),
+			name:     "TLLBodyLargerThanNeeded",
+			buf:      []byte{1, 2, 3, 4, 5, 6, 7, 8},
+			expected: tcpip.LinkAddress("\x01\x02\x03\x04\x05\x06"),
 		},
 	}
 
@@ -640,11 +639,11 @@ func TestOpts(t *testing.T) {
 	prefixInformationBytes[3] |= (1 << slaacFlagBit) - 1
 	binary.BigEndian.PutUint32(prefixInformationBytes[12:], validLifetimeSeconds+1)
 	tests := []struct {
+		opt         NDPOption
+		check       func(*testing.T, NDPOption)
 		name        string
 		buf         []byte
-		opt         NDPOption
 		expectedBuf []byte
-		check       func(*testing.T, NDPOption)
 	}{
 		{
 			name:        "Nonce",
@@ -850,46 +849,46 @@ func TestNDPRecursiveDNSServerOption(t *testing.T) {
 	tests := []struct {
 		name     string
 		buf      []byte
-		lifetime time.Duration
 		addrs    []tcpip.Address
+		lifetime time.Duration
 	}{
 		{
-			"Valid1Addr",
-			[]byte{
+			name: "Valid1Addr",
+			buf: []byte{
 				25, 3, 0, 0,
 				0, 0, 0, 0,
 				0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
 			},
-			0,
-			[]tcpip.Address{
+			lifetime: 0,
+			addrs: []tcpip.Address{
 				tcpip.AddrFrom16Slice([]byte("\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f")),
 			},
 		},
 		{
-			"Valid2Addr",
-			[]byte{
+			name: "Valid2Addr",
+			buf: []byte{
 				25, 5, 0, 0,
 				0, 0, 0, 0,
 				0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
 				17, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16,
 			},
-			0,
-			[]tcpip.Address{
+			lifetime: 0,
+			addrs: []tcpip.Address{
 				tcpip.AddrFrom16Slice([]byte("\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f")),
 				tcpip.AddrFrom16Slice([]byte("\x11\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x10")),
 			},
 		},
 		{
-			"Valid3Addr",
-			[]byte{
+			name: "Valid3Addr",
+			buf: []byte{
 				25, 7, 0, 0,
 				0, 0, 0, 0,
 				0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
 				17, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16,
 				17, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17,
 			},
-			0,
-			[]tcpip.Address{
+			lifetime: 0,
+			addrs: []tcpip.Address{
 				tcpip.AddrFrom16Slice([]byte("\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f")),
 				tcpip.AddrFrom16Slice([]byte("\x11\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x10")),
 				tcpip.AddrFrom16Slice([]byte("\x11\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x11")),
@@ -954,11 +953,11 @@ func TestNDPRecursiveDNSServerOption(t *testing.T) {
 // TestNDPDNSSearchListOption tests the getters of NDPDNSSearchList.
 func TestNDPDNSSearchListOption(t *testing.T) {
 	tests := []struct {
+		err         error
 		name        string
 		buf         []byte
-		lifetime    time.Duration
 		domainNames []string
-		err         error
+		lifetime    time.Duration
 	}{
 		{
 			name: "Valid1Label",
@@ -1346,9 +1345,9 @@ func TestNDPSearchListOptionDomainNameLabelInvalidSymbols(t *testing.T) {
 // the iterator was returned for is malformed.
 func TestNDPOptionsIterCheck(t *testing.T) {
 	tests := []struct {
+		expectedErr error
 		name        string
 		buf         []byte
-		expectedErr error
 	}{
 		{
 			name:        "ZeroLengthField",

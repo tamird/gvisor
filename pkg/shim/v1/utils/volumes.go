@@ -19,6 +19,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -363,7 +364,7 @@ func hostTmpfsSize(path string) (uint64, bool) {
 // hasSizeOption returns whether the comma-separated mount options in opts
 // include a "size" option.
 func hasSizeOption(opts string) bool {
-	for _, o := range strings.Split(opts, ",") {
+	for o := range strings.SplitSeq(opts, ",") {
 		if strings.HasPrefix(o, "size=") {
 			return true
 		}
@@ -455,7 +456,7 @@ func configureShm(s *specs.Spec) (bool, error) {
 
 			// Remove the duplicate entry now that we found the shared /dev/shm mount.
 			if duplicate >= 0 {
-				s.Mounts = append(s.Mounts[:duplicate], s.Mounts[duplicate+1:]...)
+				s.Mounts = slices.Delete(s.Mounts, duplicate, duplicate+1)
 				updated = true
 			}
 			break

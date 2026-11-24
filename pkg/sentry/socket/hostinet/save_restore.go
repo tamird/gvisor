@@ -51,10 +51,9 @@ type listenerState struct {
 // The restore helpers acquire this mutex themselves. checklocks cannot export
 // that exclusion through Stack.Restore's private package-global guard.
 var restoredListeners struct {
-	mu sync.Mutex
-
 	// +checklocks:mu
 	sockets []*Socket
+	mu      sync.Mutex
 }
 
 // beforeSave is invoked by stateify.

@@ -40,17 +40,16 @@ import (
 // accelFD is not savable; we do not implement save/restore of accelerator
 // state.
 type accelFD struct {
-	vfsfd vfs.FileDescription
 	vfs.FileDescriptionDefaultImpl
 	vfs.DentryMetadataFileDescriptionImpl
 	vfs.NoLockFD
 	memmap.MappableNoTrackMappings
 	memmap.MappableNoHugepages
-
-	hostFD     int32
+	vfsfd      vfs.FileDescription
 	device     *accelDevice
-	queue      waiter.Queue
 	memmapFile fsutil.MmapNoInternalFile
+	queue      waiter.Queue
+	hostFD     int32
 
 	// writable is true if this FD was opened with write access and is
 	// therefore counted in device.openWriteFDs. It is immutable after

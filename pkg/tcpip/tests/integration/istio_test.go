@@ -15,6 +15,7 @@
 package istio_test
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -23,7 +24,6 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/rand"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -224,16 +224,12 @@ func newTestContext(t *testing.T) *testContext {
 }
 
 func (ctx *testContext) startServers(t *testing.T) {
-	ctx.wg.Add(1)
-	go func() {
-		defer ctx.wg.Done()
+	ctx.wg.Go(func() {
 		ctx.startHTTPServer()
-	}()
-	ctx.wg.Add(1)
-	go func() {
-		defer ctx.wg.Done()
+	})
+	ctx.wg.Go(func() {
 		ctx.startTCPProxyServer(t)
-	}()
+	})
 }
 
 func (ctx *testContext) startTCPProxyServer(t *testing.T) {
@@ -315,7 +311,7 @@ func TestOutboundNATRedirect(t *testing.T) {
 	tbl.Rules[ruleIdx+1].Target = &stack.AcceptTarget{}
 	ipt.ReplaceTable(stack.NATID, tbl, false /* ipv6 */)
 
-	dialFunc := func(protocol, address string) (net.Conn, error) {
+	dialFunc := func(dialCtx context.Context, protocol, address string) (net.Conn, error) {
 		host, port, err := net.SplitHostPort(address)
 		if err != nil {
 			return nil, fmt.Errorf("unable to parse address: %s, err: %s", address, err)
@@ -334,12 +330,12 @@ func TestOutboundNATRedirect(t *testing.T) {
 		// Dial with an explicit source address bound so that the redirect rule will
 		// be able to correctly redirect these packets.
 		localAddr := tcpip.FullAddress{Addr: localIPv4Addr1}
-		return gonet.DialTCPWithBind(context.Background(), ctx.localStack, localAddr, remoteAddress, ipv4.ProtocolNumber)
+		return gonet.DialTCPWithBind(dialCtx, ctx.localStack, localAddr, remoteAddress, ipv4.ProtocolNumber)
 	}
 
 	httpClient := &http.Client{
 		Transport: &http.Transport{
-			Dial: dialFunc,
+			DialContext: dialFunc,
 		},
 	}
 

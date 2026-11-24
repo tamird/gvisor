@@ -166,8 +166,8 @@ func decodePodKeepZero(t reflect.Type, p unsafe.Pointer, b []byte) {
 		if isZero(b) {
 			return
 		}
-		for i := 0; i < t.NumField(); i++ {
-			if f := t.Field(i); f.Name != "_" && f.Type.Size() != 0 {
+		for f := range t.Fields() {
+			if f.Name != "_" && f.Type.Size() != 0 {
 				decodePodKeepZero(f.Type, add(p, f.Offset), b[f.Offset:f.Offset+f.Type.Size()])
 			}
 		}
@@ -402,7 +402,7 @@ func (ds *graphDecodeState) decodeElems(elem *typeInfo, p unsafe.Pointer, n uint
 		return
 	}
 	esz := elem.size
-	for i := uintptr(0); i < n; i++ {
+	for i := range n {
 		ds.lastRef = -1
 		ds.decodeValue(elem, add(p, i*esz))
 		if ds.lastRef >= 0 {
@@ -517,7 +517,7 @@ func (ds *graphDecodeState) decodeMap(ti *typeInfo, m unsafe.Pointer, n int) {
 	// the addresses of keys and values. Entries get fresh storage after
 	// those run; other entries reuse the storage of the previous entry.
 	fresh := true
-	for i := 0; i < n; i++ {
+	for range n {
 		if fresh {
 			k = reflect.New(kt.typ).Elem()
 			e = reflect.New(et.typ).Elem()

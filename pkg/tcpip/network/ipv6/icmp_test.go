@@ -509,11 +509,11 @@ func TestICMPCounts(t *testing.T) {
 	})
 
 	types := []struct {
+		extraData          []byte
+		size               int
 		typ                header.ICMPv6Type
 		hopLimit           uint8
 		includeRouterAlert bool
-		size               int
-		extraData          []byte
 	}{
 		{
 			typ:      header.ICMPv6DstUnreachable,
@@ -634,7 +634,7 @@ func visitStats(v reflect.Value, f func(string, *tcpip.StatCounter)) {
 	t := v.Type()
 	for i := 0; i < v.NumField(); i++ {
 		v := v.Field(i)
-		if s, ok := v.Interface().(*tcpip.StatCounter); ok {
+		if s, ok := reflect.TypeAssert[*tcpip.StatCounter](v); ok {
 			f(t.Field(i).Name, s)
 		} else {
 			visitStats(v, f)
@@ -753,8 +753,8 @@ func (c *multiStackTestContext) cleanup() {
 
 type routeArgs struct {
 	src, dst       *channel.Endpoint
-	typ            header.ICMPv6Type
 	remoteLinkAddr tcpip.LinkAddress
+	typ            header.ICMPv6Type
 }
 
 func routeICMPv6Packet(t *testing.T, clock *faketime.ManualClock, args routeArgs, fn func(*testing.T, header.ICMPv6)) {
@@ -864,11 +864,11 @@ func TestICMPChecksumValidationSimple(t *testing.T) {
 	})
 
 	types := []struct {
-		name        string
-		typ         header.ICMPv6Type
-		size        int
-		extraData   []byte
 		statCounter func(tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter
+		name        string
+		extraData   []byte
+		size        int
+		typ         header.ICMPv6Type
 		routerOnly  bool
 	}{
 		{
@@ -1091,7 +1091,7 @@ func TestICMPChecksumValidationSimple(t *testing.T) {
 func TestICMPChecksumValidationWithPayload(t *testing.T) {
 	const simpleBodySize = 64
 	simpleBody := func(view []byte) {
-		for i := 0; i < simpleBodySize; i++ {
+		for i := range simpleBodySize {
 			view[i] = uint8(i)
 		}
 	}
@@ -1110,72 +1110,72 @@ func TestICMPChecksumValidationWithPayload(t *testing.T) {
 	}
 
 	types := []struct {
-		name        string
-		typ         header.ICMPv6Type
-		size        int
 		statCounter func(tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter
-		payloadSize int
 		payload     func([]byte)
+		name        string
+		size        int
+		payloadSize int
+		typ         header.ICMPv6Type
 	}{
 		{
-			"DstUnreachable",
-			header.ICMPv6DstUnreachable,
-			header.ICMPv6DstUnreachableMinimumSize,
-			func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
+			name: "DstUnreachable",
+			typ:  header.ICMPv6DstUnreachable,
+			size: header.ICMPv6DstUnreachableMinimumSize,
+			statCounter: func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
 				return stats.DstUnreachable
 			},
-			errorICMPBodySize,
-			errorICMPBody,
+			payloadSize: errorICMPBodySize,
+			payload:     errorICMPBody,
 		},
 		{
-			"PacketTooBig",
-			header.ICMPv6PacketTooBig,
-			header.ICMPv6PacketTooBigMinimumSize,
-			func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
+			name: "PacketTooBig",
+			typ:  header.ICMPv6PacketTooBig,
+			size: header.ICMPv6PacketTooBigMinimumSize,
+			statCounter: func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
 				return stats.PacketTooBig
 			},
-			errorICMPBodySize,
-			errorICMPBody,
+			payloadSize: errorICMPBodySize,
+			payload:     errorICMPBody,
 		},
 		{
-			"TimeExceeded",
-			header.ICMPv6TimeExceeded,
-			header.ICMPv6MinimumSize,
-			func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
+			name: "TimeExceeded",
+			typ:  header.ICMPv6TimeExceeded,
+			size: header.ICMPv6MinimumSize,
+			statCounter: func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
 				return stats.TimeExceeded
 			},
-			errorICMPBodySize,
-			errorICMPBody,
+			payloadSize: errorICMPBodySize,
+			payload:     errorICMPBody,
 		},
 		{
-			"ParamProblem",
-			header.ICMPv6ParamProblem,
-			header.ICMPv6MinimumSize,
-			func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
+			name: "ParamProblem",
+			typ:  header.ICMPv6ParamProblem,
+			size: header.ICMPv6MinimumSize,
+			statCounter: func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
 				return stats.ParamProblem
 			},
-			errorICMPBodySize,
-			errorICMPBody,
+			payloadSize: errorICMPBodySize,
+			payload:     errorICMPBody,
 		},
 		{
-			"EchoRequest",
-			header.ICMPv6EchoRequest,
-			header.ICMPv6EchoMinimumSize,
-			func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
+			name: "EchoRequest",
+			typ:  header.ICMPv6EchoRequest,
+			size: header.ICMPv6EchoMinimumSize,
+			statCounter: func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
 				return stats.EchoRequest
 			},
-			simpleBodySize,
-			simpleBody,
+			payloadSize: simpleBodySize,
+			payload:     simpleBody,
 		},
 		{
-			"EchoReply",
-			header.ICMPv6EchoReply,
-			header.ICMPv6EchoMinimumSize,
-			func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
+			name: "EchoReply",
+			typ:  header.ICMPv6EchoReply,
+			size: header.ICMPv6EchoMinimumSize,
+			statCounter: func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
 				return stats.EchoReply
 			},
-			simpleBodySize,
-			simpleBody,
+			payloadSize: simpleBodySize,
+			payload:     simpleBody,
 		},
 	}
 
@@ -1280,7 +1280,7 @@ func TestICMPChecksumValidationWithPayload(t *testing.T) {
 func TestICMPChecksumValidationWithPayloadMultipleViews(t *testing.T) {
 	const simpleBodySize = 64
 	simpleBody := func(view []byte) {
-		for i := 0; i < simpleBodySize; i++ {
+		for i := range simpleBodySize {
 			view[i] = uint8(i)
 		}
 	}
@@ -1299,72 +1299,72 @@ func TestICMPChecksumValidationWithPayloadMultipleViews(t *testing.T) {
 	}
 
 	types := []struct {
-		name        string
-		typ         header.ICMPv6Type
-		size        int
 		statCounter func(tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter
-		payloadSize int
 		payload     func([]byte)
+		name        string
+		size        int
+		payloadSize int
+		typ         header.ICMPv6Type
 	}{
 		{
-			"DstUnreachable",
-			header.ICMPv6DstUnreachable,
-			header.ICMPv6DstUnreachableMinimumSize,
-			func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
+			name: "DstUnreachable",
+			typ:  header.ICMPv6DstUnreachable,
+			size: header.ICMPv6DstUnreachableMinimumSize,
+			statCounter: func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
 				return stats.DstUnreachable
 			},
-			errorICMPBodySize,
-			errorICMPBody,
+			payloadSize: errorICMPBodySize,
+			payload:     errorICMPBody,
 		},
 		{
-			"PacketTooBig",
-			header.ICMPv6PacketTooBig,
-			header.ICMPv6PacketTooBigMinimumSize,
-			func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
+			name: "PacketTooBig",
+			typ:  header.ICMPv6PacketTooBig,
+			size: header.ICMPv6PacketTooBigMinimumSize,
+			statCounter: func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
 				return stats.PacketTooBig
 			},
-			errorICMPBodySize,
-			errorICMPBody,
+			payloadSize: errorICMPBodySize,
+			payload:     errorICMPBody,
 		},
 		{
-			"TimeExceeded",
-			header.ICMPv6TimeExceeded,
-			header.ICMPv6MinimumSize,
-			func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
+			name: "TimeExceeded",
+			typ:  header.ICMPv6TimeExceeded,
+			size: header.ICMPv6MinimumSize,
+			statCounter: func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
 				return stats.TimeExceeded
 			},
-			errorICMPBodySize,
-			errorICMPBody,
+			payloadSize: errorICMPBodySize,
+			payload:     errorICMPBody,
 		},
 		{
-			"ParamProblem",
-			header.ICMPv6ParamProblem,
-			header.ICMPv6MinimumSize,
-			func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
+			name: "ParamProblem",
+			typ:  header.ICMPv6ParamProblem,
+			size: header.ICMPv6MinimumSize,
+			statCounter: func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
 				return stats.ParamProblem
 			},
-			errorICMPBodySize,
-			errorICMPBody,
+			payloadSize: errorICMPBodySize,
+			payload:     errorICMPBody,
 		},
 		{
-			"EchoRequest",
-			header.ICMPv6EchoRequest,
-			header.ICMPv6EchoMinimumSize,
-			func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
+			name: "EchoRequest",
+			typ:  header.ICMPv6EchoRequest,
+			size: header.ICMPv6EchoMinimumSize,
+			statCounter: func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
 				return stats.EchoRequest
 			},
-			simpleBodySize,
-			simpleBody,
+			payloadSize: simpleBodySize,
+			payload:     simpleBody,
 		},
 		{
-			"EchoReply",
-			header.ICMPv6EchoReply,
-			header.ICMPv6EchoMinimumSize,
-			func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
+			name: "EchoReply",
+			typ:  header.ICMPv6EchoReply,
+			size: header.ICMPv6EchoMinimumSize,
+			statCounter: func(stats tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter {
 				return stats.EchoReply
 			},
-			simpleBodySize,
-			simpleBody,
+			payloadSize: simpleBodySize,
+			payload:     simpleBody,
 		},
 	}
 
@@ -1477,14 +1477,13 @@ func TestLinkAddressRequest(t *testing.T) {
 	mcaddr := header.EthernetAddressFromMulticastIPv6Address(snaddr)
 
 	tests := []struct {
-		name           string
-		nicAddr        tcpip.Address
-		localAddr      tcpip.Address
-		remoteLinkAddr tcpip.LinkAddress
-
 		expectedErr            tcpip.Error
-		expectedRemoteAddr     tcpip.Address
+		name                   string
+		remoteLinkAddr         tcpip.LinkAddress
 		expectedRemoteLinkAddr tcpip.LinkAddress
+		nicAddr                tcpip.Address
+		localAddr              tcpip.Address
+		expectedRemoteAddr     tcpip.Address
 	}{
 		{
 			name:                   "Unicast",
@@ -1632,9 +1631,9 @@ func TestPacketQueing(t *testing.T) {
 	)
 
 	tests := []struct {
-		name      string
 		rxPkt     func(*channel.Endpoint)
 		checkResp func(*testing.T, *channel.Endpoint)
+		name      string
 	}{
 		{
 			name: "ICMP Error",
@@ -1843,13 +1842,13 @@ func TestPacketQueing(t *testing.T) {
 
 func TestCallsToNeighborCache(t *testing.T) {
 	tests := []struct {
-		name                  string
 		createPacket          func() header.ICMPv6
-		multicast             bool
+		name                  string
 		source                tcpip.Address
 		destination           tcpip.Address
 		wantProbeCount        int
 		wantConfirmationCount int
+		multicast             bool
 	}{
 		{
 			name: "Unicast Neighbor Solicitation without source link-layer address option",

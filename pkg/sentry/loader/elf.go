@@ -68,6 +68,9 @@ func progFlagsAsPerms(f elf.ProgFlag) hostarch.AccessType {
 
 // elfInfo contains the metadata needed to load an ELF binary.
 type elfInfo struct {
+	// phdrs are the program headers.
+	phdrs []elf.ProgHeader
+
 	// os is the target OS of the ELF.
 	os abi.OS
 
@@ -76,9 +79,6 @@ type elfInfo struct {
 
 	// entry is the program entry point.
 	entry hostarch.Addr
-
-	// phdrs are the program headers.
-	phdrs []elf.ProgHeader
 
 	// phdrSize is the size of a single program header in the ELF.
 	phdrSize int
@@ -360,6 +360,17 @@ func mapSegment(ctx context.Context, m *mm.MemoryManager, fd *vfs.FileDescriptio
 
 // loadedELF describes an ELF that has been successfully loaded.
 type loadedELF struct {
+	// interpter is the path to the ELF interpreter.
+	interpreter string
+
+	// auxv contains a subset of ELF-specific auxiliary vector entries:
+	//	* AT_PHDR
+	//	* AT_PHENT
+	//	* AT_PHNUM
+	//	* AT_BASE
+	//	* AT_ENTRY
+	auxv arch.Auxv
+
 	// os is the target OS of the ELF.
 	os abi.OS
 
@@ -375,9 +386,6 @@ type loadedELF struct {
 	// end is the end of the ELF.
 	end hostarch.Addr
 
-	// interpter is the path to the ELF interpreter.
-	interpreter string
-
 	// phdrAddr is the address of the ELF program headers.
 	phdrAddr hostarch.Addr
 
@@ -386,14 +394,6 @@ type loadedELF struct {
 
 	// phdrNum is the number of program headers.
 	phdrNum int
-
-	// auxv contains a subset of ELF-specific auxiliary vector entries:
-	//	* AT_PHDR
-	//	* AT_PHENT
-	//	* AT_PHNUM
-	//	* AT_BASE
-	//	* AT_ENTRY
-	auxv arch.Auxv
 }
 
 // loadParsedELF loads f into mm.
@@ -684,20 +684,20 @@ func loadELF(ctx context.Context, args LoadArgs, wds *wouldDumpState) (loadedELF
 
 	// ELF-specific auxv entries.
 	bin.auxv = arch.Auxv{
-		arch.AuxEntry{linux.AT_PHDR, bin.phdrAddr},
-		arch.AuxEntry{linux.AT_PHENT, hostarch.Addr(bin.phdrSize)},
-		arch.AuxEntry{linux.AT_PHNUM, hostarch.Addr(bin.phdrNum)},
-		arch.AuxEntry{linux.AT_ENTRY, bin.entry},
+		arch.AuxEntry{Key: linux.AT_PHDR, Value: bin.phdrAddr},
+		arch.AuxEntry{Key: linux.AT_PHENT, Value: hostarch.Addr(bin.phdrSize)},
+		arch.AuxEntry{Key: linux.AT_PHNUM, Value: hostarch.Addr(bin.phdrNum)},
+		arch.AuxEntry{Key: linux.AT_ENTRY, Value: bin.entry},
 	}
 	if bin.interpreter != "" {
-		bin.auxv = append(bin.auxv, arch.AuxEntry{linux.AT_BASE, interp.start})
+		bin.auxv = append(bin.auxv, arch.AuxEntry{Key: linux.AT_BASE, Value: interp.start})
 
 		// Start in the interpreter.
 		// N.B. AT_ENTRY above contains the *original* entry point.
 		bin.entry = interp.entry
 	} else {
 		// Always add AT_BASE even if there is no interpreter.
-		bin.auxv = append(bin.auxv, arch.AuxEntry{linux.AT_BASE, 0})
+		bin.auxv = append(bin.auxv, arch.AuxEntry{Key: linux.AT_BASE, Value: 0})
 	}
 
 	return bin, ac, nil

@@ -31,9 +31,6 @@ import (
 // AsyncFileClient provides async I/O by communicating with an AsyncFileServer,
 // which may be in another process.
 type AsyncFileClient struct {
-	asyncFileClientRefs
-
-	filesMu sync.Mutex
 
 	// files contains the endpoints to shut down if the server disconnects.
 	//
@@ -41,8 +38,11 @@ type AsyncFileClient struct {
 	files map[*asyncReadWriter]struct{}
 
 	uc           *urpc.Client
-	watchdog     sync.WaitGroup
 	watchdogStop eventfd.Eventfd
+	watchdog     sync.WaitGroup
+	asyncFileClientRefs
+
+	filesMu sync.Mutex
 }
 
 // NewAsyncFileClient returns an AsyncFileClient that communicates with an
@@ -169,11 +169,9 @@ func (c *AsyncFileClient) open(path string, mode int) (*asyncReadWriter, error) 
 		rw.closeWithoutEndpoint()
 		return nil, fmt.Errorf("failed to initialize client flipcall endpoint: %w", err)
 	}
-	rw.connectorWG.Add(1)
-	go func() {
-		defer rw.connectorWG.Done()
+	rw.connectorWG.Go(func() {
 		rw.ensureConnected()
-	}()
+	})
 	c.files[rw] = struct{}{}
 	c.IncRef()
 	return rw, nil
@@ -185,25 +183,23 @@ func (c *AsyncFileClient) open(path string, mode int) (*asyncReadWriter, error) 
 // Any given asyncReadWriter functions either as an AsyncReader or an
 // AsyncWriter, never both at the same time.
 type asyncReadWriter struct {
-	// Immutable fields:
+	connectErr error
+
+	// client, maxIOBytes, maxRanges, maxParallel, handle, and isReader are immutable.
 	client      *AsyncFileClient
+	ioep        ioEndpoint
+	connectorWG sync.WaitGroup
+	reserve     uint64
+	connectOnce sync.Once
 	maxIOBytes  uint32
 	maxRanges   uint32
 	maxParallel uint32
 	handle      uint32
-	isReader    bool
 
 	// numSubmissions is the number of submissions to be sent to the server by
 	// the next call to Wait().
 	numSubmissions uint32
-
-	ioep ioEndpoint
-
-	connectOnce sync.Once
-	connectErr  error
-	connectorWG sync.WaitGroup
-
-	reserve uint64
+	isReader       bool
 }
 
 // Close implements stateio.AsyncReader.Close and stateio.AsyncWriter.Close.
@@ -287,10 +283,8 @@ func (rw *asyncReadWriter) registerClientFD(fd int32, size uint64, settings []st
 		return 0, fmt.Errorf("failed to dup registered FD: %w", err)
 	}
 	req := RegisterClientFileRequest{
-		Handle: rw.handle,
-		FilePayload: urpc.FilePayload{
-			Files: []*os.File{os.NewFile(uintptr(dupFD), "stateipc_client_fd")},
-		},
+		Handle:   rw.handle,
+		Files:    []*os.File{os.NewFile(uintptr(dupFD), "stateipc_client_fd")},
 		Size:     size,
 		Writable: rw.isReader,
 		Settings: settings,
@@ -388,7 +382,7 @@ func (rw *asyncReadWriter) Wait(cs []stateio.Completion, minCompletions int) ([]
 	}
 	rw.ioep.resetForCompletions()
 	respErrno := rw.ioep.ioResponseHeader().Errno
-	for i := uint32(0); i < numCompletions; i++ {
+	for range uint32(numCompletions) {
 		cmp := rw.ioep.scanCompletion()
 		cs = append(cs, stateio.Completion{
 			ID:  int(cmp.ID),

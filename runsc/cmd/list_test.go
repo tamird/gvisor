@@ -135,7 +135,7 @@ func TestList(t *testing.T) {
 
 			// Handle IDs returned out of order.
 			got := make(map[string]struct{})
-			for _, id := range strings.Split(out.String(), "\n") {
+			for id := range strings.SplitSeq(out.String(), "\n") {
 				got[id] = struct{}{}
 			}
 			for _, want := range tc.want {

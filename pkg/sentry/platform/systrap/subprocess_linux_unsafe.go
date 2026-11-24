@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build amd64 || linux
-// +build amd64 linux
 
 package systrap
 

@@ -319,7 +319,7 @@ func readHWCap(auxvFilepath string) (hwCap, error) {
 	}
 
 	l := len(auxv) / 16
-	for i := 0; i < l; i++ {
+	for i := range l {
 		tag := binary.LittleEndian.Uint64(auxv[i*16:])
 		val := binary.LittleEndian.Uint64(auxv[i*16+8:])
 		switch tag {

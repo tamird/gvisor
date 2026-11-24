@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 package fdbased
 
@@ -47,8 +46,8 @@ const (
 )
 
 type packetInfo struct {
-	Proto    tcpip.NetworkProtocolNumber
 	Contents *stack.PacketBuffer
+	Proto    tcpip.NetworkProtocolNumber
 }
 
 type packetContents struct {
@@ -79,12 +78,12 @@ func checkPacketInfoEqual(t *testing.T, got, want packetInfo) {
 }
 
 type testContext struct {
-	t        *testing.T
-	readFDs  []int
-	writeFDs []int
 	ep       stack.LinkEndpoint
+	t        *testing.T
 	ch       chan packetInfo
 	done     chan struct{}
+	readFDs  []int
+	writeFDs []int
 }
 
 func newContext(t *testing.T, opt *Options) *testContext {
@@ -134,7 +133,7 @@ func (c *testContext) cleanup() {
 }
 
 func (c *testContext) DeliverNetworkPacket(protocol tcpip.NetworkProtocolNumber, pkt *stack.PacketBuffer) {
-	c.ch <- packetInfo{protocol, pkt.Clone()}
+	c.ch <- packetInfo{Proto: protocol, Contents: pkt.Clone()}
 }
 
 func (c *testContext) DeliverLinkPacket(tcpip.NetworkProtocolNumber, *stack.PacketBuffer) {
@@ -238,7 +237,7 @@ func testWritePacket(t *testing.T, plen int, eth bool, gsoMaxSize uint32, hash u
 	}
 
 	// Write.
-	want := append(append([]byte{}, b...), payload...)
+	want := slices.Concat(b, payload)
 	const l3HdrLen = header.IPv6MinimumSize
 	if gsoMaxSize != 0 {
 		pkt.GSOOptions = stack.GSO{
@@ -481,9 +480,9 @@ func TestBufConfigFirst(t *testing.T) {
 var capLengthTestCases = []struct {
 	comment     string
 	config      []int
+	wantLengths []int
 	n           int
 	wantUsed    int
-	wantLengths []int
 }{
 	{
 		comment:     "Single slice",
@@ -529,7 +528,7 @@ func TestIovecBuffer(t *testing.T) {
 
 			// Make a copy as iovecs points to internal slice. We will need this state
 			// later.
-			oldIovecs := append([]unix.Iovec(nil), iovecs...)
+			oldIovecs := slices.Concat[[]unix.Iovec](iovecs)
 
 			// Test the buffer that get pulled.
 			buf := b.pullBuffer(c.n)
@@ -795,7 +794,7 @@ func countEventFDs(t *testing.T) int {
 func TestCloseReleasesStopFDs(t *testing.T) {
 	for _, mode := range []PacketDispatchMode{Readv, RecvMMsg} {
 		before := countEventFDs(t)
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET, 0)
 			if err != nil {
 				t.Fatalf("Socketpair = %v", err)

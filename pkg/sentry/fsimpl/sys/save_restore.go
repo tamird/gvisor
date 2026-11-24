@@ -15,6 +15,7 @@
 package sys
 
 import (
+	"maps"
 	"path"
 
 	"gvisor.dev/gvisor/pkg/context"
@@ -89,9 +90,7 @@ func (fs *filesystem) CompleteRestore(ctx context.Context, opts vfs.CompleteRest
 	if err != nil {
 		return err
 	}
-	for dir, sub := range sysDevicesSub {
-		devicesSub[dir] = sub
-	}
+	maps.Copy(devicesSub, sysDevicesSub)
 
 	deviceDirs, err := fs.newDeviceClassDir(ctx, creds, []string{accelDevice, vfioDevice}, sysDevicesPath, pciInfos)
 	if err != nil {

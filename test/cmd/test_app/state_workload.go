@@ -99,7 +99,7 @@ func shmChildMagic(hop int) uint64 {
 func deterministicPattern(tag string, hop int, n int) []byte {
 	out := make([]byte, n)
 	header := fmt.Sprintf("[%s:hop=%d]", tag, hop)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out[i] = header[i%len(header)] ^ byte((i*31+hop*17)&0xff)
 	}
 	return out
@@ -547,7 +547,7 @@ func (w *stateWorkload) Execute(ctx context.Context, f *flag.FlagSet, args ...an
 			return w.failf("hop %d Remove unlinked: %v", hop, err)
 		}
 		oob := unix.UnixRights(int(unlinkedFile.Fd()))
-		msgTag := []byte(fmt.Sprintf("SCM_HOP_%d", hop))
+		msgTag := fmt.Appendf(nil, "SCM_HOP_%d", hop)
 		if err := unix.Sendmsg(spFDs[0], msgTag, oob, nil, 0); err != nil {
 			unlinkedFile.Close()
 			return w.failf("hop %d Sendmsg SCM_RIGHTS: %v", hop, err)
@@ -557,7 +557,7 @@ func (w *stateWorkload) Execute(ctx context.Context, f *flag.FlagSet, args ...an
 		}
 
 		// Queue unread pipe bytes and eventfd counter for epoll across S/R.
-		wantPipe := []byte(fmt.Sprintf("epoll-pipe-hop-%d", hop))
+		wantPipe := fmt.Appendf(nil, "epoll-pipe-hop-%d", hop)
 		if _, err := unix.Write(epPipe[1], wantPipe); err != nil {
 			return w.failf("hop %d Write epPipe: %v", hop, err)
 		}
@@ -673,7 +673,7 @@ func (w *stateWorkload) Execute(ctx context.Context, f *flag.FlagSet, args ...an
 		if !bytes.Equal(gotTCP, wantTCP) {
 			return w.failf("hop %d in-flight TCP payload mismatch after restore", hop)
 		}
-		replyTCP := []byte(fmt.Sprintf("tcp-ack-hop-%d", hop))
+		replyTCP := fmt.Appendf(nil, "tcp-ack-hop-%d", hop)
 		if _, err := tcpClient.Write(replyTCP); err != nil {
 			return w.failf("hop %d tcpClient.Write ack: %v", hop, err)
 		}
@@ -799,7 +799,7 @@ func (w *stateWorkload) Execute(ctx context.Context, f *flag.FlagSet, args ...an
 			if err != nil {
 				return w.failf("hop %d EpollWait: %v", hop, err)
 			}
-			for i := 0; i < n; i++ {
+			for i := range n {
 				switch int(events[i].Fd) {
 				case epPipe[0]:
 					buf := make([]byte, 64)
@@ -843,7 +843,7 @@ func (w *stateWorkload) Execute(ctx context.Context, f *flag.FlagSet, args ...an
 			if err != nil {
 				return w.failf("hop %d EpollWait fresh timerfd tick: %v", hop, err)
 			}
-			for i := 0; i < n; i++ {
+			for i := range n {
 				if int(events[i].Fd) == tfd {
 					var expBuf [8]byte
 					if rn, err := unix.Read(tfd, expBuf[:]); err == nil && rn == 8 && binary.NativeEndian.Uint64(expBuf[:]) > 0 {

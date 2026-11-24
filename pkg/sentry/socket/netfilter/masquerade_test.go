@@ -67,9 +67,9 @@ func masqueradeFilter(netProto tcpip.NetworkProtocolNumber) stack.IPHeaderFilter
 func TestMasqueradeTargetMakerUnmarshal(t *testing.T) {
 	for _, test := range []struct {
 		name      string
-		netProto  tcpip.NetworkProtocolNumber
 		buf       []byte
 		wantPorts stack.PortOrIdentRange
+		netProto  tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:     "ipv4",
@@ -145,8 +145,8 @@ func TestMasqueradeTargetMakerUnmarshal(t *testing.T) {
 func TestMasqueradeTargetMakerUnmarshalInvalid(t *testing.T) {
 	for _, test := range []struct {
 		name     string
-		netProto tcpip.NetworkProtocolNumber
 		buf      []byte
+		netProto tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:     "ipv4 short",
@@ -236,10 +236,10 @@ func TestMasqueradeTargetMakerUnmarshalInvalid(t *testing.T) {
 
 func TestMasqueradeTargetMakerMarshalWithoutRaw(t *testing.T) {
 	for _, test := range []struct {
-		name     string
-		netProto tcpip.NetworkProtocolNumber
-		ports    stack.PortOrIdentRange
 		want     marshal.Marshallable
+		name     string
+		ports    stack.PortOrIdentRange
+		netProto tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:     "ipv4",
@@ -272,10 +272,9 @@ func TestMasqueradeTargetMakerMarshalWithoutRaw(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			maker := masqueradeTargetMaker{NetworkProtocol: test.netProto}
-			target := &masqueradeTarget{MasqueradeTarget: stack.MasqueradeTarget{
+			target := &masqueradeTarget{
 				NetworkProtocol: test.netProto,
-				Ports:           test.ports,
-			}}
+				Ports:           test.ports}
 			if got, want := maker.marshal(target), marshal.Marshal(test.want); !bytes.Equal(got, want) {
 				t.Errorf("marshal() = %v, want %v", got, want)
 			}

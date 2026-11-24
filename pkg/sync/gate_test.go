@@ -56,7 +56,7 @@ func TestGateConcurrent(t *testing.T) {
 	totalTime := 5 * time.Second
 	timePerTest := 20 * time.Millisecond
 	numTests := int(totalTime / timePerTest)
-	for i := 0; i < numTests; i++ {
+	for range numTests {
 		testGateConcurrentOnce(t, timePerTest)
 	}
 }
@@ -76,10 +76,8 @@ func testGateConcurrentOnce(t *testing.T, d time.Duration) {
 
 	// Start a large number of goroutines that repeatedly attempt to enter the
 	// gate and get the expected result.
-	for i := 0; i < numGoroutines; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range numGoroutines {
+		wg.Go(func() {
 			for ctx.Err() == nil {
 				closedBeforeEnter := atomic.LoadInt32(&closeState) == 2
 				if g.Enter() {
@@ -102,7 +100,7 @@ func testGateConcurrentOnce(t *testing.T, d time.Duration) {
 				// Go does not preempt busy loops until Go 1.14.
 				runtime.Gosched()
 			}
-		}()
+		})
 	}
 
 	// Allow goroutines to enter the gate successfully for half of the test's
@@ -138,21 +136,21 @@ func TestGateRaceReproduction(t *testing.T) {
 
 func BenchmarkGateEnterLeave(b *testing.B) {
 	var g Gate
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		g.Enter()
 		g.Leave()
 	}
 }
 
 func BenchmarkGateClose(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		var g Gate
 		g.Close()
 	}
 }
 
 func BenchmarkGateEnterLeaveAsyncClose(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		var g Gate
 		g.Enter()
 		go func() {

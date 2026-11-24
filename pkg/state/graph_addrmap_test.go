@@ -112,8 +112,8 @@ func TestAddrMap(t *testing.T) {
 			m.init(initial)
 		}
 		want := make(map[uintptr]int32)
-		for round := 0; round < 3; round++ {
-			for i := 0; i < 5000; i++ {
+		for range 3 {
+			for i := range 5000 {
 				// Use clustered keys, like addresses, and zero.
 				k := uintptr(r.Intn(20000)) * 8
 				if i%3 == 0 {
@@ -131,7 +131,7 @@ func TestAddrMap(t *testing.T) {
 					t.Fatalf("get(%#x) = %d, %t, want %d, true", k, got, ok, v)
 				}
 			}
-			for i := 0; i < 1000; i++ {
+			for range 1000 {
 				k := uintptr(r.Intn(40000))*8 + 4
 				got, gotOK := m.get(k)
 				wantV, wantOK := want[k]

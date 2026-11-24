@@ -51,31 +51,28 @@ import (
 //     if it is no longer needed at all.
 //  2. Add the flag to flags_graveyard.go and remove it from flags.go.
 type Config struct {
-	// RootDir is the runtime root directory.
-	RootDir string `flag:"root"`
+	// explicitlySet contains whether a flag was explicitly set on the command-line from which this
+	// Config was constructed. Nil when the Config was not initialized from a FlagSet.
+	explicitlySet map[string]struct{}
 
-	// Traceback changes the Go runtime's traceback level.
-	Traceback string `flag:"traceback"`
+	// cliStateEngine records the --state-engine policy explicitly passed on the
+	// command line when this Config was constructed via NewFromFlags, before any
+	// OCI annotation or bundle overrides run.
+	cliStateEngine *StateEnginePolicy
 
-	// Debug indicates that debug logging should be enabled.
-	Debug bool `flag:"debug"`
-
-	// LogFilename is the filename to log to, if not empty.
-	LogFilename string `flag:"log"`
-
-	// LogFormat is the log format.
-	LogFormat string `flag:"log-format"`
+	// StraceSyscalls is the set of syscalls to trace (comma-separated values).
+	// If StraceEnable is true and this string is empty, then all syscalls will
+	// be traced.
+	StraceSyscalls string `flag:"strace-syscalls"`
 
 	// DebugLog is the path to log debug information to, if not empty.
 	// If specified together with `DebugToUserLog`, debug logs are emitted
 	// to both.
 	DebugLog string `flag:"debug-log"`
 
-	// DebugToUserLog indicates that Sentry debug logs should be emitted
-	// to user-visible logs.
-	// If specified together with `DebugLog`, debug logs are emitted
-	// to both.
-	DebugToUserLog bool `flag:"debug-to-user-log"`
+	// TraceFile collects a Go runtime execution trace to the passed file
+	// for the duration of the container execution.
+	TraceFile string `flag:"trace"`
 
 	// DebugCommand is a comma-separated list of commands to be debugged if
 	// --debug-log is also set. Empty means debug all. "!" negates the expression.
@@ -91,121 +88,109 @@ type Config struct {
 	// DebugLogFormat is the log format for debug.
 	DebugLogFormat string `flag:"debug-log-format"`
 
-	// FileAccess indicates how the root filesystem is accessed.
-	FileAccess FileAccessType `flag:"file-access"`
+	// ProfileMutex collects a mutex profile to the passed file for the
+	// duration of the container execution. Requires ProfileEnabled.
+	ProfileMutex string `flag:"profile-mutex"`
 
-	// FileAccessMounts indicates how non-root volumes are accessed.
-	FileAccessMounts FileAccessType `flag:"file-access-mounts"`
+	// ProfileHeap collects a heap profile to the passed file for the
+	// duration of the container execution. Requires ProfileEnabled.
+	ProfileHeap string `flag:"profile-heap"`
 
-	// Overlay is whether to wrap all mounts in an overlay. The upper tmpfs layer
-	// will be backed by application memory.
-	Overlay bool `flag:"overlay"`
+	// ProfileCPU collects a CPU profile to the passed file for the
+	// duration of the container execution. Requires ProfileEnabled.
+	ProfileCPU string `flag:"profile-cpu"`
 
-	// Overlay2 holds configuration about wrapping mounts in overlayfs.
-	// DO NOT call it directly, use GetOverlay2() instead.
-	Overlay2 Overlay2 `flag:"overlay2"`
+	// LogFormat is the log format.
+	LogFormat string `flag:"log-format"`
 
-	// TarTimestampResolution is the resolution of modification times in tar
-	// archives of overlay upper layers and filesystem checkpoints.
-	TarTimestampResolution TarTimestampResolution `flag:"tar-timestamp-resolution"`
+	// ProfileBlock collects a block profile to the passed file for the
+	// duration of the container execution. Requires ProfileEnabled.
+	ProfileBlock string `flag:"profile-block"`
 
-	// FSGoferHostUDS is deprecated: use host-uds=all.
-	FSGoferHostUDS bool `flag:"fsgofer-host-uds"`
+	// OverrideProcs is a comma-separated list of proc files to override with stubs.
+	OverrideProcs string `flag:"override-procs"`
 
-	// HostUDS controls permission to access host Unix-domain sockets.
-	// DO NOT call it directly, use GetHostUDS() instead.
-	HostUDS HostUDS `flag:"host-uds"`
+	// WatchdogAction sets what action the watchdog takes when triggered.
+	WatchdogAction string `flag:"watchdog-action"`
 
-	// HostFifo controls permission to access host FIFO (or named pipes).
-	HostFifo HostFifo `flag:"host-fifo"`
+	// PodInitConfig is the path to configuration file with additional steps to
+	// take during pod creation.
+	PodInitConfig string `flag:"pod-init-config"`
 
-	// CharacterDevicePolicy controls how character device files on gofer
-	// mounts (the rootfs and bind mounts) are handled.
-	CharacterDevicePolicy CharacterDevicePolicy `flag:"character-device-policy"`
+	// LogFilename is the filename to log to, if not empty.
+	LogFilename string `flag:"log"`
 
-	// InodeNumbers controls how inode numbers of files on gofer mounts are
-	// assigned.
-	InodeNumbers InodeNumbers `flag:"inode-numbers"`
-
-	// HostSettings controls how host settings are handled.
-	HostSettings HostSettingsPolicy `flag:"host-settings"`
-
-	// Network indicates what type of network to use.
-	Network NetworkType `flag:"network"`
-
-	// GoferNetworkNamespace controls the network namespace used by gofer
-	// processes. The default is the shared empty "null" network namespace.
-	GoferNetworkNamespace GoferNetworkNamespace `flag:"gofer-network-namespace"`
-
-	// EnableRaw indicates whether raw sockets should be enabled. Raw
-	// sockets are disabled by stripping CAP_NET_RAW from the list of
-	// capabilities.
-	EnableRaw bool `flag:"net-raw"`
-
-	// AllowPacketEndpointWrite enables write operations on packet endpoints.
-	AllowPacketEndpointWrite bool `flag:"allow-packet-socket-write"`
-
-	// AllowLiveTCPMigration allows TCP connection state to be migrated.
-	AllowLiveTCPMigration bool `flag:"allow-live-tcp-migration"`
-
-	// SignalUnkillablePolicy controls protection of PID namespace init processes
-	// from signals under Linux SIGNAL_UNKILLABLE semantics (see SignalUnkillablePolicy).
-	SignalUnkillablePolicy SignalUnkillablePolicy `flag:"signal-unkillable-policy"`
-
-	// HostGSO indicates that host segmentation offload is enabled.
-	HostGSO bool `flag:"gso"`
-
-	// GVisorGSO indicates that gVisor segmentation offload is enabled. The flag
-	// retains its old name of "software" GSO for API consistency.
-	GVisorGSO bool `flag:"software-gso"`
-
-	// GVisorGRO enables gVisor's generic receive offload.
-	GVisorGRO bool `flag:"gvisor-gro"`
-
-	// TCPDelayedACK controls whether netstack TCP delays ACKs.
-	TCPDelayedACK TCPDelayedACK `flag:"tcp-delayed-ack"`
-
-	// TXChecksumOffload indicates that TX Checksum Offload is enabled.
-	TXChecksumOffload bool `flag:"tx-checksum-offload"`
-
-	// RXChecksumOffload indicates that RX Checksum Offload is enabled.
-	RXChecksumOffload bool `flag:"rx-checksum-offload"`
-
-	// QDisc indicates the type of queuening discipline to use by default
-	// for non-loopback interfaces.
-	QDisc QueueingDiscipline `flag:"qdisc"`
-
-	// TBFRate is the egress rate limit in bytes/sec when QDisc=tbf.
-	TBFRate uint64 `flag:"qdisc-tbf-rate"`
-
-	// TBFBurst is the bucket depth in bytes when QDisc=tbf.
-	TBFBurst uint64 `flag:"qdisc-tbf-burst"`
-
-	// LogPackets indicates that all network packets should be logged.
-	LogPackets bool `flag:"log-packets"`
-
-	// PCAP is a file to which network packets should be logged in PCAP format.
-	PCAP string `flag:"pcap-log"`
-
-	// Netgofer controls whether and how netgofer is used for networking via UDS.
-	// Note: It is experimental and currently only proxies outbound TCP and UDP
-	// traffic. Active connections cannot be preserved across save/restore.
-	Netgofer NetgoferMode `flag:"netgofer"`
+	// ProfilingMetricsLog is the file name to use for ProfilingMetrics
+	// output.
+	ProfilingMetricsLog string `flag:"profiling-metrics-log"`
 
 	// NetworkProxyPath, if set, is the path of an external UDS that the
 	// sentry attaches its primary network interface to instead of creating
 	// an AF_PACKET socket.
 	NetworkProxyPath string `flag:"network-proxy-path"`
 
+	// NVProxyAllowUnsupportedCapabilities is a comma-separated list of driver
+	// capabilities that are allowed to be requested by the container.
+	NVProxyAllowedDriverCapabilities string `flag:"nvproxy-allowed-driver-capabilities"`
+
+	// GoferNetworkNamespace controls the network namespace used by gofer
+	// processes. The default is the shared empty "null" network namespace.
+	GoferNetworkNamespace GoferNetworkNamespace `flag:"gofer-network-namespace"`
+
+	// BootTimesLog is the file to which the startup timeline of the sandbox
+	// (see timing.Timer.Export) is written, as JSON, when the sandbox starts.
+	BootTimesLog string `flag:"boot-times-log"`
+
+	// TestOnlyAutosaveImagePath if not empty enables auto save for syscall tests
+	// and stores the directory path to the saved state file.
+	TestOnlyAutosaveImagePath string `flag:"TESTONLY-autosave-image-path"`
+
+	// SharedRootDir is the directory used for state shared across sandboxes
+	// regardless of their runtime root directory (e.g. the null gofer network
+	// namespace bind mount). If empty, RootDir is used.
+	// Access to SharedRootDir grants the ability to identify sandboxes, but
+	// not to control them.
+	SharedRootDir string `flag:"shared-root"`
+
+	// FinalMetricsLog is the file to which all metric data should be written
+	// upon sandbox termination.
+	FinalMetricsLog string `flag:"final-metrics-log"`
+
+	// Traceback changes the Go runtime's traceback level.
+	Traceback string `flag:"traceback"`
+
+	// RootDir is the runtime root directory.
+	RootDir string `flag:"root"`
+
+	// TestOnlyTestNameEnv should only be used in tests. It looks up for the
+	// test name in the container environment variables and adds it to the debug
+	// log file name. This is done to help identify the log with the test when
+	// multiple tests are run in parallel, since there is no way to pass
+	// parameters to the runtime from docker.
+	TestOnlyTestNameEnv string `flag:"TESTONLY-test-name-env"`
+
 	// Platform is the platform to run on.
 	Platform string `flag:"platform"`
 
-	// PlatformDevicePath is the raw value of --platform_device_path: either a
-	// single device file path, which applies to any platform, or
-	// comma-separated platform=path pairs, which apply only to the named
-	// platforms. Use PlatformDeviceFor to read it. If unset, a sane
-	// platform-specific default will be used.
-	PlatformDevicePath string `flag:"platform_device_path"`
+	// ProfilingMetrics is a comma separated list of metric names which are
+	// going to be written to the ProfilingMetricsLog file from within the
+	// sentry in CSV format. ProfilingMetrics will be snapshotted at a rate
+	// specified by ProfilingMetricsRate. Requires ProfilingMetricsLog to be
+	// set.
+	ProfilingMetrics string `flag:"profiling-metrics"`
+
+	// NVProxyDriverVersion is the version of the NVIDIA driver ABI to use.
+	// If empty, it is autodetected from the installed NVIDIA driver.
+	// It can also be set to the special value "latest" to force the use of
+	// the latest supported NVIDIA driver ABI.
+	NVProxyDriverVersion string `flag:"nvproxy-driver-version"`
+
+	// PCAP is a file to which network packets should be logged in PCAP format.
+	PCAP string `flag:"pcap-log"`
+
+	// SidecarReleaseEnforcementPolicy controls when spawned sidecar binaries
+	// must match `runsc`'s build label.
+	SidecarReleaseEnforcementPolicy SidecarReleasePolicy `flag:"sidecar-release-enforcement-policy"`
 
 	// MetricServer, if set, indicates that metrics should be exported on this address.
 	// This may either be 1) "addr:port" to export metrics on a specific network interface address,
@@ -218,9 +203,19 @@ type Config struct {
 	// The value of this flag must also match across the two command lines.
 	MetricServer string `flag:"metric-server"`
 
-	// SidecarReleaseEnforcementPolicy controls when spawned sidecar binaries
-	// must match `runsc`'s build label.
-	SidecarReleaseEnforcementPolicy SidecarReleasePolicy `flag:"sidecar-release-enforcement-policy"`
+	// PlatformDevicePath is the raw value of --platform_device_path: either a
+	// single device file path, which applies to any platform, or
+	// comma-separated platform=path pairs, which apply only to the named
+	// platforms. Use PlatformDeviceFor to read it. If unset, a sane
+	// platform-specific default will be used.
+	PlatformDevicePath string `flag:"platform_device_path"`
+
+	// Overlay2 holds configuration about wrapping mounts in overlayfs.
+	// DO NOT call it directly, use GetOverlay2() instead.
+	Overlay2 Overlay2 `flag:"overlay2"`
+
+	// XDP controls Whether and how to use XDP.
+	XDP XDP `flag:"EXPERIMENTAL-xdp"`
 
 	// SandboxCreationCPUPolicy is the CPU limit of the sandbox cgroup while a
 	// new sandbox is created and started.
@@ -230,57 +225,77 @@ type Config struct {
 	// checkpoint, restore, and teardown.
 	SandboxLifecycleCPUPolicy SandboxCPUPolicy `flag:"sandbox-lifecycle-cpu-policy"`
 
-	// FinalMetricsLog is the file to which all metric data should be written
-	// upon sandbox termination.
-	FinalMetricsLog string `flag:"final-metrics-log"`
+	// QDisc indicates the type of queuening discipline to use by default
+	// for non-loopback interfaces.
+	QDisc QueueingDiscipline `flag:"qdisc"`
 
-	// BootTimesLog is the file to which the startup timeline of the sandbox
-	// (see timing.Timer.Export) is written, as JSON, when the sandbox starts.
-	BootTimesLog string `flag:"boot-times-log"`
+	// CharacterDevicePolicy controls how character device files on gofer
+	// mounts (the rootfs and bind mounts) are handled.
+	CharacterDevicePolicy CharacterDevicePolicy `flag:"character-device-policy"`
 
-	// ProfilingMetrics is a comma separated list of metric names which are
-	// going to be written to the ProfilingMetricsLog file from within the
-	// sentry in CSV format. ProfilingMetrics will be snapshotted at a rate
-	// specified by ProfilingMetricsRate. Requires ProfilingMetricsLog to be
-	// set.
-	ProfilingMetrics string `flag:"profiling-metrics"`
+	// DCache sets the global dirent cache size. If negative, per-mount caches are
+	// used.
+	DCache int `flag:"dcache"`
 
-	// ProfilingMetricsLog is the file name to use for ProfilingMetrics
-	// output.
-	ProfilingMetricsLog string `flag:"profiling-metrics-log"`
+	// TBFBurst is the bucket depth in bytes when QDisc=tbf.
+	TBFBurst uint64 `flag:"qdisc-tbf-burst"`
+
+	// TBFRate is the egress rate limit in bytes/sec when QDisc=tbf.
+	TBFRate uint64 `flag:"qdisc-tbf-rate"`
+
+	// NetworkProcessorsPerChannel controls the number of goroutines used to
+	// handle packets on a single network channel. A higher number can help handle
+	// many simultaneous connections. If this is 0, runsc will divide GOMAXPROCS
+	// evenly among each network channel.
+	NetworkProcessorsPerChannel int `flag:"network-processors-per-channel"`
+
+	// TCPDelayedACK controls whether netstack TCP delays ACKs.
+	TCPDelayedACK TCPDelayedACK `flag:"tcp-delayed-ack"`
+
+	// SignalUnkillablePolicy controls protection of PID namespace init processes
+	// from signals under Linux SIGNAL_UNKILLABLE semantics (see SignalUnkillablePolicy).
+	SignalUnkillablePolicy SignalUnkillablePolicy `flag:"signal-unkillable-policy"`
+
+	// RestoreSpecValidation indicates the level of spec validation to be
+	// performed during restore.
+	RestoreSpecValidation RestoreSpecValidationPolicy `flag:"restore-spec-validation"`
+
+	// Network indicates what type of network to use.
+	Network NetworkType `flag:"network"`
+
+	// HostSettings controls how host settings are handled.
+	HostSettings HostSettingsPolicy `flag:"host-settings"`
 
 	// ProfilingMetricsRate is the target rate (in microseconds) at which
 	// profiling metrics will be snapshotted.
 	ProfilingMetricsRate int `flag:"profiling-metrics-rate-us"`
 
-	// Strace indicates that strace should be enabled.
-	Strace bool `flag:"strace"`
+	// FDLimit specifies a limit on the number of host file descriptors that can
+	// be open simultaneously by the sentry and gofer. It applies separately to
+	// each.
+	FDLimit int `flag:"fdlimit"`
 
-	// StraceSyscalls is the set of syscalls to trace (comma-separated values).
-	// If StraceEnable is true and this string is empty, then all syscalls will
-	// be traced.
-	StraceSyscalls string `flag:"strace-syscalls"`
+	// InodeNumbers controls how inode numbers of files on gofer mounts are
+	// assigned.
+	InodeNumbers InodeNumbers `flag:"inode-numbers"`
 
 	// StraceLogSize is the max size of data blobs to display.
 	StraceLogSize uint `flag:"strace-log-size"`
 
-	// StraceEvent indicates sending strace to events if true. Strace is
-	// sent to log if false.
-	StraceEvent bool `flag:"strace-event"`
+	// Netgofer controls whether and how netgofer is used for networking via UDS.
+	// Note: It is experimental and currently only proxies outbound TCP and UDP
+	// traffic. Active connections cannot be preserved across save/restore.
+	Netgofer NetgoferMode `flag:"netgofer"`
 
-	// DisableSeccomp indicates whether seccomp syscall filters should be
-	// disabled. Pardon the double negation, but default to enabled is important.
-	DisableSeccomp bool
+	// HostFifo controls permission to access host FIFO (or named pipes).
+	HostFifo HostFifo `flag:"host-fifo"`
 
-	// EnableCoreTags indicates whether the Sentry process and children will be
-	// run in a core tagged process. This isolates the sentry from sharing
-	// physical cores with other core tagged processes. This is useful as a
-	// mitigation for hyperthreading side channel based attacks. Requires host
-	// linux kernel >= 5.14.
-	EnableCoreTags bool `flag:"enable-core-tags"`
+	// InSandboxCgroup indicates the cgroup setup inside the sandbox.
+	InSandboxCgroup InSandboxCgroupType `flag:"in-sandbox-cgroup"`
 
-	// WatchdogAction sets what action the watchdog takes when triggered.
-	WatchdogAction string `flag:"watchdog-action"`
+	// HostUDS controls permission to access host Unix-domain sockets.
+	// DO NOT call it directly, use GetHostUDS() instead.
+	HostUDS HostUDS `flag:"host-uds"`
 
 	// PanicSignal registers signal handling that panics. Usually set to
 	// SIGUSR2(12) to troubleshoot hangs. -1 disables it.
@@ -290,16 +305,17 @@ type Config struct {
 	// stacks without exiting. -1 disables it.
 	DumpGoroutinesSignal int `flag:"dump-goroutines-signal"`
 
-	// ProfileEnable is set to prepare the sandbox to be profiled.
-	ProfileEnable bool `flag:"profile"`
+	// NumNetworkChannels controls the number of AF_PACKET sockets that map
+	// to the same underlying network device. This allows netstack to better
+	// scale for high throughput use cases.
+	NumNetworkChannels int `flag:"num-network-channels"`
 
-	// ProfileBlock collects a block profile to the passed file for the
-	// duration of the container execution. Requires ProfileEnabled.
-	ProfileBlock string `flag:"profile-block"`
+	// TarTimestampResolution is the resolution of modification times in tar
+	// archives of overlay upper layers and filesystem checkpoints.
+	TarTimestampResolution TarTimestampResolution `flag:"tar-timestamp-resolution"`
 
-	// ProfileCPU collects a CPU profile to the passed file for the
-	// duration of the container execution. Requires ProfileEnabled.
-	ProfileCPU string `flag:"profile-cpu"`
+	// StateEngine selects the state serialization engine used when saving checkpoints.
+	StateEngine StateEnginePolicy `flag:"state-engine"`
 
 	// ProfileGCInterval forces a garbage-collection cycle at regular intervals.
 	// Useful for benchmark runs where the GC threshold may not be reached
@@ -310,28 +326,27 @@ type Config struct {
 	// If zero, GC happens per the Go runtime's default behavior.
 	ProfileGCInterval time.Duration `flag:"profile-gc-interval"`
 
-	// ProfileHeap collects a heap profile to the passed file for the
-	// duration of the container execution. Requires ProfileEnabled.
-	ProfileHeap string `flag:"profile-heap"`
+	// FileAccessMounts indicates how non-root volumes are accessed.
+	FileAccessMounts FileAccessType `flag:"file-access-mounts"`
 
-	// ProfileMutex collects a mutex profile to the passed file for the
-	// duration of the container execution. Requires ProfileEnabled.
-	ProfileMutex string `flag:"profile-mutex"`
+	// FileAccess indicates how the root filesystem is accessed.
+	FileAccess FileAccessType `flag:"file-access"`
 
-	// TraceFile collects a Go runtime execution trace to the passed file
-	// for the duration of the container execution.
-	TraceFile string `flag:"trace"`
+	// ControlRPCStopTimeout is the grace period given to in-flight RPCs on
+	// the sandbox control (urpc) socket when the sandbox is shutting down.
+	// New RPCs are rejected immediately, but ongoing RPCs are allowed to run
+	// to completion. After the timeout elapses, idle client connections are
+	// closed and connections still processing an RPC are marked to be closed
+	// once their current RPC finishes. Setting this to 0 closes idle clients
+	// immediately.
+	ControlRPCStopTimeout time.Duration `flag:"control-rpc-stop-timeout"`
 
-	// NumNetworkChannels controls the number of AF_PACKET sockets that map
-	// to the same underlying network device. This allows netstack to better
-	// scale for high throughput use cases.
-	NumNetworkChannels int `flag:"num-network-channels"`
+	// ReferenceLeakMode sets reference leak check mode
+	ReferenceLeak refs.LeakMode `flag:"ref-leak-mode"`
 
-	// NetworkProcessorsPerChannel controls the number of goroutines used to
-	// handle packets on a single network channel. A higher number can help handle
-	// many simultaneous connections. If this is 0, runsc will divide GOMAXPROCS
-	// evenly among each network channel.
-	NetworkProcessorsPerChannel int `flag:"network-processors-per-channel"`
+	// GVisorGSO indicates that gVisor segmentation offload is enabled. The flag
+	// retains its old name of "software" GSO for API consistency.
+	GVisorGSO bool `flag:"software-gso"`
 
 	// Rootless allows the sandbox to be started with a user that is not root.
 	// Defense in depth measures are weaker in rootless mode. Specifically, the
@@ -343,8 +358,8 @@ type Config struct {
 	// AlsoLogToStderr allows to send log messages to stderr.
 	AlsoLogToStderr bool `flag:"alsologtostderr"`
 
-	// ReferenceLeakMode sets reference leak check mode
-	ReferenceLeak refs.LeakMode `flag:"ref-leak-mode"`
+	// ProfileEnable is set to prepare the sandbox to be profiled.
+	ProfileEnable bool `flag:"profile"`
 
 	// CPUNumFromQuota sets CPU number count to available CPU quota, using
 	// least integer value greater than or equal to quota.
@@ -361,31 +376,33 @@ type Config struct {
 	// Don't configure cgroups.
 	IgnoreCgroups bool `flag:"ignore-cgroups"`
 
-	// InSandboxCgroup indicates the cgroup setup inside the sandbox.
-	InSandboxCgroup InSandboxCgroupType `flag:"in-sandbox-cgroup"`
+	// EnableCoreTags indicates whether the Sentry process and children will be
+	// run in a core tagged process. This isolates the sentry from sharing
+	// physical cores with other core tagged processes. This is useful as a
+	// mitigation for hyperthreading side channel based attacks. Requires host
+	// linux kernel >= 5.14.
+	EnableCoreTags bool `flag:"enable-core-tags"`
 
 	// Use systemd to configure cgroups.
 	SystemdCgroup bool `flag:"systemd-cgroup"`
 
-	// PodInitConfig is the path to configuration file with additional steps to
-	// take during pod creation.
-	PodInitConfig string `flag:"pod-init-config"`
+	// DisableSeccomp indicates whether seccomp syscall filters should be
+	// disabled. Pardon the double negation, but default to enabled is important.
+	DisableSeccomp bool
 
-	// XDP controls Whether and how to use XDP.
-	XDP XDP `flag:"EXPERIMENTAL-xdp"`
+	// StraceEvent indicates sending strace to events if true. Strace is
+	// sent to log if false.
+	StraceEvent bool `flag:"strace-event"`
 
 	// AFXDPUseNeedWakeup determines whether XDP_USE_NEED_WAKEUP is set
 	// when using AF_XDP sockets.
 	AFXDPUseNeedWakeup bool `flag:"EXPERIMENTAL-xdp-need-wakeup"`
 
-	// FDLimit specifies a limit on the number of host file descriptors that can
-	// be open simultaneously by the sentry and gofer. It applies separately to
-	// each.
-	FDLimit int `flag:"fdlimit"`
+	// Strace indicates that strace should be enabled.
+	Strace bool `flag:"strace"`
 
-	// DCache sets the global dirent cache size. If negative, per-mount caches are
-	// used.
-	DCache int `flag:"dcache"`
+	// LogPackets indicates that all network packets should be logged.
+	LogPackets bool `flag:"log-packets"`
 
 	// IOUring enables support for the IO_URING API calls to perform
 	// asynchronous I/O operations.
@@ -407,15 +424,11 @@ type Config struct {
 	// effect of injecting nvidia-container-runtime-hook as a prestart hook.
 	NVProxyDocker bool `flag:"nvproxy-docker"`
 
-	// NVProxyDriverVersion is the version of the NVIDIA driver ABI to use.
-	// If empty, it is autodetected from the installed NVIDIA driver.
-	// It can also be set to the special value "latest" to force the use of
-	// the latest supported NVIDIA driver ABI.
-	NVProxyDriverVersion string `flag:"nvproxy-driver-version"`
+	// RXChecksumOffload indicates that RX Checksum Offload is enabled.
+	RXChecksumOffload bool `flag:"rx-checksum-offload"`
 
-	// NVProxyAllowUnsupportedCapabilities is a comma-separated list of driver
-	// capabilities that are allowed to be requested by the container.
-	NVProxyAllowedDriverCapabilities string `flag:"nvproxy-allowed-driver-capabilities"`
+	// TXChecksumOffload indicates that TX Checksum Offload is enabled.
+	TXChecksumOffload bool `flag:"tx-checksum-offload"`
 
 	// NVProxyAllowUnsupportedDriver allows nvproxy to be initialized with an
 	// unsupported driver version.
@@ -437,26 +450,19 @@ type Config struct {
 	// disabling chroot, the container root path should not have a symlink.
 	TestOnlyAllowRunAsCurrentUserWithoutChroot bool `flag:"TESTONLY-unsafe-nonroot"`
 
-	// TestOnlyTestNameEnv should only be used in tests. It looks up for the
-	// test name in the container environment variables and adds it to the debug
-	// log file name. This is done to help identify the log with the test when
-	// multiple tests are run in parallel, since there is no way to pass
-	// parameters to the runtime from docker.
-	TestOnlyTestNameEnv string `flag:"TESTONLY-test-name-env"`
+	// GVisorGRO enables gVisor's generic receive offload.
+	GVisorGRO bool `flag:"gvisor-gro"`
 
 	// TestOnlyAFSSyscallPanic should only be used in tests. It enables the
 	// alternate behaviour for afs_syscall to trigger a Go-runtime panic upon being
 	// called. This is useful for tests exercising gVisor panic-reporting.
 	TestOnlyAFSSyscallPanic bool `flag:"TESTONLY-afs-syscall-panic"`
 
-	// explicitlySet contains whether a flag was explicitly set on the command-line from which this
-	// Config was constructed. Nil when the Config was not initialized from a FlagSet.
-	explicitlySet map[string]struct{}
+	// HostGSO indicates that host segmentation offload is enabled.
+	HostGSO bool `flag:"gso"`
 
-	// cliStateEngine records the --state-engine policy explicitly passed on the
-	// command line when this Config was constructed via NewFromFlags, before any
-	// OCI annotation or bundle overrides run.
-	cliStateEngine *StateEnginePolicy
+	// AllowLiveTCPMigration allows TCP connection state to be migrated.
+	AllowLiveTCPMigration bool `flag:"allow-live-tcp-migration"`
 
 	// ReproduceNAT, when true, tells runsc to scrape the host network
 	// namespace's NAT iptables and reproduce it inside the sandbox.
@@ -470,22 +476,22 @@ type Config struct {
 	// sockets should be disconnected upon save."
 	NetDisconnectOk bool `flag:"net-disconnect-ok"`
 
-	// TestOnlyAutosaveImagePath if not empty enables auto save for syscall tests
-	// and stores the directory path to the saved state file.
-	TestOnlyAutosaveImagePath string `flag:"TESTONLY-autosave-image-path"`
+	// AllowPacketEndpointWrite enables write operations on packet endpoints.
+	AllowPacketEndpointWrite bool `flag:"allow-packet-socket-write"`
 
 	// TestOnlyAutosaveResume indicates save resume for syscall tests.
 	TestOnlyAutosaveResume bool `flag:"TESTONLY-autosave-resume"`
 
-	// RestoreSpecValidation indicates the level of spec validation to be
-	// performed during restore.
-	RestoreSpecValidation RestoreSpecValidationPolicy `flag:"restore-spec-validation"`
+	// EnableRaw indicates whether raw sockets should be enabled. Raw
+	// sockets are disabled by stripping CAP_NET_RAW from the list of
+	// capabilities.
+	EnableRaw bool `flag:"net-raw"`
 
 	// GVisorMarkerFile enables the /proc/gvisor/kernel_is_gvisor marker file.
 	GVisorMarkerFile bool `flag:"gvisor-marker-file"`
 
-	// OverrideProcs is a comma-separated list of proc files to override with stubs.
-	OverrideProcs string `flag:"override-procs"`
+	// FSGoferHostUDS is deprecated: use host-uds=all.
+	FSGoferHostUDS bool `flag:"fsgofer-host-uds"`
 
 	// SystrapDisableSyscallPatching disables syscall patching in Systrap.
 	SystrapDisableSyscallPatching bool `flag:"systrap-disable-syscall-patching"`
@@ -512,28 +518,22 @@ type Config struct {
 	// AllowConnectedOnSave allows network connections to stay established on save.
 	AllowConnectedOnSave bool `flag:"allow-connected-on-save"`
 
-	// StateEngine selects the state serialization engine used when saving checkpoints.
-	StateEngine StateEnginePolicy `flag:"state-engine"`
+	// Overlay is whether to wrap all mounts in an overlay. The upper tmpfs layer
+	// will be backed by application memory.
+	Overlay bool `flag:"overlay"`
 
 	// AllowRootfsTarAnnotation indicates whether the rootfs tar annotation
 	// should be allowed.
 	AllowRootfsTarAnnotation bool `flag:"allow-rootfs-tar-annotation"`
 
-	// ControlRPCStopTimeout is the grace period given to in-flight RPCs on
-	// the sandbox control (urpc) socket when the sandbox is shutting down.
-	// New RPCs are rejected immediately, but ongoing RPCs are allowed to run
-	// to completion. After the timeout elapses, idle client connections are
-	// closed and connections still processing an RPC are marked to be closed
-	// once their current RPC finishes. Setting this to 0 closes idle clients
-	// immediately.
-	ControlRPCStopTimeout time.Duration `flag:"control-rpc-stop-timeout"`
+	// DebugToUserLog indicates that Sentry debug logs should be emitted
+	// to user-visible logs.
+	// If specified together with `DebugLog`, debug logs are emitted
+	// to both.
+	DebugToUserLog bool `flag:"debug-to-user-log"`
 
-	// SharedRootDir is the directory used for state shared across sandboxes
-	// regardless of their runtime root directory (e.g. the null gofer network
-	// namespace bind mount). If empty, RootDir is used.
-	// Access to SharedRootDir grants the ability to identify sandboxes, but
-	// not to control them.
-	SharedRootDir string `flag:"shared-root"`
+	// Debug indicates that debug logging should be enabled.
+	Debug bool `flag:"debug"`
 }
 
 // UseNetworkProxy reports whether the primary sandbox network interface should
@@ -544,12 +544,13 @@ func (c *Config) UseNetworkProxy() bool {
 
 // platformDevicePaths is the parsed value of --platform_device_path.
 type platformDevicePaths struct {
-	// any is the device file path for every platform. The single-path form
-	// sets it.
-	any string
 	// byPlatform maps a platform name to its device file path. The
 	// platform=path form sets it.
 	byPlatform map[string]string
+
+	// any is the device file path for every platform. The single-path form
+	// sets it.
+	any string
 }
 
 // parsePlatformDevicePaths parses v, a --platform_device_path value. A value
@@ -560,7 +561,7 @@ func parsePlatformDevicePaths(v string) (platformDevicePaths, error) {
 		return platformDevicePaths{any: v}, nil
 	}
 	paths := platformDevicePaths{byPlatform: make(map[string]string)}
-	for _, pair := range strings.Split(v, ",") {
+	for pair := range strings.SplitSeq(v, ",") {
 		name, path, ok := strings.Cut(pair, "=")
 		if !ok || name == "" || path == "" {
 			return platformDevicePaths{}, fmt.Errorf("expected format is --platform_device_path={path} or --platform_device_path={platform}={path}[,{platform}={path}...], got %q", v)
@@ -836,10 +837,6 @@ const (
 	FileAccessShared
 )
 
-func fileAccessTypePtr(v FileAccessType) *FileAccessType {
-	return &v
-}
-
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (f *FileAccessType) Set(v string) error {
 	switch v {
@@ -885,10 +882,6 @@ const (
 	// NetworkPlugin uses third-party network stack.
 	NetworkPlugin
 )
-
-func networkTypePtr(v NetworkType) *NetworkType {
-	return &v
-}
 
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (n *NetworkType) Set(v string) error {
@@ -948,10 +941,6 @@ const (
 	GoferNetworkNamespaceNull GoferNetworkNamespace = "null"
 )
 
-func goferNetworkNamespacePtr(v GoferNetworkNamespace) *GoferNetworkNamespace {
-	return &v
-}
-
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (n *GoferNetworkNamespace) Set(v string) error {
 	switch v {
@@ -986,10 +975,6 @@ const (
 	// InSandboxCgroupV2 mounts cgroup v2 inside the sandbox.
 	InSandboxCgroupV2
 )
-
-func inSandboxCgroupTypePtr(v InSandboxCgroupType) *InSandboxCgroupType {
-	return &v
-}
 
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (c *InSandboxCgroupType) Set(v string) error {
@@ -1035,10 +1020,6 @@ const (
 	QDiscTBF
 )
 
-func queueingDisciplinePtr(v QueueingDiscipline) *QueueingDiscipline {
-	return &v
-}
-
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (q *QueueingDiscipline) Set(v string) error {
 	switch v {
@@ -1072,10 +1053,6 @@ func (q QueueingDiscipline) String() string {
 	panic(fmt.Sprintf("Invalid qdisc %d", q))
 }
 
-func leakModePtr(v refs.LeakMode) *refs.LeakMode {
-	return &v
-}
-
 // HostUDS tells how much of the host UDS the file system has access to.
 type HostUDS int
 
@@ -1092,10 +1069,6 @@ const (
 	// HostUDSAll allows all form of communication with the host through UDS.
 	HostUDSAll = HostUDSOpen | HostUDSCreate
 )
-
-func hostUDSPtr(v HostUDS) *HostUDS {
-	return &v
-}
 
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (g *HostUDS) Set(v string) error {
@@ -1157,10 +1130,6 @@ const (
 	HostFifoOpen HostFifo = 0x1
 )
 
-func hostFifoPtr(v HostFifo) *HostFifo {
-	return &v
-}
-
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (g *HostFifo) Set(v string) error {
 	switch v {
@@ -1217,10 +1186,6 @@ const (
 	// exposing the host device to the container.
 	CharDevPassthrough
 )
-
-func charDevicePolicyPtr(v CharacterDevicePolicy) *CharacterDevicePolicy {
-	return &v
-}
 
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (p *CharacterDevicePolicy) Set(v string) error {
@@ -1280,10 +1245,6 @@ const (
 	InodeNumbersVirtual
 )
 
-func inodeNumbersPtr(v InodeNumbers) *InodeNumbers {
-	return &v
-}
-
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (n *InodeNumbers) Set(v string) error {
 	switch v {
@@ -1328,10 +1289,6 @@ const (
 	TCPDelayedACKDisabled
 )
 
-func tcpDelayedACKPtr(v TCPDelayedACK) *TCPDelayedACK {
-	return &v
-}
-
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (d *TCPDelayedACK) Set(v string) error {
 	switch v {
@@ -1374,10 +1331,6 @@ const (
 	// entry gets a PAX extended header, which adds about 1 KiB per entry.
 	TarTimestampNanoseconds
 )
-
-func tarTimestampResolutionPtr(v TarTimestampResolution) *TarTimestampResolution {
-	return &v
-}
 
 // Set implements flag.Value. Set(String()) should be idempotent.
 func (r *TarTimestampResolution) Set(v string) error {
@@ -1467,14 +1420,15 @@ func (m OverlayMedium) HostFileDir() string {
 // Overlay2 holds the configuration for setting up overlay filesystems for the
 // container.
 type Overlay2 struct {
-	rootMount bool
-	subMounts bool
-	medium    OverlayMedium
+	medium OverlayMedium
+
 	// Size of overlay upper layer.
 	// Passed as is to tmpfs mount, as `size={size}`.
 	// Empty means use default.
 	// Size is applied to each overlay independently and not shared by overlays.
-	size string
+	size      string
+	rootMount bool
+	subMounts bool
 }
 
 func defaultOverlay2() *Overlay2 {
@@ -1742,20 +1696,20 @@ func IsReleaseVersion(ver string) bool {
 // application is not running. It never goes below the OCI spec limit.
 // The zero value keeps the OCI spec limit.
 type SandboxCPUPolicy struct {
-	// uncapped removes the limit.
-	uncapped bool
-
 	// milliCPUs, if non-zero, is the limit in milliCPUs.
 	milliCPUs int64
-
-	// implicit is set on flag defaults, i.e. when the policy was not
-	// specified on the command-line.
-	implicit bool
 
 	// factor, if non-zero, multiplies the OCI spec limit.
 	// It is always above or equal to 1, since the limit should
 	// never go below the OCI spec one.
 	factor float64
+
+	// uncapped removes the limit.
+	uncapped bool
+
+	// implicit is set on flag defaults, i.e. when the policy was not
+	// specified on the command-line.
+	implicit bool
 }
 
 // Default sandbox CPU policies.
@@ -1975,8 +1929,8 @@ func (p SignalUnkillablePolicy) String() string {
 
 // XDP holds configuration for whether and how to use XDP.
 type XDP struct {
-	Mode      XDPMode
 	IfaceName string
+	Mode      XDPMode
 }
 
 // XDPMode specifies a particular use of XDP.

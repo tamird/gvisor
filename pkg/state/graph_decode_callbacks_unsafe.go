@@ -118,7 +118,7 @@ func (ds *graphDecodeState) decodeObject(obj int32) {
 		n := d.count(1)
 		esz := ti.size
 		var pos uint64
-		for j := 0; j < n; j++ {
+		for range n {
 			pos += d.uvarint()
 			count := d.uvarint()
 			if pos+count > uint64(o.size/esz) || pos+count < pos {

@@ -154,7 +154,7 @@ func (mm *MemoryManager) asCopyOut(ctx context.Context, ar hostarch.AddrRange, s
 		}
 		if _, ok := err.(platform.AddressSpaceIOUnavailable); ok {
 			// Fall back to using internal mappings.
-			return mm.imCopyOut(ctx, hostarch.AddrRange{ar.Start + hostarch.Addr(done), ar.End}, src[done:], opts)
+			return mm.imCopyOut(ctx, hostarch.AddrRange{Start: ar.Start + hostarch.Addr(done), End: ar.End}, src[done:], opts)
 		}
 		return done, translateIOError(ctx, err)
 	}
@@ -216,7 +216,7 @@ func (mm *MemoryManager) asCopyIn(ctx context.Context, ar hostarch.AddrRange, ds
 		}
 		if _, ok := err.(platform.AddressSpaceIOUnavailable); ok {
 			// Fall back to using internal mappings.
-			return mm.imCopyIn(ctx, hostarch.AddrRange{ar.Start + hostarch.Addr(done), ar.End}, dst[done:], opts)
+			return mm.imCopyIn(ctx, hostarch.AddrRange{Start: ar.Start + hostarch.Addr(done), End: ar.End}, dst[done:], opts)
 		}
 		return done, translateIOError(ctx, err)
 	}
@@ -273,7 +273,7 @@ func (mm *MemoryManager) asZeroOut(ctx context.Context, ar hostarch.AddrRange, o
 		}
 		if _, ok := err.(platform.AddressSpaceIOUnavailable); ok {
 			// Fall back to using internal mappings.
-			return mm.imZeroOut(ctx, hostarch.AddrRange{ar.Start + hostarch.Addr(done), ar.End}, opts)
+			return mm.imZeroOut(ctx, hostarch.AddrRange{Start: ar.Start + hostarch.Addr(done), End: ar.End}, opts)
 		}
 		return done, translateIOError(ctx, err)
 	}
@@ -321,7 +321,7 @@ func (mm *MemoryManager) CopyOutFrom(ctx context.Context, ars hostarch.AddrRange
 			ar := ars.Head()
 			rem := int64(bufN) - done
 			if int64(ar.Length()) > rem {
-				ar = hostarch.AddrRange{ar.Start, ar.Start + hostarch.Addr(rem)}
+				ar = hostarch.AddrRange{Start: ar.Start, End: ar.Start + hostarch.Addr(rem)}
 			}
 			n, err := mm.asCopyOut(ctx, ar, buf[int(done):int(done+int64(ar.Length()))], opts)
 			done += int64(n)
@@ -574,7 +574,7 @@ func (mm *MemoryManager) handleASIOFault(ctx context.Context, addr hostarch.Addr
 	// Try to map all remaining pages in the I/O operation. This RoundUp can't
 	// overflow because otherwise it would have been caught by CheckIORange.
 	end, _ := ioar.End.RoundUp()
-	ar := hostarch.AddrRange{addr.RoundDown(), end}
+	ar := hostarch.AddrRange{Start: addr.RoundDown(), End: end}
 
 	// Don't bother trying existingPMAsLocked; in most cases, if we did have
 	// existing pmas, we wouldn't have faulted.
@@ -936,15 +936,15 @@ func (mm *MemoryManager) getIOMappingsTrackedLocked(pseg pmaIterator, ar hostarc
 }
 
 type ioBuf struct {
-	unbufBytesBefore uint64
 	file             memmap.File
-	off              uint64
 	buf              *[]byte
+	unbufBytesBefore uint64
+	off              uint64
 }
 
 type ioBufTracker struct {
-	write bool
 	bufs  []ioBuf
+	write bool
 }
 
 var ioBufTrackerPool = sync.Pool{

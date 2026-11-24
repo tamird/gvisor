@@ -29,8 +29,8 @@ import (
 //
 // Clients should usually prefer to use Preadv2 and Pwritev2 directly.
 type ReadWriterAt struct {
-	fd     int32
 	offset int64
+	fd     int32
 	flags  uint32
 }
 

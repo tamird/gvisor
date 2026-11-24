@@ -17,6 +17,7 @@ package shim_test
 import (
 	"context"
 	"errors"
+	"maps"
 	"net"
 	"os"
 	"path/filepath"
@@ -78,17 +79,13 @@ func TestGvisorTaskService(t *testing.T) {
 				"enable_hibernate_server": true,
 				"root":                    rootTmp,
 			}
-			for k, v := range tc.shimArgs {
-				shimArgs[k] = v
-			}
+			maps.Copy(shimArgs, tc.shimArgs)
 
 			runscArgs := map[string]any{
 				"overlay2":       "all:self",
 				"ignore-cgroups": "true",
 			}
-			for k, v := range tc.runscArgs {
-				runscArgs[k] = v
-			}
+			maps.Copy(runscArgs, tc.runscArgs)
 
 			containerd := shimutils.NewMockContainerd(t, shimArgs, runscArgs)
 
@@ -230,14 +227,14 @@ func TestGvisorTaskService(t *testing.T) {
 			// 4. Test Wait
 			for _, wt := range []struct {
 				name          string
+				expectErr     string
 				val           pb.WaitRequest_WaitType
 				expectTimeout bool
-				expectErr     string
 			}{
-				{"WaitCheckpoint", pb.WaitRequest_CHECKPOINT, true, ""},
-				{"WaitRestore", pb.WaitRequest_RESTORE, false, "cannot wait for restore"},
-				{"WaitFSCheckpoint", pb.WaitRequest_FSCHECKPOINT, true, ""},
-				{"WaitFSRestore", pb.WaitRequest_FSRESTORE, false, "filesystem restore is not enabled"},
+				{name: "WaitCheckpoint", val: pb.WaitRequest_CHECKPOINT, expectTimeout: true, expectErr: ""},
+				{name: "WaitRestore", val: pb.WaitRequest_RESTORE, expectTimeout: false, expectErr: "cannot wait for restore"},
+				{name: "WaitFSCheckpoint", val: pb.WaitRequest_FSCHECKPOINT, expectTimeout: true, expectErr: ""},
+				{name: "WaitFSRestore", val: pb.WaitRequest_FSRESTORE, expectTimeout: false, expectErr: "filesystem restore is not enabled"},
 			} {
 				t.Run(wt.name+"Timeout", func(t *testing.T) {
 					ctx, cancel := context.WithTimeout(t.Context(), 1*time.Second)

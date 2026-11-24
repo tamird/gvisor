@@ -30,11 +30,6 @@ import (
 	"gvisor.dev/gvisor/test/secbench/secbenchdef"
 )
 
-type Options struct {
-	Name    string
-	Options config.Options
-}
-
 // BenchmarkSentrySystrap benchmarks the seccomp filters used by the Sentry
 // using the Systrap platform.
 func BenchmarkSentrySystrap(b *testing.B) {
@@ -51,16 +46,16 @@ func BenchmarkSentrySystrap(b *testing.B) {
 				// Top 10 syscalls captured by running Postgres in a runsc container
 				// and running `pgbench` against it. Weights are the number of times
 				// each syscall was called.
-				{"futex", 870063, secbenchdef.Single(unix.SYS_FUTEX, 0, linux.FUTEX_WAKE)},
-				{"nanosleep", 275649, secbenchdef.NanosleepZero.Seq()},
-				{"sendmmsg", 160201, secbenchdef.Single(unix.SYS_SENDMMSG, secbenchdef.NonExistentFD, 0, 0, unix.MSG_DONTWAIT)},
-				{"fstat", 115769, secbenchdef.Single(unix.SYS_FSTAT, secbenchdef.NonExistentFD)},
-				{"ppoll", 69749, secbenchdef.PPollNonExistent.Seq()},
-				{"fsync", 23131, secbenchdef.Single(unix.SYS_FSYNC, secbenchdef.NonExistentFD)},
-				{"pwrite64", 14096, secbenchdef.Single(unix.SYS_PWRITE64, secbenchdef.NonExistentFD)},
-				{"epoll_pwait", 12266, secbenchdef.Single(unix.SYS_EPOLL_PWAIT, secbenchdef.NonExistentFD)},
-				{"close", 1991, secbenchdef.Single(unix.SYS_CLOSE, secbenchdef.NonExistentFD)},
-				{"getpid", 1413, secbenchdef.Single(unix.SYS_GETPID)},
+				{Name: "futex", Weight: 870063, Syscalls: secbenchdef.Single(unix.SYS_FUTEX, 0, linux.FUTEX_WAKE)},
+				{Name: "nanosleep", Weight: 275649, Syscalls: secbenchdef.NanosleepZero.Seq()},
+				{Name: "sendmmsg", Weight: 160201, Syscalls: secbenchdef.Single(unix.SYS_SENDMMSG, secbenchdef.NonExistentFD, 0, 0, unix.MSG_DONTWAIT)},
+				{Name: "fstat", Weight: 115769, Syscalls: secbenchdef.Single(unix.SYS_FSTAT, secbenchdef.NonExistentFD)},
+				{Name: "ppoll", Weight: 69749, Syscalls: secbenchdef.PPollNonExistent.Seq()},
+				{Name: "fsync", Weight: 23131, Syscalls: secbenchdef.Single(unix.SYS_FSYNC, secbenchdef.NonExistentFD)},
+				{Name: "pwrite64", Weight: 14096, Syscalls: secbenchdef.Single(unix.SYS_PWRITE64, secbenchdef.NonExistentFD)},
+				{Name: "epoll_pwait", Weight: 12266, Syscalls: secbenchdef.Single(unix.SYS_EPOLL_PWAIT, secbenchdef.NonExistentFD)},
+				{Name: "close", Weight: 1991, Syscalls: secbenchdef.Single(unix.SYS_CLOSE, secbenchdef.NonExistentFD)},
+				{Name: "getpid", Weight: 1413, Syscalls: secbenchdef.Single(unix.SYS_GETPID)},
 			},
 		},
 		rules,
@@ -83,16 +78,16 @@ func BenchmarkSentryKVM(b *testing.B) {
 			Arch: linux.AUDIT_ARCH_X86_64,
 			Sequences: []secbenchdef.Sequence{
 				// Same procedure, but using the KVM platform instead.
-				{"futex", 3180352, secbenchdef.Single(unix.SYS_FUTEX, 0, linux.FUTEX_WAKE)},
-				{"ioctl", 2501786, secbenchdef.Single(unix.SYS_IOCTL, secbenchdef.NonExistentFD, kvm.KVM_RUN)},
-				{"rt_sigreturn", 2501695, secbenchdef.RTSigreturn.Seq()},
-				{"sendmmsg", 1490395, secbenchdef.Single(unix.SYS_SENDMMSG, secbenchdef.NonExistentFD, 0, 0, unix.MSG_DONTWAIT)},
-				{"nanosleep", 1217019, secbenchdef.NanosleepZero.Seq()},
-				{"fstat", 1068477, secbenchdef.Single(unix.SYS_FSTAT, secbenchdef.NonExistentFD)},
-				{"ppoll", 653137, secbenchdef.PPollNonExistent.Seq()},
-				{"fsync", 213320, secbenchdef.Single(unix.SYS_FSYNC, secbenchdef.NonExistentFD)},
-				{"pwrite64", 107603, secbenchdef.Single(unix.SYS_PWRITE64, secbenchdef.NonExistentFD)},
-				{"epoll_pwait", 29909, secbenchdef.Single(unix.SYS_EPOLL_PWAIT, secbenchdef.NonExistentFD)},
+				{Name: "futex", Weight: 3180352, Syscalls: secbenchdef.Single(unix.SYS_FUTEX, 0, linux.FUTEX_WAKE)},
+				{Name: "ioctl", Weight: 2501786, Syscalls: secbenchdef.Single(unix.SYS_IOCTL, secbenchdef.NonExistentFD, kvm.KVM_RUN)},
+				{Name: "rt_sigreturn", Weight: 2501695, Syscalls: secbenchdef.RTSigreturn.Seq()},
+				{Name: "sendmmsg", Weight: 1490395, Syscalls: secbenchdef.Single(unix.SYS_SENDMMSG, secbenchdef.NonExistentFD, 0, 0, unix.MSG_DONTWAIT)},
+				{Name: "nanosleep", Weight: 1217019, Syscalls: secbenchdef.NanosleepZero.Seq()},
+				{Name: "fstat", Weight: 1068477, Syscalls: secbenchdef.Single(unix.SYS_FSTAT, secbenchdef.NonExistentFD)},
+				{Name: "ppoll", Weight: 653137, Syscalls: secbenchdef.PPollNonExistent.Seq()},
+				{Name: "fsync", Weight: 213320, Syscalls: secbenchdef.Single(unix.SYS_FSYNC, secbenchdef.NonExistentFD)},
+				{Name: "pwrite64", Weight: 107603, Syscalls: secbenchdef.Single(unix.SYS_PWRITE64, secbenchdef.NonExistentFD)},
+				{Name: "epoll_pwait", Weight: 29909, Syscalls: secbenchdef.Single(unix.SYS_EPOLL_PWAIT, secbenchdef.NonExistentFD)},
 			},
 		},
 		rules,

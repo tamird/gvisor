@@ -280,14 +280,14 @@ var _ kernel.Stracer = (SyscallMap)(nil)
 
 // syscallTable contains the syscalls for a specific OS/Arch.
 type syscallTable struct {
+	// syscalls contains the syscall mappings.
+	syscalls SyscallMap
+
 	// os is the operating system this table targets.
 	os abi.OS
 
 	// arch is the architecture this table targets.
 	arch arch.Arch
-
-	// syscalls contains the syscall mappings.
-	syscalls SyscallMap
 }
 
 var syscallTables []syscallTable

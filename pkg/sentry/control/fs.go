@@ -213,14 +213,14 @@ type MountOpts struct {
 	// FSType is the filesystem type name (e.g., "gofer", "tmpfs").
 	FSType string `json:"fs_type"`
 
-	// Flags are the Linux mount flags (e.g. MS_RDONLY, MS_NOEXEC).
-	Flags uint64 `json:"flags"`
-
 	// Data contains filesystem-specific mount options (e.g. "cache=remote,aname=/").
 	Data string `json:"data"`
 
 	// FilePayload contains file descriptors sent over SCM_RIGHTS (e.g. socket FD to Gofer).
 	urpc.FilePayload
+
+	// Flags are the Linux mount flags (e.g. MS_RDONLY, MS_NOEXEC).
+	Flags uint64 `json:"flags"`
 }
 
 // Mount is a RPC stub which mounts a filesystem into a container's mount namespace.

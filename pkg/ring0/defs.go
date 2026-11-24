@@ -32,16 +32,6 @@ var (
 	CPUVendor uint64
 )
 
-// Kernel is a global kernel object.
-//
-// This contains global state, shared by multiple CPUs.
-type Kernel struct {
-	// PageTables are the kernel pagetables; this must be provided.
-	PageTables *pagetables.PageTables
-
-	KernelArchState
-}
-
 // Hooks are hooks for kernel functions.
 type Hooks interface {
 	// KernelSyscall is called for kernel system calls.

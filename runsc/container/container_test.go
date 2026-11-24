@@ -867,8 +867,8 @@ func TestGoferWillNeedHostRPC(t *testing.T) {
 	shifted := []specs.LinuxIDMapping{{ContainerID: 0, HostID: 100000, Size: 65536}}
 	idMapped := specs.Mount{Destination: "/mnt", Source: "/mnt", Type: "bind", UIDMappings: shifted, GIDMappings: shifted}
 	for _, tc := range []struct {
-		name string
 		spec *specs.Spec
+		name string
 		want bool
 	}{
 		{name: "no userns", spec: &specs.Spec{Linux: &specs.Linux{}}, want: partialUserNS},
@@ -1794,8 +1794,8 @@ func TestSignalUnkillablePolicyForcedSignals(t *testing.T) {
 func TestNoRootContainerRejectsRootArgs(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
-		args    Args
 		wantErr string
+		args    Args
 	}{
 		{
 			name:    "console socket",
@@ -1888,13 +1888,13 @@ func TestSignalUnkillablePolicyFaultKillsInit(t *testing.T) {
 			}
 
 			type waitResult struct {
-				ws  unix.WaitStatus
 				err error
+				ws  unix.WaitStatus
 			}
 			done := make(chan waitResult, 1)
 			go func() {
 				ws, err := cont.Wait()
-				done <- waitResult{ws, err}
+				done <- waitResult{ws: ws, err: err}
 			}()
 			select {
 			case res := <-done:
@@ -1984,7 +1984,7 @@ func hostinetSRListenerAddr(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	for _, line := range strings.Split(string(b), "\n") {
+	for line := range strings.SplitSeq(string(b), "\n") {
 		if addr, ok := strings.CutPrefix(line, "LISTENER_ADDR="); ok {
 			return addr, nil
 		}
@@ -2000,7 +2000,7 @@ func lastHostinetSRCount(path string) (int, error) {
 		return 0, err
 	}
 	last := -1
-	for _, line := range strings.Split(string(b), "\n") {
+	for line := range strings.SplitSeq(string(b), "\n") {
 		if !strings.HasPrefix(line, "COUNT=") {
 			continue
 		}
@@ -3136,7 +3136,7 @@ func TestIDMappedMountFlags(t *testing.T) {
 
 			verifyMountinfo := func(dest string, wantOpts []string) {
 				var foundLine string
-				for _, line := range strings.Split(string(mountinfo), "\n") {
+				for line := range strings.SplitSeq(string(mountinfo), "\n") {
 					fields := strings.Fields(line)
 					if len(fields) >= 6 && fields[4] == dest {
 						foundLine = line
@@ -3148,7 +3148,7 @@ func TestIDMappedMountFlags(t *testing.T) {
 				}
 				fields := strings.Fields(foundLine)
 				optsMap := make(map[string]bool)
-				for _, opt := range strings.Split(fields[5], ",") {
+				for opt := range strings.SplitSeq(fields[5], ",") {
 					optsMap[opt] = true
 				}
 				for _, want := range wantOpts {
@@ -3727,9 +3727,9 @@ func TestOCISeccompErrnoRet(t *testing.T) {
 
 	for _, tc := range []struct {
 		name  string
-		sysno int
-		args  []string
 		want  string
+		args  []string
+		sysno int
 	}{
 		{name: "errno_ret_honored", sysno: unix.SYS_GETSID, want: fmt.Sprintf("failed: %v", unix.ENOSYS)},
 		{name: "no_errno_ret_defaults_to_eperm", sysno: unix.SYS_GETPGID, want: fmt.Sprintf("failed: %v", unix.EPERM)},
@@ -3918,7 +3918,7 @@ func TestStateNonLeaderExec(t *testing.T) {
 
 // TestDestroyStarting attempts to force a race between start and destroy.
 func TestDestroyStarting(t *testing.T) {
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		spec, conf := sleepSpecConf(t)
 		rootDir, bundleDir, cleanup, err := testutil.SetupContainer(spec, conf)
 		if err != nil {
@@ -3944,20 +3944,16 @@ func TestDestroyStarting(t *testing.T) {
 			t.Fatalf("error loading container: %v", err)
 		}
 		wg := sync.WaitGroup{}
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			// Ignore failures, start can fail if destroy runs first.
 			_ = startCont.Start(conf)
-		}()
+		})
 
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if err := c.Destroy(); err != nil {
 				t.Errorf("deleting non-started container failed: %v", err)
 			}
-		}()
+		})
 		wg.Wait()
 	}
 }
@@ -3967,8 +3963,8 @@ func TestCreateWorkingDir(t *testing.T) {
 		name    string
 		cwd     string
 		wantCwd string
-		pathLen int
 		wantErr string
+		pathLen int
 	}{
 		{name: "MissingDirectory", cwd: "new/working/dir", wantCwd: "new/working/dir"},
 		{name: "TrailingSlash", cwd: "new/working/dir/", wantCwd: "new/working/dir"},
@@ -4228,8 +4224,8 @@ func TestTTYField(t *testing.T) {
 
 	testCases := []struct {
 		name         string
-		useTTY       bool
 		wantTTYField string
+		useTTY       bool
 	}{
 		{
 			name:         "no tty",
@@ -5018,7 +5014,7 @@ func TestFDPassingExec(t *testing.T) {
 
 // findInPath finds a filename in the PATH environment variable.
 func findInPath(filename string) string {
-	for _, dir := range strings.Split(os.Getenv("PATH"), ":") {
+	for dir := range strings.SplitSeq(os.Getenv("PATH"), ":") {
 		fullPath := filepath.Join(dir, filename)
 		if _, err := os.Stat(fullPath); err == nil {
 			return fullPath
@@ -5603,7 +5599,7 @@ func TestLookupEROFS(t *testing.T) {
 			t.Fatalf("os.Mkdir() failed: %v", err)
 		}
 		randomFiles := make([]string, 0, size)
-		for i := 0; i < size; i++ {
+		for range size {
 			file, err := os.CreateTemp(sourceDir, "")
 			if err != nil {
 				t.Fatalf("os.CreateTemp() failed: %v", err)
@@ -5649,10 +5645,6 @@ func TestLookupEROFS(t *testing.T) {
 			t.Fatalf("exec: umount %q, err: %v, out: %s", targetDir, err, out)
 		}
 	}
-}
-
-func int64Ptr(v int64) *int64 {
-	return &v
 }
 
 func TestSpecValidation(t *testing.T) {
@@ -5855,18 +5847,18 @@ func TestSpecValidation(t *testing.T) {
 				spec.Linux = &specs.Linux{
 					Resources: &specs.LinuxResources{
 						Memory: &specs.LinuxMemory{
-							Limit:       int64Ptr(1),
-							Swap:        int64Ptr(2),
-							Reservation: int64Ptr(3),
+							Limit:       new(int64(1)),
+							Swap:        new(int64(2)),
+							Reservation: new(int64(3)),
 						},
 					},
 				}
 				restoreSpec.Linux = &specs.Linux{
 					Resources: &specs.LinuxResources{
 						Memory: &specs.LinuxMemory{
-							Limit:       int64Ptr(1),
-							Swap:        int64Ptr(2),
-							Reservation: int64Ptr(5),
+							Limit:       new(int64(1)),
+							Swap:        new(int64(2)),
+							Reservation: new(int64(5)),
 						},
 					},
 				}
@@ -6556,7 +6548,7 @@ func TestSaveRestoreExecReconfigure(t *testing.T) {
 
 	checkpointOpts.SaveRestoreExecContainerID = cont.ID
 	var lastImage string
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		lastImage = imageDir(fmt.Sprintf("image%d", i))
 		if err := cont.Checkpoint(conf, lastImage, checkpointOpts); err != nil {
 			t.Fatalf("checkpoint %d failed: %v", i+1, err)

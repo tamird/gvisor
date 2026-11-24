@@ -25,23 +25,14 @@ import (
 //
 // It is safe to call Route's methods from multiple goroutines.
 type Route struct {
-	routeInfo routeInfo
+	// localAddressEndpoint is the local address this route is associated with.
+	// +checklocks:mu
+	localAddressEndpoint AssignableAddressEndpoint
 
 	// localAddressNIC is the interface the address is associated with.
 	// TODO(gvisor.dev/issue/4548): Remove this field once we can query the
 	// address's assigned status without the NIC.
 	localAddressNIC *nic
-
-	// mu protects annotated fields below.
-	mu routeRWMutex
-
-	// localAddressEndpoint is the local address this route is associated with.
-	// +checklocks:mu
-	localAddressEndpoint AssignableAddressEndpoint
-
-	// remoteLinkAddress is the link-layer (MAC) address of the next hop.
-	// +checklocks:mu
-	remoteLinkAddress tcpip.LinkAddress
 
 	// outgoingNIC is the interface this route uses to write packets.
 	outgoingNIC *nic
@@ -54,6 +45,14 @@ type Route struct {
 	// neighbor cache.
 	// +checklocks:mu
 	neighborEntry *neighborEntry
+
+	// remoteLinkAddress is the link-layer (MAC) address of the next hop.
+	// +checklocks:mu
+	remoteLinkAddress tcpip.LinkAddress
+	routeInfo         routeInfo
+
+	// mu protects annotated fields.
+	mu routeRWMutex
 
 	// mtu is the maximum transmission unit to use for this route.
 	// If mtu is 0, this field is ignored and the MTU of the outgoing NIC
@@ -365,8 +364,8 @@ func (r *Route) ResolveWith(addr tcpip.LinkAddress) {
 
 // ResolvedFieldsResult is the result of a route resolution attempt.
 type ResolvedFieldsResult struct {
-	RouteInfo RouteInfo
 	Err       tcpip.Error
+	RouteInfo RouteInfo
 }
 
 // ResolvedFields attempts to resolve the remote link address if it is not

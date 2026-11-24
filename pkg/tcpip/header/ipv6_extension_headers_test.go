@@ -127,9 +127,9 @@ func TestIPv6UnknownExtHdrOption(t *testing.T) {
 
 func TestIPv6OptionsExtHdrIterErr(t *testing.T) {
 	tests := []struct {
+		err   error
 		name  string
 		bytes []byte
-		err   error
 	}{
 		{
 			name:  "Single unknown with zero length",
@@ -509,10 +509,10 @@ func makeBufferFromByteBuffers(bs ...[]byte) buffer.Buffer {
 
 func TestIPv6ExtHdrIterErr(t *testing.T) {
 	tests := []struct {
+		err          error
+		payload      buffer.Buffer
 		name         string
 		firstNextHdr IPv6ExtensionHeaderIdentifier
-		payload      buffer.Buffer
-		err          error
 	}{
 		{
 			name:         "Upper layer only without data",
@@ -699,10 +699,10 @@ func TestIPv6ExtHdrIter(t *testing.T) {
 	routingExtHdrWithUpperLayerData := []byte{255, 0, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4}
 	upperLayerData := []byte{1, 2, 3, 4}
 	tests := []struct {
-		name         string
-		firstNextHdr IPv6ExtensionHeaderIdentifier
 		payload      buffer.Buffer
+		name         string
 		expected     []IPv6PayloadHeader
+		firstNextHdr IPv6ExtensionHeaderIdentifier
 	}{
 		// With a non-atomic fragment that is not the first fragment, the payload
 		// after the fragment will not be parsed because the payload is expected to
@@ -1027,10 +1027,10 @@ var _ IPv6SerializableHopByHopOption = (*dummyHbHOptionSerializer)(nil)
 // dummyHbHOptionSerializer provides a generic implementation of
 // IPv6SerializableHopByHopOption for use in tests.
 type dummyHbHOptionSerializer struct {
-	id          IPv6ExtHdrOptionIdentifier
 	payload     *buffer.View
 	align       int
 	alignOffset int
+	id          IPv6ExtHdrOptionIdentifier
 }
 
 // identifier implements IPv6SerializableHopByHopOption.
@@ -1076,11 +1076,11 @@ func TestIPv6HopByHopSerializer(t *testing.T) {
 		}
 	}
 	tests := []struct {
+		validate   func(*testing.T, IPv6SerializableHopByHopOption, IPv6ExtHdrOption)
 		name       string
-		nextHeader uint8
 		options    []IPv6SerializableHopByHopOption
 		expect     []byte
-		validate   func(*testing.T, IPv6SerializableHopByHopOption, IPv6ExtHdrOption)
+		nextHeader uint8
 	}{
 		{
 			name:       "single option",
@@ -1254,8 +1254,8 @@ var _ IPv6SerializableExtHdr = (*dummyIPv6ExtHdrSerializer)(nil)
 //
 // The dummy header always carries the nextHeader value in the first byte.
 type dummyIPv6ExtHdrSerializer struct {
-	id             IPv6ExtensionHeaderIdentifier
 	headerContents []byte
+	id             IPv6ExtensionHeaderIdentifier
 }
 
 // identifier implements IPv6SerializableExtHdr.
@@ -1278,8 +1278,8 @@ func TestIPv6ExtHdrSerializer(t *testing.T) {
 	tests := []struct {
 		name             string
 		headers          []IPv6SerializableExtHdr
-		nextHeader       tcpip.TransportProtocolNumber
 		expectSerialized []byte
+		nextHeader       tcpip.TransportProtocolNumber
 		expectNextHeader uint8
 	}{
 		{

@@ -431,15 +431,13 @@ func TestJobControlSignalRootContainer(t *testing.T) {
 		ws unix.WaitStatus
 		wg sync.WaitGroup
 	)
-	wg.Add(1)
-	go func() {
+	wg.Go(func() {
 		var err error
 		ws, err = c.Wait()
 		if err != nil {
 			t.Errorf("error waiting on container: %v", err)
 		}
-		wg.Done()
-	}()
+	})
 
 	// Wait for bash to start.
 	expectedPL := []*controlapi.Process{
@@ -627,10 +625,10 @@ type blockingBuffer struct {
 	// A send to readCh indicates that a previously empty buffer now has
 	// data for reading.
 	readCh chan struct{}
+	buf    bytes.Buffer
 
 	// mu protects buf.
-	mu  sync.Mutex
-	buf bytes.Buffer
+	mu sync.Mutex
 }
 
 func newBlockingBuffer() *blockingBuffer {
@@ -740,7 +738,7 @@ func TestConsoleInDevpts(t *testing.T) {
 	// Each exec console gets its own node, which is removed after the exec
 	// process exits. Each exec therefore sees exactly two nodes: the root
 	// container console and its own.
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		pid, out, finish := startPTYExec(t, conf, c, `echo "name=$(tty) nodes=$(ls /dev/pts | grep -c '^[0-9]') end"`)
 		m := regexp.MustCompile(`name=/dev/pts/([0-9]+) nodes=([0-9]+) end`).FindStringSubmatch(out)
 		if m == nil {
@@ -857,8 +855,8 @@ func processTTY(t *testing.T, c *Container, pid int32) string {
 
 // lockedBuffer is a thread-safe bytes.Buffer.
 type lockedBuffer struct {
-	mu  sync.Mutex
 	buf bytes.Buffer
+	mu  sync.Mutex
 }
 
 // Write implements io.Writer.Write.

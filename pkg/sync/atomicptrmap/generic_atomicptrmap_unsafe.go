@@ -101,7 +101,7 @@ func (m *AtomicPtrMap) shard(hash uintptr) *apmShard {
 	// nogo is dumb).
 	const indexLSB = unsafe.Sizeof(uintptr(0))*8 - ShardOrder
 	index := hash >> indexLSB
-	return (*apmShard)(unsafe.Pointer(uintptr(unsafe.Pointer(&m.shards)) + (index * unsafe.Sizeof(apmShard{}))))
+	return (*apmShard)(unsafe.Add(unsafe.Pointer(&m.shards), index*unsafe.Sizeof(apmShard{})))
 }
 
 type apmShard struct {
@@ -112,16 +112,16 @@ type apmShard struct {
 }
 
 type apmShardMutationData struct {
-	dirtyMu  sync.Mutex // serializes slot transitions out of empty
-	dirty    uintptr    // # slots with val != nil
-	count    uintptr    // # slots with val != nil and val != tombstone()
-	rehashMu sync.Mutex // serializes rehashing
+	dirtyMu  sync.Mutex     // serializes slot transitions out of empty
+	dirty    uintptr        // # slots with val != nil
+	count    atomic.Uintptr // # slots with val != nil and val != tombstone()
+	rehashMu sync.Mutex     // serializes rehashing
 }
 
 type apmShardLookupData struct {
-	seq   sync.SeqCount  // allows atomic reads of slots+mask
 	slots unsafe.Pointer // [mask+1]slot or nil; protected by rehashMu/seq
 	mask  uintptr        // always (a power of 2) - 1; protected by rehashMu/seq
+	seq   sync.SeqCount  // allows atomic reads of slots+mask
 }
 
 const (
@@ -171,7 +171,7 @@ type apmSlot struct {
 }
 
 func apmSlotAt(slots unsafe.Pointer, pos uintptr) *apmSlot {
-	return (*apmSlot)(unsafe.Pointer(uintptr(slots) + pos*unsafe.Sizeof(apmSlot{})))
+	return (*apmSlot)(unsafe.Add(slots, pos*unsafe.Sizeof(apmSlot{})))
 }
 
 var tombstoneObj byte
@@ -293,7 +293,7 @@ retry:
 				slot.key = key
 				atomic.StorePointer(&slot.val, newVal) // transitions slot to full
 				shard.dirty++
-				atomic.AddUintptr(&shard.count, 1)
+				shard.count.Add(1)
 				shard.dirtyMu.Unlock()
 				return nil
 			}
@@ -317,11 +317,11 @@ retry:
 				}
 				if atomic.CompareAndSwapPointer(&slot.val, slotVal, newVal) {
 					if slotVal == tombstone() {
-						atomic.AddUintptr(&shard.count, 1)
+						shard.count.Add(1)
 						return nil
 					}
 					if newVal == tombstone() {
-						atomic.AddUintptr(&shard.count, ^uintptr(0) /* -1 */)
+						shard.count.Add(^uintptr(0) /* -1 */)
 					}
 					return (*Value)(slotVal)
 				}
@@ -364,7 +364,7 @@ func (shard *apmShard) rehash(oldSlots unsafe.Pointer) {
 	if oldSlots != nil {
 		oldSize := shard.mask + 1
 		newSize = oldSize
-		if count := atomic.LoadUintptr(&shard.count) + 1; count*apmExpansionThresholdDen > oldSize*apmExpansionThresholdNum {
+		if count := shard.count.Load() + 1; count*apmExpansionThresholdDen > oldSize*apmExpansionThresholdNum {
 			newSize *= 2
 		}
 	}
@@ -430,7 +430,7 @@ func (shard *apmShard) rehash(oldSlots unsafe.Pointer) {
 //
 // f must not call other methods on m.
 func (m *AtomicPtrMap) Range(f func(key Key, val *Value) bool) {
-	for si := 0; si < len(m.shards); si++ {
+	for si := range len(m.shards) {
 		shard := &m.shards[si]
 		if !shard.doRange(f) {
 			return
@@ -469,7 +469,7 @@ func (shard *apmShard) doRange(f func(key Key, val *Value) bool) bool {
 //
 //   - It is safe for f to call other methods on m.
 func (m *AtomicPtrMap) RangeRepeatable(f func(key Key, val *Value) bool) {
-	for si := 0; si < len(m.shards); si++ {
+	for si := range len(m.shards) {
 		shard := &m.shards[si]
 
 	retry:

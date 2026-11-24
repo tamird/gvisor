@@ -894,14 +894,12 @@ func (t *Task) execOnDestroyActions() {
 	}
 	ctx := t.k.SupervisorContext()
 	// Block S/R until all actions is executed.
-	t.k.tasks.aioGoroutines.Add(1)
 	// Run in another goroutine to avoid extra lock dependencies.
-	go func() {
-		defer t.k.tasks.aioGoroutines.Done()
+	t.k.tasks.aioGoroutines.Go(func() {
 		for act := range actions {
 			act.TaskDestroyAction(ctx)
 		}
-	}()
+	})
 }
 
 // Preconditions: The TaskSet mutex must be locked.
@@ -1000,6 +998,20 @@ const (
 
 // WaitOptions controls the behavior of Task.Wait.
 type WaitOptions struct {
+	// If BlockInterruptErr is not nil, Wait will block until either an event
+	// is available or there are no tasks that could produce a waitable event;
+	// if that blocking is interrupted, Wait returns BlockInterruptErr. If
+	// BlockInterruptErr is nil, Wait will not block.
+	BlockInterruptErr error
+
+	// If SpecificThreadGroup is non-nil, only events from the specific thread group
+	// are eligible to be waited for.
+	SpecificThreadGroup *ThreadGroup
+
+	// Events is a bitwise combination of the events defined above that specify
+	// what events are of interest to the call to Wait.
+	Events waiter.EventMask
+
 	// If SpecificTID is non-zero, only events from the task with thread ID
 	// SpecificTID are eligible to be waited for. SpecificTID is resolved in
 	// the PID namespace of the waiter (the method receiver of Task.Wait). If
@@ -1007,10 +1019,6 @@ type WaitOptions struct {
 	// waited for by the waiting task, then there are no waitable tasks and
 	// Wait will return ECHILD.
 	SpecificTID ThreadID
-
-	// If SpecificThreadGroup is non-nil, only events from the specific thread group
-	// are eligible to be waited for.
-	SpecificThreadGroup *ThreadGroup
 
 	// If SpecificPGID is non-zero, only events from ThreadGroups with a
 	// matching ProcessGroupID are eligible to be waited for. (Same
@@ -1038,20 +1046,10 @@ type WaitOptions struct {
 	// in the thread group of the waiter are eligible to be waited for.
 	SiblingChildren bool
 
-	// Events is a bitwise combination of the events defined above that specify
-	// what events are of interest to the call to Wait.
-	Events waiter.EventMask
-
 	// If ConsumeEvent is true, the Wait should consume the event such that it
 	// cannot be returned by a future Wait. Note that if a task exit is
 	// consumed in this way, in most cases the task will be reaped.
 	ConsumeEvent bool
-
-	// If BlockInterruptErr is not nil, Wait will block until either an event
-	// is available or there are no tasks that could produce a waitable event;
-	// if that blocking is interrupted, Wait returns BlockInterruptErr. If
-	// BlockInterruptErr is nil, Wait will not block.
-	BlockInterruptErr error
 
 	// If NonBlock is true, Wait will not block.
 	NonBlock bool

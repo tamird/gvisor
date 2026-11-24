@@ -64,11 +64,11 @@ type runData struct {
 
 // KVM represents a lightweight VM context.
 type KVM struct {
-	// KVM never changes mm_structs.
-	platform.UseHostProcessMemoryBarrier
-
 	// machine is the backing VM.
 	machine *machine
+
+	// KVM never changes mm_structs.
+	platform.UseHostProcessMemoryBarrier
 }
 
 var (
@@ -128,8 +128,8 @@ func New(deviceFile *fd.FD, config Config) (*KVM, error) {
 	config.StartupTimer.Reached("host membarrier probed")
 
 	return &KVM{
-		UseHostProcessMemoryBarrier: platform.UseHostProcessMemoryBarrier{MemBarrier: memBarrier},
-		machine:                     machine,
+		MemBarrier: memBarrier,
+		machine:    machine,
 	}, nil
 }
 

@@ -74,36 +74,34 @@ func encodeMSS(mss uint16) uint32 {
 // and must not be accessed or have its methods called concurrently as they
 // may mutate the stored objects.
 type listenContext struct {
+	// hasher is the hash function used to generate a SYN cookie.
+	//
+	// +checklocks:hasherMu
+	hasher   hash.Hash
 	stack    *stack.Stack
 	protocol *protocol
+
+	// listenEP is a reference to the listening endpoint associated with
+	// this context. Can be nil if the context is created by the forwarder.
+	listenEP *Endpoint
+	hasherMu hasherMutex
 
 	// rcvWnd is the receive window that is sent by this listening context
 	// in the initial SYN-ACK.
 	rcvWnd seqnum.Size
+
+	// netProto indicates the network protocol(IPv4/v6) for the listening
+	// endpoint.
+	netProto tcpip.NetworkProtocolNumber
 
 	// nonce are random bytes that are initialized once when the context
 	// is created and used to seed the hash function when generating
 	// the SYN cookie.
 	nonce [2][sha1.BlockSize]byte
 
-	// listenEP is a reference to the listening endpoint associated with
-	// this context. Can be nil if the context is created by the forwarder.
-	listenEP *Endpoint
-
-	hasherMu hasherMutex
-
-	// hasher is the hash function used to generate a SYN cookie.
-	//
-	// +checklocks:hasherMu
-	hasher hash.Hash
-
 	// v6Only is true if listenEP is a dual stack socket and has the
 	// IPV6_V6ONLY option set.
 	v6Only bool
-
-	// netProto indicates the network protocol(IPv4/v6) for the listening
-	// endpoint.
-	netProto tcpip.NetworkProtocolNumber
 }
 
 // timeStamp returns an 8-bit timestamp with a granularity of 64 seconds.

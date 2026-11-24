@@ -33,5 +33,5 @@ func (i *Image) pointerAt(off uint64) unsafe.Pointer {
 //   - d is a pointer to the memory backed by image.
 //   - d is not the last dirent in its block.
 func direntAfter(d *Dirent) *Dirent {
-	return (*Dirent)(unsafe.Pointer(uintptr(unsafe.Pointer(d)) + DirentSize))
+	return (*Dirent)(unsafe.Add(unsafe.Pointer(d), DirentSize))
 }

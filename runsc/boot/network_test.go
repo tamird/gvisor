@@ -28,7 +28,6 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/network/ipv4"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/icmp"
-	"gvisor.dev/gvisor/pkg/urpc"
 	"gvisor.dev/gvisor/runsc/boot/sentryapi"
 )
 
@@ -159,9 +158,7 @@ func TestCreateLinksAndRoutesExternalLoopback(t *testing.T) {
 
 			n := &Network{Stack: s}
 			args := &sentryapi.CreateLinksAndRoutesArgs{
-				FilePayload: urpc.FilePayload{
-					Files: []*os.File{proxyEPFile, ethEPFile},
-				},
+				Files: []*os.File{proxyEPFile, ethEPFile},
 				FDBasedLinks: []sentryapi.FDBasedLink{
 					{
 						Name: "proxy",

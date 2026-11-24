@@ -19,6 +19,7 @@ package nftables
 
 import (
 	"fmt"
+	"slices"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/marshal/primitive"
@@ -47,10 +48,12 @@ type ctMatchInfo struct {
 // It evaluates connection tracking state and
 // direction against packet conntrack info.
 type compatCTMatch struct {
-	// revision is the XTables conntrack match extension revision (1, 2, or 3).
-	revision uint32
 	// infoData is the raw netlink attribute payload for serialization (NFTA_MATCH_INFO).
 	infoData []byte
+
+	// revision is the XTables conntrack match extension revision (1, 2, or 3).
+	revision uint32
+
 	// info holds the precomputed match flags and state masks.
 	info ctMatchInfo
 }
@@ -120,7 +123,7 @@ func (op *compatCTMatch) checkCompatibility(cCtx *opCompatCtx) *syserr.Annotated
 // deepCopy implements operation.deepCopy.
 func (op *compatCTMatch) deepCopy() operation {
 	opCopy := *op
-	opCopy.infoData = append([]byte(nil), op.infoData...)
+	opCopy.infoData = slices.Concat[[]byte](op.infoData)
 	return &opCopy
 }
 

@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build amd64
-// +build amd64
 
 package pagetables
 
@@ -113,7 +112,7 @@ func (w *Walker) walkPMDs(pmdEntries *PTEs, start, end uintptr) (bool, uint16) {
 			if w.visitor.requiresSplit() && (start&(pmdSize-1) != 0 || end < next(start, pmdSize)) {
 				// Install the relevant entries.
 				pteEntries = w.pageTables.Allocator.NewPTEs()
-				for index := uint16(0); index < entriesPerPage; index++ {
+				for index := range uint16(entriesPerPage) {
 					pteEntries[index].Set(
 						pmdEntry.Address()+(pteSize*uintptr(index)),
 						pmdEntry.Opts())
@@ -207,7 +206,7 @@ func (w *Walker) walkPUDs(pudEntries *PTEs, start, end uintptr) (bool, uint16) {
 			if w.visitor.requiresSplit() && (start&(pudSize-1) != 0 || end < next(start, pudSize)) {
 				// Install the relevant entries.
 				pmdEntries = w.pageTables.Allocator.NewPTEs() // escapes: see above.
-				for index := uint16(0); index < entriesPerPage; index++ {
+				for index := range uint16(entriesPerPage) {
 					pmdEntries[index].SetSuper()
 					pmdEntries[index].Set(
 						pudEntry.Address()+(pmdSize*uintptr(index)),

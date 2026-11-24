@@ -92,13 +92,13 @@ func (rc *RedirectHostCommand) execute() error {
 }
 
 type installProgramAndMapOpts struct {
-	program     []byte
 	iface       *net.Interface
-	unpin       bool
 	pinDir      string
 	mapPath     string
 	programPath string
 	linkPath    string
+	program     []byte
+	unpin       bool
 }
 
 func installProgramAndMap(opts installProgramAndMapOpts) error {

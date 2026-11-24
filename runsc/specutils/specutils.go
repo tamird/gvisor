@@ -816,11 +816,11 @@ func OpenDebugLogFile(logPattern string, opts log.FileOpts) (*os.File, error) {
 //   - %ID%: is replaced with SandboxID
 //   - %CID%: is replaced with CID (container ID)
 type LogFileOpts struct {
+	Timestamp time.Time
 	SandboxID string
 	CID       string
 	Command   string
 	Test      string
-	Timestamp time.Time
 }
 
 // Build implements log.FileOpts.Build.
@@ -857,7 +857,7 @@ func IsDebugCommand(conf *config.Config, command string) bool {
 		filter = filter[1:]
 		rv = false
 	}
-	for _, cmd := range strings.Split(filter, ",") {
+	for cmd := range strings.SplitSeq(filter, ",") {
 		if cmd == command {
 			return rv
 		}
@@ -1011,8 +1011,8 @@ func EnvVar(env []string, name string) (string, bool) {
 	}
 	prefix := name + "="
 	for _, e := range env {
-		if strings.HasPrefix(e, prefix) {
-			return strings.TrimPrefix(e, prefix), true
+		if after, ok := strings.CutPrefix(e, prefix); ok {
+			return after, true
 		}
 	}
 	return "", false
@@ -1120,10 +1120,6 @@ func AnnotationToBool(spec *specs.Spec, annotation string) bool {
 	return ret
 }
 
-func boolPtr(b bool) *bool {
-	return &b
-}
-
 // Features returns the features supported by the runtime.
 func Features() *features.Features {
 	featuresOnce.Do(func() {
@@ -1143,14 +1139,14 @@ func Features() *features.Features {
 				Namespaces:   KnownNamespaces(),
 				Capabilities: AllCapabilities().Bounding,
 				Cgroup: &features.Cgroup{
-					V1:          boolPtr(true),
-					V2:          boolPtr(false),
-					Systemd:     boolPtr(false),
-					SystemdUser: boolPtr(false),
-					Rdma:        boolPtr(false),
+					V1:          new(true),
+					V2:          new(false),
+					Systemd:     new(false),
+					SystemdUser: new(false),
+					Rdma:        new(false),
 				},
 				Seccomp: &features.Seccomp{
-					Enabled:        boolPtr(true),
+					Enabled:        new(true),
 					Actions:        knownSeccompActions(),
 					Operators:      knownSeccompOperators(),
 					Archs:          knownSeccompArchs(),
@@ -1158,17 +1154,17 @@ func Features() *features.Features {
 					SupportedFlags: supportedSeccompFlags(),
 				},
 				Apparmor: &features.Apparmor{
-					Enabled: boolPtr(false),
+					Enabled: new(false),
 				},
 				Selinux: &features.Selinux{
-					Enabled: boolPtr(false),
+					Enabled: new(false),
 				},
 				IntelRdt: &features.IntelRdt{
-					Enabled: boolPtr(false),
+					Enabled: new(false),
 				},
 				MountExtensions: &features.MountExtensions{
 					IDMap: &features.IDMap{
-						Enabled: boolPtr(true),
+						Enabled: new(true),
 					},
 				},
 			},

@@ -722,18 +722,18 @@ type ReadOptions struct {
 
 // ReadResult represents result for a successful Endpoint.Read.
 type ReadResult struct {
+	// ControlMessages is the control messages received.
+	ControlMessages ReceivableControlMessages
+
+	// RemoteAddr is the remote address if ReadOptions.NeedAddr is true.
+	RemoteAddr FullAddress
+
 	// Count is the number of bytes received and written to the buffer.
 	Count int
 
 	// Total is the number of bytes of the received packet. This can be used to
 	// determine whether the read is truncated.
 	Total int
-
-	// ControlMessages is the control messages received.
-	ControlMessages ReceivableControlMessages
-
-	// RemoteAddr is the remote address if ReadOptions.NeedAddr is true.
-	RemoteAddr FullAddress
 
 	// LinkPacketInfo is the link-layer information of the received packet if
 	// ReadOptions.NeedLinkPacketInfo is true.
@@ -1287,9 +1287,6 @@ type TCPInfoOption struct {
 	// RTO is the retransmission timeout for the endpoint.
 	RTO time.Duration
 
-	// State is the current endpoint protocol state.
-	State EndpointState
-
 	// CcState is the congestion control state.
 	CcState CongestionControlState
 
@@ -1305,6 +1302,9 @@ type TCPInfoOption struct {
 	// SndSsthresh is the threshold between slow start and congestion
 	// avoidance.
 	SndSsthresh uint32
+
+	// State is the current endpoint protocol state.
+	State EndpointState
 
 	// ReorderSeen indicates if reordering is seen in the endpoint.
 	ReorderSeen bool
@@ -2662,13 +2662,12 @@ func (*TransportEndpointStats) IsEndpointStats() {}
 // InitStatCounters initializes v's fields with nil StatCounter fields to new
 // StatCounters.
 func InitStatCounters(v reflect.Value) {
-	for i := 0; i < v.NumField(); i++ {
-		v := v.Field(i)
-		if s, ok := v.Addr().Interface().(**StatCounter); ok {
+	for _, v := range v.Fields() {
+		if s, ok := reflect.TypeAssert[**StatCounter](v.Addr()); ok {
 			if *s == nil {
 				*s = new(StatCounter)
 			}
-		} else if s, ok := v.Addr().Interface().(**IntegralStatCounterMap); ok {
+		} else if s, ok := reflect.TypeAssert[**IntegralStatCounterMap](v.Addr()); ok {
 			if *s == nil {
 				*s = new(IntegralStatCounterMap)
 				(*s).Init()
@@ -2695,7 +2694,7 @@ func clone(dst reflect.Value, src reflect.Value) {
 	for i := 0; i < dst.NumField(); i++ {
 		d := dst.Field(i)
 		s := src.Field(i)
-		if c, ok := s.Addr().Interface().(*StatCounter); ok {
+		if c, ok := reflect.TypeAssert[*StatCounter](s.Addr()); ok {
 			d.Addr().Interface().(*StatCounter).IncrementBy(c.Value())
 		} else {
 			clone(d, s)
@@ -2853,7 +2852,7 @@ func (a AddressWithPrefix) Subnet() Subnet {
 			address: a.Address,
 			mask:    AddressMask{length: addrLen},
 		}
-		for i := 0; i < addrLen; i++ {
+		for i := range addrLen {
 			sub.mask.mask[i] = 0xff
 		}
 		return sub
@@ -2862,7 +2861,7 @@ func (a AddressWithPrefix) Subnet() Subnet {
 	sa := Address{length: addrLen}
 	sm := AddressMask{length: addrLen}
 	n := uint(a.PrefixLen)
-	for i := 0; i < addrLen; i++ {
+	for i := range addrLen {
 		if n >= 8 {
 			sa.addr[i] = a.Address.addr[i]
 			sm.mask[i] = 0xff

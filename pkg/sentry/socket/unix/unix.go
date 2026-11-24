@@ -606,7 +606,7 @@ func (s *Socket) extractEndpoint(t *kernel.Task, sockaddr []byte) (transport.Bou
 		Path:               p,
 		FollowFinalSymlink: true,
 	}
-	ep, e := t.Kernel().VFS().BoundEndpointAt(t, t.Credentials(), &pop, &vfs.BoundEndpointOptions{path})
+	ep, e := t.Kernel().VFS().BoundEndpointAt(t, t.Credentials(), &pop, &vfs.BoundEndpointOptions{Addr: path})
 	root.DecRef(t)
 	if relPath {
 		start.DecRef(t)
@@ -777,10 +777,7 @@ func (s *Socket) RecvMsg(t *kernel.Task, dst usermem.IOSequence, flags int, have
 		rightsLen -= credLen
 	}
 	// FDs are 32 bit (4 byte) ints.
-	numRights := rightsLen / 4
-	if numRights < 0 {
-		numRights = 0
-	}
+	numRights := max(rightsLen/4, 0)
 
 	r := EndpointReader{
 		Ctx:       t,
@@ -920,7 +917,7 @@ func convertAddress(addr transport.Address) (linux.SockAddr, uint32) {
 	var out linux.SockAddrUnix
 	out.Family = linux.AF_UNIX
 	l := len([]byte(addr.Addr))
-	for i := 0; i < l; i++ {
+	for i := range l {
 		out.Path[i] = int8(addr.Addr[i])
 	}
 

@@ -289,8 +289,7 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 		e.requeueOnRestore()
 		connectedLoading.Done()
 	case epState == StateListen:
-		tcpip.AsyncLoading.Add(1)
-		go func() {
+		tcpip.AsyncLoading.Go(func() {
 			connectedLoading.Wait()
 			e.LockUser()
 			// All endpoints will be moved to initial state after
@@ -302,12 +301,10 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 			e.UnlockUser()
 			e.requeueOnRestore()
 			listenLoading.Done()
-			tcpip.AsyncLoading.Done()
-		}()
+		})
 	case epState == StateConnecting:
 		// Initial SYN hasn't been sent yet so initiate a connect.
-		tcpip.AsyncLoading.Add(1)
-		go func() {
+		tcpip.AsyncLoading.Go(func() {
 			connectedLoading.Wait()
 			listenLoading.Wait()
 			bind()
@@ -317,8 +314,7 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 				e.Close()
 			}
 			connectingLoading.Done()
-			tcpip.AsyncLoading.Done()
-		}()
+		})
 	case epState == StateSynSent || epState == StateSynRecv:
 		tcpip.AsyncLoading.Add(1)
 		go func() {
@@ -351,14 +347,12 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 			e.requeueOnRestore()
 		}()
 	case epState == StateBound:
-		tcpip.AsyncLoading.Add(1)
-		go func() {
+		tcpip.AsyncLoading.Go(func() {
 			connectedLoading.Wait()
 			listenLoading.Wait()
 			connectingLoading.Wait()
 			bind()
-			tcpip.AsyncLoading.Done()
-		}()
+		})
 	case epState == StateClose:
 		e.isPortReserved = false
 		e.state.Store(uint32(StateClose))

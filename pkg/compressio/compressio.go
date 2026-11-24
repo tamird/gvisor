@@ -232,8 +232,6 @@ func (w *worker) work(compress bool, level int) {
 }
 
 type hashPool struct {
-	mu sync.Mutex
-
 	// key is a private copy of the key used to create hash objects. It is
 	// immutable after construction, including during lazy worker setup.
 	key []byte
@@ -243,6 +241,7 @@ type hashPool struct {
 	//
 	// +checklocks:mu
 	hashes []hash.Hash
+	mu     sync.Mutex
 }
 
 // getHash gets a hash object for the pool. It should only be called when the
@@ -276,19 +275,34 @@ func (p *hashPool) putHash(h hash.Hash) {
 
 // pool is common functionality for reader/writers.
 type pool struct {
-	// mu serializes construction, Reader.Read, Writer.Write, Writer.Close,
-	// and finalizer cleanup, including synchronous completion callbacks.
-	mu sync.Mutex
+	// err is the first returned terminal Read or Write error. Submitted work is
+	// drained before returning it, so later calls must not schedule more work.
+	//
+	// +checklocks:mu
+	err error
+
+	// buf is the current active buffer; the exact semantics of this buffer
+	// depend on whether this is a reader or a writer.
+	//
+	// +checklocks:mu
+	buf *bytes.Buffer
+
+	// hashPool is the hash object pool. It cannot be embedded into pool
+	// itself as worker refers to it and that would stop pool from being
+	// GCed.
+	//
+	// +checklocks:mu
+	hashPool *hashPool
 
 	// workers are the compression/decompression workers.
 	//
 	// +checklocks:mu
 	workers []worker
 
-	// chunkSize is the chunk size. This is the first four bytes in the
-	// stream and is shared across both the reader and writer. It is immutable
-	// after construction.
-	chunkSize uint32
+	// lastSum records the hash of the last chunk processed.
+	//
+	// +checklocks:mu
+	lastSum []byte
 
 	// nextInput is the next worker for input (scheduling).
 	//
@@ -300,29 +314,14 @@ type pool struct {
 	// +checklocks:mu
 	nextOutput int
 
-	// buf is the current active buffer; the exact semantics of this buffer
-	// depend on whether this is a reader or a writer.
-	//
-	// +checklocks:mu
-	buf *bytes.Buffer
+	// mu serializes construction, Reader.Read, Writer.Write, Writer.Close,
+	// and finalizer cleanup, including synchronous completion callbacks.
+	mu sync.Mutex
 
-	// err is the first returned terminal Read or Write error. Submitted work is
-	// drained before returning it, so later calls must not schedule more work.
-	//
-	// +checklocks:mu
-	err error
-
-	// lastSum records the hash of the last chunk processed.
-	//
-	// +checklocks:mu
-	lastSum []byte
-
-	// hashPool is the hash object pool. It cannot be embedded into pool
-	// itself as worker refers to it and that would stop pool from being
-	// GCed.
-	//
-	// +checklocks:mu
-	hashPool *hashPool
+	// chunkSize is the chunk size. This is the first four bytes in the
+	// stream and is shared across both the reader and writer. It is immutable
+	// after construction.
+	chunkSize uint32
 }
 
 // init initializes the worker pool.
@@ -435,6 +434,7 @@ func (p *pool) schedule(c *chunk, callback func(*chunk) error) error {
 
 // Reader is a compressed reader.
 type Reader struct {
+	// pool must stay first so its finalizer receives the allocation base.
 	pool
 
 	// in is the source; the interface value is immutable. Read calls it with
@@ -733,6 +733,7 @@ func (r *Reader) Close() error {
 
 // Writer is a compressed writer.
 type Writer struct {
+	// pool must stay first so its finalizer receives the allocation base.
 	pool
 
 	// out is the underlying writer; the interface value is immutable.
@@ -763,11 +764,9 @@ var _ io.Writer = (*Writer)(nil)
 // O(chunkSize * [1+GOMAXPROCS]).
 func NewWriter(out io.Writer, key []byte, chunkSize uint32, level int) (*Writer, error) {
 	w := &Writer{
-		pool: pool{
-			chunkSize: chunkSize,
-			buf:       bufPool.Get().(*bytes.Buffer),
-		},
-		out: out,
+		chunkSize: chunkSize,
+		buf:       bufPool.Get().(*bytes.Buffer),
+		out:       out,
 	}
 	// init registers a finalizer. Order subsequent initialization before
 	// finalizer cleanup, including when a header write fails.
@@ -909,10 +908,7 @@ func (w *Writer) Write(p []byte) (done int, err error) {
 		}
 
 		// Read from p into w.buf.
-		toWrite := len(p) - done
-		if toWrite > left {
-			toWrite = left
-		}
+		toWrite := min(len(p)-done, left)
 		n, err := w.buf.Write(p[done : done+toWrite])
 		done += n
 		if err != nil {

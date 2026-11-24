@@ -227,11 +227,11 @@ func TestGetLimits(t *testing.T) {
 		name           string
 		mem            string
 		cpu            string
+		limitPath      string
+		path           string
 		expMem         uint64
 		expCPUQuota    int64
 		expCPUPeriod   int64
-		limitPath      string
-		path           string
 		writeParentCPU bool
 	}{
 		{
@@ -542,10 +542,10 @@ func TestParseCPUMax(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	for _, tc := range []struct {
+		updatedResources *specs.LinuxResources
 		name             string
 		initialCPUMax    string
 		initialMemMax    string
-		updatedResources *specs.LinuxResources
 		wantCPUQuota     int64
 		wantCPUPeriod    int64
 		wantMemory       uint64
@@ -637,13 +637,13 @@ func TestUpdate(t *testing.T) {
 
 func TestUpdateUnified(t *testing.T) {
 	for _, tc := range []struct {
-		name      string
 		resources *specs.LinuxResources
-		// pre-created files in the fake cgroup.
-		seedFiles []string
 		// expected file contents after Update()
 		wantFiles  map[string]string
+		name       string
 		wantErrSub string
+		// pre-created files in the fake cgroup.
+		seedFiles []string
 	}{
 		{
 			name: "sets arbitrary unified key",

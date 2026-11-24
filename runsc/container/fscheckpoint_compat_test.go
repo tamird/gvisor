@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -47,11 +48,11 @@ var (
 )
 
 type snapshotMetadata struct {
-	CommitTimestampUnix int64      `json:"commit_timestamp_unix"`
 	CommitHash          string     `json:"commit_hash,omitempty"`
 	RunscVersion        string     `json:"runsc_version,omitempty"`
-	ManifestVersion     uint64     `json:"manifest_version,omitempty"`
 	FSTreeArgs          [][]string `json:"fs_tree_args,omitempty"`
+	CommitTimestampUnix int64      `json:"commit_timestamp_unix"`
+	ManifestVersion     uint64     `json:"manifest_version,omitempty"`
 }
 
 func readManifestVersion(manifestPath string) (uint64, error) {
@@ -110,9 +111,9 @@ func detectRunscVersion(t *testing.T, runscBin string) string {
 	if err != nil {
 		t.Fatalf("Failed to run %q --version: %v", runscBin, err)
 	}
-	for _, line := range strings.Split(string(out), "\n") {
-		if strings.HasPrefix(line, "runsc version ") {
-			return strings.TrimSpace(strings.TrimPrefix(line, "runsc version "))
+	for line := range strings.SplitSeq(string(out), "\n") {
+		if after, ok := strings.CutPrefix(line, "runsc version "); ok {
+			return strings.TrimSpace(after)
 		}
 	}
 	return strings.TrimSpace(string(out))
@@ -587,7 +588,7 @@ func TestFSCheckpointCompatibility(t *testing.T) {
 	for ver := range latestByVersion {
 		versions = append(versions, ver)
 	}
-	sort.Slice(versions, func(i, j int) bool { return versions[i] < versions[j] })
+	slices.Sort(versions)
 
 	for _, ver := range versions {
 		snap := latestByVersion[ver]

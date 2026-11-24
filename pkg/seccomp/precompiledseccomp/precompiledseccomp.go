@@ -32,15 +32,15 @@ import (
 // Program is a precompiled seccomp-bpf program.
 // To get actual BPF instructions, call the `RenderInstructions` function.
 type Program struct {
+	// VarOffsets maps variable names to the uint32-based offsets where these
+	// variables show up in `Bytecode32`.
+	VarOffsets map[string][]int
+
 	// Name is the name of this program within a set of embedded programs.
 	Name string
 
 	// Bytecode32 is the raw BPF bytecode represented as a sequence of uint32s.
 	Bytecode32 []uint32
-
-	// VarOffsets maps variable names to the uint32-based offsets where these
-	// variables show up in `Bytecode32`.
-	VarOffsets map[string][]int
 }
 
 // Values is an assignment of variables to uint32 values.
@@ -79,10 +79,10 @@ func (v Values) PopUint64(varName string) uint64 {
 // Returns the empty string if the variable name is not a suffixed 32-bit
 // variable name.
 func (v Values) Uint64VarName(varName string) string {
-	if strings.HasSuffix(varName, uint64VarSuffixHigh) {
-		varName = strings.TrimSuffix(varName, uint64VarSuffixHigh)
-	} else if strings.HasSuffix(varName, uint64VarSuffixLow) {
-		varName = strings.TrimSuffix(varName, uint64VarSuffixLow)
+	if before, ok := strings.CutSuffix(varName, uint64VarSuffixHigh); ok {
+		varName = before
+	} else if before, ok := strings.CutSuffix(varName, uint64VarSuffixLow); ok {
+		varName = before
 	} else {
 		return "" // Not a suffixed variable.
 	}
@@ -186,7 +186,7 @@ func Precompile(name string, varNames []string, fn func(Values) *seccomp.Program
 		if len(offsets1) != len(offsets2) {
 			return Program{}, fmt.Errorf("var %q has different number of offsets depending on its value: with value 0x%08x it showed up %d times, but with value %d it showed up %d times", varName, values1[varName], len(offsets1), values2[varName], len(offsets2))
 		}
-		for i := 0; i < len(offsets1); i++ {
+		for i := range len(offsets1) {
 			if offsets1[i] != offsets2[i] {
 				return Program{}, fmt.Errorf("var %q has different offsets depending on its value: with value 0x%08x it showed up at offsets %v, but with value %d it showed up at offsets %v", varName, values1[varName], offsets1, values2[varName], offsets2)
 			}

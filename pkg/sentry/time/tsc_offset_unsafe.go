@@ -47,7 +47,8 @@ var modeOffset atomic.Pointer[atomicbitops.Int64]
 
 // aliasedOffset holds the pages backing modeOffset.
 var aliasedOffset struct {
-	once sync.Once
+	// err is the error from allocating the pages, if any.
+	err error
 
 	// hostPage points to the page holding tscOffset. It is nil until
 	// EnableGuestAliasedOffset succeeds.
@@ -61,9 +62,7 @@ var aliasedOffset struct {
 	// guestPage and err are only read after once.Do returns, which orders
 	// those reads after the writes in the once function.
 	guestPage uintptr
-
-	// err is the error from allocating the pages, if any.
-	err error
+	once      sync.Once
 }
 
 // EnableGuestAliasedOffset allocates the pages that let a platform apply a TSC

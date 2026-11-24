@@ -27,11 +27,38 @@ const DefaultSaveRestoreExecTimeout = 10 * time.Minute
 
 // SaveOpts contains options for the Save RPC call.
 type SaveOpts struct {
+	// Metadata is the set of metadata to prepend to the state file.
+	Metadata map[string]string `json:"metadata"`
+
+	// GraphEngine, when non-nil, overrides the process-wide state engine used
+	// for this checkpoint operation. When nil, the sandbox's configured state
+	// engine is used.
+	GraphEngine *bool `json:"graph_engine,omitempty"`
+
+	// ExecOpts contains options for executing a binary during save/restore.
+	ExecOpts SaveRestoreExecOpts
+
+	// CudaCheckpointPath is the path to the cuda-checkpoint binary.
+	CudaCheckpointPath string `json:"cuda_checkpoint_path"`
+
+	// RunscVersion is the runsc binary version.
+	RunscVersion string `json:"runsc_version"`
+
 	// Key is used to enable state integrity check.
 	Key []byte `json:"key"`
 
-	// Metadata is the set of metadata to prepend to the state file.
-	Metadata map[string]string `json:"metadata"`
+	// FilePayload contains the following:
+	// 1. checkpoint state file.
+	// 2. optional checkpoint pages metadata file (if HavePagesFile is true).
+	// 3. optional checkpoint pages file (if HavePagesFile is true).
+	// 4. 4 files (manifest, multi-tar, pages metadata, pages) per bundle in
+	//    SplitFSCheckpointPaths, in bundle order.
+	urpc.FilePayload
+
+	// SplitFSCheckpointPaths lists the filesystem checkpoint bundles to save in
+	// separate files. Filesystems not in any bundle are saved in the regular
+	// checkpoint files. Use the path "all-tmpfs" to include all tmpfs mounts.
+	SplitFSCheckpointPaths []fscheckpoint.Bundle `json:"split_fs_checkpoint_paths"`
 
 	// AppMFExcludeCommittedZeroPages is the value of
 	// pgalloc.SaveOpts.ExcludeCommittedZeroPages for the application memory
@@ -42,50 +69,23 @@ type SaveOpts struct {
 	// metadata file is provided.
 	HavePagesFile bool `json:"have_pages_file"`
 
-	// FilePayload contains the following:
-	// 1. checkpoint state file.
-	// 2. optional checkpoint pages metadata file (if HavePagesFile is true).
-	// 3. optional checkpoint pages file (if HavePagesFile is true).
-	// 4. 4 files (manifest, multi-tar, pages metadata, pages) per bundle in
-	//    SplitFSCheckpointPaths, in bundle order.
-	urpc.FilePayload
-
 	// Resume indicates if the sandbox process should continue running
 	// after checkpointing.
 	Resume bool
-
-	// ExecOpts contains options for executing a binary during save/restore.
-	ExecOpts SaveRestoreExecOpts
 
 	// If UseCheckpointGofer is true, the first and only file in FilePayload is
 	// a Unix domain socket connected to a URPC server implementing
 	// stateipc.AsyncFileServer and providing checkpoint files.
 	UseCheckpointGofer bool `json:"use_checkpoint_gofer"`
 
-	// CudaCheckpointPath is the path to the cuda-checkpoint binary.
-	CudaCheckpointPath string `json:"cuda_checkpoint_path"`
-
 	// CudaCheckpointSequential indicates whether cuda-checkpoint should be run
 	// sequentially (rather than in parallel).
 	CudaCheckpointSequential bool `json:"cuda_checkpoint_sequential"`
-
-	// SplitFSCheckpointPaths lists the filesystem checkpoint bundles to save in
-	// separate files. Filesystems not in any bundle are saved in the regular
-	// checkpoint files. Use the path "all-tmpfs" to include all tmpfs mounts.
-	SplitFSCheckpointPaths []fscheckpoint.Bundle `json:"split_fs_checkpoint_paths"`
-
-	// RunscVersion is the runsc binary version.
-	RunscVersion string `json:"runsc_version"`
 
 	// ValidateMetadata indicates whether filesystem implementations backed by
 	// remote filesystems should refresh metadata during save so that restore
 	// can validate file sizes and/or modification timestamps.
 	ValidateMetadata bool `json:"validate_metadata"`
-
-	// GraphEngine, when non-nil, overrides the process-wide state engine used
-	// for this checkpoint operation. When nil, the sandbox's configured state
-	// engine is used.
-	GraphEngine *bool `json:"graph_engine,omitempty"`
 }
 
 // SaveRestoreExecOpts contains options for executing a binary
@@ -95,9 +95,9 @@ type SaveRestoreExecOpts struct {
 	// The first element is the path to the binary.
 	Argv string
 
-	// Timeout is the timeout for waiting for the save/restore binary.
-	Timeout time.Duration
-
 	// ContainerID is the ID of the container that the save/restore binary executes in.
 	ContainerID string
+
+	// Timeout is the timeout for waiting for the save/restore binary.
+	Timeout time.Duration
 }

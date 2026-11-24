@@ -29,10 +29,25 @@ import (
 
 // ExecArgs is the set of arguments to exec, as sent over the control socket.
 type ExecArgs struct {
+	// Capabilities is the list of capabilities to give to the process.
+	Capabilities *auth.TaskCapabilities
+
 	// Filename is the filename to load.
 	//
 	// If this is provided as "", then the file will be guessed via Argv[0].
 	Filename string `json:"filename"`
+
+	// WorkingDirectory defines the working directory for the new process.
+	WorkingDirectory string `json:"wd"`
+
+	// ContainerID is the container for the process being executed.
+	ContainerID string
+
+	// FilePayload determines the files to give to the new process.
+	FilePayload
+
+	// ExtraKGIDs is the list of additional groups to which the user belongs.
+	ExtraKGIDs []auth.KGID
 
 	// Argv is a list of arguments.
 	Argv []string `json:"argv"`
@@ -40,25 +55,16 @@ type ExecArgs struct {
 	// Envv is a list of environment variables.
 	Envv []string `json:"envv"`
 
-	// WorkingDirectory defines the working directory for the new process.
-	WorkingDirectory string `json:"wd"`
+	// KGID is the GID to run with in the root user namespace. Defaults to
+	// the root group if not set explicitly.
+	KGID auth.KGID
 
 	// KUID is the UID to run with in the root user namespace. Defaults to
 	// root if not set explicitly.
 	KUID auth.KUID
 
-	// KGID is the GID to run with in the root user namespace. Defaults to
-	// the root group if not set explicitly.
-	KGID auth.KGID
-
-	// ExtraKGIDs is the list of additional groups to which the user belongs.
-	ExtraKGIDs []auth.KGID
-
 	// NoNewPrivileges disallows the new process from acquiring new privileges.
 	NoNewPrivileges bool
-
-	// Capabilities is the list of capabilities to give to the process.
-	Capabilities *auth.TaskCapabilities
 
 	// StdioIsPty indicates that FDs 0, 1, and 2 are connected to a host pty FD.
 	StdioIsPty bool
@@ -66,12 +72,6 @@ type ExecArgs struct {
 	// SupportTTYs indicates whether TTYs other than the console TTY should be
 	// imported as TTYs.
 	SupportTTYs bool
-
-	// FilePayload determines the files to give to the new process.
-	FilePayload
-
-	// ContainerID is the container for the process being executed.
-	ContainerID string
 
 	// NewPIDNamespace runs the process as PID 1 of a new child PID namespace.
 	NewPIDNamespace bool
@@ -131,31 +131,37 @@ func NewFilePayload(fdMap map[int]*os.File, execFile *os.File) FilePayload {
 	}
 
 	return FilePayload{
-		FilePayload: urpc.FilePayload{Files: files},
-		GuestFDs:    guestFDs,
+		Files:    files,
+		GuestFDs: guestFDs,
 	}
 }
 
 // Process contains information about a single process in a Sandbox.
 type Process struct {
-	UID auth.KUID `json:"uid"`
-	PID int32     `json:"pid"`
-	// Parent PID
-	PPID int32 `json:"ppid"`
-	// Process Group ID
-	PGID    int32   `json:"pgid"`
-	Threads []int32 `json:"threads"`
-	// Processor utilization
-	C int32 `json:"c"`
 	// TTY name of the process. Will be of the form "pts/N" if there is a
 	// TTY, or "?" if there is not.
 	TTY string `json:"tty"`
+
 	// Start time
 	STime string `json:"stime"`
+
 	// CPU time
 	Time string `json:"time"`
+
 	// Executable shortname (e.g. "sh" for /bin/sh)
-	Cmd string `json:"cmd"`
+	Cmd     string    `json:"cmd"`
+	Threads []int32   `json:"threads"`
+	UID     auth.KUID `json:"uid"`
+	PID     int32     `json:"pid"`
+
+	// Parent PID
+	PPID int32 `json:"ppid"`
+
+	// Process Group ID
+	PGID int32 `json:"pgid"`
+
+	// Processor utilization
+	C int32 `json:"c"`
 }
 
 // ProcessListToTable prints a table with the following format:

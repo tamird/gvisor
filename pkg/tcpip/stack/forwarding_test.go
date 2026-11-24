@@ -50,11 +50,10 @@ var _ NetworkEndpoint = (*fwdTestNetworkEndpoint)(nil)
 // use the first three: destination address, source address, and transport
 // protocol. They're all one byte fields to simplify parsing.
 type fwdTestNetworkEndpoint struct {
-	AddressableEndpointState
-
 	nic        NetworkInterface
-	proto      *fwdTestNetworkProtocol
 	dispatcher TransportDispatcher
+	proto      *fwdTestNetworkProtocol
+	AddressableEndpointState
 
 	mu struct {
 		sync.RWMutex
@@ -170,12 +169,11 @@ var _ NetworkProtocol = (*fwdTestNetworkProtocol)(nil)
 // fwdTestNetworkProtocol is a network-layer protocol that implements Address
 // resolution.
 type fwdTestNetworkProtocol struct {
-	stack *Stack
-
+	stack                  *Stack
 	neigh                  *neighborCache
-	addrResolveDelay       time.Duration
 	onLinkAddressResolved  func(*neighborCache, tcpip.Address, tcpip.LinkAddress)
 	onResolveStaticAddress func(tcpip.Address) (tcpip.LinkAddress, bool)
+	addrResolveDelay       time.Duration
 }
 
 func (*fwdTestNetworkProtocol) Number() tcpip.NetworkProtocolNumber {
@@ -261,11 +259,11 @@ var _ LinkEndpoint = (*fwdTestLinkEndpoint)(nil)
 
 type fwdTestLinkEndpoint struct {
 	dispatcher NetworkDispatcher
-	mtu        uint32
-	linkAddr   tcpip.LinkAddress
 
 	// C is where outbound packets are queued.
-	C chan *PacketBuffer
+	C        chan *PacketBuffer
+	linkAddr tcpip.LinkAddress
+	mtu      uint32
 }
 
 // InjectInbound injects an inbound packet.
@@ -556,7 +554,7 @@ func TestForwardingResolutionFailsForQueuedPackets(t *testing.T) {
 	const numPackets int = 5
 	// These packets will all be enqueued in the packet queue to wait for link
 	// address resolution.
-	for i := 0; i < numPackets; i++ {
+	for range numPackets {
 		buf := make([]byte, 30)
 		buf[dstAddrOffset] = 3
 		ep1.InjectInbound(fwdTestNetNumber, NewPacketBuffer(PacketBufferOptions{
@@ -565,7 +563,7 @@ func TestForwardingResolutionFailsForQueuedPackets(t *testing.T) {
 	}
 
 	// All packets should fail resolution.
-	for i := 0; i < numPackets; i++ {
+	for range numPackets {
 		clock.Advance(proto.addrResolveDelay)
 		select {
 		case got := <-ep2.C:
@@ -655,7 +653,7 @@ func TestForwardingWithFakeResolverTwoPackets(t *testing.T) {
 	clock, ep1, ep2 := fwdTestNetFactory(t, &proto)
 
 	// Inject two inbound packets to address 3 on NIC 1.
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		buf := make([]byte, 30)
 		buf[dstAddrOffset] = 3
 		ep1.InjectInbound(fwdTestNetNumber, NewPacketBuffer(PacketBufferOptions{
@@ -663,7 +661,7 @@ func TestForwardingWithFakeResolverTwoPackets(t *testing.T) {
 		}))
 	}
 
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		var p *PacketBuffer
 
 		clock.Advance(proto.addrResolveDelay)
@@ -707,7 +705,7 @@ func TestForwardingWithFakeResolverManyPackets(t *testing.T) {
 	}
 	clock, ep1, ep2 := fwdTestNetFactory(t, &proto)
 
-	for i := 0; i < maxPendingPacketsPerResolution+5; i++ {
+	for i := range maxPendingPacketsPerResolution + 5 {
 		// Inject inbound 'maxPendingPacketsPerResolution + 5' packets on NIC 1.
 		buf := make([]byte, 30)
 		buf[dstAddrOffset] = 3
@@ -718,7 +716,7 @@ func TestForwardingWithFakeResolverManyPackets(t *testing.T) {
 		}))
 	}
 
-	for i := 0; i < maxPendingPacketsPerResolution; i++ {
+	for i := range maxPendingPacketsPerResolution {
 		var p *PacketBuffer
 
 		clock.Advance(proto.addrResolveDelay)
@@ -773,7 +771,7 @@ func TestForwardingWithFakeResolverManyResolutions(t *testing.T) {
 	}
 	clock, ep1, ep2 := fwdTestNetFactory(t, &proto)
 
-	for i := 0; i < maxPendingResolutions+5; i++ {
+	for i := range maxPendingResolutions + 5 {
 		// Inject inbound 'maxPendingResolutions + 5' packets on NIC 1.
 		// Each packet has a different destination address (3 to
 		// maxPendingResolutions + 7).
@@ -784,7 +782,7 @@ func TestForwardingWithFakeResolverManyResolutions(t *testing.T) {
 		}))
 	}
 
-	for i := 0; i < maxPendingResolutions; i++ {
+	for range maxPendingResolutions {
 		var p *PacketBuffer
 
 		clock.Advance(proto.addrResolveDelay)

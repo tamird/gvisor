@@ -82,13 +82,13 @@ type fsTreeCreator struct {
 }
 
 type fsTreeCommon struct {
+	targetDir        string
 	depth            uint
 	numFilesPerLevel uint
 	fileSize         uint
-	targetDir        string
+	seed             uint64
 	createSymlink    bool
 	addEmptyFiles    bool
-	seed             uint64
 }
 
 // Name implements subcommands.Command.Name.
@@ -606,7 +606,7 @@ func (s *syscall) Execute(ctx context.Context, f *flag.FlagSet, _ ...any) subcom
 		return subcommands.ExitUsageError
 	}
 	var syscallArgs [maxSyscallArgs]uintptr
-	for i := 0; i < numArgs; i++ {
+	for i := range numArgs {
 		uintArg, err := strconv.ParseUint(f.Arg(i), 10, 64)
 		if err != nil {
 			fmt.Printf("not an integer: %q\n", f.Arg(i))

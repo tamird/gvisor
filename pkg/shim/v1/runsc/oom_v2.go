@@ -14,7 +14,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 package runsc
 
@@ -72,15 +71,18 @@ type cgroupV2 struct {
 type cgroupV2Entry struct {
 	// path is the sandbox cgroup's unified group path.
 	path string
-	// base is the sandbox cgroup's oom_kill count when the container was
-	// added. The count is cumulative and shared by every container in the
-	// pod, so kills recorded before that are not this container's.
-	base uint64
+
 	// parentPath is the unified group path of the pod cgroup. It is consulted
 	// when the container's own cgroup is already gone at exit time. Empty
 	// when the parent is not the pod cgroup or could not be read at add time,
 	// which disables the fallback.
 	parentPath string
+
+	// base is the sandbox cgroup's oom_kill count when the container was
+	// added. The count is cumulative and shared by every container in the
+	// pod, so kills recorded before that are not this container's.
+	base uint64
+
 	// parentBase is the parent's oom_kill count when the container was
 	// added. Kills recorded before that must not be attributed to this
 	// container.
@@ -89,14 +91,12 @@ type cgroupV2Entry struct {
 
 // watcher implementation for handling OOM events from a container's cgroup
 type watcherV2 struct {
-	itemCh    chan itemV2
 	publisher shim.Publisher
+	itemCh    chan itemV2
 
 	// statPath reads the oom_kill count for the cgroup at a unified group
 	// path. It is a field so tests can substitute counts and failures.
 	statPath func(string) (uint64, error)
-
-	mu sync.Mutex
 
 	// +checklocks:mu
 	cgroups map[string]*cgroupV2Entry
@@ -112,6 +112,7 @@ type watcherV2 struct {
 	//
 	// +checklocks:mu
 	lastOOM map[string]uint64
+	mu      sync.Mutex
 }
 
 // readOOMKill returns the oom_kill count from memory.events for the cgroup at
@@ -160,9 +161,9 @@ func cgroupGone(err error) bool {
 }
 
 type itemV2 struct {
+	err error
 	id  string
 	ev  cgroupsv2.Event
-	err error
 }
 
 // Close closes the watcher

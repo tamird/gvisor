@@ -20,6 +20,7 @@ package nftables
 import (
 	"fmt"
 	"math"
+	"slices"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/marshal/primitive"
@@ -43,12 +44,14 @@ type masqTargetInfo struct {
 
 // compatMASQTarget implements the xtables MASQUERADE target extension.
 type compatMASQTarget struct {
-	// revision is the XTables MASQUERADE target extension revision.
-	revision uint32
 	// infoData is the raw netlink attribute payload; saved for dump.
 	infoData []byte
+
 	// info contains the port range parameters.
 	info masqTargetInfo
+
+	// revision is the XTables MASQUERADE target extension revision.
+	revision uint32
 }
 
 // evaluate implements operation.evaluate.
@@ -107,7 +110,7 @@ func (op *compatMASQTarget) checkCompatibility(cCtx *opCompatCtx) *syserr.Annota
 // deepCopy implements operation.deepCopy.
 func (op *compatMASQTarget) deepCopy() operation {
 	opCopy := *op
-	opCopy.infoData = append([]byte(nil), op.infoData...)
+	opCopy.infoData = slices.Concat[[]byte](op.infoData)
 	return &opCopy
 }
 

@@ -36,8 +36,8 @@ func (e *customHTTPError) HTTPCode() int {
 
 func TestHTTPCodeFromError(t *testing.T) {
 	testCases := []struct {
-		name     string
 		err      error
+		name     string
 		wantCode int
 		wantOk   bool
 	}{
@@ -109,9 +109,9 @@ func TestIsPermissionDeniedCode(t *testing.T) {
 
 func TestMapGCSError(t *testing.T) {
 	testCases := []struct {
-		name      string
 		err       error
 		wantIsErr error
+		name      string
 	}{
 		{
 			name:      "nil error",

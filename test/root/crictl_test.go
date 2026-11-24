@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"os"
 	"os/exec"
@@ -85,9 +86,8 @@ func SimpleSpec(name, image string, cmd []string, extra map[string]any) string {
 	if len(cmd) > 0 { // Omit if empty.
 		s["command"] = cmd
 	}
-	for k, v := range extra {
-		s[k] = v // Extra settings.
-	}
+	// Extra settings.
+	maps.Copy(s, extra)
 	v, err := json.Marshal(s)
 	if err != nil {
 		// This shouldn't happen.
@@ -657,7 +657,7 @@ func getPidsRSS(t *testing.T, pids []string) int64 {
 			t.Logf("failed to read /proc/%s/status for shim process: %v", pid, err)
 			continue
 		}
-		for _, line := range strings.Split(string(statusBytes), "\n") {
+		for line := range strings.SplitSeq(string(statusBytes), "\n") {
 			if strings.HasPrefix(line, "VmRSS:") {
 				parts := strings.Fields(line)
 				if len(parts) >= 2 {
@@ -885,7 +885,7 @@ func runPodStartup(t *testing.T, enableGrouping bool, numPods, numContsPerPod in
 
 	var sbSpecFiles []string
 	var sbSpecCleanups []func()
-	for i := 0; i < numPods; i++ {
+	for i := range numPods {
 		sbSpec := Sandbox(fmt.Sprintf("pod-%d", i))
 		sbSpecFile, specCleanup, err := testutil.WriteTmpFile(fmt.Sprintf("sbSpec-%d", i), sbSpec)
 		if err != nil {
@@ -902,7 +902,7 @@ func runPodStartup(t *testing.T, enableGrouping bool, numPods, numContsPerPod in
 
 	var contSpecFiles []string
 	var contSpecCleanups []func()
-	for j := 0; j < numContsPerPod; j++ {
+	for j := range numContsPerPod {
 		contSpec := SimpleSpec(fmt.Sprintf("cont-%d", j), "basic/busybox", []string{"sleep", "1000"}, nil)
 		contSpecFile, contSpecCleanup, err := testutil.WriteTmpFile(fmt.Sprintf("contSpec-%d", j), contSpec)
 		if err != nil {
@@ -918,14 +918,14 @@ func runPodStartup(t *testing.T, enableGrouping bool, numPods, numContsPerPod in
 	}()
 
 	start := time.Now()
-	for i := 0; i < numPods; i++ {
+	for i := range numPods {
 		podID, err := crictl.RunPod(containerdRuntime, sbSpecFiles[i])
 		if err != nil {
 			t.Fatalf("failed to run pod: %v", err)
 		}
 
 		containerIDs := make([]string, 0, numContsPerPod)
-		for j := 0; j < numContsPerPod; j++ {
+		for j := range numContsPerPod {
 			contID, err := crictl.Create(podID, contSpecFiles[j], sbSpecFiles[i])
 			if err != nil {
 				t.Fatalf("failed to create container: %v", err)

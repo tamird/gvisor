@@ -152,34 +152,24 @@ type ParallelWriter struct {
 	// the construction of the tree.
 
 	stateio.NoRegisterClientFD
-
-	maxWriteBytes           uint64
-	maxRanges               int
-	bucket                  *storage.BucketHandle
-	obj                     *storage.ObjectHandle
-	subs                    chan *composeLeaf
-	cmps                    chan stateio.Completion
 	writerCtx               context.Context
-	cancelWritesAndComposes context.CancelCauseFunc
+	composeErr              error
 	deleterCtx              context.Context
 	cancelDeleters          context.CancelFunc
+	cmps                    chan stateio.Completion
+	obj                     *storage.ObjectHandle
+	cancelWritesAndComposes context.CancelCauseFunc
+	bucket                  *storage.BucketHandle
+
+	// delete holds objects to be deleted.
+	delete chan *storage.ObjectHandle
+	subs   chan *composeLeaf
 
 	// tmpFmt is the format string used to produce temporary object names.
 	tmpFmt string
 
-	// tmpFmtPrefixLen is the number of bytes to strip from the front of temporary
-	// object names to obtain part numbers only, used for logging.
-	tmpFmtPrefixLen int
-
-	// prevLeaves is the number of writes that have ever been enqueued.
-	prevLeaves uint64
-
 	// levels is the write composition graph.
 	levels []composeLevel
-
-	// workers counts the number of writer and deleter goroutines (which are
-	// persistent for the life of the ParallelWriter).
-	workers sync.WaitGroup
 
 	// composes counts the number of composer goroutines (which are created as
 	// necessary).
@@ -192,38 +182,46 @@ type ParallelWriter struct {
 	// use sync.Gate instead of sync.WaitGroup to count composer goroutines.
 	composes sync.Gate
 
+	// workers counts the number of writer and deleter goroutines (which are
+	// persistent for the life of the ParallelWriter).
+	workers sync.WaitGroup
+
+	// deletes counts the number of pending object deletions.
+	deletes       sync.WaitGroup
+	maxWriteBytes uint64
+
+	// prevLeaves is the number of writes that have ever been enqueued.
+	prevLeaves uint64
+	maxRanges  int
+
+	// tmpFmtPrefixLen is the number of bytes to strip from the front of temporary
+	// object names to obtain part numbers only, used for logging.
+	tmpFmtPrefixLen int
+
 	// If composeErr is non-nil, it is the error returned by any failed
 	// composition. composeErrOnce is used to assign composeErr at most once.
 	composeErrOnce sync.Once
-	composeErr     error
-
-	// deletes counts the number of pending object deletions.
-	deletes sync.WaitGroup
-
-	// delete holds objects to be deleted.
-	delete chan *storage.ObjectHandle
 }
 
 // composeNode represents an object created during parallel composite upload.
 type composeNode struct {
+	// impl is the containing composeLeaf or composeBranch. impl is immutable.
+	impl any
 	// obj is the object being created for this node. obj becomes immutable
 	// when ready becomes true.
 	obj *storage.ObjectHandle
-
-	readyMu sync.Mutex
 
 	// If parent is non-nil, it is the branch that obj will be composed into.
 	//
 	// +checklocks:readyMu
 	parent *composeBranch
 
+	readyMu sync.Mutex
+
 	// If ready is true, obj has been created.
 	//
 	// +checklocks:readyMu
 	ready bool
-
-	// impl is the containing composeLeaf or composeBranch. impl is immutable.
-	impl any
 }
 
 func (node *composeNode) node() *composeNode {
@@ -234,19 +232,15 @@ func (node *composeNode) node() *composeNode {
 // writing to it.
 type composeLeaf struct {
 	composeNode
-	id  int
 	src stateio.LocalClientRanges
+	id  int
 }
 
 // composeBranch represents an object created during parallel composite upload
 // by composing other objects.
 type composeBranch struct {
+	parts [composeMax]*composeNode
 	composeNode
-
-	// If mixed is false, parts consists of a contiguous range of parts in a
-	// single level. If mixed is true, parts may originate from different
-	// levels. This is only used for logging.
-	mixed bool
 
 	// Composition of the object represented by this branch should be initiated
 	// when partsReady == partsMax. partsMax is immutable.
@@ -260,7 +254,10 @@ type composeBranch struct {
 	// Invariant: partsLen > 1.
 	partsLen uint32
 
-	parts [composeMax]*composeNode
+	// If mixed is false, parts consists of a contiguous range of parts in a
+	// single level. If mixed is true, parts may originate from different
+	// levels. This is only used for logging.
+	mixed bool
 }
 
 func appendNodeObjs(nodes []*composeNode, objs []*storage.ObjectHandle) []*storage.ObjectHandle {
@@ -384,9 +381,7 @@ func (w *ParallelWriter) AddWritev(id int, total uint64, _ stateio.SourceFile, _
 
 func (w *ParallelWriter) makeLeaf(id int, src stateio.LocalClientRanges) *composeLeaf {
 	leaf := &composeLeaf{
-		composeNode: composeNode{
-			obj: w.bucket.Object(w.makePartName(0, w.prevLeaves)),
-		},
+		obj: w.bucket.Object(w.makePartName(0, w.prevLeaves)),
 		id:  id,
 		src: src,
 	}
@@ -406,9 +401,7 @@ func (w *ParallelWriter) insertIntoWriteCompositionGraph(leaf *composeLeaf) {
 				// Create a new branch at the next level composing these two
 				// nodes.
 				parent := &composeBranch{
-					composeNode: composeNode{
-						obj: w.bucket.Object(w.makePartName(levelIndex+1, level.prevParents)),
-					},
+					obj:      w.bucket.Object(w.makePartName(levelIndex+1, level.prevParents)),
 					partsMax: composeMax,
 					partsLen: 2,
 				}
@@ -719,9 +712,7 @@ func (w *ParallelWriter) buildFinalCompositionTree(nodes []*composeNode, levelBa
 				parentObj = w.bucket.Object(w.makePartName(levelBase+levelIndex, partIndex))
 			}
 			parent := &composeBranch{
-				composeNode: composeNode{
-					obj: parentObj,
-				},
+				obj:      parentObj,
 				mixed:    true,
 				partsMax: uint32(numParts),
 				partsLen: uint32(numParts),

@@ -32,7 +32,7 @@ import (
 // e.g. in the case of the mpol mount option for tmpfs(5).
 func GenericParseMountOptions(str string) map[string]string {
 	m := make(map[string]string)
-	for _, opt := range strings.Split(str, ",") {
+	for opt := range strings.SplitSeq(str, ",") {
 		if len(opt) > 0 {
 			res := strings.SplitN(opt, "=", 2)
 			if len(res) == 2 {
@@ -65,7 +65,7 @@ type KeyValuePair struct {
 // of the form "key" or "key=value", preserving the original order.
 func GenericParseMountOptionsOrdered(str string) []KeyValuePair {
 	var options []KeyValuePair
-	for _, opt := range strings.Split(str, ",") {
+	for opt := range strings.SplitSeq(str, ",") {
 		if len(opt) > 0 {
 			res := strings.SplitN(opt, "=", 2)
 			if len(res) == 2 {

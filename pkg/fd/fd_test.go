@@ -25,9 +25,9 @@ import (
 
 func TestSetNegOne(t *testing.T) {
 	type entry struct {
-		name string
 		file *FD
 		fn   func() error
+		name string
 	}
 	var tests []entry
 
@@ -37,9 +37,9 @@ func TestSetNegOne(t *testing.T) {
 	}
 	f1 := New(fd)
 	tests = append(tests, entry{
-		"Release",
-		f1,
-		func() error {
+		name: "Release",
+		file: f1,
+		fn: func() error {
 			return unix.Close(f1.Release())
 		},
 	})
@@ -50,9 +50,9 @@ func TestSetNegOne(t *testing.T) {
 	}
 	f2 := New(fd)
 	tests = append(tests, entry{
-		"Close",
-		f2,
-		f2.Close,
+		name: "Close",
+		file: f2,
+		fn:   f2.Close,
 	})
 
 	for _, test := range tests {
@@ -68,15 +68,15 @@ func TestSetNegOne(t *testing.T) {
 
 func TestStartsNegOne(t *testing.T) {
 	type entry struct {
-		name string
 		file *FD
+		name string
 	}
 
 	tests := []entry{
-		{"-1", New(-1)},
-		{"-2", New(-2)},
-		{"MinInt32", New(math.MinInt32)},
-		{"MinInt64", New(math.MinInt64)},
+		{name: "-1", file: New(-1)},
+		{name: "-2", file: New(-2)},
+		{name: "MinInt32", file: New(math.MinInt32)},
+		{name: "MinInt64", file: New(math.MinInt64)},
 	}
 
 	for _, test := range tests {

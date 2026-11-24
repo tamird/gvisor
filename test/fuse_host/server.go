@@ -39,10 +39,10 @@ func Serve(fd int, backDir string) {
 }
 
 type server struct {
-	fd        int
-	backDir   string
-	nextFh    uint64
 	openFiles map[uint64]*os.File
+	backDir   string
+	fd        int
+	nextFh    uint64
 }
 
 func (s *server) serve() {

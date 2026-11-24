@@ -19,6 +19,7 @@ package control
 import (
 	"maps"
 	"math"
+	"slices"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
@@ -121,10 +122,7 @@ func putCmsg(buf []byte, flags int, msgType uint32, align uint, data []int32) ([
 		return buf, flags
 	}
 
-	length := 4*len(data) + linux.SizeOfControlMessageHeader
-	if length > space {
-		length = space
-	}
+	length := min(4*len(data)+linux.SizeOfControlMessageHeader, space)
 	buf = putUint64(buf, uint64(length))
 	buf = putUint32(buf, linux.SOL_SOCKET)
 	buf = putUint32(buf, msgType)
@@ -708,7 +706,7 @@ func (fs *RightsFiles) Files(ctx context.Context, max int) (RightsFiles, bool) {
 
 // Clone implements transport.RightsControlMessage.Clone.
 func (fs *RightsFiles) Clone() transport.RightsControlMessage {
-	nfs := append(RightsFiles(nil), *fs...)
+	nfs := slices.Concat[RightsFiles](*fs)
 	for _, nf := range nfs {
 		nf.IncRef()
 	}

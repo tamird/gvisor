@@ -27,14 +27,14 @@ type xattrCache struct {
 	// negatives tracks xattrs known not to exist (linuxerr.ENODATA).
 	negatives map[string]struct{}
 
+	// list caches the full list of xattr names. If nil, the list is not cached.
+	// If non-nil but empty, the cache is authoritatively empty.
+	list []string
+
 	// overlayOpaqueNegative tracks if "user.overlay.opaque" is known not to
 	// exist (linuxerr.ENODATA). This avoids allocating xattrsNegative map in
 	// the common case.
 	overlayOpaqueNegative bool
-
-	// list caches the full list of xattr names. If nil, the list is not cached.
-	// If non-nil but empty, the cache is authoritatively empty.
-	list []string
 }
 
 func (c *xattrCache) get(name string) (val string, negative bool, found bool) {
@@ -92,7 +92,7 @@ func (c *xattrCache) getList() ([]string, bool) {
 		return nil, false
 	}
 	// Return a copy to prevent the caller from modifying the cached list.
-	return append([]string(nil), c.list...), true
+	return slices.Concat[[]string](c.list), true
 }
 
 func (c *xattrCache) setList(names []string) {
@@ -100,6 +100,6 @@ func (c *xattrCache) setList(names []string) {
 		c.list = []string{}
 	} else {
 		// Save a copy to prevent the caller from modifying the cached list.
-		c.list = append([]string(nil), names...)
+		c.list = slices.Concat[[]string](names)
 	}
 }

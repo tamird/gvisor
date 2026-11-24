@@ -50,9 +50,7 @@ func Example() {
 	defer serverEP.Destroy()
 
 	var serverRun sync.WaitGroup
-	serverRun.Add(1)
-	go func() {
-		defer serverRun.Done()
+	serverRun.Go(func() {
 		i := 0
 		var buf bytes.Buffer
 		// wait for first request
@@ -76,7 +74,7 @@ func Example() {
 			}
 			i++
 		}
-	}()
+	})
 	defer func() {
 		serverEP.Shutdown()
 		serverRun.Wait()
@@ -87,7 +85,7 @@ func Example() {
 		panic(err)
 	}
 	var buf bytes.Buffer
-	for i := 0; i < count; i++ {
+	for i := range count {
 		// write request
 		buf.Reset()
 		fmt.Fprintf(&buf, "%s%d", reqPrefix, i)

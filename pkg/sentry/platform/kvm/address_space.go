@@ -36,7 +36,7 @@ func (ds *dirtySet) forEach(m *machine, fn func(c *vCPU)) {
 	for index := range ds.vCPUMasks {
 		mask := ds.vCPUMasks[index].Swap(0)
 		if mask != 0 {
-			for bit := 0; bit < 64; bit++ {
+			for bit := range 64 {
 				if mask&(1<<uint64(bit)) == 0 {
 					continue
 				}
@@ -69,11 +69,6 @@ func (ds *dirtySet) mark(c *vCPU) bool {
 type addressSpace struct {
 	platform.NoAddressSpaceIO
 
-	// mu is the lock for modifications to the address space.
-	//
-	// Note that the page tables themselves are not locked.
-	mu sync.Mutex
-
 	// machine is the underlying machine.
 	machine *machine
 
@@ -82,6 +77,11 @@ type addressSpace struct {
 
 	// dirtySet is the set of dirty vCPUs.
 	dirtySet *dirtySet
+
+	// mu is the lock for modifications to the address space.
+	//
+	// Note that the page tables themselves are not locked.
+	mu sync.Mutex
 }
 
 // Invalidate interrupts all dirty contexts.

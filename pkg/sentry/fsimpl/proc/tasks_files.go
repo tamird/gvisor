@@ -216,7 +216,7 @@ func (*statData) Generate(ctx context.Context, buf *bytes.Buffer) error {
 	// The per-CPU lines therefore sum back to the aggregate "cpu" line. This
 	// makes the aggregate statistic a reasonable approximation of the total CPU
 	// usage across all cores.
-	for c := uint(0); c < cores; c++ {
+	for c := range uint(cores) {
 		per := cpuStats{
 			user:   userTicks / uint64(cores),
 			system: sysTicks / uint64(cores),
@@ -240,7 +240,7 @@ func (*statData) Generate(ctx context.Context, buf *bytes.Buffer) error {
 	// The Kernel doesn't handle real interrupts, so report all zeroes.
 	// TODO(b/37226836): We could count page faults as #PF.
 	fmt.Fprintf(buf, "intr 0") // total
-	for i := 0; i < numInterrupts; i++ {
+	for range numInterrupts {
 		fmt.Fprintf(buf, " 0")
 	}
 	fmt.Fprintf(buf, "\n")
@@ -265,7 +265,7 @@ func (*statData) Generate(ctx context.Context, buf *bytes.Buffer) error {
 
 	// Number of each softirq handled.
 	fmt.Fprintf(buf, "softirq 0") // total
-	for i := 0; i < linux.NumSoftIRQ; i++ {
+	for range linux.NumSoftIRQ {
 		fmt.Fprintf(buf, " 0")
 	}
 	fmt.Fprintf(buf, "\n")

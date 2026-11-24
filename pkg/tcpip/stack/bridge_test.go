@@ -402,11 +402,12 @@ type dispatchTestContext struct {
 	s        *stack.Stack
 	bridge   *stack.BridgeEndpoint
 	ch1, ch2 *channel.Endpoint
+	passedUp []tcpip.PacketType
+
 	// classifying is whether port 1 classifies frames itself, as the ethernet
 	// wrapper does. Otherwise port 1 behaves like a tap, fdbased, xdp or
 	// sharedmem port, which leave the packet type unset.
 	classifying bool
-	passedUp    []tcpip.PacketType
 }
 
 // HandlePacket implements stack.PacketEndpoint.

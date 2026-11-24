@@ -22,9 +22,9 @@ import (
 
 func TestSet(t *testing.T) {
 	testCases := []struct {
+		expectedErr error
 		limit       Limit
 		privileged  bool
-		expectedErr error
 	}{
 		{limit: Limit{Cur: 50, Max: 50}, privileged: false, expectedErr: nil},
 		{limit: Limit{Cur: 20, Max: 50}, privileged: false, expectedErr: nil},

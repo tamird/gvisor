@@ -564,7 +564,7 @@ func TestMetricUpdateStageTiming(t *testing.T) {
 	} else if len(registration.Stages) != len(allStages) {
 		t.Errorf("MetricRegistration has %d stages (%v), expected %d (%v)", len(registration.Stages), registration.Stages, len(allStages), allStages)
 	} else {
-		for i := 0; i < len(allStages); i++ {
+		for i := range len(allStages) {
 			if InitStage(registration.Stages[i]) != allStages[i] {
 				t.Errorf("MetricRegistration.Stages[%d]: got %q want %q", i, registration.Stages[i], allStages[i])
 			}
@@ -669,23 +669,19 @@ func TestTimerMetric(t *testing.T) {
 
 	// Create timer data.
 	var wg sync.WaitGroup
-	for i := 0; i < 5; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 5 {
+		wg.Go(func() {
 			op := timer.Start(&fieldValFoo)
 			defer op.Finish(&fieldValQuux)
 			time.Sleep(250 * time.Millisecond)
-		}()
+		})
 	}
-	for i := 0; i < 3; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 3 {
+		wg.Go(func() {
 			op := timer.Start()
 			defer op.Finish(&fieldValFoo, &fieldValQuux)
 			time.Sleep(750 * time.Millisecond)
-		}()
+		})
 	}
 	wg.Wait()
 	EmitMetricUpdate()
@@ -716,13 +712,13 @@ func TestTimerMetric(t *testing.T) {
 
 func TestBucketer(t *testing.T) {
 	for _, test := range []struct {
-		name                    string
 		bucketer                Bucketer
+		name                    string
+		firstFewLowerBounds     []int64
+		successiveBucketSamples []int64
 		minSample               int64
 		maxSample               int64
 		step                    int64
-		firstFewLowerBounds     []int64
-		successiveBucketSamples []int64
 	}{
 		{
 			name:                "static-sized buckets",
@@ -768,7 +764,7 @@ func TestBucketer(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			numFiniteBuckets := test.bucketer.NumFiniteBuckets()
 			t.Logf("Underflow bucket has bounds (-inf, %d)", test.bucketer.LowerBound(0))
-			for b := 0; b < numFiniteBuckets; b++ {
+			for b := range numFiniteBuckets {
 				t.Logf("Bucket %d has bounds [%d, %d)", b, test.bucketer.LowerBound(b), test.bucketer.LowerBound(b+1))
 			}
 			t.Logf("Overflow bucket has bounds [%d, +inf)", test.bucketer.LowerBound(numFiniteBuckets))
@@ -875,9 +871,9 @@ func TestFieldMapperWithFields(t *testing.T) {
 	}
 
 	for _, test := range []struct {
+		errOnCreation error
 		name          string
 		fields        []Field
-		errOnCreation error
 	}{
 		{
 			name:          "FieldMapper8x10",
@@ -1053,12 +1049,12 @@ func TestMetricProfiling(t *testing.T) {
 	for _, test := range []struct {
 		name                 string
 		profilingMetricsFlag string
+		expectedHeader       string // If unspecified, computed automatically for non-field metrics.
 		metricNames          []string
 		firstMetricFields    []Field
-		expectedHeader       string // If unspecified, computed automatically for non-field metrics.
-		lossy                bool
 		incrementMetricBy    []uint64
 		numIterations        uint64
+		lossy                bool
 		errOnStartProfiling  bool
 	}{
 		{
@@ -1310,8 +1306,8 @@ func TestMetricProfiling(t *testing.T) {
 					}
 					line = strings.TrimSuffix(line, "\t"+gotLineChecksum)
 				}
-				if strings.HasPrefix(line, MetricsMetaIndicator) {
-					line = strings.TrimPrefix(line, MetricsMetaIndicator)
+				if after, ok := strings.CutPrefix(line, MetricsMetaIndicator); ok {
+					line = after
 					components := strings.Split(line, "\t")
 					if len(components) != 2 {
 						t.Fatalf("got %d components in metadata line %q, want 2", len(components), line)
@@ -1375,6 +1371,9 @@ func TestMetricProfiling(t *testing.T) {
 					}
 					prevValues[i-1] = m
 				}
+			}
+			if err := lines.Err(); err != nil {
+				t.Fatalf("Read metric output: %v", err)
 			}
 			expectedMinNumDatapoints := int(0.7 * float32(test.numIterations))
 			if numDatapoints < expectedMinNumDatapoints {

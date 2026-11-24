@@ -74,25 +74,19 @@ var (
 )
 
 type context struct {
-	archContext
 	platform.NoCPUNumbers
-
-	// signalInfo is the signal info, if and when a signal is received.
-	signalInfo linux.SignalInfo
-
-	// interrupt is the interrupt context.
-	interrupt interrupt.Forwarder
 
 	// thread is the subprocess thread this context used for its last switch.
 	thread atomic.Pointer[thread]
-
-	// mu protects the following fields.
-	mu sync.Mutex
 
 	// If lastFaultSP is non-nil, the last context switch was due to a fault
 	// received while executing lastFaultSP. Only context.Switch may set
 	// lastFaultSP to a non-nil value.
 	lastFaultSP *subprocess
+
+	// interrupt is the interrupt context.
+	interrupt interrupt.Forwarder
+	archContext
 
 	// lastFaultAddr is the last faulting address; this is only meaningful if
 	// lastFaultSP is non-nil.
@@ -101,6 +95,12 @@ type context struct {
 	// lastFaultIP is the address of the last faulting instruction;
 	// this is also only meaningful if lastFaultSP is non-nil.
 	lastFaultIP hostarch.Addr
+
+	// signalInfo is the signal info, if and when a signal is received.
+	signalInfo linux.SignalInfo
+
+	// mu protects lastFaultSP, lastFaultAddr, and lastFaultIP.
+	mu sync.Mutex
 }
 
 // NewContext implements platform.Platform.NewContext.
@@ -239,8 +239,8 @@ func (*context) PrepareExit() {}
 type PTrace struct {
 	platform.MMapMinAddr
 	platform.NoCPUPreemptionDetection
-	platform.UseHostGlobalMemoryBarrier
 	platform.NoCPUNumbers
+	platform.UseHostGlobalMemoryBarrier
 }
 
 // New returns a new ptrace-based implementation of the platform interface.
@@ -272,7 +272,7 @@ func NewWithOptions(opts platform.Options) (*PTrace, error) {
 	memBarrier := <-mbCh
 	opts.StartupTimer.Reached("host membarrier probed")
 	return &PTrace{
-		UseHostGlobalMemoryBarrier: platform.UseHostGlobalMemoryBarrier{MemBarrier: memBarrier},
+		MemBarrier: memBarrier,
 	}, nil
 }
 

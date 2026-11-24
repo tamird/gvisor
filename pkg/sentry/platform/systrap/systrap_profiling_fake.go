@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build !systrap_profiling
-// +build !systrap_profiling
 
 package systrap
 

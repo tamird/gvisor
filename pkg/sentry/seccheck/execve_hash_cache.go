@@ -16,6 +16,7 @@ package seccheck
 
 import (
 	"container/list"
+	"slices"
 	"sync"
 
 	"gvisor.dev/gvisor/pkg/log"
@@ -41,8 +42,8 @@ type ExecveHashes struct {
 }
 
 type execveEntry struct {
-	key    ExecveKey
 	hashes ExecveHashes
+	key    ExecveKey
 }
 
 // ExecveHashOptions defines which binary check algorithms are enabled or requested
@@ -55,11 +56,11 @@ type ExecveHashOptions struct {
 // ExecveHashCache provides a thread-safe, bounded LRU cache mapping binary filesystem
 // keys to digests.
 type ExecveHashCache struct {
-	mu       sync.Mutex
-	capacity int
-	opts     ExecveHashOptions
 	entries  map[ExecveKey]*list.Element
 	lru      *list.List
+	capacity int
+	mu       sync.Mutex
+	opts     ExecveHashOptions
 }
 
 // NewExecveHashCache constructs a new ExecveHashCache with the specified capacity and options.
@@ -99,8 +100,8 @@ func (c *ExecveHashCache) Lookup(key ExecveKey) (ExecveHashes, bool) {
 		c.lru.MoveToFront(elem)
 		e := elem.Value.(*execveEntry)
 		h := ExecveHashes{
-			SHA256: append([]byte(nil), e.hashes.SHA256...),
-			SHA1:   append([]byte(nil), e.hashes.SHA1...),
+			SHA256: slices.Concat[[]byte](e.hashes.SHA256),
+			SHA1:   slices.Concat[[]byte](e.hashes.SHA1),
 		}
 		return h, true
 	}
@@ -120,10 +121,10 @@ func (c *ExecveHashCache) Add(key ExecveKey, hashes ExecveHashes) {
 	if elem, ok := c.entries[key]; ok {
 		e := elem.Value.(*execveEntry)
 		if len(hashes.SHA256) > 0 {
-			e.hashes.SHA256 = append([]byte(nil), hashes.SHA256...)
+			e.hashes.SHA256 = slices.Concat[[]byte](hashes.SHA256)
 		}
 		if len(hashes.SHA1) > 0 {
-			e.hashes.SHA1 = append([]byte(nil), hashes.SHA1...)
+			e.hashes.SHA1 = slices.Concat[[]byte](hashes.SHA1)
 		}
 		c.lru.MoveToFront(elem)
 		return
@@ -141,8 +142,8 @@ func (c *ExecveHashCache) Add(key ExecveKey, hashes ExecveHashes) {
 	e := &execveEntry{
 		key: key,
 		hashes: ExecveHashes{
-			SHA256: append([]byte(nil), hashes.SHA256...),
-			SHA1:   append([]byte(nil), hashes.SHA1...),
+			SHA256: slices.Concat[[]byte](hashes.SHA256),
+			SHA1:   slices.Concat[[]byte](hashes.SHA1),
 		},
 	}
 	elem := c.lru.PushFront(e)

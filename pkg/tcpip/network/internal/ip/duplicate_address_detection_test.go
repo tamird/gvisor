@@ -31,13 +31,12 @@ type mockDADProtocol struct {
 	t *testing.T
 
 	mu struct {
-		sync.Mutex
-
 		// +checklocks:Mutex
 		dad ip.DAD
 
 		// +checklocks:Mutex
 		sentNonces map[tcpip.Address][][]byte
+		sync.Mutex
 	}
 }
 
@@ -113,8 +112,8 @@ var (
 )
 
 type dadResult struct {
-	Addr tcpip.Address
 	R    stack.DADResult
+	Addr tcpip.Address
 }
 
 func handler(ch chan<- dadResult, a tcpip.Address) func(stack.DADResult) {
@@ -189,7 +188,7 @@ func TestDADCheckDuplicateAddress(t *testing.T) {
 	default:
 	}
 	clock.Advance(delta)
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		if diff := cmp.Diff(dadResult{Addr: addr1, R: &stack.DADSucceeded{}}, <-ch); diff != "" {
 			t.Errorf("(i=%d) dad result mismatch (-want +got):\n%s", i, diff)
 		}

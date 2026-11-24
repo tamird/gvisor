@@ -15,6 +15,7 @@
 package transport
 
 import (
+	"slices"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/context"
@@ -29,7 +30,7 @@ type mockRights struct {
 
 // Clone implements RightsControlMessage.Clone.
 func (m *mockRights) Clone() RightsControlMessage {
-	nrefs := append([]*int(nil), m.refs...)
+	nrefs := slices.Concat[[]*int](m.refs)
 	for _, r := range nrefs {
 		*r++
 	}
@@ -38,7 +39,7 @@ func (m *mockRights) Clone() RightsControlMessage {
 
 // TransferRights implements RightsControlMessage.TransferRights.
 func (m *mockRights) TransferRights() RightsControlMessage {
-	nrefs := append([]*int(nil), m.refs...)
+	nrefs := slices.Concat[[]*int](m.refs)
 	m.refs = nil
 	return &mockRights{refs: nrefs}
 }
@@ -55,20 +56,20 @@ func (m *mockRights) Release(ctx context.Context) {
 // of the success/error paths of the Enqueue call.
 func TestEnqueueRightsOwnership(t *testing.T) {
 	for _, test := range []struct {
-		name string
+		wantErr *syserr.Error
+		name    string
+
+		data [][]byte
 
 		// limit and used are the initial capacity and occupancy of the queue.
 		limit int64
 		used  int64
+
+		wantN int64
 		// closed closes the queue before enqueuing.
-		closed bool
-
-		data         [][]byte
-		discardEmpty bool
-		truncate     bool
-
-		wantN           int64
-		wantErr         *syserr.Error
+		closed          bool
+		discardEmpty    bool
+		truncate        bool
 		wantQueued      bool
 		wantTransferred bool
 	}{

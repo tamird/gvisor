@@ -60,7 +60,7 @@ func TestIovecsReadWriteShortWriteMultiBatch(t *testing.T) {
 	buf1 := make([]byte, 1)
 	buf100 := make([]byte, 100)
 
-	for i := 0; i < MaxReadWriteIov; i++ {
+	for i := range MaxReadWriteIov {
 		iovs[i] = unix.Iovec{Base: &buf1[0], Len: 1}
 	}
 	for i := MaxReadWriteIov; i < 2*MaxReadWriteIov; i++ {

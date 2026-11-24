@@ -917,7 +917,7 @@ func (*FilterOutputDropSrcPorts) ContainerAction(ctx context.Context, ip net.IP,
 	}
 
 	// Wait for all listeners to report.
-	for i := 0; i < len(ports); i++ {
+	for range len(ports) {
 		if err := <-errCh; err != nil {
 			return err
 		}
@@ -952,7 +952,7 @@ func (*FilterOutputDropSrcPorts) LocalAction(ctx context.Context, ip net.IP, ipv
 	}
 
 	// Wait for all client to report.
-	for i := 0; i < len(ports); i++ {
+	for range len(ports) {
 		if err := <-errCh; err != nil {
 			return err
 		}
@@ -1018,7 +1018,7 @@ func (*FilterOutputAcceptInvertPorts) ContainerAction(ctx context.Context, ip ne
 	}
 
 	// Wait for listeners.
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		if err := <-errCh; err != nil {
 			return err
 		}
@@ -1053,7 +1053,7 @@ func (*FilterOutputAcceptInvertPorts) LocalAction(ctx context.Context, ip net.IP
 	}
 
 	// Wait for clients.
-	for i := 0; i < len(testPorts); i++ {
+	for range len(testPorts) {
 		if err := <-errCh; err != nil {
 			return err
 		}

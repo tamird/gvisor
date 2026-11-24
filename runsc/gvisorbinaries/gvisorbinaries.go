@@ -229,6 +229,10 @@ var All = []*Binary{&MetricServer, &CheckpointGofer, &Netgofer, &GvisorSentry, &
 
 // Options is the set of options used to execute a sidecar binary.
 type Options struct {
+	// SysProcAttr provides OS-specific options to the executed process.
+	// Used only by ForkExec.
+	SysProcAttr *unix.SysProcAttr
+
 	// Argv is the set of arguments to exec with. Argv[0] is the name of the
 	// binary as invoked. If Argv is empty, it defaults to a single-element
 	// slice holding the resolved binary path.
@@ -240,10 +244,6 @@ type Options struct {
 	// Files is the set of file descriptors to pass to forked processes.
 	// Used only by ForkExec.
 	Files []uintptr
-
-	// SysProcAttr provides OS-specific options to the executed process.
-	// Used only by ForkExec.
-	SysProcAttr *unix.SysProcAttr
 }
 
 // String returns a string representation of the argv.

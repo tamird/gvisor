@@ -357,53 +357,53 @@ func TestAIOLookupAfterDestroy(t *testing.T) {
 
 func TestGetAllocationDirection(t *testing.T) {
 	testCases := []struct {
-		name          string
-		mmapDirection arch.MmapDirection
-		ar            hostarch.AddrRange
 		vma           *vma
+		name          string
+		ar            hostarch.AddrRange
+		mmapDirection arch.MmapDirection
 		expected      pgalloc.Direction
 	}{
 		{
-			"No last fault in vma with mmap direction BottomUp",
-			arch.MmapBottomUp,
-			hostarch.AddrRange{123, 456},
-			&vma{lastFault: 0},
-			pgalloc.BottomUp,
+			name:          "No last fault in vma with mmap direction BottomUp",
+			mmapDirection: arch.MmapBottomUp,
+			ar:            hostarch.AddrRange{Start: 123, End: 456},
+			vma:           &vma{lastFault: 0},
+			expected:      pgalloc.BottomUp,
 		},
 		{
-			"No last fault in vma with mmap direction TopDown",
-			arch.MmapTopDown,
-			hostarch.AddrRange{123, 456},
-			&vma{lastFault: 0},
-			pgalloc.TopDown,
+			name:          "No last fault in vma with mmap direction TopDown",
+			mmapDirection: arch.MmapTopDown,
+			ar:            hostarch.AddrRange{Start: 123, End: 456},
+			vma:           &vma{lastFault: 0},
+			expected:      pgalloc.TopDown,
 		},
 		{
-			"Last fault in vma equals to addr range, with mmap direction BottomUp",
-			arch.MmapBottomUp,
-			hostarch.AddrRange{123, 456},
-			&vma{lastFault: 123},
-			pgalloc.BottomUp,
+			name:          "Last fault in vma equals to addr range, with mmap direction BottomUp",
+			mmapDirection: arch.MmapBottomUp,
+			ar:            hostarch.AddrRange{Start: 123, End: 456},
+			vma:           &vma{lastFault: 123},
+			expected:      pgalloc.BottomUp,
 		},
 		{
-			"Last fault in vma equals to addr range, with mmap direction TopDown",
-			arch.MmapTopDown,
-			hostarch.AddrRange{123, 456},
-			&vma{lastFault: 123},
-			pgalloc.TopDown,
+			name:          "Last fault in vma equals to addr range, with mmap direction TopDown",
+			mmapDirection: arch.MmapTopDown,
+			ar:            hostarch.AddrRange{Start: 123, End: 456},
+			vma:           &vma{lastFault: 123},
+			expected:      pgalloc.TopDown,
 		},
 		{
-			"Last fault in vma greater than addr range",
-			arch.MmapTopDown,
-			hostarch.AddrRange{123, 456},
-			&vma{lastFault: 456},
-			pgalloc.TopDown,
+			name:          "Last fault in vma greater than addr range",
+			mmapDirection: arch.MmapTopDown,
+			ar:            hostarch.AddrRange{Start: 123, End: 456},
+			vma:           &vma{lastFault: 456},
+			expected:      pgalloc.TopDown,
 		},
 		{
-			"Last fault in vma smaller than addr range",
-			arch.MmapTopDown,
-			hostarch.AddrRange{123, 456},
-			&vma{lastFault: 100},
-			pgalloc.BottomUp,
+			name:          "Last fault in vma smaller than addr range",
+			mmapDirection: arch.MmapTopDown,
+			ar:            hostarch.AddrRange{Start: 123, End: 456},
+			vma:           &vma{lastFault: 100},
+			expected:      pgalloc.BottomUp,
 		},
 	}
 	for _, test := range testCases {
@@ -469,7 +469,7 @@ func TestPinnedPagesCopiedOnFork(t *testing.T) {
 
 	// Fork twice so that both the first fork of a pinned pma, and the fork
 	// of the resulting parent pma state, are tested.
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		mm2, err := mm.Fork(ctx)
 		if err != nil {
 			t.Fatalf("Fork got err %v want nil", err)
@@ -923,7 +923,7 @@ func TestEagerForkCopy(t *testing.T) {
 
 	// Fork twice to check that the parent's pma remains eligible for eager
 	// copying after the first fork.
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		mm2, err := mm.Fork(ctx)
 		if err != nil {
 			t.Fatalf("Fork got err %v want nil", err)
@@ -1008,7 +1008,7 @@ func TestEagerForkCopyAdjacentMappings(t *testing.T) {
 
 	// Only the parent's pages outside of the EagerForkCopy mapping should
 	// have been made copy-on-write.
-	for i := 0; i < npages; i++ {
+	for i := range npages {
 		pageAddr := addr + hostarch.Addr(i)*pageSizeAddr
 		wantCOW := !eagerAR.Contains(pageAddr)
 		if _, needCOW := pmaAt(t, mm, pageAddr); needCOW != wantCOW {
@@ -1133,8 +1133,8 @@ func TestSealedMapping(t *testing.T) {
 // gatedReaderAt blocks reads past offset from until `gate` is closed.
 type gatedReaderAt struct {
 	io.ReaderAt
-	from int64
 	gate chan struct{}
+	from int64
 }
 
 // ReadAt implements `io.ReaderAt.ReadAt`.
@@ -1196,7 +1196,7 @@ func TestIODuringAsyncPageLoad(t *testing.T) {
 	mf := newTestMemoryFile(t)
 	gate := make(chan struct{})
 	loadDone := make(chan error, 1)
-	apfl, err := pgalloc.StartAsyncPagesFileLoad(stateio.NewIOReader(&gatedReaderAt{bytes.NewReader(pages.Bytes()), gated, gate}, 1<<20, 1, 2), func(err error) { loadDone <- err }, nil, pgalloc.AsyncPagesFileLoadOpts{})
+	apfl, err := pgalloc.StartAsyncPagesFileLoad(stateio.NewIOReader(&gatedReaderAt{ReaderAt: bytes.NewReader(pages.Bytes()), from: gated, gate: gate}, 1<<20, 1, 2), func(err error) { loadDone <- err }, nil, pgalloc.AsyncPagesFileLoadOpts{})
 	if err != nil {
 		t.Fatalf("StartAsyncPagesFileLoad got err %v want nil", err)
 	}
@@ -1218,7 +1218,7 @@ func TestIODuringAsyncPageLoad(t *testing.T) {
 	if err != nil {
 		t.Fatalf("MMap got err %v want nil", err)
 	}
-	ar := hostarch.AddrRange{addr, addr + size}
+	ar := hostarch.AddrRange{Start: addr, End: addr + size}
 	mm.activeMu.Lock()
 	mm.pmas.Insert(mm.pmas.FindGap(ar.Start), ar, pma{
 		file:           mf,
@@ -1366,7 +1366,7 @@ func TestEnsurePMAsExistBufferedIOFallback(t *testing.T) {
 // example, it randomly drops items when the race detector is enabled), so this
 // test may not exercise recycling on every iteration. It never fails spuriously.
 func TestGetByteSlicePtrZeroed(t *testing.T) {
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		dirty := getByteSlicePtr(pageSizeInt)
 		for j := range *dirty {
 			(*dirty)[j] = 0xfe

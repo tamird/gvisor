@@ -39,8 +39,8 @@ type Downloader struct {
 }
 
 type downloadStatusError struct {
-	code   int
 	status string
+	code   int
 }
 
 func (e *downloadStatusError) Error() string {

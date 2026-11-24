@@ -42,23 +42,22 @@ import (
 )
 
 type socketOperations struct {
-	vfsfd vfs.FileDescription
 	vfs.FileDescriptionDefaultImpl
 	vfs.DentryMetadataFileDescriptionImpl
+	vfsfd vfs.FileDescription
 	vfs.LockFD
-	socket.SendReceiveTimeout
 
+	// eventInfo holds current socket fd's corresponding notification queue
+	// and events status. It will be used to interact with plugin
+	// network stack for event reporting.
+	eventInfo plugin.EventInfo
+	socket.SendReceiveTimeout
 	family   int
 	skType   linux.SockType
 	protocol int
 
 	// fd holds the current socket fd created by plugin stack.
 	fd uint32 `state:"nosave"`
-
-	// eventInfo holds current socket fd's corresponding notification queue
-	// and events status. It will be used to interact with plugin
-	// network stack for event reporting.
-	eventInfo plugin.EventInfo
 }
 
 var _ = socket.Socket(&socketOperations{})

@@ -137,8 +137,8 @@ func resolve(ctx context.Context, creds *auth.Credentials, mns *vfs.MountNamespa
 func getPath(env []string) []string {
 	const prefix = "PATH="
 	for _, e := range env {
-		if strings.HasPrefix(e, prefix) {
-			return strings.Split(strings.TrimPrefix(e, prefix), ":")
+		if after, ok := strings.CutPrefix(e, prefix); ok {
+			return strings.Split(after, ":")
 		}
 	}
 	return nil

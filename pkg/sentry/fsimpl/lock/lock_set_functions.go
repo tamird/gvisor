@@ -15,6 +15,7 @@
 package lock
 
 import (
+	"maps"
 	"math"
 )
 
@@ -54,9 +55,7 @@ func (lockSetFunctions) Split(r LockRange, val Lock, split uint64) (Lock, Lock) 
 	// Copy the segment so that split segments don't contain map references
 	// to other segments.
 	val0 := Lock{Readers: make(map[UniqueID]OwnerInfo)}
-	for k, v := range val.Readers {
-		val0.Readers[k] = v
-	}
+	maps.Copy(val0.Readers, val.Readers)
 	val0.Writer = val.Writer
 	val0.WriterInfo = val.WriterInfo
 

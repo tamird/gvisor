@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build !msan && !race
-// +build !msan,!race
 
 package filter
 

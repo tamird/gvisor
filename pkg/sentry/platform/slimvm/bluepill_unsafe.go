@@ -44,7 +44,7 @@ var hexSyms = []byte("0123456789abcdef")
 func printHex(title []byte, val uint64) {
 	var str [19]byte
 	str[0] = ' '
-	for i := 0; i < 16; i++ {
+	for i := range 16 {
 		str[16-i] = hexSyms[val&0xf]
 		val = val >> 4
 	}

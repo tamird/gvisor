@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build amd64
-// +build amd64
 
 // Package testutil provides common test utilities for systrap.
 package testutil

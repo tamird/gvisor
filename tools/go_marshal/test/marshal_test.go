@@ -260,20 +260,20 @@ func copyOutN(t *testing.T, src marshal.Marshallable, limit int) {
 func TestLimitedMarshalling(t *testing.T) {
 	types := []reflect.Type{
 		// Packed types.
-		reflect.TypeOf((*test.Type2)(nil)),
-		reflect.TypeOf((*test.Type3)(nil)),
-		reflect.TypeOf((*test.Timespec)(nil)),
-		reflect.TypeOf((*test.Stat)(nil)),
-		reflect.TypeOf((*test.InetAddr)(nil)),
-		reflect.TypeOf((*test.SignalSet)(nil)),
-		reflect.TypeOf((*test.SignalSetAlias)(nil)),
+		reflect.TypeFor[*test.Type2](),
+		reflect.TypeFor[*test.Type3](),
+		reflect.TypeFor[*test.Timespec](),
+		reflect.TypeFor[*test.Stat](),
+		reflect.TypeFor[*test.InetAddr](),
+		reflect.TypeFor[*test.SignalSet](),
+		reflect.TypeFor[*test.SignalSetAlias](),
 		// Non-packed types.
-		reflect.TypeOf((*test.Type1)(nil)),
-		reflect.TypeOf((*test.Type4)(nil)),
-		reflect.TypeOf((*test.Type5)(nil)),
-		reflect.TypeOf((*test.Type6)(nil)),
-		reflect.TypeOf((*test.Type7)(nil)),
-		reflect.TypeOf((*test.Type8)(nil)),
+		reflect.TypeFor[*test.Type1](),
+		reflect.TypeFor[*test.Type4](),
+		reflect.TypeFor[*test.Type5](),
+		reflect.TypeFor[*test.Type6](),
+		reflect.TypeFor[*test.Type7](),
+		reflect.TypeFor[*test.Type8](),
 	}
 
 	for _, tyPtr := range types {
@@ -328,7 +328,7 @@ func TestLimitedSliceMarshalling(t *testing.T) {
 	}{
 		// Packed types.
 		{
-			reflect.TypeOf((*[20]test.Stat)(nil)),
+			reflect.TypeFor[*[20]test.Stat](),
 			func(cc marshal.CopyContext, addr hostarch.Addr, dst any) (int, error) {
 				slice := dst.(*[20]test.Stat)[:]
 				return test.CopyStatSliceIn(cc, addr, slice)
@@ -343,7 +343,7 @@ func TestLimitedSliceMarshalling(t *testing.T) {
 			},
 		},
 		{
-			reflect.TypeOf((*[1]test.Stat)(nil)),
+			reflect.TypeFor[*[1]test.Stat](),
 			func(cc marshal.CopyContext, addr hostarch.Addr, dst any) (int, error) {
 				slice := dst.(*[1]test.Stat)[:]
 				return test.CopyStatSliceIn(cc, addr, slice)
@@ -358,7 +358,7 @@ func TestLimitedSliceMarshalling(t *testing.T) {
 			},
 		},
 		{
-			reflect.TypeOf((*[5]test.SignalSetAlias)(nil)),
+			reflect.TypeFor[*[5]test.SignalSetAlias](),
 			func(cc marshal.CopyContext, addr hostarch.Addr, dst any) (int, error) {
 				slice := dst.(*[5]test.SignalSetAlias)[:]
 				return test.CopySignalSetAliasSliceIn(cc, addr, slice)
@@ -374,7 +374,7 @@ func TestLimitedSliceMarshalling(t *testing.T) {
 		},
 		// Non-packed types.
 		{
-			reflect.TypeOf((*[20]test.Type1)(nil)),
+			reflect.TypeFor[*[20]test.Type1](),
 			func(cc marshal.CopyContext, addr hostarch.Addr, dst any) (int, error) {
 				slice := dst.(*[20]test.Type1)[:]
 				return test.CopyType1SliceIn(cc, addr, slice)
@@ -389,7 +389,7 @@ func TestLimitedSliceMarshalling(t *testing.T) {
 			},
 		},
 		{
-			reflect.TypeOf((*[1]test.Type1)(nil)),
+			reflect.TypeFor[*[1]test.Type1](),
 			func(cc marshal.CopyContext, addr hostarch.Addr, dst any) (int, error) {
 				slice := dst.(*[1]test.Type1)[:]
 				return test.CopyType1SliceIn(cc, addr, slice)
@@ -404,7 +404,7 @@ func TestLimitedSliceMarshalling(t *testing.T) {
 			},
 		},
 		{
-			reflect.TypeOf((*[7]test.Type8)(nil)),
+			reflect.TypeFor[*[7]test.Type8](),
 			func(cc marshal.CopyContext, addr hostarch.Addr, dst any) (int, error) {
 				slice := dst.(*[7]test.Type8)[:]
 				return test.CopyType8SliceIn(cc, addr, slice)

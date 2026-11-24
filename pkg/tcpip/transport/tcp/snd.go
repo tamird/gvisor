@@ -286,23 +286,21 @@ func initSender(ep *Endpoint, iss, irs seqnum.Value, sndWnd seqnum.Size, mss uin
 	maxPayloadSize := int(mss) - ep.maxOptionSize()
 
 	ep.snd = &sender{
-		ep: ep,
-		TCPSenderState: TCPSenderState{
-			SndWnd:           sndWnd,
-			SndUna:           iss + 1,
-			SndNxt:           iss + 1,
-			RTTMeasureSeqNum: iss + 1,
-			LastSendTime:     ep.stack.Clock().NowMonotonic(),
-			MaxPayloadSize:   maxPayloadSize,
-			MaxSentAck:       irs + 1,
-			FastRecovery: TCPFastRecoveryState{
-				// See: https://tools.ietf.org/html/rfc6582#section-3.2 Step 1.
-				Last:      iss,
-				HighRxt:   iss,
-				RescueRxt: iss,
-			},
-			RTO: 1 * time.Second,
+		ep:               ep,
+		SndWnd:           sndWnd,
+		SndUna:           iss + 1,
+		SndNxt:           iss + 1,
+		RTTMeasureSeqNum: iss + 1,
+		LastSendTime:     ep.stack.Clock().NowMonotonic(),
+		MaxPayloadSize:   maxPayloadSize,
+		MaxSentAck:       irs + 1,
+		FastRecovery: TCPFastRecoveryState{
+			// See: https://tools.ietf.org/html/rfc6582#section-3.2 Step 1.
+			Last:      iss,
+			HighRxt:   iss,
+			RescueRxt: iss,
 		},
+		RTO:             1 * time.Second,
 		smallSegmentEnd: iss + 1,
 		gso:             ep.gso.Type != stack.GSONone,
 		writeList: protectedWriteList{
@@ -878,10 +876,7 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 	if newData {
 		// Merge segments if allowed.
 		if seg.payloadSize() != 0 {
-			available := int(s.SndNxt.Size(end))
-			if available > limit {
-				available = limit
-			}
+			available := min(int(s.SndNxt.Size(end)), limit)
 
 			// nextTooBig indicates that the next segment was too
 			// large to entirely fit in the current segment. It
@@ -1393,11 +1388,9 @@ func (s *sender) walkSACK(rcvdSeg *segment) bool {
 	n := len(rcvdSeg.parsedOptions.SACKBlocks)
 	if checkDSACK(rcvdSeg) {
 		dsackBlock := rcvdSeg.parsedOptions.SACKBlocks[0]
-		numDSACK := uint64(dsackBlock.End-dsackBlock.Start) / uint64(s.MaxPayloadSize)
-		// numDSACK can be zero when DSACK is sent for subsegments.
-		if numDSACK < 1 {
-			numDSACK = 1
-		}
+		numDSACK := max(
+			// numDSACK can be zero when DSACK is sent for subsegments.
+			uint64(dsackBlock.End-dsackBlock.Start)/uint64(s.MaxPayloadSize), 1)
 		s.ep.stack.Stats().TCP.SegmentsAckedWithDSACK.IncrementBy(numDSACK)
 		s.rc.setDSACKSeen(true)
 		idx = 1

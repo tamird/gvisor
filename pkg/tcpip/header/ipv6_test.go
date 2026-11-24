@@ -66,10 +66,10 @@ func TestAppendOpaqueInterfaceIdentifier(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		prefix     tcpip.Subnet
 		nicName    string
-		dadCounter uint8
 		secretKey  []byte
+		prefix     tcpip.Subnet
+		dadCounter uint8
 	}{
 		{
 			name:       "SecretKey of minimum size",
@@ -164,10 +164,10 @@ func TestLinkLocalAddrWithOpaqueIID(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		prefix     tcpip.Subnet
 		nicName    string
-		dadCounter uint8
 		secretKey  []byte
+		prefix     tcpip.Subnet
+		dadCounter uint8
 	}{
 		{
 			name:       "SecretKey of minimum size",
@@ -298,10 +298,10 @@ func TestIsV6LinkLocalUnicastAddress(t *testing.T) {
 
 func TestScopeForIPv6Address(t *testing.T) {
 	tests := []struct {
+		err   tcpip.Error
 		name  string
 		addr  tcpip.Address
 		scope header.IPv6AddressScope
-		err   tcpip.Error
 	}{
 		{
 			name:  "Unique Local",

@@ -35,10 +35,10 @@ type multiportMarshalerV1 struct{}
 // source and/or destination ports, per-port flags, and an
 // inversion flag.
 type multiportMatcherV1 struct {
-	flags  uint8    // Port match flag (source/destination/either).
-	count  uint8    // Number of ports.
 	ports  []uint16 // List of ports to match against.
 	pflags []uint8  // Per-port flags (for range matches).
+	flags  uint8    // Port match flag (source/destination/either).
+	count  uint8    // Number of ports.
 	invert bool     // Invert match result.
 }
 
@@ -66,13 +66,10 @@ func (multiportMarshalerV1) marshal(mr matcher) []byte {
 	xtmp.Flags = m.flags
 
 	// Set the count of ports and populate the "Ports" slice.
-	xtmp.Count = uint8(len(m.ports))
-
-	// Truncate the "ports" slice to the maximum allowed
-	// by "XT_MULTI_PORTS" to prevent out-of-bounds writes.
-	if xtmp.Count > linux.XT_MULTI_PORTS {
-		xtmp.Count = linux.XT_MULTI_PORTS
-	}
+	xtmp.Count = min(
+		// Truncate the "ports" slice to the maximum allowed
+		// by "XT_MULTI_PORTS" to prevent out-of-bounds writes.
+		uint8(len(m.ports)), linux.XT_MULTI_PORTS)
 
 	// Copy over the ports, and per-port flags.
 	for i := uint8(0); i < xtmp.Count; i++ {

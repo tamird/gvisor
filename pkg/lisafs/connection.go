@@ -42,13 +42,24 @@ import (
 //   - The client can drop its ref via the Close RPC which will in turn make the
 //     connection drop its ref.
 type Connection struct {
-	// server is the server on which this connection was created. It is immutably
-	// associated with it for its entire lifetime.
-	server *Server
-
 	// impl is the implementation that owns this connection's mount behavior and
 	// advertised protocol configuration.
 	impl ConnectionImpl
+
+	// fds tracks this connection's open FDs.
+	//
+	// +checklocks:fdsMu
+	fds map[FDID]genericFD
+
+	// channelAlloc is used to allocate memory for channels.
+	channelAlloc *flipcall.PacketWindowAllocator
+
+	// sockComm is the main socket by which this connections is established.
+	sockComm *sockCommunicator
+
+	// server is the server on which this connection was created. It is immutably
+	// associated with it for its entire lifetime.
+	server *Server
 
 	// mountPath is the path to a file inside the server that is served to this
 	// connection as its root FD. IOW, this connection is mounted at this path.
@@ -56,25 +67,14 @@ type Connection struct {
 	// per the user's sandbox configuration. mountPath is immutable.
 	mountPath string
 
-	// maxMessageSize is the cached value of impl.MaxMessageSize().
-	maxMessageSize uint32
-
-	// supported caches information about which messages are supported. It is
-	// indexed by MID. An MID is supported if supported[MID] is true.
-	supported []bool
-
-	// opts defines connection-specific behavior.
-	opts ConnectionOpts
-
-	// sockComm is the main socket by which this connections is established.
-	sockComm *sockCommunicator
-
-	channelsMu sync.Mutex
-
 	// channels keeps track of all open channels.
 	//
 	// +checklocks:channelsMu
 	channels []*channel
+
+	// supported caches information about which messages are supported. It is
+	// indexed by MID. An MID is supported if supported[MID] is true.
+	supported []bool
 
 	// activeWg represents active channels.
 	activeWg sync.WaitGroup
@@ -82,19 +82,18 @@ type Connection struct {
 	// reqGate counts requests that are still being handled.
 	reqGate sync.Gate
 
-	// channelAlloc is used to allocate memory for channels.
-	channelAlloc *flipcall.PacketWindowAllocator
-
-	fdsMu sync.RWMutex
-
-	// fds tracks this connection's open FDs.
-	//
-	// +checklocks:fdsMu
-	fds map[FDID]genericFD
 	// nextFDID is the next available FDID.
 	//
 	// +checklocks:fdsMu
-	nextFDID FDID
+	nextFDID   FDID
+	fdsMu      sync.RWMutex
+	channelsMu sync.Mutex
+
+	// maxMessageSize is the cached value of impl.MaxMessageSize().
+	maxMessageSize uint32
+
+	// opts defines connection-specific behavior.
+	opts ConnectionOpts
 }
 
 // CreateConnection initializes a new connection which will be mounted at

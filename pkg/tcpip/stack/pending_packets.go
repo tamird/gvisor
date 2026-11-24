@@ -17,6 +17,7 @@ package stack
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
 )
@@ -35,7 +36,6 @@ type pendingPacket struct {
 }
 
 type packetsPendingLinkResolutionMu struct {
-	packetsPendingLinkResolutionMutex
 
 	// The packets to send once the resolver completes.
 	//
@@ -51,6 +51,7 @@ type packetsPendingLinkResolutionMu struct {
 	//
 	// +checklocks:packetsPendingLinkResolutionMutex
 	cancelChans []<-chan struct{}
+	packetsPendingLinkResolutionMutex
 }
 
 // packetsPendingLinkResolution is a queue of packets pending link resolution.
@@ -111,7 +112,7 @@ func (f *packetsPendingLinkResolution) dequeue(ch <-chan struct{}, linkAddr tcpi
 	if ok {
 		for i, cancelChan := range f.mu.cancelChans {
 			if cancelChan == ch {
-				f.mu.cancelChans = append(f.mu.cancelChans[:i], f.mu.cancelChans[i+1:]...)
+				f.mu.cancelChans = slices.Delete(f.mu.cancelChans, i, i+1)
 				break
 			}
 		}

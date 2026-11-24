@@ -149,7 +149,7 @@ func (pc *TcpdumpCommand) execute() error {
 			controlBlock.Fill.FillAll(&controlBlock.UMEM)
 
 			// Read packets one-by-one and log them.
-			for i := uint32(0); i < nReceived; i++ {
+			for i := range uint32(nReceived) {
 				// Wrap the packet in a PacketBuffer.
 				descriptor := controlBlock.RX.Get(rxIndex + i)
 				data := controlBlock.UMEM.Get(descriptor)

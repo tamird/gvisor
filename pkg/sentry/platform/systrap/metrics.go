@@ -109,14 +109,14 @@ func (b *latencyBuckets) getMedian() cpuTicks {
 
 // merge combines two latencyBuckets instances.
 func (b *latencyBuckets) merge(other *latencyBuckets) {
-	for i := 0; i < numLatencyBuckets; i++ {
+	for i := range numLatencyBuckets {
 		b[i].Add(other[i].Load())
 	}
 }
 
 // reset zeroes all buckets.
 func (b *latencyBuckets) reset() {
-	for i := 0; i < numLatencyBuckets; i++ {
+	for i := range numLatencyBuckets {
 		b[i].Store(0)
 	}
 }

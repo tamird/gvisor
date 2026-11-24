@@ -86,6 +86,7 @@
 package scsdk
 
 import (
+	"slices"
 	"sync"
 )
 
@@ -97,12 +98,12 @@ type ProcessKey struct {
 
 // ProcessInfo contains tracked state for a process inside a gVisor sandbox.
 type ProcessInfo struct {
-	Key                 ProcessKey
 	ContainerID         string
 	ProcessName         string
 	BinaryPath          string
 	Argv                []string
 	Env                 []string
+	Key                 ProcessKey
 	ParentThreadGroupID int32
 }
 
@@ -121,8 +122,8 @@ type EnrichedExecveEvent struct {
 
 // ProcessTracker manages the lifecycle of process metadata across Seccheck events.
 type ProcessTracker struct {
-	mu        sync.RWMutex
 	processes map[ProcessKey]*ProcessInfo
+	mu        sync.RWMutex
 }
 
 // NewProcessTracker creates an initialized ProcessTracker.
@@ -172,8 +173,8 @@ func (pt *ProcessTracker) RegisterOrUpdate(execve *ExecutionEvent) *ProcessInfo 
 	info.ProcessName = execve.Context.ProcessName
 	info.ParentThreadGroupID = execve.Context.ParentThreadGroupID
 	info.BinaryPath = execve.BinaryPath
-	info.Argv = append([]string(nil), execve.Argv...)
-	info.Env = append([]string(nil), execve.Env...)
+	info.Argv = slices.Concat(execve.Argv)
+	info.Env = slices.Concat(execve.Env)
 	return info
 }
 

@@ -30,10 +30,10 @@ import (
 // in a register.
 // Note: payload operations are not supported for the verdict register.
 type payloadSet struct {
-	base       payloadBase // Payload base to access data from.
-	offset     uint8       // Number of bytes to skip after the base for data.
 	blen       int         // Number of bytes to load.
 	sregIdx    int         // Index of the source register in registerSet.data.
+	base       payloadBase // Payload base to access data from.
+	offset     uint8       // Number of bytes to skip after the base for data.
 	csumType   uint8       // Type of checksum to use.
 	csumOffset uint8       // Number of bytes to skip after the base for checksum.
 	csumFlags  uint8       // Flags for checksum.

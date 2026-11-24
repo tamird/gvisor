@@ -37,9 +37,9 @@ type multiportMarshaler struct{}
 // multiportMatcher represents a multiport matcher
 // with source and/or destination ports.
 type multiportMatcher struct {
+	ports []uint16 // List of ports to match against.
 	flags uint8    // Port match flag (source/destination/either).
 	count uint8    // Number of ports.
-	ports []uint16 // List of ports to match against.
 }
 
 // init registers the "multiportMarshaler" with the matcher registry.
@@ -68,13 +68,10 @@ func (multiportMarshaler) marshal(mr matcher) []byte {
 	xtmp.Flags = m.flags
 
 	// Set the count of ports and populate the "Ports" slice.
-	xtmp.Count = uint8(len(m.ports))
-
-	// Truncate the "ports" slice to the maximum allowed
-	// by "XT_MULTI_PORTS" to prevent out-of-bounds writes.
-	if xtmp.Count > linux.XT_MULTI_PORTS {
-		xtmp.Count = linux.XT_MULTI_PORTS
-	}
+	xtmp.Count = min(
+		// Truncate the "ports" slice to the maximum allowed
+		// by "XT_MULTI_PORTS" to prevent out-of-bounds writes.
+		uint8(len(m.ports)), linux.XT_MULTI_PORTS)
 
 	// Copy over the ports.
 	for i := uint8(0); i < xtmp.Count; i++ {

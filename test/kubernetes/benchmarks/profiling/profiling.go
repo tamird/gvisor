@@ -39,7 +39,6 @@ import (
 
 	"github.com/google/pprof/profile"
 	"golang.org/x/time/rate"
-	"google.golang.org/protobuf/proto"
 	"gvisor.dev/gvisor/pkg/atomicbitops"
 	"gvisor.dev/gvisor/runsc/flag"
 	k8s "gvisor.dev/gvisor/test/kubernetes"
@@ -77,15 +76,11 @@ var postProcessors []postProcessor
 
 func profileDSTemplate(cluster *testcluster.TestCluster) appsv1.DaemonSet {
 	return appsv1.DaemonSet{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "apps/v1",
-			Kind:       "DaemonSet",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: setupPodName,
-			Labels: map[string]string{
-				k8sApp: setupPodName,
-			},
+		APIVersion: "apps/v1",
+		Kind:       "DaemonSet",
+		Name:       setupPodName,
+		Labels: map[string]string{
+			k8sApp: setupPodName,
 		},
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
@@ -115,10 +110,8 @@ func profileDSTemplate(cluster *testcluster.TestCluster) appsv1.DaemonSet {
 					Volumes: []v13.Volume{
 						{
 							Name: "host",
-							VolumeSource: v13.VolumeSource{
-								HostPath: &v13.HostPathVolumeSource{
-									Path: "/",
-								},
+							HostPath: &v13.HostPathVolumeSource{
+								Path: "/",
 							},
 						},
 					},
@@ -237,7 +230,7 @@ func startOperations(ctx context.Context, k8sCtx k8sctx.KubernetesContext, c *te
 			Image:           image,
 			Name:            name,
 			Command:         op.command,
-			SecurityContext: &v13.SecurityContext{Privileged: proto.Bool(true)},
+			SecurityContext: &v13.SecurityContext{Privileged: new(true)},
 			VolumeMounts: []v13.VolumeMount{
 				{
 					Name:      "host",
@@ -436,11 +429,11 @@ func processProfileRun(ctx context.Context, t *testing.T, run *profileRun) error
 // next should be the base64 decoder.
 type dirStreamReader struct {
 	logsReader io.ReadCloser
-	buf        bytes.Buffer
 	checksum   hash.Hash
 	dataCh     chan []byte
 	errCh      chan error
 	progressFn func(readBytes, estimatedTotalBytes int64)
+	buf        bytes.Buffer
 }
 
 // processLogs reads container logs and writes base64 data to `r.dataCh`.
@@ -516,8 +509,12 @@ func (r *dirStreamReader) processLogs() {
 		}()
 		if err != nil {
 			r.errCh <- err
-			break
+			return
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		r.errCh <- err
+		return
 	}
 	r.errCh <- io.EOF
 }

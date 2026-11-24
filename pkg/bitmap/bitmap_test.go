@@ -44,7 +44,7 @@ func generateFilledSlice(min, max, length int) []uint32 {
 func generateFilledBitmap(min, max, fillNum int) ([]uint32, Bitmap) {
 	bitmap := New(uint32(max))
 	randSlice := generateFilledSlice(min, max, fillNum)
-	for i := 0; i < fillNum; i++ {
+	for i := range fillNum {
 		bitmap.Add(randSlice[i])
 	}
 	return randSlice, bitmap
@@ -62,7 +62,6 @@ func TestNewBitmap(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if bitmap := New(uint32(tt.size)); len(bitmap.bitBlock) != tt.expectSize {
 				t.Errorf("New created bitmap with %v, bitBlock size: %d, wanted: %d", tt.name, len(bitmap.bitBlock), tt.expectSize)
@@ -85,7 +84,6 @@ func TestAdd(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			bitmap := New(uint32(tt.bitmapSize))
 			bitmap.Add(uint32(tt.addNum))
@@ -101,12 +99,12 @@ func TestRemove(t *testing.T) {
 	bitmap := New(uint32(1024))
 	firstSlice := generateFilledSlice(0, 511, 50)
 	secondSlice := generateFilledSlice(512, 1024, 50)
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		bitmap.Add(firstSlice[i])
 		bitmap.Add(secondSlice[i])
 	}
 
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		bitmap.Remove(firstSlice[i])
 	}
 	bitmapSlice := bitmap.ToSlice()
@@ -114,7 +112,7 @@ func TestRemove(t *testing.T) {
 		t.Errorf("After Remove() firstSlice, remained slice: %v, wanted: %v", bitmapSlice, secondSlice)
 	}
 
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		bitmap.Remove(secondSlice[i])
 	}
 	bitmapSlice = bitmap.ToSlice()
@@ -139,7 +137,6 @@ func TestFlipRange(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			fillSlice, bitmap := generateFilledBitmap(tt.flipRangeMin, tt.flipRangeMax, tt.filledSliceLen)
 			flipFillSlice := make([]uint32, 0)
@@ -174,7 +171,6 @@ func TestClearRange(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			bitmap := New(uint32(tt.bitmapSize))
 			bitmap.FlipRange(uint32(0), uint32(tt.bitmapSize))
@@ -302,8 +298,8 @@ func TestBitmapNumOnes(t *testing.T) {
 }
 
 type bitmapForEachTestcase struct {
-	start, end uint32
 	expected   map[uint32]bool
+	start, end uint32
 }
 
 func TestForEach(t *testing.T) {
@@ -314,21 +310,21 @@ func TestForEach(t *testing.T) {
 	bitmap.FlipRange(1005, 1006)
 	bitmap.FlipRange(1096, 1098)
 	testcases := []bitmapForEachTestcase{
-		{0, 0, map[uint32]bool{}},
-		{0, 100, map[uint32]bool{}},
-		{1003, 1004, map[uint32]bool{1003: true}},
-		{1003, 1006, map[uint32]bool{1003: true, 1005: true}},
-		{1000, 2000, map[uint32]bool{1003: true, 1005: true, 1096: true, 1097: true}},
-		{1000, 1097, map[uint32]bool{1003: true, 1005: true, 1096: true}},
-		{1060, 1097, map[uint32]bool{1096: true}},
-		{0, bitmapSize, func() map[uint32]bool {
+		{start: 0, end: 0, expected: map[uint32]bool{}},
+		{start: 0, end: 100, expected: map[uint32]bool{}},
+		{start: 1003, end: 1004, expected: map[uint32]bool{1003: true}},
+		{start: 1003, end: 1006, expected: map[uint32]bool{1003: true, 1005: true}},
+		{start: 1000, end: 2000, expected: map[uint32]bool{1003: true, 1005: true, 1096: true, 1097: true}},
+		{start: 1000, end: 1097, expected: map[uint32]bool{1003: true, 1005: true, 1096: true}},
+		{start: 1060, end: 1097, expected: map[uint32]bool{1096: true}},
+		{start: 0, end: bitmapSize, expected: func() map[uint32]bool {
 			m := make(map[uint32]bool)
 			for _, i := range bitmap.ToSlice() {
 				m[i] = true
 			}
 			return m
 		}()},
-		{234, 356, func() map[uint32]bool {
+		{start: 234, end: 356, expected: func() map[uint32]bool {
 			m := make(map[uint32]bool)
 			for i := uint32(234); i < 356; i++ {
 				m[i] = true
@@ -404,7 +400,7 @@ func TestGrow(t *testing.T) {
 	bitmap.Grow(64)
 
 	want := make([]uint32, 64)
-	for i := 0; i < 128; i++ {
+	for i := range 128 {
 		if i < 64 {
 			want[i] = uint32(i)
 		}

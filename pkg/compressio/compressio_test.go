@@ -51,14 +51,14 @@ func initTest(t harness, size int) []byte {
 }
 
 type testOpts struct {
-	Name        string
-	Data        []byte
 	NewWriter   func(*bytes.Buffer) (io.WriteCloser, error)
 	NewReader   func(*bytes.Buffer) (io.Reader, error)
 	PreWrite    func()
 	PostWrite   func()
 	PreRead     func()
 	PostRead    func()
+	Name        string
+	Data        []byte
 	WriteIters  int
 	ReadIters   int
 	CorruptData bool

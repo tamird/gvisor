@@ -198,9 +198,7 @@ func createVethPair(t *testing.T, name string) netlink.Link {
 	t.Helper()
 
 	veth := &netlink.Veth{
-		LinkAttrs: netlink.LinkAttrs{
-			Name: name,
-		},
+		Name:     name,
 		PeerName: name + "-peer",
 	}
 

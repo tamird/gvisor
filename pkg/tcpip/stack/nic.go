@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"reflect"
 	"slices"
-	"sort"
 
 	"gvisor.dev/gvisor/pkg/atomicbitops"
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -153,7 +152,7 @@ func (p *packetEndpointList) remove(ep PacketEndpoint) {
 	defer p.mu.Unlock()
 	for i, epOther := range p.eps {
 		if epOther == ep {
-			p.eps = append(p.eps[:i], p.eps[i+1:]...)
+			p.eps = slices.Delete(p.eps, i, i+1)
 			break
 		}
 	}
@@ -506,10 +505,8 @@ func (n *nic) WritePacket(r *Route, pkt *PacketBuffer) tcpip.Error {
 // WritePacketToRemote implements NetworkInterface.
 func (n *nic) WritePacketToRemote(remoteLinkAddr tcpip.LinkAddress, pkt *PacketBuffer) tcpip.Error {
 	pkt.EgressRoute = RouteInfo{
-		routeInfo: routeInfo{
-			NetProto:         pkt.NetworkProtocolNumber,
-			LocalLinkAddress: n.LinkAddress(),
-		},
+		NetProto:          pkt.NetworkProtocolNumber,
+		LocalLinkAddress:  n.LinkAddress(),
 		RemoteLinkAddress: remoteLinkAddr,
 	}
 	return n.writePacket(pkt)
@@ -707,9 +704,7 @@ func (n *nic) primaryAddresses() []tcpip.ProtocolAddress {
 	}
 	// Sort the network protocol numbers so that IPv4 address is always
 	// added to the list before IPv6 address.
-	sort.Slice(protocolNumbers, func(i, j int) bool {
-		return protocolNumbers[i] < protocolNumbers[j]
-	})
+	slices.Sort(protocolNumbers)
 
 	for _, p := range protocolNumbers {
 		addressableEndpoint, ok := n.networkEndpoints[p].(AddressableEndpoint)

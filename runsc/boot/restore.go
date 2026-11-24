@@ -51,7 +51,6 @@ import (
 	"gvisor.dev/gvisor/pkg/state/statefile"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/timing"
-	"gvisor.dev/gvisor/pkg/urpc"
 	"gvisor.dev/gvisor/runsc/boot/pprof"
 	"gvisor.dev/gvisor/runsc/boot/sentryapi"
 	"gvisor.dev/gvisor/runsc/config"
@@ -172,13 +171,11 @@ func saveOptsFromSpec(spec *specs.Spec, fds []*fd.FD, useCheckpointGofer bool) (
 
 	saveOpts := &controlapi.SaveOpts{
 		AppMFExcludeCommittedZeroPages: specutils.AnnotationToBool(spec, annotationCheckpointExcludeCommittedZeroPages),
-		FilePayload: urpc.FilePayload{
-			Files: files,
-		},
-		Metadata:                 comp.ToMetadata(),
-		HavePagesFile:            len(files) > 1,
-		Resume:                   specutils.AnnotationToBool(spec, annotationCheckpointResume),
-		CudaCheckpointSequential: specutils.AnnotationToBool(spec, annotationCheckpointCudaCheckpointSequential),
+		Files:                          files,
+		Metadata:                       comp.ToMetadata(),
+		HavePagesFile:                  len(files) > 1,
+		Resume:                         specutils.AnnotationToBool(spec, annotationCheckpointResume),
+		CudaCheckpointSequential:       specutils.AnnotationToBool(spec, annotationCheckpointCudaCheckpointSequential),
 	}
 	if cudaPath, ok := spec.Annotations[annotationCheckpointCudaCheckpointPath]; ok {
 		saveOpts.CudaCheckpointPath = cudaPath
@@ -225,18 +222,11 @@ func newProcInternalData(conf *config.Config, spec *specs.Spec, containerName st
 // all containers and triggers the full sandbox restore after the last
 // container is restored.
 type restorer struct {
-	mu sync.Mutex
-
-	// totalContainers is the number of containers expected to be restored in
-	// the sandbox. Sandbox restore can only happen, after all containers have
-	// been restored.
-	totalContainers int
-
-	// containers is the list of containers restored so far.
-	containers []*containerInfo
-
 	// stateFile is a reader for the statefile.
 	stateFile statefile.Reader
+
+	// deviceFile is the required to start the platform.
+	deviceFile *fd.FD
 
 	// metadata is the metadata contained in the statefile.
 	metadata map[string]string
@@ -244,10 +234,6 @@ type restorer struct {
 	// timer is the timer for the restore process.
 	// The `restorer` owns the timer and will end it when restore is complete.
 	timer *timing.Timer
-
-	// If background is true, pagesFile may continue to be read after
-	// restorer.restore() returns.
-	background bool
 
 	// mainMF is the main MemoryFile of the sandbox.
 	// It is created as soon as possible, and may be restored to as soon as
@@ -259,9 +245,6 @@ type restorer struct {
 	// asynchronous loading of the memory pages.
 	asyncMFLoader *kernel.AsyncMFLoader
 
-	// deviceFile is the required to start the platform.
-	deviceFile *fd.FD
-
 	// cm is the container manager that is used to restore the sandbox.
 	cm *containerManager
 
@@ -269,12 +252,25 @@ type restorer struct {
 	// checkpoint.
 	checkpointedSpecs map[string]*specs.Spec
 
+	// rootFsOutputTar is the file to write the rootfs upper layer tar archive to.
+	rootFsOutputTar *os.File
+
+	// containers is the list of containers restored so far.
+	containers []*containerInfo
+
+	// totalContainers is the number of containers expected to be restored in
+	// the sandbox. Sandbox restore can only happen, after all containers have
+	// been restored.
+	totalContainers int
+	mu              sync.Mutex
+
+	// If background is true, pagesFile may continue to be read after
+	// restorer.restore() returns.
+	background bool
+
 	// extractRootFsMode is true if we only want to extract the upper layer of
 	// a rootfs overlay.
 	extractRootFsMode bool
-
-	// rootFsOutputTar is the file to write the rootfs upper layer tar archive to.
-	rootFsOutputTar *os.File
 }
 
 // restoreSubcontainer restores a subcontainer.

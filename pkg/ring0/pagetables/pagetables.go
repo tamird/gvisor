@@ -36,22 +36,13 @@ type PageTables struct {
 	// many PageTables if upperSharedPageTables is not nil.
 	root *PTEs
 
-	// rootPhysical is the cached physical address of the root.
-	//
-	// This is saved only to prevent constant translation.
-	rootPhysical uintptr
-
-	// archPageTables includes architecture-specific features.
-	archPageTables
-
 	// upperSharedPageTables represents a read-only shared upper
 	// of the Pagetable. When it is not nil, the upper is not
 	// allowed to be modified.
 	upperSharedPageTables *PageTables
 
-	// upperStart is the start address of the upper portion that
-	// are shared from upperSharedPageTables
-	upperStart uintptr
+	// archPageTables includes architecture-specific features.
+	archPageTables
 
 	// readOnlyShared indicates the Pagetables are read-only and
 	// own the ranges that are shared with other Pagetables.
@@ -60,6 +51,15 @@ type PageTables struct {
 	// largeAddressesEnabled indicates the Pagetables support addresses
 	// larger than 48 bits.
 	largeAddressesEnabled bool
+
+	// rootPhysical is the cached physical address of the root.
+	//
+	// This is saved only to prevent constant translation.
+	rootPhysical uintptr
+
+	// upperStart is the start address of the upper portion that
+	// are shared from upperSharedPageTables
+	upperStart uintptr
 }
 
 // PageSize returns the size of the memory mapped by a last-level page table
@@ -274,10 +274,10 @@ func (p *PageTables) IsEmpty(addr hostarch.Addr, length uintptr) bool {
 // lookupVisitor is used for lookup.
 type lookupVisitor struct {
 	target    uintptr // Input & Output.
-	findFirst bool    // Input.
 	physical  uintptr // Output.
 	size      uintptr // Output.
 	opts      MapOpts // Output.
+	findFirst bool    // Input.
 }
 
 // visit matches the given address.

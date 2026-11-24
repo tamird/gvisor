@@ -29,8 +29,8 @@ const uniqueXMLSuffix = ".unique.xml"
 // Keep each suite's complete contents and attributes, including failure and
 // skipped elements, properties and any additional GoogleTest metadata.
 type xmlTestSuite struct {
-	Attributes []xml.Attr `xml:",any,attr"`
 	Contents   string     `xml:",innerxml"`
+	Attributes []xml.Attr `xml:",any,attr"`
 }
 
 type xmlProperties struct {
@@ -38,16 +38,16 @@ type xmlProperties struct {
 }
 
 type xmlTestSuites struct {
+	Properties *xmlProperties `xml:"properties,omitempty"`
 	XMLName    xml.Name       `xml:"testsuites"`
 	Name       string         `xml:"name,attr"`
+	Time       string         `xml:"time,attr"`
+	Timestamp  string         `xml:"timestamp,attr,omitempty"`
+	Suites     []xmlTestSuite `xml:"testsuite"`
 	Tests      int            `xml:"tests,attr"`
 	Failures   int            `xml:"failures,attr"`
 	Errors     int            `xml:"errors,attr"`
 	Disabled   int            `xml:"disabled,attr"`
-	Time       string         `xml:"time,attr"`
-	Timestamp  string         `xml:"timestamp,attr,omitempty"`
-	Properties *xmlProperties `xml:"properties,omitempty"`
-	Suites     []xmlTestSuite `xml:"testsuite"`
 }
 
 func collateXMLs(origXML string) error {

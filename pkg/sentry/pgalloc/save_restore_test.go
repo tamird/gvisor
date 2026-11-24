@@ -111,12 +111,12 @@ func TestHostFileDataSeeker(t *testing.T) {
 		off  uint64
 		want memmap.FileRange
 	}{
-		{off: page(0), want: memmap.FileRange{page(2), page(4)}},
-		{off: page(3), want: memmap.FileRange{page(3), page(4)}},
-		{off: page(4), want: memmap.FileRange{page(9), page(10)}},
-		{off: page(10), want: memmap.FileRange{page(12), page(13)}},
-		{off: page(13), want: memmap.FileRange{f.TotalSize(), f.TotalSize()}},
-		{off: page(15), want: memmap.FileRange{f.TotalSize(), f.TotalSize()}},
+		{off: page(0), want: memmap.FileRange{Start: page(2), End: page(4)}},
+		{off: page(3), want: memmap.FileRange{Start: page(3), End: page(4)}},
+		{off: page(4), want: memmap.FileRange{Start: page(9), End: page(10)}},
+		{off: page(10), want: memmap.FileRange{Start: page(12), End: page(13)}},
+		{off: page(13), want: memmap.FileRange{Start: f.TotalSize(), End: f.TotalSize()}},
+		{off: page(15), want: memmap.FileRange{Start: f.TotalSize(), End: f.TotalSize()}},
 	} {
 		got, err := d.dataAtOrAfter(call.off)
 		if err != nil || got != call.want {
@@ -481,8 +481,8 @@ func BenchmarkSaveToDiskBacked(b *testing.B) {
 // put it between the successful reads so that they straddle the error.
 type shortPageBatch struct {
 	stateio.AsyncReader
-	queued int
 	sizes  []uint64
+	queued int
 }
 
 func (r *shortPageBatch) AddRead(id int, off int64, file stateio.DestinationFile, fr memmap.FileRange, dst []byte) {

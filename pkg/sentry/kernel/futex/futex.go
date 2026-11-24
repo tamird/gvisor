@@ -47,9 +47,6 @@ const (
 
 // Key represents something that a futex waiter may wait on.
 type Key struct {
-	// Kind is the type of the Key.
-	Kind KeyKind
-
 	// Mappable is the memory-mapped object that is represented by the Key.
 	// Mappable is always nil if Kind is not KindSharedMappable, and may be nil
 	// even if it is.
@@ -59,6 +56,9 @@ type Key struct {
 	// MappingIdentity is always nil is Mappable is nil, and may be nil even if
 	// it isn't.
 	MappingIdentity memmap.MappingIdentity
+
+	// Kind is the type of the Key.
+	Kind KeyKind
 
 	// If Kind is KindPrivate or KindSharedPrivate, Offset is the represented
 	// memory address. Otherwise, Offset is the represented offset into

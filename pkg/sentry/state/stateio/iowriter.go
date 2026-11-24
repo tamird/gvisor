@@ -28,17 +28,17 @@ type IOWriter struct {
 	NoRegisterClientFD
 
 	dst           io.Writer
-	maxWriteBytes uint64
-	maxRanges     int
 	subs          chan ioWriterSubmission
 	cmps          chan Completion
 	shutdown      chan struct{}
 	workers       sync.WaitGroup
+	maxWriteBytes uint64
+	maxRanges     int
 }
 
 type ioWriterSubmission struct {
-	id  int
 	src LocalClientRanges
+	id  int
 }
 
 // NewIOWriter returns an IOWriter that writes to dst. It takes ownership of

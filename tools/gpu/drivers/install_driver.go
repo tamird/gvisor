@@ -40,20 +40,19 @@ func init() {
 
 // Installer installs one supported driver on the host architecture.
 type Installer struct {
-	requestedVersion nvconf.DriverVersion
-	checksum         string
-	downloader       Downloader
-	tempDir          string
-
+	downloader           Downloader
 	getCurrentDriverFunc func(context.Context) (nvconf.DriverVersion, error)
 	checkHostFunc        func(context.Context) error
 	uninstallFunc        func(context.Context) error
 	installFunc          func(context.Context, string) error
+	checksum             string
+	tempDir              string
+	requestedVersion     nvconf.DriverVersion
 }
 
 type installableDriver struct {
-	version  nvconf.DriverVersion
 	checksum string
+	version  nvconf.DriverVersion
 }
 
 func hostDriver(version nvconf.DriverVersion, checksums nvproxy.Checksums) (installableDriver, error) {
@@ -68,7 +67,7 @@ func hostDriver(version nvconf.DriverVersion, checksums nvproxy.Checksums) (inst
 	if err != nil {
 		return installableDriver{}, fmt.Errorf("failed to get checksum for driver %q: %w", version, err)
 	}
-	return installableDriver{version, checksum}, nil
+	return installableDriver{version: version, checksum: checksum}, nil
 }
 
 // installableDrivers is the common host-architecture selection for installation
@@ -203,7 +202,7 @@ func getCurrentDriver(ctx context.Context) (nvconf.DriverVersion, error) {
 	// If there are multiple GPUs, there will be one version per line.
 	// Make sure they are all the same version.
 	sameVersion := ""
-	for _, line := range strings.Split(string(out), "\n") {
+	for line := range strings.SplitSeq(string(out), "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
@@ -288,7 +287,7 @@ func tryToPrintFailureLogs() {
 		return
 	}
 
-	for _, line := range strings.Split(string(out), "\n") {
+	for line := range strings.SplitSeq(string(out), "\n") {
 		fmt.Printf("[nvidia-installer]: %s\n", line)
 	}
 }
@@ -309,7 +308,7 @@ func getOSRelease() (map[string]string, error) {
 		return nil, fmt.Errorf("failed to read %s: %v", path, err)
 	}
 	m := make(map[string]string)
-	for _, line := range strings.Split(string(data), "\n") {
+	for line := range strings.SplitSeq(string(data), "\n") {
 		if kv := strings.SplitN(line, "=", 2); len(kv) == 2 {
 			m[kv[0]] = strings.Trim(kv[1], "\"")
 		}

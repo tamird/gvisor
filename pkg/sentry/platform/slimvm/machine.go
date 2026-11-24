@@ -31,29 +31,27 @@ import (
 
 // machine contains state associated with the VM as a whole.
 type machine struct {
-	// upperSharedPageTables tracks the read-only shared upper of all the pagetables.
-	upperSharedPageTables *pagetables.PageTables
-
 	// kernel is the set of global structures.
 	kernel ring0.Kernel
 
-	// mappingCache is used for mapPhysical.
-	mappingCache sync.Map
-
-	// mu protects vCPUs.
-	mu sync.RWMutex
-
-	// available is notified when vCPUs are available.
-	available sync.Cond
+	// upperSharedPageTables tracks the read-only shared upper of all the pagetables.
+	upperSharedPageTables *pagetables.PageTables
 
 	// vCPUs are the machine vCPUs.
 	//
 	// These are populated dynamically.
 	vCPUs map[uint64]*vCPU
 
+	// available is notified when vCPUs are available.
+	available sync.Cond
+
+	// mappingCache is used for mapPhysical.
+	mappingCache sync.Map
+
 	// allocatedVCPUIDs tracks IDs assigned to active vCPUs.
 	// It is protected by mu.
 	allocatedVCPUIDs bitmap.Bitmap
+	memoryRegions    []userMemoryRegion
 
 	// maxVCPUs is the maximum number of vCPUs, set by getMaxVCPU. vCPUs are
 	// created lazily up to this limit.
@@ -62,10 +60,11 @@ type machine struct {
 	// applicationCores is used to compute maxVCPUs.
 	applicationCores int
 
-	memoryRegions []userMemoryRegion
-
 	// sandboxID is the sandbox identifier passed to the host kernel module.
 	sandboxID int64
+
+	// mu protects vCPUs.
+	mu sync.RWMutex
 }
 
 type slimvmConfig struct {
@@ -103,8 +102,19 @@ type vCPU struct {
 	// by the bluepill code (see bluepill_amd64.s).
 	ring0.CPU
 
-	// id is the vCPU id.
-	id int
+	// active is the current addressSpace: this is set and read atomically,
+	// it is used to elide unnecessary interrupts due to invalidations.
+	active atomicAddressSpace
+
+	// machine associated with this vCPU.
+	machine *machine
+
+	// vCPUArchState is the architecture-specific state.
+	vCPUArchState
+
+	// active PCIDs on this vCPU.
+	activePCIDs pcidBitmap
+	vmxConfig   slimvmConfig
 
 	// tid is the last set tid.
 	tid atomicbitops.Uint64
@@ -115,25 +125,8 @@ type vCPU struct {
 	// guestExits is the count of guest to host world switches.
 	guestExits atomicbitops.Uint64
 
-	// state is the vCPU state.
-	//
-	// This is a bitmask of the three fields (vCPU*) described above.
-	state atomicbitops.Uint32
-
-	vmxConfig slimvmConfig
-
-	// machine associated with this vCPU.
-	machine *machine
-
-	// active is the current addressSpace: this is set and read atomically,
-	// it is used to elide unnecessary interrupts due to invalidations.
-	active atomicAddressSpace
-
-	// vCPUArchState is the architecture-specific state.
-	vCPUArchState
-
-	// active PCIDs on this vCPU.
-	activePCIDs pcidBitmap
+	// id is the vCPU id.
+	id int
 
 	// CPUID Faulting enable flag.
 	cpuidFaultingEnable int
@@ -141,6 +134,9 @@ type vCPU struct {
 	// Count the OOM happened recently.
 	OOMCount  int
 	OOMLastTS int64
+
+	// state is a bitmask of the vCPU state flags.
+	state atomicbitops.Uint32
 
 	// FullRestore indicates whether this vCPU need
 	// iret-based restore before enter guest.

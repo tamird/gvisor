@@ -35,11 +35,12 @@ type MetricValue interface {
 // metricValue is an individual metric value.
 // It implements `MetricValue`.
 type metricValue struct {
+	// unit is for storing information about the metric.
+	unit string
+
 	// value is value printed for this metric.
 	// *testing.B expects a float64, so we use the same.
 	value float64
-	// unit is for storing information about the metric.
-	unit string
 }
 
 // ToBenchstat implements `MetricValue.ToBenchstat`.

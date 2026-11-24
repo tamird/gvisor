@@ -24,17 +24,17 @@ import (
 // Writer is an io.Writer which buffers input, flushing
 // individual lines through an emitter function.
 type Writer struct {
-	sync.Mutex
+	// emit flushes individual lines and is fixed after construction.
+	// Write calls it synchronously with Mutex held, so it must not reenter
+	// this Writer. checklocks cannot recover that owner through the function.
+	emit func(p []byte)
 
 	// buf holds the data we haven't emitted yet.
 	//
 	// +checklocks:Mutex
 	buf bytes.Buffer
 
-	// emit flushes individual lines and is fixed after construction.
-	// Write calls it synchronously with Mutex held, so it must not reenter
-	// this Writer. checklocks cannot recover that owner through the function.
-	emit func(p []byte)
+	sync.Mutex
 }
 
 // NewWriter creates a Writer which emits using emitter.

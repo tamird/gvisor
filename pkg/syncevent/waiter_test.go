@@ -97,8 +97,7 @@ func BenchmarkWaiterNotifyRedundant(b *testing.B) {
 	w.Init()
 	w.Notify(evBench)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		w.Notify(evBench)
 	}
 }
@@ -109,8 +108,7 @@ func BenchmarkSleeperNotifyRedundant(b *testing.B) {
 	s.AddWaker(&w)
 	w.Assert()
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		w.Assert()
 	}
 }
@@ -119,8 +117,7 @@ func BenchmarkChannelNotifyRedundant(b *testing.B) {
 	ch := make(chan struct{}, 1)
 	ch <- struct{}{}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		select {
 		case ch <- struct{}{}:
 		default:
@@ -136,8 +133,7 @@ func BenchmarkWaiterNotifyWaitAck(b *testing.B) {
 	var w Waiter
 	w.Init()
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		w.Notify(evBench)
 		w.Wait()
 		w.Ack(evBench)
@@ -149,8 +145,7 @@ func BenchmarkSleeperNotifyWaitAck(b *testing.B) {
 	var w sleep.Waker
 	s.AddWaker(&w)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		w.Assert()
 		s.Fetch(true)
 	}
@@ -159,8 +154,7 @@ func BenchmarkSleeperNotifyWaitAck(b *testing.B) {
 func BenchmarkChannelNotifyWaitAck(b *testing.B) {
 	ch := make(chan struct{}, 1)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		// notify
 		select {
 		case ch <- struct{}{}:
@@ -195,8 +189,7 @@ func BenchmarkSleeperMultiNotifyWaitAck(b *testing.B) {
 		},
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		w := wakerPool.Get().(*sleep.Waker)
 		s.AddWaker(w)
 		w.Assert()
@@ -215,8 +208,7 @@ func BenchmarkSleeperMultiNotifyWaitAck(b *testing.B) {
 // identical.
 
 func BenchmarkWaiterTempNotifyWaitAck(b *testing.B) {
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		w := GetWaiter()
 		w.Notify(evBench)
 		w.Wait()
@@ -235,8 +227,7 @@ func BenchmarkSleeperTempNotifyWaitAck(b *testing.B) {
 	}
 	var w sleep.Waker
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		s := sleeperPool.Get().(*sleep.Sleeper)
 		s.AddWaker(&w)
 		w.Assert()
@@ -253,8 +244,7 @@ func BenchmarkWaiterNotifyWaitMultiAck(b *testing.B) {
 	var w Waiter
 	w.Init()
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		w.Notify(evBench)
 		if e := w.Wait(); e != evBench {
 			b.Fatalf("Wait: got %#x, wanted %#x", e, evBench)
@@ -270,8 +260,7 @@ func BenchmarkSleeperNotifyWaitMultiAck(b *testing.B) {
 		s.AddWaker(&ws[i])
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		ws[0].Assert()
 		if v := s.Fetch(true); v != &ws[0] {
 			b.Fatalf("Fetch: got %v, wanted %v", v, &ws[0])
@@ -284,8 +273,7 @@ func BenchmarkChannelNotifyWaitMultiAck(b *testing.B) {
 	ch1 := make(chan struct{}, 1)
 	ch2 := make(chan struct{}, 1)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		// notify
 		select {
 		case ch0 <- struct{}{}:

@@ -68,11 +68,14 @@ func cgroupRootDirectory(ctrl string) (string, error) {
 		if vfstype != "cgroup" {
 			continue
 		}
-		for _, mntopt := range strings.Split(mntopts, ",") {
+		for mntopt := range strings.SplitSeq(mntopts, ",") {
 			if mntopt == ctrl {
 				return file, nil
 			}
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		return "", fmt.Errorf("failed to read %s: %w", path, err)
 	}
 	return "", fmt.Errorf("no cgroup hierarchy mounted for controller %s", ctrl)
 }
@@ -101,11 +104,14 @@ func currentCgroup(ctrl string) (string, error) {
 		if len(fields) != nrfields {
 			return "", fmt.Errorf("failed to parse %s: line %q: got %d fields, wanted %d", path, line, len(fields), nrfields)
 		}
-		for _, controller := range strings.Split(fields[1], ",") {
+		for controller := range strings.SplitSeq(fields[1], ",") {
 			if controller == ctrl {
 				return fields[2], nil
 			}
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		return "", fmt.Errorf("failed to read %s: %w", path, err)
 	}
 	return "", fmt.Errorf("not a member of a cgroup hierarchy for controller %s", ctrl)
 }

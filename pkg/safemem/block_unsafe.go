@@ -114,7 +114,7 @@ func (b Block) DropFirst64(n uint64) Block {
 		return Block{}
 	}
 	return Block{
-		start:        unsafe.Pointer(uintptr(b.start) + uintptr(n)),
+		start:        unsafe.Add(b.start, n),
 		length:       b.length - int(n),
 		needSafecopy: b.needSafecopy,
 	}
@@ -195,10 +195,7 @@ func Copy(dst, src Block) (int, error) {
 		return copy(dst.ToSlice(), src.ToSlice()), nil
 	}
 
-	n := dst.length
-	if n > src.length {
-		n = src.length
-	}
+	n := min(dst.length, src.length)
 	if n == 0 {
 		return 0, nil
 	}

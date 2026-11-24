@@ -58,39 +58,32 @@ const (
 
 // Options holds the configuration for a Sandbox.
 type Options struct {
-	runtimeDir string
+	err          error
+	snapshot     *Snapshot
+	capabilities *specs.LinuxCapabilities
+	user         *specs.User
+	runtimeDir   string
+
 	// stateDir is where the sandbox keeps its state. Defaults to a directory
 	// inside the runtime directory.
-	stateDir   string
-	id         string
-	network    NetworkMode
-	mounts     []Mount
-	snapshot   *Snapshot
-	env        []string
-	err        error
-	workingDir string
-	hostname   string
-
-	// Process and filesystem layout.
-	rootPath     string
-	rootReadonly bool
-	user         *specs.User
-	capabilities *specs.LinuxCapabilities
-
-	// Namespaces and ID mappings.
+	stateDir              string
+	id                    string
+	network               NetworkMode
+	workingDir            string
+	hostname              string
+	rootPath              string
+	debugLog              string
+	mounts                []Mount
 	namespaces            []specs.LinuxNamespace
-	skipDefaultNamespaces bool
 	uidMappings           []specs.LinuxIDMapping
 	gidMappings           []specs.LinuxIDMapping
-
-	// Default-layout opt-outs.
+	env                   []string
+	rootReadonly          bool
+	skipDefaultNamespaces bool
 	skipLinuxSystemMounts bool
 	skipHostBinaryMounts  bool
 	skipBaseEnv           bool
-
-	// Runtime behavior.
-	debug    bool
-	debugLog string
+	debug                 bool
 }
 
 // Option configures the Options struct.
@@ -118,6 +111,9 @@ const (
 
 // Mount holds settings for a custom host bind directory or in-memory mount.
 type Mount struct {
+	// Mode is the permission bits of the mount point.
+	// A nil Mode leaves the mount type's own default in place.
+	Mode        *uint32
 	Source      string
 	Destination string
 	Type        MountType
@@ -136,10 +132,6 @@ type Mount struct {
 
 	// NoDev adds "nodev".
 	NoDev bool
-
-	// Mode is the permission bits of the mount point.
-	// A nil Mode leaves the mount type's own default in place.
-	Mode *uint32
 }
 
 // WithRuntimeDir sets a custom runtime directory where bundle and state files are written.
@@ -317,15 +309,15 @@ type Sandbox struct {
 	runscPath string
 	rootState string
 
-	// ownStateDir means Close should remove rootState.
-	ownStateDir bool
-
-	// ownRuntimeDir means Close should remove runtimeDir.
-	runtimeDir    string
-	ownRuntimeDir bool
+	runtimeDir string
 
 	// execMu keeps a signal-relaying Exec from overlapping other Exec calls.
 	execMu sync.RWMutex
+
+	// ownStateDir means Close should remove rootState.
+	ownStateDir bool
+	// ownRuntimeDir means Close should remove runtimeDir.
+	ownRuntimeDir bool
 }
 
 // newID returns a unique ID for the sandbox.
@@ -633,13 +625,13 @@ type ExecOption func(*execOptions)
 
 // execOptions holds the configuration for one Exec call.
 type execOptions struct {
-	args            []string
-	execPath        string
-	gid             *uint32
-	uid             *uint32
 	stdin           io.Reader
 	stdout          io.Writer
 	stderr          io.Writer
+	gid             *uint32
+	uid             *uint32
+	execPath        string
+	args            []string
 	relaySignals    bool
 	newPIDNamespace bool
 }
@@ -688,14 +680,13 @@ func WithExecNewPIDNamespace() ExecOption {
 
 // ExecResult is the outcome of a command run by Exec.
 type ExecResult struct {
-	// ExitCode is the status the command exited with, or 128 plus the signal
-	// number if a signal killed it, the same way a shell reports it.
-	ExitCode int
-
 	// Stdout and Stderr hold what the command wrote to those streams. A stream
 	// that WithExecStdio redirected is not collected here.
 	Stdout string
 	Stderr string
+	// ExitCode is the status the command exited with, or 128 plus the signal
+	// number if a signal killed it, the same way a shell reports it.
+	ExitCode int
 }
 
 // Exec runs a command inside the sandbox and waits for it to exit. A non-zero
@@ -761,8 +752,8 @@ func (s *Sandbox) Exec(ctx context.Context, argv []string, opts ...ExecOption) (
 	err := cmd.Wait()
 	res.Stdout, res.Stderr = stdout.String(), stderr.String()
 	if err != nil {
-		var exitErr *exec.ExitError
-		if !errors.As(err, &exitErr) {
+		exitErr, ok := errors.AsType[*exec.ExitError](err)
+		if !ok {
 			return nil, fmt.Errorf("failed to run command in sandbox: %v", err)
 		}
 		if ws, ok := exitErr.Sys().(syscall.WaitStatus); ok && ws.Signaled() {

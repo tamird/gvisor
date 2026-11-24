@@ -39,7 +39,7 @@ func extractCode(response, codeBlockDelim string) (string, error) {
 	}
 	var codeLines []string
 	isCodeBlock := false
-	for _, line := range strings.Split(response, "\n") {
+	for line := range strings.SplitSeq(response, "\n") {
 		if strings.HasPrefix(line, codeBlockDelim) {
 			isCodeBlock = !isCodeBlock
 		} else if isCodeBlock {

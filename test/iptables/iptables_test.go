@@ -196,9 +196,7 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 
 	// Run our side of the test.
 	errCh := make(chan error, 2)
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		if err := test.LocalAction(ctx, ip, ipv6); err != nil && !errors.Is(err, context.Canceled) {
 			errCh <- fmt.Errorf("LocalAction failed: %v", err)
 		} else {
@@ -207,12 +205,10 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 		if test.LocalSufficient() {
 			errCh <- nil
 		}
-	}()
+	})
 
 	// Run the container side.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		// The runner exits successfully only after ContainerAction succeeds.
 		// Cleanup retrieves its logs independently of the traffic context.
 		if err := d.Wait(ctx); err != nil && !errors.Is(err, context.Canceled) {
@@ -223,9 +219,9 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 		if test.ContainerSufficient() {
 			errCh <- nil
 		}
-	}()
+	})
 
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		if err := <-errCh; err != nil {
 			t.Fatal(err)
 		}
@@ -517,9 +513,9 @@ func TestFilterInputInvertDportDrop(t *testing.T) {
 
 func TestFilterAddrs(t *testing.T) {
 	tcs := []struct {
-		ipv6  bool
 		addrs []string
 		want  []string
+		ipv6  bool
 	}{
 		{
 			ipv6:  false,

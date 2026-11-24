@@ -111,9 +111,9 @@ type Feature string
 
 // TestEnvironment represents the environment in which a sample test runs.
 type TestEnvironment struct {
+	Features        map[Feature]bool
 	NumGPUs         int
 	RuntimeIsGVisor bool
-	Features        map[Feature]bool
 }
 
 // GetEnvironment returns the environment in which a sample test runs.
@@ -140,8 +140,8 @@ func GetEnvironment(ctx context.Context, t *testing.T, image string) (*TestEnvir
 		foundNVCaps := ""
 		const nvCapsPrefixFlag = "--nvproxy-allowed-driver-capabilities"
 		for i, arg := range runtimeArgs {
-			if strings.HasPrefix(arg, nvCapsPrefixFlag+"=") {
-				foundNVCaps = strings.TrimPrefix(arg, nvCapsPrefixFlag+"=")
+			if after, ok := strings.CutPrefix(arg, nvCapsPrefixFlag+"="); ok {
+				foundNVCaps = after
 			} else if arg == "--nvproxy-allowed-driver-capabilities" && i < len(runtimeArgs)-1 {
 				foundNVCaps = runtimeArgs[i+1]
 			}
@@ -166,7 +166,7 @@ func GetEnvironment(ctx context.Context, t *testing.T, image string) (*TestEnvir
 		return nil, fmt.Errorf("cannot get list of CUDA features: %v", err)
 	}
 	features := make(map[Feature]bool)
-	for _, line := range strings.Split(featuresList, "\n") {
+	for line := range strings.SplitSeq(featuresList, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
@@ -496,7 +496,7 @@ func testLog(t *testing.T, format string, values ...any) {
 // with line breaks in the middle.
 func multiLineLog(t *testing.T, output string) {
 	t.Helper()
-	for _, line := range strings.Split(output, "\n") {
+	for line := range strings.SplitSeq(output, "\n") {
 		// `line` may contain % characters here, so we need to format it through
 		// `%s` so that `%` characters don't show up as "MISSING" in the logs.
 		testLog(t, "%s", line)
@@ -801,7 +801,7 @@ func RunCudaTests(ctx context.Context, t *testing.T, args *RunCudaTestArgs) {
 	}
 	spawnGroup, spawnCtx := errgroup.WithContext(ctx)
 	containers := make([]*dockerutil.Container, numContainers)
-	for i := 0; i < numContainers; i++ {
+	for i := range numContainers {
 		spawnGroup.Go(func() error {
 			c := dockerutil.MakeContainer(ctx, t)
 			runOpts, err := getContainerOpts(args.Image)

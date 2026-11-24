@@ -16,6 +16,7 @@ package precompiledseccomp
 
 import (
 	"errors"
+	"slices"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
@@ -95,8 +96,8 @@ func TestSyscallVars(t *testing.T) {
 	}
 	buf := make([]byte, (&linux.SeccompData{}).SizeBytes())
 	for _, test := range []struct {
-		name    string
 		sn      VarSyscallNumbers
+		name    string
 		wantErr bool
 	}{
 		{
@@ -132,7 +133,7 @@ func TestSyscallVars(t *testing.T) {
 			vars := Values{}
 			test.sn.SetVars(vars)
 			program := precompiled // Modified in-place, so copy.
-			program.Bytecode32 = append([]uint32(nil), precompiled.Bytecode32...)
+			program.Bytecode32 = slices.Concat[[]uint32](precompiled.Bytecode32)
 			rendered, err := program.RenderInstructions(vars)
 			if test.wantErr {
 				if !errors.Is(err, ErrSyscallVarsNotRenderable) {
@@ -156,7 +157,7 @@ func TestSyscallVars(t *testing.T) {
 				t.Fatalf("cannot compile program: %v", err)
 			}
 			for nr := int32(-1); nr < 1000; nr++ {
-				for arg := uint64(0); arg < 4; arg++ {
+				for arg := range uint64(4) {
 					data := linux.SeccompData{
 						Nr:   nr,
 						Arch: seccomp.LINUX_AUDIT_ARCH,

@@ -433,8 +433,8 @@ func (cc *Crictl) ContainerStatusCTR(contID string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	lines := strings.Split(out, "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(out, "\n")
+	for line := range lines {
 		fields := strings.Fields(line)
 		if len(fields) >= 3 && fields[0] == contID {
 			return fields[2], nil

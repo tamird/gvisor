@@ -31,21 +31,11 @@ import (
 // to ensure that the clock does not drift significantly from the reference
 // clock.
 type CalibratedClock struct {
-	// mu protects ref's mutable sampling state.
-	// TODO(mpratt): consider a sequence counter for read locking.
-	mu sync.RWMutex
-
 	// ref samples the reference clock that this clock is calibrated against.
 	// The pointer is immutable; its samples and overhead are protected by mu.
 	// The sampler has no link back to this clock, so checklocks cannot name
 	// the owning mutex for the sampler's fields and methods.
 	ref *sampler
-
-	// ready indicates that the fields below are ready for use calculating
-	// time.
-	//
-	// +checklocks:mu
-	ready bool
 
 	// params are the current timekeeping parameters.
 	//
@@ -56,6 +46,16 @@ type CalibratedClock struct {
 	//
 	// +checklocks:mu
 	errorNS ReferenceNS
+
+	// mu protects ref's mutable sampling state.
+	// TODO(mpratt): consider a sequence counter for read locking.
+	mu sync.RWMutex
+
+	// ready indicates that the fields below are ready for use calculating
+	// time.
+	//
+	// +checklocks:mu
+	ready bool
 }
 
 // NewCalibratedClock creates a CalibratedClock that tracks the given ClockID.

@@ -872,12 +872,10 @@ type keepalive struct {
 
 func newEndpoint(s *stack.Stack, protocol *protocol, netProto tcpip.NetworkProtocolNumber, waiterQueue *waiter.Queue) *Endpoint {
 	e := &Endpoint{
-		stack:    s,
-		protocol: protocol,
-		TransportEndpointInfo: stack.TransportEndpointInfo{
-			NetProto:   netProto,
-			TransProto: header.TCPProtocolNumber,
-		},
+		stack:      s,
+		protocol:   protocol,
+		NetProto:   netProto,
+		TransProto: header.TCPProtocolNumber,
 		sndQueueInfo: sndQueueInfo{
 			TCPSndBufState: TCPSndBufState{
 				SndMTU: math.MaxInt32,
@@ -1299,10 +1297,7 @@ func wndFromSpace(space int) int {
 // initialReceiveWindow returns the initial receive window to advertise in the
 // SYN/SYN-ACK.
 func (e *Endpoint) initialReceiveWindow() int {
-	rcvWnd := wndFromSpace(e.receiveBufferAvailable())
-	if rcvWnd > math.MaxUint16 {
-		rcvWnd = math.MaxUint16
-	}
+	rcvWnd := min(wndFromSpace(e.receiveBufferAvailable()), math.MaxUint16)
 
 	// Use the user supplied MSS, if available.
 	routeWnd := InitialCwnd * int(calculateAdvertisedMSS(e.userMSS, e.route)) * 2
@@ -1748,13 +1743,8 @@ func (e *Endpoint) selectWindowLocked(rcvBufSize int) (wnd seqnum.Size) {
 	// previous window we advertised. In cases where we receive MSS sized or close
 	// MSS sized segments we will probably run out of window space before we
 	// exhaust receive buffer.
-	newWnd := wndFromAvailable
-	if newWnd > wndFromUsedBytes {
-		newWnd = wndFromUsedBytes
-	}
-	if newWnd < 0 {
-		newWnd = 0
-	}
+	newWnd := min(wndFromAvailable, wndFromUsedBytes)
+	newWnd = max(newWnd, 0)
 	return seqnum.Size(newWnd)
 }
 
@@ -1785,10 +1775,7 @@ func (e *Endpoint) selectWindow() (wnd seqnum.Size) {
 // +checklocks:e.rcvQueueMu
 func (e *Endpoint) windowCrossedACKThresholdLocked(deltaBefore int, rcvBufSize int) (crossed bool, above bool) {
 	newAvail := int(e.selectWindowLocked(rcvBufSize))
-	oldAvail := newAvail - deltaBefore
-	if oldAvail < 0 {
-		oldAvail = 0
-	}
+	oldAvail := max(newAvail-deltaBefore, 0)
 	threshold := int(e.amss)
 	// rcvBufFraction is the inverse of the fraction of receive buffer size that
 	// is used to decide if the available buffer space is now above it.
@@ -3506,10 +3493,7 @@ func (e *Endpoint) computeTCPSendBufferSize() int64 {
 
 	const packetOverheadFactor = 2
 	curMSS := e.snd.MaxPayloadSize
-	numSeg := InitialCwnd
-	if numSeg < e.snd.SndCwnd {
-		numSeg = e.snd.SndCwnd
-	}
+	numSeg := max(InitialCwnd, e.snd.SndCwnd)
 
 	// SndCwnd indicates the number of segments that can be sent. This means
 	// that the sender can send upto #SndCwnd segments and the send buffer

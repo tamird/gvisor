@@ -57,12 +57,12 @@ var (
 
 type halfClosePipeConn struct {
 	net.Conn
+	readErr    error
 	r          *io.PipeReader
 	w          *io.PipeWriter
 	mu         sync.Mutex
 	closed     bool
 	writeClose bool
-	readErr    error
 }
 
 func newHalfClosePipePair() (*halfClosePipeConn, *halfClosePipeConn) {
@@ -599,7 +599,7 @@ func TestRunProxyModeWithSeccomp(t *testing.T) {
 		outputMu   sync.Mutex
 		childOut   bytes.Buffer
 		childReady = make(chan bool, 1)
-		readerDone = make(chan struct{})
+		readerDone = make(chan error, 1)
 	)
 	getChildOutput := func() string {
 		outputMu.Lock()
@@ -608,6 +608,7 @@ func TestRunProxyModeWithSeccomp(t *testing.T) {
 	}
 	go func() {
 		defer close(readerDone)
+		defer pr.Close()
 		scanner := bufio.NewScanner(pr)
 		readySent := false
 		for scanner.Scan() {
@@ -624,6 +625,7 @@ func TestRunProxyModeWithSeccomp(t *testing.T) {
 		if !readySent {
 			close(childReady)
 		}
+		readerDone <- scanner.Err()
 	}()
 
 	cmd.Stdout = pw
@@ -647,10 +649,10 @@ func TestRunProxyModeWithSeccomp(t *testing.T) {
 	select {
 	case ok := <-childReady:
 		if !ok {
-			<-readerDone
+			readErr := <-readerDone
 			waitErr := cmd.Wait()
 			cmdWaited = true
-			t.Fatalf("child netgofer exited before becoming ready (%v); output:\n%s", waitErr, getChildOutput())
+			t.Fatalf("child netgofer exited before becoming ready (%v; output reader: %v); output:\n%s", waitErr, readErr, getChildOutput())
 		}
 	case <-time.After(10 * time.Second):
 		t.Fatalf("timed out waiting for child netgofer ready log; output:\n%s", getChildOutput())
@@ -676,8 +678,11 @@ func TestRunProxyModeWithSeccomp(t *testing.T) {
 	closeClientFD()
 	cmdWaited = true
 	if err := cmd.Wait(); err != nil {
-		<-readerDone
-		t.Fatalf("seccomp child process failed: %v\noutput:\n%s", err, getChildOutput())
+		readErr := <-readerDone
+		t.Fatalf("seccomp child process failed: %v (output reader: %v)\noutput:\n%s", err, readErr, getChildOutput())
+	}
+	if err := <-readerDone; err != nil {
+		t.Fatalf("read child netgofer output: %v", err)
 	}
 }
 
@@ -729,7 +734,7 @@ func TestProxyLimitsConnections(t *testing.T) {
 	}
 
 	_ = conn1.Close()
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		if conn4, err := gonet.DialTCP(clientStack, targetAddr, ipv4.ProtocolNumber); err == nil {
 			_ = conn4.Close()
 			return
@@ -814,8 +819,8 @@ func TestProxyRejectsDisallowedDestinations(t *testing.T) {
 	udpPort6 := uint16(udpPC6.LocalAddr().(*net.UDPAddr).Port)
 	cases := []struct {
 		name     string
-		netProto tcpip.NetworkProtocolNumber
 		addr     tcpip.Address
+		netProto tcpip.NetworkProtocolNumber
 		udpPort  uint16
 	}{
 		{
@@ -856,8 +861,7 @@ func TestProxyRejectsDisallowedDestinations(t *testing.T) {
 				_ = conn.Close()
 				t.Fatalf("DialContextTCP(%s) succeeded, want rejection", tc.addr)
 			}
-			var opErr *net.OpError
-			if !errors.As(err, &opErr) || opErr.Err.Error() != (&tcpip.ErrConnectionRefused{}).String() {
+			if opErr, ok := errors.AsType[*net.OpError](err); !ok || opErr.Err.Error() != (&tcpip.ErrConnectionRefused{}).String() {
 				t.Fatalf("DialContextTCP(%s) = %v, want connection refused by netgofer", tc.addr, err)
 			}
 		})
@@ -976,7 +980,7 @@ func TestProxyLimitsUDPConnections(t *testing.T) {
 
 	_ = dialAndEcho("udp-flow-1")
 	_ = dialAndEcho("udp-flow-2")
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		select {
 		case <-udpDialed:
 		default:
@@ -1024,8 +1028,8 @@ func TestProxyLimitsUDPConnections(t *testing.T) {
 
 type closeNotifyingConn struct {
 	net.Conn
-	closeOnce sync.Once
 	closed    chan struct{}
+	closeOnce sync.Once
 }
 
 func (c *closeNotifyingConn) Close() error {
@@ -1115,7 +1119,7 @@ func TestProxyUDPIdleTimeout(t *testing.T) {
 		t.Fatalf("second gonet.DialUDP() failed: %v", err)
 	}
 	defer conn2.Close()
-	for i := 0; i < 40; i++ {
+	for range 40 {
 		_ = conn2.SetDeadline(time.Now().Add(50 * time.Millisecond))
 		if _, err := conn2.Write([]byte("idle-timeout-2")); err != nil {
 			t.Fatalf("conn2.Write() failed: %v", err)

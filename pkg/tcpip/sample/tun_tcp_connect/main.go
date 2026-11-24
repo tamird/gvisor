@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 // This sample creates a stack with TCP and IPv4 protocols on top of a TUN
 // device, and connects to a peer. Similar to "nc <address> <port>". While the

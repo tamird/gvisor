@@ -13,8 +13,6 @@
 // limitations under the License.
 
 //go:build ((linux && amd64) || (linux && arm64)) && go1.18
-// +build linux,amd64 linux,arm64
-// +build go1.18
 
 // //go:linkname directives type-checked by checklinkname. Any other
 // non-linkname assumptions outside the Go 1 compatibility guarantee should

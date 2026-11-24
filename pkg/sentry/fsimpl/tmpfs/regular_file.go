@@ -255,7 +255,7 @@ func (rf *regularFile) truncateNoTimeUpdateLocked(newSize uint64) error {
 	newpgend := offsetPageEnd(int64(newSize))
 	if newpgend < oldpgend {
 		rf.mapsMu.Lock()
-		rf.mappings.Invalidate(memmap.MappableRange{newpgend, oldpgend}, memmap.InvalidateOpts{
+		rf.mappings.Invalidate(memmap.MappableRange{Start: newpgend, End: oldpgend}, memmap.InvalidateOpts{
 			// Compare Linux's mm/shmem.c:shmem_setattr() =>
 			// mm/memory.c:unmap_mapping_range(evencows=1).
 			InvalidatePrivate: true,
@@ -352,7 +352,7 @@ func (rf *regularFile) Translate(ctx context.Context, required, optional memmap.
 	var beyondEOF bool
 	if required.End > pgend {
 		if required.Start >= pgend {
-			return nil, &memmap.BusError{io.EOF}
+			return nil, &memmap.BusError{Err: io.EOF}
 		}
 		beyondEOF = true
 		required.End = pgend
@@ -371,7 +371,7 @@ func (rf *regularFile) Translate(ctx context.Context, required, optional memmap.
 		// Only error out if even the required range can not be allocated for.
 		pagesToFill = rf.data.PagesToFill(required, required)
 		if !rf.inode.fs.accountPages(pagesToFill) {
-			return nil, &memmap.BusError{linuxerr.ENOSPC}
+			return nil, &memmap.BusError{Err: linuxerr.ENOSPC}
 		}
 		fillRange = required
 	}
@@ -421,10 +421,10 @@ func (rf *regularFile) Translate(ctx context.Context, required, optional memmap.
 	// Don't return the error returned by f.data.Fill if it occurred outside of
 	// required.
 	if translatedEnd < required.End && cerr != nil {
-		return ts, &memmap.BusError{cerr}
+		return ts, &memmap.BusError{Err: cerr}
 	}
 	if beyondEOF {
-		return ts, &memmap.BusError{io.EOF}
+		return ts, &memmap.BusError{Err: io.EOF}
 	}
 	return ts, nil
 }
@@ -771,7 +771,7 @@ func (rw *regularFileReadWriter) ReadToBlocks(dsts safemem.BlockSeq) (uint64, er
 	var done uint64
 	seg, gap := rw.file.data.Find(uint64(rw.off))
 	for rw.off < end {
-		mr := memmap.MappableRange{uint64(rw.off), uint64(end)}
+		mr := memmap.MappableRange{Start: uint64(rw.off), End: uint64(end)}
 		switch {
 		case seg.Ok():
 			// Get internal mappings.
@@ -861,7 +861,7 @@ func (rw *regularFileReadWriter) WriteFromBlocks(srcs safemem.BlockSeq) (uint64,
 	// overflow since end is an int64.
 	pgstartaddr := hostarch.Addr(rw.off).RoundDown()
 	pgendaddr, _ := hostarch.Addr(end).RoundUp()
-	pgMR := memmap.MappableRange{uint64(pgstartaddr), uint64(pgendaddr)}
+	pgMR := memmap.MappableRange{Start: uint64(pgstartaddr), End: uint64(pgendaddr)}
 	fs := rw.file.inode.fs
 	mayHuge := rw.file.huge && fs.mf.HugepagesEnabled()
 
@@ -871,7 +871,7 @@ func (rw *regularFileReadWriter) WriteFromBlocks(srcs safemem.BlockSeq) (uint64,
 	)
 	seg, gap := rw.file.data.Find(uint64(rw.off))
 	for rw.off < end {
-		mr := memmap.MappableRange{uint64(rw.off), uint64(end)}
+		mr := memmap.MappableRange{Start: uint64(rw.off), End: uint64(end)}
 		switch {
 		case seg.Ok():
 			fr := seg.FileRangeOf(seg.Range().Intersect(mr))

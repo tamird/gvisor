@@ -120,12 +120,13 @@ func (a Action) String() string {
 // Watchdog is the main watchdog class. It controls a goroutine that periodically
 // analyses all tasks and reports if any of them appear to be stuck.
 type Watchdog struct {
-	// Configuration options are embedded.
-	Opts
-
-	// period indicates how often to check all tasks. It's calculated based on
-	// opts.TaskTimeout.
-	period time.Duration
+	// lastStackDump tracks the last time a stack dump was generated to prevent
+	// spamming the log.
+	//
+	// The monitoring goroutine owns it after Start. Before the first Start,
+	// waitForStart may access it with mu held and startCalled false. checklocks
+	// cannot express this conditional goroutine/mutex ownership.
+	lastStackDump time.Time
 
 	// k is where the tasks come from.
 	k *kernel.Kernel
@@ -143,13 +144,12 @@ type Watchdog struct {
 	// goroutine ownership.
 	offenders map[*kernel.Task]*offender
 
-	// lastStackDump tracks the last time a stack dump was generated to prevent
-	// spamming the log.
-	//
-	// The monitoring goroutine owns it after Start. Before the first Start,
-	// waitForStart may access it with mu held and startCalled false. checklocks
-	// cannot express this conditional goroutine/mutex ownership.
-	lastStackDump time.Time
+	// Configuration options are embedded.
+	Opts
+
+	// period indicates how often to check all tasks. It's calculated based on
+	// opts.TaskTimeout.
+	period time.Duration
 
 	// lastRun is the CPU-clock time of the last monitoring pass.
 	//
@@ -158,8 +158,7 @@ type Watchdog struct {
 	// later Start from resetting it concurrently. checklocks cannot express
 	// this ownership handoff.
 	lastRun ktime.Time
-
-	mu sync.Mutex
+	mu      sync.Mutex
 
 	// running is true if the watchdog is running.
 	//

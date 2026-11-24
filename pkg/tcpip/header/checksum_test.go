@@ -42,7 +42,7 @@ func testICMPChecksum(t *testing.T, headerChecksum func() uint16, icmpChecksum f
 	wg.Add(concurrency)
 	defer wg.Wait()
 
-	for i := 0; i < concurrency; i++ {
+	for range concurrency {
 		go func() {
 			defer wg.Done()
 
@@ -57,7 +57,7 @@ func testICMPChecksum(t *testing.T, headerChecksum func() uint16, icmpChecksum f
 			}
 		}()
 	}
-	for i := 0; i < concurrency; i++ {
+	for range concurrency {
 		<-ready
 	}
 	close(start)
@@ -146,7 +146,7 @@ func TestICMPv6Checksum(t *testing.T) {
 
 func randomAddress(size int) tcpip.Address {
 	s := make([]byte, size)
-	for i := 0; i < size; i++ {
+	for i := range size {
 		s[i] = byte(rand.Uint32())
 	}
 	return tcpip.AddrFromSlice(s)
@@ -154,8 +154,8 @@ func randomAddress(size int) tcpip.Address {
 
 func TestChecksummableNetworkUpdateAddress(t *testing.T) {
 	tests := []struct {
-		name   string
 		update func(header.IPv4, tcpip.Address)
+		name   string
 	}{
 		{
 			name:   "SetSourceAddressWithChecksumUpdate",
@@ -169,7 +169,7 @@ func TestChecksummableNetworkUpdateAddress(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			for i := 0; i < 1000; i++ {
+			for range 1000 {
 				var origBytes [header.IPv4MinimumSize]byte
 				header.IPv4(origBytes[:]).Encode(&header.IPv4Fields{
 					TOS:            1,
@@ -217,8 +217,8 @@ func TestChecksummableTransportUpdatePort(t *testing.T) {
 	const pseudoHeaderXSum = 0
 
 	tests := []struct {
-		name         string
 		transportHdr func(_, _ uint16) (header.ChecksummableTransport, func(uint16) uint16)
+		name         string
 		proto        tcpip.TransportProtocolNumber
 	}{
 		{
@@ -263,8 +263,8 @@ func TestChecksummableTransportUpdatePort(t *testing.T) {
 			for _, test := range tests {
 				t.Run(test.name, func(t *testing.T) {
 					for _, subTest := range []struct {
-						name   string
 						update func(header.ChecksummableTransport)
+						name   string
 					}{
 						{
 							name:   "Source port",
@@ -296,7 +296,7 @@ func TestChecksummableTransportUpdatePort(t *testing.T) {
 	check(2, 0xfffe, 1)
 	check(0xfffe, 1, 2)
 	check(0xfffe, 2, 1)
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		check(uint16(rand.Uint32()), uint16(rand.Uint32()), uint16(rand.Uint32()))
 	}
 }
@@ -305,8 +305,8 @@ func TestChecksummableTransportUpdatePseudoHeaderAddress(t *testing.T) {
 	const addressSize = 16
 
 	tests := []struct {
-		name         string
 		transportHdr func() header.ChecksummableTransport
+		name         string
 		proto        tcpip.TransportProtocolNumber
 	}{
 		{
@@ -321,7 +321,7 @@ func TestChecksummableTransportUpdatePseudoHeaderAddress(t *testing.T) {
 		},
 	}
 
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		permanent := randomAddress(addressSize)
 		old := randomAddress(addressSize)
 		new := randomAddress(addressSize)
@@ -358,10 +358,10 @@ func TestChecksummableTransportUpdatePseudoHeaderAddress(t *testing.T) {
 func TestUDPChecksumIncrementalUpdate(t *testing.T) {
 	tests := []struct {
 		name            string
-		initialChecksum uint16
-		newPort         uint16
 		oldAddr         tcpip.Address
 		newAddr         tcpip.Address
+		initialChecksum uint16
+		newPort         uint16
 		wantChecksum    uint16
 	}{
 		{

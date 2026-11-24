@@ -390,14 +390,14 @@ func TestHugeMountOption(t *testing.T) {
 	creds := auth.CredentialsFromContext(ctx)
 	for _, test := range []struct {
 		opts     string
-		wantHuge bool
 		wantOpts string
+		wantHuge bool
 	}{
-		{"", false, ""},
-		{"huge=never", false, ""},
-		{"huge=always", true, "huge=always"},
-		{"huge=within_size", true, "huge=within_size"},
-		{"huge=advise", false, "huge=advise"},
+		{opts: "", wantHuge: false, wantOpts: ""},
+		{opts: "huge=never", wantHuge: false, wantOpts: ""},
+		{opts: "huge=always", wantHuge: true, wantOpts: "huge=always"},
+		{opts: "huge=within_size", wantHuge: true, wantOpts: "huge=within_size"},
+		{opts: "huge=advise", wantHuge: false, wantOpts: "huge=advise"},
 	} {
 		t.Run(test.opts, func(t *testing.T) {
 			vfsObj, root, cleanup, err := newTmpfsRootWithOpts(ctx, test.opts)

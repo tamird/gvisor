@@ -289,15 +289,16 @@ func stringVector(t *kernel.Task, addr hostarch.Addr) string {
 	if err != nil {
 		return fmt.Sprintf("%#x {error copying vector: %v}", addr, err)
 	}
-	s := fmt.Sprintf("%#x [", addr)
+	var s strings.Builder
+	fmt.Fprintf(&s, "%#x [", addr)
 	for i, v := range vec {
 		if i != 0 {
-			s += ", "
+			s.WriteString(", ")
 		}
-		s += fmt.Sprintf("%q", v)
+		fmt.Fprintf(&s, "%q", v)
 	}
-	s += "]"
-	return s
+	s.WriteString("]")
+	return s.String()
 }
 
 func rusage(t *kernel.Task, addr hostarch.Addr) string {
@@ -497,10 +498,7 @@ func (i *SyscallInfo) post(t *kernel.Task, args arch.SyscallArguments, rval uint
 		case ReadBuffer:
 			output[arg] = dump(t, args[arg].Pointer(), uint(rval), maximumBlobSize, LogAppDataAllowed /* content */)
 		case ReadIOVec:
-			printLength := uint64(rval)
-			if printLength > uint64(maximumBlobSize) {
-				printLength = uint64(maximumBlobSize)
-			}
+			printLength := min(uint64(rval), uint64(maximumBlobSize))
 			output[arg] = iovecs(t, args[arg].Pointer(), int(args[arg+1].Int()), LogAppDataAllowed /* content */, printLength)
 		case WriteIOVec, IOVec, WriteBuffer:
 			// We already have a big blast from write.
@@ -661,11 +659,11 @@ func (i *SyscallInfo) sendExit(t *kernel.Task, elapsed time.Duration, output []s
 }
 
 type syscallContext struct {
-	info        SyscallInfo
-	args        arch.SyscallArguments
 	start       time.Time
+	info        SyscallInfo
 	logOutput   []string
 	eventOutput []string
+	args        arch.SyscallArguments
 	flags       uint32
 }
 

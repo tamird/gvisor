@@ -20,6 +20,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
+	"slices"
 	"testing"
 )
 
@@ -192,7 +193,7 @@ func TestStickyErrorAfterMismatch(t *testing.T) {
 	if _, err := io.ReadFull(r, make([]byte, len(data))); err == nil {
 		t.Fatalf("re-framed stream accepted")
 	}
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		n, err := r.Read(make([]byte, 16))
 		if err == nil || n != 0 {
 			t.Errorf("read %d after fatal error: n=%d err=%v", i, n, err)
@@ -206,7 +207,7 @@ func TestInPlaceTamperIsRejected(t *testing.T) {
 	data := testData(8192)
 	stream := writeKeyed(t, data, 4096)
 	for _, pos := range []int{0, 4, 100, len(stream) / 2, len(stream) - sha256.Size, len(stream) - 1} {
-		tampered := append([]byte(nil), stream...)
+		tampered := slices.Concat[[]byte](stream)
 		tampered[pos] ^= 0xFF
 
 		r := newReader(tampered)
@@ -293,14 +294,14 @@ func TestVerifyGivesReadError(t *testing.T) {
 	stream := writeKeyed(t, data, 1024)
 
 	for _, tc := range []struct {
+		want   error
 		name   string
 		stream []byte
-		want   error
 	}{
 		{
 			name: "hash-mismatch",
 			stream: func() []byte {
-				s := append([]byte(nil), stream...)
+				s := slices.Concat[[]byte](stream)
 				s[4+len(data)/2] ^= 0xFF
 				return s
 			}(),

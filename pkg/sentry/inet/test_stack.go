@@ -35,11 +35,11 @@ type TestStack struct {
 	InterfacesMap                map[int32]Interface
 	InterfaceAddrsMap            map[int32][]InterfaceAddr
 	RouteList                    []Route
-	SupportsIPv6Flag             bool
 	TCPRecvBufSize               TCPBufferSize
 	TCPSendBufSize               TCPBufferSize
-	TCPSACKFlag                  bool
 	Recovery                     TCPLossRecovery
+	SupportsIPv6Flag             bool
+	TCPSACKFlag                  bool
 	IPForwarding                 bool
 	AllowExternalLoopbackTraffic bool
 	IPv6KeepAddrOnDownFlag       bool

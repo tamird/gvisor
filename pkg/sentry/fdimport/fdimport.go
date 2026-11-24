@@ -31,11 +31,11 @@ import (
 
 // ImportOptions contains options for Import().
 type ImportOptions struct {
-	Console       bool
-	Restorable    bool
+	ContainerName string
 	UID           auth.KUID
 	GID           auth.KGID
-	ContainerName string
+	Console       bool
+	Restorable    bool
 
 	// SupportTTYs indicates whether TTYs other than the console TTY should be imported as TTYs.
 	SupportTTYs bool

@@ -177,15 +177,15 @@ func (p *Prompt) RaiseTemperature() {
 // Response represents a response to a query.
 type Response struct {
 	Choices []struct {
-		Text         string  `json:"text"`
 		FinishReason *string `json:"finish_reason"`
+		Text         string  `json:"text"`
 	} `json:"choices"`
 }
 
 // FullResponse aggregates streamed responses.
 type FullResponse struct {
-	objects []*Response
 	metrics llmutil.ResponseMetrics
+	objects []*Response
 }
 
 // Text returns the concatenated text from all responses.

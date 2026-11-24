@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"math"
 	"net"
+	"slices"
 	"sort"
 	"testing"
 	"time"
@@ -79,9 +80,9 @@ func TestNICMTULimitsSurviveMove(t *testing.T) {
 		t.Fatalf("SetNICStack(%d, _) = %v", nicID, err)
 	}
 	for _, test := range []struct {
+		wantErr tcpip.Error
 		mtu     uint32
 		wantMTU uint32
-		wantErr tcpip.Error
 	}{
 		{mtu: 999, wantMTU: 1500, wantErr: &tcpip.ErrInvalidOptionValue{}},
 		{mtu: 1000, wantMTU: 1000},
@@ -140,6 +141,9 @@ func checkGetMainNICAddress(s *stack.Stack, nicID tcpip.NICID, proto tcpip.Netwo
 // Headers of this protocol are fakeNetHeaderLen bytes. Addresses are 4 bytes,
 // but we only use the first byte.
 type fakeNetworkEndpoint struct {
+	nic        stack.NetworkInterface
+	dispatcher stack.TransportDispatcher
+	proto      *fakeNetworkProtocol
 	stack.AddressableEndpointState
 
 	mu struct {
@@ -154,10 +158,6 @@ type fakeNetworkEndpoint struct {
 		// +checklocks:RWMutex
 		multicastForwarding bool
 	}
-
-	nic        stack.NetworkInterface
-	proto      *fakeNetworkProtocol
-	dispatcher stack.TransportDispatcher
 }
 
 func (f *fakeNetworkEndpoint) Enable() tcpip.Error {
@@ -297,30 +297,29 @@ type fakeNetworkEndpointStats struct{}
 func (*fakeNetworkEndpointStats) IsNetworkEndpointStats() {}
 
 type addMulticastRouteData struct {
-	addresses stack.UnicastSourceAndMulticastDestination
 	route     stack.MulticastRoute
+	addresses stack.UnicastSourceAndMulticastDestination
 }
 
 type enableMulticastForwardingForProtocolResult struct {
-	AlreadyEnabled bool
 	Err            tcpip.Error
+	AlreadyEnabled bool
 }
 
 // fakeNetworkProtocol is a network-layer protocol descriptor. It aggregates the
 // number of packets sent and received via endpoints of this protocol. The index
 // where packets are added is given by the packet's destination address MOD 10.
 type fakeNetworkProtocol struct {
-	stack *stack.Stack
+	enableMulticastForwardingForProtocolResult enableMulticastForwardingForProtocolResult
+	stack                                      *stack.Stack
 
-	packetCount     [10]int
-	sendPacketCount [10]int
-	defaultTTL      uint8
+	addMulticastRouteData addMulticastRouteData
 
-	addMulticastRouteData          addMulticastRouteData
-	multicastRouteLastUsedTimeData stack.UnicastSourceAndMulticastDestination
-	removeMulticastRouteData       stack.UnicastSourceAndMulticastDestination
-
-	enableMulticastForwardingForProtocolResult  enableMulticastForwardingForProtocolResult
+	packetCount                                 [10]int
+	sendPacketCount                             [10]int
+	multicastRouteLastUsedTimeData              stack.UnicastSourceAndMulticastDestination
+	removeMulticastRouteData                    stack.UnicastSourceAndMulticastDestination
+	defaultTTL                                  uint8
 	disableMulticastForwardingForProtocolCalled bool
 }
 
@@ -389,7 +388,7 @@ func (*fakeNetworkProtocol) Parse(pkt *stack.PacketBuffer) (tcpip.TransportProto
 // AddMulticastRoute implements
 // MulticastForwardingNetworkProtocol.AddMulticastRoute.
 func (f *fakeNetworkProtocol) AddMulticastRoute(addresses stack.UnicastSourceAndMulticastDestination, route stack.MulticastRoute) tcpip.Error {
-	f.addMulticastRouteData = addMulticastRouteData{addresses, route}
+	f.addMulticastRouteData = addMulticastRouteData{addresses: addresses, route: route}
 	return nil
 }
 
@@ -485,13 +484,7 @@ func (m *fakeMulticastEventDispatcher) OnUnexpectedInputInterface(context stack.
 
 // Checks to see if list contains an address.
 func containsAddr(list []tcpip.ProtocolAddress, item tcpip.ProtocolAddress) bool {
-	for _, i := range list {
-		if i == item {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(list, item)
 }
 
 type addressChangedEvent struct {
@@ -1125,8 +1118,8 @@ func TestRemoveUnknownNIC(t *testing.T) {
 
 func TestRemoveNIC(t *testing.T) {
 	for _, tt := range []struct {
-		name   string
 		linkep stack.LinkEndpoint
+		name   string
 	}{
 		{
 			name:   "loopback",
@@ -1177,9 +1170,9 @@ func TestRemoveNIC(t *testing.T) {
 
 func TestRouteWithDownNIC(t *testing.T) {
 	tests := []struct {
-		name   string
 		downFn func(s *stack.Stack, nicID tcpip.NICID) tcpip.Error
 		upFn   func(s *stack.Stack, nicID tcpip.NICID) tcpip.Error
+		name   string
 	}{
 		{
 			name:   "Disabled NIC",
@@ -1884,8 +1877,8 @@ func TestExternalSendWithHandleLocal(t *testing.T) {
 	}
 
 	tests := []struct {
-		name           string
 		configureStack func(*testing.T, *stack.Stack)
+		name           string
 	}{
 		{
 			name:           "Default",
@@ -2230,37 +2223,37 @@ func TestOutgoingBroadcastWithRouteTable(t *testing.T) {
 func TestMulticastOrIPv6LinkLocalNeedsNoRoute(t *testing.T) {
 	for _, tc := range []struct {
 		name        string
-		routeNeeded bool
 		address     string
+		routeNeeded bool
 	}{
 		// IPv4 multicast address range: 224.0.0.0 - 239.255.255.255
 		//                <=>  0xe0.0x00.0x00.0x00 - 0xef.0xff.0xff.0xff
-		{"IPv4 Multicast 1", false, "\xe0\x00\x00\x00"},
-		{"IPv4 Multicast 2", false, "\xef\xff\xff\xff"},
-		{"IPv4 Unicast 1", true, "\xdf\xff\xff\xff"},
-		{"IPv4 Unicast 2", true, "\xf0\x00\x00\x00"},
-		{"IPv4 Unicast 3", true, "\x00\x00\x00\x00"},
+		{name: "IPv4 Multicast 1", routeNeeded: false, address: "\xe0\x00\x00\x00"},
+		{name: "IPv4 Multicast 2", routeNeeded: false, address: "\xef\xff\xff\xff"},
+		{name: "IPv4 Unicast 1", routeNeeded: true, address: "\xdf\xff\xff\xff"},
+		{name: "IPv4 Unicast 2", routeNeeded: true, address: "\xf0\x00\x00\x00"},
+		{name: "IPv4 Unicast 3", routeNeeded: true, address: "\x00\x00\x00\x00"},
 
 		// IPv6 multicast address is 0xff[8] + flags[4] + scope[4] + groupId[112]
-		{"IPv6 Multicast 1", false, "\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
-		{"IPv6 Multicast 2", false, "\xff\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
-		{"IPv6 Multicast 3", false, "\xff\x0f\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"},
+		{name: "IPv6 Multicast 1", routeNeeded: false, address: "\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
+		{name: "IPv6 Multicast 2", routeNeeded: false, address: "\xff\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
+		{name: "IPv6 Multicast 3", routeNeeded: false, address: "\xff\x0f\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"},
 
 		// IPv6 link-local address starts with fe80::/10.
-		{"IPv6 Unicast Link-Local 1", false, "\xfe\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
-		{"IPv6 Unicast Link-Local 2", false, "\xfe\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01"},
-		{"IPv6 Unicast Link-Local 3", false, "\xfe\x80\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff"},
-		{"IPv6 Unicast Link-Local 4", false, "\xfe\xbf\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
-		{"IPv6 Unicast Link-Local 5", false, "\xfe\xbf\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"},
+		{name: "IPv6 Unicast Link-Local 1", routeNeeded: false, address: "\xfe\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
+		{name: "IPv6 Unicast Link-Local 2", routeNeeded: false, address: "\xfe\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01"},
+		{name: "IPv6 Unicast Link-Local 3", routeNeeded: false, address: "\xfe\x80\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff"},
+		{name: "IPv6 Unicast Link-Local 4", routeNeeded: false, address: "\xfe\xbf\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
+		{name: "IPv6 Unicast Link-Local 5", routeNeeded: false, address: "\xfe\xbf\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"},
 
 		// IPv6 addresses that are neither multicast nor link-local.
-		{"IPv6 Unicast Not Link-Local 1", true, "\xf0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
-		{"IPv6 Unicast Not Link-Local 2", true, "\xf0\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"},
-		{"IPv6 Unicast Not Link-local 3", true, "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
-		{"IPv6 Unicast Not Link-Local 4", true, "\xfe\xc0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
-		{"IPv6 Unicast Not Link-Local 5", true, "\xfe\xdf\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
-		{"IPv6 Unicast Not Link-Local 6", true, "\xfd\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
-		{"IPv6 Unicast Not Link-Local 7", true, "\xf0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
+		{name: "IPv6 Unicast Not Link-Local 1", routeNeeded: true, address: "\xf0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
+		{name: "IPv6 Unicast Not Link-Local 2", routeNeeded: true, address: "\xf0\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"},
+		{name: "IPv6 Unicast Not Link-local 3", routeNeeded: true, address: "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
+		{name: "IPv6 Unicast Not Link-Local 4", routeNeeded: true, address: "\xfe\xc0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
+		{name: "IPv6 Unicast Not Link-Local 5", routeNeeded: true, address: "\xfe\xdf\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
+		{name: "IPv6 Unicast Not Link-Local 6", routeNeeded: true, address: "\xfd\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
+		{name: "IPv6 Unicast Not Link-Local 7", routeNeeded: true, address: "\xf0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			s := stack.New(stack.Options{
@@ -2350,9 +2343,9 @@ func TestGetMainNICAddressAddPrimaryNonPrimary(t *testing.T) {
 
 	for _, addrLen := range []int{4, 16} {
 		t.Run(fmt.Sprintf("addrLen=%d", addrLen), func(t *testing.T) {
-			for canBe := 0; canBe < 3; canBe++ {
+			for canBe := range 3 {
 				t.Run(fmt.Sprintf("canBe=%d", canBe), func(t *testing.T) {
-					for never := 0; never < 3; never++ {
+					for never := range 3 {
 						t.Run(fmt.Sprintf("never=%d", never), func(t *testing.T) {
 							s := stack.New(stack.Options{
 								NetworkProtocols: []stack.NetworkProtocolFactory{fakeNetFactory},
@@ -2595,9 +2588,9 @@ func TestAddProtocolAddress(t *testing.T) {
 
 func TestCreateNICWithOptions(t *testing.T) {
 	type callArgsAndExpect struct {
-		nicID tcpip.NICID
-		opts  stack.NICOptions
 		err   tcpip.Error
+		opts  stack.NICOptions
+		nicID tcpip.NICID
 	}
 
 	tests := []struct {
@@ -2789,19 +2782,19 @@ func TestNICStats(t *testing.T) {
 func TestNICContextPreservation(t *testing.T) {
 	var ctx *int
 	tests := []struct {
+		want stack.NICContext
 		name string
 		opts stack.NICOptions
-		want stack.NICContext
 	}{
 		{
-			"context_set",
-			stack.NICOptions{Context: ctx},
-			ctx,
+			name: "context_set",
+			opts: stack.NICOptions{Context: ctx},
+			want: ctx,
 		},
 		{
-			"context_not_set",
-			stack.NICOptions{},
-			nil,
+			name: "context_not_set",
+			opts: stack.NICOptions{},
+			want: nil,
 		},
 	}
 	for _, test := range tests {
@@ -2858,23 +2851,23 @@ func TestNICMulticastPreservation(t *testing.T) {
 func TestNICKindPreservation(t *testing.T) {
 	tests := []struct {
 		name string
-		opts stack.NICOptions
 		want string
+		opts stack.NICOptions
 	}{
 		{
-			"veth",
-			stack.NICOptions{Kind: "veth"},
-			"veth",
+			name: "veth",
+			opts: stack.NICOptions{Kind: "veth"},
+			want: "veth",
 		},
 		{
-			"bridge",
-			stack.NICOptions{Kind: "bridge"},
-			"bridge",
+			name: "bridge",
+			opts: stack.NICOptions{Kind: "bridge"},
+			want: "bridge",
 		},
 		{
-			"not_set",
-			stack.NICOptions{},
-			"",
+			name: "not_set",
+			opts: stack.NICOptions{},
+			want: "",
 		},
 	}
 	for _, test := range tests {
@@ -2918,11 +2911,11 @@ func TestNICAutoGenLinkLocalAddr(t *testing.T) {
 	tests := []struct {
 		name         string
 		nicName      string
-		autoGen      bool
 		linkAddr     tcpip.LinkAddress
 		iidOpts      ipv6.OpaqueInterfaceIdentifierOptions
-		shouldGen    bool
 		expectedAddr tcpip.Address
+		autoGen      bool
+		shouldGen    bool
 	}{
 		{
 			name:      "Disabled",
@@ -3406,15 +3399,15 @@ func TestIPv6SourceAddressSelectionScopeAndSameAddress(t *testing.T) {
 	tempGlobalAddr2 := header.GenerateTempIPv6SLAACAddr(tempIIDHistory[:], stableGlobalAddr2.Address).Address
 
 	type addressWithProperties struct {
-		addr       tcpip.Address
 		properties stack.AddressProperties
+		addr       tcpip.Address
 	}
 
 	// Rule 3 is also tested by NDP's AutoGenAddr test.
 	tests := []struct {
 		name                                   string
-		slaacPrefixForTempAddrBeforeNICAddrAdd tcpip.AddressWithPrefix
 		nicAddrs                               []addressWithProperties
+		slaacPrefixForTempAddrBeforeNICAddrAdd tcpip.AddressWithPrefix
 		slaacPrefixForTempAddrAfterNICAddrAdd  tcpip.AddressWithPrefix
 		remoteAddr                             tcpip.Address
 		expectedLocalAddr                      tcpip.Address
@@ -4125,22 +4118,22 @@ func TestDoDADWhenNICEnabled(t *testing.T) {
 func TestStackReceiveBufferSizeOption(t *testing.T) {
 	const sMin = stack.MinBufferSize
 	testCases := []struct {
+		err  tcpip.Error
 		name string
 		rs   tcpip.ReceiveBufferSizeOption
-		err  tcpip.Error
 	}{
 		// Invalid configurations.
-		{"min_below_zero", tcpip.ReceiveBufferSizeOption{Min: -1, Default: sMin, Max: sMin}, &tcpip.ErrInvalidOptionValue{}},
-		{"min_zero", tcpip.ReceiveBufferSizeOption{Min: 0, Default: sMin, Max: sMin}, &tcpip.ErrInvalidOptionValue{}},
-		{"default_below_min", tcpip.ReceiveBufferSizeOption{Min: sMin, Default: sMin - 1, Max: sMin - 1}, &tcpip.ErrInvalidOptionValue{}},
-		{"default_above_max", tcpip.ReceiveBufferSizeOption{Min: sMin, Default: sMin + 1, Max: sMin}, &tcpip.ErrInvalidOptionValue{}},
-		{"max_below_min", tcpip.ReceiveBufferSizeOption{Min: sMin, Default: sMin + 1, Max: sMin - 1}, &tcpip.ErrInvalidOptionValue{}},
+		{name: "min_below_zero", rs: tcpip.ReceiveBufferSizeOption{Min: -1, Default: sMin, Max: sMin}, err: &tcpip.ErrInvalidOptionValue{}},
+		{name: "min_zero", rs: tcpip.ReceiveBufferSizeOption{Min: 0, Default: sMin, Max: sMin}, err: &tcpip.ErrInvalidOptionValue{}},
+		{name: "default_below_min", rs: tcpip.ReceiveBufferSizeOption{Min: sMin, Default: sMin - 1, Max: sMin - 1}, err: &tcpip.ErrInvalidOptionValue{}},
+		{name: "default_above_max", rs: tcpip.ReceiveBufferSizeOption{Min: sMin, Default: sMin + 1, Max: sMin}, err: &tcpip.ErrInvalidOptionValue{}},
+		{name: "max_below_min", rs: tcpip.ReceiveBufferSizeOption{Min: sMin, Default: sMin + 1, Max: sMin - 1}, err: &tcpip.ErrInvalidOptionValue{}},
 
 		// Valid Configurations
-		{"in_ascending_order", tcpip.ReceiveBufferSizeOption{Min: sMin, Default: sMin + 1, Max: sMin + 2}, nil},
-		{"all_equal", tcpip.ReceiveBufferSizeOption{Min: sMin, Default: sMin, Max: sMin}, nil},
-		{"min_default_equal", tcpip.ReceiveBufferSizeOption{Min: sMin, Default: sMin, Max: sMin + 1}, nil},
-		{"default_max_equal", tcpip.ReceiveBufferSizeOption{Min: sMin, Default: sMin + 1, Max: sMin + 1}, nil},
+		{name: "in_ascending_order", rs: tcpip.ReceiveBufferSizeOption{Min: sMin, Default: sMin + 1, Max: sMin + 2}, err: nil},
+		{name: "all_equal", rs: tcpip.ReceiveBufferSizeOption{Min: sMin, Default: sMin, Max: sMin}, err: nil},
+		{name: "min_default_equal", rs: tcpip.ReceiveBufferSizeOption{Min: sMin, Default: sMin, Max: sMin + 1}, err: nil},
+		{name: "default_max_equal", rs: tcpip.ReceiveBufferSizeOption{Min: sMin, Default: sMin + 1, Max: sMin + 1}, err: nil},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -4165,22 +4158,22 @@ func TestStackReceiveBufferSizeOption(t *testing.T) {
 func TestStackSendBufferSizeOption(t *testing.T) {
 	const sMin = stack.MinBufferSize
 	testCases := []struct {
+		err  tcpip.Error
 		name string
 		ss   tcpip.SendBufferSizeOption
-		err  tcpip.Error
 	}{
 		// Invalid configurations.
-		{"min_below_zero", tcpip.SendBufferSizeOption{Min: -1, Default: sMin, Max: sMin}, &tcpip.ErrInvalidOptionValue{}},
-		{"min_zero", tcpip.SendBufferSizeOption{Min: 0, Default: sMin, Max: sMin}, &tcpip.ErrInvalidOptionValue{}},
-		{"default_below_min", tcpip.SendBufferSizeOption{Min: 0, Default: sMin - 1, Max: sMin - 1}, &tcpip.ErrInvalidOptionValue{}},
-		{"default_above_max", tcpip.SendBufferSizeOption{Min: 0, Default: sMin + 1, Max: sMin}, &tcpip.ErrInvalidOptionValue{}},
-		{"max_below_min", tcpip.SendBufferSizeOption{Min: sMin, Default: sMin + 1, Max: sMin - 1}, &tcpip.ErrInvalidOptionValue{}},
+		{name: "min_below_zero", ss: tcpip.SendBufferSizeOption{Min: -1, Default: sMin, Max: sMin}, err: &tcpip.ErrInvalidOptionValue{}},
+		{name: "min_zero", ss: tcpip.SendBufferSizeOption{Min: 0, Default: sMin, Max: sMin}, err: &tcpip.ErrInvalidOptionValue{}},
+		{name: "default_below_min", ss: tcpip.SendBufferSizeOption{Min: 0, Default: sMin - 1, Max: sMin - 1}, err: &tcpip.ErrInvalidOptionValue{}},
+		{name: "default_above_max", ss: tcpip.SendBufferSizeOption{Min: 0, Default: sMin + 1, Max: sMin}, err: &tcpip.ErrInvalidOptionValue{}},
+		{name: "max_below_min", ss: tcpip.SendBufferSizeOption{Min: sMin, Default: sMin + 1, Max: sMin - 1}, err: &tcpip.ErrInvalidOptionValue{}},
 
 		// Valid Configurations
-		{"in_ascending_order", tcpip.SendBufferSizeOption{Min: sMin, Default: sMin + 1, Max: sMin + 2}, nil},
-		{"all_equal", tcpip.SendBufferSizeOption{Min: sMin, Default: sMin, Max: sMin}, nil},
-		{"min_default_equal", tcpip.SendBufferSizeOption{Min: sMin, Default: sMin, Max: sMin + 1}, nil},
-		{"default_max_equal", tcpip.SendBufferSizeOption{Min: sMin, Default: sMin + 1, Max: sMin + 1}, nil},
+		{name: "in_ascending_order", ss: tcpip.SendBufferSizeOption{Min: sMin, Default: sMin + 1, Max: sMin + 2}, err: nil},
+		{name: "all_equal", ss: tcpip.SendBufferSizeOption{Min: sMin, Default: sMin, Max: sMin}, err: nil},
+		{name: "min_default_equal", ss: tcpip.SendBufferSizeOption{Min: sMin, Default: sMin, Max: sMin + 1}, err: nil},
+		{name: "default_max_equal", ss: tcpip.SendBufferSizeOption{Min: sMin, Default: sMin + 1, Max: sMin + 1}, err: nil},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -4248,12 +4241,12 @@ func TestOutgoingSubnetBroadcast(t *testing.T) {
 
 	tests := []struct {
 		name                      string
-		nicAddr                   tcpip.ProtocolAddress
+		expectedRemoteLinkAddress tcpip.LinkAddress
 		routes                    []tcpip.Route
+		nicAddr                   tcpip.ProtocolAddress
 		remoteAddr                tcpip.Address
 		expectedLocalAddress      tcpip.Address
 		expectedRemoteAddress     tcpip.Address
-		expectedRemoteLinkAddress tcpip.LinkAddress
 		expectedNextHop           tcpip.Address
 		expectedNetProto          tcpip.NetworkProtocolNumber
 		expectedLoop              stack.PacketLooping
@@ -4536,8 +4529,8 @@ func TestGetNetworkEndpoint(t *testing.T) {
 	const nicID = 1
 
 	tests := []struct {
-		name         string
 		protoFactory stack.NetworkProtocolFactory
+		name         string
 		protoNum     tcpip.NetworkProtocolNumber
 	}{
 		{
@@ -4712,11 +4705,11 @@ func TestFindRouteWithForwarding(t *testing.T) {
 	)
 
 	type netCfg struct {
-		proto              tcpip.NetworkProtocolNumber
 		factory            stack.NetworkProtocolFactory
 		nic1AddrWithPrefix tcpip.AddressWithPrefix
 		nic2AddrWithPrefix tcpip.AddressWithPrefix
 		remoteAddr         tcpip.Address
+		proto              tcpip.NetworkProtocolNumber
 	}
 
 	fakeNetCfg := netCfg{
@@ -4753,15 +4746,14 @@ func TestFindRouteWithForwarding(t *testing.T) {
 	}
 
 	tests := []struct {
-		name string
+		findRouteErr tcpip.Error
+		name         string
 
-		netCfg            netCfg
-		forwardingEnabled bool
-
-		addrNIC             tcpip.NICID
+		netCfg              netCfg
 		localAddrWithPrefix tcpip.AddressWithPrefix
 
-		findRouteErr          tcpip.Error
+		addrNIC               tcpip.NICID
+		forwardingEnabled     bool
 		dependentOnForwarding bool
 	}{
 		{
@@ -5176,11 +5168,11 @@ func TestCheckLocalAddressIgnoresLoopbackTemporaryAddress(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		netProto     tcpip.NetworkProtocolNumber
+		properties   stack.AddressProperties
+		defaultRoute tcpip.Subnet
 		localAddr    tcpip.AddressWithPrefix
 		remoteAddr   tcpip.Address
-		defaultRoute tcpip.Subnet
-		properties   stack.AddressProperties
+		netProto     tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:         "IPv4",
@@ -5231,7 +5223,7 @@ func TestCheckLocalAddressIgnoresLoopbackTemporaryAddress(t *testing.T) {
 			}
 
 			// NIC iteration order is random.
-			for i := 0; i < 100; i++ {
+			for range 100 {
 				nicID := s.CheckLocalAddress(0, test.netProto, localAddr)
 				if nicID != externalNICID {
 					t.Fatalf("got s.CheckLocalAddress(0, %d, %s) = %d, want = %d", test.netProto, localAddr, nicID, externalNICID)
@@ -5257,10 +5249,10 @@ func TestAddMulticastRoute(t *testing.T) {
 	addresses := stack.UnicastSourceAndMulticastDestination{Source: address, Destination: address}
 
 	tests := []struct {
+		wantErr  tcpip.Error
+		factory  stack.NetworkProtocolFactory
 		name     string
 		netProto tcpip.NetworkProtocolNumber
-		factory  stack.NetworkProtocolFactory
-		wantErr  tcpip.Error
 	}{
 		{
 			name:     "valid",
@@ -5301,7 +5293,7 @@ func TestAddMulticastRoute(t *testing.T) {
 			if test.wantErr == nil {
 				fakeNet := s.NetworkProtocolInstance(fakeNetNumber).(*fakeNetworkProtocol)
 
-				expectedAddMulticastRouteData := addMulticastRouteData{addresses, route}
+				expectedAddMulticastRouteData := addMulticastRouteData{addresses: addresses, route: route}
 				if !cmp.Equal(fakeNet.addMulticastRouteData, expectedAddMulticastRouteData, cmp.AllowUnexported(addMulticastRouteData{}, stack.MulticastRoute{})) {
 					t.Errorf("fakeNet.addMulticastRouteData = %#v, want = %#v", fakeNet.addMulticastRouteData, expectedAddMulticastRouteData)
 				}
@@ -5316,10 +5308,10 @@ func TestRemoveMulticastRoute(t *testing.T) {
 	addresses := stack.UnicastSourceAndMulticastDestination{Source: address, Destination: address}
 
 	tests := []struct {
+		wantErr  tcpip.Error
+		factory  stack.NetworkProtocolFactory
 		name     string
 		netProto tcpip.NetworkProtocolNumber
-		factory  stack.NetworkProtocolFactory
-		wantErr  tcpip.Error
 	}{
 		{
 			name:     "valid",
@@ -5367,10 +5359,10 @@ func TestMulticastRouteLastUsedTime(t *testing.T) {
 	addresses := stack.UnicastSourceAndMulticastDestination{Source: address, Destination: address}
 
 	tests := []struct {
+		wantErr  tcpip.Error
+		factory  stack.NetworkProtocolFactory
 		name     string
 		netProto tcpip.NetworkProtocolNumber
-		factory  stack.NetworkProtocolFactory
-		wantErr  tcpip.Error
 	}{
 		{
 			name:     "valid",
@@ -5416,44 +5408,44 @@ func TestMulticastRouteLastUsedTime(t *testing.T) {
 
 func TestEnableMulticastForwardingForProtocol(t *testing.T) {
 	tests := []struct {
-		name           string
-		netProto       tcpip.NetworkProtocolNumber
-		factory        stack.NetworkProtocolFactory
 		delegateOutput enableMulticastForwardingForProtocolResult
 		wantResult     enableMulticastForwardingForProtocolResult
+		factory        stack.NetworkProtocolFactory
+		name           string
+		netProto       tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:           "impl returns previously enabled",
 			netProto:       fakeNetNumber,
 			factory:        fakeNetFactory,
-			delegateOutput: enableMulticastForwardingForProtocolResult{true, nil},
-			wantResult:     enableMulticastForwardingForProtocolResult{true, nil},
+			delegateOutput: enableMulticastForwardingForProtocolResult{AlreadyEnabled: true, Err: nil},
+			wantResult:     enableMulticastForwardingForProtocolResult{AlreadyEnabled: true, Err: nil},
 		},
 		{
 			name:           "impl returns previously disabled",
 			netProto:       fakeNetNumber,
 			factory:        fakeNetFactory,
-			delegateOutput: enableMulticastForwardingForProtocolResult{false, nil},
-			wantResult:     enableMulticastForwardingForProtocolResult{false, nil},
+			delegateOutput: enableMulticastForwardingForProtocolResult{AlreadyEnabled: false, Err: nil},
+			wantResult:     enableMulticastForwardingForProtocolResult{AlreadyEnabled: false, Err: nil},
 		},
 		{
 			name:           "impl returns error",
 			netProto:       fakeNetNumber,
 			factory:        fakeNetFactory,
-			delegateOutput: enableMulticastForwardingForProtocolResult{false, &tcpip.ErrUnknownDevice{}},
-			wantResult:     enableMulticastForwardingForProtocolResult{false, &tcpip.ErrUnknownDevice{}},
+			delegateOutput: enableMulticastForwardingForProtocolResult{AlreadyEnabled: false, Err: &tcpip.ErrUnknownDevice{}},
+			wantResult:     enableMulticastForwardingForProtocolResult{AlreadyEnabled: false, Err: &tcpip.ErrUnknownDevice{}},
 		},
 		{
 			name:       "unknown protocol",
 			factory:    fakeNetFactory,
 			netProto:   arp.ProtocolNumber,
-			wantResult: enableMulticastForwardingForProtocolResult{false, &tcpip.ErrUnknownProtocol{}},
+			wantResult: enableMulticastForwardingForProtocolResult{AlreadyEnabled: false, Err: &tcpip.ErrUnknownProtocol{}},
 		},
 		{
 			name:       "not supported",
 			factory:    arp.NewProtocol,
 			netProto:   arp.ProtocolNumber,
-			wantResult: enableMulticastForwardingForProtocolResult{false, &tcpip.ErrNotSupported{}},
+			wantResult: enableMulticastForwardingForProtocolResult{AlreadyEnabled: false, Err: &tcpip.ErrNotSupported{}},
 		},
 	}
 	for _, test := range tests {
@@ -5469,7 +5461,7 @@ func TestEnableMulticastForwardingForProtocol(t *testing.T) {
 
 			alreadyEnabled, err := s.EnableMulticastForwardingForProtocol(test.netProto, &fakeMulticastEventDispatcher{})
 
-			if !cmp.Equal(enableMulticastForwardingForProtocolResult{alreadyEnabled, err}, test.wantResult, cmpopts.EquateErrors()) {
+			if !cmp.Equal(enableMulticastForwardingForProtocolResult{AlreadyEnabled: alreadyEnabled, Err: err}, test.wantResult, cmpopts.EquateErrors()) {
 				t.Errorf("s.EnableMulticastForwardingForProtocol(%d, _) = (%t, %s), want = (%t, %s)", test.netProto, alreadyEnabled, err, test.wantResult.AlreadyEnabled, test.wantResult.Err)
 			}
 		})
@@ -5478,10 +5470,10 @@ func TestEnableMulticastForwardingForProtocol(t *testing.T) {
 
 func TestDisableMulticastForwardingForProtocol(t *testing.T) {
 	tests := []struct {
+		wantErr  tcpip.Error
+		factory  stack.NetworkProtocolFactory
 		name     string
 		netProto tcpip.NetworkProtocolNumber
-		factory  stack.NetworkProtocolFactory
-		wantErr  tcpip.Error
 	}{
 		{
 			name:     "valid",
@@ -5528,8 +5520,8 @@ func TestNICForwarding(t *testing.T) {
 	const nicID = 1
 
 	tests := []struct {
-		name     string
 		factory  stack.NetworkProtocolFactory
+		name     string
 		netProto tcpip.NetworkProtocolNumber
 	}{
 		{
@@ -5671,8 +5663,8 @@ func TestWritePacketToRemote(t *testing.T) {
 	}
 	tests := []struct {
 		name     string
-		protocol tcpip.NetworkProtocolNumber
 		payload  []byte
+		protocol tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:     "SuccessIPv4",
@@ -5839,9 +5831,9 @@ func TestStaticGetLinkAddress(t *testing.T) {
 
 	tests := []struct {
 		name             string
-		proto            tcpip.NetworkProtocolNumber
-		addr             tcpip.Address
 		expectedLinkAddr tcpip.LinkAddress
+		addr             tcpip.Address
+		proto            tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:             "IPv4",
@@ -5884,21 +5876,21 @@ func TestFindRoute(t *testing.T) {
 	const prefixLen = 24
 
 	type nic struct {
-		id        tcpip.NICID
 		addresses []string
+		id        tcpip.NICID
 	}
 	type route struct {
 		gateway string
 		subnet  string
-		nic     tcpip.NICID
 		srcHint string
+		nic     tcpip.NICID
 	}
 	type query struct {
 		name        string
 		remote      string
-		wantID      tcpip.NICID
 		wantLocal   string
 		wantNextHop string
+		wantID      tcpip.NICID
 		wantErr     bool
 	}
 	stacks := []struct {

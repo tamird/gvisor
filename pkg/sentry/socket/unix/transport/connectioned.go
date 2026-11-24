@@ -140,10 +140,10 @@ func NewConnectioned(ctx context.Context, stype linux.SockType, uid uniqueid.Pro
 
 func newConnectioned(ctx context.Context, stype linux.SockType, uid uniqueid.Provider) *connectionedEndpoint {
 	ep := &connectionedEndpoint{
-		baseEndpoint: baseEndpoint{WaitQueue: &waiter.Queue{}},
-		id:           uid.UniqueID(),
-		idGenerator:  uid,
-		stype:        stype,
+		WaitQueue:   &waiter.Queue{},
+		id:          uid.UniqueID(),
+		idGenerator: uid,
+		stype:       stype,
 	}
 
 	ep.ops.InitHandler(ep, &stackHandler{}, getSendBufferLimits, getReceiveBufferLimits)
@@ -188,10 +188,10 @@ func NewPair(ctx context.Context, stype linux.SockType, uid uniqueid.Provider) (
 // socketpair.
 func NewExternal(stype linux.SockType, uid uniqueid.Provider, wq *waiter.Queue, receiver Receiver, peer Sender) Endpoint {
 	ep := &connectionedEndpoint{
-		baseEndpoint: baseEndpoint{WaitQueue: wq, receiver: receiver, peer: peer},
-		id:           uid.UniqueID(),
-		idGenerator:  uid,
-		stype:        stype,
+		WaitQueue: wq, receiver: receiver, peer: peer,
+		id:          uid.UniqueID(),
+		idGenerator: uid,
+		stype:       stype,
 	}
 	ep.ops.InitHandler(ep, &stackHandler{}, getSendBufferLimits, getReceiveBufferLimits)
 	ep.ops.SetSendBufferSize(peer.SendMaxQueueSize(), false /* notify */)
@@ -348,10 +348,8 @@ func (e *connectionedEndpoint) BidirectionalConnect(ctx context.Context, ce Conn
 
 	// Create a newly bound connectionedEndpoint.
 	ne := &connectionedEndpoint{
-		baseEndpoint: baseEndpoint{
-			path:      e.path,
-			WaitQueue: &waiter.Queue{},
-		},
+		path:        e.path,
+		WaitQueue:   &waiter.Queue{},
 		id:          e.idGenerator.UniqueID(),
 		idGenerator: e.idGenerator,
 		stype:       e.stype,
@@ -373,7 +371,7 @@ func (e *connectionedEndpoint) BidirectionalConnect(ctx context.Context, ce Conn
 	writeQueue := &queue{readerWaiters: ne.WaitQueue, writerWaiters: ce.WaiterQueue(), limit: e.ops.GetSendBufferSize()}
 	writeQueue.InitRefs()
 	if e.stype == linux.SOCK_STREAM {
-		ne.receiver = &streamQueueReceiver{queueReceiver: queueReceiver{readQueue: writeQueue}}
+		ne.receiver = &streamQueueReceiver{readQueue: writeQueue}
 	} else {
 		ne.receiver = &queueReceiver{readQueue: writeQueue}
 	}
@@ -391,7 +389,7 @@ func (e *connectionedEndpoint) BidirectionalConnect(ctx context.Context, ce Conn
 			if err := e.swapPeerCredsLocked(ctx, ce, ne); err != nil {
 				return err
 			}
-			returnConnect(&streamQueueReceiver{queueReceiver: queueReceiver{readQueue: readQueue}}, peer)
+			returnConnect(&streamQueueReceiver{readQueue: readQueue}, peer)
 		} else {
 			returnConnect(&queueReceiver{readQueue: readQueue}, peer)
 		}

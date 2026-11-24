@@ -498,7 +498,7 @@ Outer:
 		if size > sizeBudget {
 			break Outer
 		}
-		cBytes := append([]byte{}, buf[:size]...)
+		cBytes := bytes.Clone(buf[:size])
 		buf = buf[size:]
 		// We're guaranteed that cBytes has at least one element.
 	cByteSwitch:
@@ -592,7 +592,7 @@ func (*inputQueueTransformer) transform(l *lineDiscipline, q *queue, buf []byte)
 	var notifyEcho bool
 	for len(buf) > 0 && len(q.readBuf) < canonMaxBytes {
 		size := l.peek(buf)
-		cBytes := append([]byte{}, buf[:size]...)
+		cBytes := bytes.Clone(buf[:size])
 		// We're guaranteed that cBytes has at least one element.
 		switch cBytes[0] {
 		case '\r':

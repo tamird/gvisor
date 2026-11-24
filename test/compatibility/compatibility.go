@@ -76,6 +76,7 @@ func Poll(ctx context.Context, t *testing.T, desc string, timeout, interval time
 
 // Request describes an HTTP request issued by a compatibility test.
 type Request struct {
+	Headers     map[string]string
 	Method      string // defaults to GET.
 	URL         string
 	Body        string
@@ -83,7 +84,6 @@ type Request struct {
 	Host        string // overrides the Host header if non-empty.
 	Username    string // enables HTTP basic auth if non-empty.
 	Password    string
-	Headers     map[string]string
 	// Timeout overrides the default client timeout for this request.
 	// Zero uses the default from httpClient.
 	Timeout time.Duration

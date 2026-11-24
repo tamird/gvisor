@@ -52,18 +52,6 @@ const (
 
 // OpenResponse is the response type for AsyncFileServer.Open.
 type OpenResponse struct {
-	// Handle is the handle for the opened server file.
-	Handle uint32 `json:"handle"`
-
-	// MaxIOBytes is the maximum number of bytes per read/write request.
-	MaxIOBytes uint32 `json:"max_io_bytes"`
-
-	// MaxRanges is the maximum number of file ranges per read/write request.
-	MaxRanges uint32 `json:"max_ranges"`
-
-	// MaxParallel is the maximum number of parallel read/write requests.
-	MaxParallel uint32 `json:"max_parallel"`
-
 	// FilePayload.Files[0] backs the Flipcall packet window for this file's
 	// read/write requests.
 	urpc.FilePayload
@@ -75,6 +63,18 @@ type OpenResponse struct {
 	// PacketWindowLength is the length of the packet window backed by
 	// FilePayload.Files[0].
 	PacketWindowLength int `json:"packet_window_length"`
+
+	// Handle is the handle for the opened server file.
+	Handle uint32 `json:"handle"`
+
+	// MaxIOBytes is the maximum number of bytes per read/write request.
+	MaxIOBytes uint32 `json:"max_io_bytes"`
+
+	// MaxRanges is the maximum number of file ranges per read/write request.
+	MaxRanges uint32 `json:"max_ranges"`
+
+	// MaxParallel is the maximum number of parallel read/write requests.
+	MaxParallel uint32 `json:"max_parallel"`
 }
 
 // CloseRequest is the request type for AsyncFileServer.Close.
@@ -91,22 +91,22 @@ type CloseResponse struct {
 // RegisterClientFileRequest is the request type for
 // AsyncFileServer.RegisterClientFile.
 type RegisterClientFileRequest struct {
-	// Handle is the handle of the opened server file for which this client
-	// file is being registered.
-	Handle uint32 `json:"handle"`
-
 	// FilePayload.Files[0] is the file being registered.
 	urpc.FilePayload
+
+	// Settings configures registered ranges in the file.
+	Settings []stateio.ClientFileRangeSetting `json:"settings"`
 
 	// Size is the number of bytes in the file to register.
 	Size uint64 `json:"size"`
 
+	// Handle is the handle of the opened server file for which this client
+	// file is being registered.
+	Handle uint32 `json:"handle"`
+
 	// Writable is true if the registered client file must be writable.
 	// Writable must be set to true if the server file is opened for reading.
 	Writable bool `json:"writable"`
-
-	// Settings configures registered ranges in the file.
-	Settings []stateio.ClientFileRangeSetting `json:"settings"`
 }
 
 // RegisterClientFileResponse is the response type for
@@ -221,8 +221,7 @@ func ioErrnoFromError(err error, errKind string) int32 {
 	if err == io.EOF || err == io.ErrUnexpectedEOF {
 		return -1
 	}
-	var errno unix.Errno
-	if errors.As(err, &errno) {
+	if errno, ok := errors.AsType[unix.Errno](err); ok {
 		return int32(errno)
 	}
 	log.Infof("Returning EIO for %s error: %v", errKind, err)

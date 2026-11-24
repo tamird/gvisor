@@ -37,9 +37,9 @@ const (
 )
 
 type symbol struct {
+	scope *scope
 	kind  SymKind
 	pos   token.Pos
-	scope *scope
 }
 
 type scope struct {

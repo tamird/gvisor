@@ -17,6 +17,7 @@ package boot
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"golang.org/x/sys/unix"
 	"google.golang.org/protobuf/proto"
@@ -48,12 +49,11 @@ type compatEmitter struct {
 	// nameMap is fixed at construction.
 	nameMap strace.SyscallMap
 
-	mu sync.Mutex
-
 	// trackers map syscall number to the respective tracker instance.
 	//
 	// +checklocks:mu
 	trackers map[uint64]syscallTracker
+	mu       sync.Mutex
 }
 
 func newCompatEmitter(logFD int) (*compatEmitter, error) {
@@ -71,7 +71,7 @@ func newCompatEmitter(logFD int) (*compatEmitter, error) {
 
 	if logFD > 0 {
 		f := os.NewFile(uintptr(logFD), "user log file")
-		target := &log.MultiEmitter{c.sink, log.K8sJSONEmitter{&log.Writer{Next: f}}}
+		target := &log.MultiEmitter{c.sink, log.K8sJSONEmitter{Writer: &log.Writer{Next: f}}}
 		c.sink = &log.BasicLogger{Level: log.Info, Emitter: target}
 	}
 	return c, nil
@@ -174,10 +174,11 @@ func (o *onceTracker) onReported(_ *rpb.Registers) {
 // argsTracker reports only once for each different combination of arguments.
 // It's used for generic syscalls like ioctl to report once per 'cmd'.
 type argsTracker struct {
-	// argsIdx is the syscall arguments to use as unique ID.
-	argsIdx  []int
 	reported map[string]struct{}
-	count    int
+
+	// argsIdx is the syscall arguments to use as unique ID.
+	argsIdx []int
+	count   int
 }
 
 func newArgsTracker(argIdx ...int) *argsTracker {
@@ -186,11 +187,11 @@ func newArgsTracker(argIdx ...int) *argsTracker {
 
 // key returns the command based on the syscall argument index.
 func (a *argsTracker) key(regs *rpb.Registers) string {
-	var rv string
+	var rv strings.Builder
 	for _, idx := range a.argsIdx {
-		rv += fmt.Sprintf("%d|", argVal(idx, regs))
+		fmt.Fprintf(&rv, "%d|", argVal(idx, regs))
 	}
-	return rv
+	return rv.String()
 }
 
 func (a *argsTracker) shouldReport(regs *rpb.Registers) bool {

@@ -43,7 +43,7 @@ type EndpointWriter struct {
 
 // WriteFromBlocks implements safemem.Writer.WriteFromBlocks.
 func (w *EndpointWriter) WriteFromBlocks(srcs safemem.BlockSeq) (uint64, error) {
-	return safemem.FromVecWriterFunc{func(bufs [][]byte) (int64, error) {
+	return safemem.FromVecWriterFunc{WriteVec: func(bufs [][]byte) (int64, error) {
 		n, notify, err := w.Endpoint.SendMsg(w.Ctx, bufs, w.Control, w.To)
 		w.Notify = notify
 		if err != nil {
@@ -58,43 +58,42 @@ func (w *EndpointWriter) WriteFromBlocks(srcs safemem.BlockSeq) (uint64, error) 
 //
 // EndpointReader is not thread-safe.
 type EndpointReader struct {
-	Ctx context.Context
+	// Control contains the received control messages.
+	Control transport.ControlMessages
+	Ctx     context.Context
 
 	// Endpoint is the transport.Endpoint to read from.
 	Endpoint transport.Endpoint
-
-	// Creds indicates if credential control messages are requested.
-	Creds bool
-
-	// NumRights is the number of SCM_RIGHTS FDs requested.
-	NumRights int
-
-	// Peek indicates that the data should not be consumed from the
-	// endpoint.
-	Peek bool
-
-	// MsgSize is the size of the message that was read from. For stream
-	// sockets, it is the amount read.
-	MsgSize int64
-
-	// From will be set with the address read from.
-	From transport.Address
-
-	// Control contains the received control messages.
-	Control transport.ControlMessages
-
-	// UnusedRights is a slice of unused RightsControlMessage that must be
-	// Release()d before this EndpointReader is discarded.
-	UnusedRights []transport.RightsControlMessage
-
-	// ControlTrunc indicates that SCM_RIGHTS FDs were discarded based on
-	// the value of NumRights.
-	ControlTrunc bool
 
 	// Notify is the Receiver.NotifyWriteSpace callback that is set by
 	// ReadToBlocks and should be called without mm.activeMu held (i.e.
 	// after CopyIn completes).
 	Notify func()
+
+	// From will be set with the address read from.
+	From transport.Address
+
+	// UnusedRights is a slice of unused RightsControlMessage that must be
+	// Release()d before this EndpointReader is discarded.
+	UnusedRights []transport.RightsControlMessage
+
+	// NumRights is the number of SCM_RIGHTS FDs requested.
+	NumRights int
+
+	// MsgSize is the size of the message that was read from. For stream
+	// sockets, it is the amount read.
+	MsgSize int64
+
+	// Creds indicates if credential control messages are requested.
+	Creds bool
+
+	// Peek indicates that the data should not be consumed from the
+	// endpoint.
+	Peek bool
+
+	// ControlTrunc indicates that SCM_RIGHTS FDs were discarded based on
+	// the value of NumRights.
+	ControlTrunc bool
 }
 
 // Truncate calls RecvMsg on the endpoint without writing to a destination.
@@ -121,7 +120,7 @@ func (r *EndpointReader) Truncate() error {
 
 // ReadToBlocks implements safemem.Reader.ReadToBlocks.
 func (r *EndpointReader) ReadToBlocks(dsts safemem.BlockSeq) (uint64, error) {
-	return safemem.FromVecReaderFunc{func(bufs [][]byte) (int64, error) {
+	return safemem.FromVecReaderFunc{ReadVec: func(bufs [][]byte) (int64, error) {
 		args := transport.RecvArgs{
 			Creds:     r.Creds,
 			NumRights: r.NumRights,

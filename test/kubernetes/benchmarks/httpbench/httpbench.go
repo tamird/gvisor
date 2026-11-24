@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -32,7 +33,6 @@ import (
 	"gvisor.dev/gvisor/test/kubernetes/testcluster"
 	v13 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // InfiniteQPS is a stand-in value for "a lot of QPS".
@@ -54,6 +54,9 @@ const (
 
 // Round is a single round of benchmarking.
 type Round struct {
+	// If set, only report the metric types listed here.
+	OnlyReport []MetricType
+
 	// NumThreads is the number of concurrent threads and connections to make.
 	NumThreads int
 
@@ -64,9 +67,6 @@ type Round struct {
 	// Duration is the total duration of the round. It should be longer than 10s
 	// as wrk2 uses the first 10 seconds as calibration period.
 	Duration time.Duration
-
-	// If set, only report the metric types listed here.
-	OnlyReport []MetricType
 }
 
 // HTTPBenchmark helps manage an HTTP-based benchmark.
@@ -74,10 +74,6 @@ type Round struct {
 // the HTTP server pod and a Kubernetes Service pointing at it, and this
 // library takes care of the rest.
 type HTTPBenchmark struct {
-	// Name is the name of the benchmark. It is used as a prefix for all
-	// benchstat output metrics.
-	Name string
-
 	// Cluster is the test cluster.
 	Cluster *testcluster.TestCluster
 
@@ -87,21 +83,25 @@ type HTTPBenchmark struct {
 	// Service is a Kubernetes service pointing to the HTTP server.
 	Service *v13.Service
 
-	// Port is the port that the HTTP server is bound to.
-	Port int
+	// Name is the name of the benchmark. It is used as a prefix for all
+	// benchstat output metrics.
+	Name string
 
 	// Path is the HTTP path that the benchmark should use in its requests.
 	// It should start by "/", e.g. "/index.html".
 	Path string
-
-	// Timeout is the maximum allowable duration of requests for Path.
-	Timeout time.Duration
 
 	// Rounds is the set of rounds to run the benchmark for. Must be non-empty.
 	Rounds []Round
 
 	// WantPercentiles is the list of percentiles to report.
 	WantPercentiles []int
+
+	// Port is the port that the HTTP server is bound to.
+	Port int
+
+	// Timeout is the maximum allowable duration of requests for Path.
+	Timeout time.Duration
 }
 
 // Run runs the HTTP-based benchmark.
@@ -203,14 +203,10 @@ func (h *HTTPBenchmark) newWrk2Client(name, ip string, round Round) *v13.Pod {
 		fmt.Sprintf("http://%s:%d%s", ip, h.Port, h.Path),
 	}
 	return &v13.Pod{
-		TypeMeta: v1.TypeMeta{
-			Kind:       "Pod",
-			APIVersion: "v1",
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name:      name,
-			Namespace: h.Namespace.Namespace,
-		},
+		Kind:       "Pod",
+		APIVersion: "v1",
+		Name:       name,
+		Namespace:  h.Namespace.Namespace,
 		Spec: v13.PodSpec{
 			Containers: []v13.Container{
 				{
@@ -231,14 +227,10 @@ func (h *HTTPBenchmark) getWgetPod(ip string) *v13.Pod {
 	// only to verify that the server is up, not that the page at h.Path exists.
 	cmd := fmt.Sprintf("wget --spider -T 10 http://%s:%d/", ip, h.Port)
 	return &v13.Pod{
-		TypeMeta: v1.TypeMeta{
-			Kind:       "Pod",
-			APIVersion: "v1",
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name:      name,
-			Namespace: h.Namespace.Namespace,
-		},
+		Kind:       "Pod",
+		APIVersion: "v1",
+		Name:       name,
+		Namespace:  h.Namespace.Namespace,
 		Spec: v13.PodSpec{
 			Containers: []v13.Container{
 				{
@@ -353,17 +345,12 @@ func getMeasurements(data string, onlyReport []MetricType, wantPercentiles []int
 		if len(onlyReport) == 0 {
 			return true
 		}
-		for _, typ := range onlyReport {
-			if typ == m {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(onlyReport, m)
 	}
 	var metricValues []benchmetric.MetricValue
 	totalRequests := 0
 	totalRequestsFound := false
-	for _, line := range strings.Split(data, "\n") {
+	for line := range strings.SplitSeq(data, "\n") {
 		if match := wrk2TotalRequestsRe.FindStringSubmatch(line); match != nil {
 			gotRequests, err := strconv.ParseInt(strings.ReplaceAll(match[1], ",", ""), 10, 64)
 			if err != nil {

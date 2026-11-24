@@ -31,8 +31,8 @@ import (
 )
 
 type Fs struct {
-	content []byte
 	err     error
+	content []byte
 	delay   time.Duration
 }
 

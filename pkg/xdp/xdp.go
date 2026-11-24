@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build amd64 || arm64
-// +build amd64 arm64
 
 // Package xdp provides tools for working with AF_XDP sockets.
 //
@@ -56,11 +55,11 @@ import (
 // The ControlBlock and the structures it contains are meant to be used with a
 // single RX goroutine and a single TX goroutine.
 type ControlBlock struct {
-	UMEM       UMEM
 	Fill       FillQueue
 	RX         RXQueue
 	TX         TXQueue
 	Completion CompletionQueue
+	UMEM       UMEM
 }
 
 // Opts configure an AF_XDP socket.

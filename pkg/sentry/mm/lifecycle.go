@@ -16,6 +16,7 @@ package mm
 
 import (
 	"fmt"
+	"slices"
 
 	"gvisor.dev/gvisor/pkg/atomicbitops"
 	"gvisor.dev/gvisor/pkg/context"
@@ -159,7 +160,7 @@ func (mm *MemoryManager) Fork(ctx context.Context) (*MemoryManager, error) {
 		captureInvalidations: true,
 		argv:                 mm.argv,
 		envv:                 mm.envv,
-		auxv:                 append(arch.Auxv(nil), mm.auxv...),
+		auxv:                 slices.Concat[arch.Auxv](mm.auxv),
 		// IncRef'd below, once we know that there isn't an error.
 		executable:        mm.executable,
 		dumpability:       atomicbitops.FromInt32(mm.dumpability.Load()),

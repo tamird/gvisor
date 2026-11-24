@@ -195,18 +195,12 @@ const (
 // Preconditions: Same as IO.CopyFromUser, plus:
 //   - maxlen >= 0.
 func CopyStringIn(ctx context.Context, uio IO, addr hostarch.Addr, maxlen int, opts IOOpts) (string, error) {
-	initLen := maxlen
-	if initLen > copyStringMaxInitBufLen {
-		initLen = copyStringMaxInitBufLen
-	}
+	initLen := min(maxlen, copyStringMaxInitBufLen)
 	buf := make([]byte, initLen)
 	var done int
 	for done < maxlen {
 		// Read up to copyStringIncrement bytes at a time.
-		readlen := copyStringIncrement
-		if readlen > maxlen-done {
-			readlen = maxlen - done
-		}
+		readlen := min(copyStringIncrement, maxlen-done)
 		end, ok := addr.AddLength(uint64(readlen))
 		if !ok {
 			return gohacks.StringFromImmutableBytes(buf[:done]), linuxerr.EFAULT
@@ -220,10 +214,7 @@ func CopyStringIn(ctx context.Context, uio IO, addr hostarch.Addr, maxlen int, o
 		}
 		// Ensure that our buffer is large enough to accommodate the read.
 		if done+readlen > len(buf) {
-			newBufLen := len(buf) * 2
-			if newBufLen > maxlen {
-				newBufLen = maxlen
-			}
+			newBufLen := min(len(buf)*2, maxlen)
 			buf = append(buf, make([]byte, newBufLen-len(buf))...)
 		}
 		n, err := uio.CopyIn(ctx, addr, buf[done:done+readlen], opts)

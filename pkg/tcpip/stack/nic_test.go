@@ -34,11 +34,9 @@ var _ NDPEndpoint = (*testIPv6Endpoint)(nil)
 // We use this instead of ipv6.endpoint because the ipv6 package depends on
 // the stack package which this test lives in, causing a cyclic dependency.
 type testIPv6Endpoint struct {
-	AddressableEndpointState
-
 	nic      NetworkInterface
 	protocol *testIPv6Protocol
-
+	AddressableEndpointState
 	invalidatedRtr tcpip.Address
 }
 

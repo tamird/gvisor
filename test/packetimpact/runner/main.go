@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:build linux && go1.10
-// +build linux,go1.10
+//go:build linux
 
 // The runner binary is used as the test runner for PacketImpact tests.
 package main
@@ -196,8 +195,7 @@ func main() {
 		case expectFailure:
 			log.Fatalf("the test is expected to fail, but it succeeded")
 		case err != nil:
-			var exitStatus *exec.ExitError
-			if errors.As(err, &exitStatus) {
+			if exitStatus, ok := errors.AsType[*exec.ExitError](err); ok {
 				os.Exit(exitStatus.ExitCode())
 			}
 			log.Fatalf("unknown error when executing test: %s", err)
@@ -207,8 +205,8 @@ func main() {
 
 type dutProcess struct {
 	cmd       *exec.Cmd
-	id        int
 	completeR *os.File
+	id        int
 	dutNetNS  netNS
 }
 
@@ -247,15 +245,11 @@ func newDUT(ctx context.Context, id int, dutBinary string, dutArgs dutArgList) (
 		dutSideIfaceName := dutSide.ifaceName(typ, id)
 		tbSideIfaceName := tbSide.ifaceName(typ, id)
 		dutVeth := netlink.Veth{
-			LinkAttrs: netlink.LinkAttrs{
-				Name: dutSideIfaceName,
-			},
+			Name:     dutSideIfaceName,
 			PeerName: tbSideIfaceName,
 		}
 		tbVeth := netlink.Veth{
-			LinkAttrs: netlink.LinkAttrs{
-				Name: tbSideIfaceName,
-			},
+			Name:     tbSideIfaceName,
 			PeerName: dutSideIfaceName,
 		}
 		if err := netlink.LinkAdd(&dutVeth); err != nil {
@@ -271,9 +265,9 @@ func newDUT(ctx context.Context, id int, dutBinary string, dutArgs dutArgList) (
 		}
 
 		for _, conf := range []struct {
-			ns   netNS
 			addr *netlink.Addr
 			veth *netlink.Veth
+			ns   netNS
 		}{
 			{ns: currentNetNS, addr: tbIPv4, veth: &tbVeth},
 			{ns: dutNetNS, addr: dutIPv4, veth: &dutVeth},
@@ -302,9 +296,7 @@ func newDUT(ctx context.Context, id int, dutBinary string, dutArgs dutArgList) (
 	for _, ns := range []netNS{currentNetNS, dutNetNS} {
 		if err := ns.Do(func() error {
 			return netlink.LinkSetUp(&netlink.Device{
-				LinkAttrs: netlink.LinkAttrs{
-					Name: "lo",
-				},
+				Name: "lo",
 			})
 		}); err != nil {
 			return nil, fmt.Errorf("failed to bring loopback up: %w", err)

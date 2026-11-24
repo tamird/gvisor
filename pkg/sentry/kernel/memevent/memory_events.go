@@ -41,16 +41,16 @@ var totalEvents = metric.MustCreateNewUint64Metric("/memory_events/events", metr
 type MemoryEvents struct {
 	k *kernel.Kernel
 
-	// The period is how often to emit an event. The memory events goroutine
-	// will ensure a minimum of one event is emitted per this period, regardless
-	// how of much memory usage has changed.
-	period time.Duration
-
 	// Writing to this channel indicates the memory goroutine should stop.
 	stop chan struct{}
 
 	// done is used to signal when the memory event goroutine has exited.
 	done sync.WaitGroup
+
+	// The period is how often to emit an event. The memory events goroutine
+	// will ensure a minimum of one event is emitted per this period, regardless
+	// how of much memory usage has changed.
+	period time.Duration
 }
 
 // New creates a new MemoryEvents.

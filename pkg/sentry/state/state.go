@@ -44,8 +44,8 @@ const (
 
 // SaveOpts contains save-related options.
 type SaveOpts struct {
-	// Destination is the save target.
-	Destination io.Writer
+	// StartTime stores the start time of the sandbox.
+	StartTime time.Time
 
 	// PagesMetadata is the file into which MemoryFile metadata is stored if
 	// PagesMetadata is non-nil. Otherwise this content is stored in Destination.
@@ -55,11 +55,25 @@ type SaveOpts struct {
 	// PagesFile is non-nil. Otherwise this content is stored in Destination.
 	PagesFile stateio.AsyncWriter
 
-	// Key is used to enable state integrity check.
-	Key []byte
+	// Destination is the save target.
+	Destination io.Writer
 
 	// Metadata is save metadata.
 	Metadata map[string]string
+
+	// GraphEngine, when non-nil, overrides the process-wide state engine for
+	// this save operation.
+	GraphEngine *bool
+
+	// FSSaveOpts contains options for filesystem checkpoint. If non-nil, we
+	// should split filesystem to separate pages from the full checkpoint.
+	FSSaveOpts *kernel.FSSaveOpts
+
+	// CudaCheckpointPath is the path to the cuda-checkpoint binary.
+	CudaCheckpointPath string
+
+	// Key is used to enable state integrity check.
+	Key []byte
 
 	// AppMFExcludeCommittedZeroPages is the value of
 	// pgalloc.SaveOpts.ExcludeCommittedZeroPages for the application memory
@@ -72,12 +86,6 @@ type SaveOpts struct {
 	// Autosave indicates if the statefile is used for autosave.
 	Autosave bool
 
-	// StartTime stores the start time of the sandbox.
-	StartTime time.Time
-
-	// CudaCheckpointPath is the path to the cuda-checkpoint binary.
-	CudaCheckpointPath string
-
 	// CudaCheckpointSequential indicates whether cuda-checkpoint should be run
 	// sequentially (rather than in parallel).
 	CudaCheckpointSequential bool
@@ -86,14 +94,6 @@ type SaveOpts struct {
 	// remote filesystems should refresh metadata during save so that restore
 	// can validate file sizes and/or modification timestamps.
 	ValidateMetadata bool
-
-	// FSSaveOpts contains options for filesystem checkpoint. If non-nil, we
-	// should split filesystem to separate pages from the full checkpoint.
-	FSSaveOpts *kernel.FSSaveOpts
-
-	// GraphEngine, when non-nil, overrides the process-wide state engine for
-	// this save operation.
-	GraphEngine *bool
 }
 
 // Close releases resources owned by opts.

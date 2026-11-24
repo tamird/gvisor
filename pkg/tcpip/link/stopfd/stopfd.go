@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 // Package stopfd provides an type that can be used to signal the stop of a dispatcher.
 package stopfd

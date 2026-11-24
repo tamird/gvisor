@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build (linux && amd64) || (linux && arm64)
-// +build linux,amd64 linux,arm64
 
 package fdbased
 
@@ -35,7 +34,7 @@ var tPacketHdrlen = tPacketAlign(unsafe.Sizeof(tPacketHdr{}) + unsafe.Sizeof(uni
 // use atomic operations to prevent races.
 func (t tPacketHdr) tpStatus() uint32 {
 	hdr := unsafe.Pointer(&t[0])
-	statusPtr := unsafe.Pointer(uintptr(hdr) + uintptr(tpStatusOffset))
+	statusPtr := unsafe.Add(hdr, tpStatusOffset)
 	return (*atomicbitops.Uint32)(statusPtr).Load()
 }
 
@@ -44,7 +43,7 @@ func (t tPacketHdr) tpStatus() uint32 {
 // use atomic operations to prevent races.
 func (t tPacketHdr) setTPStatus(status uint32) {
 	hdr := unsafe.Pointer(&t[0])
-	statusPtr := unsafe.Pointer(uintptr(hdr) + uintptr(tpStatusOffset))
+	statusPtr := unsafe.Add(hdr, tpStatusOffset)
 	(*atomicbitops.Uint32)(statusPtr).Store(status)
 }
 

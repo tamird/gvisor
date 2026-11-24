@@ -22,6 +22,7 @@ import (
 	"io"
 	"math/rand"
 	"runtime"
+	"slices"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/compressio"
@@ -38,9 +39,9 @@ func randomKey() ([]byte, error) {
 }
 
 type testCase struct {
+	metadata map[string]string
 	name     string
 	data     []byte
-	metadata map[string]string
 }
 
 func TestStatefile(t *testing.T) {
@@ -51,28 +52,28 @@ func TestStatefile(t *testing.T) {
 
 	cases := []testCase{
 		// Various data sizes.
-		{"nil", nil, nil},
-		{"empty", []byte(""), nil},
-		{"some", []byte("_"), nil},
-		{"one", []byte("0"), nil},
-		{"two", []byte("01"), nil},
-		{"three", []byte("012"), nil},
-		{"four", []byte("0123"), nil},
-		{"five", []byte("01234"), nil},
-		{"six", []byte("012356"), nil},
-		{"seven", []byte("0123567"), nil},
-		{"eight", []byte("01235678"), nil},
+		{name: "nil", data: nil, metadata: nil},
+		{name: "empty", data: []byte(""), metadata: nil},
+		{name: "some", data: []byte("_"), metadata: nil},
+		{name: "one", data: []byte("0"), metadata: nil},
+		{name: "two", data: []byte("01"), metadata: nil},
+		{name: "three", data: []byte("012"), metadata: nil},
+		{name: "four", data: []byte("0123"), metadata: nil},
+		{name: "five", data: []byte("01234"), metadata: nil},
+		{name: "six", data: []byte("012356"), metadata: nil},
+		{name: "seven", data: []byte("0123567"), metadata: nil},
+		{name: "eight", data: []byte("01235678"), metadata: nil},
 
 		// Make sure we have one longer than the hash length.
-		{"longer than hash", []byte("012356asdjflkasjlk3jlk23j4lkjaso0d789f0aujw3lkjlkxsdf78asdful2kj3ljka78"), nil},
+		{name: "longer than hash", data: []byte("012356asdjflkasjlk3jlk23j4lkjaso0d789f0aujw3lkjlkxsdf78asdful2kj3ljka78"), metadata: nil},
 
 		// Make sure we have one longer than the chunk size.
-		{"chunks", make([]byte, 3*stateFileChunkSize), nil},
-		{"large", make([]byte, 30*stateFileChunkSize), nil},
+		{name: "chunks", data: make([]byte, 3*stateFileChunkSize), metadata: nil},
+		{name: "large", data: make([]byte, 30*stateFileChunkSize), metadata: nil},
 
 		// Different metadata.
-		{"one metadata", []byte("data"), map[string]string{"foo": "bar"}},
-		{"two metadata", []byte("data"), map[string]string{"foo": "bar", "one": "two"}},
+		{name: "one metadata", data: []byte("data"), metadata: map[string]string{"foo": "bar"}},
+		{name: "two metadata", data: []byte("data"), metadata: map[string]string{"foo": "bar", "one": "two"}},
 	}
 
 	for cKey, compress := range compression {
@@ -143,7 +144,7 @@ func TestStatefile(t *testing.T) {
 
 							// Change the data and verify that it fails.
 							if key != nil {
-								b := append([]byte(nil), bufEncoded.Bytes()...)
+								b := slices.Concat[[]byte](bufEncoded.Bytes())
 								i := rand.Intn(len(b))
 								b[i]++
 								bufDecoded.Reset()
@@ -159,7 +160,7 @@ func TestStatefile(t *testing.T) {
 							// Change the key and verify that it fails.
 							newKey := integrityKey
 							if len(key) > 0 {
-								newKey = append([]byte{}, key...)
+								newKey = bytes.Clone(key)
 								newKey[rand.Intn(len(newKey))]++
 							}
 							bufDecoded.Reset()
@@ -185,7 +186,7 @@ func TestMetadataKeyVerification(t *testing.T) {
 	if err != nil {
 		t.Fatalf("randomKey: %v", err)
 	}
-	wrongKey := append([]byte(nil), key...)
+	wrongKey := slices.Concat[[]byte](key)
 	wrongKey[0] ^= 0xff
 
 	var keyedBuf bytes.Buffer
@@ -212,7 +213,7 @@ func TestMetadataKeyVerification(t *testing.T) {
 		t.Errorf("Metadata with wrong key = %v, want %v", err, compressio.ErrHashMismatch)
 	}
 
-	tampered := append([]byte(nil), keyedBuf.Bytes()...)
+	tampered := slices.Concat[[]byte](keyedBuf.Bytes())
 	idx := bytes.Index(tampered, []byte(`"v"`))
 	if idx < 0 {
 		t.Fatalf("metadata value not found in serialized header")

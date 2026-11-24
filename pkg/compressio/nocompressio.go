@@ -68,22 +68,14 @@ type SimpleReader struct {
 	// source is the underlying stream.
 	source io.ReadCloser
 
-	// bin is a bufio reader for the underlying stream.
-	bin *bufio.Reader
-
 	// h is the hash object.
 	h hash.Hash
 
-	// current data chunk size
-	chunkSize uint32
+	// err is the first error. All subsequent reads give this error.
+	err error
 
-	// streamLeft is the number of bytes of the current chunk that the reader
-	// did not read yet. It is zero unless a chunk is too large to hold.
-	streamLeft uint32
-
-	// unverified is true if the reader gave data from the current chunk, but
-	// did not compare the hash of the chunk yet.
-	unverified bool
+	// bin is a bufio reader for the underlying stream.
+	bin *bufio.Reader
 
 	// pending is data that a hash covers. The reader did not give it to the
 	// caller yet. It always aliases store.
@@ -93,14 +85,22 @@ type SimpleReader struct {
 	// maxVerifiedChunkSize.
 	store []byte
 
-	// err is the first error. All subsequent reads give this error.
-	err error
+	// current data chunk size
+	chunkSize uint32
+
+	// streamLeft is the number of bytes of the current chunk that the reader
+	// did not read yet. It is zero unless a chunk is too large to hold.
+	streamLeft uint32
 
 	// prevHash is the previous hash value.
 	prevHash [sha256.Size]byte
 
 	// scratch is a scratch buffer used for reading chunk size and hash values.
 	scratch [sha256.Size]byte
+
+	// unverified is true if the reader gave data from the current chunk, but
+	// did not compare the hash of the chunk yet.
+	unverified bool
 }
 
 var _ io.Reader = (*SimpleReader)(nil)
@@ -167,10 +167,7 @@ func (r *SimpleReader) Read(p []byte) (int, error) {
 	}
 
 	// The chunk is too large to hold. Read it directly.
-	toRead := uint32(len(p))
-	if toRead > r.streamLeft {
-		toRead = r.streamLeft
-	}
+	toRead := min(uint32(len(p)), r.streamLeft)
 	n, err := r.bin.Read(p[:toRead])
 	if n > 0 {
 		_, _ = r.h.Write(p[:n])
@@ -313,11 +310,14 @@ type SimpleWriter struct {
 	// base is the underlying writer.
 	base io.Writer
 
+	// h is the hash object which will be used to checksum each chunk.
+	h hash.Hash
+
 	// bufOut is a buffered writer. If nil, SimpleWriter does buffering manually.
 	bufOut *bufio.Writer
 
-	// h is the hash object which will be used to checksum each chunk.
-	h hash.Hash
+	// buf is used to buffer the output.
+	buf []byte
 
 	// chunkSize is the data chunk size. chunkSize is immutable.
 	chunkSize int
@@ -327,9 +327,6 @@ type SimpleWriter struct {
 
 	// prevHash is the previous hash value.
 	prevHash [sha256.Size]byte
-
-	// buf is used to buffer the output.
-	buf []byte
 
 	// closed indicates whether the file has been closed.
 	closed bool

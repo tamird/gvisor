@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -137,19 +138,17 @@ type oomPoller interface {
 // that commands sent to the tool can load the state and perform the operation
 // with the required context.
 type runscService struct {
-	mu sync.Mutex
-
-	events chan any
-
 	// platform handles operations related to the console.
 	platform stdio.Platform
 
-	// ex gets notified whenever the container init process or an exec'd process
-	// exits from inside the sandbox.
-	ec chan proc.Exit
-
 	// oomPoller monitors the sandbox's cgroup for OOM notifications.
 	oomPoller oomPoller
+	shutdown  shutdown.Service
+	events    chan any
+
+	// ec gets notified whenever the container init process or an exec'd process
+	// exits from inside the sandbox.
+	ec chan proc.Exit
 
 	// containers maps container id to a container.
 	//
@@ -159,8 +158,7 @@ type runscService struct {
 	// versionCommand is the runsc executable configured for the sandbox.
 	// A nil pointer or empty command selects the default.
 	versionCommand atomic.Pointer[string]
-
-	shutdown shutdown.Service
+	mu             sync.Mutex
 }
 
 var _ extension.TaskServiceExt = (*runscService)(nil)
@@ -883,8 +881,8 @@ func setPodCgroup(spec *specs.Spec) bool {
 	// Search backwards for the pod cgroup path to make the sandbox use it,
 	// instead of the pause container's cgroup.
 	parts := strings.Split(spec.Linux.CgroupsPath, string(filepath.Separator))
-	for i := len(parts) - 1; i >= 0; i-- {
-		if strings.HasPrefix(parts[i], "pod") {
+	for i, part := range slices.Backward(parts) {
+		if strings.HasPrefix(part, "pod") {
 			var path string
 			for j := 0; j <= i; j++ {
 				path = filepath.Join(path, parts[j])

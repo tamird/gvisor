@@ -97,7 +97,7 @@ func BenchmarkGoogleLogging(b *testing.B) {
 		Emitter: e,
 		Level:   Debug,
 	}
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		bl.Debugf("hello %d, %d, %d", 1, 2, 3)
 	}
 }

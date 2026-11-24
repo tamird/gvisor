@@ -895,7 +895,7 @@ func TCPSACKBlockChecker(sackBlocks []header.SACKBlock) TransportChecker {
 					t.Errorf("malformed SACK option length in options: %v", opts)
 				}
 				numBlocks := sackOptionLen / 8
-				for j := 0; j < numBlocks; j++ {
+				for j := range numBlocks {
 					start := binary.BigEndian.Uint32(opts[i+2+j*8:])
 					end := binary.BigEndian.Uint32(opts[i+2+j*8+4:])
 					gotSACKBlocks = append(gotSACKBlocks, header.SACKBlock{
@@ -1817,8 +1817,8 @@ var _ header.Network = (*ipv6HeaderWithExtHdr)(nil)
 // header.IPv6.
 type ipv6HeaderWithExtHdr struct {
 	header.IPv6
-	transport tcpip.TransportProtocolNumber
 	payload   []byte
+	transport tcpip.TransportProtocolNumber
 }
 
 // TransportProtocol implements header.Network.

@@ -59,7 +59,7 @@ func (h *handle) readToBlocksAt(ctx context.Context, dsts safemem.BlockSeq, offs
 	}
 	rw := getHandleReadWriter(ctx, h, int64(offset))
 	defer putHandleReadWriter(rw)
-	return safemem.FromIOReader{rw}.ReadToBlocks(dsts)
+	return safemem.FromIOReader{Reader: rw}.ReadToBlocks(dsts)
 }
 
 func (h *handle) writeFromBlocksAt(ctx context.Context, srcs safemem.BlockSeq, offset uint64) (uint64, error) {
@@ -74,7 +74,7 @@ func (h *handle) writeFromBlocksAt(ctx context.Context, srcs safemem.BlockSeq, o
 	}
 	rw := getHandleReadWriter(ctx, h, int64(offset))
 	defer putHandleReadWriter(rw)
-	return safemem.FromIOWriter{rw}.WriteFromBlocks(srcs)
+	return safemem.FromIOWriter{Writer: rw}.WriteFromBlocks(srcs)
 }
 
 func (h *handle) allocate(ctx context.Context, mode, offset, length uint64) error {

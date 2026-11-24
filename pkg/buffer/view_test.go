@@ -16,6 +16,7 @@ package buffer
 
 import (
 	"bytes"
+	"slices"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -79,8 +80,8 @@ func TestClone(t *testing.T) {
 
 func TestWrite(t *testing.T) {
 	for _, tc := range []struct {
-		name      string
 		view      *View
+		name      string
 		initSize  int
 		writeSize int
 	}{
@@ -111,7 +112,7 @@ func TestWrite(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.view.Grow(tc.initSize)
 			defer tc.view.Release()
-			orig := append([]byte(nil), tc.view.AsSlice()...)
+			orig := slices.Concat[[]byte](tc.view.AsSlice())
 			toWrite := make([]byte, tc.writeSize)
 			rand.Read(toWrite)
 
@@ -191,9 +192,9 @@ func TestWriteTo(t *testing.T) {
 
 func TestReadFrom(t *testing.T) {
 	for _, tc := range []struct {
+		view *View
 		name string
 		data []byte
-		view *View
 	}{
 		{
 			name: "basic",

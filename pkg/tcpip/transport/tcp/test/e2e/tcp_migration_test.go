@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	"reflect"
+	"slices"
 	"testing"
 	"time"
 	"unsafe"
@@ -145,7 +146,7 @@ func TestTCPMigration(t *testing.T) {
 				t.Fatalf("Field restoredEndpoints not found")
 			}
 			offset := sf.Offset
-			ptr := unsafe.Pointer(uintptr(unsafe.Pointer(restoredStack)) + offset)
+			ptr := unsafe.Add(unsafe.Pointer(restoredStack), offset)
 			restoredEndpointsPtr := (*[]stack.RestoredEndpoint)(ptr)
 			restoredEndpoints := *restoredEndpointsPtr
 
@@ -209,8 +210,8 @@ func TestRestoreListenWithPreexistingConnection(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name        string
 		setupProbes func(t *testing.T, c *testcontext.Context) []tcpip.Endpoint
+		name        string
 	}{
 		{
 			name: "EstablishedProbeConnection",
@@ -253,7 +254,7 @@ func TestRestoreListenWithPreexistingConnection(t *testing.T) {
 			name: "MultipleProbeConnections",
 			setupProbes: func(t *testing.T, c *testcontext.Context) []tcpip.Endpoint {
 				var acceptedEPs []tcpip.Endpoint
-				for i := uint16(0); i < 3; i++ {
+				for i := range uint16(3) {
 					srcPort := testcontext.TestPort + i
 					iss := seqnum.Value(testcontext.TestInitialSequenceNumber + i*1000)
 
@@ -402,21 +403,21 @@ func TestRestoreListenWithPreexistingConnection(t *testing.T) {
 						t.Fatalf("Field restoredEndpoints not found")
 					}
 					offset := sf.Offset
-					ptr := unsafe.Pointer(uintptr(unsafe.Pointer(restoredStack)) + offset)
+					ptr := unsafe.Add(unsafe.Pointer(restoredStack), offset)
 					restoredEndpointsPtr := (*[]stack.RestoredEndpoint)(ptr)
 					restoredEndpoints := *restoredEndpointsPtr
 
 					// Mark all non-listen restored endpoints with terminateAtRestore = true to simulate snapshot restore.
 					for _, rep := range restoredEndpoints {
 						epVal := reflect.ValueOf(rep)
-						if epVal.Kind() == reflect.Ptr {
+						if epVal.Kind() == reflect.Pointer {
 							origStateField := epVal.Elem().FieldByName("origEndpointState")
 							if origStateField.IsValid() && origStateField.Uint() != uint64(tcp.StateListen) {
 								termField := epVal.Elem().FieldByName("terminateAtRestore")
 								if termField.IsValid() {
 									// Use unsafe to set unexported field terminateAtRestore
 									tf, _ := epVal.Elem().Type().FieldByName("terminateAtRestore")
-									tPtr := (*bool)(unsafe.Pointer(uintptr(epVal.UnsafePointer()) + tf.Offset))
+									tPtr := (*bool)(unsafe.Add(epVal.UnsafePointer(), tf.Offset))
 									*tPtr = true
 								}
 							}
@@ -425,8 +426,8 @@ func TestRestoreListenWithPreexistingConnection(t *testing.T) {
 
 					if reverse {
 						var reordered []stack.RestoredEndpoint
-						for i := len(restoredEndpoints) - 1; i >= 0; i-- {
-							reordered = append(reordered, restoredEndpoints[i])
+						for _, restoredEndpoint := range slices.Backward(restoredEndpoints) {
+							reordered = append(reordered, restoredEndpoint)
 						}
 						*restoredEndpointsPtr = reordered
 					}
@@ -435,7 +436,7 @@ func TestRestoreListenWithPreexistingConnection(t *testing.T) {
 					var listenEP tcpip.Endpoint
 					for _, rep := range *restoredEndpointsPtr {
 						epVal := reflect.ValueOf(rep)
-						if epVal.Kind() == reflect.Ptr {
+						if epVal.Kind() == reflect.Pointer {
 							origStateField := epVal.Elem().FieldByName("origEndpointState")
 							if origStateField.IsValid() && origStateField.Uint() == uint64(tcp.StateListen) {
 								listenEP = rep.(tcpip.Endpoint)

@@ -301,7 +301,7 @@ func TestCheckpointFileRoundTrip(t *testing.T) {
 	plat := stubPlatform{sys}
 	data := stateFile
 	var sizes []int
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		ctx, cleanup := withHostFDs(t, restoreContext(t, names, mounts), names)
 		// Alternate between reading through a bufio.Reader and directly.
 		k, err := loadKernel(ctx, plat, data, i%2 == 1)
@@ -466,7 +466,7 @@ func withHostFDs(b testing.TB, ctx context.Context, names []string) (context.Con
 	fdmap := make(map[checkpoint.ResourceID]int)
 	var fds []int
 	for _, name := range names {
-		for stdio := 0; stdio < 3; stdio++ {
+		for stdio := range 3 {
 			var p [2]int
 			if err := unix.Pipe2(p[:], unix.O_CLOEXEC); err != nil {
 				b.Fatalf("pipe2: %v", err)

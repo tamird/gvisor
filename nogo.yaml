@@ -128,16 +128,109 @@ analyzers:
     internal:
       exclude:
         - "^-$" # b/181776900: analyzer fails on buildkite.
-  shadow: # Disable for now.
+  # Intentional branch-local variables and error guards produce false positives.
+  shadow:
     generated:
       exclude: [".*"]
     internal:
       exclude: [".*"]
-  composites: # Disable for now.
-    generated:
-      exclude: [".*"]
+  fieldalignment:
     internal:
-      exclude: [".*"]
+      exclude:
+        # CPU offsets, including self at zero, are fixed by hardware entry assembly.
+        - '^pkg/ring0/defs\.go:63:10$'
+        # CPUArchState offsets are fixed by entry_amd64.s.
+        - '^pkg/ring0/defs_amd64\.go:148:19$'
+        # kernelEntry offsets are fixed by entry_amd64.s and bluepill_amd64.s.
+        - '^pkg/ring0/defs_amd64\.go:106:18$'
+        # Preserve fastPathState's documented hot-field cache-line partitions.
+        - '^pkg/sentry/platform/systrap/metrics\.go:197:20$'
+        # SIOCETHTOOL requires the ifreq name before its data pointer.
+        # https://man7.org/linux/man-pages/man7/netdevice.7.html
+        - '^runsc/sandbox/network_unsafe\.go:31:12$'
+        # KVM_SET_DEVICE_ATTR requires flags/group/attr/addr at offsets 0/4/8/16.
+        # https://docs.kernel.org/virt/kvm/api.html#kvm-set-device-attr-kvm-get-device-attr
+        - '^pkg/sentry/platform/kvm/machine_amd64_unsafe\.go:132:8$'
+        # eface mirrors the runtime interface layout read by kernelAddr.
+        - '^pkg/ring0/kernel_unsafe\.go:22:12$'
+        # Keep chunks last to preserve MapInternal's documented cache-line layout.
+        - '^pkg/sentry/pgalloc/pgalloc\.go:56:17$'
+        # Reader and Writer keep pool at the allocation base for SetFinalizer.
+        - '^pkg/compressio/compressio\.go:436:13$'
+        - '^pkg/compressio/compressio\.go:735:13$'
+        # maptype mirrors Go's internal/abi.MapType prefix used by MapKeyHasher.
+        - '^pkg/sync/runtime_unsafe\.go:110:[0-9]+$'
+        # These fixtures test declaration-order binary encoding and padding.
+        - '^pkg/binary/binary_test\.go:(73|156):[0-9]+$'
+        # The trailing zero-size field distinguishes non-direct from direct layout.
+        - '^pkg/state/graph_typeinfo_test\.go:173:[0-9]+$'
+        # Keep the embedded ring entry at a nonzero container offset in this fixture.
+        - '^pkg/ilist/ring_test\.go:21:[0-9]+$'
+        # Type1 exercises non-packed multi-field and padding marshal layouts.
+        - '^tools/go_marshal/test/test\.go:27:[0-9]+$'
+        # The first shared field exercises root aliases at zero byte offset.
+        - '^pkg/state/graph_decode_callbacks_test\.go:813:[0-9]+$'
+        # These AIO structs separate caller and async-goroutine state by cache line.
+        - '^pkg/sentry/pgalloc/save_restore\.go:(647|1339|1444):[0-9]+$'
+    generated:
+      exclude:
+        # Shard padding separates mutation and lookup data into cache lines.
+        - '^bazel-out/[^/]+/bin/pkg/(sync/locking/atomicptrmap_(ancestors|goroutine)_unsafe|sentry/state/stateipc/(destination|source)file_atomicptrmap_unsafe|sync/atomicptrmap/test_atomicptrmap(_sharded)?_unsafe)\.go:(85|87):[0-9]+$'
+        - '^bazel-out/[^/]+/bin/pkg/sentry/state/stateipc/(destination|source)file_atomicptrmap_unsafe\.go:79:[0-9]+$'
+        # Segment nodes keep lookup keys and hasChildren in the first cache line.
+        - '^bazel-out/[^/]+/bin/pkg/(segment/test/(gap|int)_set|state/addr_set)\.go:992:[0-9]+$'
+  bloop:
+    internal:
+      exclude:
+        # Measure and StartTimer regions exclude per-iteration setup and cleanup.
+        - '^sandboxexec/sandbox/sandbox_bench_test\.go:(74|107|124|146):[0-9]+$'
+        - '^test/benchmarks/base/startup_test\.go:(42|170|212):[0-9]+$'
+        - '^test/benchmarks/media/ffmpeg_test\.go:42:[0-9]+$'
+  waitgroupgo:
+    internal:
+      exclude:
+        # The pinned compiler keeps an escaping callback plus WaitGroup.Go's wrapper.
+        - '^pkg/sentry/kernel/aio\.go:29:2$'
+  scannererr:
+    internal:
+      exclude:
+        # readUntil treats read errors and EOF as an unsuccessful match.
+        - '^pkg/test/testutil/testutil\.go:760:8$'
+  slicesbackward:
+    internal:
+      exclude:
+        # Reverse indexing keeps mountMu checks in the locked function.
+        - '^pkg/sentry/vfs/propagation\.go:530:6$'
+  rangeint:
+    internal:
+      exclude:
+        # Indexed loops preserve checklocks' TryLock path analysis in LockUser.
+        - '^pkg/tcpip/transport/tcp/endpoint\.go:(684|704):[0-9]+$'
+  stditerators:
+    internal:
+      exclude:
+        # Indexing keeps guarded calls in the annotated function for checklocks.
+        - '^pkg/state/graph_typeinfo_unsafe\.go:334:[0-9]+$'
+        # Indexing keeps Register's guarded accesses in its locked function.
+        - '^pkg/urpc/urpc\.go:241:[0-9]+$'
+  framepointer:
+    internal:
+      exclude:
+        # These hardware entry/return paths construct or restore the vCPU frame.
+        - '^pkg/ring0/entry_amd64\.s:(433|523|689):[0-9]+$'
+        # retjmp restores the saved frame before the signal-return epilogue.
+        - '^pkg/sigframe/sigframe_amd64\.s:85:[0-9]+$'
+  directive:
+    generated:
+      exclude:
+        # The NBSP fixture verifies that malformed whitespace does not grant nosplit.
+        - '^bazel-out/[^/]+/bin/tools/checkescape/test1/nosplit\.go:'
+  reflectvaluecompare:
+    internal:
+      exclude:
+        # An identical reflect.Value descriptor in disjoint ranges means inconsistent
+        # address registration; distinct objects may have equal contents.
+        - '^pkg/state/encode\.go:893:[0-9]+$'
   errorsas:
     external: # Enabled.
       exclude:
@@ -260,12 +353,12 @@ analyzers:
       suppress:
         # Nogo's Go 1.27 compiler archives require NewReader before Read.
         # Remove when the export-data producer switches to cmd/export:
-        # https://github.com/golang/tools/blob/ea2f152dc/go/gcexportdata/gcexportdata.go#L25-L34
-        - '^gcexportdata\.NewReader is deprecated:'
+        # https://github.com/golang/tools/blob/v0.53.0/go/gcexportdata/gcexportdata.go
+        - '^golang\.org/x/tools/go/gcexportdata\.NewReader is deprecated:'
         # OCI prestart hooks remain supported for existing container configurations.
-        - '^(c\.Spec|spec)\.Hooks\.Prestart is deprecated:'
+        - '^\(github\.com/opencontainers/runtime-spec/specs-go\.Hooks\)\.Prestart is deprecated:'
         # The cgroup v1 controller still honors this setting on older host kernels.
-        - '^spec\.Memory\.Kernel is deprecated:'
+        - '^\(github\.com/opencontainers/runtime-spec/specs-go\.LinuxMemory\)\.Kernel is deprecated:'
   SA2001: # Empty critical section.
     internal:
       exclude:

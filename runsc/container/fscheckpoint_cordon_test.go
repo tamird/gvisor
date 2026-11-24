@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build !false
-// +build !false
 
 package container
 
@@ -75,7 +74,7 @@ func currentGitBranch(t *testing.T) string {
 		}
 	}
 	if out, err := exec.Command("git", "branch", "-a", "--contains", "HEAD").Output(); err == nil {
-		for _, line := range strings.Split(string(out), "\n") {
+		for line := range strings.SplitSeq(string(out), "\n") {
 			b := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(line), "*"))
 			if strings.HasSuffix(b, "fscheckpoint-compat-testing") {
 				return b

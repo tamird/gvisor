@@ -95,9 +95,9 @@ func (*SpecialMappable) CopyMapping(context.Context, memmap.MappingSpace, hostar
 func (m *SpecialMappable) Translate(ctx context.Context, required, optional memmap.MappableRange, at hostarch.AccessType) ([]memmap.Translation, error) {
 	var err error
 	if required.End > m.fr.Length() {
-		err = &memmap.BusError{linuxerr.EFAULT}
+		err = &memmap.BusError{Err: linuxerr.EFAULT}
 	}
-	if source := optional.Intersect(memmap.MappableRange{0, m.fr.Length()}); source.Length() != 0 {
+	if source := optional.Intersect(memmap.MappableRange{Start: 0, End: m.fr.Length()}); source.Length() != 0 {
 		return []memmap.Translation{
 			{
 				Source: source,

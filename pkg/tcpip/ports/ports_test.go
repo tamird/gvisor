@@ -35,13 +35,13 @@ var (
 )
 
 type portReserveTestAction struct {
-	port    uint16
-	ip      tcpip.Address
 	want    tcpip.Error
+	dest    tcpip.FullAddress
+	ip      tcpip.Address
+	device  tcpip.NICID
+	port    uint16
 	flags   Flags
 	release bool
-	device  tcpip.NICID
-	dest    tcpip.FullAddress
 }
 
 func TestPortReservation(t *testing.T) {
@@ -376,9 +376,9 @@ func TestPickEphemeralPort(t *testing.T) {
 	)
 
 	for _, test := range []struct {
-		name     string
-		f        func(port uint16) (bool, tcpip.Error)
 		wantErr  tcpip.Error
+		f        func(port uint16) (bool, tcpip.Error)
+		name     string
 		wantPort uint16
 	}{
 		{
@@ -441,7 +441,7 @@ func TestOverflow(t *testing.T) {
 	for offset := uint32(math.MaxUint16 - count); offset < math.MaxUint16; offset++ {
 		reservedPorts := make(map[uint16]struct{})
 		// Ensure we can reserve everything in the allowed range.
-		for i := uint16(0); i < count; i++ {
+		for i := range uint16(count) {
 			port, err := pickEphemeralPort(offset, firstEphemeral, count, func(port uint16) (bool, tcpip.Error) {
 				if _, ok := reservedPorts[port]; !ok {
 					reservedPorts[port] = struct{}{}

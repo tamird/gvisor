@@ -15,6 +15,8 @@
 package netfilter
 
 import (
+	"slices"
+
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/marshal"
 	"gvisor.dev/gvisor/pkg/syserr"
@@ -63,7 +65,7 @@ func (mm *masqueradeTargetMaker) id() targetID {
 func (mm *masqueradeTargetMaker) marshal(target target) []byte {
 	mt := target.(*masqueradeTarget)
 	if len(mt.raw) > 0 {
-		return append([]byte(nil), mt.raw...)
+		return slices.Concat[[]byte](mt.raw)
 	}
 
 	var flags uint32
@@ -143,10 +145,8 @@ func (mm *masqueradeTargetMaker) unmarshal(buf []byte, filter stack.IPHeaderFilt
 	}
 
 	target := &masqueradeTarget{
-		MasqueradeTarget: stack.MasqueradeTarget{
-			NetworkProtocol: netProto,
-		},
-		raw: append([]byte(nil), buf...),
+		NetworkProtocol: netProto,
+		raw:             slices.Concat[[]byte](buf),
 	}
 	if flags&linux.NF_NAT_RANGE_PROTO_SPECIFIED != 0 {
 		// Linux does not check the order, but iptables never builds an

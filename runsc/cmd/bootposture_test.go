@@ -42,16 +42,16 @@ import (
 const postureFDLimit = 4096
 
 type postureCase struct {
-	name           string
-	directfs       bool
-	network        config.NetworkType
-	extraFDClasses []string
+	name string
 
 	// platform overrides the gVisor platform; leave empty to use the default.
-	platform string
+	platform       string
+	extraFDClasses []string
+	network        config.NetworkType
 
 	// fdLimit, when non-zero, is passed as --fdlimit.
-	fdLimit int
+	fdLimit  int
+	directfs bool
 
 	// coreTags is passed as --enable-core-tags.
 	coreTags bool
@@ -240,7 +240,7 @@ func checkGoferPosture(t *testing.T, pid int) {
 		t.Fatalf("Reading gofer environ: %v", err)
 	}
 	var gomaxprocsVals, godebugVals []string
-	for _, entry := range strings.Split(strings.TrimSuffix(string(rawEnv), "\x00"), "\x00") {
+	for entry := range strings.SplitSeq(strings.TrimSuffix(string(rawEnv), "\x00"), "\x00") {
 		if v, ok := strings.CutPrefix(entry, "GOMAXPROCS="); ok {
 			gomaxprocsVals = append(gomaxprocsVals, v)
 		}
@@ -300,8 +300,7 @@ func runInOwnNetNS() bool {
 	cmd.Env = append(os.Environ(), ownNetNSEnv+"=1")
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 	err := cmd.Run()
-	var exit *exec.ExitError
-	if errors.As(err, &exit) {
+	if exit, ok := errors.AsType[*exec.ExitError](err); ok {
 		if code := exit.ExitCode(); code >= 0 {
 			os.Exit(code)
 		}

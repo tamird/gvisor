@@ -35,7 +35,7 @@ func (m *metricServer) profileCPU(w *httpResponseWriter, req *http.Request) http
 	m.mu.Lock()
 	if m.shuttingDown {
 		m.mu.Unlock()
-		return httpResult{http.StatusServiceUnavailable, errors.New("server is shutting down already")}
+		return httpResult{code: http.StatusServiceUnavailable, err: errors.New("server is shutting down already")}
 	}
 	m.mu.Unlock()
 	w.WriteHeader(http.StatusOK)
@@ -74,7 +74,7 @@ func (m *metricServer) profileHeap(w *httpResponseWriter, req *http.Request) htt
 	m.mu.Lock()
 	if m.shuttingDown {
 		m.mu.Unlock()
-		return httpResult{http.StatusServiceUnavailable, errors.New("server is shutting down already")}
+		return httpResult{code: http.StatusServiceUnavailable, err: errors.New("server is shutting down already")}
 	}
 	m.mu.Unlock()
 	w.WriteHeader(http.StatusOK)

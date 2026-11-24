@@ -344,10 +344,7 @@ func fuseServerRun(t *testing.T, s *testutil.System, k *kernel.Kernel, fd *vfs.F
 		payloadLen := uint32(readPayload.SizeBytes())
 
 		// The read buffer must meet some certain size criteria.
-		buffSize := linux.SizeOfFUSEHeaderIn + payloadLen
-		if buffSize < linux.FUSE_MIN_READ_BUFFER {
-			buffSize = linux.FUSE_MIN_READ_BUFFER
-		}
+		buffSize := max(linux.SizeOfFUSEHeaderIn+payloadLen, linux.FUSE_MIN_READ_BUFFER)
 		inBuf := make([]byte, buffSize)
 		inIOseq := usermem.BytesIOSequence(inBuf)
 

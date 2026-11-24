@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build arm64
-// +build arm64
 
 package cpuid
 
@@ -68,7 +67,7 @@ func initCPUInfo() {
 	cpuinfo := string(cpuinfob)
 
 	// We get the value straight from host /proc/cpuinfo.
-	for _, line := range strings.Split(cpuinfo, "\n") {
+	for line := range strings.SplitSeq(cpuinfo, "\n") {
 		switch {
 		case strings.Contains(line, "BogoMIPS"):
 			splitMHz := strings.Split(line, ":")

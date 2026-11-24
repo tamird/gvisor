@@ -71,15 +71,15 @@ func TestOCISeccompFilterCache(t *testing.T) {
 		t.Fatalf("building getppid profile: %v", err)
 	}
 	for _, tc := range []struct {
-		name  string
 		f     *kernel.SyscallFilter
+		name  string
 		sysno uintptr
 		want  uint32
 	}{
-		{"getpid profile, getpid", getpid2, unix.SYS_GETPID, allow},
-		{"getpid profile, getppid", getpid2, unix.SYS_GETPPID, eperm},
-		{"getppid profile, getpid", getppid, unix.SYS_GETPID, eperm},
-		{"getppid profile, getppid", getppid, unix.SYS_GETPPID, allow},
+		{name: "getpid profile, getpid", f: getpid2, sysno: unix.SYS_GETPID, want: allow},
+		{name: "getpid profile, getppid", f: getpid2, sysno: unix.SYS_GETPPID, want: eperm},
+		{name: "getppid profile, getpid", f: getppid, sysno: unix.SYS_GETPID, want: eperm},
+		{name: "getppid profile, getppid", f: getppid, sysno: unix.SYS_GETPPID, want: allow},
 	} {
 		if got := runFilter(t, tc.f, tc.sysno); got != tc.want {
 			t.Errorf("%s: got %#x, want %#x", tc.name, got, tc.want)
@@ -91,7 +91,7 @@ func TestOCISeccompFilterCacheSkipsErrors(t *testing.T) {
 	conf := &config.Config{OCISeccomp: true}
 	bad := allowOnlySpec("getpid")
 	bad.Linux.Seccomp.DefaultAction = "SCMP_ACT_BOGUS"
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		if f, err := buildOCISeccompFilter(conf, bad); err == nil {
 			t.Errorf("call %d with invalid profile: got filter %p, want error", i, f)
 		}

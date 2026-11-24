@@ -53,14 +53,6 @@ type CgroupMode int
 
 // Container for operating on a runsc container and its processes
 type Container struct {
-	mu sync.Mutex
-
-	// ID of the container
-	ID string
-
-	// Bundle path
-	Bundle string
-
 	// task is the main process that is running the container.
 	task *proc.Init
 
@@ -69,21 +61,28 @@ type Container struct {
 	// +checklocks:mu
 	processes map[string]extension.Process
 
+	// ID of the container
+	ID string
+
+	// Bundle path
+	Bundle string
+
 	// cgroup is the cgroups mode that is being used by the container.
 	cgroup CgroupMode
+	mu     sync.Mutex
 }
 
 // ContainerConfig contains configuration for creating a container.
 type ContainerConfig struct {
+	Options            *anypb.Any
 	ID                 string
 	Bundle             string
-	Rootfs             []*types.Mount
-	Options            *anypb.Any
-	Terminal           bool
 	Stdin              string
 	Stdout             string
 	Stderr             string
 	FSRestoreImagePath string
+	Rootfs             []*types.Mount
+	Terminal           bool
 	FSRestoreDirect    bool
 }
 

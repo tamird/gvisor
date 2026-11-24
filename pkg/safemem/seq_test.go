@@ -46,36 +46,28 @@ func TestBlockSeqOfNonemptyBlock(t *testing.T) {
 }
 
 type blockSeqTest struct {
-	desc string
-
+	desc       string
+	want       string
 	pieces     []string
-	haveOffset bool
 	offset     uint64
-	haveLimit  bool
 	limit      uint64
-
-	want string
+	haveOffset bool
+	haveLimit  bool
 }
 
 func (t blockSeqTest) NonEmptyByteSlices() [][]byte {
-	// t is a value, so we can mutate it freely.
+	offset, limit := t.offset, t.limit
 	slices := make([][]byte, 0, len(t.pieces))
 	for _, str := range t.pieces {
 		if t.haveOffset {
-			strOff := t.offset
-			if strOff > uint64(len(str)) {
-				strOff = uint64(len(str))
-			}
+			strOff := min(offset, uint64(len(str)))
 			str = str[strOff:]
-			t.offset -= strOff
+			offset -= strOff
 		}
 		if t.haveLimit {
-			strLim := t.limit
-			if strLim > uint64(len(str)) {
-				strLim = uint64(len(str))
-			}
+			strLim := min(limit, uint64(len(str)))
 			str = str[:strLim]
-			t.limit -= strLim
+			limit -= strLim
 		}
 		if len(str) != 0 {
 			slices = append(slices, []byte(str))
@@ -267,8 +259,7 @@ func TestCopySeqToUnsafeFault(t *testing.T) {
 	if n != uint64(pageSize) {
 		t.Errorf("CopySeqToUnsafe: got %d bytes copied, wanted %d", n, pageSize)
 	}
-	var busErr safecopy.BusError
-	if !errors.As(err, &busErr) {
+	if _, ok := errors.AsType[safecopy.BusError](err); !ok {
 		t.Errorf("CopySeqToUnsafe: got error %v, wanted safecopy.BusError", err)
 	}
 	if !bytes.Equal(m[:pageSize], src[:pageSize]) {

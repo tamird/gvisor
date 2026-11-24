@@ -26,18 +26,34 @@ import (
 // BufWriter implements io.WriteCloser for an AsyncWriter by writing from a
 // buffering memfd.
 type BufWriter struct {
+	// If err is non-nil, it is the error that has terminated writing.
+	err error
+
+	// sf represents the file backing the buffer. sf is immutable.
+	sf SourceFile
+
+	// aw is the data sink. aw is immutable.
+	aw AsyncWriter
+
+	// chunks holds availability for each chunk. The chunks slice header is
+	// immutable.
+	chunks []bufWriterChunk
+
 	// The BufWriter's buffer is logically divided into numChunks chunks of
 	// equal length. Each chunk is filled by Write and then written to the
 	// AsyncWriter as soon as it becomes full.
 
 	// buf is the whole buffer. buf[bufStart:bufEnd] is the empty part of the
 	// current chunk.
-	buf      []byte
+	buf []byte
+
+	// cs is a slice of completions whose storage is reused by all calls to
+	// aw.Wait(). The cs slice header is immutable.
+	cs []Completion
+
+	// buf[bufStart:bufEnd] is the empty part of the current chunk.
 	bufStart int
 	bufEnd   int
-
-	// If err is non-nil, it is the error that has terminated writing.
-	err error
 
 	// curChunk is the index of the current chunk.
 	curChunk int
@@ -55,20 +71,6 @@ type BufWriter struct {
 
 	// chunkLen is the size of each chunk in bytes. chunkLen is immutable.
 	chunkLen int
-
-	// chunks holds availability for each chunk. The chunks slice header is
-	// immutable.
-	chunks []bufWriterChunk
-
-	// aw is the data sink. ar is immutable.
-	aw AsyncWriter
-
-	// sf represents the file backing the buffer. sf is immutable.
-	sf SourceFile
-
-	// cs is a slice of completions whose storage is reused by all calls to
-	// aw.Wait(). The cs slice header is immutable.
-	cs []Completion
 }
 
 type bufWriterChunk struct {
@@ -120,7 +122,7 @@ func (w *BufWriter) Close() error {
 
 	// Flush current chunk if non-empty.
 	if chunkStart := w.chunkLen * w.curChunk; chunkStart != w.bufStart {
-		w.aw.AddWrite(w.curChunk, w.sf, memmap.FileRange{uint64(chunkStart), uint64(w.bufStart)}, w.buf[chunkStart:w.bufStart])
+		w.aw.AddWrite(w.curChunk, w.sf, memmap.FileRange{Start: uint64(chunkStart), End: uint64(w.bufStart)}, w.buf[chunkStart:w.bufStart])
 		w.chunksInflight++
 	}
 
@@ -200,7 +202,7 @@ func (w *BufWriter) Write(src []byte) (int, error) {
 			for range w.chunksFlushable {
 				chunkStart := w.chunkLen * chunkToFlush
 				chunkEnd := chunkStart + w.chunkLen
-				w.aw.AddWrite(chunkToFlush, w.sf, memmap.FileRange{uint64(chunkStart), uint64(chunkEnd)}, w.buf[chunkStart:chunkEnd])
+				w.aw.AddWrite(chunkToFlush, w.sf, memmap.FileRange{Start: uint64(chunkStart), End: uint64(chunkEnd)}, w.buf[chunkStart:chunkEnd])
 				w.chunksInflight++
 				chunkToFlush++
 				if chunkToFlush >= w.numChunks {

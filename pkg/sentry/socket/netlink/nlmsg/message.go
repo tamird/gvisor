@@ -37,8 +37,8 @@ func alignPad(length int, align uint) int {
 
 // Message contains a complete serialized netlink message.
 type Message struct {
-	hdr linux.NetlinkMessageHeader
 	buf []byte
+	hdr linux.NetlinkMessageHeader
 }
 
 // NewMessage creates a new Message containing the passed header.
@@ -73,12 +73,10 @@ func ParseMessage(buf []byte) (msg *Message, rest []byte, ok bool) {
 	}
 
 	// Padding.
-	numPad := alignPad(totalMsgLen, linux.NLMSG_ALIGNTO)
-	// Linux permits the last message not being aligned, just consume all of it.
-	// Ref: net/netlink/af_netlink.c:netlink_rcv_skb
-	if numPad > len(b) {
-		numPad = len(b)
-	}
+	numPad := min(
+		// Linux permits the last message not being aligned, just consume all of it.
+		// Ref: net/netlink/af_netlink.c:netlink_rcv_skb
+		alignPad(totalMsgLen, linux.NLMSG_ALIGNTO), len(b))
 	_, ok = b.Extract(numPad)
 	if !ok {
 		return
@@ -130,12 +128,10 @@ func (m *Message) GetData(msg marshal.Marshallable) (AttrsView, bool) {
 	}
 	msg.UnmarshalUnsafe(msgBytes)
 
-	numPad := alignPad(linux.NetlinkMessageHeaderSize+size, linux.NLMSG_ALIGNTO)
-	// Linux permits the last message not being aligned, just consume all of it.
-	// Ref: net/netlink/af_netlink.c:netlink_rcv_skb
-	if numPad > len(b) {
-		numPad = len(b)
-	}
+	numPad := min(
+		// Linux permits the last message not being aligned, just consume all of it.
+		// Ref: net/netlink/af_netlink.c:netlink_rcv_skb
+		alignPad(linux.NetlinkMessageHeaderSize+size, linux.NLMSG_ALIGNTO), len(b))
 	_, ok = b.Extract(numPad)
 	if !ok {
 		return nil, false
@@ -240,12 +236,8 @@ func (n *NestedAttr) PutAttrString(atype uint16, s string) {
 
 // MessageSet contains a series of netlink messages.
 type MessageSet struct {
-	// Multi indicates that this a multi-part message, to be terminated by
-	// NLMSG_DONE. NLMSG_DONE is sent even if the set contains only one
-	// Message.
-	//
-	// If Multi is set, all added messages will have NLM_F_MULTI set.
-	Multi bool
+	// Messages contains the messages in the set.
+	Messages []*Message
 
 	// PortID is the destination port for all messages.
 	PortID int32
@@ -253,8 +245,12 @@ type MessageSet struct {
 	// Seq is the sequence counter for all messages in the set.
 	Seq uint32
 
-	// Messages contains the messages in the set.
-	Messages []*Message
+	// Multi indicates that this a multi-part message, to be terminated by
+	// NLMSG_DONE. NLMSG_DONE is sent even if the set contains only one
+	// Message.
+	//
+	// If Multi is set, all added messages will have NLM_F_MULTI set.
+	Multi bool
 
 	// ContainsError indicates that the message set contains at least one error.
 	ContainsError bool

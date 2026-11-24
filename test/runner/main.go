@@ -28,6 +28,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -633,7 +634,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 		signalled.Store(true)
 		log.Warningf("%s: Got signal: %v", name, s)
 		done := make(chan bool, 1)
-		dArgs := append([]string{}, args...)
+		dArgs := slices.Clone(args)
 		dArgs = append(dArgs, "debug", "--stacks", id)
 		log.Infof("Executing: %v", append([]string{specutils.ExePath}, dArgs...))
 		go func(dArgs []string) {
@@ -775,6 +776,14 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 				if line := scanner.Text(); isWarning(line) {
 					warningsFound = append(warningsFound, strings.TrimSpace(line))
 				}
+			}
+			scanErr := scanner.Err()
+			closeErr := f.Close()
+			if scanErr != nil {
+				return fmt.Errorf("read runsc log %s: %w", file.Name(), scanErr)
+			}
+			if closeErr != nil {
+				return closeErr
 			}
 		}
 		if len(warningsFound) > 0 {

@@ -309,9 +309,9 @@ func createPipeReader(path string) (func(), error) {
 
 type socketCreator func(path string, proto int) (cleanup func(), err error)
 type socketCreatorSpec struct {
-	protocol int
-	name     string
 	sockets  map[string]socketCreator
+	name     string
+	protocol int
 }
 
 // createSocketTree creates a local tree of unix domain sockets for use in
@@ -432,8 +432,8 @@ func CreateFifoTree(baseDir string) (string, func(), error) {
 	defer cu.Clean()
 
 	for _, pipe := range []struct {
-		name string
 		ctor pipeCreator
+		name string
 	}{
 		{
 			name: "in", ctor: createPipeWriter,

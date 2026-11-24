@@ -62,12 +62,9 @@ func keyCtlGetKeyringID(t *kernel.Task, args arch.SyscallArguments) (uintptr, *k
 func keyctlDescribe(t *kernel.Task, args arch.SyscallArguments) (uintptr, *kernel.SyscallControl, error) {
 	keyID := auth.KeySerial(args[1].Int())
 	bufPtr := args[2].Pointer()
-	bufSize := args[3].SizeT()
-
-	// Get address range to write to.
-	if bufSize > math.MaxInt32 {
-		bufSize = math.MaxInt32
-	}
+	bufSize := min(
+		// Get address range to write to.
+		args[3].SizeT(), math.MaxInt32)
 
 	key, err := t.LookupKey(keyID)
 	if err != nil {
@@ -77,10 +74,7 @@ func keyctlDescribe(t *kernel.Task, args arch.SyscallArguments) (uintptr, *kerne
 	gid := t.UserNamespace().MapFromKGID(key.KGID())
 	keyDesc := fmt.Sprintf("%s;%d;%d;%08x;%s\x00", key.Type(), uid, gid, uint64(key.Permissions()), key.Description)
 	if bufSize > 0 {
-		toWrite := uint(len(keyDesc))
-		if toWrite > bufSize {
-			toWrite = bufSize
-		}
+		toWrite := min(uint(len(keyDesc)), bufSize)
 		_, err = t.CopyOutBytes(bufPtr, []byte(keyDesc)[:toWrite])
 	}
 	// The KEYCTL_DESCRIBE operation returns the length of the full string,

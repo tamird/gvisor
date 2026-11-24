@@ -254,11 +254,11 @@ func compareFragments(packets []*stack.PacketBuffer, sourcePacket *stack.PacketB
 // UDP packets destined to the IPv6 link-local all-nodes multicast address.
 func TestReceiveOnAllNodesMulticastAddr(t *testing.T) {
 	tests := []struct {
-		name string
 		rxf  func(t *testing.T, s *stack.Stack, e *channel.Endpoint, src, dst tcpip.Address, want uint64)
+		name string
 	}{
-		{"ICMP", testReceiveICMP},
-		{"UDP", testReceiveUDP},
+		{name: "ICMP", rxf: testReceiveICMP},
+		{name: "UDP", rxf: testReceiveUDP},
 	}
 
 	for _, test := range tests {
@@ -337,11 +337,11 @@ func TestDropOtherHostPackets(t *testing.T) {
 // address.
 func TestReceiveOnSolicitedNodeAddr(t *testing.T) {
 	tests := []struct {
-		name string
 		rxf  func(t *testing.T, s *stack.Stack, e *channel.Endpoint, src, dst tcpip.Address, want uint64)
+		name string
 	}{
-		{"ICMP", testReceiveICMP},
-		{"UDP", testReceiveUDP},
+		{name: "ICMP", rxf: testReceiveICMP},
+		{name: "UDP", rxf: testReceiveUDP},
 	}
 
 	snmc := header.SolicitedNodeAddr(addr2)
@@ -473,17 +473,17 @@ func TestAddIpv6Address(t *testing.T) {
 
 func TestReceiveIPv6ExtHdrs(t *testing.T) {
 	tests := []struct {
-		name                    string
 		extHdr                  func(nextHdr uint8) ([]byte, uint8)
 		payloadLength           *uint16
-		padding                 int
-		shouldAccept            bool
 		countersToBeIncremented func(*tcpip.Stats) []*tcpip.StatCounter
+		name                    string
+		padding                 int
+		pointer                 uint32
+		shouldAccept            bool
 		// Should we expect an ICMP response and if so, with what contents?
 		expectICMP bool
 		ICMPType   header.ICMPv6Type
 		ICMPCode   header.ICMPv6Code
-		pointer    uint32
 		multicast  bool
 	}{
 		{
@@ -1249,15 +1249,15 @@ func TestReceiveIPv6ExtHdrs(t *testing.T) {
 
 // fragmentData holds the IPv6 payload for a fragmented IPv6 packet.
 type fragmentData struct {
+	data    []byte
 	srcAddr tcpip.Address
 	dstAddr tcpip.Address
 	nextHdr uint8
-	data    []byte
 }
 
 func udpGen(payload []byte, multiplier uint8, src, dst tcpip.Address) []byte {
 	payloadLen := len(payload)
-	for i := 0; i < payloadLen; i++ {
+	for i := range payloadLen {
 		payload[i] = uint8(i) * multiplier
 	}
 
@@ -2167,11 +2167,9 @@ func TestConcurrentFragmentWrites(t *testing.T) {
 
 	var wg sync.WaitGroup
 	defer wg.Wait()
-	for i := 0; i < 3; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for i := 0; i < 10; i++ {
+	for range 3 {
+		wg.Go(func() {
+			for range 10 {
 				for _, f := range fragments {
 					hdr := prependable.New(header.IPv6MinimumSize)
 
@@ -2196,7 +2194,7 @@ func TestConcurrentFragmentWrites(t *testing.T) {
 					pkt.DecRef()
 				}
 			}
-		}()
+		})
 	}
 }
 
@@ -2215,9 +2213,9 @@ func TestInvalidIPv6Fragments(t *testing.T) {
 	)
 
 	type fragmentData struct {
+		payload            []byte
 		ipv6Fields         header.IPv6Fields
 		ipv6FragmentFields header.IPv6SerializableFragmentExtHdr
-		payload            []byte
 	}
 
 	tests := []struct {
@@ -2381,9 +2379,9 @@ func TestFragmentReassemblyTimeout(t *testing.T) {
 	)
 
 	type fragmentData struct {
+		payload            []byte
 		ipv6Fields         header.IPv6Fields
 		ipv6FragmentFields header.IPv6SerializableFragmentExtHdr
-		payload            []byte
 	}
 
 	tests := []struct {
@@ -2628,8 +2626,8 @@ func TestFragmentReassemblyTimeout(t *testing.T) {
 func TestWriteStats(t *testing.T) {
 	const nPackets = 3
 	tests := []struct {
-		name                     string
 		setup                    func(*testing.T, *stack.Stack)
+		name                     string
 		allowPackets             int
 		expectSent               int
 		expectOutputDropped      int
@@ -2740,7 +2738,7 @@ func TestWriteStats(t *testing.T) {
 			test.setup(t, rt.Stack())
 
 			nWritten := 0
-			for i := 0; i < nPackets; i++ {
+			for range nPackets {
 				pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 					ReserveHeaderBytes: header.UDPMinimumSize + int(rt.MaxHeaderLength()),
 					Payload:            buffer.Buffer{},
@@ -2888,10 +2886,10 @@ type fragmentInfo struct {
 
 var fragmentationTests = []struct {
 	description   string
-	mtu           uint32
+	wantFragments []fragmentInfo
 	transHdrLen   int
 	payloadSize   int
-	wantFragments []fragmentInfo
+	mtu           uint32
 }{
 	{
 		description: "No fragmentation",
@@ -2991,14 +2989,14 @@ func TestFragmentationErrors(t *testing.T) {
 	const ttl = 42
 
 	tests := []struct {
+		mockError      tcpip.Error
+		wantError      tcpip.Error
 		description    string
-		mtu            uint32
 		transHdrLen    int
 		payloadSize    int
 		allowPackets   int
 		outgoingErrors int
-		mockError      tcpip.Error
-		wantError      tcpip.Error
+		mtu            uint32
 	}{
 		{
 			description:    "No frag",
@@ -3119,13 +3117,12 @@ var (
 
 func TestForwarding(t *testing.T) {
 	tests := []struct {
-		name                                 string
 		extHdr                               func(nextHdr uint8) ([]byte, uint8, checker.NetworkChecker)
-		TTL                                  uint8
-		payloadLength                        int
+		expectedICMPError                    *icmpError
+		name                                 string
+		expectedFragmentsForwarded           []fragmentInfo
 		srcAddr                              tcpip.Address
 		dstAddr                              tcpip.Address
-		closeOutgoingEndpoint                bool
 		expectedPacketUnrouteableErrors      uint64
 		expectedInitializingSourceErrors     uint64
 		expectedLinkLocalSourceErrors        uint64
@@ -3134,9 +3131,10 @@ func TestForwarding(t *testing.T) {
 		expectedPacketTooBigErrors           uint64
 		expectedExhaustedTTLErrors           uint64
 		expectedOutgoingEndpointClosedErrors uint64
+		payloadLength                        int
+		closeOutgoingEndpoint                bool
 		expectPacketForwarded                bool
-		expectedFragmentsForwarded           []fragmentInfo
-		expectedICMPError                    *icmpError
+		TTL                                  uint8
 	}{
 		{
 			name:    "TTL of zero",
@@ -3576,13 +3574,13 @@ func TestMulticastForwarding(t *testing.T) {
 	)
 
 	tests := []struct {
-		name                          string
 		extHdr                        func(nextHdr uint8) ([]byte, uint8, checker.NetworkChecker)
+		expectedICMPError             *icmpError
+		name                          string
 		payloadLength                 int
 		expectedExtensionHeaderErrors uint64
 		expectedPacketTooBigErrors    uint64
 		expectPacketForwarded         bool
-		expectedICMPError             *icmpError
 	}{
 		{
 			name: "Hopbyhop with unknown option skippable action",
@@ -3950,9 +3948,9 @@ func TestIcmpRateLimit(t *testing.T) {
 		},
 	})
 	tests := []struct {
-		name         string
 		createPacket func() []byte
 		check        func(*testing.T, *channel.Endpoint, int)
+		name         string
 	}{
 		{
 			name: "echo",
@@ -4054,7 +4052,7 @@ func TestIcmpRateLimit(t *testing.T) {
 	}
 	for _, testCase := range tests {
 		t.Run(testCase.name, func(t *testing.T) {
-			for round := 0; round < icmpBurst+1; round++ {
+			for round := range icmpBurst + 1 {
 				pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 					Payload: buffer.MakeWithData(testCase.createPacket()),
 				})
@@ -4285,8 +4283,8 @@ func TestRecalculateChecksum(t *testing.T) {
 
 	// Expected checksums below are precomputed using a Python scapy lib.
 	tests := []struct {
-		name         string
 		pkt          *stack.PacketBuffer
+		name         string
 		wantChecksum uint16
 		wantErr      bool
 	}{

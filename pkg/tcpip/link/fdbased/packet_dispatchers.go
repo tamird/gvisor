@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 package fdbased
 
@@ -334,7 +333,7 @@ func (d *recvMMsgDispatcher) dispatch() (bool, tcpip.Error) {
 
 	defer d.pkts.Reset()
 
-	for k := 0; k < nMsgs; k++ {
+	for k := range nMsgs {
 		n := int(d.msgHdrs[k].Len)
 		pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 			Payload: d.bufs[k].pullBuffer(n),

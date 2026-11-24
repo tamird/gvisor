@@ -17,6 +17,7 @@ package proc
 import (
 	"bytes"
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 
@@ -115,11 +116,9 @@ var _ kernfs.Inode = (*fdDirInode)(nil)
 
 func (fs *filesystem) newFDDirInode(ctx context.Context, task *kernel.Task) kernfs.Inode {
 	inode := &fdDirInode{
-		fdDir: fdDir{
-			fs:             fs,
-			task:           task,
-			produceSymlink: true,
-		},
+		fs:             fs,
+		task:           task,
+		produceSymlink: true,
 	}
 	inode.InodeAttrs.Init(ctx, taskOwnerCreds(task), linux.UNNAMED_MAJOR, fs.devMinor, fs.NextIno(), linux.ModeDirectory|0500)
 	inode.InitRefs()
@@ -273,10 +272,8 @@ var _ kernfs.Inode = (*fdInfoDirInode)(nil)
 
 func (fs *filesystem) newFDInfoDirInode(ctx context.Context, task *kernel.Task) kernfs.Inode {
 	inode := &fdInfoDirInode{
-		fdDir: fdDir{
-			fs:   fs,
-			task: task,
-		},
+		fs:   fs,
+		task: task,
 	}
 	inode.InodeAttrs.Init(ctx, taskOwnerCreds(task), linux.UNNAMED_MAJOR, fs.devMinor, fs.NextIno(), linux.ModeDirectory|0555)
 	inode.InitRefs()
@@ -403,8 +400,8 @@ func (d *fdInfoData) Generate(ctx context.Context, buf *bytes.Buffer) error {
 	if nspids, err := kernel.ObservedTIDsForPIDFD(file, d.task); err == nil {
 		fmt.Fprintf(buf, "Pid:\t%d\n", nspids[len(nspids)-1])
 		buf.WriteString("NSpid:")
-		for i := len(nspids) - 1; i >= 0; i-- {
-			fmt.Fprintf(buf, "\t%d", nspids[i])
+		for _, nspid := range slices.Backward(nspids) {
+			fmt.Fprintf(buf, "\t%d", nspid)
 		}
 		buf.WriteString("\n")
 	}

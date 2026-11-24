@@ -56,10 +56,11 @@ func (rm *ResponseMetrics) TimeToLastByte() time.Duration {
 
 // APIResponse represents a response from an LLM API.
 type APIResponse[T any] struct {
-	// Objects is the list of JSON objects in the response.
-	Objects []*T
 	// Metrics contains HTTP response metrics.
 	Metrics ResponseMetrics
+
+	// Objects is the list of JSON objects in the response.
+	Objects []*T
 }
 
 // Obj returns the first object in the response, if there is a singular
@@ -78,7 +79,7 @@ func (ar *APIResponse[T]) Obj() (*T, error) {
 func MakeAPIResponse[T any](rawResponse []byte) (*APIResponse[T], error) {
 	var respBytes strings.Builder
 	var resp APIResponse[T]
-	for _, line := range strings.Split(string(rawResponse), "\n") {
+	for line := range strings.SplitSeq(string(rawResponse), "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
@@ -144,10 +145,10 @@ type Server interface {
 
 // DockerServer implements an LLM server interface via a local Docker container.
 type DockerServer struct {
-	Container   *dockerutil.Container
 	Logger      testutil.Logger
-	Port        int
+	Container   *dockerutil.Container
 	ClientImage string
+	Port        int
 }
 
 // InstrumentedRequest performs an instrumented HTTP request against the server.

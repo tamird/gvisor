@@ -57,7 +57,7 @@ func (g *interfaceGenerator) emitMarshallableForArrayNewtype(n *ast.Ident, a *as
 	g.emit("// MarshalBytes implements marshal.Marshallable.MarshalBytes.\n")
 	g.emit("func (%s *%s) MarshalBytes(dst []byte) []byte {\n", g.r, g.typeName())
 	g.inIndent(func() {
-		g.emit("for idx := 0; idx < %s; idx++ {\n", lenExpr)
+		g.emit("for idx := range %s {\n", lenExpr)
 		g.inIndent(func() {
 			g.marshalScalar(fmt.Sprintf("%s[idx]", g.r), elt.Name, "dst")
 		})
@@ -69,7 +69,7 @@ func (g *interfaceGenerator) emitMarshallableForArrayNewtype(n *ast.Ident, a *as
 	g.emit("// UnmarshalBytes implements marshal.Marshallable.UnmarshalBytes.\n")
 	g.emit("func (%s *%s) UnmarshalBytes(src []byte) []byte {\n", g.r, g.typeName())
 	g.inIndent(func() {
-		g.emit("for idx := 0; idx < %s; idx++ {\n", lenExpr)
+		g.emit("for idx := range %s {\n", lenExpr)
 		g.inIndent(func() {
 			g.unmarshalScalar(fmt.Sprintf("%s[idx]", g.r), elt.Name, "src")
 		})

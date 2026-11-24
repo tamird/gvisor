@@ -56,8 +56,8 @@ type Route struct {
 
 // DefaultRoute represents a catch all route to the default gateway.
 type DefaultRoute struct {
-	Route Route
 	Name  string
+	Route Route
 }
 
 // Neighbor represents an ARP/NDP neighbor entry to be added to the stack.
@@ -68,22 +68,17 @@ type Neighbor struct {
 
 // FDBasedLink configures an fd-based link.
 type FDBasedLink struct {
-	Name              string
-	InterfaceIndex    int
-	MTU               int
-	Multicast         bool
-	Addresses         []IPWithPrefix
-	Routes            []Route
-	GSOMaxSize        uint32
-	GVisorGSOEnabled  bool
-	GVisorGRO         bool
-	TXChecksumOffload bool
-	RXChecksumOffload bool
-	LinkAddress       net.HardwareAddr
-	QDisc             config.QueueingDiscipline
-	TBFRate           uint64
-	TBFBurst          uint32
-	Neighbors         []Neighbor
+	Name      string
+	Neighbors []Neighbor
+
+	// IsPacket indicates whether each FD in this link is a packet socket.
+	IsPacket       []bool
+	Addresses      []IPWithPrefix
+	Routes         []Route
+	LinkAddress    net.HardwareAddr
+	QDisc          config.QueueingDiscipline
+	InterfaceIndex int
+	MTU            int
 
 	// NumChannels controls how many underlying FDs are to be used to
 	// create this endpoint.
@@ -92,9 +87,14 @@ type FDBasedLink struct {
 	// ProcessorsPerChannel controls how many goroutines are used to handle
 	// packets on each channel.
 	ProcessorsPerChannel int
-
-	// IsPacket indicates whether each FD in this link is a packet socket.
-	IsPacket []bool
+	TBFRate              uint64
+	GSOMaxSize           uint32
+	TBFBurst             uint32
+	Multicast            bool
+	GVisorGSOEnabled     bool
+	GVisorGRO            bool
+	TXChecksumOffload    bool
+	RXChecksumOffload    bool
 
 	// PreConfigured indicates that getsockname and setsockopt(PACKET_FANOUT)
 	// have already been performed on the host FDs.
@@ -121,33 +121,33 @@ const (
 
 // XDPLink configures an XDP link.
 type XDPLink struct {
-	Name              string
-	InterfaceIndex    int
-	MTU               int
-	Multicast         bool
-	Addresses         []IPWithPrefix
-	Routes            []Route
-	TXChecksumOffload bool
-	RXChecksumOffload bool
-	LinkAddress       net.HardwareAddr
-	QDisc             config.QueueingDiscipline
-	TBFRate           uint64
-	TBFBurst          uint32
-	Neighbors         []Neighbor
-	GVisorGRO         bool
-	Bind              BindOpt
+	Name           string
+	LinkAddress    net.HardwareAddr
+	Routes         []Route
+	Neighbors      []Neighbor
+	Addresses      []IPWithPrefix
+	InterfaceIndex int
+	MTU            int
+	TBFRate        uint64
+	QDisc          config.QueueingDiscipline
+	Bind           BindOpt
 
 	// NumChannels controls how many underlying FDs are to be used to
 	// create this endpoint.
-	NumChannels int
+	NumChannels       int
+	TBFBurst          uint32
+	Multicast         bool
+	TXChecksumOffload bool
+	RXChecksumOffload bool
+	GVisorGRO         bool
 }
 
 // LoopbackLink configures a loopback link.
 type LoopbackLink struct {
 	Name      string
-	Multicast bool
 	Addresses []IPWithPrefix
 	Routes    []Route
+	Multicast bool
 	GVisorGRO bool
 }
 
@@ -160,11 +160,9 @@ type CreateLinksAndRoutesArgs struct {
 	// number of fd's should match the sum of the NumChannels field of the
 	// FDBasedLink entries below.
 	urpc.FilePayload
-
-	LoopbackLinks []LoopbackLink
-	FDBasedLinks  []FDBasedLink
-	XDPLinks      []XDPLink
-
+	LoopbackLinks    []LoopbackLink
+	FDBasedLinks     []FDBasedLink
+	XDPLinks         []XDPLink
 	Defaultv4Gateway DefaultRoute
 	Defaultv6Gateway DefaultRoute
 
@@ -200,9 +198,8 @@ const NetworkInitPluginStack = "Network.InitPluginStack"
 
 // InitPluginStackArgs are arguments to InitPluginStack.
 type InitPluginStackArgs struct {
-	urpc.FilePayload
-
 	InitStr string
+	urpc.FilePayload
 }
 
 // IPWithPrefix is an address with its subnet prefix length.

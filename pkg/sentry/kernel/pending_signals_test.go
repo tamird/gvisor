@@ -26,10 +26,10 @@ func TestAnyFatalPending(t *testing.T) {
 	customHandler := linux.SigAction{Handler: 1}
 
 	for _, test := range []struct {
+		actions    map[linux.Signal]linux.SigAction
 		name       string
 		pendingSet uint64
 		mask       linux.SignalSet
-		actions    map[linux.Signal]linux.SigAction
 		want       bool
 	}{
 		{

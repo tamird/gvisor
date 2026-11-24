@@ -120,7 +120,7 @@ func RegisterFlags(flagSet *flag.FlagSet) {
 	flagSet.String("profile-mutex", "", "collects a mutex profile to this file path for the duration of the container execution. Requires -profile=true.")
 	flagSet.String("trace", "", "collects a Go runtime execution trace to this file path for the duration of the container execution.")
 	flagSet.Bool("rootless", false, "it allows the sandbox to be started with a user that is not root. Sandbox and Gofer processes may run with same privileges as current user.")
-	flagSet.Var(leakModePtr(refs.NoLeakChecking), "ref-leak-mode", "sets reference leak check mode: disabled (default), log-names, log-traces.")
+	flagSet.Var(new(refs.NoLeakChecking), "ref-leak-mode", "sets reference leak check mode: disabled (default), log-names, log-traces.")
 	flagSet.Bool("cpu-num-from-quota", true, "set cpu number to cpu quota (least integer greater or equal to quota value, but not less than 2)")
 	flagSet.Bool(flagOCISeccomp, false, "Enables loading OCI seccomp filters inside the sandbox.")
 	flagSet.Bool("enable-core-tags", false, "enables core tagging. Requires host linux kernel >= 5.14.")
@@ -145,8 +145,8 @@ func RegisterFlags(flagSet *flag.FlagSet) {
 	flagSet.Bool("app-huge-pages", true, "enable use of huge pages for application memory; requires /sys/kernel/mm/transparent_hugepage/shmem_enabled = advise")
 
 	// Flags that control sandbox runtime behavior: FS related.
-	flagSet.Var(fileAccessTypePtr(FileAccessExclusive), "file-access", "specifies which filesystem validation to use for the root mount: exclusive (default), shared.")
-	flagSet.Var(fileAccessTypePtr(FileAccessShared), "file-access-mounts", "specifies which filesystem validation to use for volumes other than the root mount: shared (default), exclusive.")
+	flagSet.Var(new(FileAccessExclusive), "file-access", "specifies which filesystem validation to use for the root mount: exclusive (default), shared.")
+	flagSet.Var(new(FileAccessShared), "file-access-mounts", "specifies which filesystem validation to use for volumes other than the root mount: shared (default), exclusive.")
 	flagSet.Bool("overlay", false, "DEPRECATED: use --overlay2=all:memory to achieve the same effect")
 	flagSet.Var(defaultOverlay2(), flagOverlay2, "wrap mounts with overlayfs. Format is\n"+
 		"* 'none' to turn overlay mode off\n"+
@@ -154,16 +154,16 @@ func RegisterFlags(flagSet *flag.FlagSet) {
 		"    'mount' can be 'root' or 'all'\n"+
 		"    'medium' can be 'memory', 'self' or 'dir=/abs/dir/path' in which filestore will be created\n"+
 		"    'size' optional parameter overrides default overlay upper layer size\n")
-	flagSet.Var(tarTimestampResolutionPtr(TarTimestampSeconds), "tar-timestamp-resolution", "resolution of modification times in tar archives of overlay upper layers and filesystem checkpoints. 'nanoseconds' adds about 1 KiB per tar entry. Values: seconds|nanoseconds, default: seconds")
-	flagSet.Var(hostUDSPtr(HostUDSNone), flagHostUDS, "controls permission to access host Unix-domain sockets. Values: none|open|create|all, default: none")
-	flagSet.Var(hostFifoPtr(HostFifoNone), "host-fifo", "controls permission to access host FIFOs (or named pipes). Values: none|open, default: none")
-	flagSet.Var(charDevicePolicyPtr(CharDevEmulatedOnly), "character-device-policy", "controls how character device files on gofer mounts (rootfs and bind mounts) are handled. 'emulated-only' serves devices implemented by the sentry and fails opens of other devices with ENXIO (default and more secure); 'prefer-emulated' serves sentry-implemented devices from the sentry and opens the rest through the host; 'passthrough' opens all of them through the host. Values: emulated-only|prefer-emulated|passthrough, default: emulated-only")
-	flagSet.Var(inodeNumbersPtr(InodeNumbersPassthrough), "inode-numbers", "controls inode numbers on gofer mounts: 'passthrough' reports host inode numbers; 'virtual' assigns sandbox-private sequential numbers, which costs memory per file seen and a stat(2) per getdents(2) entry. Values: passthrough|virtual, default: passthrough")
+	flagSet.Var(new(TarTimestampSeconds), "tar-timestamp-resolution", "resolution of modification times in tar archives of overlay upper layers and filesystem checkpoints. 'nanoseconds' adds about 1 KiB per tar entry. Values: seconds|nanoseconds, default: seconds")
+	flagSet.Var(new(HostUDSNone), flagHostUDS, "controls permission to access host Unix-domain sockets. Values: none|open|create|all, default: none")
+	flagSet.Var(new(HostFifoNone), "host-fifo", "controls permission to access host FIFOs (or named pipes). Values: none|open, default: none")
+	flagSet.Var(new(CharDevEmulatedOnly), "character-device-policy", "controls how character device files on gofer mounts (rootfs and bind mounts) are handled. 'emulated-only' serves devices implemented by the sentry and fails opens of other devices with ENXIO (default and more secure); 'prefer-emulated' serves sentry-implemented devices from the sentry and opens the rest through the host; 'passthrough' opens all of them through the host. Values: emulated-only|prefer-emulated|passthrough, default: emulated-only")
+	flagSet.Var(new(InodeNumbersPassthrough), "inode-numbers", "controls inode numbers on gofer mounts: 'passthrough' reports host inode numbers; 'virtual' assigns sandbox-private sequential numbers, which costs memory per file seen and a stat(2) per getdents(2) entry. Values: passthrough|virtual, default: passthrough")
 	flagSet.Bool("gvisor-marker-file", false, "enable the presence of the /proc/gvisor/kernel_is_gvisor file that can be used by applications to detect that gVisor is in use")
 	flagSet.String("override-procs", "", "comma-separated list of proc files to override with stubs (e.g. kallsyms)")
 
 	flagSet.Bool("ignore-cgroups", false, "don't configure cgroups.")
-	flagSet.Var(inSandboxCgroupTypePtr(InSandboxCgroupV1), flagInSandboxCgroup, "cgroup setup to use inside the sandbox: v1 (default), v2.")
+	flagSet.Var(new(InSandboxCgroupV1), flagInSandboxCgroup, "cgroup setup to use inside the sandbox: v1 (default), v2.")
 	flagSet.Int("fdlimit", -1, "Specifies a limit on the number of host file descriptors that can be open. Applies separately to the sentry and gofer. Note: each file in the sandbox holds more than one host FD open.")
 	flagSet.Int("dcache", -1, "Set the global dentry cache size. This acts as a coarse-grained control on the number of host FDs simultaneously open by the sentry. If negative, per-mount caches are used.")
 	flagSet.Bool("iouring", false, "TEST ONLY; Enables io_uring syscalls in the sentry. Support is experimental and very limited.")
@@ -171,20 +171,20 @@ func RegisterFlags(flagSet *flag.FlagSet) {
 	flagSet.Bool("TESTONLY-nftables", false, "TEST ONLY; Enables nftables support in the sentry.")
 
 	// Flags that control sandbox runtime behavior: network related.
-	flagSet.Var(networkTypePtr(NetworkSandbox), "network", "specifies which network to use: sandbox (default), host, none. Using network inside the sandbox is more secure because it's isolated from the host network.")
+	flagSet.Var(new(NetworkSandbox), "network", "specifies which network to use: sandbox (default), host, none. Using network inside the sandbox is more secure because it's isolated from the host network.")
 	flagSet.String(flagNetworkProxyPath, "", "EXPERIMENTAL. Path of an external SOCK_SEQPACKET Unix domain socket to attach the sandbox's primary network interface to, instead of an AF_PACKET socket.")
 	flagSet.Var(NetgoferModeOff.Ptr(), flagNetgofer, "EXPERIMENTAL. Mode for using netgofer (off|proxy|proxy-loopback, default: off).")
-	flagSet.Var(goferNetworkNamespacePtr(GoferNetworkNamespaceNull), "gofer-network-namespace", "network namespace for gofers: null (default; an empty namespace shared by all gofers using the same --shared-root, which defaults to --root), new (a new empty namespace per gofer), host (the current namespace), or an absolute path to an existing namespace.")
+	flagSet.Var(new(GoferNetworkNamespaceNull), "gofer-network-namespace", "network namespace for gofers: null (default; an empty namespace shared by all gofers using the same --shared-root, which defaults to --root), new (a new empty namespace per gofer), host (the current namespace), or an absolute path to an existing namespace.")
 	flagSet.Bool("net-raw", false, "enable raw sockets. When false, raw sockets are disabled by removing CAP_NET_RAW from containers (`runsc exec` will still be able to utilize raw sockets). Raw sockets allow malicious containers to craft packets and potentially attack the network.")
 	flagSet.Bool("allow-packet-socket-write", false, "allow writes on AF_PACKET sockets. When false, writes on AF_PACKET sockets will fail. When turned on, untrusted workloads may potentially attack the network because of the ability to craft arbitrary packets.")
 	flagSet.Bool("allow-live-tcp-migration", true, "allow TCP connection state to be migrated. If false, connected TCP endpoints will be terminated during save/restore.")
 	flagSet.Bool("gso", true, "enable host segmentation offload if it is supported by a network device.")
 	flagSet.Bool("software-gso", true, "enable gVisor segmentation offload when host offload can't be enabled.")
 	flagSet.Bool("gvisor-gro", false, "enable gVisor generic receive offload")
-	flagSet.Var(tcpDelayedACKPtr(TCPDelayedACKEnabled), "tcp-delayed-ack", "controls whether netstack TCP delays ACKs so that responses can carry them, like Linux. Values: enabled|disabled, default: enabled")
+	flagSet.Var(new(TCPDelayedACKEnabled), "tcp-delayed-ack", "controls whether netstack TCP delays ACKs so that responses can carry them, like Linux. Values: enabled|disabled, default: enabled")
 	flagSet.Bool("tx-checksum-offload", false, "enable TX checksum offload.")
 	flagSet.Bool("rx-checksum-offload", true, "enable RX checksum offload.")
-	flagSet.Var(queueingDisciplinePtr(QDiscFIFO), flagQDisc, "specifies which queueing discipline to apply by default to the non loopback nics used by the sandbox.")
+	flagSet.Var(new(QDiscFIFO), flagQDisc, "specifies which queueing discipline to apply by default to the non loopback nics used by the sandbox.")
 	flagSet.Uint64(flagQDiscTBFRate, defaultQDiscTBFRate, "egress rate limit in bytes/sec when --qdisc=tbf.")
 	flagSet.Uint64(flagQDiscTBFBurst, defaultQDiscTBFBurst, "bucket depth in bytes when --qdisc=tbf.")
 	flagSet.Int("num-network-channels", 1, "number of underlying channels(FDs) to use for network link endpoints.")
@@ -554,7 +554,7 @@ func (c *Config) ApplyBundles(flagSet *flag.FlagSet, bundleNames ...BundleName) 
 }
 
 func getVal(field reflect.Value) string {
-	if str, ok := field.Addr().Interface().(fmt.Stringer); ok {
+	if str, ok := reflect.TypeAssert[fmt.Stringer](field.Addr()); ok {
 		return str.String()
 	}
 	switch field.Kind() {

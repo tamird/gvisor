@@ -19,6 +19,7 @@ package nftables
 
 import (
 	"fmt"
+	"slices"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/marshal/primitive"
@@ -32,16 +33,21 @@ import (
 // natTargetInfo stores params for SNAT/DNAT target.
 // Ref: net/netfilter/nft_nat.c
 type natTargetInfo struct {
-	// netProto is the expected network protocol number (IPv4 or IPv6).
-	netProto tcpip.NetworkProtocolNumber
-	// natType indicates SNAT or DNAT.
-	natType stack.NATType
 	// address is the NAT address.
 	address tcpip.Address
+
+	// natType indicates SNAT or DNAT.
+	natType stack.NATType
+
 	// portsOrIdents specifies the port range to map.
 	portsOrIdents stack.PortOrIdentRange
+
+	// netProto is the expected network protocol number (IPv4 or IPv6).
+	netProto tcpip.NetworkProtocolNumber
+
 	// changePort represents if port should be changed.
 	changePort bool
+
 	// changeAddress represents if address should be changed.
 	changeAddress bool
 }
@@ -50,12 +56,15 @@ type natTargetInfo struct {
 type compatNATTarget struct {
 	// name is the name of the NAT target extension ("SNAT" or "DNAT").
 	name string
-	// revision is the XTables NAT target extension revision (0, 1, ...).
-	revision uint32
+
 	// infoData is the raw netlink attribute payload; saved for dump.
 	infoData []byte
+
 	// info holds the NAT params.
 	info natTargetInfo
+
+	// revision is the XTables NAT target extension revision (0, 1, ...).
+	revision uint32
 }
 
 // evaluate implements operation.evaluate.
@@ -99,7 +108,7 @@ func (op *compatNATTarget) checkCompatibility(cCtx *opCompatCtx) *syserr.Annotat
 // deepCopy implements operation.deepCopy.
 func (op *compatNATTarget) deepCopy() operation {
 	opCopy := *op
-	opCopy.infoData = append([]byte(nil), op.infoData...)
+	opCopy.infoData = slices.Concat[[]byte](op.infoData)
 	return &opCopy
 }
 

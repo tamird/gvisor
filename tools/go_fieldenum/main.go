@@ -155,8 +155,8 @@ func main() {
 }
 
 type fieldEnumTypeInfo struct {
-	prefix     string
 	structType *ast.StructType
+	prefix     string
 }
 
 // structInfo contains information about the code generated for a given struct.
@@ -280,7 +280,7 @@ func (si *structInfo) writeTo(b *strings.Builder) {
 	for _, fieldSetField := range si.reprByFieldSet {
 		fmt.Fprintf(b, "\tcopied.%s = fs.%s.Load()\n", fieldSetField.fieldName, fieldSetField.fieldName)
 	}
-	for i := 0; i < numBitmaskUint32s; i++ {
+	for i := range numBitmaskUint32s {
 		fmt.Fprintf(b, "\tcopied.fields[%d] = atomicbitops.FromUint32(fs.fields[%d].Load())\n", i, i)
 	}
 	fmt.Fprintf(b, "\treturn\n")

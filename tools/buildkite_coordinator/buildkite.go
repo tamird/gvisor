@@ -63,12 +63,11 @@ type JobUUID string
 // JobAcquisitionToken represents an active JAT issued by Buildkite.
 // A JAT is associated with a specific job UUID.
 type JobAcquisitionToken struct {
-	// token stores the JAT.
-	token string
-
 	// expiresAt stores the approximate time at which the JAT will expire.
 	// Stored for the purposes of avoiding handing expired JATs to agents.
 	expiresAt time.Time
+	// token stores the JAT.
+	token string
 
 	// attempts stores the number of times we have previously attempted to
 	// assign this JAT to an agent.
@@ -86,29 +85,13 @@ const (
 // BuildMetadata stores metadata about a build on Buildkite, in particular
 // information about its authorship and approval status.
 type BuildMetadata struct {
+	// approvers stores the set of IDs of the GitHub accounts that have
+	// approved commit on GitHub.
+	//
+	// approvers is only valid if approversKnown is true.
+	approvers map[authorID]struct{}
 	// source stores the BUILDKITE_SOURCE variable from this build.
 	source string
-
-	// nonPR indicates whether this build did not originate from a pull request.
-	//
-	// nonPR is only valid if source is one of "webhook", "api", or "ui".
-	nonPR bool
-
-	// prNumber stores the PR number associated with this build, or 0
-	// if the build did not originate from a pull request.
-	//
-	// prNumber is only valid if source is one of "webhook", "api", or "ui".
-	prNumber int
-
-	// authorKnown indicates whether the author of the build is known.
-	// It can be false if an error was encountered while fetching it.
-	authorKnown bool
-
-	// author stores the author ID associated with this build, as verified
-	// from GitHub.
-	//
-	// author is only valid if authorKnown is true.
-	author authorID
 
 	// commit stores the commit being built (BUILDKITE_COMMIT), if it is a full
 	// commit SHA. Otherwise, commit is "".
@@ -116,28 +99,42 @@ type BuildMetadata struct {
 	// commit is only valid if prNumber is non-zero.
 	commit string
 
+	// prNumber stores the PR number associated with this build, or 0
+	// if the build did not originate from a pull request.
+	//
+	// prNumber is only valid if source is one of "webhook", "api", or "ui".
+	prNumber int
+
+	// author stores the author ID associated with this build, as verified
+	// from GitHub.
+	//
+	// author is only valid if authorKnown is true.
+	author authorID
+
+	// nonPR indicates whether this build did not originate from a pull request.
+	//
+	// nonPR is only valid if source is one of "webhook", "api", or "ui".
+	nonPR bool
+
+	// authorKnown indicates whether the author of the build is known.
+	// It can be false if an error was encountered while fetching it.
+	authorKnown bool
+
 	// approversKnown indicates whether the approvers of the active commit for
 	// this build are known.
 	// It can be false if an error was encountered while fetching them.
 	approversKnown bool
-
-	// approvers stores the set of IDs of the GitHub accounts that have
-	// approved commit on GitHub.
-	//
-	// approvers is only valid if approversKnown is true.
-	approvers map[authorID]struct{}
 }
 
 // Build represents a Buildkite build as part of a JobPool.
 type Build struct {
-	BuildMetadata
-
 	// reservedJobs stores all the jobs that have been reserved in Buildkite,
 	// along with their JATs.
 	//
 	// len(reservedJobs) may occasionally exceed JobPool.jobsPerBuild. This is
 	// permitted to allow for more efficient concurrent error handling.
 	reservedJobs map[JobUUID]JobAcquisitionToken
+	BuildMetadata
 }
 
 // Queue represents a Buildkite queue as part of a JobPool.
@@ -157,14 +154,6 @@ type Queue struct {
 //
 // Safe for concurrent use.
 type JobPool struct {
-	// jobsPerBuild determines how many jobs per build we aim to maintain JATs
-	// for.
-	// It is immutable.
-	jobsPerBuild uint
-
-	// mu protects queues and trustedAuthors.
-	mu sync.Mutex
-
 	// queues stores pool data associated with each queue.
 	// queues is protected by mu.
 	queues map[string]Queue
@@ -172,6 +161,13 @@ type JobPool struct {
 	// trustedAuthors lists author IDs whose builds will be placed in trustedBuilds.
 	// trustedAuthors is protected by mu.
 	trustedAuthors map[authorID]struct{}
+	// jobsPerBuild determines how many jobs per build we aim to maintain JATs
+	// for.
+	// It is immutable.
+	jobsPerBuild uint
+
+	// mu protects queues and trustedAuthors.
+	mu sync.Mutex
 }
 
 // NewJobPool returns an empty job pool.
@@ -321,10 +317,10 @@ func (p *JobPool) trustedLocked(metadata BuildMetadata) bool {
 // It is returned by assignJob.
 type JobAssignment struct {
 	jobUUID   JobUUID
-	jat       JobAcquisitionToken
 	buildUUID BuildUUID
-	metadata  BuildMetadata
 	queue     string
+	jat       JobAcquisitionToken
+	metadata  BuildMetadata
 }
 
 // PinAgentFunc represents a callback to pin an agent.
@@ -427,20 +423,20 @@ func (p *JobPool) assignJob(svc *compute.Service, a agent) (*JobAssignment, PinA
 //
 // Safe for concurrent use.
 type BuildkiteStack struct {
-	// The following fields are immutable.
-	key    string
 	queues map[string]struct{}
 
-	// Safe for concurrent use
+	// api and gh are safe for concurrent use.
 	api *buildkite.Client
 	gh  *githubClient
-
-	// mu protects the below fields.
-	mu sync.Mutex
 
 	// metadataCache caches build metadata for each build UUID so we can avoid
 	// re-fetching the metadata at every snapshot.
 	metadataCache map[BuildUUID]BuildMetadata
+	// key and queues are immutable.
+	key string
+
+	// mu protects metadataCache.
+	mu sync.Mutex
 }
 
 // NewStack registers a stack with the given key.

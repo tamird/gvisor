@@ -43,12 +43,13 @@ import (
 // A PinRing accumulates host fds to pin into a donated pin ring.
 // The zero value means "no ring" and pins nothing.
 type PinRing struct {
+	fds []int32
+
 	// FD is the donated ring's FD number.
 	FD int
 
-	// mu protects the fields below.
+	// mu protects fds and finalized.
 	mu        sync.Mutex
-	fds       []int32
 	finalized bool
 }
 

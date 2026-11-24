@@ -138,17 +138,19 @@ var defaultContextFields = []FieldDesc{
 
 // SinkDesc describes a sink that is available to be configured.
 type SinkDesc struct {
-	// Name is a unique identifier for the sink.
-	Name string
 	// Setup is called outside the protection of the sandbox. This is done to
 	// allow the sink to do whatever is necessary to set it up. If it returns a
 	// file, this file is donated to the sandbox and passed to the sink when New
 	// is called. config is an opaque json object passed to the sink.
 	Setup func(config map[string]any) (*os.File, error)
+
 	// New creates a new sink. config is an opaque json object passed to the sink.
 	// endpoint is a file descriptor to the file returned in Setup. It's set to -1
 	// if Setup returned nil.
 	New func(config map[string]any, endpoint *fd.FD) (Sink, error)
+
+	// Name is a unique identifier for the sink.
+	Name string
 }
 
 // RegisterSink registers a new sink to make it discoverable.
@@ -162,29 +164,33 @@ func RegisterSink(sink SinkDesc) {
 // PointDesc describes a Point that is available to be configured.
 // Schema for these points are defined in pkg/sentry/seccheck/points/.
 type PointDesc struct {
-	// ID is the point unique identifier.
-	ID Point
 	// Name is the point unique name. Convention is to use the following format:
 	// namespace/name
 	// Examples: container/start, sentry/clone, etc.
 	Name string
+
 	// OptionalFields is a list of fields that are available in the point, but not
 	// collected unless specified when the Point is configured.
 	// Examples: fd_path, data for read/write Points, etc.
 	OptionalFields []FieldDesc
+
 	// ContextFields is a list of fields that can be collected from the context,
 	// but are not collected unless specified when the Point is configured.
 	// Examples: container_id, PID, etc.
 	ContextFields []FieldDesc
+
+	// ID is the point unique identifier.
+	ID Point
 }
 
 // FieldDesc describes an optional/context field that is available to be
 // configured.
 type FieldDesc struct {
-	// ID is the numeric identifier of the field.
-	ID Field
 	// Name is the unique field name.
 	Name string
+
+	// ID is the numeric identifier of the field.
+	ID Field
 }
 
 func registerPoint(pt PointDesc) {

@@ -505,7 +505,7 @@ func sandboxPid(pid int) (int, error) {
 	}
 
 	var children []int
-	for _, line := range strings.Split(buf.String(), "\n") {
+	for line := range strings.SplitSeq(buf.String(), "\n") {
 		if len(line) == 0 {
 			continue
 		}

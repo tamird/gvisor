@@ -37,10 +37,7 @@ func (fs *filesystem) ReadInPages(ctx context.Context, fd *regularFileFD, off ui
 	readSize, _ := hostarch.PageRoundUp(uint64(size))
 
 	// One request cannot exceed either maxRead or maxPages.
-	maxPages := fs.conn.maxRead >> hostarch.PageShift
-	if maxPages > uint32(fs.conn.maxPages) {
-		maxPages = uint32(fs.conn.maxPages)
-	}
+	maxPages := min(fs.conn.maxRead>>hostarch.PageShift, uint32(fs.conn.maxPages))
 
 	var outs [][]byte
 	var sizeRead uint32
@@ -62,10 +59,7 @@ func (fs *filesystem) ReadInPages(ctx context.Context, fd *regularFileFD, off ui
 	// For the majority of reads with normal size, this loop should only
 	// execute once.
 	for pagesRead < pagesToRead {
-		pagesCanRead := pagesToRead - pagesRead
-		if pagesCanRead > maxPages {
-			pagesCanRead = maxPages
-		}
+		pagesCanRead := min(pagesToRead-pagesRead, maxPages)
 
 		in.Offset = off + (uint64(pagesRead) << hostarch.PageShift)
 		in.Size = pagesCanRead << hostarch.PageShift
@@ -140,10 +134,7 @@ func (fs *filesystem) Write(ctx context.Context, fd *regularFileFD, offset int64
 	// One request cannot exceed maxWrite, maxPages, or, unless big writes were
 	// negotiated, one page. Note that the bigWrites flag is obsolete, latest
 	// libfuse always sets it on.
-	maxWrite := uint32(fs.conn.maxPages) << hostarch.PageShift
-	if maxWrite > fs.conn.maxWrite {
-		maxWrite = fs.conn.maxWrite
-	}
+	maxWrite := min(uint32(fs.conn.maxPages)<<hostarch.PageShift, fs.conn.maxWrite)
 	if pageSize := uint32(hostarch.PageSize); !fs.conn.bigWrites && maxWrite > pageSize {
 		maxWrite = pageSize
 	}

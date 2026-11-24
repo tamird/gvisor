@@ -41,22 +41,8 @@ const (
 // IPv6Fields contains the fields of an IPv6 packet. It is used to describe the
 // fields of a packet that needs to be encoded.
 type IPv6Fields struct {
-	// TrafficClass is the "traffic class" field of an IPv6 packet.
-	TrafficClass uint8
-
-	// FlowLabel is the "flow label" field of an IPv6 packet.
-	FlowLabel uint32
-
-	// PayloadLength is the "payload length" field of an IPv6 packet, including
-	// the length of all extension headers.
-	PayloadLength uint16
-
-	// TransportProtocol is the transport layer protocol number. Serialized in the
-	// last "next header" field of the IPv6 header + extension headers.
-	TransportProtocol tcpip.TransportProtocolNumber
-
-	// HopLimit is the "Hop Limit" field of an IPv6 packet.
-	HopLimit uint8
+	// ExtensionHeaders are the extension headers following the IPv6 header.
+	ExtensionHeaders IPv6ExtHdrSerializer
 
 	// SrcAddr is the "source ip address" of an IPv6 packet.
 	SrcAddr tcpip.Address
@@ -64,8 +50,22 @@ type IPv6Fields struct {
 	// DstAddr is the "destination ip address" of an IPv6 packet.
 	DstAddr tcpip.Address
 
-	// ExtensionHeaders are the extension headers following the IPv6 header.
-	ExtensionHeaders IPv6ExtHdrSerializer
+	// FlowLabel is the "flow label" field of an IPv6 packet.
+	FlowLabel uint32
+
+	// TransportProtocol is the transport layer protocol number. Serialized in the
+	// last "next header" field of the IPv6 header + extension headers.
+	TransportProtocol tcpip.TransportProtocolNumber
+
+	// PayloadLength is the "payload length" field of an IPv6 packet, including
+	// the length of all extension headers.
+	PayloadLength uint16
+
+	// TrafficClass is the "traffic class" field of an IPv6 packet.
+	TrafficClass uint8
+
+	// HopLimit is the "Hop Limit" field of an IPv6 packet.
+	HopLimit uint8
 }
 
 // IPv6 represents an ipv6 header stored in a byte array.

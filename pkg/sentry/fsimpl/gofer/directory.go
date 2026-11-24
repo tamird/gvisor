@@ -108,17 +108,16 @@ func (d *dentry) cacheNegativeLookupLocked(name string) {
 }
 
 type createSyntheticOpts struct {
-	name string
-	mode linux.FileMode
-	kuid auth.KUID
-	kgid auth.KGID
-
 	// The endpoint for a synthetic socket. endpoint should be nil if the file
 	// being created is not a socket.
 	endpoint transport.BoundEndpoint
 
 	// pipe should be nil if the file being created is not a pipe.
 	pipe *pipe.VFSPipe
+	name string
+	kuid auth.KUID
+	kgid auth.KGID
+	mode linux.FileMode
 }
 
 // newSyntheticDentry creates a synthetic file with the given name.

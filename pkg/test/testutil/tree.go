@@ -31,13 +31,13 @@ type Tree struct {
 
 // treeNode represents a hierarchy of tests and sub-tests.
 type treeNode struct {
-	// testName is only set on leaf nodes.
-	// It is a fully-qualified test name.
-	testName string
-
 	// children is only set of non-leaf nodes.
 	// It is a set of child nodes, mapped by their component as key.
 	children map[string]*treeNode
+
+	// testName is only set on leaf nodes.
+	// It is a fully-qualified test name.
+	testName string
 }
 
 // NewTree creates a new test tree out of the given test names.
@@ -49,7 +49,7 @@ func NewTree(testNames []string, separator string) *Tree {
 	tree := &Tree{root: &treeNode{}}
 	for _, testName := range testNames {
 		n := tree.root
-		for _, component := range strings.Split(testName, separator) {
+		for component := range strings.SplitSeq(testName, separator) {
 			if component == "" {
 				continue
 			}

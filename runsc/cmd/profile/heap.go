@@ -28,8 +28,8 @@ import (
 
 // heap implements subcommands.Command for the "heap" command.
 type heap struct {
-	delay  time.Duration
 	output string
+	delay  time.Duration
 }
 
 // Name implements subcommands.Command.

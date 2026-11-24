@@ -342,11 +342,11 @@ func (discardEmitter) Emit(int, log.Level, time.Time, string, ...any) {}
 func newEmitter(format string, logFile io.Writer) log.Emitter {
 	switch format {
 	case "text":
-		return log.GoogleEmitter{&log.Writer{Next: logFile}}
+		return log.GoogleEmitter{Writer: &log.Writer{Next: logFile}}
 	case "json":
-		return log.JSONEmitter{&log.Writer{Next: logFile}}
+		return log.JSONEmitter{Writer: &log.Writer{Next: logFile}}
 	case "json-k8s":
-		return log.K8sJSONEmitter{&log.Writer{Next: logFile}}
+		return log.K8sJSONEmitter{Writer: &log.Writer{Next: logFile}}
 	}
 	util.Fatalf("invalid log format %q, must be 'text', 'json', or 'json-k8s'", format)
 	panic("unreachable")
@@ -378,19 +378,19 @@ func userLogEmitter(conf *config.Config, subcommand string) (log.Emitter, bool) 
 	if userLog == nil {
 		return nil, false
 	}
-	return log.K8sJSONEmitter{&log.Writer{Next: userLog}}, true
+	return log.K8sJSONEmitter{Writer: &log.Writer{Next: userLog}}, true
 }
 
 type bufferedLog struct {
-	depth     int
-	level     log.Level
 	timestamp time.Time
 	message   string
+	depth     int
+	level     log.Level
 }
 
 type bufferedEmitter struct {
-	mu     sync.Mutex
 	buffer []bufferedLog
+	mu     sync.Mutex
 }
 
 // Emit implements log.Emitter.Emit.

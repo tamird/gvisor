@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"math"
 	"path"
 	"strconv"
@@ -249,7 +250,7 @@ func TestManyProcMounts(t *testing.T) {
 			InternalData: &InternalData{},
 		},
 	}
-	for i := 0; i < numMounts; i++ {
+	for i := range numMounts {
 		if _, err := s.VFS.MountAt(s.Ctx, s.Creds, "", pop, Name, mntOpts); err != nil {
 			t.Fatalf("MountAt(/proc) failed after %d additional mounts: %v", i, err)
 		}
@@ -299,9 +300,7 @@ func TestTasksWithOverrideProc(t *testing.T) {
 	defer s.Destroy()
 
 	expected := make(map[string]testutil.DirentType)
-	for k, v := range tasksStaticFiles {
-		expected[k] = v
-	}
+	maps.Copy(expected, tasksStaticFiles)
 	expected["kallsyms"] = linux.DT_REG
 	expected["arbitrary_file"] = linux.DT_REG
 
@@ -339,13 +338,11 @@ func TestTasks(t *testing.T) {
 	defer s.Destroy()
 
 	expectedDirents := make(map[string]testutil.DirentType)
-	for n, d := range tasksStaticFiles {
-		expectedDirents[n] = d
-	}
+	maps.Copy(expectedDirents, tasksStaticFiles)
 
 	k := kernel.KernelFromContext(s.Ctx)
 	var tasks []*kernel.Task
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		tc := k.NewThreadGroup(k.RootPIDNamespace(), kernel.NewSignalHandlers(), linux.SIGCHLD, k.GlobalInit().Limits())
 		task, err := testutil.CreateTask(s.Ctx, fmt.Sprintf("name-%d", i), tc, s.MntNs, s.Root, s.Root)
 		if err != nil {
@@ -428,7 +425,7 @@ func TestTasksOffset(t *testing.T) {
 	defer s.Destroy()
 
 	k := kernel.KernelFromContext(s.Ctx)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		tc := k.NewThreadGroup(k.RootPIDNamespace(), kernel.NewSignalHandlers(), linux.SIGCHLD, k.GlobalInit().Limits())
 		if _, err := testutil.CreateTask(s.Ctx, fmt.Sprintf("name-%d", i), tc, s.MntNs, s.Root, s.Root); err != nil {
 			t.Fatalf("CreateTask(): %v", err)
@@ -436,9 +433,9 @@ func TestTasksOffset(t *testing.T) {
 	}
 
 	for _, tc := range []struct {
+		wants  map[string]vfs.Dirent
 		name   string
 		offset int64
-		wants  map[string]vfs.Dirent
 	}{
 		{
 			name:   "small offset",
@@ -667,7 +664,7 @@ func TestTree(t *testing.T) {
 	defer file.DecRef(s.Ctx)
 
 	var tasks []*kernel.Task
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		tc := k.NewThreadGroup(k.RootPIDNamespace(), kernel.NewSignalHandlers(), linux.SIGCHLD, k.GlobalInit().Limits())
 		task, err := testutil.CreateTask(s.Ctx, fmt.Sprintf("name-%d", i), tc, s.MntNs, s.Root, s.Root)
 		if err != nil {

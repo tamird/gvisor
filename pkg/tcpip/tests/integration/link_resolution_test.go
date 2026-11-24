@@ -115,11 +115,11 @@ func TestPing(t *testing.T) {
 	)
 
 	tests := []struct {
+		icmpBuf    func(*testing.T) []byte
 		name       string
+		remoteAddr tcpip.Address
 		transProto tcpip.TransportProtocolNumber
 		netProto   tcpip.NetworkProtocolNumber
-		remoteAddr tcpip.Address
-		icmpBuf    func(*testing.T) []byte
 	}{
 		{
 			name:       "IPv4 Ping",
@@ -225,12 +225,12 @@ func TestTCPLinkResolutionFailure(t *testing.T) {
 	)
 
 	tests := []struct {
-		name             string
-		netProto         tcpip.NetworkProtocolNumber
-		remoteAddr       tcpip.Address
 		expectedWriteErr tcpip.Error
+		name             string
 		sockError        tcpip.SockError
+		remoteAddr       tcpip.Address
 		transErr         transportError
+		netProto         tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:             "IPv4 with resolvable remote",
@@ -512,17 +512,17 @@ func TestForwardingWithLinkResolutionFailure(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                         string
-		networkProtocolFactory       []stack.NetworkProtocolFactory
-		networkProtocolNumber        tcpip.NetworkProtocolNumber
-		sourceAddr                   tcpip.Address
-		destAddr                     tcpip.Address
-		incomingAddr                 tcpip.AddressWithPrefix
-		outgoingAddr                 tcpip.AddressWithPrefix
 		transportProtocol            func(*stack.Stack) stack.TransportProtocol
 		rx                           func(*channel.Endpoint, tcpip.Address, tcpip.Address)
 		linkResolutionRequestChecker func(*testing.T, *stack.PacketBuffer, tcpip.Address, tcpip.Address)
 		icmpReplyChecker             func(*testing.T, *buffer.View, tcpip.Address, tcpip.Address)
+		name                         string
+		networkProtocolFactory       []stack.NetworkProtocolFactory
+		incomingAddr                 tcpip.AddressWithPrefix
+		outgoingAddr                 tcpip.AddressWithPrefix
+		sourceAddr                   tcpip.Address
+		destAddr                     tcpip.Address
+		networkProtocolNumber        tcpip.NetworkProtocolNumber
 		mtu                          uint32
 	}{
 		{
@@ -676,10 +676,10 @@ func TestGetLinkAddress(t *testing.T) {
 	)
 
 	tests := []struct {
-		name                  string
-		netProto              tcpip.NetworkProtocolNumber
-		remoteAddr, localAddr tcpip.Address
 		expectedErr           tcpip.Error
+		name                  string
+		remoteAddr, localAddr tcpip.Address
+		netProto              tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:        "IPv4 resolvable",
@@ -770,13 +770,13 @@ func TestRouteResolvedFields(t *testing.T) {
 	)
 
 	tests := []struct {
+		expectedErr           tcpip.Error
 		name                  string
-		netProto              tcpip.NetworkProtocolNumber
+		expectedLinkAddr      tcpip.LinkAddress
 		localAddr             tcpip.Address
 		remoteAddr            tcpip.Address
+		netProto              tcpip.NetworkProtocolNumber
 		immediatelyResolvable bool
-		expectedErr           tcpip.Error
-		expectedLinkAddr      tcpip.LinkAddress
 	}{
 		{
 			name:                  "IPv4 immediately resolvable",
@@ -860,9 +860,6 @@ func TestRouteResolvedFields(t *testing.T) {
 			ch := make(chan stack.ResolvedFieldsResult, 1)
 
 			if !test.immediatelyResolvable {
-				wantUnresolvedRouteInfo := wantRouteInfo
-				wantUnresolvedRouteInfo.RemoteLinkAddress = ""
-
 				err := r.ResolvedFields(func(r stack.ResolvedFieldsResult) {
 					ch <- r
 				})
@@ -917,10 +914,10 @@ func TestWritePacketsLinkResolution(t *testing.T) {
 	)
 
 	tests := []struct {
-		name             string
-		netProto         tcpip.NetworkProtocolNumber
-		remoteAddr       tcpip.Address
 		expectedWriteErr tcpip.Error
+		name             string
+		remoteAddr       tcpip.Address
+		netProto         tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:             "IPv4",
@@ -1046,9 +1043,9 @@ func (t eventType) String() string {
 }
 
 type eventInfo struct {
+	entry     stack.NeighborEntry
 	eventType eventType
 	nicID     tcpip.NICID
-	entry     stack.NeighborEntry
 }
 
 func (e eventInfo) String() string {
@@ -1099,11 +1096,11 @@ func (d *nudDispatcher) expectEvent(want eventInfo) error {
 // that the neighbor used for a route is reachable.
 func TestTCPConfirmNeighborReachability(t *testing.T) {
 	tests := []struct {
+		getEndpoints    func(*testing.T, *stack.Stack, *stack.Stack, *stack.Stack) (tcpip.Endpoint, <-chan struct{}, tcpip.Endpoint, <-chan struct{})
 		name            string
-		netProto        tcpip.NetworkProtocolNumber
 		remoteAddr      tcpip.Address
 		neighborAddr    tcpip.Address
-		getEndpoints    func(*testing.T, *stack.Stack, *stack.Stack, *stack.Stack) (tcpip.Endpoint, <-chan struct{}, tcpip.Endpoint, <-chan struct{})
+		netProto        tcpip.NetworkProtocolNumber
 		isHost1Listener bool
 	}{
 		{
@@ -1528,11 +1525,11 @@ func TestDAD(t *testing.T) {
 	}
 
 	tests := []struct {
+		expectedResult stack.DADResult
 		name           string
+		remoteAddr     tcpip.Address
 		netProto       tcpip.NetworkProtocolNumber
 		dadNetProto    tcpip.NetworkProtocolNumber
-		remoteAddr     tcpip.Address
-		expectedResult stack.DADResult
 	}{
 		{
 			name:           "IPv4 own address",
@@ -1665,8 +1662,8 @@ func TestDAD(t *testing.T) {
 
 type settableLinkEndpoint struct {
 	stack.LinkEndpoint
-	mu   sync.Mutex
 	addr tcpip.LinkAddress
+	mu   sync.Mutex
 }
 
 func newSettableLinkEndpoint(e stack.LinkEndpoint) *settableLinkEndpoint {
@@ -1811,7 +1808,7 @@ func TestUpdateCachedNeighborEntry(t *testing.T) {
 
 	// Send packet to neighbor (start link resolution & resolve, then send
 	// packet). Send twice to use cached address the second time.
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		go writePacket(t, r)
 		if err := host1NICMonitorable.waitForLinkAddress(utils.LinkAddr2, time.Second); err != nil {
 			t.Fatalf("host1NIC.waitForLinkAddress(%s): %s", utils.LinkAddr2, err)

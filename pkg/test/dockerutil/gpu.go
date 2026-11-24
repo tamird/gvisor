@@ -158,15 +158,12 @@ func GPURunOpts(sniffGPUOpts SniffGPUOpts) (RunOpts, error) {
 
 // SniffGPUOpts dictates options to sniffer GPU workloads.
 type SniffGPUOpts struct {
+	// runSniffer is set internally.
+	runSniffer *os.File
+
 	// If set, explains why the sniffer should be disabled for this test.
 	// If unset or empty, the sniffer is enabled.
 	DisableSnifferReason string
-
-	// If true, the test will not fail even when the workload calls incompatible
-	// ioctls. Useful for debugging.
-	// TODO(b/340955577): Should be converted to a flag and removed from this
-	// struct once all GPU tests have no incompatible ioctls.
-	AllowIncompatibleIoctl bool
 
 	// The set of GPU capabilities exposed to the container.
 	// If unset, defaults to `DefaultGPUCapabilities`.
@@ -176,8 +173,11 @@ type SniffGPUOpts struct {
 	// Must be a directory visible from within the container.
 	addLDPath string
 
-	// The fields below are set internally.
-	runSniffer *os.File
+	// If true, the test will not fail even when the workload calls incompatible
+	// ioctls. Useful for debugging.
+	// TODO(b/340955577): Should be converted to a flag and removed from this
+	// struct once all GPU tests have no incompatible ioctls.
+	AllowIncompatibleIoctl bool
 }
 
 // GPUCapabilities returns the set of GPU capabilities meant to be

@@ -35,7 +35,7 @@ func BenchmarkReadAt(b *testing.B) {
 	defer buf.Release()
 
 	bytes := make([]byte, 10)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		if n, err := buf.ReadAt(bytes, 0); n != len(bytes) || err != nil {
 			b.Fatalf("ReadAt = (%d, %v), want (%d, nil)", n, err, len(bytes))
 		}
@@ -48,7 +48,7 @@ func BenchmarkWriteRead(b *testing.B) {
 	defer buf.Release()
 	sz := 1000
 	rbuf := bytes.NewBuffer(make([]byte, sz))
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		buf.Append(NewViewSize(sz))
 		rbuf.Reset()
 		n, err := buf.ReadToWriter(rbuf, int64(sz))
@@ -105,10 +105,10 @@ func testReadAt(t *testing.T, b *Buffer, offset int64, n int, wantStr string, wa
 
 func TestBuffer(t *testing.T) {
 	testCases := []struct {
+		op     func(*testing.T, *Buffer)
 		name   string
 		input  string
 		output string
-		op     func(*testing.T, *Buffer)
 	}{
 		// Preconditions.
 		{
@@ -531,13 +531,13 @@ func TestBuffer(t *testing.T) {
 func TestBufferPullUp(t *testing.T) {
 	for _, tc := range []struct {
 		desc   string
-		inputs []string
-		offset int
-		length int
 		output string
-		failed bool
+		inputs []string
 		// lengths is the lengths of each buffer node after the pull up.
 		lengths []int
+		offset  int
+		length  int
+		failed  bool
 	}{
 		{
 			desc: "whole empty view",
@@ -685,7 +685,7 @@ func TestReadByte(t *testing.T) {
 	readString := "abcdef123456ghijkl"
 	b := Buffer{}
 	nViews := 3
-	for i := 0; i < nViews; i++ {
+	for i := range nViews {
 		vLen := len(readString) / nViews
 		v := NewViewWithData([]byte(readString[i*vLen : (i+1)*vLen]))
 		b.appendOwned(v)
@@ -908,7 +908,7 @@ func TestChecksum(t *testing.T) {
 	b.appendOwned(NewViewWithData(data[30:70]))
 	b.appendOwned(NewViewWithData(data[70:]))
 
-	for offset := 0; offset < 100; offset++ {
+	for offset := range 100 {
 		var cs checksum.Checksumer
 		cs.Add(data[offset:])
 		dataChecksum := cs.Checksum()

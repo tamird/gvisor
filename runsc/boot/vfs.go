@@ -205,15 +205,15 @@ func rdmaproxyRegisterDevices(info *containerInfo, vfsObj *vfs.VirtualFilesystem
 		// Snapshot attribute values are verbatim file contents; trim before
 		// parsing "major:minor".
 		devStr := strings.TrimSpace(dev.Dev)
-		sep := strings.IndexByte(devStr, ':')
-		if sep < 0 {
+		_, after, ok := strings.Cut(devStr, ":")
+		if !ok {
 			continue
 		}
-		minor64, err := strconv.ParseUint(devStr[sep+1:], 10, 32)
+		minor64, err := strconv.ParseUint(after, 10, 32)
 		if err != nil {
 			continue
 		}
-		for _, line := range strings.Split(leafUevent[dev.LeafPCI], "\n") {
+		for line := range strings.SplitSeq(leafUevent[dev.LeafPCI], "\n") {
 			if driver, ok := strings.CutPrefix(line, "DRIVER="); ok {
 				driverByMinor[uint32(minor64)] = driver
 				break
@@ -460,9 +460,26 @@ func (f *fdDispenser) empty() bool {
 }
 
 type containerMounter struct {
-	l *Loader
-
+	l    *Loader
 	root *specs.Root
+
+	// devGoferFD is the FD to attach the sandbox to the dev gofer.
+	devGoferFD *fd.FD
+
+	// sharedMounts is a map of shared mounts that can be reused across
+	// containers.
+	//
+	// FIXME: This is equivalent to l.sharedMounts, but lacks the checklocks
+	// annotation.
+	sharedMounts map[string]*vfs.Mount
+
+	// rootfsUpperTarFD is the file descriptor to the tar file containing the rootfs
+	// upper layer changes.
+	rootfsUpperTarFD *fd.FD
+
+	// containerID is the ID for the container.
+	containerID   string
+	containerName string
 
 	// mounts is the set of submounts for the container. It's a copy from the spec
 	// that may be freely modified without affecting the original spec.
@@ -475,33 +492,15 @@ type containerMounter struct {
 	// overlayfs mount for certain gofer mounts.
 	goferFilestoreFDs fdDispenser
 
-	// devGoferFD is the FD to attach the sandbox to the dev gofer.
-	devGoferFD *fd.FD
-
 	// goferMountConfs contains information about how the gofer mounts have been
 	// configured. The first entry is for rootfs and the following entries are
 	// for bind mounts in Spec.Mounts (in the same order).
 	goferMountConfs []specutils.GoferMountConf
 
-	// sharedMounts is a map of shared mounts that can be reused across
-	// containers.
-	//
-	// FIXME: This is equivalent to l.sharedMounts, but lacks the checklocks
-	// annotation.
-	sharedMounts map[string]*vfs.Mount
-
-	// containerID is the ID for the container.
-	containerID   string
-	containerName string
-
 	// cgroupsMounted indicates if cgroups are mounted in the container.
 	// This is used to set the InitialCgroups before starting the container
 	// process.
 	cgroupsMounted bool
-
-	// rootfsUpperTarFD is the file descriptor to the tar file containing the rootfs
-	// upper layer changes.
-	rootfsUpperTarFD *fd.FD
 }
 
 // +checklocks:l.mu
@@ -921,8 +920,8 @@ type mountInfo struct {
 	mount          *specs.Mount
 	goferFD        *fd.FD
 	hint           *sentryapi.MountHint
-	goferMountConf specutils.GoferMountConf
 	filestoreFD    *fd.FD
+	goferMountConf specutils.GoferMountConf
 }
 
 func (c *containerMounter) prepareMounts() ([]mountInfo, error) {

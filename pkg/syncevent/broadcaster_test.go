@@ -32,7 +32,7 @@ func TestBroadcasterFilter(t *testing.T) {
 		ws[i].Init()
 		br.SubscribeEvents(ws[i].Receiver(), 1<<(i%MaxEvents))
 	}
-	for ev := 0; ev < MaxEvents; ev++ {
+	for ev := range MaxEvents {
 		br.Broadcast(1 << ev)
 		for i := range ws {
 			want := NoEvents
@@ -58,7 +58,7 @@ func TestBroadcasterManySubscriptions(t *testing.T) {
 	}
 
 	ids := make([]SubscriptionID, numReceivers)
-	for i := 0; i < numReceivers; i++ {
+	for i := range numReceivers {
 		// Subscribe receiver i.
 		ids[i] = br.SubscribeEvents(ws[i].Receiver(), 1)
 		// Check that receivers [0, i] are subscribed.
@@ -73,7 +73,7 @@ func TestBroadcasterManySubscriptions(t *testing.T) {
 
 	// Generate a random order for unsubscriptions.
 	unsub := rand.Perm(numReceivers)
-	for i := 0; i < numReceivers; i++ {
+	for i := range numReceivers {
 		// Unsubscribe receiver unsub[i].
 		br.UnsubscribeEvents(ids[unsub[i]])
 		// Check that receivers [unsub[0], unsub[i]] are not subscribed, and that
@@ -110,8 +110,7 @@ func BenchmarkBroadcasterSubscribeUnsubscribe(b *testing.B) {
 	var w Waiter
 	w.Init()
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		id := br.SubscribeEvents(w.Receiver(), 1)
 		br.UnsubscribeEvents(id)
 	}
@@ -123,8 +122,7 @@ func BenchmarkMapSubscribeUnsubscribe(b *testing.B) {
 	var w Waiter
 	w.Init()
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		mu.Lock()
 		m[w.Receiver()] = Set(1)
 		mu.Unlock()
@@ -138,8 +136,7 @@ func BenchmarkQueueSubscribeUnsubscribe(b *testing.B) {
 	var q waiter.Queue
 	e, _ := waiter.NewChannelEntry(1)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		q.EventRegister(&e)
 		q.EventUnregister(&e)
 	}
@@ -168,10 +165,10 @@ func BenchmarkBroadcasterSubscribeUnsubscribeBatch(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N/numBatchReceivers; i++ {
-		for j := 0; j < numBatchReceivers; j++ {
+		for j := range numBatchReceivers {
 			ids[j] = br.SubscribeEvents(ws[j].Receiver(), 1)
 		}
-		for j := 0; j < numBatchReceivers; j++ {
+		for j := range numBatchReceivers {
 			br.UnsubscribeEvents(ids[unsub[j]])
 		}
 	}
@@ -190,12 +187,12 @@ func BenchmarkMapSubscribeUnsubscribeBatch(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N/numBatchReceivers; i++ {
-		for j := 0; j < numBatchReceivers; j++ {
+		for j := range numBatchReceivers {
 			mu.Lock()
 			m[ws[j].Receiver()] = Set(1)
 			mu.Unlock()
 		}
-		for j := 0; j < numBatchReceivers; j++ {
+		for j := range numBatchReceivers {
 			mu.Lock()
 			delete(m, ws[unsub[j]].Receiver())
 			mu.Unlock()
@@ -215,10 +212,10 @@ func BenchmarkQueueSubscribeUnsubscribeBatch(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N/numBatchReceivers; i++ {
-		for j := 0; j < numBatchReceivers; j++ {
+		for j := range numBatchReceivers {
 			q.EventRegister(&es[j])
 		}
-		for j := 0; j < numBatchReceivers; j++ {
+		for j := range numBatchReceivers {
 			q.EventUnregister(&es[unsub[j]])
 		}
 	}
@@ -278,7 +275,7 @@ func BenchmarkQueueBroadcastRedundant(b *testing.B) {
 	for _, n := range receiverCountsIncludingZero {
 		b.Run(fmt.Sprintf("%d", n), func(b *testing.B) {
 			var q waiter.Queue
-			for i := 0; i < n; i++ {
+			for range n {
 				e, _ := waiter.NewChannelEntry(1)
 				q.EventRegister(&e)
 			}

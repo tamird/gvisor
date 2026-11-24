@@ -44,8 +44,8 @@ func hasNaNComponent(c wire.Complex64) bool {
 
 // typeEntry is an entry in the typeDatabase.
 type typeEntry struct {
-	ID typeID
 	wire.Type
+	ID typeID
 }
 
 // reconciledTypeEntry is a reconciled entry in the typeDatabase.
@@ -415,7 +415,7 @@ func RegisterNoHooks(t StructType) {
 func RegisterIdent(t, base StructType) {
 	typ := reflect.TypeOf(t)
 	baseTyp := reflect.TypeOf(base)
-	if typ == nil || typ.Kind() != reflect.Ptr || baseTyp == nil || baseTyp.Kind() != reflect.Ptr {
+	if typ == nil || typ.Kind() != reflect.Pointer || baseTyp == nil || baseTyp.Kind() != reflect.Pointer {
 		Failf("RegisterIdent must be called on pointers")
 	}
 	identBases[typ.Elem()] = baseTyp.Elem()
@@ -424,7 +424,7 @@ func RegisterIdent(t, base StructType) {
 
 func registerStruct(t StructType, noHooks bool) {
 	typ := reflect.TypeOf(t)
-	if typ == nil || typ.Kind() != reflect.Ptr {
+	if typ == nil || typ.Kind() != reflect.Pointer {
 		Failf("RegisterStruct must be called on pointers")
 	}
 	typ = typ.Elem()
@@ -446,7 +446,7 @@ func registerStruct(t StructType, noHooks bool) {
 // reconstruct concrete types held in interfaces without a preceding Save.
 func Register(t Type) {
 	typ := reflect.TypeOf(t)
-	if typ == nil || typ.Kind() != reflect.Ptr {
+	if typ == nil || typ.Kind() != reflect.Pointer {
 		Failf("Register must be called on pointers")
 	}
 	if !eagerTypeInfo {

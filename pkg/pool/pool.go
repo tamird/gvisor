@@ -21,8 +21,6 @@ import (
 
 // Pool is a simple allocator.
 type Pool struct {
-	mu sync.Mutex
-
 	// cache is the set of returned values.
 	//
 	// +checklocks:mu
@@ -38,6 +36,7 @@ type Pool struct {
 
 	// Limit is the exclusive upper limit, fixed before publishing the pool.
 	Limit uint64
+	mu    sync.Mutex
 }
 
 // Get gets a value from the pool.

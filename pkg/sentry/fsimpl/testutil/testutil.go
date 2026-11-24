@@ -19,6 +19,7 @@ package testutil
 import (
 	"fmt"
 	"io"
+	"maps"
 	"strings"
 	"testing"
 
@@ -214,9 +215,10 @@ func (s *System) AssertDirentOffsets(collector *DirentCollector, expected map[st
 // testing. It simply iterates to the end of a given directory FD and collects
 // all dirents emitted by the callback.
 type DirentCollector struct {
-	mu      sync.Mutex
-	order   []*vfs.Dirent
 	dirents map[string]*vfs.Dirent
+	order   []*vfs.Dirent
+	mu      sync.Mutex
+
 	// When the collector is used in various Assert* functions, should "." and
 	// ".." be implicitly checked?
 	skipDots bool
@@ -268,9 +270,7 @@ func (d *DirentCollector) Contains(name string, typ uint8) error {
 func (d *DirentCollector) Dirents() map[string]*vfs.Dirent {
 	d.mu.Lock()
 	dirents := make(map[string]*vfs.Dirent)
-	for n, d := range d.dirents {
-		dirents[n] = d
-	}
+	maps.Copy(dirents, d.dirents)
 	d.mu.Unlock()
 	return dirents
 }

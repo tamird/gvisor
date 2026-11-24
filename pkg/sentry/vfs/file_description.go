@@ -230,7 +230,7 @@ func (fd *FileDescription) DecRef(ctx context.Context) {
 
 		// Unlock any OFD locks.
 		if fd.impl.SupportsLocks() {
-			fd.impl.UnlockPOSIX(ctx, fd, lock.LockRange{0, lock.LockEOF})
+			fd.impl.UnlockPOSIX(ctx, fd, lock.LockRange{Start: 0, End: lock.LockEOF})
 		}
 
 		// Clean up O_ASYNC state.

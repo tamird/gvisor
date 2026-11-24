@@ -140,7 +140,7 @@ func TestRead(t *testing.T) {
 		for ids != ^uint32(0) && off < dataLen {
 			id := bits.TrailingZeros32(^ids)
 			ids |= uint32(1) << id
-			ar.AddRead(id, int64(off), df, memmap.FileRange{uint64(off), uint64(off) + chunkSize}, buf[off:off+chunkSize])
+			ar.AddRead(id, int64(off), df, memmap.FileRange{Start: uint64(off), End: uint64(off) + chunkSize}, buf[off:off+chunkSize])
 			off += chunkSize
 		}
 		cs, err := ar.Wait(cs[:0], 1 /* minCompletions */)
@@ -223,8 +223,8 @@ func TestReadv(t *testing.T) {
 			id := bits.TrailingZeros32(^ids)
 			ids |= uint32(1) << id
 			frs := []memmap.FileRange{
-				{uint64(off), uint64(off) + chunkSize},
-				{uint64(off) + chunkSize, uint64(off) + 2*chunkSize},
+				{Start: uint64(off), End: uint64(off) + chunkSize},
+				{Start: uint64(off) + chunkSize, End: uint64(off) + 2*chunkSize},
 			}
 			iovecs := []unix.Iovec{
 				{Base: &buf[off], Len: chunkSize},
@@ -309,7 +309,7 @@ func TestWrite(t *testing.T) {
 		for ids != ^uint32(0) && off < dataLen {
 			id := bits.TrailingZeros32(^ids)
 			ids |= uint32(1) << id
-			aw.AddWrite(id, sf, memmap.FileRange{uint64(off), uint64(off) + chunkSize}, buf[off:off+chunkSize])
+			aw.AddWrite(id, sf, memmap.FileRange{Start: uint64(off), End: uint64(off) + chunkSize}, buf[off:off+chunkSize])
 			off += chunkSize
 		}
 		cs, err := aw.Wait(cs[:0], 1 /* minCompletions */)
@@ -392,8 +392,8 @@ func TestWritev(t *testing.T) {
 			id := bits.TrailingZeros32(^ids)
 			ids |= uint32(1) << id
 			frs := []memmap.FileRange{
-				{uint64(off), uint64(off) + chunkSize},
-				{uint64(off) + chunkSize, uint64(off) + 2*chunkSize},
+				{Start: uint64(off), End: uint64(off) + chunkSize},
+				{Start: uint64(off) + chunkSize, End: uint64(off) + 2*chunkSize},
 			}
 			iovecs := []unix.Iovec{
 				{Base: &buf[off], Len: chunkSize},
@@ -476,7 +476,7 @@ func TestClientWatchdog(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to register destination file: %v", err)
 	}
-	ar.AddRead(0 /* id */, 0 /* off */, df, memmap.FileRange{0, chunkSize}, buf[:chunkSize])
+	ar.AddRead(0 /* id */, 0 /* off */, df, memmap.FileRange{Start: 0, End: chunkSize}, buf[:chunkSize])
 	cs, err := ar.Wait(nil, 1 /* minCompletions */)
 	if err != nil {
 		t.Fatalf("AsyncReader.Wait before shutdown failed: %v", err)
@@ -495,7 +495,7 @@ func TestClientWatchdog(t *testing.T) {
 	time.Sleep(time.Second)
 
 	// Attempt to read the second chunk from the file and expect error.
-	ar.AddRead(0 /* id */, chunkSize, df, memmap.FileRange{chunkSize, chunkSize * 2}, buf[chunkSize:chunkSize*2])
+	ar.AddRead(0 /* id */, chunkSize, df, memmap.FileRange{Start: chunkSize, End: chunkSize * 2}, buf[chunkSize:chunkSize*2])
 	cs, err = ar.Wait(cs[:0], 1 /* minCompletions */)
 	if err == nil {
 		t.Errorf("AsyncReader.Wait after shutdown got error nil, completions: %+v", cs)

@@ -89,8 +89,8 @@ func MakeAddressIterator(addressSize int, buf *bytes.Buffer) AddressIterator {
 
 // AddressIterator is an iterator over IPv6 addresses.
 type AddressIterator struct {
-	addressSize int
 	buf         *bytes.Buffer
+	addressSize int
 }
 
 // Done indicates that the iterator has been exhausted/has no more elements.

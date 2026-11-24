@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build !check_invariants
-// +build !check_invariants
 
 package vfs
 

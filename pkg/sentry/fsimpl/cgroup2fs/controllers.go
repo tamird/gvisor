@@ -25,10 +25,7 @@ import (
 )
 
 // Aliased for brevity.
-const (
-	firstController = kernel.Cgroup2Ctrl(0)
-	numControllers  = kernel.Cgroup2NumControllers
-)
+const numControllers = kernel.Cgroup2NumControllers
 
 var ctrlNames = map[string]kernel.Cgroup2Ctrl{
 	"cpu":    kernel.Cgroup2CPU,
@@ -54,13 +51,13 @@ func (cs *ctrlSet) fork() *ctrlSet {
 
 // interfaceFile defines a cgroup interface file to be instantiated.
 type interfaceFile struct {
-	name           string
 	source         vfs.DynamicBytesSource
+	ctrl           controller
+	onEventCreated func(inode *eventFile)
+	name           string
 	perm           linux.FileMode
 	isEvent        bool
-	onEventCreated func(inode *eventFile)
 	showAtRoot     bool
-	ctrl           controller
 
 	// nsDelegatable marks files that remain writable on a cgroup namespace
 	// root from inside the namespace when the "nsdelegate" mount option is

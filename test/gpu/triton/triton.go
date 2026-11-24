@@ -20,6 +20,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 
@@ -201,9 +202,7 @@ func (p *Prompt) RaiseTemperature() {
 func (p *Prompt) Copy() *Prompt {
 	promptCopy := *p
 	promptCopy.Options = make(map[string]any, len(p.Options))
-	for k, v := range p.Options {
-		promptCopy.Options[k] = v
-	}
+	maps.Copy(promptCopy.Options, p.Options)
 	return &promptCopy
 }
 
@@ -231,6 +230,8 @@ func ZeroTemperaturePrompt(text string, maxTokens int) *Prompt {
 
 // Prompt is a triton prompt.
 type Prompt struct {
+	// Options maps parameter names to JSON-compatible values.
+	Options map[string]any
 
 	// Text is the prompt string.
 	// Common leading whitespace will be removed.
@@ -238,9 +239,6 @@ type Prompt struct {
 
 	// MaxTokens is the maximum number of tokens to generate.
 	MaxTokens int
-
-	// Options maps parameter names to JSON-compatible values.
-	Options map[string]any
 }
 
 // CleanQuery removes common whitespace from query lines, and all
@@ -322,9 +320,9 @@ func (p *Prompt) WithHotterModel() *Prompt {
 // Request defines the structure for the JSON payload.
 // https://docs.sglang.ai/basic_usage/sampling_params.html
 type promptJSON struct {
+	Options   map[string]any `json:"parameters"`
 	TextInput string         `json:"text_input"`
 	MaxTokens int            `json:"max_tokens"`
-	Options   map[string]any `json:"parameters"`
 }
 
 // json encodes this prompt to the JSON format expected by Triton.
@@ -346,8 +344,8 @@ type responseJSON struct {
 
 // Response represents a response to a query from Triton.
 type Response struct {
-	data    []*responseJSON
 	metrics llmutil.ResponseMetrics
+	data    []*responseJSON
 }
 
 // NumTokens returns the number of tokens in the response.

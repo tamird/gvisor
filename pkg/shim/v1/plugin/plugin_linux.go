@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 // Package plugin registers the runsc task service as a containerd TTRPC plugin.
 package plugin
@@ -24,7 +23,7 @@ import (
 	"github.com/containerd/containerd/v2/plugins"
 	"github.com/containerd/plugin"
 	"github.com/containerd/plugin/registry"
-	"gvisor.dev/gvisor/pkg/shim/v1"
+	v1 "gvisor.dev/gvisor/pkg/shim/v1"
 )
 
 func init() {
@@ -35,7 +34,7 @@ func init() {
 			plugins.EventPlugin,
 			plugins.InternalPlugin,
 		},
-		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
+		InitFn: func(ic *plugin.InitContext) (any, error) {
 			pp, err := ic.GetByID(plugins.EventPlugin, "publisher")
 			if err != nil {
 				return nil, err

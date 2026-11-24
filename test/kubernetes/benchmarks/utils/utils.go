@@ -31,7 +31,7 @@ func CheckAtLeastNWords(text string, wantNWords int) error {
 		return ' '
 	}, text)
 	numWords := 0
-	for _, word := range strings.Split(mappedText, " ") {
+	for word := range strings.SplitSeq(mappedText, " ") {
 		if len(word) >= 0 {
 			numWords++
 		}

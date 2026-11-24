@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build amd64
-// +build amd64
 
 package cpuid
 
@@ -21,6 +20,7 @@ import (
 	"cmp"
 	"encoding/binary"
 	"fmt"
+	"maps"
 	"slices"
 )
 
@@ -64,7 +64,7 @@ func (fs FeatureSet) ToStatic() Static {
 	}
 
 	// Processor Extended State Enumeration.
-	for i := uint32(0); i < xSaveInfoNumLeaves; i++ {
+	for i := range uint32(xSaveInfoNumLeaves) {
 		in := In{Eax: uint32(xSaveInfo), Ecx: i}
 		s[in] = fs.Query(in)
 	}
@@ -89,9 +89,7 @@ func (fs FeatureSet) ToStatic() Static {
 func (s Static) ToFeatureSet() FeatureSet {
 	// Make a copy.
 	ns := make(Static)
-	for k, v := range s {
-		ns[k] = v
-	}
+	maps.Copy(ns, s)
 	ns.normalize()
 	return FeatureSet{ns, hwCap{}}
 }

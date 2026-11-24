@@ -17,6 +17,7 @@ package shim_test
 import (
 	"context"
 	"io"
+	"maps"
 	"net"
 	"net/http"
 	"os"
@@ -114,8 +115,8 @@ func queryMetrics(t *testing.T, metricSock string) string {
 // Test variants for grouping.
 
 type metricServerTestCase struct {
-	name     string
 	shimArgs map[string]any
+	name     string
 }
 
 var metricServerTestCases = []metricServerTestCase{
@@ -173,9 +174,7 @@ func TestMetricServerMultipleSandboxes(t *testing.T) {
 			shimArgs := map[string]any{
 				"root": sharedRoot,
 			}
-			for k, v := range tc.shimArgs {
-				shimArgs[k] = v
-			}
+			maps.Copy(shimArgs, tc.shimArgs)
 			runscArgs := map[string]any{
 				"metric-server": metricSock,
 			}
@@ -288,9 +287,7 @@ func TestMetricServerLifecycle(t *testing.T) {
 			shimArgs := map[string]any{
 				"root": sharedRoot,
 			}
-			for k, v := range tc.shimArgs {
-				shimArgs[k] = v
-			}
+			maps.Copy(shimArgs, tc.shimArgs)
 			runscArgs := map[string]any{
 				"metric-server": metricSock,
 			}

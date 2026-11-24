@@ -544,7 +544,7 @@ func (h *handshake) handleSegment(s *segment) tcpip.Error {
 // +checklocksexclude:h.ep.pendingProcessingMu
 // +checklocksexclude:h.listenEP.listenCtx.hasherMu
 func (h *handshake) processSegments() tcpip.Error {
-	for i := 0; i < maxSegmentsPerWake; i++ {
+	for range maxSegmentsPerWake {
 		s := h.ep.segmentQueue.dequeue()
 		if s == nil {
 			return nil
@@ -714,9 +714,9 @@ func (h *handshake) transitionToStateEstablishedLocked(s *segment) {
 }
 
 type backoffTimer struct {
+	t          tcpip.Timer
 	timeout    time.Duration
 	maxTimeout time.Duration
-	t          tcpip.Timer
 }
 
 func newBackoffTimer(clock tcpip.Clock, timeout, maxTimeout time.Duration, f func()) (*backoffTimer, tcpip.Error) {
@@ -826,17 +826,17 @@ func makeSynOptions(opts header.TCPSynOptions) []byte {
 // tcpFields is a struct to carry different parameters required by the
 // send*TCP variant functions below.
 type tcpFields struct {
+	opts      []byte
 	id        stack.TransportEndpointID
-	ttl       uint8
-	tos       uint8
-	flags     header.TCPFlags
 	seq       seqnum.Value
 	ack       seqnum.Value
 	rcvWnd    seqnum.Size
-	opts      []byte
 	txHash    uint32
-	df        bool
 	expOptVal uint16
+	ttl       uint8
+	tos       uint8
+	flags     header.TCPFlags
+	df        bool
 }
 
 func (e *Endpoint) countRetransmits(packets uint64) {
@@ -914,11 +914,8 @@ func sendTCPBatch(r *stack.Route, tf tcpFields, pkt *stack.PacketBuffer, gso sta
 
 	size := pkt.Data().Size()
 	hdrSize := header.TCPMinimumSize + int(r.MaxHeaderLength()) + optLen
-	for i := 0; i < n; i++ {
-		packetSize := mss
-		if packetSize > size {
-			packetSize = size
-		}
+	for i := range n {
+		packetSize := min(mss, size)
 		size -= packetSize
 
 		pkt := pkt
@@ -1284,7 +1281,7 @@ func (e *Endpoint) handleReset(s *segment) (ok bool, err tcpip.Error) {
 // +checklocksexclude:e.snd.rtt.rttMutex
 func (e *Endpoint) handleSegmentsLocked() tcpip.Error {
 	sndUna := e.snd.SndUna
-	for i := 0; i < maxSegmentsPerWake; i++ {
+	for range maxSegmentsPerWake {
 		if state := e.EndpointState(); state.closed() || state == StateTimeWait || state == StateError {
 			return nil
 		}
@@ -1519,7 +1516,7 @@ func (e *Endpoint) handshakeFailed(err tcpip.Error) {
 // +checklocks:e.mu
 // +checklocksexclude:e.segmentQueue.mu
 func (e *Endpoint) handleTimeWaitSegments() (extendTimeWait bool, reuseTW func()) {
-	for i := 0; i < maxSegmentsPerWake; i++ {
+	for range maxSegmentsPerWake {
 		s := e.segmentQueue.dequeue()
 		if s == nil {
 			break

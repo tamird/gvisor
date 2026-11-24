@@ -251,8 +251,8 @@ func (c *WriteContext) Release() {
 
 // WritePacketInfo is the properties of a packet that may be written.
 type WritePacketInfo struct {
-	NetProto                    tcpip.NetworkProtocolNumber
 	LocalAddress, RemoteAddress tcpip.Address
+	NetProto                    tcpip.NetworkProtocolNumber
 	MaxHeaderLength             uint16
 	RequiresTXTransportChecksum bool
 }

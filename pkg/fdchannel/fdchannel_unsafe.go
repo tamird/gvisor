@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build aix || darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris
-// +build aix darwin dragonfly freebsd linux netbsd openbsd solaris
 
 // Package fdchannel implements passing file descriptors between processes over
 // Unix domain sockets.
@@ -41,9 +40,9 @@ func NewConnectedSockets() ([2]int, error) {
 //
 // Endpoint is not copyable or movable by value.
 type Endpoint struct {
-	sockfd int32
-	msghdr unix.Msghdr
 	cmsg   *unix.Cmsghdr // followed by sizeofInt32 bytes of data
+	msghdr unix.Msghdr
+	sockfd int32
 }
 
 // Init must be called on zero-value Endpoints before first use. sockfd must be
@@ -139,5 +138,5 @@ func (ep *Endpoint) recvFD(nonblock bool) (int, error) {
 
 func (ep *Endpoint) cmsgData() *int32 {
 	// unix.CmsgLen(0) == unix.cmsgAlignOf(unix.SizeofCmsghdr)
-	return (*int32)(unsafe.Pointer(uintptr(unsafe.Pointer(ep.cmsg)) + uintptr(unix.CmsgLen(0))))
+	return (*int32)(unsafe.Add(unsafe.Pointer(ep.cmsg), unix.CmsgLen(0)))
 }

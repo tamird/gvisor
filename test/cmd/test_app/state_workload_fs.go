@@ -39,7 +39,7 @@ const fsProbeLogName = "log"
 func fsProbeLog(name string, hops int) []byte {
 	var b bytes.Buffer
 	fmt.Fprintf(&b, "fsprobe:%s\n", name)
-	for hop := 0; hop < hops; hop++ {
+	for hop := range hops {
 		fmt.Fprintf(&b, "hop=%d\nverified=%d\n", hop, hop)
 	}
 	return b.Bytes()
@@ -49,28 +49,33 @@ func fsProbeLog(name string, hops int) []byte {
 // filesystem (tmpfs, host bind mount, or root overlay) that must survive
 // checkpoint/restore.
 type fsProbe struct {
-	name string
-	dir  string
-	// allowUnlinked is true if open unlinked files are expected to survive
-	// checkpoint/restore in this filesystem.
-	allowUnlinked bool
-
 	// logFile is the log file, kept open with O_APPEND.
 	logFile *os.File
-	// wantLog is the expected content of the log file.
-	wantLog []byte
+
 	// readFile is the log file opened read-only, at offset readOff.
 	readFile *os.File
-	readOff  int64
+
 	// mapFile is backing a MAP_SHARED mapping, mapping.
 	mapFile *os.File
-	mapping []byte
-	// wantMap is the expected content of mapping.
-	wantMap []byte
+
 	// unlinked is an open file that has been unlinked, with content
 	// wantUnlinked.
 	unlinked     *os.File
+	name         string
+	dir          string
 	wantUnlinked string
+
+	// wantLog is the expected content of the log file.
+	wantLog []byte
+	mapping []byte
+
+	// wantMap is the expected content of mapping.
+	wantMap []byte
+	readOff int64
+
+	// allowUnlinked is true if open unlinked files are expected to survive
+	// checkpoint/restore in this filesystem.
+	allowUnlinked bool
 }
 
 func newFSProbe(name, root string, allowUnlinked bool) (*fsProbe, error) {

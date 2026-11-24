@@ -40,8 +40,8 @@ var handlers = [...]lisafs.RPCHandler{
 }
 
 type testControlFD struct {
-	lisafs.ControlFD
 	lisafs.ControlFDImpl
+	lisafs.ControlFD
 }
 
 func (fd *testControlFD) FD() *lisafs.ControlFD {
@@ -154,12 +154,10 @@ func TestStress(t *testing.T) {
 		concurrency := 8
 		numMsgPerGoroutine := 5000
 		var clientWg sync.WaitGroup
-		for i := 0; i < concurrency; i++ {
-			clientWg.Add(1)
-			go func() {
-				defer clientWg.Done()
+		for range concurrency {
+			clientWg.Go(func() {
 
-				for j := 0; j < numMsgPerGoroutine; j++ {
+				for range numMsgPerGoroutine {
 					// Create a massive random message.
 					var req lisafs.MsgDynamic
 					req.Randomize(100)
@@ -173,7 +171,7 @@ func TestStress(t *testing.T) {
 						t.Errorf("response should be the same as request: request = %+v, response = %+v", req, resp)
 					}
 				}
-			}()
+			})
 		}
 
 		clientWg.Wait()
@@ -220,10 +218,10 @@ func (*walkTestConnImpl) SupportedMessages() []lisafs.MID {
 func TestWalkMultipleResponseValidation(t *testing.T) {
 	names := []string{"a", "b"}
 	for _, tc := range []struct {
-		name      string
-		status    lisafs.WalkStatus
-		numInodes int
 		wantErr   error
+		name      string
+		numInodes int
+		status    lisafs.WalkStatus
 	}{
 		{
 			name:      "success",
@@ -344,9 +342,9 @@ func TestWalkMultipleResponseValidation(t *testing.T) {
 
 // unlinkRaceFD implements lisafs.ControlFDImpl for TestUnlinkCloseRace.
 type unlinkRaceFD struct {
-	testControlFD
 	onWalk   func(parent *unlinkRaceFD, name string) (*unlinkRaceFD, bool)
 	onUnlink func(parent *unlinkRaceFD, name string) error
+	testControlFD
 }
 
 // Walk implements lisafs.ControlFDImpl.Walk.
@@ -466,13 +464,11 @@ func TestUnlinkCloseRace(t *testing.T) {
 		dirFDID := inodes[0].ControlFD
 
 		var unlinkWg sync.WaitGroup
-		unlinkWg.Add(1)
-		go func() {
-			defer unlinkWg.Done()
+		unlinkWg.Go(func() {
 			if err := rootFD.UnlinkAt(ctx, "dir", unix.AT_REMOVEDIR); err != nil {
 				t.Errorf("UnlinkAt(\"dir\") failed: %v", err)
 			}
-		}()
+		})
 
 		<-unlinkEntered
 		c.CloseFD(ctx, dirFDID, true /* flush */)

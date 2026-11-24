@@ -29,9 +29,9 @@ import (
 
 // Options are seccomp filter related options.
 type Options struct {
+	ExtraRules     []seccomp.SyscallRules
 	ProfileEnabled bool
 	CgoEnabled     bool
-	ExtraRules     []seccomp.SyscallRules
 }
 
 // isInstrumentationEnabled returns whether there are any

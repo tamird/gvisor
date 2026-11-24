@@ -104,8 +104,8 @@ func newTestNeighborResolver(nudDisp NUDDispatcher, config NUDConfigurations, cl
 
 // testEntryStore contains a set of IP to NeighborEntry mappings.
 type testEntryStore struct {
-	mu         sync.RWMutex
 	entriesMap map[tcpip.Address]NeighborEntry
+	mu         sync.RWMutex
 }
 
 func toAddress(i uint16) tcpip.Address {
@@ -133,7 +133,7 @@ func newTestEntryStore() *testEntryStore {
 	store := &testEntryStore{
 		entriesMap: make(map[tcpip.Address]NeighborEntry),
 	}
-	for i := uint16(0); i < entryStoreSize; i++ {
+	for i := range uint16(entryStoreSize) {
 		addr := toAddress(i)
 		linkAddr := toLinkAddress(i)
 
@@ -172,7 +172,7 @@ func (s *testEntryStore) entries() []NeighborEntry {
 	entries := make([]NeighborEntry, 0, len(s.entriesMap))
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	for i := uint16(0); i < entryStoreSize; i++ {
+	for i := range uint16(entryStoreSize) {
 		addr := toAddress(i)
 		if entry, ok := s.entriesMap[addr]; ok {
 			entries = append(entries, entry)
@@ -196,10 +196,10 @@ func (s *testEntryStore) set(i uint16, linkAddr tcpip.LinkAddress) {
 // neighbor probe.
 type testNeighborResolver struct {
 	clock                tcpip.Clock
-	neigh                neighborCache
 	entries              *testEntryStore
-	delay                time.Duration
 	onLinkAddressRequest func()
+	neigh                neighborCache
+	delay                time.Duration
 	dropReplies          bool
 }
 
@@ -460,8 +460,8 @@ func newTestContext(c NUDConfigurations) testContext {
 }
 
 type overflowOptions struct {
-	startAtEntryIndex uint16
 	wantStaticEntries []NeighborEntry
+	startAtEntryIndex uint16
 }
 
 func (c *testContext) overflowCache(opts overflowOptions) error {
@@ -1070,7 +1070,7 @@ func TestNeighborCacheKeepFrequentlyUsed(t *testing.T) {
 	// periodically refreshes the frequently used entry.
 
 	// Fill the neighbor cache to capacity
-	for i := uint16(0); i < NeighborCacheSize; i++ {
+	for i := range uint16(NeighborCacheSize) {
 		entry, ok := linkRes.entries.entry(i)
 		if !ok {
 			t.Fatalf("got linkRes.entries.entry(%d) = _, false, want = true", i)
@@ -1162,7 +1162,7 @@ func TestNeighborCacheConcurrent(t *testing.T) {
 	storeEntries := linkRes.entries.entries()
 	for _, entry := range storeEntries {
 		var wg sync.WaitGroup
-		for r := 0; r < concurrentProcesses; r++ {
+		for range concurrentProcesses {
 			wg.Add(1)
 			go func(entry NeighborEntry) {
 				defer wg.Done()
@@ -1635,9 +1635,9 @@ func BenchmarkCacheClear(b *testing.B) {
 	linkRes.delay = 0
 
 	// Clear for every possible size of the cache
-	for cacheSize := uint16(0); cacheSize < NeighborCacheSize; cacheSize++ {
+	for cacheSize := range uint16(NeighborCacheSize) {
 		// Fill the neighbor cache to capacity.
-		for i := uint16(0); i < cacheSize; i++ {
+		for i := range cacheSize {
 			entry, ok := linkRes.entries.entry(i)
 			if !ok {
 				b.Fatalf("got linkRes.entries.entry(%d) = _, false, want = true", i)

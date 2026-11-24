@@ -38,6 +38,141 @@ type factsLoadTestFact struct{}
 
 func (*factsLoadTestFact) AFact() {}
 
+func TestIgnoredFileDirectives(t *testing.T) {
+	analyzers := make(map[*analysis.Analyzer]analyzer)
+	for a, runner := range allAnalyzers {
+		if a.Name == "directive" {
+			register(analyzers, runner)
+		}
+	}
+	dir := t.TempDir()
+	source := filepath.Join(dir, "source.go")
+	ignored := filepath.Join(dir, "ignored.go")
+	for filename, contents := range map[string]string{
+		source:  "package sample\n",
+		ignored: "//go:build ignore\n\n//go:debug panicnil=1\npackage sample\n",
+	} {
+		if err := os.WriteFile(filename, []byte(contents), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	i := &importer{
+		fset:      token.NewFileSet(),
+		cache:     make(map[string]*importerEntry),
+		analyzers: analyzers,
+	}
+	_, findings, _, err := i.checkPackage("sample", []string{source, ignored})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(findings) != 1 || findings[0].Category != "directive" || findings[0].Position.Filename != ignored || !strings.Contains(findings[0].Message, "//go:debug directive only valid in package main or test") {
+		t.Fatalf("findings = %v, want invalid directive in %s", findings, ignored)
+	}
+}
+
+func TestFieldAlignmentLayouts(t *testing.T) {
+	analyzers := make(map[*analysis.Analyzer]analyzer)
+	for a, runner := range allAnalyzers {
+		if a.Name == "fieldalignment" {
+			register(analyzers, runner)
+		}
+	}
+	const source = `package sample
+import renamed "structs"
+type Marker = renamed.HostLayout
+type Different renamed.HostLayout
+type ordinary struct { // report
+	n uint64
+	p *int
+}
+type host struct {
+	_ Marker
+	n uint64
+	p *int
+	child struct { // report
+		n uint64
+		p *int
+	}
+}
+type notHost struct { // report
+	_ Different
+	n uint64
+	p *int
+}
+// +stateify savable
+type saved struct {
+	n uint64
+	p *int
+	child struct { // report
+		n uint64
+		p *int
+	}
+}
+// +stateify savable
+type (
+	grouped struct {
+		n uint64
+		p *int
+	}
+)
+type (
+	// +stateify savable
+	specComment struct { // report
+		n uint64
+		p *int
+	}
+)
+// +stateify savable suffix
+type otherComment struct { // report
+	n uint64
+	p *int
+}
+func localType() {
+	// +stateify savable
+	type local struct { // report
+		n uint64
+		p *int
+	}
+}
+`
+	filename := filepath.Join(t.TempDir(), "source.go")
+	if err := os.WriteFile(filename, []byte(source), 0600); err != nil {
+		t.Fatal(err)
+	}
+	// The marker is identified by its declared type, including through aliases.
+	structs := types.NewPackage("structs", "structs")
+	marker := types.NewTypeName(token.NoPos, structs, "HostLayout", nil)
+	types.NewNamed(marker, types.NewStruct(nil, nil), nil)
+	structs.Scope().Insert(marker)
+	structs.MarkComplete()
+	i := &importer{
+		fset: token.NewFileSet(),
+		cache: map[string]*importerEntry{
+			"structs": {pkg: structs},
+		},
+		analyzers: analyzers,
+	}
+	_, findings, _, err := i.checkPackage("sample", []string{filename})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := make(map[int]bool)
+	for line, text := range strings.Split(source, "\n") {
+		if strings.Contains(text, "// report") {
+			want[line+1] = true
+		}
+	}
+	for _, f := range findings {
+		if f.Category != "fieldalignment" || !want[f.Position.Line] {
+			t.Errorf("unexpected finding: %v", &f)
+		}
+		delete(want, f.Position.Line)
+	}
+	if len(want) != 0 {
+		t.Errorf("missing fieldalignment findings at lines: %v", want)
+	}
+}
+
 func TestDeclaredFactsErrors(t *testing.T) {
 	savedFactMap, savedBundles := flags.FactMap, flags.Bundles
 	t.Cleanup(func() {
@@ -45,20 +180,20 @@ func TestDeclaredFactsErrors(t *testing.T) {
 	})
 	var malformed bytes.Buffer
 	if err := gob.NewEncoder(&malformed).Encode([]struct {
-		Key   string
 		Value any
+		Key   string
 	}{{Value: "bad"}}); err != nil {
 		t.Fatal(err)
 	}
 
 	for _, tc := range []struct {
+		wantErr  error
 		name     string
-		supplied bool
-		create   bool
+		wantText string
 		contents []byte
 		bundles  [][]byte // A nil entry omits the package from that bundle.
-		wantErr  error
-		wantText string
+		supplied bool
+		create   bool
 	}{
 		{name: "absent"},
 		{name: "missing", supplied: true, wantErr: os.ErrNotExist},

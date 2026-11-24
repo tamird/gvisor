@@ -25,6 +25,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"time"
 
@@ -71,17 +72,17 @@ func (l *LogMonitor) Wait(cmd *exec.Cmd, ch chan runc.Exit) (int, error) {
 
 // Runsc is the client to the runsc cli.
 type Runsc struct {
+	Config       map[string]string
+	DebugLogFD   *int
 	Command      string
-	PdeathSignal unix.Signal
-	Setpgid      bool
 	Root         string
 	Log          string
 	LogFormat    runc.Format
 	PanicLog     string
-	Config       map[string]string
-	Debug        bool
 	DebugLog     string
-	DebugLogFD   *int
+	PdeathSignal unix.Signal
+	Setpgid      bool
+	Debug        bool
 }
 
 // List returns all containers created inside the provided runsc root directory.
@@ -297,16 +298,16 @@ func (r *Runsc) Restore(context context.Context, id string, cio runc.IO, opts *R
 // CheckpointOpts is a set of options to runsc.Checkpoint().
 type CheckpointOpts struct {
 	ImagePath                 string
-	LeaveRunning              bool
-	Direct                    bool
 	Compression               string
-	ExcludeCommittedZeroPages bool
 	SaveRestoreExecArgv       string
 	SaveRestoreExecTimeout    string
 	CudaCheckpointPath        string
-	CudaCheckpointSequential  bool
 	WorkPath                  string
 	FSPath                    string
+	LeaveRunning              bool
+	Direct                    bool
+	ExcludeCommittedZeroPages bool
+	CudaCheckpointSequential  bool
 }
 
 func (o *CheckpointOpts) checkpointArgs() []string {
@@ -461,9 +462,9 @@ func (r *Runsc) WaitWithOptions(context context.Context, id string, opts *WaitOp
 // ExecOpts is a set of options to runsc.Exec().
 type ExecOpts struct {
 	runc.IO
+	ConsoleSocket   runc.ConsoleSocket
 	PidFile         string
 	InternalPidFile string
-	ConsoleSocket   runc.ConsoleSocket
 	Detach          bool
 }
 
@@ -805,5 +806,5 @@ func cloneBuf(b *bytes.Buffer) []byte {
 	if b == nil {
 		return nil
 	}
-	return append([]byte(nil), b.Bytes()...)
+	return slices.Concat[[]byte](b.Bytes())
 }

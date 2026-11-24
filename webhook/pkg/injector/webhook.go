@@ -53,9 +53,7 @@ func CreateConfiguration(clientset kubeclientset.Interface, selector *metav1.Lab
 	fail := admregv1beta1.Fail
 
 	config := &admregv1beta1.MutatingWebhookConfiguration{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: Name,
-		},
+		Name: Name,
 		Webhooks: []admregv1beta1.MutatingWebhook{
 			{
 				Name: fullName,
@@ -71,11 +69,9 @@ func CreateConfiguration(clientset kubeclientset.Interface, selector *metav1.Lab
 						Operations: []admregv1beta1.OperationType{
 							admregv1beta1.Create,
 						},
-						Rule: admregv1beta1.Rule{
-							APIGroups:   []string{"*"},
-							APIVersions: []string{"*"},
-							Resources:   []string{"pods"},
-						},
+						APIGroups:   []string{"*"},
+						APIVersions: []string{"*"},
+						Resources:   []string{"pods"},
 					},
 				},
 				FailurePolicy:     &fail,

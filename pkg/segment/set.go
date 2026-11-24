@@ -864,7 +864,7 @@ func (s *Set) SplitUnchecked(seg Iterator, split Key) (Iterator, Iterator) {
 	end2 := seg.End()
 	seg.SetEndUnchecked(split)
 	seg.SetValue(val1)
-	seg2 := s.InsertWithoutMergingUnchecked(seg.NextGap(), Range{split, end2}, val2)
+	seg2 := s.InsertWithoutMergingUnchecked(seg.NextGap(), Range{Start: split, End: end2}, val2)
 	// seg may now be invalid due to the Insert.
 	return seg2.PrevSegment(), seg2
 }
@@ -1163,7 +1163,7 @@ func (n *node) rebalanceBeforeInsert(gap GapIterator) GapIterator {
 			copy(left.children[:minDegree], n.children[:minDegree])
 			copy(right.children[:minDegree], n.children[minDegree:])
 			zeroNodeSlice(n.children[2:])
-			for i := 0; i < minDegree; i++ {
+			for i := range minDegree {
 				left.children[i].parent = left
 				left.children[i].parentIndex = i
 				right.children[i].parent = right
@@ -1214,7 +1214,7 @@ func (n *node) rebalanceBeforeInsert(gap GapIterator) GapIterator {
 	if n.hasChildren {
 		copy(sibling.children[:minDegree], n.children[minDegree:])
 		zeroNodeSlice(n.children[minDegree:])
-		for i := 0; i < minDegree; i++ {
+		for i := range minDegree {
 			sibling.children[i].parent = sibling
 			sibling.children[i].parentIndex = i
 		}
@@ -1804,7 +1804,7 @@ func (gap GapIterator) Ok() bool {
 
 // Range returns the range spanned by the iterated gap.
 func (gap GapIterator) Range() Range {
-	return Range{gap.Start(), gap.End()}
+	return Range{Start: gap.Start(), End: gap.End()}
 }
 
 // Start is equivalent to Range().Start, but should be preferred if only the
@@ -2101,7 +2101,7 @@ func (s *Set) ImportSlice(fs []FlatSegment) error {
 	gap := s.FirstGap()
 	for i := range fs {
 		f := &fs[i]
-		r := Range{f.Start, f.End}
+		r := Range{Start: f.Start, End: f.End}
 		if !gap.Range().IsSupersetOf(r) {
 			return fmt.Errorf("segment overlaps a preceding segment or is incorrectly sorted: %v => %v", r, f.Value)
 		}

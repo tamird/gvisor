@@ -52,10 +52,11 @@ type MetricName string
 
 // Metric is the full metadata about a metric.
 type Metric struct {
-	// Name is the name of the metric.
-	Name MetricName
 	// Metadata is the metadata of the metric.
 	Metadata *mpb.MetricMetadata
+
+	// Name is the name of the metric.
+	Name MetricName
 }
 
 // MetricAndFields is a metric name and a set of field values.
@@ -123,14 +124,17 @@ func (ts *TimeSeries) ChartTitle() string {
 // Data maps metrics and field values to timeseries.
 type Data struct {
 	startTime       time.Time
-	rawLogs         string
 	data            map[MetricAndFields]*TimeSeries
 	collectionStats *metric.CollectionStats
+	rawLogs         string
 }
 
 // HTMLOptions are options for generating an HTML page with charts of the
 // metrics data.
 type HTMLOptions struct {
+	// When is the time at which the measurements were taken.
+	When time.Time
+
 	// Title is the title of this set of charts.
 	Title string
 
@@ -138,9 +142,6 @@ type HTMLOptions struct {
 	// collected. May be empty; usually only specified when there are more
 	// than one container involved in a single test or benchmark.
 	ContainerName string
-
-	// When is the time at which the measurements were taken.
-	When time.Time
 }
 
 type chart struct {
@@ -542,7 +543,7 @@ func Parse(logs string, hasPrefix bool) (*Data, error) {
 	lineHashMismatch := false
 	metricsLineFound := false
 	var gotErrs []error
-	for _, line := range strings.Split(logs, "\n") {
+	for line := range strings.SplitSeq(logs, "\n") {
 		if hasPrefix && !strings.HasPrefix(line, metric.MetricsPrefix) {
 			continue
 		}
@@ -553,8 +554,8 @@ func Parse(logs string, hasPrefix bool) (*Data, error) {
 		lineData := strings.TrimPrefix(line, metric.MetricsPrefix)
 
 		// Check for hash match.
-		if strings.HasPrefix(lineData, metric.MetricsHashIndicator) {
-			hash := strings.TrimPrefix(lineData, metric.MetricsHashIndicator)
+		if after, ok := strings.CutPrefix(lineData, metric.MetricsHashIndicator); ok {
+			hash := after
 			wantHashInt64, err := strconv.ParseUint(strings.TrimPrefix(hash, "0x"), 16, 32)
 			if err != nil {
 				gotErrs = append(gotErrs, fmt.Errorf("invalid hash line: %q: %w", line, err))
@@ -596,8 +597,8 @@ func Parse(logs string, hasPrefix bool) (*Data, error) {
 			lineData = strings.Join(tabSplit[:len(tabSplit)-1], "\t")
 		}
 
-		if strings.HasPrefix(lineData, metric.MetricsMetaIndicator) {
-			lineMetadata := strings.TrimPrefix(lineData, metric.MetricsMetaIndicator)
+		if after, ok := strings.CutPrefix(lineData, metric.MetricsMetaIndicator); ok {
+			lineMetadata := after
 			components := strings.Split(lineMetadata, "\t")
 			if len(components) != 2 {
 				return nil, fmt.Errorf("invalid meta line: %q", line)
@@ -614,8 +615,8 @@ func Parse(logs string, hasPrefix bool) (*Data, error) {
 			continue
 		}
 
-		if strings.HasPrefix(lineData, metric.MetricsStartTimeIndicator) {
-			timestamp, err := strconv.ParseUint(strings.TrimPrefix(lineData, metric.MetricsStartTimeIndicator), 10, 64)
+		if after, ok := strings.CutPrefix(lineData, metric.MetricsStartTimeIndicator); ok {
+			timestamp, err := strconv.ParseUint(after, 10, 64)
 			if err != nil {
 				return nil, fmt.Errorf("invalid start time line: %q: %w", line, err)
 			}
@@ -873,11 +874,11 @@ func fromFile(ctx context.Context, name, logFile string, logContents []byte, has
 	if err != nil {
 		return fmt.Errorf("failed to generate HTML: %w", err)
 	}
-	if strings.HasSuffix(logFile, ".log") {
+	if before, ok := strings.CutSuffix(logFile, ".log"); ok {
 		// Best-effort conversion to HTML next to the .log file in the directory,
 		// if permissions allow that. Ignore errors, what matters more is the
 		// publishing step later on.
-		_ = os.WriteFile(strings.TrimSuffix(logFile, ".log")+".html", []byte(html), 0644)
+		_ = os.WriteFile(before+".html", []byte(html), 0644)
 	}
 	if err := publishHTMLFn(ctx, logFn, htmlOptions, html); err != nil {
 		return fmt.Errorf("failed to publish HTML: %w", err)

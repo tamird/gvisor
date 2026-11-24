@@ -45,7 +45,7 @@ func TestHostFeatureFlags(t *testing.T) {
 		t.Fatalf("Unable to extract flags from %q", cpuinfo)
 	}
 	cpuinfoFlags := make(map[string]struct{})
-	for _, f := range strings.Split(m[1], " ") {
+	for f := range strings.SplitSeq(m[1], " ") {
 		cpuinfoFlags[f] = struct{}{}
 	}
 

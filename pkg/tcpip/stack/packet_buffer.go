@@ -42,24 +42,24 @@ var pkPool = sync.Pool{
 
 // PacketBufferOptions specifies options for PacketBuffer creation.
 type PacketBufferOptions struct {
-	// ReserveHeaderBytes is the number of bytes to reserve for headers. Total
-	// number of bytes pushed onto the headers must not exceed this value.
-	ReserveHeaderBytes int
+	// OnRelease is a function to be run when the packet buffer is no longer
+	// referenced (released back to the pool).
+	OnRelease func()
 
 	// Payload is the initial unparsed data for the new packet. If set, it will
 	// be owned by the new packet.
 	Payload buffer.Buffer
 
-	// IsForwardedPacket identifies that the PacketBuffer being created is for a
-	// forwarded packet.
-	IsForwardedPacket bool
-
-	// OnRelease is a function to be run when the packet buffer is no longer
-	// referenced (released back to the pool).
-	OnRelease func()
+	// ReserveHeaderBytes is the number of bytes to reserve for headers. Total
+	// number of bytes pushed onto the headers must not exceed this value.
+	ReserveHeaderBytes int
 
 	// Mark is the mark value of this packet.
 	Mark uint32
+
+	// IsForwardedPacket identifies that the PacketBuffer being created is for a
+	// forwarded packet.
+	IsForwardedPacket bool
 }
 
 // A PacketBuffer contains all the data of a network packet.

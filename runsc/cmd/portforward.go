@@ -30,7 +30,6 @@ import (
 	"github.com/google/subcommands"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"gvisor.dev/gvisor/pkg/log"
-	"gvisor.dev/gvisor/pkg/urpc"
 	"gvisor.dev/gvisor/runsc/boot/sentryapi"
 	"gvisor.dev/gvisor/runsc/cmd/util"
 	"gvisor.dev/gvisor/runsc/config"
@@ -41,8 +40,8 @@ import (
 // PortForward implements subcommands.Command for the "portforward" command.
 type PortForward struct {
 	containerLoader
-	portNum int
 	stream  string
+	portNum int
 }
 
 // Name implements subcommands.Command.Name.
@@ -239,7 +238,7 @@ func (p *PortForward) doStream(ctx context.Context, port string, c *container.Co
 	if err := c.PortForward(&sentryapi.PortForwardOpts{
 		Port:        uint16(p.portNum),
 		ContainerID: c.ID,
-		FilePayload: urpc.FilePayload{Files: []*os.File{f}},
+		Files:       []*os.File{f},
 	}); err != nil {
 		return fmt.Errorf("PortForward: %v", err)
 	}
@@ -274,8 +273,8 @@ func portCopy(ctx context.Context, c *container.Container, localConn net.Conn, p
 	// immediately after port forwarding is started and connection state is
 	// handled via the UDS from then on.
 	if err := c.PortForward(&sentryapi.PortForwardOpts{
-		Port:        port,
-		FilePayload: urpc.FilePayload{Files: []*os.File{streamFile}},
+		Port:  port,
+		Files: []*os.File{streamFile},
 	}); err != nil {
 		return fmt.Errorf("PortForward: %v", err)
 	}

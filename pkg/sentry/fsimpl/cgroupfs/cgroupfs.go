@@ -835,10 +835,8 @@ func (f *stubControllerFile) WriteBackground(ctx context.Context, src usermem.IO
 // stores a control value from data.
 func (fs *filesystem) newStubControllerFile(ctx context.Context, creds *auth.Credentials, data *atomicbitops.Int64, allowBackgroundAccess bool) kernfs.Inode {
 	f := &stubControllerFile{
-		controllerFile: controllerFile{
-			allowBackgroundAccess: allowBackgroundAccess,
-		},
-		data: data,
+		allowBackgroundAccess: allowBackgroundAccess,
+		data:                  data,
 	}
 	f.Init(ctx, creds, linux.UNNAMED_MAJOR, fs.devMinor, fs.NextIno(), f, writableFileMode)
 	return f

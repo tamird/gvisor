@@ -1131,8 +1131,8 @@ func (e *endpoint) forwardMulticastPacket(h header.IPv4, pkt *stack.PacketBuffer
 	case multicast.NoRouteFoundAndPendingInserted:
 		e.emitMulticastEvent(func(disp stack.MulticastForwardingEventDispatcher) {
 			disp.OnMissingRoute(stack.MulticastPacketContext{
-				stack.UnicastSourceAndMulticastDestination{h.SourceAddress(), h.DestinationAddress()},
-				e.nic.ID(),
+				SourceAndDestination: stack.UnicastSourceAndMulticastDestination{Source: h.SourceAddress(), Destination: h.DestinationAddress()},
+				InputInterface:       e.nic.ID(),
 			})
 		})
 	case multicast.PacketQueuedInPendingRoute:
@@ -1188,8 +1188,8 @@ func (e *endpoint) forwardValidatedMulticastPacket(pkt *stack.PacketBuffer, inst
 		h := header.IPv4(pkt.NetworkHeader().Slice())
 		e.emitMulticastEvent(func(disp stack.MulticastForwardingEventDispatcher) {
 			disp.OnUnexpectedInputInterface(stack.MulticastPacketContext{
-				stack.UnicastSourceAndMulticastDestination{h.SourceAddress(), h.DestinationAddress()},
-				e.nic.ID(),
+				SourceAndDestination: stack.UnicastSourceAndMulticastDestination{Source: h.SourceAddress(), Destination: h.DestinationAddress()},
+				InputInterface:       e.nic.ID(),
 			}, installedRoute.ExpectedInputInterface)
 		})
 		return &ip.ErrUnexpectedMulticastInputInterface{}
@@ -2062,10 +2062,7 @@ func calculateNetworkMTU(linkMTU, networkHeaderSize uint32) (uint32, tcpip.Error
 		return 0, &tcpip.ErrMalformedHeader{}
 	}
 
-	networkMTU := linkMTU
-	if networkMTU > MaxTotalSize {
-		networkMTU = MaxTotalSize
-	}
+	networkMTU := min(linkMTU, MaxTotalSize)
 
 	return networkMTU - networkHeaderSize, nil
 }

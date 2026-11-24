@@ -63,44 +63,44 @@ func TestSACKScoreboardIsSACKED(t *testing.T) {
 	}{
 		{
 			"Test holes and unsacked SACK blocks in SACKed ranges and insertion of overlapping SACK blocks",
-			[]header.SACKBlock{{10, 20}, {10, 30}, {30, 40}, {41, 50}, {5, 10}, {1, 50}, {111, 120}, {101, 110}, {52, 120}},
+			[]header.SACKBlock{{Start: 10, End: 20}, {Start: 10, End: 30}, {Start: 30, End: 40}, {Start: 41, End: 50}, {Start: 5, End: 10}, {Start: 1, End: 50}, {Start: 111, End: 120}, {Start: 101, End: 110}, {Start: 52, End: 120}},
 			[]blockTest{
-				{header.SACKBlock{15, 21}, true},
-				{header.SACKBlock{200, 201}, false},
-				{header.SACKBlock{50, 51}, false},
-				{header.SACKBlock{53, 120}, true},
+				{header.SACKBlock{Start: 15, End: 21}, true},
+				{header.SACKBlock{Start: 200, End: 201}, false},
+				{header.SACKBlock{Start: 50, End: 51}, false},
+				{header.SACKBlock{Start: 53, End: 120}, true},
 			},
 			0,
 		},
 		{
 			"Test disjoint SACKBlocks",
-			[]header.SACKBlock{{2288624809, 2288810057}, {2288811477, 2288838565}},
+			[]header.SACKBlock{{Start: 2288624809, End: 2288810057}, {Start: 2288811477, End: 2288838565}},
 			[]blockTest{
-				{header.SACKBlock{2288624809, 2288810057}, true},
-				{header.SACKBlock{2288811477, 2288838565}, true},
-				{header.SACKBlock{2288810057, 2288811477}, false},
+				{header.SACKBlock{Start: 2288624809, End: 2288810057}, true},
+				{header.SACKBlock{Start: 2288811477, End: 2288838565}, true},
+				{header.SACKBlock{Start: 2288810057, End: 2288811477}, false},
 			},
 			2288624809,
 		},
 		{
 			"Test sequence number wrap around",
-			[]header.SACKBlock{{4294254144, 225652}, {5340409, 5350509}},
+			[]header.SACKBlock{{Start: 4294254144, End: 225652}, {Start: 5340409, End: 5350509}},
 			[]blockTest{
-				{header.SACKBlock{4294254144, 4294254145}, true},
-				{header.SACKBlock{4294254143, 4294254144}, false},
-				{header.SACKBlock{4294254144, 1}, true},
-				{header.SACKBlock{225652, 5350509}, false},
-				{header.SACKBlock{5340409, 5350509}, true},
-				{header.SACKBlock{5350509, 5350609}, false},
+				{header.SACKBlock{Start: 4294254144, End: 4294254145}, true},
+				{header.SACKBlock{Start: 4294254143, End: 4294254144}, false},
+				{header.SACKBlock{Start: 4294254144, End: 1}, true},
+				{header.SACKBlock{Start: 225652, End: 5350509}, false},
+				{header.SACKBlock{Start: 5340409, End: 5350509}, true},
+				{header.SACKBlock{Start: 5350509, End: 5350609}, false},
 			},
 			4294254144,
 		},
 		{
 			"Test disjoint SACKBlocks out of order",
-			[]header.SACKBlock{{827450276, 827454536}, {827426028, 827428868}},
+			[]header.SACKBlock{{Start: 827450276, End: 827454536}, {Start: 827426028, End: 827428868}},
 			[]blockTest{
-				{header.SACKBlock{827426028, 827428867}, true},
-				{header.SACKBlock{827450168, 827450275}, false},
+				{header.SACKBlock{Start: 827426028, End: 827428867}, true},
+				{header.SACKBlock{Start: 827450168, End: 827450275}, false},
 			},
 			827426000,
 		},
@@ -119,8 +119,8 @@ func TestSACKScoreboardIsRangeLost(t *testing.T) {
 	const largeMSS = 1 << 15
 	for _, test := range []struct {
 		name        string
-		mss         uint16
 		sackedBytes seqnum.Size
+		mss         uint16
 		lost        bool
 	}{
 		{name: "below_byte_threshold", mss: smss, sackedBytes: 2*smss - 1},
@@ -142,17 +142,17 @@ func TestSACKScoreboardIsRangeLost(t *testing.T) {
 	}
 
 	s := tcp.NewSACKScoreboard(10, 0)
-	s.Insert(header.SACKBlock{1, 25})
-	s.Insert(header.SACKBlock{25, 50})
-	s.Insert(header.SACKBlock{51, 100})
-	s.Insert(header.SACKBlock{111, 120})
-	s.Insert(header.SACKBlock{101, 110})
-	s.Insert(header.SACKBlock{121, 141})
-	s.Insert(header.SACKBlock{145, 146})
-	s.Insert(header.SACKBlock{147, 148})
-	s.Insert(header.SACKBlock{149, 150})
-	s.Insert(header.SACKBlock{153, 154})
-	s.Insert(header.SACKBlock{155, 156})
+	s.Insert(header.SACKBlock{Start: 1, End: 25})
+	s.Insert(header.SACKBlock{Start: 25, End: 50})
+	s.Insert(header.SACKBlock{Start: 51, End: 100})
+	s.Insert(header.SACKBlock{Start: 111, End: 120})
+	s.Insert(header.SACKBlock{Start: 101, End: 110})
+	s.Insert(header.SACKBlock{Start: 121, End: 141})
+	s.Insert(header.SACKBlock{Start: 145, End: 146})
+	s.Insert(header.SACKBlock{Start: 147, End: 148})
+	s.Insert(header.SACKBlock{Start: 149, End: 150})
+	s.Insert(header.SACKBlock{Start: 153, End: 154})
+	s.Insert(header.SACKBlock{Start: 155, End: 156})
 	testCases := []struct {
 		block header.SACKBlock
 		lost  bool
@@ -161,35 +161,35 @@ func TestSACKScoreboardIsRangeLost(t *testing.T) {
 		// nDupAckThreshold discontiguous SACK blocks after it as well
 		// as (nDupAckThreshold -1) * 10 (smss) bytes that have been
 		// SACKED above the sequence number covered by this block.
-		{block: header.SACKBlock{0, 1}, lost: true},
+		{block: header.SACKBlock{Start: 0, End: 1}, lost: true},
 
 		// These blocks have all been SACKed and should not be
 		// considered lost.
-		{block: header.SACKBlock{1, 2}, lost: false},
-		{block: header.SACKBlock{25, 26}, lost: false},
-		{block: header.SACKBlock{1, 45}, lost: false},
+		{block: header.SACKBlock{Start: 1, End: 2}, lost: false},
+		{block: header.SACKBlock{Start: 25, End: 26}, lost: false},
+		{block: header.SACKBlock{Start: 1, End: 45}, lost: false},
 
 		// Same as the first case above.
-		{block: header.SACKBlock{50, 51}, lost: true},
+		{block: header.SACKBlock{Start: 50, End: 51}, lost: true},
 
 		// This block has been SACKed and should not be considered lost.
-		{block: header.SACKBlock{119, 120}, lost: false},
+		{block: header.SACKBlock{Start: 119, End: 120}, lost: false},
 
 		// This one should return true because there are >
 		// (nDupAckThreshold - 1) * 10 (smss) bytes that have been
 		// sacked above this sequence number.
-		{block: header.SACKBlock{120, 121}, lost: true},
+		{block: header.SACKBlock{Start: 120, End: 121}, lost: true},
 
 		// This block has been SACKed and should not be considered lost.
-		{block: header.SACKBlock{125, 126}, lost: false},
+		{block: header.SACKBlock{Start: 125, End: 126}, lost: false},
 
 		// This block has not been SACKed and there are nDupAckThreshold
 		// number of SACKed blocks after it.
-		{block: header.SACKBlock{141, 145}, lost: true},
+		{block: header.SACKBlock{Start: 141, End: 145}, lost: true},
 
 		// This block has not been SACKed and there are less than
 		// nDupAckThreshold SACKed sequences after it.
-		{block: header.SACKBlock{151, 152}, lost: false},
+		{block: header.SACKBlock{Start: 151, End: 152}, lost: false},
 	}
 	for _, tc := range testCases {
 		if want, got := tc.lost, s.IsRangeLost(tc.block); got != want {
@@ -200,18 +200,18 @@ func TestSACKScoreboardIsRangeLost(t *testing.T) {
 
 func TestSACKScoreboardIsLost(t *testing.T) {
 	s := tcp.NewSACKScoreboard(10, 0)
-	s.Insert(header.SACKBlock{1, 25})
-	s.Insert(header.SACKBlock{25, 50})
-	s.Insert(header.SACKBlock{51, 100})
-	s.Insert(header.SACKBlock{111, 120})
-	s.Insert(header.SACKBlock{101, 110})
-	s.Insert(header.SACKBlock{121, 141})
-	s.Insert(header.SACKBlock{121, 141})
-	s.Insert(header.SACKBlock{145, 146})
-	s.Insert(header.SACKBlock{147, 148})
-	s.Insert(header.SACKBlock{149, 150})
-	s.Insert(header.SACKBlock{153, 154})
-	s.Insert(header.SACKBlock{155, 156})
+	s.Insert(header.SACKBlock{Start: 1, End: 25})
+	s.Insert(header.SACKBlock{Start: 25, End: 50})
+	s.Insert(header.SACKBlock{Start: 51, End: 100})
+	s.Insert(header.SACKBlock{Start: 111, End: 120})
+	s.Insert(header.SACKBlock{Start: 101, End: 110})
+	s.Insert(header.SACKBlock{Start: 121, End: 141})
+	s.Insert(header.SACKBlock{Start: 121, End: 141})
+	s.Insert(header.SACKBlock{Start: 145, End: 146})
+	s.Insert(header.SACKBlock{Start: 147, End: 148})
+	s.Insert(header.SACKBlock{Start: 149, End: 150})
+	s.Insert(header.SACKBlock{Start: 153, End: 154})
+	s.Insert(header.SACKBlock{Start: 155, End: 156})
 	testCases := []struct {
 		seq  seqnum.Value
 		lost bool
@@ -259,7 +259,7 @@ func TestSACKScoreboardIsLost(t *testing.T) {
 }
 
 func TestSACKScoreboardDelete(t *testing.T) {
-	blocks := []header.SACKBlock{{4294254144, 225652}, {5340409, 5350509}}
+	blocks := []header.SACKBlock{{Start: 4294254144, End: 225652}, {Start: 5340409, End: 5350509}}
 	s := initScoreboard(blocks, 4294254143)
 	s.Delete(5340408)
 	if s.Empty() {
@@ -272,12 +272,12 @@ func TestSACKScoreboardDelete(t *testing.T) {
 	if s.Empty() {
 		t.Fatal("s.Empty() = true, want false")
 	}
-	newSB := header.SACKBlock{5340410, 5350509}
+	newSB := header.SACKBlock{Start: 5340410, End: 5350509}
 	if !s.IsSACKED(newSB) {
 		t.Fatalf("s.IsSACKED(%v) = false, want true, scoreboard: %v", newSB, s)
 	}
 	s.Delete(5350509)
-	lastOctet := header.SACKBlock{5350508, 5350509}
+	lastOctet := header.SACKBlock{Start: 5350508, End: 5350509}
 	if s.IsSACKED(lastOctet) {
 		t.Fatalf("s.IsSACKED(%v) = false, want true", lastOctet)
 	}

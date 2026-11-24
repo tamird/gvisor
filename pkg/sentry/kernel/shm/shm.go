@@ -540,9 +540,9 @@ func (*Shm) CopyMapping(context.Context, memmap.MappingSpace, hostarch.AddrRange
 func (s *Shm) Translate(ctx context.Context, required, optional memmap.MappableRange, at hostarch.AccessType) ([]memmap.Translation, error) {
 	var err error
 	if required.End > s.fr.Length() {
-		err = &memmap.BusError{linuxerr.EFAULT}
+		err = &memmap.BusError{Err: linuxerr.EFAULT}
 	}
-	if source := optional.Intersect(memmap.MappableRange{0, s.fr.Length()}); source.Length() != 0 {
+	if source := optional.Intersect(memmap.MappableRange{Start: 0, End: s.fr.Length()}); source.Length() != 0 {
 		return []memmap.Translation{
 			{
 				Source: source,

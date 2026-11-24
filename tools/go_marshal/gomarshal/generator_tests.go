@@ -38,13 +38,8 @@ var sliceAPIImports = []string{
 }
 
 type testGenerator struct {
-	sourceBuffer
-
 	// The type we're serializing.
 	t *ast.TypeSpec
-
-	// Receiver argument for generated methods.
-	r string
 
 	// Imports used by generated code.
 	imports *importTable
@@ -53,6 +48,10 @@ type testGenerator struct {
 	// for. We need this to construct test instances for the type, since the
 	// tests aren't written in the same package.
 	decl *importStmt
+
+	// Receiver argument for generated methods.
+	r string
+	sourceBuffer
 }
 
 func newTestGenerator(t *ast.TypeSpec, r string) *testGenerator {

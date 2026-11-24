@@ -31,9 +31,9 @@ func TestPrecompile(t *testing.T) {
 	counter := 0
 
 	for _, test := range []struct {
+		fn      func(Values) *seccomp.Program
 		name    string
 		vars    []string
-		fn      func(Values) *seccomp.Program
 		wantErr bool
 	}{
 		{

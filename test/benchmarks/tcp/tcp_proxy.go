@@ -99,8 +99,8 @@ const (
 
 type netstackImpl struct {
 	s    *stack.Stack
-	addr tcpip.Address
 	mode string
+	addr tcpip.Address
 }
 
 func setupNetwork(ifaceName string, numChannels int) (fds []int, err error) {

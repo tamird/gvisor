@@ -33,8 +33,8 @@ func main() {
 	tempdir := os.Args[1]
 
 	tcs := []struct {
-		name     string
 		testfunc func() error
+		name     string
 	}{{
 		name: "unix.Mount to folder succeeds",
 		testfunc: func() error {
@@ -70,8 +70,7 @@ func main() {
 			if err == nil {
 				return fmt.Errorf("SafeMount didn't fail, but should have")
 			}
-			var symErr *specutils.ErrSymlinkMount
-			if !errors.As(err, &symErr) {
+			if _, ok := errors.AsType[*specutils.ErrSymlinkMount](err); !ok {
 				return fmt.Errorf("expected SafeMount to fail with ErrSymlinkMount, but got: %v", err)
 			}
 			return nil

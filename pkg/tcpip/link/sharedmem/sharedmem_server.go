@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 package sharedmem
 
@@ -155,9 +154,8 @@ func (e *serverEndpoint) Attach(dispatcher stack.NetworkDispatcher) {
 		e.workerStarted = true
 		e.completed.Add(1)
 		if e.peerFD >= 0 {
-			e.completed.Add(1)
 			// Spin up a goroutine to monitor for peer shutdown.
-			go func() {
+			e.completed.Go(func() {
 				b := make([]byte, 1)
 				// When sharedmem endpoint is in use the peerFD is never used for any
 				// data transfer and this Read should only return if the peer is
@@ -170,8 +168,7 @@ func (e *serverEndpoint) Attach(dispatcher stack.NetworkDispatcher) {
 						e.onClosed(tcpip.TranslateErrno(errno))
 					}
 				}
-				e.completed.Done()
-			}()
+			})
 		}
 		// Link endpoints are not savable. When transportation endpoints are saved,
 		// they stop sending outgoing packets and all incoming packets are rejected.

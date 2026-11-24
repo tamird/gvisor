@@ -26,7 +26,7 @@ func fdsFromSet(t *kernel.Task, set []byte) []int {
 	var fds []int
 	// Append n if the n-th bit is 1.
 	for i, v := range set {
-		for j := 0; j < 8; j++ {
+		for j := range 8 {
 			if (v>>j)&1 == 1 {
 				fds = append(fds, i*8+j)
 			}

@@ -50,9 +50,6 @@ func marshalACLXattr(version uint32, entries ...linux.PosixACLXattrEntry) []byte
 	return buf
 }
 
-// aclMask returns p as a pointer.
-func aclMask(p AccessTypes) *AccessTypes { return &p }
-
 // aclEqual reports whether two PosixACLs are equal.
 func aclEqual(a, b PosixACL) bool {
 	if a.UGOPerms != b.UGOPerms {
@@ -86,12 +83,12 @@ func aclEqual(a, b PosixACL) bool {
 func TestParsePosixACL(t *testing.T) {
 	ns := auth.NewRootUserNamespace()
 	for _, tc := range []struct {
-		name string
-		src  []byte
 		// wantErr is the expected error; nil means success, in which case want
 		// is compared against the parsed result.
 		wantErr *errors.Error
 		want    *PosixACL
+		name    string
+		src     []byte
 	}{
 		{
 			name: "minimal",
@@ -113,7 +110,7 @@ func TestParsePosixACL(t *testing.T) {
 			),
 			want: &PosixACL{
 				UGOPerms: 0o644,
-				Mask:     aclMask(permRW),
+				Mask:     new(AccessTypes(permRW)),
 				Users:    []ACLUser{{UID: 982, Perms: permR}},
 			},
 		},
@@ -128,7 +125,7 @@ func TestParsePosixACL(t *testing.T) {
 			),
 			want: &PosixACL{
 				UGOPerms: 0o750,
-				Mask:     aclMask(permRX),
+				Mask:     new(AccessTypes(permRX)),
 				Groups:   []ACLGroup{{GID: 100, Perms: permRWX}},
 			},
 		},
@@ -144,7 +141,7 @@ func TestParsePosixACL(t *testing.T) {
 			),
 			want: &PosixACL{
 				UGOPerms: 0o644,
-				Mask:     aclMask(permRW),
+				Mask:     new(AccessTypes(permRW)),
 				Users: []ACLUser{
 					{UID: 982, Perms: permR},
 					{UID: 982, Perms: permR | permW},
@@ -282,7 +279,7 @@ func TestSerializePosixACL(t *testing.T) {
 	ns := auth.NewRootUserNamespace()
 	acl := PosixACL{
 		UGOPerms: 0o644,
-		Mask:     aclMask(permRW),
+		Mask:     new(AccessTypes(permRW)),
 		Users:    []ACLUser{{UID: 982, Perms: permR}},
 	}
 	// Serialize emits entries in canonical order: USER_OBJ, named users,
@@ -304,11 +301,11 @@ func TestPosixACLRoundTrip(t *testing.T) {
 	ns := auth.NewRootUserNamespace()
 	for _, acl := range []PosixACL{
 		{UGOPerms: 0o640},
-		{UGOPerms: 0o644, Mask: aclMask(permRWX), Users: []ACLUser{{UID: 982, Perms: permR}}},
-		{UGOPerms: 0o600, Mask: aclMask(permRX), Groups: []ACLGroup{{GID: 100, Perms: permRX}}},
+		{UGOPerms: 0o644, Mask: new(AccessTypes(permRWX)), Users: []ACLUser{{UID: 982, Perms: permR}}},
+		{UGOPerms: 0o600, Mask: new(AccessTypes(permRX)), Groups: []ACLGroup{{GID: 100, Perms: permRX}}},
 		{
 			UGOPerms: 0o750,
-			Mask:     aclMask(permRW),
+			Mask:     new(AccessTypes(permRW)),
 			Users:    []ACLUser{{UID: 1000, Perms: permRWX}, {UID: 1001, Perms: permR}},
 			Groups:   []ACLGroup{{GID: 50, Perms: permR}},
 		},
@@ -341,13 +338,13 @@ func TestPosixACLModeEquivalence(t *testing.T) {
 		},
 		{
 			name:      "mask surfaces as group bits",
-			acl:       PosixACL{UGOPerms: 0o644, Mask: aclMask(permRWX)},
+			acl:       PosixACL{UGOPerms: 0o644, Mask: new(AccessTypes(permRWX))},
 			wantMode:  0o674,
 			wantEquiv: false,
 		},
 		{
 			name:      "named user is not equivalent",
-			acl:       PosixACL{UGOPerms: 0o644, Mask: aclMask(permR), Users: []ACLUser{{UID: 1, Perms: permR}}},
+			acl:       PosixACL{UGOPerms: 0o644, Mask: new(AccessTypes(permR)), Users: []ACLUser{{UID: 1, Perms: permR}}},
 			wantMode:  0o644,
 			wantEquiv: false,
 		},

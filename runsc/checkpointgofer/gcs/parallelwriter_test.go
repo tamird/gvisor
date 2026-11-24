@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 
@@ -122,8 +123,8 @@ func TestParallelWriterWriteCompositionGraph(t *testing.T) {
 
 		clear(seenLeaves)
 		clear(highestPartIndex)
-		for levelIndex := len(w.levels) - 1; levelIndex >= 0; levelIndex-- {
-			if node := w.levels[levelIndex].firstPart; node != nil {
+		for levelIndex, v := range slices.Backward(w.levels) {
+			if node := v.firstPart; node != nil {
 				highestPartIndexForLevel, ok := highestPartIndex[levelIndex]
 				nextPartIndex := uint64(0)
 				if ok {
@@ -139,9 +140,9 @@ func TestParallelWriterWriteCompositionGraph(t *testing.T) {
 }
 
 type testComposeNode struct {
+	parts      []*testComposeNode
 	levelIndex int // -1 for root
 	partIndex  uint64
-	parts      []*testComposeNode
 }
 
 func (n *testComposeNode) name() string {
@@ -165,7 +166,7 @@ func testComposeRange(levelIndex int, firstPartIndex, lastPartIndex uint64) []*t
 	n := lastPartIndex - firstPartIndex + 1
 	nodes := make([]*testComposeNode, n)
 	for i := range nodes {
-		nodes[i] = &testComposeNode{levelIndex, firstPartIndex + uint64(i), nil}
+		nodes[i] = &testComposeNode{levelIndex: levelIndex, partIndex: firstPartIndex + uint64(i), parts: nil}
 	}
 	return nodes
 }
@@ -216,138 +217,138 @@ func TestParallelWriterFinalCompositionTree(t *testing.T) {
 	bkt := client.Bucket("test-bucket")
 
 	type testCase struct {
-		numWrites int
 		wantRoot  *testComposeNode
+		numWrites int
 	}
 	for _, tc := range []testCase{
-		{2, &testComposeNode{-1, 0, []*testComposeNode{
-			&testComposeNode{0, 0, nil},
-			&testComposeNode{0, 1, nil}}}},
-		{31, &testComposeNode{-1, 0,
-			testComposeRange(0, 0, 30)}},
+		{numWrites: 2, wantRoot: &testComposeNode{levelIndex: -1, partIndex: 0, parts: []*testComposeNode{
+			&testComposeNode{levelIndex: 0, partIndex: 0, parts: nil},
+			&testComposeNode{levelIndex: 0, partIndex: 1, parts: nil}}}},
+		{numWrites: 31, wantRoot: &testComposeNode{levelIndex: -1, partIndex: 0,
+			parts: testComposeRange(0, 0, 30)}},
 		// At 32 writes (and any number of writes that is a non-negative
 		// integer power of 32), there is only one temporary object, which is
 		// moved to the final destination rather than being composed.
-		{33, &testComposeNode{-1, 0, []*testComposeNode{
-			&testComposeNode{1, 0, nil},
-			&testComposeNode{0, 32, nil}}}},
-		{63, &testComposeNode{-1, 0, append([]*testComposeNode{
-			&testComposeNode{1, 0, nil}},
+		{numWrites: 33, wantRoot: &testComposeNode{levelIndex: -1, partIndex: 0, parts: []*testComposeNode{
+			&testComposeNode{levelIndex: 1, partIndex: 0, parts: nil},
+			&testComposeNode{levelIndex: 0, partIndex: 32, parts: nil}}}},
+		{numWrites: 63, wantRoot: &testComposeNode{levelIndex: -1, partIndex: 0, parts: append([]*testComposeNode{
+			&testComposeNode{levelIndex: 1, partIndex: 0, parts: nil}},
 			testComposeRange(0, 32, 62)...)}},
-		{64, &testComposeNode{-1, 0, []*testComposeNode{
-			&testComposeNode{1, 0, nil},
-			&testComposeNode{1, 1, nil}}}},
-		{94, &testComposeNode{-1, 0, append([]*testComposeNode{
-			&testComposeNode{1, 0, nil},
-			&testComposeNode{1, 1, nil}},
+		{numWrites: 64, wantRoot: &testComposeNode{levelIndex: -1, partIndex: 0, parts: []*testComposeNode{
+			&testComposeNode{levelIndex: 1, partIndex: 0, parts: nil},
+			&testComposeNode{levelIndex: 1, partIndex: 1, parts: nil}}}},
+		{numWrites: 94, wantRoot: &testComposeNode{levelIndex: -1, partIndex: 0, parts: append([]*testComposeNode{
+			&testComposeNode{levelIndex: 1, partIndex: 0, parts: nil},
+			&testComposeNode{levelIndex: 1, partIndex: 1, parts: nil}},
 			testComposeRange(0, 64, 93)...)}},
 		// Minimum number of writes needed for one sub-maximal non-root
 		// composition: 31+2=33 source objects, grouped as 2+31 in the write
 		// composition graph.
-		{95, &testComposeNode{-1, 0, append(append([]*testComposeNode{
-			&testComposeNode{1, 0, nil},
-			&testComposeNode{1, 1, nil}},
+		{numWrites: 95, wantRoot: &testComposeNode{levelIndex: -1, partIndex: 0, parts: append(append([]*testComposeNode{
+			&testComposeNode{levelIndex: 1, partIndex: 0, parts: nil},
+			&testComposeNode{levelIndex: 1, partIndex: 1, parts: nil}},
 			testComposeRange(0, 64, 92)...),
-			&testComposeNode{2, 0, []*testComposeNode{
-				&testComposeNode{0, 93, nil},
-				&testComposeNode{0, 94, nil}}})}},
-		{1023, &testComposeNode{-1, 0, append(
+			&testComposeNode{levelIndex: 2, partIndex: 0, parts: []*testComposeNode{
+				&testComposeNode{levelIndex: 0, partIndex: 93, parts: nil},
+				&testComposeNode{levelIndex: 0, partIndex: 94, parts: nil}}})}},
+		{numWrites: 1023, wantRoot: &testComposeNode{levelIndex: -1, partIndex: 0, parts: append(
 			testComposeRange(1, 0, 30),
-			&testComposeNode{2, 0,
-				testComposeRange(0, 992, 1022)})}},
+			&testComposeNode{levelIndex: 2, partIndex: 0,
+				parts: testComposeRange(0, 992, 1022)})}},
 		// 1024 == 32**2
-		{1025, &testComposeNode{-1, 0, []*testComposeNode{
-			&testComposeNode{2, 0, nil},
-			&testComposeNode{0, 1024, nil}}}},
-		{1056, &testComposeNode{-1, 0, []*testComposeNode{
-			&testComposeNode{2, 0, nil},
-			&testComposeNode{1, 32, nil}}}},
-		{1086, &testComposeNode{-1, 0, append([]*testComposeNode{
-			&testComposeNode{2, 0, nil},
-			&testComposeNode{1, 32, nil}},
+		{numWrites: 1025, wantRoot: &testComposeNode{levelIndex: -1, partIndex: 0, parts: []*testComposeNode{
+			&testComposeNode{levelIndex: 2, partIndex: 0, parts: nil},
+			&testComposeNode{levelIndex: 0, partIndex: 1024, parts: nil}}}},
+		{numWrites: 1056, wantRoot: &testComposeNode{levelIndex: -1, partIndex: 0, parts: []*testComposeNode{
+			&testComposeNode{levelIndex: 2, partIndex: 0, parts: nil},
+			&testComposeNode{levelIndex: 1, partIndex: 32, parts: nil}}}},
+		{numWrites: 1086, wantRoot: &testComposeNode{levelIndex: -1, partIndex: 0, parts: append([]*testComposeNode{
+			&testComposeNode{levelIndex: 2, partIndex: 0, parts: nil},
+			&testComposeNode{levelIndex: 1, partIndex: 32, parts: nil}},
 			testComposeRange(0, 1056, 1085)...)}},
-		{1087, &testComposeNode{-1, 0, append(append([]*testComposeNode{
-			&testComposeNode{2, 0, nil},
-			&testComposeNode{1, 32, nil}},
+		{numWrites: 1087, wantRoot: &testComposeNode{levelIndex: -1, partIndex: 0, parts: append(append([]*testComposeNode{
+			&testComposeNode{levelIndex: 2, partIndex: 0, parts: nil},
+			&testComposeNode{levelIndex: 1, partIndex: 32, parts: nil}},
 			testComposeRange(0, 1056, 1084)...),
-			&testComposeNode{3, 0, []*testComposeNode{
-				&testComposeNode{0, 1085, nil},
-				&testComposeNode{0, 1086, nil}}})}},
+			&testComposeNode{levelIndex: 3, partIndex: 0, parts: []*testComposeNode{
+				&testComposeNode{levelIndex: 0, partIndex: 1085, parts: nil},
+				&testComposeNode{levelIndex: 0, partIndex: 1086, parts: nil}}})}},
 		// Minimum number of writes needed for one maximal non-root
 		// composition: 31+32=63 source objects, grouped as 1+31+31 in the
 		// write composition graph.
-		{2047, &testComposeNode{-1, 0, append(append([]*testComposeNode{
-			&testComposeNode{2, 0, nil}},
+		{numWrites: 2047, wantRoot: &testComposeNode{levelIndex: -1, partIndex: 0, parts: append(append([]*testComposeNode{
+			&testComposeNode{levelIndex: 2, partIndex: 0, parts: nil}},
 			testComposeRange(1, 32, 61)...),
-			&testComposeNode{3, 0, append([]*testComposeNode{
-				&testComposeNode{1, 62, nil}},
+			&testComposeNode{levelIndex: 3, partIndex: 0, parts: append([]*testComposeNode{
+				&testComposeNode{levelIndex: 1, partIndex: 62, parts: nil}},
 				testComposeRange(0, 2016, 2046)...)})}},
-		{3040, &testComposeNode{-1, 0, append(append([]*testComposeNode{
-			&testComposeNode{2, 0, nil},
-			&testComposeNode{2, 1, nil}},
+		{numWrites: 3040, wantRoot: &testComposeNode{levelIndex: -1, partIndex: 0, parts: append(append([]*testComposeNode{
+			&testComposeNode{levelIndex: 2, partIndex: 0, parts: nil},
+			&testComposeNode{levelIndex: 2, partIndex: 1, parts: nil}},
 			testComposeRange(1, 64, 92)...),
-			&testComposeNode{3, 0, []*testComposeNode{
-				&testComposeNode{1, 93, nil},
-				&testComposeNode{1, 94, nil}}})}},
-		{3070, &testComposeNode{-1, 0, append(append([]*testComposeNode{
-			&testComposeNode{2, 0, nil},
-			&testComposeNode{2, 1, nil}},
+			&testComposeNode{levelIndex: 3, partIndex: 0, parts: []*testComposeNode{
+				&testComposeNode{levelIndex: 1, partIndex: 93, parts: nil},
+				&testComposeNode{levelIndex: 1, partIndex: 94, parts: nil}}})}},
+		{numWrites: 3070, wantRoot: &testComposeNode{levelIndex: -1, partIndex: 0, parts: append(append([]*testComposeNode{
+			&testComposeNode{levelIndex: 2, partIndex: 0, parts: nil},
+			&testComposeNode{levelIndex: 2, partIndex: 1, parts: nil}},
 			testComposeRange(1, 64, 92)...),
-			&testComposeNode{3, 0, append([]*testComposeNode{
-				&testComposeNode{1, 93, nil},
-				&testComposeNode{1, 94, nil}},
+			&testComposeNode{levelIndex: 3, partIndex: 0, parts: append([]*testComposeNode{
+				&testComposeNode{levelIndex: 1, partIndex: 93, parts: nil},
+				&testComposeNode{levelIndex: 1, partIndex: 94, parts: nil}},
 				testComposeRange(0, 3040, 3069)...)})}},
 		// Minimum number of writes needed for one maximal + one sub-maximal
 		// non-root composition: 30+2+32=64 source objects, grouped as 2+31+31
 		// in the write composition graph.
-		{3071, &testComposeNode{-1, 0, append(append([]*testComposeNode{
-			&testComposeNode{2, 0, nil},
-			&testComposeNode{2, 1, nil}},
+		{numWrites: 3071, wantRoot: &testComposeNode{levelIndex: -1, partIndex: 0, parts: append(append([]*testComposeNode{
+			&testComposeNode{levelIndex: 2, partIndex: 0, parts: nil},
+			&testComposeNode{levelIndex: 2, partIndex: 1, parts: nil}},
 			testComposeRange(1, 64, 91)...),
-			&testComposeNode{3, 0, []*testComposeNode{
-				&testComposeNode{1, 92, nil},
-				&testComposeNode{1, 93, nil}}},
-			&testComposeNode{3, 1, append([]*testComposeNode{
-				&testComposeNode{1, 94, nil}},
+			&testComposeNode{levelIndex: 3, partIndex: 0, parts: []*testComposeNode{
+				&testComposeNode{levelIndex: 1, partIndex: 92, parts: nil},
+				&testComposeNode{levelIndex: 1, partIndex: 93, parts: nil}}},
+			&testComposeNode{levelIndex: 3, partIndex: 1, parts: append([]*testComposeNode{
+				&testComposeNode{levelIndex: 1, partIndex: 94, parts: nil}},
 				testComposeRange(0, 3040, 3070)...)})}},
 		// This is the example given in buildFinalCompositionTree().
-		{5119, &testComposeNode{-1, 0, append(append(
+		{numWrites: 5119, wantRoot: &testComposeNode{levelIndex: -1, partIndex: 0, parts: append(append(
 			testComposeRange(2, 0, 3),
 			testComposeRange(1, 128, 153)...),
-			&testComposeNode{3, 0,
-				testComposeRange(1, 154, 157)},
-			&testComposeNode{3, 1, append([]*testComposeNode{
-				&testComposeNode{1, 158, nil}},
+			&testComposeNode{levelIndex: 3, partIndex: 0,
+				parts: testComposeRange(1, 154, 157)},
+			&testComposeNode{levelIndex: 3, partIndex: 1, parts: append([]*testComposeNode{
+				&testComposeNode{levelIndex: 1, partIndex: 158, parts: nil}},
 				testComposeRange(0, 5088, 5118)...)})}},
 		// Minimum number of writes needed for two maximal non-root
 		// compositions: 30+32+32=94 source objects, grouped as 1+31+31+31 in
 		// the write composition graph.
-		{65535, &testComposeNode{-1, 0, append(append([]*testComposeNode{
-			&testComposeNode{3, 0, nil}},
+		{numWrites: 65535, wantRoot: &testComposeNode{levelIndex: -1, partIndex: 0, parts: append(append([]*testComposeNode{
+			&testComposeNode{levelIndex: 3, partIndex: 0, parts: nil}},
 			testComposeRange(2, 32, 60)...),
-			&testComposeNode{4, 0, append([]*testComposeNode{
-				&testComposeNode{2, 61, nil},
-				&testComposeNode{2, 62, nil}},
+			&testComposeNode{levelIndex: 4, partIndex: 0, parts: append([]*testComposeNode{
+				&testComposeNode{levelIndex: 2, partIndex: 61, parts: nil},
+				&testComposeNode{levelIndex: 2, partIndex: 62, parts: nil}},
 				testComposeRange(1, 2016, 2045)...)},
-			&testComposeNode{4, 1, append([]*testComposeNode{
-				&testComposeNode{1, 2046, nil}},
+			&testComposeNode{levelIndex: 4, partIndex: 1, parts: append([]*testComposeNode{
+				&testComposeNode{levelIndex: 1, partIndex: 2046, parts: nil}},
 				testComposeRange(0, 65504, 65534)...)})}},
 		// Minimum number of writes needed for two maximal + one sub-maximal
 		// non-root compositions: 29+2+32+32=95 source objects, grouped as
 		// 2+31+31+31 in the write composition graph.
-		{98303, &testComposeNode{-1, 0, append(append([]*testComposeNode{
-			&testComposeNode{3, 0, nil},
-			&testComposeNode{3, 1, nil}},
+		{numWrites: 98303, wantRoot: &testComposeNode{levelIndex: -1, partIndex: 0, parts: append(append([]*testComposeNode{
+			&testComposeNode{levelIndex: 3, partIndex: 0, parts: nil},
+			&testComposeNode{levelIndex: 3, partIndex: 1, parts: nil}},
 			testComposeRange(2, 64, 90)...),
-			&testComposeNode{4, 0, []*testComposeNode{
-				&testComposeNode{2, 91, nil},
-				&testComposeNode{2, 92, nil}}},
-			&testComposeNode{4, 1, append([]*testComposeNode{
-				&testComposeNode{2, 93, nil},
-				&testComposeNode{2, 94, nil}},
+			&testComposeNode{levelIndex: 4, partIndex: 0, parts: []*testComposeNode{
+				&testComposeNode{levelIndex: 2, partIndex: 91, parts: nil},
+				&testComposeNode{levelIndex: 2, partIndex: 92, parts: nil}}},
+			&testComposeNode{levelIndex: 4, partIndex: 1, parts: append([]*testComposeNode{
+				&testComposeNode{levelIndex: 2, partIndex: 93, parts: nil},
+				&testComposeNode{levelIndex: 2, partIndex: 94, parts: nil}},
 				testComposeRange(1, 3040, 3069)...)},
-			&testComposeNode{4, 2, append([]*testComposeNode{
-				&testComposeNode{1, 3070, nil}},
+			&testComposeNode{levelIndex: 4, partIndex: 2, parts: append([]*testComposeNode{
+				&testComposeNode{levelIndex: 1, partIndex: 3070, parts: nil}},
 				testComposeRange(0, 98272, 98302)...)})}},
 	} {
 		t.Run(fmt.Sprintf("%d", tc.numWrites), func(t *testing.T) {

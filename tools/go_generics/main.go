@@ -100,6 +100,7 @@ import (
 	"go/token"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 
 	"gvisor.dev/gvisor/tools/go_generics/globals"
@@ -142,12 +143,12 @@ func (m mapValue) String() string {
 }
 
 func (m mapValue) Set(s string) error {
-	sep := strings.Index(s, "=")
-	if sep == -1 {
+	key, value, ok := strings.Cut(s, "=")
+	if !ok {
 		return fmt.Errorf("missing '=' from '%s'", s)
 	}
 
-	m[s[:sep]] = s[sep+1:]
+	m[key] = value
 
 	return nil
 }
@@ -275,7 +276,7 @@ func main() {
 	if f.Doc != nil {
 		for i, cg := range f.Comments {
 			if cg == f.Doc {
-				f.Comments = append(f.Comments[:i], f.Comments[i+1:]...)
+				f.Comments = slices.Delete(f.Comments, i, i+1)
 				break
 			}
 		}

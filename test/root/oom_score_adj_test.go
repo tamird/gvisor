@@ -46,11 +46,11 @@ func TestOOMScoreAdjSingle(t *testing.T) {
 	}
 
 	testCases := []struct {
-		Name string
 
 		// OOMScoreAdj is the oom_score_adj set to the OCI spec. If nil then
 		// no value is set.
 		OOMScoreAdj *int
+		Name        string
 	}{
 		{
 			Name:        "max",
@@ -124,23 +124,23 @@ func TestOOMScoreAdjMulti(t *testing.T) {
 	}
 
 	testCases := []struct {
-		Name string
+
+		// Expected is the expected oom_score_adj of the sandbox. If nil, then
+		// this value is ignored.
+		Expected *int
+
+		// ExpectedAfterRemove is the expected oom_score_adj of the sandbox
+		// after containers are removed. Ignored if nil.
+		ExpectedAfterRemove *int
+		Name                string
 
 		// OOMScoreAdj is the oom_score_adj set to the OCI spec. If nil then
 		// no value is set. One value for each container. The first value is the
 		// root container.
 		OOMScoreAdj []*int
 
-		// Expected is the expected oom_score_adj of the sandbox. If nil, then
-		// this value is ignored.
-		Expected *int
-
 		// Remove is a set of container indexes to remove from the sandbox.
 		Remove []int
-
-		// ExpectedAfterRemove is the expected oom_score_adj of the sandbox
-		// after containers are removed. Ignored if nil.
-		ExpectedAfterRemove *int
 	}{
 		// A single container CRI test case. This should not happen in
 		// practice as there should be at least one container besides the pause

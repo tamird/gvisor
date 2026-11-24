@@ -822,7 +822,7 @@ const netStatTCPExtFields = "SyncookiesSent SyncookiesRecv SyncookiesFailed " +
 func writeNetStatHeaderAndZeros(buf *bytes.Buffer, prefix, fields string) {
 	fmt.Fprintf(buf, "%s: %s\n", prefix, fields)
 	fmt.Fprintf(buf, "%s:", prefix)
-	for range strings.Fields(fields) {
+	for range strings.FieldsSeq(fields) {
 		buf.WriteString(" 0")
 	}
 	buf.WriteByte('\n')

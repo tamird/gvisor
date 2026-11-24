@@ -28,8 +28,8 @@ import (
 // ClientFD is a wrapper around FDID that provides client-side utilities
 // so that RPC making is easier.
 type ClientFD struct {
-	fd     FDID
 	client *Client
+	fd     FDID
 }
 
 // ID returns the underlying FDID.
@@ -509,12 +509,10 @@ func (f *ClientFD) Connect(ctx context.Context, sockType linux.SockType, euid UI
 	)
 	if credsAvailable && f.client.IsSupported(ConnectWithGroups) {
 		reqWithGroups := ConnectWithGroupsReq{
-			ConnectWithCredsReq: ConnectWithCredsReq{
-				ConnectReq: req,
-				UID:        euid,
-				GID:        egid,
-			},
-			Groups: groups,
+			ConnectReq: req,
+			UID:        euid,
+			GID:        egid,
+			Groups:     groups,
 		}
 		ctx.UninterruptibleSleepStart()
 		err = f.client.SndRcvMessage(ConnectWithGroups, uint32(reqWithGroups.SizeBytes()), reqWithGroups.MarshalBytes, resp.CheckedUnmarshal, sockFD[:], reqWithGroups.String, resp.String)
@@ -564,13 +562,11 @@ func (f *ClientFD) RenameAt(ctx context.Context, oldName string, newDirFD FDID, 
 		}
 
 		req := RenameAt2Req{
-			RenameAtReq: RenameAtReq{
-				OldDir:  f.fd,
-				OldName: SizedString(oldName),
-				NewDir:  newDirFD,
-				NewName: SizedString(newName),
-			},
-			Flags: primitive.Uint32(flags),
+			OldDir:  f.fd,
+			OldName: SizedString(oldName),
+			NewDir:  newDirFD,
+			NewName: SizedString(newName),
+			Flags:   primitive.Uint32(flags),
 		}
 		var resp RenameAtResp
 		ctx.UninterruptibleSleepStart()
@@ -667,14 +663,14 @@ func (f *ClientFD) RemoveXattr(ctx context.Context, name string) error {
 //
 // All fields are immutable.
 type ClientBoundSocketFD struct {
+	client *Client
+
 	// fd is the FDID of the bound socket on the server.
 	fd FDID
 
 	// notificationFD is the host FD that can be used to notify when new
 	// clients connect to the socket.
 	notificationFD int32
-
-	client *Client
 }
 
 // Close implements transport.BoundSocketFD.Close.

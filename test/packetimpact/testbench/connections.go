@@ -248,9 +248,9 @@ func (s *ipv6State) close() error {
 
 // tcpState maintains state about a TCP connection.
 type tcpState struct {
-	out, in                   TCP
 	localSeqNum, remoteSeqNum *seqnum.Value
 	synAck                    *TCP
+	out, in                   TCP
 	portPickerFD              int
 	finSent                   bool
 }
@@ -259,8 +259,10 @@ var _ layerState = (*tcpState)(nil)
 
 // SeqNumValue is a helper routine that allocates a new seqnum.Value value to
 // store v and returns a pointer to it.
+//
+//go:fix inline
 func SeqNumValue(v seqnum.Value) *seqnum.Value {
-	return &v
+	return new(v)
 }
 
 // newTCPState creates a new TCPState.
@@ -272,7 +274,7 @@ func (n *DUTTestNet) newTCPState(domain int, out, in TCP) (*tcpState, error) {
 	s := tcpState{
 		out:          TCP{SrcPort: &localPort},
 		in:           TCP{DstPort: &localPort},
-		localSeqNum:  SeqNumValue(seqnum.Value(rand.Uint32())),
+		localSeqNum:  new(seqnum.Value(rand.Uint32())),
 		portPickerFD: portPickerFD,
 		finSent:      false,
 	}
@@ -288,10 +290,10 @@ func (n *DUTTestNet) newTCPState(domain int, out, in TCP) (*tcpState, error) {
 func (s *tcpState) outgoing() Layer {
 	newOutgoing := deepcopy.Copy(s.out).(TCP)
 	if s.localSeqNum != nil {
-		newOutgoing.SeqNum = Uint32(uint32(*s.localSeqNum))
+		newOutgoing.SeqNum = new(uint32(*s.localSeqNum))
 	}
 	if s.remoteSeqNum != nil {
-		newOutgoing.AckNum = Uint32(uint32(*s.remoteSeqNum))
+		newOutgoing.AckNum = new(uint32(*s.remoteSeqNum))
 	}
 	return &newOutgoing
 }
@@ -304,13 +306,13 @@ func (s *tcpState) incoming(received Layer) Layer {
 	}
 	newIn := deepcopy.Copy(s.in).(TCP)
 	if s.remoteSeqNum != nil {
-		newIn.SeqNum = Uint32(uint32(*s.remoteSeqNum))
+		newIn.SeqNum = new(uint32(*s.remoteSeqNum))
 	}
 	if seq, flags := s.localSeqNum, tcpReceived.Flags; seq != nil && flags != nil && *flags&header.TCPFlagAck != 0 {
 		// The caller didn't specify an AckNum so we'll expect the calculated one,
 		// but only if the ACK flag is set because the AckNum is not valid in a
 		// header if ACK is not set.
-		newIn.AckNum = Uint32(uint32(*seq))
+		newIn.AckNum = new(uint32(*seq))
 	}
 	return &newIn
 }
@@ -340,7 +342,7 @@ func (s *tcpState) received(l Layer) error {
 	if !ok {
 		return fmt.Errorf("can't update tcpState with %T Layer", l)
 	}
-	s.remoteSeqNum = SeqNumValue(seqnum.Value(*tcp.SeqNum))
+	s.remoteSeqNum = new(seqnum.Value(*tcp.SeqNum))
 	if *tcp.Flags&(header.TCPFlagSyn|header.TCPFlagFin) != 0 {
 		s.remoteSeqNum.UpdateForward(1)
 	}
@@ -681,11 +683,9 @@ func (n *DUTTestNet) NewTCPIPv4(t *testing.T, outgoingTCP, incomingTCP TCP) TCPI
 	}
 
 	return TCPIPv4{
-		Connection: Connection{
-			layerStates: []layerState{etherState, ipv4State, tcpState},
-			injector:    injector,
-			sniffer:     sniffer,
-		},
+		layerStates: []layerState{etherState, ipv4State, tcpState},
+		injector:    injector,
+		sniffer:     sniffer,
 	}
 }
 
@@ -695,17 +695,17 @@ func (conn *TCPIPv4) Connect(t *testing.T) {
 	t.Helper()
 
 	// Send the SYN.
-	conn.Send(t, TCP{Flags: TCPFlags(header.TCPFlagSyn)})
+	conn.Send(t, TCP{Flags: new(header.TCPFlagSyn)})
 
 	// Wait for the SYN-ACK.
-	synAck, err := conn.Expect(t, TCP{Flags: TCPFlags(header.TCPFlagSyn | header.TCPFlagAck)}, time.Second)
+	synAck, err := conn.Expect(t, TCP{Flags: new(header.TCPFlagSyn | header.TCPFlagAck)}, time.Second)
 	if err != nil {
 		t.Fatalf("didn't get synack during handshake: %s", err)
 	}
 	conn.layerStates[len(conn.layerStates)-1].(*tcpState).synAck = synAck
 
 	// Send an ACK.
-	conn.Send(t, TCP{Flags: TCPFlags(header.TCPFlagAck)})
+	conn.Send(t, TCP{Flags: new(header.TCPFlagAck)})
 }
 
 // ConnectWithOptions performs a TCP 3-way handshake with given TCP options.
@@ -714,17 +714,17 @@ func (conn *TCPIPv4) ConnectWithOptions(t *testing.T, options []byte) {
 	t.Helper()
 
 	// Send the SYN.
-	conn.Send(t, TCP{Flags: TCPFlags(header.TCPFlagSyn), Options: options})
+	conn.Send(t, TCP{Flags: new(header.TCPFlagSyn), Options: options})
 
 	// Wait for the SYN-ACK.
-	synAck, err := conn.Expect(t, TCP{Flags: TCPFlags(header.TCPFlagSyn | header.TCPFlagAck)}, time.Second)
+	synAck, err := conn.Expect(t, TCP{Flags: new(header.TCPFlagSyn | header.TCPFlagAck)}, time.Second)
 	if err != nil {
 		t.Fatalf("didn't get synack during handshake: %s", err)
 	}
 	conn.layerStates[len(conn.layerStates)-1].(*tcpState).synAck = synAck
 
 	// Send an ACK.
-	conn.Send(t, TCP{Flags: TCPFlags(header.TCPFlagAck)})
+	conn.Send(t, TCP{Flags: new(header.TCPFlagAck)})
 }
 
 // ExpectData is a convenient method that expects a Layer and the Layer after
@@ -759,7 +759,7 @@ func (conn *TCPIPv4) ExpectNextData(t *testing.T, tcp *TCP, payload *Payload, ti
 	expected[len(expected)-1] = tcp
 	if payload != nil {
 		expected = append(expected, payload)
-		tcp.SeqNum = Uint32(uint32(*conn.RemoteSeqNum(t)) - uint32(payload.Length()))
+		tcp.SeqNum = new(uint32(*conn.RemoteSeqNum(t)) - uint32(payload.Length()))
 	}
 	if !conn.match(expected, got) {
 		return nil, fmt.Errorf("next frame is not matching %s during %s: got %s", expected, timeout, got)
@@ -849,7 +849,7 @@ func GenerateOTWSeqSegment(t *testing.T, conn *TCPIPv4, seqNumOffset seqnum.Size
 	t.Helper()
 	lastAcceptable := conn.LocalSeqNum(t).Add(windowSize)
 	otwSeq := uint32(lastAcceptable.Add(seqNumOffset))
-	return TCP{SeqNum: Uint32(otwSeq), Flags: TCPFlags(header.TCPFlagAck)}
+	return TCP{SeqNum: new(otwSeq), Flags: new(header.TCPFlagAck)}
 }
 
 // GenerateUnaccACKSegment generates a segment with
@@ -859,7 +859,7 @@ func GenerateUnaccACKSegment(t *testing.T, conn *TCPIPv4, seqNumOffset seqnum.Si
 	t.Helper()
 	lastAcceptable := conn.RemoteSeqNum(t)
 	unaccAck := uint32(lastAcceptable.Add(seqNumOffset))
-	return TCP{AckNum: Uint32(unaccAck), Flags: TCPFlags(header.TCPFlagAck)}
+	return TCP{AckNum: new(unaccAck), Flags: new(header.TCPFlagAck)}
 }
 
 // IPv4Conn maintains the state for all the layers in a IPv4 connection.
@@ -890,11 +890,9 @@ func (n *DUTTestNet) NewIPv4Conn(t *testing.T, outgoingIPv4, incomingIPv4 IPv4) 
 	}
 
 	return IPv4Conn{
-		Connection: Connection{
-			layerStates: []layerState{etherState, ipv4State},
-			injector:    injector,
-			sniffer:     sniffer,
-		},
+		layerStates: []layerState{etherState, ipv4State},
+		injector:    injector,
+		sniffer:     sniffer,
 	}
 }
 
@@ -934,11 +932,9 @@ func (n *DUTTestNet) NewIPv6Conn(t *testing.T, outgoingIPv6, incomingIPv6 IPv6) 
 	}
 
 	return IPv6Conn{
-		Connection: Connection{
-			layerStates: []layerState{etherState, ipv6State},
-			injector:    injector,
-			sniffer:     sniffer,
-		},
+		layerStates: []layerState{etherState, ipv6State},
+		injector:    injector,
+		sniffer:     sniffer,
 	}
 }
 
@@ -981,11 +977,9 @@ func (n *DUTTestNet) NewUDPIPv4(t *testing.T, outgoingUDP, incomingUDP UDP) UDPI
 	}
 
 	return UDPIPv4{
-		Connection: Connection{
-			layerStates: []layerState{etherState, ipv4State, udpState},
-			injector:    injector,
-			sniffer:     sniffer,
-		},
+		layerStates: []layerState{etherState, ipv4State, udpState},
+		injector:    injector,
+		sniffer:     sniffer,
 	}
 }
 
@@ -1107,11 +1101,9 @@ func (n *DUTTestNet) NewUDPIPv6(t *testing.T, outgoingUDP, incomingUDP UDP) UDPI
 		t.Fatalf("can't make sniffer: %s", err)
 	}
 	return UDPIPv6{
-		Connection: Connection{
-			layerStates: []layerState{etherState, ipv6State, udpState},
-			injector:    injector,
-			sniffer:     sniffer,
-		},
+		layerStates: []layerState{etherState, ipv6State, udpState},
+		injector:    injector,
+		sniffer:     sniffer,
 	}
 }
 
@@ -1235,11 +1227,9 @@ func (n *DUTTestNet) NewTCPIPv6(t *testing.T, outgoingTCP, incomingTCP TCP) TCPI
 	}
 
 	return TCPIPv6{
-		Connection: Connection{
-			layerStates: []layerState{etherState, ipv6State, tcpState},
-			injector:    injector,
-			sniffer:     sniffer,
-		},
+		layerStates: []layerState{etherState, ipv6State, tcpState},
+		injector:    injector,
+		sniffer:     sniffer,
 	}
 }
 

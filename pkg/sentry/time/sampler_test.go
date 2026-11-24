@@ -89,9 +89,9 @@ func generateSamples(n int, overhead TSCValue) []sample {
 // TestSample ensures that samples can be collected.
 func TestSample(t *testing.T) {
 	testCases := []struct {
+		err     error
 		name    string
 		samples []sample
-		err     error
 	}{
 		{
 			name: "basic",
@@ -160,7 +160,7 @@ func TestOutliersIgnored(t *testing.T) {
 	}, nil)
 
 	// Collect 5 samples.
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		err := s.Sample()
 		if err != nil {
 			t.Fatalf("Unexpected error while sampling: %v", err)

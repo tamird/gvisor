@@ -217,8 +217,8 @@ func compareProbes(t *testing.T, env, what string) {
 	if err != nil {
 		t.Fatalf("warmup probe: %v\noutput: %s", err, out)
 	}
-	if strings.HasPrefix(out, "SKIP: ") {
-		t.Skip(strings.TrimSuffix(strings.TrimPrefix(out, "SKIP: "), "\n"))
+	if after, ok := strings.CutPrefix(out, "SKIP: "); ok {
+		t.Skip(strings.TrimSuffix(after, "\n"))
 	}
 
 	var plain, deferred []time.Duration

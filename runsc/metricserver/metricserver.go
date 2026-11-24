@@ -27,6 +27,7 @@ import (
 	"regexp"
 	"runtime"
 	"runtime/debug"
+	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -60,8 +61,14 @@ const (
 // servedSandbox is a sandbox that we serve metrics from.
 // A single metrics server will export data about multiple sandboxes.
 type servedSandbox struct {
-	rootContainerID container.FullID
-	server          *metricServer
+	// extra contains additional per-sandbox data.
+	extra sandboxData
+
+	// createdAt stores the time the sandbox was created.
+	// It is loaded from the container state file.
+	// Like extraLabels, it is immutable after initialization by load.
+	createdAt time.Time
+	server    *metricServer
 
 	// extraLabels is initialized by load along with sandbox and is immutable
 	// thereafter. Metrics readers synchronize initialization by calling load.
@@ -69,25 +76,11 @@ type servedSandbox struct {
 	// initialization to immutable access after a successful load.
 	extraLabels map[string]string
 
-	mu sync.Mutex
-
 	// sandbox is the sandbox being monitored.
 	// Once set, the pointer is not reassigned.
 	//
 	// +checklocks:mu
 	sandbox *sandbox.Sandbox
-
-	// createdAt stores the time the sandbox was created.
-	// It is loaded from the container state file.
-	// Like extraLabels, it is immutable after initialization by load.
-	createdAt time.Time
-
-	// capabilities is the union of the capability set of the containers within `sandbox`.
-	// It is used to export a per-sandbox metric representing which capabilities are in use.
-	// For monitoring purposes, a capability added in a container means it is considered
-	// added for the whole sandbox.
-	// Like extraLabels, it is immutable after initialization by load.
-	capabilities []linux.Capability
 
 	// specMetadataLabels is the set of label exported as part of the
 	// `spec_metadata` metric.
@@ -110,9 +103,15 @@ type servedSandbox struct {
 	//
 	// +checklocks:mu
 	cleanupVerifier func()
+	rootContainerID container.FullID
 
-	// extra contains additional per-sandbox data.
-	extra sandboxData
+	// capabilities is the union of the capability set of the containers within `sandbox`.
+	// It is used to export a per-sandbox metric representing which capabilities are in use.
+	// For monitoring purposes, a capability added in a container means it is considered
+	// added for the whole sandbox.
+	// Like extraLabels, it is immutable after initialization by load.
+	capabilities []linux.Capability
+	mu           sync.Mutex
 }
 
 // load loads the sandbox being monitored and initializes its metric verifier.
@@ -272,27 +271,43 @@ func querySandboxMetrics(ctx context.Context, sand *sandbox.Sandbox, verifier *p
 
 // metricServer implements the metric server.
 type metricServer struct {
-	rootDir                string
-	pid                    int
-	allowUnknownRoot       bool
-	exposeProfileEndpoints bool
-	address                string
-	exporterPrefix         string
-	startTime              time.Time
-	srv                    http.Server
-
-	// Size of the map of written metrics during the last /metrics export. Initially zero.
-	// Used to efficiently reallocate a map of the right size during the next export.
-	//
-	// +checkatomic
-	lastMetricsWrittenSize atomicbitops.Uint32
+	// extra contains additional server-wide data.
+	extra serverData
 
 	// Pool of `prometheus.ReusableWriter`s. Used to avoid large buffer allocations for
 	// successive snapshots.
 	promWriterPool sync.Pool
+	startTime      time.Time
 
-	// mu protects mutable registry, request-filter, and shutdown state.
-	mu sync.Mutex
+	// shutdownDone is closed when the shutdown attempt returns, including on
+	// cancellation or error. It is initialized before startVerifyLoop and is
+	// never reassigned.
+	shutdownDone chan struct{}
+
+	// shutdownCh is written to when receiving the signal to shut down gracefully.
+	// It is initialized before startVerifyLoop and is never reassigned.
+	shutdownCh chan os.Signal
+
+	// lastValidCapabilityFilterReg is the compiled regular expression corresponding to
+	// lastValidCapabilityFilterStr.
+	//
+	// +checklocks:mu
+	lastValidCapabilityFilterReg *regexp.Regexp
+
+	// lastStateFileStat maps container full IDs to the last observed stat() of their state file.
+	// This is used to monitor for sandboxes in the background. If a sandbox's state file matches this
+	// info, we can assume that the last background scan already looked at it.
+	//
+	// +checklocks:mu
+	lastStateFileStat map[container.FullID]os.FileInfo
+
+	// sandboxes is the list of sandboxes we serve metrics for.
+	//
+	// +checklocks:mu
+	sandboxes      map[container.FullID]*servedSandbox
+	rootDir        string
+	address        string
+	exporterPrefix string
 
 	// pidFile is the path to the PID file to remove on shutdown. It is cleared
 	// after successful removal.
@@ -308,18 +323,6 @@ type metricServer struct {
 	//
 	// +checklocks:mu
 	udsPath string
-
-	// sandboxes is the list of sandboxes we serve metrics for.
-	//
-	// +checklocks:mu
-	sandboxes map[container.FullID]*servedSandbox
-
-	// lastStateFileStat maps container full IDs to the last observed stat() of their state file.
-	// This is used to monitor for sandboxes in the background. If a sandbox's state file matches this
-	// info, we can assume that the last background scan already looked at it.
-	//
-	// +checklocks:mu
-	lastStateFileStat map[container.FullID]os.FileInfo
 
 	// lastValidMetricFilter stores the last value of the "runsc-sandbox-metrics-filter" parameter for
 	// /metrics requests.
@@ -338,12 +341,7 @@ type metricServer struct {
 	//
 	// +checklocks:mu
 	lastValidCapabilityFilterStr string
-
-	// lastValidCapabilityFilterReg is the compiled regular expression corresponding to
-	// lastValidCapabilityFilterStr.
-	//
-	// +checklocks:mu
-	lastValidCapabilityFilterReg *regexp.Regexp
+	srv                          http.Server
 
 	// numSandboxes counts the number of sandboxes that have ever been registered on this server.
 	// Used to distinguish between the case where this metrics serve has sat there doing nothing
@@ -354,24 +352,24 @@ type metricServer struct {
 	//
 	// +checklocks:mu
 	numSandboxes int64
+	pid          int
+
+	// mu protects mutable registry, request-filter, and shutdown state.
+	mu sync.Mutex
+
+	// Size of the map of written metrics during the last /metrics export. Initially zero.
+	// Used to efficiently reallocate a map of the right size during the next export.
+	//
+	// +checkatomic
+	lastMetricsWrittenSize atomicbitops.Uint32
+	allowUnknownRoot       bool
+	exposeProfileEndpoints bool
 
 	// shuttingDown is set when shutdown starts. It prevents discovery from
 	// adding new sandboxes and lets handlers reject requests.
 	//
 	// +checklocks:mu
 	shuttingDown bool
-
-	// shutdownCh is written to when receiving the signal to shut down gracefully.
-	// It is initialized before startVerifyLoop and is never reassigned.
-	shutdownCh chan os.Signal
-
-	// shutdownDone is closed when the shutdown attempt returns, including on
-	// cancellation or error. It is initialized before startVerifyLoop and is
-	// never reassigned.
-	shutdownDone chan struct{}
-
-	// extraData contains additional server-wide data.
-	extra serverData
 }
 
 // sufficientlyEqualStats returns whether the given FileInfo's are sufficiently
@@ -417,13 +415,7 @@ func (m *metricServer) refreshSandboxesLocked() {
 		return
 	}
 	for sandboxID, sandbox := range m.sandboxes {
-		found := false
-		for _, sid := range sandboxIDs {
-			if sid == sandboxID {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(sandboxIDs, sandboxID)
 		if !found {
 			log.Warningf("Sandbox %s no longer exists but did not explicitly unregister. Removing it.", sandboxID)
 			sandbox.cleanup()
@@ -578,7 +570,7 @@ func (m *metricServer) loadSandboxesLocked(ctx context.Context) []sandboxLoadRes
 		loadSandboxCh <- sandbox
 	}
 	close(loadSandboxCh)
-	for i := 0; i < numSandboxes; i++ {
+	for range numSandboxes {
 		loadedSandboxes = append(loadedSandboxes, <-loadedSandboxesCh)
 	}
 	close(loadedSandboxesCh)
@@ -590,14 +582,14 @@ func (m *metricServer) loadSandboxesLocked(ctx context.Context) []sandboxLoadRes
 // metric data (if querying metrics from the sandbox process succeeded).
 type sandboxMetricsResult struct {
 	sandboxLoadResult
-	isRunning       bool
 	isRunningErr    error
-	isCheckpointed  bool
-	isRestored      bool
+	err             error
+	snapshot        *prometheus.Snapshot
 	cpuTimeSavedMS  int64
 	wallTimeSavedMS int64
-	snapshot        *prometheus.Snapshot
-	err             error
+	isRunning       bool
+	isCheckpointed  bool
+	isRestored      bool
 }
 
 // queryMultiSandboxMetrics queries metric data from multiple loaded sandboxes.
@@ -624,12 +616,9 @@ func queryMultiSandboxMetrics(ctx context.Context, loadedSandboxes []sandboxLoad
 	}
 	loadedSandboxCh := make(chan sandboxLoadResult, numSandboxes)
 	var wg sync.WaitGroup
-	numGoroutines := exportParallelGoroutines
-	if numSandboxes < numGoroutines {
-		numGoroutines = numSandboxes
-	}
+	numGoroutines := min(numSandboxes, exportParallelGoroutines)
 	wg.Add(numGoroutines)
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		go func() {
 			defer wg.Done()
 			for s := range loadedSandboxCh {
@@ -713,7 +702,7 @@ func (m *metricServer) serveMetrics(w *httpResponseWriter, req *http.Request) ht
 		_, err := regexp.Compile(metricsFilter)
 		if err != nil {
 			m.mu.Unlock()
-			return httpResult{http.StatusBadRequest, errors.New("provided metric filter is not a valid regular expression")}
+			return httpResult{code: http.StatusBadRequest, err: errors.New("provided metric filter is not a valid regular expression")}
 		}
 		m.lastValidMetricFilter = metricsFilter
 	}
@@ -722,7 +711,7 @@ func (m *metricServer) serveMetrics(w *httpResponseWriter, req *http.Request) ht
 			reg, err := regexp.Compile(capabilityFilterStr)
 			if err != nil {
 				m.mu.Unlock()
-				return httpResult{http.StatusBadRequest, errors.New("provided capability filter is not a valid regular expression")}
+				return httpResult{code: http.StatusBadRequest, err: errors.New("provided capability filter is not a valid regular expression")}
 			}
 			m.lastValidCapabilityFilterStr = capabilityFilterStr
 			m.lastValidCapabilityFilterReg = reg
@@ -858,7 +847,7 @@ func (m *metricServer) serveMetrics(w *httpResponseWriter, req *http.Request) ht
 	m.promWriterPool.Put(promWriter)
 	if err != nil {
 		if written == 0 {
-			return httpResult{http.StatusServiceUnavailable, err}
+			return httpResult{code: http.StatusServiceUnavailable, err: err}
 		}
 		// Note that we cannot return an HTTP error here because we have already started writing a
 		// response, which means we've already responded with a 200 OK status code.
@@ -881,14 +870,14 @@ func (m *metricServer) serveHealthCheck(w *httpResponseWriter, req *http.Request
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.shuttingDown {
-		return httpResult{http.StatusServiceUnavailable, errors.New("server is shutting down")}
+		return httpResult{code: http.StatusServiceUnavailable, err: errors.New("server is shutting down")}
 	}
 	if err := req.ParseForm(); err != nil {
-		return httpResult{http.StatusBadRequest, err}
+		return httpResult{code: http.StatusBadRequest, err: err}
 	}
 	rootDir := req.Form.Get("root")
 	if rootDir != m.rootDir {
-		return httpResult{http.StatusBadRequest, fmt.Errorf("this metric server is configured to serve root directory: %s", m.rootDir)}
+		return httpResult{code: http.StatusBadRequest, err: fmt.Errorf("this metric server is configured to serve root directory: %s", m.rootDir)}
 	}
 	w.WriteHeader(http.StatusOK)
 	w.WriteString("runsc-metrics:OK")
@@ -902,7 +891,7 @@ func (m *metricServer) servePID(w *httpResponseWriter, req *http.Request) httpRe
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.shuttingDown {
-		return httpResult{http.StatusServiceUnavailable, errors.New("server is shutting down")}
+		return httpResult{code: http.StatusServiceUnavailable, err: errors.New("server is shutting down")}
 	}
 	w.WriteString(strconv.Itoa(m.pid))
 	return httpOK
@@ -1038,7 +1027,7 @@ func (s *Server) Run(ctx context.Context) error {
 	m.srv.ReadTimeout = httpTimeout
 	m.srv.WriteTimeout = httpTimeout
 	if m.pidFile != "" {
-		if err := os.WriteFile(m.pidFile, []byte(fmt.Sprintf("%d", m.pid)), 0644); err != nil {
+		if err := os.WriteFile(m.pidFile, fmt.Appendf(nil, "%d", m.pid), 0644); err != nil {
 			return fmt.Errorf("cannot write PID to file %q: %w", m.pidFile, err)
 		}
 		defer os.Remove(m.pidFile)

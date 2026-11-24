@@ -59,10 +59,10 @@ type Command struct {
 	Cluster                  clusterflag.Flag
 	DaemonSetName            string
 	DaemonSetNamespace       string
-	EnablePerPodFlagOverride bool
 	Image                    string
 	PauseContainerImage      string
 	RunscFlags               string
+	EnablePerPodFlagOverride bool
 }
 
 // Name implements subcommands.Command.Name.
@@ -130,7 +130,7 @@ func (c *Command) Execute(ctx context.Context, f *flag.FlagSet, _ ...any) subcom
 	}
 	extraFlags := make(map[string]string)
 	if c.RunscFlags != "" {
-		for _, flag := range strings.Fields(c.RunscFlags) {
+		for flag := range strings.FieldsSeq(c.RunscFlags) {
 			parts := strings.SplitN(flag, "=", 2)
 			if len(parts) != 2 {
 				util.Fatalf("Invalid runsc flag: %q", flag)

@@ -84,17 +84,16 @@ type transportError struct {
 // Packets are checked by comparing their fields/values against the expected
 // values stored in the test object itself.
 type testObject struct {
-	t        *testing.T
-	protocol tcpip.TransportProtocolNumber
-	contents []byte
-	srcAddr  tcpip.Address
-	dstAddr  tcpip.Address
-	v4       bool
-	transErr transportError
-
+	t            *testing.T
+	contents     []byte
+	srcAddr      tcpip.Address
+	dstAddr      tcpip.Address
+	transErr     transportError
 	dataCalls    int
 	controlCalls int
 	rawCalls     int
+	protocol     tcpip.TransportProtocolNumber
+	v4           bool
 }
 
 // checkValues verifies that the transport protocol, data contents, src & dst
@@ -450,9 +449,9 @@ func TestSourceAddressValidation(t *testing.T) {
 	}
 
 	tests := []struct {
+		rxICMP     func(*channel.Endpoint, tcpip.Address)
 		name       string
 		srcAddress tcpip.Address
-		rxICMP     func(*channel.Endpoint, tcpip.Address)
 		valid      bool
 	}{
 		{
@@ -535,8 +534,8 @@ func TestSourceAddressValidation(t *testing.T) {
 
 func TestEnableWhenNICDisabled(t *testing.T) {
 	tests := []struct {
-		name            string
 		protocolFactory stack.NetworkProtocolFactory
+		name            string
 		protoNum        tcpip.NetworkProtocolNumber
 	}{
 		{
@@ -628,17 +627,15 @@ func TestIPv4Send(t *testing.T) {
 
 	proto := s.NetworkProtocolInstance(ipv4.ProtocolNumber)
 	nic := testInterface{
-		testObject: testObject{
-			t:  t,
-			v4: true,
-		},
+		t:  t,
+		v4: true,
 	}
 	ep := proto.NewEndpoint(&nic, nil)
 	defer ep.Close()
 
 	// Allocate and initialize the payload view.
 	payload := make([]byte, 100)
-	for i := 0; i < len(payload); i++ {
+	for i := range len(payload) {
 		payload[i] = uint8(i)
 	}
 
@@ -671,12 +668,12 @@ func TestIPv4Send(t *testing.T) {
 
 func TestReceive(t *testing.T) {
 	tests := []struct {
-		name         string
 		protoFactory stack.NetworkProtocolFactory
+		handlePacket func(*testing.T, stack.NetworkEndpoint, *testInterface)
+		name         string
+		epAddr       tcpip.AddressWithPrefix
 		protoNum     tcpip.NetworkProtocolNumber
 		v4           bool
-		epAddr       tcpip.AddressWithPrefix
-		handlePacket func(*testing.T, stack.NetworkEndpoint, *testInterface)
 	}{
 		{
 			name:         "IPv4",
@@ -765,10 +762,8 @@ func TestReceive(t *testing.T) {
 			}()
 
 			nic := testInterface{
-				testObject: testObject{
-					t:  t,
-					v4: test.v4,
-				},
+				t:  t,
+				v4: test.v4,
 			}
 			ep := s.NetworkProtocolInstance(test.protoNum).NewEndpoint(&nic, &nic.testObject)
 			defer ep.Close()
@@ -890,9 +885,7 @@ func TestIPv4ReceiveControl(t *testing.T) {
 
 			proto := s.NetworkProtocolInstance(ipv4.ProtocolNumber)
 			nic := testInterface{
-				testObject: testObject{
-					t: t,
-				},
+				t: t,
 			}
 			ep := proto.NewEndpoint(&nic, &nic.testObject)
 			defer ep.Close()
@@ -979,10 +972,8 @@ func TestIPv4FragmentationReceive(t *testing.T) {
 
 	proto := s.NetworkProtocolInstance(ipv4.ProtocolNumber)
 	nic := testInterface{
-		testObject: testObject{
-			t:  t,
-			v4: true,
-		},
+		t:  t,
+		v4: true,
 	}
 	ep := proto.NewEndpoint(&nic, &nic.testObject)
 	defer ep.Close()
@@ -1081,9 +1072,7 @@ func TestIPv6Send(t *testing.T) {
 
 	proto := s.NetworkProtocolInstance(ipv6.ProtocolNumber)
 	nic := testInterface{
-		testObject: testObject{
-			t: t,
-		},
+		t: t,
 	}
 	ep := proto.NewEndpoint(&nic, nil)
 	defer ep.Close()
@@ -1094,7 +1083,7 @@ func TestIPv6Send(t *testing.T) {
 
 	// Allocate and initialize the payload view.
 	payload := make([]byte, 100)
-	for i := 0; i < len(payload); i++ {
+	for i := range len(payload) {
 		payload[i] = uint8(i)
 	}
 
@@ -1141,13 +1130,13 @@ func TestIPv6ReceiveControl(t *testing.T) {
 	}
 
 	cases := []struct {
-		name           string
-		expectedCount  int
 		fragmentOffset *uint16
+		name           string
+		transErr       transportError
+		expectedCount  int
+		trunc          int
 		typ            header.ICMPv6Type
 		code           header.ICMPv6Code
-		transErr       transportError
-		trunc          int
 	}{
 		{
 			name:           "PacketTooBig",
@@ -1240,9 +1229,7 @@ func TestIPv6ReceiveControl(t *testing.T) {
 
 			proto := s.NetworkProtocolInstance(ipv6.ProtocolNumber)
 			nic := testInterface{
-				testObject: testObject{
-					t: t,
-				},
+				t: t,
 			}
 			ep := proto.NewEndpoint(&nic, &nic.testObject)
 			defer ep.Close()
@@ -1385,14 +1372,14 @@ func TestWriteHeaderIncludedPacket(t *testing.T) {
 	}
 
 	tests := []struct {
-		name         string
+		expectedErr  tcpip.Error
 		protoFactory stack.NetworkProtocolFactory
-		protoNum     tcpip.NetworkProtocolNumber
-		nicAddr      tcpip.AddressWithPrefix
-		remoteAddr   tcpip.Address
 		pktGen       func(*testing.T, tcpip.Address) buffer.Buffer
 		checker      func(*testing.T, *stack.PacketBuffer, tcpip.Address)
-		expectedErr  tcpip.Error
+		name         string
+		nicAddr      tcpip.AddressWithPrefix
+		remoteAddr   tcpip.Address
+		protoNum     tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:         "IPv4",
@@ -1934,13 +1921,13 @@ func TestICMPInclusionSize(t *testing.T) {
 		)
 	}
 	tests := []struct {
-		name          string
-		srcAddress    tcpip.Address
 		injector      func(*channel.Endpoint, tcpip.Address, []byte) []byte
 		checker       func(*testing.T, *stack.PacketBuffer, []byte)
+		name          string
+		srcAddress    tcpip.Address
 		payloadLength int    // Not including IP header.
-		linkMTU       uint32 // Largest IP packet that the link can send as payload.
 		replyLength   int    // Total size of IP/ICMP packet expected back.
+		linkMTU       uint32 // Largest IP packet that the link can send as payload.
 	}{
 		{
 			name:          "IPv4 exact match",
@@ -2055,7 +2042,7 @@ func TestICMPInclusionSize(t *testing.T) {
 			defer e.Close()
 			// Allocate and initialize the payload view.
 			payload := make([]byte, test.payloadLength)
-			for i := 0; i < len(payload); i++ {
+			for i := range len(payload) {
 				payload[i] = uint8(i)
 			}
 			// Default routes for IPv4&6 so ICMP can find a route to the remote
@@ -2088,10 +2075,10 @@ func TestJoinLeaveAllRoutersGroup(t *testing.T) {
 	const nicID = 1
 
 	tests := []struct {
-		name           string
-		netProto       tcpip.NetworkProtocolNumber
 		protoFactory   stack.NetworkProtocolFactory
+		name           string
 		allRoutersAddr tcpip.Address
+		netProto       tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:           "IPv4",

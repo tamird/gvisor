@@ -463,9 +463,9 @@ const (
 // Beyond being used as a Locker, this is a simple mechanism for
 // changing the underlying values for simpler tests.
 type testMutex struct {
-	a hostarch.Addr
-	d testData
 	m *Manager
+	d testData
+	a hostarch.Addr
 }
 
 func newTestMutex(addr hostarch.Addr, d testData, m *Manager) *testMutex {
@@ -511,7 +511,7 @@ func (t *testMutex) Unlock() {
 
 // This function was shamelessly stolen from mutex_test.go.
 func HammerMutex(l sync.Locker, loops int, cdone chan bool) {
-	for i := 0; i < loops; i++ {
+	for range loops {
 		l.Lock()
 		runtime.Gosched()
 		l.Unlock()
@@ -525,11 +525,11 @@ func TestMutexStress(t *testing.T) {
 	tm := newTestMutex(0*testMutexSize, d, m)
 	c := make(chan bool)
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		go HammerMutex(tm, 1000, c)
 	}
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		<-c
 	}
 }

@@ -59,9 +59,9 @@ const (
 // created here. Therefore we use the intermediary (master), which is created
 // on initialization of the platform.
 var globalPool struct {
-	mu        sync.Mutex
 	master    *subprocess
 	available []*subprocess
+	mu        sync.Mutex
 }
 
 // thread is a traced thread; it is a thread identifier.
@@ -80,15 +80,15 @@ type thread struct {
 
 // threadPool is a collection of threads.
 type threadPool struct {
-	// mu protects below.
-	mu sync.RWMutex
-
 	// threads is the collection of threads.
 	//
 	// This map is indexed by system TID (the calling thread); which will
 	// be the tracer for the given *thread, and therefore capable of using
 	// relevant ptrace calls.
 	threads map[int32]*thread
+
+	// mu protects threads.
+	mu sync.RWMutex
 }
 
 // lookupOrCreate looks up a given thread or creates one.
@@ -143,6 +143,10 @@ type subprocess struct {
 	// requests is used to signal creation of new threads.
 	requests chan chan *thread
 
+	// contexts is the set of contexts for which it's possible that
+	// context.lastFaultSP == this subprocess.
+	contexts map[*context]struct{}
+
 	// sysemuThreads are reserved for emulation.
 	sysemuThreads threadPool
 
@@ -150,12 +154,8 @@ type subprocess struct {
 	// handled in the dedicated goroutine corresponding to requests above).
 	syscallThreads threadPool
 
-	// mu protects the following fields.
+	// mu protects contexts.
 	mu sync.Mutex
-
-	// contexts is the set of contexts for which it's possible that
-	// context.lastFaultSP == this subprocess.
-	contexts map[*context]struct{}
 }
 
 // newSubprocess returns a usable subprocess.

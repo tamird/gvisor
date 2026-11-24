@@ -85,35 +85,37 @@ func (w *logWriter) Write(p []byte) (n int, err error) {
 
 // Command wraps a command with some niceties for stdout/stderr handling.
 type Command struct {
+	// waitErr is the error returned by `Cmd.Wait`.
+	waitErr error
+
 	// Cmd is the wrapped command.
 	Cmd *exec.Cmd
 
-	// Option fields.
-	// If non-nil, this data will be fed to the command's stdin.
-	Stdin []byte
-	// ForwardStdout and ForwardStderr control whether stdout/stderr are
-	// forwarded to the user's console.
-	ForwardStdout, ForwardStderr bool
+	// doneCh is closed when the command is done running.
+	doneCh chan struct{}
+
 	// PrefixStdout and PrefixStderr are prefixes for forwarded logs.
 	PrefixStdout, PrefixStderr string
+
+	// Sets of stdout/stderr/combined output lines.
+	stdoutLines, stderrLines, combined []string
+
+	// If non-nil, this data will be fed to the command's stdin.
+	Stdin []byte
 
 	// streamWG waits for stdout/stderr capturing goroutines.
 	streamWG sync.WaitGroup
 
-	// mu protects the fields below.
+	// mu protects started, stdoutLines, stderrLines, combined, waitErr and doneCh.
 	mu sync.Mutex
 
 	// started is `true` if the command has started.
 	started bool
 
-	// Sets of stdout/stderr/combined output lines.
-	stdoutLines, stderrLines, combined []string
+	// ForwardStdout and ForwardStderr control whether stdout/stderr are
 
-	// waitErr is the error returned by `Cmd.Wait`.
-	waitErr error
-
-	// doneCh is closed when the command is done running.
-	doneCh chan struct{}
+	// forwarded to the user's console.
+	ForwardStdout, ForwardStderr bool
 }
 
 // Start starts a command in the background.
@@ -143,14 +145,14 @@ func (c *Command) Start(ctx context.Context) error {
 	c.started = true
 
 	for _, stream := range []struct {
-		forward bool
-		prefix  string
 		from    io.ReadCloser
 		to      io.Writer
 		lines   *[]string
+		prefix  string
+		forward bool
 	}{
-		{c.ForwardStdout, c.PrefixStdout, stdout, os.Stdout, &c.stdoutLines},
-		{c.ForwardStderr, c.PrefixStderr, stderr, &logWriter{}, &c.stderrLines},
+		{forward: c.ForwardStdout, prefix: c.PrefixStdout, from: stdout, to: os.Stdout, lines: &c.stdoutLines},
+		{forward: c.ForwardStderr, prefix: c.PrefixStderr, from: stderr, to: &logWriter{}, lines: &c.stderrLines},
 	} {
 		c.streamWG.Add(1)
 		go func(forward bool, prefix string, from io.ReadCloser, to io.Writer, lines *[]string) {
@@ -224,7 +226,7 @@ func (c *Command) ExitCode(ctx context.Context) (int, error) {
 	if c.waitErr == nil {
 		return 0, nil
 	}
-	if exitErr := (*exec.ExitError)(nil); errors.As(c.waitErr, &exitErr) {
+	if exitErr, ok := errors.AsType[*exec.ExitError](c.waitErr); ok {
 		return exitErr.ExitCode(), nil
 	}
 	return 0, fmt.Errorf("process exit did not carry exit code: %w", c.waitErr)
@@ -674,23 +676,12 @@ func logImageWithFrameAndPrefix(ctx context.Context, img image.Image, title, pre
 	if err != nil {
 		return fmt.Errorf("ascii-image-converter failed: %v (output: %q)", err, strings.Join(stderr, "\n"))
 	}
-	header := "┍"
-	footer := "╰"
 	numHeaderHorizontalLines := imageWidth - len(title) - 2
 	leftHeaderHorizontalLines := numHeaderHorizontalLines / 2
 	rightHeaderHorizontalLines := numHeaderHorizontalLines - leftHeaderHorizontalLines
-	for i := 0; i < leftHeaderHorizontalLines; i++ {
-		header += "━"
-	}
-	header += fmt.Sprintf(" %s ", title)
-	for i := 0; i < rightHeaderHorizontalLines; i++ {
-		header += "━"
-	}
-	for i := 0; i < imageWidth; i++ {
-		footer += "─"
-	}
-	header += "┑"
-	footer += "╯"
+	header := "┍" + strings.Repeat("━", max(0, leftHeaderHorizontalLines)) +
+		fmt.Sprintf(" %s ", title) + strings.Repeat("━", max(0, rightHeaderHorizontalLines)) + "┑"
+	footer := "╰" + strings.Repeat("─", max(0, imageWidth)) + "╯"
 	logDo(func() {
 		fmt.Fprintf(os.Stderr, "%s%s\n", prefix, header)
 		for _, line := range stdout {
@@ -961,7 +952,7 @@ func Main(ctx context.Context) (int, error) {
 		if err != nil {
 			log("> Test failed: %s (%s)", testName, err)
 			lastErr = fmt.Errorf("test %q failed: %w", testName, err)
-			if exitErr := (*exec.ExitError)(nil); errors.As(err, &exitErr) && exitErr.ExitCode() > 0 {
+			if exitErr, ok := errors.AsType[*exec.ExitError](err); ok && exitErr.ExitCode() > 0 {
 				exitCode = exitErr.ExitCode()
 			}
 			continue

@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"fmt"
 	"runtime"
+	"slices"
 
 	"gvisor.dev/gvisor/pkg/atomicbitops"
 	"gvisor.dev/gvisor/pkg/context"
@@ -127,8 +128,8 @@ type fileLine struct {
 type stackKey [maxStackFrames]fileLine
 
 var stackCache = struct {
-	sync.Mutex
 	entries map[stackKey][]uintptr
+	sync.Mutex
 }{entries: map[stackKey][]uintptr{}}
 
 func makeStackKey(pcs []uintptr) stackKey {
@@ -163,7 +164,7 @@ func RecordStack() []uintptr {
 	v, ok := stackCache.entries[key]
 	if !ok {
 		// Reallocate to prevent pcs from escaping.
-		v = append([]uintptr(nil), pcs...)
+		v = slices.Clone(pcs)
 		stackCache.entries[key] = v
 	}
 	stackCache.Unlock()

@@ -105,7 +105,7 @@ func ParseTestCases(testBin string, benchmarks bool, extraArgs ...string) ([]Tes
 	// Parse test output.
 	var t []TestCase
 	var suite string
-	for _, line := range strings.Split(string(out), "\n") {
+	for line := range strings.SplitSeq(string(out), "\n") {
 		// Strip comments.
 		line = strings.Split(line, "#")[0]
 
@@ -165,7 +165,7 @@ func ParseBenchmarks(binary string, extraArgs ...string) ([]TestCase, error) {
 	}
 
 	// Parse benchmark output.
-	for _, line := range strings.Split(benches, "\n") {
+	for line := range strings.SplitSeq(benches, "\n") {
 		// Strip comments.
 		line = strings.Split(line, "#")[0]
 

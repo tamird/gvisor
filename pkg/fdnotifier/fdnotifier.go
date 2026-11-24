@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 // Package fdnotifier contains an adapter that translates IO events (e.g., a
 // file became readable/writable) from native FDs to the notifications in the
@@ -42,16 +41,6 @@ type fdInfo struct {
 // notifier holds all the state necessary to issue notifications when IO events
 // occur in the observed FDs.
 type notifier struct {
-	// epFD is the epoll file descriptor used to register for io
-	// notifications. The first AddFD sets it before starting waitAndNotify.
-	epFD int
-
-	// pauseMu synchronizes notifications with save/restore.
-	// It precedes mu in lock order.
-	pauseMu sync.Mutex
-
-	mu sync.Mutex
-
 	// fdMap maps file descriptors to their notification queues and waiting
 	// status.
 	//
@@ -64,10 +53,19 @@ type notifier struct {
 	// +checklocks:mu
 	queues map[uint64]*waiter.Queue
 
+	// epFD is the epoll file descriptor used to register for io
+	// notifications. The first AddFD sets it before starting waitAndNotify.
+	epFD int
+
 	// lastID is the last ID assigned by EPOLL_CTL_ADD.
 	//
 	// +checklocks:mu
 	lastID uint64
+
+	// pauseMu synchronizes notifications with save/restore.
+	// It precedes mu in lock order.
+	pauseMu sync.Mutex
+	mu      sync.Mutex
 }
 
 // waitFD waits on mask for fd.

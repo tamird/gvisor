@@ -172,7 +172,7 @@ func inVM() bool {
 // hypervisorFlagSet reports whether the first "flags" line in cpuinfo, the
 // contents of /proc/cpuinfo, lists the "hypervisor" flag.
 func hypervisorFlagSet(cpuinfo string) bool {
-	for _, line := range strings.Split(cpuinfo, "\n") {
+	for line := range strings.SplitSeq(cpuinfo, "\n") {
 		if strings.HasPrefix(line, "flags") {
 			return slices.Contains(strings.Fields(line), "hypervisor")
 		}

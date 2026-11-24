@@ -33,8 +33,8 @@ import (
 var _ stack.NetworkDispatcher = (*testNetworkDispatcher)(nil)
 
 type deliveredPacket struct {
-	protocol tcpip.NetworkProtocolNumber
 	packet   *stack.PacketBuffer
+	protocol tcpip.NetworkProtocolNumber
 }
 
 type testNetworkDispatcher struct {

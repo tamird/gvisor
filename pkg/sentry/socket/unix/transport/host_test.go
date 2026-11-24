@@ -89,10 +89,8 @@ func TestHostSenderClosedHostReadiness(t *testing.T) {
 func TestConnectionedEndpointClosedHostReadiness(t *testing.T) {
 	c := &HostSender{fd: -1}
 	ep := &connectionedEndpoint{
-		baseEndpoint: baseEndpoint{
-			receiver: c,
-			peer:     c,
-		},
+		receiver: c,
+		peer:     c,
 	}
 
 	mask := waiter.EventIn | waiter.EventHUp | waiter.EventRdHUp | waiter.EventOut

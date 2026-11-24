@@ -20,7 +20,7 @@ import (
 )
 
 func TestMax(t *testing.T) {
-	a := max(10, 20)
+	a := maximum(10, 20)
 	if a != 20 {
 		t.Errorf("Bad result of max, got %v, want %v", a, 20)
 	}

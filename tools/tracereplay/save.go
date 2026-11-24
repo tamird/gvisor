@@ -27,9 +27,9 @@ import (
 
 // Save implements the functionality required for the "save" command.
 type Save struct {
+	dir    string
+	prefix string
 	server.CommonServer
-	dir         string
-	prefix      string
 	clientCount atomicbitops.Uint64
 }
 

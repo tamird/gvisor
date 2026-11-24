@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build amd64 || arm64
-// +build amd64 arm64
 
 package xdp
 
@@ -26,6 +25,18 @@ import (
 //
 // FillQueue is not thread-safe and requires external synchronization
 type FillQueue struct {
+	// producer points to the shared atomic value that indicates the last
+	// produced descriptor. Only we update this value.
+	producer *atomicbitops.Uint32
+
+	// consumer points to the shared atomic value that indicates the last
+	// consumed descriptor. Only the kernel updates this value.
+	consumer *atomicbitops.Uint32
+
+	// flags points to the shared atomic value that holds flags for the
+	// queue.
+	flags *atomicbitops.Uint32
+
 	// mem is the mmap'd area shared with the kernel. Many other fields of
 	// this struct point into mem.
 	mem []byte
@@ -42,18 +53,6 @@ type FillQueue struct {
 	// the ring.
 	mask uint32
 
-	// producer points to the shared atomic value that indicates the last
-	// produced descriptor. Only we update this value.
-	producer *atomicbitops.Uint32
-
-	// consumer points to the shared atomic value that indicates the last
-	// consumed descriptor. Only the kernel updates this value.
-	consumer *atomicbitops.Uint32
-
-	// flags points to the shared atomic value that holds flags for the
-	// queue.
-	flags *atomicbitops.Uint32
-
 	// Cached values are used to avoid relatively expensive atomic
 	// operations. They are used, incremented, and decremented multiple
 	// times with non-atomic operations, and then "batch-updated" by
@@ -61,6 +60,7 @@ type FillQueue struct {
 
 	// cachedProducer is used to atomically write *producer.
 	cachedProducer uint32
+
 	// cachedConsumer is updated when we atomically read *consumer.
 	// cachedConsumer is actually len(ring) larger than the real consumer
 	// value. See free() for details.

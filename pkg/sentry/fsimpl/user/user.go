@@ -312,7 +312,7 @@ func FindUIDGIDInPasswd(passwd io.Reader, user string) (auth.KUID, auth.KGID, er
 			// If format is invalid, return default values.
 			return fallbackUID, fallbackGID, nil
 		}
-		for i := 0; i < numFields; i++ {
+		for i := range numFields {
 			// The password, GECOS and user command interpreter fields are
 			// optional, no need to check if they are empty.
 			if i == passwdIdx || i == shellIdx || i == gecosIdx {

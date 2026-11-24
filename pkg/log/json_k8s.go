@@ -23,9 +23,9 @@ import (
 )
 
 type k8sJSONLog struct {
+	Time  time.Time `json:"time"`
 	Log   string    `json:"log"`
 	Level Level     `json:"level"`
-	Time  time.Time `json:"time"`
 }
 
 // K8sJSONEmitter logs messages in json format that is compatible with

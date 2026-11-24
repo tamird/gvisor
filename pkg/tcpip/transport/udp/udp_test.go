@@ -106,15 +106,15 @@ func TestBindToDeviceOption(t *testing.T) {
 	}
 
 	testActions := []struct {
-		name                 string
-		setBindToDevice      *tcpip.NICID
 		setBindToDeviceError tcpip.Error
+		setBindToDevice      *tcpip.NICID
+		name                 string
 		getBindToDevice      int32
 	}{
-		{"GetDefaultValue", nil, nil, 0},
-		{"BindToNonExistent", nicIDPtr(999), &tcpip.ErrUnknownDevice{}, 0},
-		{"BindToExistent", nicIDPtr(321), nil, 321},
-		{"UnbindToDevice", nicIDPtr(0), nil, 0},
+		{name: "GetDefaultValue", setBindToDevice: nil, setBindToDeviceError: nil, getBindToDevice: 0},
+		{name: "BindToNonExistent", setBindToDevice: nicIDPtr(999), setBindToDeviceError: &tcpip.ErrUnknownDevice{}, getBindToDevice: 0},
+		{name: "BindToExistent", setBindToDevice: nicIDPtr(321), setBindToDeviceError: nil, getBindToDevice: 321},
+		{name: "UnbindToDevice", setBindToDevice: nicIDPtr(0), setBindToDeviceError: nil, getBindToDevice: 0},
 	}
 	for _, testAction := range testActions {
 		t.Run(testAction.name, func(t *testing.T) {
@@ -274,13 +274,13 @@ func TestV6ReadOnV6(t *testing.T) {
 // correctly dropped when handleLocal is true and not otherwise.
 func TestV4ReadSelfSource(t *testing.T) {
 	for _, tt := range []struct {
-		name              string
-		handleLocal       bool
 		wantErr           tcpip.Error
+		name              string
 		wantInvalidSource uint64
+		handleLocal       bool
 	}{
-		{"HandleLocal", false, nil, 0},
-		{"NoHandleLocal", true, &tcpip.ErrWouldBlock{}, 1},
+		{name: "HandleLocal", handleLocal: false, wantErr: nil, wantInvalidSource: 0},
+		{name: "NoHandleLocal", handleLocal: true, wantErr: &tcpip.ErrWouldBlock{}, wantInvalidSource: 1},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			c := context.NewWithOptions(t, []stack.TransportProtocolFactory{udp.NewProtocol, icmp.NewProtocol6, icmp.NewProtocol4}, context.Options{
@@ -1076,10 +1076,10 @@ func TestReadIncrementsPacketsReceived(t *testing.T) {
 
 func TestReadRecvOriginalDstAddr(t *testing.T) {
 	tests := []struct {
-		name                    string
-		proto                   tcpip.NetworkProtocolNumber
-		flow                    context.TestFlow
 		expectedOriginalDstAddr tcpip.FullAddress
+		name                    string
+		flow                    context.TestFlow
+		proto                   tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:                    "IPv4 unicast",
@@ -1385,12 +1385,12 @@ func TestReceiveControlMessage(t *testing.T) {
 	for _, flow := range []context.TestFlow{context.UnicastV4, context.UnicastV6, context.UnicastV6Only, context.MulticastV4, context.MulticastV6, context.MulticastV6Only, context.Broadcast} {
 		t.Run(flow.String(), func(t *testing.T) {
 			for _, test := range []struct {
-				name             string
-				optionProtocol   tcpip.NetworkProtocolNumber
 				getReceiveOption func(tcpip.Endpoint) bool
 				setReceiveOption func(tcpip.Endpoint, bool)
 				presenceChecker  checker.ControlMessagesChecker
 				absenceChecker   checker.ControlMessagesChecker
+				name             string
+				optionProtocol   tcpip.NetworkProtocolNumber
 			}{
 				{
 					name:             "TOS",
@@ -2058,8 +2058,8 @@ func TestOutgoingSubnetBroadcast(t *testing.T) {
 
 	tests := []struct {
 		name                 string
-		nicAddr              tcpip.ProtocolAddress
 		routes               []tcpip.Route
+		nicAddr              tcpip.ProtocolAddress
 		remoteAddr           tcpip.Address
 		requiresBroadcastOpt bool
 	}{

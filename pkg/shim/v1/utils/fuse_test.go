@@ -226,8 +226,8 @@ func TestFindPodCSIFuseMinors_FromMountinfo(t *testing.T) {
 
 func TestFuseAbortOnTeardownAnnotation(t *testing.T) {
 	for _, tc := range []struct {
-		name        string
 		annotations map[string]string
+		name        string
 		want        bool
 	}{
 		{

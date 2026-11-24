@@ -463,7 +463,7 @@ func TestMultiContainerRlimitsIsolated(t *testing.T) {
 				if err != nil {
 					t.Fatalf("error reading limits of PID %d: %v", pid, err)
 				}
-				for _, line := range strings.Split(string(out), "\n") {
+				for line := range strings.SplitSeq(string(out), "\n") {
 					if rest, ok := strings.CutPrefix(line, "Max open files"); ok {
 						if f := strings.Fields(rest); len(f) >= 2 {
 							return f[0] + "/" + f[1]
@@ -794,7 +794,7 @@ func TestNoRootContainerPIDNSSandboxSpecChurn(t *testing.T) {
 	}
 	startNoRootContainerSandboxWithSpec(t, conf, sbID, sbSpec)
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		path := pidnsPath
 		joiner := startNoRootContainerSub(t, conf, sbID, &path)
 		if _, err := execPS(conf, joiner); err != nil {
@@ -1109,10 +1109,10 @@ func TestMultiContainerTarRootfsUpperLayer(t *testing.T) {
 
 type execDesc struct {
 	c    *Container
-	cmd  []string
 	name string
-	want int
 	err  string
+	cmd  []string
+	want int
 }
 
 func execMany(t *testing.T, conf *config.Config, execs []execDesc) {
@@ -2214,20 +2214,16 @@ func TestMultiContainerDestroyStarting(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error loading container: %v", err)
 		}
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			// Ignore failures, start can fail if destroy runs first.
 			_ = startCont.Start(conf)
-		}()
+		})
 
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if err := cont.Destroy(); err != nil {
 				t.Errorf("deleting non-started container failed: %v", err)
 			}
-		}()
+		})
 	}
 	wg.Wait()
 }
@@ -2295,7 +2291,7 @@ func TestMultiContainerContainerDestroyStress(t *testing.T) {
 	// between batches all containers stop before starting another batch.
 	cmds := [][]string{{app, "reaper"}}
 	const batchSize = 10
-	for i := 0; i < 3*batchSize; i++ {
+	for range 3 * batchSize {
 		dir, err := os.MkdirTemp(testutil.TmpDir(), "gofer-stop-test")
 		if err != nil {
 			t.Fatal("os.MkdirTemp failed:", err)
@@ -3041,7 +3037,7 @@ func TestMultiContainerLoadSandbox(t *testing.T) {
 	defer cleanup()
 
 	// Then create unrelated containers.
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		specs, ids = createSpecs(sleepCmd, sleepCmd, sleepCmd)
 		_, cleanup, err = startContainers(conf, specs, ids)
 		if err != nil {
@@ -3418,7 +3414,7 @@ func TestCgroupV2ReadControlFile(t *testing.T) {
 			}
 		case "cgroup.procs":
 			// cgroup.procs should be a list of PIDs, so it should be parseable as integers.
-			for _, pidStr := range strings.Fields(val) {
+			for pidStr := range strings.FieldsSeq(val) {
 				if _, err := strconv.Atoi(pidStr); err != nil {
 					t.Fatalf("expected cgroup.procs to contain integers, got non-integer %q in %q", pidStr, val)
 				}
@@ -3587,7 +3583,7 @@ func TestDuplicateEnvVariable(t *testing.T) {
 
 	// Create files to dump `env` output.
 	files := [3]*os.File{}
-	for i := 0; i < len(files); i++ {
+	for i := range len(files) {
 		var err error
 		files[i], err = os.CreateTemp(testutil.TmpDir(), "env-var-test")
 		if err != nil {
@@ -3639,7 +3635,7 @@ func TestDuplicateEnvVariable(t *testing.T) {
 		}
 		t.Logf("Checking env %q:\n%s", file.Name(), out)
 		envs := make(map[string]string)
-		for _, line := range strings.Split(string(out), "\n") {
+		for line := range strings.SplitSeq(string(out), "\n") {
 			if len(line) == 0 {
 				continue
 			}
@@ -3837,7 +3833,7 @@ func TestMultiContainerMemoryLeakStress(t *testing.T) {
 	)
 	cmds := make([][]string, 0, warmupContainers+stressContainers+1)
 	cmds = append(cmds, sleepCmd)
-	for i := 0; i < warmupContainers+stressContainers; i++ {
+	for range warmupContainers + stressContainers {
 		cmds = append(cmds, createFsTree)
 	}
 	testSpecs, ids := createSpecs(cmds...)
@@ -3909,7 +3905,7 @@ func TestMultiContainerMemoryLeakStress(t *testing.T) {
 		// Note that all fields of controlapi.MemoryUsage are exported and uint64.
 		newUsageV := reflect.ValueOf(newUsage)
 		numFields := oldUsageV.NumField()
-		for i := 0; i < numFields; i++ {
+		for i := range numFields {
 			name := oldUsageV.Type().Field(i).Name
 			if name == "Unknown" {
 				// In a full accounting, Unknown is usage that no scan for

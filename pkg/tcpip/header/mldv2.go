@@ -268,9 +268,9 @@ const (
 //	|                                                               |
 //	+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 type MLDv2ReportMulticastAddressRecordSerializer struct {
-	RecordType       MLDv2ReportRecordType
-	MulticastAddress tcpip.Address
 	Sources          []tcpip.Address
+	MulticastAddress tcpip.Address
+	RecordType       MLDv2ReportRecordType
 }
 
 // Length returns the number of bytes this serializer would occupy.
@@ -487,8 +487,8 @@ type MLDv2Report []byte
 // MLDv2ReportMulticastAddressRecordIterator is an iterator over MLDv2 Multicast
 // Address Records.
 type MLDv2ReportMulticastAddressRecordIterator struct {
-	recordsLeft uint16
 	buf         *bytes.Buffer
+	recordsLeft uint16
 }
 
 // MLDv2ReportMulticastAddressRecordIteratorNextDisposition is the possible

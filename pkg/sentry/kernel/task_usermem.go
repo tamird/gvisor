@@ -86,10 +86,7 @@ func (t *Task) CopyInVector(addr hostarch.Addr, maxElemSize, maxTotalSize int) (
 		if maxTotalSize <= 0 {
 			return nil, linuxerr.ENOMEM
 		}
-		thisMax := maxElemSize
-		if maxTotalSize < thisMax {
-			thisMax = maxTotalSize
-		}
+		thisMax := min(maxTotalSize, maxElemSize)
 		arg, err := t.CopyInString(hostarch.Addr(t.Arch().Value(argAddr)), thisMax)
 		if err != nil {
 			return v, err
@@ -205,7 +202,7 @@ func copyInIovecs(ctx marshal.CopyContext, t *Task, addr hostarch.Addr, numIovec
 	}
 
 	b := ctx.CopyScratchBuffer(iovecLength)
-	for i := 0; i < numIovecs; i++ {
+	for range numIovecs {
 		ar, err := makeIovec(ctx, t, addr, b)
 		if err != nil {
 			return []hostarch.AddrRange{}, err

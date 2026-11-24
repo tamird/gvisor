@@ -25,7 +25,6 @@ import (
 	"gvisor.dev/gvisor/pkg/cleanup"
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/log"
-	"gvisor.dev/gvisor/pkg/sentry/control/controlapi"
 	"gvisor.dev/gvisor/pkg/sentry/devices/memdev"
 	"gvisor.dev/gvisor/pkg/sentry/devices/nvproxy"
 	"gvisor.dev/gvisor/pkg/sentry/fdcollector"
@@ -167,9 +166,9 @@ func postResumeCuda(k *kernel.Kernel, timeline *timing.Timeline) error {
 }
 
 type checkpointProc struct {
-	desc string
 	tg   *kernel.ThreadGroup
 	out  *fdcollector.Agent
+	desc string
 }
 
 // invokeCudaCheckpoint invokes cuda-checkpoint on the given CUDA process with
@@ -196,16 +195,14 @@ func invokeCudaCheckpoint(sctx context.Context, k *kernel.Kernel, proc *Proc, cu
 		mntns.DecRef(ctx)
 	})
 	args := &ExecArgs{
-		ExecArgs: controlapi.ExecArgs{
-			Filename: cudaCheckpointPath,
-			Argv: []string{
-				"cuda-checkpoint",
-				opFlag,
-				"--pid",
-				strconv.FormatInt(int64(pid), 10),
-			},
-			ContainerID: contID,
+		Filename: cudaCheckpointPath,
+		Argv: []string{
+			"cuda-checkpoint",
+			opFlag,
+			"--pid",
+			strconv.FormatInt(int64(pid), 10),
 		},
+		ContainerID:    contID,
 		MountNamespace: mntns,
 		PIDNamespace:   leader.PIDNamespace(),
 	}

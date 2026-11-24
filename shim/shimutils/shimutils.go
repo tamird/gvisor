@@ -22,6 +22,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net"
 	"os"
 	"os/exec"
@@ -130,9 +131,9 @@ func newSpec(args ...string) *specs.Spec {
 
 // Container is a test container.
 type Container struct {
+	spec   *specs.Spec
 	id     string
 	bundle string
-	spec   *specs.Spec
 }
 
 // NewContainer creates a new container with the given spec and returns it. It also creates the
@@ -188,11 +189,10 @@ func (c *Container) writeSpec(spec *specs.Spec) error {
 
 // dummyEventsServer is a mock implementation of the events service.
 type dummyEventsServer struct {
-	t  testing.TB
-	ch chan any
-
-	mu     sync.Mutex
+	t      testing.TB
+	ch     chan any
 	events []any
+	mu     sync.Mutex
 }
 
 // Forward forwards the event to the event channel.
@@ -236,21 +236,21 @@ func (s *dummyEventsServer) clearEvents() {
 // MockContainerd plays the role of containerd to test the shim. It creates
 // the necessary directory structure and files for the shim to run and sends requests to the shim.
 type MockContainerd struct {
-	wd            string
+	shimConn      net.Conn
+	eventListener net.Listener
+	client        task.TaskService
 	shim          *exec.Cmd
 	eventServer   *ttrpc.Server
-	eventListener net.Listener
 	EventChan     chan any
+	logFile       *os.File
+	eventsImpl    *dummyEventsServer
+	wd            string
 	eventWd       string
 	eventSocket   string
-	eventsImpl    *dummyEventsServer
+	shimSocket    string
 
-	// Benchmark mode fields for low-overhead per-iteration execution.
-	benchMode  bool
-	shimSocket string
-	shimConn   net.Conn
-	client     task.TaskService
-	logFile    *os.File
+	// benchMode enables low-overhead per-iteration execution.
+	benchMode bool
 }
 
 // We need a directory structure to save and other artifacts. The directory
@@ -586,9 +586,7 @@ func newRunscConfig(m *MockContainerd, shimArgsOverrides, runscArgsOverrides map
 		"platform":                "systrap",
 		"network":                 "none",
 	}
-	for k, v := range runscArgsOverrides {
-		runscConfig[k] = v
-	}
+	maps.Copy(runscConfig, runscArgsOverrides)
 	if runscConfig["debug"] == "true" {
 		runscConfig["debug-log"] = runscDebugPath
 	}
@@ -599,9 +597,7 @@ func newRunscConfig(m *MockContainerd, shimArgsOverrides, runscArgsOverrides map
 		"runsc_config": runscConfig,
 	}
 
-	for k, v := range shimArgsOverrides {
-		config[k] = v
-	}
+	maps.Copy(config, shimArgsOverrides)
 
 	var buf bytes.Buffer
 	if err := toml.NewEncoder(&buf).Encode(config); err != nil {

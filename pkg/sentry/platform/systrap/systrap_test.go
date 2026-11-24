@@ -151,7 +151,7 @@ func TestSwitchThreadIDVisibility(t *testing.T) {
 		}()
 	}
 
-	for i := 0; i < 4000; i++ {
+	for i := range 4000 {
 		si, _, err := pctx.Switch(ctx, mm, ac, 0)
 		if err != nil {
 			t.Fatalf("Switch failed at iteration %d: %v (si: %v)", i, err, si)

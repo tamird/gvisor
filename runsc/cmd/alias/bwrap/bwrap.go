@@ -25,6 +25,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -77,23 +78,23 @@ type HostDir struct {
 
 // bwrapConfig represents the configuration for the bwrap sandbox.
 type bwrapConfig struct {
-	Mounts      []sandbox.Mount
-	HostDirs    []HostDir
-	CapOps      []*CapOp
-	UnshareNet  bool
-	Args        []string
-	Chdir       string
+	nextPerms   *uint32
 	runscConfig *config.Config
-	Env         []string
-	UnsetEnv    []string
-	UID         int
-	GID         int
-	UnshareUser bool
+	Chdir       string
 	Hostname    string
 	Argv0       string
+	Args        []string
+	Mounts      []sandbox.Mount
+	Env         []string
+	UnsetEnv    []string
+	CapOps      []*CapOp
+	HostDirs    []HostDir
+	UID         int
+	GID         int
+	UnshareNet  bool
+	UnshareUser bool
 	AsPID1      bool
 	hasArgv0    bool
-	nextPerms   *uint32
 }
 
 // String returns a string representation of the bwrapConfig.
@@ -180,7 +181,7 @@ func (c *bwrapConfig) subDirPath(parent, child string) (string, bool) {
 	if len(childParts) < len(parentParts) {
 		return "", false
 	}
-	for i := 0; i < len(parentParts); i++ {
+	for i := range len(parentParts) {
 		if parentParts[i] != childParts[i] {
 			return "", false
 		}
@@ -218,8 +219,8 @@ func (c *bwrapConfig) mapCWD() (string, error) {
 // type, or no mount at all, means the path exists only inside the sandbox.
 func (c *bwrapConfig) hostPath(path string) (bind sandbox.Mount, host string, ok bool) {
 	path = filepath.Clean(path)
-	for i := len(c.Mounts) - 1; i >= 0; i-- {
-		m := c.Mounts[i]
+	for _, m := range slices.Backward(c.Mounts) {
+
 		rel, err := filepath.Rel(m.Destination, path)
 		if err != nil || rel == ".." || strings.HasPrefix(rel, "../") {
 			continue
@@ -413,8 +414,8 @@ func (d HostDir) make(uid, gid int) error {
 		}
 		parents = append(parents, p)
 	}
-	for i := len(parents) - 1; i >= 0; i-- {
-		if err := mkdir(parents[i], d.parentPerms(), uid, gid); err != nil {
+	for _, parent := range slices.Backward(parents) {
+		if err := mkdir(parent, d.parentPerms(), uid, gid); err != nil {
 			return err
 		}
 	}
@@ -528,7 +529,7 @@ func (c *bwrapConfig) resolveEnv() {
 	for _, e := range c.UnsetEnv {
 		for i, v := range env {
 			if strings.HasPrefix(v, e+"=") {
-				env = append(env[:i], env[i+1:]...)
+				env = slices.Delete(env, i, i+1)
 				break
 			}
 		}
@@ -553,12 +554,7 @@ func normalizeCap(capName string) (string, error) {
 
 // isKnownCapability checks if capName is a valid Linux capability known to gVisor.
 func isKnownCapability(capName string) bool {
-	for _, c := range specutils.AllCapabilities().Bounding {
-		if c == capName {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(specutils.AllCapabilities().Bounding, capName)
 }
 
 // addCapability adds a single capability to all 5 capability sets.
@@ -572,10 +568,8 @@ func addCapability(caps *specs.LinuxCapabilities, capName string) {
 	}
 
 	addUnique := func(set []string) []string {
-		for _, c := range set {
-			if c == capName {
-				return set
-			}
+		if slices.Contains(set, capName) {
+			return set
 		}
 		return append(set, capName)
 	}

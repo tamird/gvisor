@@ -30,17 +30,16 @@ import (
 // Notifier holds all the state necessary to issue notifications when
 // IO events occur on the observed FDs in plugin stack.
 type Notifier struct {
-	// epFD is the epoll FD used for event registration. It is initialized by
-	// waitAndNotify before signaling ioInit and is immutable afterward.
-	epFD int32
-
-	mu sync.Mutex
-
 	// eventMap maps file descriptors to their notification queues
 	// and waiting status.
 	//
 	// +checklocks:mu
 	eventMap map[uint32]*plugin.EventInfo
+	mu       sync.Mutex
+
+	// epFD is the epoll FD used for event registration. It is initialized by
+	// waitAndNotify before signaling ioInit and is immutable afterward.
+	epFD int32
 }
 
 const (
@@ -136,7 +135,7 @@ func (n *Notifier) waitAndNotify(ioInit chan int32) error {
 		}
 
 		n.mu.Lock()
-		for i := 0; i < num; i++ {
+		for i := range num {
 			h := uint32(events[i].Fd)
 			eventInfo, ok := n.eventMap[h]
 			if !ok {

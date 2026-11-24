@@ -59,7 +59,7 @@ func setup(t *testing.T) (string, string) {
 func TestTPUProxyV5(t *testing.T) {
 	testDir, gvisorChroot := setup(t)
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		os.MkdirAll(path.Join(testDir, "sys", "kernel", "iommu_groups", fmt.Sprintf("%d", i)), 0755)
 		writeFile(t, path.Join(testDir, "dev", "vfio", fmt.Sprintf("%d", i)), "")
 		writeFile(t, path.Join(testDir, "dev", "vfio", "devices", fmt.Sprintf("vfio%d", i)), "")
@@ -72,7 +72,7 @@ func TestTPUProxyV5(t *testing.T) {
 		t.Fatalf("failed to update chroot: %v", err)
 	}
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		if _, err := os.Stat(path.Join(gvisorChroot, "sys", "kernel", "iommu_groups", fmt.Sprintf("%d", i))); err != nil {
 			t.Errorf("failed to stat iommu group file: %v", err)
 		}
@@ -90,7 +90,7 @@ func TestTPUProxyV5(t *testing.T) {
 func TestTPUProxyV5NestedPCIDevice(t *testing.T) {
 	testDir, gvisorChroot := setup(t)
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		os.MkdirAll(path.Join(testDir, "sys", "kernel", "iommu_groups", fmt.Sprintf("%d", i)), 0755)
 		writeFile(t, path.Join(testDir, "dev", "vfio", fmt.Sprintf("%d", i)), "")
 		writeFile(t, path.Join(testDir, "dev", "vfio", "devices", fmt.Sprintf("vfio%d", i)), "")
@@ -122,7 +122,7 @@ func TestTPUProxyV5NestedPCIDevice(t *testing.T) {
 func TestTPUProxyV4(t *testing.T) {
 	testDir, gvisorChroot := setup(t)
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		os.MkdirAll(path.Join(testDir, "sys", "kernel", "iommu_groups", fmt.Sprintf("%d", i)), 0755)
 		writeFile(t, path.Join(testDir, "dev", fmt.Sprintf("accel%d", i)), "")
 		pciPath := path.Join(testDir, "sys", "devices", "pci0000:00", fmt.Sprintf("0000:00:00.%d", i))
@@ -134,7 +134,7 @@ func TestTPUProxyV4(t *testing.T) {
 		t.Fatalf("failed to update chroot: %v", err)
 	}
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		devicePath := path.Join(gvisorChroot, "sys", "devices", "pci0000:00", fmt.Sprintf("0000:00:00.%d", i), "device")
 		if _, err := os.ReadFile(devicePath); err != nil {
 			t.Errorf("failed to read device file: %v", err)

@@ -33,7 +33,7 @@ import (
 	eventsv1 "k8s.io/api/events/v1"
 	nodev1 "k8s.io/api/node/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -212,9 +212,12 @@ var KnownMachineTypes = map[string]*MachineInfo{
 
 // TestCluster wraps clusters with their individual ClientSets so that helper methods can be called.
 type TestCluster struct {
-	clusterName string
-
 	client KubernetesClient
+
+	// nodepools is a map of NodePools that exist in this cluster.
+	// It is nil by default and initialized lazily.
+	nodepools   map[NodePoolType]*NodePool
+	clusterName string
 
 	// testNodepoolRuntimeOverride, if set, overrides the runtime used for pods
 	// running on the test nodepool. If unset, the test nodepool's default
@@ -223,10 +226,6 @@ type TestCluster struct {
 
 	// nodepoolsMu controls the initialization of `nodepools`.
 	nodepoolsMu sync.Mutex
-
-	// nodepools is a map of NodePools that exist in this cluster.
-	// It is nil by default and initialized lazily.
-	nodepools map[NodePoolType]*NodePool
 }
 
 // NodePool is a set of nodes in a TestCluster.
@@ -238,6 +237,9 @@ type TestCluster struct {
 // reasonably similar hardware) so that simple pod scheduling can determine
 // where to consume resources.
 type NodePool struct {
+	// spec is the machine spec of nodes in the nodepool.
+	spec *MachineInfo
+
 	// nodePoolType is the type of the nodepool.
 	// It is used to identify the nodes in the cluster, and therefore as a
 	// scheduling constraint for pods to run exclusively on these nodes.
@@ -250,20 +252,17 @@ type NodePool struct {
 	// cpuArchitecture is the CPU architecture of nodes in the nodepool.
 	cpuArchitecture CPUArchitecture
 
-	// spec is the machine spec of nodes in the nodepool.
-	spec *MachineInfo
-
 	// tpuAcceleratorType is the TPU accelerator type present on nodes in the nodepool.
 	// Empty string if the nodes have no accelerators.
 	tpuAcceleratorType AcceleratorType
 
-	// numAccelerators is the number of accelerators present on nodes in the
-	// nodepool.
-	numAccelerators int
-
 	// tpuTopology is the TPU topology used by the nodepool.
 	// Empty string if the nodepool has no TPU-based accelerators.
 	tpuTopology string
+
+	// numAccelerators is the number of accelerators present on nodes in the
+	// nodepool.
+	numAccelerators int
 }
 
 // NewTestClusterFromProto returns a new TestCluster client from a proto.
@@ -804,14 +803,8 @@ func (t *TestCluster) applyCommonPodConfigurations(ctx context.Context, np *Node
 		if targetMemoryMiB == 0 {
 			targetMemoryMiB = int(float64(np.spec.MemoryGiB*1024) * defaultMaxResourceUtilization)
 		}
-		requestCores := int(float64(targetCores) * defaultMaxResourceUtilization)
-		if requestCores < 1 {
-			requestCores = 1
-		}
-		requestMemoryMiB := int(float64(targetMemoryMiB) * defaultMaxResourceUtilization)
-		if requestMemoryMiB < 1 {
-			requestMemoryMiB = 1
-		}
+		requestCores := max(int(float64(targetCores)*defaultMaxResourceUtilization), 1)
+		requestMemoryMiB := max(int(float64(targetMemoryMiB)*defaultMaxResourceUtilization), 1)
 		resLimitCPU := resource.MustParse(fmt.Sprintf("%d", targetCores))
 		resRequestCPU := resource.MustParse(fmt.Sprintf("%d", requestCores))
 		resLimitMem := resource.MustParse(fmt.Sprintf("%dMi", targetMemoryMiB))
@@ -983,14 +976,10 @@ func (t *TestCluster) ExecRequestInClientPod(ctx context.Context, service *v13.S
 
 	argv := argvFn(fmt.Sprintf("http://%s:%d", ip, service.Spec.Ports[0].Port))
 	clientPod := &v13.Pod{
-		TypeMeta: v1.TypeMeta{
-			Kind:       "Pod",
-			APIVersion: "v1",
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name:      clientPodName,
-			Namespace: podNamespace,
-		},
+		Kind:       "Pod",
+		APIVersion: "v1",
+		Name:       clientPodName,
+		Namespace:  podNamespace,
 		Spec: v13.PodSpec{
 			Containers: []v13.Container{
 				{
@@ -1179,7 +1168,6 @@ func (t *TestCluster) StreamDaemonSetLogs(ctx context.Context, ds *appsv1.Daemon
 			return err
 		}
 		for _, pod := range pods {
-			pod := pod
 			if pod.Spec.NodeName == "" {
 				continue // No node assigned yet.
 			}
@@ -1263,17 +1251,15 @@ func (t *TestCluster) ListPodEvents(ctx context.Context, pod *v13.Pod) (*eventsv
 // GetMicroVMRuntimeClass returns the default RuntimeClass definition for GKE Sandbox MicroVM.
 func GetMicroVMRuntimeClass() *nodev1.RuntimeClass {
 	return &nodev1.RuntimeClass{
-		ObjectMeta: v1.ObjectMeta{
-			Name: "microvm",
-			Annotations: map[string]string{
-				"components.gke.io/component-name":    "sandbox-runtime-class",
-				"components.gke.io/component-version": "1.36.4",
-				"components.gke.io/layer":             "addon",
-			},
-			Labels: map[string]string{
-				"addonmanager.kubernetes.io/mode": "Reconcile",
-				"kubernetes.io/cluster-service":   "true",
-			},
+		Name: "microvm",
+		Annotations: map[string]string{
+			"components.gke.io/component-name":    "sandbox-runtime-class",
+			"components.gke.io/component-version": "1.36.4",
+			"components.gke.io/layer":             "addon",
+		},
+		Labels: map[string]string{
+			"addonmanager.kubernetes.io/mode": "Reconcile",
+			"kubernetes.io/cluster-service":   "true",
 		},
 		Handler: "kata-clh",
 		Overhead: &nodev1.Overhead{

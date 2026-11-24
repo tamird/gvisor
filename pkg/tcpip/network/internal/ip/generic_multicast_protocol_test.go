@@ -34,22 +34,19 @@ const maxUnsolicitedReportDelay = time.Second
 var _ ip.MulticastGroupProtocol = (*mockMulticastGroupProtocol)(nil)
 
 type mockMulticastGroupProtocolProtectedFields struct {
-	sync.RWMutex
-
-	genericMulticastGroup    ip.GenericMulticastProtocolState
 	sendReportGroupAddrCount map[tcpip.Address]int
 	sendLeaveGroupAddrCount  map[tcpip.Address]int
-	makeQueuePackets         bool
-	disabled                 bool
 	sentV2Reports            map[tcpip.Address][]ip.MulticastGroupProtocolV2ReportRecordType
+	genericMulticastGroup    ip.GenericMulticastProtocolState
+	sync.RWMutex
+	makeQueuePackets bool
+	disabled         bool
 }
 
 type mockMulticastGroupProtocol struct {
-	t *testing.T
-
+	t                   *testing.T
+	mu                  mockMulticastGroupProtocolProtectedFields
 	skipProtocolAddress tcpip.Address
-
-	mu mockMulticastGroupProtocolProtectedFields
 }
 
 func (m *mockMulticastGroupProtocol) init(opts ip.GenericMulticastProtocolOptions, v1Compatibility bool) {
@@ -328,9 +325,9 @@ func TestJoinGroup(t *testing.T) {
 	}
 
 	subTests := []struct {
+		checkFields     func(tcpip.Address) checkFields
 		name            string
 		v1Compatibility bool
-		checkFields     func(tcpip.Address) checkFields
 	}{
 		{
 			name:            "V1 Compatibility",
@@ -414,10 +411,10 @@ func TestLeaveGroup(t *testing.T) {
 	}
 
 	subTests := []struct {
-		name            string
-		v1Compatibility bool
 		checkFields     func(tcpip.Address, bool) checkFields
 		handleQuery     func(*mockMulticastGroupProtocol, tcpip.Address)
+		name            string
+		v1Compatibility bool
 	}{
 		{
 			name:            "V1 Compatibility",
@@ -520,8 +517,8 @@ func TestLeaveGroup(t *testing.T) {
 func TestHandleReport(t *testing.T) {
 	tests := []struct {
 		name             string
-		reportAddr       tcpip.Address
 		expectReportsFor []tcpip.Address
+		reportAddr       tcpip.Address
 	}{
 		{
 			name:             "Unpecified empty",
@@ -551,9 +548,9 @@ func TestHandleReport(t *testing.T) {
 	}
 
 	subTests := []struct {
+		checkFields     func([]tcpip.Address) checkFields
 		name            string
 		v1Compatibility bool
-		checkFields     func([]tcpip.Address) checkFields
 	}{
 		{
 			name:            "V1 Compatibility",
@@ -630,10 +627,10 @@ func TestHandleReport(t *testing.T) {
 func TestHandleQuery(t *testing.T) {
 	tests := []struct {
 		name                    string
-		queryAddr               tcpip.Address
-		maxDelay                time.Duration
 		expectQueriedReportsFor []tcpip.Address
 		expectDelayedReportsFor []tcpip.Address
+		queryAddr               tcpip.Address
+		maxDelay                time.Duration
 	}{
 		{
 			name:                    "Unpecified empty",
@@ -673,9 +670,9 @@ func TestHandleQuery(t *testing.T) {
 	}
 
 	subTests := []struct {
+		checkFields     func([]tcpip.Address) checkFields
 		name            string
 		v1Compatibility bool
-		checkFields     func([]tcpip.Address) checkFields
 	}{
 		{
 			name:            "V1 Compatibility",
@@ -762,10 +759,10 @@ func TestHandleQuery(t *testing.T) {
 func TestHandleQueryV2Response(t *testing.T) {
 	tests := []struct {
 		name                    string
-		queryAddr               tcpip.Address
-		maxDelay                uint16
 		expectQueriedReportsFor []tcpip.Address
 		expectDelayedReportsFor []tcpip.Address
+		queryAddr               tcpip.Address
+		maxDelay                uint16
 	}{
 		{
 			name:                    "Unpecified empty",
@@ -805,9 +802,9 @@ func TestHandleQueryV2Response(t *testing.T) {
 	}
 
 	subTests := []struct {
+		checkFields     func([]tcpip.Address, bool) checkFields
 		name            string
 		v1Compatibility bool
-		checkFields     func([]tcpip.Address, bool) checkFields
 	}{
 		{
 			name:            "V1 Compatibility",
@@ -1029,9 +1026,9 @@ func TestJoinCount(t *testing.T) {
 	const maxUnsolicitedReportDelay = time.Second
 
 	tests := []struct {
+		checkFields     func(tcpip.Address, bool) checkFields
 		name            string
 		v1Compatibility bool
-		checkFields     func(tcpip.Address, bool) checkFields
 	}{
 		{
 			name:            "V1 Compatibility",
@@ -1156,10 +1153,10 @@ func TestMakeAllNonMemberAndInitialize(t *testing.T) {
 	const unsolicitedTransmissionCount = 2
 
 	tests := []struct {
+		checkFields     func([]tcpip.Address, bool) checkFields
 		name            string
 		v1              bool
 		v1Compatibility bool
-		checkFields     func([]tcpip.Address, bool) checkFields
 	}{
 		{
 			name:            "V1",
@@ -1255,7 +1252,7 @@ func TestMakeAllNonMemberAndInitialize(t *testing.T) {
 
 			// Should send the initial set of unsolcited V2 reports.
 			mgp.initializeGroups()
-			for i := 0; i < unsolicitedTransmissionCount; i++ {
+			for range unsolicitedTransmissionCount {
 				if test.v1 {
 					if diff := mgp.check(test.checkFields([]tcpip.Address{addr1, addr2}, false /* leave */)); diff != "" {
 						t.Errorf("mockMulticastGroupProtocol mismatch (-want +got):\n%s", diff)
@@ -1302,9 +1299,9 @@ func TestMakeAllNonMemberAndInitialize(t *testing.T) {
 // non-member state, but are still considered locally joined.
 func TestGroupStateNonMember(t *testing.T) {
 	tests := []struct {
+		checkFields     func([]tcpip.Address, bool) checkFields
 		name            string
 		v1Compatibility bool
-		checkFields     func([]tcpip.Address, bool) checkFields
 	}{
 		{
 			name:            "V1 Compatibility",
@@ -1399,10 +1396,10 @@ func TestMakeAllNonMemberCancelsDelayedReportJob(t *testing.T) {
 	const maxRespCode = 1
 
 	tests := []struct {
+		checkFields     func(tcpip.Address, bool) checkFields
 		name            string
 		v1              bool
 		v1Compatibility bool
-		checkFields     func(tcpip.Address, bool) checkFields
 	}{
 		{
 			name:            "V1",
@@ -1495,9 +1492,9 @@ func TestMakeAllNonMemberCancelsDelayedReportJob(t *testing.T) {
 
 func TestQueuedPackets(t *testing.T) {
 	tests := []struct {
+		checkFields     func(tcpip.Address) checkFields
 		name            string
 		v1Compatibility bool
-		checkFields     func(tcpip.Address) checkFields
 	}{
 		{
 			name:            "V1 Compatibility",

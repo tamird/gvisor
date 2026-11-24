@@ -49,12 +49,11 @@ type ArchInfo struct {
 
 // SyscallDoc represents a single item of syscall documentation.
 type SyscallDoc struct {
-	Name string `json:"name"`
-	num  uintptr
-
+	Name    string   `json:"name"`
 	Support string   `json:"support"`
 	Note    string   `json:"note,omitempty"`
 	URLs    []string `json:"urls,omitempty"`
+	num     uintptr
 }
 
 type outputFunc func(io.Writer, CompatibilityInfo) error
@@ -256,8 +255,8 @@ func outputJSON(w io.Writer, info CompatibilityInfo) error {
 
 // numberedRow is aCSV row annotated by syscall number (used for sorting)
 type numberedRow struct {
-	num uintptr
 	row []string
+	num uintptr
 }
 
 // outputCSV outputs the syscall info in tabular format.

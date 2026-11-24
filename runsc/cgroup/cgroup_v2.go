@@ -26,6 +26,7 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -163,13 +164,7 @@ func (c *cgroupV2) Update(res *specs.LinuxResources) error {
 	log.Debugf("Updating cgroup resources for %q", path)
 	for controllerName, ctrlr := range controllers2 {
 		// First check if our controller is found in the system.
-		found := false
-		for _, knownController := range c.Controllers {
-			if controllerName == knownController {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(c.Controllers, controllerName)
 
 		// In case we don't have the controller.
 		if found {
@@ -199,13 +194,7 @@ func (c *cgroupV2) Update(res *specs.LinuxResources) error {
 						return fmt.Errorf("unified resource %q must be in the form CONTROLLER.PARAMETER", k)
 					}
 					// Try providing a helpful message if the controller is unknown.
-					found := false
-					for _, knownController := range c.Controllers {
-						if controller == knownController {
-							found = true
-							break
-						}
-					}
+					found := slices.Contains(c.Controllers, controller)
 					if !found && controller != "cgroup" {
 						return fmt.Errorf("unified resource %q can't be set: controller %q not available", k, controller)
 					}
@@ -229,8 +218,8 @@ func (c *cgroupV2) Uninstall() error {
 	b := backoff.WithContext(backoff.NewConstantBackOff(100*time.Millisecond), ctx)
 
 	// Deletion must occur reverse order, because they may contain ancestors.
-	for i := len(c.Own) - 1; i >= 0; i-- {
-		current := c.Own[i]
+	for _, current := range slices.Backward(c.Own) {
+
 		log.Debugf("Removing cgroup for path=%q", current)
 
 		fn := func() error {
@@ -950,7 +939,7 @@ func parseUint(s string, base, bitSize int) (uint64, error) {
 func RangeToBits(str string) ([]byte, error) {
 	bits := &big.Int{}
 
-	for _, r := range strings.Split(str, ",") {
+	for r := range strings.SplitSeq(str, ",") {
 		// allow extra spaces around
 		r = strings.TrimSpace(r)
 		// allow empty elements (extra commas)

@@ -61,36 +61,6 @@ const (
 // fields of a packet that needs to be encoded. The IHL field is not here as
 // it is totally defined by the size of the options.
 type IPv4Fields struct {
-	// TOS is the "type of service" field of an IPv4 packet.
-	TOS uint8
-
-	// TotalLength is the "total length" field of an IPv4 packet.
-	TotalLength uint16
-
-	// ID is the "identification" field of an IPv4 packet.
-	ID uint16
-
-	// Flags is the "flags" field of an IPv4 packet.
-	Flags uint8
-
-	// FragmentOffset is the "fragment offset" field of an IPv4 packet.
-	FragmentOffset uint16
-
-	// TTL is the "time to live" field of an IPv4 packet.
-	TTL uint8
-
-	// Protocol is the "protocol" field of an IPv4 packet.
-	Protocol uint8
-
-	// Checksum is the "checksum" field of an IPv4 packet.
-	Checksum uint16
-
-	// SrcAddr is the "source ip address" of an IPv4 packet.
-	SrcAddr tcpip.Address
-
-	// DstAddr is the "destination ip address" of an IPv4 packet.
-	DstAddr tcpip.Address
-
 	// Options must be 40 bytes or less as they must fit along with the
 	// rest of the IPv4 header into the maximum size describable in the
 	// IHL field. RFC 791 section 3.1 says:
@@ -103,6 +73,36 @@ type IPv4Fields struct {
 	// That leaves ten 32 bit (4 byte) fields for options. An attempt to encode
 	// more will fail.
 	Options IPv4OptionsSerializer
+
+	// SrcAddr is the "source ip address" of an IPv4 packet.
+	SrcAddr tcpip.Address
+
+	// DstAddr is the "destination ip address" of an IPv4 packet.
+	DstAddr tcpip.Address
+
+	// TotalLength is the "total length" field of an IPv4 packet.
+	TotalLength uint16
+
+	// ID is the "identification" field of an IPv4 packet.
+	ID uint16
+
+	// FragmentOffset is the "fragment offset" field of an IPv4 packet.
+	FragmentOffset uint16
+
+	// Checksum is the "checksum" field of an IPv4 packet.
+	Checksum uint16
+
+	// TOS is the "type of service" field of an IPv4 packet.
+	TOS uint8
+
+	// Flags is the "flags" field of an IPv4 packet.
+	Flags uint8
+
+	// TTL is the "time to live" field of an IPv4 packet.
+	TTL uint8
+
+	// Protocol is the "protocol" field of an IPv4 packet.
+	Protocol uint8
 }
 
 // IPv4 is an IPv4 header.

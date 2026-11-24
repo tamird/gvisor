@@ -85,14 +85,14 @@ type pendingTimer struct {
 //
 // Safe for concurrent use.
 type TimeoutController struct {
-	svc *compute.Service
+	svc           *compute.Service
+	pendingTimers map[instanceIdentity]*pendingTimer
 
 	// TimeoutController.mu synchronizes accesses to pendingTimers.
 	//
 	// To remove an existing pendingTimer, pendingTimer.mu must also
 	// be held for that slot.
-	mu            sync.Mutex
-	pendingTimers map[instanceIdentity]*pendingTimer
+	mu sync.Mutex
 }
 
 // NewTimeoutController returns a controller with timeouts restored for every

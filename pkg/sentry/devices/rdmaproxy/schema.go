@@ -15,6 +15,7 @@
 package rdmaproxy
 
 import (
+	"maps"
 	"sync"
 
 	"gvisor.dev/gvisor/pkg/abi/ib"
@@ -115,14 +116,15 @@ const (
 
 // MethodSchema is the complete, verified description of one (object, method).
 type MethodSchema struct {
-	Dma DmaKind
+	// Attrs maps attribute id -> type. Any attribute not present here causes
+	// the request to be rejected.
+	Attrs map[uint16]AttrType
+
 	// HandleAttr is the attribute carrying this object's IDR handle, used for
 	// create/destroy resource tracking. Only meaningful when Dma tracks a
 	// handle.
 	HandleAttr uint16
-	// Attrs maps attribute id -> type. Any attribute not present here causes
-	// the request to be rejected.
-	Attrs map[uint16]AttrType
+	Dma        DmaKind
 }
 
 // schemas is the allowlist of supported (object, method) pairs, keyed by
@@ -354,9 +356,7 @@ func buildSchemas() map[uint32]*MethodSchema {
 	// Merge the driver-namespace (object, method) pairs each registered vendor
 	// plug-in models (e.g. the mlx5 UAR); these carry no core DMA semantics.
 	rangeDrivers(func(d Driver) {
-		for k, s := range d.Schemas() {
-			m[k] = s
-		}
+		maps.Copy(m, d.Schemas())
 	})
 	return m
 }

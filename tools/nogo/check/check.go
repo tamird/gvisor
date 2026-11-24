@@ -111,12 +111,12 @@ func sortSrcs(srcs []string) (goFiles []string, nonGoFiles []string) {
 
 // importerEntry is a single entry in the importer.
 type importerEntry struct {
-	ready    sync.WaitGroup
-	pkg      *types.Package
-	findings FindingSet
 	err      error
-	factsMu  sync.Mutex
+	pkg      *types.Package
 	facts    *facts.Package
+	findings FindingSet
+	ready    sync.WaitGroup
+	factsMu  sync.Mutex
 }
 
 // importer is an almost-implementation of go/types.Importer.
@@ -125,28 +125,29 @@ type importerEntry struct {
 // files, and the facts. Note that this importer implementation will always
 // pass when a given package is not available.
 type importer struct {
-	fset *token.FileSet
+	// factsErr is the first error loading package facts.
+	//
+	// +checklocks:mu
+	factsErr error
+	fset     *token.FileSet
 
 	// sources is a map from package path to the source file paths in that
 	// package.
 	//
 	// N.B. key is the package path (including GOROOT vendor/ prefix if any),
 	// not the import path (what appears in the import declaration).
-	sources map[string][]string
-
-	// roots is the set of potential GOROOT prefixes on the file paths in sources.
-	// GOROOT is effectively a merged version of these roots.
-	roots []string
-
+	sources   map[string][]string
 	analyzers map[*analysis.Analyzer]analyzer
-
-	// mu protects cache, bundles, and factsErr (see below).
-	mu sync.Mutex
 
 	// cache is keyed by package path (see sources above).
 	//
 	// +checklocks:mu
-	cache map[string]*importerEntry
+	cache   map[string]*importerEntry
+	imports map[string]*types.Package // key is package path (see sources above).
+
+	// roots is the set of potential GOROOT prefixes on the file paths in sources.
+	// GOROOT is effectively a merged version of these roots.
+	roots []string
 
 	// bundles and each bundle's decoded-package cache are protected by mu.
 	// A bundle has no link to this importer, so checklocks cannot express
@@ -155,14 +156,11 @@ type importer struct {
 	// +checklocks:mu
 	bundles []*facts.Bundle
 
-	// factsErr is the first error loading package facts.
-	//
-	// +checklocks:mu
-	factsErr error
+	// mu protects cache, bundles, and factsErr.
+	mu sync.Mutex
 
 	// importsMu protects imports.
 	importsMu sync.Mutex
-	imports   map[string]*types.Package // key is package path (see sources above).
 }
 
 // loadBundles loads all bundle files.
@@ -475,12 +473,14 @@ func (i *importer) checkPackage(path string, srcs []string) (*types.Package, Fin
 	// Load all source files.
 	goFiles, nonGoFiles := sortSrcs(srcs)
 	syntax := make([]*ast.File, 0, len(goFiles))
+	var ignoredFiles []string
 	for _, file := range goFiles {
 		include, err := shouldInclude(file)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("error evaluating file %q: %w", file, err)
 		}
 		if !include {
+			ignoredFiles = append(ignoredFiles, file)
 			continue
 		}
 		s, err := parser.ParseFile(i.fset, file, nil, parser.ParseComments)
@@ -496,6 +496,7 @@ func (i *importer) checkPackage(path string, srcs []string) (*types.Package, Fin
 			return nil, nil, nil, fmt.Errorf("error evaluating non-Go file %q: %w", file, err)
 		}
 		if !include {
+			ignoredFiles = append(ignoredFiles, file)
 			continue
 		}
 		otherFiles = append(otherFiles, file)
@@ -602,13 +603,20 @@ func (i *importer) checkPackage(path string, srcs []string) (*types.Package, Fin
 			// Run the analysis.
 			var localFindings FindingSet
 			p := &analysis.Pass{
-				Analyzer:   a,
-				Fset:       i.fset,
-				Files:      syntax,
-				OtherFiles: otherFiles,
-				Pkg:        astPackage,
-				TypesInfo:  typesInfo,
-				ResultOf:   results, // All results.
+				Analyzer:     a,
+				Fset:         i.fset,
+				Files:        syntax,
+				OtherFiles:   otherFiles,
+				IgnoredFiles: ignoredFiles,
+				ReadFile: func(filename string) ([]byte, error) {
+					if !slices.Contains(srcs, filename) {
+						return nil, fmt.Errorf("file %q is not a declared input", filename)
+					}
+					return os.ReadFile(filename)
+				},
+				Pkg:       astPackage,
+				TypesInfo: typesInfo,
+				ResultOf:  results, // All results.
 				Report: func(d analysis.Diagnostic) {
 					localFindings = append(localFindings, Finding{
 						Category: a.Name,

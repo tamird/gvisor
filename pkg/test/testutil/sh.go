@@ -58,33 +58,36 @@ func shellEscape(s string) string {
 }
 
 type byteOrError struct {
-	b   byte
 	err error
+	b   byte
 }
 
 // Shell manages a /bin/sh invocation with convenience functions to handle I/O.
 // The shell is run in its own interactive TTY and should present its prompt.
 type Shell struct {
+	// logger is used for logging. It may be nil.
+	logger Logger
+
 	// cmd is a reference to the underlying sh process.
 	cmd *exec.Cmd
+
 	// cmdFinished is closed when cmd exits.
 	cmdFinished chan struct{}
-
-	// echo is whether the shell will echo input back to us.
-	// This helps setting expectations of getting feedback of written bytes.
-	echo bool
-	// Control characters we expect to see in the shell.
-	controlCharIntr string
-	controlCharEOF  string
 
 	// ptyMaster and ptyReplica are the TTY pair associated with the shell.
 	ptyMaster  *os.File
 	ptyReplica *os.File
+
 	// readCh is a channel where everything read from ptyMaster is written.
 	readCh chan byteOrError
 
-	// logger is used for logging. It may be nil.
-	logger Logger
+	// Control characters we expect to see in the shell.
+	controlCharIntr string
+	controlCharEOF  string
+
+	// echo is whether the shell will echo input back to us.
+	// This helps setting expectations of getting feedback of written bytes.
+	echo bool
 }
 
 // cleanup kills the shell process and closes the TTY.
@@ -181,7 +184,7 @@ func (s *Shell) reader(ctx context.Context) {
 				return
 			}
 		} else {
-			for i := 0; i < got; i++ {
+			for i := range got {
 				s.readCh <- byteOrError{b: b[i]}
 			}
 		}
@@ -411,7 +414,7 @@ func (s *Shell) RefreshSTTY(ctx context.Context, expectPrompt string) error {
 	// For `a = b;`, `controlChar` contains `a`, and `previousToken` is used to
 	// set `controlChar` to `previousToken` when we see an "=" token.
 	var previousToken, controlChar string
-	for _, token := range strings.Fields(string(sttyOutput)) {
+	for token := range strings.FieldsSeq(string(sttyOutput)) {
 		if controlChar != "" {
 			value := strings.TrimSuffix(token, ";")
 			switch controlChar {

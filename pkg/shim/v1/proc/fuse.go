@@ -50,7 +50,7 @@ func (p *Init) monitorGofer(ctx context.Context) {
 		return
 	}
 	var goferPid int
-	for i := 0; i < 30; i++ {
+	for range 30 {
 		goferPid = utils.FindGoferPID(p.runtime.Root, p.Bundle, p.id)
 		if goferPid > 0 {
 			break

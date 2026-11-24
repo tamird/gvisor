@@ -92,40 +92,12 @@ func validateID(id string) error {
 //     again just to be sure, waits, and then proceeds with remaining teardown.
 //
 // Container is thread-unsafe.
+//
+// Fields marked nojson are not saved in the state file and will not
+// be preserved across commands.
 type Container struct {
-	// ID is the container ID.
-	ID string `json:"id"`
-
-	// Spec is the OCI runtime spec that configures this container.
-	Spec *specs.Spec `json:"spec"`
-
-	// BundleDir is the directory containing the container bundle.
-	BundleDir string `json:"bundleDir"`
-
 	// CreatedAt is the time the container was created.
 	CreatedAt time.Time `json:"createdAt"`
-
-	// Owner is the container owner.
-	Owner string `json:"owner"`
-
-	// ConsoleSocket is the path to a unix domain socket that will receive
-	// the console FD.
-	ConsoleSocket string `json:"consoleSocket"`
-
-	// Status is the current container Status.
-	Status Status `json:"status"`
-
-	// GoferPid is the PID of the gofer running along side the sandbox. May
-	// be 0 if the gofer has been killed.
-	GoferPid sandbox.Pid `json:"goferPid"`
-
-	// GoferPidIdentity is the specutils.ProcessIdentity of the gofer process.
-	// Zero if unknown.
-	GoferPidIdentity uint64 `json:"goferPidIdentity,omitempty"`
-
-	// Sandbox is the sandbox this container is running in. It's set when the
-	// container is created and reset when the sandbox is destroyed.
-	Sandbox *sandbox.Sandbox `json:"sandbox"`
 
 	// CompatCgroup has the cgroup configuration for the container. For the single
 	// container case, container cgroup is set in `c.Sandbox` only. CompactCgroup
@@ -137,30 +109,56 @@ type Container struct {
 	// to the container in question.
 	CompatCgroup cgroup.CgroupJSON `json:"compatCgroup"`
 
-	// Saver handles load from/save to the state file safely from multiple
-	// processes.
-	Saver StateFile `json:"saver"`
+	// Spec is the OCI runtime spec that configures this container.
+	Spec *specs.Spec `json:"spec"`
+
+	// goferRPCDone is closed once the gofer has reached the point where it
+	// no longer needs to make RPCs to its parent process.
+	// Set to nil if the RPC channel was never needed to begin with.
+	goferRPCDone chan struct{} `nojson:"true"`
+
+	// Sandbox is the sandbox this container is running in. It's set when the
+	// container is created and reset when the sandbox is destroyed.
+	Sandbox *sandbox.Sandbox `json:"sandbox"`
+
+	// ID is the container ID.
+	ID string `json:"id"`
+
+	// BundleDir is the directory containing the container bundle.
+	BundleDir string `json:"bundleDir"`
+
+	// Owner is the container owner.
+	Owner string `json:"owner"`
+
+	// Status is the current container Status.
+	Status Status `json:"status"`
+
+	// ConsoleSocket is the path to a unix domain socket that will receive
+	// the console FD.
+	ConsoleSocket string `json:"consoleSocket"`
 
 	// GoferMountConfs contains information about how the gofer mounts have been
 	// overlaid (with tmpfs or overlayfs). The first entry is for rootfs and the
 	// following entries are for bind mounts in Spec.Mounts (in the same order).
 	GoferMountConfs specutils.GoferMountConfFlags `json:"goferMountConfs"`
 
-	//
-	// Fields below this line are not saved in the state file and will not
-	// be preserved across commands.
-	//
+	// Saver handles load from/save to the state file safely from multiple
+	// processes.
+	Saver StateFile `json:"saver"`
+
+	// GoferPidIdentity is the specutils.ProcessIdentity of the gofer process.
+	// Zero if unknown.
+	GoferPidIdentity uint64 `json:"goferPidIdentity,omitempty"`
+
+	// GoferPid is the PID of the gofer running along side the sandbox. May
+	// be 0 if the gofer has been killed.
+	GoferPid sandbox.Pid `json:"goferPid"`
 
 	// goferIsChild is set if a gofer process is a child of the current process.
 	//
 	// This field isn't saved to json, because only a creator of a gofer
 	// process will have it as a child process.
 	goferIsChild bool `nojson:"true"`
-
-	// goferRPCDone is closed once the gofer has reached the point where it
-	// no longer needs to make RPCs to its parent process.
-	// Set to nil if the RPC channel was never needed to begin with.
-	goferRPCDone chan struct{} `nojson:"true"`
 
 	// allowWrite is set if the container may be saved or destroyed.
 	// Writes will be refused if `true`.
@@ -169,11 +167,18 @@ type Container struct {
 
 // Args is used to configure a new container.
 type Args struct {
-	// ID is the container unique identifier.
-	ID string
-
 	// Spec is the OCI spec that describes the container.
 	Spec *specs.Spec
+
+	// PassFiles are user-supplied files from the host to be exposed to the
+	// sandboxed app. They are supported only for the sandbox's root container.
+	PassFiles map[int]*os.File
+
+	// ExecFile is the host file used for program execution.
+	ExecFile *os.File
+
+	// ID is the container unique identifier.
+	ID string
 
 	// BundleDir is the directory containing the container bundle.
 	BundleDir string
@@ -191,28 +196,21 @@ type Args struct {
 	// It only applies for the init container.
 	UserLog string
 
-	// Attached indicates that the sandbox lifecycle is attached with the caller.
-	// If the caller exits, the sandbox should exit too.
-	//
-	// It only applies for the init container.
-	Attached bool
-
-	// PassFiles are user-supplied files from the host to be exposed to the
-	// sandboxed app. They are supported only for the sandbox's root container.
-	PassFiles map[int]*os.File
-
-	// ExecFile is the host file used for program execution.
-	ExecFile *os.File
+	// CheckpointDirPath is the path to the sentry checkpoint directory.
+	// Used to default FSRestoreImagePaths if it is empty.
+	CheckpointDirPath string
 
 	// If FSRestoreImagePaths is non-empty, it lists paths to filesystem
 	// checkpoints that should be restored. FSRestoreImagePaths may only be
 	// set for containers in a new Sandbox process.
 	FSRestoreImagePaths []string
-	FSRestoreDirect     bool
 
-	// CheckpointDirPath is the path to the sentry checkpoint directory.
-	// Used to default FSRestoreImagePaths if it is empty.
-	CheckpointDirPath string
+	// Attached indicates that the sandbox lifecycle is attached with the caller.
+	// If the caller exits, the sandbox should exit too.
+	//
+	// It only applies for the init container.
+	Attached        bool
+	FSRestoreDirect bool
 
 	// NoRootContainer creates a sandbox with no root container: Spec has
 	// neither Process nor Root, and no gofer is started. Only valid when ID is
@@ -709,9 +707,9 @@ func (c *Container) startLocked(conf *config.Config, action string, startRoot fu
 		}
 		// Errors reported by the sandbox mean that it was up at *some* point,
 		// even if it exited since.
-		var remoteErr urpc.RemoteError
+		_, isRemote := errors.AsType[urpc.RemoteError](err)
 		switch {
-		case errors.As(err, &remoteErr):
+		case isRemote:
 			// Treat container as stopped.
 			if specutils.IsRootContainer(c.Spec) {
 				if state, stateErr := c.Sandbox.ContainerRuntimeState(c.ID); stateErr == nil && state == sentryapi.RuntimeStateStopped {
@@ -2230,10 +2228,8 @@ func (c *Container) HasCapabilityInAnySet(capability linux.Capability) bool {
 		c.Spec.Process.Capabilities.Permitted,
 		c.Spec.Process.Capabilities.Ambient,
 	} {
-		for _, c := range set {
-			if c == capString {
-				return true
-			}
+		if slices.Contains(set, capString) {
+			return true
 		}
 	}
 	return false
@@ -2248,10 +2244,8 @@ func (c *Container) RunsAsUID0() bool {
 }
 
 func (c *Container) requireStatus(action string, statuses ...Status) error {
-	for _, s := range statuses {
-		if c.Status == s {
-			return nil
-		}
+	if slices.Contains(statuses, c.Status) {
+		return nil
 	}
 	return fmt.Errorf("cannot %s container %q in state %s", action, c.ID, c.Status)
 }

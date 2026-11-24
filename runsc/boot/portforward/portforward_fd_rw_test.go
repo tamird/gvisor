@@ -111,19 +111,17 @@ type waiterRW struct {
 	vfs.FileDescriptionDefaultImpl
 	vfs.NoLockFD
 	vfs.DentryMetadataFileDescriptionImpl
-
-	waitMu sync.Mutex
-
-	// +checklocks:waitMu
-	buf bytes.Buffer
+	quit chan bool
 
 	// +checklocks:waitMu
 	entries []*waiter.Entry
 
 	// +checklocks:waitMu
-	shouldWait bool
+	buf    bytes.Buffer
+	waitMu sync.Mutex
 
-	quit chan bool
+	// +checklocks:waitMu
+	shouldWait bool
 
 	// +checklocks:waitMu
 	closed bool
@@ -241,8 +239,8 @@ func (w *waiterRW) doNotify() {
 func TestReaderWriter(t *testing.T) {
 	ctx := context.Background()
 	for _, tc := range []struct {
-		name    string
 		newImpl func() vfs.FileDescriptionImpl
+		name    string
 	}{
 		{
 			name:    "readerWriter",
@@ -296,8 +294,8 @@ func TestReaderWriter(t *testing.T) {
 }
 
 type blockingConn struct {
-	name        string
 	releaseRead <-chan struct{}
+	name        string
 	mu          sync.Mutex
 
 	// +checklocks:mu

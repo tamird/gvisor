@@ -113,9 +113,9 @@ func analyzeStackDump(scanner *bufio.Scanner, out io.Writer, stuckIds map[uint]s
 
 	// Create histogram with all unique stacks.
 	type counter struct {
-		count int
-		ids   []uint
 		*stack
+		ids   []uint
+		count int
 	}
 	uniq := make(map[string]*counter)
 	for _, stack := range stacks {
@@ -212,7 +212,7 @@ func parseBlock(block []string) (*stack, error) {
 		return nil, err
 	}
 
-	var signature string
+	var signature strings.Builder
 	for i, line := range block[1:] {
 		// Only look at function names. Skip odd lines that contain file names.
 		if i%2 == 0 {
@@ -221,13 +221,14 @@ func parseBlock(block []string) (*stack, error) {
 			if idx != -1 {
 				line = line[:idx]
 			}
-			signature += line + "\n"
+			signature.WriteString(line)
+			signature.WriteByte('\n')
 		}
 	}
 
 	return &stack{
 		id:        uint(id),
-		signature: signature,
+		signature: signature.String(),
 		lines:     block[1:],
 	}, nil
 }
@@ -246,7 +247,7 @@ func parseGoroutineID(line string) (uint, error) {
 }
 
 type stack struct {
-	id        uint
 	signature string
 	lines     []string
+	id        uint
 }

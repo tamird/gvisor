@@ -54,7 +54,7 @@ func TestTable(t *testing.T) {
 	}()
 
 	// Go through all functions and check that they return the right value.
-	for i := uintptr(0); i < maxTestSyscall; i++ {
+	for i := range uintptr(maxTestSyscall) {
 		fn := table.Lookup(i)
 		if fn == nil {
 			t.Errorf("Syscall %v is set to nil", i)
@@ -80,15 +80,12 @@ func TestTable(t *testing.T) {
 func BenchmarkTableLookup(b *testing.B) {
 	table := createSyscallTable()
 
-	b.ResetTimer()
-
 	j := uintptr(0)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		table.Lookup(j)
 		j = (j + 1) % 310
 	}
 
-	b.StopTimer()
 	// Cleanup registered tables to keep tests separate.
 	allSyscallTables = []*SyscallTable{}
 }
@@ -96,15 +93,12 @@ func BenchmarkTableLookup(b *testing.B) {
 func BenchmarkTableMapLookup(b *testing.B) {
 	table := createSyscallTable()
 
-	b.ResetTimer()
-
 	j := uintptr(0)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		table.mapLookup(j)
 		j = (j + 1) % 310
 	}
 
-	b.StopTimer()
 	// Cleanup registered tables to keep tests separate.
 	allSyscallTables = []*SyscallTable{}
 }

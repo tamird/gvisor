@@ -17,6 +17,7 @@ package precompiledseccomp
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -136,17 +137,17 @@ func checkSyscallVarsPrecompilable(prog *seccomp.Program, values Values) error {
 
 // VarSyscall is a syscall whose syscall number is only known at runtime.
 type VarSyscall struct {
-	// Name is the syscall name.
-	// Within a set of `VarSyscall`s, names must be in the same order as
-	// their syscall numbers.
-	Name string
+	// Rule is the rule for the syscall.
+	Rule seccomp.SyscallRule
 
 	// HostSysno returns the syscall number of the syscall on the current
 	// host, and whether the syscall may be used on the current host.
 	HostSysno func() (uintptr, bool)
 
-	// Rule is the rule for the syscall.
-	Rule seccomp.SyscallRule
+	// Name is the syscall name.
+	// Within a set of `VarSyscall`s, names must be in the same order as
+	// their syscall numbers.
+	Name string
 }
 
 // VarSyscallNumbers maps the names of `VarSyscall`s to their syscall number.
@@ -179,7 +180,7 @@ func AllVarSyscallNumbers(syscalls []VarSyscall) VarSyscallNumbers {
 // with the given names, with arbitrary syscall numbers that are valid for
 // rendering programs precompiled with them.
 func PrecompileSyscallNumbers(names ...string) VarSyscallNumbers {
-	names = append([]string(nil), names...)
+	names = slices.Concat[[]string](names)
 	sort.Strings(names)
 	sn := make(VarSyscallNumbers, len(names))
 	for i, name := range names {

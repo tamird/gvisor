@@ -16,6 +16,7 @@ package stack
 
 import (
 	"fmt"
+	"slices"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/hash/jenkins"
@@ -361,7 +362,7 @@ type multiPortEndpoint struct {
 
 func (ep *multiPortEndpoint) transportEndpoints() []TransportEndpoint {
 	ep.mu.RLock()
-	eps := append([]TransportEndpoint(nil), ep.endpoints...)
+	eps := slices.Concat[[]TransportEndpoint](ep.endpoints)
 	ep.mu.RUnlock()
 	return eps
 }

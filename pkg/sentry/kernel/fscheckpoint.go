@@ -40,13 +40,13 @@ type FSSaveOpts struct {
 	// RunscVersion is the runsc binary version.
 	RunscVersion string
 
-	// If ExitAfterSaving is true, all processes exit with status 0 before
-	// FSSave returns, whether or not it returns a non-nil error.
-	ExitAfterSaving bool
-
 	// Bundles are the filesystem checkpoint bundles to save, each to its own
 	// set of files.
 	Bundles []FSSaveBundle
+
+	// If ExitAfterSaving is true, all processes exit with status 0 before
+	// FSSave returns, whether or not it returns a non-nil error.
+	ExitAfterSaving bool
 }
 
 // FSSaveBundle holds options for saving one filesystem checkpoint bundle.

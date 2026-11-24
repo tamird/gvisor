@@ -18,6 +18,7 @@ package seccomp
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -305,15 +306,15 @@ type labelSet struct {
 	// prefix is a label prefix used when generating label names.
 	prefix string
 
-	// labelCounter is used to generate unique label names.
-	labelCounter int
-
 	// ruleMatched is the label that a rule should jump to if it matches.
 	ruleMatched label
 
 	// ruleMismatched is the label that a rule should jump to if it doesn't
 	// match.
 	ruleMismatched label
+
+	// labelCounter is used to generate unique label names.
+	labelCounter int
 }
 
 // NewLabel returns a new unique label.
@@ -382,20 +383,16 @@ type Program struct {
 
 // ProgramOptions configure a seccomp program.
 type ProgramOptions struct {
+
+	// RuleCache, if non-nil, memoizes optimized syscall rules across Build
+	// calls. Useful when compiling many programs that share rules.
+	RuleCache *OptimizedRuleCache
 	// DefaultAction is the action returned when none of the rules match.
 	DefaultAction Action
 
 	// BadArchAction is the action returned when the architecture of the
 	// syscall structure input doesn't match the one the program expects.
 	BadArchAction Action
-
-	// SkipOptimizations disables optimizations for the seccomp program
-	// and its BPF bytecode.
-	SkipOptimizations bool
-
-	// RuleCache, if non-nil, memoizes optimized syscall rules across Build
-	// calls. Useful when compiling many programs that share rules.
-	RuleCache *OptimizedRuleCache
 
 	// HotSyscalls is the set of syscall numbers that are the hottest,
 	// where "hotness" refers to frequency (regardless of the amount of
@@ -405,6 +402,10 @@ type ProgramOptions struct {
 	// called >10% of the time out of all syscalls made).
 	// It is ordered from most frequent to least frequent.
 	HotSyscalls []uintptr
+
+	// SkipOptimizations disables optimizations for the seccomp program
+	// and its BPF bytecode.
+	SkipOptimizations bool
 }
 
 // defaultBPFAction returns the BPF action that `Default` actions resolve to:
@@ -499,8 +500,8 @@ func (p *Program) Build() ([]bpf.Instruction, BuildStats, error) {
 // singleSyscallRuleSet represents what to do for a single syscall.
 // It is used inside `orderedRules`.
 type singleSyscallRuleSet struct {
-	sysno    uintptr
 	rules    []syscallRuleAction
+	sysno    uintptr
 	vsyscall bool
 }
 
@@ -602,11 +603,6 @@ type orderedRuleSets struct {
 	// They come first and are checked linearly using `hotNonTrivialOrder`.
 	hotNonTrivial map[uintptr]singleSyscallRuleSet
 
-	// hotNonTrivial is the set of hot syscalls that are non-trivial
-	// and may or may not require vsyscall checking.
-	// They come first and are checked linearly using `hotNonTrivialOrder`.
-	hotNonTrivialOrder []uintptr
-
 	// coldNonTrivial is the set of non-hot syscalls that are non-trivial.
 	// They may or may not require vsyscall checking.
 	// They come second.
@@ -618,6 +614,11 @@ type orderedRuleSets struct {
 	// They come last. This is because the host kernel will cache the results
 	// of these system calls, and will never execute them on the hot path.
 	trivial map[uintptr]singleSyscallRuleSet
+
+	// hotNonTrivial is the set of hot syscalls that are non-trivial
+	// and may or may not require vsyscall checking.
+	// They come first and are checked linearly using `hotNonTrivialOrder`.
+	hotNonTrivialOrder []uintptr
 }
 
 // orderRuleSets converts a set of `RuleSet`s into an `orderedRuleSets`.
@@ -755,12 +756,12 @@ func orderRuleSets(rules []RuleSet, options ProgramOptions) (orderedRuleSets, ti
 func (ors orderedRuleSets) log(logFn func(string, ...any)) {
 	logFn("Ordered seccomp rules:")
 	for _, sm := range []struct {
-		name string
 		m    map[uintptr]singleSyscallRuleSet
+		name string
 	}{
-		{"Hot non-trivial", ors.hotNonTrivial},
-		{"Cold non-trivial", ors.coldNonTrivial},
-		{"Trivial", ors.trivial},
+		{ors.hotNonTrivial, "Hot non-trivial"},
+		{ors.coldNonTrivial, "Cold non-trivial"},
+		{ors.trivial, "Trivial"},
 	} {
 		if len(sm.m) == 0 {
 			logFn("  %s syscalls: None.", sm.name)
@@ -897,9 +898,7 @@ func (ors orderedRuleSets) renderBST(program *syscallProgram, ls *labelSet, alre
 			possibleActions[ra.action] = struct{}{}
 		}
 	}
-	sort.Slice(orderedSysnos, func(i, j int) bool {
-		return orderedSysnos[i] < orderedSysnos[j]
-	})
+	slices.Sort(orderedSysnos)
 	frag := program.Record()
 	root := createBST(orderedSysnos)
 	root.root = true
@@ -1030,9 +1029,9 @@ func renderBSTRules(n *node, rng knownRange, syscallMap map[uintptr]singleSyscal
 
 // node represents a tree node.
 type node struct {
-	value uintptr
 	left  *node
 	right *node
+	value uintptr
 	root  bool
 }
 
@@ -1049,13 +1048,13 @@ func (n *node) label() label {
 // knownRange represents the known set of node numbers that we've
 // already checked. This is used as part of BST traversal.
 type knownRange struct {
-	lowerBoundExclusive int
-	upperBoundExclusive int
 
 	// alreadyChecked is a set of node values that were already checked
 	// earlier in the program (prior to the BST being built).
 	// It is *not* updated during BST traversal.
-	previouslyChecked map[uintptr]struct{}
+	previouslyChecked   map[uintptr]struct{}
+	lowerBoundExclusive int
+	upperBoundExclusive int
 }
 
 // withLowerBoundExclusive returns an updated `knownRange` with the given

@@ -32,17 +32,17 @@ import (
 
 // Run implements subcommands.Command for the "run" command.
 type Run struct {
+	// spec is the cached OCI spec from FetchSpec().
+	spec *specs.Spec
+
 	// Run flags are a super-set of those for Create.
 	Create
-
-	// detach indicates that runsc has to start a process and exit without waiting it.
-	detach bool
 
 	// execFD is the host file descriptor used for program execution.
 	execFD int
 
-	// spec is the cached OCI spec from FetchSpec().
-	spec *specs.Spec
+	// detach indicates that runsc has to start a process and exit without waiting it.
+	detach bool
 }
 
 // Name implements subcommands.Command.Name.

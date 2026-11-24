@@ -97,7 +97,7 @@ type Writer struct {
 	//
 	// +checklocks:mu
 	// +checkatomic
-	atomicErrors int32
+	atomicErrors atomic.Int32
 }
 
 // Write writes out the given bytes, handling non-blocking sockets.
@@ -119,7 +119,7 @@ func (l *Writer) Write(data []byte) (int, error) {
 		// Some other error?
 		if err != nil {
 			l.mu.Lock()
-			atomic.AddInt32(&l.atomicErrors, 1)
+			l.atomicErrors.Add(1)
 			l.mu.Unlock()
 			return n, err
 		}
@@ -131,15 +131,15 @@ func (l *Writer) Write(data []byte) (int, error) {
 	}
 
 	// Dirty read in case there were errors (rare).
-	if atomic.LoadInt32(&l.atomicErrors) > 0 {
+	if l.atomicErrors.Load() > 0 {
 		l.mu.Lock()
 		defer l.mu.Unlock()
 
 		// Recheck condition under lock.
-		if e := atomic.LoadInt32(&l.atomicErrors); e > 0 {
+		if e := l.atomicErrors.Load(); e > 0 {
 			msg := fmt.Sprintf("\n*** Dropped %d log messages ***\n", e)
 			if _, err := l.Next.Write([]byte(msg)); err == nil {
-				atomic.StoreInt32(&l.atomicErrors, 0)
+				l.atomicErrors.Store(0)
 			}
 		}
 	}
@@ -200,13 +200,13 @@ type Logger interface {
 
 // BasicLogger is the default implementation of Logger.
 type BasicLogger struct {
-	// +checkatomic
-	Level
-
 	// Emitter receives enabled log messages. BasicLogger does not synchronize
 	// access to it. Callers must synchronize field replacement with logging
 	// calls and provide any synchronization needed for concurrent Emit calls.
 	Emitter
+
+	// +checkatomic
+	Level
 }
 
 // Debugf implements logger.Debugf.

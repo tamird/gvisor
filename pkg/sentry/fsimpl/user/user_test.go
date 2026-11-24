@@ -76,10 +76,10 @@ func createEtcFile(ctx context.Context, vfsObj *vfs.VirtualFilesystem, creds *au
 // TestGetExecUserHome tests the getExecUserHome function.
 func TestGetExecUserHome(t *testing.T) {
 	tests := map[string]struct {
-		uid            auth.KUID
 		passwdContents string
-		passwdMode     linux.FileMode
 		expected       string
+		uid            auth.KUID
+		passwdMode     linux.FileMode
 	}{
 		"success": {
 			uid:            1000,
@@ -150,10 +150,10 @@ func TestGetExecUserHome(t *testing.T) {
 // TestFindHomeInPasswd tests the findHomeInPasswd function's passwd file parsing.
 func TestFindHomeInPasswd(t *testing.T) {
 	tests := map[string]struct {
-		uid      uint32
 		passwd   string
 		expected string
 		def      string
+		uid      uint32
 	}{
 		"empty": {
 			uid:      1000,
@@ -216,14 +216,14 @@ func TestFindHomeInPasswd(t *testing.T) {
 // TestGetExecUIDGIDFromUser tests the GetExecUIDGIDFromUser function.
 func TestGetExecUIDGIDFromUser(t *testing.T) {
 	tests := map[string]struct {
+		wantErr        error
 		user           string
 		passwdContents string
 		groupContents  string
-		fileMode       linux.FileMode
-		missingGroup   bool
 		expectedUID    auth.KUID
 		expectedGID    auth.KGID
-		wantErr        error
+		fileMode       linux.FileMode
+		missingGroup   bool
 	}{
 		"user0": {
 			user:           "user0",

@@ -194,10 +194,10 @@ func TestCgroupV1(t *testing.T) {
 	// CPU available in our current set, and every container's set.
 	attrs := []struct {
 		field          string
-		value          int64
 		ctrl           string
 		file           string
 		want           string
+		value          int64
 		skipIfNotFound bool
 	}{
 		{
@@ -338,10 +338,10 @@ func TestCgroupV1(t *testing.T) {
 	// Lower the limit while keeping it above the 500 MiB reservation.
 	updatedMemory := struct {
 		field          string
-		value          int64
 		ctrl           string
 		file           string
 		want           string
+		value          int64
 		skipIfNotFound bool
 	}{
 		field: "memory",
@@ -352,9 +352,7 @@ func TestCgroupV1(t *testing.T) {
 	}
 	attrs[3] = updatedMemory
 	if err := d.Update(ctx, container.UpdateConfig{
-		Resources: container.Resources{
-			Memory: updatedMemory.value,
-		},
+		Memory: updatedMemory.value,
 	}); err != nil {
 		t.Fatalf("failed to update container: %v", err)
 	}
@@ -406,9 +404,9 @@ func TestCgroupV2(t *testing.T) {
 	// CPU available in our current set, and every container's set.
 	attrs := []struct {
 		field          string
-		value          int64
 		file           string
 		want           string
+		value          int64
 		skipIfNotFound bool
 	}{
 		{
@@ -550,9 +548,9 @@ func TestCgroupV2(t *testing.T) {
 	// Update pids-limit.
 	updatedPidsLimit := struct {
 		field          string
-		value          int64
 		file           string
 		want           string
+		value          int64
 		skipIfNotFound bool
 	}{
 		field: "pids-limit",
@@ -562,9 +560,7 @@ func TestCgroupV2(t *testing.T) {
 	}
 	attrs[len(attrs)-1] = updatedPidsLimit
 	if err := d.Update(ctx, container.UpdateConfig{
-		Resources: container.Resources{
-			PidsLimit: &updatedPidsLimit.value,
-		},
+		PidsLimit: &updatedPidsLimit.value,
 	}); err != nil {
 		t.Fatalf("failed to update container: %v", err)
 	}
@@ -640,12 +636,12 @@ func TestCgroupDevicesShared(t *testing.T) {
 	}
 	defer restore()
 	for _, tc := range []struct {
-		major, minor uint32
 		want         error
+		major, minor uint32
 	}{
-		{195, 255, nil},
-		{10, 232, nil},
-		{199, 0, unix.EPERM},
+		{major: 195, minor: 255, want: nil},
+		{major: 10, minor: 232, want: nil},
+		{major: 199, minor: 0, want: unix.EPERM},
 	} {
 		path := filepath.Join(t.TempDir(), "dev")
 		if err := unix.Mknod(path, unix.S_IFCHR|0600, int(unix.Mkdev(tc.major, tc.minor))); !errors.Is(err, tc.want) {
@@ -731,7 +727,7 @@ func pidCgroupPath(pid int, controller string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	for _, line := range strings.Split(strings.TrimSpace(string(data)), "\n") {
+	for line := range strings.SplitSeq(strings.TrimSpace(string(data)), "\n") {
 		// Format: hierarchy-ID:controller-list:cgroup-path
 		fields := strings.SplitN(line, ":", 3)
 		if len(fields) == 3 && slices.Contains(strings.Split(fields[1], ","), controller) {
@@ -917,7 +913,7 @@ func checkGoferMaxProcsEnv(t *testing.T, pid int, wantProcs string) {
 		t.Fatalf("reading environ of gofer %d: %v", pid, err)
 	}
 	var gomaxprocsVals, godebugVals []string
-	for _, entry := range strings.Split(strings.TrimSuffix(string(rawEnv), "\x00"), "\x00") {
+	for entry := range strings.SplitSeq(strings.TrimSuffix(string(rawEnv), "\x00"), "\x00") {
 		if v, ok := strings.CutPrefix(entry, "GOMAXPROCS="); ok {
 			gomaxprocsVals = append(gomaxprocsVals, v)
 		}

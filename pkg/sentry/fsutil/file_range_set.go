@@ -74,7 +74,7 @@ func (seg FileRangeIterator) FileRange() memmap.FileRange {
 //   - mr.Length() != 0.
 func (seg FileRangeIterator) FileRangeOf(mr memmap.MappableRange) memmap.FileRange {
 	frstart := seg.Value() + (mr.Start - seg.Start())
-	return memmap.FileRange{frstart, frstart + mr.Length()}
+	return memmap.FileRange{Start: frstart, End: frstart + mr.Length()}
 }
 
 // PagesToFill returns an upper bound on the number of pages that Fill() will

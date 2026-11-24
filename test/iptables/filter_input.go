@@ -963,8 +963,7 @@ func (*FilterInputInterfaceInvertDrop) LocalAction(ctx context.Context, ip net.I
 	timedCtx, cancel := context.WithTimeout(ctx, NegativeTimeout)
 	defer cancel()
 	if err := netutils.ConnectTCP(timedCtx, ip, acceptPort, ipv6); err != nil {
-		var operr *net.OpError
-		if errors.As(err, &operr) && operr.Timeout() {
+		if operr, ok := errors.AsType[*net.OpError](err); ok && operr.Timeout() {
 			return nil
 		}
 		return fmt.Errorf("error connecting: %w", err)
@@ -1211,7 +1210,7 @@ func (*FilterInputDropAllExceptOneDstPort) ContainerAction(ctx context.Context, 
 	}()
 
 	// Wait for both listeners.
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		if err := <-errCh; err != nil {
 			return err
 		}

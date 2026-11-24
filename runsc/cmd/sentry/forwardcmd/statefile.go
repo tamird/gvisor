@@ -39,11 +39,11 @@ import (
 
 // Statefile implements subcommands.Command for the "statefile" command.
 type Statefile struct {
-	list    bool
 	get     string
-	bitmask bool
 	key     string
 	output  string
+	list    bool
+	bitmask bool
 	html    bool
 }
 

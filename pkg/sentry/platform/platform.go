@@ -614,26 +614,6 @@ type Options struct {
 	// platform).
 	DeviceFile *fd.FD
 
-	// DisableSyscallPatching controls whether Systrap is allowed to patch
-	// syscalls invocations sites at runtime.
-	DisableSyscallPatching bool
-
-	// DisableFastPath, if true, completely disables the Systrap fast path.
-	DisableFastPath bool
-
-	// ApplicationCores is used by KVM to determine the correct amount of
-	// vCPUs to create.
-	ApplicationCores int
-
-	// UseCPUNums is used by KVM to determine whether to use KVM CPU numbers
-	// as CPU numbers in the sentry. This is necessary to support features like
-	// rseq
-	UseCPUNums bool
-
-	// SandboxID is the sandbox identifier, used by slimvm to pass to the
-	// host kernel module for sandbox identification.
-	SandboxID string
-
 	// StartupTimer is the timer tracking overall sandbox startup.
 	// Platform constructors should record any relevant midpoints on it.
 	StartupTimer *timing.Timer
@@ -643,8 +623,28 @@ type Options struct {
 	// See `//pkg/pinring`.
 	PinRing *pinring.PinRing
 
+	// SandboxID is the sandbox identifier, used by slimvm to pass to the
+	// host kernel module for sandbox identification.
+	SandboxID string
+
+	// ApplicationCores is used by KVM to determine the correct amount of
+	// vCPUs to create.
+	ApplicationCores int
+
 	// TSCOffset is an offset to apply to the guest TSC counter (currently KVM only).
 	TSCOffset uint64
+
+	// DisableSyscallPatching controls whether Systrap is allowed to patch
+	// syscalls invocations sites at runtime.
+	DisableSyscallPatching bool
+
+	// DisableFastPath, if true, completely disables the Systrap fast path.
+	DisableFastPath bool
+
+	// UseCPUNums is used by KVM to determine whether to use KVM CPU numbers
+	// as CPU numbers in the sentry. This is necessary to support features like
+	// rseq
+	UseCPUNums bool
 }
 
 // Constructor represents a platform type.

@@ -46,12 +46,12 @@ type pastAffiliation struct {
 type maintainer struct {
 	Name             string            `yaml:"name"`
 	GitHub           string            `yaml:"github"`
-	GitHubID         uint64            `yaml:"github_id"`
 	Affiliation      string            `yaml:"affiliation"`
 	PastAffiliations []pastAffiliation `yaml:"past_affiliation"`
 	Started          string            `yaml:"started"`
 	Status           string            `yaml:"status"`
 	Areas            []string          `yaml:"areas"`
+	GitHubID         uint64            `yaml:"github_id"`
 }
 
 // roster is the schema of maintainers.yaml.
@@ -242,7 +242,7 @@ func formatTable(headers []string, rows [][]string) string {
 	}
 	b.WriteString("\n")
 	// Separator
-	for i := 0; i < numCols; i++ {
+	for i := range numCols {
 		if i > 0 {
 			b.WriteString(" | ")
 		}

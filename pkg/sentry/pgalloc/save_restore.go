@@ -20,8 +20,10 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"maps"
 	"math"
 	"runtime"
+	"slices"
 	"sync/atomic"
 	"time"
 
@@ -68,9 +70,7 @@ func (f *MemoryFile) exportMetadataProto() *pgallocpb.MemoryFileMetadataProto {
 		Version:     1,
 		Subreleased: make(map[uint64]uint64, len(f.subreleased)),
 	}
-	for k, v := range f.subreleased {
-		pb.Subreleased[k] = v
-	}
+	maps.Copy(pb.Subreleased, f.subreleased)
 	chunks := f.chunksLoad()
 	pb.Chunks = make([]*pgallocpb.ChunkInfoProto, len(chunks))
 	for i, c := range chunks {
@@ -124,9 +124,7 @@ func (f *MemoryFile) importMetadataProto(pb *pgallocpb.MemoryFileMetadataProto) 
 		return fmt.Errorf("unsupported MemoryFileMetadataProto version %d", pb.Version)
 	}
 	f.subreleased = make(map[uint64]uint64, len(pb.Subreleased))
-	for k, v := range pb.Subreleased {
-		f.subreleased[k] = v
-	}
+	maps.Copy(f.subreleased, pb.Subreleased)
 	chunks := make([]chunkInfo, len(pb.Chunks))
 	for i, c := range pb.Chunks {
 		chunks[i] = chunkInfo{
@@ -303,7 +301,7 @@ func (f *MemoryFile) SaveTo(ctx context.Context, w io.Writer, opts *SaveOpts) er
 			if decommitPendingFR.Length() != 0 {
 				decommitNow(decommitPendingFR)
 			}
-			decommitPendingFR = memmap.FileRange{off, end}
+			decommitPendingFR = memmap.FileRange{Start: off, End: end}
 		}
 		// Maintain invariants by decommitting if we've reached the end of the
 		// containing huge page.
@@ -452,13 +450,13 @@ func (f *MemoryFile) SaveTo(ctx context.Context, w io.Writer, opts *SaveOpts) er
 			if err != nil {
 				return err
 			}
-			hole := memmap.FileRange{fr.Start, min(data.Start, fr.End)}
+			hole := memmap.FileRange{Start: fr.Start, End: min(data.Start, fr.End)}
 			if hole.Length() != 0 {
 				alreadyUncommittedBytes += hole.Length()
 				hostHoleBytes += hole.Length()
 				maseg = updateAddRange(maseg, hole, false /* wasCommitted */, false /* nowCommitted */)
 			}
-			dataFR := memmap.FileRange{hole.End, min(data.End, fr.End)}
+			dataFR := memmap.FileRange{Start: hole.End, End: min(data.End, fr.End)}
 			scanRange(dataFR, false /* wasCommitted */)
 			fr.Start = dataFR.End
 		}
@@ -624,7 +622,7 @@ func (d *hostFileDataSeeker) dataAtOrAfter(off uint64) (memmap.FileRange, error)
 	if d.cur.End <= off {
 		data, err := unix.Seek(d.fd, int64(off), unix.SEEK_DATA)
 		if err == unix.ENXIO {
-			d.cur = memmap.FileRange{d.size, d.size}
+			d.cur = memmap.FileRange{Start: d.size, End: d.size}
 			return d.cur, nil
 		}
 		if err != nil {
@@ -642,7 +640,7 @@ func (d *hostFileDataSeeker) dataAtOrAfter(off uint64) (memmap.FileRange, error)
 			End:   min(hostarch.MustPageRoundUp(uint64(hole)), d.size),
 		}
 	}
-	return memmap.FileRange{max(off, d.cur.Start), d.cur.End}, nil
+	return memmap.FileRange{Start: max(off, d.cur.Start), End: d.cur.End}, nil
 }
 
 // AsyncPagesFileSave holds async page saving state for a single pages file.
@@ -743,8 +741,6 @@ type apsRange struct {
 // apsOp tracks async page save state corresponding to a single AIO write
 // operation.
 type apsOp struct {
-	// total is the number of bytes to be written by the operation.
-	total uint64
 
 	// amfs represents the MemoryFile being saved.
 	amfs *asyncMemoryFileSave
@@ -754,6 +750,8 @@ type apsOp struct {
 
 	// iovecs contains mappings of frs.
 	iovecs []unix.Iovec
+	// total is the number of bytes to be written by the operation.
+	total uint64
 }
 
 // StartAsyncPagesFileSave constructs asynchronous saving state for the pages
@@ -1114,25 +1112,27 @@ func (apfs *AsyncPagesFileSave) main() {
 // LoadOpts provides options to MemoryFile.LoadFrom().
 type LoadOpts struct {
 	// If PagesFile is not nil, then page contents will be read from PagesFile,
-	// starting at offset PagesFileOffset, rather than from r. After LoadFrom
-	// returns, PagesFileOffset will be updated to the offset of the first byte
-	// in PagesFile after this MemoryFile's contents.
-	//
+	// starting at offset PagesFileOffset, rather than from r.
+	PagesFile *AsyncPagesFileLoad
+
 	// Reading from PagesFile may continue after LoadFrom returns. If
 	// DoneCallback is not nil, it will be called when reading for this
 	// MemoryFile completes. DoneCallback will be called whether or not
 	// LoadFrom returns a non-nil error.
-	//
-	// Invariant: PagesFileOffset must be page-aligned.
-	PagesFile       *AsyncPagesFileLoad
-	PagesFileOffset uint64
-	DoneCallback    func(error)
+	DoneCallback func(error)
 
 	// Optional timeline for the restore process.
 	// If async page loading is enabled, a forked timeline will be created, so
 	// ownership of this timeline remains in the hands of the caller of
 	// LoadFrom.
 	Timeline *timing.Timeline
+
+	// PagesFileOffset is the offset in PagesFile at which page contents start.
+	// If PagesFile is not nil, LoadFrom updates it to the offset of the first
+	// byte in PagesFile after this MemoryFile's contents.
+	//
+	// Invariant: PagesFileOffset must be page-aligned.
+	PagesFileOffset uint64
 }
 
 // LoadFrom loads MemoryFile state from the given stream.
@@ -1196,9 +1196,7 @@ func (f *MemoryFile) LoadFrom(ctx context.Context, r io.Reader, opts *LoadOpts) 
 			chunk.mapping = m
 			m += chunkSize
 		}
-		madviseWG.Add(1)
-		go func() {
-			defer madviseWG.Done()
+		madviseWG.Go(func() {
 			for i := range chunks {
 				chunk := &chunks[i]
 				f.madviseChunkMapping(chunk.mapping, chunkSize, chunk.huge)
@@ -1208,7 +1206,7 @@ func (f *MemoryFile) LoadFrom(ctx context.Context, r io.Reader, opts *LoadOpts) 
 				default:
 				}
 			}
-		}()
+		})
 	}
 	defer madviseWG.Wait()
 
@@ -1476,15 +1474,15 @@ type asyncMemoryFileLoad struct {
 
 // aplUnloadedInfo is the value type of asyncMemoryFileLoad.unloaded.
 type aplUnloadedInfo struct {
+
+	// waiters queues goroutines waiting for these pages to be loaded.
+	waiters []*aplWaiter
 	// off is the offset into the pages file at which the represented pages
 	// begin.
 	off uint64
 
 	// started is true if a read has been enqueued for these pages.
 	started bool
-
-	// waiters queues goroutines waiting for these pages to be loaded.
-	waiters []*aplWaiter
 }
 
 type aplWaiter struct {
@@ -1514,11 +1512,6 @@ var aplWaiterPool = sync.Pool{
 // aplOp tracks async page load state corresponding to a single AIO read
 // operation.
 type aplOp struct {
-	// total is the number of bytes to be read by the operation.
-	total uint64
-
-	// end is the pages file offset at which the read ends.
-	end uint64
 
 	// amfl represents the MemoryFile being loaded.
 	amfl *asyncMemoryFileLoad
@@ -1528,6 +1521,11 @@ type aplOp struct {
 
 	// iovecs contains mappings of frs.
 	iovecs []unix.Iovec
+	// total is the number of bytes to be read by the operation.
+	total uint64
+
+	// end is the pages file offset at which the read ends.
+	end uint64
 
 	// If tempRef is true, a temporary reference is held on pages in frs that
 	// should be dropped after completion.
@@ -1607,7 +1605,7 @@ func (f *MemoryFile) IsAsyncLoading() bool {
 // loading is not in progress, AwaitLoadAll returns immediately.
 func (f *MemoryFile) AwaitLoadAll() error {
 	if amfl := f.asyncPageLoad.Load(); amfl != nil {
-		return amfl.awaitLoad(memmap.FileRange{0, hostarch.PageRoundDown(uint64(math.MaxUint64))})
+		return amfl.awaitLoad(memmap.FileRange{Start: 0, End: hostarch.PageRoundDown(uint64(math.MaxUint64))})
 	}
 	return nil
 }
@@ -2233,7 +2231,7 @@ func (aplUnloadedSetFunctions) Split(fr memmap.FileRange, ul aplUnloadedInfo, sp
 		// "copy-on-append", saving an allocation if ul2 is never appended-to.
 		// This is safe since existing elements in ul.waiters will never be
 		// mutated.
-		waiters: ul.waiters[:len(ul.waiters):len(ul.waiters)],
+		waiters: slices.Clip(ul.waiters),
 	}
 	return ul, ul2
 }
@@ -2243,7 +2241,7 @@ func (f *MemoryFile) getClientFileRangeSettings(fileSize uint64) []stateio.Clien
 		return nil
 	}
 	var cfrs []stateio.ClientFileRangeSetting
-	f.forEachChunk(memmap.FileRange{0, fileSize}, func(chunk *chunkInfo, chunkFR memmap.FileRange) bool {
+	f.forEachChunk(memmap.FileRange{Start: 0, End: fileSize}, func(chunk *chunkInfo, chunkFR memmap.FileRange) bool {
 		if chunk.huge {
 			if f.opts.AdviseHugepage {
 				cfrs = append(cfrs, stateio.ClientFileRangeSetting{

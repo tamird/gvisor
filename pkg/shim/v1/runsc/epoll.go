@@ -14,7 +14,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 package runsc
 
@@ -43,18 +42,17 @@ func newOOMEpoller(publisher events.Publisher) (*epoller, error) {
 }
 
 type epoller struct {
-	mu sync.Mutex
-
-	fd        int
 	publisher events.Publisher
 
 	// +checklocks:mu
 	set map[uintptr]*item
+	fd  int
+	mu  sync.Mutex
 }
 
 type item struct {
-	id string
 	cg cgroups.Cgroup
+	id string
 }
 
 func (e *epoller) Close() error {
@@ -80,7 +78,7 @@ func (e *epoller) run(ctx context.Context) {
 				log.L.WithError(err).Error("cgroups: epoll wait failed, no longer reporting OOM events")
 				return
 			}
-			for i := 0; i < n; i++ {
+			for i := range n {
 				e.process(ctx, uintptr(events[i].Fd))
 			}
 		}

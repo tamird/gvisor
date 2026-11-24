@@ -238,9 +238,9 @@ func TestCheckLoopsAndChainsUnreachableLoop(t *testing.T) {
 
 func TestCheckTargetHooks(t *testing.T) {
 	for _, test := range []struct {
+		want  *syserr.Error
 		name  string
 		table stack.Table
-		want  *syserr.Error
 	}{
 		{
 			name: "redirect on postrouting",
@@ -408,70 +408,66 @@ func TestParseTargetTable(t *testing.T) {
 	filter := emptyIPv4Filter
 	filter.Protocol = header.TCPProtocolNumber
 	for _, test := range []struct {
-		name      string
 		target    target
-		tableName string
 		want      *syserr.Error
+		name      string
+		tableName string
 	}{
 		{
 			name: "redirect in the filter table",
-			target: &redirectTarget{RedirectTarget: stack.RedirectTarget{
+			target: &redirectTarget{
 				NetworkProtocol: header.IPv4ProtocolNumber,
-				Port:            9999,
-			}},
+				Port:            9999},
 			tableName: filterTable,
 			want:      syserr.ErrInvalidArgument,
 		},
 		{
 			name: "redirect in the nat table",
-			target: &redirectTarget{RedirectTarget: stack.RedirectTarget{
+			target: &redirectTarget{
 				NetworkProtocol: header.IPv4ProtocolNumber,
-				Port:            9999,
-			}},
+				Port:            9999},
 			tableName: natTable,
 		},
 		{
 			name: "dnat in the filter table",
-			target: &dnatTarget{DNATTarget: stack.DNATTarget{
+			target: &dnatTarget{
 				NetworkProtocol: header.IPv4ProtocolNumber,
 				Port:            9999,
-				ChangePort:      true,
-			}},
+				ChangePort:      true},
 			tableName: filterTable,
 			want:      syserr.ErrInvalidArgument,
 		},
 		{
 			name:      "snat in the raw table",
-			target:    &snatTarget{SNATTarget: stack.SNATTarget{NetworkProtocol: header.IPv4ProtocolNumber}},
+			target:    &snatTarget{NetworkProtocol: header.IPv4ProtocolNumber},
 			tableName: rawTable,
 			want:      syserr.ErrInvalidArgument,
 		},
 		{
 			name:      "masquerade in the mangle table",
-			target:    &masqueradeTarget{MasqueradeTarget: stack.MasqueradeTarget{NetworkProtocol: header.IPv4ProtocolNumber}},
+			target:    &masqueradeTarget{NetworkProtocol: header.IPv4ProtocolNumber},
 			tableName: mangleTable,
 			want:      syserr.ErrInvalidArgument,
 		},
 		{
 			name:      "masquerade in the nat table",
-			target:    &masqueradeTarget{MasqueradeTarget: stack.MasqueradeTarget{NetworkProtocol: header.IPv4ProtocolNumber}},
+			target:    &masqueradeTarget{NetworkProtocol: header.IPv4ProtocolNumber},
 			tableName: natTable,
 		},
 		{
 			name: "reject in the filter table",
-			target: &rejectIPv4Target{RejectIPv4Target: stack.RejectIPv4Target{
-				RejectWith: stack.RejectIPv4WithICMPPortUnreachable,
-			}},
+			target: &rejectIPv4Target{
+				RejectWith: stack.RejectIPv4WithICMPPortUnreachable},
 			tableName: filterTable,
 		},
 		{
 			name:      "ct in the raw table",
-			target:    &ctTarget{CTTarget: stack.CTTarget{NetworkProtocol: header.IPv4ProtocolNumber}},
+			target:    &ctTarget{NetworkProtocol: header.IPv4ProtocolNumber},
 			tableName: rawTable,
 		},
 		{
 			name:      "accept in the filter table",
-			target:    &acceptTarget{AcceptTarget: stack.AcceptTarget{NetworkProtocol: header.IPv4ProtocolNumber}},
+			target:    &acceptTarget{NetworkProtocol: header.IPv4ProtocolNumber},
 			tableName: filterTable,
 		},
 	} {
@@ -486,17 +482,16 @@ func TestParseTargetTable(t *testing.T) {
 func TestModifyEntriesTableOrder(t *testing.T) {
 	for _, test := range []struct {
 		name      string
-		rules     []stack.Rule
 		tableName string
+		rules     []stack.Rule
 		ipv6      bool
 	}{
 		{
 			name: "ct before an unsupported reject type in the filter table",
 			rules: []stack.Rule{
-				makeRule(&ctTarget{CTTarget: stack.CTTarget{NetworkProtocol: header.IPv4ProtocolNumber}}),
-				makeRule(&rejectIPv4Target{RejectIPv4Target: stack.RejectIPv4Target{
-					RejectWith: stack.RejectIPv4WithICMPHostUnreachable,
-				}}),
+				makeRule(&ctTarget{NetworkProtocol: header.IPv4ProtocolNumber}),
+				makeRule(&rejectIPv4Target{
+					RejectWith: stack.RejectIPv4WithICMPHostUnreachable}),
 			},
 			tableName: filterTable,
 		},
@@ -505,9 +500,8 @@ func TestModifyEntriesTableOrder(t *testing.T) {
 			rules: []stack.Rule{
 				{
 					Filter: emptyIPv6Filter,
-					Target: &rejectIPv6Target{RejectIPv6Target: stack.RejectIPv6Target{
-						RejectWith: stack.RejectIPv6WithICMPAdminProhibited,
-					}},
+					Target: &rejectIPv6Target{
+						RejectWith: stack.RejectIPv6WithICMPAdminProhibited},
 				},
 			},
 			tableName: natTable,
@@ -554,21 +548,19 @@ func TestParseTargetsRejectHandler(t *testing.T) {
 		NetworkProtocols: []stack.NetworkProtocolFactory{ipv4.NewProtocol, ipv6.NewProtocol},
 	})
 	for _, test := range []struct {
-		name   string
 		target target
+		name   string
 		ipv6   bool
 	}{
 		{
 			name: "ipv4 reject",
-			target: &rejectIPv4Target{RejectIPv4Target: stack.RejectIPv4Target{
-				RejectWith: stack.RejectIPv4WithICMPPortUnreachable,
-			}},
+			target: &rejectIPv4Target{
+				RejectWith: stack.RejectIPv4WithICMPPortUnreachable},
 		},
 		{
 			name: "ipv6 reject",
-			target: &rejectIPv6Target{RejectIPv6Target: stack.RejectIPv6Target{
-				RejectWith: stack.RejectIPv6WithICMPPortUnreachable,
-			}},
+			target: &rejectIPv6Target{
+				RejectWith: stack.RejectIPv6WithICMPPortUnreachable},
 			ipv6: true,
 		},
 	} {
@@ -578,7 +570,7 @@ func TestParseTargetsRejectHandler(t *testing.T) {
 				filter = emptyIPv6Filter
 			}
 			rules := []stack.Rule{
-				{Filter: filter, Target: &acceptTarget{AcceptTarget: stack.AcceptTarget{NetworkProtocol: filter.NetworkProtocol()}}},
+				{Filter: filter, Target: &acceptTarget{NetworkProtocol: filter.NetworkProtocol()}},
 				{Filter: filter},
 			}
 			if err := parseTargets(stk, rules, map[int][]byte{1: marshalTarget(test.target)}, test.ipv6, filterTable); err != nil {
@@ -603,17 +595,16 @@ func TestParseTargetsRejectHandler(t *testing.T) {
 func TestSetEntriesParsesTargets(t *testing.T) {
 	filter := emptyIPv4Filter
 	filter.Protocol = header.TCPProtocolNumber
-	accept := &acceptTarget{AcceptTarget: stack.AcceptTarget{NetworkProtocol: header.IPv4ProtocolNumber}}
+	accept := &acceptTarget{NetworkProtocol: header.IPv4ProtocolNumber}
 	table := stack.Table{
 		Rules: []stack.Rule{
 			makeRule(accept),
 			makeRule(accept),
 			{
 				Filter: filter,
-				Target: &redirectTarget{RedirectTarget: stack.RedirectTarget{
+				Target: &redirectTarget{
 					NetworkProtocol: header.IPv4ProtocolNumber,
-					Port:            9999,
-				}},
+					Port:            9999},
 			},
 			makeRule(accept),
 			makeRule(accept),
@@ -634,7 +625,7 @@ func TestSetEntriesParsesTargets(t *testing.T) {
 func TestSetEntriesTargetHooks(t *testing.T) {
 	filter := emptyIPv4Filter
 	filter.Protocol = header.TCPProtocolNumber
-	accept := &acceptTarget{AcceptTarget: stack.AcceptTarget{NetworkProtocol: header.IPv4ProtocolNumber}}
+	accept := &acceptTarget{NetworkProtocol: header.IPv4ProtocolNumber}
 	table := stack.Table{
 		Rules: []stack.Rule{
 			makeRule(accept),
@@ -642,10 +633,9 @@ func TestSetEntriesTargetHooks(t *testing.T) {
 			makeRule(accept),
 			{
 				Filter: filter,
-				Target: &redirectTarget{RedirectTarget: stack.RedirectTarget{
+				Target: &redirectTarget{
 					NetworkProtocol: header.IPv4ProtocolNumber,
-					Port:            9999,
-				}},
+					Port:            9999},
 			},
 			makeRule(accept),
 		},
@@ -659,37 +649,33 @@ func TestSetEntriesTargetHooks(t *testing.T) {
 
 func TestSetEntriesLoopOrder(t *testing.T) {
 	for _, test := range []struct {
-		name   string
 		target stack.Target
+		name   string
 		ipv6   bool
 		tcp    bool
 	}{
 		{
 			name: "unsupported reject type",
-			target: &rejectIPv4Target{RejectIPv4Target: stack.RejectIPv4Target{
-				RejectWith: stack.RejectIPv4WithICMPHostUnreachable,
-			}},
+			target: &rejectIPv4Target{
+				RejectWith: stack.RejectIPv4WithICMPHostUnreachable},
 			tcp: true,
 		},
 		{
 			name: "unsupported reject type with no protocol",
-			target: &rejectIPv4Target{RejectIPv4Target: stack.RejectIPv4Target{
-				RejectWith: stack.RejectIPv4WithICMPHostUnreachable,
-			}},
+			target: &rejectIPv4Target{
+				RejectWith: stack.RejectIPv4WithICMPHostUnreachable},
 		},
 		{
 			name: "unsupported ipv6 reject type",
-			target: &rejectIPv6Target{RejectIPv6Target: stack.RejectIPv6Target{
-				RejectWith: stack.RejectIPv6WithICMPAdminProhibited,
-			}},
+			target: &rejectIPv6Target{
+				RejectWith: stack.RejectIPv6WithICMPAdminProhibited},
 			ipv6: true,
 			tcp:  true,
 		},
 		{
 			name: "unsupported ipv6 reject type with no protocol",
-			target: &rejectIPv6Target{RejectIPv6Target: stack.RejectIPv6Target{
-				RejectWith: stack.RejectIPv6WithICMPAdminProhibited,
-			}},
+			target: &rejectIPv6Target{
+				RejectWith: stack.RejectIPv6WithICMPAdminProhibited},
 			ipv6: true,
 		},
 	} {
@@ -701,17 +687,17 @@ func TestSetEntriesLoopOrder(t *testing.T) {
 			netProto := filter.NetworkProtocol()
 			var rules []stack.Rule
 			for _, target := range []stack.Target{
-				&acceptTarget{AcceptTarget: stack.AcceptTarget{NetworkProtocol: netProto}},
-				&acceptTarget{AcceptTarget: stack.AcceptTarget{NetworkProtocol: netProto}},
+				&acceptTarget{NetworkProtocol: netProto},
+				&acceptTarget{NetworkProtocol: netProto},
 				test.target,
 				&JumpTarget{RuleNum: 6, NetworkProtocol: netProto},
-				&acceptTarget{AcceptTarget: stack.AcceptTarget{NetworkProtocol: netProto}},
-				&userChainTarget{UserChainTarget: stack.UserChainTarget{Name: "a", NetworkProtocol: netProto}},
+				&acceptTarget{NetworkProtocol: netProto},
+				&userChainTarget{Name: "a", NetworkProtocol: netProto},
 				&JumpTarget{RuleNum: 9, NetworkProtocol: netProto},
-				&returnTarget{ReturnTarget: stack.ReturnTarget{NetworkProtocol: netProto}},
-				&userChainTarget{UserChainTarget: stack.UserChainTarget{Name: "b", NetworkProtocol: netProto}},
+				&returnTarget{NetworkProtocol: netProto},
+				&userChainTarget{Name: "b", NetworkProtocol: netProto},
 				&JumpTarget{RuleNum: 6, NetworkProtocol: netProto},
-				&returnTarget{ReturnTarget: stack.ReturnTarget{NetworkProtocol: netProto}},
+				&returnTarget{NetworkProtocol: netProto},
 			} {
 				rules = append(rules, stack.Rule{Filter: filter, Target: target})
 			}

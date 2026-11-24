@@ -19,14 +19,13 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 	"time"
 
 	cspb "cloud.google.com/go/container/apiv1/containerpb"
-	"google.golang.org/protobuf/proto"
 	v13 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -61,13 +60,9 @@ func (n *Namespace) Reset(ctx context.Context) error {
 		return fmt.Errorf("failed to clean up namespace %q: %w", n.Namespace, err)
 	}
 	_, err := n.testCluster.createNamespace(ctx, &v13.Namespace{
-		TypeMeta: v1.TypeMeta{
-			Kind:       "namespace",
-			APIVersion: apiV1,
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name: n.Namespace,
-		},
+		Kind:       "namespace",
+		APIVersion: apiV1,
+		Name:       n.Namespace,
 	})
 	return err
 }
@@ -123,14 +118,10 @@ func (n *Namespace) NewAlpinePod(name, image string, cmd []string) *v13.Pod {
 // NewPod returns a pod template.
 func (n *Namespace) NewPod(name string) *v13.Pod {
 	return &v13.Pod{
-		TypeMeta: v1.TypeMeta{
-			Kind:       pod,
-			APIVersion: apiV1,
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name:      name,
-			Namespace: n.Namespace,
-		},
+		Kind:       pod,
+		APIVersion: apiV1,
+		Name:       name,
+		Namespace:  n.Namespace,
 		Spec: v13.PodSpec{
 			RestartPolicy: v13.RestartPolicyNever,
 		},
@@ -141,14 +132,10 @@ func (n *Namespace) NewPod(name string) *v13.Pod {
 func (n *Namespace) GetPersistentVolume(name, size string) *v13.PersistentVolumeClaim {
 	storageClass := "standard-rwo"
 	pvc := &v13.PersistentVolumeClaim{
-		TypeMeta: v1.TypeMeta{
-			Kind:       "PersistentVolumeClaim",
-			APIVersion: apiV1,
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name:      name,
-			Namespace: n.Namespace,
-		},
+		Kind:       "PersistentVolumeClaim",
+		APIVersion: apiV1,
+		Name:       name,
+		Namespace:  n.Namespace,
 		Spec: v13.PersistentVolumeClaimSpec{
 			StorageClassName: &storageClass,
 			AccessModes:      []v13.PersistentVolumeAccessMode{v13.ReadWriteOnce},
@@ -175,15 +162,11 @@ func (n *Namespace) GetPersistentVolume(name, size string) *v13.PersistentVolume
 // GetService gets a service spec for benchmarks.
 func (n *Namespace) GetService(name string, spec v13.ServiceSpec) *v13.Service {
 	return &v13.Service{
-		TypeMeta: v1.TypeMeta{
-			Kind:       "Service",
-			APIVersion: apiV1,
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name:      name,
-			Namespace: n.Namespace,
-		},
-		Spec: spec,
+		Kind:       "Service",
+		APIVersion: apiV1,
+		Name:       name,
+		Namespace:  n.Namespace,
+		Spec:       spec,
 	}
 }
 
@@ -551,10 +534,8 @@ func SetNodePlacementPolicyCompact(nodepool *cspb.NodePool, tpuTopology string) 
 
 // addToleration adds a toleration to the pod if it doesn't already exist.
 func addToleration(podSpec *v13.PodSpec, toleration v13.Toleration) {
-	for _, t := range podSpec.Tolerations {
-		if t == toleration {
-			return
-		}
+	if slices.Contains(podSpec.Tolerations, toleration) {
+		return
 	}
 	podSpec.Tolerations = append(podSpec.Tolerations, toleration)
 }
@@ -566,14 +547,14 @@ func (t RuntimeType) ApplyPodSpec(podSpec *v13.PodSpec) {
 	}
 	switch t {
 	case RuntimeTypeGVisor, RuntimeTypeGVisorCapped:
-		podSpec.RuntimeClassName = proto.String(gvisorRuntimeClass)
+		podSpec.RuntimeClassName = new(gvisorRuntimeClass)
 		podSpec.NodeSelector[NodepoolRuntimeKey] = string(t)
 		addToleration(podSpec, v13.Toleration{
 			Key:      "nvidia.com/gpu",
 			Operator: v13.TolerationOpExists,
 		})
 	case RuntimeTypeMicroVM:
-		podSpec.RuntimeClassName = proto.String(microvmRuntimeClass)
+		podSpec.RuntimeClassName = new(microvmRuntimeClass)
 		podSpec.NodeSelector[NodepoolRuntimeKey] = string(t)
 		addToleration(podSpec, v13.Toleration{
 			Effect:   v13.TaintEffectNoSchedule,
@@ -604,7 +585,7 @@ func (t RuntimeType) ApplyPodSpec(podSpec *v13.PodSpec) {
 			Value:    microvmRuntimeClass,
 		})
 	case RuntimeTypeGVisorTPU:
-		podSpec.RuntimeClassName = proto.String(gvisorRuntimeClass)
+		podSpec.RuntimeClassName = new(gvisorRuntimeClass)
 		podSpec.NodeSelector[NodepoolRuntimeKey] = string(RuntimeTypeGVisorTPU)
 		addToleration(podSpec, v13.Toleration{
 			Key:      "google.com/tpu",
@@ -633,7 +614,7 @@ func (t RuntimeType) ApplyPodSpec(podSpec *v13.PodSpec) {
 			// Logically impossible since we already checked that t is a Kata runtime, so panic is appropriate.
 			panic(fmt.Sprintf("failed to get Kata shim name for runtime %q: %v", t, err))
 		}
-		podSpec.RuntimeClassName = proto.String(shimName)
+		podSpec.RuntimeClassName = new(shimName)
 		podSpec.NodeSelector["katacontainers.io/kata-runtime"] = "true"
 		podSpec.NodeSelector[NodepoolRuntimeKey] = string(t)
 	default:

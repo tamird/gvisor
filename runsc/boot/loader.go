@@ -22,6 +22,7 @@ import (
 	"os"
 	"runtime"
 	runtimedebug "runtime/debug"
+	"slices"
 	"strconv"
 	"strings"
 	gtime "time"
@@ -109,55 +110,52 @@ import (
 )
 
 type containerInfo struct {
-	cid string
+	// execFD is the host file descriptor used for program execution.
+	execFD *fd.FD
 
-	containerName string
-
-	conf *config.Config
+	// nvidiaHostSettings holds information on the Nvidia GPU driver.
+	nvidiaHostSettings *nvconf.HostSettings
 
 	// spec is the base configuration for the root container.
 	spec *specs.Spec
 
-	// procArgs refers to the container's init task.
-	procArgs kernel.CreateProcessArgs
-
-	// stdioFDs contains stdin, stdout, and stderr.
-	stdioFDs []*fd.FD
-
-	// passFDs are mappings of user-supplied host to guest file descriptors.
-	passFDs []fdMapping
-
-	// execFD is the host file descriptor used for program execution.
-	execFD *fd.FD
-
-	// goferFDs are the FDs that attach the sandbox to the gofers.
-	goferFDs []*fd.FD
-
 	// devGoferFD is the FD to attach the sandbox to the dev gofer.
 	devGoferFD *fd.FD
 
-	// goferFilestoreFDs are FDs to the regular files that will back the tmpfs or
-	// overlayfs mount for certain gofer mounts.
-	goferFilestoreFDs []*fd.FD
+	// nvproxyDevInfo holds information on nvproxy devices.
+	nvproxyDevInfo *nvproxy.DeviceInfo
+	conf           *config.Config
+
+	// rootfsUpperTarFD is the file descriptor to the tar file containing the rootfs
+	// upper layer changes.
+	rootfsUpperTarFD *fd.FD
+	cid              string
+	containerName    string
+
+	// stdioFDs contains stdin, stdout, and stderr.
+	stdioFDs []*fd.FD
 
 	// goferMountConfs contains information about how the gofer mounts have been
 	// configured. The first entry is for rootfs and the following entries are
 	// for bind mounts in Spec.Mounts (in the same order).
 	goferMountConfs []specutils.GoferMountConf
 
-	// nvidiaHostSettings holds information on the Nvidia GPU driver.
-	nvidiaHostSettings *nvconf.HostSettings
+	// goferFDs are the FDs that attach the sandbox to the gofers.
+	goferFDs []*fd.FD
 
-	// nvproxyDevInfo holds information on nvproxy devices.
-	nvproxyDevInfo *nvproxy.DeviceInfo
+	// passFDs are mappings of user-supplied host to guest file descriptors.
+	passFDs []fdMapping
+
+	// goferFilestoreFDs are FDs to the regular files that will back the tmpfs or
+	// overlayfs mount for certain gofer mounts.
+	goferFilestoreFDs []*fd.FD
+
+	// procArgs refers to the container's init task.
+	procArgs kernel.CreateProcessArgs
 
 	// applicationCores is the number of CPU cores gVisor reports to user
 	// applications.
 	applicationCores int
-
-	// rootfsUpperTarFD is the file descriptor to the tar file containing the rootfs
-	// upper layer changes.
-	rootfsUpperTarFD *fd.FD
 
 	// useCPUNums indicates whether to use platform assigned CPU numbers as CPU numbers in the sentry.
 	useCPUNums bool
@@ -205,79 +203,167 @@ func (s loaderState) String() string {
 
 // Loader keeps state needed to start the kernel and run the container.
 type Loader struct {
-	// k is the kernel.
-	k *kernel.Kernel
+	// restoreErr is the error that occurred during restore.
+	//
+	// +checklocks:mu
+	restoreErr error
 
 	// ctrl is the control server.
 	ctrl *controller
 
-	// root contains information about the root container in the sandbox.
-	root containerInfo
+	// failedToStart is a set of container IDs that failed to start.
+	//
+	// +checklocks:mu
+	failedToStart map[string]struct{}
+	watchdog      *watchdog.Watchdog
 
-	watchdog *watchdog.Watchdog
+	// freeOSMemory is runtimedebug.FreeOSMemory, replaced in tests.
+	freeOSMemory func()
 
-	// stopSignalForwarding disables forwarding of signals to the sandboxed
-	// container. It should be called when a sandbox is destroyed.
-	stopSignalForwarding func()
-
-	// stopProfiling stops profiling started at container creation. It
-	// should be called when a sandbox is destroyed.
-	stopProfiling func()
+	// rdmaSysfs is the host sysfs snapshot for RDMA device topology, or
+	// nil when disabled.
+	rdmaSysfs *rdma.Snapshot
 
 	// startupTimertracks overall sandbox startup.
 	// It is *not* owned by the Loader. See `Args.StartupTimer`.
 	startupTimer *timing.Timer
 
+	// stopSignalForwarding disables forwarding of signals to the sandboxed
+	// container. It should be called when a sandbox is destroyed.
+	stopSignalForwarding func()
+
 	// PreSeccompCallback is called right before installing seccomp filters.
 	PreSeccompCallback func()
 
-	// PostStartCallback, if set, is called once Run has successfully started
-	// the sandbox, right before the result is reported to the controller (and
-	// thus before `runsc start` returns).
-	PostStartCallback func()
-
-	// procSelfFD is Args.ProcSelfFD.
-	procSelfFD int
+	// hostinetPortRange is read before restore installs seccomp filters. A nil
+	// value means no destination host configuration is awaiting transfer.
+	hostinetPortRange *[2]uint16
 
 	// restoreDone is used to wait for restore to complete. Note that this may be
 	// much after the sandbox has started because under some configurations, the
 	// restore is allowed to proceed in the background while the sandbox runs.
 	restoreDone *sync.Cond
 
-	// sandboxID is the ID for the whole sandbox.
-	sandboxID string
+	// containerIDs store container names and IDs to assist with restore and container
+	// naming when user didn't provide one.
+	//
+	// Mapping: name -> cid.
+	// +checklocks:mu
+	containerIDs map[string]string
 
-	noRootContainer noRootContainer
+	// processes maps containers init process and invocation of exec. Root
+	// processes are keyed with container ID and pid=0, while exec invocations
+	// have the corresponding pid set.
+	//
+	// +checklocks:mu
+	processes map[execID]*execProcess
+
+	// cgroup2Mount is an internal mount of the cgroup2fs singleton used to
+	// manage per-container cgroups. It is only set when InSandboxCgroup is
+	// InSandboxCgroupV2.
+	//
+	// +checklocks:mu
+	cgroup2Mount *vfs.Mount
 
 	// mountHints provides extra information about mounts for containers that
 	// apply to the entire pod.
 	mountHints *sentryapi.PodMountHints
 
+	// PostStartCallback, if set, is called once Run has successfully started
+	// the sandbox, right before the result is reported to the controller (and
+	// thus before `runsc start` returns).
+	PostStartCallback func()
+
+	// hostinetNetSNMPFile is the pre-opened /proc/net/snmp file for hostinet restore.
+	hostinetNetSNMPFile *os.File
+
+	// hostinetNetDevFile is the pre-opened /proc/net/dev file for hostinet restore.
+	//
+	// Restore initializes both hostinet files before taking mu.
+	// ConfigureNetwork transfers them while mu is held; restore closes
+	// any unconsumed files without mu. checklocks cannot express this
+	// phase-dependent ownership.
+	hostinetNetDevFile *os.File
+
+	// networkArgs contains the routes and links which were scraped from the
+	// host network namespace during sandbox creation.
+	//
+	// +checklocks:mu
+	networkArgs *sentryapi.CreateLinksAndRoutesArgs
+
+	// sharedMounts holds VFS mounts that may be shared between containers within
+	// the same pod. It is mapped by mount source.
+	//
+	// +checklocks:mu
+	sharedMounts map[string]*vfs.Mount
+	fsRestore    *fsRestore
+
+	// k is the kernel.
+	k *kernel.Kernel
+
+	// containerSpecs stores container specs for each container in sandbox.
+	//
+	// Mapping: name -> spec.
+	// +checklocks:mu
+	containerSpecs map[string]*specs.Spec
+
+	// stopProfiling stops profiling started at container creation. It
+	// should be called when a sandbox is destroyed.
+	stopProfiling func()
+	hostTHP       HostTHP
+
 	// productName is the value to show in
 	// /sys/devices/virtual/dmi/id/product_name.
 	productName string
 
-	// rdmaSysfs is the host sysfs snapshot for RDMA device topology, or
-	// nil when disabled.
-	rdmaSysfs *rdma.Snapshot
+	// sandboxID is the ID for the whole sandbox.
+	sandboxID       string
+	noRootContainer noRootContainer
 
-	// cpuQuota and cpuPeriod are the raw host CFS settings that should be
-	// exposed through sandbox cgroupfs.
-	cpuQuota  int64
-	cpuPeriod int64
+	// +checklocks:mu
+	saveFDs []*fd.FD
+
+	// fsSaveFDs are FDs used for user-triggered filesystem checkpoint saving.
+	//
+	// +checklocks:mu
+	fsSaveFDs []*fd.FD
+
+	// portForwardProxies is a list of active port forwarding connections.
+	//
+	// +checklocks:mu
+	portForwardProxies []*pf.Proxy
+
+	// pinRing accumulates host FDs to pin before seccomp filters are
+	// installed.
+	pinRing pinring.PinRing
+
+	// root contains information about the root container in the sandbox.
+	root containerInfo
 
 	// lifecycleCPUs are the CPUs that checkpoint and restore can use.
 	lifecycleCPUs lifecycleCPUs
 
-	hostTHP HostTHP
+	// savings contains the restore savings (eg CPU and wall time saved).
+	//
+	// +checklocks:mu
+	savings sentryapi.Savings
 
-	// startupHeapReleasePending is true while a goroutine waits to return
-	// the free Sentry heap memory to the host. See
-	// Loader.releaseStartupHeapWhenIdle.
-	startupHeapReleasePending atomicbitops.Bool
+	// nextUnnamed is the number added to the name of the next container
+	// registered without a name.
+	//
+	// +checklocks:mu
+	nextUnnamed int
 
-	// freeOSMemory is runtimedebug.FreeOSMemory, replaced in tests.
-	freeOSMemory func()
+	// +checklocks:mu
+	state     loaderState
+	cpuPeriod int64
+
+	// cpuQuota and cpuPeriod are the raw host CFS settings that should be
+	// exposed through sandbox cgroupfs.
+	cpuQuota int64
+
+	// procSelfFD is Args.ProcSelfFD.
+	procSelfFD int
 
 	// saveMu serializes save operations. Saves can be requested concurrently:
 	// autosave in save-resume mode is triggered by any task executing the
@@ -289,120 +375,28 @@ type Loader struct {
 	// Lock order: saveMu is taken before mu.
 	saveMu sync.Mutex
 
-	// mu guards the fields below.
+	// mu guards shared loader state as specified by field annotations.
 	mu sync.Mutex
 
-	// +checklocks:mu
-	state loaderState
-
-	// sharedMounts holds VFS mounts that may be shared between containers within
-	// the same pod. It is mapped by mount source.
-	//
-	// +checklocks:mu
-	sharedMounts map[string]*vfs.Mount
-
-	// cgroup2Mount is an internal mount of the cgroup2fs singleton used to
-	// manage per-container cgroups. It is only set when InSandboxCgroup is
-	// InSandboxCgroupV2.
-	//
-	// +checklocks:mu
-	cgroup2Mount *vfs.Mount
-
-	// processes maps containers init process and invocation of exec. Root
-	// processes are keyed with container ID and pid=0, while exec invocations
-	// have the corresponding pid set.
-	//
-	// +checklocks:mu
-	processes map[execID]*execProcess
-
-	// containerIDs store container names and IDs to assist with restore and container
-	// naming when user didn't provide one.
-	//
-	// Mapping: name -> cid.
-	// +checklocks:mu
-	containerIDs map[string]string
-
-	// containerSpecs stores container specs for each container in sandbox.
-	//
-	// Mapping: name -> spec.
-	// +checklocks:mu
-	containerSpecs map[string]*specs.Spec
-
-	// nextUnnamed is the number added to the name of the next container
-	// registered without a name.
-	//
-	// +checklocks:mu
-	nextUnnamed int
-
-	// failedToStart is a set of container IDs that failed to start.
-	//
-	// +checklocks:mu
-	failedToStart map[string]struct{}
-
-	// portForwardProxies is a list of active port forwarding connections.
-	//
-	// +checklocks:mu
-	portForwardProxies []*pf.Proxy
-
-	// +checklocks:mu
-	saveFDs []*fd.FD
+	// startupHeapReleasePending is true while a goroutine waits to return
+	// the free Sentry heap memory to the host. See
+	// Loader.releaseStartupHeapWhenIdle.
+	startupHeapReleasePending atomicbitops.Bool
 
 	// saveCheckpointGofer is true if saveFDs contains only one FD, which
 	// is a socket connected to a checkpoint gofer.
 	saveCheckpointGofer bool
 
-	// restoreErr is the error that occurred during restore.
-	//
-	// +checklocks:mu
-	restoreErr error
-
-	// savings contains the restore savings (eg CPU and wall time saved).
-	//
-	// +checklocks:mu
-	savings sentryapi.Savings
-
-	fsRestore *fsRestore
-
-	// networkArgs contains the routes and links which were scraped from the
-	// host network namespace during sandbox creation.
-	//
-	// +checklocks:mu
-	networkArgs *sentryapi.CreateLinksAndRoutesArgs
-
-	// pinRing accumulates host FDs to pin before seccomp filters are
-	// installed.
-	pinRing pinring.PinRing
-
-	// fsSaveFDs are FDs used for user-triggered filesystem checkpoint saving.
-	//
-	// +checklocks:mu
-	fsSaveFDs []*fd.FD
-
 	// fsSaveCheckpointGofer is true if fsSaveFDs contains only one FD, which
 	// is a socket connected to a checkpoint gofer.
 	fsSaveCheckpointGofer bool
-
-	// hostinetNetDevFile is the pre-opened /proc/net/dev file for hostinet restore.
-	//
-	// Restore initializes both hostinet files before taking mu.
-	// ConfigureNetwork transfers them while mu is held; restore closes
-	// any unconsumed files without mu. checklocks cannot express this
-	// phase-dependent ownership.
-	hostinetNetDevFile *os.File
-
-	// hostinetNetSNMPFile is the pre-opened /proc/net/snmp file for hostinet restore.
-	hostinetNetSNMPFile *os.File
-
-	// hostinetPortRange is read before restore installs seccomp filters. A nil
-	// value means no destination host configuration is awaiting transfer.
-	hostinetPortRange *[2]uint16
 }
 
 // noRootContainer is the state of a sandbox with no root container.
 type noRootContainer struct {
-	enabled  bool
 	exit     chan struct{}
 	exitOnce sync.Once
+	enabled  bool
 }
 
 // stop releases waitExit. It is idempotent.
@@ -436,9 +430,6 @@ type execProcess struct {
 	// tty will be nil if the process is not attached to a terminal.
 	tty *host.TTYFileDescription
 
-	// pidnsPath is the pid namespace path in spec
-	pidnsPath string
-
 	// pidns is the PID namespace that pidnsPath refers to. It is set together
 	// with pidnsPath and holds a reference that is released when this
 	// execProcess is removed from Loader.processes (or by Loader.Destroy).
@@ -451,13 +442,16 @@ type execProcess struct {
 	// Invariant: pidns is non-nil whenever pidnsPath has been set.
 	pidns *kernel.PIDNamespace
 
-	// cgroupnsPath is the cgroup namespace path in spec
-	cgroupnsPath string
-
 	// hostTTY is present when creating a sub-container with terminal enabled.
 	// TTY file is passed during container create and must be saved until
 	// container start.
 	hostTTY *fd.FD
+
+	// pidnsPath is the pid namespace path in spec
+	pidnsPath string
+
+	// cgroupnsPath is the cgroup namespace path in spec
+	cgroupnsPath string
 }
 
 // releasePIDNamespace drops the PID namespace reference held by ep, if any.
@@ -471,122 +465,156 @@ func (ep *execProcess) releasePIDNamespace(ctx context.Context) {
 // fdMapping maps guest to host file descriptors. Guest file descriptors are
 // exposed to the application inside the sandbox through the FD table.
 type fdMapping struct {
-	guest int
 	host  *fd.FD
+	guest int
 }
 
 // Args are the arguments for New().
 type Args struct {
-	// Id is the sandbox ID.
-	ID string
 	// Spec is the sandbox specification.
 	Spec *specs.Spec
+
 	// Conf is the system configuration.
 	Conf *config.Config
-	// ControllerFD is the FD to the URPC controller. The Loader takes ownership
-	// of this FD and may close it at any time.
-	ControllerFD int
-	// PinRingFD is the FD of the donated pin ring where the sentry registers
-	// its expensive-to-release files into. See `//pkg/pinring`.
-	// -1 if there is no ring.
-	PinRingFD int
-	// CPUDMALatencyFD is an FD for /dev/cpu_dma_latency that the boot
-	// process opened to cap host CPU idle states. The Loader takes
-	// ownership of it. -1 if unset.
-	CPUDMALatencyFD int
-	// Device is an optional argument that is passed to the platform. The Loader
-	// takes ownership of this file and may close it at any time.
-	Device *fd.FD
-	// GoferFDs is an array of FDs used to connect with the Gofer. The Loader
-	// takes ownership of these FDs and may close them at any time.
-	GoferFDs []int
-	// DevGoferFD is the FD for the dev gofer connection. The Loader takes
-	// ownership of this FD and may close it at any time.
-	DevGoferFD int
-	// StdioFDs is the stdio for the application. The Loader takes ownership of
-	// these FDs and may close them at any time.
-	StdioFDs []int
-	// PassFDs are user-supplied FD mappings from host to guest descriptors.
-	// The Loader takes ownership of these FDs and may close them at any time.
-	PassFDs []sentryapi.FDMapping
-	// ExecFD is the host file descriptor used for program execution.
-	ExecFD int
-	// ProcSelfFD is a directory FD to procfs' self/fd. Required with directfs,
-	// -1 otherwise. It must stay open for the lifetime of the sandbox.
-	ProcSelfFD int
-	// GoferFilestoreFDs are FDs to the regular files that will back the tmpfs or
-	// overlayfs mount for certain gofer mounts.
-	GoferFilestoreFDs []int
-	// GoferMountConfs contains information about how the gofer mounts have been
-	// configured. The first entry is for rootfs and the following entries are
-	// for bind mounts in Spec.Mounts (in the same order).
-	GoferMountConfs []specutils.GoferMountConf
-	// NumCPU is the number of CPUs to create inside the sandbox.
-	NumCPU int
-	// LifecycleNumCPU is the number of CPUs that the sandbox can use during
-	// checkpoint and restore. `NumCPU` takes precedence if larger.
-	LifecycleNumCPU int
-	// CPUQuota and CPUPeriod are the raw host CFS settings that should be
-	// reflected by sandbox cgroupfs.
-	CPUQuota  int64
-	CPUPeriod int64
-	// TotalMem is the initial amount of total memory to report back to the
-	// container.
-	TotalMem uint64
-	// TotalHostMem is the total memory reported by host /proc/meminfo.
-	TotalHostMem uint64
-	// UserLogFD is the file descriptor to write user logs to.
-	UserLogFD int
-	// ProductName is the value to show in
-	// /sys/devices/virtual/dmi/id/product_name.
-	ProductName string
-
-	// RDMASysfs is the host sysfs snapshot for RDMA device topology, or
-	// nil when disabled.
-	RDMASysfs *rdma.Snapshot
-	// PodInitConfigFD is the file descriptor to a file passed in the
-	//	--pod-init-config flag
-	PodInitConfigFD int
-	// SinkFDs is an ordered array of file descriptors to be used by seccheck
-	// sinks configured from the --pod-init-config file.
-	SinkFDs []int
-	// ProfileOpts contains the set of profiles to enable and the
-	// corresponding FDs where profile data will be written.
-	ProfileOpts profile.Opts
-	// NvidiaDriverVersion is the NVIDIA driver ABI version to use for
-	// communicating with NVIDIA devices on the host.
-	NvidiaDriverVersion nvconf.DriverVersion
-	NvidiaHostSettings  *nvconf.HostSettings
-	// HostTHP contains host transparent hugepage settings.
-	HostTHP HostTHP
-	// SaveFDs are FDs used for user-triggered checkpoint saving.
-	SaveFDs []*fd.FD
-	// If SaveCheckpointGofer is true, Args.SaveFDs contains only one FD, which
-	// is a socket connected to a checkpoint gofer.
-	SaveCheckpointGofer bool
-	// FSRestoreFDs are FDs used for filesystem checkpoint restore. For local
-	// checkpoints, contains 4 FDs (manifest, multi-tar, pages metadata, pages)
-	// per bundle.
-	FSRestoreFDs []*fd.FD
-	// If FSRestoreCheckpointGofer is true, Args.FSRestoreFDs contains only one
-	// FD, which is a socket connected to a checkpoint gofer.
-	FSRestoreCheckpointGofer bool
-	// FSSaveFDs are FDs used for user-triggered filesystem checkpoint saving.
-	FSSaveFDs []*fd.FD
-	// If FSSaveCheckpointGofer is true, Args.FSSaveFDs contains only one FD,
-	// which is a socket connected to a checkpoint gofer.
-	FSSaveCheckpointGofer bool
-	// RootfsUpperTarFD is the file descriptor to the tar file containing the rootfs
-	// upper layer changes.
-	RootfsUpperTarFD int
-	// NoRootContainer boots without a root container; Spec then has neither
-	// Process nor Root. See Loader.noRootContainer.
-	NoRootContainer bool
 
 	// StartupTimer tracks overall sandbox startup.
 	// The `Loader` records midpoints on it as it goes through loader creation
 	// and sandbox startup. The `Loader` does not take ownership of it.
 	StartupTimer *timing.Timer
+
+	// RDMASysfs is the host sysfs snapshot for RDMA device topology, or
+	// nil when disabled.
+	RDMASysfs *rdma.Snapshot
+
+	// Device is an optional argument that is passed to the platform. The Loader
+	// takes ownership of this file and may close it at any time.
+	Device             *fd.FD
+	NvidiaHostSettings *nvconf.HostSettings
+
+	// HostTHP contains host transparent hugepage settings.
+	HostTHP HostTHP
+
+	// Id is the sandbox ID.
+	ID string
+
+	// ProfileOpts contains the set of profiles to enable and the
+	// corresponding FDs where profile data will be written.
+	ProfileOpts profile.Opts
+
+	// ProductName is the value to show in
+	// /sys/devices/virtual/dmi/id/product_name.
+	ProductName string
+
+	// SaveFDs are FDs used for user-triggered checkpoint saving.
+	SaveFDs []*fd.FD
+
+	// PassFDs are user-supplied FD mappings from host to guest descriptors.
+	// The Loader takes ownership of these FDs and may close them at any time.
+	PassFDs []sentryapi.FDMapping
+
+	// GoferFDs is an array of FDs used to connect with the Gofer. The Loader
+	// takes ownership of these FDs and may close them at any time.
+	GoferFDs []int
+
+	// StdioFDs is the stdio for the application. The Loader takes ownership of
+	// these FDs and may close them at any time.
+	StdioFDs []int
+
+	// GoferMountConfs contains information about how the gofer mounts have been
+	// configured. The first entry is for rootfs and the following entries are
+	// for bind mounts in Spec.Mounts (in the same order).
+	GoferMountConfs []specutils.GoferMountConf
+
+	// FSRestoreFDs are FDs used for filesystem checkpoint restore. For local
+	// checkpoints, contains 4 FDs (manifest, multi-tar, pages metadata, pages)
+	// per bundle.
+	FSRestoreFDs []*fd.FD
+
+	// GoferFilestoreFDs are FDs to the regular files that will back the tmpfs or
+	// overlayfs mount for certain gofer mounts.
+	GoferFilestoreFDs []int
+
+	// SinkFDs is an ordered array of file descriptors to be used by seccheck
+	// sinks configured from the --pod-init-config file.
+	SinkFDs []int
+
+	// FSSaveFDs are FDs used for user-triggered filesystem checkpoint saving.
+	FSSaveFDs []*fd.FD
+
+	// NvidiaDriverVersion is the NVIDIA driver ABI version to use for
+	// communicating with NVIDIA devices on the host.
+	NvidiaDriverVersion nvconf.DriverVersion
+
+	// ControllerFD is the FD to the URPC controller. The Loader takes ownership
+	// of this FD and may close it at any time.
+	ControllerFD int
+
+	// PinRingFD is the FD of the donated pin ring where the sentry registers
+	// its expensive-to-release files into. See `//pkg/pinring`.
+	// -1 if there is no ring.
+	PinRingFD int
+
+	// TotalMem is the initial amount of total memory to report back to the
+	// container.
+	TotalMem uint64
+
+	// CPUDMALatencyFD is an FD for /dev/cpu_dma_latency that the boot
+	// process opened to cap host CPU idle states. The Loader takes
+	// ownership of it. -1 if unset.
+	CPUDMALatencyFD int
+
+	// DevGoferFD is the FD for the dev gofer connection. The Loader takes
+	// ownership of this FD and may close it at any time.
+	DevGoferFD int
+
+	// CPUQuota and CPUPeriod are the raw host CFS settings that should be
+	// reflected by sandbox cgroupfs.
+	CPUQuota int64
+
+	// ExecFD is the host file descriptor used for program execution.
+	ExecFD int
+
+	// ProcSelfFD is a directory FD to procfs' self/fd. Required with directfs,
+	// -1 otherwise. It must stay open for the lifetime of the sandbox.
+	ProcSelfFD int
+
+	// NumCPU is the number of CPUs to create inside the sandbox.
+	NumCPU int
+
+	// TotalHostMem is the total memory reported by host /proc/meminfo.
+	TotalHostMem uint64
+	CPUPeriod    int64
+
+	// LifecycleNumCPU is the number of CPUs that the sandbox can use during
+	// checkpoint and restore. `NumCPU` takes precedence if larger.
+	LifecycleNumCPU int
+
+	// UserLogFD is the file descriptor to write user logs to.
+	UserLogFD int
+
+	// PodInitConfigFD is the file descriptor to a file passed in the
+	//	--pod-init-config flag
+	PodInitConfigFD int
+
+	// RootfsUpperTarFD is the file descriptor to the tar file containing the rootfs
+	// upper layer changes.
+	RootfsUpperTarFD int
+
+	// If SaveCheckpointGofer is true, Args.SaveFDs contains only one FD, which
+	// is a socket connected to a checkpoint gofer.
+	SaveCheckpointGofer bool
+
+	// If FSRestoreCheckpointGofer is true, Args.FSRestoreFDs contains only one
+	// FD, which is a socket connected to a checkpoint gofer.
+	FSRestoreCheckpointGofer bool
+
+	// If FSSaveCheckpointGofer is true, Args.FSSaveFDs contains only one FD,
+	// which is a socket connected to a checkpoint gofer.
+	FSSaveCheckpointGofer bool
+
+	// NoRootContainer boots without a root container; Spec then has neither
+	// Process nor Root. See Loader.noRootContainer.
+	NoRootContainer bool
 }
 
 // HostTHP holds host transparent hugepage settings.
@@ -2693,7 +2721,7 @@ func (l *Loader) portForward(opts *sentryapi.PortForwardOpts) error {
 		defer l.mu.Unlock()
 		for i := range l.portForwardProxies {
 			if l.portForwardProxies[i] == proxy {
-				l.portForwardProxies = append(l.portForwardProxies[:i], l.portForwardProxies[i+1:]...)
+				l.portForwardProxies = slices.Delete(l.portForwardProxies, i, i+1)
 				break
 			}
 		}

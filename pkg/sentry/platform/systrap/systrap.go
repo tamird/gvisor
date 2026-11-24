@@ -132,17 +132,17 @@ var (
 type platformContext struct {
 	platform.NoCPUNumbers
 
-	// signalInfo is the signal info, if and when a signal is received.
-	signalInfo linux.SignalInfo
-
-	// interrupt is the interrupt platformContext.
-	interrupt interrupt.Forwarder
-
 	// sharedContext is everything related to this platformContext that is resident in
 	// shared memory with the stub thread.
 	// sharedContext is only written on the Task goroutine, but atomic because
 	// NotifyInterrupt may read it from any goroutines.
 	sharedContext atomic.Pointer[sharedContext]
+
+	// interrupt is the interrupt platformContext.
+	interrupt interrupt.Forwarder
+
+	// signalInfo is the signal info, if and when a signal is received.
+	signalInfo linux.SignalInfo
 
 	// needRestoreFPState indicates that the FPU state has been changed by
 	// the Sentry and has to be updated on the stub thread.
@@ -277,13 +277,13 @@ func (*platformContext) PrepareExit() {}
 // Systrap represents a collection of seccomp subprocesses.
 type Systrap struct {
 	platform.NoCPUPreemptionDetection
-	platform.UseHostGlobalMemoryBarrier
 	platform.NoCPUNumbers
 
 	// memoryFile is used to create a stub sysmsg stack which is shared with
 	// the Sentry. Since memoryFile is platform-private, it is never restored,
 	// so it is safe to call memoryFile.FD() rather than memoryFile.DataFD().
 	memoryFile *pgalloc.MemoryFile
+	platform.UseHostGlobalMemoryBarrier
 }
 
 // MinUserAddress implements platform.MinUserAddress.
@@ -364,8 +364,8 @@ func New(opts platform.Options) (*Systrap, error) {
 	memBarrier := <-mbCh
 	opts.StartupTimer.Reached("host membarrier probed")
 	return &Systrap{
-		UseHostGlobalMemoryBarrier: platform.UseHostGlobalMemoryBarrier{MemBarrier: memBarrier},
-		memoryFile:                 mf,
+		MemBarrier: memBarrier,
+		memoryFile: mf,
 	}, nil
 }
 

@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build amd64
-// +build amd64
 
 package usertrap
 
@@ -447,10 +446,7 @@ func (s *State) recoverPatchesLocked(ctx context.Context, mm memoryManager) erro
 
 	cc := &usermem.IOCopyContext{Ctx: ctx, IO: mm, Opts: usermem.IOOpts{IgnorePermissions: true}}
 	var code [jmpInstLen]uint8
-	nextTrap := s.nextTrap
-	if nextTrap > trapNR {
-		nextTrap = trapNR
-	}
+	nextTrap := min(s.nextTrap, trapNR)
 
 	tableBuf := make([]uint8, nextTrap*trapSize)
 	if _, err := primitive.CopyUint8SliceIn(cc, s.tableAddr, tableBuf); err != nil {
@@ -738,12 +734,12 @@ func (s *State) HandleFault(ctx context.Context, ac *arch.Context64, mm memoryMa
 		return err
 	}
 
-	for i := 0; i < jmpInstOpcodeLen; i++ {
+	for i := range jmpInstOpcodeLen {
 		if code[i] != jmpInst[i] {
 			return nil
 		}
 	}
-	for i := 0; i < len(faultInst); i++ {
+	for i := range len(faultInst) {
 		if code[i+int(faultInstOffset)] != faultInst[i] {
 			return nil
 		}

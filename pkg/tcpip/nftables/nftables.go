@@ -175,8 +175,8 @@ func (nf *NFTables) evaluateNAT(pkt *stack.PacketBuffer, route *stack.Route, out
 // extraEvaluator is a struct that holds a priority and a function to call during
 // functions other than base chain evaluations.
 type extraEvaluator struct {
-	priority int
 	handle   func() *syserr.AnnotatedError
+	priority int
 }
 
 // getExtraEvaluators returns a list of extra evaluators beside the nft chains.
@@ -1420,7 +1420,7 @@ func (c *Chain) UnregisterRuleByIndex(index int) (*Rule, *syserr.AnnotatedError)
 	if index == -1 {
 		index = c.RuleCount() - 1
 	}
-	c.rules = append(c.rules[:index], c.rules[index+1:]...)
+	c.rules = slices.Delete(c.rules, index, index+1)
 	rule.chain = nil
 	delete(c.handleToRule, rule.handle)
 	return rule, nil

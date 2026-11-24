@@ -21,8 +21,6 @@ import (
 )
 
 type allocator struct {
-	base pagetables.RuntimeAllocator
-
 	// cpu must be set prior to any pagetable operation.
 	//
 	// Due to the way KVM's shadow paging implementation works,
@@ -30,7 +28,8 @@ type allocator struct {
 	// trapped, leading to the shadow pages being out of sync.  Therefore,
 	// we need to ensure that we are in guest mode for page table
 	// modifications. See the call to bluepill, below.
-	cpu *vCPU
+	cpu  *vCPU
+	base pagetables.RuntimeAllocator
 }
 
 // newAllocator is used to define the allocator.

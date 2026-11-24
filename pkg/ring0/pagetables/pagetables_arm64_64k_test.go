@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build arm64
-// +build arm64
 
 package pagetables
 
@@ -152,7 +151,7 @@ func TestAllocatorAlignment64K(t *testing.T) {
 	use64KPagesForTest(t)
 
 	a := NewRuntimeAllocator()
-	for i := 0; i < 16; i++ {
+	for range 16 {
 		ptes := a.NewPTEs()
 		if addr := a.PhysicalFor(ptes); addr%pteSize64K != 0 {
 			t.Fatalf("NewPTEs() = %#x, not aligned to %#x", addr, pteSize64K)

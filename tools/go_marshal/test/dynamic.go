@@ -21,8 +21,8 @@ import "gvisor.dev/gvisor/pkg/marshal/primitive"
 //
 // +marshal dynamic
 type Type12Dynamic struct {
-	X primitive.Int64
 	Y []primitive.Int64
+	X primitive.Int64
 }
 
 // SizeBytes implements marshal.Marshallable.SizeBytes.

@@ -16,11 +16,39 @@
 package sanity
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"sync"
 )
 
 func improperFormat() {
 	// This should always be caught by sanitizers.
 	fmt.Fprintf(os.Stderr, "%d\n", "hello world!")
+}
+
+func oldErrorCheck(err error) string {
+	var pathErr *os.PathError
+	if errors.As(err, &pathErr) {
+		return pathErr.Path
+	}
+	return ""
+}
+
+func lateWaitGroupAdd() {
+	var wg sync.WaitGroup
+	go func() {
+		wg.Add(1)
+		defer wg.Done()
+	}()
+	wg.Wait()
+}
+
+//go:fix inline
+func identity(s string) string {
+	return s
+}
+
+func oldCall() string {
+	return identity("value")
 }

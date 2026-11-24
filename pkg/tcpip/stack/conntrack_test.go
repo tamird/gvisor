@@ -76,11 +76,11 @@ func TestReap(t *testing.T) {
 func TestWindowScaling(t *testing.T) {
 	tcs := []struct {
 		name        string
+		dataLen     int
+		finalSeq    uint32
 		windowSize  uint16
 		synScale    uint8
 		synAckScale uint8
-		dataLen     int
-		finalSeq    uint32
 	}{
 		{
 			name:       "no scale, full overlap",
@@ -268,15 +268,15 @@ func testWindowScaling(t *testing.T, windowSize uint16, synScale, synAckScale ui
 
 type genTCPOpts struct {
 	windowSize  *uint16
-	windowScale uint8
 	seqNum      *uint32
 	ackNum      *uint32
 	flags       *header.TCPFlags
-	data        []byte
 	srcAddr     *tcpip.Address
 	dstAddr     *tcpip.Address
 	srcPort     *uint16
 	dstPort     *uint16
+	data        []byte
+	windowScale uint8
 }
 
 // genTCPPacket returns an initialized IPv4 TCP packet.

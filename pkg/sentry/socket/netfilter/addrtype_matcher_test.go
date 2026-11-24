@@ -208,9 +208,9 @@ func TestAddrTypeSourceAndInvert(t *testing.T) {
 func TestAddrTypeUnmarshal(t *testing.T) {
 	for _, test := range []struct {
 		name     string
-		netProto tcpip.NetworkProtocolNumber
-		info     linux.XTAddrtypeInfoV1
 		size     int
+		info     linux.XTAddrtypeInfoV1
+		netProto tcpip.NetworkProtocolNumber
 		wantErr  bool
 	}{
 		{name: "ipv4 LOCAL", netProto: header.IPv4ProtocolNumber, info: linux.XTAddrtypeInfoV1{Dest: linux.XT_ADDRTYPE_LOCAL}},

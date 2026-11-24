@@ -126,7 +126,7 @@ func parseMaps(stubAreaStart, stubAreaEnd, minLen uintptr) ([]mapsRegion, error)
 
 	regions := []mapsRegion{}
 	rstart := stubAreaStart
-	for _, line := range strings.Split(string(data), "\n") {
+	for line := range strings.SplitSeq(string(data), "\n") {
 		if line == "" {
 			continue
 		}
@@ -248,7 +248,7 @@ func stubInit() {
 	mapLen, _ = hostarch.PageRoundUp(mapLen + stubContextRegionLen)
 
 	// Try a few times to avoid cases when new mappings are created.
-	for i := 0; i < 32; i++ {
+	for i := range 32 {
 		if i == 0 { // fast path
 			// Randomize stubStart address.
 			randomOffset := uintptr(rand.Uint64()) * hostarch.PageSize

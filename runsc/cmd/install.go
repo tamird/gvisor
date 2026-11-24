@@ -34,14 +34,14 @@ import (
 type Install struct {
 	ConfigFile       string
 	Runtime          string
-	Experimental     bool
-	Clobber          bool
 	CgroupDriver     string
 	DownloadSidecars config.SidecarReleasePolicy
 	SidecarURL       string
 	RequireSidecars  config.SidecarReleasePolicy
 	executablePath   string
 	runtimeArgs      []string
+	Experimental     bool
+	Clobber          bool
 }
 
 // Name implements subcommands.Command.Name.

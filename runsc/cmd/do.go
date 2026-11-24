@@ -44,19 +44,18 @@ var errNoDefaultInterface = errors.New("no default interface found")
 // Do implements subcommands.Command for the "do" command. It sets up a simple
 // sandbox and executes the command inside it. See Usage() for more details.
 type Do struct {
+	// cached values for FetchSpec().
+	spec    *specs.Spec
 	root    string
 	cwd     string
 	erofs   string
 	ip      string
-	quiet   bool
-	overlay bool
+	cid     string
 	uidMap  idMapSlice
 	gidMap  idMapSlice
 	volumes volumes
-
-	// cached values for FetchSpec().
-	spec *specs.Spec
-	cid  string
+	quiet   bool
+	overlay bool
 }
 
 // Name implements subcommands.Command.Name.
@@ -99,7 +98,7 @@ func (is *idMapSlice) Get() any {
 
 // Set implements flag.Value.Set. Set(String()) should be idempotent.
 func (is *idMapSlice) Set(s string) error {
-	for _, idMap := range strings.Split(s, ",") {
+	for idMap := range strings.SplitSeq(s, ",") {
 		fs := strings.Fields(idMap)
 		if len(fs) != 3 {
 			return fmt.Errorf("invalid mapping: %s", idMap)

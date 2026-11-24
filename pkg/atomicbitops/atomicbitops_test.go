@@ -28,10 +28,10 @@ const iterations = 100
 
 func detectRaces32(val, target uint32, fn func(*Uint32, uint32)) bool {
 	runtime.GOMAXPROCS(100)
-	for n := 0; n < iterations; n++ {
+	for range iterations {
 		x := FromUint32(val)
 		var wg sync.WaitGroup
-		for i := uint32(0); i < 32; i++ {
+		for i := range uint32(32) {
 			wg.Add(1)
 			go func(a *Uint32, i uint32) {
 				defer wg.Done()
@@ -48,10 +48,10 @@ func detectRaces32(val, target uint32, fn func(*Uint32, uint32)) bool {
 
 func detectRaces64(val, target uint64, fn func(*Uint64, uint64)) bool {
 	runtime.GOMAXPROCS(100)
-	for n := 0; n < iterations; n++ {
+	for range iterations {
 		x := FromUint64(val)
 		var wg sync.WaitGroup
-		for i := uint64(0); i < 64; i++ {
+		for i := range uint64(64) {
 			wg.Add(1)
 			go func(a *Uint64, i uint64) {
 				defer wg.Done()
@@ -321,7 +321,7 @@ func TestAddFloat64(t *testing.T) {
 		// `b` and `c` are added in separate goroutines may end up at either
 		// `a + b + c` or `a + c + b`.
 		testName := fmt.Sprintf("a=%v b=%v c=%v", a, b, c)
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			fCanonical := a
 			fCanonicalReverse := a
 			fLinear := FromFloat64(a)
@@ -330,11 +330,9 @@ func TestAddFloat64(t *testing.T) {
 			fParallel2 := FromFloat64(a)
 			var wg sync.WaitGroup
 			spawn := func(f func()) {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
+				wg.Go(func() {
 					f()
-				}()
+				})
 			}
 			spawn(func() {
 				fCanonical += b
@@ -367,13 +365,13 @@ func TestAddFloat64(t *testing.T) {
 			wg.Wait()
 			for _, f := range []struct {
 				name string
-				val  float64
 				want []float64
+				val  float64
 			}{
-				{"linear", fLinear.Load(), []float64{fCanonical}},
-				{"linear reverse", fLinearReverse.Load(), []float64{fCanonicalReverse}},
-				{"parallel 1", fParallel1.Load(), []float64{fCanonical, fCanonicalReverse}},
-				{"parallel 2", fParallel2.Load(), []float64{fCanonical, fCanonicalReverse}},
+				{name: "linear", val: fLinear.Load(), want: []float64{fCanonical}},
+				{name: "linear reverse", val: fLinearReverse.Load(), want: []float64{fCanonicalReverse}},
+				{name: "parallel 1", val: fParallel1.Load(), want: []float64{fCanonical, fCanonicalReverse}},
+				{name: "parallel 2", val: fParallel2.Load(), want: []float64{fCanonical, fCanonicalReverse}},
 			} {
 				found := false
 				for _, want := range f.want {

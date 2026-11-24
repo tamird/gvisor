@@ -29,15 +29,14 @@ import (
 // The canonical way of using it is to pass the Forwarder.HandlePacket function
 // to stack.SetTransportProtocolHandler.
 type Forwarder struct {
-	stack *stack.Stack
+	stack   *stack.Stack
+	handler func(*ForwarderRequest)
 
-	maxInFlight int
-	handler     func(*ForwarderRequest)
-
-	mu forwarderMutex
 	// +checklocks:mu
-	inFlight map[stack.TransportEndpointID]struct{}
-	listen   *listenContext
+	inFlight    map[stack.TransportEndpointID]struct{}
+	listen      *listenContext
+	maxInFlight int
+	mu          forwarderMutex
 }
 
 // NewForwarder allocates and initializes a new forwarder with the given
@@ -110,11 +109,11 @@ func (f *Forwarder) HandlePacket(id stack.TransportEndpointID, pkt *stack.Packet
 // Complete releases the SYN packet. Calls to ID and
 // ForwardedPacketExperimentOption must finish before Complete begins.
 type ForwarderRequest struct {
-	mu forwarderRequestMutex
 	// +checklocks:mu
 	forwarder  *Forwarder
 	segment    *segment
 	synOptions header.TCPSynOptions
+	mu         forwarderRequestMutex
 }
 
 // ID returns the 4-tuple (src address, src port, dst address, dst port) that

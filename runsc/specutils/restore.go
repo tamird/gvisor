@@ -179,10 +179,8 @@ func shouldValidateAnnotation(key string) bool {
 	// Flag annotations controlling debug logging can change. They don't impact
 	// the restorability of the snapshot.
 	if strings.HasPrefix(key, annotationFlagPrefix) {
-		for _, allowed := range allowedRestoreFlagAnnotations {
-			if key == allowed {
-				return false
-			}
+		if slices.Contains(allowedRestoreFlagAnnotations, key) {
+			return false
 		}
 	}
 	return true
@@ -209,7 +207,7 @@ func stripMountOptionsSize(opts string) string {
 		return ""
 	}
 	var kept []string
-	for _, opt := range strings.Split(opts, ",") {
+	for opt := range strings.SplitSeq(opts, ",") {
 		if opt == "" || strings.HasPrefix(opt, "size=") {
 			continue
 		}
@@ -267,7 +265,7 @@ func validateArray[T any](field, cName string, oldArr, newArr []T) error {
 	}
 	oldMap := make(map[any]struct{})
 	newMap := make(map[any]struct{})
-	for i := 0; i < len(oldArr); i++ {
+	for i := range len(oldArr) {
 		key := oldArr[i]
 		if _, ok := oldMap[key]; ok {
 			return validateErrorWithMsg(field, cName, oldArr, newArr, "duplicate value")

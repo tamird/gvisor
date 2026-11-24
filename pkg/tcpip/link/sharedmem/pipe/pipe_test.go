@@ -471,11 +471,9 @@ func TestConcurrentReaderWriter(t *testing.T) {
 	const count = 1000000
 	var wg sync.WaitGroup
 	defer wg.Wait()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		runtime.Gosched()
-		for i := 0; i < count; i++ {
+		for range count {
 			n := 1 + tr.Intn(80)
 			wb := tx.Push(uint64(n))
 			for wb == nil {
@@ -488,9 +486,9 @@ func TestConcurrentReaderWriter(t *testing.T) {
 
 			tx.Flush()
 		}
-	}()
+	})
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		n := 1 + rr.Intn(80)
 		rb := rx.Pull()
 		for rb == nil {

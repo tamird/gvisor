@@ -15,6 +15,8 @@
 package mm
 
 import (
+	"slices"
+
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/hostarch"
 	"gvisor.dev/gvisor/pkg/sentry/arch"
@@ -149,7 +151,7 @@ func (mm *MemoryManager) SetEnvvEnd(a hostarch.Addr) {
 func (mm *MemoryManager) Auxv() arch.Auxv {
 	mm.metadataMu.Lock()
 	defer mm.metadataMu.Unlock()
-	return append(arch.Auxv(nil), mm.auxv...)
+	return slices.Concat[arch.Auxv](mm.auxv)
 }
 
 // SetAuxv sets the entire map of auxiliary vectors.
@@ -158,7 +160,7 @@ func (mm *MemoryManager) Auxv() arch.Auxv {
 func (mm *MemoryManager) SetAuxv(auxv arch.Auxv) {
 	mm.metadataMu.Lock()
 	defer mm.metadataMu.Unlock()
-	mm.auxv = append(arch.Auxv(nil), auxv...)
+	mm.auxv = slices.Concat[arch.Auxv](auxv)
 }
 
 // Executable returns the executable, if available.

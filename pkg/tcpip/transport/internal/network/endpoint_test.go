@@ -66,16 +66,16 @@ func TestEndpointStateTransitions(t *testing.T) {
 	}
 
 	tests := []struct {
+		checker                 func(*testing.T, *buffer.View)
 		name                    string
-		netProto                tcpip.NetworkProtocolNumber
-		expectedMaxHeaderLength uint16
-		expectedNetProto        tcpip.NetworkProtocolNumber
 		expectedLocalAddr       tcpip.Address
 		bindAddr                tcpip.Address
 		expectedBoundAddr       tcpip.Address
 		remoteAddr              tcpip.Address
 		expectedRemoteAddr      tcpip.Address
-		checker                 func(*testing.T, *buffer.View)
+		netProto                tcpip.NetworkProtocolNumber
+		expectedNetProto        tcpip.NetworkProtocolNumber
+		expectedMaxHeaderLength uint16
 		resume                  bool
 	}{
 		{
@@ -263,8 +263,8 @@ func TestBindNICID(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		netProto tcpip.NetworkProtocolNumber
 		bindAddr tcpip.Address
+		netProto tcpip.NetworkProtocolNumber
 		unicast  bool
 	}{
 		{

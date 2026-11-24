@@ -43,10 +43,11 @@ type Server struct {
 
 // Message corresponds to a single message sent from sinks.Remote.
 type Message struct {
-	// MsgType indicates what is the type of Msg.
-	MsgType pb.MessageType
 	// Msg is the payload to the message that can be decoded using MsgType.
 	Msg []byte
+
+	// MsgType indicates what is the type of Msg.
+	MsgType pb.MessageType
 }
 
 // NewServer creates a new server that listens to a UDS that it creates under

@@ -294,12 +294,12 @@ func (fd *regularFileFD) writeCache(ctx context.Context, d *dentry, offset int64
 	if !ok {
 		return linuxerr.EINVAL
 	}
-	mr := memmap.MappableRange{pgstart, pgend}
+	mr := memmap.MappableRange{Start: pgstart, End: pgend}
 	var freed []memmap.FileRange
 
 	d.inode.dataMu.Lock()
 	d.inode.cache.RemoveRangeWith(mr, func(cseg fsutil.FileRangeIterator) {
-		freed = append(freed, memmap.FileRange{cseg.Value(), cseg.Value() + cseg.Range().Length()})
+		freed = append(freed, memmap.FileRange{Start: cseg.Value(), End: cseg.Value() + cseg.Range().Length()})
 	})
 	d.inode.dataMu.Unlock()
 
@@ -399,7 +399,7 @@ func (rw *dentryReadWriter) ReadToBlocks(dsts safemem.BlockSeq) (uint64, error) 
 	var done uint64
 	seg, gap := rw.d.inode.cache.Find(rw.off)
 	for rw.off < end {
-		mr := memmap.MappableRange{rw.off, end}
+		mr := memmap.MappableRange{Start: rw.off, End: end}
 		switch {
 		case seg.Ok():
 			// Get internal mappings from the cache.
@@ -512,7 +512,7 @@ func (rw *dentryReadWriter) WriteFromBlocks(srcs safemem.BlockSeq) (uint64, erro
 	)
 	seg, gap := rw.d.inode.cache.Find(rw.off)
 	for rw.off < end {
-		mr := memmap.MappableRange{rw.off, end}
+		mr := memmap.MappableRange{Start: rw.off, End: end}
 		switch {
 		case seg.Ok():
 			// Get internal mappings from the cache.
@@ -770,7 +770,7 @@ func (d *dentry) Translate(ctx context.Context, required, optional memmap.Mappab
 	var beyondEOF bool
 	if required.End > pgend {
 		if required.Start >= pgend {
-			return nil, &memmap.BusError{io.EOF}
+			return nil, &memmap.BusError{Err: io.EOF}
 		}
 		beyondEOF = true
 		required.End = pgend
@@ -812,10 +812,10 @@ func (d *dentry) Translate(ctx context.Context, required, optional memmap.Mappab
 	// Don't return the error returned by c.cache.Fill if it occurred outside
 	// of required.
 	if translatedEnd < required.End && cerr != nil {
-		return ts, &memmap.BusError{cerr}
+		return ts, &memmap.BusError{Err: cerr}
 	}
 	if beyondEOF {
-		return ts, &memmap.BusError{io.EOF}
+		return ts, &memmap.BusError{Err: io.EOF}
 	}
 	return ts, nil
 }
@@ -868,7 +868,7 @@ func (d *dentry) InvalidateUnsavable(ctx context.Context) error {
 
 // Evict implements pgalloc.EvictableMemoryUser.Evict.
 func (i *inode) Evict(ctx context.Context, er pgalloc.EvictableRange) {
-	mr := memmap.MappableRange{er.Start, er.End}
+	mr := memmap.MappableRange{Start: er.Start, End: er.End}
 	mf := i.fs.mf
 	i.mapsMu.Lock()
 	defer i.mapsMu.Unlock()

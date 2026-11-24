@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build amd64
-// +build amd64
 
 package sigframe
 
@@ -65,7 +64,7 @@ func BenchmarkUserSigHandler(b *testing.B) {
 		Size: hostarch.PageSize * 4,
 	}
 	set := linux.MakeSignalSet(linux.SIGURG)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		if errno := CallWithSignalFrame(&stack, addrOfUserHandler(), &set, 0); errno != 0 {
 			b.Fatalf("CallWithSignalFrame failed: %v", errno)
 		}
