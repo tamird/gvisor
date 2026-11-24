@@ -230,7 +230,8 @@ func init() {
 			"newexpr",
 			"minmax",
 			"stringsbuilder",
-			"rangeint":
+			"rangeint",
+			"stditerators":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}

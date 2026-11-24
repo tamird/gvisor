@@ -413,8 +413,8 @@ func hasPointers(typ reflect.Type) bool {
 		if typ == timeType {
 			return false
 		}
-		for i := 0; i < typ.NumField(); i++ {
-			if f := typ.Field(i); savedField(f) && hasPointers(f.Type) {
+		for f := range typ.Fields() {
+			if savedField(f) && hasPointers(f.Type) {
 				return true
 			}
 		}

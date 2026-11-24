@@ -166,8 +166,8 @@ func decodePodKeepZero(t reflect.Type, p unsafe.Pointer, b []byte) {
 		if isZero(b) {
 			return
 		}
-		for i := 0; i < t.NumField(); i++ {
-			if f := t.Field(i); f.Name != "_" && f.Type.Size() != 0 {
+		for f := range t.Fields() {
+			if f.Name != "_" && f.Type.Size() != 0 {
 				decodePodKeepZero(f.Type, add(p, f.Offset), b[f.Offset:f.Offset+f.Type.Size()])
 			}
 		}

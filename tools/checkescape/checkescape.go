@@ -970,15 +970,15 @@ func allTypes(typ types.Type, property func(types.Type) bool) bool {
 	}
 	switch typ := typ.Underlying().(type) {
 	case *types.Union:
-		for i := 0; i < typ.Len(); i++ {
-			if !allTypes(typ.Term(i).Type(), property) {
+		for term := range typ.Terms() {
+			if !allTypes(term.Type(), property) {
 				return false
 			}
 		}
 		return true
 	case *types.Interface:
-		for i := 0; i < typ.NumEmbeddeds(); i++ {
-			if allTypes(typ.EmbeddedType(i), property) {
+		for embedded := range typ.EmbeddedTypes() {
+			if allTypes(embedded, property) {
 				return true
 			}
 		}

@@ -483,8 +483,8 @@ func (pc *passContext) checkGuards(inst almostInst, value, from ssa.Value, acces
 			if !ok {
 				continue
 			}
-			for i := 0; i < structType.NumFields(); i++ {
-				if fieldObj := structType.Field(i); fieldObj == info.object {
+			for fieldObj := range structType.Fields() {
+				if fieldObj == info.object {
 					// Add to the maybe list.
 					oo.counts[info.object]++
 				}
