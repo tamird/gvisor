@@ -300,8 +300,7 @@ func runInOwnNetNS() bool {
 	cmd.Env = append(os.Environ(), ownNetNSEnv+"=1")
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 	err := cmd.Run()
-	var exit *exec.ExitError
-	if errors.As(err, &exit) {
+	if exit, ok := errors.AsType[*exec.ExitError](err); ok {
 		if code := exit.ExitCode(); code >= 0 {
 			os.Exit(code)
 		}

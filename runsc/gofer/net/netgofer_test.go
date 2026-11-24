@@ -856,8 +856,7 @@ func TestProxyRejectsDisallowedDestinations(t *testing.T) {
 				_ = conn.Close()
 				t.Fatalf("DialContextTCP(%s) succeeded, want rejection", tc.addr)
 			}
-			var opErr *net.OpError
-			if !errors.As(err, &opErr) || opErr.Err.Error() != (&tcpip.ErrConnectionRefused{}).String() {
+			if opErr, ok := errors.AsType[*net.OpError](err); !ok || opErr.Err.Error() != (&tcpip.ErrConnectionRefused{}).String() {
 				t.Fatalf("DialContextTCP(%s) = %v, want connection refused by netgofer", tc.addr, err)
 			}
 		})

@@ -321,11 +321,9 @@ func TestControlTimeout(t *testing.T) {
 		t.Fatal("expected timeout error")
 	}
 
-	var te *tpucontrol.TimeoutError
-	if !errors.As(results[0].Err, &te) {
+	if _, ok := errors.AsType[*tpucontrol.TimeoutError](results[0].Err); !ok {
 		// Pipe deadlines may surface as a ProtocolError on some kernels.
-		var pe *tpucontrol.ProtocolError
-		if !errors.As(results[0].Err, &pe) {
+		if _, ok := errors.AsType[*tpucontrol.ProtocolError](results[0].Err); !ok {
 			t.Fatalf("expected TimeoutError or ProtocolError, got %T: %v", results[0].Err, results[0].Err)
 		}
 	}
@@ -355,8 +353,7 @@ func TestControlPipeClosed(t *testing.T) {
 		t.Fatal("expected error for closed pipe")
 	}
 
-	var pe *tpucontrol.ProtocolError
-	if !errors.As(results[0].Err, &pe) {
+	if _, ok := errors.AsType[*tpucontrol.ProtocolError](results[0].Err); !ok {
 		t.Fatalf("expected ProtocolError, got %T: %v", results[0].Err, results[0].Err)
 	}
 }
@@ -387,8 +384,7 @@ func TestControlCorruptedResponse(t *testing.T) {
 		t.Fatal("expected error for corrupted response")
 	}
 
-	var pe *tpucontrol.ProtocolError
-	if !errors.As(results[0].Err, &pe) {
+	if _, ok := errors.AsType[*tpucontrol.ProtocolError](results[0].Err); !ok {
 		t.Fatalf("expected ProtocolError, got %T: %v", results[0].Err, results[0].Err)
 	}
 }
@@ -437,8 +433,7 @@ func TestControlAllFirstFails(t *testing.T) {
 		t.Fatal("expected error when first thread fails")
 	}
 
-	var cfe *tpucontrol.ControlFailedError
-	if !errors.As(results[0].Err, &cfe) {
+	if _, ok := errors.AsType[*tpucontrol.ControlFailedError](results[0].Err); !ok {
 		t.Fatalf("expected ControlFailedError, got %T: %v", results[0].Err, results[0].Err)
 	}
 }
@@ -516,8 +511,7 @@ func TestCheckpointMultiplePIDsPartialFailure(t *testing.T) {
 	if results[1].Err == nil {
 		t.Error("pid 42: expected error")
 	}
-	var cfe *tpucontrol.ControlFailedError
-	if !errors.As(results[1].Err, &cfe) {
+	if _, ok := errors.AsType[*tpucontrol.ControlFailedError](results[1].Err); !ok {
 		t.Fatalf("expected ControlFailedError, got %T: %v", results[1].Err, results[1].Err)
 	}
 }
@@ -533,8 +527,7 @@ func TestCheckProcessExists(t *testing.T) {
 	if err == nil {
 		t.Error("expected error for non-existent PID")
 	}
-	var de *tpucontrol.DiscoveryError
-	if !errors.As(err, &de) {
+	if _, ok := errors.AsType[*tpucontrol.DiscoveryError](err); !ok {
 		t.Fatalf("expected DiscoveryError, got %T", err)
 	}
 

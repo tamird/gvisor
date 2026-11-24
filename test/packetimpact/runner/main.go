@@ -195,8 +195,7 @@ func main() {
 		case expectFailure:
 			log.Fatalf("the test is expected to fail, but it succeeded")
 		case err != nil:
-			var exitStatus *exec.ExitError
-			if errors.As(err, &exitStatus) {
+			if exitStatus, ok := errors.AsType[*exec.ExitError](err); ok {
 				os.Exit(exitStatus.ExitCode())
 			}
 			log.Fatalf("unknown error when executing test: %s", err)

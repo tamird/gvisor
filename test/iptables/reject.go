@@ -69,8 +69,7 @@ func (*FilterInputRejectDefault) LocalAction(ctx context.Context, ip net.IP, ipv
 		conn.Close()
 		return fmt.Errorf("expected connection to %s to fail", addr)
 	}
-	var netErr net.Error
-	if errors.As(err, &netErr) && netErr.Timeout() {
+	if netErr, ok := errors.AsType[net.Error](err); ok && netErr.Timeout() {
 		return fmt.Errorf("connection timed out (dropped) instead of being rejected: %w", err)
 	}
 	if ctx.Err() != nil {
@@ -146,8 +145,7 @@ func (*FilterInputRejectTCPReset) LocalAction(ctx context.Context, ip net.IP, ip
 		conn.Close()
 		return fmt.Errorf("expected connection to %s to fail", addr)
 	}
-	var netErr net.Error
-	if errors.As(err, &netErr) && netErr.Timeout() {
+	if netErr, ok := errors.AsType[net.Error](err); ok && netErr.Timeout() {
 		return fmt.Errorf("connection timed out (dropped) instead of being rejected with tcp-reset: %w", err)
 	}
 	if ctx.Err() != nil {

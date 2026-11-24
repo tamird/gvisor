@@ -176,7 +176,7 @@ func assertTruncated(t *testing.T, name string, fn func()) {
 	if err == nil {
 		t.Fatalf("%s succeeded, want errTruncated", name)
 	}
-	if !errors.As(err, new(errTruncated)) {
+	if _, ok := errors.AsType[errTruncated](err); !ok {
 		t.Fatalf("%s failed with %v, want errTruncated", name, err)
 	}
 }
@@ -187,7 +187,7 @@ func assertStateFail(t *testing.T, name string, fn func()) {
 	if err == nil {
 		t.Fatalf("%s succeeded, want failure", name)
 	}
-	if errors.As(err, new(errTruncated)) {
+	if _, ok := errors.AsType[errTruncated](err); ok {
 		t.Fatalf("%s failed with errTruncated (%v), want Failf error", name, err)
 	}
 }

@@ -206,7 +206,8 @@ func init() {
 	for _, a := range modernize.Suite {
 		switch a.Name {
 		case "any",
-			"plusbuild":
+			"plusbuild",
+			"errorsastype":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}

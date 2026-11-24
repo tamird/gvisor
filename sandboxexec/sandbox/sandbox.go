@@ -761,8 +761,8 @@ func (s *Sandbox) Exec(ctx context.Context, argv []string, opts ...ExecOption) (
 	err := cmd.Wait()
 	res.Stdout, res.Stderr = stdout.String(), stderr.String()
 	if err != nil {
-		var exitErr *exec.ExitError
-		if !errors.As(err, &exitErr) {
+		exitErr, ok := errors.AsType[*exec.ExitError](err)
+		if !ok {
 			return nil, fmt.Errorf("failed to run command in sandbox: %v", err)
 		}
 		if ws, ok := exitErr.Sys().(syscall.WaitStatus); ok && ws.Signaled() {

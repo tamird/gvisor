@@ -5,3 +5,5 @@ groups:
 analyzers:
   printf:
     all: # Enabled.
+  errorsastype:
+    all: # Enabled.

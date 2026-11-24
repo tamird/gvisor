@@ -221,8 +221,7 @@ func ioErrnoFromError(err error, errKind string) int32 {
 	if err == io.EOF || err == io.ErrUnexpectedEOF {
 		return -1
 	}
-	var errno unix.Errno
-	if errors.As(err, &errno) {
+	if errno, ok := errors.AsType[unix.Errno](err); ok {
 		return int32(errno)
 	}
 	log.Infof("Returning EIO for %s error: %v", errKind, err)

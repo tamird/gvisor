@@ -16,6 +16,7 @@
 package sanity
 
 import (
+	"errors"
 	"fmt"
 	"os"
 )
@@ -24,3 +25,12 @@ func improperFormat() {
 	// This should always be caught by sanitizers.
 	fmt.Fprintf(os.Stderr, "%d\n", "hello world!")
 }
+
+func oldErrorCheck(err error) string {
+	var pathErr *os.PathError
+	if errors.As(err, &pathErr) {
+		return pathErr.Path
+	}
+	return ""
+}
+

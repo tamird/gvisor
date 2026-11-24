@@ -709,9 +709,9 @@ func (c *Container) startLocked(conf *config.Config, action string, startRoot fu
 		}
 		// Errors reported by the sandbox mean that it was up at *some* point,
 		// even if it exited since.
-		var remoteErr urpc.RemoteError
+		_, isRemote := errors.AsType[urpc.RemoteError](err)
 		switch {
-		case errors.As(err, &remoteErr):
+		case isRemote:
 			// Treat container as stopped.
 			if specutils.IsRootContainer(c.Spec) {
 				if state, stateErr := c.Sandbox.ContainerRuntimeState(c.ID); stateErr == nil && state == sentryapi.RuntimeStateStopped {
