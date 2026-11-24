@@ -3299,7 +3299,7 @@ func (s *Sandbox) fixPidns(spec *specs.Spec) {
 			// Removing the namespace makes the container join the sandbox root
 			// namespace.
 			log.Infof("Fixing PID namespace in spec from %q to make the container join the sandbox root namespace", pidns.Path)
-			spec.Linux.Namespaces = append(spec.Linux.Namespaces[:i], spec.Linux.Namespaces[i+1:]...)
+			spec.Linux.Namespaces = slices.Delete(spec.Linux.Namespaces, i, i+1)
 			return
 		}
 	}

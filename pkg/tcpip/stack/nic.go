@@ -152,7 +152,7 @@ func (p *packetEndpointList) remove(ep PacketEndpoint) {
 	defer p.mu.Unlock()
 	for i, epOther := range p.eps {
 		if epOther == ep {
-			p.eps = append(p.eps[:i], p.eps[i+1:]...)
+			p.eps = slices.Delete(p.eps, i, i+1)
 			break
 		}
 	}

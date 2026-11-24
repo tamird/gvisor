@@ -16,6 +16,7 @@ package stack
 
 import (
 	"fmt"
+	"slices"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
@@ -141,11 +142,9 @@ func (a *AddressableEndpointState) releaseAddressState(addrState *addressState) 
 //
 // +checklocks:a.mu
 func (a *AddressableEndpointState) releaseAddressStateLocked(addrState *addressState) {
-	oldPrimary := a.primary
 	for i, s := range a.primary {
 		if s == addrState {
-			a.primary = append(a.primary[:i], a.primary[i+1:]...)
-			oldPrimary[len(oldPrimary)-1] = nil
+			a.primary = slices.Delete(a.primary, i, i+1)
 			break
 		}
 	}
@@ -251,10 +250,10 @@ func (a *AddressableEndpointState) addAndAcquireAddressLocked(addr tcpip.Address
 						// The address is already first in the primary address list.
 						attemptAddToPrimary = false
 					} else {
-						a.primary = append(a.primary[:i], a.primary[i+1:]...)
+						a.primary = slices.Delete(a.primary, i, i+1)
 					}
 				case NeverPrimaryEndpoint:
-					a.primary = append(a.primary[:i], a.primary[i+1:]...)
+					a.primary = slices.Delete(a.primary, i, i+1)
 				default:
 					panic(fmt.Sprintf("unrecognized primary endpoint behaviour = %d", properties.PEB))
 				}

@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 
 	"golang.org/x/sys/unix"
 	"google.golang.org/protobuf/proto"
@@ -212,7 +213,7 @@ func (s *CommonServer) closeClient(client client) {
 	s.cond.L.Lock()
 	for i, c := range s.clients {
 		if c == client {
-			s.clients = append(s.clients[:i], s.clients[i+1:]...)
+			s.clients = slices.Delete(s.clients, i, i+1)
 			break
 		}
 	}

@@ -1420,7 +1420,7 @@ func (c *Chain) UnregisterRuleByIndex(index int) (*Rule, *syserr.AnnotatedError)
 	if index == -1 {
 		index = c.RuleCount() - 1
 	}
-	c.rules = append(c.rules[:index], c.rules[index+1:]...)
+	c.rules = slices.Delete(c.rules, index, index+1)
 	rule.chain = nil
 	delete(c.handleToRule, rule.handle)
 	return rule, nil

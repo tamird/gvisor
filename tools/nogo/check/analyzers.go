@@ -216,6 +216,7 @@ func init() {
 	register(allAnalyzers, &plainAnalyzer{modernize.AppendClippedAnalyzer})
 	register(allAnalyzers, &plainAnalyzer{modernize.BLoopAnalyzer})
 	register(allAnalyzers, &plainAnalyzer{modernize.FmtAppendfAnalyzer})
+	register(allAnalyzers, &plainAnalyzer{modernize.SlicesDeleteAnalyzer})
 	for _, a := range modernize.Suite {
 		switch a.Name {
 		case "any",
