@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T18:11:40.232007+00:00",
+    "updatedAt": "2026-11-24T18:50:04.549616+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -26973,14 +26973,14 @@
       "url": "https://github.com/google/gvisor/pull/16098",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-20T14:38:15.867463+00:00",
-      "summary": "The current published head is d692a4fb4, native MERGEABLE/CHANGES_REQUESTED. Tamir posted the README-thread response “Fixed” and requested kerumeto again. These are delivered user actions; no new external review or source equivalence is inferred. Exact-head FirstPass2660 failed before agent assignment/start: structured upload metadata explicitly reports author1535036 rolling30-day360000 compute-minute quota. No source build/test ran, and prior qualification remains bound to its recorded sources.",
+      "updatedAt": "2026-11-24T18:50:04.549616+00:00",
+      "summary": "Exact-head kerumeto approval6045055527 covers d692a4fb4. Native validation and DCO are green; FirstPass2697 and main55830 are pending. The provider aggregate remains REVIEW_REQUIRED, so no overall approval or merge-readiness is inferred.",
       "followup": {
         "owner": "root",
         "sourceHead": "d692a4fb41acd4deb5f3b051ac06bd4145d888f3",
-        "observedAt": "2026-11-24T15:57:41.885925+00:00",
-        "disposition": "The current published head is d692a4fb4, native MERGEABLE/CHANGES_REQUESTED. Tamir posted the README-thread response “Fixed” and requested kerumeto again. These are delivered user actions; no new external review or source equivalence is inferred. Exact-head FirstPass2660 failed before agent assignment/start: structured upload metadata explicitly reports author1535036 rolling30-day360000 compute-minute quota. No source build/test ran, and prior qualification remains bound to its recorded sources.",
-        "nextAction": "Root follows the requested current-head re-review, genuine maintainer feedback and actual admitted CI. Do not repeat the posted response or reviewer request, transfer old-head qualification, retry unchanged CI or infer merge authority.",
+        "observedAt": "2026-11-24T18:50:04.549616+00:00",
+        "disposition": "Exact-head kerumeto approval6045055527 covers d692a4fb4. Native validation and DCO are green; FirstPass2697 and main55830 are pending. The provider aggregate remains REVIEW_REQUIRED, so no overall approval or merge-readiness is inferred.",
+        "nextAction": "Root follows current-head maintainer review and actual provider check/admission events through the existing normal sweep. No duplicate outreach, unchanged retry or merge is authorized.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16098",
           "https://github.com/tamird/gvisor/commit/66eb27741",
@@ -27003,10 +27003,13 @@
           "https://github.com/google/gvisor/pull/16098#discussion_r4670059974",
           "https://buildkite.com/gvisor/first-pass/builds/2489#01a209f7-6da1-4c8f-8d37-4feaa9c83475",
           "https://github.com/gvisor/gvisor/pull/16098#discussion_r4682395386",
-          "https://buildkite.com/gvisor/first-pass/builds/2660#01a20e30-708a-43a9-a738-19533dffa906"
+          "https://buildkite.com/gvisor/first-pass/builds/2660#01a20e30-708a-43a9-a738-19533dffa906",
+          "https://github.com/google/gvisor/pull/16098#pullrequestreview-6045055527",
+          "https://buildkite.com/gvisor/first-pass/builds/2697",
+          "https://buildkite.com/gvisor/pipeline/builds/55830"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Actual current-head review/check/admission or source/base/landing event.",
+        "recheckCondition": "Actual review/check/head event or next normal sweep.",
         "preparedRevision": {
           "head": "f09702e855ccb3a0da8708479b3563d56da82768",
           "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
@@ -27799,7 +27802,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Agent"
       },
-      "nextStep": "Root follows the requested current-head re-review, genuine maintainer feedback and actual admitted CI. Do not repeat the posted response or reviewer request, transfer old-head qualification, retry unchanged CI or infer merge authority.",
+      "nextStep": "Root follows current-head maintainer review and actual provider check/admission events through the existing normal sweep. No duplicate outreach, unchanged retry or merge is authorized.",
       "recheckCondition": "New substantive feedback/source change or actual internal validation/importer evidence."
     },
     {
@@ -99928,13 +99931,13 @@
       "repo": "google/gvisor",
       "number": 17484,
       "ref": "review/pty-packet-read-boundary",
-      "head": "f6fa027fbfaa28e930d3a288c3a78e9d35b53738",
+      "head": "57eccb8495c241c967d9b1522a9e41263225e36b",
       "title": "Check the PTY packet header with one payload byte",
       "url": "https://github.com/google/gvisor/pull/17484",
       "group": "tests",
-      "status": "open",
-      "updatedAt": "2026-11-24T06:27:10.701611+00:00",
-      "summary": "Unchanged published source f6fa027fb has a new exact-head relkochta approval6043441812 and native APPROVED/MERGEABLE status. Replacement main55820 is pending. The earlier terminal Mac fetch/lock/cancellation chain remains historical with its missing agent-data limits; it is not the outcome of this replacement run.",
+      "status": "merged",
+      "updatedAt": "2026-11-24T18:50:04.549616+00:00",
+      "summary": "Native #17484 is merged at 18:38:05 UTC as e8b720ea6, from maintainer-updated head57eccb849. Current native validation, FirstPass2689 and main55825 passed. The upstream PR wait is fulfilled. Prior f6fa qualification remains source-bound until the existing owner completes the exact landing/alias/dependency comparison.",
       "evidence": [
         {
           "label": "Published single-commit revision",
@@ -99946,12 +99949,12 @@
         }
       ],
       "followup": {
-        "sourceHead": "f6fa027fbfaa28e930d3a288c3a78e9d35b53738",
-        "owner": "root",
-        "nextAction": "Root follows the replacement main55820 terminal state and actual maintainer/landing events on the normal sweep. No additional watcher, unchanged retry, duplicate review request or merge action is authorized.",
+        "sourceHead": "57eccb8495c241c967d9b1522a9e41263225e36b",
+        "owner": "approved_rebase_queue / root",
+        "nextAction": "approved_rebase_queue / root verifies the exact delivered-source correspondence and existing dependent obligations; retain old Mac setup/cancellation evidence as historical. No retry, source amendment, merge command or outreach follows.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-24T17:06:51.520893+00:00",
-        "recheckCondition": "Actual replacement-run terminal result, new reviewer/landing or source/base event.",
+        "observedAt": "2026-11-24T18:50:04.549616+00:00",
+        "recheckCondition": "Owner returns exact landing/alias/dependency proof or an actual discrepancy.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17484",
           "https://github.com/tamird/gvisor/commit/8a64c10e33211d4e255aa6ad43d8131f344558d4",
@@ -99969,7 +99972,10 @@
           "https://buildkite.com/gvisor/pipeline/builds/55752",
           "https://github.com/tamird/gvisor/commit/f8500dffed4bace8841b900232beb6fd19740cd7",
           "https://github.com/gvisor/gvisor/pull/17484#pullrequestreview-6043441812",
-          "https://buildkite.com/gvisor/pipeline/builds/55820"
+          "https://buildkite.com/gvisor/pipeline/builds/55820",
+          "https://github.com/google/gvisor/pull/17484",
+          "https://github.com/google/gvisor/commit/e8b720ea6d7ec662c22d573554d200f6af49d0c4",
+          "https://buildkite.com/gvisor/pipeline/builds/55825"
         ],
         "attentionDispositions": [
           {
@@ -99994,8 +100000,8 @@
             }
           }
         ],
-        "providerHead": "f6fa027fbfaa28e930d3a288c3a78e9d35b53738",
-        "disposition": "Unchanged published source f6fa027fb has a new exact-head relkochta approval6043441812 and native APPROVED/MERGEABLE status. Replacement main55820 is pending. The earlier terminal Mac fetch/lock/cancellation chain remains historical with its missing agent-data limits; it is not the outcome of this replacement run."
+        "providerHead": "57eccb8495c241c967d9b1522a9e41263225e36b",
+        "disposition": "Native #17484 is merged at 18:38:05 UTC as e8b720ea6, from maintainer-updated head57eccb849. Current native validation, FirstPass2689 and main55825 passed. The upstream PR wait is fulfilled. Prior f6fa qualification remains source-bound until the existing owner completes the exact landing/alias/dependency comparison."
       },
       "dcoAmendment": {
         "oldHead": "8a64c10e33211d4e255aa6ad43d8131f344558d4",
@@ -100019,7 +100025,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Root follows the replacement main55820 terminal state and actual maintainer/landing events on the normal sweep. No additional watcher, unchanged retry, duplicate review request or merge action is authorized.",
+      "nextStep": "approved_rebase_queue / root verifies the exact delivered-source correspondence and existing dependent obligations; retain old Mac setup/cancellation evidence as historical. No retry, source amendment, merge command or outreach follows.",
       "recheckCondition": "Actual Go-export delivery, agent progress/cancellation/lock evidence, replacement run or substantive source/review/import event."
     },
     {
@@ -106917,21 +106923,21 @@
       "url": "https://github.com/google/gvisor/pull/17920",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-24T17:54:21.639001+00:00",
+      "updatedAt": "2026-11-24T18:50:04.549616+00:00",
       "evidence": [
         {
           "label": "Published source proposal",
           "url": "https://github.com/tamird/gvisor/commit/ac0439e2b8f91f764841ff02fd3b511c1842a276"
         }
       ],
-      "summary": "Published #17920 at ac0439e2b after the actual source approval. Native publication readback verified OPEN/MERGEABLE, DCO success and auto-merge off; other GitHub validation was pending at that observation. FirstPass 2684 stopped before an agent or source execution: author 1535036 exhausted the rolling 30-day 360,000 compute-minute quota. Prior source qualification retains its original scope; this run executed no tests.",
-      "nextStep": "Root follows current-head native validation, maintainer review and actual provider admission through the normal canonical sweep. No unchanged CI retry, quota outreach or merge is authorized.",
+      "summary": "Published #17920 remains OPEN/MERGEABLE at ac0439e2b. Native validation and DCO are green; existing maintainer requests are pending. FirstPass2684 retains the verified pre-agent rolling30-day360,000 compute-minute quota; no tests ran in that build. The source-publication decision is complete.",
+      "nextStep": "Root follows actual maintainer review and provider admission/check events through the normal canonical sweep. No duplicate request, quota outreach, unchanged retry or merge is authorized.",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-11-24T17:54:21.639001+00:00",
-        "disposition": "Published #17920 at ac0439e2b after the actual source approval. Native publication readback verified OPEN/MERGEABLE, DCO success and auto-merge off; other GitHub validation was pending at that observation. FirstPass 2684 stopped before an agent or source execution: author 1535036 exhausted the rolling 30-day 360,000 compute-minute quota. Prior source qualification retains its original scope; this run executed no tests.",
-        "nextAction": "Root follows current-head native validation, maintainer review and actual provider admission through the normal canonical sweep. No unchanged CI retry, quota outreach or merge is authorized.",
-        "recheckCondition": "Actual source/check/review/admission event or the next canonical sweep.",
+        "observedAt": "2026-11-24T18:50:04.549616+00:00",
+        "disposition": "Published #17920 remains OPEN/MERGEABLE at ac0439e2b. Native validation and DCO are green; existing maintainer requests are pending. FirstPass2684 retains the verified pre-agent rolling30-day360,000 compute-minute quota; no tests ran in that build. The source-publication decision is complete.",
+        "nextAction": "Root follows actual maintainer review and provider admission/check events through the normal canonical sweep. No duplicate request, quota outreach, unchanged retry or merge is authorized.",
+        "recheckCondition": "Actual source/check/review/admission event or next normal sweep.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17920",
           "https://buildkite.com/gvisor/first-pass/builds/2684"
@@ -106950,21 +106956,21 @@
       "url": "https://github.com/google/gvisor/pull/17921",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-24T17:54:21.639001+00:00",
+      "updatedAt": "2026-11-24T18:50:04.549616+00:00",
       "evidence": [
         {
           "label": "Published source proposal",
           "url": "https://github.com/tamird/gvisor/commit/f05f486dc0182b1a9c3e55b33fb3ccde3f0a75b0"
         }
       ],
-      "summary": "Published #17921 at f05f486dc after the actual source approval. Native publication readback verified OPEN/MERGEABLE, DCO success and auto-merge off; other GitHub validation was pending at that observation. FirstPass 2685 stopped before an agent or source execution: author 1535036 exhausted the rolling 30-day 360,000 compute-minute quota. Prior source qualification retains its original scope; this run executed no tests.",
-      "nextStep": "Root follows current-head native validation, maintainer review and actual provider admission through the normal canonical sweep. No unchanged CI retry, quota outreach or merge is authorized.",
+      "summary": "Published #17921 remains OPEN/MERGEABLE at f05f486dc. Native validation and DCO are green; existing maintainer requests are pending. FirstPass2685 retains the verified pre-agent rolling30-day360,000 compute-minute quota; no tests ran in that build. The source-publication decision is complete.",
+      "nextStep": "Root follows actual maintainer review and provider admission/check events through the normal canonical sweep. No duplicate request, quota outreach, unchanged retry or merge is authorized.",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-11-24T17:54:21.639001+00:00",
-        "disposition": "Published #17921 at f05f486dc after the actual source approval. Native publication readback verified OPEN/MERGEABLE, DCO success and auto-merge off; other GitHub validation was pending at that observation. FirstPass 2685 stopped before an agent or source execution: author 1535036 exhausted the rolling 30-day 360,000 compute-minute quota. Prior source qualification retains its original scope; this run executed no tests.",
-        "nextAction": "Root follows current-head native validation, maintainer review and actual provider admission through the normal canonical sweep. No unchanged CI retry, quota outreach or merge is authorized.",
-        "recheckCondition": "Actual source/check/review/admission event or the next canonical sweep.",
+        "observedAt": "2026-11-24T18:50:04.549616+00:00",
+        "disposition": "Published #17921 remains OPEN/MERGEABLE at f05f486dc. Native validation and DCO are green; existing maintainer requests are pending. FirstPass2685 retains the verified pre-agent rolling30-day360,000 compute-minute quota; no tests ran in that build. The source-publication decision is complete.",
+        "nextAction": "Root follows actual maintainer review and provider admission/check events through the normal canonical sweep. No duplicate request, quota outreach, unchanged retry or merge is authorized.",
+        "recheckCondition": "Actual source/check/review/admission event or next normal sweep.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17921",
           "https://buildkite.com/gvisor/first-pass/builds/2685"
@@ -122418,8 +122424,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-24T18:06:03.132845+00:00",
-      "summary": "Native scheduled run 45449232722 completed successfully and published API observations at 17:33:41 UTC. The due 18:03:38 guard reused that fresh generation; no fallback was dispatched. This proves one resumed scheduled delivery, not a scheduler-cause diagnosis or future cadence guarantee.",
+      "updatedAt": "2026-11-24T18:50:04.549616+00:00",
+      "summary": "The due native-first guard found no newer/live scheduled delivery. The single snapshot-only fallback 45460996764 completed on its failed-job recovery after a provider HTTP503, publishing API observations at 18:46:20 UTC. The first attempt published no snapshot; tests had passed. No new collector was dispatched.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122662,7 +122668,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground supervision owns the next native-first guard at 18:33:41 UTC, deadline 19:03:41. Reuse a fresh/live native generation before at most one existing snapshot-only fallback. Preserve the existing freshness policy and source/approval holds.",
+      "nextStep": "Root foreground supervision owns the next native-first guard at 19:46:20 UTC, deadline 20:16:20. Reuse an actual fresh/live native generation before at most one existing fallback. The bounded read helper omits503 from its existing retry list; a narrow correction is being prepared separately.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122798,12 +122804,13 @@
           "https://github.com/tamird/gvisor/actions/runs/45417195867",
           "https://github.com/tamird/gvisor/actions/runs/45430212258",
           "https://github.com/tamird/gvisor/actions/runs/45443163776",
-          "https://github.com/tamird/gvisor/actions/runs/45449232722"
+          "https://github.com/tamird/gvisor/actions/runs/45449232722",
+          "https://github.com/tamird/gvisor/actions/runs/45460996764"
         ],
-        "observedAt": "2026-11-24T18:06:03.132845+00:00",
-        "disposition": "Native scheduled run 45449232722 completed successfully and published API observations at 17:33:41 UTC. The due 18:03:38 guard reused that fresh generation; no fallback was dispatched. This proves one resumed scheduled delivery, not a scheduler-cause diagnosis or future cadence guarantee.",
-        "nextAction": "Root foreground supervision owns the next native-first guard at 18:33:41 UTC, deadline 19:03:41. Reuse a fresh/live native generation before at most one existing snapshot-only fallback. Preserve the existing freshness policy and source/approval holds.",
-        "recheckCondition": "Actual fresh/live native delivery or the next due freshness guard.",
+        "observedAt": "2026-11-24T18:50:04.549616+00:00",
+        "disposition": "The due native-first guard found no newer/live scheduled delivery. The single snapshot-only fallback 45460996764 completed on its failed-job recovery after a provider HTTP503, publishing API observations at 18:46:20 UTC. The first attempt published no snapshot; tests had passed. No new collector was dispatched.",
+        "nextAction": "Root foreground supervision owns the next native-first guard at 19:46:20 UTC, deadline 20:16:20. Reuse an actual fresh/live native generation before at most one existing fallback. The bounded read helper omits503 from its existing retry list; a narrow correction is being prepared separately.",
+        "recheckCondition": "Actual fresh/live native delivery, next due guard or the reviewed helper correction.",
         "owner": "root"
       }
     },
@@ -132329,9 +132336,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-24T18:11:40.232007+00:00",
+      "updatedAt": "2026-11-24T18:43:30.023486+00:00",
       "group": "analysis",
-      "summary": "54-commit series at 26090b334: dependencies first, then one analyzer and its fixes per commit. Focused AMD64/ARM64 checker and source checks pass. The first matched startup category passed stability and comparison checks on the observed route, with no detected timing difference; this is not equivalence or full-workload clearance. Module-aware corpus validation and broader qualification remain incomplete; prerequisite #17884 is still open.",
+      "summary": "54-commit analyzer series at 26090b334. The full Module-aware NoGo matrix and focused checker/source gates pass on AMD64 and ARM64. The first matched startup category passed scoped stability and comparison checks, without establishing equivalence. Remaining workload and performance qualification, four behavioral targets and prerequisite #17884 remain open.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132703,7 +132710,7 @@
           ]
         }
       ],
-      "nextStep": "Finish the remaining required workload qualification and Module-aware canonical NoGo corpus validation, then request publication review. Four behavioral targets remain unresolved. benchmark_measurement_review owns the remaining performance categories; analysis_pass_inventory owns the corpus checks.",
+      "nextStep": "Finish remaining required workload and performance qualification, including the full network workload and the targeted client-cleanup correction, then request publication review. benchmark_measurement_review owns those category gates; the full static-matrix gap is closed.",
       "evidence": [
         {
           "label": "Current reviewed analyzer series",
@@ -133061,7 +133068,7 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T18:11:40.232007+00:00",
+        "observedAt": "2026-11-24T18:43:30.023486+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45338108931",
           "https://github.com/tamird/gvisor/actions/runs/45344645597",
@@ -133117,12 +133124,14 @@
           "https://github.com/tamird/gvisor/actions/runs/45452628262",
           "https://github.com/tamird/gvisor/actions/runs/45452628262/artifacts/14950101874",
           "https://github.com/tamird/gvisor/actions/runs/45456241172",
-          "https://github.com/tamird/gvisor/actions/runs/45456255734"
+          "https://github.com/tamird/gvisor/actions/runs/45456255734",
+          "https://github.com/tamird/gvisor/actions/runs/45456834454/artifacts/14952383343",
+          "https://github.com/tamird/gvisor/actions/runs/45456849968/artifacts/14952872436"
         ],
         "owner": "root",
-        "disposition": "54-commit series at 26090b334: dependencies first, then one analyzer and its fixes per commit. Focused AMD64/ARM64 checker and source checks pass. The first matched startup category passed stability and comparison checks on the observed route, with no detected timing difference; this is not equivalence or full-workload clearance. Module-aware corpus validation and broader qualification remain incomplete; prerequisite #17884 is still open.",
-        "nextAction": "Finish the remaining required workload qualification and Module-aware canonical NoGo corpus validation, then request publication review. Four behavioral targets remain unresolved. benchmark_measurement_review owns the remaining performance categories; analysis_pass_inventory owns the corpus checks.",
-        "recheckCondition": "Actual remaining-workload results, Module-aware corpus results or #17884 landing. No publication question has been asked for this series.",
+        "disposition": "54-commit analyzer series at 26090b334. The full Module-aware NoGo matrix and focused checker/source gates pass on AMD64 and ARM64. The first matched startup category passed scoped stability and comparison checks, without establishing equivalence. Remaining workload and performance qualification, four behavioral targets and prerequisite #17884 remain open.",
+        "nextAction": "Finish remaining required workload and performance qualification, including the full network workload and the targeted client-cleanup correction, then request publication review. benchmark_measurement_review owns those category gates; the full static-matrix gap is closed.",
+        "recheckCondition": "Actual remaining-workload or cleanup qualification, prerequisite #17884 landing or publication-review milestone. No new series opening question has been asked.",
         "sourceHead": "26090b334cf9c5f4657ec33aef64efc6fa86ef82",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4"
