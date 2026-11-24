@@ -48,6 +48,7 @@ go_library(
         "@org_golang_x_tools//go/analysis/passes/gofix:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/hostport:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/httpresponse:go_default_library",
+        "@org_golang_x_tools//go/analysis/passes/ifaceassert:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/loopclosure:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/lostcancel:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/nilfunc:go_default_library",
