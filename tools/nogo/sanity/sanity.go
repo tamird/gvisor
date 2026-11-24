@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sync"
 )
 
 func improperFormat() {
@@ -32,6 +33,15 @@ func oldErrorCheck(err error) string {
 		return pathErr.Path
 	}
 	return ""
+}
+
+func lateWaitGroupAdd() {
+	var wg sync.WaitGroup
+	go func() {
+		wg.Add(1)
+		defer wg.Done()
+	}()
+	wg.Wait()
 }
 
 //go:fix inline

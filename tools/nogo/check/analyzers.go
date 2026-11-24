@@ -64,6 +64,7 @@ import (
 	"golang.org/x/tools/go/analysis/passes/unsafeptr"
 	"golang.org/x/tools/go/analysis/passes/unusedresult"
 	"golang.org/x/tools/go/analysis/passes/unusedwrite"
+	"golang.org/x/tools/go/analysis/passes/waitgroup"
 	"gvisor.dev/gvisor/tools/checkaligned"
 	"gvisor.dev/gvisor/tools/checkconst"
 	"gvisor.dev/gvisor/tools/checkescape"
@@ -218,6 +219,7 @@ func init() {
 	}
 	register(allAnalyzers, checkescape.Analyzer)
 	register(allAnalyzers, &plainAnalyzer{unusedwrite.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{waitgroup.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{checkconst.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{checkimports.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{checklinkname.Analyzer})
