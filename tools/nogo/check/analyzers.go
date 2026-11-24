@@ -216,7 +216,8 @@ func init() {
 			"errorsastype",
 			"importcomment",
 			"reflecttypefor",
-			"reflecttypeassert":
+			"reflecttypeassert",
+			"testingcontext":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}
