@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T18:55:51.532284+00:00",
+    "updatedAt": "2026-11-24T20:51:36.949756+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -26973,14 +26973,14 @@
       "url": "https://github.com/google/gvisor/pull/16098",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-24T18:50:04.549616+00:00",
-      "summary": "Exact-head kerumeto approval6045055527 covers d692a4fb4. Native validation and DCO are green; FirstPass2697 and main55830 are pending. The provider aggregate remains REVIEW_REQUIRED, so no overall approval or merge-readiness is inferred.",
+      "updatedAt": "2026-11-24T20:51:36.949756+00:00",
+      "summary": "Current d692a4fb4 has successful native validation, DCO, FirstPass2697 and main55830. The exact-head kerumeto approval is recorded; the provider aggregate still says REVIEW_REQUIRED. No overall approval or merge authority is inferred.",
       "followup": {
         "owner": "root",
         "sourceHead": "d692a4fb41acd4deb5f3b051ac06bd4145d888f3",
-        "observedAt": "2026-11-24T18:50:04.549616+00:00",
-        "disposition": "Exact-head kerumeto approval6045055527 covers d692a4fb4. Native validation and DCO are green; FirstPass2697 and main55830 are pending. The provider aggregate remains REVIEW_REQUIRED, so no overall approval or merge-readiness is inferred.",
-        "nextAction": "Root follows current-head maintainer review and actual provider check/admission events through the existing normal sweep. No duplicate outreach, unchanged retry or merge is authorized.",
+        "observedAt": "2026-11-24T20:51:36.949756+00:00",
+        "disposition": "Current d692a4fb4 has successful native validation, DCO, FirstPass2697 and main55830. The exact-head kerumeto approval is recorded; the provider aggregate still says REVIEW_REQUIRED. No overall approval or merge authority is inferred.",
+        "nextAction": "Root follows current-head maintainer review and landing events through the normal sweep; no duplicate outreach, source edit, retry or merge.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16098",
           "https://github.com/tamird/gvisor/commit/66eb27741",
@@ -27009,7 +27009,7 @@
           "https://buildkite.com/gvisor/pipeline/builds/55830"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Actual review/check/head event or next normal sweep.",
+        "recheckCondition": "Actual review/head/landing event or next normal sweep.",
         "preparedRevision": {
           "head": "f09702e855ccb3a0da8708479b3563d56da82768",
           "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
@@ -27802,7 +27802,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Agent"
       },
-      "nextStep": "Root follows current-head maintainer review and actual provider check/admission events through the existing normal sweep. No duplicate outreach, unchanged retry or merge is authorized.",
+      "nextStep": "Root follows current-head maintainer review and landing events through the normal sweep; no duplicate outreach, source edit, retry or merge.",
       "recheckCondition": "New substantive feedback/source change or actual internal validation/importer evidence."
     },
     {
@@ -41631,8 +41631,8 @@
       "url": "https://github.com/google/gvisor/pull/16522",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-20T15:15:34.980085+00:00",
-      "summary": "The user-approved ignore_srcs amendment c125b0e272 and exact reply are delivered. Publisher verified native/fork heads, MERGEABLE and DCO SUCCESS, with auto-merge off. Etienne re-review was requested and the existing Manning request preserved. New current-head CI is pending; prior byte-identical action/source qualification and private-cleaner/ThinLTO limits retain their scope. Exact-head FirstPass2658 is a pre-agent upload failure: structured metadata explicitly reports author1535036 rolling30-day360000 compute-minute quota, with no source tests run. Current native Go generation and other GitHub validation are now SUCCESS. The user’s prewarmer comment4682382293 is a delivered response, not a new implementation instruction. Native review remains CHANGES_REQUESTED while re-review is pending.",
+      "updatedAt": "2026-11-24T20:51:36.949756+00:00",
+      "summary": "The approved c125 source and reply are delivered. Manning review6045601923 is an explicitly experimental automated COMMENTED recommendation reporting external local checks, not a formal approval or our qualification. Native checks and DCO pass; FirstPass2658 retains its verified pre-agent rolling 30-day quota. Etienne’s CHANGES_REQUESTED and internal freestanding adapter integration remain open.",
       "evidence": [
         {
           "label": "Latest exact-head review",
@@ -41862,11 +41862,11 @@
       ],
       "followup": {
         "owner": "root",
-        "observedAt": "2026-11-24T15:57:41.885925+00:00",
+        "observedAt": "2026-11-24T20:51:36.949756+00:00",
         "sourceHead": "c125b0e272ddb337b4c78588c79a86b2f5e228b6",
         "mergeable": "MERGEABLE",
-        "disposition": "The user-approved ignore_srcs amendment c125b0e272 and exact reply are delivered. Publisher verified native/fork heads, MERGEABLE and DCO SUCCESS, with auto-merge off. Etienne re-review was requested and the existing Manning request preserved. New current-head CI is pending; prior byte-identical action/source qualification and private-cleaner/ThinLTO limits retain their scope. Exact-head FirstPass2658 is a pre-agent upload failure: structured metadata explicitly reports author1535036 rolling30-day360000 compute-minute quota, with no source tests run. Current native Go generation and other GitHub validation are now SUCCESS. The user’s prewarmer comment4682382293 is a delivered response, not a new implementation instruction. Native review remains CHANGES_REQUESTED while re-review is pending.",
-        "nextAction": "Root follows requested current-head maintainer re-review, actual admission recovery or a new admitted check, preserving private/internal adapter and workload limits. Source/reply approval and publication are fulfilled; no repeated source/reply/reviewer request, unchanged CI retry or merge.",
+        "disposition": "The approved c125 source and reply are delivered. Manning review6045601923 is an explicitly experimental automated COMMENTED recommendation reporting external local checks, not a formal approval or our qualification. Native checks and DCO pass; FirstPass2658 retains its verified pre-agent rolling 30-day quota. Etienne’s CHANGES_REQUESTED and internal freestanding adapter integration remain open.",
+        "nextAction": "Root follows requested current-head maintainer re-review and internal adapter/landing conditions. Preserve existing source, private-cleaner and workload limits; no source/reply repeat, unchanged CI retry or duplicate outreach.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16522",
           "https://github.com/tamird/gvisor/commit/4e034130e",
@@ -41891,9 +41891,10 @@
           "https://github.com/tamird/gvisor/actions/runs/45314629193",
           "https://github.com/gvisor/gvisor/pull/16522#discussion_r4682285433",
           "https://buildkite.com/gvisor/first-pass/builds/2658#01a20e28-74e2-4ef2-a44b-afbc66e4d452",
-          "https://github.com/gvisor/gvisor/pull/16522#discussion_r4682382293"
+          "https://github.com/gvisor/gvisor/pull/16522#discussion_r4682382293",
+          "https://github.com/google/gvisor/pull/16522#pullrequestreview-6045601923"
         ],
-        "recheckCondition": "Actual current-head CI/review/landing, source or prerequisite change.",
+        "recheckCondition": "Actual maintainer review, admitted CI, integration or source change.",
         "curatedAt": "2026-11-20T23:27:51.953187+00:00",
         "implementationOwner": "sidecar_visibility_feedback",
         "attentionDispositions": [
@@ -42528,7 +42529,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
       },
-      "nextStep": "Root follows requested current-head maintainer re-review, actual admission recovery or a new admitted check, preserving private/internal adapter and workload limits. Source/reply approval and publication are fulfilled; no repeated source/reply/reviewer request, unchanged CI retry or merge.",
+      "nextStep": "Root follows requested current-head maintainer re-review and internal adapter/landing conditions. Preserve existing source, private-cleaner and workload limits; no source/reply repeat, unchanged CI retry or duplicate outreach.",
       "recheckCondition": "A genuine maintainer/import/check event or evidenced provider admission recovery."
     },
     {
@@ -54382,27 +54383,28 @@
       "type": "pr",
       "repo": "bazelbuild/bazel",
       "number": 30837,
-      "head": "b9d613ad6ba7e5bd73b88ca498bf3ecf7f13c699",
+      "head": "d063f629beda6e4add527fafb1c5022c6dc98e3f",
       "title": "Add an opt-in native POSIX test wrapper",
       "url": "https://github.com/bazelbuild/bazel/pull/30837",
       "group": "bazel",
-      "summary": "Dmitry Zbarsky’s open PR adds an opt-in native POSIX test wrapper. Its head b9d613ad6 conflicts with Bazel master a765dc177 in the coverage resolver and the wrapper test’s filesystem dependency. Tamir’s fork at aa90c0a75 preserves the upstream conditional coverage behavior and the filesystem header used by the new POSIX tests. The prepared revision applies to the inspected master source. A current-master build and the maintainers’ cross-compilation concern remain open. On gVisor’s ordinary Ubuntu worker, Bazel 9.3.1’s shell wrapper failed two otherwise successful TCP handshake tests when the qualification requested ZIP artifacts. The host lacked file and zip. The default unzipped mode retains individual files, but its wrapper still invokes file to collect MIME metadata.\n\nAcross 164 PacketImpact manifests, stock Bazel 9.3.1 put a file-type error in all 424 MIME fields. In an AMD64 Linux sandbox with file blocked, the archived static wrapper wrote application/octet-stream for two PCAPs and a Go log containing control bytes, and text/plain for an ASCII manifest. It preserved a filename containing a space and a literal %. The outer stock Bazel wrapper still reported its own file error.",
+      "summary": "The foreign-authored POSIX wrapper proposal advanced to d063f629 and is now MERGEABLE with all collected presubmit/CLA checks successful. The old b9d conflict is historical. This does not qualify Tamir’s separate prepared aa90 fork or resolve the cross-platform design decision.",
       "ref": "codex/native-posix-test-wrapper",
-      "updatedAt": "2026-11-17T18:16:01.120596+00:00",
+      "updatedAt": "2026-11-24T20:51:36.949756+00:00",
       "status": "open",
       "followup": {
-        "owner": "dzbarsky",
-        "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
-        "sourceHead": "b9d613ad6ba7e5bd73b88ca498bf3ecf7f13c699",
-        "observedAt": "2026-11-17T18:16:01.120596+00:00",
-        "nextAction": "Author/maintainers own source revision and cross-platform prebuilt-wrapper decision; preserve prepared fork aa90c0a75 without publishing into the author branch.",
+        "owner": "dzbarsky / root",
+        "disposition": "The foreign-authored POSIX wrapper proposal advanced to d063f629 and is now MERGEABLE with all collected presubmit/CLA checks successful. The old b9d conflict is historical. This does not qualify Tamir’s separate prepared aa90 fork or resolve the cross-platform design decision.",
+        "sourceHead": "d063f629beda6e4add527fafb1c5022c6dc98e3f",
+        "observedAt": "2026-11-24T20:51:36.949756+00:00",
+        "nextAction": "The author and maintainers own current-source review and the cross-platform wrapper decision. Root tracks actual review/head/landing changes; do not publish the prepared fork into the author branch or transfer old qualification.",
         "evidence": [
           "https://github.com/bazelbuild/bazel/pull/30837",
           "https://github.com/tamird/bazel/commit/aa90c0a75",
-          "https://github.com/bazelbuild/bazel/pull/30837#issuecomment-5600246279"
+          "https://github.com/bazelbuild/bazel/pull/30837#issuecomment-5600246279",
+          "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/40067"
         ],
-        "recheckCondition": "Author publishes a new head or PR merges/closes; recheck exact head/base. Preserve recorded policy/hold conditions.",
-        "mergeable": "CONFLICTING"
+        "recheckCondition": "Actual review, changed source or merge/closure.",
+        "mergeable": "MERGEABLE"
       },
       "evidence": [
         {
@@ -54433,7 +54435,8 @@
           "label": "Four raw manifest rows from the archived static wrapper in the Linux sandbox",
           "url": "https://github.com/tamird/gvisor/actions/runs/42571822658/artifacts/13653547725"
         }
-      ]
+      ],
+      "nextStep": "The author and maintainers own current-source review and the cross-platform wrapper decision. Root tracks actual review/head/landing changes; do not publish the prepared fork into the author branch or transfer old qualification."
     },
     {
       "id": "branch:bazel-native-test-xml",
@@ -61538,8 +61541,8 @@
       "title": "netstack: end a lingering close when the peer acknowledges the FIN",
       "url": "https://github.com/google/gvisor/pull/16787",
       "status": "open",
-      "updatedAt": "2026-11-18T12:19:41.750038+00:00",
-      "summary": "Exact source 6869e8002 main55735 terminated in pipeline upload on missing fork-ref errors before builds/tests. Merged prerequisite17735/909c3dce2 removes the obsolete hook fetch; no source-test failure is established. Exact-head maintainer approval and existing sensitive-source/review limits remain distinct.",
+      "updatedAt": "2026-11-24T20:51:36.949756+00:00",
+      "summary": "Exact head6869e800 has rexren approval6045704912 and aggregate APPROVED. Native checks, DCO and FirstPass2707 pass, but current main55839 fails; its cause is not yet classified. The historical main55735 pre-command diagnosis does not establish this new run’s cause. Sensitive implementation and performance holds remain.",
       "evidence": [
         {
           "label": "Author’s offer to include the tested commit",
@@ -61582,16 +61585,18 @@
         "providerHead": "6869e8002ace5d787ef464938b49ba215fbd1693",
         "mergeable": "MERGEABLE",
         "sourceHead": "6869e8002ace5d787ef464938b49ba215fbd1693",
-        "observedAt": "2026-11-23T22:28:52.692599+00:00",
-        "disposition": "Exact source 6869e8002 main55735 terminated in pipeline upload on missing fork-ref errors before builds/tests. Merged prerequisite17735/909c3dce2 removes the obsolete hook fetch; no source-test failure is established. Exact-head maintainer approval and existing sensitive-source/review limits remain distinct.",
-        "nextAction": "The foreign author owns a refresh; root retains held reviewer follow-through. Recheck an actual head containing the merged hook prerequisite or a verified CI-mechanism change. No automatic source refresh, blind retry, outreach or protected implementation read follows from the prerequisite landing.",
-        "recheckCondition": "Actual source/head/base or CI-mechanism event, respecting the existing sensitive-work hold.",
+        "observedAt": "2026-11-24T20:51:36.949756+00:00",
+        "disposition": "Exact head6869e800 has rexren approval6045704912 and aggregate APPROVED. Native checks, DCO and FirstPass2707 pass, but current main55839 fails; its cause is not yet classified. The historical main55735 pre-command diagnosis does not establish this new run’s cause. Sensitive implementation and performance holds remain.",
+        "nextAction": "Root owns source-bound classification of main55839 through the existing CI owner and subsequent maintainer follow-through. No protected implementation read, unchanged retry, source change, quota assumption or outreach.",
+        "recheckCondition": "Existing CI owner returns the exact current-run diagnosis, or actual source/review/check change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16787",
           "https://github.com/google/gvisor/pull/16787#pullrequestreview-6029118218",
           "https://buildkite.com/gvisor/pipeline/builds/55735",
           "https://github.com/gvisor/gvisor/pull/17735",
-          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
+          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321",
+          "https://github.com/google/gvisor/pull/16787#pullrequestreview-6045704912",
+          "https://buildkite.com/gvisor/pipeline/builds/55839"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
         "curatedAt": "2026-11-18T12:19:41.750038+00:00",
@@ -61665,7 +61670,8 @@
           "metadataOnly": true,
           "reviewsAndGatesPreserved": true
         }
-      }
+      },
+      "nextStep": "Root owns source-bound classification of main55839 through the existing CI owner and subsequent maintainer follow-through. No protected implementation read, unchanged retry, source change, quota assumption or outreach."
     },
     {
       "id": "branch:hostinet-exit-linger",
@@ -98024,15 +98030,15 @@
       "title": "Use the C memcpy prototype in the signal stub",
       "url": "https://github.com/google/gvisor/pull/17446",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-11-18T02:42:04.017074+00:00",
-      "summary": "New exact-head approval 6032352553 is recorded on af4126a46. Provider review is REVIEW_REQUIRED and source is MERGEABLE. Current reported main remains PENDING; no main pass, import or merge is established.",
+      "status": "merged",
+      "updatedAt": "2026-11-24T20:51:36.949756+00:00",
+      "summary": "Native #17446 merged at 18:57:32 UTC as e597012bf from unchanged headaf4126a46. Native validation, FirstPass2703 and main55835 succeeded. The upstream PR wait is fulfilled; existing source-owner reconciliation will verify the landing and exact dependent obligations without transferring child qualification.",
       "followup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "af4126a4619b3c4c851fb6d10afecd1817fa8105",
-        "observedAt": "2026-11-24T02:39:01.884940+00:00",
-        "disposition": "New exact-head approval 6032352553 is recorded on af4126a46. Provider review is REVIEW_REQUIRED and source is MERGEABLE. Current reported main remains PENDING; no main pass, import or merge is established.",
-        "nextAction": "Root follows actual remaining maintainer/import and source-bound main CI events through existing ownership. No duplicate review request, retry, source change, merge or all-green claim.",
+        "observedAt": "2026-11-24T20:51:36.949756+00:00",
+        "disposition": "Native #17446 merged at 18:57:32 UTC as e597012bf from unchanged headaf4126a46. Native validation, FirstPass2703 and main55835 succeeded. The upstream PR wait is fulfilled; existing source-owner reconciliation will verify the landing and exact dependent obligations without transferring child qualification.",
+        "nextAction": "approved_rebase_queue / root closes exact source/alias/dependency correspondence. Preserve #17067’s separate #16522, internal adapter and performance holds and the clang-tidy child’s other prerequisites. No source edit, retry, merge or outreach.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17446",
           "https://github.com/tamird/gvisor/commit/4e82d9605",
@@ -98045,11 +98051,12 @@
           "https://github.com/tamird/gvisor/actions/runs/44196112563",
           "https://github.com/tamird/gvisor/actions/runs/44208843653",
           "https://buildkite.com/gvisor/first-pass/builds/1664",
-          "https://github.com/google/gvisor/pull/17446#pullrequestreview-6032352553"
+          "https://github.com/google/gvisor/pull/17446#pullrequestreview-6032352553",
+          "https://github.com/google/gvisor/commit/e597012bfea79de2a377822696c3c22a3cc7dbeb"
         ],
         "mergeable": "MERGEABLE",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
-        "recheckCondition": "Actual terminal main/check result, substantive review/import or changed head/base.",
+        "recheckCondition": "Existing owner returns exact landing/dependency proof or a discrepancy.",
         "qualificationHistory": [
           {
             "observedAt": "2026-11-17T21:09:15.022997+00:00",
@@ -98130,7 +98137,8 @@
         "evidence": [
           "https://github.com/tamird/gvisor/commit/08eb4bb3605759f7cd942a0d6a1a900d0eb80a5c"
         ]
-      }
+      },
+      "nextStep": "approved_rebase_queue / root closes exact source/alias/dependency correspondence. Preserve #17067’s separate #16522, internal adapter and performance holds and the clang-tidy child’s other prerequisites. No source edit, retry, merge or outreach."
     },
     {
       "id": "pr:17456",
@@ -107061,6 +107069,33 @@
         "evidence": [
           "https://github.com/tamird/gvisor/commit/df787c7f2f3dd984810e0a8dec1cc4b78e69ebdc"
         ]
+      }
+    },
+    {
+      "id": "pr:17343",
+      "type": "pr",
+      "number": 17343,
+      "repo": "google/gvisor",
+      "head": "65395f4d25f46c489be82141feeb009819403f19",
+      "title": "Build the Hackbench image from pinned source",
+      "url": "https://github.com/google/gvisor/pull/17343",
+      "group": "runtime",
+      "status": "open",
+      "owner": "root",
+      "evidence": [],
+      "summary": "The exact-head automated review6046141593 explicitly reports no findings. It adds no source obligation or approval. Existing zkoopmans review is pending; historical FirstPass1582 failure is unchanged.",
+      "nextStep": "Root follows existing maintainer review and genuine source/check changes. The no-findings event is consumed without an external reply, duplicate request or source work.",
+      "updatedAt": "2026-11-24T20:51:36.949756+00:00",
+      "followup": {
+        "disposition": "The exact-head automated review6046141593 explicitly reports no findings. It adds no source obligation or approval. Existing zkoopmans review is pending; historical FirstPass1582 failure is unchanged.",
+        "nextAction": "Root follows existing maintainer review and genuine source/check changes. The no-findings event is consumed without an external reply, duplicate request or source work.",
+        "recheckCondition": "Actual substantive review, source/check or landing event.",
+        "observedAt": "2026-11-24T20:51:36.949756+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17343#pullrequestreview-6046141593"
+        ],
+        "owner": "root",
+        "sourceHead": "65395f4d25f46c489be82141feeb009819403f19"
       }
     }
   ],
@@ -122424,8 +122459,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-24T18:55:51.532284+00:00",
-      "summary": "The due native-first guard found no newer/live scheduled delivery. The single snapshot-only fallback 45460996764 completed on its failed-job recovery after a provider HTTP503, publishing API observations at 18:46:20 UTC. The first attempt published no snapshot; tests had passed. No new collector was dispatched.",
+      "updatedAt": "2026-11-24T20:51:36.949756+00:00",
+      "summary": "The single snapshot-only fallback 45476428340 completed at 20:05:40 UTC and published API observations at 20:05:23, before the 20:16:20 freshness deadline. Its dispatch response timed out, but the actual run was found and reused; no duplicate dispatch or observer was created. Later reconciliation resumed after an unexplained external wall-clock gap, not a long-running collector.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122668,7 +122703,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground supervision owns the next native-first guard at 19:46:20 UTC, deadline 20:16:20. Reuse an actual fresh/live native generation before at most one existing fallback. The reviewed read helper now retries an initial HTTP503 once within its unchanged request budget and two-attempt limit; no new collection is needed to publish this repair.",
+      "nextStep": "Root foreground supervision owns the next native-first guard at 21:05:23 UTC, deadline 21:35:23. Reuse an actual fresh/live native generation before at most one existing fallback. Preserve the deployed bounded HTTP503 read retry and current authorizations.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122805,11 +122840,12 @@
           "https://github.com/tamird/gvisor/actions/runs/45430212258",
           "https://github.com/tamird/gvisor/actions/runs/45443163776",
           "https://github.com/tamird/gvisor/actions/runs/45449232722",
-          "https://github.com/tamird/gvisor/actions/runs/45460996764"
+          "https://github.com/tamird/gvisor/actions/runs/45460996764",
+          "https://github.com/tamird/gvisor/actions/runs/45476428340"
         ],
-        "observedAt": "2026-11-24T18:55:51.532284+00:00",
-        "disposition": "The due native-first guard found no newer/live scheduled delivery. The single snapshot-only fallback 45460996764 completed on its failed-job recovery after a provider HTTP503, publishing API observations at 18:46:20 UTC. The first attempt published no snapshot; tests had passed. No new collector was dispatched.",
-        "nextAction": "Root foreground supervision owns the next native-first guard at 19:46:20 UTC, deadline 20:16:20. Reuse an actual fresh/live native generation before at most one existing fallback. The reviewed read helper now retries an initial HTTP503 once within its unchanged request budget and two-attempt limit; no new collection is needed to publish this repair.",
+        "observedAt": "2026-11-24T20:51:36.949756+00:00",
+        "disposition": "The single snapshot-only fallback 45476428340 completed at 20:05:40 UTC and published API observations at 20:05:23, before the 20:16:20 freshness deadline. Its dispatch response timed out, but the actual run was found and reused; no duplicate dispatch or observer was created. Later reconciliation resumed after an unexplained external wall-clock gap, not a long-running collector.",
+        "nextAction": "Root foreground supervision owns the next native-first guard at 21:05:23 UTC, deadline 21:35:23. Reuse an actual fresh/live native generation before at most one existing fallback. Preserve the deployed bounded HTTP503 read retry and current authorizations.",
         "recheckCondition": "Actual fresh/live native delivery or next due guard.",
         "owner": "root"
       }
