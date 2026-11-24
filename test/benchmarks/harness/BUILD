@@ -101,7 +101,11 @@ sh_binary(
     data = [
         "//:release",
         "//images:benchmark_alpine_load",
+        "//images:benchmark_nginx_load",
+        "//images:benchmark_node_load",
         "//images:benchmark_sysbench_load",
+        "//images:benchmark_util_load",
+        "//images/basic:benchmark_redis_load",
         "//tools/benchmark/paired",
         "@startup_baseline_release//:baseline-release.tar.bz2",
     ],
