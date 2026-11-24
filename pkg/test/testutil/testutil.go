@@ -338,7 +338,7 @@ type PlatformConfig struct {
 func PlatformConfigs(tb testing.TB, platforms string, newConf func() *config.Config) []PlatformConfig {
 	tb.Helper()
 	var ps []string
-	for _, p := range strings.Split(platforms, ",") {
+	for p := range strings.SplitSeq(platforms, ",") {
 		if p = strings.TrimSpace(p); p != "" {
 			ps = append(ps, p)
 		}
@@ -703,7 +703,7 @@ func childPIDs() []int {
 			// The thread exited.
 			continue
 		}
-		for _, field := range strings.Fields(string(data)) {
+		for field := range strings.FieldsSeq(string(data)) {
 			if pid, err := strconv.Atoi(field); err == nil {
 				pids = append(pids, pid)
 			}

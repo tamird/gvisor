@@ -446,7 +446,7 @@ func collectNUMA(sysRoot string) (*NUMA, error) {
 // pciDriverName returns the DRIVER= field of a PCI uevent, or errors if
 // field is missing.
 func pciDriverName(uevent string) (string, error) {
-	for _, line := range strings.Split(uevent, "\n") {
+	for line := range strings.SplitSeq(uevent, "\n") {
 		if driver, ok := strings.CutPrefix(line, "DRIVER="); ok {
 			return driver, nil
 		}

@@ -237,7 +237,7 @@ func fillFromAncestor(path string) (string, error) {
 //	"0-2,7,12-14  # bits 0, 1, 2, 7, 12, 13, and 14 set" - man 7 cpuset
 func countCpuset(cpuset string) (int, error) {
 	var count int
-	for _, p := range strings.Split(cpuset, ",") {
+	for p := range strings.SplitSeq(cpuset, ",") {
 		interval := strings.Split(p, "-")
 		switch len(interval) {
 		case 1:
@@ -304,7 +304,7 @@ func loadPathsHelper(cgroup, mountinfo io.Reader, unified bool) (map[string]stri
 		if len(tokens[1]) == 0 {
 			continue
 		}
-		for _, ctrlr := range strings.Split(tokens[1], ",") {
+		for ctrlr := range strings.SplitSeq(tokens[1], ",") {
 			// Remove prefix for cgroups with no controller, eg. systemd.
 			ctrlr = strings.TrimPrefix(ctrlr, "name=")
 			// Discard unknown controllers.

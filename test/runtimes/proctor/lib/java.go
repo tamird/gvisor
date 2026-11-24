@@ -57,7 +57,7 @@ func (javaRunner) ListTests() ([]string, error) {
 		return nil, fmt.Errorf("jtreg -listtests: %w\n%s", err, out)
 	}
 	var testSlice []string
-	for _, test := range strings.Split(string(out), "\n") {
+	for test := range strings.SplitSeq(string(out), "\n") {
 		if !javaExclDirs.MatchString(test) {
 			testSlice = append(testSlice, test)
 		}

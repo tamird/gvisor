@@ -240,7 +240,7 @@ func checkGoferPosture(t *testing.T, pid int) {
 		t.Fatalf("Reading gofer environ: %v", err)
 	}
 	var gomaxprocsVals, godebugVals []string
-	for _, entry := range strings.Split(strings.TrimSuffix(string(rawEnv), "\x00"), "\x00") {
+	for entry := range strings.SplitSeq(strings.TrimSuffix(string(rawEnv), "\x00"), "\x00") {
 		if v, ok := strings.CutPrefix(entry, "GOMAXPROCS="); ok {
 			gomaxprocsVals = append(gomaxprocsVals, v)
 		}

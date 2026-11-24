@@ -955,7 +955,7 @@ func write[T io.StringWriter](cw *countingWriter[T], options ExportOptions, snap
 		return 0, nil
 	}
 	if options.CommentHeader != "" {
-		for _, commentLine := range strings.Split(options.CommentHeader, "\n") {
+		for commentLine := range strings.SplitSeq(options.CommentHeader, "\n") {
 			if _, err := cw.WriteString("# "); err != nil {
 				return cw.Written(), err
 			}

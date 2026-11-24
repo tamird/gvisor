@@ -115,7 +115,7 @@ var Empty = MockCPU{
 // MakeCPUSet makes a cpuSet from a MockCPU.
 func (tc MockCPU) MakeCPUSet() CPUSet {
 	bugs := make(map[string]struct{})
-	for _, bug := range strings.Split(tc.Bugs, " ") {
+	for bug := range strings.SplitSeq(tc.Bugs, " ") {
 		bugs[bug] = struct{}{}
 	}
 	var cpus CPUSet = []*CPU{}

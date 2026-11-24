@@ -176,7 +176,7 @@ func GetTimedContainerDuration(ctx context.Context, c *testcluster.TestCluster, 
 func ParseTimedContainerOutput(out string) (time.Duration, error) {
 	found := false
 	var duration time.Duration
-	for _, line := range strings.Split(out, "\n") {
+	for line := range strings.SplitSeq(out, "\n") {
 		line = strings.TrimSpace(line)
 		if !strings.HasPrefix(line, timingDataLinePrefix) {
 			continue

@@ -154,7 +154,7 @@ func ParseNvidiaVisibleDevices(spec *specs.Spec, conf *config.Config) (string, e
 		return "all", nil
 	}
 
-	for _, gpuDev := range strings.Split(nvd, ",") {
+	for gpuDev := range strings.SplitSeq(nvd, ",") {
 		// Validate gpuDev. We only support the following formats for now:
 		// * GPU indices (e.g. 0,1,2)
 		// * GPU UUIDs (e.g. GPU-fef8089b)

@@ -126,7 +126,7 @@ func parseMaps(stubAreaStart, stubAreaEnd, minLen uintptr) ([]mapsRegion, error)
 
 	regions := []mapsRegion{}
 	rstart := stubAreaStart
-	for _, line := range strings.Split(string(data), "\n") {
+	for line := range strings.SplitSeq(string(data), "\n") {
 		if line == "" {
 			continue
 		}

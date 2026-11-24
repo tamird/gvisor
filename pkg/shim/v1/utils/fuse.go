@@ -292,7 +292,7 @@ func IsProcessDeadOrZombie(pid int) bool {
 	if err != nil {
 		return true
 	}
-	for _, line := range strings.Split(string(data), "\n") {
+	for line := range strings.SplitSeq(string(data), "\n") {
 		if strings.HasPrefix(line, "State:") {
 			fields := strings.Fields(line)
 			if len(fields) >= 2 {

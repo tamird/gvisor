@@ -204,7 +204,7 @@ func StartProfilingMetrics[T ProfilingMetricsWriter](opts ProfilingMetricsOption
 	numEntries := 0
 
 	if len(opts.Metrics) > 0 {
-		for _, name := range strings.Split(opts.Metrics, ",") {
+		for name := range strings.SplitSeq(opts.Metrics, ",") {
 			name := strings.TrimSpace(name)
 			m, ok := allMetrics.uint64Metrics[name]
 			if !ok {

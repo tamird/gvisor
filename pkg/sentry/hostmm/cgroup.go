@@ -68,7 +68,7 @@ func cgroupRootDirectory(ctrl string) (string, error) {
 		if vfstype != "cgroup" {
 			continue
 		}
-		for _, mntopt := range strings.Split(mntopts, ",") {
+		for mntopt := range strings.SplitSeq(mntopts, ",") {
 			if mntopt == ctrl {
 				return file, nil
 			}
@@ -104,7 +104,7 @@ func currentCgroup(ctrl string) (string, error) {
 		if len(fields) != nrfields {
 			return "", fmt.Errorf("failed to parse %s: line %q: got %d fields, wanted %d", path, line, len(fields), nrfields)
 		}
-		for _, controller := range strings.Split(fields[1], ",") {
+		for controller := range strings.SplitSeq(fields[1], ",") {
 			if controller == ctrl {
 				return fields[2], nil
 			}

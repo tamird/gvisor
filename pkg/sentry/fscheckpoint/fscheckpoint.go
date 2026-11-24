@@ -191,7 +191,7 @@ func validPrefix(p string) bool {
 	if trimmed == "" {
 		return false
 	}
-	for _, seg := range strings.Split(trimmed, "/") {
+	for seg := range strings.SplitSeq(trimmed, "/") {
 		if seg == "" || seg == "." || seg == ".." || strings.Contains(seg, ":") {
 			return false
 		}

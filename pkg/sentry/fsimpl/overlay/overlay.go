@@ -348,8 +348,8 @@ func (fstype FilesystemType) GetFilesystem(ctx context.Context, vfsObj *vfs.Virt
 			return nil, nil, linuxerr.EINVAL
 		}
 		delete(mopts, "lowerdir")
-		lowerPathnames := strings.Split(lowerPathnamesStr, ":")
-		for _, lowerPathname := range lowerPathnames {
+		lowerPathnames := strings.SplitSeq(lowerPathnamesStr, ":")
+		for lowerPathname := range lowerPathnames {
 			if len(lowerPathname) == 0 {
 				ctx.Infof("overlay.FilesystemType.GetFilesystem: lowerdir must not contain an empty pathname")
 				return nil, nil, linuxerr.EINVAL

@@ -363,7 +363,7 @@ func hostTmpfsSize(path string) (uint64, bool) {
 // hasSizeOption returns whether the comma-separated mount options in opts
 // include a "size" option.
 func hasSizeOption(opts string) bool {
-	for _, o := range strings.Split(opts, ",") {
+	for o := range strings.SplitSeq(opts, ",") {
 		if strings.HasPrefix(o, "size=") {
 			return true
 		}

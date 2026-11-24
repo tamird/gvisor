@@ -250,7 +250,7 @@ func testBinary(t *testing.T, inputPath, outDir string) {
 		t.Errorf("generated no output in %q", tempOut)
 	}
 
-	for _, line := range strings.Split(string(binaryOutput), "\n") {
+	for line := range strings.SplitSeq(string(binaryOutput), "\n") {
 		if len(line) > 0 && !allowedErrors.MatchString(line) {
 			t.Errorf("unexpected error output: %q", line)
 		}

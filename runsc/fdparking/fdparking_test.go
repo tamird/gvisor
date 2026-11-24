@@ -148,7 +148,7 @@ func canSetMM(t *testing.T, pid int) bool {
 	}
 	var eff uint64
 	found := false
-	for _, line := range strings.Split(string(status), "\n") {
+	for line := range strings.SplitSeq(string(status), "\n") {
 		rest, ok := strings.CutPrefix(line, "CapEff:")
 		if !ok {
 			continue
@@ -252,7 +252,7 @@ func procStatus(t *testing.T, pid int) map[string]int {
 		t.Fatalf("cannot read sidecar status: %v", err)
 	}
 	fields := make(map[string]int)
-	for _, line := range strings.Split(string(data), "\n") {
+	for line := range strings.SplitSeq(string(data), "\n") {
 		key, rest, ok := strings.Cut(line, ":")
 		if !ok {
 			continue
@@ -331,7 +331,7 @@ func TestParkingMemoryFootprint(t *testing.T) {
 	}
 	// Ignore the [vsyscall] page.
 	var mappings []string
-	for _, mapping := range strings.Split(strings.TrimSpace(string(maps)), "\n") {
+	for mapping := range strings.SplitSeq(strings.TrimSpace(string(maps)), "\n") {
 		if !strings.HasSuffix(mapping, "[vsyscall]") {
 			mappings = append(mappings, mapping)
 		}

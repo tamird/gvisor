@@ -657,7 +657,7 @@ func getPidsRSS(t *testing.T, pids []string) int64 {
 			t.Logf("failed to read /proc/%s/status for shim process: %v", pid, err)
 			continue
 		}
-		for _, line := range strings.Split(string(statusBytes), "\n") {
+		for line := range strings.SplitSeq(string(statusBytes), "\n") {
 			if strings.HasPrefix(line, "VmRSS:") {
 				parts := strings.Fields(line)
 				if len(parts) >= 2 {

@@ -89,7 +89,7 @@ func newRDMADirTree() *rdmaDirTree {
 // intermediate directories.
 func (t *rdmaDirTree) get(relPath string) *rdmaDirTree {
 	cur := t
-	for _, part := range strings.Split(relPath, "/") {
+	for part := range strings.SplitSeq(relPath, "/") {
 		if part == "" {
 			continue
 		}
@@ -122,7 +122,7 @@ func (fs *filesystem) newRDMASysfs(ctx context.Context, creds *auth.Credentials,
 			if n.Path != leaf {
 				continue
 			}
-			for _, line := range strings.Split(n.Attrs["uevent"], "\n") {
+			for line := range strings.SplitSeq(n.Attrs["uevent"], "\n") {
 				if drv, ok := strings.CutPrefix(line, "DRIVER="); ok && rdma.SafeName(drv) {
 					driverByLeaf[leaf] = drv
 				}
@@ -435,7 +435,7 @@ func checkRelPath(relPath string) error {
 	if !strings.HasPrefix(relPath, "devices/") {
 		return fmt.Errorf("RDMA sysfs path %q is not under devices/", relPath)
 	}
-	for _, part := range strings.Split(relPath, "/") {
+	for part := range strings.SplitSeq(relPath, "/") {
 		if !rdma.SafeName(part) {
 			return fmt.Errorf("RDMA sysfs path %q contains unsafe component %q", relPath, part)
 		}

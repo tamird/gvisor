@@ -47,7 +47,7 @@ func (i *FDMappings) GetArray() []sentryapi.FDMapping {
 // Set implements flag.Value and appends a mapping from the command line to the
 // mappings array. Set(String()) should be idempotent.
 func (i *FDMappings) Set(s string) error {
-	for _, m := range strings.Split(s, ",") {
+	for m := range strings.SplitSeq(s, ",") {
 		split := strings.Split(m, ":")
 		if len(split) != 2 {
 			// Split returns a slice of length 1 if its first argument does not

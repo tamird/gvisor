@@ -135,7 +135,7 @@ func individualCapabilityFromString(capName string) (DriverCaps, bool) {
 func DriverCapsFromString(commaSeparatedCaps string) (DriverCaps, bool, error) {
 	cs := DriverCaps(0)
 	hasAll := false
-	for _, capName := range strings.Split(commaSeparatedCaps, ",") {
+	for capName := range strings.SplitSeq(commaSeparatedCaps, ",") {
 		capName = strings.TrimSpace(capName)
 		if capName == "" {
 			continue

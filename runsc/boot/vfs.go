@@ -213,7 +213,7 @@ func rdmaproxyRegisterDevices(info *containerInfo, vfsObj *vfs.VirtualFilesystem
 		if err != nil {
 			continue
 		}
-		for _, line := range strings.Split(leafUevent[dev.LeafPCI], "\n") {
+		for line := range strings.SplitSeq(leafUevent[dev.LeafPCI], "\n") {
 			if driver, ok := strings.CutPrefix(line, "DRIVER="); ok {
 				driverByMinor[uint32(minor64)] = driver
 				break

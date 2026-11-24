@@ -300,7 +300,7 @@ func stageImages(logger testutil.Logger) (string, error) {
 		return "", err
 	}
 	// Stage each image into the harness's cache directory.
-	for _, image := range strings.Split(*harnessTestImages, ",") {
+	for image := range strings.SplitSeq(*harnessTestImages, ",") {
 		image = strings.TrimSpace(image)
 		if image == "" {
 			continue

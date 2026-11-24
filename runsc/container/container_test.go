@@ -1984,7 +1984,7 @@ func hostinetSRListenerAddr(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	for _, line := range strings.Split(string(b), "\n") {
+	for line := range strings.SplitSeq(string(b), "\n") {
 		if addr, ok := strings.CutPrefix(line, "LISTENER_ADDR="); ok {
 			return addr, nil
 		}
@@ -2000,7 +2000,7 @@ func lastHostinetSRCount(path string) (int, error) {
 		return 0, err
 	}
 	last := -1
-	for _, line := range strings.Split(string(b), "\n") {
+	for line := range strings.SplitSeq(string(b), "\n") {
 		if !strings.HasPrefix(line, "COUNT=") {
 			continue
 		}
@@ -3136,7 +3136,7 @@ func TestIDMappedMountFlags(t *testing.T) {
 
 			verifyMountinfo := func(dest string, wantOpts []string) {
 				var foundLine string
-				for _, line := range strings.Split(string(mountinfo), "\n") {
+				for line := range strings.SplitSeq(string(mountinfo), "\n") {
 					fields := strings.Fields(line)
 					if len(fields) >= 6 && fields[4] == dest {
 						foundLine = line
@@ -3148,7 +3148,7 @@ func TestIDMappedMountFlags(t *testing.T) {
 				}
 				fields := strings.Fields(foundLine)
 				optsMap := make(map[string]bool)
-				for _, opt := range strings.Split(fields[5], ",") {
+				for opt := range strings.SplitSeq(fields[5], ",") {
 					optsMap[opt] = true
 				}
 				for _, want := range wantOpts {
@@ -5018,7 +5018,7 @@ func TestFDPassingExec(t *testing.T) {
 
 // findInPath finds a filename in the PATH environment variable.
 func findInPath(filename string) string {
-	for _, dir := range strings.Split(os.Getenv("PATH"), ":") {
+	for dir := range strings.SplitSeq(os.Getenv("PATH"), ":") {
 		fullPath := filepath.Join(dir, filename)
 		if _, err := os.Stat(fullPath); err == nil {
 			return fullPath

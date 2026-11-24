@@ -78,7 +78,7 @@ func (ar *APIResponse[T]) Obj() (*T, error) {
 func MakeAPIResponse[T any](rawResponse []byte) (*APIResponse[T], error) {
 	var respBytes strings.Builder
 	var resp APIResponse[T]
-	for _, line := range strings.Split(string(rawResponse), "\n") {
+	for line := range strings.SplitSeq(string(rawResponse), "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue

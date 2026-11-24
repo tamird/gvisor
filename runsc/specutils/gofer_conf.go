@@ -225,8 +225,8 @@ func (g *GoferMountConfFlags) GetArray() []GoferMountConf {
 // Set implements flag.Value and appends a gofer configuration from the command
 // line to the configs array. Set(String()) should be idempotent.
 func (g *GoferMountConfFlags) Set(s string) error {
-	confs := strings.Split(s, ",")
-	for _, conf := range confs {
+	confs := strings.SplitSeq(s, ",")
+	for conf := range confs {
 		var confVal GoferMountConf
 		if err := confVal.Set(conf); err != nil {
 			return fmt.Errorf("invalid GoferMountConf value (%s): %v", conf, err)

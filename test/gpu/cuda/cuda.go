@@ -166,7 +166,7 @@ func GetEnvironment(ctx context.Context, t *testing.T, image string) (*TestEnvir
 		return nil, fmt.Errorf("cannot get list of CUDA features: %v", err)
 	}
 	features := make(map[Feature]bool)
-	for _, line := range strings.Split(featuresList, "\n") {
+	for line := range strings.SplitSeq(featuresList, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
@@ -496,7 +496,7 @@ func testLog(t *testing.T, format string, values ...any) {
 // with line breaks in the middle.
 func multiLineLog(t *testing.T, output string) {
 	t.Helper()
-	for _, line := range strings.Split(output, "\n") {
+	for line := range strings.SplitSeq(output, "\n") {
 		// `line` may contain % characters here, so we need to format it through
 		// `%s` so that `%` characters don't show up as "MISSING" in the logs.
 		testLog(t, "%s", line)

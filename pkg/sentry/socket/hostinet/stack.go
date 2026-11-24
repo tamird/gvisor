@@ -378,8 +378,8 @@ func getLine(f *os.File, prefix string, withHeader bool) string {
 	data = data[:n]
 
 	prefix = prefix + ":"
-	lines := strings.Split(string(data), "\n")
-	for _, l := range lines {
+	lines := strings.SplitSeq(string(data), "\n")
+	for l := range lines {
 		l = strings.TrimSpace(l)
 		if strings.HasPrefix(l, prefix) {
 			if withHeader {

@@ -325,7 +325,7 @@ func (cf *cgroupSubtreeControl) Write(ctx context.Context, fd *vfs.FileDescripti
 	var enable []kernel.Cgroup2Ctrl
 	var disable []kernel.Cgroup2Ctrl
 
-	for _, ctrl := range strings.Split(str, " ") {
+	for ctrl := range strings.SplitSeq(str, " ") {
 		if ctrl == "" {
 			continue
 		}

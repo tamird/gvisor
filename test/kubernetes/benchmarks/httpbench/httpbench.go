@@ -363,7 +363,7 @@ func getMeasurements(data string, onlyReport []MetricType, wantPercentiles []int
 	var metricValues []benchmetric.MetricValue
 	totalRequests := 0
 	totalRequestsFound := false
-	for _, line := range strings.Split(data, "\n") {
+	for line := range strings.SplitSeq(data, "\n") {
 		if match := wrk2TotalRequestsRe.FindStringSubmatch(line); match != nil {
 			gotRequests, err := strconv.ParseInt(strings.ReplaceAll(match[1], ",", ""), 10, 64)
 			if err != nil {

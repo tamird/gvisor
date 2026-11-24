@@ -303,7 +303,7 @@ func expandSlice(slice string) string {
 	if sliceName == "-" {
 		return "/"
 	}
-	for _, component := range strings.Split(sliceName, "-") {
+	for component := range strings.SplitSeq(sliceName, "-") {
 		// Append the component to the path and to the prefix.
 		path += "/" + prefix + component + suffix
 		prefix += component + "-"
@@ -328,7 +328,7 @@ func validSlice(slice string) error {
 	if sliceName == "-" {
 		return nil
 	}
-	for _, component := range strings.Split(sliceName, "-") {
+	for component := range strings.SplitSeq(sliceName, "-") {
 		// test--a.slice isn't permitted, nor is -test.slice.
 		if component == "" {
 			return fmt.Errorf("%w: %s", ErrInvalidSlice, slice)

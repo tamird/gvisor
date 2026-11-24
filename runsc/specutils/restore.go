@@ -209,7 +209,7 @@ func stripMountOptionsSize(opts string) string {
 		return ""
 	}
 	var kept []string
-	for _, opt := range strings.Split(opts, ",") {
+	for opt := range strings.SplitSeq(opts, ",") {
 		if opt == "" || strings.HasPrefix(opt, "size=") {
 			continue
 		}

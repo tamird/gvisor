@@ -76,7 +76,7 @@ func run() error {
 
 func parsePodLabels() *metav1.LabelSelector {
 	rv := &metav1.LabelSelector{}
-	for _, s := range strings.Split(*podLabels, ",") {
+	for s := range strings.SplitSeq(*podLabels, ",") {
 		req := metav1.LabelSelectorRequirement{
 			Key:      strings.TrimSpace(s),
 			Operator: "Exists",

@@ -857,7 +857,7 @@ func IsDebugCommand(conf *config.Config, command string) bool {
 		filter = filter[1:]
 		rv = false
 	}
-	for _, cmd := range strings.Split(filter, ",") {
+	for cmd := range strings.SplitSeq(filter, ",") {
 		if cmd == command {
 			return rv
 		}
