@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T20:55:31.712040+00:00",
+    "updatedAt": "2026-11-24T20:57:33.409415+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -61542,8 +61542,8 @@
       "title": "netstack: end a lingering close when the peer acknowledges the FIN",
       "url": "https://github.com/google/gvisor/pull/16787",
       "status": "open",
-      "updatedAt": "2026-11-24T20:51:36.949756+00:00",
-      "summary": "Exact head6869e800 has rexren approval6045704912 and aggregate APPROVED. Native checks, DCO and FirstPass2707 pass, but current main55839 fails; its cause is not yet classified. The historical main55735 pre-command diagnosis does not establish this new run’s cause. Sensitive implementation and performance holds remain.",
+      "updatedAt": "2026-11-24T20:57:33.409415+00:00",
+      "summary": "Exact head6869e800 has Rex approval6045704912 and FirstPass2707 success. Main55839 exhausted three upload attempts before tests: the repository pre-command hook could not find remote ref adios-404. A deleted branch is not independently established; no TCP test or source failure is demonstrated. Sensitive implementation and performance holds remain.",
       "evidence": [
         {
           "label": "Author’s offer to include the tested commit",
@@ -61586,10 +61586,10 @@
         "providerHead": "6869e8002ace5d787ef464938b49ba215fbd1693",
         "mergeable": "MERGEABLE",
         "sourceHead": "6869e8002ace5d787ef464938b49ba215fbd1693",
-        "observedAt": "2026-11-24T20:51:36.949756+00:00",
-        "disposition": "Exact head6869e800 has rexren approval6045704912 and aggregate APPROVED. Native checks, DCO and FirstPass2707 pass, but current main55839 fails; its cause is not yet classified. The historical main55735 pre-command diagnosis does not establish this new run’s cause. Sensitive implementation and performance holds remain.",
-        "nextAction": "Root owns source-bound classification of main55839 through the existing CI owner and subsequent maintainer follow-through. No protected implementation read, unchanged retry, source change, quota assumption or outreach.",
-        "recheckCondition": "Existing CI owner returns the exact current-run diagnosis, or actual source/review/check change.",
+        "observedAt": "2026-11-24T20:57:33.409415+00:00",
+        "disposition": "Exact head6869e800 has Rex approval6045704912 and FirstPass2707 success. Main55839 exhausted three upload attempts before tests: the repository pre-command hook could not find remote ref adios-404. A deleted branch is not independently established; no TCP test or source failure is demonstrated. Sensitive implementation and performance holds remain.",
+        "nextAction": "Root follows the existing hook-remedy integration or a changed author head/provider event. The new bootstrap diagnosis is complete; do not retry unchanged CI, read protected TCP implementation, change foreign source or send outreach.",
+        "recheckCondition": "Actual hook integration, changed author source or provider/check evidence.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16787",
           "https://github.com/google/gvisor/pull/16787#pullrequestreview-6029118218",
@@ -61597,7 +61597,8 @@
           "https://github.com/gvisor/gvisor/pull/17735",
           "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321",
           "https://github.com/google/gvisor/pull/16787#pullrequestreview-6045704912",
-          "https://buildkite.com/gvisor/pipeline/builds/55839"
+          "https://buildkite.com/gvisor/pipeline/builds/55839",
+          "https://buildkite.com/gvisor/pipeline/builds/55839#01a20efa-ce5e-4869-8cef-4743a0da24eb"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
         "curatedAt": "2026-11-18T12:19:41.750038+00:00",
@@ -61672,7 +61673,7 @@
           "reviewsAndGatesPreserved": true
         }
       },
-      "nextStep": "Root owns source-bound classification of main55839 through the existing CI owner and subsequent maintainer follow-through. No protected implementation read, unchanged retry, source change, quota assumption or outreach."
+      "nextStep": "Root follows the existing hook-remedy integration or a changed author head/provider event. The new bootstrap diagnosis is complete; do not retry unchanged CI, read protected TCP implementation, change foreign source or send outreach."
     },
     {
       "id": "branch:hostinet-exit-linger",
@@ -132379,9 +132380,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-24T18:55:51.532284+00:00",
+      "updatedAt": "2026-11-24T20:57:33.409415+00:00",
       "group": "analysis",
-      "summary": "54-commit analyzer series at 26090b334. The full Module-aware NoGo matrix and focused checker/source gates pass on AMD64 and ARM64. The first matched startup category passed scoped stability and comparison checks, without establishing equivalence. Remaining workload and performance qualification, four behavioral targets and prerequisite #17884 remain open.",
+      "summary": "54-commit analyzer series at 26090b334; the full Module-aware NoGo matrix passes 891 validators per ISA, and focused source checks pass. Scoped startup and four Node variants completed matched A/A and A/B. Node C1 has nominal timing/QPS findings (p=.009/.001); none survive global adjustment. Twenty-one remaining disjoint groups are running. Four behavioral targets and prerequisite #17884 remain open.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132753,7 +132754,7 @@
           ]
         }
       ],
-      "nextStep": "Finish remaining required workload and performance qualification, including the full network workload and its stability/comparison gates, then request publication review. benchmark_measurement_review owns those category gates. Targeted network client cleanup is accepted; no network A/B result is established. The full static-matrix gap is closed.",
+      "nextStep": "benchmark_measurement_review owns the 21 remaining disjoint workload groups. Finish required qualification, then request publication review. Completed startup and four-variant Node results do not establish equivalence or full workload clearance.",
       "evidence": [
         {
           "label": "Current reviewed analyzer series",
@@ -133111,7 +133112,7 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T18:55:51.532284+00:00",
+        "observedAt": "2026-11-24T20:57:33.409415+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45338108931",
           "https://github.com/tamird/gvisor/actions/runs/45344645597",
@@ -133169,12 +133170,13 @@
           "https://github.com/tamird/gvisor/actions/runs/45456241172",
           "https://github.com/tamird/gvisor/actions/runs/45456255734",
           "https://github.com/tamird/gvisor/actions/runs/45456834454/artifacts/14952383343",
-          "https://github.com/tamird/gvisor/actions/runs/45456849968/artifacts/14952872436"
+          "https://github.com/tamird/gvisor/actions/runs/45456849968/artifacts/14952872436",
+          "https://github.com/tamird/gvisor/actions/runs/45471808094/artifacts/14959282175"
         ],
         "owner": "root",
-        "disposition": "54-commit analyzer series at 26090b334. The full Module-aware NoGo matrix and focused checker/source gates pass on AMD64 and ARM64. The first matched startup category passed scoped stability and comparison checks, without establishing equivalence. Remaining workload and performance qualification, four behavioral targets and prerequisite #17884 remain open.",
-        "nextAction": "Finish remaining required workload and performance qualification, including the full network workload and its stability/comparison gates, then request publication review. benchmark_measurement_review owns those category gates. Targeted network client cleanup is accepted; no network A/B result is established. The full static-matrix gap is closed.",
-        "recheckCondition": "Actual remaining-workload or cleanup qualification, prerequisite #17884 landing or publication-review milestone. No new series opening question has been asked.",
+        "disposition": "54-commit analyzer series at 26090b334; the full Module-aware NoGo matrix passes 891 validators per ISA, and focused source checks pass. Scoped startup and four Node variants completed matched A/A and A/B. Node C1 has nominal timing/QPS findings (p=.009/.001); none survive global adjustment. Twenty-one remaining disjoint groups are running. Four behavioral targets and prerequisite #17884 remain open.",
+        "nextAction": "benchmark_measurement_review owns the 21 remaining disjoint workload groups. Finish required qualification, then request publication review. Completed startup and four-variant Node results do not establish equivalence or full workload clearance.",
+        "recheckCondition": "Existing owners return remaining matched-workload results, actual behavioral/prerequisite changes or publication-review milestone.",
         "sourceHead": "26090b334cf9c5f4657ec33aef64efc6fa86ef82",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4"
