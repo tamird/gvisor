@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T00:28:40.976210+00:00",
+    "updatedAt": "2026-11-24T00:51:51.157209+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38236,19 +38236,19 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-httpd-upstream-current",
-      "head": "58f8351804a22afcd0bd0fab283b37a8b46ada6e",
+      "head": "0a9681ef9cdaf1a3640c64438d0507351a050fac",
       "title": "Pin upstream Apache test images",
       "url": "https://github.com/google/gvisor/pull/16466",
       "group": "bazel",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:46.312467+00:00",
-      "summary": "Exact-head carzh approval 6031578226 is recorded at 58f835180. Provider remains REVIEW_REQUIRED; no merge or extra review request is inferred. Current main55764 is reported FAILURE and FirstPass2569 PENDING. The main failure cause has not been established by canonical job diagnosis; historical first-pass quota evidence does not classify this newer main run.",
+      "summary": "Source-equivalent rebase 0a9681ef9 and factual notice 7118479997 are delivered and root-verified. Strict range-diff is equal and two final independent context reviews are clear. Current provider head is MERGEABLE, DCO SUCCESS, REVIEW_REQUIRED and auto-merge null; zkoopmans request remains pending. Parent5004 contains the obsolete-hook fix by content; literal909c ancestry is not established. Earlier main upload failures on 58f835180 exhausted three missing-tamird-ref pre-command attempts before builds/tests and are historical. New FirstPass2577 is PENDING; native Gazelle/generate/header/lint are in progress. Prior approvals are historical and are not fresh-head approval credit. The unrelated ARM strict-C++ signalfd header failure remains explicit; affected gates are not a full strict-C++ or runtime/performance claim.",
       "followup": {
-        "owner": "root",
-        "sourceHead": "58f8351804a22afcd0bd0fab283b37a8b46ada6e",
-        "observedAt": "2026-11-24T00:28:40.976210+00:00",
-        "disposition": "Exact-head carzh approval 6031578226 is recorded at 58f835180. Provider remains REVIEW_REQUIRED; no merge or extra review request is inferred. Current main55764 is reported FAILURE and FirstPass2569 PENDING. The main failure cause has not been established by canonical job diagnosis; historical first-pass quota evidence does not classify this newer main run.",
-        "nextAction": "Root retains maintainer/import follow-through. Existing CI owner rbe_parallel_evidence is actively diagnosing the exact current main build; consume its terminal canonical finding at the next normal milestone. No duplicate reader, source failure/quota attribution, retry, outreach or merge is inferred from status alone.",
+        "owner": "root / approved_rebase_queue",
+        "sourceHead": "0a9681ef9cdaf1a3640c64438d0507351a050fac",
+        "observedAt": "2026-11-24T00:51:51.157209+00:00",
+        "disposition": "Source-equivalent rebase 0a9681ef9 and factual notice 7118479997 are delivered and root-verified. Strict range-diff is equal and two final independent context reviews are clear. Current provider head is MERGEABLE, DCO SUCCESS, REVIEW_REQUIRED and auto-merge null; zkoopmans request remains pending. Parent5004 contains the obsolete-hook fix by content; literal909c ancestry is not established. Earlier main upload failures on 58f835180 exhausted three missing-tamird-ref pre-command attempts before builds/tests and are historical. New FirstPass2577 is PENDING; native Gazelle/generate/header/lint are in progress. Prior approvals are historical and are not fresh-head approval credit. The unrelated ARM strict-C++ signalfd header failure remains explicit; affected gates are not a full strict-C++ or runtime/performance claim.",
+        "nextAction": "Rebase, affected qualification and notice delivery are complete. Existing rbe_parallel_evidence owner follows the new-head CI at01:15 and root follows genuine maintainer/import review. No repeat notice, source approval request for this unchanged patch, blind CI retry, merge or duplicate observer.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16466",
           "https://github.com/tamird/gvisor/actions/runs/43013691770/job/130499353612",
@@ -38286,10 +38286,16 @@
           "https://buildkite.com/gvisor/first-pass/builds/1469#01a1ead7-82d4-4d05-bfaa-abfbf1c7b3fc",
           "https://buildkite.com/gvisor/first-pass/builds/1469#01a1ead7-82d5-489a-840a-75aa9fa9004f",
           "https://github.com/google/gvisor/pull/16466#pullrequestreview-6031578226",
-          "https://buildkite.com/gvisor/pipeline/builds/55764"
+          "https://buildkite.com/gvisor/pipeline/builds/55764",
+          "https://github.com/gvisor/gvisor/pull/16466#issuecomment-7118479997",
+          "https://github.com/tamird/gvisor/commit/0a9681ef9cdaf1a3640c64438d0507351a050fac",
+          "https://buildkite.com/gvisor/first-pass/builds/2577",
+          "https://github.com/tamird/gvisor/actions/runs/45298674216",
+          "https://github.com/tamird/gvisor/actions/runs/45298678572",
+          "https://github.com/tamird/gvisor/actions/runs/45298156847"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "rbe_parallel_evidence supplies the exact main-build diagnosis, or actual source/check/review/import change.",
+        "recheckCondition": "Existing CI owner supplies actual new-head terminal results, or substantive review/import/head/base change.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -38338,7 +38344,22 @@
               ]
             }
           }
-        ]
+        ],
+        "providerHead": "0a9681ef9cdaf1a3640c64438d0507351a050fac",
+        "currentSourceCI": {
+          "head": "0a9681ef9cdaf1a3640c64438d0507351a050fac",
+          "state": "Affected qualification passed; native DCO SUCCESS; FirstPass pending and native GHA in progress. The unrelated ARM strict-C++ signalfd header failure remains explicit; affected gates are not a full strict-C++ or runtime/performance claim.",
+          "observedAt": "2026-11-24T00:51:51.157209+00:00",
+          "scope": "Source-owner/root terminal receipt and direct provider confirmations; overall raw API sample remains00:25:20. No saved native metadata artifact is invented.",
+          "evidence": [
+            "https://github.com/gvisor/gvisor/pull/16466#issuecomment-7118479997",
+            "https://github.com/tamird/gvisor/commit/0a9681ef9cdaf1a3640c64438d0507351a050fac",
+            "https://buildkite.com/gvisor/first-pass/builds/2577",
+            "https://github.com/tamird/gvisor/actions/runs/45298674216",
+            "https://github.com/tamird/gvisor/actions/runs/45298678572",
+            "https://github.com/tamird/gvisor/actions/runs/45298156847"
+          ]
+        }
       },
       "evidence": [
         {
@@ -77989,10 +78010,10 @@
       "title": "Build Go source generators and Nogo without cgo",
       "url": "https://github.com/google/gvisor/pull/17104",
       "group": "bazel",
-      "head": "3b771cc65e733609c27485014cfa63afb1a4e850",
+      "head": "ef6f0e2f8c9cd1ca1b2b277261f68ef5509d225e",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:53.479529+00:00",
-      "summary": "Exact-head riverafernando approval 6031282973 is recorded at 3b771cc65. Provider remains REVIEW_REQUIRED; no merge or extra review request is inferred. Current main55762 is reported FAILURE and FirstPass2561 PENDING. The main failure cause has not been established by canonical job diagnosis; historical first-pass quota evidence does not classify this newer main run.",
+      "summary": "Source-equivalent rebase ef6f0e2f8 and factual notice 7118481011 are delivered and root-verified. Strict range-diff is equal and two final independent context reviews are clear. Current provider head is MERGEABLE, DCO SUCCESS, REVIEW_REQUIRED and auto-merge null; no pending review request is recorded. Parent5004 contains the obsolete-hook fix by content; literal909c ancestry is not established. Earlier main upload failures on 3b771cc65 exhausted three missing-tamird-ref pre-command attempts before builds/tests and are historical. New FirstPass2578 is PENDING; native Gazelle/generate/header/lint are in progress. Prior approvals are historical and are not fresh-head approval credit. The unrelated ARM strict-C++ signalfd header failure remains explicit; affected gates are not a full strict-C++ or runtime/performance claim.",
       "evidence": [
         {
           "label": "Standalone five-line change",
@@ -78049,12 +78070,12 @@
         }
       ],
       "followup": {
-        "sourceHead": "3b771cc65e733609c27485014cfa63afb1a4e850",
-        "owner": "root",
-        "nextAction": "Root retains maintainer/import follow-through. Existing CI owner rbe_parallel_evidence is actively diagnosing the exact current main build; consume its terminal canonical finding at the next normal milestone. No duplicate reader, source failure/quota attribution, retry, outreach or merge is inferred from status alone.",
+        "sourceHead": "ef6f0e2f8c9cd1ca1b2b277261f68ef5509d225e",
+        "owner": "root / approved_rebase_queue",
+        "nextAction": "Rebase, affected qualification and notice delivery are complete. Existing rbe_parallel_evidence owner follows the new-head CI at01:15 and root follows genuine maintainer/import review. No repeat notice, source approval request for this unchanged patch, blind CI retry, merge or duplicate observer.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-24T00:28:40.976210+00:00",
-        "recheckCondition": "rbe_parallel_evidence supplies the exact main-build diagnosis, or actual source/check/review/import change.",
+        "observedAt": "2026-11-24T00:51:51.157209+00:00",
+        "recheckCondition": "Existing CI owner supplies actual new-head terminal results, or substantive review/import/head/base change.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17104",
           "https://github.com/tamird/gvisor/commit/37dca4d683f695539ff6c47ea8f661882e588f61",
@@ -78063,7 +78084,13 @@
           "https://buildkite.com/gvisor/first-pass/builds/1534#01a1eae2-df8c-47df-a8f6-8c90efe1ec9b",
           "https://buildkite.com/gvisor/first-pass/builds/1534#01a1eae2-df92-46a8-af3a-4eca708f7aa3",
           "https://github.com/google/gvisor/pull/17104#pullrequestreview-6031282973",
-          "https://buildkite.com/gvisor/pipeline/builds/55762"
+          "https://buildkite.com/gvisor/pipeline/builds/55762",
+          "https://github.com/gvisor/gvisor/pull/17104#issuecomment-7118481011",
+          "https://github.com/tamird/gvisor/commit/ef6f0e2f8c9cd1ca1b2b277261f68ef5509d225e",
+          "https://buildkite.com/gvisor/first-pass/builds/2578",
+          "https://github.com/tamird/gvisor/actions/runs/45298681991",
+          "https://github.com/tamird/gvisor/actions/runs/45298685029",
+          "https://github.com/tamird/gvisor/actions/runs/45298160101"
         ],
         "attentionDispositions": [
           {
@@ -78089,7 +78116,22 @@
             }
           }
         ],
-        "disposition": "Exact-head riverafernando approval 6031282973 is recorded at 3b771cc65. Provider remains REVIEW_REQUIRED; no merge or extra review request is inferred. Current main55762 is reported FAILURE and FirstPass2561 PENDING. The main failure cause has not been established by canonical job diagnosis; historical first-pass quota evidence does not classify this newer main run."
+        "disposition": "Source-equivalent rebase ef6f0e2f8 and factual notice 7118481011 are delivered and root-verified. Strict range-diff is equal and two final independent context reviews are clear. Current provider head is MERGEABLE, DCO SUCCESS, REVIEW_REQUIRED and auto-merge null; no pending review request is recorded. Parent5004 contains the obsolete-hook fix by content; literal909c ancestry is not established. Earlier main upload failures on 3b771cc65 exhausted three missing-tamird-ref pre-command attempts before builds/tests and are historical. New FirstPass2578 is PENDING; native Gazelle/generate/header/lint are in progress. Prior approvals are historical and are not fresh-head approval credit. The unrelated ARM strict-C++ signalfd header failure remains explicit; affected gates are not a full strict-C++ or runtime/performance claim.",
+        "providerHead": "ef6f0e2f8c9cd1ca1b2b277261f68ef5509d225e",
+        "currentSourceCI": {
+          "head": "ef6f0e2f8c9cd1ca1b2b277261f68ef5509d225e",
+          "state": "Affected qualification passed; native DCO SUCCESS; FirstPass pending and native GHA in progress. The unrelated ARM strict-C++ signalfd header failure remains explicit; affected gates are not a full strict-C++ or runtime/performance claim.",
+          "observedAt": "2026-11-24T00:51:51.157209+00:00",
+          "scope": "Source-owner/root terminal receipt and direct provider confirmations; overall raw API sample remains00:25:20. No saved native metadata artifact is invented.",
+          "evidence": [
+            "https://github.com/gvisor/gvisor/pull/17104#issuecomment-7118481011",
+            "https://github.com/tamird/gvisor/commit/ef6f0e2f8c9cd1ca1b2b277261f68ef5509d225e",
+            "https://buildkite.com/gvisor/first-pass/builds/2578",
+            "https://github.com/tamird/gvisor/actions/runs/45298681991",
+            "https://github.com/tamird/gvisor/actions/runs/45298685029",
+            "https://github.com/tamird/gvisor/actions/runs/45298160101"
+          ]
+        }
       },
       "dcoAmendment": {
         "oldHead": "37dca4d683f695539ff6c47ea8f661882e588f61",
