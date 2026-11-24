@@ -333,6 +333,7 @@ jobs:
             ${{ runner.temp }}/bazel-qualification/profile.gz
             ${{ runner.temp }}/bazel-qualification/bazel.log
             ${{ runner.temp }}/bazel-qualification/dependencies.yaml
+            ${{ runner.temp }}/bazel-qualification/artifacts/**
             compile_commands.json
             bazel-out/*/testlogs/**/test.xml
             bazel-out/*/testlogs/**/test.log
