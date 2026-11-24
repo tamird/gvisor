@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T15:57:41.885925+00:00",
+    "updatedAt": "2026-11-24T17:06:51.520893+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -72027,7 +72027,7 @@
       "title": "Keep the MTU on each veth endpoint",
       "url": "https://github.com/google/gvisor/pull/16957",
       "group": "runtime",
-      "summary": "The veth MTU test uses its existing netlink socket to read both endpoints before and after each write. It checks requested values of 3000 and 1460 and verifies the peer keeps its prior MTU. Native Linux passed once in 14 ms; systrap and the save/restore variant passed, with eight actual restores.",
+      "summary": "Unchanged public source f3575cb4e is now natively CONFLICTING. Existing obsolete-hook55555 diagnosis is historical bootstrap evidence, not a target failure. This new veth MTU conflict is an unfinished root-owned obligation under the existing sensitive-source/performance hold.",
       "evidence": [
         {
           "label": "Proposed amendment",
@@ -72067,9 +72067,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "f3575cb4ed538695d0b7936e36662633a38b2b5e",
-        "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Exact public head Pipeline 55555 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure. The veth implementation/syscall source retains its unresolved sensitive-source and performance boundaries; no protected-source work is authorised by this shared failure.",
-        "nextAction": "Root reconciles the existing sensitive-source/performance boundary before any source adaptation. Preserve exact prior approval and evidence; do not probe protected source, retry unchanged CI or create a new human-decision question from bootstrap exposure.",
+        "observedAt": "2026-11-24T17:06:51.520893+00:00",
+        "disposition": "Unchanged public source f3575cb4e is now natively CONFLICTING. Existing obsolete-hook55555 diagnosis is historical bootstrap evidence, not a target failure. This new veth MTU conflict is an unfinished root-owned obligation under the existing sensitive-source/performance hold.",
+        "nextAction": "Root keeps source conflict assessment/adaptation and performance review held under the existing sensitive-feature instruction. Do not read or adapt protected implementation, rebase, test, push, retry CI, send outreach or ask Daybreak again.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16957",
           "https://github.com/tamird/gvisor/commit/fea7e15b6",
@@ -72115,8 +72115,9 @@
           "https://buildkite.com/gvisor/pipeline/builds/55555",
           "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
         ],
-        "mergeable": "MERGEABLE",
-        "recheckCondition": "Actual clearance of the existing source/performance boundary, or a changed provider/head/maintainer event; no automatic rebase."
+        "mergeable": "CONFLICTING",
+        "recheckCondition": "Actual user hold release, head/base/mergeability or substantive external evidence change.",
+        "base": "53e36ddeb73d8176d7ee2c40c5c8afc3b7030cda"
       },
       "refinement": {
         "before": {
@@ -72198,6 +72199,12 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
+      },
+      "nextStep": "Root keeps source conflict assessment/adaptation and performance review held under the existing sensitive-feature instruction. Do not read or adapt protected implementation, rebase, test, push, retry CI, send outreach or ask Daybreak again.",
+      "sourceConflict": {
+        "sourceHead": "f3575cb4ed538695d0b7936e36662633a38b2b5e",
+        "owner": "root",
+        "nextAction": "Root keeps source conflict assessment/adaptation and performance review held under the existing sensitive-feature instruction. Do not read or adapt protected implementation, rebase, test, push, retry CI, send outreach or ask Daybreak again."
       }
     },
     {
@@ -72358,10 +72365,10 @@
       "title": "Report the configured MTU on a bridge",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/e0cbd5ea2de2bd79901bdcea796e25eeaa2acdba",
-      "status": "Delivered as #16961",
+      "status": "Landed",
       "head": "e0cbd5ea2de2bd79901bdcea796e25eeaa2acdba",
       "updatedAt": "2026-11-17T19:04:51.199074+00:00",
-      "summary": "Relkochta performed the same-patch maintainer rebase to e0cbd5ea at20:53:59; exact-head relkochta/Manning approvals are verified. Range-diff is equal and stable patch ID is12f4507dc6cd62f761f7876c3fbdc71b8ccde087; old qualification is historical because the base changed. First Pass2514 passed. Main55741 is CANCELED: Java shard8 exhausted three pre-command apt/dpkg-lock attempts before tests; FreeBSD fetch was terminated by cancellation. Complete hostnet/KVM/posture retry chains passed. No failed test target or source failure is established.",
+      "summary": "PR16961 merged the exact observed source e0cbd5ea2 as native commit53e36ddeb73d8176d7ee2c40c5c8afc3b7030cda at16:59:59UTC. Native source lifecycle and the predecessor branch open-PR wait are fulfilled. No dependency edge or additional branch alias is recorded; historical qualification retains its source scope.",
       "evidence": [
         {
           "label": "BridgeAddUnnamed on native Linux, stock gVisor and corrected gVisor",
@@ -72387,10 +72394,10 @@
       "followup": {
         "sourceHead": "e0cbd5ea2de2bd79901bdcea796e25eeaa2acdba",
         "owner": "root",
-        "nextAction": "Follow a replacement run/head event or verified package-setup recovery through existing17854/ci-buildkite-apt-lock ownership. The maintainer’s disable-updates plan is not deployed proof; do not blindly retry, amend source, repeat outreach or re-verify the fulfilled same-patch comparison.",
+        "nextAction": "No open-PR/import wait remains. Root rechecks only an actual landing/source discrepancy; no ref deletion, retry, reply or new child work follows.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-23T22:28:52.692599+00:00",
-        "recheckCondition": "Actual replacement/current-head CI, verified package-setup recovery or new source/reviewer event.",
+        "observedAt": "2026-11-24T17:06:51.520893+00:00",
+        "recheckCondition": "Actual source/landing discrepancy.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/16961",
           "https://github.com/tamird/gvisor/commit/735639f573bb921490150d0c722414c124119728",
@@ -72398,10 +72405,11 @@
           "https://github.com/gvisor/gvisor/commit/e0cbd5ea2de2bd79901bdcea796e25eeaa2acdba",
           "https://buildkite.com/gvisor/pipeline/builds/55741",
           "https://buildkite.com/gvisor/first-pass/builds/2514",
-          "https://buildkite.com/gvisor/pipeline/builds/55741#01a20a3a-3dfa-4936-bc7a-1c82d48bae3e"
+          "https://buildkite.com/gvisor/pipeline/builds/55741#01a20a3a-3dfa-4936-bc7a-1c82d48bae3e",
+          "https://github.com/gvisor/gvisor/commit/53e36ddeb73d8176d7ee2c40c5c8afc3b7030cda"
         ],
         "providerHead": "e0cbd5ea2de2bd79901bdcea796e25eeaa2acdba",
-        "disposition": "Relkochta performed the same-patch maintainer rebase to e0cbd5ea at20:53:59; exact-head relkochta/Manning approvals are verified. Range-diff is equal and stable patch ID is12f4507dc6cd62f761f7876c3fbdc71b8ccde087; old qualification is historical because the base changed. First Pass2514 passed. Main55741 is CANCELED: Java shard8 exhausted three pre-command apt/dpkg-lock attempts before tests; FreeBSD fetch was terminated by cancellation. Complete hostnet/KVM/posture retry chains passed. No failed test target or source failure is established."
+        "disposition": "PR16961 merged the exact observed source e0cbd5ea2 as native commit53e36ddeb73d8176d7ee2c40c5c8afc3b7030cda at16:59:59UTC. Native source lifecycle and the predecessor branch open-PR wait are fulfilled. No dependency edge or additional branch alias is recorded; historical qualification retains its source scope."
       },
       "dcoAmendment": {
         "oldHead": "735639f573bb921490150d0c722414c124119728",
@@ -72424,7 +72432,8 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
-      }
+      },
+      "nextStep": "No open-PR/import wait remains. Root rechecks only an actual landing/source discrepancy; no ref deletion, retry, reply or new child work follows."
     },
     {
       "id": "pr:14101",
@@ -92743,13 +92752,13 @@
       "repo": "google/gvisor",
       "number": 17264,
       "ref": "botir/tcp-msg-more-upstream",
-      "head": "0f31a644c9bbc723443c46dfa5a99d2d2508c290",
+      "head": "22401767ad9317e22aaebb118d3f0dafd031d6a1",
       "title": "Honor MSG_MORE on TCP writes",
       "url": "https://github.com/google/gvisor/pull/17264",
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-19T16:20:03.380488+00:00",
-      "summary": "Foreign author botirkhaltaev advanced the source to 0f31a644c, native MERGEABLE/REVIEW_REQUIRED. Exact-head FirstPass2646 and GitHub validation passed. The existing capture-timeout finding4673268482 became outdated; no new feedback text or verified resolution is inferred. Root current-source review remains unfinished under the confirmed sensitive-feature hold; prior source reviews do not cover this head.",
+      "summary": "Foreign author source is now 22401767a, natively MERGEABLE/REVIEW_REQUIRED. Prior source reviews, functional results and external performance claims do not qualify this changed head. Root current-source reviewer follow-through remains unfinished under the confirmed sensitive-feature hold; the foreign author retains implementation ownership. Native Go45441491513 failed //:gopath analysis because proxy.golang.org returned an HTTP/2 INTERNAL_ERROR fetching containerd/cgroups/v3 v3.0.5; no target-source regression is established. FirstPass2678 is pending.",
       "evidence": [
         {
           "label": "Timer restore",
@@ -92811,13 +92820,13 @@
       "followup": {
         "owner": "root",
         "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
-        "providerHead": "0f31a644c9bbc723443c46dfa5a99d2d2508c290",
+        "providerHead": "22401767ad9317e22aaebb118d3f0dafd031d6a1",
         "mergeable": "MERGEABLE",
-        "sourceHead": "0f31a644c9bbc723443c46dfa5a99d2d2508c290",
-        "observedAt": "2026-11-24T12:40:36.478776+00:00",
-        "disposition": "Foreign author botirkhaltaev advanced the source to 0f31a644c, native MERGEABLE/REVIEW_REQUIRED. Exact-head FirstPass2646 and GitHub validation passed. The existing capture-timeout finding4673268482 became outdated; no new feedback text or verified resolution is inferred. Root current-source review remains unfinished under the confirmed sensitive-feature hold; prior source reviews do not cover this head.",
-        "nextAction": "Root retains current-source reviewer follow-through under the sensitive hold; the foreign author owns implementation and timeout-feedback resolution. Do not transfer old approval, read held source, run tests/timings, send outreach or ask Daybreak again.",
-        "recheckCondition": "Actual new author evidence/source, current-head review event or user releases the sensitive-feature hold.",
+        "sourceHead": "22401767ad9317e22aaebb118d3f0dafd031d6a1",
+        "observedAt": "2026-11-24T17:06:51.520893+00:00",
+        "disposition": "Foreign author source is now 22401767a, natively MERGEABLE/REVIEW_REQUIRED. Prior source reviews, functional results and external performance claims do not qualify this changed head. Root current-source reviewer follow-through remains unfinished under the confirmed sensitive-feature hold; the foreign author retains implementation ownership. Native Go45441491513 failed //:gopath analysis because proxy.golang.org returned an HTTP/2 INTERNAL_ERROR fetching containerd/cgroups/v3 v3.0.5; no target-source regression is established. FirstPass2678 is pending.",
+        "nextAction": "Root retains current-source review under the sensitive hold. Follow actual author/provider evidence without protected source reads, tests, timings, foreign edits, duplicate outreach or transfer of old-head approval. No unchanged CI retry.",
+        "recheckCondition": "Actual new author/provider evidence, changed source/base or user releases the hold.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17264",
           "https://github.com/gvisor/gvisor/commit/e5f0f6f7fc500b646b4a0dbd738f142e1a9032a2",
@@ -92842,7 +92851,8 @@
           "https://github.com/google/gvisor/pull/17264#issuecomment-7113425267",
           "https://github.com/google/gvisor/pull/17264#discussion_r4673268482",
           "https://github.com/google/gvisor/commit/b98b4d2f6f7d6f1381cf4b0305ce3d4b8a967554",
-          "https://buildkite.com/gvisor/first-pass/builds/2646"
+          "https://buildkite.com/gvisor/first-pass/builds/2646",
+          "https://github.com/gvisor/gvisor/actions/runs/45441491513/job/138613530223"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
         "curatedAt": "2026-11-19T16:20:03.380488+00:00",
@@ -92864,24 +92874,15 @@
           "sha256": "37017384ce8cc638265d4feb82b08cc0c404b70ec5c8465a7a78d7665f134c2d"
         },
         "currentHeadCI": {
-          "head": "0f31a644c9bbc723443c46dfa5a99d2d2508c290",
-          "state": "SUCCESS",
+          "head": "22401767ad9317e22aaebb118d3f0dafd031d6a1",
+          "state": "FAILURE",
           "evidence": [
-            "https://github.com/gvisor/gvisor/actions/runs/45385515070/job/138415266514",
-            "https://github.com/gvisor/gvisor/actions/runs/45385515165/job/138415267407",
-            "https://github.com/gvisor/gvisor/actions/runs/45385515339/job/138415268489",
-            "https://github.com/gvisor/gvisor/actions/runs/45385515228/job/138415267271",
-            "https://github.com/gvisor/gvisor/actions/runs/45385515117/job/138415266900",
-            "https://github.com/gvisor/gvisor/actions/runs/45385515089/job/138415267069",
-            "https://github.com/gvisor/gvisor/actions/runs/45385515339/job/138415271093",
-            "https://github.com/gvisor/gvisor/actions/runs/45385515339/job/138415271345",
-            "https://github.com/cncf/dco2",
-            "https://buildkite.com/gvisor/first-pass/builds/2646"
+            "https://github.com/gvisor/gvisor/actions/runs/45441491513/job/138613530223"
           ],
-          "limits": "Exact-current-head native validation success; it does not qualify sensitive source review, broad workloads or performance."
+          "limits": "Dependency ZIP transport failed during //:gopath analysis; FirstPass pending, no target-source failure established."
         }
       },
-      "nextStep": "Root retains current-source reviewer follow-through under the sensitive hold; the foreign author owns implementation and timeout-feedback resolution. Do not transfer old approval, read held source, run tests/timings, send outreach or ask Daybreak again."
+      "nextStep": "Root retains current-source review under the sensitive hold. Follow actual author/provider evidence without protected source reads, tests, timings, foreign edits, duplicate outreach or transfer of old-head approval. No unchanged CI retry."
     },
     {
       "id": "pr:17265",
@@ -92889,13 +92890,13 @@
       "repo": "google/gvisor",
       "number": 17265,
       "ref": "botir/gro-checksum-upstream",
-      "head": "34a1f003d1008f2180f0d31f0545a3ca727b42fc",
+      "head": "6bbb910969fb2d87e1333c1df4e937f8545563a1",
       "title": "Preserve software-validated receive checksums",
       "url": "https://github.com/google/gvisor/pull/17265",
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-19T16:20:03.380488+00:00",
-      "summary": "Foreign author head changed from d5aabcb91 to 34a1f003d. Root’s unfinished current-source review remains sensitive-held. Prior review, source qualification and external performance claims do not transfer to this changed head; the author retains implementation ownership. Ayush’s external APPROVED review6015779953 binds the new head, with current checks successful; this is not our approval or release of the hold.",
+      "summary": "Foreign author source is now 6bbb91096, natively MERGEABLE/REVIEW_REQUIRED. Prior source reviews, functional results and external performance claims do not qualify this changed head. Root current-source reviewer follow-through remains unfinished under the confirmed sensitive-feature hold; the foreign author retains implementation ownership. The existing external review record now refers to this head; this is not our approval or release of the hold.",
       "evidence": [
         {
           "label": "IPv4 and IPv6 segment input and reset count",
@@ -92905,13 +92906,13 @@
       "followup": {
         "owner": "root",
         "currentStateObservedAt": "2026-11-22T21:44:27.177935+00:00",
-        "providerHead": "34a1f003d1008f2180f0d31f0545a3ca727b42fc",
+        "providerHead": "6bbb910969fb2d87e1333c1df4e937f8545563a1",
         "mergeable": "MERGEABLE",
-        "sourceHead": "34a1f003d1008f2180f0d31f0545a3ca727b42fc",
-        "observedAt": "2026-11-23T17:11:54.720473+00:00",
-        "disposition": "Foreign author head changed from d5aabcb91 to 34a1f003d. Root’s unfinished current-source review remains sensitive-held. Prior review, source qualification and external performance claims do not transfer to this changed head; the author retains implementation ownership. Ayush’s external APPROVED review6015779953 binds the new head, with current checks successful; this is not our approval or release of the hold.",
-        "nextAction": "Keep current-source review and sensitive work held. Root follows actual author/provider evidence without held implementation reads, tests, benchmarks, foreign source edits, duplicate outreach or approval transfer.",
-        "recheckCondition": "Actual new author/provider evidence, head/base change or user release of the unrelated sensitive-feature hold.",
+        "sourceHead": "6bbb910969fb2d87e1333c1df4e937f8545563a1",
+        "observedAt": "2026-11-24T17:06:51.520893+00:00",
+        "disposition": "Foreign author source is now 6bbb91096, natively MERGEABLE/REVIEW_REQUIRED. Prior source reviews, functional results and external performance claims do not qualify this changed head. Root current-source reviewer follow-through remains unfinished under the confirmed sensitive-feature hold; the foreign author retains implementation ownership. The existing external review record now refers to this head; this is not our approval or release of the hold.",
+        "nextAction": "Root retains current-source review under the sensitive hold. Follow actual author/provider evidence without protected source reads, tests, timings, foreign edits, duplicate outreach or transfer of old-head approval. No unchanged CI retry.",
+        "recheckCondition": "Actual new author/provider evidence, changed source/base or user releases the hold.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17265",
           "https://github.com/google/gvisor/commit/e12bd9b418c580df05fe4abd323c2b4c8fea4193",
@@ -92949,7 +92950,8 @@
           ],
           "limits": "Native provider context only; no current-source review or broad-workload qualification."
         }
-      }
+      },
+      "nextStep": "Root retains current-source review under the sensitive hold. Follow actual author/provider evidence without protected source reads, tests, timings, foreign edits, duplicate outreach or transfer of old-head approval. No unchanged CI retry."
     },
     {
       "id": "branch:fuse-create-capability",
@@ -99926,7 +99928,7 @@
       "group": "tests",
       "status": "open",
       "updatedAt": "2026-11-24T06:27:10.701611+00:00",
-      "summary": "Current f6fa main55752 is terminal FAILED with the known Mac cancellation/fetch chain. Across11 attempts on different agents, six passed gopath then stopped logging during local-origin Go history fetch; one timed out after55 minutes. Final output-base lock/cancel lacks PID-to-command, progress and cancellation data. No demonstrated PTY source failure or identified single lock cause.",
+      "summary": "Unchanged published source f6fa027fb has a new exact-head relkochta approval6043441812 and native APPROVED/MERGEABLE status. Replacement main55820 is pending. The earlier terminal Mac fetch/lock/cancellation chain remains historical with its missing agent-data limits; it is not the outcome of this replacement run.",
       "evidence": [
         {
           "label": "Published single-commit revision",
@@ -99940,10 +99942,10 @@
       "followup": {
         "sourceHead": "f6fa027fbfaa28e930d3a288c3a78e9d35b53738",
         "owner": "root",
-        "nextAction": "Root advances the separately reviewed Go-export proposal at issue #17832. The original Mac lock/cancellation origin remains an external agent-data blocker; the proposal does not establish that cause or authorize an unchanged retry.",
+        "nextAction": "Root follows the replacement main55820 terminal state and actual maintainer/landing events on the normal sweep. No additional watcher, unchanged retry, duplicate review request or merge action is authorized.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-24T04:47:08.376554+00:00",
-        "recheckCondition": "Actual Go-export delivery, agent progress/cancellation/lock evidence, replacement run or substantive source/review/import event.",
+        "observedAt": "2026-11-24T17:06:51.520893+00:00",
+        "recheckCondition": "Actual replacement-run terminal result, new reviewer/landing or source/base event.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17484",
           "https://github.com/tamird/gvisor/commit/8a64c10e33211d4e255aa6ad43d8131f344558d4",
@@ -99959,7 +99961,9 @@
           "https://buildkite.com/gvisor/pipeline/builds/55739#01a20a32-1ffd-4ccf-97d3-b2ad4f78eea7",
           "https://github.com/google/gvisor/pull/17484#issuecomment-7115536743",
           "https://buildkite.com/gvisor/pipeline/builds/55752",
-          "https://github.com/tamird/gvisor/commit/f8500dffed4bace8841b900232beb6fd19740cd7"
+          "https://github.com/tamird/gvisor/commit/f8500dffed4bace8841b900232beb6fd19740cd7",
+          "https://github.com/gvisor/gvisor/pull/17484#pullrequestreview-6043441812",
+          "https://buildkite.com/gvisor/pipeline/builds/55820"
         ],
         "attentionDispositions": [
           {
@@ -99985,7 +99989,7 @@
           }
         ],
         "providerHead": "f6fa027fbfaa28e930d3a288c3a78e9d35b53738",
-        "disposition": "Current f6fa main55752 is terminal FAILED with the known Mac cancellation/fetch chain. Across11 attempts on different agents, six passed gopath then stopped logging during local-origin Go history fetch; one timed out after55 minutes. Final output-base lock/cancel lacks PID-to-command, progress and cancellation data. No demonstrated PTY source failure or identified single lock cause."
+        "disposition": "Unchanged published source f6fa027fb has a new exact-head relkochta approval6043441812 and native APPROVED/MERGEABLE status. Replacement main55820 is pending. The earlier terminal Mac fetch/lock/cancellation chain remains historical with its missing agent-data limits; it is not the outcome of this replacement run."
       },
       "dcoAmendment": {
         "oldHead": "8a64c10e33211d4e255aa6ad43d8131f344558d4",
@@ -100009,7 +100013,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Root advances the separately reviewed Go-export proposal at issue #17832. The original Mac lock/cancellation origin remains an external agent-data blocker; the proposal does not establish that cause or authorize an unchanged retry.",
+      "nextStep": "Root follows the replacement main55820 terminal state and actual maintainer/landing events on the normal sweep. No additional watcher, unchanged retry, duplicate review request or merge action is authorized.",
       "recheckCondition": "Actual Go-export delivery, agent progress/cancellation/lock evidence, replacement run or substantive source/review/import event."
     },
     {
@@ -100626,11 +100630,11 @@
       "repo": "google/gvisor",
       "number": 17374,
       "ref": "botir/pgalloc-reference-accounting",
-      "head": "a8107e23ece0cf1f5152e2f4da4fb5e6cba0c7ea",
+      "head": "d461541e18fbb43999c7656ebddb85ecdb0b6a2f",
       "title": "Separate pgalloc sharing counts from occupancy",
       "url": "https://github.com/google/gvisor/pull/17374",
       "status": "open",
-      "summary": "Current source a8107e23e is MERGEABLE with no new review in this snapshot. Prior 4350 source-bound test failures, quota evidence and external performance reports remain historical and do not establish this changed head’s outcome. The foreign author owns repair/classification; root current-source review remains sensitive-held.",
+      "summary": "Foreign author source is now d461541e1, natively MERGEABLE/REVIEW_REQUIRED. Prior source reviews, functional results and external performance claims do not qualify this changed head. Root current-source reviewer follow-through remains unfinished under the confirmed sensitive-feature hold; the foreign author retains implementation ownership.",
       "updatedAt": "2026-11-19T16:20:03.380488+00:00",
       "evidence": [
         {
@@ -100689,10 +100693,10 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "a8107e23ece0cf1f5152e2f4da4fb5e6cba0c7ea",
-        "observedAt": "2026-11-23T23:26:26.059838+00:00",
-        "disposition": "Current source a8107e23e is MERGEABLE with no new review in this snapshot. Prior 4350 source-bound test failures, quota evidence and external performance reports remain historical and do not establish this changed head’s outcome. The foreign author owns repair/classification; root current-source review remains sensitive-held.",
-        "nextAction": "Root retains current-source reviewer follow-through under the confirmed sensitive-work hold. The foreign author retains implementation ownership. Await actual author evidence or user hold release; no protected source read, tests, timings, retry, outreach or transfer of old-head approval.",
+        "sourceHead": "d461541e18fbb43999c7656ebddb85ecdb0b6a2f",
+        "observedAt": "2026-11-24T17:06:51.520893+00:00",
+        "disposition": "Foreign author source is now d461541e1, natively MERGEABLE/REVIEW_REQUIRED. Prior source reviews, functional results and external performance claims do not qualify this changed head. Root current-source reviewer follow-through remains unfinished under the confirmed sensitive-feature hold; the foreign author retains implementation ownership.",
+        "nextAction": "Root retains current-source review under the sensitive hold. Follow actual author/provider evidence without protected source reads, tests, timings, foreign edits, duplicate outreach or transfer of old-head approval. No unchanged CI retry.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17374#discussion_r4545607204",
           "https://github.com/google/gvisor/pull/17374#discussion_r4576254625",
@@ -100714,7 +100718,7 @@
           "https://buildkite.com/gvisor/first-pass/builds/2428#01a208b9-9eae-46bd-9f0d-c6bd2bac97aa",
           "https://github.com/google/gvisor/commit/a8107e23ece0cf1f5152e2f4da4fb5e6cba0c7ea"
         ],
-        "recheckCondition": "Actual author source/results, substantive external review/check event or user hold release.",
+        "recheckCondition": "Actual new author/provider evidence, changed source/base or user releases the hold.",
         "incomingReview": {
           "repo": "google/gvisor",
           "number": 17374,
@@ -100764,7 +100768,7 @@
           ],
           "limits": "Attempt1 actual target timeout/failure, cause unclassified; attempt2 pre-agent daily quota. No source-cause or broad-workload qualification claim."
         },
-        "providerHead": "a8107e23ece0cf1f5152e2f4da4fb5e6cba0c7ea",
+        "providerHead": "d461541e18fbb43999c7656ebddb85ecdb0b6a2f",
         "mergeable": "MERGEABLE"
       },
       "reviewWatch": {
@@ -100782,7 +100786,7 @@
           }
         ]
       },
-      "nextStep": "Root retains current-source reviewer follow-through under the confirmed sensitive-work hold. The foreign author retains implementation ownership. Await actual author evidence or user hold release; no protected source read, tests, timings, retry, outreach or transfer of old-head approval."
+      "nextStep": "Root retains current-source review under the sensitive hold. Follow actual author/provider evidence without protected source reads, tests, timings, foreign edits, duplicate outreach or transfer of old-head approval. No unchanged CI retry."
     },
     {
       "id": "pr:16485",
@@ -122240,7 +122244,7 @@
       "status": "active",
       "owner": "root",
       "updatedAt": "2026-11-23T22:28:52.692599+00:00",
-      "summary": "The due native-first guard found no newer/live native delivery. Sole snapshot-only fallback45430212258 succeeded with outreach disabled and delivered API 2026-11-24T15:54:40.446048+00:00. Native scheduler-side delivery remains unknown; the active default-branch cron has no demonstrated configuration defect or freshness/fallback suppression.",
+      "summary": "The due native-first guard found no newer/live native delivery. Sole snapshot-only fallback45443163776 succeeded on its failed-job recovery after the reviewed fixture fix with outreach disabled and delivered API 2026-11-24T17:03:38.747135+00:00. Native scheduler-side delivery remains unknown; the active default-branch cron has no demonstrated configuration defect or freshness/fallback suppression.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122483,7 +122487,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground/active-goal supervision owns the next native-first guard 16:54:40 UTC and deadline 17:24:40. Reuse a fresh/live native generation before at most one fallback. Preserve the60/90-minute policy and two-hour UI threshold; no reset, new scheduler or operator outreach.",
+      "nextStep": "Root foreground/active-goal supervision owns the next native-first guard 18:03:38 UTC and deadline 18:33:38. Reuse a fresh/live native generation before at most one fallback. Preserve the60/90-minute policy and two-hour UI threshold; no reset, new scheduler or operator outreach.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122617,11 +122621,12 @@
           "https://github.com/tamird/gvisor/actions/runs/45394813634",
           "https://github.com/tamird/gvisor/actions/runs/45405557424",
           "https://github.com/tamird/gvisor/actions/runs/45417195867",
-          "https://github.com/tamird/gvisor/actions/runs/45430212258"
+          "https://github.com/tamird/gvisor/actions/runs/45430212258",
+          "https://github.com/tamird/gvisor/actions/runs/45443163776"
         ],
-        "observedAt": "2026-11-24T15:56:00.479099+00:00",
-        "disposition": "The due native-first guard found no newer/live native delivery. Sole snapshot-only fallback45430212258 succeeded with outreach disabled and delivered API 2026-11-24T15:54:40.446048+00:00. Native scheduler-side delivery remains unknown; the active default-branch cron has no demonstrated configuration defect or freshness/fallback suppression.",
-        "nextAction": "Root foreground/active-goal supervision owns the next native-first guard 16:54:40 UTC and deadline 17:24:40. Reuse a fresh/live native generation before at most one fallback. Preserve the60/90-minute policy and two-hour UI threshold; no reset, new scheduler or operator outreach.",
+        "observedAt": "2026-11-24T17:04:41.818848+00:00",
+        "disposition": "The due native-first guard found no newer/live native delivery. Sole snapshot-only fallback45443163776 succeeded on its failed-job recovery after the reviewed fixture fix with outreach disabled and delivered API 2026-11-24T17:03:38.747135+00:00. Native scheduler-side delivery remains unknown; the active default-branch cron has no demonstrated configuration defect or freshness/fallback suppression.",
+        "nextAction": "Root foreground/active-goal supervision owns the next native-first guard 18:03:38 UTC and deadline 18:33:38. Reuse a fresh/live native generation before at most one fallback. Preserve the60/90-minute policy and two-hour UI threshold; no reset, new scheduler or operator outreach.",
         "recheckCondition": "Actual fresh/live native delivery, substantive external event or the next due guard.",
         "owner": "root"
       }
