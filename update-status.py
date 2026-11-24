@@ -160,7 +160,7 @@ def graphql(query: str, variables: dict[str, object] | None = None, *,
                 r"Please include `[0-9a-fA-F:]+` when reporting this issue\.", diagnostic
             ) or any(error in diagnostic for error in (
                 "net/http: TLS handshake timeout", "unexpected EOF", "gh: HTTP 499",
-                "i/o timeout", "connection reset by peer", "gh: HTTP 502", "gh: HTTP 504",
+                "i/o timeout", "connection reset by peer", "gh: HTTP 502", "gh: HTTP 503", "gh: HTTP 504",
             ))
             if attempt == 0 and requests < limit and interrupted:
                 print("GitHub transport interrupted; retrying once within the request cap", file=sys.stderr)

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T18:50:04.549616+00:00",
+    "updatedAt": "2026-11-24T18:55:51.532284+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -99936,8 +99936,8 @@
       "url": "https://github.com/google/gvisor/pull/17484",
       "group": "tests",
       "status": "merged",
-      "updatedAt": "2026-11-24T18:50:04.549616+00:00",
-      "summary": "Native #17484 is merged at 18:38:05 UTC as e8b720ea6, from maintainer-updated head57eccb849. Current native validation, FirstPass2689 and main55825 passed. The upstream PR wait is fulfilled. Prior f6fa qualification remains source-bound until the existing owner completes the exact landing/alias/dependency comparison.",
+      "updatedAt": "2026-11-24T18:53:12.775296+00:00",
+      "summary": "Merged as e8b720ea6 from head57eccb849. The source owner verified identical full trees and parents for the head and merge, strict patch equivalence to the delivered f6fa rebase, and no remaining alias, import or dependent obligation. Current native checks, FirstPass2689 and main55825 passed; earlier qualification remains historical and source-scoped.",
       "evidence": [
         {
           "label": "Published single-commit revision",
@@ -99950,11 +99950,11 @@
       ],
       "followup": {
         "sourceHead": "57eccb8495c241c967d9b1522a9e41263225e36b",
-        "owner": "approved_rebase_queue / root",
-        "nextAction": "approved_rebase_queue / root verifies the exact delivered-source correspondence and existing dependent obligations; retain old Mac setup/cancellation evidence as historical. No retry, source amendment, merge command or outreach follows.",
+        "owner": "root",
+        "nextAction": "Complete. No source, review, import or dependency action remains. Retain the landing and prior CI evidence; reopen only for an actual discrepancy.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-24T18:50:04.549616+00:00",
-        "recheckCondition": "Owner returns exact landing/alias/dependency proof or an actual discrepancy.",
+        "observedAt": "2026-11-24T18:53:12.775296+00:00",
+        "recheckCondition": "Actual landing/source discrepancy; no periodic CI watch or retry.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17484",
           "https://github.com/tamird/gvisor/commit/8a64c10e33211d4e255aa6ad43d8131f344558d4",
@@ -100001,7 +100001,7 @@
           }
         ],
         "providerHead": "57eccb8495c241c967d9b1522a9e41263225e36b",
-        "disposition": "Native #17484 is merged at 18:38:05 UTC as e8b720ea6, from maintainer-updated head57eccb849. Current native validation, FirstPass2689 and main55825 passed. The upstream PR wait is fulfilled. Prior f6fa qualification remains source-bound until the existing owner completes the exact landing/alias/dependency comparison."
+        "disposition": "Merged as e8b720ea6 from head57eccb849. The source owner verified identical full trees and parents for the head and merge, strict patch equivalence to the delivered f6fa rebase, and no remaining alias, import or dependent obligation. Current native checks, FirstPass2689 and main55825 passed; earlier qualification remains historical and source-scoped."
       },
       "dcoAmendment": {
         "oldHead": "8a64c10e33211d4e255aa6ad43d8131f344558d4",
@@ -100025,7 +100025,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "approved_rebase_queue / root verifies the exact delivered-source correspondence and existing dependent obligations; retain old Mac setup/cancellation evidence as historical. No retry, source amendment, merge command or outreach follows.",
+      "nextStep": "Complete. No source, review, import or dependency action remains. Retain the landing and prior CI evidence; reopen only for an actual discrepancy.",
       "recheckCondition": "Actual Go-export delivery, agent progress/cancellation/lock evidence, replacement run or substantive source/review/import event."
     },
     {
@@ -122424,7 +122424,7 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-24T18:50:04.549616+00:00",
+      "updatedAt": "2026-11-24T18:55:51.532284+00:00",
       "summary": "The due native-first guard found no newer/live scheduled delivery. The single snapshot-only fallback 45460996764 completed on its failed-job recovery after a provider HTTP503, publishing API observations at 18:46:20 UTC. The first attempt published no snapshot; tests had passed. No new collector was dispatched.",
       "findings": [
         {
@@ -122668,7 +122668,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground supervision owns the next native-first guard at 19:46:20 UTC, deadline 20:16:20. Reuse an actual fresh/live native generation before at most one existing fallback. The bounded read helper omits503 from its existing retry list; a narrow correction is being prepared separately.",
+      "nextStep": "Root foreground supervision owns the next native-first guard at 19:46:20 UTC, deadline 20:16:20. Reuse an actual fresh/live native generation before at most one existing fallback. The reviewed read helper now retries an initial HTTP503 once within its unchanged request budget and two-attempt limit; no new collection is needed to publish this repair.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122807,10 +122807,10 @@
           "https://github.com/tamird/gvisor/actions/runs/45449232722",
           "https://github.com/tamird/gvisor/actions/runs/45460996764"
         ],
-        "observedAt": "2026-11-24T18:50:04.549616+00:00",
+        "observedAt": "2026-11-24T18:55:51.532284+00:00",
         "disposition": "The due native-first guard found no newer/live scheduled delivery. The single snapshot-only fallback 45460996764 completed on its failed-job recovery after a provider HTTP503, publishing API observations at 18:46:20 UTC. The first attempt published no snapshot; tests had passed. No new collector was dispatched.",
-        "nextAction": "Root foreground supervision owns the next native-first guard at 19:46:20 UTC, deadline 20:16:20. Reuse an actual fresh/live native generation before at most one existing fallback. The bounded read helper omits503 from its existing retry list; a narrow correction is being prepared separately.",
-        "recheckCondition": "Actual fresh/live native delivery, next due guard or the reviewed helper correction.",
+        "nextAction": "Root foreground supervision owns the next native-first guard at 19:46:20 UTC, deadline 20:16:20. Reuse an actual fresh/live native generation before at most one existing fallback. The reviewed read helper now retries an initial HTTP503 once within its unchanged request budget and two-attempt limit; no new collection is needed to publish this repair.",
+        "recheckCondition": "Actual fresh/live native delivery or next due guard.",
         "owner": "root"
       }
     },
@@ -132336,7 +132336,7 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-24T18:43:30.023486+00:00",
+      "updatedAt": "2026-11-24T18:55:51.532284+00:00",
       "group": "analysis",
       "summary": "54-commit analyzer series at 26090b334. The full Module-aware NoGo matrix and focused checker/source gates pass on AMD64 and ARM64. The first matched startup category passed scoped stability and comparison checks, without establishing equivalence. Remaining workload and performance qualification, four behavioral targets and prerequisite #17884 remain open.",
       "findings": [
@@ -132710,7 +132710,7 @@
           ]
         }
       ],
-      "nextStep": "Finish remaining required workload and performance qualification, including the full network workload and the targeted client-cleanup correction, then request publication review. benchmark_measurement_review owns those category gates; the full static-matrix gap is closed.",
+      "nextStep": "Finish remaining required workload and performance qualification, including the full network workload and its stability/comparison gates, then request publication review. benchmark_measurement_review owns those category gates. Targeted network client cleanup is accepted; no network A/B result is established. The full static-matrix gap is closed.",
       "evidence": [
         {
           "label": "Current reviewed analyzer series",
@@ -133068,7 +133068,7 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T18:43:30.023486+00:00",
+        "observedAt": "2026-11-24T18:55:51.532284+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45338108931",
           "https://github.com/tamird/gvisor/actions/runs/45344645597",
@@ -133130,7 +133130,7 @@
         ],
         "owner": "root",
         "disposition": "54-commit analyzer series at 26090b334. The full Module-aware NoGo matrix and focused checker/source gates pass on AMD64 and ARM64. The first matched startup category passed scoped stability and comparison checks, without establishing equivalence. Remaining workload and performance qualification, four behavioral targets and prerequisite #17884 remain open.",
-        "nextAction": "Finish remaining required workload and performance qualification, including the full network workload and the targeted client-cleanup correction, then request publication review. benchmark_measurement_review owns those category gates; the full static-matrix gap is closed.",
+        "nextAction": "Finish remaining required workload and performance qualification, including the full network workload and its stability/comparison gates, then request publication review. benchmark_measurement_review owns those category gates. Targeted network client cleanup is accepted; no network A/B result is established. The full static-matrix gap is closed.",
         "recheckCondition": "Actual remaining-workload or cleanup qualification, prerequisite #17884 landing or publication-review milestone. No new series opening question has been asked.",
         "sourceHead": "26090b334cf9c5f4657ec33aef64efc6fa86ef82",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
