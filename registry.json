@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T08:26:59.342576+00:00",
+    "updatedAt": "2026-11-24T09:29:22.290151+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -122172,7 +122172,7 @@
       "status": "active",
       "owner": "root",
       "updatedAt": "2026-11-23T22:28:52.692599+00:00",
-      "summary": "The due native-first guard found no newer/live native collection. Sole snapshot-only fallback45354455465 completed successfully and delivered API2026-11-24T08:18:23.599668+00:00 with outreach disabled. No new substantive tracked feedback, source heads, CI, conflict, issue or incoming-review events appeared. Native cadence irregularity has no established provider cause or demonstrated configuration defect.",
+      "summary": "The due native-first guard found no newer/live native generation. Sole snapshot-only fallback45364077284 completed successfully and delivered API2026-11-24T09:23:02.175557+00:00 with outreach disabled. No new substantive tracked feedback, source heads, CI, conflicts, issue or incoming-review events appeared. Native cadence irregularity has no established provider cause or demonstrated configuration defect.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122415,7 +122415,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground/active-goal supervision owns next native-first guard09:18:23 UTC and deadline09:48:23. Reuse a fresh/live native generation before one fallback; preserve60/90-minute policy and2-hour UI threshold without reset or a competing monitor.",
+      "nextStep": "Root foreground/active-goal supervision owns next native-first guard10:23:02 UTC and deadline10:53:02. Reuse fresh/live native delivery before one fallback; retain60/90-minute policy and2-hour UI threshold without reset or a competing monitor.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122545,9 +122545,9 @@
           "https://github.com/tamird/gvisor/actions/runs/45287620194",
           "https://github.com/tamird/gvisor/actions/runs/45296589443"
         ],
-        "observedAt": "2026-11-24T08:23:29.542165+00:00",
-        "disposition": "The due native-first guard found no newer/live native collection. Sole snapshot-only fallback45354455465 completed successfully and delivered API2026-11-24T08:18:23.599668+00:00 with outreach disabled. No new substantive tracked feedback, source heads, CI, conflict, issue or incoming-review events appeared. Native cadence irregularity has no established provider cause or demonstrated configuration defect.",
-        "nextAction": "Root foreground/active-goal supervision owns next native-first guard09:18:23 UTC and deadline09:48:23. Reuse a fresh/live native generation before one fallback; preserve60/90-minute policy and2-hour UI threshold without reset or a competing monitor.",
+        "observedAt": "2026-11-24T09:27:44.575696+00:00",
+        "disposition": "The due native-first guard found no newer/live native generation. Sole snapshot-only fallback45364077284 completed successfully and delivered API2026-11-24T09:23:02.175557+00:00 with outreach disabled. No new substantive tracked feedback, source heads, CI, conflicts, issue or incoming-review events appeared. Native cadence irregularity has no established provider cause or demonstrated configuration defect.",
+        "nextAction": "Root foreground/active-goal supervision owns next native-first guard10:23:02 UTC and deadline10:53:02. Reuse fresh/live native delivery before one fallback; retain60/90-minute policy and2-hour UI threshold without reset or a competing monitor.",
         "recheckCondition": "Fresh/live native delivery, an actual new event or the next due guard.",
         "owner": "root"
       }
@@ -132076,7 +132076,7 @@
       "owner": "benchmark_measurement_review / root",
       "updatedAt": "2026-11-24T07:01:47.154032+00:00",
       "group": "analysis",
-      "summary": "Final native analyzer preview a3f52992 is one commit on approved-prerequisite parent0c7, with tree8b006d3f identical to qualified2fb. Root verified the public commit/tree/parent; no branch, PR, workflow or access change was made. Both final AMD/ARM gates passed kernel unit and Nogo targets with215 XML cases per ISA and zero failures/skips; complete release builds produced nine-file opaque manifests each. All five source checks and guards passed. CI891 adds only18 reviewed support paths and explicitly uses --nostamp: no a3f-stamped or raw-default product equivalence is claimed. The full891-target proof remains on aae, supplemented by targeted cleanup and final kernel closure. Final source reviews are complete and all findings resolved.",
+      "summary": "Audit code remains a3f52992 (tree 8b006d3f), with the complete nine-product CI891 release qualified under --nostamp. The maintained StartupEmpty1x run45360808343 executed freshly LOCAL with cleanup0, exact release digests and no compilation. Helper81161356063486b7f19246b53c7f28f10303be18 is accepted by root and final general review: four paths,153 additions/1 deletion; only two header comments differ from qualified guard812. Injected reload failure preserved the needed runtime binary, backup and live Docker entry; authoritative recovery and owned-resource cleanup passed. Source checks passed. Preservation defects are resolved, with reused lifecycle/config-permission proof scoped to its source. Wrong-configuration run45359319539 is not qualified product evidence.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132448,7 +132448,7 @@
           ]
         }
       ],
-      "nextStep": "Root presents the completed code preview with the real remaining blocks: #17884 at0c7 is OPEN/unmerged and already has reviewers requested; comparative performance still lacks a stable same-source A/A route, and runtime/hardware limits remain. Retain the exact8fc Netgofer67-case pass scope. No new audit-opening question, human DCO gate, duplicate review request, rebuild or unchanged timing retry is warranted.",
+      "nextStep": "The existing owner is admitting all seven maintained startup/checkpoint/restore leaves for 1x functionality. Its Docker/checkpoint preflight45365290839 runs before category builds or source extension, with next check at09:30. Broad-workload/common-harness and same-source A/A-first performance remain outstanding; no timing, sample expansion or measurement approval is inferred. Preserve #17884, runtime/hardware and --nostamp/raw-default limits. Approved image deliveries retain their existing transport blocker, not a renewed human-approval wait.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132790,7 +132790,7 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T08:04:02.159571+00:00",
+        "observedAt": "2026-11-24T09:29:22.290151+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45338108931",
           "https://github.com/tamird/gvisor/actions/runs/45344645597",
@@ -132805,12 +132805,17 @@
           "https://github.com/tamird/gvisor/actions/runs/45349683050",
           "https://github.com/tamird/gvisor/actions/runs/45349685813",
           "https://github.com/tamird/gvisor/actions/runs/45349688596",
-          "https://github.com/tamird/gvisor/commit/a3f52992b34ef2873195b97b0856f20d061d0832"
+          "https://github.com/tamird/gvisor/commit/a3f52992b34ef2873195b97b0856f20d061d0832",
+          "https://github.com/tamird/gvisor/actions/runs/45360808343/artifacts/14903844249",
+          "https://github.com/tamird/gvisor/actions/runs/45363843271/artifacts/14905792639",
+          "https://github.com/tamird/gvisor/actions/runs/45363847432/artifacts/14904794364",
+          "https://github.com/tamird/gvisor/actions/runs/45362595166/artifacts/14904898784",
+          "https://github.com/tamird/gvisor/actions/runs/45365290839"
         ],
-        "owner": "root",
-        "disposition": "Final native analyzer preview a3f52992 is one commit on approved-prerequisite parent0c7, with tree8b006d3f identical to qualified2fb. Root verified the public commit/tree/parent; no branch, PR, workflow or access change was made. Both final AMD/ARM gates passed kernel unit and Nogo targets with215 XML cases per ISA and zero failures/skips; complete release builds produced nine-file opaque manifests each. All five source checks and guards passed. CI891 adds only18 reviewed support paths and explicitly uses --nostamp: no a3f-stamped or raw-default product equivalence is claimed. The full891-target proof remains on aae, supplemented by targeted cleanup and final kernel closure. Final source reviews are complete and all findings resolved.",
-        "nextAction": "Root presents the completed code preview with the real remaining blocks: #17884 at0c7 is OPEN/unmerged and already has reviewers requested; comparative performance still lacks a stable same-source A/A route, and runtime/hardware limits remain. Retain the exact8fc Netgofer67-case pass scope. No new audit-opening question, human DCO gate, duplicate review request, rebuild or unchanged timing retry is warranted.",
-        "recheckCondition": "Actual #17884 landing/admission, qualified performance-route evidence, scoped runtime/hardware recovery, or an actual new publication decision.",
+        "owner": "benchmark_measurement_review / root",
+        "disposition": "Audit code remains a3f52992 (tree 8b006d3f), with the complete nine-product CI891 release qualified under --nostamp. The maintained StartupEmpty1x run45360808343 executed freshly LOCAL with cleanup0, exact release digests and no compilation. Helper81161356063486b7f19246b53c7f28f10303be18 is accepted by root and final general review: four paths,153 additions/1 deletion; only two header comments differ from qualified guard812. Injected reload failure preserved the needed runtime binary, backup and live Docker entry; authoritative recovery and owned-resource cleanup passed. Source checks passed. Preservation defects are resolved, with reused lifecycle/config-permission proof scoped to its source. Wrong-configuration run45359319539 is not qualified product evidence.",
+        "nextAction": "The existing owner is admitting all seven maintained startup/checkpoint/restore leaves for 1x functionality. Its Docker/checkpoint preflight45365290839 runs before category builds or source extension, with next check at09:30. Broad-workload/common-harness and same-source A/A-first performance remain outstanding; no timing, sample expansion or measurement approval is inferred. Preserve #17884, runtime/hardware and --nostamp/raw-default limits. Approved image deliveries retain their existing transport blocker, not a renewed human-approval wait.",
+        "recheckCondition": "Existing owner category-admission result, actual authorized workload/harness/A/A-first readiness, prerequisite landing or scoped runtime/hardware evidence; no unchanged timing retry.",
         "sourceHead": "a3f52992b34ef2873195b97b0856f20d061d0832",
         "technicalOwner": "benchmark_measurement_review (completed source qualification)"
       },
