@@ -94,7 +94,7 @@ func TestClockGetTimeSignal(t *testing.T) {
 
 	pid := unix.Getpid()
 	tid := <-tidCh
-	for i := 0; i < 10000; i++ {
+	for range 10000 {
 		if err := unix.Tgkill(pid, tid, unix.SIGCHLD); err != nil {
 			t.Fatalf("Tgkill failed: %v", err)
 		}

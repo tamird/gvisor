@@ -289,7 +289,7 @@ func handleListen(ep *Endpoint) {
 		return
 	}
 
-	for i := 0; i < maxSegmentsPerWake; i++ {
+	for range maxSegmentsPerWake {
 		s := ep.segmentQueue.dequeue()
 		if s == nil {
 			break

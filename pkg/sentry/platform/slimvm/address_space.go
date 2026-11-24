@@ -36,7 +36,7 @@ type dirtySet struct {
 // forEach iterates over all CPUs in the dirty set.
 func (ds *dirtySet) forEach(m *machine, fn func(c *vCPU)) {
 	var localSet vCPUBitArrayLocal
-	for index := 0; index < len(ds.vCPUs); index++ {
+	for index := range len(ds.vCPUs) {
 		// Clear the dirty set, copy to the local one.
 		localSet[index] = ds.vCPUs[index].Swap(0)
 	}

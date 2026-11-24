@@ -238,7 +238,7 @@ func (s *Server) Register(obj any) {
 		typDeref = typ.Elem()
 	}
 
-	for m := 0; m < typ.NumMethod(); m++ {
+	for m := range typ.NumMethod() {
 		method := typ.Method(m)
 
 		if typDeref.Name() == "" {

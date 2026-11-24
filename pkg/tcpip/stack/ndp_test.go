@@ -1413,7 +1413,7 @@ func TestDynamicConfigurationsDisabled(t *testing.T) {
 			//
 			// This tests all possible combinations of the configurations where
 			// router/prefix discovery or SLAAC are disabled.
-			for i := 0; i < 7; i++ {
+			for i := range 7 {
 				handle := ipv6.HandlingRAsDisabled
 				if i&1 != 0 {
 					handle = ipv6.HandlingRAsEnabledWhenForwardingDisabled
@@ -1984,7 +1984,7 @@ func TestPrefixDiscoveryMaxOnLinkPrefixes(t *testing.T) {
 
 	// Receive an RA with 2 more than the max number of discovered on-link
 	// prefixes.
-	for i := 0; i < ipv6.MaxDiscoveredOnLinkPrefixes+2; i++ {
+	for i := range ipv6.MaxDiscoveredOnLinkPrefixes + 2 {
 		prefixAddr := [16]byte{1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0, 0, 0, 0, 0}
 		prefixAddr[7] = byte(i)
 		prefix := tcpip.AddressWithPrefix{
@@ -2002,7 +2002,7 @@ func TestPrefixDiscoveryMaxOnLinkPrefixes(t *testing.T) {
 	}
 
 	e.InjectInbound(header.IPv6ProtocolNumber, raBufWithOpts(llAddr1, 0, optSer))
-	for i := 0; i < ipv6.MaxDiscoveredOnLinkPrefixes+2; i++ {
+	for i := range ipv6.MaxDiscoveredOnLinkPrefixes + 2 {
 		if i < ipv6.MaxDiscoveredOnLinkPrefixes {
 			select {
 			case e := <-ndpDisp.prefixC:
@@ -2114,7 +2114,7 @@ func TestMaxSlaacPrefixes(t *testing.T) {
 
 	optSer := make(header.NDPOptionsSerializer, 0, slaacPrefixesInRA)
 	prefixes := [slaacPrefixesInRA]tcpip.Subnet{}
-	for i := 0; i < slaacPrefixesInRA; i++ {
+	for i := range slaacPrefixesInRA {
 		prefixAddr := [16]byte{1, 2, 3, 4, 5, 6, 7, byte(i), 0, 0, 0, 0, 0, 0, 0, 0}
 		prefix := tcpip.AddressWithPrefix{
 			Address:   tcpip.AddrFromSlice(prefixAddr[:]),
@@ -2136,8 +2136,8 @@ func TestMaxSlaacPrefixes(t *testing.T) {
 	}
 
 	e.InjectInbound(header.IPv6ProtocolNumber, raBufWithOpts(llAddr1, 0, optSer))
-	for i := 0; i < slaacPrefixesInRA; i++ {
-		for j := 0; j < slaacAddrsPerPrefix; j++ {
+	for i := range slaacPrefixesInRA {
+		for j := range slaacAddrsPerPrefix {
 			if i < ipv6.MaxDiscoveredSLAACPrefixes {
 				select {
 				case e := <-ndpDisp.autoGenAddrNewC:
@@ -2772,7 +2772,7 @@ func TestAutoGenTempAddrRegen(t *testing.T) {
 	var tempIIDHistory [header.IIDSize]byte
 	header.InitialTempIID(tempIIDHistory[:], nil, nicID)
 	var tempAddrs [numTempAddrs]tempAddrState
-	for i := 0; i < len(tempAddrs); i++ {
+	for i := range len(tempAddrs) {
 		tempAddrs[i] = tempAddrState{
 			addrWithPrefix: header.GenerateTempIPv6SLAACAddr(tempIIDHistory[:], addr.Address),
 		}
@@ -2975,7 +2975,7 @@ func TestAutoGenTempAddrRegenJobUpdates(t *testing.T) {
 	var tempIIDHistory [header.IIDSize]byte
 	header.InitialTempIID(tempIIDHistory[:], nil, nicID)
 	var tempAddrs [numTempAddrs]tempAddrState
-	for i := 0; i < len(tempAddrs); i++ {
+	for i := range len(tempAddrs) {
 		tempAddrs[i] = tempAddrState{
 			addrWithPrefix: header.GenerateTempIPv6SLAACAddr(tempIIDHistory[:], addr.Address),
 		}
@@ -3201,7 +3201,7 @@ func TestMixedSLAACAddrConflictRegen(t *testing.T) {
 	var tempAddrsWithModifiedEUI64 [maxAddrs]tcpip.AddressWithPrefix
 	subnetID := subnet.ID()
 	addrBytes := subnetID.AsSlice()
-	for i := 0; i < maxAddrs; i++ {
+	for i := range maxAddrs {
 		stableAddrsWithOpaqueIID[i] = tcpip.AddressWithPrefix{
 			Address:   tcpip.AddrFromSlice(header.AppendOpaqueInterfaceIdentifier(addrBytes[:header.IIDOffsetInIPv6Address], subnet, nicName, uint8(i), nil)),
 			PrefixLen: header.IIDOffsetInIPv6Address * 8,
@@ -4527,7 +4527,7 @@ func TestAutoGenAddrInResponseToDADConflicts(t *testing.T) {
 						stableAddrs := addrType.prepareFn(t, clock, &ndpDisp, e, tempIIDHistory[:])
 
 						// Simulate DAD conflicts so the address is regenerated.
-						for i := uint8(0); i < numFailures; i++ {
+						for i := range uint8(numFailures) {
 							addr := addrType.addrGenFn(i, tempIIDHistory[:])
 							clock.RunImmediatelyScheduledJobs()
 							if _, err := expectAutoGenAddrNewEvent(&ndpDisp, addr); err != nil {
@@ -5417,7 +5417,7 @@ func TestCleanupNDPState(t *testing.T) {
 
 			// Collect invalidation events after having NDP state cleaned up.
 			gotOffLinkRouteEvents := make(map[ndpOffLinkRouteEvent]int)
-			for i := 0; i < maxRouterAndPrefixEvents; i++ {
+			for i := range maxRouterAndPrefixEvents {
 				ok, e := expectOffLinkRouteEvent()
 				if !ok {
 					t.Errorf("expected %d off-link route events after becoming a router; got = %d", maxRouterAndPrefixEvents, i)
@@ -5426,7 +5426,7 @@ func TestCleanupNDPState(t *testing.T) {
 				gotOffLinkRouteEvents[e]++
 			}
 			gotPrefixEvents := make(map[ndpPrefixEvent]int)
-			for i := 0; i < maxRouterAndPrefixEvents; i++ {
+			for i := range maxRouterAndPrefixEvents {
 				ok, e := expectPrefixEvent()
 				if !ok {
 					t.Errorf("expected %d prefix events after becoming a router; got = %d", maxRouterAndPrefixEvents, i)

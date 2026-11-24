@@ -166,7 +166,7 @@ func (c *testContext) cleanup() {
 }
 
 func (c *testContext) waitForPackets(n int, to <-chan time.Time, errorStr string) {
-	for i := 0; i < n; i++ {
+	for range n {
 		select {
 		case <-c.packetCh:
 		case <-to:
@@ -633,7 +633,7 @@ func TestSimpleReceive(t *testing.T) {
 
 	// Check that buffers have been posted.
 	limit := c.ep.rx.q.PostedBuffersLimit()
-	for i := uint64(0); i < limit; i++ {
+	for i := range uint64(limit) {
 		timeout := time.After(2 * time.Second)
 		bi := queue.DecodeRxBufferHeader(pollPull(t, &c.rxq.tx, timeout, "Timeout waiting for all buffers to be posted"))
 
@@ -743,7 +743,7 @@ func TestRxBuffersReposted(t *testing.T) {
 		c.rxCfg.EventFD.Notify()
 
 		// Wait for them to be reposted.
-		for j := 0; j < 2; j++ {
+		for j := range 2 {
 			bi := queue.DecodeRxBufferHeader(pollPull(t, &c.rxq.tx, timeout, "Timeout waiting for buffer to be reposted"))
 			if bi != buffers[2*i+j] {
 				t.Fatalf("Different buffer posted: got %v, want %v", bi, buffers[2*i+j])

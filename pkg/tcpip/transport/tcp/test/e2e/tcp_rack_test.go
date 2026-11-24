@@ -566,7 +566,7 @@ func TestRACKMinPTO(t *testing.T) {
 			if n, err := c.EP.Write(&r, tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
 				t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, len(data))
 			}
-			for i := 0; i < numPackets; i++ {
+			for i := range numPackets {
 				c.ReceiveAndCheckPacketWithOptions(data, i*maxPayload, maxPayload, e2e.TSOptionSize)
 			}
 
@@ -1111,7 +1111,7 @@ func TestRACKWithDuplicateACK(t *testing.T) {
 	seq := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
 	start := c.IRS.Add(1 + seqnum.Size(maxPayload))
 	end := start.Add(seqnum.Size(maxPayload))
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		c.SendAckWithSACK(seq, 0, []header.SACKBlock{{start, end}})
 		end = end.Add(seqnum.Size(maxPayload))
 	}
@@ -1207,7 +1207,7 @@ func TestRACKWithWindowFull(t *testing.T) {
 	}
 
 	bytesRead := 0
-	for i := 0; i < numPkts; i++ {
+	for range numPkts {
 		c.ReceiveAndCheckPacketWithOptions(data, bytesRead, maxPayload, e2e.TSOptionSize)
 		bytesRead += maxPayload
 	}

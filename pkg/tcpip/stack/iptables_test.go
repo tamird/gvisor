@@ -82,7 +82,7 @@ func TestDefaultMangleTableHasLinuxHooks(t *testing.T) {
 		if got := table.ValidHooks(); got != linuxMangleHooks {
 			t.Errorf("ipv6=%v DefaultTables mangle ValidHooks()=%#x, want %#x (Linux mangle is valid at all five NF_INET hooks)", ipv6, got, linuxMangleHooks)
 		}
-		for hook := Hook(0); hook < NumHooks; hook++ {
+		for hook := range Hook(NumHooks) {
 			if table.BuiltinChains[hook] == HookUnset {
 				t.Errorf("ipv6=%v default mangle BuiltinChains[%v]=HookUnset; SET_ENTRIES requires every valid hook", ipv6, hook)
 			}
@@ -481,7 +481,7 @@ func TestIsNATApplied(t *testing.T) {
 // everywhere else.
 func natTableWithRule(hook Hook, target Target) Table {
 	var table Table
-	for h := Hook(0); h < NumHooks; h++ {
+	for h := range Hook(NumHooks) {
 		table.BuiltinChains[h] = len(table.Rules)
 		if h == hook {
 			table.Rules = append(table.Rules, Rule{Target: target})

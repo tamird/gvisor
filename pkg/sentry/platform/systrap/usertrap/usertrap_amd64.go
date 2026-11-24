@@ -734,12 +734,12 @@ func (s *State) HandleFault(ctx context.Context, ac *arch.Context64, mm memoryMa
 		return err
 	}
 
-	for i := 0; i < jmpInstOpcodeLen; i++ {
+	for i := range jmpInstOpcodeLen {
 		if code[i] != jmpInst[i] {
 			return nil
 		}
 	}
-	for i := 0; i < len(faultInst); i++ {
+	for i := range len(faultInst) {
 		if code[i+int(faultInstOffset)] != faultInst[i] {
 			return nil
 		}

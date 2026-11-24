@@ -112,7 +112,7 @@ func TestAddRandom(t *testing.T) {
 
 func TestRemoveRandom(t *testing.T) {
 	var s Set
-	for i := 0; i < testSize; i++ {
+	for i := range testSize {
 		s.InsertWithoutMergingRange(Range{i, i + 1}, i+valueOffset)
 	}
 	order := rand.Perm(testSize)
@@ -211,7 +211,7 @@ func TestMaxGapAddRandomWithMerge(t *testing.T) {
 
 func TestMaxGapRemoveRandom(t *testing.T) {
 	var s gapSet
-	for i := 0; i < testSize; i++ {
+	for i := range testSize {
 		s.InsertWithoutMergingRange(Range{i, i + 1}, i+valueOffset)
 	}
 	order := rand.Perm(testSize)
@@ -246,7 +246,7 @@ func TestMaxGapRemoveRandom(t *testing.T) {
 
 func TestMaxGapRemoveHalfRandom(t *testing.T) {
 	var s gapSet
-	for i := 0; i < testSize; i++ {
+	for i := range testSize {
 		s.InsertWithoutMergingRange(Range{intervalLength * i, intervalLength*i + rand.Intn(intervalLength-1) + 1}, intervalLength*i+valueOffset)
 	}
 	order := randIntervalPermutation(testSize)
@@ -405,7 +405,7 @@ func TestPrevLargeEnoughGap(t *testing.T) {
 func TestAddSequentialAdjacent(t *testing.T) {
 	var s Set
 	var nrInsertions int
-	for i := 0; i < testSize; i++ {
+	for i := range testSize {
 		s.InsertWithoutMergingRange(Range{i, i + 1}, i+valueOffset)
 		nrInsertions++
 		if err := s.segmentTestCheck(nrInsertions, validate); err != nil {
@@ -455,7 +455,7 @@ func TestAddSequentialAdjacent(t *testing.T) {
 func TestAddSequentialNonAdjacent(t *testing.T) {
 	var s Set
 	var nrInsertions int
-	for i := 0; i < testSize; i++ {
+	for i := range testSize {
 		// The range here differs from TestAddSequentialAdjacent so that
 		// consecutive segments are not adjacent.
 		s.InsertWithoutMergingRange(Range{2 * i, 2*i + 1}, 2*i+valueOffset)
@@ -658,7 +658,7 @@ func TestMutateRange(t *testing.T) {
 func benchmarkAddSequential(b *testing.B, size int) {
 	for n := 0; n < b.N; n++ {
 		var s Set
-		for i := 0; i < size; i++ {
+		for i := range size {
 			s.InsertWithoutMergingRange(Range{i, i + 1}, i)
 		}
 	}
@@ -678,13 +678,13 @@ func benchmarkAddRandom(b *testing.B, size int) {
 
 func benchmarkFindSequential(b *testing.B, size int) {
 	var s Set
-	for i := 0; i < size; i++ {
+	for i := range size {
 		s.InsertWithoutMergingRange(Range{i, i + 1}, i)
 	}
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		for i := 0; i < size; i++ {
+		for i := range size {
 			if seg := s.FindSegment(i); !seg.Ok() {
 				b.Fatalf("Failed to find segment %d", i)
 			}
@@ -694,7 +694,7 @@ func benchmarkFindSequential(b *testing.B, size int) {
 
 func benchmarkFindRandom(b *testing.B, size int) {
 	var s Set
-	for i := 0; i < size; i++ {
+	for i := range size {
 		s.InsertWithoutMergingRange(Range{i, i + 1}, i)
 	}
 	order := rand.Perm(size)
@@ -711,7 +711,7 @@ func benchmarkFindRandom(b *testing.B, size int) {
 
 func benchmarkIteration(b *testing.B, size int) {
 	var s Set
-	for i := 0; i < size; i++ {
+	for i := range size {
 		s.InsertWithoutMergingRange(Range{i, i + 1}, i)
 	}
 
@@ -730,10 +730,10 @@ func benchmarkIteration(b *testing.B, size int) {
 func benchmarkAddFindRemoveSequential(b *testing.B, size int) {
 	for n := 0; n < b.N; n++ {
 		var s Set
-		for i := 0; i < size; i++ {
+		for i := range size {
 			s.InsertWithoutMergingRange(Range{i, i + 1}, i)
 		}
-		for i := 0; i < size; i++ {
+		for i := range size {
 			seg := s.FindSegment(i)
 			if !seg.Ok() {
 				b.Fatalf("Failed to find segment %d", i)

@@ -111,7 +111,7 @@ func (cq *CompletionQueue) FreeAll(umem *UMEM) {
 	if available < 1 {
 		return
 	}
-	for i := uint32(0); i < available; i++ {
+	for i := range uint32(available) {
 		umem.FreeFrame(cq.Get(index + i))
 	}
 	cq.Release(available)

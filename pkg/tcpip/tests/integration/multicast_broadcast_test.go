@@ -510,7 +510,7 @@ func TestReuseAddrAndBroadcast(t *testing.T) {
 				// Create multiple endpoints for each type of "broadcast interested"
 				// endpoint so we can test that all endpoints receive the broadcast
 				// packet.
-				for i := 0; i < 2; i++ {
+				for range 2 {
 					var wq waiter.Queue
 					we, ch := waiter.NewChannelEntry(waiter.ReadableEvents)
 					wq.EventRegister(&we)

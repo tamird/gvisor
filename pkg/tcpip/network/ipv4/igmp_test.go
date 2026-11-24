@@ -334,7 +334,7 @@ func TestSendQueuedIGMPReports(t *testing.T) {
 
 			// We expect two batches of reports to be sent (1 batch when the address
 			// is assigned, and another after the maximum unsolicited report interval.
-			for i := 0; i < 2; i++ {
+			for i := range 2 {
 				// IGMPv2 always sends a single message per group.
 				//
 				// IGMPv3 sends a single message per group when we first get an

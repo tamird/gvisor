@@ -469,7 +469,7 @@ func TestPinnedPagesCopiedOnFork(t *testing.T) {
 
 	// Fork twice so that both the first fork of a pinned pma, and the fork
 	// of the resulting parent pma state, are tested.
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		mm2, err := mm.Fork(ctx)
 		if err != nil {
 			t.Fatalf("Fork got err %v want nil", err)
@@ -923,7 +923,7 @@ func TestEagerForkCopy(t *testing.T) {
 
 	// Fork twice to check that the parent's pma remains eligible for eager
 	// copying after the first fork.
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		mm2, err := mm.Fork(ctx)
 		if err != nil {
 			t.Fatalf("Fork got err %v want nil", err)
@@ -1008,7 +1008,7 @@ func TestEagerForkCopyAdjacentMappings(t *testing.T) {
 
 	// Only the parent's pages outside of the EagerForkCopy mapping should
 	// have been made copy-on-write.
-	for i := 0; i < npages; i++ {
+	for i := range npages {
 		pageAddr := addr + hostarch.Addr(i)*pageSizeAddr
 		wantCOW := !eagerAR.Contains(pageAddr)
 		if _, needCOW := pmaAt(t, mm, pageAddr); needCOW != wantCOW {
@@ -1366,7 +1366,7 @@ func TestEnsurePMAsExistBufferedIOFallback(t *testing.T) {
 // example, it randomly drops items when the race detector is enabled), so this
 // test may not exercise recycling on every iteration. It never fails spuriously.
 func TestGetByteSlicePtrZeroed(t *testing.T) {
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		dirty := getByteSlicePtr(pageSizeInt)
 		for j := range *dirty {
 			(*dirty)[j] = 0xfe

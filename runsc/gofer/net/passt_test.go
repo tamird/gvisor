@@ -168,7 +168,7 @@ func TestReadPasstFrame(t *testing.T) {
 	t.Run("two frames", func(t *testing.T) {
 		r := bytes.NewReader(append(append([]byte{}, frame...), frame...))
 		buf := make([]byte, passtMaxFrameSize)
-		for i := 0; i < 2; i++ {
+		for i := range 2 {
 			got, err := readPasstFrame(r, buf)
 			if err != nil {
 				t.Fatalf("readPasstFrame() #%d failed: %v", i, err)

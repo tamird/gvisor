@@ -79,7 +79,7 @@ func (e *epoller) run(ctx context.Context) {
 				log.L.WithError(err).Error("cgroups: epoll wait failed, no longer reporting OOM events")
 				return
 			}
-			for i := 0; i < n; i++ {
+			for i := range n {
 				e.process(ctx, uintptr(events[i].Fd))
 			}
 		}

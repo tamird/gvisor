@@ -518,7 +518,7 @@ func (m *fieldMapper) keyToMultiField(key int) []string {
 	}
 	fieldValues := make([]string, depth)
 	remainingCombinationBucket := m.numFieldCombinations
-	for i := 0; i < depth; i++ {
+	for i := range depth {
 		remainingCombinationBucket /= len(m.fields[i].values)
 		fieldValues[i] = m.fields[i].values[key/remainingCombinationBucket].Value
 		key = key % remainingCombinationBucket
@@ -537,7 +537,7 @@ func (m *fieldMapper) keyToMultiFieldInPlace(key int, fieldValues []*FieldValue)
 	}
 	depth := len(m.fields)
 	remainingCombinationBucket := m.numFieldCombinations
-	for i := 0; i < depth; i++ {
+	for i := range depth {
 		remainingCombinationBucket /= len(m.fields[i].values)
 		fieldValues[i] = m.fields[i].values[key/remainingCombinationBucket]
 		key = key % remainingCombinationBucket
@@ -680,7 +680,7 @@ func (m *Uint64Metric) forEachNonZero(f func(fieldValues []*FieldValue, value ui
 		return
 	}
 	var fieldValues []*FieldValue
-	for k := 0; k < numCombinations; k++ {
+	for k := range numCombinations {
 		val := m.fields[k].Load()
 		if val == 0 {
 			continue
@@ -1308,7 +1308,7 @@ func (m *metricSet) Values() metricValues {
 					tmpFieldValues = make([]*FieldValue, len(v.fields))
 				}
 				fieldValues := tmpFieldValues[:len(v.fields)]
-				for fieldKey := 0; fieldKey < numFieldCombinations; fieldKey++ {
+				for fieldKey := range numFieldCombinations {
 					v.fieldMapper.keyToMultiFieldInPlace(fieldKey, fieldValues)
 					perFieldKeyVals[fieldKey] = v.value(fieldValues...)
 				}
@@ -1459,7 +1459,7 @@ func EmitMetricUpdate() {
 				currentSamples := snapshot.distributionMetrics[name][fieldKey]
 				numBuckets := len(currentSamples)
 				newSamples = make([]uint64, numBuckets)
-				for i := 0; i < numBuckets; i++ {
+				for i := range numBuckets {
 					newSamples[i] = currentSamples[i] - oldSamples[fieldKey][i]
 				}
 			} else {

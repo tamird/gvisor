@@ -1163,7 +1163,7 @@ func (n *node) rebalanceBeforeInsert(gap GapIterator) GapIterator {
 			copy(left.children[:minDegree], n.children[:minDegree])
 			copy(right.children[:minDegree], n.children[minDegree:])
 			zeroNodeSlice(n.children[2:])
-			for i := 0; i < minDegree; i++ {
+			for i := range minDegree {
 				left.children[i].parent = left
 				left.children[i].parentIndex = i
 				right.children[i].parent = right
@@ -1214,7 +1214,7 @@ func (n *node) rebalanceBeforeInsert(gap GapIterator) GapIterator {
 	if n.hasChildren {
 		copy(sibling.children[:minDegree], n.children[minDegree:])
 		zeroNodeSlice(n.children[minDegree:])
-		for i := 0; i < minDegree; i++ {
+		for i := range minDegree {
 			sibling.children[i].parent = sibling
 			sibling.children[i].parentIndex = i
 		}

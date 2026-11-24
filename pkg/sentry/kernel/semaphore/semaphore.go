@@ -313,7 +313,7 @@ func (r *Registry) findIndexByID(id ipc.ID) (int32, bool) {
 
 // +checklocks:r.reg.Mu
 func (r *Registry) findFirstAvailableIndex() (int32, bool) {
-	for index := int32(0); index < setsMax; index++ {
+	for index := range int32(setsMax) {
 		if _, present := r.indexes[index]; !present {
 			return index, true
 		}

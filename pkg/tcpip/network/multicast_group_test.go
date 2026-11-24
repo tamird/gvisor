@@ -235,7 +235,7 @@ func checkInitialIPv6Groups(t *testing.T, e *channel.Endpoint, s *stack.Stack, c
 	if err := s.LeaveGroup(ipv6.ProtocolNumber, nicID, ipv6AddrSNMC); err != nil {
 		t.Fatalf("LeaveGroup(%d, %d, %s): %s", ipv6.ProtocolNumber, nicID, ipv6AddrSNMC, err)
 	}
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		reportCounter++
 		iptestutil.CheckMLDv2Stats(t, s, 0, 0, reportCounter)
 		if p := e.Read(); p == nil {
@@ -998,7 +998,7 @@ func TestMGPQueryMessages(t *testing.T) {
 							if err := s.JoinGroup(test.protoNum, nicID, test.multicastAddr); err != nil {
 								t.Fatalf("JoinGroup(%d, %d, %s): %s", test.protoNum, nicID, test.multicastAddr, err)
 							}
-							for i := 0; i < maxUnsolicitedReports; i++ {
+							for i := range maxUnsolicitedReports {
 								reportCounter++
 								subTest.checkStats(t, s, reportCounter, leaveCounter, reportV2Counter)
 								if p := e.Read(); p == nil {
@@ -1686,7 +1686,7 @@ func TestMGPCoalescedQueryResponseRecords(t *testing.T) {
 					}
 
 					addrs := make([]tcpip.Address, test.maxRecordsPerMessage+subTest.extraRecords)
-					for i := 0; i < len(addrs); i++ {
+					for i := range len(addrs) {
 						addr := test.genAddr(uint16(i))
 						addrs[i] = addr
 

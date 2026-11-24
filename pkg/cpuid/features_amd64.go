@@ -687,7 +687,7 @@ var linuxBlockOrder = []block{1, 6, 0, 5, 2, 4, 8, 3, 7}
 
 func archFlagOrder(fn func(Feature)) {
 	for _, b := range linuxBlockOrder {
-		for i := 0; i < blockSize; i++ {
+		for i := range blockSize {
 			f := featureID(b, i)
 			if _, ok := allFeatures[f]; ok {
 				fn(f)

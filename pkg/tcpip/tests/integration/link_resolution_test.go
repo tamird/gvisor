@@ -1808,7 +1808,7 @@ func TestUpdateCachedNeighborEntry(t *testing.T) {
 
 	// Send packet to neighbor (start link resolution & resolve, then send
 	// packet). Send twice to use cached address the second time.
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		go writePacket(t, r)
 		if err := host1NICMonitorable.waitForLinkAddress(utils.LinkAddr2, time.Second); err != nil {
 			t.Fatalf("host1NIC.waitForLinkAddress(%s): %s", utils.LinkAddr2, err)

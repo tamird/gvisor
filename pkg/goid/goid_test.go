@@ -38,7 +38,7 @@ func TestUniquenessAndConsistency(t *testing.T) {
 		checkedWG sync.WaitGroup
 		exitCh    = make(chan struct{})
 	)
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		checkedWG.Add(1)
 		go func() {
 			id := Get()

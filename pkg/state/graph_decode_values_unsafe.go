@@ -402,7 +402,7 @@ func (ds *graphDecodeState) decodeElems(elem *typeInfo, p unsafe.Pointer, n uint
 		return
 	}
 	esz := elem.size
-	for i := uintptr(0); i < n; i++ {
+	for i := range n {
 		ds.lastRef = -1
 		ds.decodeValue(elem, add(p, i*esz))
 		if ds.lastRef >= 0 {
@@ -517,7 +517,7 @@ func (ds *graphDecodeState) decodeMap(ti *typeInfo, m unsafe.Pointer, n int) {
 	// the addresses of keys and values. Entries get fresh storage after
 	// those run; other entries reuse the storage of the previous entry.
 	fresh := true
-	for i := 0; i < n; i++ {
+	for range n {
 		if fresh {
 			k = reflect.New(kt.typ).Elem()
 			e = reflect.New(et.typ).Elem()

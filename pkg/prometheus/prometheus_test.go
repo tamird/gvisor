@@ -1754,10 +1754,10 @@ func TestNumberPacker(t *testing.T) {
 		uint64(0xaaaaaaaaaaaaaaaa): {},
 		uint64(0xffffffffffffffff): {},
 	}
-	for numBits := 0; numBits < 2; numBits++ {
+	for range 2 {
 		newIntegers := map[uint64]struct{}{}
 		for interestingInt := range interestingIntegers {
-			for i := 0; i < 64; i++ {
+			for i := range 64 {
 				newIntegers[interestingInt|(1<<i)] = struct{}{}
 				newIntegers[interestingInt & ^(1<<i)] = struct{}{}
 			}

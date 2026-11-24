@@ -317,7 +317,7 @@ func TestDoneFunction(t *testing.T) {
 	// Cases when the sleeper has n wakers, with a random number of them
 	// asserted.
 	for n := 1; n < 20; n++ {
-		for iters := 0; iters < 1000; iters++ {
+		for range 1000 {
 			s := Sleeper{}
 			w := make([]Waker, n)
 			for j := 0; j < n; j++ {
@@ -327,7 +327,7 @@ func TestDoneFunction(t *testing.T) {
 			// Pick the number of asserted elements, then assert
 			// random wakers.
 			asserted := rand.Int() % (n + 1)
-			for j := 0; j < asserted; j++ {
+			for range asserted {
 				w[rand.Int()%n].Assert()
 			}
 			s.Done()
@@ -343,11 +343,11 @@ func TestAssertFetch(t *testing.T) {
 
 	ws := make([]Waker, sleeperWakers)
 	ss := make([]Sleeper, sleeperWakers)
-	for i := 0; i < sleeperWakers; i++ {
+	for i := range sleeperWakers {
 		ss[i].AddWaker(&ws[i])
 	}
 	defer func() {
-		for i := 0; i < sleeperWakers; i++ {
+		for i := range sleeperWakers {
 			defer ss[i].Done()
 		}
 	}()
@@ -355,13 +355,13 @@ func TestAssertFetch(t *testing.T) {
 		count atomicbitops.Int32
 		wg    sync.WaitGroup
 	)
-	for i := 0; i < sleeperWakers; i++ {
+	for i := range sleeperWakers {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
 			ss[i].Fetch(true /* block */)
 			w := &ws[(i+1)%sleeperWakers]
-			for n := 0; n < wakeRequests; n++ {
+			for range wakeRequests {
 				count.Add(1)
 				ss[i].AssertAndFetch(w)
 			}
@@ -389,7 +389,7 @@ func TestRace(t *testing.T) {
 	s := Sleeper{}
 
 	// Associate each waker and start goroutines that will assert them.
-	for i := 0; i < wakers; i++ {
+	for range wakers {
 		var w Waker
 		s.AddWaker(&w)
 		go func() {
@@ -406,7 +406,7 @@ func TestRace(t *testing.T) {
 	}
 
 	// Wait for all wake up notifications from all wakers.
-	for i := 0; i < wakers*wakeRequests; i++ {
+	for range wakers * wakeRequests {
 		v := s.Fetch(true)
 		counts[v]++
 	}

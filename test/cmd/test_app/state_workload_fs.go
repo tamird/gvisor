@@ -39,7 +39,7 @@ const fsProbeLogName = "log"
 func fsProbeLog(name string, hops int) []byte {
 	var b bytes.Buffer
 	fmt.Fprintf(&b, "fsprobe:%s\n", name)
-	for hop := 0; hop < hops; hop++ {
+	for hop := range hops {
 		fmt.Fprintf(&b, "hop=%d\nverified=%d\n", hop, hop)
 	}
 	return b.Bytes()

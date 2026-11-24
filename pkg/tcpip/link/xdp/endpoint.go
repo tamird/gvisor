@@ -368,7 +368,7 @@ func (ep *endpoint) dispatch() (bool, tcpip.Error) {
 			// Populate views quickly so that we can release frames
 			// back to the kernel.
 			ep.control.UMEM.Lock()
-			for i := uint32(0); i < nReceived; i++ {
+			for i := range uint32(nReceived) {
 				// Copy packet bytes into a view and free up the
 				// buffer.
 				descriptor := ep.control.RX.Get(rxIndex + i)
@@ -385,7 +385,7 @@ func (ep *endpoint) dispatch() (bool, tcpip.Error) {
 			ep.mu.RLock()
 			d := ep.networkDispatcher
 			ep.mu.RUnlock()
-			for i := uint32(0); i < nReceived; i++ {
+			for i := range uint32(nReceived) {
 				view := views[i]
 				data := view.AsSlice()
 

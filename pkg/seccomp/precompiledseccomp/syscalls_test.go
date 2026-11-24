@@ -156,7 +156,7 @@ func TestSyscallVars(t *testing.T) {
 				t.Fatalf("cannot compile program: %v", err)
 			}
 			for nr := int32(-1); nr < 1000; nr++ {
-				for arg := uint64(0); arg < 4; arg++ {
+				for arg := range uint64(4) {
 					data := linux.SeccompData{
 						Nr:   nr,
 						Arch: seccomp.LINUX_AUDIT_ARCH,

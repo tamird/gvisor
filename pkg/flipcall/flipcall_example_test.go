@@ -87,7 +87,7 @@ func Example() {
 		panic(err)
 	}
 	var buf bytes.Buffer
-	for i := 0; i < count; i++ {
+	for i := range count {
 		// write request
 		buf.Reset()
 		fmt.Fprintf(&buf, "%s%d", reqPrefix, i)

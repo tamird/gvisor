@@ -44,7 +44,7 @@ func generateFilledSlice(min, max, length int) []uint32 {
 func generateFilledBitmap(min, max, fillNum int) ([]uint32, Bitmap) {
 	bitmap := New(uint32(max))
 	randSlice := generateFilledSlice(min, max, fillNum)
-	for i := 0; i < fillNum; i++ {
+	for i := range fillNum {
 		bitmap.Add(randSlice[i])
 	}
 	return randSlice, bitmap
@@ -99,12 +99,12 @@ func TestRemove(t *testing.T) {
 	bitmap := New(uint32(1024))
 	firstSlice := generateFilledSlice(0, 511, 50)
 	secondSlice := generateFilledSlice(512, 1024, 50)
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		bitmap.Add(firstSlice[i])
 		bitmap.Add(secondSlice[i])
 	}
 
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		bitmap.Remove(firstSlice[i])
 	}
 	bitmapSlice := bitmap.ToSlice()
@@ -112,7 +112,7 @@ func TestRemove(t *testing.T) {
 		t.Errorf("After Remove() firstSlice, remained slice: %v, wanted: %v", bitmapSlice, secondSlice)
 	}
 
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		bitmap.Remove(secondSlice[i])
 	}
 	bitmapSlice = bitmap.ToSlice()
@@ -400,7 +400,7 @@ func TestGrow(t *testing.T) {
 	bitmap.Grow(64)
 
 	want := make([]uint32, 64)
-	for i := 0; i < 128; i++ {
+	for i := range 128 {
 		if i < 64 {
 			want[i] = uint32(i)
 		}

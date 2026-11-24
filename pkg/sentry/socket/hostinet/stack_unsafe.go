@@ -49,7 +49,7 @@ func queryInterfaceFeatures(interfaces map[int32]inet.Interface) error {
 		gfeatures.Size = numFeatureBlocks
 		gfeatures.MarshalBytes(b)
 		next := b[unsafe.Sizeof(linux.EthtoolGFeatures{}):]
-		for i := 0; i < numFeatureBlocks; i++ {
+		for i := range numFeatureBlocks {
 			featureBlocks[i].MarshalBytes(next)
 			next = next[unsafe.Sizeof(linux.EthtoolGetFeaturesBlock{}):]
 		}

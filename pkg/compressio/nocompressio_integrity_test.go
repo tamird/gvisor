@@ -192,7 +192,7 @@ func TestStickyErrorAfterMismatch(t *testing.T) {
 	if _, err := io.ReadFull(r, make([]byte, len(data))); err == nil {
 		t.Fatalf("re-framed stream accepted")
 	}
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		n, err := r.Read(make([]byte, 16))
 		if err == nil || n != 0 {
 			t.Errorf("read %d after fatal error: n=%d err=%v", i, n, err)

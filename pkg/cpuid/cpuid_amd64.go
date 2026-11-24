@@ -82,17 +82,17 @@ func (fs *FeatureSet) loadFunction(_ context.Context, b []byte) {
 //
 //go:nosplit
 func vendorIDFromRegs(bx, cx, dx uint32) (r [12]byte) {
-	for i := uint(0); i < 4; i++ {
+	for i := range uint(4) {
 		b := byte(bx >> (i * 8))
 		r[i] = b
 	}
 
-	for i := uint(0); i < 4; i++ {
+	for i := range uint(4) {
 		b := byte(dx >> (i * 8))
 		r[4+i] = b
 	}
 
-	for i := uint(0); i < 4; i++ {
+	for i := range uint(4) {
 		b := byte(cx >> (i * 8))
 		r[8+i] = b
 	}

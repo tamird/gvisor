@@ -28,7 +28,7 @@ import (
 func buildScoreboard(iss seqnum.Value, smss uint16, n int, blockSize, gapSize seqnum.Size) *SACKScoreboard {
 	s := NewSACKScoreboard(smss, iss)
 	seq := iss
-	for i := 0; i < n; i++ {
+	for range n {
 		// Skip a gap (the "lost" segment), then insert a SACK block.
 		seq = seq.Add(gapSize)
 		s.Insert(header.SACKBlock{Start: seq, End: seq.Add(blockSize)})

@@ -51,7 +51,7 @@ func TestGetLastRuntimeErrorNoFDLeak(t *testing.T) {
 
 	before := openFDs(t)
 	const iterations = 64
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		msg, err := getLastRuntimeError(r)
 		if err != nil {
 			t.Fatalf("getLastRuntimeError: %v", err)

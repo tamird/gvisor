@@ -251,7 +251,7 @@ func TestPumpDrainsBeforeSleeping(t *testing.T) {
 func TestPumpShutdown(t *testing.T) {
 	n := newPump(t)
 	link := n.links[0]
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		if err := enqueue(link, byte(i)); err != nil {
 			t.Fatal(err)
 		}

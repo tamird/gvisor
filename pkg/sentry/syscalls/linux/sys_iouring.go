@@ -40,7 +40,7 @@ func IOUringSetup(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (ui
 		return 0, nil, err
 	}
 
-	for i := int(0); i < len(params.Resv); i++ {
+	for i := range int(len(params.Resv)) {
 		if params.Resv[i] != 0 {
 			return 0, nil, linuxerr.EINVAL
 		}

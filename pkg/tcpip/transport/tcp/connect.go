@@ -544,7 +544,7 @@ func (h *handshake) handleSegment(s *segment) tcpip.Error {
 // +checklocksexclude:h.ep.pendingProcessingMu
 // +checklocksexclude:h.listenEP.listenCtx.hasherMu
 func (h *handshake) processSegments() tcpip.Error {
-	for i := 0; i < maxSegmentsPerWake; i++ {
+	for range maxSegmentsPerWake {
 		s := h.ep.segmentQueue.dequeue()
 		if s == nil {
 			return nil
@@ -914,7 +914,7 @@ func sendTCPBatch(r *stack.Route, tf tcpFields, pkt *stack.PacketBuffer, gso sta
 
 	size := pkt.Data().Size()
 	hdrSize := header.TCPMinimumSize + int(r.MaxHeaderLength()) + optLen
-	for i := 0; i < n; i++ {
+	for i := range n {
 		packetSize := min(mss, size)
 		size -= packetSize
 
@@ -1281,7 +1281,7 @@ func (e *Endpoint) handleReset(s *segment) (ok bool, err tcpip.Error) {
 // +checklocksexclude:e.snd.rtt.rttMutex
 func (e *Endpoint) handleSegmentsLocked() tcpip.Error {
 	sndUna := e.snd.SndUna
-	for i := 0; i < maxSegmentsPerWake; i++ {
+	for range maxSegmentsPerWake {
 		if state := e.EndpointState(); state.closed() || state == StateTimeWait || state == StateError {
 			return nil
 		}
@@ -1516,7 +1516,7 @@ func (e *Endpoint) handshakeFailed(err tcpip.Error) {
 // +checklocks:e.mu
 // +checklocksexclude:e.segmentQueue.mu
 func (e *Endpoint) handleTimeWaitSegments() (extendTimeWait bool, reuseTW func()) {
-	for i := 0; i < maxSegmentsPerWake; i++ {
+	for range maxSegmentsPerWake {
 		s := e.segmentQueue.dequeue()
 		if s == nil {
 			break

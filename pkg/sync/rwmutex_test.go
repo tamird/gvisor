@@ -34,18 +34,18 @@ func doTestParallelReaders(numReaders, gomaxprocs int) {
 	clocked := make(chan bool)
 	cunlock := make(chan bool)
 	cdone := make(chan bool)
-	for i := 0; i < numReaders; i++ {
+	for range numReaders {
 		go parallelReader(&m, clocked, cunlock, cdone)
 	}
 	// Wait for all parallel RLock()s to succeed.
-	for i := 0; i < numReaders; i++ {
+	for range numReaders {
 		<-clocked
 	}
-	for i := 0; i < numReaders; i++ {
+	for range numReaders {
 		cunlock <- true
 	}
 	// Wait for the goroutines to finish.
-	for i := 0; i < numReaders; i++ {
+	for range numReaders {
 		<-cdone
 	}
 }
@@ -58,13 +58,13 @@ func TestParallelReaders(t *testing.T) {
 }
 
 func reader(rwm *RWMutex, numIterations int, activity *int32, cdone chan bool) {
-	for i := 0; i < numIterations; i++ {
+	for range numIterations {
 		rwm.RLock()
 		n := atomic.AddInt32(activity, 1)
 		if n < 1 || n >= 10000 {
 			panic(fmt.Sprintf("wlock(%d)\n", n))
 		}
-		for i := 0; i < 100; i++ {
+		for range 100 {
 		}
 		atomic.AddInt32(activity, -1)
 		rwm.RUnlock()
@@ -73,13 +73,13 @@ func reader(rwm *RWMutex, numIterations int, activity *int32, cdone chan bool) {
 }
 
 func writer(rwm *RWMutex, numIterations int, activity *int32, cdone chan bool) {
-	for i := 0; i < numIterations; i++ {
+	for range numIterations {
 		rwm.Lock()
 		n := atomic.AddInt32(activity, 10000)
 		if n != 10000 {
 			panic(fmt.Sprintf("wlock(%d)\n", n))
 		}
-		for i := 0; i < 100; i++ {
+		for range 100 {
 		}
 		atomic.AddInt32(activity, -10000)
 		rwm.Unlock()
@@ -88,13 +88,13 @@ func writer(rwm *RWMutex, numIterations int, activity *int32, cdone chan bool) {
 }
 
 func downgradingWriter(rwm *RWMutex, numIterations int, activity *int32, cdone chan bool) {
-	for i := 0; i < numIterations; i++ {
+	for range numIterations {
 		rwm.Lock()
 		n := atomic.AddInt32(activity, 10000)
 		if n != 10000 {
 			panic(fmt.Sprintf("wlock(%d)\n", n))
 		}
-		for i := 0; i < 100; i++ {
+		for range 100 {
 		}
 		atomic.AddInt32(activity, -10000)
 		rwm.DowngradeLock()
@@ -102,7 +102,7 @@ func downgradingWriter(rwm *RWMutex, numIterations int, activity *int32, cdone c
 		if n < 1 || n >= 10000 {
 			panic(fmt.Sprintf("wlock(%d)\n", n))
 		}
-		for i := 0; i < 100; i++ {
+		for range 100 {
 		}
 		atomic.AddInt32(activity, -1)
 		rwm.RUnlock()

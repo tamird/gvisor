@@ -113,7 +113,7 @@ func echoServerN(t *testing.T, serverFD int, count int, done chan struct{}) {
 	t.Helper()
 	defer close(done)
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		buf := make([]byte, linux.FUSE_MIN_READ_BUFFER)
 		n, err := unix.Read(serverFD, buf)
 		if err != nil {
@@ -328,7 +328,7 @@ func TestHostConnectionConcurrent(t *testing.T) {
 	var wg sync.WaitGroup
 	errs := make(chan error, numRequests)
 
-	for i := 0; i < numRequests; i++ {
+	for i := range numRequests {
 		wg.Add(1)
 		go func(val uint32) {
 			defer wg.Done()

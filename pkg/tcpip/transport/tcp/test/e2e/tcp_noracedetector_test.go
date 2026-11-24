@@ -57,7 +57,7 @@ func TestFastRecovery(t *testing.T) {
 	// Do slow start for a few iterations.
 	expected := tcp.InitialCwnd
 	bytesRead := 0
-	for i := 0; i < iterations; i++ {
+	for i := range iterations {
 		expected = tcp.InitialCwnd << uint(i)
 		if i > 0 {
 			// Acknowledge all the data received so far if not on
@@ -81,7 +81,7 @@ func TestFastRecovery(t *testing.T) {
 	// Send 3 duplicate acks. This should force an immediate retransmit of
 	// the pending packet and put the sender into fast recovery.
 	rtxOffset := bytesRead - maxPayload*expected
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		c.SendAck(790, rtxOffset)
 	}
 
@@ -109,7 +109,7 @@ func TestFastRecovery(t *testing.T) {
 
 	// Now send 7 mode duplicate acks. Each of these should cause a window
 	// inflation by 1 and cause the sender to send an extra packet.
-	for i := 0; i < 7; i++ {
+	for range 7 {
 		c.SendAck(790, rtxOffset)
 	}
 
@@ -142,7 +142,7 @@ func TestFastRecovery(t *testing.T) {
 
 	// Receive the 10 extra packets that should have been released due to
 	// the congestion window inflation in recovery.
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		c.ReceiveAndCheckPacket(data, bytesRead, maxPayload)
 		bytesRead += maxPayload
 	}
@@ -172,7 +172,7 @@ func TestFastRecovery(t *testing.T) {
 	// We would expect to get expected/2 +1 - 10 packets. But subsequent
 	// iterations will send us expected/2 + 1 + 1 (per iteration).
 	expected = expected/2 + 1 - 10
-	for i := 0; i < iterations; i++ {
+	for i := range iterations {
 		// Read all packets expected on this iteration. Don't
 		// acknowledge any of them just yet, so that we can measure the
 		// congestion window.
@@ -223,7 +223,7 @@ func TestExponentialIncreaseDuringSlowStart(t *testing.T) {
 
 	expected := tcp.InitialCwnd
 	bytesRead := 0
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		// Read all packets expected on this iteration. Don't
 		// acknowledge any of them just yet, so that we can measure the
 		// congestion window.
@@ -268,7 +268,7 @@ func TestCongestionAvoidance(t *testing.T) {
 	// Do slow start for a few iterations.
 	expected := tcp.InitialCwnd
 	bytesRead := 0
-	for i := 0; i < iterations; i++ {
+	for i := range iterations {
 		expected = tcp.InitialCwnd << uint(i)
 		if i > 0 {
 			// Acknowledge all the data received so far if not on
@@ -313,7 +313,7 @@ func TestCongestionAvoidance(t *testing.T) {
 	// Check that packets trains of cwnd packets are sent, and that cwnd is
 	// incremented by 1 after we acknowledge each packet.
 	expected = expected/2 + 1
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		// Read all packets expected on this iteration. Don't
 		// acknowledge any of them just yet, so that we can measure the
 		// congestion window.
@@ -363,7 +363,7 @@ func TestRetransmit(t *testing.T) {
 	// Do slow start for a few iterations.
 	expected := tcp.InitialCwnd
 	bytesRead := 0
-	for i := 0; i < iterations; i++ {
+	for i := range iterations {
 		expected = tcp.InitialCwnd << uint(i)
 		if i > 0 {
 			// Acknowledge all the data received so far if not on

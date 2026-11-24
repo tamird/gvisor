@@ -22,7 +22,7 @@ import (
 const testIterations = 100_000
 
 func TestInt63n(t *testing.T) {
-	for i := 0; i < testIterations; i++ {
+	for range testIterations {
 		maximum := rand.Int63()
 		for maximum <= 0 {
 			maximum = rand.Int63()
@@ -34,7 +34,7 @@ func TestInt63n(t *testing.T) {
 }
 
 func TestInt63(t *testing.T) {
-	for i := 0; i < testIterations; i++ {
+	for range testIterations {
 		if n := Int63(); n < 0 {
 			t.Errorf("Int63() returned bad value %d", n)
 		}

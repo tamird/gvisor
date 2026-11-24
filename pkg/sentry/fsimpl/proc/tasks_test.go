@@ -249,7 +249,7 @@ func TestManyProcMounts(t *testing.T) {
 			InternalData: &InternalData{},
 		},
 	}
-	for i := 0; i < numMounts; i++ {
+	for i := range numMounts {
 		if _, err := s.VFS.MountAt(s.Ctx, s.Creds, "", pop, Name, mntOpts); err != nil {
 			t.Fatalf("MountAt(/proc) failed after %d additional mounts: %v", i, err)
 		}
@@ -345,7 +345,7 @@ func TestTasks(t *testing.T) {
 
 	k := kernel.KernelFromContext(s.Ctx)
 	var tasks []*kernel.Task
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		tc := k.NewThreadGroup(k.RootPIDNamespace(), kernel.NewSignalHandlers(), linux.SIGCHLD, k.GlobalInit().Limits())
 		task, err := testutil.CreateTask(s.Ctx, fmt.Sprintf("name-%d", i), tc, s.MntNs, s.Root, s.Root)
 		if err != nil {
@@ -428,7 +428,7 @@ func TestTasksOffset(t *testing.T) {
 	defer s.Destroy()
 
 	k := kernel.KernelFromContext(s.Ctx)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		tc := k.NewThreadGroup(k.RootPIDNamespace(), kernel.NewSignalHandlers(), linux.SIGCHLD, k.GlobalInit().Limits())
 		if _, err := testutil.CreateTask(s.Ctx, fmt.Sprintf("name-%d", i), tc, s.MntNs, s.Root, s.Root); err != nil {
 			t.Fatalf("CreateTask(): %v", err)
@@ -667,7 +667,7 @@ func TestTree(t *testing.T) {
 	defer file.DecRef(s.Ctx)
 
 	var tasks []*kernel.Task
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		tc := k.NewThreadGroup(k.RootPIDNamespace(), kernel.NewSignalHandlers(), linux.SIGCHLD, k.GlobalInit().Limits())
 		task, err := testutil.CreateTask(s.Ctx, fmt.Sprintf("name-%d", i), tc, s.MntNs, s.Root, s.Root)
 		if err != nil {

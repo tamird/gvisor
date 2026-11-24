@@ -475,7 +475,7 @@ func TestConcurrentReaderWriter(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		runtime.Gosched()
-		for i := 0; i < count; i++ {
+		for range count {
 			n := 1 + tr.Intn(80)
 			wb := tx.Push(uint64(n))
 			for wb == nil {
@@ -490,7 +490,7 @@ func TestConcurrentReaderWriter(t *testing.T) {
 		}
 	}()
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		n := 1 + rr.Intn(80)
 		rb := rx.Pull()
 		for rb == nil {

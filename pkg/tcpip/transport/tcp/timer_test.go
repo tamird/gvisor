@@ -41,7 +41,7 @@ func TestCleanup(t *testing.T) {
 	}
 
 	// The waker should not be asserted.
-	for i := 0; i < isAssertedTimeoutSeconds; i++ {
+	for range isAssertedTimeoutSeconds {
 		clock.Advance(time.Second)
 		if w.IsAsserted() {
 			t.Fatalf("waker asserted unexpectedly")

@@ -349,7 +349,7 @@ func TestSendAndReceiveDataClosedByOriginator(t *testing.T) {
 	// Send some data.
 	tcp := make(header.TCP, header.TCPMinimumSize+1024)
 
-	for i := uint32(0); i < 10; i++ {
+	for range uint32(10) {
 		// Send some data.
 		tcp.Encode(&header.TCPFields{
 			SeqNum:     sseq,
@@ -378,7 +378,7 @@ func TestSendAndReceiveDataClosedByOriginator(t *testing.T) {
 		}
 	}
 
-	for i := uint32(0); i < 10; i++ {
+	for range uint32(10) {
 		// Receive some data.
 		tcp.Encode(&header.TCPFields{
 			SeqNum:     rseq,

@@ -180,7 +180,7 @@ func (c *bwrapConfig) subDirPath(parent, child string) (string, bool) {
 	if len(childParts) < len(parentParts) {
 		return "", false
 	}
-	for i := 0; i < len(parentParts); i++ {
+	for i := range len(parentParts) {
 		if parentParts[i] != childParts[i] {
 			return "", false
 		}

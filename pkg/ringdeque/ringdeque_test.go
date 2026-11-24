@@ -60,7 +60,7 @@ func TestDeque(t *testing.T) {
 			if got := d.Len(); got != 0 {
 				t.Errorf("zero-value Deque.Len: got %d, want 0", got)
 			}
-			for i := 0; i < numElems; i++ {
+			for i := range numElems {
 				test.push(&d, i)
 				if d.Empty() {
 					t.Errorf("Deque empty after %d pushes", i+1)
@@ -69,7 +69,7 @@ func TestDeque(t *testing.T) {
 					t.Errorf("Len: got %d, want %d", got, want)
 				}
 			}
-			for i := 0; i < numElems; i++ {
+			for i := range numElems {
 				want := i
 				if test.reversed {
 					want = numElems - 1 - i

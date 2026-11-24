@@ -485,7 +485,7 @@ func testV4ListenClose(t *testing.T, c *context.Context) {
 	}
 
 	irs := seqnum.Value(789)
-	for i := uint16(0); i < n; i++ {
+	for i := range uint16(n) {
 		// Send a SYN request.
 		c.SendPacket(nil, &context.Headers{
 			SrcPort: context.TestPort + i,
@@ -498,7 +498,7 @@ func testV4ListenClose(t *testing.T, c *context.Context) {
 
 	// Each of these ACKs will cause a syn-cookie based connection to be
 	// accepted and delivered to the listening endpoint.
-	for i := 0; i < n; i++ {
+	for range n {
 		v := c.GetPacket()
 		defer v.Release()
 		tcp := header.TCP(header.IPv4(v.AsSlice()).Payload())

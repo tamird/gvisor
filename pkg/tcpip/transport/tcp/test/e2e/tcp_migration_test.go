@@ -253,7 +253,7 @@ func TestRestoreListenWithPreexistingConnection(t *testing.T) {
 			name: "MultipleProbeConnections",
 			setupProbes: func(t *testing.T, c *testcontext.Context) []tcpip.Endpoint {
 				var acceptedEPs []tcpip.Endpoint
-				for i := uint16(0); i < 3; i++ {
+				for i := range uint16(3) {
 					srcPort := testcontext.TestPort + i
 					iss := seqnum.Value(testcontext.TestInitialSequenceNumber + i*1000)
 

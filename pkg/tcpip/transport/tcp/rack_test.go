@@ -397,7 +397,7 @@ func TestRACKEqualTransmitTimeOrdersByEndSequence(t *testing.T) {
 	ctx.snd.ep.mu.Lock()
 	defer ctx.snd.ep.mu.Unlock()
 	ctx.snd.rc.EndSequence = 2
-	for seq := seqnum.Value(0); seq < 3; seq++ {
+	for seq := range seqnum.Value(3) {
 		ctx.addSegment(seq, tcpip.MonotonicTime{})
 	}
 

@@ -67,7 +67,7 @@ func TestMultiEmitter(t *testing.T) {
 	// Create three testEmitters, tied together in a multiEmitter.
 	me := &multiEmitter{}
 	var emitters []*testEmitter
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		te := &testEmitter{}
 		emitters = append(emitters, te)
 		me.AddEmitter(te)
@@ -115,7 +115,7 @@ func TestRateLimitedEmitter(t *testing.T) {
 	rle := RateLimitedEmitterFrom(te, max, burst)
 
 	// Send 50 messages in one shot.
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		if _, err := rle.Emit(testMessage{}); err != nil {
 			t.Fatalf("rle.Emit failed: %v", err)
 		}
@@ -128,7 +128,7 @@ func TestRateLimitedEmitter(t *testing.T) {
 
 	// Sleep for a second and then send another 50.
 	time.Sleep(1 * time.Second)
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		if _, err := rle.Emit(testMessage{}); err != nil {
 			t.Fatalf("rle.Emit failed: %v", err)
 		}

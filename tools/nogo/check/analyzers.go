@@ -229,7 +229,8 @@ func init() {
 			"stringsseq",
 			"newexpr",
 			"minmax",
-			"stringsbuilder":
+			"stringsbuilder",
+			"rangeint":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}

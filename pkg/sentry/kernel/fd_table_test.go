@@ -84,7 +84,7 @@ func runTest(t testing.TB, fn func(ctx context.Context, fdTable *FDTable, fd *vf
 // one and add one that works too.
 func TestFDTableMany(t *testing.T) {
 	runTest(t, func(ctx context.Context, fdTable *FDTable, fd *vfs.FileDescription, _ *limits.LimitSet) {
-		for i := 0; i < maxFD; i++ {
+		for i := range maxFD {
 			if _, err := fdTable.NewFDs(ctx, 0, []*vfs.FileDescription{fd}, FDFlags{}); err != nil {
 				t.Fatalf("Allocated %v FDs but wanted to allocate %v", i, maxFD)
 			}
@@ -300,7 +300,7 @@ func BenchmarkFork(b *testing.B) {
 	b.StopTimer() // Setup.
 
 	runTest(b, func(ctx context.Context, fdTable *FDTable, fd *vfs.FileDescription, limitSet *limits.LimitSet) {
-		for i := 0; i < maxFD; i++ {
+		for i := range maxFD {
 			_, err := fdTable.NewFDAt(ctx, int32(i), fd, FDFlags{})
 			if err != nil {
 				b.Fatalf("fdTable.NewFDs: got %v, wanted nil", err)
@@ -347,11 +347,11 @@ func BenchmarkFDLookupAndDecRefConcurrent(b *testing.B) {
 
 		b.StartTimer() // Benchmark.
 		var wg sync.WaitGroup
-		for i := 0; i < concurrency; i++ {
+		for range concurrency {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				for i := 0; i < each; i++ {
+				for i := range each {
 					tf, _ := fdTable.Get(fds[i%len(fds)])
 					tf.DecRef(ctx)
 				}
@@ -376,7 +376,7 @@ func TestSetFlagsForRange(t *testing.T) {
 
 	for _, test := range testCases {
 		runTest(t, func(ctx context.Context, fdTable *FDTable, fd *vfs.FileDescription, _ *limits.LimitSet) {
-			for i := 0; i < maxFD; i++ {
+			for range maxFD {
 				if _, err := fdTable.NewFDs(ctx, 0, []*vfs.FileDescription{fd}, FDFlags{}); err != nil {
 					t.Fatalf("testCase: %v\nfdTable.NewFDs(_, 0, %+v, FDFlags{}): %d, want: nil", test, []*vfs.FileDescription{fd}, err)
 				}

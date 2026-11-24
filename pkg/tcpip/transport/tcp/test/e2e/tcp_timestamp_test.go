@@ -107,7 +107,7 @@ func TestTimeStampEnabledConnect(t *testing.T) {
 
 	// There should be 5 views to read and each of them should
 	// contain the same data.
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		buf := make([]byte, len(data))
 		w := tcpip.SliceWriter(buf)
 		result, err := c.EP.Read(&w, tcpip.ReadOptions{})

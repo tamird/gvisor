@@ -132,7 +132,7 @@ func (c *Client) StartChannels() error {
 	// channels and costly initialization like flipcall.Endpoint.Connect can
 	// proceed parallelly.
 	var channelsWg sync.WaitGroup
-	for i := 0; i < maxChans; i++ {
+	for range maxChans {
 		channelsWg.Add(1)
 		go func() {
 			defer channelsWg.Done()

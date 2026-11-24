@@ -701,7 +701,7 @@ func TestHyStartAckTrainUsesIngressTime(t *testing.T) {
 	fClock.Advance(time.Millisecond) // t = 7ms: within ackDelta of LastAck(6ms) and
 	// 3ms past RoundStart(4ms) > LastRTT/2(2ms); frozen below for the burst.
 	arrival := fClock.NowMonotonic()
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		arrival = arrival.Add(3 * time.Millisecond) // true arrivals 3ms apart
 		uut.updateHyStart(5*time.Millisecond, arrival)
 		if snd.Ssthresh != InitialSsthresh {

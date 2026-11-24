@@ -1187,7 +1187,7 @@ func (vfs *VirtualFilesystem) MakeSyntheticMountpoint(ctx context.Context, targe
 func (vfs *VirtualFilesystem) PopDelayedDecRefs() []refs.RefCounter {
 	var rcs []refs.RefCounter
 	for rc, refs := range vfs.toDecRef {
-		for i := 0; i < refs; i++ {
+		for range refs {
 			rcs = append(rcs, rc)
 		}
 	}
@@ -1226,7 +1226,7 @@ func (vfs *VirtualFilesystem) unlockMounts(ctx context.Context) {
 	vfs.toDecRef = map[refs.RefCounter]int{}
 	vfs.mountMu.Unlock()
 	for rc, refs := range toDecRef {
-		for i := 0; i < refs; i++ {
+		for range refs {
 			rc.DecRef(ctx)
 		}
 	}

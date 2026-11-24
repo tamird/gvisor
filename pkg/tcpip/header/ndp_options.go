@@ -877,7 +877,7 @@ func (o NDPDNSSearchList) iterDomainNames(fn func(string)) error {
 			}
 
 			// Copy the label and add a trailing period.
-			for i := 0; i < labelLen; i++ {
+			for i := range labelLen {
 				b, err := searchList.ReadByte()
 				if err != nil {
 					if err != io.EOF {

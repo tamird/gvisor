@@ -136,7 +136,7 @@ func (n *Notifier) waitAndNotify(ioInit chan int32) error {
 		}
 
 		n.mu.Lock()
-		for i := 0; i < num; i++ {
+		for i := range num {
 			h := uint32(events[i].Fd)
 			eventInfo, ok := n.eventMap[h]
 			if !ok {

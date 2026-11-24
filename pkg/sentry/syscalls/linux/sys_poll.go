@@ -262,7 +262,7 @@ func doSelect(t *kernel.Task, nfds int, readFDs, writeFDs, exceptFDs hostarch.Ad
 	// Count how many FDs are actually being requested so that we can build
 	// a PollFD array.
 	fdCount := 0
-	for i := 0; i < nBytes; i++ {
+	for i := range nBytes {
 		v := r[i] | w[i] | e[i]
 		for v != 0 {
 			v &= (v - 1)
@@ -273,11 +273,11 @@ func doSelect(t *kernel.Task, nfds int, readFDs, writeFDs, exceptFDs hostarch.Ad
 	// Build the PollFD array.
 	pfd := make([]linux.PollFD, 0, fdCount)
 	var fd int32
-	for i := 0; i < nBytes; i++ {
+	for i := range nBytes {
 		rV, wV, eV := r[i], w[i], e[i]
 		v := rV | wV | eV
 		m := byte(1)
-		for j := 0; j < 8; j++ {
+		for range 8 {
 			if (v & m) != 0 {
 				// Make sure the fd is valid and decrement the reference
 				// immediately to ensure we don't leak. Note, another thread

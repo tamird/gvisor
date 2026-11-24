@@ -3021,7 +3021,7 @@ func NewProtocolWithOptions(opts Options) stack.NetworkProtocolFactory {
 		// Default: 0-1,3-127 (rate limit ICMPv6 errors except Packet Too Big)
 		// See https://www.kernel.org/doc/Documentation/networking/ip-sysctl.txt.
 		defaultIcmpTypes := make(map[header.ICMPv6Type]struct{})
-		for i := header.ICMPv6Type(0); i < header.ICMPv6EchoRequest; i++ {
+		for i := range header.ICMPv6Type(header.ICMPv6EchoRequest) {
 			switch i {
 			case header.ICMPv6PacketTooBig:
 				// Do not rate limit packet too big by default.

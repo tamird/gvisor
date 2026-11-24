@@ -189,7 +189,7 @@ func TestDADCheckDuplicateAddress(t *testing.T) {
 	default:
 	}
 	clock.Advance(delta)
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		if diff := cmp.Diff(dadResult{Addr: addr1, R: &stack.DADSucceeded{}}, <-ch); diff != "" {
 			t.Errorf("(i=%d) dad result mismatch (-want +got):\n%s", i, diff)
 		}

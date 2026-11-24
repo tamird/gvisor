@@ -115,7 +115,7 @@ func TestWaitForIdleActivityRestartsWait(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		k := newIdleTestKernel()
 		done := waitForIdleAsync(k)
-		for i := 0; i < 3; i++ {
+		for range 3 {
 			k.setActive(false)
 			time.Sleep(testIdleDelay / 2)
 			k.setActive(true)

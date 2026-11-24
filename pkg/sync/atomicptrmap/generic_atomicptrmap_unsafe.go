@@ -430,7 +430,7 @@ func (shard *apmShard) rehash(oldSlots unsafe.Pointer) {
 //
 // f must not call other methods on m.
 func (m *AtomicPtrMap) Range(f func(key Key, val *Value) bool) {
-	for si := 0; si < len(m.shards); si++ {
+	for si := range len(m.shards) {
 		shard := &m.shards[si]
 		if !shard.doRange(f) {
 			return
@@ -469,7 +469,7 @@ func (shard *apmShard) doRange(f func(key Key, val *Value) bool) bool {
 //
 //   - It is safe for f to call other methods on m.
 func (m *AtomicPtrMap) RangeRepeatable(f func(key Key, val *Value) bool) {
-	for si := 0; si < len(m.shards); si++ {
+	for si := range len(m.shards) {
 		shard := &m.shards[si]
 
 	retry:

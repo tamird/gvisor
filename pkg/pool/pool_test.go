@@ -40,7 +40,7 @@ func TestPoolUnique(t *testing.T) {
 
 func TestExausted(t *testing.T) {
 	p := Pool{Start: 1, Limit: 500}
-	for i := 0; i < 499; i++ {
+	for range 499 {
 		_, ok := p.Get()
 		if !ok {
 			t.Fatalf("pool exhausted before 499 items")

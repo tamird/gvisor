@@ -161,7 +161,7 @@ func (n *natOp) setupNetmap(pkt *stack.PacketBuffer, minAddr, maxAddr *tcpip.Add
 	maxSlice := maxAddr.AsSlice()
 	newAddrBytes := make([]byte, addrLen)
 	words := addrLen / 4 // size of uint32
-	for i := 0; i < words; i++ {
+	for i := range words {
 		offset := i * 4 // offset in bytes
 		m := binary.BigEndian.Uint32(manipAddrSlice[offset:])
 		min := binary.BigEndian.Uint32(minSlice[offset:])

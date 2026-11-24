@@ -107,7 +107,7 @@ func (s *syslog) Log() []byte {
 	s.msg = append(s.msg, []byte(fmt.Sprintf(format, 0.0, "Starting gVisor..."))...)
 
 	time := 0.1
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		time += rand.Float64() / 2
 		s.msg = append(s.msg, []byte(fmt.Sprintf(format, time, selectMessage()))...)
 	}

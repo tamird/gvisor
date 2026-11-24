@@ -171,7 +171,7 @@ func TestCPUDir(t *testing.T) {
 		"possible": linux.DT_REG,
 		"present":  linux.DT_REG,
 	}
-	for i := uint(0); i < cores; i++ {
+	for i := range uint(cores) {
 		want[fmt.Sprintf("cpu%d", i)] = linux.DT_DIR
 	}
 	s.AssertAllDirentTypes(s.ListDirents(s.PathOpAtRoot("devices/system/cpu")), want)
@@ -205,7 +205,7 @@ func TestCPUDir(t *testing.T) {
 	}
 	fullMask := mask(func(uint) bool { return true })
 	fullList := fmt.Sprintf("0-%d\n", cores-1)
-	for i := uint(0); i < cores; i++ {
+	for i := range uint(cores) {
 		dir := fmt.Sprintf("devices/system/cpu/cpu%d", i)
 		s.AssertAllDirentTypes(s.ListDirents(s.PathOpAtRoot(dir)), map[string]testutil.DirentType{
 			"topology": linux.DT_DIR,

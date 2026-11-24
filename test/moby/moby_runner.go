@@ -299,7 +299,7 @@ func (d *dockerdHandler) cleanup() {
 
 // waitReady waits for the dockerd daemon to be ready.
 func (d *dockerdHandler) waitReady() error {
-	for i := 0; i < 30; i++ {
+	for range 30 {
 		select {
 		case err := <-d.exited:
 			d.exited <- err

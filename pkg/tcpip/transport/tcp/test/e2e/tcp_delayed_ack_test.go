@@ -142,7 +142,7 @@ func (c *delayedAckContext) respond() {
 // warmUp uses up the quick ACKs at the start of the connection.
 func (c *delayedAckContext) warmUp() {
 	c.t.Helper()
-	for i := 0; i < quickAcks; i++ {
+	for range quickAcks {
 		c.send(1)
 		c.checkACK()
 	}
@@ -265,7 +265,7 @@ func TestDelayedACKGRO(t *testing.T) {
 	g := gro.GRO{Dispatcher: groDispatcher{c}}
 	g.Init(true)
 	rcvd := c.Stack().Stats().IP.PacketsReceived.Value()
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 			Payload: c.BuildSegment(make([]byte, peerMSS), &context.Headers{
 				SrcPort: c.peer.SrcPort,

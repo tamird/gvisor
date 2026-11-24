@@ -64,7 +64,7 @@ func TestRlimitNoFile(t *testing.T) {
 	// Create a directory with a bunch of files.
 	const nfiles = 5000
 	tmpDir := testutil.TmpDir()
-	for i := 0; i < nfiles; i++ {
+	for range nfiles {
 		if _, err := os.CreateTemp(tmpDir, "tmp"); err != nil {
 			t.Fatalf("TempFile(): %v", err)
 		}
@@ -99,7 +99,7 @@ func TestDentryCacheLimit(t *testing.T) {
 	// Create a directory with a bunch of files.
 	const nfiles = 5000
 	tmpDir := testutil.TmpDir()
-	for i := 0; i < nfiles; i++ {
+	for range nfiles {
 		if _, err := os.CreateTemp(tmpDir, "tmp"); err != nil {
 			t.Fatalf("TempFile(): %v", err)
 		}

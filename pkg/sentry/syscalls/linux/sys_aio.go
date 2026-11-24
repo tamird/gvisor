@@ -121,7 +121,7 @@ func IoGetevents(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (uin
 	}
 
 	// Loop over all requests.
-	for count := int32(0); count < events; count++ {
+	for count := range int32(events) {
 		// Get a request, per semantics.
 		var v any
 		if count >= minEvents {
@@ -221,7 +221,7 @@ func IoSubmit(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (uintpt
 		return 0, nil, linuxerr.EINVAL
 	}
 
-	for i := int32(0); i < nrEvents; i++ {
+	for i := range int32(nrEvents) {
 		// Copy in the callback address.
 		var cbAddr hostarch.Addr
 		switch t.Arch().Width() {

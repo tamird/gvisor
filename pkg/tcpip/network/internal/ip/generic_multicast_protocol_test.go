@@ -1255,7 +1255,7 @@ func TestMakeAllNonMemberAndInitialize(t *testing.T) {
 
 			// Should send the initial set of unsolcited V2 reports.
 			mgp.initializeGroups()
-			for i := 0; i < unsolicitedTransmissionCount; i++ {
+			for range unsolicitedTransmissionCount {
 				if test.v1 {
 					if diff := mgp.check(test.checkFields([]tcpip.Address{addr1, addr2}, false /* leave */)); diff != "" {
 						t.Errorf("mockMulticastGroupProtocol mismatch (-want +got):\n%s", diff)

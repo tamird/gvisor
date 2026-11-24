@@ -448,7 +448,7 @@ func TestContainerMetricsMultiple(t *testing.T) {
 	}()
 
 	// Start a bunch of containers with metrics.
-	for i := 0; i < numConcurrentContainers; i++ {
+	for i := range numConcurrentContainers {
 		cont, err := New(te.sleepConf, Args{
 			ID:        testutil.RandomContainerID(),
 			Spec:      te.sleepSpec,

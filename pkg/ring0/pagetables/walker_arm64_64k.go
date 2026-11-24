@@ -87,7 +87,7 @@ func (w *Walker) iterateRangeCanonical64K(start, end uintptr) bool {
 				if w.visitor.requiresSplit() && (start&(pmdSize64K-1) != 0 || end < next(start, pmdSize64K)) {
 					// Install the relevant entries.
 					pteEntries = w.pageTables.Allocator.NewPTEs().as64K()
-					for index := uint16(0); index < entriesPerPage64K; index++ {
+					for index := range uint16(entriesPerPage64K) {
 						pteEntries[index].Set(
 							pmdEntry.Address()+(pteSize64K*uintptr(index)),
 							pmdEntry.Opts())

@@ -665,7 +665,7 @@ func capName(i int) string {
 
 func capsFromMask(mask uint64) []string {
 	var out []string
-	for i := 0; i < 64; i++ {
+	for i := range 64 {
 		if mask&(uint64(1)<<uint(i)) != 0 {
 			out = append(out, capName(i))
 		}

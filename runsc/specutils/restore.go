@@ -267,7 +267,7 @@ func validateArray[T any](field, cName string, oldArr, newArr []T) error {
 	}
 	oldMap := make(map[any]struct{})
 	newMap := make(map[any]struct{})
-	for i := 0; i < len(oldArr); i++ {
+	for i := range len(oldArr) {
 		key := oldArr[i]
 		if _, ok := oldMap[key]; ok {
 			return validateErrorWithMsg(field, cName, oldArr, newArr, "duplicate value")

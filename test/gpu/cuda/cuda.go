@@ -801,7 +801,7 @@ func RunCudaTests(ctx context.Context, t *testing.T, args *RunCudaTestArgs) {
 	}
 	spawnGroup, spawnCtx := errgroup.WithContext(ctx)
 	containers := make([]*dockerutil.Container, numContainers)
-	for i := 0; i < numContainers; i++ {
+	for i := range numContainers {
 		spawnGroup.Go(func() error {
 			c := dockerutil.MakeContainer(ctx, t)
 			runOpts, err := getContainerOpts(args.Image)

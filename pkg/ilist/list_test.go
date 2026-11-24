@@ -163,7 +163,7 @@ func TestReset(t *testing.T) {
 	}
 
 	// Resetting list of 10 elements.
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		l.PushBack(&testEntry{})
 	}
 
@@ -185,7 +185,7 @@ func TestReset(t *testing.T) {
 
 func BenchmarkIterateForward(b *testing.B) {
 	var l List
-	for i := 0; i < 1000000; i++ {
+	for i := range 1000000 {
 		l.PushBack(&testEntry{value: i})
 	}
 
@@ -199,7 +199,7 @@ func BenchmarkIterateForward(b *testing.B) {
 
 func BenchmarkIterateBackward(b *testing.B) {
 	var l List
-	for i := 0; i < 1000000; i++ {
+	for i := range 1000000 {
 		l.PushBack(&testEntry{value: i})
 	}
 
@@ -213,7 +213,7 @@ func BenchmarkIterateBackward(b *testing.B) {
 
 func BenchmarkDirectIterateForward(b *testing.B) {
 	var l directList
-	for i := 0; i < 1000000; i++ {
+	for i := range 1000000 {
 		l.PushBack(&direct{value: i})
 	}
 
@@ -227,7 +227,7 @@ func BenchmarkDirectIterateForward(b *testing.B) {
 
 func BenchmarkDirectIterateBackward(b *testing.B) {
 	var l directList
-	for i := 0; i < 1000000; i++ {
+	for i := range 1000000 {
 		l.PushBack(&direct{value: i})
 	}
 

@@ -172,7 +172,7 @@ func SendAndReceiveWithSACK(t *testing.T, c *context.Context, maxPayload int, nu
 	}
 
 	bytesRead := 0
-	for i := 0; i < numPackets; i++ {
+	for range numPackets {
 		c.ReceiveAndCheckPacketWithOptions(data, bytesRead, maxPayload, TSOptionSize)
 		bytesRead += maxPayload
 	}

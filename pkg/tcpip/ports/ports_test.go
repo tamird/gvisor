@@ -441,7 +441,7 @@ func TestOverflow(t *testing.T) {
 	for offset := uint32(math.MaxUint16 - count); offset < math.MaxUint16; offset++ {
 		reservedPorts := make(map[uint16]struct{})
 		// Ensure we can reserve everything in the allowed range.
-		for i := uint16(0); i < count; i++ {
+		for i := range uint16(count) {
 			port, err := pickEphemeralPort(offset, firstEphemeral, count, func(port uint16) (bool, tcpip.Error) {
 				if _, ok := reservedPorts[port]; !ok {
 					reservedPorts[port] = struct{}{}

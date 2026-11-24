@@ -92,7 +92,7 @@ func TestConnectionAbort(t *testing.T) {
 
 	var futNormal []*futureResponse
 	testObj := primitive.Uint32(rand.Uint32())
-	for i := 0; i < int(numRequests); i++ {
+	for i := range int(numRequests) {
 		req := conn.NewRequest(creds, uint32(i), uint64(i), 0, &testObj)
 		conn.mu.Lock()
 		fut, err := conn.callFutureLocked(req)

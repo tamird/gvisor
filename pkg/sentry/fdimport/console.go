@@ -72,7 +72,7 @@ func ExposeConsole(ctx context.Context, mntns *vfs.MountNamespace, fdTable *kern
 	// description.
 	consoleFDs := make(map[int32]kernel.FDFlags)
 	var statusFlags uint32
-	for fd := int32(0); fd < 3; fd++ {
+	for fd := range int32(3) {
 		file, flags := fdTable.Get(fd)
 		if file == nil {
 			continue

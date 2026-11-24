@@ -227,7 +227,7 @@ const (
 //   - fs.Dirent of the binary file
 //   - Possibly updated args.Argv
 func loadExecutable(ctx context.Context, args LoadArgs, wds *wouldDumpState) (loadedELF, *arch.Context64, *vfs.FileDescription, []string, error) {
-	for i := 0; i < maxLoaderAttempts; i++ {
+	for range maxLoaderAttempts {
 		if args.File == nil {
 			var err error
 			args.File, err = openPath(ctx, args)

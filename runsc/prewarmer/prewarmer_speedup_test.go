@@ -112,10 +112,10 @@ func TestPrewarmerSpeedsUpFDTableExpansion(t *testing.T) {
 	const runs = 32 // Number of runs to do.
 
 	var alone, prewarmed []time.Duration
-	for i := 0; i < runs; i++ {
+	for range runs {
 		alone = append(alone, timedRun(t, exec.Command(expander)))
 	}
-	for i := 0; i < runs; i++ {
+	for range runs {
 		prewarmed = append(prewarmed, timedRun(t, prewarmedCommand()))
 	}
 
@@ -212,7 +212,7 @@ func TestPrewarmerSpeedsUpRealBoot(t *testing.T) {
 	const runs = 8 // Number of runs to do per side.
 
 	var prewarmed []time.Duration
-	for i := 0; i < runs; i++ {
+	for range runs {
 		d, output, err := runscDo(t, runsc, sidecarDir, filepath.Join(tmp, "root-prewarmed"))
 		if err != nil {
 			t.Fatalf("runsc do with the prewarmer failed: %v; output:\n%s", err, output)
@@ -231,7 +231,7 @@ func TestPrewarmerSpeedsUpRealBoot(t *testing.T) {
 	}
 
 	var unprewarmed []time.Duration
-	for i := 0; i < runs; i++ {
+	for range runs {
 		d, output, err := runscDo(t, runsc, sidecarDir, filepath.Join(tmp, "root-unprewarmed"))
 		if err != nil {
 			t.Fatalf("runsc do without the prewarmer failed: %v; output:\n%s", err, output)

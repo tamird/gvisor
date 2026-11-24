@@ -143,6 +143,11 @@ analyzers:
       exclude:
         # The NBSP fixture verifies that malformed whitespace does not grant nosplit.
         - '^bazel-out/[^/]+/bin/tools/checkescape/test1/nosplit\.go:'
+  rangeint:
+    internal:
+      exclude:
+        # Indexed loops preserve checklocks' TryLock path analysis in LockUser.
+        - '^pkg/tcpip/transport/tcp/endpoint\.go:(684|704):[0-9]+$'
   reflectvaluecompare:
     internal:
       exclude:

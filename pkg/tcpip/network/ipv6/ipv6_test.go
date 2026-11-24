@@ -1257,7 +1257,7 @@ type fragmentData struct {
 
 func udpGen(payload []byte, multiplier uint8, src, dst tcpip.Address) []byte {
 	payloadLen := len(payload)
-	for i := 0; i < payloadLen; i++ {
+	for i := range payloadLen {
 		payload[i] = uint8(i) * multiplier
 	}
 
@@ -2167,11 +2167,11 @@ func TestConcurrentFragmentWrites(t *testing.T) {
 
 	var wg sync.WaitGroup
 	defer wg.Wait()
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for i := 0; i < 10; i++ {
+			for range 10 {
 				for _, f := range fragments {
 					hdr := prependable.New(header.IPv6MinimumSize)
 
@@ -2740,7 +2740,7 @@ func TestWriteStats(t *testing.T) {
 			test.setup(t, rt.Stack())
 
 			nWritten := 0
-			for i := 0; i < nPackets; i++ {
+			for range nPackets {
 				pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 					ReserveHeaderBytes: header.UDPMinimumSize + int(rt.MaxHeaderLength()),
 					Payload:            buffer.Buffer{},
@@ -4054,7 +4054,7 @@ func TestIcmpRateLimit(t *testing.T) {
 	}
 	for _, testCase := range tests {
 		t.Run(testCase.name, func(t *testing.T) {
-			for round := 0; round < icmpBurst+1; round++ {
+			for round := range icmpBurst + 1 {
 				pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 					Payload: buffer.MakeWithData(testCase.createPacket()),
 				})
