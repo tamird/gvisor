@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T00:51:51.157209+00:00",
+    "updatedAt": "2026-11-24T01:32:50.502686+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38242,13 +38242,13 @@
       "group": "bazel",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:46.312467+00:00",
-      "summary": "Source-equivalent rebase 0a9681ef9 and factual notice 7118479997 are delivered and root-verified. Strict range-diff is equal and two final independent context reviews are clear. Current provider head is MERGEABLE, DCO SUCCESS, REVIEW_REQUIRED and auto-merge null; zkoopmans request remains pending. Parent5004 contains the obsolete-hook fix by content; literal909c ancestry is not established. Earlier main upload failures on 58f835180 exhausted three missing-tamird-ref pre-command attempts before builds/tests and are historical. New FirstPass2577 is PENDING; native Gazelle/generate/header/lint are in progress. Prior approvals are historical and are not fresh-head approval credit. The unrelated ARM strict-C++ signalfd header failure remains explicit; affected gates are not a full strict-C++ or runtime/performance claim.",
+      "summary": "Delivered unchanged-patch rebase 0a9681ef9 and saved notice are verified in the current API sample. FirstPass2577 and all reported native GitHub contexts are SUCCESS; no current-head main-pipeline context is reported. Provider binds the retained approval to the rebased head with its original submission time; this is not a newly submitted review. Provider remains REVIEW_REQUIRED. Old main upload failures were before-tests obsolete-hook errors; parent5004 contains the hook correction by content, without a literal909 ancestry claim.",
       "followup": {
         "owner": "root / approved_rebase_queue",
         "sourceHead": "0a9681ef9cdaf1a3640c64438d0507351a050fac",
-        "observedAt": "2026-11-24T00:51:51.157209+00:00",
-        "disposition": "Source-equivalent rebase 0a9681ef9 and factual notice 7118479997 are delivered and root-verified. Strict range-diff is equal and two final independent context reviews are clear. Current provider head is MERGEABLE, DCO SUCCESS, REVIEW_REQUIRED and auto-merge null; zkoopmans request remains pending. Parent5004 contains the obsolete-hook fix by content; literal909c ancestry is not established. Earlier main upload failures on 58f835180 exhausted three missing-tamird-ref pre-command attempts before builds/tests and are historical. New FirstPass2577 is PENDING; native Gazelle/generate/header/lint are in progress. Prior approvals are historical and are not fresh-head approval credit. The unrelated ARM strict-C++ signalfd header failure remains explicit; affected gates are not a full strict-C++ or runtime/performance claim.",
-        "nextAction": "Rebase, affected qualification and notice delivery are complete. Existing rbe_parallel_evidence owner follows the new-head CI at01:15 and root follows genuine maintainer/import review. No repeat notice, source approval request for this unchanged patch, blind CI retry, merge or duplicate observer.",
+        "observedAt": "2026-11-24T01:32:50.502686+00:00",
+        "disposition": "Delivered unchanged-patch rebase 0a9681ef9 and saved notice are verified in the current API sample. FirstPass2577 and all reported native GitHub contexts are SUCCESS; no current-head main-pipeline context is reported. Provider binds the retained approval to the rebased head with its original submission time; this is not a newly submitted review. Provider remains REVIEW_REQUIRED. Old main upload failures were before-tests obsolete-hook errors; parent5004 contains the hook correction by content, without a literal909 ancestry claim.",
+        "nextAction": "Root follows remaining maintainer/import review and actual new-head main/check events; existing rbe_parallel_evidence owner retains the01:45 checkpoint. Rebase, notice and affected qualification are complete. No duplicate source approval, notice, retry, outreach or merge.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16466",
           "https://github.com/tamird/gvisor/actions/runs/43013691770/job/130499353612",
@@ -38295,7 +38295,7 @@
           "https://github.com/tamird/gvisor/actions/runs/45298156847"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Existing CI owner supplies actual new-head terminal results, or substantive review/import/head/base change.",
+        "recheckCondition": "Actual new-head main result, substantive review/import event or source/base change.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -38348,9 +38348,9 @@
         "providerHead": "0a9681ef9cdaf1a3640c64438d0507351a050fac",
         "currentSourceCI": {
           "head": "0a9681ef9cdaf1a3640c64438d0507351a050fac",
-          "state": "Affected qualification passed; native DCO SUCCESS; FirstPass pending and native GHA in progress. The unrelated ARM strict-C++ signalfd header failure remains explicit; affected gates are not a full strict-C++ or runtime/performance claim.",
-          "observedAt": "2026-11-24T00:51:51.157209+00:00",
-          "scope": "Source-owner/root terminal receipt and direct provider confirmations; overall raw API sample remains00:25:20. No saved native metadata artifact is invented.",
+          "state": "FirstPass2577 and all reported native contexts SUCCESS; no main context reported.",
+          "observedAt": "2026-11-24T01:32:50.502686+00:00",
+          "scope": "Current canonical API01:29:32 plus retained source-owner qualification receipts. No full main/runtime/performance claim.",
           "evidence": [
             "https://github.com/gvisor/gvisor/pull/16466#issuecomment-7118479997",
             "https://github.com/tamird/gvisor/commit/0a9681ef9cdaf1a3640c64438d0507351a050fac",
@@ -41353,14 +41353,14 @@
       "url": "https://github.com/google/gvisor/pull/16516",
       "group": "bazel",
       "status": "open",
-      "summary": "Existing owner checkpoint00:12: source remains MERGEABLE/APPROVED; main55748 remains live. Six jobs and gate remain with the same three exhausted APT/dpkg setup chains; no new target failure is established. Prior live attempt IDs were superseded by continued retry chains.",
+      "summary": "Current API reports main55748 FAILURE on exacta9594385d. This GitHub context alone does not establish terminal build state or a new target cause. Existing owner checkpoints and source-bound qualification retain their limits; no new human feedback is present.",
       "updatedAt": "2026-11-17T17:42:43.236533Z",
       "followup": {
         "owner": "root",
         "sourceHead": "a9594385d15d2e17e5dd7491be94d774f47fa80e",
-        "observedAt": "2026-11-24T00:28:40.976210+00:00",
-        "disposition": "Existing owner checkpoint00:12: source remains MERGEABLE/APPROVED; main55748 remains live. Six jobs and gate remain with the same three exhausted APT/dpkg setup chains; no new target failure is established. Prior live attempt IDs were superseded by continued retry chains.",
-        "nextAction": "Existing rbe_parallel_evidence owner rechecks at00:45; APT/image owners retain recovery. No source change, retry, merge, duplicate observer or terminal verdict from a live status.",
+        "observedAt": "2026-11-24T01:32:50.502686+00:00",
+        "disposition": "Current API reports main55748 FAILURE on exacta9594385d. This GitHub context alone does not establish terminal build state or a new target cause. Existing owner checkpoints and source-bound qualification retain their limits; no new human feedback is present.",
+        "nextAction": "Existing rbe_parallel_evidence owner classifies complete retry chains at01:45. Root retains review/import follow-through; preserve known APT/image recovery ownership. No duplicate reader, unchanged retry, source failure attribution or merge from status alone.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16516#pullrequestreview-5895770949",
           "https://github.com/gvisor/gvisor/pull/16516#pullrequestreview-5943223023",
@@ -41381,7 +41381,7 @@
           "delivered": true,
           "endpoint": "/repos/gvisor/gvisor/pulls/16516/requested_reviewers/rerequest"
         },
-        "recheckCondition": "Existing owner’s23:10/terminal receipt or an actual source/review/import event.",
+        "recheckCondition": "Existing CI owner supplies a terminal source-bound verdict, or actual review/import/head/base change.",
         "mergeable": "MERGEABLE",
         "attentionDispositions": [],
         "providerHead": "a9594385d15d2e17e5dd7491be94d774f47fa80e"
@@ -78013,7 +78013,7 @@
       "head": "ef6f0e2f8c9cd1ca1b2b277261f68ef5509d225e",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:53.479529+00:00",
-      "summary": "Source-equivalent rebase ef6f0e2f8 and factual notice 7118481011 are delivered and root-verified. Strict range-diff is equal and two final independent context reviews are clear. Current provider head is MERGEABLE, DCO SUCCESS, REVIEW_REQUIRED and auto-merge null; no pending review request is recorded. Parent5004 contains the obsolete-hook fix by content; literal909c ancestry is not established. Earlier main upload failures on 3b771cc65 exhausted three missing-tamird-ref pre-command attempts before builds/tests and are historical. New FirstPass2578 is PENDING; native Gazelle/generate/header/lint are in progress. Prior approvals are historical and are not fresh-head approval credit. The unrelated ARM strict-C++ signalfd header failure remains explicit; affected gates are not a full strict-C++ or runtime/performance claim.",
+      "summary": "Delivered unchanged-patch rebase ef6f0e2f8 and saved notice are verified in the current API sample. FirstPass2578 and all reported native GitHub contexts are SUCCESS; no current-head main-pipeline context is reported. Provider binds the retained approval to the rebased head with its original submission time; this is not a newly submitted review. Provider remains REVIEW_REQUIRED. Old main upload failures were before-tests obsolete-hook errors; parent5004 contains the hook correction by content, without a literal909 ancestry claim.",
       "evidence": [
         {
           "label": "Standalone five-line change",
@@ -78072,10 +78072,10 @@
       "followup": {
         "sourceHead": "ef6f0e2f8c9cd1ca1b2b277261f68ef5509d225e",
         "owner": "root / approved_rebase_queue",
-        "nextAction": "Rebase, affected qualification and notice delivery are complete. Existing rbe_parallel_evidence owner follows the new-head CI at01:15 and root follows genuine maintainer/import review. No repeat notice, source approval request for this unchanged patch, blind CI retry, merge or duplicate observer.",
+        "nextAction": "Root follows remaining maintainer/import review and actual new-head main/check events; existing rbe_parallel_evidence owner retains the01:45 checkpoint. Rebase, notice and affected qualification are complete. No duplicate source approval, notice, retry, outreach or merge.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-24T00:51:51.157209+00:00",
-        "recheckCondition": "Existing CI owner supplies actual new-head terminal results, or substantive review/import/head/base change.",
+        "observedAt": "2026-11-24T01:32:50.502686+00:00",
+        "recheckCondition": "Actual new-head main result, substantive review/import event or source/base change.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17104",
           "https://github.com/tamird/gvisor/commit/37dca4d683f695539ff6c47ea8f661882e588f61",
@@ -78116,13 +78116,13 @@
             }
           }
         ],
-        "disposition": "Source-equivalent rebase ef6f0e2f8 and factual notice 7118481011 are delivered and root-verified. Strict range-diff is equal and two final independent context reviews are clear. Current provider head is MERGEABLE, DCO SUCCESS, REVIEW_REQUIRED and auto-merge null; no pending review request is recorded. Parent5004 contains the obsolete-hook fix by content; literal909c ancestry is not established. Earlier main upload failures on 3b771cc65 exhausted three missing-tamird-ref pre-command attempts before builds/tests and are historical. New FirstPass2578 is PENDING; native Gazelle/generate/header/lint are in progress. Prior approvals are historical and are not fresh-head approval credit. The unrelated ARM strict-C++ signalfd header failure remains explicit; affected gates are not a full strict-C++ or runtime/performance claim.",
+        "disposition": "Delivered unchanged-patch rebase ef6f0e2f8 and saved notice are verified in the current API sample. FirstPass2578 and all reported native GitHub contexts are SUCCESS; no current-head main-pipeline context is reported. Provider binds the retained approval to the rebased head with its original submission time; this is not a newly submitted review. Provider remains REVIEW_REQUIRED. Old main upload failures were before-tests obsolete-hook errors; parent5004 contains the hook correction by content, without a literal909 ancestry claim.",
         "providerHead": "ef6f0e2f8c9cd1ca1b2b277261f68ef5509d225e",
         "currentSourceCI": {
           "head": "ef6f0e2f8c9cd1ca1b2b277261f68ef5509d225e",
-          "state": "Affected qualification passed; native DCO SUCCESS; FirstPass pending and native GHA in progress. The unrelated ARM strict-C++ signalfd header failure remains explicit; affected gates are not a full strict-C++ or runtime/performance claim.",
-          "observedAt": "2026-11-24T00:51:51.157209+00:00",
-          "scope": "Source-owner/root terminal receipt and direct provider confirmations; overall raw API sample remains00:25:20. No saved native metadata artifact is invented.",
+          "state": "FirstPass2578 and all reported native contexts SUCCESS; no main context reported.",
+          "observedAt": "2026-11-24T01:32:50.502686+00:00",
+          "scope": "Current canonical API01:29:32 plus retained source-owner qualification receipts. No full main/runtime/performance claim.",
           "evidence": [
             "https://github.com/gvisor/gvisor/pull/17104#issuecomment-7118481011",
             "https://github.com/tamird/gvisor/commit/ef6f0e2f8c9cd1ca1b2b277261f68ef5509d225e",
@@ -99897,7 +99897,7 @@
       "group": "tests",
       "status": "open",
       "updatedAt": "2026-11-17T19:05:00.391405+00:00",
-      "summary": "Existing owner checkpoint00:12: source remains MERGEABLE/APPROVED; main55752 remains live. Five platform jobs and gate remain, with no unrecovered terminal failure established. Prior live attempt IDs were superseded by continued retry chains.",
+      "summary": "Current API reports main55752 FAILURE on exactf6fa027fb. This GitHub context alone does not establish terminal build state or a new target cause. Existing owner checkpoints and source-bound qualification retain their limits; no new human feedback is present.",
       "evidence": [
         {
           "label": "Published single-commit revision",
@@ -99911,10 +99911,10 @@
       "followup": {
         "sourceHead": "f6fa027fbfaa28e930d3a288c3a78e9d35b53738",
         "owner": "root",
-        "nextAction": "Existing rbe_parallel_evidence owner rechecks at00:45; APT/image owners retain recovery. No source change, retry, merge, duplicate observer or terminal verdict from a live status.",
+        "nextAction": "Existing rbe_parallel_evidence owner classifies complete retry chains at01:45. Root retains review/import follow-through; preserve known APT/image recovery ownership. No duplicate reader, unchanged retry, source failure attribution or merge from status alone.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-24T00:28:40.976210+00:00",
-        "recheckCondition": "Existing owner’s23:10/terminal receipt or an actual source/review/import event.",
+        "observedAt": "2026-11-24T01:32:50.502686+00:00",
+        "recheckCondition": "Existing CI owner supplies a terminal source-bound verdict, or actual review/import/head/base change.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17484",
           "https://github.com/tamird/gvisor/commit/8a64c10e33211d4e255aa6ad43d8131f344558d4",
@@ -99955,7 +99955,7 @@
           }
         ],
         "providerHead": "f6fa027fbfaa28e930d3a288c3a78e9d35b53738",
-        "disposition": "Existing owner checkpoint00:12: source remains MERGEABLE/APPROVED; main55752 remains live. Five platform jobs and gate remain, with no unrecovered terminal failure established. Prior live attempt IDs were superseded by continued retry chains."
+        "disposition": "Current API reports main55752 FAILURE on exactf6fa027fb. This GitHub context alone does not establish terminal build state or a new target cause. Existing owner checkpoints and source-bound qualification retain their limits; no new human feedback is present."
       },
       "dcoAmendment": {
         "oldHead": "8a64c10e33211d4e255aa6ad43d8131f344558d4",
@@ -106735,15 +106735,15 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-23T18:40:13.679878+00:00",
-      "summary": "Exact-head carzh approval 6031127244 is recorded at 057d07808. Provider remains REVIEW_REQUIRED; no merge or extra review request is inferred. Current main55757 is PENDING; the old FirstPass2468 pre-agent quota receipt remains historical and does not establish this newer run outcome.",
+      "summary": "Current API reports main55757 PENDING on exact057d07808. This GitHub context alone does not establish terminal build state or a new target cause. Existing owner checkpoints and source-bound qualification retain their limits; no new human feedback is present.",
       "followup": {
         "owner": "root",
         "sourceHead": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
         "providerHead": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
-        "observedAt": "2026-11-24T00:28:40.976210+00:00",
-        "disposition": "Exact-head carzh approval 6031127244 is recorded at 057d07808. Provider remains REVIEW_REQUIRED; no merge or extra review request is inferred. Current main55757 is PENDING; the old FirstPass2468 pre-agent quota receipt remains historical and does not establish this newer run outcome.",
-        "nextAction": "Root follows remaining maintainer/import review and source-bound current CI. Existing CI ownership handles actual new failure diagnosis; no source failure, quota cause, retry, duplicate outreach, merge or approval transfer is inferred from status alone.",
-        "recheckCondition": "Canonical current-build diagnosis or terminal replacement, actual maintainer/import event or changed source.",
+        "observedAt": "2026-11-24T01:32:50.502686+00:00",
+        "disposition": "Current API reports main55757 PENDING on exact057d07808. This GitHub context alone does not establish terminal build state or a new target cause. Existing owner checkpoints and source-bound qualification retain their limits; no new human feedback is present.",
+        "nextAction": "Existing rbe_parallel_evidence owner classifies complete retry chains at01:45. Root retains review/import follow-through; preserve known APT/image recovery ownership. No duplicate reader, unchanged retry, source failure attribution or merge from status alone.",
+        "recheckCondition": "Existing CI owner supplies a terminal source-bound verdict, or actual review/import/head/base change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17885",
           "https://buildkite.com/gvisor/first-pass/builds/2468",
@@ -122150,7 +122150,7 @@
       "status": "active",
       "owner": "root",
       "updatedAt": "2026-11-23T22:28:52.692599+00:00",
-      "summary": "Native-first due guard found no fresh/live native run. The sole snapshot-only fallback45296589443 succeeded and delivered API2026-11-24T00:25:20.432081+00:00 with outreach disabled. Native delivery irregularity has no established provider cause or demonstrated source/configuration defect.",
+      "summary": "The due native-first guard found no fresh/live native run. Sole snapshot-only fallback45305019407 completed successfully and published API2026-11-24T01:29:32.041999+00:00; outreach was disabled. Native scheduling irregularity has no demonstrated source/configuration defect or established provider cause.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122393,7 +122393,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground/active-goal supervision owns next native-first guard01:25:20 UTC and deadline01:55:20. Reuse fresh/live native delivery before one fallback; retain60/90-minute policy and2-hour UI threshold, without scheduler reset or competing monitor.",
+      "nextStep": "Root foreground/active-goal supervision owns next native-first guard02:29:32 UTC and deadline02:59:32. Reuse fresh/live native delivery before one fallback; preserve60/90-minute policy and2-hour UI threshold without reset, competing monitor or access change.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -132050,7 +132050,7 @@
       "owner": "analysis_pass_inventory / root",
       "updatedAt": "2026-11-23T22:28:52.692599+00:00",
       "group": "analysis",
-      "summary": "Unified analyzer migrations and validation remain active. Latest reported source98a11 has1,030 affected owning cases per ISA passing, not a final current-source corpus result. Worker-only788 onbc923 completed both50-case architecture suites:49 PASS+one existing non-root skip each, zero errors; this closes that worker setup gap without blanket latest-source qualification. Independent strict-C++ header proposalac0439 remains qualified and awaiting its separate source-publication decision; original npm ARM strict result is unchanged.",
+      "summary": "Unified analyzer migrations remain active on source1fa. Current accounting closes339 of724 captured source spans, preserves one contract and leaves384; diagnostic closure is not verified. Source7233 command tests/Nogo await the existing owner checkpoint, and the object-only container12 handoff remains active. Worker788 full50 per ISA passed49 plus one existing non-root skip, without blanket latest-source corpus qualification. Separate headerac0439 publication review remains unanswered; npm original ARM strict failure is not retroactively green.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132422,7 +132422,7 @@
           ]
         }
       ],
-      "nextStep": "Existing analyzer owner completes the unified migrations and source-bound validation; unrelated protected features remain held. Separately, root awaits the one-include header proposal answer. Its qualified strict-C++ repair does not make the original npm ARM result green or replace the npm source decision.",
+      "nextStep": "Primary analyzer owner completes remaining source/generator migrations and exact affected/full-corpus validation; secondary container owner supplies its bounded handoff. Preserve unrelated protected-feature holds and separate pending header/npm decisions. No duplicate observer, broad current-source pass or publication-ready claim.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132760,7 +132760,7 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T00:28:40.976210+00:00",
+        "observedAt": "2026-11-24T01:32:50.502686+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45274157128/artifacts/14868766183",
           "https://github.com/tamird/gvisor/actions/runs/45286918461",
@@ -132772,8 +132772,8 @@
           "https://github.com/tamird/gvisor/actions/runs/45292273315"
         ],
         "owner": "root",
-        "disposition": "Unified analyzer migrations and validation remain active. Latest reported source98a11 has1,030 affected owning cases per ISA passing, not a final current-source corpus result. Worker-only788 onbc923 completed both50-case architecture suites:49 PASS+one existing non-root skip each, zero errors; this closes that worker setup gap without blanket latest-source qualification. Independent strict-C++ header proposalac0439 remains qualified and awaiting its separate source-publication decision; original npm ARM strict result is unchanged. Header preview creation alone remains blocked after SSH timeout and one normal HTTPS create-only workflow-check timeout; npm existing-ref update succeeded. No blanket ref outage or new access permission is established.",
-        "nextAction": "Existing analyzer owner completes the unified migrations and source-bound validation; unrelated protected features remain held. Separately, root awaits the one-include header proposal answer. Its qualified strict-C++ repair does not make the original npm ARM result green or replace the npm source decision.",
+        "disposition": "Unified analyzer migrations remain active on source1fa. Current accounting closes339 of724 captured source spans, preserves one contract and leaves384; diagnostic closure is not verified. Source7233 command tests/Nogo await the existing owner checkpoint, and the object-only container12 handoff remains active. Worker788 full50 per ISA passed49 plus one existing non-root skip, without blanket latest-source corpus qualification. Separate headerac0439 publication review remains unanswered; npm original ARM strict failure is not retroactively green.",
+        "nextAction": "Primary analyzer owner completes remaining source/generator migrations and exact affected/full-corpus validation; secondary container owner supplies its bounded handoff. Preserve unrelated protected-feature holds and separate pending header/npm decisions. No duplicate observer, broad current-source pass or publication-ready claim.",
         "recheckCondition": "Actual analyzer validation/migration milestone, existing header-publication answer or working normal preview transport."
       },
       "contributorReview": {
@@ -143938,8 +143938,8 @@
       "head": "96fe4a8e5e8f376a40aa6e275edeb4e1c915c7eb",
       "title": "Honor disabled OCI network modes",
       "updatedAt": "2026-11-23T22:28:52.692599+00:00",
-      "summary": "The approved disabled-network-mode correction is merged through BuildBuddy14275/3d0a8571. Its source/review/required-check lifecycle is complete. Hosted-worker deployment and actual network-mode enforcement remain unverified; source landing is not rollout proof. Earlier Linux-test access and nonrequired baseline failures retain their original scope.",
-      "nextStep": "Root follows actual deployed-version or naturally needed authorized worker evidence before claiming provider enforcement. No open PR-publication question, duplicate source fix or new credential/access change remains.",
+      "summary": "BuildBuddy14275/3d0a857 disabled-network-mode correction is merged; source/review/required-check lifecycle is complete. Hosted executor deployment and enforcement remain unverified. ExecutedActionMetadata carries worker and executor_id but no build commit/tag; scheduler ExecutionNode.version is version.Tag() behind group-scoped authenticated inventory, not public shared-worker provenance. App version or merge status cannot prove executor rollout.",
+      "nextStep": "Root retains the missing datum: provider-backed build commit or immutable image digest including3d0a857, tied to the executor_id/pool of a required hosted action. Preserve naturally supplied provenance at an already-required qualification; another ordinary run alone cannot reveal unsupported metadata. No new access/probe/operator request, source fix or publication question.",
       "findings": [],
       "evidence": [
         {
@@ -143975,7 +143975,14 @@
           "outcome": "approved",
           "postedURL": "https://github.com/buildbuddy-io/buildbuddy/pull/14275"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-11-24T01:32:50.502686+00:00",
+        "disposition": "BuildBuddy14275/3d0a857 disabled-network-mode correction is merged; source/review/required-check lifecycle is complete. Hosted executor deployment and enforcement remain unverified. ExecutedActionMetadata carries worker and executor_id but no build commit/tag; scheduler ExecutionNode.version is version.Tag() behind group-scoped authenticated inventory, not public shared-worker provenance. App version or merge status cannot prove executor rollout.",
+        "nextAction": "Root retains the missing datum: provider-backed build commit or immutable image digest including3d0a857, tied to the executor_id/pool of a required hosted action. Preserve naturally supplied provenance at an already-required qualification; another ordinary run alone cannot reveal unsupported metadata. No new access/probe/operator request, source fix or publication question.",
+        "recheckCondition": "Naturally supplied provider-backed executor build/image provenance or actual deployment evidence."
+      }
     },
     {
       "id": "investigation:rules-lint-patcher",
