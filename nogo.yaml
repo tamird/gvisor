@@ -143,6 +143,11 @@ analyzers:
       exclude:
         # The NBSP fixture verifies that malformed whitespace does not grant nosplit.
         - '^bazel-out/[^/]+/bin/tools/checkescape/test1/nosplit\.go:'
+  scannererr:
+    internal:
+      exclude:
+        # readUntil treats read errors and EOF as an unsuccessful match.
+        - '^pkg/test/testutil/testutil\.go:762:8$'
   framepointer:
     internal:
       exclude:

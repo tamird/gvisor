@@ -46,6 +46,7 @@ import (
 	"golang.org/x/tools/go/analysis/passes/nilfunc"
 	"golang.org/x/tools/go/analysis/passes/nilness"
 	"golang.org/x/tools/go/analysis/passes/printf"
+	"golang.org/x/tools/go/analysis/passes/scannererr"
 	"golang.org/x/tools/go/analysis/passes/shadow"
 	"golang.org/x/tools/go/analysis/passes/shift"
 	"golang.org/x/tools/go/analysis/passes/sigchanyzer"
@@ -192,6 +193,7 @@ func init() {
 	register(allAnalyzers, &plainAnalyzer{nilfunc.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{nilness.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{printf.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{scannererr.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{shift.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{sigchanyzer.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{slog.Analyzer})
