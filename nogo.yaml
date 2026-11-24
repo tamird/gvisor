@@ -143,6 +143,13 @@ analyzers:
       exclude:
         # The NBSP fixture verifies that malformed whitespace does not grant nosplit.
         - '^bazel-out/[^/]+/bin/tools/checkescape/test1/nosplit\.go:'
+  framepointer:
+    internal:
+      exclude:
+        # These hardware entry/return paths construct or restore the vCPU frame.
+        - '^pkg/ring0/entry_amd64\.s:(433|523|689):[0-9]+$'
+        # retjmp restores the saved frame before the signal-return epilogue.
+        - '^pkg/sigframe/sigframe_amd64\.s:85:[0-9]+$'
   errorsas:
     external: # Enabled.
       exclude:

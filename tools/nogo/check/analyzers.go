@@ -34,6 +34,7 @@ import (
 	"golang.org/x/tools/go/analysis/passes/defers"
 	"golang.org/x/tools/go/analysis/passes/directive"
 	"golang.org/x/tools/go/analysis/passes/errorsas"
+	"golang.org/x/tools/go/analysis/passes/framepointer"
 	"golang.org/x/tools/go/analysis/passes/gofix"
 	"golang.org/x/tools/go/analysis/passes/hostport"
 	"golang.org/x/tools/go/analysis/passes/httpresponse"
@@ -175,6 +176,7 @@ func init() {
 	register(allAnalyzers, &plainAnalyzer{defers.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{directive.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{errorsas.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{framepointer.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{gofix.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{hostport.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{httpresponse.Analyzer})
