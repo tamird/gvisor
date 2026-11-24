@@ -27,7 +27,8 @@ async function readDraft() {
     if (!draft) throw Error("This version of the draft is no longer available. Open its card for the current work.");
     const labels = { issue: "Issue", reply: "Reply", review: "Review", proposal: "Pull request", amendment: "PR amendment", submission: "Pull request",
       information: "Information request", exception: "Scoped execution exception", closure: "Pull request closure" };
-    const kind = labels[draft.kind] || "Draft";
+    const kind = item.type === "issue" && draft.kind === "proposal" && draft.head === undefined
+      ? "Issue update" : labels[draft.kind] || "Draft";
     document.getElementById("draft-context").textContent = [kind, item.repo || item.title].join(" · ");
     heading.textContent = draft.title || item.title;
     document.title = heading.textContent + " · gVisor work map";
@@ -50,7 +51,8 @@ async function readDraft() {
         destination.searchParams.set("body", draft.body);
       }
       source.href = destination.href;
-      source.textContent = draft.kind === "issue" ? "Open prefilled issue ↗" : "Open source ↗";
+      source.textContent = draft.kind === "issue" ? "Open prefilled issue ↗"
+        : item.type === "issue" && draft.kind === "proposal" && draft.head === undefined ? "Open existing issue ↗" : "Open source ↗";
       source.hidden = false;
     }
   } catch (err) {

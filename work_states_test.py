@@ -77,6 +77,28 @@ class WorkStatesTest(unittest.TestCase):
         investigation["status"] = "concluded"
         self.assertEqual(record_states([], registry, {"workStates": current}, when), {})
 
+    def test_issue_update_settlement_preserves_the_source_proposal(self):
+        url = "https://github.com/google/gvisor/issues/2"
+        cache = dict(kind="proposal", status="pending", head="a" * 40)
+        update = dict(kind="proposal", status="pending", url=url, title="Revise the issue", body="The revised proposal.")
+        issue = dict(id="issue:2", type="issue", url=url, contributorReview=cache, additionalReviews=[update])
+        registry = dict(meta=dict(repo="google/gvisor"), nodes=[issue])
+        def scope() -> str | None:
+            return derive_states([], registry).get("issue:2", {}).get("contributor-review", {}).get("scope")
+        self.assertEqual(scope(), cache["head"])
+        issue["settledReviews"] = [cache.copy()]
+        self.assertEqual(scope(), url)
+        issue["settledReviews"].append(update.copy())
+        self.assertIsNone(scope())
+        for field, value in [("body", "A revised body."), ("title", "Another revision"),
+                             ("url", "https://github.com/google/gvisor/issues/3")]:
+            with self.subTest(field=field):
+                settled = issue["settledReviews"][-1]
+                old = settled[field]
+                settled[field] = value
+                self.assertEqual(scope(), url)
+                settled[field] = old
+
     def test_investigation_code_proposal_has_its_own_commit_scope(self):
         head = "a" * 40
         decision = dict(kind="proposal", status="pending", head=head)

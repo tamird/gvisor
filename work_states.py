@@ -738,11 +738,13 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
             continue
         pr = published.get(node["id"])
         for decision in decisions:
+            issue_update = (node["type"] == "issue" and decision.get("kind") == "proposal"
+                            and decision.get("head") is None)
             settled = any(
                 item["kind"] == decision.get("kind") and item.get("head") == decision.get("head")
-                and (item["kind"] not in {"reply", "review", "issue", "information", "exception", "closure"}
+                and (not issue_update and item["kind"] not in {"reply", "review", "issue", "information", "exception", "closure"}
                      or item.get("body") == decision.get("body"))
-                and (item["kind"] not in {"issue", "information", "exception", "closure"}
+                and (not issue_update and item["kind"] not in {"issue", "information", "exception", "closure"}
                      or (item.get("url"), item.get("title")) == (decision.get("url"), decision.get("title")))
                 for item in node.get("settledReviews", [])
             )

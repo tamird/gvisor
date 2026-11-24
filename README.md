@@ -47,7 +47,9 @@ facts and unresolved causes in every relationship.
   `body`; `kind: reply` refers to an existing thread. Use `additionalReviews`
   for other independent pending questions on that same item. An existing
   issue can carry a `kind: proposal` for its source fix, with the exact fork
-  commit, base, title and body. `kind: closure` requests closing a PR and
+  commit, base, title and body. To replace that issue's body, use `kind: proposal`
+  with its exact issue URL, title and body, omitting `head` and `baseHead`.
+  `kind: closure` requests closing a PR and
   posting its recorded body, bound to the current head and original PR URL.
   `kind: information` asks for facts, without authorizing execution;
   `kind: exception` records an explicitly requested, source-bound execution
@@ -99,9 +101,10 @@ other records refresh; a partial inventory is rejected. Reconcile the affected
 identity before assigning it a new provider state.
 
 A contributor decision is tied to the proposed commit, or to the exact draft
-and PR head for a comment. When recording a decision, move its kind and head
-into the node’s `settledReviews` with the outcome and time (and the body for a
-comment). Remove the pending request immediately, including when publication
+and destination for text (plus the PR head for a comment on a PR). When recording
+an issue-body update, retain its title, body and URL in `settledReviews`; a changed
+draft remains a distinct decision. Other decisions retain their kind and applicable head,
+outcome and time (and the body for a comment). Remove the pending request immediately, including when publication
 has to wait. Keep these records when promoting a branch to a PR. The metadata
 preflight rejects a pending request for work that has already been reviewed.
 For a new PR proposal, link the card and its review button to the same

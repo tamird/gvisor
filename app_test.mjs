@@ -1438,18 +1438,85 @@ test('PR amendments keep the proposed commit and published base distinct', () =>
   assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["contributor-review"]', context), undefined);
 });
 
-test('outgoing decisions require reviewable text and the owning discussion', () => {
+test('outgoing decisions and issue updates stay bound to their destination', async () => {
   const context = client();
-  const node = { id: 'issue:2', type: 'issue', url: 'https://github.com/google/gvisor/issues/2',
+  const url = 'https://github.com/google/gvisor/issues/2';
+  const node = { id: 'issue:2', type: 'issue', url,
     contributorReview: { status: 'pending', kind: 'reply', title: 'Authorize reply',
-      summary: 'Reply about the experiment.', body: 'The measured result is attached.', url: 'https://github.com/google/gvisor/issues/2' } };
+      summary: 'Reply about the experiment.', body: 'The measured result is attached.', url } };
   context.registryInput = { ...context.registryInput, nodes: [node], edges: [], groups: [] };
-  vm.runInContext('validateRegistry(registryInput)', context);
-  for (const change of [{ body: '' }, { url: 'https://github.com/google/gvisor/issues/3' }, { kind: 'proposal' }]) {
+  const validate = () => vm.runInContext('validateRegistry(registryInput)', context);
+  validate();
+  for (const change of [{ body: '' }, { url: 'https://github.com/google/gvisor/issues/3' }]) {
     const original = { ...node.contributorReview }; Object.assign(node.contributorReview, change);
-    assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid contributor decision/);
+    assert.throws(validate, /Invalid contributor decision/);
     node.contributorReview = original;
   }
+
+  const cache = { status: 'pending', kind: 'proposal', head: 'a'.repeat(40), baseHead: 'b'.repeat(40),
+    url: 'https://github.com/tamird/gvisor/commit/aaaaaaaaa', title: 'Enable the cache', summary: 'Review the source.', body: 'Use the cache.' };
+  const update = { status: 'pending', kind: 'proposal', url, title: 'Revise the issue', summary: 'Replace its body.', body: 'The revised proposal.' };
+  node.contributorReview = cache;
+  node.additionalReviews = [update];
+  context.nodeInput = node;
+  const pending = () => {
+    validate();
+    return JSON.parse(vm.runInContext('JSON.stringify(pendingDecisions(nodeInput).map(d => d.title))', context));
+  };
+  assert.deepEqual(pending(), [cache.title, update.title]);
+  for (const change of [{ url: url + '#issuecomment-1' }, { url: 'https://github.com/other/repo/issues/2' }, { url: cache.url },
+    { head: 'a'.repeat(40) }, { baseHead: 'b'.repeat(40) }]) {
+    Object.assign(update, change);
+    assert.throws(validate, /Invalid contributor decision/);
+    delete update.head; delete update.baseHead; update.url = url;
+  }
+
+  delete node.url; delete update.url;
+  assert.throws(validate, /Invalid contributor decision/);
+  for (const malformed of ['not-a-url', 'https://github.com/google/gvisor/issues/new',
+    'https://github.com/google/gvisor/pull/2', 'https://github.com/google/gvisor/issues/0', [url]]) {
+    node.url = update.url = malformed;
+    assert.throws(validate, /Invalid contributor decision/);
+  }
+  node.url = update.url = url;
+  assert.deepEqual(pending(), [cache.title, update.title]);
+
+  const create = () => ({ children: [], append(...items) { this.children.push(...items); },
+    setAttribute() {}, addEventListener() {}, focus() {} });
+  const elements = {};
+  context.document = { referrer: '', createElement: create, addEventListener() {},
+    getElementById: id => elements[id] ||= create() };
+  context.location = new URL('https://tamird.github.io/gvisor/');
+  context.parent = create();
+  vm.runInContext('nodeInput.workStates = stateRecords(snapshotInput, nodeInput); appendContributorDecisions(parent, nodeInput, pendingDecisions(nodeInput))', context);
+  const section = context.parent.children.find(el => el.children.some(child => child.textContent === update.title));
+  assert.equal(section.children.find(child => child.textContent === 'Open existing issue ↗').href, url);
+  assert.ok(!section.children.some(child => child.textContent === 'Open proposed commit ↗'));
+
+  const key = await vm.runInContext('draftKey(nodeInput.additionalReviews[0])', context);
+  context.location = new URL(`https://tamird.github.io/gvisor/draft.html?draft=${key}#issue%3A2`);
+  context.history = { length: 1 };
+  context.fetch = async () => ({ ok: true, json: async () => context.registryInput });
+  context.markdownit = () => ({ render: body => body });
+  const reader = readFileSync(new URL('./draft-reader.js', import.meta.url), 'utf8');
+  assert.ok(reader.endsWith('readDraft();\n'));
+  vm.runInContext(reader.slice(0, -'readDraft();\n'.length), context);
+  await vm.runInContext('readDraft()', context);
+  assert.match(elements['draft-context'].textContent, /^Issue update/);
+  assert.equal(elements['draft-body'].innerHTML, update.body);
+  assert.equal(elements['draft-source'].textContent, 'Open existing issue ↗');
+  assert.equal(elements['draft-source'].href, url);
+
+  node.settledReviews = [{ ...update }];
+  assert.deepEqual(pending(), [cache.title]);
+  update.body += ' Revised.';
+  assert.deepEqual(pending(), [cache.title, update.title]);
+  update.body = node.settledReviews[0].body;
+  update.title += ' Revised';
+  assert.deepEqual(pending(), [cache.title, update.title]);
+  update.title = node.settledReviews[0].title;
+  node.settledReviews[0].url = 'https://github.com/google/gvisor/issues/3';
+  assert.deepEqual(pending(), [cache.title, update.title]);
 });
 
 test('an upstream issue draft opens from its source PR without accepting cross-thread replies', () => {

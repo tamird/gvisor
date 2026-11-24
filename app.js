@@ -1224,9 +1224,10 @@ function contributorChanges(node) {
 // Code approval is for a commit. Reviews and replies can contain different
 // messages about the same commit, so their text is part of the decision too.
 function alreadyReviewed(node, decision) {
+  const issueUpdate = node.type === "issue" && decision.kind === "proposal" && decision.head === undefined;
   return node.settledReviews?.some(item => item.kind === decision.kind && item.head === decision.head
-    && (!["review", "reply", "issue", "information", "exception", "closure"].includes(item.kind) || item.body === decision.body)
-    && (!["issue", "information", "exception", "closure"].includes(item.kind)
+    && (!(issueUpdate || ["review", "reply", "issue", "information", "exception", "closure"].includes(item.kind)) || item.body === decision.body)
+    && (!(issueUpdate || ["issue", "information", "exception", "closure"].includes(item.kind))
       || item.url === decision.url && item.title === decision.title));
 }
 function commitLinkMatches(repo, head, url) {
@@ -2020,6 +2021,7 @@ function appendContributorDecisions(parent, node, decisions) {
       const form = decision.url + "?title=" + encodeURIComponent(decision.title) + "&body=" + encodeURIComponent(decision.body);
       section.append(link("Open prefilled issue ↗", form));
     } else if (decision.url) section.append(link(["review", "closure"].includes(decision.kind) ? "Open original PR ↗"
+      : node.type === "issue" && decision.kind === "proposal" && decision.head === undefined ? "Open existing issue ↗"
       : decision.kind === "reply" ? "Open original discussion ↗"
       : decision.kind === "information" ? "Open context ↗"
       : decision.kind === "exception" ? "Open scoped source ↗" : "Open proposed commit ↗", decision.url));
@@ -2411,6 +2413,10 @@ function validateContributorDecisions(node, candidate) {
     const fix = ["investigation", "issue"].includes(node.type) && decision?.kind === "proposal" && text
       && commit && /^[a-f0-9]{40}$/.test(decision.baseHead) && decision.head !== decision.baseHead
       && commitLinkMatches(fork, decision.head, decision.url);
+    const issueUpdate = node.type === "issue" && decision?.kind === "proposal" && text
+      && decision.head === undefined && decision.baseHead === undefined && typeof decision.url === "string"
+      && /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/issues\/[1-9]\d*$/.test(decision.url)
+      && decision.url === node.url;
     const amendment = node.type === "pr" && decision?.kind === "amendment" && text
       && commit && /^[a-f0-9]{40}$/.test(decision.baseHead) && decision.head !== decision.baseHead
       && commitLinkMatches(fork, decision.head, decision.url);
@@ -2423,7 +2429,7 @@ function validateContributorDecisions(node, candidate) {
     const information = decision?.kind === "information" && text && decision.head === undefined
       && (decision.url === undefined || safeURL(decision.url));
     const exception = decision?.kind === "exception" && text && commit && commitLinkMatches(fork, decision.head, decision.url);
-    if (!decision || decision.status !== "pending" || !proposal && !fix && !amendment && !outgoing && !issue && !information && !exception
+    if (!decision || decision.status !== "pending" || !proposal && !fix && !issueUpdate && !amendment && !outgoing && !issue && !information && !exception
         || node.type === "investigation" && !node.group
         || decision.body !== undefined && typeof decision.body !== "string"
         || decision.replyBody !== undefined && (!["proposal", "amendment"].includes(decision.kind)
