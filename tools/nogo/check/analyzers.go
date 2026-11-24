@@ -53,6 +53,7 @@ import (
 	"golang.org/x/tools/go/analysis/passes/structtag"
 	"golang.org/x/tools/go/analysis/passes/testinggoroutine"
 	"golang.org/x/tools/go/analysis/passes/tests"
+	"golang.org/x/tools/go/analysis/passes/timeformat"
 	"golang.org/x/tools/go/analysis/passes/unmarshal"
 	"golang.org/x/tools/go/analysis/passes/unreachable"
 	"golang.org/x/tools/go/analysis/passes/unsafeptr"
@@ -192,6 +193,7 @@ func init() {
 	register(allAnalyzers, &plainAnalyzer{structtag.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{testinggoroutine.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{tests.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{timeformat.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{unmarshal.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{unreachable.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{unsafeptr.Analyzer})
