@@ -52,6 +52,7 @@ import (
 	"golang.org/x/tools/go/analysis/passes/sortslice"
 	"golang.org/x/tools/go/analysis/passes/sqlrowserr"
 	"golang.org/x/tools/go/analysis/passes/stdmethods"
+	"golang.org/x/tools/go/analysis/passes/stdversion"
 	"golang.org/x/tools/go/analysis/passes/stringintconv"
 	"golang.org/x/tools/go/analysis/passes/structtag"
 	"golang.org/x/tools/go/analysis/passes/testinggoroutine"
@@ -193,6 +194,7 @@ func init() {
 	register(allAnalyzers, &plainAnalyzer{sortslice.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{sqlrowserr.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{stdmethods.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{stdversion.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{stringintconv.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{shadow.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{structtag.Analyzer})

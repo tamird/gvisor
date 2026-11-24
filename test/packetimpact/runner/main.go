@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:build linux && go1.10
+//go:build linux
 
 // The runner binary is used as the test runner for PacketImpact tests.
 package main
