@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-24T04:41:01.877891+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-24T03:40:18.555541+00:00",
+  "registryDate": "2026-11-24T04:47:08.376554+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -456680,7 +456680,7 @@
       "number": 16462,
       "head": "9354eb0eeba8d44da40cdae3235e51e890e82b63",
       "sourceNumber": 16462,
-      "owner": "root",
+      "owner": "approved_rebase_queue / root",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABhZ6GfQ",
       "needsTriage": false,
@@ -457410,7 +457410,7 @@
       "number": 16458,
       "head": "303aee0fb294bcf676c2579d24b6821d0578a603",
       "sourceNumber": 16458,
-      "owner": "root",
+      "owner": "approved_rebase_queue / root",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABk8iBdA",
       "needsTriage": false,
@@ -457756,7 +457756,7 @@
       "number": 16458,
       "head": "303aee0fb294bcf676c2579d24b6821d0578a603",
       "sourceNumber": 16458,
-      "owner": "root",
+      "owner": "approved_rebase_queue / root",
       "kind": "comment",
       "id": "IC_kwDOB9IlXs8AAAABlh1Mpw",
       "needsTriage": false,
@@ -458340,14 +458340,14 @@
       "mergeabilityCheckedAt": "2026-11-24T04:40:54.661885+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Follow current-head checks and maintainer review on #15189. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr. Preserve the historical outreach clock; reconcile its existing source-rebase proof before resuming automatic outreach on this metadata replacement.\n\nRequired first-pass CI (source 88b54c90a3442188496cedaa3590d10409590861; observed 2026-11-17T19:29:29.454062+00:00): build 1447 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller. Job metadata still includes pending outcomes; this is a classification of the latest failed attempts, not a claim that every job has terminated.",
+      "action": "Keep source assessment/adaptation held until actual user hold release. No protected implementation read, rebase, tests, push, outreach or new Daybreak question.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "88b54c90a3442188496cedaa3590d10409590861",
-        "disposition": "Source-preserving refresh delivered.",
-        "nextAction": "Follow current-head checks and maintainer review on #15189. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr. Preserve the historical outreach clock; reconcile its existing source-rebase proof before resuming automatic outreach on this metadata replacement.\n\nRequired first-pass CI (source 88b54c90a3442188496cedaa3590d10409590861; observed 2026-11-17T19:29:29.454062+00:00): build 1447 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller. Job metadata still includes pending outcomes; this is a classification of the latest failed attempts, not a claim that every job has terminated."
+        "disposition": "Current exact88b54c90a is CONFLICTING. Root retains conflict ownership under the confirmed sensitive-feature hold; prior reviews/CI do not authorize current-base adaptation.",
+        "nextAction": "Keep source assessment/adaptation held until actual user hold release. No protected implementation read, rebase, tests, push, outreach or new Daybreak question."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-24T04:40:54.661885+00:00"
     },
     {
       "repo": "google/gvisor",
@@ -458507,15 +458507,15 @@
       "checkedAt": "2026-11-24T04:40:54.661885+00:00",
       "mergeabilityCheckedAt": "2026-11-24T04:40:54.661885+00:00",
       "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Monitor review of the current source and the status of the earlier export #17300. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 303aee0fb294bcf676c2579d24b6821d0578a603; observed 2026-11-17T19:29:29.454062+00:00): build 1466 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+      "owner": "approved_rebase_queue / root",
+      "action": "Assigned approved_rebase_queue is actively performing bounded current-state review and isolated object preparation while the analyzer retains the main checkout. Preserve approved image/build semantics and separate import/review boundaries; qualify/review any real integration delta before publication. No blind retry, automatic source approval or competing checkout writer.",
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "303aee0fb294bcf676c2579d24b6821d0578a603",
-        "disposition": "The published MySQL source is mergeable. Konstantin approved the previous revision, 28035bfa2. Open export #17300 still names that revision and conflicts with master.",
-        "nextAction": "Monitor review of the current source and the status of the earlier export #17300. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 303aee0fb294bcf676c2579d24b6821d0578a603; observed 2026-11-17T19:29:29.454062+00:00): build 1466 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+        "disposition": "Current exact303aee0fb is CONFLICTING. The earlier mergeable-only wait is obsolete. Prior source qualification/approvals and separate import boundaries remain historical and source-bound.",
+        "nextAction": "Assigned approved_rebase_queue is actively performing bounded current-state review and isolated object preparation while the analyzer retains the main checkout. Preserve approved image/build semantics and separate import/review boundaries; qualify/review any real integration delta before publication. No blind retry, automatic source approval or competing checkout writer."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-24T04:40:54.661885+00:00"
     },
     {
       "repo": "google/gvisor",
@@ -458531,15 +458531,15 @@
       "checkedAt": "2026-11-24T04:40:54.661885+00:00",
       "mergeabilityCheckedAt": "2026-11-24T04:40:54.661885+00:00",
       "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Await review of the mergeable Tomcat source. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 9354eb0eeba8d44da40cdae3235e51e890e82b63; observed 2026-11-17T19:29:29.454062+00:00): build 1467 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+      "owner": "approved_rebase_queue / root",
+      "action": "Assigned approved_rebase_queue is actively performing bounded current-state review and isolated object preparation while the analyzer retains the main checkout. Preserve approved image/build semantics and separate import/review boundaries; qualify/review any real integration delta before publication. No blind retry, automatic source approval or competing checkout writer.",
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "9354eb0eeba8d44da40cdae3235e51e890e82b63",
-        "disposition": "The published Tomcat source is mergeable. GitHub lists @relkochta and @zkoopmans as requested reviewers.",
-        "nextAction": "Await review of the mergeable Tomcat source. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 9354eb0eeba8d44da40cdae3235e51e890e82b63; observed 2026-11-17T19:29:29.454062+00:00): build 1467 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+        "disposition": "Current exact9354eb0ee is CONFLICTING. The earlier mergeable-only wait is obsolete. Prior source qualification/approvals and separate import boundaries remain historical and source-bound.",
+        "nextAction": "Assigned approved_rebase_queue is actively performing bounded current-state review and isolated object preparation while the analyzer retains the main checkout. Preserve approved image/build semantics and separate import/review boundaries; qualify/review any real integration delta before publication. No blind retry, automatic source approval or competing checkout writer."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-24T04:40:54.661885+00:00"
     },
     {
       "repo": "google/gvisor",
@@ -458652,13 +458652,14 @@
       "mergeabilityCheckedAt": "2026-11-24T04:40:57.352517+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Follow maintainer review, exact published-head checks and any matching import; handle new substantive feedback in the existing workstream. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr. Preserve the historical outreach clock; reconcile its existing source-rebase proof before resuming automatic outreach on this metadata replacement.\n\nRequired first-pass CI (source 2899ec75263130d131ca356a3b9584715226ee28; observed 2026-11-17T19:29:29.454062+00:00): build 1497 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller. Job metadata still includes pending outcomes; this is a classification of the latest failed attempts, not a claim that every job has terminated.",
+      "action": "Keep source assessment/adaptation held until actual user hold release. No protected implementation read, rebase, tests, push, outreach or new Daybreak question.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "2899ec75263130d131ca356a3b9584715226ee28",
-        "nextAction": "Follow maintainer review, exact published-head checks and any matching import; handle new substantive feedback in the existing workstream. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr. Preserve the historical outreach clock; reconcile its existing source-rebase proof before resuming automatic outreach on this metadata replacement.\n\nRequired first-pass CI (source 2899ec75263130d131ca356a3b9584715226ee28; observed 2026-11-17T19:29:29.454062+00:00): build 1497 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller. Job metadata still includes pending outcomes; this is a classification of the latest failed attempts, not a claim that every job has terminated."
+        "disposition": "Current exact2899ec752 is CONFLICTING. Root retains conflict ownership under the confirmed sensitive-feature hold; prior reviews/CI do not authorize current-base adaptation.",
+        "nextAction": "Keep source assessment/adaptation held until actual user hold release. No protected implementation read, rebase, tests, push, outreach or new Daybreak question."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-24T04:40:57.352517+00:00"
     },
     {
       "repo": "google/gvisor",
@@ -458674,15 +458675,15 @@
       "checkedAt": "2026-11-24T04:40:57.352517+00:00",
       "mergeabilityCheckedAt": "2026-11-24T04:40:57.352517+00:00",
       "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Await maintainer review of the three Go helper images. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 37ea324587c5a41ba85048ef960dc0763f007a31; observed 2026-11-17T19:29:29.454062+00:00): build 1513 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+      "owner": "approved_rebase_queue / root",
+      "action": "Assigned approved_rebase_queue is actively performing bounded current-state review and isolated object preparation while the analyzer retains the main checkout. Preserve approved image/build semantics and separate import/review boundaries; qualify/review any real integration delta before publication. No blind retry, automatic source approval or competing checkout writer.",
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "37ea324587c5a41ba85048ef960dc0763f007a31",
-        "disposition": "Rebased the Hey, Ollama and profiling-helper image builds onto master while preserving the Redis mapping. The ten-archive comparison exercised both revised image PRs. The Go helpers are awaiting review.",
-        "nextAction": "Await maintainer review of the three Go helper images. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 37ea324587c5a41ba85048ef960dc0763f007a31; observed 2026-11-17T19:29:29.454062+00:00): build 1513 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller."
+        "disposition": "Current exact37ea32458 is CONFLICTING. The earlier mergeable-only wait is obsolete. Prior source qualification/approvals and separate import boundaries remain historical and source-bound.",
+        "nextAction": "Assigned approved_rebase_queue is actively performing bounded current-state review and isolated object preparation while the analyzer retains the main checkout. Preserve approved image/build semantics and separate import/review boundaries; qualify/review any real integration delta before publication. No blind retry, automatic source approval or competing checkout writer."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-24T04:40:57.352517+00:00"
     },
     {
       "repo": "google/gvisor",
@@ -458795,12 +458796,12 @@
       "mergeabilityCheckedAt": "2026-11-24T04:41:00.339016+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Root completes final review and the requested before/after record for the simplified LookupEnv/child-cleanup revision, then prepares an actual publication question. Do not update the public PR, run timings or infer approval from the priorf26 proposal.",
+      "action": "Root owns final exact-source review and eventual publication boundary, using the completed before/after record. Do not schedule implementation/allocation as unfinished, transfer oldf26 review clearance, create a pending approval card, run timings or update the public PR.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
-        "disposition": "Revised private TCP Go source4aba6f94689dc7f185c524b10a4c903c401cf5d2 has compiler/source/cleanup guards and all seven original CLI recipes plus three stalled cases passing on CI7dcb with15 support paths. Final adversarial review remains pending. Public17184 is unchanged, the oldf26 ask is superseded, and no new publication approval or performance claim exists.",
-        "nextAction": "Root completes final review and the requested before/after record for the simplified LookupEnv/child-cleanup revision, then prepares an actual publication question. Do not update the public PR, run timings or infer approval from the priorf26 proposal."
+        "disposition": "Private4aba6f94689dc7f185c524b10a4c903c401cf5d2 already has functional/source/cleanup evidence and the requested before/after record at existing temp/tcp-4aba-before-after-record.md. Final exact-source adversarial review remains required: oldf26 reviews do not cover changed cancellation semantics. Performance A/A/qualified-route gate is unmet. Public2aa remains unchanged; old asks are superseded and no4aba publication question exists.",
+        "nextAction": "Root owns final exact-source review and eventual publication boundary, using the completed before/after record. Do not schedule implementation/allocation as unfinished, transfer oldf26 review clearance, create a pending approval card, run timings or update the public PR."
       },
       "conflictObservedSince": "2026-11-20T00:41:37.337032+00:00"
     },
@@ -470869,7 +470870,7 @@
         "since": "2026-11-24T02:57:05.420540+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T03:40:18.555541+00:00"
+        "observedAt": "2026-11-24T04:47:08.376554+00:00"
       }
     },
     "pr:16539": {
@@ -473011,7 +473012,7 @@
         "since": "2026-11-22T14:30:19.849383+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T03:40:18.555541+00:00"
+        "observedAt": "2026-11-24T04:47:08.376554+00:00"
       }
     },
     "pr:17082": {
@@ -475550,7 +475551,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T03:40:18.555541+00:00"
+        "observedAt": "2026-11-24T04:47:08.376554+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -475559,7 +475560,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T03:40:18.555541+00:00"
+        "observedAt": "2026-11-24T04:47:08.376554+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -475568,7 +475569,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T03:40:18.555541+00:00"
+        "observedAt": "2026-11-24T04:47:08.376554+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -475577,7 +475578,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T03:40:18.555541+00:00"
+        "observedAt": "2026-11-24T04:47:08.376554+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -475586,7 +475587,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T03:40:18.555541+00:00"
+        "observedAt": "2026-11-24T04:47:08.376554+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -475595,7 +475596,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T03:40:18.555541+00:00"
+        "observedAt": "2026-11-24T04:47:08.376554+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -475604,7 +475605,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T03:40:18.555541+00:00"
+        "observedAt": "2026-11-24T04:47:08.376554+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -475613,7 +475614,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T03:40:18.555541+00:00"
+        "observedAt": "2026-11-24T04:47:08.376554+00:00"
       }
     },
     "issue:17832": {
@@ -475622,7 +475623,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T03:40:18.555541+00:00"
+        "observedAt": "2026-11-24T04:47:08.376554+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -475631,7 +475632,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T03:40:18.555541+00:00"
+        "observedAt": "2026-11-24T04:47:08.376554+00:00"
       }
     },
     "investigation:repository-lint": {
@@ -475640,7 +475641,7 @@
         "since": "2026-11-24T00:13:57.833052+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T03:40:18.555541+00:00"
+        "observedAt": "2026-11-24T04:47:08.376554+00:00"
       }
     },
     "investigation:ci-flake-node-worker-arraybuffer-zerofill": {
@@ -475649,7 +475650,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T03:40:18.555541+00:00"
+        "observedAt": "2026-11-24T04:47:08.376554+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -475658,7 +475659,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-24T03:40:18.555541+00:00",
+        "observedAt": "2026-11-24T04:47:08.376554+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     }
