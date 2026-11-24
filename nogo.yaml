@@ -138,6 +138,11 @@ analyzers:
       exclude: [".*"]
     internal:
       exclude: [".*"]
+  directive:
+    generated:
+      exclude:
+        # The NBSP fixture verifies that malformed whitespace does not grant nosplit.
+        - '^bazel-out/[^/]+/bin/tools/checkescape/test1/nosplit\.go:'
   errorsas:
     external: # Enabled.
       exclude:

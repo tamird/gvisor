@@ -44,6 +44,7 @@ go_library(
         "@org_golang_x_tools//go/analysis/passes/copylock:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/deepequalerrors:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/defers:go_default_library",
+        "@org_golang_x_tools//go/analysis/passes/directive:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/errorsas:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/gofix:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/hostport:go_default_library",

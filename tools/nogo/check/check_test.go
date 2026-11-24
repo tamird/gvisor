@@ -38,6 +38,38 @@ type factsLoadTestFact struct{}
 
 func (*factsLoadTestFact) AFact() {}
 
+func TestIgnoredFileDirectives(t *testing.T) {
+	analyzers := make(map[*analysis.Analyzer]analyzer)
+	for a, runner := range allAnalyzers {
+		if a.Name == "directive" {
+			register(analyzers, runner)
+		}
+	}
+	dir := t.TempDir()
+	source := filepath.Join(dir, "source.go")
+	ignored := filepath.Join(dir, "ignored.go")
+	for filename, contents := range map[string]string{
+		source:  "package sample\n",
+		ignored: "//go:build ignore\n\n//go:debug panicnil=1\npackage sample\n",
+	} {
+		if err := os.WriteFile(filename, []byte(contents), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	i := &importer{
+		fset:      token.NewFileSet(),
+		cache:     make(map[string]*importerEntry),
+		analyzers: analyzers,
+	}
+	_, findings, _, err := i.checkPackage("sample", []string{source, ignored})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(findings) != 1 || findings[0].Category != "directive" || findings[0].Position.Filename != ignored || !strings.Contains(findings[0].Message, "//go:debug directive only valid in package main or test") {
+		t.Fatalf("findings = %v, want invalid directive in %s", findings, ignored)
+	}
+}
+
 func TestDeclaredFactsErrors(t *testing.T) {
 	savedFactMap, savedBundles := flags.FactMap, flags.Bundles
 	t.Cleanup(func() {
