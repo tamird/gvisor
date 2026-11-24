@@ -565,7 +565,9 @@ function certifiedEarlierExport(patch) {
     && Date.parse(proof.verifiedAt) <= Date.parse(patch.verifiedAt) ? proof : null;
 }
 function importLineage(node, includeAmendment = false) {
-  const pr = node.github, current = pr.imports.filter(item => item.matchesSourceHead && item.sourceHead === pr.head);
+  const pr = node.github;
+  if (!usesImports(pr)) return [];
+  const current = pr.imports.filter(item => item.matchesSourceHead && item.sourceHead === pr.head);
   const patch = approvedPatch(node);
   const amendment = includeAmendment && reviewedAmendment(node);
   if (amendment && !patch) return current.length ? current : pr.imports.filter(item => item.sourceHead === amendment.approvedHead);
@@ -2774,12 +2776,12 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
         (!Object.hasOwn(configured, repo) && !suppliers.some(node => node.id === identity)) ||
         pr.url !== `https://github.com/${repo}/pull/${pr.number}` ||
         (pr.importPolicy !== undefined && pr.importPolicy !== policy) ||
-        (policy === "none" && (pr.importPolicy !== "none" || pr.imports.length))) throw new Error("Invalid PR inventory");
+        (policy === "none" && pr.importPolicy !== "none")) throw new Error("Invalid PR inventory");
     numbers.add(identity);
     if (pr.publicImportDisposition !== undefined) {
       const disposition = publicImportDisposition({ ...nextRegistry.nodes.find(node => node.id === identity), github: pr }, snapshot.reviewAuthority === undefined);
       if (!disposition || !["exact", "equivalent", "amended", "none"].includes(disposition.scope)
-          || !["conflicting", "open", "draft", "merged", "closed", "absent", "unknown"].includes(disposition.state)
+          || !["conflicting", "open", "draft", "merged", "closed", "absent", "unknown", "not-applicable"].includes(disposition.state)
           || ![null, "author-conflicts", "maintainer-import-refresh", "maintainer-reapproval", "maintainer-import-label", "maintainer-reimport", "maintainer-import-landed"].includes(disposition.action)
           || typeof disposition.description !== "string") throw new Error("Invalid public import disposition");
     }

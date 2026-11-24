@@ -3522,6 +3522,11 @@ test('repository identity separates same-number PRs, promotion and conflict obse
   await vm.runInContext(`refreshConflict(7, 'buildbuddy-io/buildbuddy')`, context);
   assert.equal(requestedURL, `https://api.github.com/repos/${repo}/pulls/7`);
   assert.equal(vm.runInContext('withConflictResult(primaryInput).head', context), primary.head);
+  const history = { ...external, number: 8, url: `https://github.com/${repo}/pull/8`,
+    sourceHead: external.head, matchesSourceHead: true, status: 'closed' };
+  external.imports = [history];
+  assert.doesNotThrow(() => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context));
+  assert.equal(external.imports[0], history);
   external.url = primary.url;
   assert.throws(() => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context), /Invalid PR inventory/);
 });
@@ -3529,7 +3534,11 @@ test('repository identity separates same-number PRs, promotion and conflict obse
 test('direct-review approvals do not acquire Copybara actions', () => {
   const node = attentionNode(); node.repo = 'buildbuddy-io/buildbuddy'; node.github.repo = node.repo;
   node.github.importPolicy = 'none';
+  const historical = { ...node.github, number: 2, sourceHead: node.github.head, matchesSourceHead: true,
+    mergeable: 'CONFLICTING', checks: { complete: true, total: 1, contexts: [serviceStatus('tests', 'FAILURE')] } };
+  node.github.imports = [historical];
   assert.deepEqual(idsFor(node), ['maintainer-merge']);
+  assert.equal(node.github.imports[0], historical);
   node.github.checks.state = 'PENDING'; node.github.checks.contexts[0].state = 'IN_PROGRESS';
   assert.deepEqual(idsFor(node), []);
   node.github.checks.state = 'FAILURE'; node.github.checks.contexts[0].state = 'FAILURE';

@@ -854,6 +854,21 @@ class RepositoryStateTest(unittest.TestCase):
         self.assertIn("failing", pr_states(external))
 
 
+    def test_native_merge_does_not_gate_on_retained_export(self):
+        export = original(number=2, sourceHead="a" * 40, matchesSourceHead=True,
+                          mergeable="CONFLICTING", checks={"complete": True, "total": 1,
+                          "contexts": [{"name": "tests", "state": "FAILURE"}]})
+        pr = original(importPolicy="none", reviewDecision="APPROVED", mergeable="MERGEABLE",
+                      imports=[export], checks={"complete": True, "total": 1, "state": "SUCCESS",
+                      "contexts": [{"name": "tests", "state": "SUCCESS"}]})
+        before = copy.deepcopy(pr)
+        self.assertEqual(set(pr_states(pr)), {"waiting-merge"})
+        disposition = public_import_disposition(pr)
+        self.assertEqual((disposition["state"], disposition["action"]), ("not-applicable", None))
+        self.assertIn("do not require an export lookup", disposition["description"])
+        self.assertEqual(pr, before)
+
+
 class ApprovalGateTest(unittest.TestCase):
     def test_exact_provider_gate_preserves_raw_error_and_blocks_readiness(self):
         gate = {"name": "Test (darwin_arm64)", "kind": "status", "state": "ERROR",

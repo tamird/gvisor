@@ -228,7 +228,8 @@ def changed_references(current: dict, previous: dict) -> list[dict]:
 
 def older_merged_imports(pr: dict) -> list[dict]:
     """Find merged exports when the current source has no active or merged export."""
-    if pr.get("status") not in {"open", "draft", "closed"} or not pr.get("importsComplete"):
+    if (pr.get("importPolicy", "copybara") == "none"
+            or pr.get("status") not in {"open", "draft", "closed"} or not pr.get("importsComplete")):
         return []
     if pr["status"] != "closed" and (pr.get("revisionChanged") or pr.get("branchHead") not in {None, pr.get("head")}):
         return []
@@ -1034,7 +1035,7 @@ def collect_repository(repo: str, policy: str, previous: dict,
                  if registered is not None
                  else fetch_numbers(sorted(refresh_numbers), timeline=True, repo=repo))
     relations = {number: {pr["number"]: pr["sourceHead"]
-                          for pr in prior_sources.get(number, {}).get("imports", []) if policy == "copybara"}
+                          for pr in prior_sources.get(number, {}).get("imports", [])}
                  for number in numbers}
     timeline_relations = {}
     changed_relations = set()
@@ -1076,11 +1077,12 @@ def collect_repository(repo: str, policy: str, previous: dict,
         imports = []
         for other, head in sorted(relations[number].items()):
             if other in imported:
-                actual = import_source(imported[other], item["url"], item.get("headOwner"), item["ref"], repo)
-                expected = timeline_relations.get(number, {}).get(other)
-                if actual is None or (expected is not None and actual != expected):
-                    raise RuntimeError(f"Import #{other} source footer changed during retrieval")
-                head = actual
+                if policy == "copybara":
+                    actual = import_source(imported[other], item["url"], item.get("headOwner"), item["ref"], repo)
+                    expected = timeline_relations.get(number, {}).get(other)
+                    if actual is None or (expected is not None and actual != expected):
+                        raise RuntimeError(f"Import #{other} source footer changed during retrieval")
+                    head = actual
                 linked = dict(refreshed[other])
             else:
                 linked = dict(prior_imports[other])
@@ -1148,7 +1150,8 @@ def check_report(prs: list[dict], previous: dict) -> dict:
             if active and (failed or check_states(pr) & FAILURES):
                 failure = {**observation, "recordedFollowup": assignment}
                 if (source["status"] == "open" and pr["status"] == "open" and source.get("head") and not delivered
-                        and (is_source or pr.get("sourceHead") == source["head"])
+                        and (is_source or source.get("importPolicy", "copybara") != "none"
+                             and pr.get("sourceHead") == source["head"])
                         and not source.get("revisionChanged") and not pr.get("revisionChanged")
                         and (not source.get("branchHead") or source["branchHead"] == source["head"])
                         and not observation["sourceBranchMismatch"]):
@@ -1317,6 +1320,8 @@ def fetch_maintainers(*, include_specialties: bool = False):
 
 def refresh_reminder_imports(raw: dict, previous: dict) -> list[dict]:
     """Recheck the source timeline and its exact exports before restoring a trigger."""
+    if repository_policies(REGISTRY)[previous["repo"]] == "none":
+        return previous.get("imports", [])
     matches = {item["number"]: item["sourceHead"] for item in previous.get("imports", [])}
     for event in raw["timelineItems"]["nodes"]:
         candidate = event.get("source") or {}
@@ -1631,9 +1636,15 @@ def derive_snapshot() -> None:
     previous = json.loads((ROOT / "github-status.json").read_text())
     snapshot = previous.copy()
     snapshot["registryDate"] = REGISTRY["meta"]["updatedAt"]
+    snapshot["repositories"] = repository_policies(REGISTRY)
     nodes, _ = registry_source_indexes()
     for pr in snapshot["prs"]:
         node = nodes.get((pr.get("repo", REPO), pr["number"]), {})
+        policy = snapshot["repositories"][pr.get("repo", REPO)]
+        if pr.get("importPolicy", "copybara") != policy:
+            pr["importPolicy"] = policy
+            pr["publicImportDisposition"] = public_import_disposition(pr, node.get("approvedPatch"),
+                    node.get("landedPatch"), node.get("reapproval"), node.get("importPatchComparison"))
         if handoff := terminal_import_handoff(pr, pr, node):
             pr["terminalImportHandoff"] = handoff
         else:
@@ -2023,7 +2034,7 @@ def review_outreach(post: bool = False) -> None:
             time.sleep(1)
             recheck_unknown_mergeability([raw], repo=REPO)
         current = with_maintainer_reviewers(normalize(raw, sources[number]), maintainers)
-        current["importPolicy"] = "copybara"
+        current["importPolicy"] = repository_policies(REGISTRY)[REPO]
         current["imports"] = refresh_reminder_imports(raw, sources[number])
         current["importsComplete"] = not raw["timelineItems"]["pageInfo"]["hasPreviousPage"]
         node = next((n for n in REGISTRY["nodes"] if n["id"] == f"pr:{number}"), {})

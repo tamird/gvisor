@@ -116,8 +116,10 @@ amendment, compare the published PR head with the proposed head. When the
 contributor last reviewed a different proposal, include a second command
 comparing that revision with the proposed head.
 
-Repository policies in `meta.repositories` select the existing Copybara workflow
-for gVisor and ordinary direct PR review for BuildBuddy. Every live PR carries
+Repository policies in `meta.repositories` select native PR merging (`none`) or
+Copybara discovery (`copybara`). Native merging retains observed export history
+without making it a source merge gate. gVisor and BuildBuddy use native merging.
+Every live PR carries
 its source repository; non-primary PR IDs include that repository, preserving
 existing gVisor deep links and preventing equal PR numbers from colliding.
 Repository-qualified identity also scopes review history and conflict refreshes.

@@ -1034,6 +1034,7 @@ class CollectorHistoryTest(unittest.TestCase):
                 mock.patch.object(updater, "graphql", side_effect=AssertionError("Unexpected API call")) as api, \
                 mock.patch.object(updater.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "", "")):
             expected["registryDate"] = self.registry["meta"]["updatedAt"]
+            expected["repositories"] = updater.repository_policies(self.registry)
             expected["reviewerHandoff"] = updater.reviewer_handoff(expected["prs"], self.previous)
             expected["reviewWatchHandoff"] = updater.review_watch_handoff(expected["prs"] + expected["reviewPRs"], self.previous)
             expected["mergeabilityHandoff"] = updater.mergeability_handoff(updater.check_report(expected["prs"], self.previous), self.previous)
@@ -1275,6 +1276,36 @@ class CollectorHistoryTest(unittest.TestCase):
         self.assertEqual(current["workStates"]["pr:1"]["merged"]["observedAt"], OLD)
         self.assertEqual(current["limits"]["retainedSources"], 101)
         self.assertEqual(current["limits"]["retainedImports"], 2)
+
+    def test_native_policy_derivation_preserves_observations_and_import_history(self) -> None:
+        self.registry["meta"]["repositories"] = {"google/gvisor": "none"}
+        with mock.patch.multiple(updater, ROOT=self.root, REGISTRY=self.registry), \
+                mock.patch.object(updater, "graphql", side_effect=AssertionError("Unexpected API call")), \
+                mock.patch.object(updater.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "", "")):
+            updater.derive_snapshot()
+        current = json.loads(self.path.read_text())
+        self.assertEqual(current["checkedAt"], self.previous["checkedAt"])
+        self.assertEqual(current["repositories"], {"google/gvisor": "none"})
+        for before, after in zip(self.previous["prs"], current["prs"], strict=True):
+            self.assertEqual(after["importPolicy"], "none")
+            self.assertEqual((after["publicImportDisposition"]["state"], after["publicImportDisposition"]["action"]),
+                             ("not-applicable", None))
+            self.assertEqual({k: v for k, v in after.items() if k not in {"importPolicy", "publicImportDisposition"}},
+                             {k: v for k, v in before.items() if k not in {"importPolicy", "publicImportDisposition"}})
+
+    def test_native_merge_retains_known_exports_without_discovering_new_ones(self) -> None:
+        self.registry["meta"]["repositories"] = {"google/gvisor": "none"}
+        self.raw[103]["body"] = "The historical export now uses native review."
+        current = self.collect()
+        source = next(pr for pr in current["prs"] if pr["number"] == 3)
+        self.assertEqual(source["importPolicy"], "none")
+        self.assertEqual([item["number"] for item in source["imports"]], [103, 104])
+        self.assertEqual(source["imports"][0]["head"], f"{113:040x}")
+        self.assertIn(103, self.requested)
+        self.assertNotIn(105, self.requested)
+        self.assertIsNone(updater.terminal_import_handoff(source, source, {}))
+        self.assertEqual((source["publicImportDisposition"]["state"], source["publicImportDisposition"]["action"]),
+                         ("not-applicable", None))
 
     def test_known_export_merges_after_source_closes(self) -> None:
         export = linked(imported(101, 1), 1)
@@ -2970,6 +3001,13 @@ class ReapprovalReminderTest(unittest.TestCase):
             fetch.assert_called_once_with([7], timeline=False, repo="google/gvisor", team_details=False)
             self.assertEqual(calls.call_args.args[0], ["gh", "api", "user", "--jq", ".login"])
             self.assertEqual(calls.call_count, 1)
+
+    def test_native_merge_reminders_preserve_history_without_new_exports(self) -> None:
+        source = retained(self.raw, [linked(imported(107, 7, "CLOSED"), 7)])
+        registry = {"meta": {"repo": "google/gvisor", "repositories": {"google/gvisor": "none"}}, "nodes": []}
+        with mock.patch.object(updater, "REGISTRY", registry), mock.patch.object(updater, "fetch_numbers") as fetch:
+            self.assertEqual(updater.refresh_reminder_imports(self.raw, source), source["imports"])
+        fetch.assert_not_called()
 
     def test_reminder_export_refresh_discovers_exact_successor(self) -> None:
         old = linked(imported(107, 7, "CLOSED"), 7)

@@ -477,6 +477,8 @@ def certified_earlier_export(patch: dict) -> dict | None:
 
 def import_lineage(pr: dict, patch: dict | None = None, amendment: dict | None = None) -> list[dict]:
     """An exact-head successor supersedes attempts at a certified earlier patch."""
+    if pr.get("importPolicy", "copybara") == "none":
+        return []
     current = [item for item in pr.get("imports", [])
                if item.get("matchesSourceHead") and item.get("sourceHead") == pr["head"]]
     # Content lineage is informational only. Callers deciding whether the
@@ -619,6 +621,9 @@ def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict
         action = None
     result = {"binding": binding, "scope": scope, "state": state, "action": action,
               "trigger": trigger, "description": description}
+    if pr.get("importPolicy", "copybara") == "none":
+        return {**result, "state": "not-applicable",
+                "description": "Native PR merges do not require an export lookup. Retained export observations are historical."}
     # A conflict with master does not change which source Copybara exported.
     open_export = next((item for item in active if item["status"] == "open"), None)
     if (not open_export or scope != "exact" or not binding["complete"] or trigger["state"] != "present"

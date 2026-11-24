@@ -1,14 +1,14 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T15:33:12.099125+00:00",
+    "updatedAt": "2026-11-24T15:57:41.885925+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
     "edgeDirection": "Prerequisite → dependent. Integration membership is listed in details and excluded from dependency reach.",
     "dependencyNotes": "Dependencies are curated from source interfaces, PR descriptions and validated workstreams. Review/preparation waits appear as status, not dependency edges. Retained unpublished source remains visible; obsolete validation branches are omitted. Landed prerequisites are not active blockers.",
     "repositories": {
-      "google/gvisor": "copybara",
+      "google/gvisor": "none",
       "buildbuddy-io/buildbuddy": "none",
       "golang/tools": "none",
       "nodejs/node": "none",
@@ -26968,19 +26968,19 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "nogo-export-data",
-      "head": "7bca7b25f93434a14c2c003d38339e54c4f40906",
+      "head": "d692a4fb41acd4deb5f3b051ac06bd4145d888f3",
       "title": "Generate Nogo export data from source",
       "url": "https://github.com/google/gvisor/pull/16098",
       "group": "analysis",
       "status": "open",
       "updatedAt": "2026-11-20T14:38:15.867463+00:00",
-      "summary": "Exact-head FirstPass2489 failed pre-agent upload exit80 with null agent/start and explicit Tamir1535036 rolling30-day360,000 compute-minute quota. No Bazel tests ran; empty logs did not contain the structured admission reason. Existing source qualification/approval and independent review/landing holds remain. The README line-wrap correction is delivered at7bca7b25 with identical word sequence/executable inputs and final review clear. The original line-length finding is addressed in source; no new reply approval or posted reply is claimed.",
+      "summary": "The current published head is d692a4fb4, native MERGEABLE/CHANGES_REQUESTED. Tamir posted the README-thread response “Fixed” and requested kerumeto again. These are delivered user actions; no new external review or source equivalence is inferred. Exact-head FirstPass2660 failed before agent assignment/start: structured upload metadata explicitly reports author1535036 rolling30-day360000 compute-minute quota. No source build/test ran, and prior qualification remains bound to its recorded sources.",
       "followup": {
-        "owner": "root / approved_rebase_queue",
-        "sourceHead": "7bca7b25f93434a14c2c003d38339e54c4f40906",
-        "observedAt": "2026-11-23T20:29:42.991432+00:00",
-        "disposition": "Exact-head FirstPass2489 failed pre-agent upload exit80 with null agent/start and explicit Tamir1535036 rolling30-day360,000 compute-minute quota. No Bazel tests ran; empty logs did not contain the structured admission reason. Existing source qualification/approval and independent review/landing holds remain. The README line-wrap correction is delivered at7bca7b25 with identical word sequence/executable inputs and final review clear. The original line-length finding is addressed in source; no new reply approval or posted reply is claimed.",
-        "nextAction": "Follow actual quota recovery or a new admitted build through the existing owner. No unchanged retry, operator outreach, unsupported rerequest or source churn. Do not repeat the fulfilled whitespace correction or invent a reply.",
+        "owner": "root",
+        "sourceHead": "d692a4fb41acd4deb5f3b051ac06bd4145d888f3",
+        "observedAt": "2026-11-24T15:57:41.885925+00:00",
+        "disposition": "The current published head is d692a4fb4, native MERGEABLE/CHANGES_REQUESTED. Tamir posted the README-thread response “Fixed” and requested kerumeto again. These are delivered user actions; no new external review or source equivalence is inferred. Exact-head FirstPass2660 failed before agent assignment/start: structured upload metadata explicitly reports author1535036 rolling30-day360000 compute-minute quota. No source build/test ran, and prior qualification remains bound to its recorded sources.",
+        "nextAction": "Root follows the requested current-head re-review, genuine maintainer feedback and actual admitted CI. Do not repeat the posted response or reviewer request, transfer old-head qualification, retry unchanged CI or infer merge authority.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16098",
           "https://github.com/tamird/gvisor/commit/66eb27741",
@@ -27001,10 +27001,12 @@
           "https://github.com/google/gvisor/pull/16098#pullrequestreview-5985786410",
           "https://github.com/google/gvisor/pull/16098#pullrequestreview-6027074750",
           "https://github.com/google/gvisor/pull/16098#discussion_r4670059974",
-          "https://buildkite.com/gvisor/first-pass/builds/2489#01a209f7-6da1-4c8f-8d37-4feaa9c83475"
+          "https://buildkite.com/gvisor/first-pass/builds/2489#01a209f7-6da1-4c8f-8d37-4feaa9c83475",
+          "https://github.com/gvisor/gvisor/pull/16098#discussion_r4682395386",
+          "https://buildkite.com/gvisor/first-pass/builds/2660#01a20e30-708a-43a9-a738-19533dffa906"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Actual new admission/source/check/review/import evidence or next normal canonical sweep.",
+        "recheckCondition": "Actual current-head review/check/admission or source/base/landing event.",
         "preparedRevision": {
           "head": "f09702e855ccb3a0da8708479b3563d56da82768",
           "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
@@ -27797,7 +27799,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Agent"
       },
-      "nextStep": "Preserve current06b8 fixture and consumed external feedback; root follows actual internal validation/importer evidence. Do not reopen the resolved fixture repair or send an automatic reply.",
+      "nextStep": "Root follows the requested current-head re-review, genuine maintainer feedback and actual admitted CI. Do not repeat the posted response or reviewer request, transfer old-head qualification, retry unchanged CI or infer merge authority.",
       "recheckCondition": "New substantive feedback/source change or actual internal validation/importer evidence."
     },
     {
@@ -41330,14 +41332,14 @@
       "url": "https://github.com/google/gvisor/pull/16516",
       "group": "bazel",
       "status": "open",
-      "summary": "Main 55748 at a959 is terminal FAILED. The final Windows attempt also timed out during local-origin Go-history fetch, before Windows compilation; known Go/32-bit fetch and APT setup failures remain. No new source failure is demonstrated. Shared Go-export candidate f8500dffe is tracked separately under issue #17832.",
+      "summary": "Main 55748 at a959 is terminal FAILED. The final Windows attempt also timed out during local-origin Go-history fetch, before Windows compilation; known Go/32-bit fetch and APT setup failures remain. No new source failure is demonstrated. Shared Go-export candidate f8500dffe is tracked separately under issue #17832. Tamir posted the CI-cancellation question7135968742; no external answer is present in this observation.",
       "updatedAt": "2026-11-24T06:27:10.701611+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "a9594385d15d2e17e5dd7491be94d774f47fa80e",
-        "observedAt": "2026-11-24T05:25:45.034658+00:00",
-        "disposition": "Main 55748 at a959 is terminal FAILED. The final Windows attempt also timed out during local-origin Go-history fetch, before Windows compilation; known Go/32-bit fetch and APT setup failures remain. No new source failure is demonstrated. Shared Go-export candidate f8500dffe is tracked separately under issue #17832.",
-        "nextAction": "Root advances the separate Go-export proposal at issue #17832 and follows the existing APT #17854/shared provider blockers. Regular CI watching is retired; preserve exact-source validation and await actual changed provider/review/import evidence.",
+        "observedAt": "2026-11-24T15:57:41.885925+00:00",
+        "disposition": "Main 55748 at a959 is terminal FAILED. The final Windows attempt also timed out during local-origin Go-history fetch, before Windows compilation; known Go/32-bit fetch and APT setup failures remain. No new source failure is demonstrated. Shared Go-export candidate f8500dffe is tracked separately under issue #17832. Tamir posted the CI-cancellation question7135968742; no external answer is present in this observation.",
+        "nextAction": "Root follows an actual answer to the posted CI question or changed provider/source evidence. Existing terminal55748 setup/fetch/cancellation evidence retains its scope; do not repeat the question, retry CI, infer source failure or invent an accepted operator owner.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16516#pullrequestreview-5895770949",
           "https://github.com/gvisor/gvisor/pull/16516#pullrequestreview-5943223023",
@@ -41350,7 +41352,8 @@
           "https://buildkite.com/gvisor/first-pass/builds/2303#01a2003f-e1ce-4a4c-acb9-5a30df33af5d",
           "https://github.com/google/gvisor/pull/16516#pullrequestreview-6030082805",
           "https://buildkite.com/gvisor/pipeline/builds/55748",
-          "https://github.com/tamird/gvisor/commit/f8500dffed4bace8841b900232beb6fd19740cd7"
+          "https://github.com/tamird/gvisor/commit/f8500dffed4bace8841b900232beb6fd19740cd7",
+          "https://github.com/gvisor/gvisor/pull/16516#issuecomment-7135968742"
         ],
         "nativeReviewRequest": {
           "reviewer": "manninglucas",
@@ -41359,7 +41362,7 @@
           "delivered": true,
           "endpoint": "/repos/gvisor/gvisor/pulls/16516/requested_reviewers/rerequest"
         },
-        "recheckCondition": "Actual Go-export/APT prerequisite delivery, replacement CI, agent diagnostics or substantive review/import/source event.",
+        "recheckCondition": "Actual human reply, changed provider diagnostic or source/head event.",
         "mergeable": "MERGEABLE",
         "attentionDispositions": [],
         "providerHead": "a9594385d15d2e17e5dd7491be94d774f47fa80e"
@@ -41424,7 +41427,7 @@
           "postedURL": "https://github.com/gvisor/gvisor/pull/16516#pullrequestreview-5943223023"
         }
       ],
-      "nextStep": "Root advances the separate Go-export proposal at issue #17832 and follows the existing APT #17854/shared provider blockers. Regular CI watching is retired; preserve exact-source validation and await actual changed provider/review/import evidence.",
+      "nextStep": "Root follows an actual answer to the posted CI question or changed provider/source evidence. Existing terminal55748 setup/fetch/cancellation evidence retains its scope; do not repeat the question, retry CI, infer source failure or invent an accepted operator owner.",
       "recheckCondition": "Actual Go-export/APT prerequisite delivery, replacement CI, agent diagnostics or substantive review/import/source event."
     },
     {
@@ -41626,7 +41629,7 @@
       "group": "release",
       "status": "open",
       "updatedAt": "2026-11-20T15:15:34.980085+00:00",
-      "summary": "The user-approved ignore_srcs amendment c125b0e272 and exact reply are delivered. Publisher verified native/fork heads, MERGEABLE and DCO SUCCESS, with auto-merge off. Etienne re-review was requested and the existing Manning request preserved. New current-head CI is pending; prior byte-identical action/source qualification and private-cleaner/ThinLTO limits retain their scope. Exact-head FirstPass2658 is a pre-agent upload failure: structured metadata explicitly reports author1535036 rolling30-day360000 compute-minute quota, with no source tests run.",
+      "summary": "The user-approved ignore_srcs amendment c125b0e272 and exact reply are delivered. Publisher verified native/fork heads, MERGEABLE and DCO SUCCESS, with auto-merge off. Etienne re-review was requested and the existing Manning request preserved. New current-head CI is pending; prior byte-identical action/source qualification and private-cleaner/ThinLTO limits retain their scope. Exact-head FirstPass2658 is a pre-agent upload failure: structured metadata explicitly reports author1535036 rolling30-day360000 compute-minute quota, with no source tests run. Current native Go generation and other GitHub validation are now SUCCESS. The user’s prewarmer comment4682382293 is a delivered response, not a new implementation instruction. Native review remains CHANGES_REQUESTED while re-review is pending.",
       "evidence": [
         {
           "label": "Latest exact-head review",
@@ -41856,11 +41859,11 @@
       ],
       "followup": {
         "owner": "root",
-        "observedAt": "2026-11-24T15:33:12.099125+00:00",
+        "observedAt": "2026-11-24T15:57:41.885925+00:00",
         "sourceHead": "c125b0e272ddb337b4c78588c79a86b2f5e228b6",
         "mergeable": "MERGEABLE",
-        "disposition": "The user-approved ignore_srcs amendment c125b0e272 and exact reply are delivered. Publisher verified native/fork heads, MERGEABLE and DCO SUCCESS, with auto-merge off. Etienne re-review was requested and the existing Manning request preserved. New current-head CI is pending; prior byte-identical action/source qualification and private-cleaner/ThinLTO limits retain their scope. Exact-head FirstPass2658 is a pre-agent upload failure: structured metadata explicitly reports author1535036 rolling30-day360000 compute-minute quota, with no source tests run.",
-        "nextAction": "Root follows current-head Go generation, requested maintainer review and actual admission recovery or new admitted checks. No unchanged CI retry, quota outreach, duplicate source/reply/reviewer request or merge action.",
+        "disposition": "The user-approved ignore_srcs amendment c125b0e272 and exact reply are delivered. Publisher verified native/fork heads, MERGEABLE and DCO SUCCESS, with auto-merge off. Etienne re-review was requested and the existing Manning request preserved. New current-head CI is pending; prior byte-identical action/source qualification and private-cleaner/ThinLTO limits retain their scope. Exact-head FirstPass2658 is a pre-agent upload failure: structured metadata explicitly reports author1535036 rolling30-day360000 compute-minute quota, with no source tests run. Current native Go generation and other GitHub validation are now SUCCESS. The user’s prewarmer comment4682382293 is a delivered response, not a new implementation instruction. Native review remains CHANGES_REQUESTED while re-review is pending.",
+        "nextAction": "Root follows requested current-head maintainer re-review, actual admission recovery or a new admitted check, preserving private/internal adapter and workload limits. Source/reply approval and publication are fulfilled; no repeated source/reply/reviewer request, unchanged CI retry or merge.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16522",
           "https://github.com/tamird/gvisor/commit/4e034130e",
@@ -41884,7 +41887,8 @@
           "https://github.com/tamird/gvisor/actions/runs/45314627023",
           "https://github.com/tamird/gvisor/actions/runs/45314629193",
           "https://github.com/gvisor/gvisor/pull/16522#discussion_r4682285433",
-          "https://buildkite.com/gvisor/first-pass/builds/2658#01a20e28-74e2-4ef2-a44b-afbc66e4d452"
+          "https://buildkite.com/gvisor/first-pass/builds/2658#01a20e28-74e2-4ef2-a44b-afbc66e4d452",
+          "https://github.com/gvisor/gvisor/pull/16522#discussion_r4682382293"
         ],
         "recheckCondition": "Actual current-head CI/review/landing, source or prerequisite change.",
         "curatedAt": "2026-11-20T23:27:51.953187+00:00",
@@ -42521,7 +42525,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
       },
-      "nextStep": "Root follows current-head Go generation, requested maintainer review and actual admission recovery or new admitted checks. No unchanged CI retry, quota outreach, duplicate source/reply/reviewer request or merge action.",
+      "nextStep": "Root follows requested current-head maintainer re-review, actual admission recovery or a new admitted check, preserving private/internal adapter and workload limits. Source/reply approval and publication are fulfilled; no repeated source/reply/reviewer request, unchanged CI retry or merge.",
       "recheckCondition": "A genuine maintainer/import/check event or evidenced provider admission recovery."
     },
     {
@@ -122236,7 +122240,7 @@
       "status": "active",
       "owner": "root",
       "updatedAt": "2026-11-23T22:28:52.692599+00:00",
-      "summary": "The due native-first guard found no newer/live native delivery. Sole snapshot-only fallback45417195867 succeeded with outreach disabled and delivered API 2026-11-24T14:47:11.369592+00:00. Native scheduler-side delivery remains unknown; the active default-branch cron has no demonstrated configuration defect or freshness/fallback suppression.",
+      "summary": "The due native-first guard found no newer/live native delivery. Sole snapshot-only fallback45430212258 succeeded with outreach disabled and delivered API 2026-11-24T15:54:40.446048+00:00. Native scheduler-side delivery remains unknown; the active default-branch cron has no demonstrated configuration defect or freshness/fallback suppression.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122479,7 +122483,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground/active-goal supervision owns the next native-first guard 15:47:11 UTC and deadline 16:17:11. Reuse a fresh/live native generation before at most one fallback. Preserve the60/90-minute policy and two-hour UI threshold; no reset, new scheduler or operator outreach.",
+      "nextStep": "Root foreground/active-goal supervision owns the next native-first guard 16:54:40 UTC and deadline 17:24:40. Reuse a fresh/live native generation before at most one fallback. Preserve the60/90-minute policy and two-hour UI threshold; no reset, new scheduler or operator outreach.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122612,11 +122616,12 @@
           "https://github.com/tamird/gvisor/actions/runs/45384586173",
           "https://github.com/tamird/gvisor/actions/runs/45394813634",
           "https://github.com/tamird/gvisor/actions/runs/45405557424",
-          "https://github.com/tamird/gvisor/actions/runs/45417195867"
+          "https://github.com/tamird/gvisor/actions/runs/45417195867",
+          "https://github.com/tamird/gvisor/actions/runs/45430212258"
         ],
-        "observedAt": "2026-11-24T14:47:59.067163+00:00",
-        "disposition": "The due native-first guard found no newer/live native delivery. Sole snapshot-only fallback45417195867 succeeded with outreach disabled and delivered API 2026-11-24T14:47:11.369592+00:00. Native scheduler-side delivery remains unknown; the active default-branch cron has no demonstrated configuration defect or freshness/fallback suppression.",
-        "nextAction": "Root foreground/active-goal supervision owns the next native-first guard 15:47:11 UTC and deadline 16:17:11. Reuse a fresh/live native generation before at most one fallback. Preserve the60/90-minute policy and two-hour UI threshold; no reset, new scheduler or operator outreach.",
+        "observedAt": "2026-11-24T15:56:00.479099+00:00",
+        "disposition": "The due native-first guard found no newer/live native delivery. Sole snapshot-only fallback45430212258 succeeded with outreach disabled and delivered API 2026-11-24T15:54:40.446048+00:00. Native scheduler-side delivery remains unknown; the active default-branch cron has no demonstrated configuration defect or freshness/fallback suppression.",
+        "nextAction": "Root foreground/active-goal supervision owns the next native-first guard 16:54:40 UTC and deadline 17:24:40. Reuse a fresh/live native generation before at most one fallback. Preserve the60/90-minute policy and two-hour UI threshold; no reset, new scheduler or operator outreach.",
         "recheckCondition": "Actual fresh/live native delivery, substantive external event or the next due guard.",
         "owner": "root"
       }
