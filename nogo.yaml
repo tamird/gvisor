@@ -143,6 +143,12 @@ analyzers:
       exclude:
         # The NBSP fixture verifies that malformed whitespace does not grant nosplit.
         - '^bazel-out/[^/]+/bin/tools/checkescape/test1/nosplit\.go:'
+  reflectvaluecompare:
+    internal:
+      exclude:
+        # An identical reflect.Value descriptor in disjoint ranges means inconsistent
+        # address registration; distinct objects may have equal contents.
+        - '^pkg/state/encode\.go:896:[0-9]+$'
   scannererr:
     internal:
       exclude:
