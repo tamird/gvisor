@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -587,7 +588,7 @@ func TestFSCheckpointCompatibility(t *testing.T) {
 	for ver := range latestByVersion {
 		versions = append(versions, ver)
 	}
-	sort.Slice(versions, func(i, j int) bool { return versions[i] < versions[j] })
+	slices.Sort(versions)
 
 	for _, ver := range versions {
 		snap := latestByVersion[ver]

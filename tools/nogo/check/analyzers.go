@@ -232,7 +232,8 @@ func init() {
 			"stringsbuilder",
 			"rangeint",
 			"stditerators",
-			"slicesbackward":
+			"slicesbackward",
+			"slicessort":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}

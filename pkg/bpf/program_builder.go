@@ -17,6 +17,7 @@ package bpf
 import (
 	"fmt"
 	"math"
+	"slices"
 	"sort"
 	"strings"
 
@@ -304,9 +305,7 @@ func (o FragmentOutcomes) String() string {
 	for v := range o.MayReturnImmediate {
 		sortedReturnValues = append(sortedReturnValues, uint32(v))
 	}
-	sort.Slice(sortedReturnValues, func(i, j int) bool {
-		return sortedReturnValues[i] < sortedReturnValues[j]
-	})
+	slices.Sort(sortedReturnValues)
 	for _, v := range sortedReturnValues {
 		s = append(s, fmt.Sprintf("may return '0x%x'", v))
 	}

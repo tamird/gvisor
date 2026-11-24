@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
-	"sort"
+	"slices"
 
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
@@ -814,9 +814,7 @@ func (es *encodeState) Save(obj reflect.Value) {
 		for id := range es.pending {
 			ids = append(ids, id)
 		}
-		sort.Slice(ids, func(i, j int) bool {
-			return ids[i] < ids[j]
-		})
+		slices.Sort(ids)
 		for _, id := range ids {
 			// Encode the id.
 			oes = nil

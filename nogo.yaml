@@ -165,7 +165,7 @@ analyzers:
       exclude:
         # An identical reflect.Value descriptor in disjoint ranges means inconsistent
         # address registration; distinct objects may have equal contents.
-        - '^pkg/state/encode\.go:896:[0-9]+$'
+        - '^pkg/state/encode\.go:894:[0-9]+$'
   scannererr:
     internal:
       exclude:

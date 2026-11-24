@@ -18,7 +18,7 @@ import (
 	"bytes"
 	"fmt"
 	"math"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -401,7 +401,7 @@ func (c *cgroupInode) ID() uint32 {
 }
 
 func sortTIDs(tids []kernel.ThreadID) {
-	sort.Slice(tids, func(i, j int) bool { return tids[i] < tids[j] })
+	slices.Sort(tids)
 }
 
 // +stateify savable

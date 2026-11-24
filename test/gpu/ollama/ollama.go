@@ -22,7 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -562,7 +562,7 @@ func (r *Response) TimePerOutputTokenQuantile(quantile float64) time.Duration {
 		return -1
 	}
 	intervals := r.tokenIntervals()
-	sort.Slice(intervals, func(i, j int) bool { return intervals[i] < intervals[j] })
+	slices.Sort(intervals)
 	return intervals[int(quantile*float64(len(intervals)-1))]
 }
 
