@@ -39,12 +39,12 @@ var ignoreList = map[string]struct{}{
 // implementsSerializableInterface returns true if the given type implements
 // an interface which inherently provides serialization.
 func implementsSerializableInterface(typ reflect.Type) bool {
-	jsonMarshaler := reflect.TypeOf((*json.Marshaler)(nil)).Elem()
-	jsonUnmarshaler := reflect.TypeOf((*json.Unmarshaler)(nil)).Elem()
+	jsonMarshaler := reflect.TypeFor[json.Marshaler]()
+	jsonUnmarshaler := reflect.TypeFor[json.Unmarshaler]()
 	if typ.Implements(jsonMarshaler) && typ.Implements(jsonUnmarshaler) {
 		return true
 	}
-	protoMessage := reflect.TypeOf((*proto.Message)(nil)).Elem()
+	protoMessage := reflect.TypeFor[proto.Message]()
 	return typ.Implements(protoMessage)
 }
 

@@ -214,7 +214,8 @@ func init() {
 		case "any",
 			"plusbuild",
 			"errorsastype",
-			"importcomment":
+			"importcomment",
+			"reflecttypefor":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}
