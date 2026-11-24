@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 // Package xdp provides link layer endpoints backed by AF_XDP sockets.
 package xdp

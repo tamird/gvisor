@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 // Package tun contains methods to open TAP and TUN devices.
 package tun

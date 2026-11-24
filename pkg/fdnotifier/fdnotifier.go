@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 // Package fdnotifier contains an adapter that translates IO events (e.g., a
 // file became readable/writable) from native FDs to the notifications in the

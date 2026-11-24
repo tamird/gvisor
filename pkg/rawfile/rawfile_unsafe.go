@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 // Package rawfile contains utilities for using raw host files on Linux hosts.
 package rawfile

@@ -5,7 +5,6 @@
 // https://developers.google.com/open-source/licenses/bsd.
 
 //go:build go1.14
-// +build go1.14
 
 // //go:linkname directives type-checked by checklinkname. Any other
 // non-linkname assumptions outside the Go 1 compatibility guarantee should

@@ -5,7 +5,6 @@
 // https://developers.google.com/open-source/licenses/bsd.
 
 //go:build !amd64
-// +build !amd64
 
 package sync
 

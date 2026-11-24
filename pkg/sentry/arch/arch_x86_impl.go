@@ -13,8 +13,6 @@
 // limitations under the License.
 
 //go:build (amd64 || 386) && !false
-// +build amd64 386
-// +build !false
 
 package arch
 

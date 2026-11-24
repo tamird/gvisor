@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build amd64 || arm64
-// +build amd64 arm64
 
 // Package cmd implements the subcommands of xdp_loader.
 package cmd

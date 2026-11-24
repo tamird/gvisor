@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build !sentry_profiling
-// +build !sentry_profiling
 
 package metric
 

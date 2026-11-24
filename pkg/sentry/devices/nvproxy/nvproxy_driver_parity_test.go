@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build !false
-// +build !false
 
 // Package nvproxy_driver_parity_test tests that the nvproxy driver ABI
 // is kept up to date with the NVIDIA driver.

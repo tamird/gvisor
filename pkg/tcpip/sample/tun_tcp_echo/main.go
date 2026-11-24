@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 // This sample creates a stack with TCP and IPv4 protocols on top of a TUN
 // device, and listens on a port. Data received by the server in the accepted

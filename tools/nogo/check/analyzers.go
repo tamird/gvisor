@@ -205,7 +205,8 @@ func init() {
 	register(allAnalyzers, &plainAnalyzer{unusedresult.Analyzer})
 	for _, a := range modernize.Suite {
 		switch a.Name {
-		case "any":
+		case "any",
+			"plusbuild":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}

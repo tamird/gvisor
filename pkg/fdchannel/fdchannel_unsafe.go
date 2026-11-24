@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build aix || darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris
-// +build aix darwin dragonfly freebsd linux netbsd openbsd solaris
 
 // Package fdchannel implements passing file descriptors between processes over
 // Unix domain sockets.

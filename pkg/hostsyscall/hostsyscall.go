@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 // Package hostsyscall provides functions like unix.RawSyscall, but without the
 // overhead of multiple stack frame allocations.

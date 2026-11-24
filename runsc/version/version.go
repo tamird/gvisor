@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build !false
-// +build !false
 
 // Package version holds a string containing version information for runsc.
 // Other packages may import it to get this information while avoiding

@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 // The devid binary is used to get the device ID in the runsc container.
 package main
