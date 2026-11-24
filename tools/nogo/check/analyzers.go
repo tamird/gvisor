@@ -234,7 +234,8 @@ func init() {
 			"stditerators",
 			"slicesbackward",
 			"slicessort",
-			"slicesclip":
+			"slicesclip",
+			"slicescontains":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}

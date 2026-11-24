@@ -892,11 +892,8 @@ func parseMountinfo(s string) ([]mountEntry, error) {
 		var flags []string
 		opts := strings.Split(fields[5], ",")
 		for _, want := range mountFlags {
-			for _, got := range opts {
-				if got == want {
-					flags = append(flags, want)
-					break
-				}
+			if slices.Contains(opts, want) {
+				flags = append(flags, want)
 			}
 		}
 		out = append(out, mountEntry{

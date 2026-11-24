@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"math"
 	"net"
+	"slices"
 	"sort"
 	"testing"
 	"time"
@@ -485,13 +486,7 @@ func (m *fakeMulticastEventDispatcher) OnUnexpectedInputInterface(context stack.
 
 // Checks to see if list contains an address.
 func containsAddr(list []tcpip.ProtocolAddress, item tcpip.ProtocolAddress) bool {
-	for _, i := range list {
-		if i == item {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(list, item)
 }
 
 type addressChangedEvent struct {

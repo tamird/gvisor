@@ -554,12 +554,7 @@ func normalizeCap(capName string) (string, error) {
 
 // isKnownCapability checks if capName is a valid Linux capability known to gVisor.
 func isKnownCapability(capName string) bool {
-	for _, c := range specutils.AllCapabilities().Bounding {
-		if c == capName {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(specutils.AllCapabilities().Bounding, capName)
 }
 
 // addCapability adds a single capability to all 5 capability sets.
@@ -573,10 +568,8 @@ func addCapability(caps *specs.LinuxCapabilities, capName string) {
 	}
 
 	addUnique := func(set []string) []string {
-		for _, c := range set {
-			if c == capName {
-				return set
-			}
+		if slices.Contains(set, capName) {
+			return set
 		}
 		return append(set, capName)
 	}

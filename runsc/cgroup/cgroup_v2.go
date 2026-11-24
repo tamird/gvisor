@@ -164,13 +164,7 @@ func (c *cgroupV2) Update(res *specs.LinuxResources) error {
 	log.Debugf("Updating cgroup resources for %q", path)
 	for controllerName, ctrlr := range controllers2 {
 		// First check if our controller is found in the system.
-		found := false
-		for _, knownController := range c.Controllers {
-			if controllerName == knownController {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(c.Controllers, controllerName)
 
 		// In case we don't have the controller.
 		if found {
@@ -200,13 +194,7 @@ func (c *cgroupV2) Update(res *specs.LinuxResources) error {
 						return fmt.Errorf("unified resource %q must be in the form CONTROLLER.PARAMETER", k)
 					}
 					// Try providing a helpful message if the controller is unknown.
-					found := false
-					for _, knownController := range c.Controllers {
-						if controller == knownController {
-							found = true
-							break
-						}
-					}
+					found := slices.Contains(c.Controllers, controller)
 					if !found && controller != "cgroup" {
 						return fmt.Errorf("unified resource %q can't be set: controller %q not available", k, controller)
 					}

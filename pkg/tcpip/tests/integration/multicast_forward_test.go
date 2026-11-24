@@ -17,6 +17,7 @@ package multicast_forward_test
 import (
 	"fmt"
 	"os"
+	"slices"
 	"testing"
 	"time"
 
@@ -857,12 +858,7 @@ func TestMulticastForwarding(t *testing.T) {
 	}
 
 	contains := func(want tcpip.NICID, items []tcpip.NICID) bool {
-		for _, item := range items {
-			if want == item {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(items, want)
 	}
 
 	tests := []struct {

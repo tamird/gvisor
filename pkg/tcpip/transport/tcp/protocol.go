@@ -19,6 +19,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -320,13 +321,11 @@ func (p *protocol) SetOption(option tcpip.SettableTransportProtocolOption) tcpip
 		return nil
 
 	case *tcpip.CongestionControlOption:
-		for _, c := range p.availableCongestionControl {
-			if string(*v) == c {
-				p.mu.Lock()
-				p.congestionControl = string(*v)
-				p.mu.Unlock()
-				return nil
-			}
+		if slices.Contains(p.availableCongestionControl, string(*v)) {
+			p.mu.Lock()
+			p.congestionControl = string(*v)
+			p.mu.Unlock()
+			return nil
 		}
 		// linux returns ENOENT when an invalid congestion control
 		// is specified.

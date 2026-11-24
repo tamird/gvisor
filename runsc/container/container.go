@@ -2230,10 +2230,8 @@ func (c *Container) HasCapabilityInAnySet(capability linux.Capability) bool {
 		c.Spec.Process.Capabilities.Permitted,
 		c.Spec.Process.Capabilities.Ambient,
 	} {
-		for _, c := range set {
-			if c == capString {
-				return true
-			}
+		if slices.Contains(set, capString) {
+			return true
 		}
 	}
 	return false
@@ -2248,10 +2246,8 @@ func (c *Container) RunsAsUID0() bool {
 }
 
 func (c *Container) requireStatus(action string, statuses ...Status) error {
-	for _, s := range statuses {
-		if c.Status == s {
-			return nil
-		}
+	if slices.Contains(statuses, c.Status) {
+		return nil
 	}
 	return fmt.Errorf("cannot %s container %q in state %s", action, c.ID, c.Status)
 }
