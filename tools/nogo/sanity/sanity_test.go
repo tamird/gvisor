@@ -42,6 +42,7 @@ func TestFindings(t *testing.T) {
 	for _, want := range []string{
 		`fmt.Fprintf format %d has arg "hello world!" of wrong type string`,
 		"errors.As can be simplified using AsType[*os.PathError]",
+		"should be inlined",
 	} {
 		if !bytes.Contains(out, []byte(want)) {
 			t.Errorf("missing %q in stdout:\n%s", want, out)

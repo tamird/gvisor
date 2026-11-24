@@ -34,3 +34,11 @@ func oldErrorCheck(err error) string {
 	return ""
 }
 
+//go:fix inline
+func identity(s string) string {
+	return s
+}
+
+func oldCall() string {
+	return identity("value")
+}

@@ -234,7 +234,7 @@ func (s *Server) Register(obj any) {
 	// If we got a pointer, deref it to the underlying object. We need this to
 	// obtain the name of the underlying type.
 	typDeref := typ
-	if typ.Kind() == reflect.Ptr {
+	if typ.Kind() == reflect.Pointer {
 		typDeref = typ.Elem()
 	}
 
@@ -266,12 +266,12 @@ func (s *Server) Register(obj any) {
 			panic(fmt.Sprintf("method %s has wrong number of arguments.", prettyName))
 		}
 		argType := mtype.In(1)
-		if argType.Kind() != reflect.Ptr {
+		if argType.Kind() != reflect.Pointer {
 			// Need arg pointer.
 			panic(fmt.Sprintf("method %s has non-pointer first argument.", prettyName))
 		}
 		resultType := mtype.In(2)
-		if resultType.Kind() != reflect.Ptr {
+		if resultType.Kind() != reflect.Pointer {
 			// Need result pointer.
 			panic(fmt.Sprintf("method %s has non-pointer second argument.", prettyName))
 		}

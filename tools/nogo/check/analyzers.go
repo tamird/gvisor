@@ -39,6 +39,7 @@ import (
 	"golang.org/x/tools/go/analysis/passes/hostport"
 	"golang.org/x/tools/go/analysis/passes/httpresponse"
 	"golang.org/x/tools/go/analysis/passes/ifaceassert"
+	"golang.org/x/tools/go/analysis/passes/inline"
 	"golang.org/x/tools/go/analysis/passes/loopclosure"
 	"golang.org/x/tools/go/analysis/passes/lostcancel"
 	"golang.org/x/tools/go/analysis/passes/modernize"
@@ -184,6 +185,7 @@ func init() {
 	register(allAnalyzers, &plainAnalyzer{hostport.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{httpresponse.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{ifaceassert.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{inline.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{loopclosure.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{lostcancel.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{nilfunc.Analyzer})

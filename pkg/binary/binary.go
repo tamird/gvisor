@@ -107,7 +107,7 @@ func marshal(buf []byte, order binary.ByteOrder, data reflect.Value) []byte {
 func Unmarshal(buf []byte, order binary.ByteOrder, data any) {
 	value := reflect.ValueOf(data)
 	switch value.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		value = value.Elem()
 	case reflect.Slice:
 	default:
