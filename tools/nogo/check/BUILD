@@ -56,6 +56,7 @@ go_library(
         "@org_golang_x_tools//go/analysis/passes/printf:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/shadow:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/shift:go_default_library",
+        "@org_golang_x_tools//go/analysis/passes/sigchanyzer:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/stdmethods:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/stringintconv:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/structtag:go_default_library",

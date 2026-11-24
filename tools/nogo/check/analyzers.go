@@ -44,6 +44,7 @@ import (
 	"golang.org/x/tools/go/analysis/passes/printf"
 	"golang.org/x/tools/go/analysis/passes/shadow"
 	"golang.org/x/tools/go/analysis/passes/shift"
+	"golang.org/x/tools/go/analysis/passes/sigchanyzer"
 	"golang.org/x/tools/go/analysis/passes/stdmethods"
 	"golang.org/x/tools/go/analysis/passes/stringintconv"
 	"golang.org/x/tools/go/analysis/passes/structtag"
@@ -177,6 +178,7 @@ func init() {
 	register(allAnalyzers, &plainAnalyzer{nilness.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{printf.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{shift.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{sigchanyzer.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{stdmethods.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{stringintconv.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{shadow.Analyzer})
