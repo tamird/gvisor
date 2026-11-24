@@ -20,6 +20,7 @@ import (
 	"reflect"
 
 	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/appends"
 	"golang.org/x/tools/go/analysis/passes/asmdecl"
 	"golang.org/x/tools/go/analysis/passes/assign"
 	"golang.org/x/tools/go/analysis/passes/atomic"
@@ -147,6 +148,7 @@ func register(analyzerSet map[*analysis.Analyzer]analyzer, a analyzer) {
 
 func init() {
 	// Standard & internal analyzers.
+	register(allAnalyzers, &plainAnalyzer{appends.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{asmdecl.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{assign.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{atomic.Analyzer})

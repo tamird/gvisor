@@ -32,6 +32,7 @@ go_library(
         "@co_honnef_go_tools//stylecheck:go_default_library",
         "@co_honnef_go_tools//unused:go_default_library",
         "@org_golang_x_tools//go/analysis:go_default_library",
+        "@org_golang_x_tools//go/analysis/passes/appends:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/asmdecl:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/assign:go_default_library",
         "@org_golang_x_tools//go/analysis/passes/atomic:go_default_library",
