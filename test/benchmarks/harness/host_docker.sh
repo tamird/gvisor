@@ -1,0 +1,105 @@
+#!/bin/bash
+# Copyright 2026 The gVisor Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Installs an opaque release in the existing Docker daemon for one caller.
+# Requires exclusive ownership of the host daemon for the entire invocation.
+# With no caller, checks the native and installed runtimes using Alpine.
+set -euo pipefail
+runfiles="${TEST_SRCDIR:-${RUNFILES_DIR:-$0.runfiles}}/${TEST_WORKSPACE:-_main}"
+config=/etc/docker/daemon.json
+image=gvisor.dev/images/benchmarks/alpine:latest
+sudo -n true
+docker info >/dev/null
+initial_containers=$(docker ps -aq)
+test -z "$initial_containers" # Require an otherwise unused daemon.
+initial_runtimes=$(docker info --format '{{json .Runtimes}}')
+docker_root=$(docker info --format '{{.DockerRootDir}}')
+work=$(mktemp -d "${TEST_TMPDIR:-${TMPDIR:-/tmp}}/benchmark-runtime.XXXXXX")
+runtime=benchmark-$(basename "$work")
+container=$runtime-check
+config_existed=false
+image_existed=false
+configured=false
+loaded=false
+if test -f "$config"; then sudo cp -a "$config" "$work/daemon.before"; config_existed=true; fi
+if docker image inspect "$image" >/dev/null 2>&1; then image_existed=true; fi
+cleanup() {
+  ret=$?
+  trap - EXIT
+  if docker container inspect "$container" >/dev/null 2>&1; then docker rm -f "$container" >/dev/null || ret=1; fi
+  if $configured; then
+    # Reload retains runtime entries when the runtimes key is omitted.
+    sudo python3 - "$work/daemon.before" "$config" <<'PY' || ret=1
+import json, pathlib, sys
+old = pathlib.Path(sys.argv[1])
+config = json.loads(old.read_text()) if old.exists() else {}
+config.setdefault("runtimes", {})
+pathlib.Path(sys.argv[2]).write_text(json.dumps(config))
+PY
+    sudo systemctl reload docker || ret=1
+    for i in {1..10}; do
+      test "$(docker info --format '{{json .Runtimes}}')" = "$initial_runtimes" && break
+      sleep 1
+    done
+    if $config_existed; then sudo cp -a "$work/daemon.before" "$config" || ret=1; else sudo rm -f "$config" || ret=1; fi
+  fi
+  test "$(docker info --format '{{json .Runtimes}}')" = "$initial_runtimes" || ret=1
+  test "$(docker ps -aq)" = "$initial_containers" || ret=1
+  sudo python3 - "$docker_root/runtimes" "$runtime" <<'PY' || ret=1
+import pathlib, sys
+for path in pathlib.Path(sys.argv[1]).glob(sys.argv[2] + ".*"):
+    path.unlink()
+PY
+  if $loaded && ! $image_existed; then docker image rm "$image" >/dev/null || ret=1; fi
+  sudo rm -rf -- "$work" || ret=1
+  echo "HOST_DOCKER_CLEANUP_EXIT=$ret"
+  exit "$ret"
+}
+trap cleanup EXIT
+"$runfiles/images/benchmark_alpine_load.exe"
+loaded=true
+docker image inspect "$image" --format 'HOST_DOCKER_IMAGE {{.Id}} {{.Architecture}}'
+# Preserve the complete producer-owned layout, including every sidecar.
+cp -aL "$runfiles/release/." "$work/"
+chmod -R a+rx "$work"
+python3 - "$work" <<'PY'
+import hashlib, pathlib, sys
+root = pathlib.Path(sys.argv[1])
+for path in sorted(root.rglob("*")):
+    if path.is_file() and path.name != "daemon.before":
+        print("HOST_DOCKER_RELEASE", path.relative_to(root), hashlib.sha256(path.read_bytes()).hexdigest())
+PY
+"$work/runsc" --version
+configured=true
+sudo "$work/runsc" install --config_file="$config" --runtime="$runtime" -- --platform=systrap
+sudo systemctl reload docker
+for i in {1..10}; do
+  actual=$(docker info --format "{{with index .Runtimes \"$runtime\"}}{{.Path}}{{end}}")
+  test "$actual" = "$work/runsc" && break
+  sleep 1
+done
+test "$actual" = "$work/runsc"
+export RUNTIME="$runtime"
+if test "$#" -eq 0; then
+  for selected in runc "$runtime"; do
+    docker create --name "$container" --runtime="$selected" --network=none "$image" true >/dev/null
+    test "$(docker inspect "$container" --format '{{.HostConfig.Runtime}}')" = "$selected"
+    timeout 90s docker start -a "$container"
+    docker rm "$container" >/dev/null
+    echo "HOST_DOCKER_RUNTIME_PASS=$selected"
+  done
+else
+  "$@" --config_path="$config"
+fi
