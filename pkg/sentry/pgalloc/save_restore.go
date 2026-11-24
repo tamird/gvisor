@@ -1194,9 +1194,7 @@ func (f *MemoryFile) LoadFrom(ctx context.Context, r io.Reader, opts *LoadOpts) 
 			chunk.mapping = m
 			m += chunkSize
 		}
-		madviseWG.Add(1)
-		go func() {
-			defer madviseWG.Done()
+		madviseWG.Go(func() {
 			for i := range chunks {
 				chunk := &chunks[i]
 				f.madviseChunkMapping(chunk.mapping, chunkSize, chunk.huge)
@@ -1206,7 +1204,7 @@ func (f *MemoryFile) LoadFrom(ctx context.Context, r io.Reader, opts *LoadOpts) 
 				default:
 				}
 			}
-		}()
+		})
 	}
 	defer madviseWG.Wait()
 

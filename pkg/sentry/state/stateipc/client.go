@@ -169,11 +169,9 @@ func (c *AsyncFileClient) open(path string, mode int) (*asyncReadWriter, error) 
 		rw.closeWithoutEndpoint()
 		return nil, fmt.Errorf("failed to initialize client flipcall endpoint: %w", err)
 	}
-	rw.connectorWG.Add(1)
-	go func() {
-		defer rw.connectorWG.Done()
+	rw.connectorWG.Go(func() {
 		rw.ensureConnected()
-	}()
+	})
 	c.files[rw] = struct{}{}
 	c.IncRef()
 	return rw, nil

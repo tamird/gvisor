@@ -133,9 +133,7 @@ func (c *Client) StartChannels() error {
 	// proceed parallelly.
 	var channelsWg sync.WaitGroup
 	for range maxChans {
-		channelsWg.Add(1)
-		go func() {
-			defer channelsWg.Done()
+		channelsWg.Go(func() {
 			ch, err := c.createChannel()
 			if err != nil {
 				if err == unix.ENOMEM {
@@ -149,7 +147,7 @@ func (c *Client) StartChannels() error {
 			c.channels = append(c.channels, ch)
 			c.availableChannels = append(c.availableChannels, ch)
 			c.channelsMu.Unlock()
-		}()
+		})
 	}
 	channelsWg.Wait()
 

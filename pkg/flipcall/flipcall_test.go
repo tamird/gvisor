@@ -67,9 +67,7 @@ func testSendRecv(t *testing.T, c *testConnection) {
 	// flipcall endpoints is visible to the Go race detector.
 	state := 0
 	var serverRun sync.WaitGroup
-	serverRun.Add(1)
-	go func() {
-		defer serverRun.Done()
+	serverRun.Go(func() {
 		t.Logf("server Endpoint waiting for packet 1")
 		if _, err := c.serverEP.RecvFirst(); err != nil {
 			t.Errorf("server Endpoint.RecvFirst() failed: %v", err)
@@ -89,7 +87,7 @@ func testSendRecv(t *testing.T, c *testConnection) {
 			t.Errorf("shared state counter: got %d, wanted 4", state)
 		}
 		t.Logf("server Endpoint got packet 3")
-	}()
+	})
 	defer func() {
 		// Ensure that the server goroutine is cleaned up before
 		// c.serverEP.Destroy(), even if the test fails.
@@ -152,13 +150,11 @@ func TestShutdownBeforeConnectRemote(t *testing.T) {
 
 func testShutdownDuringConnect(t *testing.T, c *testConnection, remoteShutdown bool) {
 	var clientRun sync.WaitGroup
-	clientRun.Add(1)
-	go func() {
-		defer clientRun.Done()
+	clientRun.Go(func() {
 		if err := c.clientEP.Connect(); err == nil {
 			t.Errorf("client Endpoint.Connect() succeeded unexpectedly")
 		}
-	}()
+	})
 	time.Sleep(time.Second) // to allow c.clientEP.Connect() to block
 	if remoteShutdown {
 		c.serverEP.Shutdown()
@@ -205,13 +201,11 @@ func TestShutdownBeforeRecvFirstRemote(t *testing.T) {
 
 func testShutdownDuringRecvFirstBeforeConnect(t *testing.T, c *testConnection, remoteShutdown bool) {
 	var serverRun sync.WaitGroup
-	serverRun.Add(1)
-	go func() {
-		defer serverRun.Done()
+	serverRun.Go(func() {
 		if _, err := c.serverEP.RecvFirst(); err == nil {
 			t.Errorf("server Endpoint.RecvFirst() succeeded unexpectedly")
 		}
-	}()
+	})
 	time.Sleep(time.Second) // to allow c.serverEP.RecvFirst() to block
 	if remoteShutdown {
 		c.clientEP.Shutdown()
@@ -235,13 +229,11 @@ func TestShutdownDuringRecvFirstBeforeConnectRemote(t *testing.T) {
 
 func testShutdownDuringRecvFirstAfterConnect(t *testing.T, c *testConnection, remoteShutdown bool) {
 	var serverRun sync.WaitGroup
-	serverRun.Add(1)
-	go func() {
-		defer serverRun.Done()
+	serverRun.Go(func() {
 		if _, err := c.serverEP.RecvFirst(); err == nil {
 			t.Errorf("server Endpoint.RecvFirst() succeeded unexpectedly")
 		}
-	}()
+	})
 	defer func() {
 		// Ensure that the server goroutine is cleaned up before
 		// c.serverEP.Destroy(), even if the test fails.
@@ -273,9 +265,7 @@ func TestShutdownDuringRecvFirstAfterConnectRemote(t *testing.T) {
 
 func testShutdownDuringClientSendRecv(t *testing.T, c *testConnection, remoteShutdown bool) {
 	var serverRun sync.WaitGroup
-	serverRun.Add(1)
-	go func() {
-		defer serverRun.Done()
+	serverRun.Go(func() {
 		if _, err := c.serverEP.RecvFirst(); err != nil {
 			t.Errorf("server Endpoint.RecvFirst() failed: %v", err)
 		}
@@ -285,7 +275,7 @@ func testShutdownDuringClientSendRecv(t *testing.T, c *testConnection, remoteShu
 		} else {
 			c.clientEP.Shutdown()
 		}
-	}()
+	})
 	defer func() {
 		// Ensure that the server goroutine is cleaned up before
 		// c.serverEP.Destroy(), even if the test fails.
@@ -314,9 +304,7 @@ func TestShutdownDuringClientSendRecvRemote(t *testing.T) {
 
 func testShutdownDuringServerSendRecv(t *testing.T, c *testConnection, remoteShutdown bool) {
 	var serverRun sync.WaitGroup
-	serverRun.Add(1)
-	go func() {
-		defer serverRun.Done()
+	serverRun.Go(func() {
 		if _, err := c.serverEP.RecvFirst(); err != nil {
 			t.Errorf("server Endpoint.RecvFirst() failed: %v", err)
 			return
@@ -324,7 +312,7 @@ func testShutdownDuringServerSendRecv(t *testing.T, c *testConnection, remoteShu
 		if _, err := c.serverEP.SendRecv(0); err == nil {
 			t.Errorf("server Endpoint.SendRecv() succeeded unexpectedly")
 		}
-	}()
+	})
 	defer func() {
 		// Ensure that the server goroutine is cleaned up before
 		// c.serverEP.Destroy(), even if the test fails.
@@ -360,9 +348,7 @@ func TestShutdownDuringServerSendRecvRemote(t *testing.T) {
 
 func benchmarkSendRecv(b *testing.B, c *testConnection) {
 	var serverRun sync.WaitGroup
-	serverRun.Add(1)
-	go func() {
-		defer serverRun.Done()
+	serverRun.Go(func() {
 		if b.N == 0 {
 			return
 		}
@@ -379,7 +365,7 @@ func benchmarkSendRecv(b *testing.B, c *testConnection) {
 		if err := c.serverEP.SendLast(0); err != nil {
 			b.Errorf("server Endpoint.SendLast() failed: %v", err)
 		}
-	}()
+	})
 	defer func() {
 		c.serverEP.Shutdown()
 		serverRun.Wait()

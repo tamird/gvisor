@@ -169,9 +169,7 @@ func TestHostSocketConnect(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		conn, err := l.Accept()
 		if err != nil {
 			t.Errorf("accept error: %v", err)
@@ -191,7 +189,7 @@ func TestHostSocketConnect(t *testing.T) {
 		if want := "Hello"; string(buf[:]) != want {
 			t.Errorf("expected %s, got %v", want, string(buf[:]))
 		}
-	}()
+	})
 
 	opts := dockerutil.RunOpts{
 		Image:   "basic/integrationtest",

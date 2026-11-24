@@ -155,9 +155,7 @@ func TestStress(t *testing.T) {
 		numMsgPerGoroutine := 5000
 		var clientWg sync.WaitGroup
 		for range concurrency {
-			clientWg.Add(1)
-			go func() {
-				defer clientWg.Done()
+			clientWg.Go(func() {
 
 				for range numMsgPerGoroutine {
 					// Create a massive random message.
@@ -173,7 +171,7 @@ func TestStress(t *testing.T) {
 						t.Errorf("response should be the same as request: request = %+v, response = %+v", req, resp)
 					}
 				}
-			}()
+			})
 		}
 
 		clientWg.Wait()
@@ -466,13 +464,11 @@ func TestUnlinkCloseRace(t *testing.T) {
 		dirFDID := inodes[0].ControlFD
 
 		var unlinkWg sync.WaitGroup
-		unlinkWg.Add(1)
-		go func() {
-			defer unlinkWg.Done()
+		unlinkWg.Go(func() {
 			if err := rootFD.UnlinkAt(ctx, "dir", unix.AT_REMOVEDIR); err != nil {
 				t.Errorf("UnlinkAt(\"dir\") failed: %v", err)
 			}
-		}()
+		})
 
 		<-unlinkEntered
 		c.CloseFD(ctx, dirFDID, true /* flush */)

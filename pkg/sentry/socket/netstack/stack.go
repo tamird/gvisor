@@ -128,11 +128,9 @@ func (s *Stack) sendRouteEvent(ctx context.Context, rt tcpip.Route, added bool, 
 func (s *Stack) Destroy() {
 	if s.Stack != nil {
 		s.Stack.Close()
-		refs.CleanupSync.Add(1)
-		go func() {
+		refs.CleanupSync.Go(func() {
 			s.Stack.Wait()
-			refs.CleanupSync.Done()
-		}()
+		})
 	}
 }
 

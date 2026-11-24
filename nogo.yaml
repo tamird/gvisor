@@ -143,6 +143,11 @@ analyzers:
       exclude:
         # The NBSP fixture verifies that malformed whitespace does not grant nosplit.
         - '^bazel-out/[^/]+/bin/tools/checkescape/test1/nosplit\.go:'
+  waitgroupgo:
+    internal:
+      exclude:
+        # The pinned compiler keeps an escaping callback plus WaitGroup.Go's wrapper.
+        - '^pkg/sentry/kernel/aio\.go:29:2$'
   slicesbackward:
     internal:
       exclude:

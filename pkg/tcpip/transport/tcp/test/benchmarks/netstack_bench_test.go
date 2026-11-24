@@ -109,9 +109,7 @@ func (ch pumpNotifier) WriteNotify() {
 // Drain until empty, then sleep. Per-packet release deadlines or a fixed-size
 // drain change ACK burst timing and can mask the premature-PTO problem.
 func (n *topology) startPump(from, to *channel.Endpoint, batch time.Duration) {
-	n.pumps.Add(1)
-	go func() {
-		defer n.pumps.Done()
+	n.pumps.Go(func() {
 		notify := make(pumpNotifier, 1)
 		h := from.AddNotify(notify)
 		defer from.RemoveNotify(h)
@@ -142,7 +140,7 @@ func (n *topology) startPump(from, to *channel.Endpoint, batch time.Duration) {
 				}
 			}
 		}
-	}()
+	})
 }
 
 func (n *topology) close() {

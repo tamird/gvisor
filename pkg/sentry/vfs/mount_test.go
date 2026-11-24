@@ -387,9 +387,7 @@ func BenchmarkMountTableParallelLookup(b *testing.B) {
 				var end sync.WaitGroup
 				for g := 0; g < numG; g++ {
 					ready.Add(1)
-					end.Add(1)
-					go func() {
-						defer end.Done()
+					end.Go(func() {
 						ready.Done()
 						<-begin
 						for i := 0; i < b.N; i++ {
@@ -408,7 +406,7 @@ func BenchmarkMountTableParallelLookup(b *testing.B) {
 								return
 							}
 						}
-					}()
+					})
 				}
 
 				ready.Wait()
@@ -444,9 +442,7 @@ func BenchmarkMountMapParallelLookup(b *testing.B) {
 				var end sync.WaitGroup
 				for g := 0; g < numG; g++ {
 					ready.Add(1)
-					end.Add(1)
-					go func() {
-						defer end.Done()
+					end.Go(func() {
 						ready.Done()
 						<-begin
 						for i := 0; i < b.N; i++ {
@@ -467,7 +463,7 @@ func BenchmarkMountMapParallelLookup(b *testing.B) {
 								return
 							}
 						}
-					}()
+					})
 				}
 
 				ready.Wait()
@@ -502,9 +498,7 @@ func BenchmarkMountSyncMapParallelLookup(b *testing.B) {
 				var end sync.WaitGroup
 				for g := 0; g < numG; g++ {
 					ready.Add(1)
-					end.Add(1)
-					go func() {
-						defer end.Done()
+					end.Go(func() {
 						ready.Done()
 						<-begin
 						for i := 0; i < b.N; i++ {
@@ -524,7 +518,7 @@ func BenchmarkMountSyncMapParallelLookup(b *testing.B) {
 								return
 							}
 						}
-					}()
+					})
 				}
 
 				ready.Wait()

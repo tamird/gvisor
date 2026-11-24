@@ -192,9 +192,7 @@ func (ep *endpoint) Attach(networkDispatcher stack.NetworkDispatcher) {
 		// Link endpoints are not savable. When transportation endpoints are
 		// saved, they stop sending outgoing packets and all incoming packets
 		// are rejected.
-		ep.wg.Add(1)
-		go func() { // S/R-SAFE: See above.
-			defer ep.wg.Done()
+		ep.wg.Go(func() { // S/R-SAFE: See above.
 			for {
 				cont, err := ep.dispatch()
 				if err != nil || !cont {
@@ -204,7 +202,7 @@ func (ep *endpoint) Attach(networkDispatcher stack.NetworkDispatcher) {
 					return
 				}
 			}
-		}()
+		})
 	}
 }
 

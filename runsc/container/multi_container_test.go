@@ -2214,20 +2214,16 @@ func TestMultiContainerDestroyStarting(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error loading container: %v", err)
 		}
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			// Ignore failures, start can fail if destroy runs first.
 			_ = startCont.Start(conf)
-		}()
+		})
 
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if err := cont.Destroy(); err != nil {
 				t.Errorf("deleting non-started container failed: %v", err)
 			}
-		}()
+		})
 	}
 	wg.Wait()
 }

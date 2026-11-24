@@ -318,39 +318,29 @@ func (d *Debug) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcomm
 		traceErr error
 	)
 	if blockFile != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			blockErr = c.Sandbox.BlockProfile(blockFile, d.duration)
-		}()
+		})
 	}
 	if cpuFile != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			cpuErr = c.Sandbox.CPUProfile(cpuFile, d.duration)
-		}()
+		})
 	}
 	if heapFile != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			heapErr = c.Sandbox.HeapProfile(heapFile, d.delay)
-		}()
+		})
 	}
 	if mutexFile != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			mutexErr = c.Sandbox.MutexProfile(mutexFile, d.duration)
-		}()
+		})
 	}
 	if traceFile != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			traceErr = c.Sandbox.Trace(traceFile, d.duration)
-		}()
+		})
 	}
 
 	// Before sleeping, allow us to catch signals and try to exit

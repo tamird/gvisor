@@ -81,11 +81,9 @@ func New(lower stack.LinkWriter, n int, queueLen int) stack.QueueingDiscipline {
 		qd.lower = lower
 		qd.queue.Init(queueLen)
 
-		d.wg.Add(1)
-		go func() {
-			defer d.wg.Done()
+		d.wg.Go(func() {
 			qd.dispatchLoop()
-		}()
+		})
 	}
 	return d
 }

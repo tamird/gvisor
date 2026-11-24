@@ -119,13 +119,11 @@ func TestRecvFDThenShutdown(t *testing.T) {
 	defer recvEP.Destroy()
 
 	var receiverWG sync.WaitGroup
-	receiverWG.Add(1)
-	go func() {
-		defer receiverWG.Done()
+	receiverWG.Go(func() {
 		if _, err := recvEP.RecvFD(); err == nil {
 			t.Error("RecvFD succeeded unexpectedly")
 		}
-	}()
+	})
 	defer receiverWG.Wait()
 	time.Sleep(time.Second) // to ensure recvEP.RecvFD() has blocked
 	recvEP.Shutdown()

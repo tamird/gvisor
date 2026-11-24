@@ -231,11 +231,9 @@ func NewFileServer(ctx context.Context, opts *FileServerOptions) (*FileServer, e
 		cancel:                  cancel,
 	}
 	if s.allowCheckpointWrites || s.allowFSCheckpointWrites {
-		s.background.Add(1)
-		go func() {
-			defer s.background.Done()
+		s.background.Go(func() {
 			s.getParallelCompositeUploadEnabled()
-		}()
+		})
 	}
 	return s, nil
 }

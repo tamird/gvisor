@@ -185,11 +185,9 @@ func TestRun(t *testing.T) {
 	// block forever.
 	var resultChanErr error
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
+	wg.Go(func() {
 		resultChanErr = <-l.ctrl.manager.startResultChan
-		wg.Done()
-	}()
+	})
 
 	// Run the container.
 	if err := l.Run(); err != nil {

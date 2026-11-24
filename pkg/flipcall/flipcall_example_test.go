@@ -50,9 +50,7 @@ func Example() {
 	defer serverEP.Destroy()
 
 	var serverRun sync.WaitGroup
-	serverRun.Add(1)
-	go func() {
-		defer serverRun.Done()
+	serverRun.Go(func() {
 		i := 0
 		var buf bytes.Buffer
 		// wait for first request
@@ -76,7 +74,7 @@ func Example() {
 			}
 			i++
 		}
-	}()
+	})
 	defer func() {
 		serverEP.Shutdown()
 		serverRun.Wait()

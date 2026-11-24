@@ -92,11 +92,9 @@ func (s *Server) Stop(timeout time.Duration) {
 // requests. StartServing does not block; to wait for the control server to
 // exit, call Wait.
 func (s *Server) StartServing() {
-	s.wg.Add(1)
-	go func() { // S/R-SAFE: does not impact state directly.
+	s.wg.Go(func() { // S/R-SAFE: does not impact state directly.
 		s.serve()
-		s.wg.Done()
-	}()
+	})
 }
 
 // serve is the body of the main service goroutine. It handles incoming control

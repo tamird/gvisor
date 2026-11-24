@@ -149,9 +149,7 @@ func TestConcurrentHeterogeneous(t *testing.T) {
 			vals[i] = val
 			addKeyValuePair(key, val)
 		}
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			r := rand.New(rand.NewSource(rand.Int63()))
 			var stored *testValue
 			for ctx.Err() == nil {
@@ -185,7 +183,7 @@ func TestConcurrentHeterogeneous(t *testing.T) {
 					}
 				}
 			}
-		}()
+		})
 	}
 
 	// These goroutines share a small set of keys.
@@ -214,9 +212,7 @@ func TestConcurrentHeterogeneous(t *testing.T) {
 		return vals[r.Intn(len(vals))]
 	}
 	for range 3 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			r := rand.New(rand.NewSource(rand.Int63()))
 			for ctx.Err() == nil {
 				keyIndex := r.Intn(len(sharedKeys))
@@ -244,13 +240,11 @@ func TestConcurrentHeterogeneous(t *testing.T) {
 					}
 				}
 			}
-		}()
+		})
 	}
 
 	// This goroutine repeatedly searches for unused keys.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		r := rand.New(rand.NewSource(rand.Int63()))
 		for ctx.Err() == nil {
 			key := -1 - r.Int63()
@@ -258,13 +252,11 @@ func TestConcurrentHeterogeneous(t *testing.T) {
 				t.Errorf("Load(%d): got %p, wanted nil", key, got)
 			}
 		}
-	}()
+	})
 
 	// This goroutine repeatedly calls RangeRepeatable() and checks that each
 	// key corresponds to an expected value.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		abort := false
 		for !abort && ctx.Err() == nil {
 			apm.RangeRepeatable(func(key int64, val *testValue) bool {
@@ -282,7 +274,7 @@ func TestConcurrentHeterogeneous(t *testing.T) {
 				return true
 			})
 		}
-	}()
+	})
 
 	// Finally, the main goroutine spins for the length of the test calling
 	// Range() and checking that each key that it observes is unique and
@@ -578,9 +570,7 @@ func benchmarkConcurrent(b *testing.B, mapCtor func() benchmarkableMap, opts ben
 	n := (b.N + opts.loadsPerMutationPair + 1) / (opts.loadsPerMutationPair + 2)
 	for i, procs := 0, runtime.GOMAXPROCS(0); i < procs; i++ {
 		workerID := i
-		workers.Add(1)
-		go func() {
-			defer workers.Done()
+		workers.Go(func() {
 			started.Wait()
 			for i := range n {
 				var key int64
@@ -595,7 +585,7 @@ func benchmarkConcurrent(b *testing.B, mapCtor func() benchmarkableMap, opts ben
 				}
 				m.Delete(key)
 			}
-		}()
+		})
 	}
 
 	b.ResetTimer()

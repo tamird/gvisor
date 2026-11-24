@@ -238,7 +238,8 @@ func init() {
 			"slicescontains",
 			"mapsloop",
 			"atomictypes",
-			"unsafefuncs":
+			"unsafefuncs",
+			"waitgroupgo":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}

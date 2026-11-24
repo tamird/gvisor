@@ -5930,9 +5930,7 @@ func TestTimeWaitAssassination(t *testing.T) {
 			var wg sync.WaitGroup
 			defer wg.Wait()
 
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				// The new endpoint will take over the binding.
 				c.Create(-1)
 				timeout := time.After(5 * time.Second)
@@ -5953,15 +5951,13 @@ func TestTimeWaitAssassination(t *testing.T) {
 						break connect
 					}
 				}
-			}()
+			})
 
 			// If the new endpoint does not properly transition to connecting before
 			// taking over the port reservation, sending acks will cause the processor
 			// to panic 1-5% of the time.
 			for range 5 {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
+				wg.Go(func() {
 					c.SendPacket(nil, &context.Headers{
 						SrcPort: context.TestPort,
 						DstPort: port,
@@ -5969,7 +5965,7 @@ func TestTimeWaitAssassination(t *testing.T) {
 						SeqNum:  seq,
 						AckNum:  ack,
 					})
-				}()
+				})
 			}
 		}(uint16(port))
 	}
@@ -9405,9 +9401,7 @@ func TestResetDuringClose(t *testing.T) {
 	// below is processed by the worker first.
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		c.SendPacket(nil, &context.Headers{
 			SrcPort: context.TestPort,
 			DstPort: c.Port,
@@ -9416,13 +9410,11 @@ func TestResetDuringClose(t *testing.T) {
 			RcvWnd:  30000,
 			Flags:   header.TCPFlagRst,
 		})
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		c.EP.Close()
-	}()
+	})
 
 	wg.Wait()
 }
