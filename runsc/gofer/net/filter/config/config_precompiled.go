@@ -65,7 +65,6 @@ func precompiledPrograms(parallelism int) ([]precompiledseccomp.Program, error) 
 	var errGroup errgroup.Group
 	errGroup.SetLimit(parallelism)
 	for i, opt := range opts {
-		i, opt := i, opt
 		errGroup.Go(func() error {
 			var varNames []string
 			for varName := range opt.Vars() {

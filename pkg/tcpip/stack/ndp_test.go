@@ -4636,7 +4636,6 @@ func TestAutoGenAddrWithEUI64IIDNoDADRetries(t *testing.T) {
 	}
 
 	for _, addrType := range addrTypes {
-		addrType := addrType
 
 		t.Run(addrType.name, func(t *testing.T) {
 			const autoGenAddrCount = 2

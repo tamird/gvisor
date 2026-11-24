@@ -220,7 +220,8 @@ func init() {
 			"reflecttypefor",
 			"reflecttypeassert",
 			"testingcontext",
-			"omitzero":
+			"omitzero",
+			"forvar":
 			register(allAnalyzers, &plainAnalyzer{a})
 		}
 	}
