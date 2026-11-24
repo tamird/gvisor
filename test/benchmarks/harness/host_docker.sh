@@ -76,11 +76,13 @@ fi
 initial_runtimes=$(docker info --format '{{json .Runtimes}}')
 docker_root=$(docker info --format '{{.DockerRootDir}}')
 if $comparison; then
-  sudo python3 - "$initial_runtimes" "$docker_root/runtimes" <<'PY'
+  sudo python3 - "$initial_runtimes" "$docker_root/runtimes" "$config" <<'PY'
 import json, pathlib, sys
 configured = json.loads(sys.argv[1])
+config_path = pathlib.Path(sys.argv[3])
+on_disk = json.loads(config_path.read_text()).get("runtimes", {}) if config_path.exists() else {}
 for name in ("benchmark-baseline", "benchmark-candidate"):
-    if name in configured or any(pathlib.Path(sys.argv[2]).glob(name + ".*")):
+    if name in configured or name in on_disk or any(pathlib.Path(sys.argv[2]).glob(name + ".*")):
         raise SystemExit(f"Comparison runtime name is already in use: {name}")
 PY
   baseline_archive=$(repository_file startup_baseline_release baseline-release.tar.bz2)
@@ -165,6 +167,17 @@ cleanup() {
   if test "${#configured[@]}" -gt 0; then
     # Canonical uninstall leaves an explicit runtime map for daemon reload.
     for i in "${configured[@]}"; do
+      # Install can fail after writing its entry but before installing sidecars.
+      runtime_present=$(sudo python3 - "$owned_config" "${runtime_names[$i]}" <<'PY'
+import json, pathlib, sys
+path = pathlib.Path(sys.argv[1])
+print(path.exists() and sys.argv[2] in json.loads(path.read_text()).get("runtimes", {}))
+PY
+      ) || {
+        echo "HOST_DOCKER_CLEANUP_BLOCKED: cannot read owned config; preserving $work" >&2
+        exit 1
+      }
+      if test "$runtime_present" = False; then continue; fi
       if ! sudo "${release_roots[$i]}/runsc" uninstall \
           --config_file="$owned_config" --runtime="${runtime_names[$i]}"; then
         echo "HOST_DOCKER_CLEANUP_BLOCKED: uninstall failed; preserving $work" >&2
@@ -289,9 +302,9 @@ for path in sorted(root.rglob("*")):
         print(sys.argv[2], path.relative_to(root), hashlib.sha256(path.read_bytes()).hexdigest())
 PY
   "$root/runsc" --version
+  configured+=("$i")
   sudo "$root/runsc" install --experimental="$restart_experimental" \
     --config_file="$owned_config" --runtime="${runtime_names[$i]}" -- --platform=systrap
-  configured+=("$i")
 done
 if $checkpoint_mode; then
   engine=$(repository_file docker_27_5_1 dockerd)
