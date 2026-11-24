@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T09:29:22.290151+00:00",
+    "updatedAt": "2026-11-24T10:30:49.178496+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -122172,7 +122172,7 @@
       "status": "active",
       "owner": "root",
       "updatedAt": "2026-11-23T22:28:52.692599+00:00",
-      "summary": "The due native-first guard found no newer/live native generation. Sole snapshot-only fallback45364077284 completed successfully and delivered API2026-11-24T09:23:02.175557+00:00 with outreach disabled. No new substantive tracked feedback, source heads, CI, conflicts, issue or incoming-review events appeared. Native cadence irregularity has no established provider cause or demonstrated configuration defect.",
+      "summary": "The due native-first guard found no qualifying newer/live native delivery. Sole snapshot-only fallback45374435406 succeeded with outreach disabled and delivered API 2026-11-24T10:27:48.596693+00:00. No substantive tracked source, feedback, CI, conflict, issue or incoming-review change appeared. Native scheduling irregularity remains unexplained; no configuration defect is established.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122415,7 +122415,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground/active-goal supervision owns next native-first guard10:23:02 UTC and deadline10:53:02. Reuse fresh/live native delivery before one fallback; retain60/90-minute policy and2-hour UI threshold without reset or a competing monitor.",
+      "nextStep": "Root foreground/active-goal supervision owns the next native-first guard at 11:27:48 UTC and recovery deadline 11:57:48. Reuse a fresh/live native generation before at most one fallback. Preserve the 60/90-minute policy, two-hour UI threshold and existing one-reset boundary; no competing monitor.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122543,12 +122543,13 @@
           "https://docs.github.com/en/actions/how-tos/troubleshoot-workflows#scheduled-workflow-stopped-running",
           "https://github.com/tamird/gvisor/actions/runs/45277681053",
           "https://github.com/tamird/gvisor/actions/runs/45287620194",
-          "https://github.com/tamird/gvisor/actions/runs/45296589443"
+          "https://github.com/tamird/gvisor/actions/runs/45296589443",
+          "https://github.com/tamird/gvisor/actions/runs/45374435406"
         ],
-        "observedAt": "2026-11-24T09:27:44.575696+00:00",
-        "disposition": "The due native-first guard found no newer/live native generation. Sole snapshot-only fallback45364077284 completed successfully and delivered API2026-11-24T09:23:02.175557+00:00 with outreach disabled. No new substantive tracked feedback, source heads, CI, conflicts, issue or incoming-review events appeared. Native cadence irregularity has no established provider cause or demonstrated configuration defect.",
-        "nextAction": "Root foreground/active-goal supervision owns next native-first guard10:23:02 UTC and deadline10:53:02. Reuse fresh/live native delivery before one fallback; retain60/90-minute policy and2-hour UI threshold without reset or a competing monitor.",
-        "recheckCondition": "Fresh/live native delivery, an actual new event or the next due guard.",
+        "observedAt": "2026-11-24T10:30:00.469945+00:00",
+        "disposition": "The due native-first guard found no qualifying newer/live native delivery. Sole snapshot-only fallback45374435406 succeeded with outreach disabled and delivered API 2026-11-24T10:27:48.596693+00:00. No substantive tracked source, feedback, CI, conflict, issue or incoming-review change appeared. Native scheduling irregularity remains unexplained; no configuration defect is established.",
+        "nextAction": "Root foreground/active-goal supervision owns the next native-first guard at 11:27:48 UTC and recovery deadline 11:57:48. Reuse a fresh/live native generation before at most one fallback. Preserve the 60/90-minute policy, two-hour UI threshold and existing one-reset boundary; no competing monitor.",
+        "recheckCondition": "Actual fresh/live native delivery, substantive external event or the next due guard.",
         "owner": "root"
       }
     },
@@ -132076,7 +132077,7 @@
       "owner": "benchmark_measurement_review / root",
       "updatedAt": "2026-11-24T07:01:47.154032+00:00",
       "group": "analysis",
-      "summary": "Audit code remains a3f52992 (tree 8b006d3f), with the complete nine-product CI891 release qualified under --nostamp. The maintained StartupEmpty1x run45360808343 executed freshly LOCAL with cleanup0, exact release digests and no compilation. Helper81161356063486b7f19246b53c7f28f10303be18 is accepted by root and final general review: four paths,153 additions/1 deletion; only two header comments differ from qualified guard812. Injected reload failure preserved the needed runtime binary, backup and live Docker entry; authoritative recovery and owned-resource cleanup passed. Source checks passed. Preservation defects are resolved, with reused lifecycle/config-permission proof scoped to its source. Wrong-configuration run45359319539 is not qualified product evidence.",
+      "summary": "Audit a3f52992 remains the reviewed one-commit preview, tree 8b006d3f. Its nine CI891 release products are qualified under --nostamp. All seven maintained startup/checkpoint/restore leaves passed N1 with no failures or skips on CI f82f, using accepted native helper47a8 and the same nine product digests without compilation. Official Docker27.5.1 used the existing service, containerd2.4 and storage; cleanup restored the complete original Docker28 service/configuration and resource state. Native47 does not default to Docker27: selection remains a published Bazel product plus a transient prefix. Original Docker28 restore failures and the first host-restoration failure retain their evidence limits. Independently, default graph Save and Load (20000 objects, seed1, all options true) each passed N1 on a fresh remote TestRunner; the two raw rows and BEP establish execution, not per-benchmark XML cases. Broad performance is still unqualified.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132448,7 +132449,7 @@
           ]
         }
       ],
-      "nextStep": "The existing owner is admitting all seven maintained startup/checkpoint/restore leaves for 1x functionality. Its Docker/checkpoint preflight45365290839 runs before category builds or source extension, with next check at09:30. Broad-workload/common-harness and same-source A/A-first performance remain outstanding; no timing, sample expansion or measurement approval is inferred. Preserve #17884, runtime/hardware and --nostamp/raw-default limits. Approved image deliveries retain their existing transport blocker, not a renewed human-approval wait.",
+      "nextStep": "benchmark_measurement_review has frozen helper promotion713b110fd4 (CI1b241aac): published-engine selection now resides in the existing shared helper/Bazel startup profile, with one cleanup path and README command, replacing the recurring 86-line invocation prefix. Focused RestoreEmpty1x45375333220, source checks45375337414 and canonical license Fetch/Verify45375341994 are running under that sole owner; qualification and final review remain pending. Do not repeat the seven-leaf functional run or authorize timing. Broad required categories, common harness and same-source A/A-first performance remain outstanding. Preserve #17884, hardware/runtime and --nostamp/raw-default limits, approved image transport blockers and the separate unanswered non-Bazel Moby rebuild exception.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132790,7 +132791,7 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T09:29:22.290151+00:00",
+        "observedAt": "2026-11-24T10:30:49.178496+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45338108931",
           "https://github.com/tamird/gvisor/actions/runs/45344645597",
@@ -132810,12 +132811,15 @@
           "https://github.com/tamird/gvisor/actions/runs/45363843271/artifacts/14905792639",
           "https://github.com/tamird/gvisor/actions/runs/45363847432/artifacts/14904794364",
           "https://github.com/tamird/gvisor/actions/runs/45362595166/artifacts/14904898784",
-          "https://github.com/tamird/gvisor/actions/runs/45365290839"
+          "https://github.com/tamird/gvisor/actions/runs/45365290839",
+          "https://github.com/tamird/gvisor/actions/runs/45372422612/artifacts/14910101961",
+          "https://github.com/tamird/gvisor/actions/runs/45372901011/artifacts/14909442658",
+          "https://github.com/tamird/gvisor/commit/81161356063486b7f19246b53c7f28f10303be18"
         ],
         "owner": "benchmark_measurement_review / root",
-        "disposition": "Audit code remains a3f52992 (tree 8b006d3f), with the complete nine-product CI891 release qualified under --nostamp. The maintained StartupEmpty1x run45360808343 executed freshly LOCAL with cleanup0, exact release digests and no compilation. Helper81161356063486b7f19246b53c7f28f10303be18 is accepted by root and final general review: four paths,153 additions/1 deletion; only two header comments differ from qualified guard812. Injected reload failure preserved the needed runtime binary, backup and live Docker entry; authoritative recovery and owned-resource cleanup passed. Source checks passed. Preservation defects are resolved, with reused lifecycle/config-permission proof scoped to its source. Wrong-configuration run45359319539 is not qualified product evidence.",
-        "nextAction": "The existing owner is admitting all seven maintained startup/checkpoint/restore leaves for 1x functionality. Its Docker/checkpoint preflight45365290839 runs before category builds or source extension, with next check at09:30. Broad-workload/common-harness and same-source A/A-first performance remain outstanding; no timing, sample expansion or measurement approval is inferred. Preserve #17884, runtime/hardware and --nostamp/raw-default limits. Approved image deliveries retain their existing transport blocker, not a renewed human-approval wait.",
-        "recheckCondition": "Existing owner category-admission result, actual authorized workload/harness/A/A-first readiness, prerequisite landing or scoped runtime/hardware evidence; no unchanged timing retry.",
+        "disposition": "Audit a3f52992 remains the reviewed one-commit preview, tree 8b006d3f. Its nine CI891 release products are qualified under --nostamp. All seven maintained startup/checkpoint/restore leaves passed N1 with no failures or skips on CI f82f, using accepted native helper47a8 and the same nine product digests without compilation. Official Docker27.5.1 used the existing service, containerd2.4 and storage; cleanup restored the complete original Docker28 service/configuration and resource state. Native47 does not default to Docker27: selection remains a published Bazel product plus a transient prefix. Original Docker28 restore failures and the first host-restoration failure retain their evidence limits. Independently, default graph Save and Load (20000 objects, seed1, all options true) each passed N1 on a fresh remote TestRunner; the two raw rows and BEP establish execution, not per-benchmark XML cases. Broad performance is still unqualified.",
+        "nextAction": "benchmark_measurement_review has frozen helper promotion713b110fd4 (CI1b241aac): published-engine selection now resides in the existing shared helper/Bazel startup profile, with one cleanup path and README command, replacing the recurring 86-line invocation prefix. Focused RestoreEmpty1x45375333220, source checks45375337414 and canonical license Fetch/Verify45375341994 are running under that sole owner; qualification and final review remain pending. Do not repeat the seven-leaf functional run or authorize timing. Broad required categories, common harness and same-source A/A-first performance remain outstanding. Preserve #17884, hardware/runtime and --nostamp/raw-default limits, approved image transport blockers and the separate unanswered non-Bazel Moby rebuild exception.",
+        "recheckCondition": "Existing owner returns focused restoration, source/license gates and final review for713b110fd4; actual prerequisite landing or authorized common-harness/A/A-first readiness. No duplicate watcher or unchanged functional/timing retry.",
         "sourceHead": "a3f52992b34ef2873195b97b0856f20d061d0832",
         "technicalOwner": "benchmark_measurement_review (completed source qualification)"
       },
