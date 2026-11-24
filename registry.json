@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-24T02:57:05.420540+00:00",
+    "updatedAt": "2026-11-24T03:40:18.555541+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -102619,7 +102619,7 @@
       "group": "ci-flakes",
       "status": "open",
       "updatedAt": "2026-11-21T02:33:33.655Z",
-      "summary": "New exact-head approval 6032431146 is recorded on 00c5cd11a. Provider review is REVIEW_REQUIRED and source is MERGEABLE. Current reported main remains PENDING; no main pass, import or merge is established.",
+      "summary": "Exact00c5cd11 retains Milan approval and FirstPass2587 SUCCESS. Current GitHub main55777 context is FAILURE; canonical terminal job/retry-chain cause has not yet been established, so this is not a demonstrated PTY source failure. Provider review/import requirements and previous qualification retain their scope.",
       "evidence": [
         {
           "label": "Formatter amendment",
@@ -102629,10 +102629,10 @@
       "followup": {
         "sourceHead": "00c5cd11a3952bf965588d48dd19329cb45de332",
         "owner": "root",
-        "nextAction": "Root follows actual remaining maintainer/import and source-bound main CI events through existing ownership. No duplicate review request, retry, source change, merge or all-green claim.",
+        "nextAction": "Root routes the exact main55777 result for canonical complete-chain diagnosis through existing CI ownership, then follows actual maintainer/import events. No duplicate observer, source fix, blind retry, outreach or merge is inferred from the status.",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-24T02:39:01.884940+00:00",
-        "recheckCondition": "Actual terminal main/check result, substantive review/import or changed head/base.",
+        "observedAt": "2026-11-24T03:40:18.555541+00:00",
+        "recheckCondition": "Canonical source-bound main55777 diagnosis, replacement terminal run or substantive review/import/head change.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17568",
           "https://github.com/tamird/gvisor/commit/63ff9616fe4c004db00310ea45b6e06a521f803c",
@@ -102647,9 +102647,11 @@
           "https://github.com/tamird/gvisor/commit/00c5cd11a3952bf965588d48dd19329cb45de332",
           "https://github.com/gvisor/gvisor/pull/17568#issuecomment-7055962171",
           "https://buildkite.com/gvisor/first-pass/builds/2208#01a1fbf0-b35b-40e6-8468-fcffb0ecb0b3",
-          "https://github.com/google/gvisor/pull/17568#pullrequestreview-6032431146"
+          "https://github.com/google/gvisor/pull/17568#pullrequestreview-6032431146",
+          "https://buildkite.com/gvisor/pipeline/builds/55777",
+          "https://buildkite.com/gvisor/first-pass/builds/2587"
         ],
-        "disposition": "New exact-head approval 6032431146 is recorded on 00c5cd11a. Provider review is REVIEW_REQUIRED and source is MERGEABLE. Current reported main remains PENDING; no main pass, import or merge is established.",
+        "disposition": "Exact00c5cd11 retains Milan approval and FirstPass2587 SUCCESS. Current GitHub main55777 context is FAILURE; canonical terminal job/retry-chain cause has not yet been established, so this is not a demonstrated PTY source failure. Provider review/import requirements and previous qualification retain their scope.",
         "curatedAt": "2026-11-21T02:33:33.655Z",
         "attentionDispositions": [
           {
@@ -122173,7 +122175,7 @@
       "status": "active",
       "owner": "root",
       "updatedAt": "2026-11-23T22:28:52.692599+00:00",
-      "summary": "Due native-first guard found no fresh/live native run. Sole snapshot-only fallback45312886122 succeeded and delivered API2026-11-24T02:33:40.186902+00:00 with outreach disabled. Native cadence irregularity has no established provider cause or demonstrated configuration defect.",
+      "summary": "The due native-first guard found no fresh/live native collection. Sole snapshot-only fallback45320415443 succeeded and delivered API2026-11-24T03:37:16.856401+00:00 with outreach disabled. Native delivery irregularity has no established provider cause or demonstrated source/configuration defect.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122416,7 +122418,7 @@
           ]
         }
       ],
-      "nextStep": "Root foreground/active-goal supervision owns next native-first guard03:33:40 UTC and deadline04:03:40. Reuse fresh/live native delivery before one fallback; preserve60/90-minute policy and2-hour UI threshold, without reset or extra monitor.",
+      "nextStep": "Root foreground/active-goal supervision owns next native-first guard04:37:16 UTC and deadline05:07:16. Reuse fresh/live native delivery before one fallback; retain60/90-minute policy and2-hour UI threshold with no reset, new scheduler or competing observer.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -132073,7 +132075,7 @@
       "owner": "analysis_pass_inventory / root",
       "updatedAt": "2026-11-23T22:28:52.692599+00:00",
       "group": "analysis",
-      "summary": "Unified analyzer migrations remain active beyond the earlier427-span checkpoint; no new completion count is asserted. Source d946/nested9 and declaration handoff93b5137e15 are active, with diagnostic closure unverified. Architecture Kernel split and common PageTables constraints retain their documented source-specific limits. Worker/runtime projection evidence and the three route failures remain separate from a native-source/full-corpus pass. Headerac0439 and npm9c publication questions remain unanswered.",
+      "summary": "Unified source/generator migrations remain active, with diagnostic closure unverified and no new completion count asserted. Root Gofer12 declaration changes are integrated at12fd1be7cdeb8c5eaaff0e0f565860d3862099ca; focused qualification is pending. AMD profile run45319022026 passed all3 cases with zero skips on d946. ARM corrected admission45319927699 remains profile-owner work and is not transferred from AMD. Earlier worker35d/a96 route failures, architecture constraints and full-corpus limitations remain distinct. Header/npm decisions and unrelated sensitive-feature holds persist.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132445,7 +132447,7 @@
           ]
         }
       ],
-      "nextStep": "Primary analyzer owner finishes source/generator migrations and exact validation; bounded secondary handoffs supply their existing evidence. Preserve unrelated sensitive-feature holds, source ownership and independent strict-C++/route limitations. No diagnostic-closure, final corpus-green or publication-ready claim.",
+      "nextStep": "Existing primary owner qualifies the integrated Gofer changes and continues exact source/generator closure; profile owner closes ARM admission/result. Consume their terminal evidence without mirrored jobs, invented counts or a final green/publication-ready claim.",
       "evidence": [
         {
           "label": "Ryan explains the first-pass cache policy",
@@ -132783,7 +132785,7 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-24T02:39:01.884940+00:00",
+        "observedAt": "2026-11-24T03:40:18.555541+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45274157128/artifacts/14868766183",
           "https://github.com/tamird/gvisor/actions/runs/45286918461",
@@ -132792,11 +132794,14 @@
           "https://github.com/tamird/gvisor/actions/runs/45292265635",
           "https://github.com/tamird/gvisor/actions/runs/45292268167",
           "https://github.com/tamird/gvisor/actions/runs/45292270599",
-          "https://github.com/tamird/gvisor/actions/runs/45292273315"
+          "https://github.com/tamird/gvisor/actions/runs/45292273315",
+          "https://github.com/tamird/gvisor/commit/12fd1be7cdeb8c5eaaff0e0f565860d3862099ca",
+          "https://github.com/tamird/gvisor/actions/runs/45319022026",
+          "https://github.com/tamird/gvisor/actions/runs/45319927699"
         ],
         "owner": "root",
-        "disposition": "Unified analyzer migrations remain active beyond the earlier427-span checkpoint; no new completion count is asserted. Source d946/nested9 and declaration handoff93b5137e15 are active, with diagnostic closure unverified. Architecture Kernel split and common PageTables constraints retain their documented source-specific limits. Worker/runtime projection evidence and the three route failures remain separate from a native-source/full-corpus pass. Headerac0439 and npm9c publication questions remain unanswered.",
-        "nextAction": "Primary analyzer owner finishes source/generator migrations and exact validation; bounded secondary handoffs supply their existing evidence. Preserve unrelated sensitive-feature holds, source ownership and independent strict-C++/route limitations. No diagnostic-closure, final corpus-green or publication-ready claim.",
+        "disposition": "Unified source/generator migrations remain active, with diagnostic closure unverified and no new completion count asserted. Root Gofer12 declaration changes are integrated at12fd1be7cdeb8c5eaaff0e0f565860d3862099ca; focused qualification is pending. AMD profile run45319022026 passed all3 cases with zero skips on d946. ARM corrected admission45319927699 remains profile-owner work and is not transferred from AMD. Earlier worker35d/a96 route failures, architecture constraints and full-corpus limitations remain distinct. Header/npm decisions and unrelated sensitive-feature holds persist.",
+        "nextAction": "Existing primary owner qualifies the integrated Gofer changes and continues exact source/generator closure; profile owner closes ARM admission/result. Consume their terminal evidence without mirrored jobs, invented counts or a final green/publication-ready claim.",
         "recheckCondition": "Actual analyzer validation/migration milestone, existing header-publication answer or working normal preview transport."
       },
       "contributorReview": {
