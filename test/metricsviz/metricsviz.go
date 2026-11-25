@@ -542,7 +542,7 @@ func Parse(logs string, hasPrefix bool) (*Data, error) {
 	lineHashMismatch := false
 	metricsLineFound := false
 	var gotErrs []error
-	for _, line := range strings.Split(logs, "\n") {
+	for line := range strings.SplitSeq(logs, "\n") {
 		if hasPrefix && !strings.HasPrefix(line, metric.MetricsPrefix) {
 			continue
 		}

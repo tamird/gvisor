@@ -151,7 +151,7 @@ func getRunscDriverInfo(ctx context.Context, ns *testcluster.Namespace, cluster 
 		return nil, fmt.Errorf("failed to read log on cluster %q: %v", cluster.GetName(), err)
 	}
 	versions := make(map[string]any)
-	for _, v := range strings.Split(strings.TrimSpace(buf.String()), "\n") {
+	for v := range strings.SplitSeq(strings.TrimSpace(buf.String()), "\n") {
 		versions[v] = true
 	}
 	if len(versions) == 0 {

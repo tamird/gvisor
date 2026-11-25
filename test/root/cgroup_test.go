@@ -731,7 +731,7 @@ func pidCgroupPath(pid int, controller string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	for _, line := range strings.Split(strings.TrimSpace(string(data)), "\n") {
+	for line := range strings.SplitSeq(strings.TrimSpace(string(data)), "\n") {
 		// Format: hierarchy-ID:controller-list:cgroup-path
 		fields := strings.SplitN(line, ":", 3)
 		if len(fields) == 3 && slices.Contains(strings.Split(fields[1], ","), controller) {
@@ -917,7 +917,7 @@ func checkGoferMaxProcsEnv(t *testing.T, pid int, wantProcs string) {
 		t.Fatalf("reading environ of gofer %d: %v", pid, err)
 	}
 	var gomaxprocsVals, godebugVals []string
-	for _, entry := range strings.Split(strings.TrimSuffix(string(rawEnv), "\x00"), "\x00") {
+	for entry := range strings.SplitSeq(strings.TrimSuffix(string(rawEnv), "\x00"), "\x00") {
 		if v, ok := strings.CutPrefix(entry, "GOMAXPROCS="); ok {
 			gomaxprocsVals = append(gomaxprocsVals, v)
 		}

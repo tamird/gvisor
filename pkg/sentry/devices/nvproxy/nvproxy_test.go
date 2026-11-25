@@ -300,7 +300,7 @@ func TestFilterCapabilities(t *testing.T) {
 		nvconf.SupportedDriverCaps,
 		nvconf.DefaultDriverCaps,
 	}
-	for _, capName := range strings.Split(nvconf.ValidCapabilities.String(), ",") {
+	for capName := range strings.SplitSeq(nvconf.ValidCapabilities.String(), ",") {
 		individualCap, _, err := nvconf.DriverCapsFromString(capName)
 		if err != nil {
 			t.Fatalf("nvconf.DriverCapsFromString(%q) failed: %v", capName, err)

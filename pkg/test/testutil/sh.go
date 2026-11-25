@@ -411,7 +411,7 @@ func (s *Shell) RefreshSTTY(ctx context.Context, expectPrompt string) error {
 	// For `a = b;`, `controlChar` contains `a`, and `previousToken` is used to
 	// set `controlChar` to `previousToken` when we see an "=" token.
 	var previousToken, controlChar string
-	for _, token := range strings.Fields(string(sttyOutput)) {
+	for token := range strings.FieldsSeq(string(sttyOutput)) {
 		if controlChar != "" {
 			value := strings.TrimSuffix(token, ";")
 			switch controlChar {

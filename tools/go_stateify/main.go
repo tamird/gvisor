@@ -311,7 +311,7 @@ func main() {
 			fmt.Fprintf(outputFile, "	\"%s\"\n", *statePkg)
 		}
 		if *imports != "" {
-			for _, i := range strings.Split(*imports, ",") {
+			for i := range strings.SplitSeq(*imports, ",") {
 				fmt.Fprintf(outputFile, "	\"%s\"\n", i)
 			}
 		}

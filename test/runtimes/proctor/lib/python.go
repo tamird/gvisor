@@ -118,7 +118,7 @@ func (pythonRunner) ListTests() ([]string, error) {
 		return nil, fmt.Errorf("failed to list: %v", err)
 	}
 	var res []string
-	for _, testLib := range strings.Split(string(out), "\n") {
+	for testLib := range strings.SplitSeq(string(out), "\n") {
 		if len(testLib) == 0 {
 			continue
 		}

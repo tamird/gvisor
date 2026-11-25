@@ -422,13 +422,6 @@ analyzers:
     # Controversial.
     internal:
       exclude: [".*"]
-  stringsseq:
-    internal:
-      exclude:
-        - ".*" # Temporary: migrate stringsseq.
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate stringsseq.
   newexpr:
     internal:
       exclude:

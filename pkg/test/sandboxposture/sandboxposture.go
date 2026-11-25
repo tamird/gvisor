@@ -539,7 +539,7 @@ func parseStatus(path string) (map[string]string, error) {
 		return nil, err
 	}
 	m := make(map[string]string)
-	for _, line := range strings.Split(string(b), "\n") {
+	for line := range strings.SplitSeq(string(b), "\n") {
 		k, v, ok := strings.Cut(line, ":")
 		if !ok {
 			continue
@@ -869,7 +869,7 @@ func (m mountEntry) String() string {
 
 func parseMountinfo(s string) ([]mountEntry, error) {
 	var out []mountEntry
-	for _, line := range strings.Split(s, "\n") {
+	for line := range strings.SplitSeq(s, "\n") {
 		if strings.TrimSpace(line) == "" {
 			continue
 		}
@@ -1340,7 +1340,7 @@ type idMapEntry struct {
 
 func parseIDMap(s string) ([]idMapEntry, error) {
 	var out []idMapEntry
-	for _, line := range strings.Split(s, "\n") {
+	for line := range strings.SplitSeq(s, "\n") {
 		fields := strings.Fields(line)
 		if len(fields) == 0 {
 			continue
@@ -1646,7 +1646,7 @@ func deviceCgroupOf(p *proc) (string, error) {
 	if len(mounts) == 0 {
 		mounts = defaultCgroupMounts
 	}
-	for _, line := range strings.Split(strings.TrimSpace(raw), "\n") {
+	for line := range strings.SplitSeq(strings.TrimSpace(raw), "\n") {
 		fields := strings.SplitN(line, ":", 3)
 		if len(fields) != 3 {
 			return "", fmt.Errorf("malformed cgroup line %q", line)
@@ -1694,7 +1694,7 @@ func deviceCgroupOf(p *proc) (string, error) {
 			if err != nil {
 				return "", err
 			}
-			for _, rule := range strings.Split(strings.TrimSpace(string(list)), "\n") {
+			for rule := range strings.SplitSeq(strings.TrimSpace(string(list)), "\n") {
 				if strings.HasPrefix(rule, "a ") {
 					return DeviceCgroupUnconfined, nil
 				}
@@ -1724,7 +1724,7 @@ var defaultCgroupMounts = []cgroupMount{
 // cgroupMounts lists the cgroupfs mounts in mountinfo.
 func cgroupMounts(mountinfo string) ([]cgroupMount, error) {
 	var out []cgroupMount
-	for _, line := range strings.Split(mountinfo, "\n") {
+	for line := range strings.SplitSeq(mountinfo, "\n") {
 		fields := strings.Fields(line)
 		if len(fields) == 0 {
 			continue

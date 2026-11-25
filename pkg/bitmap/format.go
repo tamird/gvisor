@@ -122,9 +122,9 @@ func ParseList(input string, bitLimit uint32) (*Bitmap, error) {
 	if len(input) == 0 {
 		return &b, nil
 	}
-	tokens := strings.Split(input, ",")
+	tokens := strings.SplitSeq(input, ",")
 
-	for _, t := range tokens {
+	for t := range tokens {
 		start, end, err := parseToken(strings.TrimSpace(t))
 		if err != nil {
 			return nil, err

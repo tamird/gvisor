@@ -560,7 +560,7 @@ func parsePlatformDevicePaths(v string) (platformDevicePaths, error) {
 		return platformDevicePaths{any: v}, nil
 	}
 	paths := platformDevicePaths{byPlatform: make(map[string]string)}
-	for _, pair := range strings.Split(v, ",") {
+	for pair := range strings.SplitSeq(v, ",") {
 		name, path, ok := strings.Cut(pair, "=")
 		if !ok || name == "" || path == "" {
 			return platformDevicePaths{}, fmt.Errorf("expected format is --platform_device_path={path} or --platform_device_path={platform}={path}[,{platform}={path}...], got %q", v)

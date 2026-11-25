@@ -63,7 +63,7 @@ func main() {
 	}
 	if *onlyTests != "" {
 		tests := make(map[string]bool)
-		for _, test := range strings.Split(*onlyTests, ",") {
+		for test := range strings.SplitSeq(*onlyTests, ",") {
 			tests[test] = true
 		}
 		filter = func(test string) bool {

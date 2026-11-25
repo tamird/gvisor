@@ -82,7 +82,7 @@ func mountMemoryEmptyDir(t *testing.T, uid, volume string, sizeLimit int) (strin
 
 // mountSizeOption returns the value of the "size=" mount option in bytes.
 func mountSizeOption(opts string) (int, error) {
-	for _, opt := range strings.Split(opts, ",") {
+	for opt := range strings.SplitSeq(opts, ",") {
 		val, ok := strings.CutPrefix(opt, "size=")
 		if !ok || val == "" {
 			continue

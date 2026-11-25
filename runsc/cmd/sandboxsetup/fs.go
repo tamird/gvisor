@@ -84,7 +84,7 @@ func resolveSymlinksImpl(root, base, rel string, followCount uint) (string, erro
 	}
 
 	rel = filepath.Clean(rel)
-	for _, name := range strings.Split(rel, string(filepath.Separator)) {
+	for name := range strings.SplitSeq(rel, string(filepath.Separator)) {
 		if name == "" {
 			continue
 		}

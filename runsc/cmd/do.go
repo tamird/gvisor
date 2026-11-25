@@ -99,7 +99,7 @@ func (is *idMapSlice) Get() any {
 
 // Set implements flag.Value.Set. Set(String()) should be idempotent.
 func (is *idMapSlice) Set(s string) error {
-	for _, idMap := range strings.Split(s, ",") {
+	for idMap := range strings.SplitSeq(s, ",") {
 		fs := strings.Fields(idMap)
 		if len(fs) != 3 {
 			return fmt.Errorf("invalid mapping: %s", idMap)

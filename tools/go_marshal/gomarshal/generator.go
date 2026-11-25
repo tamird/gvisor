@@ -232,7 +232,7 @@ func newMarshallableType(fset *token.FileSet, tagLine *ast.Comment, spec *ast.Ty
 
 	var unhandledTags []string
 
-	for _, tag := range strings.Fields(strings.TrimPrefix(tagLine.Text, "// +marshal")) {
+	for tag := range strings.FieldsSeq(strings.TrimPrefix(tagLine.Text, "// +marshal")) {
 		if strings.HasPrefix(tag, "slice:") {
 			tokens := strings.Split(tag, ":")
 			if len(tokens) < 2 || len(tokens) > 3 {

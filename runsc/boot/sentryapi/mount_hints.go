@@ -275,7 +275,7 @@ func (r *RootfsHint) setOption(key, val string) error {
 }
 
 func (r *RootfsHint) setOptions(val string) error {
-	for _, option := range strings.Split(val, ",") {
+	for option := range strings.SplitSeq(val, ",") {
 		parts := strings.SplitN(option, "=", 2)
 		if len(parts) != 2 {
 			return fmt.Errorf("rootfs options must be key=value: %s", option)

@@ -39,7 +39,7 @@ func TestNvidiaSmi(t *testing.T) {
 	cmd := "nvidia-smi"
 	out, err := c.Run(ctx, opts, cmd)
 	t.Logf("%q output:", cmd)
-	for _, line := range strings.Split(string(out), "\n") {
+	for line := range strings.SplitSeq(string(out), "\n") {
 		t.Logf("%q: %s", cmd, line)
 	}
 	if err != nil {

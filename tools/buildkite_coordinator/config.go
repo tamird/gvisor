@@ -157,7 +157,7 @@ func envOr(key, def string) string {
 // a set.
 func envSet(key string) map[string]struct{} {
 	set := make(map[string]struct{})
-	for _, v := range strings.Split(os.Getenv(key), ",") {
+	for v := range strings.SplitSeq(os.Getenv(key), ",") {
 		if v = strings.TrimSpace(v); v != "" {
 			set[v] = struct{}{}
 		}

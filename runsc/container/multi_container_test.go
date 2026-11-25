@@ -463,7 +463,7 @@ func TestMultiContainerRlimitsIsolated(t *testing.T) {
 				if err != nil {
 					t.Fatalf("error reading limits of PID %d: %v", pid, err)
 				}
-				for _, line := range strings.Split(string(out), "\n") {
+				for line := range strings.SplitSeq(string(out), "\n") {
 					if rest, ok := strings.CutPrefix(line, "Max open files"); ok {
 						if f := strings.Fields(rest); len(f) >= 2 {
 							return f[0] + "/" + f[1]
@@ -3418,7 +3418,7 @@ func TestCgroupV2ReadControlFile(t *testing.T) {
 			}
 		case "cgroup.procs":
 			// cgroup.procs should be a list of PIDs, so it should be parseable as integers.
-			for _, pidStr := range strings.Fields(val) {
+			for pidStr := range strings.FieldsSeq(val) {
 				if _, err := strconv.Atoi(pidStr); err != nil {
 					t.Fatalf("expected cgroup.procs to contain integers, got non-integer %q in %q", pidStr, val)
 				}
@@ -3639,7 +3639,7 @@ func TestDuplicateEnvVariable(t *testing.T) {
 		}
 		t.Logf("Checking env %q:\n%s", file.Name(), out)
 		envs := make(map[string]string)
-		for _, line := range strings.Split(string(out), "\n") {
+		for line := range strings.SplitSeq(string(out), "\n") {
 			if len(line) == 0 {
 				continue
 			}

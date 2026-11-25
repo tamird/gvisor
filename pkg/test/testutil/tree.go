@@ -49,7 +49,7 @@ func NewTree(testNames []string, separator string) *Tree {
 	tree := &Tree{root: &treeNode{}}
 	for _, testName := range testNames {
 		n := tree.root
-		for _, component := range strings.Split(testName, separator) {
+		for component := range strings.SplitSeq(testName, separator) {
 			if component == "" {
 				continue
 			}
