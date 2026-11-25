@@ -62,7 +62,6 @@ func TestNewBitmap(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if bitmap := New(uint32(tt.size)); len(bitmap.bitBlock) != tt.expectSize {
 				t.Errorf("New created bitmap with %v, bitBlock size: %d, wanted: %d", tt.name, len(bitmap.bitBlock), tt.expectSize)
@@ -85,7 +84,6 @@ func TestAdd(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			bitmap := New(uint32(tt.bitmapSize))
 			bitmap.Add(uint32(tt.addNum))
@@ -139,7 +137,6 @@ func TestFlipRange(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			fillSlice, bitmap := generateFilledBitmap(tt.flipRangeMin, tt.flipRangeMax, tt.filledSliceLen)
 			flipFillSlice := make([]uint32, 0)
@@ -174,7 +171,6 @@ func TestClearRange(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			bitmap := New(uint32(tt.bitmapSize))
 			bitmap.FlipRange(uint32(0), uint32(tt.bitmapSize))

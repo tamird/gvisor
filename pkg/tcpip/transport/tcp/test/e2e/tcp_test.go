@@ -9517,7 +9517,6 @@ func TestHandshakeRTT(t *testing.T) {
 		}
 	}
 	for _, tt := range testCases {
-		tt := tt
 		t.Run(fmt.Sprintf("connect=%t,TS=%t,cookie=%t,retrans=%t)", tt.connect, tt.tsEnabled, tt.useCookie, tt.retrans), func(t *testing.T) {
 			t.Parallel()
 			c := context.New(t, e2e.DefaultMTU)

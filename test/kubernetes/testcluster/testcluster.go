@@ -1179,7 +1179,6 @@ func (t *TestCluster) StreamDaemonSetLogs(ctx context.Context, ds *appsv1.Daemon
 			return err
 		}
 		for _, pod := range pods {
-			pod := pod
 			if pod.Spec.NodeName == "" {
 				continue // No node assigned yet.
 			}
