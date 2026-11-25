@@ -406,13 +406,6 @@ analyzers:
     # Controversial.
     internal:
       exclude: [".*"]
-  fmtappendf:
-    internal:
-      exclude:
-        - ".*" # Temporary: migrate fmtappendf.
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate fmtappendf.
   appendclipped:
     internal:
       exclude:

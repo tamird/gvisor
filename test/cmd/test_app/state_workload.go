@@ -547,7 +547,7 @@ func (w *stateWorkload) Execute(ctx context.Context, f *flag.FlagSet, args ...an
 			return w.failf("hop %d Remove unlinked: %v", hop, err)
 		}
 		oob := unix.UnixRights(int(unlinkedFile.Fd()))
-		msgTag := []byte(fmt.Sprintf("SCM_HOP_%d", hop))
+		msgTag := fmt.Appendf(nil, "SCM_HOP_%d", hop)
 		if err := unix.Sendmsg(spFDs[0], msgTag, oob, nil, 0); err != nil {
 			unlinkedFile.Close()
 			return w.failf("hop %d Sendmsg SCM_RIGHTS: %v", hop, err)
@@ -557,7 +557,7 @@ func (w *stateWorkload) Execute(ctx context.Context, f *flag.FlagSet, args ...an
 		}
 
 		// Queue unread pipe bytes and eventfd counter for epoll across S/R.
-		wantPipe := []byte(fmt.Sprintf("epoll-pipe-hop-%d", hop))
+		wantPipe := fmt.Appendf(nil, "epoll-pipe-hop-%d", hop)
 		if _, err := unix.Write(epPipe[1], wantPipe); err != nil {
 			return w.failf("hop %d Write epPipe: %v", hop, err)
 		}
@@ -673,7 +673,7 @@ func (w *stateWorkload) Execute(ctx context.Context, f *flag.FlagSet, args ...an
 		if !bytes.Equal(gotTCP, wantTCP) {
 			return w.failf("hop %d in-flight TCP payload mismatch after restore", hop)
 		}
-		replyTCP := []byte(fmt.Sprintf("tcp-ack-hop-%d", hop))
+		replyTCP := fmt.Appendf(nil, "tcp-ack-hop-%d", hop)
 		if _, err := tcpClient.Write(replyTCP); err != nil {
 			return w.failf("hop %d tcpClient.Write ack: %v", hop, err)
 		}

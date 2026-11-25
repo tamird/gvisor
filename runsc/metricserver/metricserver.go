@@ -1030,7 +1030,7 @@ func (s *Server) Run(ctx context.Context) error {
 	m.srv.ReadTimeout = httpTimeout
 	m.srv.WriteTimeout = httpTimeout
 	if m.pidFile != "" {
-		if err := os.WriteFile(m.pidFile, []byte(fmt.Sprintf("%d", m.pid)), 0644); err != nil {
+		if err := os.WriteFile(m.pidFile, fmt.Appendf(nil, "%d", m.pid), 0644); err != nil {
 			return fmt.Errorf("cannot write PID to file %q: %w", m.pidFile, err)
 		}
 		defer os.Remove(m.pidFile)
