@@ -114,10 +114,9 @@ func BenchmarkInitialize(b *testing.B) {
 		archInit()
 	}
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		initialize()
 	}
-	b.StopTimer()
 	b.ReportMetric(float64(retainedBytes(func() { Points = nil }, initialize)), "retained-B")
 }
 

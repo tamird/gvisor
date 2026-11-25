@@ -136,21 +136,21 @@ func TestGateRaceReproduction(t *testing.T) {
 
 func BenchmarkGateEnterLeave(b *testing.B) {
 	var g Gate
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		g.Enter()
 		g.Leave()
 	}
 }
 
 func BenchmarkGateClose(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		var g Gate
 		g.Close()
 	}
 }
 
 func BenchmarkGateEnterLeaveAsyncClose(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		var g Gate
 		g.Enter()
 		go func() {

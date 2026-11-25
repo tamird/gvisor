@@ -110,8 +110,7 @@ func BenchmarkBroadcasterSubscribeUnsubscribe(b *testing.B) {
 	var w Waiter
 	w.Init()
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		id := br.SubscribeEvents(w.Receiver(), 1)
 		br.UnsubscribeEvents(id)
 	}
@@ -123,8 +122,7 @@ func BenchmarkMapSubscribeUnsubscribe(b *testing.B) {
 	var w Waiter
 	w.Init()
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		mu.Lock()
 		m[w.Receiver()] = Set(1)
 		mu.Unlock()
@@ -138,8 +136,7 @@ func BenchmarkQueueSubscribeUnsubscribe(b *testing.B) {
 	var q waiter.Queue
 	e, _ := waiter.NewChannelEntry(1)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		q.EventRegister(&e)
 		q.EventUnregister(&e)
 	}

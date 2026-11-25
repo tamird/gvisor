@@ -35,7 +35,7 @@ func BenchmarkReadAt(b *testing.B) {
 	defer buf.Release()
 
 	bytes := make([]byte, 10)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		if n, err := buf.ReadAt(bytes, 0); n != len(bytes) || err != nil {
 			b.Fatalf("ReadAt = (%d, %v), want (%d, nil)", n, err, len(bytes))
 		}
@@ -48,7 +48,7 @@ func BenchmarkWriteRead(b *testing.B) {
 	defer buf.Release()
 	sz := 1000
 	rbuf := bytes.NewBuffer(make([]byte, sz))
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		buf.Append(NewViewSize(sz))
 		rbuf.Reset()
 		n, err := buf.ReadToWriter(rbuf, int64(sz))

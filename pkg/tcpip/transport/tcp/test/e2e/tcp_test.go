@@ -503,8 +503,7 @@ func BenchmarkWildcardBindClose(b *testing.B) {
 	}()
 	var wq waiter.Queue
 	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		ep, err := s.NewEndpoint(tcp.ProtocolNumber, ipv6.ProtocolNumber, &wq)
 		if err != nil {
 			b.Fatal(err)

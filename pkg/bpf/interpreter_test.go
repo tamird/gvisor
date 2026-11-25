@@ -1120,8 +1120,7 @@ func BenchmarkInterpreter(b *testing.B) {
 		b.Fatalf("Unexpected compilation error: %v", err)
 	}
 	data := dataAsInput(&linux.SeccompData{Nr: 231 /* __NR_exit_group */, Arch: 0xc000003e})
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		if _, err := Exec[NativeEndian](p, data); err != nil {
 			b.Fatalf("Unexpected execution error: %v", err)
 		}

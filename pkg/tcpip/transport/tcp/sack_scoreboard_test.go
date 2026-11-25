@@ -56,8 +56,7 @@ func BenchmarkIsSACKED(b *testing.B) {
 	query := header.SACKBlock{Start: mid, End: mid.Add(blockSize)}
 
 	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		s.IsSACKED(query)
 	}
 }
@@ -81,8 +80,7 @@ func BenchmarkIsRangeLost(b *testing.B) {
 	query := header.SACKBlock{Start: gapStart, End: gapStart.Add(gapSize)}
 
 	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		s.IsRangeLost(query)
 	}
 }
@@ -106,8 +104,7 @@ func BenchmarkInsert(b *testing.B) {
 	}
 
 	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		s.Insert(block)
 	}
 }
@@ -154,8 +151,7 @@ func BenchmarkSetPipeWorkload(b *testing.B) {
 	total := seqnum.Size(nBlocks) * (blockSize + gapSize)
 
 	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		// Walk through every MSS-sized segment in the range, calling
 		// IsSACKED and IsRangeLost for each, as SetPipe does.
 		for off := seqnum.Size(0); off < total; off += seqnum.Size(smss) {

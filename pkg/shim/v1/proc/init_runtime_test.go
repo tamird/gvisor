@@ -40,8 +40,7 @@ import (
 func BenchmarkRuntimeLockUncontended(b *testing.B) {
 	p := New("bench", nil, stdio.Stdio{})
 	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, unlock, err := p.lockRuntime(context.Background())
 		if err != nil {
 			b.Fatal(err)
@@ -71,8 +70,7 @@ func BenchmarkRuntimeLockContended(b *testing.B) {
 func BenchmarkRuntimeLockBurst(b *testing.B) {
 	p := New("bench", nil, stdio.Stdio{})
 	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, release, err := p.lockRuntime(context.Background())
 		if err != nil {
 			b.Fatal(err)
