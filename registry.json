@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T15:19:00.232145+00:00",
+    "updatedAt": "2026-11-25T16:22:07.608415+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36131,14 +36131,14 @@
       "url": "https://github.com/google/gvisor/pull/16419",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
-      "summary": "Current 0ae405ec7 is OPEN/CONFLICTING with CHANGES_REQUESTED. Daybreak availability is confirmed. actions_bazel_cache owns the matcher/parity and current-base candidate. Prior test-only run 44836517279 failed and its observer treated nil TCP.SeqNum as a wildcard; it establishes no new Linux-parity proof. Existing qualification and ARM/performance limits remain.",
+      "updatedAt": "2026-11-25T16:21:48.259782+00:00",
+      "summary": "Public 0ae405ec7 remains conflicting with changes requested. Candidate 54d23533 on base 8075b384 passed TCP unit and four end-to-end shards remotely; formatting recovery also passed all six source paths. Packet targets stopped before testbench on read-only accept_dad setup, so no packet/Linux-parity verdict exists. The owning worker-capability preflight is running; the candidate is not ready or published.",
       "followup": {
         "owner": "actions_bazel_cache",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
         "observedAt": "2026-11-20T23:31:27.372182+00:00",
-        "disposition": "Current 0ae405ec7 is OPEN/CONFLICTING with CHANGES_REQUESTED. Daybreak availability is confirmed. actions_bazel_cache owns the matcher/parity and current-base candidate. Prior test-only run 44836517279 failed and its observer treated nil TCP.SeqNum as a wildcard; it establishes no new Linux-parity proof. Existing qualification and ARM/performance limits remain.",
-        "nextAction": "actions_bazel_cache prepares the assigned source-bound candidate and resolves the existing reviewer findings, preserving root final review/publication and required qualification. Do not reuse old source credit for a changed integration delta or duplicate the owner’s work.",
+        "disposition": "Public 0ae405ec7 remains conflicting with changes requested. Candidate 54d23533 on base 8075b384 passed TCP unit and four end-to-end shards remotely; formatting recovery also passed all six source paths. Packet targets stopped before testbench on read-only accept_dad setup, so no packet/Linux-parity verdict exists. The owning worker-capability preflight is running; the candidate is not ready or published.",
+        "nextAction": "actions_bazel_cache owns the existing packet-capability recovery and packet-only qualification, reusing the completed unit/end-to-end/format evidence. Root retains final source/performance/publication boundaries. Do not duplicate the owner’s job reads or infer parity from setup failure.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16419",
           "https://github.com/google/gvisor/pull/16419#discussion_r4504268180",
@@ -36165,9 +36165,12 @@
           "https://github.com/tamird/gvisor/actions/runs/44820776849",
           "https://github.com/gvisor/gvisor/pull/16419#pullrequestreview-6000448132",
           "https://github.com/gvisor/gvisor/pull/16419#discussion_r4648619069",
-          "https://github.com/gvisor/gvisor/pull/16419#discussion_r4648619071"
+          "https://github.com/gvisor/gvisor/pull/16419#discussion_r4648619071",
+          "https://github.com/tamird/gvisor/actions/runs/45646205507",
+          "https://github.com/tamird/gvisor/actions/runs/45651934531",
+          "https://github.com/tamird/gvisor/actions/runs/45652124079"
         ],
-        "recheckCondition": "Assigned owner returns the candidate/qualification or current source/reviewer evidence changes.",
+        "recheckCondition": "The existing owner returns the worker/packet result or actual source/reviewer evidence changes.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "mergeable": "CONFLICTING",
         "qualificationHistory": [
@@ -36277,7 +36280,7 @@
           ]
         },
         "remainingNetworkOutcomeOwner": "tcp_conflict",
-        "curatedAt": "2026-11-25T15:19:00.232145+00:00",
+        "curatedAt": "2026-11-25T16:21:48.259782+00:00",
         "ciExecutionAuthorization": {
           "status": "Authorized CI-only; held for permanent Bazel mechanism migration",
           "owner": "root",
@@ -36310,7 +36313,13 @@
           ],
           "limits": "Oldbase inputs only. No currentbase/packet32/race/compiler/fullnetworkperformance shortcut."
         },
-        "implementationOwner": "actions_bazel_cache"
+        "implementationOwner": "actions_bazel_cache",
+        "candidate": {
+          "head": "54d23533e945131c900091c00d0fbc16a4a4e781",
+          "base": "8075b38443e475fd4e12ef9d423e2cd460e2396d",
+          "ci": "98c8840ef373e79afcf05ff4b6cdb89544655579",
+          "state": "Packet qualification incomplete; unpublished"
+        }
       },
       "evidence": [
         {
@@ -36517,8 +36526,8 @@
           "https://github.com/tamird/gvisor/commit/0ae405ec7d1ace5894645c28910c69605c0de20e"
         ]
       },
-      "nextStep": "actions_bazel_cache prepares the assigned source-bound candidate and resolves the existing reviewer findings, preserving root final review/publication and required qualification. Do not reuse old source credit for a changed integration delta or duplicate the owner’s work.",
-      "recheckCondition": "Assigned owner returns the candidate/qualification or current source/reviewer evidence changes."
+      "nextStep": "actions_bazel_cache owns the existing packet-capability recovery and packet-only qualification, reusing the completed unit/end-to-end/format evidence. Root retains final source/performance/publication boundaries. Do not duplicate the owner’s job reads or infer parity from setup failure.",
+      "recheckCondition": "The existing owner returns the worker/packet result or actual source/reviewer evidence changes."
     },
     {
       "id": "pr:17114",
@@ -41342,19 +41351,19 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/systrap-elf-offsets",
-      "head": "a9594385d15d2e17e5dd7491be94d774f47fa80e",
+      "head": "d890ca5f5151167a7fb02694bd8d6e6209fff2d4",
       "title": "Generate systrap stub offsets from the linked ELF",
       "url": "https://github.com/google/gvisor/pull/16516",
       "group": "bazel",
       "status": "open",
-      "summary": "Main 55748 at a959 is terminal FAILED. The final Windows attempt also timed out during local-origin Go-history fetch, before Windows compilation; known Go/32-bit fetch and APT setup failures remain. No new source failure is demonstrated. Shared Go-export candidate f8500dffe is tracked separately under issue #17832. Tamir posted the CI-cancellation question7135968742; no external answer is present in this observation.",
-      "updatedAt": "2026-11-24T06:27:10.701611+00:00",
+      "summary": "Published source advanced from a9594385d to d890ca5f5 and remains MERGEABLE; native checks including FirstPass 2823 passed. Hosting review is now REVIEW_REQUIRED, with fvoznika and konstantin-s-bogom requested. Old main 55748 fetch/APT/cancellation failures and prior qualification remain historical, source-specific evidence. No unchanged-source or approval-transfer claim is made.",
+      "updatedAt": "2026-11-25T16:21:48.259782+00:00",
       "followup": {
         "owner": "root",
-        "sourceHead": "a9594385d15d2e17e5dd7491be94d774f47fa80e",
+        "sourceHead": "d890ca5f5151167a7fb02694bd8d6e6209fff2d4",
         "observedAt": "2026-11-24T15:57:41.885925+00:00",
-        "disposition": "Main 55748 at a959 is terminal FAILED. The final Windows attempt also timed out during local-origin Go-history fetch, before Windows compilation; known Go/32-bit fetch and APT setup failures remain. No new source failure is demonstrated. Shared Go-export candidate f8500dffe is tracked separately under issue #17832. Tamir posted the CI-cancellation question7135968742; no external answer is present in this observation.",
-        "nextAction": "Root follows an actual answer to the posted CI question or changed provider/source evidence. Existing terminal55748 setup/fetch/cancellation evidence retains its scope; do not repeat the question, retry CI, infer source failure or invent an accepted operator owner.",
+        "disposition": "Published source advanced from a9594385d to d890ca5f5 and remains MERGEABLE; native checks including FirstPass 2823 passed. Hosting review is now REVIEW_REQUIRED, with fvoznika and konstantin-s-bogom requested. Old main 55748 fetch/APT/cancellation failures and prior qualification remain historical, source-specific evidence. No unchanged-source or approval-transfer claim is made.",
+        "nextAction": "Root and the existing source owner reconcile current-head correspondence and requested maintainer review. Keep the old CI question and shared Go-export proposal separate; no old failure transfer, duplicate question, unchanged retry, source edit or merge.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16516#pullrequestreview-5895770949",
           "https://github.com/gvisor/gvisor/pull/16516#pullrequestreview-5943223023",
@@ -41368,7 +41377,9 @@
           "https://github.com/google/gvisor/pull/16516#pullrequestreview-6030082805",
           "https://buildkite.com/gvisor/pipeline/builds/55748",
           "https://github.com/tamird/gvisor/commit/f8500dffed4bace8841b900232beb6fd19740cd7",
-          "https://github.com/gvisor/gvisor/pull/16516#issuecomment-7135968742"
+          "https://github.com/gvisor/gvisor/pull/16516#issuecomment-7135968742",
+          "https://github.com/gvisor/gvisor/pull/16516",
+          "https://buildkite.com/gvisor/first-pass/builds/2823"
         ],
         "nativeReviewRequest": {
           "reviewer": "manninglucas",
@@ -41377,10 +41388,11 @@
           "delivered": true,
           "endpoint": "/repos/gvisor/gvisor/pulls/16516/requested_reviewers/rerequest"
         },
-        "recheckCondition": "Actual human reply, changed provider diagnostic or source/head event.",
+        "recheckCondition": "Current-source correspondence, maintainer review or a new check/source event.",
         "mergeable": "MERGEABLE",
         "attentionDispositions": [],
-        "providerHead": "a9594385d15d2e17e5dd7491be94d774f47fa80e"
+        "providerHead": "d890ca5f5151167a7fb02694bd8d6e6209fff2d4",
+        "curatedAt": "2026-11-25T16:21:48.259782+00:00"
       },
       "evidence": [
         {
@@ -41442,8 +41454,8 @@
           "postedURL": "https://github.com/gvisor/gvisor/pull/16516#pullrequestreview-5943223023"
         }
       ],
-      "nextStep": "Root follows an actual answer to the posted CI question or changed provider/source evidence. Existing terminal55748 setup/fetch/cancellation evidence retains its scope; do not repeat the question, retry CI, infer source failure or invent an accepted operator owner.",
-      "recheckCondition": "Actual Go-export/APT prerequisite delivery, replacement CI, agent diagnostics or substantive review/import/source event."
+      "nextStep": "Root and the existing source owner reconcile current-head correspondence and requested maintainer review. Keep the old CI question and shared Go-export proposal separate; no old failure transfer, duplicate question, unchanged retry, source edit or merge.",
+      "recheckCondition": "Current-source correspondence, maintainer review or a new check/source event."
     },
     {
       "id": "branch:hermetic-arch-copy",
@@ -107355,32 +107367,35 @@
       "url": "https://github.com/google/gvisor/pull/17962",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-11-25T12:50:33.824992+00:00",
+      "updatedAt": "2026-11-25T16:21:48.259782+00:00",
       "evidence": [
         {
           "label": "Published source",
           "url": "https://github.com/tamird/gvisor/commit/8044063a9a1f7d76cca2656cdbee0310d2bb1266"
         }
       ],
-      "summary": "Approved TAP source 8044063a is delivered in #17962. Native checks and DCO pass; FirstPass 2806 retains the verified pre-agent rolling 30-day quota failure. Ayush reported narrower TODO behavior and requested wording qualification; Tamir already replied with a scope question. The external semantic report has not been independently verified.",
-      "nextStep": "Root reconciles the reporter-wording feedback with Tamir’s existing reply before any description/source-message change or new reply. Preserve Node/FLAKY evidence limits and provider-admission follow-through; do not duplicate approval, outreach or unchanged CI retries.",
-      "recheckCondition": "Actual response on the existing discussion, verified reporter evidence, provider admission or changed source/check.",
+      "summary": "TAP-only source 8044063a remains open. Shayon formally approved this exact head; the aggregate remains REVIEW_REQUIRED. Main 55910 passed. Current FirstPass 2816 independently failed before agent allocation on author 1535036’s rolling 30-day 360000 compute-minute quota. Ayush’s reporter-wording report and Tamir’s existing scope question remain unresolved; no semantic defect is independently verified.",
+      "nextStep": "Root follows the existing reporter-wording discussion, maintainer review and actual admission/check changes. Preserve original FLAKY/source limits; no duplicate reply, source amendment, approval question, retry or quota outreach.",
+      "recheckCondition": "Actual discussion response, source/review/check or quota-admission change.",
       "followup": {
         "owner": "root",
-        "disposition": "Approved TAP source 8044063a is delivered in #17962. Native checks and DCO pass; FirstPass 2806 retains the verified pre-agent rolling 30-day quota failure. Ayush reported narrower TODO behavior and requested wording qualification; Tamir already replied with a scope question. The external semantic report has not been independently verified.",
-        "nextAction": "Root reconciles the reporter-wording feedback with Tamir’s existing reply before any description/source-message change or new reply. Preserve Node/FLAKY evidence limits and provider-admission follow-through; do not duplicate approval, outreach or unchanged CI retries.",
-        "recheckCondition": "Actual response on the existing discussion, verified reporter evidence, provider admission or changed source/check.",
+        "disposition": "TAP-only source 8044063a remains open. Shayon formally approved this exact head; the aggregate remains REVIEW_REQUIRED. Main 55910 passed. Current FirstPass 2816 independently failed before agent allocation on author 1535036’s rolling 30-day 360000 compute-minute quota. Ayush’s reporter-wording report and Tamir’s existing scope question remain unresolved; no semantic defect is independently verified.",
+        "nextAction": "Root follows the existing reporter-wording discussion, maintainer review and actual admission/check changes. Preserve original FLAKY/source limits; no duplicate reply, source amendment, approval question, retry or quota outreach.",
+        "recheckCondition": "Actual discussion response, source/review/check or quota-admission change.",
         "observedAt": "2026-11-25T12:53:06.511271+00:00",
         "evidence": [
           "https://github.com/google/gvisor/pull/17962",
           "https://buildkite.com/gvisor/first-pass/builds/2806#01a212a9-fdcf-4e40-8016-46067b6e444e",
           "https://github.com/google/gvisor/pull/17962#issuecomment-7162691048",
-          "https://github.com/google/gvisor/pull/17962#issuecomment-7162785797"
+          "https://github.com/google/gvisor/pull/17962#issuecomment-7162785797",
+          "https://github.com/gvisor/gvisor/pull/17962#pullrequestreview-6057963834",
+          "https://buildkite.com/gvisor/pipeline/builds/55910",
+          "https://buildkite.com/gvisor/first-pass/builds/2816#01a212c4-6c4b-437e-8a46-63f9934e4a19"
         ],
         "sourceHead": "8044063a9a1f7d76cca2656cdbee0310d2bb1266",
         "providerHead": "8044063a9a1f7d76cca2656cdbee0310d2bb1266",
         "mergeable": "MERGEABLE",
-        "curatedAt": "2026-11-25T12:53:06.511271+00:00",
+        "curatedAt": "2026-11-25T16:21:48.259782+00:00",
         "attentionDispositions": [
           {
             "reason": "author-feedback",
@@ -107437,20 +107452,23 @@
           {
             "reason": "author-public-checks",
             "action": "ci-infrastructure-retry",
-            "title": "FirstPass 2806: source-bound rolling 30-day quota before agent start",
-            "nextAction": "Root follows actual admission recovery or a new source/check event through the existing CI owner. No unchanged retry, quota outreach or source-failure inference.",
+            "title": "FirstPass 2816: own verified pre-agent rolling 30-day quota",
+            "nextAction": "Root follows the existing reporter-wording discussion, maintainer review and actual admission/check changes. Preserve original FLAKY/source limits; no duplicate reply, source amendment, approval question, retry or quota outreach.",
             "evidence": [
-              "https://buildkite.com/gvisor/first-pass/builds/2806#01a212a9-fdcf-4e40-8016-46067b6e444e"
+              "https://buildkite.com/gvisor/first-pass/builds/2816"
             ],
             "binding": {
               "sourceHead": "8044063a9a1f7d76cca2656cdbee0310d2bb1266",
               "checks": [
                 {
-                  "id": "SC_kwDOB9IlXs8AAAAN8G-hTA",
+                  "id": "SC_kwDOB9IlXs8AAAAN8JMP9w",
                   "name": "buildkite/first-pass/pr",
                   "state": "FAILURE",
-                  "url": "https://buildkite.com/gvisor/first-pass/builds/2806",
-                  "kind": "status"
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/2816",
+                  "description": "Build #2816 failed",
+                  "app": null,
+                  "kind": "status",
+                  "purpose": "validation"
                 }
               ]
             }
@@ -107643,7 +107661,7 @@
       "url": "https://github.com/google/gvisor/pull/17971",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
+      "updatedAt": "2026-11-25T16:21:48.259782+00:00",
       "evidence": [
         {
           "label": "Published image-output source",
@@ -107652,18 +107670,47 @@
       ],
       "followup": {
         "owner": "root",
-        "disposition": "Approved image-only source e17f88ffd is delivered in ready #17971, OPEN/MERGEABLE with DCO success. GitHub checks are in progress and FirstPass 2824 was pending at publication. Existing image declarations match the qualified combined source; no whole combined runtime or ARM qualification is inferred.",
-        "nextAction": "Root follows actual current-head CI/admission and maintainer review. The opening decision is fulfilled; no duplicate approval, source update, retry, outreach or merge.",
-        "recheckCondition": "Actual current-head check/review/admission or landing event.",
-        "curatedAt": "2026-11-25T15:19:00.232145+00:00",
+        "disposition": "Published image-only source e17f88ffd remains OPEN/MERGEABLE with REVIEW_REQUIRED. DCO and native GitHub validation are green. FirstPass 2824 failed solely at pipeline upload before agent allocation: author 1535036 reached the rolling 30-day 360000 compute-minute quota. No source/test execution occurred in that build.",
+        "nextAction": "Root follows quota reset or a new current-head CI/review event. Publication is complete; this is an admission wait, not source repair. Preserve image-only qualification limits, with no retry, duplicate opening question, outreach or merge.",
+        "recheckCondition": "Actual quota reset or new CI/review/source event.",
+        "curatedAt": "2026-11-25T16:21:48.259782+00:00",
         "sourceHead": "e17f88ffdd7a4e532f187741a4c58b7b09c109fc",
         "providerHead": "e17f88ffdd7a4e532f187741a4c58b7b09c109fc",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-25T15:18:17.648950+00:00"
+        "observedAt": "2026-11-25T16:16:29.141419+00:00",
+        "evidence": [
+          "https://buildkite.com/gvisor/first-pass/builds/2824"
+        ],
+        "attentionDispositions": [
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "FirstPass 2824: verified pre-agent rolling 30-day quota",
+            "nextAction": "Root follows quota reset or a new current-head CI/review event. Publication is complete; this is an admission wait, not source repair. Preserve image-only qualification limits, with no retry, duplicate opening question, outreach or merge.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/2824"
+            ],
+            "binding": {
+              "sourceHead": "e17f88ffdd7a4e532f187741a4c58b7b09c109fc",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN8WgDog",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/2824",
+                  "description": "Build #2824 failed",
+                  "app": null,
+                  "kind": "status",
+                  "purpose": "validation"
+                }
+              ]
+            }
+          }
+        ]
       },
-      "summary": "Approved image-only source e17f88ffd is delivered in ready #17971, OPEN/MERGEABLE with DCO success. GitHub checks are in progress and FirstPass 2824 was pending at publication. Existing image declarations match the qualified combined source; no whole combined runtime or ARM qualification is inferred.",
-      "nextStep": "Root follows actual current-head CI/admission and maintainer review. The opening decision is fulfilled; no duplicate approval, source update, retry, outreach or merge.",
-      "recheckCondition": "Actual current-head check/review/admission or landing event."
+      "summary": "Published image-only source e17f88ffd remains OPEN/MERGEABLE with REVIEW_REQUIRED. DCO and native GitHub validation are green. FirstPass 2824 failed solely at pipeline upload before agent allocation: author 1535036 reached the rolling 30-day 360000 compute-minute quota. No source/test execution occurred in that build.",
+      "nextStep": "Root follows quota reset or a new current-head CI/review event. Publication is complete; this is an admission wait, not source repair. Preserve image-only qualification limits, with no retry, duplicate opening question, outreach or merge.",
+      "recheckCondition": "Actual quota reset or new CI/review/source event."
     }
   ],
   "edges": [
@@ -123028,8 +123075,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-25T12:51:30.999228+00:00",
-      "summary": "Milestone collector 45615038308 initially failed source-publication receipt validation with an out-of-scope predicate. Reviewed two-file fix 6ffd4ed5 was published; failed-job-only attempt 2 of the same run succeeded and delivered API 2026-11-25T12:47:27.424253+00:00. This repairs that receipt path, not missing native schedule events. No future manual guard is armed.",
+      "updatedAt": "2026-11-25T16:21:48.259782+00:00",
+      "summary": "This one-shot recovery collected API 2026-11-25T16:17:23.742287+00:00 using the existing local collector after versioned workflow dispatch returned HTTP 502/500 without an accepted run. Its staged snapshot was validated and installed after correcting the local Node PATH. The newest observed scheduled run remains 45594344209 at 10:22 UTC; recurring unattended freshness is not demonstrated and the native event-gap cause remains unknown.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -123272,7 +123319,7 @@
           ]
         }
       ],
-      "nextStep": "This milestone recovery ends after verified public delivery. Preserve the failed first attempt, bounded 503 retry and missed-delivery evidence. The existing active native workflow remains configured; unattended freshness is still an external scheduling/delivery limitation with unknown event-gap cause. No new scheduler, duplicate observer, access change or promised foreground fallback.",
+      "nextStep": "This recovery ends after verified public delivery. Preserve the dispatch errors, original local-finalization failure, missed-delivery evidence and bounded 503 read retry. The configured native workflow remains active; no future fallback/observer is armed, no recurring fix is claimed and no new scheduler/access change is introduced.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -123368,11 +123415,11 @@
         }
       ],
       "technicalOwner": "Codex",
-      "recheckCondition": "Actual new native delivery or a separately established execution mechanism; a future timestamp alone is not an armed guard.",
+      "recheckCondition": "Actual new native delivery or separately established execution coverage; a future timestamp alone is not an armed mechanism.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "This milestone recovery ends after verified public delivery. Preserve the failed first attempt, bounded 503 retry and missed-delivery evidence. The existing active native workflow remains configured; unattended freshness is still an external scheduling/delivery limitation with unknown event-gap cause. No new scheduler, duplicate observer, access change or promised foreground fallback.",
-        "recheckCondition": "Actual new native delivery or a separately established execution mechanism; a future timestamp alone is not an armed guard."
+        "nextAction": "This recovery ends after verified public delivery. Preserve the dispatch errors, original local-finalization failure, missed-delivery evidence and bounded 503 read retry. The configured native workflow remains active; no future fallback/observer is armed, no recurring fix is claimed and no new scheduler/access change is introduced.",
+        "recheckCondition": "Actual new native delivery or separately established execution coverage; a future timestamp alone is not an armed mechanism."
       },
       "currentHealth": {
         "observedAt": "2026-11-25T12:51:30.999228+00:00",
@@ -123423,13 +123470,16 @@
           "https://github.com/tamird/gvisor/blob/5d504727a0851a505875c8b7fc3ce85a8302a78a/.github/workflows/work-map.yml",
           "https://github.com/tamird/gvisor/actions/runs/45615038308",
           "https://github.com/tamird/gvisor/actions/runs/45615038308/attempts/1",
-          "https://github.com/tamird/gvisor/commit/6ffd4ed5a6d6edc5aca2b65da6fedb5388d1e58f"
+          "https://github.com/tamird/gvisor/commit/6ffd4ed5a6d6edc5aca2b65da6fedb5388d1e58f",
+          "https://github.com/tamird/gvisor/actions/workflows/work-map.yml",
+          "https://github.com/tamird/gvisor/actions/runs/45594344209"
         ],
         "observedAt": "2026-11-25T12:51:30.999228+00:00",
-        "disposition": "Milestone collector 45615038308 initially failed source-publication receipt validation with an out-of-scope predicate. Reviewed two-file fix 6ffd4ed5 was published; failed-job-only attempt 2 of the same run succeeded and delivered API 2026-11-25T12:47:27.424253+00:00. This repairs that receipt path, not missing native schedule events. No future manual guard is armed.",
-        "nextAction": "This milestone recovery ends after verified public delivery. Preserve the failed first attempt, bounded 503 retry and missed-delivery evidence. The existing active native workflow remains configured; unattended freshness is still an external scheduling/delivery limitation with unknown event-gap cause. No new scheduler, duplicate observer, access change or promised foreground fallback.",
-        "recheckCondition": "Actual new native delivery or a separately established execution mechanism; a future timestamp alone is not an armed guard.",
-        "owner": "root"
+        "disposition": "This one-shot recovery collected API 2026-11-25T16:17:23.742287+00:00 using the existing local collector after versioned workflow dispatch returned HTTP 502/500 without an accepted run. Its staged snapshot was validated and installed after correcting the local Node PATH. The newest observed scheduled run remains 45594344209 at 10:22 UTC; recurring unattended freshness is not demonstrated and the native event-gap cause remains unknown.",
+        "nextAction": "This recovery ends after verified public delivery. Preserve the dispatch errors, original local-finalization failure, missed-delivery evidence and bounded 503 read retry. The configured native workflow remains active; no future fallback/observer is armed, no recurring fix is claimed and no new scheduler/access change is introduced.",
+        "recheckCondition": "Actual new native delivery or separately established execution coverage; a future timestamp alone is not an armed mechanism.",
+        "owner": "root",
+        "curatedAt": "2026-11-25T16:21:48.259782+00:00"
       }
     },
     {
@@ -132954,9 +133004,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-25T12:50:33.824992+00:00",
+      "updatedAt": "2026-11-25T16:22:07.608415+00:00",
       "group": "analysis",
-      "summary": "The complete 54-commit implementation at 26090b334 is reviewable; Module-aware NoGo passes 891 validators per ISA. Remaining performance gates: 40 network A/B variants, MM/syscall A/B and filesystem A/A+A/B. Eight FUSE capability holds, one Fastlane baseline functional failure and four behavioral provider/baseline failures remain distinct; #17884 is open.",
+      "summary": "The distinct 54-commit analyzer series at 26090b334 is complete and reviewable: dependency bump, then 53 analyzer activations/fixes. Both architectures passed all 891 fresh static validators. Publication readiness remains blocked by open prerequisite #17884, incomplete performance/A-A admission, eight FUSE capability cases, the Fastlane baseline fixture and four behavioral targets.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -133328,7 +133378,7 @@
           ]
         }
       ],
-      "nextStep": "analysis_delivery owns the concrete Hey deadline-censoring versus complete-workload measurement blocker. Shared strict JSON/count/status collection passed all eight functional visits, then correctly rejected the N1000/C1000 Httpd case with 389 successful requests and 611 timeouts: Bazel failed, no benchmark row was accepted, cleanup passed. Verify existing whole-visit bounds and stock CLI before proposing a small timeout-policy correction; no rerun or timing is authorized here. Remaining qualification uses full categories/variants, raw benchstat and n>=24 or p<.01 criteria; an added equivalence bound or overstrict ancillary early/late protocol is not itself a submission gate.",
+      "nextStep": "analysis_delivery owns the remaining performance matrix and A/A admission. Root coordinates #17884 and the remaining capability/fixture/behavior gates: sandboxsetup_test, sandbox_test, docprocessor_test and sandbox_py_test. Preserve exact source-bound evidence and source/publication requirements; no readiness, full runtime or performance-clearance claim.",
       "evidence": [
         {
           "label": "Complete 54-commit analyzer series: dependency first, then 53 activations",
@@ -133587,11 +133637,11 @@
           }
         ]
       },
-      "recheckCondition": "Owning fixture functional preflight, required workload qualification, an actual prerequisite/decision or an explicit hold change; do not duplicate the owner’s observer.",
+      "recheckCondition": "Actual prerequisite landing, required workload/A-A qualification or a resolved named capability/fixture/behavior gate.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "analysis_delivery owns the concrete Hey deadline-censoring versus complete-workload measurement blocker. Shared strict JSON/count/status collection passed all eight functional visits, then correctly rejected the N1000/C1000 Httpd case with 389 successful requests and 611 timeouts: Bazel failed, no benchmark row was accepted, cleanup passed. Verify existing whole-visit bounds and stock CLI before proposing a small timeout-policy correction; no rerun or timing is authorized here. Remaining qualification uses full categories/variants, raw benchstat and n>=24 or p<.01 criteria; an added equivalence bound or overstrict ancillary early/late protocol is not itself a submission gate.",
-        "recheckCondition": "Owning fixture functional preflight, required workload qualification, an actual prerequisite/decision or an explicit hold change; do not duplicate the owner’s observer."
+        "nextAction": "analysis_delivery owns the remaining performance matrix and A/A admission. Root coordinates #17884 and the remaining capability/fixture/behavior gates: sandboxsetup_test, sandbox_test, docprocessor_test and sandbox_py_test. Preserve exact source-bound evidence and source/publication requirements; no readiness, full runtime or performance-clearance claim.",
+        "recheckCondition": "Actual prerequisite landing, required workload/A-A qualification or a resolved named capability/fixture/behavior gate."
       },
       "head": "26090b334cf9c5f4657ec33aef64efc6fa86ef82",
       "settledReviews": [
@@ -133762,13 +133812,14 @@
           "https://github.com/tamird/gvisor/actions/runs/45617576724/artifacts/15024070114"
         ],
         "owner": "root",
-        "disposition": "The complete 54-commit implementation at 26090b334 is reviewable; Module-aware NoGo passes 891 validators per ISA. Remaining performance gates: 40 network A/B variants, MM/syscall A/B and filesystem A/A+A/B. Eight FUSE capability holds, one Fastlane baseline functional failure and four behavioral provider/baseline failures remain distinct; #17884 is open.",
-        "nextAction": "analysis_delivery owns the concrete Hey deadline-censoring versus complete-workload measurement blocker. Shared strict JSON/count/status collection passed all eight functional visits, then correctly rejected the N1000/C1000 Httpd case with 389 successful requests and 611 timeouts: Bazel failed, no benchmark row was accepted, cleanup passed. Verify existing whole-visit bounds and stock CLI before proposing a small timeout-policy correction; no rerun or timing is authorized here. Remaining qualification uses full categories/variants, raw benchstat and n>=24 or p<.01 criteria; an added equivalence bound or overstrict ancillary early/late protocol is not itself a submission gate.",
-        "recheckCondition": "Owning fixture functional preflight, required workload qualification, an actual prerequisite/decision or an explicit hold change; do not duplicate the owner’s observer.",
+        "disposition": "The distinct 54-commit analyzer series at 26090b334 is complete and reviewable: dependency bump, then 53 analyzer activations/fixes. Both architectures passed all 891 fresh static validators. Publication readiness remains blocked by open prerequisite #17884, incomplete performance/A-A admission, eight FUSE capability cases, the Fastlane baseline fixture and four behavioral targets.",
+        "nextAction": "analysis_delivery owns the remaining performance matrix and A/A admission. Root coordinates #17884 and the remaining capability/fixture/behavior gates: sandboxsetup_test, sandbox_test, docprocessor_test and sandbox_py_test. Preserve exact source-bound evidence and source/publication requirements; no readiness, full runtime or performance-clearance claim.",
+        "recheckCondition": "Actual prerequisite landing, required workload/A-A qualification or a resolved named capability/fixture/behavior gate.",
         "sourceHead": "26090b334cf9c5f4657ec33aef64efc6fa86ef82",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
-        "implementationOwner": "analysis_delivery"
+        "implementationOwner": "analysis_delivery",
+        "curatedAt": "2026-11-25T16:22:07.608415+00:00"
       },
       "comparisons": [
         {
