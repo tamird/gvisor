@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-25T23:15:59.484334+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-25T23:00:04.041520+00:00",
+  "registryDate": "2026-11-25T23:17:55.397746+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -463298,12 +463298,12 @@
       "mergeabilityCheckedAt": "2026-11-25T23:15:57.105500+00:00",
       "sourceBranchMismatch": false,
       "owner": "approved_rebase_queue",
-      "action": "approved_rebase_queue and root assess the retained slowdown before any publication decision. Preserve the completed A/A and actual binary/source bindings; no repeat, extra samples or broad performance clearance.",
+      "action": "Root and approved_rebase_queue follow actual #17929/#17930 source or landing, then assess only a small residual/test follow-up. Preserve the private candidate and measured slowdown; no duplicate production rewrite, foreign approval transfer, retry, outreach or publication.",
       "recordedFollowup": {
         "owner": "approved_rebase_queue",
         "sourceHead": "32fd9c26abba8ceb7d68c6aacfd565bda81f839a",
-        "disposition": "Public #17131 remains at 32fd9c26; private 99628869e is functionally qualified. Matched A/B 45716033027 retained 24 pairs and found a 4.51% initial-attach-cycle slowdown for four FDs/two processors (reported p<0.001), with no control flags. Allocation improvements do not erase that timing regression. Performance remains held pending source/measurement assessment.",
-        "nextAction": "approved_rebase_queue and root assess the retained slowdown before any publication decision. Preserve the completed A/A and actual binary/source bindings; no repeat, extra samples or broad performance clearance."
+        "disposition": "Public #17131 remains at 32fd9c26; private 99628869e is functionally qualified but its matched A/B observed a 4.51% four-FD/two-processor attach-cycle slowdown. Foreign #17930 moves all three workers into Attach.prepare and overlaps the core pre-attach lifetime fix; its reattach/shutdown semantics differ. Performance is not accepted, and the duplicate production rewrite is deferred.",
+        "nextAction": "Root and approved_rebase_queue follow actual #17929/#17930 source or landing, then assess only a small residual/test follow-up. Preserve the private candidate and measured slowdown; no duplicate production rewrite, foreign approval transfer, retry, outreach or publication."
       },
       "conflictObservedSince": "2026-11-23T21:26:12.901588+00:00"
     },
@@ -463321,13 +463321,13 @@
       "checkedAt": "2026-11-25T23:15:58.893473+00:00",
       "mergeabilityCheckedAt": "2026-11-25T23:15:58.893473+00:00",
       "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
+      "owner": "approved_rebase_queue",
+      "action": "Root and approved_rebase_queue assess the retained control’s drift and precision before any candidate timing. No repeat, worker-wide inference, timing expansion or end-to-end latency claim; source/performance/publication boundaries remain.",
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue",
         "sourceHead": "f069808da1b9876130c7a853fe2fbb9f815d8519",
-        "disposition": "Current f069808da is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
-        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge."
+        "disposition": "Public #17286 remains at f069808da; private 2d81758a1054 retains affected functional/source qualification. Timing-path admission proved an actual DelayedACKs counter increment. Same-source control 45719158653 had no adjusted flags, but Setup’s early/late baseline median moved +9.2% and the delayed-ACK late interval reached ±15%. Candidate timing is held; simulated timing does not establish end-to-end latency.",
+        "nextAction": "Root and approved_rebase_queue assess the retained control’s drift and precision before any candidate timing. No repeat, worker-wide inference, timing expansion or end-to-end latency claim; source/performance/publication boundaries remain."
       },
       "conflictObservedSince": "2026-11-20T23:52:55.787276+00:00"
     },
@@ -471930,7 +471930,7 @@
         "since": "2026-11-25T22:15:30.434231+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "pr:14458": {
@@ -472693,7 +472693,7 @@
         "since": "2026-11-25T20:26:19.847463+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "pr:15202": {
@@ -473670,7 +473670,7 @@
         "since": "2026-11-25T20:26:38.821906+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "pr:15648": {
@@ -475010,7 +475010,7 @@
         "since": "2026-11-25T22:41:21.827202+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "pr:16445": {
@@ -475625,7 +475625,7 @@
         "since": "2026-11-25T22:35:10.106729+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "pr:16661": {
@@ -476406,7 +476406,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "pr:16822": {
@@ -476488,7 +476488,7 @@
         "since": "2026-11-25T23:00:04.041520+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "pr:16828": {
@@ -477086,7 +477086,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "pr:16958": {
@@ -477145,7 +477145,7 @@
         "since": "2026-11-25T21:37:40.347012+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "pr:16963": {
@@ -478574,7 +478574,7 @@
         "since": "2026-11-25T22:30:31.228636+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "pr:17370": {
@@ -478599,7 +478599,7 @@
         "since": "2026-11-25T22:34:48.644451+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "pr:17376": {
@@ -478622,7 +478622,7 @@
         "since": "2026-11-25T22:30:31.228636+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "pr:17377": {
@@ -478843,7 +478843,7 @@
         "since": "2026-11-25T22:30:31.228636+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "pr:17480": {
@@ -480026,7 +480026,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -480035,7 +480035,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -480044,7 +480044,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -480053,7 +480053,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -480062,7 +480062,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -480071,7 +480071,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -480080,7 +480080,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -480089,7 +480089,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "issue:17832": {
@@ -480098,7 +480098,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "branch:hey-report-cap-accounting": {
@@ -480107,7 +480107,7 @@
         "since": "2026-11-25T22:03:16.345652+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     },
     "investigation:ci-benchmark-fuse-device": {
@@ -480116,7 +480116,7 @@
         "since": "2026-11-25T21:11:04.741354+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:00:04.041520+00:00"
+        "observedAt": "2026-11-25T23:17:55.397746+00:00"
       }
     }
   },
