@@ -1376,6 +1376,9 @@ func TestMetricProfiling(t *testing.T) {
 					prevValues[i-1] = m
 				}
 			}
+			if err := lines.Err(); err != nil {
+				t.Fatalf("Read metric output: %v", err)
+			}
 			expectedMinNumDatapoints := int(0.7 * float32(test.numIterations))
 			if numDatapoints < expectedMinNumDatapoints {
 				t.Errorf("numDatapoints: got %d, want at least %d", numDatapoints, expectedMinNumDatapoints)

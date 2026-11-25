@@ -74,6 +74,9 @@ func cgroupRootDirectory(ctrl string) (string, error) {
 			}
 		}
 	}
+	if err := scanner.Err(); err != nil {
+		return "", fmt.Errorf("failed to read %s: %w", path, err)
+	}
 	return "", fmt.Errorf("no cgroup hierarchy mounted for controller %s", ctrl)
 }
 
@@ -106,6 +109,9 @@ func currentCgroup(ctrl string) (string, error) {
 				return fields[2], nil
 			}
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		return "", fmt.Errorf("failed to read %s: %w", path, err)
 	}
 	return "", fmt.Errorf("not a member of a cgroup hierarchy for controller %s", ctrl)
 }

@@ -94,6 +94,9 @@ func parseCgroupRoot(r io.Reader) string {
 			return mountPoint
 		}
 	}
+	if err := scanner.Err(); err != nil {
+		log.Warningf("Failed to read cgroup mount information: %v", err)
+	}
 	return "/sys/fs/cgroup"
 }
 

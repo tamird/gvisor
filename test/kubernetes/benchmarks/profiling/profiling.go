@@ -516,8 +516,12 @@ func (r *dirStreamReader) processLogs() {
 		}()
 		if err != nil {
 			r.errCh <- err
-			break
+			return
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		r.errCh <- err
+		return
 	}
 	r.errCh <- io.EOF
 }

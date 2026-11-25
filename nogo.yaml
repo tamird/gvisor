@@ -203,12 +203,8 @@ analyzers:
   scannererr:
     internal:
       exclude:
-        - ".*" # Temporary: migrate scannererr.
         # readUntil treats read errors and EOF as an unsuccessful match.
-        - '^pkg/test/testutil/testutil\.go:760:8$'
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate scannererr.
+        - '^pkg/test/testutil/testutil\.go:758:8$'
   slicesbackward:
     internal:
       exclude:

@@ -599,7 +599,7 @@ func TestRunProxyModeWithSeccomp(t *testing.T) {
 		outputMu   sync.Mutex
 		childOut   bytes.Buffer
 		childReady = make(chan bool, 1)
-		readerDone = make(chan struct{})
+		readerDone = make(chan error, 1)
 	)
 	getChildOutput := func() string {
 		outputMu.Lock()
@@ -608,6 +608,7 @@ func TestRunProxyModeWithSeccomp(t *testing.T) {
 	}
 	go func() {
 		defer close(readerDone)
+		defer pr.Close()
 		scanner := bufio.NewScanner(pr)
 		readySent := false
 		for scanner.Scan() {
@@ -624,6 +625,7 @@ func TestRunProxyModeWithSeccomp(t *testing.T) {
 		if !readySent {
 			close(childReady)
 		}
+		readerDone <- scanner.Err()
 	}()
 
 	cmd.Stdout = pw
@@ -647,10 +649,10 @@ func TestRunProxyModeWithSeccomp(t *testing.T) {
 	select {
 	case ok := <-childReady:
 		if !ok {
-			<-readerDone
+			readErr := <-readerDone
 			waitErr := cmd.Wait()
 			cmdWaited = true
-			t.Fatalf("child netgofer exited before becoming ready (%v); output:\n%s", waitErr, getChildOutput())
+			t.Fatalf("child netgofer exited before becoming ready (%v; output reader: %v); output:\n%s", waitErr, readErr, getChildOutput())
 		}
 	case <-time.After(10 * time.Second):
 		t.Fatalf("timed out waiting for child netgofer ready log; output:\n%s", getChildOutput())
@@ -676,8 +678,11 @@ func TestRunProxyModeWithSeccomp(t *testing.T) {
 	closeClientFD()
 	cmdWaited = true
 	if err := cmd.Wait(); err != nil {
-		<-readerDone
-		t.Fatalf("seccomp child process failed: %v\noutput:\n%s", err, getChildOutput())
+		readErr := <-readerDone
+		t.Fatalf("seccomp child process failed: %v (output reader: %v)\noutput:\n%s", err, readErr, getChildOutput())
+	}
+	if err := <-readerDone; err != nil {
+		t.Fatalf("read child netgofer output: %v", err)
 	}
 }
 

@@ -95,5 +95,8 @@ func (c *Symbolize) Execute(_ context.Context, f *flag.FlagSet, args ...any) sub
 			return util.Errorf("Failed to symbolize \"%s\": %v", scanner.Text(), err)
 		}
 	}
+	if err := scanner.Err(); err != nil {
+		return util.Errorf("Failed to read symbol addresses: %v", err)
+	}
 	return subcommands.ExitSuccess
 }

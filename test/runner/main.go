@@ -776,6 +776,14 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 					warningsFound = append(warningsFound, strings.TrimSpace(line))
 				}
 			}
+			scanErr := scanner.Err()
+			closeErr := f.Close()
+			if scanErr != nil {
+				return fmt.Errorf("read runsc log %s: %w", file.Name(), scanErr)
+			}
+			if closeErr != nil {
+				return closeErr
+			}
 		}
 		if len(warningsFound) > 0 {
 			return fmt.Errorf("warnings found: %s", warningsFound)
