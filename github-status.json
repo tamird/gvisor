@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-25T10:07:16.271790+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-25T03:43:36.676192+00:00",
+  "registryDate": "2026-11-25T10:10:54.050204+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -460389,14 +460389,14 @@
       "mergeabilityCheckedAt": "2026-11-25T10:07:08.831385+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Follow maintainer review/reapproval and import of the exact DCO replacement. Ayush's unchanged Thanks for the fix review and existing import request contain no new author work or reply request. No public export is currently recorded; preserve the existing maintainer import ownership and do not send a duplicate acknowledgement or review request.\n\nRequired first-pass CI (source 2457939ec15647b0908859936941c569b0a04cce; observed 2026-11-17T19:29:29.454062+00:00): build 1445 has buildkite/first-pass/pr FAILURE. Pipeline upload exits 1: Queue 'default' does not exist in the 'untrusted' cluster. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Coordinate source pipeline agent selection with the actual upstream cluster queue policy; confirm the accepted configuration before any authorized retry. Recheck: Supported source/queue configuration is confirmed and provider quota permits validation.",
+      "action": "Root reconciles the new conflict within the existing maintainer/source coordination, preserving sensitive-work and performance boundaries before any source adaptation. No source edit, build/test, automatic reapproval, unchanged CI retry, duplicate reply or outreach follows from this metadata recovery.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "2457939ec15647b0908859936941c569b0a04cce",
-        "disposition": "Inspected the complete live conversation. Prior review body, state and submission time are unchanged; only its provider association and updated time differ. This is informational and does not establish a newly submitted human approval. GitHub aggregate review remains REVIEW_REQUIRED.",
-        "nextAction": "Follow maintainer review/reapproval and import of the exact DCO replacement. Ayush's unchanged Thanks for the fix review and existing import request contain no new author work or reply request. No public export is currently recorded; preserve the existing maintainer import ownership and do not send a duplicate acknowledgement or review request.\n\nRequired first-pass CI (source 2457939ec15647b0908859936941c569b0a04cce; observed 2026-11-17T19:29:29.454062+00:00): build 1445 has buildkite/first-pass/pr FAILURE. Pipeline upload exits 1: Queue 'default' does not exist in the 'untrusted' cluster. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Coordinate source pipeline agent selection with the actual upstream cluster queue policy; confirm the accepted configuration before any authorized retry. Recheck: Supported source/queue configuration is confirmed and provider quota permits validation."
+        "disposition": "Unchanged 2457939ec is now conflicting against the current base. Historical LisaFS socket/node-lifetime qualification and maintainer review remain source-bound; no approval or validation transfers to a future integration delta. Earlier untrusted-queue admission evidence remains separate.",
+        "nextAction": "Root reconciles the new conflict within the existing maintainer/source coordination, preserving sensitive-work and performance boundaries before any source adaptation. No source edit, build/test, automatic reapproval, unchanged CI retry, duplicate reply or outreach follows from this metadata recovery."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-25T10:07:08.831385+00:00"
     },
     {
       "repo": "google/gvisor",
@@ -475552,7 +475552,7 @@
         "since": "2026-11-25T03:43:36.676192+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T03:43:36.676192+00:00"
+        "observedAt": "2026-11-25T10:10:54.050204+00:00"
       }
     },
     "pr:17191": {
@@ -477843,7 +477843,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T03:43:36.676192+00:00"
+        "observedAt": "2026-11-25T10:10:54.050204+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -477852,7 +477852,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T03:43:36.676192+00:00"
+        "observedAt": "2026-11-25T10:10:54.050204+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -477861,7 +477861,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T03:43:36.676192+00:00"
+        "observedAt": "2026-11-25T10:10:54.050204+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -477870,7 +477870,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T03:43:36.676192+00:00"
+        "observedAt": "2026-11-25T10:10:54.050204+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -477879,7 +477879,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T03:43:36.676192+00:00"
+        "observedAt": "2026-11-25T10:10:54.050204+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -477888,7 +477888,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T03:43:36.676192+00:00"
+        "observedAt": "2026-11-25T10:10:54.050204+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -477897,7 +477897,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T03:43:36.676192+00:00"
+        "observedAt": "2026-11-25T10:10:54.050204+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -477906,7 +477906,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T03:43:36.676192+00:00"
+        "observedAt": "2026-11-25T10:10:54.050204+00:00"
       }
     },
     "issue:17832": {
@@ -477915,7 +477915,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T03:43:36.676192+00:00"
+        "observedAt": "2026-11-25T10:10:54.050204+00:00"
       }
     },
     "branch:arm-premerge-cpp-lint": {
@@ -477924,7 +477924,7 @@
         "since": "2026-11-24T18:07:30.803456+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T03:43:36.676192+00:00"
+        "observedAt": "2026-11-25T10:10:54.050204+00:00"
       }
     },
     "branch:clang-tidy-process-failures": {
@@ -477933,7 +477933,7 @@
         "since": "2026-11-24T18:07:30.803456+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T03:43:36.676192+00:00"
+        "observedAt": "2026-11-25T10:10:54.050204+00:00"
       }
     },
     "branch:sysbench-summary-output": {
@@ -477942,7 +477942,7 @@
         "since": "2026-11-25T01:21:15.429370+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T03:43:36.676192+00:00"
+        "observedAt": "2026-11-25T10:10:54.050204+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -477951,7 +477951,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T03:43:36.676192+00:00"
+        "observedAt": "2026-11-25T10:10:54.050204+00:00"
       }
     },
     "investigation:ci-flake-node-worker-arraybuffer-zerofill": {
@@ -477960,7 +477960,7 @@
         "since": "2026-11-24T18:06:03.132845+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T03:43:36.676192+00:00"
+        "observedAt": "2026-11-25T10:10:54.050204+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -477969,7 +477969,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T03:43:36.676192+00:00",
+        "observedAt": "2026-11-25T10:10:54.050204+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     },
@@ -477979,7 +477979,7 @@
         "since": "2026-11-25T01:21:15.429370+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T03:43:36.676192+00:00"
+        "observedAt": "2026-11-25T10:10:54.050204+00:00"
       }
     }
   },

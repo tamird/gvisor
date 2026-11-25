@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T03:43:36.676192+00:00",
+    "updatedAt": "2026-11-25T10:10:54.050204+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2340,12 +2340,12 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": null,
-      "updatedAt": "2026-11-17T19:27:27.069527+00:00",
-      "summary": "Published the fixture fix. Only an absent TEST_TMPDIR falls back to os.TempDir; an explicitly empty value fails.",
+      "updatedAt": "2026-11-25T10:10:54.050204+00:00",
+      "summary": "Unchanged 2457939ec is now conflicting against the current base. Historical LisaFS socket/node-lifetime qualification and maintainer review remain source-bound; no approval or validation transfers to a future integration delta. Earlier untrusted-queue admission evidence remains separate.",
       "followup": {
-        "disposition": "Inspected the complete live conversation. Prior review body, state and submission time are unchanged; only its provider association and updated time differ. This is informational and does not establish a newly submitted human approval. GitHub aggregate review remains REVIEW_REQUIRED.",
+        "disposition": "Unchanged 2457939ec is now conflicting against the current base. Historical LisaFS socket/node-lifetime qualification and maintainer review remain source-bound; no approval or validation transfers to a future integration delta. Earlier untrusted-queue admission evidence remains separate.",
         "owner": "root",
-        "nextAction": "Follow maintainer review/reapproval and import of the exact DCO replacement. Ayush's unchanged Thanks for the fix review and existing import request contain no new author work or reply request. No public export is currently recorded; preserve the existing maintainer import ownership and do not send a duplicate acknowledgement or review request.\n\nRequired first-pass CI (source 2457939ec15647b0908859936941c569b0a04cce; observed 2026-11-17T19:29:29.454062+00:00): build 1445 has buildkite/first-pass/pr FAILURE. Pipeline upload exits 1: Queue 'default' does not exist in the 'untrusted' cluster. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Coordinate source pipeline agent selection with the actual upstream cluster queue policy; confirm the accepted configuration before any authorized retry. Recheck: Supported source/queue configuration is confirmed and provider quota permits validation.",
+        "nextAction": "Root reconciles the new conflict within the existing maintainer/source coordination, preserving sensitive-work and performance boundaries before any source adaptation. No source edit, build/test, automatic reapproval, unchanged CI retry, duplicate reply or outreach follows from this metadata recovery.",
         "sourceHead": "2457939ec15647b0908859936941c569b0a04cce",
         "mergeable": "MERGEABLE",
         "evidence": [
@@ -2357,8 +2357,8 @@
           "https://buildkite.com/gvisor/first-pass/builds/1445",
           "https://buildkite.com/gvisor/first-pass/builds/1445#01a1ead1-be31-4430-8185-f9fee90713f1"
         ],
-        "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "recheckCondition": "New substantive feedback or an edited review body; source/import head or status change; a new maintainer approval/reapproval decision.\n\nSupported source/queue configuration is confirmed and provider quota permits validation.",
+        "observedAt": "2026-11-25T10:10:54.050204+00:00",
+        "recheckCondition": "Actual source/base/mergeability change, a bounded owner disposition or explicit change to applicable source holds.",
         "attentionDispositions": [
           {
             "reason": "author-feedback",
@@ -2559,7 +2559,9 @@
           "reviewDecision": null,
           "reviewedAt": "2026-10-10T14:31:51.129671+00:00"
         }
-      }
+      },
+      "nextStep": "Root reconciles the new conflict within the existing maintainer/source coordination, preserving sensitive-work and performance boundaries before any source adaptation. No source edit, build/test, automatic reapproval, unchanged CI retry, duplicate reply or outreach follows from this metadata recovery.",
+      "recheckCondition": "Actual source/base/mergeability change, a bounded owner disposition or explicit change to applicable source holds."
     },
     {
       "id": "pr:14360",
@@ -122547,8 +122549,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-25T03:43:36.676192+00:00",
-      "summary": "The native-first guard executed at 03:38:22 UTC and found no newer/live collection. API version 2026-03-10 returned collector 45541397778 directly; exact readback verified creation at 2026-11-25T03:38:45Z. It completed successfully and delivered API 2026-11-25T03:41:37.020916+00:00. Prior native delivery, missed-deadline ownership evidence and bounded 503 read retry remain retained; no scheduler cause is inferred.",
+      "updatedAt": "2026-11-25T10:10:54.050204+00:00",
+      "summary": "User-requested one-shot collector 45591409191 succeeded and delivered API 2026-11-25T10:07:16.271790+00:00. The prior 04:41:37 guard/05:11:37 deadline was missed after the owner ended around 03:47 with no manual observer armed. Native workflow 378998679 remains active with its ten-minute cron, but no native event newer than the 01:32:13 scheduled run is established. Unattended freshness remains an external scheduling/delivery limitation with unknown native-event cause; this recovery is not a recurring fix.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122791,7 +122793,7 @@
           ]
         }
       ],
-      "nextStep": "tracker_health_resume owns the next native-first guard at 04:41:37 UTC and deadline 05:11:37, with root supervision. Reuse actual fresh/live native work before at most one necessary direct-ID fallback. No new scheduler, duplicate observer, speculative reset or metadata clock reset.",
+      "nextStep": "This one-shot recovery ends after verified public delivery; no future manual guard is armed. Preserve the existing active workflow and bounded 503 read retry. Reconcile actual future native deliveries or separately established execution ownership before claiming unattended freshness; no second scheduler, reset, access change or promised foreground fallback.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122887,29 +122889,29 @@
         }
       ],
       "technicalOwner": "Codex",
-      "recheckCondition": "Actual post-reset scheduled event/completion or existing manual freshness lead; preserve the one-reset boundary.",
+      "recheckCondition": "An actual new native schedule event/delivery, demonstrated source/config defect or separately established real delivery mechanism; a calculated future timestamp alone is not an armed guard.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
-        "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+        "nextAction": "This one-shot recovery ends after verified public delivery; no future manual guard is armed. Preserve the existing active workflow and bounded 503 read retry. Reconcile actual future native deliveries or separately established execution ownership before claiming unattended freshness; no second scheduler, reset, access change or promised foreground fallback.",
+        "recheckCondition": "An actual new native schedule event/delivery, demonstrated source/config defect or separately established real delivery mechanism; a calculated future timestamp alone is not an armed guard."
       },
       "currentHealth": {
-        "observedAt": "2026-11-22T01:16:21.953242+00:00",
+        "observedAt": "2026-11-25T10:10:54.050204+00:00",
         "owner": "root",
         "workflowState": "active",
         "actionsEnabled": true,
-        "defaultWorkflowHead": "fc8a0f4298cb4b48dd2109ed3c8029f1f0c4871d",
+        "defaultWorkflowHead": "5d504727a0851a505875c8b7fc3ce85a8302a78a",
         "cron": "7,17,27,37,47,57 * * * *",
-        "latestNativeScheduleRun": 44970034296,
-        "latestNativeScheduleAt": "2026-11-22T01:08:34Z",
+        "latestNativeScheduleRun": 45526464103,
+        "latestNativeScheduleAt": "2026-11-25T01:32:13Z",
         "latestNativeScheduleConclusion": "success",
-        "currentManualSweep": 44968409941,
-        "currentSnapshotAt": "2026-11-22T01:11:37.920377+00:00",
+        "currentManualSweep": 45591409191,
+        "currentSnapshotAt": "2026-11-25T10:07:16.271790+00:00",
         "currentManualConclusion": "success",
-        "cause": "Two scheduled deliveries are verified, separated by an irregular interval; sustained cadence and reset causality remain unproved.",
-        "nextAction": "At each existing freshness lead derived from the actual API timestamp, check for a newer or live native scheduled run before using the existing snapshot-only fallback. Observe subsequent scheduled deliveries before claiming sustained recovery. Preserve the one-reset boundary; no new monitor or source/cron rewrite.",
-        "recheckCondition": "Next actual scheduled delivery or existing timestamp-derived manual freshness lead; no second reset.",
-        "currentSnapshotSource": "Verified scheduled run 44970034296"
+        "cause": "No source/config defect is demonstrated. Native event gaps have unknown external scheduling/delivery cause. The 04:41:37 guard/05:11:37 deadline was missed without an armed manual observer after the prior owner ended around 03:47; earlier 21:35 miss remains an ownership/timing failure, not proved provider dispatch delay.",
+        "nextAction": "This one-shot recovery ends after verified public delivery; no future manual guard is armed. Preserve the existing active workflow and bounded 503 read retry. Reconcile actual future native deliveries or separately established execution ownership before claiming unattended freshness; no second scheduler, reset, access change or promised foreground fallback.",
+        "recheckCondition": "An actual new native schedule event/delivery, demonstrated source/config defect or separately established real delivery mechanism; a calculated future timestamp alone is not an armed guard.",
+        "currentSnapshotSource": "User-requested one-shot manual collector 45591409191"
       },
       "followup": {
         "evidence": [
@@ -122937,12 +122939,14 @@
           "https://github.com/tamird/gvisor/actions/runs/45524494233",
           "https://github.com/tamird/gvisor/actions/runs/45526464103",
           "https://github.com/tamird/gvisor/actions/runs/45534009507",
-          "https://github.com/tamird/gvisor/actions/runs/45541397778"
+          "https://github.com/tamird/gvisor/actions/runs/45541397778",
+          "https://github.com/tamird/gvisor/actions/runs/45591409191",
+          "https://github.com/tamird/gvisor/blob/5d504727a0851a505875c8b7fc3ce85a8302a78a/.github/workflows/work-map.yml"
         ],
-        "observedAt": "2026-11-25T03:43:36.676192+00:00",
-        "disposition": "The native-first guard executed at 03:38:22 UTC and found no newer/live collection. API version 2026-03-10 returned collector 45541397778 directly; exact readback verified creation at 2026-11-25T03:38:45Z. It completed successfully and delivered API 2026-11-25T03:41:37.020916+00:00. Prior native delivery, missed-deadline ownership evidence and bounded 503 read retry remain retained; no scheduler cause is inferred.",
-        "nextAction": "tracker_health_resume owns the next native-first guard at 04:41:37 UTC and deadline 05:11:37, with root supervision. Reuse actual fresh/live native work before at most one necessary direct-ID fallback. No new scheduler, duplicate observer, speculative reset or metadata clock reset.",
-        "recheckCondition": "Actual newer/live native delivery or the next due freshness guard.",
+        "observedAt": "2026-11-25T10:10:54.050204+00:00",
+        "disposition": "User-requested one-shot collector 45591409191 succeeded and delivered API 2026-11-25T10:07:16.271790+00:00. The prior 04:41:37 guard/05:11:37 deadline was missed after the owner ended around 03:47 with no manual observer armed. Native workflow 378998679 remains active with its ten-minute cron, but no native event newer than the 01:32:13 scheduled run is established. Unattended freshness remains an external scheduling/delivery limitation with unknown native-event cause; this recovery is not a recurring fix.",
+        "nextAction": "This one-shot recovery ends after verified public delivery; no future manual guard is armed. Preserve the existing active workflow and bounded 503 read retry. Reconcile actual future native deliveries or separately established execution ownership before claiming unattended freshness; no second scheduler, reset, access change or promised foreground fallback.",
+        "recheckCondition": "An actual new native schedule event/delivery, demonstrated source/config defect or separately established real delivery mechanism; a calculated future timestamp alone is not an armed guard.",
         "owner": "root"
       }
     },
@@ -138538,8 +138542,8 @@
       "status": "active",
       "group": "tests",
       "owner": "root",
-      "updatedAt": "2026-11-25T03:45:02.939955+00:00",
-      "summary": "Public current-master status for 79815415 reports PGO build 4024 SUCCESS. Earlier build 3910 remains a historical failure with unknown cause and restricted diagnostics; it is no longer the current default-branch result. Status success alone does not prove a profile commit or explain the old failure.",
+      "updatedAt": "2026-11-25T10:10:54.050204+00:00",
+      "summary": "Public current-master status for 8075b384 reports PGO build 4029 SUCCESS. Historical build 3910 remains an unexplained failure; the canonical PGO reader still returns 403. Current status success does not prove profile publication or explain the old failure.",
       "findings": [
         {
           "text": "A scan of 1,019 published commits found every numbered build in that interval. Build #3173 on 689b011dd passed in 17m31s. Build #3174 on d39e500a2, the Go 1.27.2 upgrade, failed in 3h55m. Build #3781 on 2552c6787 failed in 4h30m.",
@@ -138623,7 +138627,7 @@
           ]
         }
       ],
-      "nextStep": "Root follows an actual new PGO/default-branch failure or naturally accessible diagnostic/profile-publication evidence. No unchanged restricted-build retry, broader credential request or inferred old-failure remediation.",
+      "nextStep": "Root follows an actual new PGO/default-branch failure or naturally accessible diagnostic/profile-publication evidence. No restricted-build retry, broader credential request, inferred profile refresh or old-failure remediation.",
       "evidence": [
         {
           "label": "Publisher correction, gVisor #17492",
@@ -138698,18 +138702,19 @@
       "recheckCondition": "A new source-bound PGO result, accessible diagnostic evidence or actual profile-publication event.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Root follows an actual new PGO/default-branch failure or naturally accessible diagnostic/profile-publication evidence. No unchanged restricted-build retry, broader credential request or inferred old-failure remediation.",
+        "nextAction": "Root follows an actual new PGO/default-branch failure or naturally accessible diagnostic/profile-publication evidence. No restricted-build retry, broader credential request, inferred profile refresh or old-failure remediation.",
         "recheckCondition": "A new source-bound PGO result, accessible diagnostic evidence or actual profile-publication event."
       },
       "followup": {
         "curatedAt": "2026-11-19T11:00:16.411290+00:00",
-        "nextAction": "Root follows an actual new PGO/default-branch failure or naturally accessible diagnostic/profile-publication evidence. No unchanged restricted-build retry, broader credential request or inferred old-failure remediation.",
+        "nextAction": "Root follows an actual new PGO/default-branch failure or naturally accessible diagnostic/profile-publication evidence. No restricted-build retry, broader credential request, inferred profile refresh or old-failure remediation.",
         "recheckCondition": "A new source-bound PGO result, accessible diagnostic evidence or actual profile-publication event.",
         "owner": "root",
-        "disposition": "Public current-master status for 79815415 reports PGO build 4024 SUCCESS. Earlier build 3910 remains a historical failure with unknown cause and restricted diagnostics; it is no longer the current default-branch result. Status success alone does not prove a profile commit or explain the old failure.",
-        "observedAt": "2026-11-25T03:45:02.939955+00:00",
+        "disposition": "Public current-master status for 8075b384 reports PGO build 4029 SUCCESS. Historical build 3910 remains an unexplained failure; the canonical PGO reader still returns 403. Current status success does not prove profile publication or explain the old failure.",
+        "observedAt": "2026-11-25T10:10:54.050204+00:00",
         "evidence": [
-          "https://buildkite.com/gvisor/pgo-profiles/builds/4024"
+          "https://buildkite.com/gvisor/pgo-profiles/builds/4024",
+          "https://buildkite.com/gvisor/pgo-profiles/builds/4029"
         ]
       }
     },
