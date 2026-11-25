@@ -16,6 +16,7 @@ package tests
 
 import (
 	"context"
+	"slices"
 
 	"gvisor.dev/gvisor/pkg/state"
 )
@@ -121,7 +122,7 @@ type sliceValueHolder struct {
 }
 
 func (h *sliceValueHolder) saveItems() []sliceValueElem {
-	return append([]sliceValueElem(nil), h.items...)
+	return slices.Concat(h.items)
 }
 
 func (h *sliceValueHolder) loadItems(_ context.Context, items []sliceValueElem) {
@@ -130,5 +131,5 @@ func (h *sliceValueHolder) loadItems(_ context.Context, items []sliceValueElem) 
 			state.Failf("sliceValueHolder.loadItems ran before element LoadValue callbacks")
 		}
 	}
-	h.items = append([]sliceValueElem(nil), items...)
+	h.items = slices.Concat(items)
 }

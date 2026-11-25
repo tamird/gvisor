@@ -86,6 +86,7 @@
 package scsdk
 
 import (
+	"slices"
 	"sync"
 )
 
@@ -172,8 +173,8 @@ func (pt *ProcessTracker) RegisterOrUpdate(execve *ExecutionEvent) *ProcessInfo 
 	info.ProcessName = execve.Context.ProcessName
 	info.ParentThreadGroupID = execve.Context.ParentThreadGroupID
 	info.BinaryPath = execve.BinaryPath
-	info.Argv = append([]string(nil), execve.Argv...)
-	info.Env = append([]string(nil), execve.Env...)
+	info.Argv = slices.Concat(execve.Argv)
+	info.Env = slices.Concat(execve.Env)
 	return info
 }
 

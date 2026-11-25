@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"slices"
 	"testing"
 
 	"golang.org/x/sys/unix"
@@ -182,7 +183,7 @@ func TestDispatchMalformedIPv4(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			data := append(append([]byte(nil), test.ethHdr...), netHdr...)
+			data := slices.Concat(test.ethHdr, netHdr)
 			if err := unix.Sendmsg(fds[1], data, nil, nil, 0); err != nil {
 				t.Fatal(err)
 			}

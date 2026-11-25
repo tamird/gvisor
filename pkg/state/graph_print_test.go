@@ -161,7 +161,7 @@ func TestPrintGraphUnexportedInlineMapAndTrailingData(t *testing.T) {
 		}
 	}
 
-	withTrailing := append(append([]byte(nil), raw...), 0xff)
+	withTrailing := append(bytes.Clone(raw), 0xff)
 	var out strings.Builder
 	if err := PrintGraph(&out, withTrailing, 0, false); err == nil || !strings.Contains(err.Error(), "trailing data") {
 		t.Fatalf("PrintGraph with trailing byte = %v, want trailing data error", err)

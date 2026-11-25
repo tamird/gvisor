@@ -237,7 +237,7 @@ func testWritePacket(t *testing.T, plen int, eth bool, gsoMaxSize uint32, hash u
 	}
 
 	// Write.
-	want := append(append([]byte{}, b...), payload...)
+	want := slices.Concat(b, payload)
 	const l3HdrLen = header.IPv6MinimumSize
 	if gsoMaxSize != 0 {
 		pkt.GSOOptions = stack.GSO{
@@ -528,7 +528,7 @@ func TestIovecBuffer(t *testing.T) {
 
 			// Make a copy as iovecs points to internal slice. We will need this state
 			// later.
-			oldIovecs := append([]unix.Iovec(nil), iovecs...)
+			oldIovecs := slices.Concat[[]unix.Iovec](iovecs)
 
 			// Test the buffer that get pulled.
 			buf := b.pullBuffer(c.n)

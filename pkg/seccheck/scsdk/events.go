@@ -15,6 +15,8 @@
 package scsdk
 
 import (
+	"slices"
+
 	pointspb "gvisor.dev/gvisor/pkg/sentry/seccheck/points/points_go_proto"
 )
 
@@ -77,10 +79,10 @@ func ToExecutionEvent(execve *pointspb.ExecveInfo) *ExecutionEvent {
 	}
 
 	if len(execve.GetArgv()) > 0 {
-		ev.Argv = append([]string(nil), execve.GetArgv()...)
+		ev.Argv = slices.Clone(execve.GetArgv())
 	}
 	if len(execve.GetEnv()) > 0 {
-		ev.Env = append([]string(nil), execve.GetEnv()...)
+		ev.Env = slices.Clone(execve.GetEnv())
 	}
 
 	if pipeIn := execve.GetPipeInputProc(); pipeIn != nil {

@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -166,7 +167,7 @@ func TestReadPasstFrame(t *testing.T) {
 	frame := testPasstFrame(header.IPv4ProtocolNumber, pkt)
 
 	t.Run("two frames", func(t *testing.T) {
-		r := bytes.NewReader(append(append([]byte{}, frame...), frame...))
+		r := bytes.NewReader(slices.Concat(frame, frame))
 		buf := make([]byte, passtMaxFrameSize)
 		for i := range 2 {
 			got, err := readPasstFrame(r, buf)
@@ -365,11 +366,11 @@ func TestPasstPacketAllowed(t *testing.T) {
 		DstAddr:           tcpip.AddrFrom16([16]byte{0xfe, 0x80, 15: 1}),
 	})
 	copy(ipv6TCP[header.IPv6MinimumSize:], testTCP(80))
-	ipv6TCPPublic := append([]byte(nil), ipv6TCP...)
+	ipv6TCPPublic := slices.Concat[[]byte](ipv6TCP)
 	header.IPv6(ipv6TCPPublic).SetDestinationAddress(tcpip.AddrFrom16([16]byte{0x20, 0x01, 0x48, 0x60, 0x48, 0x60, 15: 0x88}))
 	// A 60-byte IPv6 packet that claims a 1000-byte payload. The filter must
 	// reject it without reading past the packet.
-	ipv6BadLen := append([]byte(nil), ipv6TCPPublic...)
+	ipv6BadLen := slices.Concat[[]byte](ipv6TCPPublic)
 	header.IPv6(ipv6BadLen).SetPayloadLength(1000)
 	for _, tc := range []struct {
 		name string

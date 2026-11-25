@@ -155,7 +155,7 @@ func (test testVariant) failureCases() []testVariant {
 	}
 	for i, capAdd := range test.CapAdd {
 		copy := failureCase(fmt.Sprintf("without capability %s", capAdd))
-		copy.CapAdd = append(append([]string(nil), test.CapAdd[:i]...), test.CapAdd[i+1:]...)
+		copy.CapAdd = slices.Concat(test.CapAdd[:i], test.CapAdd[i+1:])
 		failureCases = append(failureCases, copy)
 	}
 	for _, tryRemoveArg := range []string{
@@ -164,7 +164,7 @@ func (test testVariant) failureCases() []testVariant {
 	} {
 		if index := slices.Index(test.Args, tryRemoveArg); index != -1 {
 			copy := failureCase(fmt.Sprintf("without argument %s", tryRemoveArg))
-			copy.Args = append(append([]string(nil), test.Args[:index]...), test.Args[index+1:]...)
+			copy.Args = slices.Concat(test.Args[:index], test.Args[index+1:])
 			failureCases = append(failureCases, copy)
 		}
 	}

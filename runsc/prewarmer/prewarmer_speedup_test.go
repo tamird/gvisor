@@ -66,7 +66,7 @@ func timedRun(t *testing.T, cmd *exec.Cmd) time.Duration {
 }
 
 func p50(durations []time.Duration) time.Duration {
-	sorted := append([]time.Duration(nil), durations...)
+	sorted := slices.Concat[[]time.Duration](durations)
 	slices.Sort(sorted)
 	return sorted[len(sorted)/2]
 }

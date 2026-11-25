@@ -17,6 +17,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"slices"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/buffer"
@@ -237,7 +238,7 @@ func TestPacketHeaderPushConsumeMixed(t *testing.T) {
 	network := makeView(20)
 	data := makeView(30)
 
-	initData := append([]byte(nil), network...)
+	initData := slices.Concat[[]byte](network)
 	initData = append(initData, data...)
 	pk := NewPacketBuffer(PacketBufferOptions{
 		ReserveHeaderBytes: len(link),

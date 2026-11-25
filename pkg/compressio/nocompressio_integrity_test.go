@@ -20,6 +20,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
+	"slices"
 	"testing"
 )
 
@@ -206,7 +207,7 @@ func TestInPlaceTamperIsRejected(t *testing.T) {
 	data := testData(8192)
 	stream := writeKeyed(t, data, 4096)
 	for _, pos := range []int{0, 4, 100, len(stream) / 2, len(stream) - sha256.Size, len(stream) - 1} {
-		tampered := append([]byte(nil), stream...)
+		tampered := slices.Concat[[]byte](stream)
 		tampered[pos] ^= 0xFF
 
 		r := newReader(tampered)
@@ -300,7 +301,7 @@ func TestVerifyGivesReadError(t *testing.T) {
 		{
 			name: "hash-mismatch",
 			stream: func() []byte {
-				s := append([]byte(nil), stream...)
+				s := slices.Concat[[]byte](stream)
 				s[4+len(data)/2] ^= 0xFF
 				return s
 			}(),

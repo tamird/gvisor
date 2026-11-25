@@ -20,6 +20,7 @@ package nftables
 import (
 	"fmt"
 	"math"
+	"slices"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/marshal/primitive"
@@ -107,7 +108,7 @@ func (op *compatMASQTarget) checkCompatibility(cCtx *opCompatCtx) *syserr.Annota
 // deepCopy implements operation.deepCopy.
 func (op *compatMASQTarget) deepCopy() operation {
 	opCopy := *op
-	opCopy.infoData = append([]byte(nil), op.infoData...)
+	opCopy.infoData = slices.Concat[[]byte](op.infoData)
 	return &opCopy
 }
 

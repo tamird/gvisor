@@ -17,6 +17,7 @@ package precompiledseccomp
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -179,7 +180,7 @@ func AllVarSyscallNumbers(syscalls []VarSyscall) VarSyscallNumbers {
 // with the given names, with arbitrary syscall numbers that are valid for
 // rendering programs precompiled with them.
 func PrecompileSyscallNumbers(names ...string) VarSyscallNumbers {
-	names = append([]string(nil), names...)
+	names = slices.Concat[[]string](names)
 	sort.Strings(names)
 	sn := make(VarSyscallNumbers, len(names))
 	for i, name := range names {

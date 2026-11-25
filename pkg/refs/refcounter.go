@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"fmt"
 	"runtime"
+	"slices"
 
 	"gvisor.dev/gvisor/pkg/atomicbitops"
 	"gvisor.dev/gvisor/pkg/context"
@@ -163,7 +164,7 @@ func RecordStack() []uintptr {
 	v, ok := stackCache.entries[key]
 	if !ok {
 		// Reallocate to prevent pcs from escaping.
-		v = append([]uintptr(nil), pcs...)
+		v = slices.Clone(pcs)
 		stackCache.entries[key] = v
 	}
 	stackCache.Unlock()

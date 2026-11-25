@@ -402,13 +402,6 @@ analyzers:
     # Controversial.
     internal:
       exclude: [".*"]
-  appendclipped:
-    internal:
-      exclude:
-        - ".*" # Temporary: migrate appendclipped.
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate appendclipped.
   slicesdelete:
     internal:
       exclude:

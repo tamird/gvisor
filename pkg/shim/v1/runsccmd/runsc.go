@@ -25,6 +25,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"time"
 
@@ -805,5 +806,5 @@ func cloneBuf(b *bytes.Buffer) []byte {
 	if b == nil {
 		return nil
 	}
-	return append([]byte(nil), b.Bytes()...)
+	return slices.Concat[[]byte](b.Bytes())
 }

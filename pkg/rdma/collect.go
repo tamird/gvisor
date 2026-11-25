@@ -21,6 +21,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -331,7 +332,7 @@ func (d *Device) collectPorts(ibDir string) error {
 		}
 		d.Ports[num] = Port{
 			StaticAttrs:    staticAttrs,
-			LiveAttrs:      append([]string{}, portLiveAttrNames...),
+			LiveAttrs:      slices.Clone(portLiveAttrNames),
 			GIDNames:       gids,
 			PKeyNames:      pkeys,
 			CounterNames:   counters,

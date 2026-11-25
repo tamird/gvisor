@@ -630,7 +630,7 @@ func collectCreds(status, refStatus map[string]string) (Credentials, error) {
 	}
 	sort.Strings(c.ExtraGroups)
 
-	sorted := append([]string(nil), groups...)
+	sorted := slices.Concat[[]string](groups)
 	sort.Strings(sorted)
 	switch {
 	case len(sorted) == 0:

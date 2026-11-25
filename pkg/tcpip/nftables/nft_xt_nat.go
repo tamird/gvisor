@@ -19,6 +19,7 @@ package nftables
 
 import (
 	"fmt"
+	"slices"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/marshal/primitive"
@@ -99,7 +100,7 @@ func (op *compatNATTarget) checkCompatibility(cCtx *opCompatCtx) *syserr.Annotat
 // deepCopy implements operation.deepCopy.
 func (op *compatNATTarget) deepCopy() operation {
 	opCopy := *op
-	opCopy.infoData = append([]byte(nil), op.infoData...)
+	opCopy.infoData = slices.Concat[[]byte](op.infoData)
 	return &opCopy
 }
 

@@ -17,6 +17,8 @@
 package precompiled
 
 import (
+	"slices"
+
 	"gvisor.dev/gvisor/pkg/seccomp/precompiledseccomp"
 )
 
@@ -43,5 +45,5 @@ func GetPrecompiled(programName string) (precompiledseccomp.Program, bool) {
 
 // ListPrecompiled returns a list of all registered program names.
 func ListPrecompiled() []string {
-	return append([]string(nil), precompiledProgramNames...)
+	return slices.Concat(precompiledProgramNames)
 }

@@ -18,6 +18,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -94,7 +95,7 @@ func TestPassFDCLI(t *testing.T) {
 			restoreArgs := []string{"restore", "--detach", "--image-path", checkpoint, "--bundle", bundle}
 			if mode == "restore-created" {
 				run([]*os.File{after}, "create", "--pass-fd=3:3,3:4", "--bundle", bundle, id)
-				args := append(append([]string{}, restoreArgs...), "--pass-fd=3:3,3:4", id)
+				args := append(slices.Clone(restoreArgs), "--pass-fd=3:3,3:4", id)
 				out, err := command([]*os.File{before}, args...).CombinedOutput()
 				if err == nil || !strings.Contains(string(out), "pass-fd must be supplied when creating") {
 					t.Fatalf("replacement mapping: got err %v, output %s", err, out)
