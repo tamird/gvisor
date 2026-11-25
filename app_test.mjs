@@ -84,7 +84,8 @@ test('a requested rebase belongs to its author and source head', () => {
 test('a default-branch result directs the investigation owner using the observed commit', () => {
   const c = client(), id = 'investigation:pgo';
   const item = { id, title: 'PGO refresh', owner: 'agent', status: 'active', group: 'tests', updatedAt: c.registryInput.meta.updatedAt,
-    summary: 'Refresh profiles', findings: [], evidence: [], nextStep: 'Inspect the failing stage.',
+    summary: 'Refresh profiles', findings: [{ text: 'Historical investigation evidence.', evidence: [] }],
+    evidence: [], nextStep: 'Inspect the failing stage.', followup: { recheckCondition: 'The owning qualification result.' },
     defaultBranchCheck: { context: 'buildkite/pgo-profiles', onSuccess: 'Verify the published profile.' } };
   Object.assign(c.registryInput, { groups: [{ id: 'tests', label: 'Tests' }], nodes: [], edges: [], investigations: [item] });
   const check = { head: 'a'.repeat(40), branch: 'master', context: item.defaultBranchCheck.context };
@@ -110,6 +111,11 @@ test('a default-branch result directs the investigation owner using the observed
     assert.ok(rendered.includes(state === 'SUCCESS' ? item.defaultBranchCheck.onSuccess : ['FAILURE', 'ERROR'].includes(state) ? item.nextStep : 'Wait for a completed status on this commit.'));
     assert.equal(rendered.includes(item.defaultBranchCheck.onSuccess), state === 'SUCCESS');
     if (state !== 'MISSING') assert.ok(rendered.includes(check.url));
+    const next = state === 'SUCCESS' ? item.defaultBranchCheck.onSuccess
+      : ['FAILURE', 'ERROR'].includes(state) ? item.nextStep : 'Wait for a completed status on this commit.';
+    assert.ok(rendered.indexOf(next) < rendered.indexOf('Historical investigation evidence.'));
+    assert.ok(rendered.indexOf('Recheck: The owning qualification result.') >= 0);
+    assert.ok(rendered.indexOf('Recheck: The owning qualification result.') < rendered.indexOf('Historical investigation evidence.'));
   }
   check.url = 'https://buildkite.com/gvisor/pgo-profiles/builds/37';
   assert.throws(draw, /Invalid default-branch check/);

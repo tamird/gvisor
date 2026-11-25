@@ -1639,6 +1639,11 @@ function drawInvestigations() {
     control.dataset.investigation = item.id; control.setAttribute("aria-current", selected === item.id ? "true" : "false"); heading.append(control);
     card.append(heading, badge({ text: item.status === "active" ? "Active" : "Concluded", tone: item.status === "active" ? "pending" : "good" }),
       element("span", "investigation-meta", `Owner: ${item.owner} · updated ${date(item.updatedAt)}`), element("p", "investigation-summary", item.summary));
+    const node = nodes.get(item.id);
+    if (node) appendInvestigationSource(card, node);
+    const nextStep = investigationNextStep(item);
+    if (nextStep) card.append(element("h3", "", item.status === "active" ? "Next step" : "Recommendation"), element("p", "", nextStep));
+    if (item.followup?.recheckCondition) card.append(element("p", "investigation-meta", `Recheck: ${item.followup.recheckCondition}`));
     if (item.comparisons?.length) card.append(element("h3", "", "Verified comparisons"));
     for (const comparison of item.comparisons || []) {
       const section = element("section", "investigation-comparison"), table = element("table", "comparison-table");
@@ -1657,9 +1662,7 @@ function drawInvestigations() {
       section.append(table, element("p", "comparison-note", comparison.note), investigationEvidence(comparison.evidence));
       card.append(section);
     }
-    const node = nodes.get(item.id);
     if (node) {
-      appendInvestigationSource(card, node);
       appendContributorDecisions(card, node, pendingDecisions(node));
       appendSettledPublications(card, node);
       appendHumanAction(card, node);
@@ -1678,8 +1681,6 @@ function drawInvestigations() {
       if (check.description) line.append(" · " + check.description);
       card.append(line);
     }
-    const nextStep = investigationNextStep(item);
-    if (nextStep) card.append(element("h3", "", item.status === "active" ? "Next step" : "Recommendation"), element("p", "", nextStep));
     if (item.evidence.length) {
       card.append(investigationEvidence(item.evidence));
     }
