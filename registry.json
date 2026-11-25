@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T20:14:46.158965+00:00",
+    "updatedAt": "2026-11-25T20:23:42.090467+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -6765,14 +6765,14 @@
       "url": "https://github.com/google/gvisor/pull/15189",
       "group": "runtime",
       "status": "open",
-      "summary": "Current 88b54c90a is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
+      "summary": "Public #15189 remains unchanged at 88b54c90a and conflicting. Current-base candidate 40d658b147 removes only duplicate imports/dependencies already upstream and preserves the approved cleanup logic. Graph/source, owning stack/netstack unit and NoGo gates, and linked runsc/Sentry builds passed on both architectures. Root’s final context/safety/performance and publication review remains.",
       "number": 15189,
       "reviewDecision": "",
-      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
+      "updatedAt": "2026-11-25T20:23:42.090467+00:00",
       "followup": {
-        "disposition": "Current 88b54c90a is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
-        "owner": "root",
-        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
+        "disposition": "Public #15189 remains unchanged at 88b54c90a and conflicting. Current-base candidate 40d658b147 removes only duplicate imports/dependencies already upstream and preserves the approved cleanup logic. Graph/source, owning stack/netstack unit and NoGo gates, and linked runsc/Sentry builds passed on both architectures. Root’s final context/safety/performance and publication review remains.",
+        "owner": "approved_rebase_queue / root",
+        "nextAction": "Root completes final context/safety/performance and publication review of exact 40d658b147 under existing grants; do not transfer its private qualification to the unchanged public head.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15189",
           "https://github.com/tamird/gvisor/actions/runs/42350364656/artifacts/13565357543",
@@ -6790,12 +6790,18 @@
           "https://buildkite.com/gvisor/first-pass/builds/1447#01a1ead0-e625-421e-978a-a8e2ffa21425",
           "https://buildkite.com/gvisor/first-pass/builds/1447#01a1ead0-e626-4f3c-a20b-e2acf261231d",
           "https://buildkite.com/gvisor/first-pass/builds/1447#01a1ead0-e626-4b58-87d1-33489f293aa6",
-          "https://buildkite.com/gvisor/first-pass/builds/1447#01a1ead0-e627-44e3-9d15-d3fccc570c83"
+          "https://buildkite.com/gvisor/first-pass/builds/1447#01a1ead0-e627-44e3-9d15-d3fccc570c83",
+          "https://github.com/tamird/gvisor/actions/runs/45692389850",
+          "https://github.com/tamird/gvisor/actions/runs/45692394054",
+          "https://github.com/tamird/gvisor/actions/runs/45692943549",
+          "https://github.com/tamird/gvisor/actions/runs/45692951218",
+          "https://github.com/tamird/gvisor/actions/runs/45692957318",
+          "https://github.com/tamird/gvisor/actions/runs/45692962660"
         ],
         "sourceHead": "88b54c90a3442188496cedaa3590d10409590861",
         "mergeable": "CONFLICTING",
         "observedAt": "2026-11-24T04:47:08.376554+00:00",
-        "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change.",
+        "recheckCondition": "Existing owner’s terminal qualification/final review or actual public source/review change.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -6828,7 +6834,13 @@
             }
           }
         ],
-        "curatedAt": "2026-11-25T15:19:00.232145+00:00"
+        "curatedAt": "2026-11-25T20:23:42.090467+00:00",
+        "candidate": {
+          "head": "40d658b147fd3ab5d10a0d37c4a5fd56c121f3fe",
+          "ci": "56707aeb8a01673b4ba3f17d85449d09038c05c1",
+          "base": "bd985598c2fbd6f26f92bbe28685d63095f970c2",
+          "publication": "Not published; public source unchanged"
+        }
       },
       "head": "88b54c90a3442188496cedaa3590d10409590861",
       "evidence": [
@@ -6880,8 +6892,8 @@
         },
         "historicalOutreachClockHead": "4677b6d5ab8676013afe8e5074ca776e9aabaafd"
       },
-      "nextStep": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
-      "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change."
+      "nextStep": "Root completes final context/safety/performance and publication review of exact 40d658b147 under existing grants; do not transfer its private qualification to the unchanged public head.",
+      "recheckCondition": "Existing owner’s terminal qualification/final review or actual public source/review change."
     },
     {
       "id": "pr:15188",
@@ -16964,8 +16976,8 @@
       "group": "rbe",
       "url": "https://github.com/google/gvisor/pull/15647",
       "status": "open",
-      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
-      "summary": "Current 94e3488d9 is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
+      "updatedAt": "2026-11-25T20:23:42.090467+00:00",
+      "summary": "Public #15647 remains unchanged at 94e3488d9 and conflicting. Current-base candidate e1e2d0356 preserves the upstream VDSOParamsFileRange correction. Graph/source and both-architecture binary builds passed. Both architectures passed six actual native/reference-systrap/save-restore clock cases with no skips; owning unit/NoGo terminal results remain with approved_rebase_queue.",
       "number": 15647,
       "reviewDecision": null,
       "evidence": [
@@ -16991,11 +17003,11 @@
         }
       ],
       "followup": {
-        "owner": "root",
-        "disposition": "Current 94e3488d9 is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
+        "owner": "approved_rebase_queue / root",
+        "disposition": "Public #15647 remains unchanged at 94e3488d9 and conflicting. Current-base candidate e1e2d0356 preserves the upstream VDSOParamsFileRange correction. Graph/source and both-architecture binary builds passed. Both architectures passed six actual native/reference-systrap/save-restore clock cases with no skips; owning unit/NoGo terminal results remain with approved_rebase_queue.",
         "sourceHead": "94e3488d99cba57f92c7acc767eae3d2d4b0f5a5",
         "observedAt": "2026-11-23T00:18:10.610714+00:00",
-        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
+        "nextAction": "approved_rebase_queue reconciles the existing unit/NoGo results, then root completes final context/safety/performance and publication review. Preserve current source-bound qualification limits; no public delivery is claimed.",
         "evidence": [
           {
             "label": "All four clock and restore results",
@@ -17007,11 +17019,23 @@
           },
           "https://github.com/gvisor/gvisor/pull/15647",
           "https://github.com/tamird/gvisor/commit/80bbb7478312a10e7335a5475c9683a76d5c17d6",
-          "https://github.com/tamird/gvisor/commit/94e3488d99cba57f92c7acc767eae3d2d4b0f5a5"
+          "https://github.com/tamird/gvisor/commit/94e3488d99cba57f92c7acc767eae3d2d4b0f5a5",
+          "https://github.com/tamird/gvisor/actions/runs/45691560610",
+          "https://github.com/tamird/gvisor/actions/runs/45691564319",
+          "https://github.com/tamird/gvisor/actions/runs/45692353866",
+          "https://github.com/tamird/gvisor/actions/runs/45692359308",
+          "https://github.com/tamird/gvisor/actions/runs/45692338733",
+          "https://github.com/tamird/gvisor/actions/runs/45692342931"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change.",
-        "curatedAt": "2026-11-25T15:19:00.232145+00:00"
+        "recheckCondition": "Existing owner’s terminal qualification/final review or actual public source/review change.",
+        "curatedAt": "2026-11-25T20:23:42.090467+00:00",
+        "candidate": {
+          "head": "e1e2d03562b5215e8815237efb607627fe2c6033",
+          "ci": "edc583a3b2df4defa5ba175e14002863dbe3e0b5",
+          "base": "bd985598c2fbd6f26f92bbe28685d63095f970c2",
+          "publication": "Not published; public source unchanged"
+        }
       },
       "dcoAmendment": {
         "oldHead": "80bbb7478312a10e7335a5475c9683a76d5c17d6",
@@ -17035,8 +17059,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "PR reviewers"
       },
-      "nextStep": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
-      "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change."
+      "nextStep": "approved_rebase_queue reconciles the existing unit/NoGo results, then root completes final context/safety/performance and publication review. Preserve current source-bound qualification limits; no public delivery is claimed.",
+      "recheckCondition": "Existing owner’s terminal qualification/final review or actual public source/review change."
     },
     {
       "id": "branch:nvproxy-declared-sources",
@@ -124995,9 +125019,9 @@
       "id": "investigation:runtime-startup",
       "title": "Runtime startup performance",
       "status": "active",
-      "owner": "analysis_delivery",
-      "updatedAt": "2026-11-25T20:13:29.584037+00:00",
-      "summary": "Tamir approved the source-bound remote Moby rebuild on ce1634b4a. The build and image package checks passed; a later wrapper string assertion failed and was recovered offline. Routine remote builds within authorized work have permanent standing authorization. No image was published and no performance result is claimed.",
+      "owner": "root",
+      "updatedAt": "2026-11-25T20:22:37.899685+00:00",
+      "summary": "The approved remote Moby rebuild on exact ce1634b4a and owning Bazel validation are complete. The build/package checks passed; the later wrapper assertion failure is retained with its offline source binding. Run 45692299082 built moby_test and passed empty-selection TestMain. No image was published, no workload performance was measured, and no build approval remains.",
       "findings": [
         {
           "text": "A stopped Nginx worker still has an open listener: the old port check passed while the GET timed out. After resuming that worker, the same GET returned HTTP 200. Both existing AMD64 checkpoint and restore benchmarks completed with the new probe. The benchmark measures readiness to serve a request, including Docker exec time.",
@@ -125246,7 +125270,7 @@
           ]
         }
       ],
-      "nextStep": "analysis_delivery consumes the owning Bazel build/TestMain empty-selection result from run 45692299082. This validation needs no Docker image. Preserve the separate P64 and performance/source-publication holds.",
+      "nextStep": "Root retains the separately scoped startup/performance work and Iperf P64 blocker. The completed build and empty-selection validation need no further consumption or rebuild; image-dependent workload qualification is separate from this fulfilled build obligation.",
       "evidence": [
         {
           "label": "Merged Nginx restore-benchmark HTTP readiness change",
@@ -125449,11 +125473,11 @@
         }
       ],
       "technicalOwner": "Codex",
-      "recheckCondition": "Terminal owning Bazel validation or a genuine source/qualification change.",
+      "recheckCondition": "Actual new startup/performance or source/prerequisite evidence under the existing owner and authorization.",
       "lifecycleCoordination": {
-        "owner": "analysis_delivery",
-        "nextAction": "analysis_delivery consumes the owning Bazel build/TestMain empty-selection result from run 45692299082. This validation needs no Docker image. Preserve the separate P64 and performance/source-publication holds.",
-        "recheckCondition": "Terminal owning Bazel validation or a genuine source/qualification change."
+        "owner": "root",
+        "nextAction": "Root retains the separately scoped startup/performance work and Iperf P64 blocker. The completed build and empty-selection validation need no further consumption or rebuild; image-dependent workload qualification is separate from this fulfilled build obligation.",
+        "recheckCondition": "Actual new startup/performance or source/prerequisite evidence under the existing owner and authorization."
       },
       "group": "runtime",
       "repo": "google/gvisor",
@@ -125479,11 +125503,11 @@
         }
       ],
       "followup": {
-        "owner": "analysis_delivery",
-        "disposition": "Tamir approved the source-bound remote Moby rebuild on ce1634b4a. The build and image package checks passed; a later wrapper string assertion failed and was recovered offline. Routine remote builds within authorized work have permanent standing authorization. No image was published and no performance result is claimed.",
-        "nextAction": "analysis_delivery consumes the owning Bazel build/TestMain empty-selection result from run 45692299082. This validation needs no Docker image. Preserve the separate P64 and performance/source-publication holds.",
-        "recheckCondition": "Terminal owning Bazel validation or a genuine source/qualification change.",
-        "curatedAt": "2026-11-25T20:13:29.584037+00:00",
+        "owner": "root",
+        "disposition": "The approved remote Moby rebuild on exact ce1634b4a and owning Bazel validation are complete. The build/package checks passed; the later wrapper assertion failure is retained with its offline source binding. Run 45692299082 built moby_test and passed empty-selection TestMain. No image was published, no workload performance was measured, and no build approval remains.",
+        "nextAction": "Root retains the separately scoped startup/performance work and Iperf P64 blocker. The completed build and empty-selection validation need no further consumption or rebuild; image-dependent workload qualification is separate from this fulfilled build obligation.",
+        "recheckCondition": "Actual new startup/performance or source/prerequisite evidence under the existing owner and authorization.",
+        "curatedAt": "2026-11-25T20:22:37.899685+00:00",
         "sourceHead": "ce1634b4adf686f6067b4fed388de417efd43ddd",
         "remoteBuild": {
           "run": 45691659853,
@@ -125493,7 +125517,8 @@
           "buildExit": 0,
           "imageDigest": "sha256:f4b706b7068e741b4f6ebfd05aad7cd38bd50420d91b4a508bb12e829d06f7c9",
           "wrapperFailure": "Subsequent git-describe string assertion; recovered offline without rebuild",
-          "validationRun": 45692299082
+          "validationRun": 45692299082,
+          "validationStatus": "PASS: owning moby_test build and empty-selection TestMain on exact ce163"
         },
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45691659853",
