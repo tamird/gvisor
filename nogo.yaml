@@ -426,13 +426,6 @@ analyzers:
     # Controversial.
     internal:
       exclude: [".*"]
-  stdversion:
-    internal:
-      exclude:
-        - ".*" # Temporary: migrate stdversion.
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate stdversion.
   unusedwrite:
     internal:
       exclude:
