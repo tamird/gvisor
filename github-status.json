@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-25T03:41:37.020916+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-25T02:40:09.723370+00:00",
+  "registryDate": "2026-11-25T03:43:36.676192+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -460254,7 +460254,7 @@
       "number": 17184,
       "head": "2aa840f4ffe655f0c749185070fba77e676186b5",
       "sourceNumber": 17184,
-      "owner": "root / approved_rebase_queue",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABaKNTKA",
       "needsTriage": false,
@@ -460865,13 +460865,13 @@
       "checkedAt": "2026-11-25T03:41:35.366868+00:00",
       "mergeabilityCheckedAt": "2026-11-25T03:41:35.366868+00:00",
       "sourceBranchMismatch": false,
-      "owner": "root / approved_rebase_queue",
-      "action": "approved_rebase_queue owns the read-only full public-patch/merged #17822 overlap assessment for root. Preserve rejected private Go rewrite proposals, source/performance holds and old superseded asks. No source change, adopted reviewer scope, reply, closure or new publication question is authorized.",
+      "owner": "root",
+      "action": "Root awaits the existing closure/scope decision. Preserve the held private Go rewrite, legacy dependency, prior evidence and performance controls until the user decides. Do not infer literal full-source supersession, post a reply, close, amend source or repeat approval questions.",
       "recordedFollowup": {
-        "owner": "root / approved_rebase_queue",
+        "owner": "root",
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
-        "disposition": "Public 2aa840f4 remains conflicting and now has shailend-g changes requested: merged #17822 overlaps its readiness/retry/client-result handling, and the reviewer asks whether the residual ss wait and numeric-rate check are still wanted. This is external review evidence, not verified source equivalence or a new commitment. Private 4aba retains completed exact-source reviews and functional evidence; comparative performance remains unmet.",
-        "nextAction": "approved_rebase_queue owns the read-only full public-patch/merged #17822 overlap assessment for root. Preserve rejected private Go rewrite proposals, source/performance holds and old superseded asks. No source change, adopted reviewer scope, reply, closure or new publication question is authorized."
+        "disposition": "The read-only overlap assessment is complete: #17822 covers the observed startup/status/empty-rate failure. Only an unmotivated numeric/parallel SUM guard remains, without a demonstrated normal successful-producer failure. The actual close-with-reply versus retain-parser-guard decision is pending. No reply, closure or source change occurred.",
+        "nextAction": "Root awaits the existing closure/scope decision. Preserve the held private Go rewrite, legacy dependency, prior evidence and performance controls until the user decides. Do not infer literal full-source supersession, post a reply, close, amend source or repeat approval questions."
       },
       "conflictObservedSince": "2026-11-20T00:41:37.337032+00:00"
     },
@@ -475512,6 +475512,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-25T03:41:35.366868+00:00"
+      },
+      "contributor-review": {
+        "scope": "2aa840f4ffe655f0c749185070fba77e676186b5",
+        "since": "2026-11-25T03:43:36.676192+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-25T03:43:36.676192+00:00"
       }
     },
     "pr:17191": {
@@ -477802,7 +477809,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T02:40:09.723370+00:00"
+        "observedAt": "2026-11-25T03:43:36.676192+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -477811,7 +477818,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T02:40:09.723370+00:00"
+        "observedAt": "2026-11-25T03:43:36.676192+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -477820,7 +477827,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T02:40:09.723370+00:00"
+        "observedAt": "2026-11-25T03:43:36.676192+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -477829,7 +477836,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T02:40:09.723370+00:00"
+        "observedAt": "2026-11-25T03:43:36.676192+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -477838,7 +477845,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T02:40:09.723370+00:00"
+        "observedAt": "2026-11-25T03:43:36.676192+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -477847,7 +477854,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T02:40:09.723370+00:00"
+        "observedAt": "2026-11-25T03:43:36.676192+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -477856,7 +477863,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T02:40:09.723370+00:00"
+        "observedAt": "2026-11-25T03:43:36.676192+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -477865,7 +477872,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T02:40:09.723370+00:00"
+        "observedAt": "2026-11-25T03:43:36.676192+00:00"
       }
     },
     "issue:17832": {
@@ -477874,7 +477881,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T02:40:09.723370+00:00"
+        "observedAt": "2026-11-25T03:43:36.676192+00:00"
       }
     },
     "branch:arm-premerge-cpp-lint": {
@@ -477883,7 +477890,7 @@
         "since": "2026-11-24T18:07:30.803456+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T02:40:09.723370+00:00"
+        "observedAt": "2026-11-25T03:43:36.676192+00:00"
       }
     },
     "branch:clang-tidy-process-failures": {
@@ -477892,7 +477899,7 @@
         "since": "2026-11-24T18:07:30.803456+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T02:40:09.723370+00:00"
+        "observedAt": "2026-11-25T03:43:36.676192+00:00"
       }
     },
     "branch:sysbench-summary-output": {
@@ -477901,7 +477908,7 @@
         "since": "2026-11-25T01:21:15.429370+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T02:40:09.723370+00:00"
+        "observedAt": "2026-11-25T03:43:36.676192+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -477910,7 +477917,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T02:40:09.723370+00:00"
+        "observedAt": "2026-11-25T03:43:36.676192+00:00"
       }
     },
     "investigation:ci-flake-node-worker-arraybuffer-zerofill": {
@@ -477919,7 +477926,7 @@
         "since": "2026-11-24T18:06:03.132845+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T02:40:09.723370+00:00"
+        "observedAt": "2026-11-25T03:43:36.676192+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -477928,7 +477935,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T02:40:09.723370+00:00",
+        "observedAt": "2026-11-25T03:43:36.676192+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     },
@@ -477938,7 +477945,7 @@
         "since": "2026-11-25T01:21:15.429370+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T02:40:09.723370+00:00"
+        "observedAt": "2026-11-25T03:43:36.676192+00:00"
       }
     }
   },

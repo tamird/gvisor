@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T02:40:09.723370+00:00",
+    "updatedAt": "2026-11-25T03:43:36.676192+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -82916,7 +82916,7 @@
       "url": "https://github.com/google/gvisor/pull/17184",
       "group": "tests",
       "status": "open",
-      "summary": "Public 2aa840f4 remains conflicting and now has shailend-g changes requested: merged #17822 overlaps its readiness/retry/client-result handling, and the reviewer asks whether the residual ss wait and numeric-rate check are still wanted. This is external review evidence, not verified source equivalence or a new commitment. Private 4aba retains completed exact-source reviews and functional evidence; comparative performance remains unmet.",
+      "summary": "The read-only overlap assessment is complete: #17822 covers the observed startup/status/empty-rate failure. Only an unmotivated numeric/parallel SUM guard remains, without a demonstrated normal successful-producer failure. The actual close-with-reply versus retain-parser-guard decision is pending. No reply, closure or source change occurred.",
       "evidence": [
         {
           "label": "Published standalone benchmark correction",
@@ -82931,14 +82931,14 @@
           "url": "https://github.com/tamird/gvisor/blob/208cd127d/.github/qualification/tcp_benchmark_go.result.json"
         }
       ],
-      "updatedAt": "2026-11-25T02:40:09.723370+00:00",
+      "updatedAt": "2026-11-25T02:55:55.308741+00:00",
       "followup": {
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
-        "owner": "root / approved_rebase_queue",
-        "nextAction": "approved_rebase_queue owns the read-only full public-patch/merged #17822 overlap assessment for root. Preserve rejected private Go rewrite proposals, source/performance holds and old superseded asks. No source change, adopted reviewer scope, reply, closure or new publication question is authorized.",
+        "owner": "root",
+        "nextAction": "Root awaits the existing closure/scope decision. Preserve the held private Go rewrite, legacy dependency, prior evidence and performance controls until the user decides. Do not infer literal full-source supersession, post a reply, close, amend source or repeat approval questions.",
         "mergeable": "CONFLICTING",
-        "observedAt": "2026-11-25T02:40:09.723370+00:00",
-        "recheckCondition": "The existing owner returns its bounded read-only overlap assessment, or actual source/review evidence or user scope changes.",
+        "observedAt": "2026-11-25T02:55:55.308741+00:00",
+        "recheckCondition": "The user answers the existing closure/scope question or directly relevant new source evidence changes the assessment.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17184",
           "https://github.com/tamird/gvisor/commit/9c541c3ae1cd68df1741882480d5bf184396e695",
@@ -82984,7 +82984,7 @@
           "https://github.com/google/gvisor/pull/17184#pullrequestreview-6050501416",
           "https://github.com/gvisor/gvisor/pull/17822"
         ],
-        "disposition": "Public 2aa840f4 remains conflicting and now has shailend-g changes requested: merged #17822 overlaps its readiness/retry/client-result handling, and the reviewer asks whether the residual ss wait and numeric-rate check are still wanted. This is external review evidence, not verified source equivalence or a new commitment. Private 4aba retains completed exact-source reviews and functional evidence; comparative performance remains unmet.",
+        "disposition": "The read-only overlap assessment is complete: #17822 covers the observed startup/status/empty-rate failure. Only an unmotivated numeric/parallel SUM guard remains, without a demonstrated normal successful-producer failure. The actual close-with-reply versus retain-parser-guard decision is pending. No reply, closure or source change occurred.",
         "curatedAt": "2026-11-22T14:02:28.619749+00:00",
         "implementationOwner": "approved_rebase_queue",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
@@ -83012,8 +83012,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "approved_rebase_queue owns the read-only full public-patch/merged #17822 overlap assessment for root. Preserve rejected private Go rewrite proposals, source/performance holds and old superseded asks. No source change, adopted reviewer scope, reply, closure or new publication question is authorized.",
-      "recheckCondition": "A qualified stable performance route, new source-bound measurement evidence, a concrete source finding or a user decision changes the next action. No additional execution approval is needed for otherwise authorized validation.",
+      "nextStep": "Root awaits the existing closure/scope decision. Preserve the held private Go rewrite, legacy dependency, prior evidence and performance controls until the user decides. Do not infer literal full-source supersession, post a reply, close, amend source or repeat approval questions.",
+      "recheckCondition": "The user answers the existing closure/scope question or directly relevant new source evidence changes the assessment.",
       "refinement": {
         "before": {
           "head": "2aa840f4ffe655f0c749185070fba77e676186b5"
@@ -83074,7 +83074,16 @@
           "outcome": "changes-requested"
         }
       ],
-      "nextAction": "Root prioritizes the requested current-CI/cache research and proposed issue rewrite. On resumption, approved_rebase_queue compares the earlier lean Go baseline and identifies the smallest owning mechanism while preserving required behavior and meaningful negatives. Do not repeat an approval question or publish058."
+      "nextAction": "Root prioritizes the requested current-CI/cache research and proposed issue rewrite. On resumption, approved_rebase_queue compares the earlier lean Go baseline and identifies the smallest owning mechanism while preserving required behavior and meaningful negatives. Do not repeat an approval question or publish058.",
+      "contributorReview": {
+        "kind": "closure",
+        "status": "pending",
+        "head": "2aa840f4ffe655f0c749185070fba77e676186b5",
+        "url": "https://github.com/google/gvisor/pull/17184",
+        "title": "Close the covered TCP startup proposal",
+        "summary": "Review closing with the prepared reply or retaining only the parser guard. The assessment found #17822 covers the observed startup/status/empty-rate failure; no normal successful-producer failure motivates the residual numeric/parallel SUM guard. No literal full-source supersession is claimed.",
+        "body": "#17822 covers the startup and client-failure cases this PR targeted. I do not have a failing case for the remaining numeric/aggregate guard, so I am closing this.\n\nPosted by Codex on behalf of @tamird.\n"
+      }
     },
     {
       "id": "branch:tcp-dsack-below-ack-parity",
@@ -122538,8 +122547,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-25T02:40:09.723370+00:00",
-      "summary": "The due native-first guard found no newer/live delivery. Versioned API dispatch returned collector 45534009507 directly, with creation at 2026-11-25T02:35:10Z; it completed successfully and delivered API 2026-11-25T02:38:22.758878+00:00. The earlier scheduled delivery remains valid evidence of that run, not a proved cause for gaps. Prior missed-deadline ownership and bounded 503 read retry facts remain unchanged.",
+      "updatedAt": "2026-11-25T03:43:36.676192+00:00",
+      "summary": "The native-first guard executed at 03:38:22 UTC and found no newer/live collection. API version 2026-03-10 returned collector 45541397778 directly; exact readback verified creation at 2026-11-25T03:38:45Z. It completed successfully and delivered API 2026-11-25T03:41:37.020916+00:00. Prior native delivery, missed-deadline ownership evidence and bounded 503 read retry remain retained; no scheduler cause is inferred.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122782,7 +122791,7 @@
           ]
         }
       ],
-      "nextStep": "tracker_health_resume owns the next native-first guard at 03:38:22 UTC and deadline 04:08:22, with root supervision. Reuse actual fresh/live native delivery before at most one necessary versioned direct-ID fallback; no duplicate observer, new scheduler, speculative reset or metadata clock reset.",
+      "nextStep": "tracker_health_resume owns the next native-first guard at 04:41:37 UTC and deadline 05:11:37, with root supervision. Reuse actual fresh/live native work before at most one necessary direct-ID fallback. No new scheduler, duplicate observer, speculative reset or metadata clock reset.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122927,11 +122936,12 @@
           "https://github.com/gvisor/gvisor/actions/runs/45507638072",
           "https://github.com/tamird/gvisor/actions/runs/45524494233",
           "https://github.com/tamird/gvisor/actions/runs/45526464103",
-          "https://github.com/tamird/gvisor/actions/runs/45534009507"
+          "https://github.com/tamird/gvisor/actions/runs/45534009507",
+          "https://github.com/tamird/gvisor/actions/runs/45541397778"
         ],
-        "observedAt": "2026-11-25T02:40:09.723370+00:00",
-        "disposition": "The due native-first guard found no newer/live delivery. Versioned API dispatch returned collector 45534009507 directly, with creation at 2026-11-25T02:35:10Z; it completed successfully and delivered API 2026-11-25T02:38:22.758878+00:00. The earlier scheduled delivery remains valid evidence of that run, not a proved cause for gaps. Prior missed-deadline ownership and bounded 503 read retry facts remain unchanged.",
-        "nextAction": "tracker_health_resume owns the next native-first guard at 03:38:22 UTC and deadline 04:08:22, with root supervision. Reuse actual fresh/live native delivery before at most one necessary versioned direct-ID fallback; no duplicate observer, new scheduler, speculative reset or metadata clock reset.",
+        "observedAt": "2026-11-25T03:43:36.676192+00:00",
+        "disposition": "The native-first guard executed at 03:38:22 UTC and found no newer/live collection. API version 2026-03-10 returned collector 45541397778 directly; exact readback verified creation at 2026-11-25T03:38:45Z. It completed successfully and delivered API 2026-11-25T03:41:37.020916+00:00. Prior native delivery, missed-deadline ownership evidence and bounded 503 read retry remain retained; no scheduler cause is inferred.",
+        "nextAction": "tracker_health_resume owns the next native-first guard at 04:41:37 UTC and deadline 05:11:37, with root supervision. Reuse actual fresh/live native work before at most one necessary direct-ID fallback. No new scheduler, duplicate observer, speculative reset or metadata clock reset.",
         "recheckCondition": "Actual newer/live native delivery or the next due freshness guard.",
         "owner": "root"
       }
@@ -135109,8 +135119,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-12T19:22:51+00:00",
-      "summary": "In several CI builds the first receive on a connected UDP socket succeeded where PacketImpact expected ECONNREFUSED. Builds #54608 and #54611 reproduced the assertion while #17312 was open. Neither original preserved the numeric return from recv.",
+      "updatedAt": "2026-11-25T02:57:09.139542+00:00",
+      "summary": "The blocked-receive correction and packet regression in #17312 merged on 2026-11-15. Historical CI missed ECONNREFUSED and did not preserve the numeric recv result; landing alone does not establish that the symptom cannot recur.",
       "findings": [
         {
           "text": "The two failing logs point to the same receive assertion. On each retry, the UDP ICMP-error target was the only one of 82 tests to rerun and passed in 9.7 seconds. Its log does not report the individual passing subtest.",
@@ -135281,7 +135291,7 @@
           ]
         }
       ],
-      "nextStep": "The blocked-receive fix and packet regression are in #17312. After it lands, check for further failures of the same UDP assertion in CI.",
+      "nextStep": "On natural recurrence, root binds the failing job to a source containing the landed correction and checks the same UDP assertion with available return-value evidence. No review/landing wait, unchanged retry, source change or new probe is queued.",
       "evidence": [
         {
           "label": "Standalone PR head, both UDP suites on native AMD64",
@@ -135341,11 +135351,22 @@
         }
       ],
       "technicalOwner": "CI flake triage",
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
+      "recheckCondition": "Natural recurrence or new source-bound causal evidence, respecting existing sensitive-work holds.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
-        "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+        "nextAction": "On natural recurrence, root binds the failing job to a source containing the landed correction and checks the same UDP assertion with available return-value evidence. No review/landing wait, unchanged retry, source change or new probe is queued.",
+        "recheckCondition": "Natural recurrence or new source-bound causal evidence, respecting existing sensitive-work holds."
+      },
+      "followup": {
+        "owner": "root",
+        "disposition": "The blocked-receive correction and packet regression in #17312 merged on 2026-11-15. Historical CI missed ECONNREFUSED and did not preserve the numeric recv result; landing alone does not establish that the symptom cannot recur.",
+        "nextAction": "On natural recurrence, root binds the failing job to a source containing the landed correction and checks the same UDP assertion with available return-value evidence. No review/landing wait, unchanged retry, source change or new probe is queued.",
+        "recheckCondition": "Natural recurrence or new source-bound causal evidence, respecting existing sensitive-work holds.",
+        "observedAt": "2026-11-25T02:57:09.139542+00:00",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/17312",
+          "https://github.com/gvisor/gvisor/commit/3ff623347f4361b9fb8671b38e26b18298840fbf"
+        ]
       }
     },
     {
@@ -137769,8 +137790,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-12T19:22:51+00:00",
-      "summary": "The stock packet-mode test expected a single TIOCPKT_DATA header for a translated line. Limiting its first native read to three bytes reproduced the same byte-comparison failure. The proposed one-byte case and the neighboring newline-translation case both passed on native Linux and systrap.",
+      "updatedAt": "2026-11-25T02:57:09.139542+00:00",
+      "summary": "The one-byte PTY packet-header test in #17484 merged as e8b720ea6 on 2026-11-24. Its landing/source correspondence is complete; prior native/systrap results retain their exact scopes. This does not prove absence of future PTY failures.",
       "findings": [
         {
           "text": "PtyTest.PacketModeWriteReplicaToMaster failed its full-buffer comparison at pty.cc:881. The adjacent job-control case passed. On retry, shard 1 ran and the other three shards supplied cached passes. The original log does not print the differing bytes.",
@@ -137812,7 +137833,7 @@
           ]
         }
       ],
-      "nextStep": "Follow review and CI on #17484. Compare a new failure with its one-byte packet read once the test change lands.",
+      "nextStep": "On a natural new packet-mode failure, root checks whether its source includes the landed one-byte test and compares the actual failure. No remaining PR review/import wait, duplicate patch, new test run or unchanged retry.",
       "evidence": [
         {
           "label": "Original native PTY test.log",
@@ -137856,11 +137877,22 @@
         }
       ],
       "technicalOwner": "CI flake triage",
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
+      "recheckCondition": "Natural source-bound PTY recurrence or an actual landing discrepancy.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
-        "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+        "nextAction": "On a natural new packet-mode failure, root checks whether its source includes the landed one-byte test and compares the actual failure. No remaining PR review/import wait, duplicate patch, new test run or unchanged retry.",
+        "recheckCondition": "Natural source-bound PTY recurrence or an actual landing discrepancy."
+      },
+      "followup": {
+        "owner": "root",
+        "disposition": "The one-byte PTY packet-header test in #17484 merged as e8b720ea6 on 2026-11-24. Its landing/source correspondence is complete; prior native/systrap results retain their exact scopes. This does not prove absence of future PTY failures.",
+        "nextAction": "On a natural new packet-mode failure, root checks whether its source includes the landed one-byte test and compares the actual failure. No remaining PR review/import wait, duplicate patch, new test run or unchanged retry.",
+        "recheckCondition": "Natural source-bound PTY recurrence or an actual landing discrepancy.",
+        "observedAt": "2026-11-25T02:57:09.139542+00:00",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/17484",
+          "https://github.com/gvisor/gvisor/commit/e8b720ea6d7ec662c22d573554d200f6af49d0c4"
+        ]
       }
     },
     {
@@ -138506,8 +138538,8 @@
       "status": "active",
       "group": "tests",
       "owner": "root",
-      "updatedAt": "2026-11-19T11:00:16.411290+00:00",
-      "summary": "Current-master PGO build3910 failed, but its first failing step and cause are unknown. The canonical reader returns403 and the user independently receives403. No user log-retrieval or approval obligation remains.",
+      "updatedAt": "2026-11-25T03:45:02.939955+00:00",
+      "summary": "Public current-master status for 79815415 reports PGO build 4024 SUCCESS. Earlier build 3910 remains a historical failure with unknown cause and restricted diagnostics; it is no longer the current default-branch result. Status success alone does not prove a profile commit or explain the old failure.",
       "findings": [
         {
           "text": "A scan of 1,019 published commits found every numbered build in that interval. Build #3173 on 689b011dd passed in 17m31s. Build #3174 on d39e500a2, the Go 1.27.2 upgrade, failed in 3h55m. Build #3781 on 2552c6787 failed in 4h30m.",
@@ -138591,7 +138623,7 @@
           ]
         }
       ],
-      "nextStep": "Root watches existing public default-branch/provider evidence for accessible diagnostics or a later informative run; preserve unknown cause and do not retry the restricted build or request broader credentials.",
+      "nextStep": "Root follows an actual new PGO/default-branch failure or naturally accessible diagnostic/profile-publication evidence. No unchanged restricted-build retry, broader credential request or inferred old-failure remediation.",
       "evidence": [
         {
           "label": "Publisher correction, gVisor #17492",
@@ -138663,16 +138695,22 @@
           "note": "The tested publisher change opened as one commit in #17492."
         }
       ],
-      "recheckCondition": "Public diagnostic access changes or a later PGO/default-branch event supplies primary evidence.",
+      "recheckCondition": "A new source-bound PGO result, accessible diagnostic evidence or actual profile-publication event.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
-        "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+        "nextAction": "Root follows an actual new PGO/default-branch failure or naturally accessible diagnostic/profile-publication evidence. No unchanged restricted-build retry, broader credential request or inferred old-failure remediation.",
+        "recheckCondition": "A new source-bound PGO result, accessible diagnostic evidence or actual profile-publication event."
       },
       "followup": {
         "curatedAt": "2026-11-19T11:00:16.411290+00:00",
-        "nextAction": "Root watches existing public default-branch/provider evidence for accessible diagnostics or a later informative run; preserve unknown cause and do not retry the restricted build or request broader credentials.",
-        "recheckCondition": "Public diagnostic access changes or a later PGO/default-branch event supplies primary evidence."
+        "nextAction": "Root follows an actual new PGO/default-branch failure or naturally accessible diagnostic/profile-publication evidence. No unchanged restricted-build retry, broader credential request or inferred old-failure remediation.",
+        "recheckCondition": "A new source-bound PGO result, accessible diagnostic evidence or actual profile-publication event.",
+        "owner": "root",
+        "disposition": "Public current-master status for 79815415 reports PGO build 4024 SUCCESS. Earlier build 3910 remains a historical failure with unknown cause and restricted diagnostics; it is no longer the current default-branch result. Status success alone does not prove a profile commit or explain the old failure.",
+        "observedAt": "2026-11-25T03:45:02.939955+00:00",
+        "evidence": [
+          "https://buildkite.com/gvisor/pgo-profiles/builds/4024"
+        ]
       }
     },
     {
@@ -138680,9 +138718,9 @@
       "title": "Netgofer connection-limit test times out waiting for proxy shutdown",
       "group": "ci-flakes",
       "status": "active",
-      "owner": "root",
-      "updatedAt": "2026-11-19T18:59:24.568877+00:00",
-      "summary": "A fresh matched AMD64 failure captured proxy shutdown waiting for its active recvMMsg receiver. Applying only the already-qualified EOF production fix passed full owning suites and200 targeted repetitions. This supports the mechanism in that context; historical ARM per-read values and exhaustive absence remain unproven.",
+      "owner": "eof_arm_resume",
+      "updatedAt": "2026-11-25T02:50:55.971781+00:00",
+      "summary": "EOF source 362bfd remains implementation/qualification HELD under Daybreak/sensitive-work restrictions and failed same-source measurement controls. Historical correctness and fixture results retain their exact input scopes; the full 150-leaf, n>=24 study remains outstanding. No current-runtime or performance qualification is inferred.",
       "findings": [
         {
           "text": "The original failure at runsc/gofer/net/netgofer_test.go:353 records the shutdown timeout. It does not identify the operation keeping the proxy alive. The earlier UDP idle-slot investigation failed a different assertion.",
@@ -138720,7 +138758,7 @@
           ]
         }
       ],
-      "nextStep": "Advance the existing full controlled performance study through the shared native/Sentry Bazel worker. Verify runtime/image inventory and actual capability with a cheap integration preflight before balanced150-leaf/n24 measurements. Preserve valid compiler/correctness caches and opaque release inputs.",
+      "nextStep": "Metadata-only follow-through by eof_arm_resume. Do not launch bridge probes, protected source/log reads, changes or timing studies under this or another item. Retain the unfinished 150-leaf/n>=24 acceptance scope and publication boundaries; reuse shared-host admission only when recorded products, images, harness, options and worker configuration match.",
       "evidence": [
         {
           "label": "Original ARM64 test.log from #17384, build 54448",
@@ -138748,16 +138786,16 @@
         }
       ],
       "technicalOwner": "CI flake triage",
-      "recheckCondition": "Shared worker capability/runtime proof, missing controlled measurements or substantive source/import feedback.",
+      "recheckCondition": "Actual user release of the sensitive-work hold plus valid same-source measurement controls permits reconsideration; directly relevant new source evidence may update the recorded disposition without authorizing execution.",
       "lifecycleCoordination": {
         "owner": "eof_arm_resume",
-        "nextAction": "Advance the existing full controlled performance study through the shared native/Sentry Bazel worker. Verify runtime/image inventory and actual capability with a cheap integration preflight before balanced150-leaf/n24 measurements. Preserve valid compiler/correctness caches and opaque release inputs.",
-        "recheckCondition": "Shared worker capability/runtime proof, missing controlled measurements or substantive source/import feedback."
+        "nextAction": "Metadata-only follow-through by eof_arm_resume. Do not launch bridge probes, protected source/log reads, changes or timing studies under this or another item. Retain the unfinished 150-leaf/n>=24 acceptance scope and publication boundaries; reuse shared-host admission only when recorded products, images, harness, options and worker configuration match.",
+        "recheckCondition": "Actual user release of the sensitive-work hold plus valid same-source measurement controls permits reconsideration; directly relevant new source evidence may update the recorded disposition without authorizing execution."
       },
       "followup": {
         "owner": "eof_arm_resume",
         "curatedAt": "2026-11-19T18:59:24.568877+00:00",
-        "disposition": "A fresh matched AMD64 failure captured proxy shutdown waiting for its active recvMMsg receiver. Applying only the already-qualified EOF production fix passed full owning suites and200 targeted repetitions. This supports the mechanism in that context; historical ARM per-read values and exhaustive absence remain unproven.",
+        "disposition": "EOF source 362bfd remains implementation/qualification HELD under Daybreak/sensitive-work restrictions and failed same-source measurement controls. Historical correctness and fixture results retain their exact input scopes; the full 150-leaf, n>=24 study remains outstanding. No current-runtime or performance qualification is inferred.",
         "sourceHead": "362bfd09934c5497e4a48fb97fbe1f445152f841",
         "matchedEvidence": {
           "diagnostic": {
@@ -138779,10 +138817,10 @@
             "sha256": "2268f0f4fc30b2aba93917098116d5b1a57bb3d2200a0b3647c95eaeb952e3dc"
           },
           "race": "Use the shared image-backed Cgo correction; prior race failure executed no tests. Do not repeat known GLIBC/architecture setup failures.",
-          "performance": "First qualify actual bridge/named-peer traffic in the permanent worker using existing declared Alpine input. Then all four existing Node workload variants with the same qualified HTTP harness on both runtime sources; full networking scope remains open."
+          "performance": "HELD: full 150-leaf/n>=24 controlled performance remains outstanding. No new bridge or timing dispatch until the sensitive-work hold is actually released and valid same-source measurement controls are established; prior exact-input evidence and acceptance scope remain retained."
         },
-        "nextAction": "Advance the existing full controlled performance study through the shared native/Sentry Bazel worker. Verify runtime/image inventory and actual capability with a cheap integration preflight before balanced150-leaf/n24 measurements. Preserve valid compiler/correctness caches and opaque release inputs.",
-        "recheckCondition": "Shared worker capability/runtime proof, missing controlled measurements or substantive source/import feedback.",
+        "nextAction": "Metadata-only follow-through by eof_arm_resume. Do not launch bridge probes, protected source/log reads, changes or timing studies under this or another item. Retain the unfinished 150-leaf/n>=24 acceptance scope and publication boundaries; reuse shared-host admission only when recorded products, images, harness, options and worker configuration match.",
+        "recheckCondition": "Actual user release of the sensitive-work hold plus valid same-source measurement controls permits reconsideration; directly relevant new source evidence may update the recorded disposition without authorizing execution.",
         "standaloneEOFRace": {
           "source": "362bfd09934c5497e4a48fb97fbe1f445152f841",
           "run": 44579977140,
@@ -138819,7 +138857,8 @@
             }
           },
           "limit": "Supported ARM correctness complete; full controlled performance and public Netip/import qualification remain open."
-        }
+        },
+        "observedAt": "2026-11-25T02:50:55.971781+00:00"
       }
     },
     {
@@ -139898,8 +139937,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-12T19:16:56+00:00",
-      "summary": "The 797 readiness clients in the affected GPU run tried to read the NVIDIA driver from inside their restricted cgroup. The author confirmed the regression and moved the lookup before joining the cgroup on 7fb83c574.",
+      "updatedAt": "2026-11-25T02:55:55.308741+00:00",
+      "summary": "The source PR closed at 7fb83c574 and export #17291 merged at c0c0c2dd6. Exact-export main 55115 passed its Ubuntu GPU job, but metadata does not prove that TestLLM executed rather than skipped or that the export contains the correction. Footer lineage diverges and protected file fingerprints differ; semantics remain unknown.",
       "findings": [
         {
           "text": "Build 54587 ran the same source on two Ubuntu GPU agents. Three completed attempts timed out in the GET / readiness loop; one other attempt was interrupted. The final attempt passed CUDA availability and the CUDA 12.8 smoke test before it started the Ollama container in 1.224 seconds. The log recorded the readiness timeout about ten minutes later. Build 54596 ran a different source and passed translation, code generation and OCR in 438.64 seconds.",
@@ -139966,7 +140005,7 @@
           ]
         }
       ],
-      "nextStep": "Check the Ubuntu GPU TestLLM job on an export containing 7fb83c574 to verify that the readiness clients start and reach the Ollama server.",
+      "nextStep": "Root and actions_bazel_cache retain the source/import-equivalence and TestLLM outcome blockers. Obtain permitted correction-bound source/import evidence and an actual TestLLM pass/skip receipt before closing. No protected source/runtime-log read, GPU provisioning, rerun, outreach or transfer of different-source 54596 proof.",
       "evidence": [
         {
           "label": "Author’s correction on the source PR",
@@ -139990,11 +140029,23 @@
         }
       ],
       "technicalOwner": "CI investigation",
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
+      "recheckCondition": "Permitted correction/import binding and TestLLM outcome evidence arrive, or the sensitive hold explicitly changes.",
       "lifecycleCoordination": {
-        "owner": "root",
-        "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
-        "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+        "owner": "root / actions_bazel_cache",
+        "nextAction": "Root and actions_bazel_cache retain the source/import-equivalence and TestLLM outcome blockers. Obtain permitted correction-bound source/import evidence and an actual TestLLM pass/skip receipt before closing. No protected source/runtime-log read, GPU provisioning, rerun, outreach or transfer of different-source 54596 proof.",
+        "recheckCondition": "Permitted correction/import binding and TestLLM outcome evidence arrive, or the sensitive hold explicitly changes."
+      },
+      "followup": {
+        "owner": "root / actions_bazel_cache",
+        "disposition": "The source PR closed at 7fb83c574 and export #17291 merged at c0c0c2dd6. Exact-export main 55115 passed its Ubuntu GPU job, but metadata does not prove that TestLLM executed rather than skipped or that the export contains the correction. Footer lineage diverges and protected file fingerprints differ; semantics remain unknown.",
+        "nextAction": "Root and actions_bazel_cache retain the source/import-equivalence and TestLLM outcome blockers. Obtain permitted correction-bound source/import evidence and an actual TestLLM pass/skip receipt before closing. No protected source/runtime-log read, GPU provisioning, rerun, outreach or transfer of different-source 54596 proof.",
+        "recheckCondition": "Permitted correction/import binding and TestLLM outcome evidence arrive, or the sensitive hold explicitly changes.",
+        "observedAt": "2026-11-25T02:55:55.308741+00:00",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/16485",
+          "https://github.com/gvisor/gvisor/pull/17291",
+          "https://buildkite.com/gvisor/pipeline/builds/55115#01a1d7bf-9839-4a9f-9f13-e607f9ba2644"
+        ]
       }
     },
     {
@@ -141464,8 +141515,8 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-13T10:55:51+00:00",
-      "summary": "On build #54765, one libaio FIO case failed before the workload started. Its cgroup constructor reported “unable to get systemd version”. Adjacent FIO containers started. The existing gVisor issue is #11877.",
+      "updatedAt": "2026-11-25T02:57:09.139542+00:00",
+      "summary": "The D-Bus error-reporting change in #17630 merged as 73308ab1e on 2026-11-13. It exposes the underlying systemd-version lookup error; the original intermittent startup cause remains unproved.",
       "findings": [
         {
           "text": "On a controlled D-Bus failure the candidate preserved the ServiceUnknown error and named the missing service. The parent discarded that information. Both succeeded against the host systemd service, and the cgroup suite passed. The original CI error did not identify which D-Bus call outcome the worker saw.",
@@ -141503,7 +141554,7 @@
           ]
         }
       ],
-      "nextStep": "Follow #17630 through review and look for the underlying D-Bus error on the next affected worker once it runs the change.",
+      "nextStep": "On the next naturally affected worker using the landed diagnostic, root retains the underlying D-Bus error and exact source/job binding. No pending review/landing action, speculative fix, unchanged retry or protected-source read.",
       "evidence": [
         {
           "label": "Diagnostic change opened as #17630",
@@ -141544,11 +141595,22 @@
         }
       ],
       "technicalOwner": "CI flake triage",
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
+      "recheckCondition": "Natural recurrence with the landed diagnostic and permitted source-bound error evidence, or explicit hold changes.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
-        "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+        "nextAction": "On the next naturally affected worker using the landed diagnostic, root retains the underlying D-Bus error and exact source/job binding. No pending review/landing action, speculative fix, unchanged retry or protected-source read.",
+        "recheckCondition": "Natural recurrence with the landed diagnostic and permitted source-bound error evidence, or explicit hold changes."
+      },
+      "followup": {
+        "owner": "root",
+        "disposition": "The D-Bus error-reporting change in #17630 merged as 73308ab1e on 2026-11-13. It exposes the underlying systemd-version lookup error; the original intermittent startup cause remains unproved.",
+        "nextAction": "On the next naturally affected worker using the landed diagnostic, root retains the underlying D-Bus error and exact source/job binding. No pending review/landing action, speculative fix, unchanged retry or protected-source read.",
+        "recheckCondition": "Natural recurrence with the landed diagnostic and permitted source-bound error evidence, or explicit hold changes.",
+        "observedAt": "2026-11-25T02:57:09.139542+00:00",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/17630",
+          "https://github.com/gvisor/gvisor/commit/73308ab1e27083a4cc61870681f65075554b0e48"
+        ]
       }
     },
     {
@@ -141701,8 +141763,8 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-13T11:22:53+00:00",
-      "summary": "OpenJDK excludes BrokenConnectionTest on Linux in the test sources used by gVisor’s Java 21 image. The master Java goferfs job failed with the same exception during listener removal.",
+      "updatedAt": "2026-11-25T02:57:09.139542+00:00",
+      "summary": "The Java 21 exclusion in #17632 merged. Natural post-landing main 55876 at master 0838783b9 dispatches Java runtime and goferfs groups with 40 shards each; mixed running/exit-0 jobs prove dispatch only. Neighboring named JMX selection/pass and skip/cache status remain unverified.",
       "findings": [
         {
           "text": "The connection-failed notification arrived before the second removeNotificationListener. The JDK threw ListenerNotFoundException where its test expected IOException. Cases 1–3 passed. Buildkite’s successful retry reused a cached result.",
@@ -141735,7 +141797,7 @@
           ]
         }
       ],
-      "nextStep": "Follow #17632 through review. Once it lands, confirm the Java 21 shard continues to run the neighboring JMX tests.",
+      "nextStep": "Root checks an actual required named-case report if naturally available from 55876 or another owning post-merge run. Do not infer JMX coverage from shard dispatch, guess a shard from the old missing job UUID, queue a rerun or bypass source/log holds.",
       "evidence": [
         {
           "label": "gVisor #17632: exclude the OpenJDK JMX test on Linux",
@@ -141785,11 +141847,23 @@
         }
       ],
       "technicalOwner": "CI flake triage",
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
+      "recheckCondition": "A naturally available source-bound named JMX selection/outcome report or a relevant source/hold change.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
-        "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+        "nextAction": "Root checks an actual required named-case report if naturally available from 55876 or another owning post-merge run. Do not infer JMX coverage from shard dispatch, guess a shard from the old missing job UUID, queue a rerun or bypass source/log holds.",
+        "recheckCondition": "A naturally available source-bound named JMX selection/outcome report or a relevant source/hold change."
+      },
+      "followup": {
+        "owner": "root",
+        "disposition": "The Java 21 exclusion in #17632 merged. Natural post-landing main 55876 at master 0838783b9 dispatches Java runtime and goferfs groups with 40 shards each; mixed running/exit-0 jobs prove dispatch only. Neighboring named JMX selection/pass and skip/cache status remain unverified.",
+        "nextAction": "Root checks an actual required named-case report if naturally available from 55876 or another owning post-merge run. Do not infer JMX coverage from shard dispatch, guess a shard from the old missing job UUID, queue a rerun or bypass source/log holds.",
+        "recheckCondition": "A naturally available source-bound named JMX selection/outcome report or a relevant source/hold change.",
+        "observedAt": "2026-11-25T02:57:09.139542+00:00",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/17632",
+          "https://github.com/gvisor/gvisor/commit/2196ec70c82e183cfa3028716c542972db870c32",
+          "https://buildkite.com/gvisor/pipeline/builds/55876"
+        ]
       }
     },
     {
@@ -144515,13 +144589,13 @@
       "id": "investigation:rules-lint-patcher",
       "repo": "bazel-contrib/rules_lint",
       "group": "bazel",
-      "status": "active",
-      "owner": "rules_lint_patcher_fix / root",
+      "status": "concluded",
+      "owner": "root",
       "head": "a3fbb54b2930347d57dc1c607f5e7546f738e7a2",
       "title": "Reject failed patch generation",
-      "updatedAt": "2026-11-23T00:18:10.610714+00:00",
-      "summary": "The verified partial-output failure has a reviewed correction at a3fbb54b: remove incomplete patches, rethrow failure and close the descriptor. Eight Bazel tests and the old-source negative control pass; both independent reviews found no issues. The fork preview is public; #1112 remains at 4a and its amendment-and-reply question is unanswered.",
-      "nextStep": "Await the source-bound combined amendment/reply decision on #1112, then follow actual CI, review and release. Main analyzer68c remains first priority; formatting remains held.",
+      "updatedAt": "2026-11-25T02:57:09.139542+00:00",
+      "summary": "Approved correction a3fbb54b and its exact reply were delivered in rules_lint #1112, which merged on 2026-11-23 as effffed80. This supplier correction and its source/reply/landing waits are complete. Historical tests and base-matrix evidence remain retained; no released version or pinned adoption is inferred.",
+      "nextStep": "Complete. Track any separate release/adoption obligation on the existing PR record; formatting remains held. Do not repeat the amendment, reply, review request or old CI.",
       "findings": [],
       "evidence": [
         {
@@ -144541,8 +144615,33 @@
           "summary": "Published the failed-patch-generation correction in rules_lint #1112.",
           "outcome": "approved",
           "postedURL": "https://github.com/bazel-contrib/rules_lint/pull/1112"
+        },
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "head": "a3fbb54b2930347d57dc1c607f5e7546f738e7a2",
+          "baseHead": "4a881d4ef85dc0cbbaaa24a433aac9f373df8649",
+          "url": "https://github.com/tamird/rules_lint/commit/a3fbb54b2930347d57dc1c607f5e7546f738e7a2",
+          "title": "Amend patcher failure handling and reply",
+          "summary": "Approved amendment and exact reply are delivered and verified in the original thread. No remaining reply-publication decision.",
+          "body": "Amend #1112 to the reviewed a3fbb54b revision and post this exact reply:\n\nConfirmed. Diff failures now remove the incomplete patch and close its descriptor. The existing test fails before the fix and passes afterward.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "postedURL": "https://github.com/bazel-contrib/rules_lint/pull/1112#discussion_r4670409775"
         }
-      ]
+      ],
+      "recheckCondition": "Actual source/landing discrepancy; no outstanding supplier-publication request.",
+      "followup": {
+        "owner": "root",
+        "disposition": "Approved correction a3fbb54b and its exact reply were delivered in rules_lint #1112, which merged on 2026-11-23 as effffed80. This supplier correction and its source/reply/landing waits are complete. Historical tests and base-matrix evidence remain retained; no released version or pinned adoption is inferred.",
+        "nextAction": "Complete. Track any separate release/adoption obligation on the existing PR record; formatting remains held. Do not repeat the amendment, reply, review request or old CI.",
+        "recheckCondition": "Actual source/landing discrepancy; no outstanding supplier-publication request.",
+        "observedAt": "2026-11-25T02:57:09.139542+00:00",
+        "evidence": [
+          "https://github.com/bazel-contrib/rules_lint/pull/1112",
+          "https://github.com/bazel-contrib/rules_lint/pull/1112#discussion_r4670409775",
+          "https://github.com/bazel-contrib/rules_lint/commit/effffed80fcedc10aeb2f449975e334ecb4a0bcd"
+        ]
+      }
     },
     {
       "id": "investigation:bazel-test-output-status",
