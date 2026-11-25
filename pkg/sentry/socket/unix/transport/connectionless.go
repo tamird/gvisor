@@ -40,7 +40,7 @@ var (
 
 // NewConnectionless creates a new unbound dgram endpoint.
 func NewConnectionless(ctx context.Context) Endpoint {
-	ep := &connectionlessEndpoint{baseEndpoint: baseEndpoint{WaitQueue: &waiter.Queue{}}}
+	ep := &connectionlessEndpoint{WaitQueue: &waiter.Queue{}}
 	q := queue{readerWaiters: ep.WaitQueue, writerWaiters: &waiter.Queue{}, limit: defaultBufferSize}
 	q.InitRefs()
 	ep.receiver = &queueReceiver{readQueue: &q}

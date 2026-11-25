@@ -252,11 +252,9 @@ func (ts *TaskSet) newTask(ctx context.Context, cfg *TaskConfig) (*Task, error) 
 	}
 
 	t = &Task{
-		taskNode: taskNode{
-			tg:       tg,
-			parent:   cfg.Parent,
-			children: make(map[*Task]struct{}),
-		},
+		tg:              tg,
+		parent:          cfg.Parent,
+		children:        make(map[*Task]struct{}),
 		runState:        (*runApp)(nil),
 		interruptChan:   make(chan struct{}, 1),
 		signalMask:      atomicbitops.FromUint64(uint64(cfg.SignalMask)),

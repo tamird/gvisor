@@ -207,9 +207,7 @@ func BenchmarkExecuteSyscall(b *testing.B) {
 			}
 
 			tg := &ThreadGroup{
-				threadGroupNode: threadGroupNode{
-					leader: task,
-				},
+				leader: task,
 			}
 			task.tg = tg
 

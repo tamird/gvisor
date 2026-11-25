@@ -286,23 +286,21 @@ func initSender(ep *Endpoint, iss, irs seqnum.Value, sndWnd seqnum.Size, mss uin
 	maxPayloadSize := int(mss) - ep.maxOptionSize()
 
 	ep.snd = &sender{
-		ep: ep,
-		TCPSenderState: TCPSenderState{
-			SndWnd:           sndWnd,
-			SndUna:           iss + 1,
-			SndNxt:           iss + 1,
-			RTTMeasureSeqNum: iss + 1,
-			LastSendTime:     ep.stack.Clock().NowMonotonic(),
-			MaxPayloadSize:   maxPayloadSize,
-			MaxSentAck:       irs + 1,
-			FastRecovery: TCPFastRecoveryState{
-				// See: https://tools.ietf.org/html/rfc6582#section-3.2 Step 1.
-				Last:      iss,
-				HighRxt:   iss,
-				RescueRxt: iss,
-			},
-			RTO: 1 * time.Second,
+		ep:               ep,
+		SndWnd:           sndWnd,
+		SndUna:           iss + 1,
+		SndNxt:           iss + 1,
+		RTTMeasureSeqNum: iss + 1,
+		LastSendTime:     ep.stack.Clock().NowMonotonic(),
+		MaxPayloadSize:   maxPayloadSize,
+		MaxSentAck:       irs + 1,
+		FastRecovery: TCPFastRecoveryState{
+			// See: https://tools.ietf.org/html/rfc6582#section-3.2 Step 1.
+			Last:      iss,
+			HighRxt:   iss,
+			RescueRxt: iss,
 		},
+		RTO:             1 * time.Second,
 		smallSegmentEnd: iss + 1,
 		gso:             ep.gso.Type != stack.GSONone,
 		writeList: protectedWriteList{

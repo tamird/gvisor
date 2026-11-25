@@ -285,10 +285,8 @@ func (rw *asyncReadWriter) registerClientFD(fd int32, size uint64, settings []st
 		return 0, fmt.Errorf("failed to dup registered FD: %w", err)
 	}
 	req := RegisterClientFileRequest{
-		Handle: rw.handle,
-		FilePayload: urpc.FilePayload{
-			Files: []*os.File{os.NewFile(uintptr(dupFD), "stateipc_client_fd")},
-		},
+		Handle:   rw.handle,
+		Files:    []*os.File{os.NewFile(uintptr(dupFD), "stateipc_client_fd")},
 		Size:     size,
 		Writable: rw.isReader,
 		Settings: settings,

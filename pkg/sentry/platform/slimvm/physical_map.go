@@ -147,10 +147,8 @@ func computePhysicalRegions(excludedRegions []region) (physicalRegions []physica
 			}
 		}
 		physicalRegions = append(physicalRegions, physicalRegion{
-			region: region{
-				virtual: virtual,
-				length:  length,
-			},
+			virtual:  virtual,
+			length:   length,
 			physical: physical,
 		})
 		physical += length

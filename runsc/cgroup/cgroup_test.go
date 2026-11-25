@@ -190,18 +190,18 @@ func makeLinuxWeightDevice(major, minor int64, weight, leafWeight *uint16) specs
 	rv := specs.LinuxWeightDevice{
 		Weight:     weight,
 		LeafWeight: leafWeight,
-	}
-	rv.Major = major
-	rv.Minor = minor
+
+		Major: major,
+		Minor: minor}
 	return rv
 }
 
 func makeLinuxThrottleDevice(major, minor int64, rate uint64) specs.LinuxThrottleDevice {
 	rv := specs.LinuxThrottleDevice{
 		Rate: rate,
-	}
-	rv.Major = major
-	rv.Minor = minor
+
+		Major: major,
+		Minor: minor}
 	return rv
 }
 

@@ -389,13 +389,11 @@ func (c *Container) hostConfig(r RunOpts) *container.HostConfig {
 		ReadonlyRootfs:  r.ReadOnly,
 		NetworkMode:     container.NetworkMode(r.NetworkMode),
 		CgroupnsMode:    container.CgroupnsMode(r.CgroupnsMode),
-		Resources: container.Resources{
-			Memory:         int64(r.Memory), // In bytes.
-			CpusetCpus:     r.CpusetCpus,
-			DeviceRequests: r.DeviceRequests,
-			Devices:        r.Devices,
-		},
-		Annotations: r.Annotations,
+		Memory:          int64(r.Memory), // In bytes.
+		CpusetCpus:      r.CpusetCpus,
+		DeviceRequests:  r.DeviceRequests,
+		Devices:         r.Devices,
+		Annotations:     r.Annotations,
 	}
 	if r.Init {
 		init := true

@@ -31,7 +31,6 @@ import (
 	"gvisor.dev/gvisor/test/kubernetes/k8sctx"
 	"gvisor.dev/gvisor/test/kubernetes/testcluster"
 	v13 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -92,20 +91,16 @@ func RunRubyDev(ctx context.Context, t *testing.T, k8sCtx k8sctx.KubernetesConte
 		{
 			name: "EmptyDir",
 			volume: &v13.Volume{
-				Name: "emptydir",
-				VolumeSource: v13.VolumeSource{
-					EmptyDir: &v13.EmptyDirVolumeSource{},
-				},
+				Name:     "emptydir",
+				EmptyDir: &v13.EmptyDirVolumeSource{},
 			},
 		},
 		{
 			name: "PersistentVolume",
 			volume: &v13.Volume{
 				Name: persistentVol.GetName(),
-				VolumeSource: v13.VolumeSource{
-					PersistentVolumeClaim: &v13.PersistentVolumeClaimVolumeSource{
-						ClaimName: persistentVol.GetName(),
-					},
+				PersistentVolumeClaim: &v13.PersistentVolumeClaimVolumeSource{
+					ClaimName: persistentVol.GetName(),
 				},
 			},
 			disabled: !supportsPV,
@@ -202,14 +197,10 @@ func newRubyDevPod(namespace *testcluster.Namespace, name, image string, volume 
 		}}
 	}
 	return &v13.Pod{
-		TypeMeta: v1.TypeMeta{
-			Kind:       "Pod",
-			APIVersion: "v1",
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace.Namespace,
-		},
+		Kind:       "Pod",
+		APIVersion: "v1",
+		Name:       name,
+		Namespace:  namespace.Namespace,
 		Spec: v13.PodSpec{
 			Volumes: volumes,
 			Containers: []v13.Container{

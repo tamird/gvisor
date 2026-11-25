@@ -51,7 +51,6 @@ import (
 	"gvisor.dev/gvisor/pkg/state/statefile"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/timing"
-	"gvisor.dev/gvisor/pkg/urpc"
 	"gvisor.dev/gvisor/runsc/boot/pprof"
 	"gvisor.dev/gvisor/runsc/boot/sentryapi"
 	"gvisor.dev/gvisor/runsc/config"
@@ -172,13 +171,11 @@ func saveOptsFromSpec(spec *specs.Spec, fds []*fd.FD, useCheckpointGofer bool) (
 
 	saveOpts := &controlapi.SaveOpts{
 		AppMFExcludeCommittedZeroPages: specutils.AnnotationToBool(spec, annotationCheckpointExcludeCommittedZeroPages),
-		FilePayload: urpc.FilePayload{
-			Files: files,
-		},
-		Metadata:                 comp.ToMetadata(),
-		HavePagesFile:            len(files) > 1,
-		Resume:                   specutils.AnnotationToBool(spec, annotationCheckpointResume),
-		CudaCheckpointSequential: specutils.AnnotationToBool(spec, annotationCheckpointCudaCheckpointSequential),
+		Files:                          files,
+		Metadata:                       comp.ToMetadata(),
+		HavePagesFile:                  len(files) > 1,
+		Resume:                         specutils.AnnotationToBool(spec, annotationCheckpointResume),
+		CudaCheckpointSequential:       specutils.AnnotationToBool(spec, annotationCheckpointCudaCheckpointSequential),
 	}
 	if cudaPath, ok := spec.Annotations[annotationCheckpointCudaCheckpointPath]; ok {
 		saveOpts.CudaCheckpointPath = cudaPath

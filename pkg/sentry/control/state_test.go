@@ -26,7 +26,6 @@ import (
 	pkgstate "gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/state/statefile"
 	"gvisor.dev/gvisor/pkg/state/wire"
-	"gvisor.dev/gvisor/pkg/urpc"
 )
 
 func TestStateSaveGraphEngineOverride(t *testing.T) {
@@ -72,9 +71,7 @@ func TestStateSaveGraphEngineOverride(t *testing.T) {
 
 			override := tc.override
 			opts := &controlapi.SaveOpts{
-				FilePayload: urpc.FilePayload{
-					Files: []*os.File{outFile},
-				},
+				Files:       []*os.File{outFile},
 				Metadata:    statefile.CompressionLevelFlateBestSpeed.ToMetadata(),
 				Resume:      true,
 				GraphEngine: &override,

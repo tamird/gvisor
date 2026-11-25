@@ -33,7 +33,6 @@ import (
 	"gvisor.dev/gvisor/test/kubernetes/testcluster"
 	v13 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // InfiniteQPS is a stand-in value for "a lot of QPS".
@@ -204,14 +203,10 @@ func (h *HTTPBenchmark) newWrk2Client(name, ip string, round Round) *v13.Pod {
 		fmt.Sprintf("http://%s:%d%s", ip, h.Port, h.Path),
 	}
 	return &v13.Pod{
-		TypeMeta: v1.TypeMeta{
-			Kind:       "Pod",
-			APIVersion: "v1",
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name:      name,
-			Namespace: h.Namespace.Namespace,
-		},
+		Kind:       "Pod",
+		APIVersion: "v1",
+		Name:       name,
+		Namespace:  h.Namespace.Namespace,
 		Spec: v13.PodSpec{
 			Containers: []v13.Container{
 				{
@@ -232,14 +227,10 @@ func (h *HTTPBenchmark) getWgetPod(ip string) *v13.Pod {
 	// only to verify that the server is up, not that the page at h.Path exists.
 	cmd := fmt.Sprintf("wget --spider -T 10 http://%s:%d/", ip, h.Port)
 	return &v13.Pod{
-		TypeMeta: v1.TypeMeta{
-			Kind:       "Pod",
-			APIVersion: "v1",
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name:      name,
-			Namespace: h.Namespace.Namespace,
-		},
+		Kind:       "Pod",
+		APIVersion: "v1",
+		Name:       name,
+		Namespace:  h.Namespace.Namespace,
 		Spec: v13.PodSpec{
 			Containers: []v13.Container{
 				{

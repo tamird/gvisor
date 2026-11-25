@@ -977,14 +977,10 @@ func (t *TestCluster) ExecRequestInClientPod(ctx context.Context, service *v13.S
 
 	argv := argvFn(fmt.Sprintf("http://%s:%d", ip, service.Spec.Ports[0].Port))
 	clientPod := &v13.Pod{
-		TypeMeta: v1.TypeMeta{
-			Kind:       "Pod",
-			APIVersion: "v1",
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name:      clientPodName,
-			Namespace: podNamespace,
-		},
+		Kind:       "Pod",
+		APIVersion: "v1",
+		Name:       clientPodName,
+		Namespace:  podNamespace,
 		Spec: v13.PodSpec{
 			Containers: []v13.Container{
 				{
@@ -1256,17 +1252,15 @@ func (t *TestCluster) ListPodEvents(ctx context.Context, pod *v13.Pod) (*eventsv
 // GetMicroVMRuntimeClass returns the default RuntimeClass definition for GKE Sandbox MicroVM.
 func GetMicroVMRuntimeClass() *nodev1.RuntimeClass {
 	return &nodev1.RuntimeClass{
-		ObjectMeta: v1.ObjectMeta{
-			Name: "microvm",
-			Annotations: map[string]string{
-				"components.gke.io/component-name":    "sandbox-runtime-class",
-				"components.gke.io/component-version": "1.36.4",
-				"components.gke.io/layer":             "addon",
-			},
-			Labels: map[string]string{
-				"addonmanager.kubernetes.io/mode": "Reconcile",
-				"kubernetes.io/cluster-service":   "true",
-			},
+		Name: "microvm",
+		Annotations: map[string]string{
+			"components.gke.io/component-name":    "sandbox-runtime-class",
+			"components.gke.io/component-version": "1.36.4",
+			"components.gke.io/layer":             "addon",
+		},
+		Labels: map[string]string{
+			"addonmanager.kubernetes.io/mode": "Reconcile",
+			"kubernetes.io/cluster-service":   "true",
 		},
 		Handler: "kata-clh",
 		Overhead: &nodev1.Overhead{

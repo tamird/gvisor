@@ -97,19 +97,15 @@ func getRunscDriverInfo(ctx context.Context, ns *testcluster.Namespace, cluster 
 
 	pod.Spec.Volumes = append(pod.Spec.Volumes, v13.Volume{
 		Name: "runsc",
-		VolumeSource: v13.VolumeSource{
-			HostPath: &v13.HostPathVolumeSource{
-				Path: runtimePath,
-				Type: new(v13.HostPathType),
-			},
+		HostPath: &v13.HostPathVolumeSource{
+			Path: runtimePath,
+			Type: new(v13.HostPathType),
 		},
 	}, v13.Volume{
 		Name: "gvisor-bin",
-		VolumeSource: v13.VolumeSource{
-			HostPath: &v13.HostPathVolumeSource{
-				Path: sidecarsPath,
-				Type: new(v13.HostPathType),
-			},
+		HostPath: &v13.HostPathVolumeSource{
+			Path: sidecarsPath,
+			Type: new(v13.HostPathType),
 		},
 	})
 
@@ -174,11 +170,9 @@ func getCOSDrivers(ctx context.Context, ns *testcluster.Namespace, cluster *test
 	file := v13.HostPathType(v13.HostPathFile)
 	pod.Spec.Volumes = append(pod.Spec.Volumes, v13.Volume{
 		Name: "host",
-		VolumeSource: v13.VolumeSource{
-			HostPath: &v13.HostPathVolumeSource{
-				Path: cosExtensionsPath,
-				Type: &file,
-			},
+		HostPath: &v13.HostPathVolumeSource{
+			Path: cosExtensionsPath,
+			Type: &file,
 		},
 	})
 

@@ -384,9 +384,7 @@ func (w *ParallelWriter) AddWritev(id int, total uint64, _ stateio.SourceFile, _
 
 func (w *ParallelWriter) makeLeaf(id int, src stateio.LocalClientRanges) *composeLeaf {
 	leaf := &composeLeaf{
-		composeNode: composeNode{
-			obj: w.bucket.Object(w.makePartName(0, w.prevLeaves)),
-		},
+		obj: w.bucket.Object(w.makePartName(0, w.prevLeaves)),
 		id:  id,
 		src: src,
 	}
@@ -406,9 +404,7 @@ func (w *ParallelWriter) insertIntoWriteCompositionGraph(leaf *composeLeaf) {
 				// Create a new branch at the next level composing these two
 				// nodes.
 				parent := &composeBranch{
-					composeNode: composeNode{
-						obj: w.bucket.Object(w.makePartName(levelIndex+1, level.prevParents)),
-					},
+					obj:      w.bucket.Object(w.makePartName(levelIndex+1, level.prevParents)),
 					partsMax: composeMax,
 					partsLen: 2,
 				}
@@ -719,9 +715,7 @@ func (w *ParallelWriter) buildFinalCompositionTree(nodes []*composeNode, levelBa
 				parentObj = w.bucket.Object(w.makePartName(levelBase+levelIndex, partIndex))
 			}
 			parent := &composeBranch{
-				composeNode: composeNode{
-					obj: parentObj,
-				},
+				obj:      parentObj,
 				mixed:    true,
 				partsMax: uint32(numParts),
 				partsLen: uint32(numParts),

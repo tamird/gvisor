@@ -24,7 +24,6 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/fsmetric"
 	"gvisor.dev/gvisor/pkg/sentry/kernel"
 	"gvisor.dev/gvisor/pkg/sentry/usage"
-	"gvisor.dev/gvisor/pkg/urpc"
 )
 
 // Usage includes usage-related RPC stubs.
@@ -41,11 +40,9 @@ func (u *Usage) UsageFD(opts *controlapi.MemoryUsageFileOpts, out *controlapi.Me
 
 	mf := u.Kernel.MemoryFile()
 	*out = controlapi.MemoryUsageFile{
-		FilePayload: urpc.FilePayload{
-			Files: []*os.File{
-				usage.MemoryAccounting.File,
-				mf.File(),
-			},
+		Files: []*os.File{
+			usage.MemoryAccounting.File,
+			mf.File(),
 		},
 	}
 

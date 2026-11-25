@@ -402,13 +402,6 @@ analyzers:
     # Controversial.
     internal:
       exclude: [".*"]
-  embedlit:
-    internal:
-      exclude:
-        - ".*" # Temporary: migrate embedlit.
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate embedlit.
   composites:
     internal:
       exclude:

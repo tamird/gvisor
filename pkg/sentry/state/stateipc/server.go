@@ -63,10 +63,8 @@ type AsyncFileServerImpl interface {
 // NewAsyncFileServer returns a new AsyncFileServer.
 func NewAsyncFileServer(impl AsyncFileServerImpl) (*AsyncFileServer, error) {
 	s := &AsyncFileServer{
-		asyncFileServer: asyncFileServer{
-			files: make(map[uint32]*openFile),
-			impl:  impl,
-		},
+		files: make(map[uint32]*openFile),
+		impl:  impl,
 	}
 	if err := s.pwa.Init(); err != nil {
 		return nil, fmt.Errorf("failed to initialize flipcall packet window allocator: %w", err)
@@ -109,15 +107,13 @@ func (s *AsyncFileServer) Open(req *OpenRequest, resp *OpenResponse) error {
 		cu.Add(func() { ar.Close() })
 		maxParallel := min(ar.MaxParallel(), maxMaxParallel)
 		rf := &readFile{
-			openFile: openFile{
-				server:      s,
-				path:        req.Path,
-				maxIOBytes:  uint32(min(ar.MaxReadBytes(), math.MaxUint32)),
-				maxRanges:   uint32(min(ar.MaxRanges(), maxMaxRanges)),
-				maxParallel: uint32(maxParallel),
-				slicesUsed:  make([]asyncIOSlices, maxParallel),
-			},
-			ar: ar,
+			server:      s,
+			path:        req.Path,
+			maxIOBytes:  uint32(min(ar.MaxReadBytes(), math.MaxUint32)),
+			maxRanges:   uint32(min(ar.MaxRanges(), maxMaxRanges)),
+			maxParallel: uint32(maxParallel),
+			slicesUsed:  make([]asyncIOSlices, maxParallel),
+			ar:          ar,
 		}
 		rf.impl = rf
 		f = &rf.openFile
@@ -129,15 +125,13 @@ func (s *AsyncFileServer) Open(req *OpenRequest, resp *OpenResponse) error {
 		cu.Add(func() { aw.Close() })
 		maxParallel := min(aw.MaxParallel(), maxMaxParallel)
 		wf := &writeFile{
-			openFile: openFile{
-				server:      s,
-				path:        req.Path,
-				maxIOBytes:  uint32(min(aw.MaxWriteBytes(), math.MaxUint32)),
-				maxRanges:   uint32(min(aw.MaxRanges(), maxMaxRanges)),
-				maxParallel: uint32(maxParallel),
-				slicesUsed:  make([]asyncIOSlices, maxParallel),
-			},
-			aw: aw,
+			server:      s,
+			path:        req.Path,
+			maxIOBytes:  uint32(min(aw.MaxWriteBytes(), math.MaxUint32)),
+			maxRanges:   uint32(min(aw.MaxRanges(), maxMaxRanges)),
+			maxParallel: uint32(maxParallel),
+			slicesUsed:  make([]asyncIOSlices, maxParallel),
+			aw:          aw,
 		}
 		wf.impl = wf
 		f = &wf.openFile

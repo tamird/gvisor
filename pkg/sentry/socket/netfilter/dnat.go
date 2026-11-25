@@ -93,9 +93,8 @@ func (*dnatTargetMakerV4) unmarshal(buf []byte, filter stack.IPHeaderFilter) (ta
 	dt.UnmarshalUnsafe(buf)
 
 	// Copy linux.XTNATTargetV0 to stack.DNATTarget.
-	target := dnatTarget{DNATTarget: stack.DNATTarget{
-		NetworkProtocol: filter.NetworkProtocol(),
-	}}
+	target := dnatTarget{
+		NetworkProtocol: filter.NetworkProtocol()}
 
 	// RangeSize should be 1.
 	nfRange := dt.NfRange
@@ -196,13 +195,11 @@ func (dt *dnatTargetMakerR1) unmarshal(buf []byte, filter stack.IPHeaderFilter) 
 	}
 
 	target := dnatTarget{
-		DNATTarget: stack.DNATTarget{
-			NetworkProtocol: filter.NetworkProtocol(),
-			Port:            ntohs(natRange.MinProto),
-			ChangeAddress:   natRange.Flags&linux.NF_NAT_RANGE_MAP_IPS != 0,
-			ChangePort:      natRange.Flags&linux.NF_NAT_RANGE_PROTO_SPECIFIED != 0,
-		},
-		revision: 1,
+		NetworkProtocol: filter.NetworkProtocol(),
+		Port:            ntohs(natRange.MinProto),
+		ChangeAddress:   natRange.Flags&linux.NF_NAT_RANGE_MAP_IPS != 0,
+		ChangePort:      natRange.Flags&linux.NF_NAT_RANGE_PROTO_SPECIFIED != 0,
+		revision:        1,
 	}
 	switch dt.NetworkProtocol {
 	case header.IPv4ProtocolNumber:
@@ -286,13 +283,11 @@ func (dt *dnatTargetMakerR2) unmarshal(buf []byte, filter stack.IPHeaderFilter) 
 	}
 
 	target := dnatTarget{
-		DNATTarget: stack.DNATTarget{
-			NetworkProtocol: filter.NetworkProtocol(),
-			Port:            ntohs(natRange.MinProto),
-			ChangeAddress:   natRange.Flags&linux.NF_NAT_RANGE_MAP_IPS != 0,
-			ChangePort:      natRange.Flags&linux.NF_NAT_RANGE_PROTO_SPECIFIED != 0,
-		},
-		revision: 2,
+		NetworkProtocol: filter.NetworkProtocol(),
+		Port:            ntohs(natRange.MinProto),
+		ChangeAddress:   natRange.Flags&linux.NF_NAT_RANGE_MAP_IPS != 0,
+		ChangePort:      natRange.Flags&linux.NF_NAT_RANGE_PROTO_SPECIFIED != 0,
+		revision:        2,
 	}
 	switch dt.NetworkProtocol {
 	case header.IPv4ProtocolNumber:

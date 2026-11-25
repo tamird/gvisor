@@ -37,43 +37,33 @@ func BenchmarkSysbench(b *testing.B) {
 		{
 			name: "CPU",
 			test: &tools.SysbenchCPU{
-				SysbenchBase: tools.SysbenchBase{
-					Threads: 1,
-				},
+				Threads: 1,
 			},
 		},
 		{
 			name:    "CPU",
 			threads: 16,
 			test: &tools.SysbenchCPU{
-				SysbenchBase: tools.SysbenchBase{
-					Threads: 16,
-				},
+				Threads: 16,
 			},
 		},
 		{
 			name: "Memory",
 			test: &tools.SysbenchMemory{
-				SysbenchBase: tools.SysbenchBase{
-					Threads: 1,
-				},
+				Threads: 1,
 			},
 		},
 		{
 			name:    "Memory",
 			threads: 16,
 			test: &tools.SysbenchMemory{
-				SysbenchBase: tools.SysbenchBase{
-					Threads: 16,
-				},
+				Threads: 16,
 			},
 		},
 		{
 			name: "Mutex",
 			test: &tools.SysbenchMutex{
-				SysbenchBase: tools.SysbenchBase{
-					Threads: 8,
-				},
+				Threads: 8,
 			},
 		},
 	}

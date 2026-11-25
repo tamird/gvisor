@@ -24,7 +24,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	v13 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -73,23 +73,19 @@ func RunscInstallDaemonSet(image string, options InstallOptions) *appsv1.DaemonS
 		})
 	}
 	return &appsv1.DaemonSet{
-		TypeMeta: v1.TypeMeta{
-			Kind:       "DaemonSet",
-			APIVersion: "apps/v1",
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name:      options.DaemonSetName,
-			Namespace: options.DaemonSetNamespace,
-		},
+		Kind:       "DaemonSet",
+		APIVersion: "apps/v1",
+		Name:       options.DaemonSetName,
+		Namespace:  options.DaemonSetNamespace,
 		Spec: appsv1.DaemonSetSpec{
-			Selector: &v1.LabelSelector{
+			Selector: &metav1.LabelSelector{
 				MatchLabels: options.Labels,
 			},
 			UpdateStrategy: appsv1.DaemonSetUpdateStrategy{
 				Type: appsv1.RollingUpdateDaemonSetStrategyType,
 			},
 			Template: v13.PodTemplateSpec{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Labels: options.Labels,
 				},
 				Spec: v13.PodSpec{
@@ -134,11 +130,9 @@ func RunscInstallDaemonSet(image string, options InstallOptions) *appsv1.DaemonS
 					Volumes: []v13.Volume{
 						{
 							Name: "host",
-							VolumeSource: v13.VolumeSource{
-								HostPath: &v13.HostPathVolumeSource{
-									Path: "/",
-									Type: &hpType,
-								},
+							HostPath: &v13.HostPathVolumeSource{
+								Path: "/",
+								Type: &hpType,
 							},
 						},
 					},

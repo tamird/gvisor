@@ -155,15 +155,11 @@ type FD struct {
 func New(fd int) *FD {
 	if fd < 0 {
 		return &FD{
-			ReadWriter: ReadWriter{
-				fd: atomicbitops.FromInt64(-1),
-			},
+			fd: atomicbitops.FromInt64(-1),
 		}
 	}
 	f := &FD{
-		ReadWriter: ReadWriter{
-			fd: atomicbitops.FromInt64(int64(fd)),
-		},
+		fd: atomicbitops.FromInt64(int64(fd)),
 	}
 	runtime.SetFinalizer(f, (*FD).Close)
 	return f
@@ -184,9 +180,7 @@ func NewFromFile(file *os.File) (*FD, error) {
 	runtime.KeepAlive(file)
 	if err != nil {
 		return &FD{
-			ReadWriter: ReadWriter{
-				fd: atomicbitops.FromInt64(-1),
-			},
+			fd: atomicbitops.FromInt64(-1),
 		}, err
 	}
 	return New(fd), nil

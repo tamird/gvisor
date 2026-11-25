@@ -97,19 +97,19 @@ func TestCanLock(t *testing.T) {
 	// 0             1024         2048             3072        4096
 	l := fill([]entry{
 		{
-			Lock:      Lock{Readers: map[UniqueID]OwnerInfo{1: {}, 2: {}}},
+			Readers:   map[UniqueID]OwnerInfo{1: {}, 2: {}},
 			LockRange: LockRange{0, 1024},
 		},
 		{
-			Lock:      Lock{Readers: map[UniqueID]OwnerInfo{1: {}}},
+			Readers:   map[UniqueID]OwnerInfo{1: {}},
 			LockRange: LockRange{1024, 2048},
 		},
 		{
-			Lock:      Lock{Readers: map[UniqueID]OwnerInfo{1: {}, 3: {}}},
+			Readers:   map[UniqueID]OwnerInfo{1: {}, 3: {}},
 			LockRange: LockRange{2048, 3072},
 		},
 		{
-			Lock:      Lock{Writer: 1},
+			Writer:    1,
 			LockRange: LockRange{3072, 4096},
 		},
 	})
@@ -222,7 +222,7 @@ func TestSetLock(t *testing.T) {
 			// 0                                  max uint64
 			after: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{0, LockEOF},
 				},
 			},
@@ -239,7 +239,7 @@ func TestSetLock(t *testing.T) {
 			// 0                                  max uint64
 			after: []entry{
 				{
-					Lock:      Lock{Writer: 0},
+					Writer:    0,
 					LockRange: LockRange{0, LockEOF},
 				},
 			},
@@ -252,7 +252,7 @@ func TestSetLock(t *testing.T) {
 			// 0                                  max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Writer: 0},
+					Writer:    0,
 					LockRange: LockRange{0, LockEOF},
 				},
 			},
@@ -266,11 +266,11 @@ func TestSetLock(t *testing.T) {
 			// 0          4096                    max uint64
 			after: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{0, 4096},
 				},
 				{
-					Lock:      Lock{Writer: 0},
+					Writer:    0,
 					LockRange: LockRange{4096, LockEOF},
 				},
 			},
@@ -283,7 +283,7 @@ func TestSetLock(t *testing.T) {
 			// 0                                  max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{0, LockEOF},
 				},
 			},
@@ -297,11 +297,11 @@ func TestSetLock(t *testing.T) {
 			// 0          4096                    max uint64
 			after: []entry{
 				{
-					Lock:      Lock{Writer: 0},
+					Writer:    0,
 					LockRange: LockRange{0, 4096},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{4096, LockEOF},
 				},
 			},
@@ -314,7 +314,7 @@ func TestSetLock(t *testing.T) {
 			// 0                                  max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Writer: 0},
+					Writer:    0,
 					LockRange: LockRange{0, LockEOF},
 				},
 			},
@@ -332,7 +332,7 @@ func TestSetLock(t *testing.T) {
 			// 0                                  max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{0, LockEOF},
 				},
 			},
@@ -350,7 +350,7 @@ func TestSetLock(t *testing.T) {
 			// 0                                  max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{0, LockEOF},
 				},
 			},
@@ -364,11 +364,11 @@ func TestSetLock(t *testing.T) {
 			// 0             4096                    max uint64
 			after: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 1: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 1: {}},
 					LockRange: LockRange{0, 4096},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{4096, LockEOF},
 				},
 			},
@@ -381,7 +381,7 @@ func TestSetLock(t *testing.T) {
 			// 0                                  max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{0, LockEOF},
 				},
 			},
@@ -395,15 +395,15 @@ func TestSetLock(t *testing.T) {
 			// 0         4096             8192    max uint64
 			after: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{0, 4096},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 1: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 1: {}},
 					LockRange: LockRange{4096, 8192},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{8192, LockEOF},
 				},
 			},
@@ -416,7 +416,7 @@ func TestSetLock(t *testing.T) {
 			// 0        1024                     max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{1024, LockEOF},
 				},
 			},
@@ -430,7 +430,7 @@ func TestSetLock(t *testing.T) {
 			// 0                                  max uint64
 			after: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{0, LockEOF},
 				},
 			},
@@ -443,7 +443,7 @@ func TestSetLock(t *testing.T) {
 			// 0                           4096
 			before: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{0, 4096},
 				},
 			},
@@ -462,11 +462,11 @@ func TestSetLock(t *testing.T) {
 			// 0                                  max uint64
 			after: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{0, 1024},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{1024, LockEOF},
 				},
 			},
@@ -479,7 +479,7 @@ func TestSetLock(t *testing.T) {
 			// 0        1024                     max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{1024, LockEOF},
 				},
 			},
@@ -493,15 +493,15 @@ func TestSetLock(t *testing.T) {
 			// 0        1024            4096      max uint64
 			after: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{1: {}}},
+					Readers:   map[UniqueID]OwnerInfo{1: {}},
 					LockRange: LockRange{0, 1024},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 1: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 1: {}},
 					LockRange: LockRange{1024, 4096},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{4096, LockEOF},
 				},
 			},
@@ -514,15 +514,15 @@ func TestSetLock(t *testing.T) {
 			// 0            1024        2048  4096      max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 1: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 1: {}},
 					LockRange: LockRange{0, 1024},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{1024, 2048},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 2: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 2: {}},
 					LockRange: LockRange{4096, LockEOF},
 				},
 			},
@@ -536,15 +536,15 @@ func TestSetLock(t *testing.T) {
 			// 0            1024       4096      max uint64
 			after: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 1: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 1: {}},
 					LockRange: LockRange{0, 1024},
 				},
 				{
-					Lock:      Lock{Writer: 0},
+					Writer:    0,
 					LockRange: LockRange{1024, 4096},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 2: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 2: {}},
 					LockRange: LockRange{4096, LockEOF},
 				},
 			},
@@ -557,15 +557,15 @@ func TestSetLock(t *testing.T) {
 			// 0            1024        2048  4096      max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 1: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 1: {}},
 					LockRange: LockRange{0, 1024},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{1024, 2048},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 2: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 2: {}},
 					LockRange: LockRange{4096, LockEOF},
 				},
 			},
@@ -579,15 +579,15 @@ func TestSetLock(t *testing.T) {
 			// 0            1024       3072  4096      max uint64
 			after: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 1: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 1: {}},
 					LockRange: LockRange{0, 1024},
 				},
 				{
-					Lock:      Lock{Writer: 0},
+					Writer:    0,
 					LockRange: LockRange{1024, 3072},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 2: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 2: {}},
 					LockRange: LockRange{4096, LockEOF},
 				},
 			},
@@ -600,11 +600,11 @@ func TestSetLock(t *testing.T) {
 			// 0            1024        2048
 			before: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 1: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 1: {}},
 					LockRange: LockRange{0, 1024},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{1024, 2048},
 				},
 			},
@@ -622,19 +622,19 @@ func TestSetLock(t *testing.T) {
 			// 0            1024        2048        4096   max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Writer: 0},
+					Writer:    0,
 					LockRange: LockRange{0, 1024},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{1024, 2048},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{2048, 4096},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{4096, LockEOF},
 				},
 			},
@@ -651,11 +651,11 @@ func TestSetLock(t *testing.T) {
 			// 0            1024                     max uint64
 			after: []entry{
 				{
-					Lock:      Lock{Writer: 0},
+					Writer:    0,
 					LockRange: LockRange{0, 1024},
 				},
 				{
-					Lock:      Lock{Writer: 0},
+					Writer:    0,
 					LockRange: LockRange{1024, LockEOF},
 				},
 			},
@@ -757,7 +757,7 @@ func TestUnlock(t *testing.T) {
 			// 0                    max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{1: {}, 2: {}}},
+					Readers:   map[UniqueID]OwnerInfo{1: {}, 2: {}},
 					LockRange: LockRange{0, LockEOF},
 				},
 			},
@@ -770,7 +770,7 @@ func TestUnlock(t *testing.T) {
 			// 0                    max uint64
 			after: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{1: {}, 2: {}}},
+					Readers:   map[UniqueID]OwnerInfo{1: {}, 2: {}},
 					LockRange: LockRange{0, LockEOF},
 				},
 			},
@@ -783,7 +783,7 @@ func TestUnlock(t *testing.T) {
 			// 0                                  max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{0, LockEOF},
 				},
 			},
@@ -799,7 +799,7 @@ func TestUnlock(t *testing.T) {
 			// 0                                  max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Writer: 0},
+					Writer:    0,
 					LockRange: LockRange{0, LockEOF},
 				},
 			},
@@ -815,7 +815,7 @@ func TestUnlock(t *testing.T) {
 			// 0                                  max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{0, LockEOF},
 				},
 			},
@@ -828,7 +828,7 @@ func TestUnlock(t *testing.T) {
 			// 0     4096                    max uint64
 			after: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{4096, LockEOF},
 				},
 			},
@@ -841,7 +841,7 @@ func TestUnlock(t *testing.T) {
 			// 0                                  max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Writer: 0},
+					Writer:    0,
 					LockRange: LockRange{0, LockEOF},
 				},
 			},
@@ -854,7 +854,7 @@ func TestUnlock(t *testing.T) {
 			// 0     4096                    max uint64
 			after: []entry{
 				{
-					Lock:      Lock{Writer: 0},
+					Writer:    0,
 					LockRange: LockRange{4096, LockEOF},
 				},
 			},
@@ -867,7 +867,7 @@ func TestUnlock(t *testing.T) {
 			// 0                                  max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{0, LockEOF},
 				},
 			},
@@ -880,7 +880,7 @@ func TestUnlock(t *testing.T) {
 			// 0                          4096
 			after: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}},
 					LockRange: LockRange{0, 4096},
 				},
 			},
@@ -893,7 +893,7 @@ func TestUnlock(t *testing.T) {
 			// 0                                  max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Writer: 0},
+					Writer:    0,
 					LockRange: LockRange{0, LockEOF},
 				},
 			},
@@ -906,7 +906,7 @@ func TestUnlock(t *testing.T) {
 			// 0                          4096
 			after: []entry{
 				{
-					Lock:      Lock{Writer: 0},
+					Writer:    0,
 					LockRange: LockRange{0, 4096},
 				},
 			},
@@ -919,15 +919,15 @@ func TestUnlock(t *testing.T) {
 			// 0            1024        4096            max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 1: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 1: {}},
 					LockRange: LockRange{0, 1024},
 				},
 				{
-					Lock:      Lock{Writer: 0},
+					Writer:    0,
 					LockRange: LockRange{1024, 4096},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 1: {}, 2: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 1: {}, 2: {}},
 					LockRange: LockRange{4096, LockEOF},
 				},
 			},
@@ -940,11 +940,11 @@ func TestUnlock(t *testing.T) {
 			// 0        1024  4096        max uint64
 			after: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{1: {}}},
+					Readers:   map[UniqueID]OwnerInfo{1: {}},
 					LockRange: LockRange{0, 1024},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{1: {}, 2: {}}},
+					Readers:   map[UniqueID]OwnerInfo{1: {}, 2: {}},
 					LockRange: LockRange{4096, LockEOF},
 				},
 			},
@@ -957,7 +957,7 @@ func TestUnlock(t *testing.T) {
 			// 0                        max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 1: {}, 2: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 1: {}, 2: {}},
 					LockRange: LockRange{0, LockEOF},
 				},
 			},
@@ -970,15 +970,15 @@ func TestUnlock(t *testing.T) {
 			// 0                1024            4096          max uint64
 			after: []entry{
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 1: {}, 2: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 1: {}, 2: {}},
 					LockRange: LockRange{0, 1024},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{1: {}, 2: {}}},
+					Readers:   map[UniqueID]OwnerInfo{1: {}, 2: {}},
 					LockRange: LockRange{1024, 4096},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 1: {}, 2: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 1: {}, 2: {}},
 					LockRange: LockRange{4096, LockEOF},
 				},
 			},
@@ -991,11 +991,11 @@ func TestUnlock(t *testing.T) {
 			// 0        1024    4096            max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Writer: 0},
+					Writer:    0,
 					LockRange: LockRange{0, 1024},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 1: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 1: {}},
 					LockRange: LockRange{4096, LockEOF},
 				},
 			},
@@ -1008,11 +1008,11 @@ func TestUnlock(t *testing.T) {
 			// 0           8    4096            max uint64
 			after: []entry{
 				{
-					Lock:      Lock{Writer: 0},
+					Writer:    0,
 					LockRange: LockRange{0, 8},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 1: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 1: {}},
 					LockRange: LockRange{4096, LockEOF},
 				},
 			},
@@ -1025,11 +1025,11 @@ func TestUnlock(t *testing.T) {
 			// 0        1024    4096            max uint64
 			before: []entry{
 				{
-					Lock:      Lock{Writer: 0},
+					Writer:    0,
 					LockRange: LockRange{0, 1024},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 1: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 1: {}},
 					LockRange: LockRange{4096, LockEOF},
 				},
 			},
@@ -1042,15 +1042,15 @@ func TestUnlock(t *testing.T) {
 			// 0       1024     4096        8192      max uint64
 			after: []entry{
 				{
-					Lock:      Lock{Writer: 0},
+					Writer:    0,
 					LockRange: LockRange{0, 1024},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{1: {}}},
+					Readers:   map[UniqueID]OwnerInfo{1: {}},
 					LockRange: LockRange{4096, 8192},
 				},
 				{
-					Lock:      Lock{Readers: map[UniqueID]OwnerInfo{0: {}, 1: {}}},
+					Readers:   map[UniqueID]OwnerInfo{0: {}, 1: {}},
 					LockRange: LockRange{8192, LockEOF},
 				},
 			},

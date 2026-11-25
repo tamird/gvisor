@@ -628,10 +628,8 @@ func TestIPv4Send(t *testing.T) {
 
 	proto := s.NetworkProtocolInstance(ipv4.ProtocolNumber)
 	nic := testInterface{
-		testObject: testObject{
-			t:  t,
-			v4: true,
-		},
+		t:  t,
+		v4: true,
 	}
 	ep := proto.NewEndpoint(&nic, nil)
 	defer ep.Close()
@@ -765,10 +763,8 @@ func TestReceive(t *testing.T) {
 			}()
 
 			nic := testInterface{
-				testObject: testObject{
-					t:  t,
-					v4: test.v4,
-				},
+				t:  t,
+				v4: test.v4,
 			}
 			ep := s.NetworkProtocolInstance(test.protoNum).NewEndpoint(&nic, &nic.testObject)
 			defer ep.Close()
@@ -890,9 +886,7 @@ func TestIPv4ReceiveControl(t *testing.T) {
 
 			proto := s.NetworkProtocolInstance(ipv4.ProtocolNumber)
 			nic := testInterface{
-				testObject: testObject{
-					t: t,
-				},
+				t: t,
 			}
 			ep := proto.NewEndpoint(&nic, &nic.testObject)
 			defer ep.Close()
@@ -979,10 +973,8 @@ func TestIPv4FragmentationReceive(t *testing.T) {
 
 	proto := s.NetworkProtocolInstance(ipv4.ProtocolNumber)
 	nic := testInterface{
-		testObject: testObject{
-			t:  t,
-			v4: true,
-		},
+		t:  t,
+		v4: true,
 	}
 	ep := proto.NewEndpoint(&nic, &nic.testObject)
 	defer ep.Close()
@@ -1081,9 +1073,7 @@ func TestIPv6Send(t *testing.T) {
 
 	proto := s.NetworkProtocolInstance(ipv6.ProtocolNumber)
 	nic := testInterface{
-		testObject: testObject{
-			t: t,
-		},
+		t: t,
 	}
 	ep := proto.NewEndpoint(&nic, nil)
 	defer ep.Close()
@@ -1240,9 +1230,7 @@ func TestIPv6ReceiveControl(t *testing.T) {
 
 			proto := s.NetworkProtocolInstance(ipv6.ProtocolNumber)
 			nic := testInterface{
-				testObject: testObject{
-					t: t,
-				},
+				t: t,
 			}
 			ep := proto.NewEndpoint(&nic, &nic.testObject)
 			defer ep.Close()

@@ -365,9 +365,8 @@ func (*redirectTargetMaker) unmarshal(buf []byte, filter stack.IPHeaderFilter) (
 	rt.UnmarshalUnsafe(buf)
 
 	// Copy linux.XTRedirectTarget to stack.RedirectTarget.
-	target := redirectTarget{RedirectTarget: stack.RedirectTarget{
-		NetworkProtocol: filter.NetworkProtocol(),
-	}}
+	target := redirectTarget{
+		NetworkProtocol: filter.NetworkProtocol()}
 
 	// RangeSize should be 1.
 	nfRange := rt.NfRange
@@ -462,11 +461,9 @@ func (*nfNATTargetMaker) unmarshal(buf []byte, filter stack.IPHeaderFilter) (tar
 	}
 
 	target := redirectTarget{
-		RedirectTarget: stack.RedirectTarget{
-			NetworkProtocol: filter.NetworkProtocol(),
-			Port:            ntohs(natRange.MinProto),
-		},
-		addr: tcpip.AddrFrom16(natRange.MinAddr),
+		NetworkProtocol: filter.NetworkProtocol(),
+		Port:            ntohs(natRange.MinProto),
+		addr:            tcpip.AddrFrom16(natRange.MinAddr),
 	}
 
 	return &target, nil

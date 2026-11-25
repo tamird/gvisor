@@ -22,11 +22,9 @@ import (
 
 func newRenoInCongestionAvoidance(cwnd int) *renoState {
 	return newRenoCC(&sender{
-		ep: &Endpoint{},
-		TCPSenderState: TCPSenderState{
-			SndCwnd:  cwnd,
-			Ssthresh: cwnd,
-		},
+		ep:       &Endpoint{},
+		SndCwnd:  cwnd,
+		Ssthresh: cwnd,
 	})
 }
 

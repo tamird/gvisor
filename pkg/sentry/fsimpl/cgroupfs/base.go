@@ -174,7 +174,7 @@ var _ kernel.CgroupImpl = (*cgroupInode)(nil)
 
 func (fs *filesystem) newCgroupInode(ctx context.Context, creds *auth.Credentials, parent *cgroupInode, mode linux.FileMode) kernfs.Inode {
 	c := &cgroupInode{
-		dir:         dir{fs: fs},
+		fs:          fs,
 		ts:          make(map[*kernel.Task]struct{}),
 		controllers: make(map[kernel.CgroupControllerType]controller),
 	}

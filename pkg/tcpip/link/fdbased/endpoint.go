@@ -973,10 +973,9 @@ func NewInjectable(fd int, mtu uint32, capabilities stack.LinkEndpointCapabiliti
 		return nil, err
 	}
 
-	return &InjectableEndpoint{endpoint: endpoint{
+	return &InjectableEndpoint{
 		fds:           []fdInfo{{fd: fd, isSocket: isSocket}},
 		mtu:           mtu,
 		caps:          capabilities,
-		writevMaxIovs: rawfile.MaxIovs,
-	}}, nil
+		writevMaxIovs: rawfile.MaxIovs}, nil
 }

@@ -75,8 +75,7 @@ func (cm *ctTargetMaker) unmarshal(buf []byte, filter stack.IPHeaderFilter) (tar
 	var ct linux.XTCTTargetInfoV0
 	ct.UnmarshalUnsafe(buf)
 
-	return &ctTarget{CTTarget: stack.CTTarget{
+	return &ctTarget{
 		NetworkProtocol: filter.NetworkProtocol(),
-		Zone:            ct.Zone,
-	}}, nil
+		Zone:            ct.Zone}, nil
 }
