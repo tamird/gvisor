@@ -529,7 +529,7 @@ func (c *bwrapConfig) resolveEnv() {
 	for _, e := range c.UnsetEnv {
 		for i, v := range env {
 			if strings.HasPrefix(v, e+"=") {
-				env = append(env[:i], env[i+1:]...)
+				env = slices.Delete(env, i, i+1)
 				break
 			}
 		}

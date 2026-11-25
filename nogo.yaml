@@ -402,13 +402,6 @@ analyzers:
     # Controversial.
     internal:
       exclude: [".*"]
-  slicesdelete:
-    internal:
-      exclude:
-        - ".*" # Temporary: migrate slicesdelete.
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate slicesdelete.
   embedlit:
     internal:
       exclude:

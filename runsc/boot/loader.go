@@ -22,6 +22,7 @@ import (
 	"os"
 	"runtime"
 	runtimedebug "runtime/debug"
+	"slices"
 	"strconv"
 	"strings"
 	gtime "time"
@@ -2693,7 +2694,7 @@ func (l *Loader) portForward(opts *sentryapi.PortForwardOpts) error {
 		defer l.mu.Unlock()
 		for i := range l.portForwardProxies {
 			if l.portForwardProxies[i] == proxy {
-				l.portForwardProxies = append(l.portForwardProxies[:i], l.portForwardProxies[i+1:]...)
+				l.portForwardProxies = slices.Delete(l.portForwardProxies, i, i+1)
 				break
 			}
 		}
