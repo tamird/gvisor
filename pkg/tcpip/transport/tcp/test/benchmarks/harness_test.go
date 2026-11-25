@@ -49,7 +49,7 @@ func TestTransfer(t *testing.T) {
 	for _, batch := range []time.Duration{0, 100 * time.Microsecond} {
 		for _, rack := range []bool{true, false} {
 			t.Run(fmt.Sprintf("batch=%v/rack=%t", batch, rack), func(t *testing.T) {
-				n := newTopology(t, rack, batch)
+				n := newTopology(t, rack, batch, nil)
 				ctx, cancel := context.WithTimeout(n.ctx, 5*time.Second)
 				defer cancel()
 				pair, err := n.connect(ctx)
@@ -97,7 +97,7 @@ func TestTransfer(t *testing.T) {
 func TestTransferFailure(t *testing.T) {
 	for _, writer := range []bool{true, false} {
 		t.Run(fmt.Sprintf("writer=%t", writer), func(t *testing.T) {
-			n := newTopology(t, true, 0)
+			n := newTopology(t, true, 0, nil)
 			pair, err := n.connect(n.ctx)
 			if err != nil {
 				t.Fatal(err)
@@ -129,7 +129,7 @@ func TestTransferFailure(t *testing.T) {
 func TestIOCancellation(t *testing.T) {
 	for _, writer := range []bool{true, false} {
 		t.Run(fmt.Sprintf("writer=%t", writer), func(t *testing.T) {
-			n := newTopology(t, true, 0)
+			n := newTopology(t, true, 0, nil)
 			pair, err := n.connect(n.ctx)
 			if err != nil {
 				t.Fatal(err)
@@ -155,7 +155,7 @@ func TestIOCancellation(t *testing.T) {
 }
 
 func TestConnectCancellation(t *testing.T) {
-	n := newTopology(t, true, 0)
+	n := newTopology(t, true, 0, nil)
 	n.links[1].Attach(nil) // Prevent the handshake from completing.
 	ctx, cancel := context.WithTimeout(n.ctx, 20*time.Millisecond)
 	defer cancel()
@@ -165,7 +165,7 @@ func TestConnectCancellation(t *testing.T) {
 }
 
 func TestTopologyDefaults(t *testing.T) {
-	n := newTopology(t, true, 100*time.Microsecond)
+	n := newTopology(t, true, 100*time.Microsecond, nil)
 	for _, s := range n.stacks {
 		var tx tcpip.TCPSendBufferSizeRangeOption
 		var rx tcpip.TCPReceiveBufferSizeRangeOption

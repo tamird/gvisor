@@ -51,7 +51,7 @@ type topology struct {
 	once      sync.Once
 }
 
-func newTopology(t testing.TB, rack bool, batch time.Duration) *topology {
+func newTopology(t testing.TB, rack bool, batch time.Duration, clock tcpip.Clock) *topology {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	n := &topology{ctx: ctx, cancel: cancel}
@@ -65,6 +65,7 @@ func newTopology(t testing.TB, rack bool, batch time.Duration) *topology {
 		link.SupportedGSOKind = stack.HostGSOSupported
 		link.LinkEPCapabilities = stack.CapabilityRXChecksumOffload
 		s := stack.New(stack.Options{
+			Clock:              clock,
 			NetworkProtocols:   []stack.NetworkProtocolFactory{ipv4.NewProtocol},
 			TransportProtocols: []stack.TransportProtocolFactory{tcp.NewProtocol},
 		})
@@ -343,7 +344,7 @@ func transfer(ctx context.Context, pair socketPair, data []byte, size int64, dst
 // Each iteration starts with fresh congestion and RTT state. Only the transfer
 // is timed; cleanup must finish before the next iteration starts.
 func benchmarkTransfer(b *testing.B, rack bool, batch time.Duration, data []byte) (time.Duration, uint64, uint64) {
-	n := newTopology(b, rack, batch)
+	n := newTopology(b, rack, batch, nil)
 	defer n.close()
 	pair, err := n.connect(n.ctx)
 	if err != nil {

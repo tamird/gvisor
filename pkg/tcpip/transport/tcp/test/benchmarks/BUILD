@@ -11,11 +11,13 @@ go_test(
     srcs = [
         "harness_test.go",
         "netstack_bench_test.go",
+        "timer_bench_test.go",
     ],
     deps = [
         "//pkg/buffer",
         "//pkg/refs",
         "//pkg/tcpip",
+        "//pkg/tcpip/faketime",
         "//pkg/tcpip/header",
         "//pkg/tcpip/link/channel",
         "//pkg/tcpip/network/ipv4",
