@@ -53,9 +53,9 @@ func BenchmarkReadSegmented(b *testing.B) {
 		if err != nil || n != 1 {
 			b.Fatalf("WritePackets = (%d, %v), want (1, nil)", n, err)
 		}
-		data, err := d.Read()
-		if err != nil {
-			b.Fatalf("Read: %v", err)
+		data, readErr := d.Read()
+		if readErr != nil {
+			b.Fatalf("Read: %v", readErr)
 		}
 		if got := data.Size(); got != size {
 			data.Release()
