@@ -426,13 +426,6 @@ analyzers:
     # Controversial.
     internal:
       exclude: [".*"]
-  any:
-    internal:
-      exclude:
-        - ".*" # Temporary: migrate any.
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate any.
   plusbuild:
     internal:
       exclude:
