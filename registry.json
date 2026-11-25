@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T20:23:42.090467+00:00",
+    "updatedAt": "2026-11-25T20:26:38.821906+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -6765,14 +6765,14 @@
       "url": "https://github.com/google/gvisor/pull/15189",
       "group": "runtime",
       "status": "open",
-      "summary": "Public #15189 remains unchanged at 88b54c90a and conflicting. Current-base candidate 40d658b147 removes only duplicate imports/dependencies already upstream and preserves the approved cleanup logic. Graph/source, owning stack/netstack unit and NoGo gates, and linked runsc/Sentry builds passed on both architectures. Root’s final context/safety/performance and publication review remains.",
+      "summary": "Public #15189 remains unchanged at 88b54c90a and conflicting. Candidate 40d658b147 is qualified on both architectures and root’s source review is complete. The actual amendment and standard rebase-notice question has been asked and awaits Tamir’s decision; no push or notice has occurred.",
       "number": 15189,
       "reviewDecision": "",
-      "updatedAt": "2026-11-25T20:23:42.090467+00:00",
+      "updatedAt": "2026-11-25T20:26:19.847463+00:00",
       "followup": {
-        "disposition": "Public #15189 remains unchanged at 88b54c90a and conflicting. Current-base candidate 40d658b147 removes only duplicate imports/dependencies already upstream and preserves the approved cleanup logic. Graph/source, owning stack/netstack unit and NoGo gates, and linked runsc/Sentry builds passed on both architectures. Root’s final context/safety/performance and publication review remains.",
-        "owner": "approved_rebase_queue / root",
-        "nextAction": "Root completes final context/safety/performance and publication review of exact 40d658b147 under existing grants; do not transfer its private qualification to the unchanged public head.",
+        "disposition": "Public #15189 remains unchanged at 88b54c90a and conflicting. Candidate 40d658b147 is qualified on both architectures and root’s source review is complete. The actual amendment and standard rebase-notice question has been asked and awaits Tamir’s decision; no push or notice has occurred.",
+        "owner": "root",
+        "nextAction": "Root awaits Tamir’s decision on exact 40d658b147 and the standard rebase notice. Publish only after approval, preserving the exact expected public-head lease and existing qualification limits.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15189",
           "https://github.com/tamird/gvisor/actions/runs/42350364656/artifacts/13565357543",
@@ -6801,7 +6801,7 @@
         "sourceHead": "88b54c90a3442188496cedaa3590d10409590861",
         "mergeable": "CONFLICTING",
         "observedAt": "2026-11-24T04:47:08.376554+00:00",
-        "recheckCondition": "Existing owner’s terminal qualification/final review or actual public source/review change.",
+        "recheckCondition": "Tamir’s response to the actual amendment question, or a genuine changed source/base/review requirement.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -6834,7 +6834,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-25T20:23:42.090467+00:00",
+        "curatedAt": "2026-11-25T20:26:19.847463+00:00",
         "candidate": {
           "head": "40d658b147fd3ab5d10a0d37c4a5fd56c121f3fe",
           "ci": "56707aeb8a01673b4ba3f17d85449d09038c05c1",
@@ -6892,8 +6892,18 @@
         },
         "historicalOutreachClockHead": "4677b6d5ab8676013afe8e5074ca776e9aabaafd"
       },
-      "nextStep": "Root completes final context/safety/performance and publication review of exact 40d658b147 under existing grants; do not transfer its private qualification to the unchanged public head.",
-      "recheckCondition": "Existing owner’s terminal qualification/final review or actual public source/review change."
+      "nextStep": "Root awaits Tamir’s decision on exact 40d658b147 and the standard rebase notice. Publish only after approval, preserving the exact expected public-head lease and existing qualification limits.",
+      "recheckCondition": "Tamir’s response to the actual amendment question, or a genuine changed source/base/review requirement.",
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "40d658b147fd3ab5d10a0d37c4a5fd56c121f3fe",
+        "baseHead": "88b54c90a3442188496cedaa3590d10409590861",
+        "url": "https://github.com/tamird/gvisor/commit/40d658b147fd3ab5d10a0d37c4a5fd56c121f3fe",
+        "title": "Rebase queued packet cleanup on current master",
+        "summary": "Tamir’s actual exact-source amendment and standard rebase-notice question is pending. Public source is still unchanged.",
+        "body": "Scope summary of the accepted question: approve amending #15189 from 88b54c90a to current-base candidate 40d658b147 and posting the standard attributed rebase notice. The integration removes only the duplicate channel import and BUILD dependency already upstream; the approved cleanup logic remains. Both-architecture owning unit/NoGo and linked binary builds, graph and source checks passed. Root reviewed the three removeNICLocked callers and their lock release before the callback. No push or notice has occurred. Existing safety/performance and source-publication boundaries remain."
+      }
     },
     {
       "id": "pr:15188",
@@ -16976,8 +16986,8 @@
       "group": "rbe",
       "url": "https://github.com/google/gvisor/pull/15647",
       "status": "open",
-      "updatedAt": "2026-11-25T20:23:42.090467+00:00",
-      "summary": "Public #15647 remains unchanged at 94e3488d9 and conflicting. Current-base candidate e1e2d0356 preserves the upstream VDSOParamsFileRange correction. Graph/source and both-architecture binary builds passed. Both architectures passed six actual native/reference-systrap/save-restore clock cases with no skips; owning unit/NoGo terminal results remain with approved_rebase_queue.",
+      "updatedAt": "2026-11-25T20:26:38.821906+00:00",
+      "summary": "Public #15647 remains unchanged at 94e3488d9 and conflicting. Current-base candidate e1e2d03562 preserves the upstream VDSOParamsFileRange correction and its source-bound qualification. The actual amendment and standard rebase-notice question has been asked and awaits Tamir’s decision; no push or notice has occurred.",
       "number": 15647,
       "reviewDecision": null,
       "evidence": [
@@ -17003,11 +17013,11 @@
         }
       ],
       "followup": {
-        "owner": "approved_rebase_queue / root",
-        "disposition": "Public #15647 remains unchanged at 94e3488d9 and conflicting. Current-base candidate e1e2d0356 preserves the upstream VDSOParamsFileRange correction. Graph/source and both-architecture binary builds passed. Both architectures passed six actual native/reference-systrap/save-restore clock cases with no skips; owning unit/NoGo terminal results remain with approved_rebase_queue.",
+        "owner": "root",
+        "disposition": "Public #15647 remains unchanged at 94e3488d9 and conflicting. Current-base candidate e1e2d03562 preserves the upstream VDSOParamsFileRange correction and its source-bound qualification. The actual amendment and standard rebase-notice question has been asked and awaits Tamir’s decision; no push or notice has occurred.",
         "sourceHead": "94e3488d99cba57f92c7acc767eae3d2d4b0f5a5",
         "observedAt": "2026-11-23T00:18:10.610714+00:00",
-        "nextAction": "approved_rebase_queue reconciles the existing unit/NoGo results, then root completes final context/safety/performance and publication review. Preserve current source-bound qualification limits; no public delivery is claimed.",
+        "nextAction": "Root awaits Tamir’s decision on exact e1e2d03562 and the standard rebase notice. Publish only after approval, preserving the exact expected public-head lease and source-bound qualification limits.",
         "evidence": [
           {
             "label": "All four clock and restore results",
@@ -17028,8 +17038,8 @@
           "https://github.com/tamird/gvisor/actions/runs/45692342931"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Existing owner’s terminal qualification/final review or actual public source/review change.",
-        "curatedAt": "2026-11-25T20:23:42.090467+00:00",
+        "recheckCondition": "Tamir’s response to the actual amendment question, or a genuine changed source/base/review requirement.",
+        "curatedAt": "2026-11-25T20:26:38.821906+00:00",
         "candidate": {
           "head": "e1e2d03562b5215e8815237efb607627fe2c6033",
           "ci": "edc583a3b2df4defa5ba175e14002863dbe3e0b5",
@@ -17059,8 +17069,18 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "PR reviewers"
       },
-      "nextStep": "approved_rebase_queue reconciles the existing unit/NoGo results, then root completes final context/safety/performance and publication review. Preserve current source-bound qualification limits; no public delivery is claimed.",
-      "recheckCondition": "Existing owner’s terminal qualification/final review or actual public source/review change."
+      "nextStep": "Root awaits Tamir’s decision on exact e1e2d03562 and the standard rebase notice. Publish only after approval, preserving the exact expected public-head lease and source-bound qualification limits.",
+      "recheckCondition": "Tamir’s response to the actual amendment question, or a genuine changed source/base/review requirement.",
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "e1e2d03562b5215e8815237efb607627fe2c6033",
+        "baseHead": "94e3488d99cba57f92c7acc767eae3d2d4b0f5a5",
+        "url": "https://github.com/tamird/gvisor/commit/e1e2d03562b5215e8815237efb607627fe2c6033",
+        "title": "Rebase the reference-clock change on current master",
+        "summary": "The actual exact-source amendment and standard rebase-notice question awaits Tamir’s decision. Public source remains unchanged.",
+        "body": "Scope summary of the accepted question: approve amending #15647 from 94e3488d9 to current-base candidate e1e2d03562 and posting the standard attributed rebase notice. The integration preserves the upstream VDSOParamsFileRange correction. Graph/source and both-architecture binary builds passed; six actual native/reference-systrap/save-restore clock cases passed per architecture with no skips. The question contains the exact source and copyable range-diff. No push or notice has occurred; existing source-bound qualification and performance limits remain."
+      }
     },
     {
       "id": "branch:nvproxy-declared-sources",
