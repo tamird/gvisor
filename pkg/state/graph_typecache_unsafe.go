@@ -175,7 +175,7 @@ func schemaFingerprint() uint64 {
 		}
 		h = hashTypeSig(hashUint(h, uint64(flags)), t, 0, seen[:0])
 		if t.Kind() == reflect.Struct && flags&2 == 0 {
-			if st, ok := reflect.Zero(reflect.PointerTo(t)).Interface().(StructType); ok {
+			if st, ok := reflect.TypeAssert[StructType](reflect.Zero(reflect.PointerTo(t))); ok {
 				fields := st.StateFields()
 				h = hashUint(h, uint64(len(fields)))
 				for _, field := range fields {

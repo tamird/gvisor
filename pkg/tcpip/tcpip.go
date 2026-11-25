@@ -2664,11 +2664,11 @@ func (*TransportEndpointStats) IsEndpointStats() {}
 func InitStatCounters(v reflect.Value) {
 	for i := 0; i < v.NumField(); i++ {
 		v := v.Field(i)
-		if s, ok := v.Addr().Interface().(**StatCounter); ok {
+		if s, ok := reflect.TypeAssert[**StatCounter](v.Addr()); ok {
 			if *s == nil {
 				*s = new(StatCounter)
 			}
-		} else if s, ok := v.Addr().Interface().(**IntegralStatCounterMap); ok {
+		} else if s, ok := reflect.TypeAssert[**IntegralStatCounterMap](v.Addr()); ok {
 			if *s == nil {
 				*s = new(IntegralStatCounterMap)
 				(*s).Init()
@@ -2695,7 +2695,7 @@ func clone(dst reflect.Value, src reflect.Value) {
 	for i := 0; i < dst.NumField(); i++ {
 		d := dst.Field(i)
 		s := src.Field(i)
-		if c, ok := s.Addr().Interface().(*StatCounter); ok {
+		if c, ok := reflect.TypeAssert[*StatCounter](s.Addr()); ok {
 			d.Addr().Interface().(*StatCounter).IncrementBy(c.Value())
 		} else {
 			clone(d, s)

@@ -554,7 +554,7 @@ func (c *Config) ApplyBundles(flagSet *flag.FlagSet, bundleNames ...BundleName) 
 }
 
 func getVal(field reflect.Value) string {
-	if str, ok := field.Addr().Interface().(fmt.Stringer); ok {
+	if str, ok := reflect.TypeAssert[fmt.Stringer](field.Addr()); ok {
 		return str.String()
 	}
 	switch field.Kind() {

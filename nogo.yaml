@@ -426,13 +426,6 @@ analyzers:
     # Controversial.
     internal:
       exclude: [".*"]
-  reflecttypeassert:
-    internal:
-      exclude:
-        - ".*" # Temporary: migrate reflecttypeassert.
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate reflecttypeassert.
   testingcontext:
     internal:
       exclude:
