@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-25T21:06:11.877960+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-25T20:53:16.291022+00:00",
+  "registryDate": "2026-11-25T21:11:54.232115+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -460694,7 +460694,7 @@
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
       "sourceNumber": 16419,
-      "owner": "actions_bazel_cache",
+      "owner": "actions_bazel_cache / root",
       "claimed": true,
       "overdue": false,
       "kind": "inline",
@@ -460714,7 +460714,7 @@
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
       "sourceNumber": 16419,
-      "owner": "actions_bazel_cache",
+      "owner": "actions_bazel_cache / root",
       "claimed": true,
       "overdue": false,
       "kind": "inline",
@@ -460831,7 +460831,7 @@
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
       "sourceNumber": 16419,
-      "owner": "actions_bazel_cache",
+      "owner": "actions_bazel_cache / root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABUTON0A",
       "needsTriage": false,
@@ -460998,7 +460998,7 @@
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
       "sourceNumber": 16419,
-      "owner": "actions_bazel_cache",
+      "owner": "actions_bazel_cache / root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABVzsOnQ",
       "needsTriage": false,
@@ -461834,7 +461834,7 @@
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
       "sourceNumber": 16419,
-      "owner": "actions_bazel_cache",
+      "owner": "actions_bazel_cache / root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABXbKd7w",
       "needsTriage": false,
@@ -461852,7 +461852,7 @@
       "number": 15449,
       "head": "fdce23a34c322b076944df7369772ec68ea78254",
       "sourceNumber": 15449,
-      "owner": "root",
+      "owner": "approved_rebase_queue / root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABXbKjHQ",
       "needsTriage": false,
@@ -462187,7 +462187,7 @@
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
       "sourceNumber": 16419,
-      "owner": "actions_bazel_cache",
+      "owner": "actions_bazel_cache / root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABZaeShA",
       "needsTriage": false,
@@ -462512,8 +462512,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "e43144b9c14879ea75fb6e7a0221da20d55698cf",
-        "disposition": "Existing maintainer internal license-exception hold and CHANGES_REQUESTED remain recorded.",
-        "nextAction": "Await confirmation of the existing maintainer hold before revising the conflicting checker implementation. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks."
+        "disposition": "Published #15114 remains at e43144b9c with the maintainer’s internal-exception propagation hold before merge. The follow-up is already posted and a response is pending; there is no unposted follow-up draft obligation. Root verified the conflict against d6f0d47621 is only tools/licensecheck/licensecheck.go. Prior source qualification remains historical.",
+        "nextAction": "Root awaits the existing maintainer hold disposition; do not send another follow-up or revise source under the hold. Any later authorized revision must preserve the landed SPDX LicenseRef handling and graph.repoRefs refactor in the sole conflicting file."
       },
       "conflictObservedSince": "2026-11-17T19:11:47.868378+00:00"
     },
@@ -462675,13 +462675,13 @@
       "checkedAt": "2026-11-25T21:06:06.777147+00:00",
       "mergeabilityCheckedAt": "2026-11-25T21:06:06.777147+00:00",
       "sourceBranchMismatch": false,
-      "owner": "actions_bazel_cache",
-      "action": "actions_bazel_cache retains finalized candidate 14d87bd3f and its source-bound receipts. Root coordinates the remaining performance qualification and authorized thread resolution before any source-publication review. No upstream amendment/reply, new approval question, timing launch or duplicate observer is implied.",
+      "owner": "actions_bazel_cache / root",
+      "action": "Root and the existing qualification owner resolve the repeated-RTO workload admission requirement before the required same-runner A/A then A/B comparison. Keep the qualified candidate and source/thread boundaries separate; no candidate/performance result is inferred from the six baseline transfers.",
       "recordedFollowup": {
-        "owner": "actions_bazel_cache",
+        "owner": "actions_bazel_cache / root",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
-        "disposition": "Public 0ae405ec7 remains conflicting and unpublished. Final candidate 14d87bd3f on 8075b384 passed the owning packet, TCP unit/four end-to-end and formatter gates; functional source differs only by two final comment lines. The owner reports all required independent reviews accepted. Remaining blockers are exact-source same-runner A/A then A/B/broader performance coverage, and evidence-backed resolution of external thread 4648619071.",
-        "nextAction": "actions_bazel_cache retains finalized candidate 14d87bd3f and its source-bound receipts. Root coordinates the remaining performance qualification and authorized thread resolution before any source-publication review. No upstream amendment/reply, new approval question, timing launch or duplicate observer is implied."
+        "disposition": "Public 0ae405ec7 remains conflicting and unpublished. Final candidate 14d87bd3f on 8075b384 passed the owning packet, TCP unit/four end-to-end and formatter gates; functional source differs only by two final comment lines. The owner reports all required independent reviews accepted. Remaining blockers are exact-source same-runner A/A then A/B/broader performance coverage, and evidence-backed resolution of external thread 4648619071. The new baseline-only preflight completed six transfers with child cleanup and placement verified, but observed only one warmup RTO; repeated RTO remains unproven. The candidate did not execute in that preflight and no A/A or A/B was performed.",
+        "nextAction": "Root and the existing qualification owner resolve the repeated-RTO workload admission requirement before the required same-runner A/A then A/B comparison. Keep the qualified candidate and source/thread boundaries separate; no candidate/performance result is inferred from the six baseline transfers."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -472491,7 +472491,7 @@
         "since": "2026-11-25T20:26:19.847463+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:53:16.291022+00:00"
+        "observedAt": "2026-11-25T21:11:54.232115+00:00"
       }
     },
     "pr:15202": {
@@ -473468,7 +473468,7 @@
         "since": "2026-11-25T20:26:38.821906+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:53:16.291022+00:00"
+        "observedAt": "2026-11-25T21:11:54.232115+00:00"
       }
     },
     "pr:15648": {
@@ -479929,7 +479929,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:53:16.291022+00:00"
+        "observedAt": "2026-11-25T21:11:54.232115+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -479938,7 +479938,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:53:16.291022+00:00"
+        "observedAt": "2026-11-25T21:11:54.232115+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -479947,7 +479947,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:53:16.291022+00:00"
+        "observedAt": "2026-11-25T21:11:54.232115+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -479956,7 +479956,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:53:16.291022+00:00"
+        "observedAt": "2026-11-25T21:11:54.232115+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -479965,7 +479965,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:53:16.291022+00:00"
+        "observedAt": "2026-11-25T21:11:54.232115+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -479974,7 +479974,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:53:16.291022+00:00"
+        "observedAt": "2026-11-25T21:11:54.232115+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -479983,7 +479983,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:53:16.291022+00:00"
+        "observedAt": "2026-11-25T21:11:54.232115+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -479992,7 +479992,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:53:16.291022+00:00"
+        "observedAt": "2026-11-25T21:11:54.232115+00:00"
       }
     },
     "issue:17832": {
@@ -480001,7 +480001,16 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:53:16.291022+00:00"
+        "observedAt": "2026-11-25T21:11:54.232115+00:00"
+      }
+    },
+    "investigation:ci-benchmark-fuse-device": {
+      "contributor-review": {
+        "scope": "Choose the scope of FUSE mmap work",
+        "since": "2026-11-25T21:11:04.741354+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-25T21:11:54.232115+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -480010,7 +480019,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:53:16.291022+00:00",
+        "observedAt": "2026-11-25T21:11:54.232115+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     }
