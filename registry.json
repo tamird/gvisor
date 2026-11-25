@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T20:36:07.700805+00:00",
+    "updatedAt": "2026-11-25T20:43:01.329836+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -108116,19 +108116,19 @@
       "title": "Recognize explicit default-route destinations",
       "url": "https://github.com/tamird/gvisor/commit/c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6",
       "group": "analysis",
-      "status": "Agent work",
+      "status": "Retired; diagnostic evidence only",
       "owner": "root",
-      "summary": "Retained own candidate c9b368ac8d recognizes explicit zero-length IPv4/IPv6 default-route destinations in runsc/sandbox/network.go while preserving gateway and IPv6 checks. The live fork ref still points to this one-file revision. No superseding revision or source-publication decision was found in current route-specific refs/registry; no upstream PR is recorded. This candidate is distinct from foreign #15866 and is not yet adopted into x/tools.",
-      "nextStep": "analysis_delivery owns the newly assigned source-bound functional check: apply the small c9b correction to frozen 0edf behavior fixture d1879b7 and qualify only the missing both-architecture route gate. Root disposes the result versus foreign #15866 before integration or publication review. No prior #15866 evidence is transferred to c9b/current 0edf.",
-      "recheckCondition": "The existing analysis_delivery owner’s exact-source both-architecture route result, then root’s integration/publication disposition; no duplicate observer.",
-      "updatedAt": "2026-11-25T20:35:12.701564+00:00",
+      "summary": "Retired from source delivery. Diagnostic c9b projection passes 89 sandbox cases with one RDMA hardware skip per architecture, including the three route failures. Root confirmed it errors on gatewayless /0 and multiple same-family defaults, contrary to #15866’s gatewayless-first-default and route-order contract. The green gate does not qualify this compatibility behavior; retain the source and results as diagnostic evidence only.",
+      "nextStep": "No source-delivery action or approval question. Preserve the diagnostic evidence; analysis_delivery separately owns route attribution against the original analyzer-series parent.",
+      "recheckCondition": "A genuinely new source/compatibility disposition; no retry or competing publication of this retired candidate.",
+      "updatedAt": "2026-11-25T20:42:23.275122+00:00",
       "followup": {
-        "owner": "analysis_delivery / root",
+        "owner": "root",
         "sourceHead": "c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6",
-        "disposition": "Retained own candidate c9b368ac8d recognizes explicit zero-length IPv4/IPv6 default-route destinations in runsc/sandbox/network.go while preserving gateway and IPv6 checks. The live fork ref still points to this one-file revision. No superseding revision or source-publication decision was found in current route-specific refs/registry; no upstream PR is recorded. This candidate is distinct from foreign #15866 and is not yet adopted into x/tools.",
-        "nextAction": "analysis_delivery owns the newly assigned source-bound functional check: apply the small c9b correction to frozen 0edf behavior fixture d1879b7 and qualify only the missing both-architecture route gate. Root disposes the result versus foreign #15866 before integration or publication review. No prior #15866 evidence is transferred to c9b/current 0edf.",
-        "recheckCondition": "The existing analysis_delivery owner’s exact-source both-architecture route result, then root’s integration/publication disposition; no duplicate observer.",
-        "curatedAt": "2026-11-25T20:35:12.701564+00:00",
+        "disposition": "Retired from source delivery. Diagnostic c9b projection passes 89 sandbox cases with one RDMA hardware skip per architecture, including the three route failures. Root confirmed it errors on gatewayless /0 and multiple same-family defaults, contrary to #15866’s gatewayless-first-default and route-order contract. The green gate does not qualify this compatibility behavior; retain the source and results as diagnostic evidence only.",
+        "nextAction": "No source-delivery action or approval question. Preserve the diagnostic evidence; analysis_delivery separately owns route attribution against the original analyzer-series parent.",
+        "recheckCondition": "A genuinely new source/compatibility disposition; no retry or competing publication of this retired candidate.",
+        "curatedAt": "2026-11-25T20:42:23.275122+00:00",
         "candidate": {
           "head": "c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6",
           "base": "a97b4dd056998f835ee843c8ec2159b6633da2cf",
@@ -108145,15 +108145,45 @@
           "state": "present",
           "observedAt": "2026-11-25T20:34:45.858786+00:00",
           "owner": "root",
-          "nextAction": "Root assesses this existing candidate against foreign #15866 and the three current analyzer route failures, then chooses the minimal source-bound integration and required qualification/review path. Existing #15866 tests do not qualify c9b or current 0edf; do not rerun, amend source or open a PR merely from this registration.",
-          "recheckCondition": "Root’s candidate/supersession disposition, actual revised route source or #15866 integration; then owning affected-target qualification on the chosen integrated source.",
+          "nextAction": "Retain the existing fork ref/evidence; this candidate is retired from source delivery. No source publication or deletion is authorized.",
+          "recheckCondition": "A genuine new source/compatibility disposition.",
           "canonicalPRs": []
         },
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6",
-          "https://github.com/gvisor/gvisor/pull/15866"
+          "https://github.com/gvisor/gvisor/pull/15866",
+          "https://github.com/tamird/gvisor/actions/runs/45696611249",
+          "https://github.com/tamird/gvisor/actions/runs/45696613609"
         ],
-        "implementationOwner": "analysis_delivery"
+        "implementationOwner": "root",
+        "functionalProjection": {
+          "sourceFix": "c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6",
+          "analyzerNative": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
+          "workerFixture": "d1879b7e846f838e3342d10ce61358d3923669f2",
+          "ci": "5e6c14b416f5266a6803f1f9b0f7b3d08ff9dfd7",
+          "results": {
+            "amd64": {
+              "run": 45696611249,
+              "cases": 90,
+              "passed": 89,
+              "failed": 0,
+              "skipped": [
+                "TestCollectLinksAndRoutes_RDMAExclusion"
+              ]
+            },
+            "arm64": {
+              "run": 45696613609,
+              "cases": 90,
+              "passed": 89,
+              "failed": 0,
+              "skipped": [
+                "TestCollectLinksAndRoutes_RDMAExclusion"
+              ]
+            }
+          },
+          "scope": "Diagnostic functional gate; native0edf unchanged; multiple-default/order compatibility not qualified",
+          "publication": "Retired from delivery: incompatible gatewayless/multiple-default behavior; diagnostic evidence retained"
+        }
       },
       "evidence": [
         {
@@ -108163,8 +108193,17 @@
         {
           "label": "Distinct foreign route-selection proposal",
           "url": "https://github.com/gvisor/gvisor/pull/15866"
+        },
+        {
+          "label": "AMD64 diagnostic route projection",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45696611249"
+        },
+        {
+          "label": "ARM64 diagnostic route projection",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45696613609"
         }
-      ]
+      ],
+      "inactive": true
     }
   ],
   "edges": [
@@ -133519,9 +133558,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-25T20:35:12.701564+00:00",
+      "updatedAt": "2026-11-25T20:42:23.275122+00:00",
       "group": "analysis",
-      "summary": "Source 0edf29aac remains the completed 36-commit rewrite. Sandboxsetup, docprocessor and Python qualification passed on both architectures within their recorded scopes; the Fastlane baseline diagnostic passed without explaining the original intermittent failure. The same three route failures and the FUSE GRPC exec/mmap prerequisite remain. Performance A/A qualification is separate, and #17884 remains open.",
+      "summary": "Source 0edf29aac remains the completed 36-commit analyzer rewrite. Ordinary functional checks passed within their recorded scopes. Diagnostic c9b makes the three route cases pass but is retired from delivery because it violates gatewayless/multiple-default behavior. Original-parent route attribution, FUSE GRPC exec/mmap, remaining performance qualification and open #17884 stay separate.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -133893,7 +133932,7 @@
           ]
         }
       ],
-      "nextStep": "analysis_delivery qualifies the retained c9b default-route correction on the frozen 0edf behavior fixture, using only the missing both-architecture gate. Root disposes that source-bound result against foreign #15866 (author eren23 owns its conflicting revision), then the chosen integration. Retained #15866 passes do not qualify c9b/current 0edf. Separately assign FUSE/MM design/parity → tiny exec-on-FUSE → GRPC; retain #17884 and performance gates.",
+      "nextStep": "analysis_delivery compares the route behavior to the original series parent, reusing existing results where valid. Do not integrate or publish diagnostic c9b: root confirmed its gatewayless/multiple-default incompatibility with #15866’s ordering contract. Separately assign FUSE/MM design/parity → tiny exec-on-FUSE → GRPC, retain #17884 and finish remaining performance qualification.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -134262,6 +134301,14 @@
         {
           "label": "Own retained route-correction candidate; not adopted/qualified for current analyzer",
           "url": "https://github.com/tamird/gvisor/commit/c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6"
+        },
+        {
+          "label": "AMD64 diagnostic route projection",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45696611249"
+        },
+        {
+          "label": "ARM64 diagnostic route projection",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45696613609"
         }
       ],
       "reviewWatch": {
@@ -134284,11 +134331,11 @@
           }
         ]
       },
-      "recheckCondition": "The existing analysis_delivery owner’s exact-source both-architecture route result, then root’s integration/publication disposition; no duplicate observer.",
+      "recheckCondition": "The existing owner’s original-parent route-attribution result; explicit FUSE/MM design/parity evidence; actual prerequisite or authorized performance progress.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Root coordinates the three remaining route expectations and the FUSE/MM architectural prerequisite (#3234/#3237). FUSE implementation ownership is unassigned: first assign a design owner and require native parity tests, then tiny exec-on-FUSE before GRPC. Keep #17884 and performance A/A gates separate; do not repeat completed ordinary qualification or infer publication readiness.",
-        "recheckCondition": "An explicit FUSE/MM design owner and native parity evidence, then tiny exec-on-FUSE; actual route/prerequisite resolution or separately authorized performance qualification."
+        "nextAction": "Root assesses existing #15866 multiple-default and FindRoute cases before deciding any route source change. c9b remains diagnostic-only; its green projection does not qualify compatibility or alter frozen 0edf. Separately assign FUSE/MM design/parity → tiny exec-on-FUSE → GRPC and finish remaining performance qualification; #17884 remains open.",
+        "recheckCondition": "Root’s route compatibility/source disposition; explicit FUSE/MM design/parity evidence; actual prerequisite or authorized performance progress."
       },
       "head": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
       "settledReviews": [
@@ -134489,17 +134536,19 @@
           "https://github.com/gvisor/gvisor/pull/15866",
           "https://github.com/tamird/gvisor/actions/runs/42131798883/artifacts/13464850421",
           "https://github.com/tamird/gvisor/actions/runs/43418722353/artifacts/14032223538",
-          "https://github.com/tamird/gvisor/commit/c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6"
+          "https://github.com/tamird/gvisor/commit/c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6",
+          "https://github.com/tamird/gvisor/actions/runs/45696611249",
+          "https://github.com/tamird/gvisor/actions/runs/45696613609"
         ],
         "owner": "root",
-        "disposition": "Source 0edf29aac remains the completed 36-commit rewrite. Sandboxsetup, docprocessor and Python qualification passed on both architectures within their recorded scopes; the Fastlane baseline diagnostic passed without explaining the original intermittent failure. The same three route failures and the FUSE GRPC exec/mmap prerequisite remain. Performance A/A qualification is separate, and #17884 remains open.",
-        "nextAction": "analysis_delivery qualifies the retained c9b default-route correction on the frozen 0edf behavior fixture, using only the missing both-architecture gate. Root disposes that source-bound result against foreign #15866 (author eren23 owns its conflicting revision), then the chosen integration. Retained #15866 passes do not qualify c9b/current 0edf. Separately assign FUSE/MM design/parity → tiny exec-on-FUSE → GRPC; retain #17884 and performance gates.",
-        "recheckCondition": "The existing analysis_delivery owner’s exact-source both-architecture route result, then root’s integration/publication disposition; no duplicate observer.",
+        "disposition": "Source 0edf29aac remains the completed 36-commit analyzer rewrite. Ordinary functional checks passed within their recorded scopes. Diagnostic c9b makes the three route cases pass but is retired from delivery because it violates gatewayless/multiple-default behavior. Original-parent route attribution, FUSE GRPC exec/mmap, remaining performance qualification and open #17884 stay separate.",
+        "nextAction": "analysis_delivery compares the route behavior to the original series parent, reusing existing results where valid. Do not integrate or publish diagnostic c9b: root confirmed its gatewayless/multiple-default incompatibility with #15866’s ordering contract. Separately assign FUSE/MM design/parity → tiny exec-on-FUSE → GRPC, retain #17884 and finish remaining performance qualification.",
+        "recheckCondition": "The existing owner’s original-parent route-attribution result; explicit FUSE/MM design/parity evidence; actual prerequisite or authorized performance progress.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-25T20:35:12.701564+00:00"
+        "curatedAt": "2026-11-25T20:42:23.275122+00:00"
       },
       "comparisons": [
         {
@@ -134589,7 +134638,11 @@
           "rows": [
             [
               "Ordinary targets, both architectures",
-              "Sandboxsetup 23 and docprocessor 9 pass per architecture. Python suite passed: 42 tests, one inherited skip. The same three route cases still fail; dependency effects are not independently excluded."
+              "Sandboxsetup23 and docprocessor9 pass per architecture. Python:42 tests, one inherited skip. Native0edf still lacks any route correction."
+            ],
+            [
+              "Diagnostic route projection, both architectures",
+              "5e6c:90 cases per architecture,89 passed/0failed/1RDMA hardware skip; the three prior route cases pass. c9b RETIRED from delivery: gatewayless/multiple-default behavior violates #15866’s route-order contract. Diagnostic results retained; original-parent attribution remains separate."
             ],
             [
               "Baseline Fastlane diagnostic",
@@ -134673,6 +134726,14 @@
             {
               "label": "FUSE mmap architecture prerequisite #3237",
               "url": "https://github.com/gvisor/gvisor/issues/3237"
+            },
+            {
+              "label": "AMD64 diagnostic route projection",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45696611249"
+            },
+            {
+              "label": "ARM64 diagnostic route projection",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45696613609"
             }
           ]
         }
@@ -142534,9 +142595,9 @@
       "title": "Node’s error serialization test times out",
       "group": "ci-flakes",
       "status": "active",
-      "owner": "benchmark_measurement_review / root",
-      "updatedAt": "2026-11-23T20:29:42.991432+00:00",
-      "summary": "The combined6a ask is superseded by three independently documented, durably published proposals: runtime output f05f486d, Node TAP8044063a and pinned AMD64 image outputs e17f88ff. Their source trees/parents are unchanged from the reviewed split; combined-source functional evidence and known FLAKY annotations retain their original limits. The actual question to open three one-commit PRs is pending; no upstream PR is opened.",
+      "owner": "root",
+      "updatedAt": "2026-11-25T20:41:47.538216+00:00",
+      "summary": "The three split changes are published: runtime output #17921 at f05f486dc, Node TAP #17962 at8044063a9 and image outputs #17971 at e17f88ffd are OPEN. Their opening decisions are complete. Follow their canonical PR records for current CI/review; the original serialization-timeout incident retains its source-bound evidence and natural-recurrence condition, with no causal fix inferred from publication.",
       "findings": [
         {
           "text": "The same test timed out in build 54544. Neither log identifies the operation still running at the deadline.",
@@ -142556,7 +142617,7 @@
           ]
         }
       ],
-      "nextStep": "Await the actual three-source opening decision recorded on the worker-arraybuffer investigation. Do not transfer the old6a question or invent fresh independent validation; retain original timeout natural-recurrence and runtime/image limits.",
+      "nextStep": "Root follows actual feedback/check/source events on #17921, #17962 and #17971 through their canonical lifecycles, and a natural recurrence of the original error-serialization timeout. No opening approval, duplicate PR/reply or validation rerun is pending here.",
       "evidence": [
         {
           "label": "Original Node shard",
@@ -142589,14 +142650,38 @@
         {
           "label": "Published exact6a fork preview",
           "url": "https://github.com/tamird/gvisor/tree/review/node-runtime-completion-20261123"
+        },
+        {
+          "label": "Canonical PR #17921",
+          "url": "https://github.com/gvisor/gvisor/pull/17921"
+        },
+        {
+          "label": "Canonical PR #17962",
+          "url": "https://github.com/gvisor/gvisor/pull/17962"
+        },
+        {
+          "label": "Canonical PR #17971",
+          "url": "https://github.com/gvisor/gvisor/pull/17971"
         }
       ],
       "technicalOwner": "CI flake triage",
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
+      "recheckCondition": "Natural error-serialization timeout recurrence or a substantive source/review/check event on the owning published PR.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
-        "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+        "nextAction": "Root follows actual feedback/check/source events on #17921, #17962 and #17971 through their canonical lifecycles, and a natural recurrence of the original error-serialization timeout. No opening approval, duplicate PR/reply or validation rerun is pending here.",
+        "recheckCondition": "Natural error-serialization timeout recurrence or a substantive source/review/check event on the owning published PR."
+      },
+      "followup": {
+        "owner": "root",
+        "disposition": "The three split changes are published: runtime output #17921 at f05f486dc, Node TAP #17962 at8044063a9 and image outputs #17971 at e17f88ffd are OPEN. Their opening decisions are complete. Follow their canonical PR records for current CI/review; the original serialization-timeout incident retains its source-bound evidence and natural-recurrence condition, with no causal fix inferred from publication.",
+        "nextAction": "Root follows actual feedback/check/source events on #17921, #17962 and #17971 through their canonical lifecycles, and a natural recurrence of the original error-serialization timeout. No opening approval, duplicate PR/reply or validation rerun is pending here.",
+        "recheckCondition": "Natural error-serialization timeout recurrence or a substantive source/review/check event on the owning published PR.",
+        "curatedAt": "2026-11-25T20:41:47.538216+00:00",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/17921",
+          "https://github.com/gvisor/gvisor/pull/17962",
+          "https://github.com/gvisor/gvisor/pull/17971"
+        ]
       }
     },
     {
@@ -145801,9 +145886,9 @@
       "title": "Report client aggregate Iperf bandwidth",
       "owner": "root",
       "head": "9cf0dbbe278572fd39d877a0d542483573a0185b",
-      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
+      "updatedAt": "2026-11-25T20:43:01.329836+00:00",
       "summary": "Root holds standalone publication of the Iperf2 reporter after N24 visit 28 showed the SUM interval was 10.7154s versus the longest stream’s 11.3312s. Source 9cf remains a literal SUM parsing correction, but its unanswered publication question is suspended by the technical owner; no user rejection, approval or upstream PR is inferred.",
-      "nextStep": "BCR #11518 is merged and published metadata matches reviewed fe25. Canonical public-registry admission 45024961797 passed four labels with zero actions, clearing the qualification fallback without rebuilding the image. benchmark_measurement_review retains DING ce163 topology qualification and its unanswered Moby exception. The separate #15146 license-policy hold is not a demonstrated binary-build prerequisite. Sentry P64 remains a 30-second timeout locally and on RBE, with unknown cause and sensitive investigation remains subject to root assignment and independent measurement-control requirements; Daybreak availability is confirmed. No unchanged retry, timing or standalone 9cf publication.",
+      "nextStep": "BCR #11518 is merged and published metadata matches reviewed fe25. Canonical public-registry admission 45024961797 passed four labels with zero actions, clearing the qualification fallback without rebuilding the image. Root retains the separate DING ce163 topology qualification. The Moby remote-build exception was approved, and the exact ce163 image build/package checks plus owning Bazel build/empty-selection validation are complete; no build approval remains. The separate #15146 license-policy hold is not a demonstrated binary-build prerequisite. Sentry P64 remains a 30-second timeout locally and on RBE, with unknown cause and sensitive investigation remains subject to root assignment and independent measurement-control requirements; Daybreak availability is confirmed. No unchanged retry, timing or standalone 9cf publication.",
       "evidence": [
         {
           "label": "Exact reviewable source and included DCO",
@@ -145842,9 +145927,9 @@
       "followup": {
         "owner": "root",
         "disposition": "Root holds standalone publication of the Iperf2 reporter after N24 visit 28 showed the SUM interval was 10.7154s versus the longest stream’s 11.3312s. Source 9cf remains a literal SUM parsing correction, but its unanswered publication question is suspended by the technical owner; no user rejection, approval or upstream PR is inferred.",
-        "nextAction": "BCR #11518 is merged and published metadata matches reviewed fe25. Canonical public-registry admission 45024961797 passed four labels with zero actions, clearing the qualification fallback without rebuilding the image. benchmark_measurement_review retains DING ce163 topology qualification and its unanswered Moby exception. The separate #15146 license-policy hold is not a demonstrated binary-build prerequisite. Sentry P64 remains a 30-second timeout locally and on RBE, with unknown cause and sensitive investigation remains subject to root assignment and independent measurement-control requirements; Daybreak availability is confirmed. No unchanged retry, timing or standalone 9cf publication.",
+        "nextAction": "BCR #11518 is merged and published metadata matches reviewed fe25. Canonical public-registry admission 45024961797 passed four labels with zero actions, clearing the qualification fallback without rebuilding the image. Root retains the separate DING ce163 topology qualification. The Moby remote-build exception was approved, and the exact ce163 image build/package checks plus owning Bazel build/empty-selection validation are complete; no build approval remains. The separate #15146 license-policy hold is not a demonstrated binary-build prerequisite. Sentry P64 remains a 30-second timeout locally and on RBE, with unknown cause and sensitive investigation remains subject to root assignment and independent measurement-control requirements; Daybreak availability is confirmed. No unchanged retry, timing or standalone 9cf publication.",
         "recheckCondition": "Root returns a bounded investigation disposition, directly relevant evidence changes, or an actual outstanding source/operational decision.",
-        "curatedAt": "2026-11-25T15:19:00.232145+00:00"
+        "curatedAt": "2026-11-25T20:43:01.329836+00:00"
       },
       "recheckCondition": "Root returns a bounded investigation disposition, directly relevant evidence changes, or an actual outstanding source/operational decision."
     },
