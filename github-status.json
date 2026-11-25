@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-25T22:12:52.030781+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-25T22:04:11.018203+00:00",
+  "registryDate": "2026-11-25T22:15:30.434231+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -462656,7 +462656,7 @@
       "number": 17343,
       "head": "65395f4d25f46c489be82141feeb009819403f19",
       "sourceNumber": 17343,
-      "owner": "root",
+      "owner": "approved_delivery_batch",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABaGDMmQ",
       "needsTriage": false,
@@ -462788,12 +462788,12 @@
       "mergeabilityCheckedAt": "2026-11-25T22:12:46.184075+00:00",
       "sourceBranchMismatch": false,
       "owner": "approved_rebase_queue / root",
-      "action": "approved_rebase_queue consumes the existing changed-fixture normal/race results, then root performs final source review. Preserve the retained UDS skip and source-bound evidence; no repeated CI, timing or publication is authorized by this partial result.",
+      "action": "Root awaits Tamir’s answer on exact 9c2cdb328 and the supplied rebase notice. Preserve public source and the expected-old-head lease until approval; do not repeat completed validation.",
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "2457939ec15647b0908859936941c569b0a04cce",
-        "disposition": "Public #14361 remains at 2457939ec. Candidate f58e824c1d is a scoped recovery for four synchronous-callback analyzer accesses and one node binding. Source checks and the two previously failed NoGo targets pass on both architectures. Two changed fixture targets still await normal/race completion on both architectures; retained runtime/binary/UDS evidence includes one supplementary-group skip per architecture. No full-green or publication claim.",
-        "nextAction": "approved_rebase_queue consumes the existing changed-fixture normal/race results, then root performs final source review. Preserve the retained UDS skip and source-bound evidence; no repeated CI, timing or publication is authorized by this partial result."
+        "disposition": "Public #14361 remains at 2457939ec. Final candidate 9c2cdb328 has completed the scoped callback and fixture recovery, normal/race/NoGo and default/empty/unset TEST_TMPDIR checks on both architectures. Two final reviews are clear. The actual amendment and rebase-notice question awaits Tamir; the retained supplementary-group skip and performance limits remain separate.",
+        "nextAction": "Root awaits Tamir’s answer on exact 9c2cdb328 and the supplied rebase notice. Preserve public source and the expected-old-head lease until approval; do not repeat completed validation."
       },
       "conflictObservedSince": "2026-11-25T10:07:08.831385+00:00"
     },
@@ -471919,6 +471919,13 @@
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
+      },
+      "contributor-review": {
+        "scope": "9c2cdb32898e9b4b03ec6ee594f1ad59abd4e7a0",
+        "since": "2026-11-25T22:15:30.434231+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-25T22:15:30.434231+00:00"
       }
     },
     "pr:14458": {
@@ -472681,7 +472688,7 @@
         "since": "2026-11-25T20:26:19.847463+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:04:11.018203+00:00"
+        "observedAt": "2026-11-25T22:15:30.434231+00:00"
       }
     },
     "pr:15202": {
@@ -473658,7 +473665,7 @@
         "since": "2026-11-25T20:26:38.821906+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:04:11.018203+00:00"
+        "observedAt": "2026-11-25T22:15:30.434231+00:00"
       }
     },
     "pr:15648": {
@@ -476429,7 +476436,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:04:11.018203+00:00"
+        "observedAt": "2026-11-25T22:15:30.434231+00:00"
       }
     },
     "pr:16822": {
@@ -477102,7 +477109,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:04:11.018203+00:00"
+        "observedAt": "2026-11-25T22:15:30.434231+00:00"
       }
     },
     "pr:16958": {
@@ -477161,7 +477168,7 @@
         "since": "2026-11-25T21:37:40.347012+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:04:11.018203+00:00"
+        "observedAt": "2026-11-25T22:15:30.434231+00:00"
       }
     },
     "pr:16963": {
@@ -480119,7 +480126,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:04:11.018203+00:00"
+        "observedAt": "2026-11-25T22:15:30.434231+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -480128,7 +480135,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:04:11.018203+00:00"
+        "observedAt": "2026-11-25T22:15:30.434231+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -480137,7 +480144,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:04:11.018203+00:00"
+        "observedAt": "2026-11-25T22:15:30.434231+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -480146,7 +480153,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:04:11.018203+00:00"
+        "observedAt": "2026-11-25T22:15:30.434231+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -480155,7 +480162,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:04:11.018203+00:00"
+        "observedAt": "2026-11-25T22:15:30.434231+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -480164,7 +480171,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:04:11.018203+00:00"
+        "observedAt": "2026-11-25T22:15:30.434231+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -480173,7 +480180,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:04:11.018203+00:00"
+        "observedAt": "2026-11-25T22:15:30.434231+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -480182,7 +480189,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:04:11.018203+00:00"
+        "observedAt": "2026-11-25T22:15:30.434231+00:00"
       }
     },
     "issue:17832": {
@@ -480191,7 +480198,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:04:11.018203+00:00"
+        "observedAt": "2026-11-25T22:15:30.434231+00:00"
       }
     },
     "branch:hey-report-cap-accounting": {
@@ -480200,7 +480207,7 @@
         "since": "2026-11-25T22:03:16.345652+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:04:11.018203+00:00"
+        "observedAt": "2026-11-25T22:15:30.434231+00:00"
       }
     },
     "investigation:ci-benchmark-fuse-device": {
@@ -480209,7 +480216,7 @@
         "since": "2026-11-25T21:11:04.741354+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:04:11.018203+00:00"
+        "observedAt": "2026-11-25T22:15:30.434231+00:00"
       }
     }
   },
