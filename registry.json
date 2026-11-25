@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T20:26:38.821906+00:00",
+    "updatedAt": "2026-11-25T20:36:07.700805+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -108106,6 +108106,65 @@
           }
         ]
       }
+    },
+    {
+      "id": "branch:network-default-route",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "network-default-route",
+      "head": "c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6",
+      "title": "Recognize explicit default-route destinations",
+      "url": "https://github.com/tamird/gvisor/commit/c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6",
+      "group": "analysis",
+      "status": "Agent work",
+      "owner": "root",
+      "summary": "Retained own candidate c9b368ac8d recognizes explicit zero-length IPv4/IPv6 default-route destinations in runsc/sandbox/network.go while preserving gateway and IPv6 checks. The live fork ref still points to this one-file revision. No superseding revision or source-publication decision was found in current route-specific refs/registry; no upstream PR is recorded. This candidate is distinct from foreign #15866 and is not yet adopted into x/tools.",
+      "nextStep": "analysis_delivery owns the newly assigned source-bound functional check: apply the small c9b correction to frozen 0edf behavior fixture d1879b7 and qualify only the missing both-architecture route gate. Root disposes the result versus foreign #15866 before integration or publication review. No prior #15866 evidence is transferred to c9b/current 0edf.",
+      "recheckCondition": "The existing analysis_delivery owner’s exact-source both-architecture route result, then root’s integration/publication disposition; no duplicate observer.",
+      "updatedAt": "2026-11-25T20:35:12.701564+00:00",
+      "followup": {
+        "owner": "analysis_delivery / root",
+        "sourceHead": "c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6",
+        "disposition": "Retained own candidate c9b368ac8d recognizes explicit zero-length IPv4/IPv6 default-route destinations in runsc/sandbox/network.go while preserving gateway and IPv6 checks. The live fork ref still points to this one-file revision. No superseding revision or source-publication decision was found in current route-specific refs/registry; no upstream PR is recorded. This candidate is distinct from foreign #15866 and is not yet adopted into x/tools.",
+        "nextAction": "analysis_delivery owns the newly assigned source-bound functional check: apply the small c9b correction to frozen 0edf behavior fixture d1879b7 and qualify only the missing both-architecture route gate. Root disposes the result versus foreign #15866 before integration or publication review. No prior #15866 evidence is transferred to c9b/current 0edf.",
+        "recheckCondition": "The existing analysis_delivery owner’s exact-source both-architecture route result, then root’s integration/publication disposition; no duplicate observer.",
+        "curatedAt": "2026-11-25T20:35:12.701564+00:00",
+        "candidate": {
+          "head": "c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6",
+          "base": "a97b4dd056998f835ee843c8ec2159b6633da2cf",
+          "paths": [
+            "runsc/sandbox/network.go"
+          ],
+          "publication": "Existing fork candidate; no upstream PR or actual approval question found",
+          "supersessionCheck": "Exact live ref and bounded route-specific refs/current registry checked; no superseding revision established"
+        },
+        "branchRefObservation": {
+          "repo": "tamird/gvisor",
+          "ref": "network-default-route",
+          "head": "c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6",
+          "state": "present",
+          "observedAt": "2026-11-25T20:34:45.858786+00:00",
+          "owner": "root",
+          "nextAction": "Root assesses this existing candidate against foreign #15866 and the three current analyzer route failures, then chooses the minimal source-bound integration and required qualification/review path. Existing #15866 tests do not qualify c9b or current 0edf; do not rerun, amend source or open a PR merely from this registration.",
+          "recheckCondition": "Root’s candidate/supersession disposition, actual revised route source or #15866 integration; then owning affected-target qualification on the chosen integrated source.",
+          "canonicalPRs": []
+        },
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6",
+          "https://github.com/gvisor/gvisor/pull/15866"
+        ],
+        "implementationOwner": "analysis_delivery"
+      },
+      "evidence": [
+        {
+          "label": "Existing exact fork candidate",
+          "url": "https://github.com/tamird/gvisor/commit/c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6"
+        },
+        {
+          "label": "Distinct foreign route-selection proposal",
+          "url": "https://github.com/gvisor/gvisor/pull/15866"
+        }
+      ]
     }
   ],
   "edges": [
@@ -112181,6 +112240,17 @@
         "https://github.com/tamird/gvisor/actions/runs/45681177653",
         "https://github.com/gvisor/gvisor/issues/3234",
         "https://github.com/gvisor/gvisor/issues/3237"
+      ]
+    },
+    {
+      "from": "branch:network-default-route",
+      "to": "investigation:repository-lint",
+      "type": "includes",
+      "label": "Route-correction candidate for disposition",
+      "reason": "This retains the missing own candidate beside the analyzer route gate. It is an alternative for root disposition, not an adopted source dependency or an additional mandatory patch.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6",
+        "https://github.com/gvisor/gvisor/pull/15866"
       ]
     }
   ],
@@ -133449,7 +133519,7 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-25T20:14:46.158965+00:00",
+      "updatedAt": "2026-11-25T20:35:12.701564+00:00",
       "group": "analysis",
       "summary": "Source 0edf29aac remains the completed 36-commit rewrite. Sandboxsetup, docprocessor and Python qualification passed on both architectures within their recorded scopes; the Fastlane baseline diagnostic passed without explaining the original intermittent failure. The same three route failures and the FUSE GRPC exec/mmap prerequisite remain. Performance A/A qualification is separate, and #17884 remains open.",
       "findings": [
@@ -133823,7 +133893,7 @@
           ]
         }
       ],
-      "nextStep": "Root follows foreign author eren23’s refreshed #15866 head (current 1be618324 is conflicting in two appended tests), then integration, and qualifies the affected sandbox target on the integrated analyzer source. Retained checks of #15866 passed all seven route collection cases on both architectures; they do not qualify current 0edf before integration. Coordinate the separate FUSE/MM architecture owner and native parity → tiny exec-on-FUSE → GRPC gate. Keep #17884 and remaining performance qualification separate.",
+      "nextStep": "analysis_delivery qualifies the retained c9b default-route correction on the frozen 0edf behavior fixture, using only the missing both-architecture gate. Root disposes that source-bound result against foreign #15866 (author eren23 owns its conflicting revision), then the chosen integration. Retained #15866 passes do not qualify c9b/current 0edf. Separately assign FUSE/MM design/parity → tiny exec-on-FUSE → GRPC; retain #17884 and performance gates.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -134188,6 +134258,10 @@
         {
           "label": "Retained full sandbox result with route correction",
           "url": "https://github.com/tamird/gvisor/actions/runs/43418722353/artifacts/14032223538"
+        },
+        {
+          "label": "Own retained route-correction candidate; not adopted/qualified for current analyzer",
+          "url": "https://github.com/tamird/gvisor/commit/c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6"
         }
       ],
       "reviewWatch": {
@@ -134210,7 +134284,7 @@
           }
         ]
       },
-      "recheckCondition": "Contributor refresh of #15866, then integration followed by the affected integrated-source sandbox result; FUSE/MM design/native parity evidence or actual prerequisite/performance progress.",
+      "recheckCondition": "The existing analysis_delivery owner’s exact-source both-architecture route result, then root’s integration/publication disposition; no duplicate observer.",
       "lifecycleCoordination": {
         "owner": "root",
         "nextAction": "Root coordinates the three remaining route expectations and the FUSE/MM architectural prerequisite (#3234/#3237). FUSE implementation ownership is unassigned: first assign a design owner and require native parity tests, then tiny exec-on-FUSE before GRPC. Keep #17884 and performance A/A gates separate; do not repeat completed ordinary qualification or infer publication readiness.",
@@ -134414,17 +134488,18 @@
           "https://github.com/gvisor/gvisor/issues/3237",
           "https://github.com/gvisor/gvisor/pull/15866",
           "https://github.com/tamird/gvisor/actions/runs/42131798883/artifacts/13464850421",
-          "https://github.com/tamird/gvisor/actions/runs/43418722353/artifacts/14032223538"
+          "https://github.com/tamird/gvisor/actions/runs/43418722353/artifacts/14032223538",
+          "https://github.com/tamird/gvisor/commit/c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6"
         ],
         "owner": "root",
         "disposition": "Source 0edf29aac remains the completed 36-commit rewrite. Sandboxsetup, docprocessor and Python qualification passed on both architectures within their recorded scopes; the Fastlane baseline diagnostic passed without explaining the original intermittent failure. The same three route failures and the FUSE GRPC exec/mmap prerequisite remain. Performance A/A qualification is separate, and #17884 remains open.",
-        "nextAction": "Root follows foreign author eren23’s refreshed #15866 head (current 1be618324 is conflicting in two appended tests), then integration, and qualifies the affected sandbox target on the integrated analyzer source. Retained checks of #15866 passed all seven route collection cases on both architectures; they do not qualify current 0edf before integration. Coordinate the separate FUSE/MM architecture owner and native parity → tiny exec-on-FUSE → GRPC gate. Keep #17884 and remaining performance qualification separate.",
-        "recheckCondition": "Contributor refresh of #15866, then integration followed by the affected integrated-source sandbox result; FUSE/MM design/native parity evidence or actual prerequisite/performance progress.",
+        "nextAction": "analysis_delivery qualifies the retained c9b default-route correction on the frozen 0edf behavior fixture, using only the missing both-architecture gate. Root disposes that source-bound result against foreign #15866 (author eren23 owns its conflicting revision), then the chosen integration. Retained #15866 passes do not qualify c9b/current 0edf. Separately assign FUSE/MM design/parity → tiny exec-on-FUSE → GRPC; retain #17884 and performance gates.",
+        "recheckCondition": "The existing analysis_delivery owner’s exact-source both-architecture route result, then root’s integration/publication disposition; no duplicate observer.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-25T20:14:46.158965+00:00"
+        "curatedAt": "2026-11-25T20:35:12.701564+00:00"
       },
       "comparisons": [
         {
@@ -146037,28 +146112,40 @@
       "id": "investigation:bazel-test-output-status",
       "type": "investigation",
       "title": "Bazel reports success after TestRunner output validation fails",
-      "status": "active",
+      "status": "concluded",
       "group": "analysis",
       "owner": "root",
       "evidence": [
         {
           "label": "Original native BEP and log showing output-validation failure with success status",
           "url": "https://github.com/tamird/gvisor/actions/runs/45509700206/artifacts/14974544524"
+        },
+        {
+          "label": "Delivered standalone reproduction: identical-attempt status inconsistency and failure control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45614362902/artifacts/15019884865"
         }
       ],
-      "summary": "The requested standalone narrow repro is retained: six-line Bash leaves one root-owned 0644 undeclared output; Bazel exits 0 while TestRunner reports exit 1/ACTION_OUTPUTS_NOT_CREATED and FAILED_TO_BUILD/final SUCCESS. Plain failing-test control exits 3. No upstream issue is filed or approved for filing by principle agreement alone.",
-      "nextStep": "Root reviews the concise report with the reproduced evidence before any actual filing decision. Preserve the existing archive and original incident; wrapper ownership and full Fio functional gates are already corrected. No operator request, test rerun or new issue-posting question is invented.",
-      "updatedAt": "2026-11-25T12:50:33.824992+00:00",
+      "summary": "The requested standalone reproduction and concise handoff were delivered and root-reviewed. In run 45614362902, the same native BEP attempt reports PASSED then FAILED_TO_BUILD while the invoking shell exits 0; the plain failure control exits 3. The archive and original evidence are retained. No upstream issue has been filed.",
+      "nextStep": "No current action. Reopen only on a new filing request or directly relevant evidence; do not repeat the delivered reproduction or revive the superseded verbose filing question.",
+      "updatedAt": "2026-11-25T20:36:07.700805+00:00",
       "followup": {
         "owner": "root",
-        "disposition": "The requested standalone narrow repro is retained: six-line Bash leaves one root-owned 0644 undeclared output; Bazel exits 0 while TestRunner reports exit 1/ACTION_OUTPUTS_NOT_CREATED and FAILED_TO_BUILD/final SUCCESS. Plain failing-test control exits 3. No upstream issue is filed or approved for filing by principle agreement alone.",
-        "nextAction": "Root reviews the concise report with the reproduced evidence before any actual filing decision. Preserve the existing archive and original incident; wrapper ownership and full Fio functional gates are already corrected. No operator request, test rerun or new issue-posting question is invented.",
-        "recheckCondition": "An actual filing decision or directly relevant repro/report evidence.",
+        "disposition": "The requested standalone reproduction and concise handoff were delivered and root-reviewed. In run 45614362902, the same native BEP attempt reports PASSED then FAILED_TO_BUILD while the invoking shell exits 0; the plain failure control exits 3. The archive and original evidence are retained. No upstream issue has been filed.",
+        "nextAction": "No current action. Reopen only on a new filing request or directly relevant evidence; do not repeat the delivered reproduction or revive the superseded verbose filing question.",
+        "recheckCondition": "A new explicit filing request or directly relevant evidence.",
         "observedAt": "2026-11-25T12:50:33.824992+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45509700206/artifacts/14974544524",
           "https://github.com/tamird/gvisor/actions/runs/45614362902/artifacts/15019884865"
-        ]
+        ],
+        "curatedAt": "2026-11-25T20:36:07.700805+00:00",
+        "completedHandoff": {
+          "run": 45614362902,
+          "rootReview": "Complete",
+          "artifact": "https://github.com/tamird/gvisor/actions/runs/45614362902/artifacts/15019884865",
+          "archive": "/private/tmp/gvisor-owner-20261117.knEPWo/bazel-test-output-repro/bazel-test-output-repro.tar.gz",
+          "issueFiled": false
+        }
       },
       "findings": [],
       "settledReviews": [
@@ -146073,7 +146160,8 @@
           "note": "The user agreed with the issue in principle but requested a narrow reproducer rather than filing this draft. The old filing question is superseded; no issue was posted."
         }
       ],
-      "recheckCondition": "An actual filing decision or directly relevant repro/report evidence."
+      "recheckCondition": "A new explicit filing request or directly relevant evidence.",
+      "inactive": true
     }
   ],
   "updatedAt": "2026-11-24T06:29:20.083295+00:00"
