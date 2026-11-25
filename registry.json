@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T12:53:06.511271+00:00",
+    "updatedAt": "2026-11-25T13:17:35.233413+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -44043,7 +44043,7 @@
       "number": 16587,
       "group": "release",
       "ref": "review/debian-changelog-release-date",
-      "head": "b31ec1084c1cfb767db222fdf04124c7c7000b86",
+      "head": "4ffc7923f64734cacfb01319dda3965432413f5a",
       "title": "Date the Debian changelog from the release version",
       "url": "https://github.com/google/gvisor/pull/16587",
       "evidence": [
@@ -44096,9 +44096,9 @@
           "url": "https://github.com/tamird/gvisor/commit/6cb9d5004"
         }
       ],
-      "updatedAt": "2026-11-25T02:17:02.181443+00:00",
+      "updatedAt": "2026-11-25T13:17:35.233413+00:00",
       "status": "open",
-      "summary": "The mechanical rebase 4ffc7923 is qualified and root-accepted; all three final files exactly match approved b31. Public b31ec1084 remains conflicting because publication awaits normal transport recovery. This is not a new source decision.",
+      "summary": "The accepted mechanical rebase 4ffc7923f is published and its factual notice is posted. All three final files match the approved b31 source; existing relkochta request is preserved. New FirstPass 2817 is independently verified pre-agent rolling 30-day quota admission failure; no source tests ran in it.",
       "refinement": {
         "before": {
           "head": "dbb2424c475adc4c2b2915f4f26f07f251f13eb6"
@@ -44110,10 +44110,10 @@
       },
       "followup": {
         "owner": "root",
-        "sourceHead": "b31ec1084c1cfb767db222fdf04124c7c7000b86",
-        "observedAt": "2026-11-25T02:17:02.181443+00:00",
-        "disposition": "The mechanical rebase 4ffc7923 is qualified and root-accepted; all three final files exactly match approved b31. Public b31ec1084 remains conflicting because publication awaits normal transport recovery. This is not a new source decision.",
-        "nextAction": "Root publishes the qualified rebase using the existing approved-rebase grant and expected b31 lease once normal transport recovers, then follows exact-head CI/review. Preserve prior quota history, existing reviewer requests and review boundaries; no unchanged CI retry, new approval ask or merge.",
+        "sourceHead": "4ffc7923f64734cacfb01319dda3965432413f5a",
+        "observedAt": "2026-11-25T13:17:35.233413+00:00",
+        "disposition": "The accepted mechanical rebase 4ffc7923f is published and its factual notice is posted. All three final files match the approved b31 source; existing relkochta request is preserved. New FirstPass 2817 is independently verified pre-agent rolling 30-day quota admission failure; no source tests ran in it.",
+        "nextAction": "Root follows current-head maintainer review and actual provider quota/admission or check changes through the existing lifecycle. Publication and routine notice are complete; locked SSH is not a blocker. No duplicate source question, unchanged retry, quota outreach, reviewer request or merge.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42209485090/artifacts/13498582036",
           "https://github.com/google/gvisor/pull/16587",
@@ -44125,10 +44125,12 @@
           "https://buildkite.com/gvisor/first-pass/builds/2469",
           "https://github.com/gvisor/gvisor/pull/16587#issuecomment-7110449402",
           "https://buildkite.com/gvisor/first-pass/builds/2469#01a209b1-5905-4d35-9da1-389ec578b8b1",
-          "https://github.com/gvisor/gvisor/pull/16587"
+          "https://github.com/gvisor/gvisor/pull/16587",
+          "https://buildkite.com/gvisor/first-pass/builds/2817#01a212d1-12b7-4578-99c7-2823544af1eb",
+          "https://github.com/gvisor/gvisor/pull/16587#issuecomment-7163355915"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Actual normal transport recovery or a changed source/base/review/check event.",
+        "recheckCondition": "Actual source/review/check/admission event; no dedicated watcher or SSH-unlock wait.",
         "curatedAt": "2026-11-19T16:20:03.380488+00:00",
         "priorImportNextAction": "Follow the checks, maintainer review and import for the published revision. DCO import coordination: Root coordinates #17678 at 8569dbe2475f. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
@@ -44291,29 +44293,53 @@
           "sha256": "e242920277bb63d705b29add5caecaec20a332d46332a3a4471a4f88af035895"
         },
         "currentPublishedLifecycle": {
-          "head": "7f37bebc1adeb13213c29774b278d3e3e861fff5",
-          "base": "a05ab5909d2518dd541a1eb4396057e9292f4178",
+          "head": "4ffc7923f64734cacfb01319dda3965432413f5a",
+          "ref": "review/debian-changelog-release-date",
+          "status": "open",
           "mergeable": "MERGEABLE",
-          "DCO": "SUCCESS",
+          "checkedAt": "2026-11-25T13:14:20.939625+00:00",
+          "reviewRequests": [
+            "relkochta"
+          ],
+          "notice": "https://github.com/gvisor/gvisor/pull/16587#issuecomment-7163355915",
           "firstPass": {
-            "build": 1880,
-            "state": "FAILURE before agent assignment:30-day360000 compute-minute quota",
-            "receipt": {
-              "file": "debian16587-firstpass1880-primary-safe-jobs.json",
-              "sha256": "dc95e53839f4265545b05a4c09732edf7abd3de6fa2c62cfc60437200915d08e"
-            }
-          },
-          "receipt": {
-            "file": "debian16587-after-publication.json",
-            "sha256": "dec0c0429257bd86b872a471178efd0a295f007e5e1e6016b53b3693515bd2bf"
-          },
-          "nativeChecks": "All six PASS",
-          "terminalReceipt": {
-            "file": "debian16587-new-head-terminal-ci.json",
-            "sha256": "e96b36143ca51611d4bb2dfa8ed1e2d6cbfddb4c4504ff7e16fb552d85af7921"
+            "build": 2817,
+            "url": "https://buildkite.com/gvisor/first-pass/builds/2817#01a212d1-12b7-4578-99c7-2823544af1eb",
+            "exit": 80,
+            "agentStarted": false,
+            "cause": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes"
           }
         },
-        "providerHead": "b31ec1084c1cfb767db222fdf04124c7c7000b86"
+        "providerHead": "4ffc7923f64734cacfb01319dda3965432413f5a",
+        "supersededExecutionBlocker": {
+          "disposition": "The mechanical rebase 4ffc7923 is qualified and root-accepted; all three final files exactly match approved b31. Public b31ec1084 remains conflicting because publication awaits normal transport recovery. This is not a new source decision.",
+          "nextAction": "Root publishes the qualified rebase using the existing approved-rebase grant and expected b31 lease once normal transport recovers, then follows exact-head CI/review. Preserve prior quota history, existing reviewer requests and review boundaries; no unchanged CI retry, new approval ask or merge.",
+          "recordedAt": "2026-11-25T02:17:02.181443+00:00",
+          "reason": "Superseded by Tamir’s direct confirmation of existing gh WORKFLOWS scope and authorized operation-scoped HTTPS fallback; historical failures are preserved, not reclassified."
+        },
+        "attentionDispositions": [
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "FirstPass 2817: verified pre-agent rolling 30-day quota",
+            "nextAction": "Root follows actual provider admission recovery or a new current-head event. No unchanged retry, outreach or source-failure inference.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/2817#01a212d1-12b7-4578-99c7-2823544af1eb"
+            ],
+            "binding": {
+              "sourceHead": "4ffc7923f64734cacfb01319dda3965432413f5a",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN8KOJkA",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/2817",
+                  "kind": "status"
+                }
+              ]
+            }
+          }
+        ]
       },
       "dcoCoordination": {
         "owner": "root",
@@ -44350,7 +44376,8 @@
           "note": "User approved14ee4cb6 test inclusion and requested a single squashed commit; owner is executing authorized amendment."
         }
       ],
-      "nextStep": "Root publishes the qualified rebase using the existing approved-rebase grant and expected b31 lease once normal transport recovers, then follows exact-head CI/review. Preserve prior quota history, existing reviewer requests and review boundaries; no unchanged CI retry, new approval ask or merge."
+      "nextStep": "Root follows current-head maintainer review and actual provider quota/admission or check changes through the existing lifecycle. Publication and routine notice are complete; locked SSH is not a blocker. No duplicate source question, unchanged retry, quota outreach, reviewer request or merge.",
+      "recheckCondition": "Actual source/review/check/admission event; no dedicated watcher or SSH-unlock wait."
     },
     {
       "id": "pr:16595",
@@ -103889,20 +103916,20 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/hey-json-preflight-20261118",
-      "head": "ebc2451733c1317e3cd1d2e57e0a815073f0e813",
+      "head": "4ef1c7dd6c58f85305c19070c3f666d903559bb7",
       "title": "Correct HTTP benchmark timing and reporting",
       "url": "https://github.com/google/gvisor/pull/17780",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-25T01:21:15.429370+00:00",
-      "summary": "Public ebc245173 remains conflicting. The approved three-commit rebase 4ef1c7dd6 is qualified on both architectures and accepted by root; only publication is blocked after bounded SSH and HTTPS workflow-determination timeouts. Readiness and cleanup standalone intents remain retired as duplicates of this open PR.",
+      "updatedAt": "2026-11-25T13:17:35.233413+00:00",
+      "summary": "The accepted three-commit mechanical rebase 4ef1c7dd6 is published and its factual notice is posted. The approved readiness overlap was dropped after #17546 landed; existing parth-opensrc and kerumeto requests are preserved. New FirstPass 2818 is its own verified pre-agent rolling 30-day quota failure, not source validation.",
       "followup": {
         "owner": "root",
-        "sourceHead": "ebc2451733c1317e3cd1d2e57e0a815073f0e813",
-        "observedAt": "2026-11-25T01:21:15.429370+00:00",
-        "disposition": "Public ebc245173 remains conflicting. The approved three-commit rebase 4ef1c7dd6 is qualified on both architectures and accepted by root; only publication is blocked after bounded SSH and HTTPS workflow-determination timeouts. Readiness and cleanup standalone intents remain retired as duplicates of this open PR.",
-        "nextAction": "Root publishes the qualified rebase with its exact ebc245173 lease when normal transport recovers, then follows current-head CI and the existing reviewer requests. The existing SSH-unlock question covers capability recovery; no new source decision or proven token-scope deficiency. Hey producer limitations constrain qualification claims, not this approved source delivery.",
-        "recheckCondition": "Actual normal SSH capability recovery, changed source/review/check evidence or maintainer action.",
+        "sourceHead": "4ef1c7dd6c58f85305c19070c3f666d903559bb7",
+        "observedAt": "2026-11-25T13:17:35.233413+00:00",
+        "disposition": "The accepted three-commit mechanical rebase 4ef1c7dd6 is published and its factual notice is posted. The approved readiness overlap was dropped after #17546 landed; existing parth-opensrc and kerumeto requests are preserved. New FirstPass 2818 is its own verified pre-agent rolling 30-day quota failure, not source validation.",
+        "nextAction": "Root follows current-head maintainer review and actual provider quota/admission or check changes through the existing lifecycle. Publication and routine notice are complete; locked SSH is not a blocker. No duplicate source question, unchanged retry, quota outreach, reviewer request or merge.",
+        "recheckCondition": "Actual source/review/check/admission event; no dedicated watcher or SSH-unlock wait.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/44231839538",
           "https://github.com/tamird/gvisor/actions/runs/44231202091",
@@ -103932,7 +103959,9 @@
           "https://github.com/tamird/gvisor/actions/runs/45519550603",
           "https://github.com/tamird/gvisor/actions/runs/45519553655",
           "https://github.com/tamird/gvisor/actions/runs/45519556332",
-          "https://github.com/tamird/gvisor/actions/runs/45518521409"
+          "https://github.com/tamird/gvisor/actions/runs/45518521409",
+          "https://buildkite.com/gvisor/first-pass/builds/2818#01a212d1-144b-4673-811c-4c4a67fc0dd2",
+          "https://github.com/gvisor/gvisor/pull/17780#issuecomment-7163355493"
         ],
         "qualificationHistory": [
           {
@@ -104815,26 +104844,52 @@
           {
             "reason": "author-public-checks",
             "action": "ci-infrastructure-retry",
-            "title": "First Pass 1812: independently diagnosed daily quota admission failure",
-            "nextAction": "Root and the existing provider owner recheck actual admission recovery or a new source/check event. No automatic retry, repeated diagnosis or CI-owner outreach.",
+            "title": "FirstPass 2818: verified pre-agent rolling 30-day quota",
+            "nextAction": "Root follows actual provider admission recovery or a new current-head event. No unchanged retry, outreach or source-failure inference.",
             "evidence": [
-              "https://buildkite.com/gvisor/first-pass/builds/1812"
+              "https://buildkite.com/gvisor/first-pass/builds/2818#01a212d1-144b-4673-811c-4c4a67fc0dd2"
             ],
             "binding": {
-              "sourceHead": "5c8a182619525e77d210a31a9b9ff575251165f3",
+              "sourceHead": "4ef1c7dd6c58f85305c19070c3f666d903559bb7",
               "checks": [
                 {
-                  "id": "SC_kwDOB9IlXs8AAAANzyZv5g",
+                  "id": "SC_kwDOB9IlXs8AAAAN8KPFYw",
                   "name": "buildkite/first-pass/pr",
                   "state": "FAILURE",
-                  "url": "https://buildkite.com/gvisor/first-pass/builds/1812",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/2818",
                   "kind": "status"
                 }
               ]
             }
           }
         ],
-        "providerHead": "ebc2451733c1317e3cd1d2e57e0a815073f0e813"
+        "providerHead": "4ef1c7dd6c58f85305c19070c3f666d903559bb7",
+        "supersededExecutionBlocker": {
+          "disposition": "Public ebc245173 remains conflicting. The approved three-commit rebase 4ef1c7dd6 is qualified on both architectures and accepted by root; only publication is blocked after bounded SSH and HTTPS workflow-determination timeouts. Readiness and cleanup standalone intents remain retired as duplicates of this open PR.",
+          "nextAction": "Root publishes the qualified rebase with its exact ebc245173 lease when normal transport recovers, then follows current-head CI and the existing reviewer requests. The existing SSH-unlock question covers capability recovery; no new source decision or proven token-scope deficiency. Hey producer limitations constrain qualification claims, not this approved source delivery.",
+          "recordedAt": "2026-11-25T01:21:15.429370+00:00",
+          "reason": "Superseded by Tamir’s direct confirmation of existing gh WORKFLOWS scope and authorized operation-scoped HTTPS fallback; historical failures are preserved, not reclassified."
+        },
+        "mergeable": "MERGEABLE",
+        "currentPublishedLifecycle": {
+          "head": "4ef1c7dd6c58f85305c19070c3f666d903559bb7",
+          "ref": "review/hey-json-preflight-20261118",
+          "status": "open",
+          "mergeable": "MERGEABLE",
+          "checkedAt": "2026-11-25T13:14:20.939616+00:00",
+          "reviewRequests": [
+            "parth-opensrc",
+            "kerumeto"
+          ],
+          "notice": "https://github.com/gvisor/gvisor/pull/17780#issuecomment-7163355493",
+          "firstPass": {
+            "build": 2818,
+            "url": "https://buildkite.com/gvisor/first-pass/builds/2818#01a212d1-144b-4673-811c-4c4a67fc0dd2",
+            "exit": 80,
+            "agentStarted": false,
+            "cause": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes"
+          }
+        }
       },
       "settledReviews": [
         {
@@ -104917,7 +104972,8 @@
         }
       },
       "number": 17780,
-      "nextStep": "Root publishes the qualified rebase with its exact ebc245173 lease when normal transport recovers, then follows current-head CI and the existing reviewer requests. The existing SSH-unlock question covers capability recovery; no new source decision or proven token-scope deficiency. Hey producer limitations constrain qualification claims, not this approved source delivery."
+      "nextStep": "Root follows current-head maintainer review and actual provider quota/admission or check changes through the existing lifecycle. Publication and routine notice are complete; locked SSH is not a blocker. No duplicate source question, unchanged retry, quota outreach, reviewer request or merge.",
+      "recheckCondition": "Actual source/review/check/admission event; no dedicated watcher or SSH-unlock wait."
     },
     {
       "id": "branch:tracker-proposal-ranges",
@@ -106044,9 +106100,9 @@
       "summary": "Cache 86cffbf72, the measured-scope issue rewrite and Go export f8500dffe have three separate unanswered publication decisions. The Go export Git/syntax checks, source guards, cleanup and independent reviews are complete. Canonical make lint/lint-cc reuse passing exact-parent 5cc6d0394 evidence because their selected inputs are unchanged. Full export assembly was not rebuilt, shallow-source limitations remain, and no RBE speedup is established. The Go export fork ref is unpublished.",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-11-24T06:29:20.083295+00:00",
+        "observedAt": "2026-11-25T13:09:11.551551+00:00",
         "disposition": "Cache 86cffbf72, the measured-scope issue rewrite and Go export f8500dffe have three separate unanswered publication decisions. The Go export Git/syntax checks, source guards, cleanup and independent reviews are complete. Canonical make lint/lint-cc reuse passing exact-parent 5cc6d0394 evidence because their selected inputs are unchanged. Full export assembly was not rebuilt, shallow-source limitations remain, and no RBE speedup is established. The Go export fork ref is unpublished.",
-        "nextAction": "Root consumes each existing decision independently: open the cache 86cffbf72 PR, replace the issue body with the current measured-scope draft, and open the Go export f8500dffe PR. Canonical lint coverage is reconciled through unchanged-input parent evidence. Deliver approved changes through the existing authorized routes; the unpublished Go export fork ref still needs its SSH/HTTPS execution blocker to clear.",
+        "nextAction": "Root consumes the existing cache, issue-body and Go-export source decisions independently. Existing authorized fork-preview work can use operation-scoped HTTPS with gh credentials after SSH failure; no SSH-unlock wait applies. None of the pending upstream opening/body questions is approved by this capability update.",
         "recheckCondition": "Actual response to any of the three existing publication questions, fork delivery recovery, or substantive maintainer/source/CI evidence.",
         "evidence": [
           "https://github.com/gvisor/gvisor/issues/17832",
@@ -106068,10 +106124,15 @@
           "https://github.com/gvisor/gvisor/actions/runs/45332448383/job/138236559759",
           "https://buildkite.com/gvisor/pipeline/builds/55802#01a20bff-5c2f-4bc4-aa29-331c9ed53e14"
         ],
-        "curatedAt": "2026-11-21T00:26:41.755Z"
+        "curatedAt": "2026-11-21T00:26:41.755Z",
+        "supersededExecutionBlocker": {
+          "nextAction": "Root consumes each existing decision independently: open the cache 86cffbf72 PR, replace the issue body with the current measured-scope draft, and open the Go export f8500dffe PR. Canonical lint coverage is reconciled through unchanged-input parent evidence. Deliver approved changes through the existing authorized routes; the unpublished Go export fork ref still needs its SSH/HTTPS execution blocker to clear.",
+          "recordedAt": "2026-11-24T06:29:20.083295+00:00",
+          "reason": "Existing gh WORKFLOWS capability is confirmed; source/body publication decisions remain separate and unanswered."
+        }
       },
-      "updatedAt": "2026-11-24T06:29:20.083295+00:00",
-      "nextStep": "Root consumes each existing decision independently: open the cache 86cffbf72 PR, replace the issue body with the current measured-scope draft, and open the Go export f8500dffe PR. Canonical lint coverage is reconciled through unchanged-input parent evidence. Deliver approved changes through the existing authorized routes; the unpublished Go export fork ref still needs its SSH/HTTPS execution blocker to clear.",
+      "updatedAt": "2026-11-25T13:09:11.551551+00:00",
+      "nextStep": "Root consumes the existing cache, issue-body and Go-export source decisions independently. Existing authorized fork-preview work can use operation-scoped HTTPS with gh credentials after SSH failure; no SSH-unlock wait applies. None of the pending upstream opening/body questions is approved by this capability update.",
       "recheckCondition": "Actual response to any of the three existing publication questions, fork delivery recovery, or substantive maintainer/source/CI evidence.",
       "reviewWatch": {
         "inspected": [
@@ -107220,25 +107281,32 @@
       "url": "https://github.com/tamird/gvisor/commit/24419d916114737a9d50690a7647c11d9fd66fe9",
       "title": "Retain the complete Sysbench summary output",
       "group": "tests",
-      "status": "Approved; publication execution blocked",
+      "status": "Published as #17970",
       "owner": "root",
       "evidence": [],
-      "summary": "Sysbench 24419d916 is approved for opening. No upstream PR exists: normal SSH signing failed, the single HTTPS new-ref fallback hit workflow-determination timeout, and a separate standard create-ref API attempt returned 404 after absence readback. No missing credential scope or new human permission is proved.",
-      "nextStep": "Root preserves the approved draft and exact-source build/NoGo receipts. Retry normal publication only on actual capability/provider recovery or a new basis; do not repeat approval, unchanged attempts, access changes or source edits.",
-      "updatedAt": "2026-11-25T12:50:33.824992+00:00",
+      "summary": "The approved Sysbench 24419d916 proposal is delivered as #17970. Its previous SSH/HTTPS/API new-ref failures remain historical; no source-publication or unlock question remains outstanding.",
+      "nextStep": "Complete handoff. Canonical #17970 owns current CI/review and provider-admission follow-through; no duplicate source opening or new credential request.",
+      "updatedAt": "2026-11-25T13:17:35.233413+00:00",
       "followup": {
         "owner": "root",
-        "disposition": "Sysbench 24419d916 is approved for opening. No upstream PR exists: normal SSH signing failed, the single HTTPS new-ref fallback hit workflow-determination timeout, and a separate standard create-ref API attempt returned 404 after absence readback. No missing credential scope or new human permission is proved.",
-        "nextAction": "Root preserves the approved draft and exact-source build/NoGo receipts. Retry normal publication only on actual capability/provider recovery or a new basis; do not repeat approval, unchanged attempts, access changes or source edits.",
-        "recheckCondition": "Actual normal SSH/provider new-ref recovery or changed source-publication evidence.",
-        "observedAt": "2026-11-25T12:50:33.824992+00:00",
+        "disposition": "The approved Sysbench 24419d916 proposal is delivered as #17970. Its previous SSH/HTTPS/API new-ref failures remain historical; no source-publication or unlock question remains outstanding.",
+        "nextAction": "Complete handoff. Canonical #17970 owns current CI/review and provider-admission follow-through; no duplicate source opening or new credential request.",
+        "recheckCondition": "Actual source/delivery discrepancy; follow #17970 for live lifecycle changes.",
+        "observedAt": "2026-11-25T13:17:35.233413+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/24419d916114737a9d50690a7647c11d9fd66fe9",
           "https://github.com/tamird/gvisor/actions/runs/45518239555",
           "https://github.com/tamird/gvisor/actions/runs/45518245437",
           "https://github.com/tamird/gvisor/actions/runs/45518242492",
-          "https://github.com/tamird/gvisor/actions/runs/45518248382"
-        ]
+          "https://github.com/tamird/gvisor/actions/runs/45518248382",
+          "https://github.com/gvisor/gvisor/pull/17970"
+        ],
+        "supersededExecutionBlocker": {
+          "disposition": "Sysbench 24419d916 is approved for opening. No upstream PR exists: normal SSH signing failed, the single HTTPS new-ref fallback hit workflow-determination timeout, and a separate standard create-ref API attempt returned 404 after absence readback. No missing credential scope or new human permission is proved.",
+          "nextAction": "Root preserves the approved draft and exact-source build/NoGo receipts. Retry normal publication only on actual capability/provider recovery or a new basis; do not repeat approval, unchanged attempts, access changes or source edits.",
+          "recordedAt": "2026-11-25T12:50:33.824992+00:00",
+          "reason": "Superseded by Tamir’s direct confirmation of existing gh WORKFLOWS scope and authorized operation-scoped HTTPS fallback; historical failures are preserved, not reclassified."
+        }
       },
       "settledReviews": [
         {
@@ -107251,10 +107319,12 @@
           "body": "Retain the complete Sysbench output alongside its reported metrics so benchmark artifacts expose the completed work and summary fields. Print after stopping the timer to exclude the output cost from the measurement.\n\nPosted by Codex on behalf of @tamird.\n",
           "summary": "Review opening the standalone one-line post-timing output change. Both architecture builds and real NoGo pass; six unchanged functional visits and two independent reviews are reused within their recorded scopes.",
           "outcome": "approved",
-          "note": "Opening this exact standalone source was approved. Publication remains execution-blocked; no upstream PR exists and no new source decision is pending."
+          "note": "The approved exact source is delivered as #17970 after operation-scoped HTTPS with the existing gh credential helper. Historical failed new-ref attempts remain preserved.",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/17970"
         }
       ],
-      "recheckCondition": "Actual normal SSH/provider new-ref recovery or changed source-publication evidence."
+      "recheckCondition": "Actual source/delivery discrepancy; follow #17970 for live lifecycle changes.",
+      "inactive": true
     },
     {
       "id": "pr:17962",
@@ -107429,6 +107499,119 @@
             }
           }
         ]
+      }
+    },
+    {
+      "id": "pr:17970",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17970,
+      "title": "Retain the complete Sysbench summary output",
+      "url": "https://github.com/google/gvisor/pull/17970",
+      "group": "tests",
+      "ref": "fix/sysbench-summary-output-20261124",
+      "head": "24419d916114737a9d50690a7647c11d9fd66fe9",
+      "status": "open",
+      "updatedAt": "2026-11-25T13:17:35.233413+00:00",
+      "evidence": [
+        {
+          "label": "Approved published source",
+          "url": "https://github.com/tamird/gvisor/commit/24419d916114737a9d50690a7647c11d9fd66fe9"
+        }
+      ],
+      "summary": "Approved one-line Sysbench output source 24419d916 is delivered as ready #17970. Source/body/base were verified, hosting is mergeable and DCO passed; existing qualification retains its recorded scopes. New FirstPass 2819 was independently verified as pre-agent rolling 30-day quota admission failure, with no source/test execution.",
+      "nextStep": "Root follows current-head maintainer review and actual provider quota/admission or check changes through the existing lifecycle. Publication and routine notice are complete; locked SSH is not a blocker. No duplicate source question, unchanged retry, quota outreach, reviewer request or merge.",
+      "recheckCondition": "Actual source/review/check/admission event; no dedicated watcher or SSH-unlock wait.",
+      "followup": {
+        "owner": "root",
+        "disposition": "Approved one-line Sysbench output source 24419d916 is delivered as ready #17970. Source/body/base were verified, hosting is mergeable and DCO passed; existing qualification retains its recorded scopes. New FirstPass 2819 was independently verified as pre-agent rolling 30-day quota admission failure, with no source/test execution.",
+        "nextAction": "Root follows current-head maintainer review and actual provider quota/admission or check changes through the existing lifecycle. Publication and routine notice are complete; locked SSH is not a blocker. No duplicate source question, unchanged retry, quota outreach, reviewer request or merge.",
+        "recheckCondition": "Actual source/review/check/admission event; no dedicated watcher or SSH-unlock wait.",
+        "observedAt": "2026-11-25T13:17:35.233413+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17970",
+          "https://buildkite.com/gvisor/first-pass/builds/2819#01a212d2-1af6-4e73-b7fb-763668dba7a2"
+        ],
+        "sourceHead": "24419d916114737a9d50690a7647c11d9fd66fe9",
+        "providerHead": "24419d916114737a9d50690a7647c11d9fd66fe9",
+        "mergeable": "MERGEABLE",
+        "currentPublishedLifecycle": {
+          "head": "24419d916114737a9d50690a7647c11d9fd66fe9",
+          "ref": "fix/sysbench-summary-output-20261124",
+          "status": "open",
+          "mergeable": "MERGEABLE",
+          "checkedAt": "2026-11-25T13:14:20.938666+00:00",
+          "reviewRequests": [
+            "relkochta",
+            "zkoopmans"
+          ],
+          "notice": null,
+          "firstPass": {
+            "build": 2819,
+            "url": "https://buildkite.com/gvisor/first-pass/builds/2819#01a212d2-1af6-4e73-b7fb-763668dba7a2",
+            "exit": 80,
+            "agentStarted": false,
+            "cause": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes"
+          }
+        },
+        "attentionDispositions": [
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "FirstPass 2819: verified pre-agent rolling 30-day quota",
+            "nextAction": "Root follows actual provider admission recovery or a new current-head event. No unchanged retry, outreach or source-failure inference.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/2819#01a212d2-1af6-4e73-b7fb-763668dba7a2"
+            ],
+            "binding": {
+              "sourceHead": "24419d916114737a9d50690a7647c11d9fd66fe9",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN8KUTLg",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/2819",
+                  "kind": "status"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "branch:hey-report-cap-accounting",
+      "type": "branch",
+      "repo": "tamird/hey",
+      "ref": "fix/uncapped-report-accounting",
+      "head": "fa4c4219db59298cdec5dd21ea07b3aff25a2c97",
+      "url": "https://github.com/tamird/hey/commit/fa4c4219db59298cdec5dd21ea07b3aff25a2c97",
+      "title": "Correct Hey report cap accounting",
+      "status": "Agent work",
+      "group": "analysis",
+      "owner": "root",
+      "updatedAt": "2026-11-25T13:17:35.233413+00:00",
+      "evidence": [],
+      "summary": "Existing native Hey preview fa4c4219d remains a separate root-owned proposal. Fork workflow 52e7 is published; Go 1.24 CI passed the failing baseline regression, formatted candidate, race suite and full build/tests. Qualification binds the retained two-file formatted postimages, not an already-formatted native preview. Upstream publication is unapproved.",
+      "nextStep": "Root applies the retained gofmt postimages, prepares final independent source review and then handles the actual user publication decision. No upstream PR or new question is inferred. This independent cap-accounting work is not an analyzer prerequisite: its HTTP visits use 1000 requests, below the one-million cap.",
+      "recheckCondition": "Final source/review or actual user decision; no extra validation or timing is launched by this record.",
+      "followup": {
+        "owner": "root",
+        "disposition": "Existing native Hey preview fa4c4219d remains a separate root-owned proposal. Fork workflow 52e7 is published; Go 1.24 CI passed the failing baseline regression, formatted candidate, race suite and full build/tests. Qualification binds the retained two-file formatted postimages, not an already-formatted native preview. Upstream publication is unapproved.",
+        "nextAction": "Root applies the retained gofmt postimages, prepares final independent source review and then handles the actual user publication decision. No upstream PR or new question is inferred. This independent cap-accounting work is not an analyzer prerequisite: its HTTP visits use 1000 requests, below the one-million cap.",
+        "recheckCondition": "Final source/review or actual user decision; no extra validation or timing is launched by this record.",
+        "observedAt": "2026-11-25T13:17:35.233413+00:00",
+        "evidence": [
+          "https://github.com/tamird/hey/commit/fa4c4219db59298cdec5dd21ea07b3aff25a2c97",
+          "https://github.com/tamird/hey/actions/runs/45620324363/artifacts/15024436246"
+        ],
+        "sourceHead": "fa4c4219db59298cdec5dd21ea07b3aff25a2c97",
+        "workflowSource": "52e7b5c32bb7b19fb2fec12c2eff2081b92703b5",
+        "testedFormattedSource": {
+          "requester/report.go": "d48354b757c14eadbf61e18b1155187232077fb83d7762a4c2036a1c71f94e2c",
+          "requester/requester_test.go": "279bbacd30d1974b022c7ecf61cad6e7ca43587854818260b9b0c550c29efd94"
+        },
+        "formatPatch": "validation-45620324363/format.patch"
       }
     }
   ],
