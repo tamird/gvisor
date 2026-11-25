@@ -245,7 +245,7 @@ jobs:
       - name: Run Bazel correctness targets
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-          GITHUB_TOKEN: ${{ inputs.command == 'run' && github.token || '' }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           results="$RUNNER_TEMP/bazel-qualification"
