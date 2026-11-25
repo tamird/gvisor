@@ -445,6 +445,7 @@ go_deps.from_file(go_mod = "//:go.mod")
 use_repo(
     go_deps,
     "co_honnef_go_tools",
+    "com_github_aclements_go_moremath",
     "com_github_burntsushi_toml",
     "com_github_cenkalti_backoff",
     "com_github_cilium_ebpf",
@@ -600,6 +601,11 @@ go_deps.module(
     path = "golang.org/x/mod",
     sum = "h1:qJmnOUb4YB+FsEuM3HcWucdZASCPGhsX6uljO6pog0c=",
     version = "v0.41.0",
+)
+go_deps.module(
+    path = "github.com/aclements/go-moremath",
+    sum = "h1:xlwdaKcTNVW4PtpQb8aKA4Pjy0CdJHEqvFbAnvR5m2g=",
+    version = "v0.0.0-20210112150236-f10218a38794",
 )
 go_deps.module(
     path = "golang.org/x/perf",
