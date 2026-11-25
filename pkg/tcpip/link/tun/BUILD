@@ -1,5 +1,5 @@
 load("//pkg/sync/locking:locking.bzl", "declare_mutex", "declare_rwmutex")
-load("//tools:defs.bzl", "go_library")
+load("//tools:defs.bzl", "go_library", "go_test")
 load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
@@ -61,5 +61,18 @@ go_library(
         "//pkg/tcpip/stack",
         "//pkg/waiter",
         "@org_golang_x_sys//unix:go_default_library",
+    ],
+)
+
+go_test(
+    name = "read_allocation_benchmark_test",
+    srcs = ["read_allocation_benchmark_test.go"],
+    embed = [":tun"],
+    tags = ["manual"],
+    deps = [
+        "//pkg/buffer",
+        "//pkg/tcpip/header",
+        "//pkg/tcpip/link/channel",
+        "//pkg/tcpip/stack",
     ],
 )
