@@ -51,6 +51,7 @@ func (h *Hey) MakeCmd(host string, port int) []string {
 	c := min(h.Concurrency, h.Requests)
 	return []string{
 		"hey",
+		"-t", "0",
 		"-o", heyOutputTemplate,
 		"-n", fmt.Sprintf("%d", h.Requests),
 		"-c", fmt.Sprintf("%d", c),

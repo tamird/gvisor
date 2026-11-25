@@ -66,6 +66,7 @@ type report struct {
 	PinCPU       int                `json:"pin_cpu"`
 	VisitTimeout time.Duration      `json:"visit_timeout_ns"`
 	Preflight    bool               `json:"preflight"`
+	Single       bool               `json:"single"`
 }
 
 func main() {
@@ -84,6 +85,7 @@ func run() error {
 	b := flag.String("b", "", "JSON argv for B; defaults to the Bazel test command")
 	cases := flag.String("cases", "", "JSON map from Bazel test labels to canonical benchfmt names")
 	preflight := flag.Bool("preflight", false, "validate two pairs with one-iteration results")
+	single := flag.Bool("single", false, "capture one functional visit without comparisons")
 	pinCPU := flag.Int("pin-cpu", -1, "bind children to this allowed logical CPU; -1 leaves affinity unchanged")
 	visitTimeout := flag.Duration("visit-timeout", 0, "maximum wall-clock duration of one benchmark process; required")
 	flag.Parse()
@@ -112,6 +114,7 @@ func run() error {
 	}
 	r := report{
 		Preflight:    *preflight,
+		Single:       *single,
 		PinCPU:       *pinCPU,
 		VisitTimeout: *visitTimeout,
 		Platform:     runtime.GOOS + "/" + runtime.GOARCH,
@@ -192,7 +195,11 @@ func startChild(cmd *exec.Cmd, cpu int) (*affinity, error) {
 
 func (r *report) collect(ctx context.Context, expected []string, output string) error {
 	var reference map[string]*benchfmt.Result
-	for i, order := range schedule(r.Preflight) {
+	orders := []string{"A"}
+	if !r.Single {
+		orders = schedule(r.Preflight)
+	}
+	for i, order := range orders {
 		pair := i - 1
 		for _, arm := range order {
 			v := visit{Pair: pair, Arm: string(arm)}
