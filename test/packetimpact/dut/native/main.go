@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux && go1.10
-// +build linux,go1.10
 
 // The native binary is used to bring up a native linux DUT.
 package main

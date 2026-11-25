@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build !false
-// +build !false
 
 // Package pprof provides a stub to initialize custom profilers.
 package pprof

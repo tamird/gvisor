@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 // Package sharedmem provides the implementation of data-link layer endpoints
 // backed by shared memory.

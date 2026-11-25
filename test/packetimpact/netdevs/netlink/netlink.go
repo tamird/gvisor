@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 // Package netlink has routines to get interfaces information through netlink.
 package netlink

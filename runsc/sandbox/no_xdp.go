@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build !xdp
-// +build !xdp
 
 package sandbox
 

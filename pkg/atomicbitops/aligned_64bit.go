@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build !arm && !mips && !mipsle && !386
-// +build !arm,!mips,!mipsle,!386
 
 package atomicbitops
 

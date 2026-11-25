@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 // Package plugin registers the runsc task service as a containerd TTRPC plugin.
 package plugin

@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux && !debug
-// +build linux,!debug
 
 // Package platforms imports all available platform packages.
 package platforms

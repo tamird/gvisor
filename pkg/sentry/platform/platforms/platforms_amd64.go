@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build amd64 && linux && !debug
-// +build amd64,linux,!debug
 
 package platforms
 

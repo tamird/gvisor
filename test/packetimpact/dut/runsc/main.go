@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 // The runsc binary is used to bring up a gVisor DUT.
 package main

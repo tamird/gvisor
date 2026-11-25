@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build !kcov && !false
-// +build !kcov,!false
 
 // Package coverage provides an interface through which Go coverage data can
 // be collected, converted to kcov format, and exposed to userspace.

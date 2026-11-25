@@ -5,7 +5,6 @@
 // https://developers.google.com/open-source/licenses/bsd.
 
 //go:build !checklocks
-// +build !checklocks
 
 package sync
 

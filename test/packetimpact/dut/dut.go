@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 // Package dut provides common definitions and utilities to be shared by DUTs.
 package dut

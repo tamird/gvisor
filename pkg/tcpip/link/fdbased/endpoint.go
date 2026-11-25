@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build linux
-// +build linux
 
 // Package fdbased provides the implementation of data-link layer endpoints
 // backed by boundary-preserving file descriptors (e.g., TUN devices,
