@@ -36,13 +36,8 @@ var (
 // accounts for a large region of shared memory.
 // TODO(gvisor.dev/issue/6313): Tune the number of channels.
 func maxChannels() int {
-	maxChans := gomaxprocs.Base()
-	if maxChans < 2 {
-		maxChans = 2
-	}
-	if maxChans > 4 {
-		maxChans = 4
-	}
+	maxChans := max(gomaxprocs.Base(), 2)
+	maxChans = min(maxChans, 4)
 	return maxChans
 }
 

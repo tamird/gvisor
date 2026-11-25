@@ -442,10 +442,7 @@ func New(opts Options) *Stack {
 
 	opts.NUDConfigs.resetInvalidFields()
 
-	clockResolution := opts.ClockResolution
-	if clockResolution < 0 {
-		clockResolution = 0
-	}
+	clockResolution := max(opts.ClockResolution, 0)
 
 	s := &Stack{
 		transportProtocols:              make(map[tcpip.TransportProtocolNumber]*transportProtocolState),

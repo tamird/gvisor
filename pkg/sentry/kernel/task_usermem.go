@@ -86,10 +86,7 @@ func (t *Task) CopyInVector(addr hostarch.Addr, maxElemSize, maxTotalSize int) (
 		if maxTotalSize <= 0 {
 			return nil, linuxerr.ENOMEM
 		}
-		thisMax := maxElemSize
-		if maxTotalSize < thisMax {
-			thisMax = maxTotalSize
-		}
+		thisMax := min(maxTotalSize, maxElemSize)
 		arg, err := t.CopyInString(hostarch.Addr(t.Arch().Value(argAddr)), thisMax)
 		if err != nil {
 			return v, err

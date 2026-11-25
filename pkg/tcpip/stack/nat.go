@@ -356,10 +356,7 @@ func (cn *conn) ConfigureNAT(portsOrIdents PortOrIdentRange, natAddress tcpip.Ad
 	const maxAttemptsForInitialRound uint32 = 128
 	const minAttemptsToContinue = 16
 
-	allowedInitialAttempts := maxAttemptsForInitialRound
-	if allowedInitialAttempts > portsOrIdents.Size {
-		allowedInitialAttempts = portsOrIdents.Size
-	}
+	allowedInitialAttempts := min(maxAttemptsForInitialRound, portsOrIdents.Size)
 
 	for maxAttempts := allowedInitialAttempts; ; maxAttempts /= 2 {
 		// Start reach round with a random initial port/ident offset.

@@ -742,10 +742,7 @@ func (p *protocol) returnError(reason icmpReason, pkt *stack.PacketBuffer, deliv
 		case *icmpReasonFragmentationNeeded:
 			// Per RFC 1191 §4, include the next-hop MTU in the ICMP message.
 			// Cap at MaxUint16 since the field is 16 bits wide.
-			mtu := reason.mtu
-			if mtu > math.MaxUint16 {
-				mtu = math.MaxUint16
-			}
+			mtu := min(reason.mtu, math.MaxUint16)
 			return header.ICMPv4DstUnreachable, header.ICMPv4FragmentationNeeded, sent.dstUnreachable, 0, uint16(mtu)
 		case *icmpReasonTTLExceeded:
 			return header.ICMPv4TimeExceeded, header.ICMPv4TTLExceeded, sent.timeExceeded, 0, 0
@@ -786,10 +783,7 @@ func (p *protocol) returnError(reason icmpReason, pkt *stack.PacketBuffer, deliv
 		return nil
 	}
 
-	payloadLen := len(origIPHdr) + len(transportHeader) + pkt.Data().Size()
-	if payloadLen > available {
-		payloadLen = available
-	}
+	payloadLen := min(len(origIPHdr)+len(transportHeader)+pkt.Data().Size(), available)
 
 	// The buffers used by pkt may be used elsewhere in the system.
 	// For example, an AF_RAW or AF_PACKET socket may use what the transport

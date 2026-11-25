@@ -777,10 +777,7 @@ func (s *Socket) RecvMsg(t *kernel.Task, dst usermem.IOSequence, flags int, have
 		rightsLen -= credLen
 	}
 	// FDs are 32 bit (4 byte) ints.
-	numRights := rightsLen / 4
-	if numRights < 0 {
-		numRights = 0
-	}
+	numRights := max(rightsLen/4, 0)
 
 	r := EndpointReader{
 		Ctx:       t,

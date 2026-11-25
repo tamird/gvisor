@@ -333,13 +333,6 @@ func (m *memoizer[T]) add(x T, s string) {
 	m.nextEviction++
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 var (
 	memoizedSlices     memoizer[*types.Slice]
 	memoizedArrays     memoizer[*types.Array]

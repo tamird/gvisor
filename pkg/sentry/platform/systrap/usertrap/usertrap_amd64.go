@@ -446,10 +446,7 @@ func (s *State) recoverPatchesLocked(ctx context.Context, mm memoryManager) erro
 
 	cc := &usermem.IOCopyContext{Ctx: ctx, IO: mm, Opts: usermem.IOOpts{IgnorePermissions: true}}
 	var code [jmpInstLen]uint8
-	nextTrap := s.nextTrap
-	if nextTrap > trapNR {
-		nextTrap = trapNR
-	}
+	nextTrap := min(s.nextTrap, trapNR)
 
 	tableBuf := make([]uint8, nextTrap*trapSize)
 	if _, err := primitive.CopyUint8SliceIn(cc, s.tableAddr, tableBuf); err != nil {

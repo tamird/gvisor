@@ -22,11 +22,8 @@ const (
 	o   = 0
 )
 
-func max(a, b t) t {
-	if a > b {
-		return a
-	}
-	return b
+func maximum(a, b t) t {
+	return max(a, b)
 }
 
 func add(a t) t {

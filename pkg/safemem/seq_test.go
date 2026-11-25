@@ -58,24 +58,18 @@ type blockSeqTest struct {
 }
 
 func (t blockSeqTest) NonEmptyByteSlices() [][]byte {
-	// t is a value, so we can mutate it freely.
+	offset, limit := t.offset, t.limit
 	slices := make([][]byte, 0, len(t.pieces))
 	for _, str := range t.pieces {
 		if t.haveOffset {
-			strOff := t.offset
-			if strOff > uint64(len(str)) {
-				strOff = uint64(len(str))
-			}
+			strOff := min(offset, uint64(len(str)))
 			str = str[strOff:]
-			t.offset -= strOff
+			offset -= strOff
 		}
 		if t.haveLimit {
-			strLim := t.limit
-			if strLim > uint64(len(str)) {
-				strLim = uint64(len(str))
-			}
+			strLim := min(limit, uint64(len(str)))
 			str = str[:strLim]
-			t.limit -= strLim
+			limit -= strLim
 		}
 		if len(str) != 0 {
 			slices = append(slices, []byte(str))

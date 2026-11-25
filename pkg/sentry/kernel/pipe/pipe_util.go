@@ -139,10 +139,9 @@ func (p *Pipe) Ioctl(ctx context.Context, io usermem.IO, sysno uintptr, args arc
 	// Switch on ioctl request.
 	switch int(args[1].Int()) {
 	case linux.FIONREAD:
-		v := p.queued()
-		if v > math.MaxInt32 {
-			v = math.MaxInt32 // Silently truncate.
-		}
+		v := min(p.queued(),
+			// Silently truncate.
+			math.MaxInt32)
 		// Copy result to userspace.
 		iocc := usermem.IOCopyContext{
 			IO:  io,

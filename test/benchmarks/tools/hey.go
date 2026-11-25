@@ -30,10 +30,7 @@ type Hey struct {
 
 // MakeCmd returns a 'hey' command.
 func (h *Hey) MakeCmd(host string, port int) []string {
-	c := h.Concurrency
-	if c > h.Requests {
-		c = h.Requests
-	}
+	c := min(h.Concurrency, h.Requests)
 	return []string{
 		"hey",
 		"-n", fmt.Sprintf("%d", h.Requests),

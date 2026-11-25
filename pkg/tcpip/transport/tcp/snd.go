@@ -878,10 +878,7 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 	if newData {
 		// Merge segments if allowed.
 		if seg.payloadSize() != 0 {
-			available := int(s.SndNxt.Size(end))
-			if available > limit {
-				available = limit
-			}
+			available := min(int(s.SndNxt.Size(end)), limit)
 
 			// nextTooBig indicates that the next segment was too
 			// large to entirely fit in the current segment. It
@@ -1393,11 +1390,9 @@ func (s *sender) walkSACK(rcvdSeg *segment) bool {
 	n := len(rcvdSeg.parsedOptions.SACKBlocks)
 	if checkDSACK(rcvdSeg) {
 		dsackBlock := rcvdSeg.parsedOptions.SACKBlocks[0]
-		numDSACK := uint64(dsackBlock.End-dsackBlock.Start) / uint64(s.MaxPayloadSize)
-		// numDSACK can be zero when DSACK is sent for subsegments.
-		if numDSACK < 1 {
-			numDSACK = 1
-		}
+		numDSACK := max(
+			// numDSACK can be zero when DSACK is sent for subsegments.
+			uint64(dsackBlock.End-dsackBlock.Start)/uint64(s.MaxPayloadSize), 1)
 		s.ep.stack.Stats().TCP.SegmentsAckedWithDSACK.IncrementBy(numDSACK)
 		s.rc.setDSACKSeen(true)
 		idx = 1

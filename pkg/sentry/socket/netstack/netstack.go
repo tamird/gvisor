@@ -1047,11 +1047,7 @@ func GetSockOptSocket(t *kernel.Task, s socket.Socket, ep commonEndpoint, family
 			return nil, syserr.ErrInvalidArgument
 		}
 
-		size := ep.SocketOptions().GetSendBufferSize()
-
-		if size > math.MaxInt32 {
-			size = math.MaxInt32
-		}
+		size := min(ep.SocketOptions().GetSendBufferSize(), math.MaxInt32)
 
 		sizeP := primitive.Int32(size)
 		return &sizeP, nil
@@ -1061,11 +1057,7 @@ func GetSockOptSocket(t *kernel.Task, s socket.Socket, ep commonEndpoint, family
 			return nil, syserr.ErrInvalidArgument
 		}
 
-		size := ep.SocketOptions().GetReceiveBufferSize()
-
-		if size > math.MaxInt32 {
-			size = math.MaxInt32
-		}
+		size := min(ep.SocketOptions().GetReceiveBufferSize(), math.MaxInt32)
 
 		sizeP := primitive.Int32(size)
 		return &sizeP, nil
@@ -1335,10 +1327,7 @@ func (s *sock) getSockOptTCP(t *kernel.Task, ep commonEndpoint, name, outLen int
 		// This is Linux's net/tcp.h TCP_CA_NAME_MAX.
 		const tcpCANameMax = 16
 
-		toCopy := tcpCANameMax
-		if outLen < tcpCANameMax {
-			toCopy = outLen
-		}
+		toCopy := min(outLen, tcpCANameMax)
 		b := make([]byte, toCopy)
 		copy(b, v)
 
@@ -2351,10 +2340,7 @@ func (s *sock) setSockOptTCP(t *kernel.Task, ep commonEndpoint, name int, optVal
 		if len(optVal) < sizeOfInt32 {
 			return syserr.ErrInvalidArgument
 		}
-		v := int32(hostarch.ByteOrder.Uint32(optVal))
-		if v < 0 {
-			v = 0
-		}
+		v := max(int32(hostarch.ByteOrder.Uint32(optVal)), 0)
 		opt := tcpip.TCPDeferAcceptOption(time.Second * time.Duration(v))
 		return syserr.TranslateNetstackError(ep.SetSockOpt(&opt))
 
@@ -3181,10 +3167,7 @@ func (s *sock) nonBlockingRead(ctx context.Context, dst usermem.IOSequence, peek
 			if err != nil {
 				return 0, 0, nil, 0, socket.ControlMessages{}, syserr.TranslateNetstackError(err)
 			}
-			msgLen := int(dst.NumBytes())
-			if msgLen > rql {
-				msgLen = rql
-			}
+			msgLen := min(int(dst.NumBytes()), rql)
 			return msgLen, 0, nil, 0, socket.ControlMessages{}, nil
 		}
 	} else if n := res.Count; n != 0 {

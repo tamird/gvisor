@@ -342,10 +342,7 @@ func BenchmarkFDLookupAndDecRefConcurrent(b *testing.B) {
 			b.Fatalf("fdTable.NewFDs: got %v, wanted nil", err)
 		}
 
-		concurrency := runtime.GOMAXPROCS(0)
-		if concurrency < 4 {
-			concurrency = 4
-		}
+		concurrency := max(runtime.GOMAXPROCS(0), 4)
 		each := b.N / concurrency
 
 		b.StartTimer() // Benchmark.

@@ -624,10 +624,7 @@ func queryMultiSandboxMetrics(ctx context.Context, loadedSandboxes []sandboxLoad
 	}
 	loadedSandboxCh := make(chan sandboxLoadResult, numSandboxes)
 	var wg sync.WaitGroup
-	numGoroutines := exportParallelGoroutines
-	if numSandboxes < numGoroutines {
-		numGoroutines = numSandboxes
-	}
+	numGoroutines := min(numSandboxes, exportParallelGoroutines)
 	wg.Add(numGoroutines)
 	for i := 0; i < numGoroutines; i++ {
 		go func() {

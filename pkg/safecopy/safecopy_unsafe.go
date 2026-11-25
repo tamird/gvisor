@@ -220,10 +220,7 @@ func copyN(dst, src uintptr, toCopy uintptr) (uintptr, error) {
 	if faultAfterSrc >= toCopy && faultAfterDst >= toCopy {
 		panic(fmt.Sprintf("Copy raised signal %d at %#x, which is outside source [%#x, %#x) and destination [%#x, %#x)", sig, fault, src, src+toCopy, dst, dst+toCopy))
 	}
-	faultedAfter := faultAfterSrc
-	if faultedAfter > faultAfterDst {
-		faultedAfter = faultAfterDst
-	}
+	faultedAfter := min(faultAfterSrc, faultAfterDst)
 
 	// memcpy might have ended the copy up to maxRegisterSize bytes before
 	// fault, if an instruction caused a memory access that straddled two

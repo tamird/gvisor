@@ -855,10 +855,7 @@ func (s *Socket) SendMsg(t *kernel.Task, src usermem.IOSequence, to []byte, flag
 		return int(n), nil
 	}
 
-	space := uint64(control.CmsgsSpace(t, controlMessages))
-	if space > maxControlLen {
-		space = maxControlLen
-	}
+	space := min(uint64(control.CmsgsSpace(t, controlMessages)), maxControlLen)
 	controlBuf := make([]byte, 0, space)
 	// PackControlMessages will append up to space bytes to controlBuf.
 	controlBuf = control.PackControlMessages(t, controlMessages, controlBuf)

@@ -191,10 +191,7 @@ func TestNATedConnectionReap(t *testing.T) {
 		t.Fatalf("expected bucket IDs to be different; got = %d", originalBktID)
 	}
 
-	lowerBktID := originalBktID
-	if lowerBktID > replyBktID {
-		lowerBktID = replyBktID
-	}
+	lowerBktID := min(originalBktID, replyBktID)
 
 	runReaper := func() {
 		// Reaping the bucket with the lower ID should reap both tuples of the

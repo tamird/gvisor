@@ -260,10 +260,7 @@ func (b *Bitmap) Reset() {
 //
 // If f returns false, ForEach stops the iteration.
 func (b *Bitmap) ForEach(start, end uint32, f func(idx uint32) bool) {
-	blockEnd := (end + 63) / 64
-	if blockEnd > uint32(len(b.bitBlock)) {
-		blockEnd = uint32(len(b.bitBlock))
-	}
+	blockEnd := min((end+63)/64, uint32(len(b.bitBlock)))
 	// base is the start number of a bitBlock
 	base := start / 64 * 64
 	blockMask := ^((uint64(1) << (start % 64)) - 1)

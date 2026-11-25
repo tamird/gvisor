@@ -354,11 +354,9 @@ func percentCPU(stats usage.CPUStats, startTime, now ktime.Time) int32 {
 	if lifetime <= 0 {
 		return 0
 	}
-	percentCPU := total * 100 / lifetime
-	// Cap at 99% since procps does the same.
-	if percentCPU > 99 {
-		percentCPU = 99
-	}
+	percentCPU := min(
+		// Cap at 99% since procps does the same.
+		total*100/lifetime, 99)
 	return int32(percentCPU)
 }
 
