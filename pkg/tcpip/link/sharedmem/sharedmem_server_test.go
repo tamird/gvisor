@@ -18,6 +18,7 @@
 package sharedmem_server_test
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -203,12 +204,12 @@ func (ctx *testContext) cleanup() {
 }
 
 func makeRequest(serverAddr tcpip.FullAddress, clientStk *stack.Stack) (*http.Response, error) {
-	dialFunc := func(address, protocol string) (net.Conn, error) {
-		return gonet.DialTCP(clientStk, serverAddr, ipv4.ProtocolNumber)
+	dialFunc := func(ctx context.Context, _, _ string) (net.Conn, error) {
+		return gonet.DialContextTCP(ctx, clientStk, serverAddr, ipv4.ProtocolNumber)
 	}
 	httpClient := &http.Client{
 		Transport: &http.Transport{
-			Dial: dialFunc,
+			DialContext: dialFunc,
 		},
 	}
 	// Close idle "keep alive" connections. If any connections remain open after

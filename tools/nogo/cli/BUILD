@@ -20,6 +20,7 @@ go_library(
         "@in_gopkg_yaml_v2//:go_default_library",
         "@org_golang_x_mod//modfile:go_default_library",
         "@org_golang_x_term//:go_default_library",
+        "@org_golang_x_tools//go/analysis:go_default_library",
     ],
 )
 

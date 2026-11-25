@@ -16,35 +16,61 @@ package check
 
 import (
 	"encoding/gob"
+	"go/ast"
+	"go/token"
+	"go/types"
 	"io"
 	"reflect"
 
 	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/appends"
 	"golang.org/x/tools/go/analysis/passes/asmdecl"
 	"golang.org/x/tools/go/analysis/passes/assign"
 	"golang.org/x/tools/go/analysis/passes/atomic"
+	"golang.org/x/tools/go/analysis/passes/atomicalign"
 	"golang.org/x/tools/go/analysis/passes/bools"
 	"golang.org/x/tools/go/analysis/passes/buildtag"
 	"golang.org/x/tools/go/analysis/passes/cgocall"
 	"golang.org/x/tools/go/analysis/passes/composite"
 	"golang.org/x/tools/go/analysis/passes/copylock"
+	"golang.org/x/tools/go/analysis/passes/deepequalerrors"
+	"golang.org/x/tools/go/analysis/passes/defers"
+	"golang.org/x/tools/go/analysis/passes/directive"
 	"golang.org/x/tools/go/analysis/passes/errorsas"
+	"golang.org/x/tools/go/analysis/passes/fieldalignment"
+	"golang.org/x/tools/go/analysis/passes/framepointer"
+	"golang.org/x/tools/go/analysis/passes/gofix"
+	"golang.org/x/tools/go/analysis/passes/hostport"
 	"golang.org/x/tools/go/analysis/passes/httpresponse"
+	"golang.org/x/tools/go/analysis/passes/ifaceassert"
+	"golang.org/x/tools/go/analysis/passes/inline"
 	"golang.org/x/tools/go/analysis/passes/loopclosure"
 	"golang.org/x/tools/go/analysis/passes/lostcancel"
+	"golang.org/x/tools/go/analysis/passes/modernize"
 	"golang.org/x/tools/go/analysis/passes/nilfunc"
 	"golang.org/x/tools/go/analysis/passes/nilness"
 	"golang.org/x/tools/go/analysis/passes/printf"
+	"golang.org/x/tools/go/analysis/passes/reflectvaluecompare"
+	"golang.org/x/tools/go/analysis/passes/scannererr"
 	"golang.org/x/tools/go/analysis/passes/shadow"
 	"golang.org/x/tools/go/analysis/passes/shift"
+	"golang.org/x/tools/go/analysis/passes/sigchanyzer"
+	"golang.org/x/tools/go/analysis/passes/slog"
+	"golang.org/x/tools/go/analysis/passes/sortslice"
+	"golang.org/x/tools/go/analysis/passes/sqlrowserr"
 	"golang.org/x/tools/go/analysis/passes/stdmethods"
+	"golang.org/x/tools/go/analysis/passes/stdversion"
 	"golang.org/x/tools/go/analysis/passes/stringintconv"
 	"golang.org/x/tools/go/analysis/passes/structtag"
+	"golang.org/x/tools/go/analysis/passes/testinggoroutine"
 	"golang.org/x/tools/go/analysis/passes/tests"
+	"golang.org/x/tools/go/analysis/passes/timeformat"
 	"golang.org/x/tools/go/analysis/passes/unmarshal"
 	"golang.org/x/tools/go/analysis/passes/unreachable"
 	"golang.org/x/tools/go/analysis/passes/unsafeptr"
 	"golang.org/x/tools/go/analysis/passes/unusedresult"
+	"golang.org/x/tools/go/analysis/passes/unusedwrite"
+	"golang.org/x/tools/go/analysis/passes/waitgroup"
 	"gvisor.dev/gvisor/tools/checkaligned"
 	"gvisor.dev/gvisor/tools/checkconst"
 	"gvisor.dev/gvisor/tools/checkescape"
@@ -145,33 +171,114 @@ func register(analyzerSet map[*analysis.Analyzer]analyzer, a analyzer) {
 	analyzerSet[a.Legacy()] = a
 }
 
+// runFieldAlignment preserves layouts declared for host ABI or saved state.
+func runFieldAlignment(pass *analysis.Pass) (any, error) {
+	preserved := make(map[token.Pos]bool)
+	for _, file := range pass.Files {
+		// Match the declaration annotation consumed by go_stateify.
+		for _, decl := range file.Decls {
+			d, ok := decl.(*ast.GenDecl)
+			if !ok || d.Tok != token.TYPE || d.Doc == nil {
+				continue
+			}
+			for _, comment := range d.Doc.List {
+				if comment.Text != "// +stateify savable" {
+					continue
+				}
+				for _, spec := range d.Specs {
+					if st, ok := spec.(*ast.TypeSpec).Type.(*ast.StructType); ok {
+						preserved[st.Pos()] = true
+					}
+				}
+			}
+		}
+		ast.Inspect(file, func(node ast.Node) bool {
+			st, ok := node.(*ast.StructType)
+			if !ok {
+				return true
+			}
+			for _, field := range st.Fields.List {
+				typ := pass.TypesInfo.TypeOf(field.Type)
+				if typ == nil {
+					continue
+				}
+				if named, ok := types.Unalias(typ).(*types.Named); ok {
+					obj := named.Obj()
+					if obj.Pkg() != nil && obj.Pkg().Path() == "structs" && obj.Name() == "HostLayout" {
+						preserved[st.Pos()] = true
+					}
+				}
+			}
+			return true
+		})
+	}
+	filteredPass := *pass
+	filteredPass.Report = func(d analysis.Diagnostic) {
+		if !preserved[d.Pos] {
+			pass.Report(d)
+		}
+	}
+	return fieldalignment.Analyzer.Run(&filteredPass)
+}
+
 func init() {
 	// Standard & internal analyzers.
+	register(allAnalyzers, &plainAnalyzer{appends.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{asmdecl.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{assign.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{atomic.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{atomicalign.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{bools.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{buildtag.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{cgocall.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{composite.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{copylock.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{deepequalerrors.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{defers.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{directive.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{errorsas.Analyzer})
+	fieldAlignment := *fieldalignment.Analyzer
+	fieldAlignment.Run = runFieldAlignment
+	register(allAnalyzers, &plainAnalyzer{&fieldAlignment})
+	register(allAnalyzers, &plainAnalyzer{framepointer.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{gofix.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{hostport.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{httpresponse.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{ifaceassert.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{inline.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{loopclosure.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{lostcancel.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{nilfunc.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{nilness.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{printf.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{reflectvaluecompare.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{scannererr.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{shift.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{sigchanyzer.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{slog.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{sortslice.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{sqlrowserr.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{stdmethods.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{stdversion.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{stringintconv.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{shadow.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{structtag.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{testinggoroutine.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{tests.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{timeformat.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{unmarshal.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{unreachable.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{unsafeptr.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{unusedresult.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{unusedwrite.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{waitgroup.Analyzer})
+	register(allAnalyzers, &plainAnalyzer{modernize.AppendClippedAnalyzer})
+	register(allAnalyzers, &plainAnalyzer{modernize.BLoopAnalyzer})
+	register(allAnalyzers, &plainAnalyzer{modernize.FmtAppendfAnalyzer})
+	register(allAnalyzers, &plainAnalyzer{modernize.SlicesDeleteAnalyzer})
+	for _, a := range modernize.Suite {
+		register(allAnalyzers, &plainAnalyzer{a})
+	}
 	register(allAnalyzers, checkescape.Analyzer)
 	register(allAnalyzers, &plainAnalyzer{checkconst.Analyzer})
 	register(allAnalyzers, &plainAnalyzer{checkimports.Analyzer})
