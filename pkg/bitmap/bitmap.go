@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"math"
 	"math/bits"
+	"slices"
 )
 
 // MaxBitEntryLimit defines the upper limit on how many bit entries are supported by this Bitmap
@@ -123,8 +124,8 @@ func (b *Bitmap) FirstOne(start uint32) (bit uint32, err error) {
 
 // Maximum return the largest value in the Bitmap.
 func (b *Bitmap) Maximum() uint32 {
-	for i := len(b.bitBlock) - 1; i >= 0; i-- {
-		if w := b.bitBlock[i]; w != 0 {
+	for i, w := range slices.Backward(b.bitBlock) {
+		if w != 0 {
 			r := bits.LeadingZeros64(w)
 			return uint32(i*64 + 63 - r)
 		}

@@ -26,6 +26,7 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -229,8 +230,8 @@ func (c *cgroupV2) Uninstall() error {
 	b := backoff.WithContext(backoff.NewConstantBackOff(100*time.Millisecond), ctx)
 
 	// Deletion must occur reverse order, because they may contain ancestors.
-	for i := len(c.Own) - 1; i >= 0; i-- {
-		current := c.Own[i]
+	for _, current := range slices.Backward(c.Own) {
+
 		log.Debugf("Removing cgroup for path=%q", current)
 
 		fn := func() error {

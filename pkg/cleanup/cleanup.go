@@ -15,6 +15,8 @@
 // Package cleanup provides utilities to clean "stuff" on defers.
 package cleanup
 
+import "slices"
+
 // Cleanup allows defers to be aborted when cleanup needs to happen
 // conditionally. Usage:
 //
@@ -55,7 +57,7 @@ func (c *Cleanup) Release() func() {
 }
 
 func clean(cleaners []func()) {
-	for i := len(cleaners) - 1; i >= 0; i-- {
-		cleaners[i]()
+	for _, cleaner := range slices.Backward(cleaners) {
+		cleaner()
 	}
 }

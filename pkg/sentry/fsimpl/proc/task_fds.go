@@ -17,6 +17,7 @@ package proc
 import (
 	"bytes"
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 
@@ -403,8 +404,8 @@ func (d *fdInfoData) Generate(ctx context.Context, buf *bytes.Buffer) error {
 	if nspids, err := kernel.ObservedTIDsForPIDFD(file, d.task); err == nil {
 		fmt.Fprintf(buf, "Pid:\t%d\n", nspids[len(nspids)-1])
 		buf.WriteString("NSpid:")
-		for i := len(nspids) - 1; i >= 0; i-- {
-			fmt.Fprintf(buf, "\t%d", nspids[i])
+		for _, nspid := range slices.Backward(nspids) {
+			fmt.Fprintf(buf, "\t%d", nspid)
 		}
 		buf.WriteString("\n")
 	}

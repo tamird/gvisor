@@ -26,6 +26,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -962,8 +963,8 @@ func (cp *ContainerPool) Lockout(ctx context.Context) (func(), error) {
 	}
 	releaseFuncs := make([]func(), 0, cp.numContainers)
 	releaseAll := func() {
-		for i := len(releaseFuncs) - 1; i >= 0; i-- {
-			releaseFuncs[i]()
+		for _, releaseFunc := range slices.Backward(releaseFuncs) {
+			releaseFunc()
 		}
 		cp.exclusiveLockCh <- struct{}{}
 	}

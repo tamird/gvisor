@@ -208,12 +208,8 @@ analyzers:
   slicesbackward:
     internal:
       exclude:
-        - ".*" # Temporary: migrate slicesbackward.
         # Reverse indexing keeps mountMu checks in the locked function.
         - '^pkg/sentry/vfs/propagation\.go:530:6$'
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate slicesbackward.
   rangeint:
     internal:
       exclude:
