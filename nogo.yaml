@@ -410,13 +410,6 @@ analyzers:
     # Controversial.
     internal:
       exclude: [".*"]
-  atomictypes:
-    internal:
-      exclude:
-        - ".*" # Temporary: migrate atomictypes.
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate atomictypes.
   unsafefuncs:
     internal:
       exclude:
