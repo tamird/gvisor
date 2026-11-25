@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T21:11:54.232115+00:00",
+    "updatedAt": "2026-11-25T21:21:11.017479+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -69022,8 +69022,8 @@
       "url": "https://github.com/google/gvisor/pull/16821",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-25T20:50:20.001455+00:00",
-      "summary": "Public #16821 remains unchanged at2899ec752 and conflicting. Signed current-base candidate de7e44336c passed its executed unit/NoGo and Sentry cases. Both native TUN cases now execute and pass, uncached, on AMD64 and ARM64 using the existing capability helper; prior skips remain historical. Full source and affected strict checks were still pending in the owner’s handoff. No readiness or upstream-publication claim.",
+      "updatedAt": "2026-11-25T21:21:11.017479+00:00",
+      "summary": "Public #16821 remains unchanged at 2899ec7526. Exact candidate a97c0844e8 has complete functional/source/strict qualification and accepted final independent reviews. The actual amendment, corrected-description and rebase-reply decision is pending; no PR mutation has occurred and no new performance result is claimed.",
       "evidence": [
         {
           "label": "Public CI stopped fetching rules_m4 with HTTP 500; the archive now matches BCR’s checksum",
@@ -69084,11 +69084,11 @@
       },
       "followup": {
         "sourceHead": "2899ec75263130d131ca356a3b9584715226ee28",
-        "owner": "approved_rebase_queue / root",
-        "nextAction": "approved_rebase_queue completes the existing full-source/affected-strict gates and final source review, then root handles the actual source/publication boundary. Preserve the corrected synthetic-compatibility scope; do not ask a source question or publish from partial qualification.",
+        "owner": "root",
+        "nextAction": "Root awaits Tamir’s response for exact a97c0844e8, the reviewed description and supplied rebase reply. Preserve the expected old-head lease and existing source/measurement limits; do not push, edit the PR or post the reply before the answer.",
         "mergeable": "CONFLICTING",
         "observedAt": "2026-11-24T04:47:08.376554+00:00",
-        "recheckCondition": "Existing owner’s terminal full-source/strict and final-review disposition, or actual public source/review change.",
+        "recheckCondition": "Tamir’s answer to the actual amendment question, or a genuine changed source/review requirement.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/16821",
           "https://github.com/tamird/gvisor/commit/9f3a1efe5acf05722e7910b465d96c8a2c26a637",
@@ -69124,7 +69124,10 @@
           "https://github.com/tamird/gvisor/actions/runs/45696101372",
           "https://github.com/tamird/gvisor/actions/runs/45697257086",
           "https://github.com/tamird/gvisor/actions/runs/45697645587",
-          "https://github.com/tamird/gvisor/actions/runs/45697649849"
+          "https://github.com/tamird/gvisor/actions/runs/45697649849",
+          "https://github.com/tamird/gvisor/actions/runs/45701615562",
+          "https://github.com/tamird/gvisor/actions/runs/45701619530",
+          "https://github.com/tamird/gvisor/actions/runs/45701622855"
         ],
         "attentionDispositions": [
           {
@@ -69174,13 +69177,17 @@
             }
           }
         ],
-        "disposition": "Public #16821 remains unchanged at2899ec752 and conflicting. Signed current-base candidate de7e44336c passed its executed unit/NoGo and Sentry cases. Both native TUN cases now execute and pass, uncached, on AMD64 and ARM64 using the existing capability helper; prior skips remain historical. Full source and affected strict checks were still pending in the owner’s handoff. No readiness or upstream-publication claim.",
-        "curatedAt": "2026-11-25T20:50:20.001455+00:00",
+        "disposition": "Public #16821 remains unchanged at 2899ec7526. Exact candidate a97c0844e8 has complete functional/source/strict qualification and accepted final independent reviews. The actual amendment, corrected-description and rebase-reply decision is pending; no PR mutation has occurred and no new performance result is claimed.",
+        "curatedAt": "2026-11-25T21:21:11.017479+00:00",
         "candidate": {
-          "head": "de7e44336c9a13991a95c9fcb8e754d6a68f1a32",
+          "head": "a97c0844e84c3faba95d7f880d548046160b323e",
           "ci": "8b81c266da5de8de291e262e748e8e7585d76651",
           "nativeCapabilityCI": "ee8d68030e40a8c59b9c5cff1da0a6e15f02dc37",
-          "publication": "Unpublished; final gates/review remain"
+          "publication": "Actual source/description/rebase-reply question pending; public PR unchanged",
+          "qualifiedNative": "de7e44336c9a13991a95c9fcb8e754d6a68f1a32",
+          "parent": "069e5f4271221d7284e6fc7bd633890c80357538",
+          "tree": "b51cd8e924897d859894252e0303cb040e4f4b65",
+          "qualifiedInputEquality": "a97 and qualified de7 have the exact same tree and parent; citation/record correction only"
         },
         "qualification": {
           "nativeTUNCasesPerArchitecture": 2,
@@ -69190,12 +69197,17 @@
             45696098533,
             45696101372
           ],
-          "pendingAtOwnerHandoff": [
-            45697257086,
-            45697645587,
-            45697649849
-          ]
-        }
+          "pendingAtOwnerHandoff": []
+        },
+        "completedQualification": {
+          "native": "de7e44336c9a13991a95c9fcb8e754d6a68f1a32",
+          "scope": "Executed unit/NoGo and Sentry cases, both native TUN cases without skips, full source and affected strict checks passed on both architectures.",
+          "strictCIOnlyPrerequisites": "Existing #17963 driver prerequisite and exact GCC-only flag compatibility correction; native sources unchanged",
+          "performanceAcceptance": false,
+          "ownerReceipt": "16821-16957-strict-final-audit.json"
+        },
+        "finalIndependentReviews": "Both accepted; no remaining formatting finding",
+        "askedComparisonCommand": "git range-diff 2899ec7526^! a97c0844e^!"
       },
       "dcoAmendment": {
         "oldHead": "9f3a1efe5acf05722e7910b465d96c8a2c26a637",
@@ -69220,8 +69232,19 @@
         "priorOwner": null,
         "historicalOutreachClockHead": "9f3a1efe5acf05722e7910b465d96c8a2c26a637"
       },
-      "nextStep": "approved_rebase_queue completes the existing full-source/affected-strict gates and final source review, then root handles the actual source/publication boundary. Preserve the corrected synthetic-compatibility scope; do not ask a source question or publish from partial qualification.",
-      "recheckCondition": "Existing owner’s terminal full-source/strict and final-review disposition, or actual public source/review change."
+      "nextStep": "Root awaits Tamir’s response for exact a97c0844e8, the reviewed description and supplied rebase reply. Preserve the expected old-head lease and existing source/measurement limits; do not push, edit the PR or post the reply before the answer.",
+      "recheckCondition": "Tamir’s answer to the actual amendment question, or a genuine changed source/review requirement.",
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "a97c0844e84c3faba95d7f880d548046160b323e",
+        "baseHead": "2899ec75263130d131ca356a3b9584715226ee28",
+        "url": "https://github.com/tamird/gvisor/commit/a97c0844e84c3faba95d7f880d548046160b323e",
+        "title": "Return the assigned interface name from TUNSETIFF",
+        "summary": "The actual source amendment, corrected description and supplied rebase-reply question awaits Tamir’s decision. Public source is unchanged.",
+        "body": "Scope summary of the actual unanswered request: approve amending #16821 to exact a97c0844e84c3faba95d7f880d548046160b323e, replacing its description with the reviewed text below, and posting the supplied rebase reply. Both final independent reviews and functional/source/strict qualification are complete; no new performance claim or source-publication approval is inferred.\n\nProposed PR description:\n\nCOMPATIBILITY:SYNTHETIC\n\nThe shared syscall tests on native Linux return the assigned interface\nname from TUNSETIFF. A read-only request returns EFAULT after the\ninterface is attached. SIOCGIFNAME writes a terminated name without\nzeroing the remaining bytes, while SIOCGIFCONF returns zero padding.\n\nCopy the TUN request back after attachment and use IFReq.SetName for\ninterface-name outputs. Preserve unused bytes rather than zeroing the\nwhole field; SIOCGIFCONF still starts each output record from zero.\n\nThe retained reproducer and syscall tests establish the mismatch. No\naffected publicly usable application is identified in that evidence.\nThe original native/fixed checks cover the three affected cases and six\nSIOCGIFCONF cases on source3278152c32; those results retain that scope.\n\nOriginal native evidence: https://github.com/tamird/gvisor/actions/runs/41125713649/artifacts/13012542083\nReported reproducer: https://github.com/gvisor/gvisor/issues/6034\n\nPosted by Codex on behalf of @tamird.\n\nProposed rebase reply:\n\nRebased on master. The native Linux and systrap ioctl tests pass on AMD64 and ARM64.\n\nPosted by Codex on behalf of @tamird.\n\nComparison command from the asked proposal:\n\ngit range-diff 2899ec7526^! a97c0844e^!\n",
+        "replyBody": "Rebased on master. The native Linux and systrap ioctl tests pass on AMD64 and ARM64.\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "pr:bazelbuild/bazel-central-registry:11519",
@@ -72451,7 +72474,7 @@
       "title": "Keep the MTU on each veth endpoint",
       "url": "https://github.com/google/gvisor/pull/16957",
       "group": "runtime",
-      "summary": "Current f3575cb4e is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
+      "summary": "Public #16957 remains unchanged at f3575cb4ed. Exact candidate 299a4bf8f4 has complete functional/source/strict qualification and accepted final independent reviews. The actual amendment, corrected-description and rebase-reply decision is pending; no PR mutation has occurred and no new performance result is claimed.",
       "evidence": [
         {
           "label": "Proposed amendment",
@@ -72487,13 +72510,13 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
+      "updatedAt": "2026-11-25T21:21:11.017479+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "f3575cb4ed538695d0b7936e36662633a38b2b5e",
         "observedAt": "2026-11-24T17:06:51.520893+00:00",
-        "disposition": "Current f3575cb4e is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
-        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
+        "disposition": "Public #16957 remains unchanged at f3575cb4ed. Exact candidate 299a4bf8f4 has complete functional/source/strict qualification and accepted final independent reviews. The actual amendment, corrected-description and rebase-reply decision is pending; no PR mutation has occurred and no new performance result is claimed.",
+        "nextAction": "Root awaits Tamir’s response for exact 299a4bf8f4, the reviewed description and supplied rebase reply. Preserve the expected old-head lease and existing source/measurement limits; do not push, edit the PR or post the reply before the answer.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16957",
           "https://github.com/tamird/gvisor/commit/fea7e15b6",
@@ -72537,12 +72560,33 @@
           "https://buildkite.com/gvisor/first-pass/builds/1523#01a1ead6-97aa-433b-acf1-5e0ff016dc90",
           "https://buildkite.com/gvisor/first-pass/builds/1523#01a1ead6-97aa-4ec7-a75a-7a161c4ef3ce",
           "https://buildkite.com/gvisor/pipeline/builds/55555",
-          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
+          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321",
+          "https://github.com/tamird/gvisor/actions/runs/45697083125",
+          "https://github.com/tamird/gvisor/actions/runs/45697089291",
+          "https://github.com/tamird/gvisor/actions/runs/45697060666",
+          "https://github.com/tamird/gvisor/actions/runs/45697064663",
+          "https://github.com/tamird/gvisor/actions/runs/45697069346",
+          "https://github.com/tamird/gvisor/actions/runs/45697075772",
+          "https://github.com/tamird/gvisor/actions/runs/45701628353",
+          "https://github.com/tamird/gvisor/actions/runs/45701634290"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change.",
+        "recheckCondition": "Tamir’s answer to the actual amendment question, or a genuine changed source/review requirement.",
         "base": "53e36ddeb73d8176d7ee2c40c5c8afc3b7030cda",
-        "curatedAt": "2026-11-25T15:19:00.232145+00:00"
+        "curatedAt": "2026-11-25T21:21:11.017479+00:00",
+        "candidate": {
+          "head": "299a4bf8f489b96c7d148e1fa9f2d7c7171925d4",
+          "publication": "Actual source/description/rebase-reply question pending; public PR unchanged"
+        },
+        "completedQualification": {
+          "native": "299a4bf8f489b96c7d148e1fa9f2d7c7171925d4",
+          "scope": "Native/systrap/save VethAdd cases, five unit targets plus NoGo, linked runsc/Sentry+tuntap and affected strict checks passed on both architectures.",
+          "strictCIOnlyPrerequisites": "Existing #17963 driver prerequisite and exact GCC-only flag compatibility correction; native sources unchanged",
+          "performanceAcceptance": false,
+          "ownerReceipt": "16821-16957-strict-final-audit.json"
+        },
+        "finalIndependentReviews": "Both accepted; no remaining formatting finding",
+        "askedComparisonCommand": "git range-diff f3575cb4ed^! 299a4bf8f^!"
       },
       "refinement": {
         "before": {
@@ -72625,13 +72669,24 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
       },
-      "nextStep": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
+      "nextStep": "Root awaits Tamir’s response for exact 299a4bf8f4, the reviewed description and supplied rebase reply. Preserve the expected old-head lease and existing source/measurement limits; do not push, edit the PR or post the reply before the answer.",
       "sourceConflict": {
         "sourceHead": "f3575cb4ed538695d0b7936e36662633a38b2b5e",
         "owner": "root",
         "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge."
       },
-      "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change."
+      "recheckCondition": "Tamir’s answer to the actual amendment question, or a genuine changed source/review requirement.",
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "299a4bf8f489b96c7d148e1fa9f2d7c7171925d4",
+        "baseHead": "f3575cb4ed538695d0b7936e36662633a38b2b5e",
+        "url": "https://github.com/tamird/gvisor/commit/299a4bf8f489b96c7d148e1fa9f2d7c7171925d4",
+        "title": "Keep the MTU on each veth endpoint",
+        "summary": "The actual source amendment, corrected description and supplied rebase-reply question awaits Tamir’s decision. Public source is unchanged.",
+        "body": "Scope summary of the actual unanswered request: approve amending #16957 to exact 299a4bf8f489b96c7d148e1fa9f2d7c7171925d4, replacing its description with the reviewed text below, and posting the supplied rebase reply. Both final independent reviews and functional/source/strict qualification are complete; no new performance claim or source-publication approval is inferred.\n\nProposed PR description:\n\nCOMPATIBILITY:SYNTHETIC\n\nNative Linux preserves the peer's MTU when either veth endpoint changes.\nThe shared syscall test verifies exact values of 3000 and 1460 and reads\nboth endpoints through the existing netlink socket after each write.\nNo affected publicly usable application is identified in this evidence.\n\nKeep each endpoint's MTU under its own lock. Preserve the accepted test\nassertions while adapting its lookup to the shared upstream helper.\n\nCurrent AMD64 and ARM64 checks passed the veth unit tests and analyzer,\nlinked runsc/Sentry builds, and the VethAdd case on native Linux, systrap,\nand systrap with save/restore. Affected C++ analysis and all five source\nchecks passed. These are functional results, not new performance data.\n\nPosted by Codex on behalf of @tamird.\n\nProposed rebase reply:\n\nRebased on master and kept the shared netlink lookup. VethAdd passes on native Linux and systrap, including save/restore.\n\nPosted by Codex on behalf of @tamird.\n\nComparison command from the asked proposal:\n\ngit range-diff f3575cb4ed^! 299a4bf8f^!\n",
+        "replyBody": "Rebased on master and kept the shared netlink lookup. VethAdd passes on native Linux and systrap, including save/restore.\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "pr:16958",

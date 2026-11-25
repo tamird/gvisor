@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-25T21:06:11.877960+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-25T21:11:54.232115+00:00",
+  "registryDate": "2026-11-25T21:21:11.017479+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -462795,13 +462795,13 @@
       "checkedAt": "2026-11-25T21:06:08.259920+00:00",
       "mergeabilityCheckedAt": "2026-11-25T21:06:08.259920+00:00",
       "sourceBranchMismatch": false,
-      "owner": "approved_rebase_queue / root",
-      "action": "approved_rebase_queue completes the existing full-source/affected-strict gates and final source review, then root handles the actual source/publication boundary. Preserve the corrected synthetic-compatibility scope; do not ask a source question or publish from partial qualification.",
+      "owner": "root",
+      "action": "Root awaits Tamir’s response for exact a97c0844e8, the reviewed description and supplied rebase reply. Preserve the expected old-head lease and existing source/measurement limits; do not push, edit the PR or post the reply before the answer.",
       "recordedFollowup": {
-        "owner": "approved_rebase_queue / root",
+        "owner": "root",
         "sourceHead": "2899ec75263130d131ca356a3b9584715226ee28",
-        "disposition": "Public #16821 remains unchanged at2899ec752 and conflicting. Signed current-base candidate de7e44336c passed its executed unit/NoGo and Sentry cases. Both native TUN cases now execute and pass, uncached, on AMD64 and ARM64 using the existing capability helper; prior skips remain historical. Full source and affected strict checks were still pending in the owner’s handoff. No readiness or upstream-publication claim.",
-        "nextAction": "approved_rebase_queue completes the existing full-source/affected-strict gates and final source review, then root handles the actual source/publication boundary. Preserve the corrected synthetic-compatibility scope; do not ask a source question or publish from partial qualification."
+        "disposition": "Public #16821 remains unchanged at 2899ec7526. Exact candidate a97c0844e8 has complete functional/source/strict qualification and accepted final independent reviews. The actual amendment, corrected-description and rebase-reply decision is pending; no PR mutation has occurred and no new performance result is claimed.",
+        "nextAction": "Root awaits Tamir’s response for exact a97c0844e8, the reviewed description and supplied rebase reply. Preserve the expected old-head lease and existing source/measurement limits; do not push, edit the PR or post the reply before the answer."
       },
       "conflictObservedSince": "2026-11-24T04:40:57.352517+00:00"
     },
@@ -462848,8 +462848,8 @@
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "f3575cb4ed538695d0b7936e36662633a38b2b5e",
-        "disposition": "Current f3575cb4e is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
-        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge."
+        "disposition": "Public #16957 remains unchanged at f3575cb4ed. Exact candidate 299a4bf8f4 has complete functional/source/strict qualification and accepted final independent reviews. The actual amendment, corrected-description and rebase-reply decision is pending; no PR mutation has occurred and no new performance result is claimed.",
+        "nextAction": "Root awaits Tamir’s response for exact 299a4bf8f4, the reviewed description and supplied rebase reply. Preserve the expected old-head lease and existing source/measurement limits; do not push, edit the PR or post the reply before the answer."
       },
       "conflictObservedSince": "2026-11-24T17:03:35.215598+00:00"
     },
@@ -472491,7 +472491,7 @@
         "since": "2026-11-25T20:26:19.847463+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:11:54.232115+00:00"
+        "observedAt": "2026-11-25T21:21:11.017479+00:00"
       }
     },
     "pr:15202": {
@@ -473468,7 +473468,7 @@
         "since": "2026-11-25T20:26:38.821906+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:11:54.232115+00:00"
+        "observedAt": "2026-11-25T21:21:11.017479+00:00"
       }
     },
     "pr:15648": {
@@ -476233,6 +476233,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-25T21:06:08.259920+00:00"
+      },
+      "contributor-review": {
+        "scope": "a97c0844e84c3faba95d7f880d548046160b323e",
+        "since": "2026-11-25T21:21:11.017479+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-25T21:21:11.017479+00:00"
       }
     },
     "pr:16822": {
@@ -476899,6 +476906,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-25T21:05:22.746202+00:00"
+      },
+      "contributor-review": {
+        "scope": "299a4bf8f489b96c7d148e1fa9f2d7c7171925d4",
+        "since": "2026-11-25T21:21:11.017479+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-25T21:21:11.017479+00:00"
       }
     },
     "pr:16958": {
@@ -479929,7 +479943,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:11:54.232115+00:00"
+        "observedAt": "2026-11-25T21:21:11.017479+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -479938,7 +479952,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:11:54.232115+00:00"
+        "observedAt": "2026-11-25T21:21:11.017479+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -479947,7 +479961,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:11:54.232115+00:00"
+        "observedAt": "2026-11-25T21:21:11.017479+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -479956,7 +479970,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:11:54.232115+00:00"
+        "observedAt": "2026-11-25T21:21:11.017479+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -479965,7 +479979,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:11:54.232115+00:00"
+        "observedAt": "2026-11-25T21:21:11.017479+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -479974,7 +479988,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:11:54.232115+00:00"
+        "observedAt": "2026-11-25T21:21:11.017479+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -479983,7 +479997,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:11:54.232115+00:00"
+        "observedAt": "2026-11-25T21:21:11.017479+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -479992,7 +480006,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:11:54.232115+00:00"
+        "observedAt": "2026-11-25T21:21:11.017479+00:00"
       }
     },
     "issue:17832": {
@@ -480001,7 +480015,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:11:54.232115+00:00"
+        "observedAt": "2026-11-25T21:21:11.017479+00:00"
       }
     },
     "investigation:ci-benchmark-fuse-device": {
@@ -480010,7 +480024,7 @@
         "since": "2026-11-25T21:11:04.741354+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:11:54.232115+00:00"
+        "observedAt": "2026-11-25T21:21:11.017479+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -480019,7 +480033,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:11:54.232115+00:00",
+        "observedAt": "2026-11-25T21:21:11.017479+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     }
