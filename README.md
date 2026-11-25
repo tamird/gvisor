@@ -1134,10 +1134,14 @@ when settled; changing its head requires explicit reconciliation. The same
 request-to-visible-item invariant applies, without creating another history or
 polling lane.
 
-Routine validation on the existing RBE service has standing authorization.
-Dispatch the workload and track its source, invocation, and results under the
-agent’s follow-up. Only an explicitly asked exception belongs in the contributor
-queue; routine execution does not become an approval request.
+Routine remote builds within authorized work have permanent standing
+authorization, including validation on the existing RBE service. Track the source,
+invocation, and results under the agent’s follow-up; do not create or retain an
+approval request merely to execute a routine remote build. Settle source-bound
+execution exceptions when the user approves them. Departures from repository
+build rules still require their applicable authorization. Source and image
+publication, merges, outreach, measurements, and separately held feature work
+retain their existing approval boundaries.
 
 ### Retire local and fork automation branches
 
