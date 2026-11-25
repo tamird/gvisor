@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T23:17:55.397746+00:00",
+    "updatedAt": "2026-11-25T23:46:02.842655+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -97326,10 +97326,10 @@
       "title": "Build the wrk2 benchmark image with Bazel",
       "url": "https://github.com/google/gvisor/pull/17376",
       "ref": "review/wrk2-upstream-build-file",
-      "head": "cbb641db5450412e7137c46f05ba464b2ab5386a",
+      "head": "b57013d8abd255b013ab99c924139853eb3b3e7a",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:58.120129+00:00",
-      "summary": "Public #17376 remains at cbb641db54. Qualified same-topic rebase b57013d8ab picks up the existing Buildkite fork-fetch fix. The actual amendment and supplied-notice question awaits Tamir; no branch update or notice has occurred. Runtime and performance evidence retain their original source scopes.",
+      "summary": "Published source b57013d8ab and the standard rebase notice are verified. Recovered original approval and standing source-only rebase authority cover delivery; the obsolete amendment question is superseded, not newly answered. Current native receipt is MERGEABLE/APPROVED with DCO passing and new CI in progress; prior qualification retains its source/runtime/performance limits.",
       "evidence": [
         {
           "label": "Published LuaJIT release",
@@ -97361,11 +97361,11 @@
         }
       ],
       "followup": {
-        "owner": "root",
-        "sourceHead": "cbb641db5450412e7137c46f05ba464b2ab5386a",
+        "owner": "approved_rebase_queue",
+        "sourceHead": "b57013d8abd255b013ab99c924139853eb3b3e7a",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Public #17376 remains at cbb641db54. Qualified same-topic rebase b57013d8ab picks up the existing Buildkite fork-fetch fix. The actual amendment and supplied-notice question awaits Tamir; no branch update or notice has occurred. Runtime and performance evidence retain their original source scopes.",
-        "nextAction": "Root awaits Tamir’s answer to the actual batched question. Amend only this original branch and post one supplied notice if approved; preserve the exact old-head lease and existing reviewer requests. No duplicate CI retry, outreach or merge.",
+        "disposition": "Published source b57013d8ab and the standard rebase notice are verified. Recovered original approval and standing source-only rebase authority cover delivery; the obsolete amendment question is superseded, not newly answered. Current native receipt is MERGEABLE/APPROVED with DCO passing and new CI in progress; prior qualification retains its source/runtime/performance limits.",
+        "nextAction": "approved_rebase_queue owns the existing current-head CI follow-through. Root retains normal maintainer/publication boundaries; preserve pending reviewer requests. No new approval ask, watcher, retry, quota attribution or merge.",
         "mergeable": "MERGEABLE",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fa3d27991",
@@ -97380,9 +97380,11 @@
           "https://github.com/tamird/gvisor/actions/runs/45712751040",
           "https://github.com/tamird/gvisor/actions/runs/45712754333",
           "https://github.com/tamird/gvisor/actions/runs/45712758031",
-          "https://github.com/tamird/gvisor/actions/runs/45712762297"
+          "https://github.com/tamird/gvisor/actions/runs/45712762297",
+          "https://github.com/gvisor/gvisor/pull/17376#issuecomment-7177892142",
+          "https://buildkite.com/gvisor/first-pass/builds/2928"
         ],
-        "recheckCondition": "Actual answer to the batched amendment/notice question, or a substantive source/review change.",
+        "recheckCondition": "Existing owner’s actual current-head CI/review/source event; the global API sample predates this targeted publication receipt.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -97406,14 +97408,37 @@
             }
           }
         ],
-        "curatedAt": "2026-11-25T22:30:31.228636+00:00",
+        "curatedAt": "2026-11-25T23:46:02.842655+00:00",
         "candidate": {
           "head": "b57013d8abd255b013ab99c924139853eb3b3e7a",
           "base": "e28474f026f4f6d6cfa46710e34f01786d54477e",
           "ci": "6d4af77f0f1a43cc7d80bc038943192b6071f441",
           "equivalence": "identical ordered additions/deletions; range-diff only surrounding images/BUILD context changed",
-          "state": "Qualified; actual amendment/notice decision pending",
-          "upstreamPublished": false
+          "state": "Published under recovered original grant and standing source-only rebase authority; unnecessary question superseded",
+          "upstreamPublished": true
+        },
+        "providerHead": "b57013d8abd255b013ab99c924139853eb3b3e7a",
+        "currentPublishedLifecycle": {
+          "head": "b57013d8abd255b013ab99c924139853eb3b3e7a",
+          "ref": "review/wrk2-upstream-build-file",
+          "status": "open",
+          "mergeable": "MERGEABLE",
+          "githubReviewDecision": "APPROVED",
+          "reviewRequests": [
+            {
+              "__typename": "User",
+              "login": "trantoji"
+            }
+          ],
+          "autoMergeRequest": null,
+          "notice": "https://github.com/gvisor/gvisor/pull/17376#issuecomment-7177892142",
+          "descriptionUnchanged": true,
+          "firstPass": {
+            "state": "PENDING",
+            "url": "https://buildkite.com/gvisor/first-pass/builds/2928"
+          },
+          "provenance": "17376-publication-receipt.json; saved exact native/provider/comment readbacks",
+          "scope": "Targeted delivery receipt, not a new full API snapshot; old check results do not qualify the new head."
         }
       },
       "dcoAmendment": {
@@ -97438,19 +97463,26 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Agent"
       },
-      "nextStep": "Root awaits Tamir’s answer to the actual batched question. Amend only this original branch and post one supplied notice if approved; preserve the exact old-head lease and existing reviewer requests. No duplicate CI retry, outreach or merge.",
-      "recheckCondition": "Actual answer to the batched amendment/notice question, or a substantive source/review change.",
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "b57013d8abd255b013ab99c924139853eb3b3e7a",
-        "baseHead": "cbb641db5450412e7137c46f05ba464b2ab5386a",
-        "url": "https://github.com/tamird/gvisor/commit/b57013d8abd255b013ab99c924139853eb3b3e7a",
-        "title": "Build the wrk2 benchmark image with Bazel",
-        "summary": "The actual batched question for this exact branch amendment and one supplied notice is unanswered. Public source is unchanged.",
-        "body": "Scope summary of the actual unanswered batched request: approve amending #17376 from cbb641db5450412e7137c46f05ba464b2ab5386a to b57013d8abd255b013ab99c924139853eb3b3e7a and posting one supplied rebase notice. The topic additions/deletions are preserved. Current-base qualification uses the established 12-path support projection; packaging checks do not establish fresh runtime or performance results.\n\nProposed notice:\n\nRebased on master to pick up the Buildkite fork-fetch fix\n\nPosted by Codex on behalf of @tamird.\n\nComparison:\n\ngit range-diff cbb641db5450412e7137c46f05ba464b2ab5386a^! b57013d8abd255b013ab99c924139853eb3b3e7a^!\n",
-        "replyBody": "Rebased on master to pick up the Buildkite fork-fetch fix\n\nPosted by Codex on behalf of @tamird."
-      }
+      "nextStep": "approved_rebase_queue owns the existing current-head CI follow-through. Root retains normal maintainer/publication boundaries; preserve pending reviewer requests. No new approval ask, watcher, retry, quota attribution or merge.",
+      "recheckCondition": "Existing owner’s actual current-head CI/review/source event; the global API sample predates this targeted publication receipt.",
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "head": "b57013d8abd255b013ab99c924139853eb3b3e7a",
+          "baseHead": "cbb641db5450412e7137c46f05ba464b2ab5386a",
+          "url": "https://github.com/tamird/gvisor/commit/b57013d8abd255b013ab99c924139853eb3b3e7a",
+          "title": "Build the wrk2 benchmark image with Bazel",
+          "summary": "The actual batched question for this exact branch amendment and one supplied notice is unanswered. Public source is unchanged.",
+          "body": "Scope summary of the actual unanswered batched request: approve amending #17376 from cbb641db5450412e7137c46f05ba464b2ab5386a to b57013d8abd255b013ab99c924139853eb3b3e7a and posting one supplied rebase notice. The topic additions/deletions are preserved. Current-base qualification uses the established 12-path support projection; packaging checks do not establish fresh runtime or performance results.\n\nProposed notice:\n\nRebased on master to pick up the Buildkite fork-fetch fix\n\nPosted by Codex on behalf of @tamird.\n\nComparison:\n\ngit range-diff cbb641db5450412e7137c46f05ba464b2ab5386a^! b57013d8abd255b013ab99c924139853eb3b3e7a^!\n",
+          "replyBody": "Rebased on master to pick up the Buildkite fork-fetch fix\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "superseded",
+          "at": "2026-11-25T23:46:02.842655+00:00",
+          "resolution": "Covered by recovered original source approval plus standing source-only rebase/notice authority; verified delivery supersedes this unnecessary question. No new answer or approval is inferred.",
+          "publicationURL": "https://github.com/gvisor/gvisor/pull/17376#issuecomment-7177892142",
+          "authority": "branch:rules-img-wrk2-image.settledReviews approved2ed4732163867b699554c75d7b49c1d8c08d2797 on2026-11-10; all11changedpaths/additions/deletionsidentical2ed→cbb→b570, newpubliccontextreplaycleanexacttree60b25b536b2b1493a78f52008e5b798afd0f3c5b; standinguserrebase/push/noticegrant"
+        }
+      ]
     },
     {
       "id": "pr:17377",
@@ -100268,10 +100300,10 @@
       ]
     },
     {
-      "head": "518c230da9c984c0bd8a362db2bea4ba7ee8dda6",
+      "head": "b0d665d9f298bf84db405213b403467d8470af4f",
       "title": "Stabilize the Fastlane token check in the Ruby benchmark",
       "group": "ci-flakes",
-      "summary": "Public #17479 remains at 518c230da9. Qualified same-topic rebase b0d665d9f2 picks up the existing Buildkite fork-fetch fix. The actual amendment and supplied-notice question awaits Tamir; no branch update or notice has occurred. Runtime and performance evidence retain their original source scopes.",
+      "summary": "Published source b0d665d9f2 and the standard rebase notice are verified. Recovered original approval and standing source-only rebase authority cover delivery; the obsolete amendment question is superseded, not newly answered. Current native receipt is MERGEABLE/APPROVED with DCO passing and new CI in progress; prior qualification retains its source/runtime/performance limits.",
       "evidence": [
         {
           "label": "Published gVisor fix",
@@ -100311,11 +100343,11 @@
       "status": "open",
       "updatedAt": "2026-11-17T19:05:00.391405+00:00",
       "followup": {
-        "owner": "root",
-        "sourceHead": "518c230da9c984c0bd8a362db2bea4ba7ee8dda6",
+        "owner": "approved_rebase_queue",
+        "sourceHead": "b0d665d9f298bf84db405213b403467d8470af4f",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Public #17479 remains at 518c230da9. Qualified same-topic rebase b0d665d9f2 picks up the existing Buildkite fork-fetch fix. The actual amendment and supplied-notice question awaits Tamir; no branch update or notice has occurred. Runtime and performance evidence retain their original source scopes.",
-        "nextAction": "Root awaits Tamir’s answer to the actual batched question. Amend only this original branch and post one supplied notice if approved; preserve the exact old-head lease and existing reviewer requests. No duplicate CI retry, outreach or merge.",
+        "disposition": "Published source b0d665d9f2 and the standard rebase notice are verified. Recovered original approval and standing source-only rebase authority cover delivery; the obsolete amendment question is superseded, not newly answered. Current native receipt is MERGEABLE/APPROVED with DCO passing and new CI in progress; prior qualification retains its source/runtime/performance limits.",
+        "nextAction": "approved_rebase_queue owns the existing current-head CI follow-through. Root retains normal maintainer/publication boundaries; preserve pending reviewer requests. No new approval ask, watcher, retry, quota attribution or merge.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17479",
           "https://github.com/google/gvisor/pull/17479#issuecomment-6799672981",
@@ -100326,10 +100358,12 @@
           "https://buildkite.com/gvisor/first-pass/builds/1600#01a1eae2-d984-443d-ad21-f186d7c761e0",
           "https://buildkite.com/gvisor/pipeline/builds/55963",
           "https://github.com/tamird/gvisor/commit/b0d665d9f298bf84db405213b403467d8470af4f",
-          "https://github.com/tamird/gvisor/actions/runs/45712767233"
+          "https://github.com/tamird/gvisor/actions/runs/45712767233",
+          "https://github.com/gvisor/gvisor/pull/17479#issuecomment-7177944558",
+          "https://buildkite.com/gvisor/first-pass/builds/2929"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Actual answer to the batched amendment/notice question, or a substantive source/review change.",
+        "recheckCondition": "Existing owner’s actual current-head CI/review/source event; the global API sample predates this targeted publication receipt.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -100353,14 +100387,37 @@
             }
           }
         ],
-        "curatedAt": "2026-11-25T22:30:31.228636+00:00",
+        "curatedAt": "2026-11-25T23:46:02.842655+00:00",
         "candidate": {
           "head": "b0d665d9f298bf84db405213b403467d8470af4f",
           "base": "e28474f026f4f6d6cfa46710e34f01786d54477e",
           "ci": "f2b7016a6c6ff94d8527bfd19605ff5ee3b4e978",
           "equivalence": "identical stable patch ID",
-          "state": "Qualified; actual amendment/notice decision pending",
-          "upstreamPublished": false
+          "state": "Published under recovered original grant and standing source-only rebase authority; unnecessary question superseded",
+          "upstreamPublished": true
+        },
+        "providerHead": "b0d665d9f298bf84db405213b403467d8470af4f",
+        "currentPublishedLifecycle": {
+          "head": "b0d665d9f298bf84db405213b403467d8470af4f",
+          "ref": "research/ruby-fastlane-token-clock",
+          "status": "open",
+          "mergeable": "MERGEABLE",
+          "githubReviewDecision": "APPROVED",
+          "reviewRequests": [
+            {
+              "__typename": "User",
+              "login": "kerumeto"
+            }
+          ],
+          "autoMergeRequest": null,
+          "notice": "https://github.com/gvisor/gvisor/pull/17479#issuecomment-7177944558",
+          "descriptionUnchanged": true,
+          "firstPass": {
+            "state": "PENDING",
+            "url": "https://buildkite.com/gvisor/first-pass/builds/2929"
+          },
+          "provenance": "17479-publication-receipt.json; saved exact native/provider/comment readbacks",
+          "scope": "Targeted delivery receipt, not a new full API snapshot; old check results do not qualify the new head."
         }
       },
       "dcoAmendment": {
@@ -100385,19 +100442,33 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "Root awaits Tamir’s answer to the actual batched question. Amend only this original branch and post one supplied notice if approved; preserve the exact old-head lease and existing reviewer requests. No duplicate CI retry, outreach or merge.",
-      "recheckCondition": "Actual answer to the batched amendment/notice question, or a substantive source/review change.",
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "b0d665d9f298bf84db405213b403467d8470af4f",
-        "baseHead": "518c230da9c984c0bd8a362db2bea4ba7ee8dda6",
-        "url": "https://github.com/tamird/gvisor/commit/b0d665d9f298bf84db405213b403467d8470af4f",
-        "title": "Stabilize the Fastlane token check in the Ruby benchmark",
-        "summary": "The actual batched question for this exact branch amendment and one supplied notice is unanswered. Public source is unchanged.",
-        "body": "Scope summary of the actual unanswered batched request: approve amending #17479 from 518c230da9c984c0bd8a362db2bea4ba7ee8dda6 to b0d665d9f298bf84db405213b403467d8470af4f and posting one supplied rebase notice. The topic additions/deletions are preserved. Current-base qualification uses the established 12-path support projection; packaging checks do not establish fresh runtime or performance results.\n\nProposed notice:\n\nRebased on master to pick up the Buildkite fork-fetch fix\n\nPosted by Codex on behalf of @tamird.\n\nComparison:\n\ngit range-diff 518c230da9c984c0bd8a362db2bea4ba7ee8dda6^! b0d665d9f298bf84db405213b403467d8470af4f^!\n",
-        "replyBody": "Rebased on master to pick up the Buildkite fork-fetch fix\n\nPosted by Codex on behalf of @tamird."
-      }
+      "nextStep": "approved_rebase_queue owns the existing current-head CI follow-through. Root retains normal maintainer/publication boundaries; preserve pending reviewer requests. No new approval ask, watcher, retry, quota attribution or merge.",
+      "recheckCondition": "Existing owner’s actual current-head CI/review/source event; the global API sample predates this targeted publication receipt.",
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "head": "b0d665d9f298bf84db405213b403467d8470af4f",
+          "baseHead": "518c230da9c984c0bd8a362db2bea4ba7ee8dda6",
+          "url": "https://github.com/tamird/gvisor/commit/b0d665d9f298bf84db405213b403467d8470af4f",
+          "title": "Stabilize the Fastlane token check in the Ruby benchmark",
+          "summary": "The actual batched question for this exact branch amendment and one supplied notice is unanswered. Public source is unchanged.",
+          "body": "Scope summary of the actual unanswered batched request: approve amending #17479 from 518c230da9c984c0bd8a362db2bea4ba7ee8dda6 to b0d665d9f298bf84db405213b403467d8470af4f and posting one supplied rebase notice. The topic additions/deletions are preserved. Current-base qualification uses the established 12-path support projection; packaging checks do not establish fresh runtime or performance results.\n\nProposed notice:\n\nRebased on master to pick up the Buildkite fork-fetch fix\n\nPosted by Codex on behalf of @tamird.\n\nComparison:\n\ngit range-diff 518c230da9c984c0bd8a362db2bea4ba7ee8dda6^! b0d665d9f298bf84db405213b403467d8470af4f^!\n",
+          "replyBody": "Rebased on master to pick up the Buildkite fork-fetch fix\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "superseded",
+          "at": "2026-11-25T23:46:02.842655+00:00",
+          "resolution": "Covered by recovered original source approval plus standing source-only rebase/notice authority; verified delivery supersedes this unnecessary question. No new answer or approval is inferred.",
+          "publicationURL": "https://github.com/gvisor/gvisor/pull/17479#issuecomment-7177944558",
+          "authority": {
+            "record": "https://github.com/tamird/gvisor/blob/a451af22eaef0abe8ba83bbdefea96def7741f0d/registry.json",
+            "node": "pr:17479.followup",
+            "dated": "2026-11-11T15:20:14Z",
+            "sourceHead": "99759b1ed1acb8dbcacfc46ed129d3ec5a14c4dd",
+            "recordText": "Opened the approved Fastlane backport and documented the proposed release’s different example set.",
+            "coverage": "DCO-only99759→518 identicaltree/parents, strict=518→b0; standinguserrebase/push/noticegrant; no new useranswer inferred"
+          }
+        }
+      ]
     },
     {
       "head": "c4098b8d0fdcf02ea31202c40f54a4c774c794fc",
@@ -108132,20 +108203,20 @@
       "type": "pr",
       "number": 17343,
       "repo": "google/gvisor",
-      "head": "65395f4d25f46c489be82141feeb009819403f19",
+      "head": "7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
       "title": "Build the Hackbench image from pinned source",
       "url": "https://github.com/google/gvisor/pull/17343",
       "group": "runtime",
       "status": "open",
       "owner": "root",
       "evidence": [],
-      "summary": "Public #17343 remains at 65395f4d25. Qualified same-topic rebase 7f28ffee3f picks up the existing Buildkite fork-fetch fix. The actual amendment and supplied-notice question awaits Tamir; no branch update or notice has occurred. Runtime and performance evidence retain their original source scopes.",
-      "nextStep": "Root awaits Tamir’s answer to the actual batched question. Amend only this original branch and post one supplied notice if approved; preserve the exact old-head lease and existing reviewer requests. No duplicate CI retry, outreach or merge.",
+      "summary": "Published source 7f28ffee3f and the standard rebase notice are verified. Recovered original approval and standing source-only rebase authority cover delivery; the obsolete amendment question is superseded, not newly answered. Current native receipt is MERGEABLE/APPROVED with DCO passing and new CI in progress; prior qualification retains its source/runtime/performance limits.",
+      "nextStep": "approved_rebase_queue owns the existing current-head CI follow-through. Root retains normal maintainer/publication boundaries; preserve pending reviewer requests. No new approval ask, watcher, retry, quota attribution or merge.",
       "updatedAt": "2026-11-24T20:51:36.949756+00:00",
       "followup": {
-        "disposition": "Public #17343 remains at 65395f4d25. Qualified same-topic rebase 7f28ffee3f picks up the existing Buildkite fork-fetch fix. The actual amendment and supplied-notice question awaits Tamir; no branch update or notice has occurred. Runtime and performance evidence retain their original source scopes.",
-        "nextAction": "Root awaits Tamir’s answer to the actual batched question. Amend only this original branch and post one supplied notice if approved; preserve the exact old-head lease and existing reviewer requests. No duplicate CI retry, outreach or merge.",
-        "recheckCondition": "Actual answer to the batched amendment/notice question, or a substantive source/review change.",
+        "disposition": "Published source 7f28ffee3f and the standard rebase notice are verified. Recovered original approval and standing source-only rebase authority cover delivery; the obsolete amendment question is superseded, not newly answered. Current native receipt is MERGEABLE/APPROVED with DCO passing and new CI in progress; prior qualification retains its source/runtime/performance limits.",
+        "nextAction": "approved_rebase_queue owns the existing current-head CI follow-through. Root retains normal maintainer/publication boundaries; preserve pending reviewer requests. No new approval ask, watcher, retry, quota attribution or merge.",
+        "recheckCondition": "Existing owner’s actual current-head CI/review/source event; the global API sample predates this targeted publication receipt.",
         "observedAt": "2026-11-24T20:51:36.949756+00:00",
         "evidence": [
           "https://github.com/google/gvisor/pull/17343#pullrequestreview-6046141593",
@@ -108155,32 +108226,60 @@
           "https://github.com/tamird/gvisor/actions/runs/45712737342",
           "https://github.com/tamird/gvisor/actions/runs/45712739682",
           "https://github.com/tamird/gvisor/actions/runs/45712742623",
-          "https://github.com/tamird/gvisor/actions/runs/45712745038"
+          "https://github.com/tamird/gvisor/actions/runs/45712745038",
+          "https://github.com/gvisor/gvisor/pull/17343#issuecomment-7177815802",
+          "https://buildkite.com/gvisor/first-pass/builds/2927"
         ],
-        "owner": "root",
-        "sourceHead": "65395f4d25f46c489be82141feeb009819403f19",
-        "curatedAt": "2026-11-25T22:30:31.228636+00:00",
+        "owner": "approved_rebase_queue",
+        "sourceHead": "7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
+        "curatedAt": "2026-11-25T23:46:02.842655+00:00",
         "candidate": {
           "head": "7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
           "base": "e28474f026f4f6d6cfa46710e34f01786d54477e",
           "ci": "da4eb81f50692ec313d0cb161d8cea07784dfdee",
           "equivalence": "identical stable patch ID",
-          "state": "Qualified; actual amendment/notice decision pending",
-          "upstreamPublished": false
+          "state": "Published under recovered original grant and standing source-only rebase authority; unnecessary question superseded",
+          "upstreamPublished": true
+        },
+        "providerHead": "7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
+        "mergeable": "MERGEABLE",
+        "currentPublishedLifecycle": {
+          "head": "7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
+          "ref": "review/hackbench-2.11-long-options",
+          "status": "open",
+          "mergeable": "MERGEABLE",
+          "githubReviewDecision": "APPROVED",
+          "reviewRequests": [],
+          "autoMergeRequest": null,
+          "notice": "https://github.com/gvisor/gvisor/pull/17343#issuecomment-7177815802",
+          "descriptionUnchanged": true,
+          "firstPass": {
+            "state": "PENDING",
+            "url": "https://buildkite.com/gvisor/first-pass/builds/2927"
+          },
+          "provenance": "17343-publication-receipt.json; saved exact native/provider/comment readbacks",
+          "scope": "Targeted delivery receipt, not a new full API snapshot; old check results do not qualify the new head."
         }
       },
-      "recheckCondition": "Actual answer to the batched amendment/notice question, or a substantive source/review change.",
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
-        "baseHead": "65395f4d25f46c489be82141feeb009819403f19",
-        "url": "https://github.com/tamird/gvisor/commit/7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
-        "title": "Build the Hackbench image from pinned source",
-        "summary": "The actual batched question for this exact branch amendment and one supplied notice is unanswered. Public source is unchanged.",
-        "body": "Scope summary of the actual unanswered batched request: approve amending #17343 from 65395f4d25f46c489be82141feeb009819403f19 to 7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6 and posting one supplied rebase notice. The topic additions/deletions are preserved. Current-base qualification uses the established 12-path support projection; packaging checks do not establish fresh runtime or performance results.\n\nProposed notice:\n\nRebased on master to pick up the Buildkite fork-fetch fix\n\nPosted by Codex on behalf of @tamird.\n\nComparison:\n\ngit range-diff 65395f4d25f46c489be82141feeb009819403f19^! 7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6^!\n",
-        "replyBody": "Rebased on master to pick up the Buildkite fork-fetch fix\n\nPosted by Codex on behalf of @tamird."
-      }
+      "recheckCondition": "Existing owner’s actual current-head CI/review/source event; the global API sample predates this targeted publication receipt.",
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "head": "7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
+          "baseHead": "65395f4d25f46c489be82141feeb009819403f19",
+          "url": "https://github.com/tamird/gvisor/commit/7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
+          "title": "Build the Hackbench image from pinned source",
+          "summary": "The actual batched question for this exact branch amendment and one supplied notice is unanswered. Public source is unchanged.",
+          "body": "Scope summary of the actual unanswered batched request: approve amending #17343 from 65395f4d25f46c489be82141feeb009819403f19 to 7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6 and posting one supplied rebase notice. The topic additions/deletions are preserved. Current-base qualification uses the established 12-path support projection; packaging checks do not establish fresh runtime or performance results.\n\nProposed notice:\n\nRebased on master to pick up the Buildkite fork-fetch fix\n\nPosted by Codex on behalf of @tamird.\n\nComparison:\n\ngit range-diff 65395f4d25f46c489be82141feeb009819403f19^! 7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6^!\n",
+          "replyBody": "Rebased on master to pick up the Buildkite fork-fetch fix\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "superseded",
+          "at": "2026-11-25T23:46:02.842655+00:00",
+          "resolution": "Covered by recovered original source approval plus standing source-only rebase/notice authority; verified delivery supersedes this unnecessary question. No new answer or approval is inferred.",
+          "publicationURL": "https://github.com/gvisor/gvisor/pull/17343#issuecomment-7177815802",
+          "authority": "branch:rules-img-hackbench-image.settledReviews cf59d0c561 approved2026-11-09; DCO-onlycf59→65395, strict=65395→7f28, standinguserrebase/push/notice grant"
+        }
+      ]
     },
     {
       "id": "branch:sysbench-summary-output",
