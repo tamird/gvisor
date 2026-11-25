@@ -426,13 +426,6 @@ analyzers:
     # Controversial.
     internal:
       exclude: [".*"]
-  unusedwrite:
-    internal:
-      exclude:
-        - ".*" # Temporary: migrate unusedwrite.
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate unusedwrite.
   inline:
     internal:
       exclude:

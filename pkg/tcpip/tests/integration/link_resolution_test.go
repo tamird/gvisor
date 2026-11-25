@@ -860,9 +860,6 @@ func TestRouteResolvedFields(t *testing.T) {
 			ch := make(chan stack.ResolvedFieldsResult, 1)
 
 			if !test.immediatelyResolvable {
-				wantUnresolvedRouteInfo := wantRouteInfo
-				wantUnresolvedRouteInfo.RemoteLinkAddress = ""
-
 				err := r.ResolvedFields(func(r stack.ResolvedFieldsResult) {
 					ch <- r
 				})
