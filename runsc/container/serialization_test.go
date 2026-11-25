@@ -97,8 +97,7 @@ func checkSerializable(typ reflect.Type, fieldName []string) error {
 		// But all the value types are allowed.
 		return checkSerializable(typ.Elem(), field("{}"))
 	case reflect.Struct:
-		for i := 0; i < typ.NumField(); i++ {
-			f := typ.Field(i)
+		for f := range typ.Fields() {
 			if _, noJSON := f.Tag.Lookup("nojson"); noJSON {
 				if f.IsExported() {
 					return fmt.Errorf("struct field %q must not be exported since it is marked `nojson:\"true\"` in a serializable struct", strings.Join(field(f.Name), "."))

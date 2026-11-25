@@ -222,14 +222,10 @@ analyzers:
   stditerators:
     internal:
       exclude:
-        - ".*" # Temporary: migrate stditerators.
         # Indexing keeps guarded calls in the annotated function for checklocks.
         - '^pkg/state/graph_typeinfo_unsafe\.go:334:[0-9]+$'
         # Indexing keeps Register's guarded accesses in its locked function.
         - '^pkg/urpc/urpc\.go:241:[0-9]+$'
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate stditerators.
   framepointer:
     internal:
       exclude:

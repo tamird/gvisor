@@ -245,8 +245,7 @@ func flattenNvproxyStruct(t *testing.T, structType reflect.Type) []reflect.Struc
 	}
 
 	var fields []reflect.StructField
-	for i := 0; i < structType.NumField(); i++ {
-		field := structType.Field(i)
+	for field := range structType.Fields() {
 		// Check if the field is any base type defined in typeMap.
 		// This avoids flattening the fields of a struct that is a base type.
 		if field.Type.Kind() != reflect.Struct || isNvproxyBaseType(field.Type) {

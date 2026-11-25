@@ -188,8 +188,7 @@ func (c *Constants) walkObject(pass *analysis.Pass, parents []string, obj types.
 		// Recurse to fields if this is a definition.
 		if structType, ok := typ.Underlying().(*types.Struct); ok {
 			fields := make([]*types.Var, 0, structType.NumFields())
-			for i := 0; i < structType.NumFields(); i++ {
-				fieldObj := structType.Field(i)
+			for fieldObj := range structType.Fields() {
 				fields = append(fields, fieldObj)
 				c.walkObject(pass, append(parents, fieldObj.Name()), fieldObj)
 			}

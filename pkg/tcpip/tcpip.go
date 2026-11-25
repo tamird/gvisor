@@ -2662,8 +2662,7 @@ func (*TransportEndpointStats) IsEndpointStats() {}
 // InitStatCounters initializes v's fields with nil StatCounter fields to new
 // StatCounters.
 func InitStatCounters(v reflect.Value) {
-	for i := 0; i < v.NumField(); i++ {
-		v := v.Field(i)
+	for _, v := range v.Fields() {
 		if s, ok := reflect.TypeAssert[**StatCounter](v.Addr()); ok {
 			if *s == nil {
 				*s = new(StatCounter)
