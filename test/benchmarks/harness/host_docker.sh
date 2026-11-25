@@ -93,6 +93,18 @@ if test "${1:-}" = --compare; then
   fi
   comparison=true
 fi
+products=
+if test "${1:-}" = --products; then
+  products=$2
+  shift 2
+  test -f "$products"
+  $comparison
+fi
+config_arg=true
+if test "${1:-}" = --; then
+  shift
+  config_arg=false
+fi
 repository_file() {
   python3 - "$RUNFILES_DIR/_repo_mapping" "$RUNFILES_DIR" "$1" "$2" <<'PY'
 import csv, pathlib, sys
@@ -339,12 +351,18 @@ for i in "${!release_roots[@]}"; do
   chmod -R a+rx "$root"
   prefix=HOST_DOCKER_RELEASE
   if $comparison && test "$i" -eq 0; then prefix=HOST_DOCKER_BASELINE_RELEASE; fi
-  python3 - "$root" "$prefix" <<'PY'
-import hashlib, pathlib, sys
+  python3 - "$root" "$prefix" "$products" "${runtime_names[$i]}" <<'PY'
+import hashlib, json, pathlib, sys
 root = pathlib.Path(sys.argv[1])
+actual = {}
 for path in sorted(root.rglob("*")):
     if path.is_file():
-        print(sys.argv[2], path.relative_to(root), hashlib.sha256(path.read_bytes()).hexdigest())
+        name = str(path.relative_to(root))
+        actual[name] = hashlib.sha256(path.read_bytes()).hexdigest()
+        print(sys.argv[2], name, actual[name])
+if sys.argv[3]:
+    expected = json.loads(pathlib.Path(sys.argv[3]).read_text())[sys.argv[4]]
+    assert actual == expected, (sys.argv[4], actual, expected)
 PY
   "$root/runsc" --version
   configured+=("$i")
@@ -396,5 +414,9 @@ if test "$#" -eq 0 || $comparison; then
   done
 fi
 if test "$#" -gt 0; then
-  "$@" --config_path="$config"
+  if $config_arg; then
+    "$@" --config_path="$config"
+  else
+    "$@"
+  fi
 fi

@@ -33,6 +33,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"slices"
+	"strings"
 	"syscall"
 	"time"
 
@@ -60,11 +61,13 @@ type affinity struct {
 
 type report struct {
 	Commands     map[string]command `json:"commands"`
+	Units        []string           `json:"units,omitempty"`
 	Platform     string             `json:"platform"`
 	Error        string             `json:"error,omitempty"`
 	Visits       []visit            `json:"visits"`
 	PinCPU       int                `json:"pin_cpu"`
 	VisitTimeout time.Duration      `json:"visit_timeout_ns"`
+	Iterations   int                `json:"iterations,omitempty"`
 	Preflight    bool               `json:"preflight"`
 }
 
@@ -83,15 +86,37 @@ func run() error {
 	a := flag.String("a", "", "JSON argv for A; defaults to the Bazel test command")
 	b := flag.String("b", "", "JSON argv for B; defaults to the Bazel test command")
 	cases := flag.String("cases", "", "JSON map from Bazel test labels to canonical benchfmt names")
+	casesFile := flag.String("cases-file", "", "file containing the cases JSON instead of -cases")
+	benchstat := flag.String("benchstat", "", "benchstat executable; collect A/A then conditional A/B when set")
+	alpha := flag.Float64("alpha", 0.01, "predeclared per-contrast significance threshold")
+	confidence := flag.Float64("confidence", 0.95, "confidence level for benchstat estimates")
 	preflight := flag.Bool("preflight", false, "validate two pairs with one-iteration results")
 	pinCPU := flag.Int("pin-cpu", -1, "bind children to this allowed logical CPU; -1 leaves affinity unchanged")
 	visitTimeout := flag.Duration("visit-timeout", 0, "maximum wall-clock duration of one benchmark process; required")
+	iterations := flag.Int("iterations", 0, "required iterations in every result; zero permits any positive count")
+	units := flag.String("metric-units", "", "comma-separated complete metric-unit inventory; empty permits any fixed set")
 	flag.Parse()
 	if *pinCPU < -1 {
 		return fmt.Errorf("pin-cpu must be -1 or a non-negative logical CPU")
 	}
 	if *visitTimeout <= 0 {
 		return fmt.Errorf("visit-timeout must be positive")
+	}
+	if *iterations < 0 {
+		return fmt.Errorf("iterations must be non-negative")
+	}
+	if !(*alpha > 0 && *alpha < 1 && *confidence > 0 && *confidence < 1) {
+		return fmt.Errorf("alpha and confidence must be between zero and one")
+	}
+	if *casesFile != "" {
+		if *cases != "" {
+			return fmt.Errorf("cases and cases-file are mutually exclusive")
+		}
+		data, err := os.ReadFile(*casesFile)
+		if err != nil {
+			return err
+		}
+		*cases = string(data)
 	}
 	var inventory map[string][]string
 	if err := json.Unmarshal([]byte(*cases), &inventory); err != nil {
@@ -114,8 +139,17 @@ func run() error {
 		Preflight:    *preflight,
 		PinCPU:       *pinCPU,
 		VisitTimeout: *visitTimeout,
+		Iterations:   *iterations,
 		Platform:     runtime.GOOS + "/" + runtime.GOARCH,
 		Commands:     make(map[string]command),
+	}
+	if *units != "" {
+		r.Units = strings.Split(*units, ",")
+		for i, unit := range r.Units {
+			if unit == "" || slices.Contains(r.Units[:i], unit) {
+				return fmt.Errorf("empty or duplicate metric unit %q", unit)
+			}
+		}
 	}
 	for arm, raw := range map[string]string{"A": *a, "B": *b} {
 		argv := slices.Clone(flag.Args())
@@ -140,6 +174,13 @@ func run() error {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	if *benchstat != "" && !r.Preflight {
+		return r.compare(ctx, expected, output, *benchstat, *alpha, *confidence)
+	}
+	return r.record(ctx, expected, output)
+}
+
+func (r *report) record(ctx context.Context, expected []string, output string) error {
 	err := r.collect(ctx, expected, output)
 	if err != nil {
 		r.Error = err.Error()
@@ -221,6 +262,27 @@ func (r *report) collect(ctx context.Context, expected []string, output string) 
 			var results map[string]*benchfmt.Result
 			if err == nil {
 				results, err = parse(out.Bytes(), expected, r.Preflight)
+			}
+			if err == nil && r.Iterations != 0 {
+				for name, result := range results {
+					if result.Iters != r.Iterations {
+						err = fmt.Errorf("%s: got %d iterations, want %d", name, result.Iters, r.Iterations)
+						break
+					}
+				}
+			}
+			if err == nil && len(r.Units) != 0 {
+				for name, result := range results {
+					if len(result.Values) != len(r.Units) {
+						err = fmt.Errorf("%s: metric inventory changed: %v", name, result.Values)
+						break
+					}
+					for _, unit := range r.Units {
+						if _, ok := result.Value(unit); !ok {
+							err = fmt.Errorf("%s: missing metric %q", name, unit)
+						}
+					}
+				}
 			}
 			if err == nil && reference != nil {
 				for name, value := range results {

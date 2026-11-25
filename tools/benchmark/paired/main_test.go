@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"math"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -25,7 +26,46 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"gvisor.dev/gvisor/pkg/test/testutil"
 )
+
+func TestComparisonFlags(t *testing.T) {
+	benchstat, err := testutil.FindFile(os.Getenv("PAIRED_BENCHSTAT"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	metrics := map[string]int{"One-4": 3}
+	for _, changed := range []bool{false, true} {
+		row := "BenchmarkOne-4 1 10 ns/op 20 bandwidth.bytes_per_second 30 io_ops.ops_per_second\n"
+		dir := t.TempDir()
+		left, right := filepath.Join(dir, "A"), filepath.Join(dir, "B")
+		if err := os.WriteFile(left, []byte(strings.Repeat(row, 24)), 0644); err != nil {
+			t.Fatal(err)
+		}
+		if changed {
+			row = strings.ReplaceAll(row, "10 ns/op", "20 ns/op")
+		}
+		if err := os.WriteFile(right, []byte(strings.Repeat(row, 24)), 0644); err != nil {
+			t.Fatal(err)
+		}
+		data, err := exec.CommandContext(t.Context(), benchstat, "-format=csv", "-row=.fullname", "-col=.file", "-alpha=0.00001388888888888889", "A="+left, "B="+right).Output()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if flagged, err := comparisonFlags(data, metrics); err != nil || flagged != changed {
+			t.Fatalf("changed=%t: flagged=%t, err=%v, output=%s", changed, flagged, err, data)
+		}
+		if _, err := comparisonFlags(data, map[string]int{"One-4": 4}); err == nil {
+			t.Fatal("accepted an omitted metric")
+		}
+	}
+	for _, data := range []string{"", "\"unterminated"} {
+		if _, err := comparisonFlags([]byte(data), metrics); err == nil {
+			t.Fatalf("accepted invalid report %q", data)
+		}
+	}
+}
 
 func TestVisitTimeout(t *testing.T) {
 	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)

@@ -12,6 +12,7 @@ DEPS = [
 SRCS = [
     "affinity_linux.go",
     "affinity_other.go",
+    "compare.go",
     "main.go",
 ]
 
@@ -25,5 +26,9 @@ go_binary(
 go_test(
     name = "paired_test",
     srcs = SRCS + ["main_test.go"],
-    deps = DEPS,
+    data = ["@org_golang_x_perf//cmd/benchstat:benchstat"],
+    env = {"PAIRED_BENCHSTAT": "$(rootpath @org_golang_x_perf//cmd/benchstat:benchstat)"},
+    deps = DEPS + ["//pkg/test/testutil"],
 )
+
+exports_files(["test.sh"])

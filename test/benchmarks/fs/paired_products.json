@@ -1,0 +1,24 @@
+{
+  "benchmark-baseline": {
+    "containerd-shim-runsc-v1": "081ef07da48fa1cbfcab660e1a89fa45e1f82a6a8c0c3c294ef8b2b38831d073",
+    "gvisor-bin/checkpointgofer": "116f07ebe0d287fe45de3c51b1b25a4352407953c5c3fdae374ecf1aabc8968b",
+    "gvisor-bin/gvisor-proc-umounter": "f8bcc91a9ea695c817cab5e401f93d02b791717385c95ac5d4d9b4d2ff42f7ab",
+    "gvisor-bin/gvisor-sentry-prewarmer": "fd80f1972b1d4284cf489ae54c8250a820ac5a9edb81d73affbf2faea755aebf",
+    "gvisor-bin/gvisor_sentry": "054597794142395419f9239c59adfe071814b09b12ee98d0ec7eb39416c4ebb1",
+    "gvisor-bin/runsc-fd-parking": "c367c27ce0da4ce8529c9ba0b091eda0e159e966062137e963d451c37d25880a",
+    "gvisor-bin/runsc-metric-server": "3c5673c7f65c32173dbc30afa6a2d176c368e6525aba29e5ea9fe7a67249f019",
+    "gvisor-bin/runsc-netgofer": "56b599e460f3128142cf0a1c78506364a24be6536442bdd817c4b5fb6e30f679",
+    "runsc": "be14f918ceec4fdffeea239a344566a1c10e606bdd7f7fbccd689624ae454b24"
+  },
+  "benchmark-candidate": {
+    "containerd-shim-runsc-v1": "02e79b3a86904c759eb1964c66cefba311f185944fa8110709003ad79b0db938",
+    "gvisor-bin/checkpointgofer": "f2690351b2e5276cedb202f5ed09c36586ec0d8645fc5e7ccb84aadc3a32d7b9",
+    "gvisor-bin/gvisor-proc-umounter": "f8bcc91a9ea695c817cab5e401f93d02b791717385c95ac5d4d9b4d2ff42f7ab",
+    "gvisor-bin/gvisor-sentry-prewarmer": "fd80f1972b1d4284cf489ae54c8250a820ac5a9edb81d73affbf2faea755aebf",
+    "gvisor-bin/gvisor_sentry": "e85c443d30260e1bde71a6c2495d75bd2279a7672d662fad2623e142392626bd",
+    "gvisor-bin/runsc-fd-parking": "c367c27ce0da4ce8529c9ba0b091eda0e159e966062137e963d451c37d25880a",
+    "gvisor-bin/runsc-metric-server": "2e0e54bfa1993e17899e92c3f12857cf9189fdf9c8a5c4d467eb9e22e15b8c5e",
+    "gvisor-bin/runsc-netgofer": "3bbae9eb8f5a51ca949e52434d52959fe5355ef5a1ff1fbe9184bf0f7e4951e5",
+    "runsc": "3adcedefb3afbb8ed8076664be9eddf6ce6fffafdce57ec8608f12ff6a53e644"
+  }
+}
