@@ -80,7 +80,7 @@ type SinkConfig struct {
 	// failures will prevent the container from starting.
 	IgnoreSetupError bool `json:"ignore_setup_error,omitempty"`
 	// Status is the runtime status for the sink.
-	Status SinkStatus `json:"status,omitempty"`
+	Status SinkStatus `json:"status"`
 	// FD is the endpoint returned from Setup. It may be nil.
 	FD *fd.FD `json:"-"`
 }

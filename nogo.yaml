@@ -426,13 +426,6 @@ analyzers:
     # Controversial.
     internal:
       exclude: [".*"]
-  omitzero:
-    internal:
-      exclude:
-        - ".*" # Temporary: migrate omitzero.
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate omitzero.
   forvar:
     internal:
       exclude:

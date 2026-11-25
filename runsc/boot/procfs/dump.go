@@ -43,8 +43,8 @@ type Status struct {
 	Comm   string `json:"comm,omitempty"`
 	PID    int32  `json:"pid"`
 	PPID   int32  `json:"ppid"`
-	UID    UIDGID `json:"uid,omitempty"`
-	GID    UIDGID `json:"gid,omitempty"`
+	UID    UIDGID `json:"uid"`
+	GID    UIDGID `json:"gid"`
 	VMSize uint64 `json:"vm_size,omitempty"`
 	VMRSS  uint64 `json:"vm_rss,omitempty"`
 }
@@ -57,7 +57,7 @@ type Stat struct {
 
 // Mapping contains information for /proc/[pid]/maps.
 type Mapping struct {
-	Address     hostarch.AddrRange  `json:"address,omitempty"`
+	Address     hostarch.AddrRange  `json:"address"`
 	Permissions hostarch.AccessType `json:"permissions"`
 	Private     string              `json:"private,omitempty"`
 	Offset      uint64              `json:"offset"`
@@ -98,9 +98,9 @@ type ProcessProcfsDump struct {
 	// Cgroup is /proc/[pid]/cgroup split into an array.
 	Cgroup []CgroupEntry `json:"cgroup,omitempty"`
 	// Status is /proc/[pid]/status.
-	Status Status `json:"status,omitempty"`
+	Status Status `json:"status"`
 	// Stat is /proc/[pid]/stat.
-	Stat Stat `json:"stat,omitempty"`
+	Stat Stat `json:"stat"`
 	// Maps is /proc/[pid]/maps.
 	Maps []Mapping `json:"maps,omitempty"`
 }
