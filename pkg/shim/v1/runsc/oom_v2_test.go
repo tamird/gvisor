@@ -107,8 +107,7 @@ func waitForProcessing(t *testing.T, w *watcherV2) {
 func TestWatcherV2AsyncPublishesNewOOM(t *testing.T) {
 	pub := &mockPublisher{}
 	w := newTestWatcherV2(pub)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	go w.run(ctx)
 
 	trackContainer(w, "c1", 0)
@@ -128,8 +127,7 @@ func TestWatcherV2AsyncPublishesNewOOM(t *testing.T) {
 func TestWatcherV2AsyncDedupsSameOOMCount(t *testing.T) {
 	pub := &mockPublisher{}
 	w := newTestWatcherV2(pub)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	go w.run(ctx)
 
 	trackContainer(w, "c1", 0)
@@ -149,8 +147,7 @@ func TestWatcherV2AsyncDedupsSameOOMCount(t *testing.T) {
 func TestWatcherV2AsyncPublishesIncrementedOOMCount(t *testing.T) {
 	pub := &mockPublisher{}
 	w := newTestWatcherV2(pub)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	go w.run(ctx)
 
 	trackContainer(w, "c1", 0)
@@ -175,8 +172,7 @@ func TestWatcherV2AsyncPublishesIncrementedOOMCount(t *testing.T) {
 func TestWatcherV2ErrorRetainsStateForExitCheck(t *testing.T) {
 	pub := &mockPublisher{}
 	w := newTestWatcherV2(pub)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	go w.run(ctx)
 
 	w.mu.Lock()
@@ -479,8 +475,7 @@ func TestWatcherV2IsOOMUntracks(t *testing.T) {
 func TestWatcherV2NoPublishAfterExit(t *testing.T) {
 	pub := &mockPublisher{}
 	w := newTestWatcherV2(pub)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	go w.run(ctx)
 
 	w.statPath = func(string) (uint64, error) { return 1, nil }

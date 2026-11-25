@@ -426,13 +426,6 @@ analyzers:
     # Controversial.
     internal:
       exclude: [".*"]
-  testingcontext:
-    internal:
-      exclude:
-        - ".*" # Temporary: migrate testingcontext.
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate testingcontext.
   omitzero:
     internal:
       exclude:
