@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-25T21:06:11.877960+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-25T21:37:40.347012+00:00",
+  "registryDate": "2026-11-25T22:04:11.018203+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -460569,26 +460569,6 @@
   "reviewerHandoff": [
     {
       "repo": "google/gvisor",
-      "number": 16098,
-      "head": "d692a4fb41acd4deb5f3b051ac06bd4145d888f3",
-      "sourceNumber": 16098,
-      "owner": "root",
-      "claimed": true,
-      "overdue": false,
-      "kind": "inline",
-      "id": "PRRC_kwDOB9IlXs8AAAABE1Brmw",
-      "createdAt": "2026-11-18T18:38:18Z",
-      "url": "https://github.com/google/gvisor/pull/16098#discussion_r4619004827",
-      "author": "rexren-gif",
-      "updatedAt": "2026-11-18T18:38:18Z",
-      "newOrChanged": false,
-      "awaitingAuthor": true,
-      "assigned": true,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
       "number": 15064,
       "head": "acf93596eddca6ca31f652d75b207a8da544ff54",
       "sourceNumber": 15064,
@@ -461344,7 +461324,7 @@
       "number": 17131,
       "head": "32fd9c26abba8ceb7d68c6aacfd565bda81f839a",
       "sourceNumber": 17131,
-      "owner": "approved_rebase_queue / root",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABWiSJNg",
       "needsTriage": false,
@@ -462483,13 +462463,13 @@
       "checkedAt": "2026-11-25T21:05:22.746202+00:00",
       "mergeabilityCheckedAt": "2026-11-25T21:03:28.045846+00:00",
       "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
+      "owner": "approved_rebase_queue / root",
+      "action": "approved_rebase_queue consumes the existing changed-fixture normal/race results, then root performs final source review. Preserve the retained UDS skip and source-bound evidence; no repeated CI, timing or publication is authorized by this partial result.",
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "2457939ec15647b0908859936941c569b0a04cce",
-        "disposition": "Current 2457939ec is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
-        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge."
+        "disposition": "Public #14361 remains at 2457939ec. Candidate f58e824c1d is a scoped recovery for four synchronous-callback analyzer accesses and one node binding. Source checks and the two previously failed NoGo targets pass on both architectures. Two changed fixture targets still await normal/race completion on both architectures; retained runtime/binary/UDS evidence includes one supplementary-group skip per architecture. No full-green or publication claim.",
+        "nextAction": "approved_rebase_queue consumes the existing changed-fixture normal/race results, then root performs final source review. Preserve the retained UDS skip and source-bound evidence; no repeated CI, timing or publication is authorized by this partial result."
       },
       "conflictObservedSince": "2026-11-25T10:07:08.831385+00:00"
     },
@@ -462676,12 +462656,12 @@
       "mergeabilityCheckedAt": "2026-11-25T21:06:06.777147+00:00",
       "sourceBranchMismatch": false,
       "owner": "actions_bazel_cache / root",
-      "action": "Root and the qualification owner prepare the existing exact-source same-runner A/A-before-A/B and required broader network/loss comparison within practical precision/duration and timing authorization; stop on failed A/A. Do not require a new forced-RTO fixture or repeated RTO in every timed sample. Preserve the unmeasured repeated-RTO-specific benefit caveat and authorized resolution of thread 4648619071 before publication review.",
+      "action": "The existing qualification owner executes the one root-authorized matched broad-throughput A/B under the frozen bounded design, without extra samples/retries or a forced-RTO framework. Root then assesses the retained result and remaining broader network/loss and thread4648619071 requirements before source-publication review.",
       "recordedFollowup": {
         "owner": "actions_bazel_cache / root",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
-        "disposition": "Public #16419 remains unchanged at 0ae405ec7. Candidate 14d87bd3f retains accepted functional/source/review evidence. The baseline-only six-transfer preflight verifies placement/cleanup and a working route with retransmits/SACK recovery, making broad A/A technically feasible for planning. Repeated-RTO-specific benefit is unmeasured, but repeated RTO in every timed sample is not a retained requirement. No A/A or A/B has run; independent measurement and external-thread gates remain.",
-        "nextAction": "Root and the qualification owner prepare the existing exact-source same-runner A/A-before-A/B and required broader network/loss comparison within practical precision/duration and timing authorization; stop on failed A/A. Do not require a new forced-RTO fixture or repeated RTO in every timed sample. Preserve the unmeasured repeated-RTO-specific benefit caveat and authorized resolution of thread 4648619071 before publication review."
+        "disposition": "Public #16419 remains unchanged at 0ae405ec7; candidate 14d87bd3f retains its functional/source/review evidence. Baseline-only calibration 45704792383 verified 50 hash-matched transfers and 24 measured pairs: B/A +1.275%, 95% paired interval −1.183% to +3.794%. Root released one matched broad-throughput A/B with existing products and the same bounded design. This supports estimation only, not equivalence, repeated-RTO-specific benefit or overall performance clearance.",
+        "nextAction": "The existing qualification owner executes the one root-authorized matched broad-throughput A/B under the frozen bounded design, without extra samples/retries or a forced-RTO framework. Root then assesses the retained result and remaining broader network/loss and thread4648619071 requirements before source-publication review."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -462939,13 +462919,13 @@
       "checkedAt": "2026-11-25T21:05:22.746202+00:00",
       "mergeabilityCheckedAt": "2026-11-25T21:04:33.674912+00:00",
       "sourceBranchMismatch": false,
-      "owner": "approved_rebase_queue / root",
-      "action": "approved_rebase_queue sequences the assigned checkout and resolves the actual current-base conflict, qualifies the integration and returns it for root’s final source/publication review. No Daybreak availability question or unrelated source-hold release is required; preserve independent safety/performance and publication boundaries.",
+      "owner": "root",
+      "action": "Root performs final source/context review of exact 99628869e9 and records the actual publication disposition. No Daybreak availability or quota-only wait remains; qualification does not authorize publication or new timing.",
       "recordedFollowup": {
-        "owner": "approved_rebase_queue / root",
+        "owner": "root",
         "sourceHead": "32fd9c26abba8ceb7d68c6aacfd565bda81f839a",
-        "disposition": "Published #17131 remains at32fd9c26a and is CONFLICTING against verified master d6f0d47621; root’s explicit-base merge-tree isolates endpoint_test.go. The PR API’s d09b876ee base was stale. Tamir enabled Daybreak, so the old availability-only authorization wait is complete. approved_rebase_queue confirms the conflict is queued after its earlier source items; no candidate or new qualification exists yet. It owns checkout sequencing, rebase and standard validation before root publication review. Existing source-bound approvals and independent safety/performance requirements remain; no rebase has been published.",
-        "nextAction": "approved_rebase_queue sequences the assigned checkout and resolves the actual current-base conflict, qualifies the integration and returns it for root’s final source/publication review. No Daybreak availability question or unrelated source-hold release is required; preserve independent safety/performance and publication boundaries."
+        "disposition": "Public #17131 remains at 32fd9c26a; current-base candidate 99628869e9 completed affected normal/race/NoGo, linked and source qualification on both architectures. Each normal/race architecture has 96 ordinary and two NoGo records with zero failures/skips. The only new integration delta adapts a stale upstream benchmark constructor; the approved production patch is preserved. Root final review remains; no benchmark timing, current performance acceptance or public update is claimed.",
+        "nextAction": "Root performs final source/context review of exact 99628869e9 and records the actual publication disposition. No Daybreak availability or quota-only wait remains; qualification does not authorize publication or new timing."
       },
       "conflictObservedSince": "2026-11-23T21:26:12.901588+00:00"
     },
@@ -472491,7 +472471,7 @@
         "since": "2026-11-25T20:26:19.847463+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:37:40.347012+00:00"
+        "observedAt": "2026-11-25T22:04:11.018203+00:00"
       }
     },
     "pr:15202": {
@@ -473468,7 +473448,7 @@
         "since": "2026-11-25T20:26:38.821906+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:37:40.347012+00:00"
+        "observedAt": "2026-11-25T22:04:11.018203+00:00"
       }
     },
     "pr:15648": {
@@ -476239,7 +476219,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:37:40.347012+00:00"
+        "observedAt": "2026-11-25T22:04:11.018203+00:00"
       }
     },
     "pr:16822": {
@@ -476912,7 +476892,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:37:40.347012+00:00"
+        "observedAt": "2026-11-25T22:04:11.018203+00:00"
       }
     },
     "pr:16958": {
@@ -476971,7 +476951,7 @@
         "since": "2026-11-25T21:37:40.347012+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:37:40.347012+00:00"
+        "observedAt": "2026-11-25T22:04:11.018203+00:00"
       }
     },
     "pr:16963": {
@@ -479950,7 +479930,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:37:40.347012+00:00"
+        "observedAt": "2026-11-25T22:04:11.018203+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -479959,7 +479939,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:37:40.347012+00:00"
+        "observedAt": "2026-11-25T22:04:11.018203+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -479968,7 +479948,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:37:40.347012+00:00"
+        "observedAt": "2026-11-25T22:04:11.018203+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -479977,7 +479957,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:37:40.347012+00:00"
+        "observedAt": "2026-11-25T22:04:11.018203+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -479986,7 +479966,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:37:40.347012+00:00"
+        "observedAt": "2026-11-25T22:04:11.018203+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -479995,7 +479975,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:37:40.347012+00:00"
+        "observedAt": "2026-11-25T22:04:11.018203+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -480004,7 +479984,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:37:40.347012+00:00"
+        "observedAt": "2026-11-25T22:04:11.018203+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -480013,7 +479993,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:37:40.347012+00:00"
+        "observedAt": "2026-11-25T22:04:11.018203+00:00"
       }
     },
     "issue:17832": {
@@ -480022,7 +480002,16 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:37:40.347012+00:00"
+        "observedAt": "2026-11-25T22:04:11.018203+00:00"
+      }
+    },
+    "branch:hey-report-cap-accounting": {
+      "contributor-review": {
+        "scope": "5f17b673523e57b344c91c8d8b59b97b5ec2f984",
+        "since": "2026-11-25T22:03:16.345652+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-25T22:04:11.018203+00:00"
       }
     },
     "investigation:ci-benchmark-fuse-device": {
@@ -480031,7 +480020,7 @@
         "since": "2026-11-25T21:11:04.741354+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:37:40.347012+00:00"
+        "observedAt": "2026-11-25T22:04:11.018203+00:00"
       }
     }
   },
