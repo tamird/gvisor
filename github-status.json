@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-25T20:02:40.652818+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-25T20:43:01.329836+00:00",
+  "registryDate": "2026-11-25T20:53:16.291022+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -461243,7 +461243,7 @@
       "number": 17131,
       "head": "32fd9c26abba8ceb7d68c6aacfd565bda81f839a",
       "sourceNumber": 17131,
-      "owner": "root",
+      "owner": "approved_rebase_queue / root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABWiSJNg",
       "needsTriage": false,
@@ -462694,13 +462694,13 @@
       "checkedAt": "2026-11-25T20:02:36.178775+00:00",
       "mergeabilityCheckedAt": "2026-11-25T20:02:36.178775+00:00",
       "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
+      "owner": "approved_rebase_queue / root",
+      "action": "approved_rebase_queue completes the existing full-source/affected-strict gates and final source review, then root handles the actual source/publication boundary. Preserve the corrected synthetic-compatibility scope; do not ask a source question or publish from partial qualification.",
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "2899ec75263130d131ca356a3b9584715226ee28",
-        "disposition": "Current 2899ec752 is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
-        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge."
+        "disposition": "Public #16821 remains unchanged at2899ec752 and conflicting. Signed current-base candidate de7e44336c passed its executed unit/NoGo and Sentry cases. Both native TUN cases now execute and pass, uncached, on AMD64 and ARM64 using the existing capability helper; prior skips remain historical. Full source and affected strict checks were still pending in the owner’s handoff. No readiness or upstream-publication claim.",
+        "nextAction": "approved_rebase_queue completes the existing full-source/affected-strict gates and final source review, then root handles the actual source/publication boundary. Preserve the corrected synthetic-compatibility scope; do not ask a source question or publish from partial qualification."
       },
       "conflictObservedSince": "2026-11-24T04:40:57.352517+00:00"
     },
@@ -462838,13 +462838,13 @@
       "checkedAt": "2026-11-25T20:02:36.178775+00:00",
       "mergeabilityCheckedAt": "2026-11-25T20:02:36.178775+00:00",
       "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Keep the source conflict root-owned and held until the applicable sensitive-work authorization changes. Do not read/adapt protected implementation, run tests or fabricate a pending approval question.",
+      "owner": "approved_rebase_queue / root",
+      "action": "approved_rebase_queue sequences the assigned checkout and resolves the actual current-base conflict, qualifies the integration and returns it for root’s final source/publication review. No Daybreak availability question or unrelated source-hold release is required; preserve independent safety/performance and publication boundaries.",
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "32fd9c26abba8ceb7d68c6aacfd565bda81f839a",
-        "disposition": "Our published source 32fd9c26a is now CONFLICTING. The unrelated sensitive-feature hold remains binding. Root retains the conflict/rebase obligation; earlier published-rebase and quota evidence does not resolve this new base conflict.",
-        "nextAction": "Keep the source conflict root-owned and held until the applicable sensitive-work authorization changes. Do not read/adapt protected implementation, run tests or fabricate a pending approval question."
+        "disposition": "Published #17131 remains at32fd9c26a and is CONFLICTING against verified master d6f0d47621; root’s explicit-base merge-tree isolates endpoint_test.go. The PR API’s d09b876ee base was stale. Tamir enabled Daybreak, so the old availability-only authorization wait is complete. approved_rebase_queue confirms the conflict is queued after its earlier source items; no candidate or new qualification exists yet. It owns checkout sequencing, rebase and standard validation before root publication review. Existing source-bound approvals and independent safety/performance requirements remain; no rebase has been published.",
+        "nextAction": "approved_rebase_queue sequences the assigned checkout and resolves the actual current-base conflict, qualifies the integration and returns it for root’s final source/publication review. No Daybreak availability question or unrelated source-hold release is required; preserve independent safety/performance and publication boundaries."
       },
       "conflictObservedSince": "2026-11-23T21:26:12.901588+00:00"
     },
@@ -472348,7 +472348,7 @@
         "since": "2026-11-25T20:26:19.847463+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:43:01.329836+00:00"
+        "observedAt": "2026-11-25T20:53:16.291022+00:00"
       }
     },
     "pr:15202": {
@@ -473325,7 +473325,7 @@
         "since": "2026-11-25T20:26:38.821906+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:43:01.329836+00:00"
+        "observedAt": "2026-11-25T20:53:16.291022+00:00"
       }
     },
     "pr:15648": {
@@ -479793,7 +479793,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:43:01.329836+00:00"
+        "observedAt": "2026-11-25T20:53:16.291022+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -479802,7 +479802,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:43:01.329836+00:00"
+        "observedAt": "2026-11-25T20:53:16.291022+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -479811,7 +479811,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:43:01.329836+00:00"
+        "observedAt": "2026-11-25T20:53:16.291022+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -479820,7 +479820,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:43:01.329836+00:00"
+        "observedAt": "2026-11-25T20:53:16.291022+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -479829,7 +479829,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:43:01.329836+00:00"
+        "observedAt": "2026-11-25T20:53:16.291022+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -479838,7 +479838,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:43:01.329836+00:00"
+        "observedAt": "2026-11-25T20:53:16.291022+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -479847,7 +479847,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:43:01.329836+00:00"
+        "observedAt": "2026-11-25T20:53:16.291022+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -479856,7 +479856,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:43:01.329836+00:00"
+        "observedAt": "2026-11-25T20:53:16.291022+00:00"
       }
     },
     "issue:17832": {
@@ -479865,7 +479865,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:43:01.329836+00:00"
+        "observedAt": "2026-11-25T20:53:16.291022+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -479874,7 +479874,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T20:43:01.329836+00:00",
+        "observedAt": "2026-11-25T20:53:16.291022+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     }
