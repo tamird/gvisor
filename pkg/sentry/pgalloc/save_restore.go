@@ -301,7 +301,7 @@ func (f *MemoryFile) SaveTo(ctx context.Context, w io.Writer, opts *SaveOpts) er
 			if decommitPendingFR.Length() != 0 {
 				decommitNow(decommitPendingFR)
 			}
-			decommitPendingFR = memmap.FileRange{off, end}
+			decommitPendingFR = memmap.FileRange{Start: off, End: end}
 		}
 		// Maintain invariants by decommitting if we've reached the end of the
 		// containing huge page.
@@ -450,13 +450,13 @@ func (f *MemoryFile) SaveTo(ctx context.Context, w io.Writer, opts *SaveOpts) er
 			if err != nil {
 				return err
 			}
-			hole := memmap.FileRange{fr.Start, min(data.Start, fr.End)}
+			hole := memmap.FileRange{Start: fr.Start, End: min(data.Start, fr.End)}
 			if hole.Length() != 0 {
 				alreadyUncommittedBytes += hole.Length()
 				hostHoleBytes += hole.Length()
 				maseg = updateAddRange(maseg, hole, false /* wasCommitted */, false /* nowCommitted */)
 			}
-			dataFR := memmap.FileRange{hole.End, min(data.End, fr.End)}
+			dataFR := memmap.FileRange{Start: hole.End, End: min(data.End, fr.End)}
 			scanRange(dataFR, false /* wasCommitted */)
 			fr.Start = dataFR.End
 		}
@@ -622,7 +622,7 @@ func (d *hostFileDataSeeker) dataAtOrAfter(off uint64) (memmap.FileRange, error)
 	if d.cur.End <= off {
 		data, err := unix.Seek(d.fd, int64(off), unix.SEEK_DATA)
 		if err == unix.ENXIO {
-			d.cur = memmap.FileRange{d.size, d.size}
+			d.cur = memmap.FileRange{Start: d.size, End: d.size}
 			return d.cur, nil
 		}
 		if err != nil {
@@ -640,7 +640,7 @@ func (d *hostFileDataSeeker) dataAtOrAfter(off uint64) (memmap.FileRange, error)
 			End:   min(hostarch.MustPageRoundUp(uint64(hole)), d.size),
 		}
 	}
-	return memmap.FileRange{max(off, d.cur.Start), d.cur.End}, nil
+	return memmap.FileRange{Start: max(off, d.cur.Start), End: d.cur.End}, nil
 }
 
 // AsyncPagesFileSave holds async page saving state for a single pages file.
@@ -1603,7 +1603,7 @@ func (f *MemoryFile) IsAsyncLoading() bool {
 // loading is not in progress, AwaitLoadAll returns immediately.
 func (f *MemoryFile) AwaitLoadAll() error {
 	if amfl := f.asyncPageLoad.Load(); amfl != nil {
-		return amfl.awaitLoad(memmap.FileRange{0, hostarch.PageRoundDown(uint64(math.MaxUint64))})
+		return amfl.awaitLoad(memmap.FileRange{Start: 0, End: hostarch.PageRoundDown(uint64(math.MaxUint64))})
 	}
 	return nil
 }
@@ -2239,7 +2239,7 @@ func (f *MemoryFile) getClientFileRangeSettings(fileSize uint64) []stateio.Clien
 		return nil
 	}
 	var cfrs []stateio.ClientFileRangeSetting
-	f.forEachChunk(memmap.FileRange{0, fileSize}, func(chunk *chunkInfo, chunkFR memmap.FileRange) bool {
+	f.forEachChunk(memmap.FileRange{Start: 0, End: fileSize}, func(chunk *chunkInfo, chunkFR memmap.FileRange) bool {
 		if chunk.huge {
 			if f.opts.AdviseHugepage {
 				cfrs = append(cfrs, stateio.ClientFileRangeSetting{

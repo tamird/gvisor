@@ -41,7 +41,7 @@ func Example() {
 	address := testutil.MustParse4("192.168.1.1")
 	defaultOutgoingInterfaces := []stack.MulticastRouteOutgoingInterface{{ID: outgoingNICID, MinTTL: defaultMinTTL}}
 	routeKey := stack.UnicastSourceAndMulticastDestination{Source: address, Destination: address}
-	multicastRoute := stack.MulticastRoute{inputNICID, defaultOutgoingInterfaces}
+	multicastRoute := stack.MulticastRoute{ExpectedInputInterface: inputNICID, OutgoingInterfaces: defaultOutgoingInterfaces}
 
 	pkt := newPacketBuffer("hello")
 	defer pkt.DecRef()

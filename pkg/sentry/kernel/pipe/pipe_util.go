@@ -76,7 +76,7 @@ func (p *Pipe) read(count int64, f func(srcs safemem.BlockSeq) (uint64, error), 
 // WriteTo writes to w from the Pipe.
 func (p *Pipe) WriteTo(ctx context.Context, w io.Writer, count int64, dup bool) (int64, error) {
 	n, err := p.read(count, func(srcs safemem.BlockSeq) (uint64, error) {
-		return safemem.FromIOWriter{w}.WriteFromBlocks(srcs)
+		return safemem.FromIOWriter{Writer: w}.WriteFromBlocks(srcs)
 	}, !dup /* removeFromSrc */)
 	if n > 0 && !dup {
 		p.queue.Notify(waiter.WritableEvents)
@@ -121,7 +121,7 @@ func (p *Pipe) write(count int64, f func(safemem.BlockSeq) (uint64, error)) (int
 // ReadFrom reads from r to the Pipe.
 func (p *Pipe) ReadFrom(ctx context.Context, r io.Reader, count int64) (int64, error) {
 	n, err := p.write(count, func(dsts safemem.BlockSeq) (uint64, error) {
-		return safemem.FromIOReader{r}.ReadToBlocks(dsts)
+		return safemem.FromIOReader{Reader: r}.ReadToBlocks(dsts)
 	})
 	if n > 0 {
 		p.queue.Notify(waiter.ReadableEvents)

@@ -322,7 +322,7 @@ func (rw *kcovReadWriter) ReadToBlocks(dsts safemem.BlockSeq) (uint64, error) {
 	}
 
 	// Get internal mappings.
-	bs, err := rw.mf.MapInternal(memmap.FileRange{start, end}, hostarch.Read)
+	bs, err := rw.mf.MapInternal(memmap.FileRange{Start: start, End: end}, hostarch.Read)
 	if err != nil {
 		return 0, err
 	}
@@ -350,7 +350,7 @@ func (rw *kcovReadWriter) WriteFromBlocks(srcs safemem.BlockSeq) (uint64, error)
 	}
 
 	// Get internal mapping.
-	bs, err := rw.mf.MapInternal(memmap.FileRange{start, end}, hostarch.Write)
+	bs, err := rw.mf.MapInternal(memmap.FileRange{Start: start, End: end}, hostarch.Write)
 	if err != nil {
 		return 0, err
 	}

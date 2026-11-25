@@ -684,20 +684,20 @@ func loadELF(ctx context.Context, args LoadArgs, wds *wouldDumpState) (loadedELF
 
 	// ELF-specific auxv entries.
 	bin.auxv = arch.Auxv{
-		arch.AuxEntry{linux.AT_PHDR, bin.phdrAddr},
-		arch.AuxEntry{linux.AT_PHENT, hostarch.Addr(bin.phdrSize)},
-		arch.AuxEntry{linux.AT_PHNUM, hostarch.Addr(bin.phdrNum)},
-		arch.AuxEntry{linux.AT_ENTRY, bin.entry},
+		arch.AuxEntry{Key: linux.AT_PHDR, Value: bin.phdrAddr},
+		arch.AuxEntry{Key: linux.AT_PHENT, Value: hostarch.Addr(bin.phdrSize)},
+		arch.AuxEntry{Key: linux.AT_PHNUM, Value: hostarch.Addr(bin.phdrNum)},
+		arch.AuxEntry{Key: linux.AT_ENTRY, Value: bin.entry},
 	}
 	if bin.interpreter != "" {
-		bin.auxv = append(bin.auxv, arch.AuxEntry{linux.AT_BASE, interp.start})
+		bin.auxv = append(bin.auxv, arch.AuxEntry{Key: linux.AT_BASE, Value: interp.start})
 
 		// Start in the interpreter.
 		// N.B. AT_ENTRY above contains the *original* entry point.
 		bin.entry = interp.entry
 	} else {
 		// Always add AT_BASE even if there is no interpreter.
-		bin.auxv = append(bin.auxv, arch.AuxEntry{linux.AT_BASE, 0})
+		bin.auxv = append(bin.auxv, arch.AuxEntry{Key: linux.AT_BASE, Value: 0})
 	}
 
 	return bin, ac, nil

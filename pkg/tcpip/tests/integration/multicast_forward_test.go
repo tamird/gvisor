@@ -1124,7 +1124,7 @@ func TestMulticastForwarding(t *testing.T) {
 
 				wantUnexpectedInputInterfaceEvent := func() *onUnexpectedInputInterfaceData {
 					if test.expectUnexpectedInputInterfaceEvent {
-						return &onUnexpectedInputInterfaceData{stack.MulticastPacketContext{stack.UnicastSourceAndMulticastDestination{srcAddr, dstAddr}, incomingNICID}, test.routeInputInterface}
+						return &onUnexpectedInputInterfaceData{stack.MulticastPacketContext{SourceAndDestination: stack.UnicastSourceAndMulticastDestination{Source: srcAddr, Destination: dstAddr}, InputInterface: incomingNICID}, test.routeInputInterface}
 					}
 					return nil
 				}()
@@ -1135,7 +1135,7 @@ func TestMulticastForwarding(t *testing.T) {
 
 				wantMissingRouteEvent := func() *onMissingRouteData {
 					if test.expectMissingRouteEvent {
-						return &onMissingRouteData{stack.MulticastPacketContext{stack.UnicastSourceAndMulticastDestination{srcAddr, dstAddr}, incomingNICID}}
+						return &onMissingRouteData{stack.MulticastPacketContext{SourceAndDestination: stack.UnicastSourceAndMulticastDestination{Source: srcAddr, Destination: dstAddr}, InputInterface: incomingNICID}}
 					}
 					return nil
 				}()

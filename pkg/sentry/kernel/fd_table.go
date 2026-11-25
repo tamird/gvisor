@@ -128,7 +128,7 @@ func (f *FDTable) loadDescriptorTable(_ goContext.Context, m map[int32]descripto
 // Release any POSIX lock possibly held by the FDTable.
 func (f *FDTable) fileUnlock(ctx context.Context, file *vfs.FileDescription) {
 	if file.SupportsLocks() {
-		err := file.UnlockPOSIX(ctx, f, lock.LockRange{0, lock.LockEOF})
+		err := file.UnlockPOSIX(ctx, f, lock.LockRange{Start: 0, End: lock.LockEOF})
 		if err != nil && !linuxerr.Equals(linuxerr.ENOLCK, err) {
 			panic(fmt.Sprintf("UnlockPOSIX failed: %v", err))
 		}

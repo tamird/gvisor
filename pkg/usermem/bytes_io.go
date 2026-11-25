@@ -135,6 +135,6 @@ func (b *BytesIO) blockFromAddrRange(ar hostarch.AddrRange) (safemem.Block, erro
 func BytesIOSequence(buf []byte) IOSequence {
 	return IOSequence{
 		IO:    &BytesIO{buf},
-		Addrs: hostarch.AddrRangeSeqOf(hostarch.AddrRange{0, hostarch.Addr(len(buf))}),
+		Addrs: hostarch.AddrRangeSeqOf(hostarch.AddrRange{Start: 0, End: hostarch.Addr(len(buf))}),
 	}
 }

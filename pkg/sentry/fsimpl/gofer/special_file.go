@@ -358,7 +358,7 @@ func (fd *specialFileFD) pwrite(ctx context.Context, src usermem.IOSequence, off
 	if !ok {
 		return 0, offset, linuxerr.EINVAL
 	}
-	mr := memmap.MappableRange{pgstart, pgend}
+	mr := memmap.MappableRange{Start: pgstart, End: pgend}
 	d.inode.mapsMu.Lock()
 	d.inode.mappings.Invalidate(mr, memmap.InvalidateOpts{})
 	d.inode.mapsMu.Unlock()

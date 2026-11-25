@@ -114,9 +114,9 @@ func Combine(es []constraint.Expr) constraint.Expr {
 	case 1:
 		return es[0]
 	default:
-		a := &constraint.AndExpr{es[0], es[1]}
+		a := &constraint.AndExpr{X: es[0], Y: es[1]}
 		for i := 2; i < len(es); i++ {
-			a = &constraint.AndExpr{a, es[i]}
+			a = &constraint.AndExpr{X: a, Y: es[i]}
 		}
 		return a
 	}

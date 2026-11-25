@@ -736,7 +736,7 @@ func mirrorAppRange(ctx context.Context, t *kernel.Task, ar hostarch.AddrRange, 
 	var m uintptr
 	if len(prs) == 1 {
 		pr := prs[0]
-		ims, err := pr.File.MapInternal(memmap.FileRange{pr.Offset, pr.Offset + uint64(pr.Source.Length())}, at)
+		ims, err := pr.File.MapInternal(memmap.FileRange{Start: pr.Offset, End: pr.Offset + uint64(pr.Source.Length())}, at)
 		if err != nil {
 			return appMirror{}, 0, err
 		}
@@ -770,7 +770,7 @@ func mirrorAppRange(ctx context.Context, t *kernel.Task, ar hostarch.AddrRange, 
 		// Mirror application mappings into the reserved range.
 		sentryAddr := m
 		for _, pr := range prs {
-			ims, err := pr.File.MapInternal(memmap.FileRange{pr.Offset, pr.Offset + uint64(pr.Source.Length())}, at)
+			ims, err := pr.File.MapInternal(memmap.FileRange{Start: pr.Offset, End: pr.Offset + uint64(pr.Source.Length())}, at)
 			if err != nil {
 				return appMirror{}, 0, err
 			}

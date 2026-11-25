@@ -191,7 +191,7 @@ func (s *SACKScoreboard) Delete(seq seqnum.Value) {
 	}
 	var toDelete []header.SACKBlock
 	var toInsert []header.SACKBlock
-	r := header.SACKBlock{seq, seq.Add(1)}
+	r := header.SACKBlock{Start: seq, End: seq.Add(1)}
 	s.ranges.DescendLessOrEqual(r, func(sb header.SACKBlock) bool {
 		if sb == r {
 			return true
@@ -200,7 +200,7 @@ func (s *SACKScoreboard) Delete(seq seqnum.Value) {
 		if sb.End.LessThanEq(seq) {
 			s.sacked -= sb.Start.Size(sb.End)
 		} else {
-			newSB := header.SACKBlock{seq, sb.End}
+			newSB := header.SACKBlock{Start: seq, End: sb.End}
 			toInsert = append(toInsert, newSB)
 			s.sacked -= sb.Start.Size(seq)
 		}
@@ -283,7 +283,7 @@ func (s *SACKScoreboard) IsRangeLost(r header.SACKBlock) bool {
 // IsLost implements the IsLost(SeqNum) operation defined in RFC 6675 section 4.
 // See IsRangeLost for the loss thresholds.
 func (s *SACKScoreboard) IsLost(seq seqnum.Value) bool {
-	return s.IsRangeLost(header.SACKBlock{seq, seq.Add(1)})
+	return s.IsRangeLost(header.SACKBlock{Start: seq, End: seq.Add(1)})
 }
 
 // Empty returns true if the SACK scoreboard has no entries, false otherwise.

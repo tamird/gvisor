@@ -133,10 +133,10 @@ const (
 
 // Field values for the get_vcpu metric acquisition path used.
 var (
-	getVCPUAcquisitionFastReused = metric.FieldValue{"fast_reused"}
-	getVCPUAcquisitionReused     = metric.FieldValue{"reused"}
-	getVCPUAcquisitionUnused     = metric.FieldValue{"unused"}
-	getVCPUAcquisitionStolen     = metric.FieldValue{"stolen"}
+	getVCPUAcquisitionFastReused = metric.FieldValue{Value: "fast_reused"}
+	getVCPUAcquisitionReused     = metric.FieldValue{Value: "reused"}
+	getVCPUAcquisitionUnused     = metric.FieldValue{Value: "unused"}
+	getVCPUAcquisitionStolen     = metric.FieldValue{Value: "stolen"}
 )
 
 var (

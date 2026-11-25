@@ -58,7 +58,7 @@ func runTest(t testing.TB, fn func(ctx context.Context, fdTable *FDTable, fd *vf
 
 	// Create the limits and context.
 	limitSet := limits.NewLimitSet()
-	limitSet.Set(limits.NumberOfFiles, limits.Limit{maxFD, maxFD}, true)
+	limitSet.Set(limits.NumberOfFiles, limits.Limit{Cur: maxFD, Max: maxFD}, true)
 	ctx := contexttest.WithLimitSet(contexttest.Context(t), limitSet)
 
 	vfsObj := &vfs.VirtualFilesystem{}
@@ -147,7 +147,7 @@ func TestFDTableOverLimit(t *testing.T) {
 func TestFDTable(t *testing.T) {
 	runTest(t, func(ctx context.Context, fdTable *FDTable, fd *vfs.FileDescription, limitSet *limits.LimitSet) {
 		// Cap the limit at one.
-		limitSet.Set(limits.NumberOfFiles, limits.Limit{1, maxFD}, true)
+		limitSet.Set(limits.NumberOfFiles, limits.Limit{Cur: 1, Max: maxFD}, true)
 
 		if _, err := fdTable.NewFDs(ctx, 0, []*vfs.FileDescription{fd}, FDFlags{}); err != nil {
 			t.Fatalf("Adding an FD to an empty 1-size map: got %v, want nil", err)
@@ -158,7 +158,7 @@ func TestFDTable(t *testing.T) {
 		}
 
 		// Remove the previous limit.
-		limitSet.Set(limits.NumberOfFiles, limits.Limit{maxFD, maxFD}, true)
+		limitSet.Set(limits.NumberOfFiles, limits.Limit{Cur: maxFD, Max: maxFD}, true)
 
 		if fds, err := fdTable.NewFDs(ctx, 0, []*vfs.FileDescription{fd}, FDFlags{}); err != nil {
 			t.Fatalf("Adding an FD to a resized map: got %v, want nil", err)
@@ -284,7 +284,7 @@ func BenchmarkNewFDAt(b *testing.B) {
 
 	runTest(b, func(ctx context.Context, fdTable *FDTable, fd *vfs.FileDescription, limitSet *limits.LimitSet) {
 		// Remove the previous limit.
-		limitSet.Set(limits.NumberOfFiles, limits.Limit{maxLimit, maxLimit}, true)
+		limitSet.Set(limits.NumberOfFiles, limits.Limit{Cur: maxLimit, Max: maxLimit}, true)
 
 		b.StartTimer() // Benchmark.
 		for i := 0; i < b.N; i++ {
@@ -319,7 +319,7 @@ func BenchmarkCreateWithMaxFD(b *testing.B) {
 	const maxLimit = 1 << 31
 	runTest(b, func(ctx context.Context, _ *FDTable, fd *vfs.FileDescription, limitSet *limits.LimitSet) {
 		// Remove the previous limit.
-		limitSet.Set(limits.NumberOfFiles, limits.Limit{maxLimit, maxLimit}, true)
+		limitSet.Set(limits.NumberOfFiles, limits.Limit{Cur: maxLimit, Max: maxLimit}, true)
 
 		for i := 0; i < b.N; i++ {
 			fdTable := new(FDTable)

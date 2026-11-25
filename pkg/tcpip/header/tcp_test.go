@@ -29,33 +29,33 @@ func TestEncodeSACKBlocks(t *testing.T) {
 		bufSize    int
 	}{
 		{
-			[]header.SACKBlock{{10, 20}, {22, 30}, {32, 40}, {42, 50}, {52, 60}, {62, 70}},
-			[]header.SACKBlock{{10, 20}, {22, 30}, {32, 40}, {42, 50}},
+			[]header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}, {Start: 42, End: 50}, {Start: 52, End: 60}, {Start: 62, End: 70}},
+			[]header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}, {Start: 42, End: 50}},
 			40,
 		},
 		{
-			[]header.SACKBlock{{10, 20}, {22, 30}, {32, 40}, {42, 50}, {52, 60}, {62, 70}},
-			[]header.SACKBlock{{10, 20}, {22, 30}, {32, 40}},
+			[]header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}, {Start: 42, End: 50}, {Start: 52, End: 60}, {Start: 62, End: 70}},
+			[]header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}},
 			30,
 		},
 		{
-			[]header.SACKBlock{{10, 20}, {22, 30}, {32, 40}, {42, 50}, {52, 60}, {62, 70}},
-			[]header.SACKBlock{{10, 20}, {22, 30}},
+			[]header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}, {Start: 42, End: 50}, {Start: 52, End: 60}, {Start: 62, End: 70}},
+			[]header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}},
 			20,
 		},
 		{
-			[]header.SACKBlock{{10, 20}, {22, 30}, {32, 40}, {42, 50}, {52, 60}, {62, 70}},
-			[]header.SACKBlock{{10, 20}},
+			[]header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}, {Start: 42, End: 50}, {Start: 52, End: 60}, {Start: 62, End: 70}},
+			[]header.SACKBlock{{Start: 10, End: 20}},
 			10,
 		},
 		{
-			[]header.SACKBlock{{10, 20}, {22, 30}, {32, 40}, {42, 50}, {52, 60}, {62, 70}},
+			[]header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}, {Start: 42, End: 50}, {Start: 52, End: 60}, {Start: 62, End: 70}},
 			nil,
 			8,
 		},
 		{
-			[]header.SACKBlock{{10, 20}, {22, 30}, {32, 40}, {42, 50}, {52, 60}, {62, 70}},
-			[]header.SACKBlock{{10, 20}, {22, 30}, {32, 40}, {42, 50}},
+			[]header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}, {Start: 42, End: 50}, {Start: 52, End: 60}, {Start: 62, End: 70}},
+			[]header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}, {Start: 42, End: 50}},
 			60,
 		},
 	}
@@ -98,48 +98,48 @@ func TestTCPParseOptions(t *testing.T) {
 		want header.TCPOptions
 	}{
 		// Trivial cases.
-		{nil, header.TCPOptions{false, 0, 0, nil}},
-		{[]byte{header.TCPOptionNOP}, header.TCPOptions{false, 0, 0, nil}},
-		{[]byte{header.TCPOptionNOP, header.TCPOptionNOP}, header.TCPOptions{false, 0, 0, nil}},
-		{[]byte{header.TCPOptionEOL}, header.TCPOptions{false, 0, 0, nil}},
-		{[]byte{header.TCPOptionNOP, header.TCPOptionEOL, header.TCPOptionTS, 10, 1, 1}, header.TCPOptions{false, 0, 0, nil}},
+		{nil, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: nil}},
+		{[]byte{header.TCPOptionNOP}, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: nil}},
+		{[]byte{header.TCPOptionNOP, header.TCPOptionNOP}, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: nil}},
+		{[]byte{header.TCPOptionEOL}, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: nil}},
+		{[]byte{header.TCPOptionNOP, header.TCPOptionEOL, header.TCPOptionTS, 10, 1, 1}, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: nil}},
 
 		// Test timestamp parsing.
-		{[]byte{header.TCPOptionNOP, header.TCPOptionTS, 10, 0, 0, 0, 1, 0, 0, 0, 1}, header.TCPOptions{true, 1, 1, nil}},
-		{[]byte{header.TCPOptionTS, 10, 0, 0, 0, 1, 0, 0, 0, 1}, header.TCPOptions{true, 1, 1, nil}},
+		{[]byte{header.TCPOptionNOP, header.TCPOptionTS, 10, 0, 0, 0, 1, 0, 0, 0, 1}, header.TCPOptions{TS: true, TSVal: 1, TSEcr: 1, SACKBlocks: nil}},
+		{[]byte{header.TCPOptionTS, 10, 0, 0, 0, 1, 0, 0, 0, 1}, header.TCPOptions{TS: true, TSVal: 1, TSEcr: 1, SACKBlocks: nil}},
 
 		// Test malformed timestamp option.
-		{[]byte{header.TCPOptionTS, 8, 1, 1}, header.TCPOptions{false, 0, 0, nil}},
-		{[]byte{header.TCPOptionNOP, header.TCPOptionTS, 8, 1, 1}, header.TCPOptions{false, 0, 0, nil}},
-		{[]byte{header.TCPOptionNOP, header.TCPOptionTS, 8, 0, 0, 0, 1, 0, 0, 0, 1}, header.TCPOptions{false, 0, 0, nil}},
+		{[]byte{header.TCPOptionTS, 8, 1, 1}, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: nil}},
+		{[]byte{header.TCPOptionNOP, header.TCPOptionTS, 8, 1, 1}, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: nil}},
+		{[]byte{header.TCPOptionNOP, header.TCPOptionTS, 8, 0, 0, 0, 1, 0, 0, 0, 1}, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: nil}},
 
 		// Test SACKBlock parsing.
-		{[]byte{header.TCPOptionSACK, 10, 0, 0, 0, 1, 0, 0, 0, 10}, header.TCPOptions{false, 0, 0, []header.SACKBlock{{1, 10}}}},
-		{[]byte{header.TCPOptionSACK, 18, 0, 0, 0, 1, 0, 0, 0, 10, 0, 0, 0, 11, 0, 0, 0, 12}, header.TCPOptions{false, 0, 0, []header.SACKBlock{{1, 10}, {11, 12}}}},
+		{[]byte{header.TCPOptionSACK, 10, 0, 0, 0, 1, 0, 0, 0, 10}, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: []header.SACKBlock{{Start: 1, End: 10}}}},
+		{[]byte{header.TCPOptionSACK, 18, 0, 0, 0, 1, 0, 0, 0, 10, 0, 0, 0, 11, 0, 0, 0, 12}, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: []header.SACKBlock{{Start: 1, End: 10}, {Start: 11, End: 12}}}},
 
 		// Test malformed SACK option.
-		{[]byte{header.TCPOptionSACK, 0}, header.TCPOptions{false, 0, 0, nil}},
-		{[]byte{header.TCPOptionSACK, 8, 0, 0, 0, 1, 0, 0, 0, 10}, header.TCPOptions{false, 0, 0, nil}},
-		{[]byte{header.TCPOptionSACK, 11, 0, 0, 0, 1, 0, 0, 0, 10, 0, 0, 0, 11, 0, 0, 0, 12}, header.TCPOptions{false, 0, 0, nil}},
-		{[]byte{header.TCPOptionSACK, 17, 0, 0, 0, 1, 0, 0, 0, 10, 0, 0, 0, 11, 0, 0, 0, 12}, header.TCPOptions{false, 0, 0, nil}},
-		{[]byte{header.TCPOptionSACK}, header.TCPOptions{false, 0, 0, nil}},
-		{[]byte{header.TCPOptionSACK, 10}, header.TCPOptions{false, 0, 0, nil}},
-		{[]byte{header.TCPOptionSACK, 10, 0, 0, 0, 1, 0, 0, 0}, header.TCPOptions{false, 0, 0, nil}},
+		{[]byte{header.TCPOptionSACK, 0}, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: nil}},
+		{[]byte{header.TCPOptionSACK, 8, 0, 0, 0, 1, 0, 0, 0, 10}, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: nil}},
+		{[]byte{header.TCPOptionSACK, 11, 0, 0, 0, 1, 0, 0, 0, 10, 0, 0, 0, 11, 0, 0, 0, 12}, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: nil}},
+		{[]byte{header.TCPOptionSACK, 17, 0, 0, 0, 1, 0, 0, 0, 10, 0, 0, 0, 11, 0, 0, 0, 12}, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: nil}},
+		{[]byte{header.TCPOptionSACK}, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: nil}},
+		{[]byte{header.TCPOptionSACK, 10}, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: nil}},
+		{[]byte{header.TCPOptionSACK, 10, 0, 0, 0, 1, 0, 0, 0}, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: nil}},
 
 		// Test Timestamp + SACK block parsing.
-		{generateOptions(&tsOption{1, 1}, []header.SACKBlock{{1, 10}, {11, 12}}), header.TCPOptions{true, 1, 1, []header.SACKBlock{{1, 10}, {11, 12}}}},
-		{generateOptions(&tsOption{1, 2}, []header.SACKBlock{{1, 10}, {11, 12}}), header.TCPOptions{true, 1, 2, []header.SACKBlock{{1, 10}, {11, 12}}}},
-		{generateOptions(&tsOption{1, 3}, []header.SACKBlock{{1, 10}, {11, 12}, {13, 14}, {14, 15}, {15, 16}}), header.TCPOptions{true, 1, 3, []header.SACKBlock{{1, 10}, {11, 12}, {13, 14}, {14, 15}}}},
+		{generateOptions(&tsOption{1, 1}, []header.SACKBlock{{Start: 1, End: 10}, {Start: 11, End: 12}}), header.TCPOptions{TS: true, TSVal: 1, TSEcr: 1, SACKBlocks: []header.SACKBlock{{Start: 1, End: 10}, {Start: 11, End: 12}}}},
+		{generateOptions(&tsOption{1, 2}, []header.SACKBlock{{Start: 1, End: 10}, {Start: 11, End: 12}}), header.TCPOptions{TS: true, TSVal: 1, TSEcr: 2, SACKBlocks: []header.SACKBlock{{Start: 1, End: 10}, {Start: 11, End: 12}}}},
+		{generateOptions(&tsOption{1, 3}, []header.SACKBlock{{Start: 1, End: 10}, {Start: 11, End: 12}, {Start: 13, End: 14}, {Start: 14, End: 15}, {Start: 15, End: 16}}), header.TCPOptions{TS: true, TSVal: 1, TSEcr: 3, SACKBlocks: []header.SACKBlock{{Start: 1, End: 10}, {Start: 11, End: 12}, {Start: 13, End: 14}, {Start: 14, End: 15}}}},
 
 		// Test valid timestamp + malformed SACK block parsing.
-		{[]byte{header.TCPOptionTS, 10, 0, 0, 0, 1, 0, 0, 0, 1, header.TCPOptionSACK}, header.TCPOptions{true, 1, 1, nil}},
-		{[]byte{header.TCPOptionTS, 10, 0, 0, 0, 1, 0, 0, 0, 1, header.TCPOptionSACK, 10}, header.TCPOptions{true, 1, 1, nil}},
-		{[]byte{header.TCPOptionTS, 10, 0, 0, 0, 1, 0, 0, 0, 1, header.TCPOptionSACK, 10, 0, 0, 0}, header.TCPOptions{true, 1, 1, nil}},
-		{[]byte{header.TCPOptionTS, 10, 0, 0, 0, 1, 0, 0, 0, 1, header.TCPOptionSACK, 11, 0, 0, 0, 1, 0, 0, 0, 1}, header.TCPOptions{true, 1, 1, nil}},
-		{[]byte{header.TCPOptionSACK, header.TCPOptionTS, 10, 0, 0, 0, 1, 0, 0, 0, 1}, header.TCPOptions{false, 0, 0, nil}},
-		{[]byte{header.TCPOptionSACK, 10, header.TCPOptionTS, 10, 0, 0, 0, 1, 0, 0, 0, 1}, header.TCPOptions{false, 0, 0, []header.SACKBlock{{134873088, 65536}}}},
-		{[]byte{header.TCPOptionSACK, 10, 0, 0, 0, header.TCPOptionTS, 10, 0, 0, 0, 1, 0, 0, 0, 1}, header.TCPOptions{false, 0, 0, []header.SACKBlock{{8, 167772160}}}},
-		{[]byte{header.TCPOptionSACK, 11, 0, 0, 0, 1, 0, 0, 0, 1, header.TCPOptionTS, 10, 0, 0, 0, 1, 0, 0, 0, 1}, header.TCPOptions{false, 0, 0, nil}},
+		{[]byte{header.TCPOptionTS, 10, 0, 0, 0, 1, 0, 0, 0, 1, header.TCPOptionSACK}, header.TCPOptions{TS: true, TSVal: 1, TSEcr: 1, SACKBlocks: nil}},
+		{[]byte{header.TCPOptionTS, 10, 0, 0, 0, 1, 0, 0, 0, 1, header.TCPOptionSACK, 10}, header.TCPOptions{TS: true, TSVal: 1, TSEcr: 1, SACKBlocks: nil}},
+		{[]byte{header.TCPOptionTS, 10, 0, 0, 0, 1, 0, 0, 0, 1, header.TCPOptionSACK, 10, 0, 0, 0}, header.TCPOptions{TS: true, TSVal: 1, TSEcr: 1, SACKBlocks: nil}},
+		{[]byte{header.TCPOptionTS, 10, 0, 0, 0, 1, 0, 0, 0, 1, header.TCPOptionSACK, 11, 0, 0, 0, 1, 0, 0, 0, 1}, header.TCPOptions{TS: true, TSVal: 1, TSEcr: 1, SACKBlocks: nil}},
+		{[]byte{header.TCPOptionSACK, header.TCPOptionTS, 10, 0, 0, 0, 1, 0, 0, 0, 1}, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: nil}},
+		{[]byte{header.TCPOptionSACK, 10, header.TCPOptionTS, 10, 0, 0, 0, 1, 0, 0, 0, 1}, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: []header.SACKBlock{{Start: 134873088, End: 65536}}}},
+		{[]byte{header.TCPOptionSACK, 10, 0, 0, 0, header.TCPOptionTS, 10, 0, 0, 0, 1, 0, 0, 0, 1}, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: []header.SACKBlock{{Start: 8, End: 167772160}}}},
+		{[]byte{header.TCPOptionSACK, 11, 0, 0, 0, 1, 0, 0, 0, 1, header.TCPOptionTS, 10, 0, 0, 0, 1, 0, 0, 0, 1}, header.TCPOptions{TS: false, TSVal: 0, TSEcr: 0, SACKBlocks: nil}},
 	}
 	for _, tc := range testCases {
 		if got, want := header.ParseTCPOptions(tc.b), tc.want; !reflect.DeepEqual(got, want) {

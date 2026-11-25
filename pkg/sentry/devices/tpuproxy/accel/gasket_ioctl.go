@@ -89,7 +89,7 @@ func gasketMapBufferIoctl(ctx context.Context, t *kernel.Task, hostFd int32, fd 
 	}
 	sentryAddr := uintptr(m)
 	for _, pr := range prs {
-		ims, err := pr.File.MapInternal(memmap.FileRange{pr.Offset, pr.Offset + uint64(pr.Source.Length())}, hostarch.ReadWrite)
+		ims, err := pr.File.MapInternal(memmap.FileRange{Start: pr.Offset, End: pr.Offset + uint64(pr.Source.Length())}, hostarch.ReadWrite)
 		if err != nil {
 			return 0, err
 		}

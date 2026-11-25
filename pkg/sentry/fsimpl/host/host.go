@@ -692,7 +692,7 @@ func (i *inode) SetStat(ctx context.Context, fs *vfs.Filesystem, creds *auth.Cre
 			newpgend, _ := hostarch.PageRoundUp(s.Size)
 			if oldpgend != newpgend {
 				i.mapsMu.Lock()
-				i.mappings.Invalidate(memmap.MappableRange{newpgend, oldpgend}, memmap.InvalidateOpts{
+				i.mappings.Invalidate(memmap.MappableRange{Start: newpgend, End: oldpgend}, memmap.InvalidateOpts{
 					// Compare Linux's mm/truncate.c:truncate_setsize() =>
 					// truncate_pagecache() =>
 					// mm/memory.c:unmap_mapping_range(evencows=1).

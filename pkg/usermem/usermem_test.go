@@ -110,7 +110,7 @@ func TestBytesIOCopyOutFromSuccess(t *testing.T) {
 	n, err := b.CopyOutFrom(newContext(), hostarch.AddrRangeSeqFromSlice([]hostarch.AddrRange{
 		{Start: 4, End: 7},
 		{Start: 1, End: 4},
-	}), safemem.FromIOReader{bytes.NewBufferString("barfoo")}, IOOpts{})
+	}), safemem.FromIOReader{Reader: bytes.NewBufferString("barfoo")}, IOOpts{})
 	if wantN := int64(6); n != wantN || err != nil {
 		t.Errorf("CopyOutFrom: got (%v, %v), wanted (%v, nil)", n, err, wantN)
 	}
@@ -124,7 +124,7 @@ func TestBytesIOCopyOutFromFailure(t *testing.T) {
 	n, err := b.CopyOutFrom(newContext(), hostarch.AddrRangeSeqFromSlice([]hostarch.AddrRange{
 		{Start: 1, End: 4},
 		{Start: 4, End: 7},
-	}), safemem.FromIOReader{bytes.NewBufferString("foobar")}, IOOpts{})
+	}), safemem.FromIOReader{Reader: bytes.NewBufferString("foobar")}, IOOpts{})
 	if wantN, wantErr := int64(4), linuxerr.EFAULT; n != wantN || err != wantErr {
 		t.Errorf("CopyOutFrom: got (%v, %v), wanted (%v, %v)", n, err, wantN, wantErr)
 	}
@@ -139,7 +139,7 @@ func TestBytesIOCopyInToSuccess(t *testing.T) {
 	n, err := b.CopyInTo(newContext(), hostarch.AddrRangeSeqFromSlice([]hostarch.AddrRange{
 		{Start: 4, End: 7},
 		{Start: 1, End: 4},
-	}), safemem.FromIOWriter{&dst}, IOOpts{})
+	}), safemem.FromIOWriter{Writer: &dst}, IOOpts{})
 	if wantN := int64(6); n != wantN || err != nil {
 		t.Errorf("CopyInTo: got (%v, %v), wanted (%v, nil)", n, err, wantN)
 	}
@@ -154,7 +154,7 @@ func TestBytesIOCopyInToFailure(t *testing.T) {
 	n, err := b.CopyInTo(newContext(), hostarch.AddrRangeSeqFromSlice([]hostarch.AddrRange{
 		{Start: 1, End: 4},
 		{Start: 4, End: 7},
-	}), safemem.FromIOWriter{&dst}, IOOpts{})
+	}), safemem.FromIOWriter{Writer: &dst}, IOOpts{})
 	if wantN, wantErr := int64(4), linuxerr.EFAULT; n != wantN || err != wantErr {
 		t.Errorf("CopyOutFrom: got (%v, %v), wanted (%v, %v)", n, err, wantN, wantErr)
 	}

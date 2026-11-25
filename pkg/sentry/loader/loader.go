@@ -395,19 +395,19 @@ func Load(ctx context.Context, args LoadArgs, extraAuxv []arch.AuxEntry, vdso *V
 
 	// Add generic auxv entries.
 	auxv := append(loaded.auxv, arch.Auxv{
-		arch.AuxEntry{linux.AT_UID, hostarch.Addr(c.RealKUID.In(c.UserNamespace).OrOverflow())},
-		arch.AuxEntry{linux.AT_EUID, hostarch.Addr(c.EffectiveKUID.In(c.UserNamespace).OrOverflow())},
-		arch.AuxEntry{linux.AT_GID, hostarch.Addr(c.RealKGID.In(c.UserNamespace).OrOverflow())},
-		arch.AuxEntry{linux.AT_EGID, hostarch.Addr(c.EffectiveKGID.In(c.UserNamespace).OrOverflow())},
-		arch.AuxEntry{linux.AT_SECURE, hostarch.Addr(secureExecInt)},
-		arch.AuxEntry{linux.AT_CLKTCK, linux.CLOCKS_PER_SEC},
-		arch.AuxEntry{linux.AT_EXECFN, execfn},
-		arch.AuxEntry{linux.AT_RANDOM, random},
-		arch.AuxEntry{linux.AT_PLATFORM, platform},
+		arch.AuxEntry{Key: linux.AT_UID, Value: hostarch.Addr(c.RealKUID.In(c.UserNamespace).OrOverflow())},
+		arch.AuxEntry{Key: linux.AT_EUID, Value: hostarch.Addr(c.EffectiveKUID.In(c.UserNamespace).OrOverflow())},
+		arch.AuxEntry{Key: linux.AT_GID, Value: hostarch.Addr(c.RealKGID.In(c.UserNamespace).OrOverflow())},
+		arch.AuxEntry{Key: linux.AT_EGID, Value: hostarch.Addr(c.EffectiveKGID.In(c.UserNamespace).OrOverflow())},
+		arch.AuxEntry{Key: linux.AT_SECURE, Value: hostarch.Addr(secureExecInt)},
+		arch.AuxEntry{Key: linux.AT_CLKTCK, Value: linux.CLOCKS_PER_SEC},
+		arch.AuxEntry{Key: linux.AT_EXECFN, Value: execfn},
+		arch.AuxEntry{Key: linux.AT_RANDOM, Value: random},
+		arch.AuxEntry{Key: linux.AT_PLATFORM, Value: platform},
 		arch.AuxEntry{Key: linux.AT_PAGESZ, Value: hostarch.Addr(hostarch.PageSize)},
-		arch.AuxEntry{linux.AT_SYSINFO_EHDR, vdsoAddr},
-		arch.AuxEntry{linux.AT_HWCAP, hostarch.Addr(args.Features.AllowedHWCap1())},
-		arch.AuxEntry{linux.AT_HWCAP2, hostarch.Addr(args.Features.AllowedHWCap2())},
+		arch.AuxEntry{Key: linux.AT_SYSINFO_EHDR, Value: vdsoAddr},
+		arch.AuxEntry{Key: linux.AT_HWCAP, Value: hostarch.Addr(args.Features.AllowedHWCap1())},
+		arch.AuxEntry{Key: linux.AT_HWCAP2, Value: hostarch.Addr(args.Features.AllowedHWCap2())},
 	}...)
 
 	sl, err := stack.Load(newArgv, args.Envv, auxv)

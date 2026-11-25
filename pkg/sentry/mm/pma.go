@@ -132,7 +132,7 @@ func (mm *MemoryManager) getPMAsLocked(ctx context.Context, vseg vmaIterator, ar
 		end = ar.End.RoundDown()
 		alignerr = linuxerr.EFAULT
 	}
-	ar = hostarch.AddrRange{ar.Start.RoundDown(), end}
+	ar = hostarch.AddrRange{Start: ar.Start.RoundDown(), End: end}
 
 	pstart, pend, perr := mm.getPMAsInternalLocked(ctx, vseg, ar, at, callerIndirectCommit, forPin)
 	if pend.Start() <= ar.Start {
@@ -178,7 +178,7 @@ func (mm *MemoryManager) getVecPMAsLocked(ctx context.Context, ars hostarch.Addr
 			end = ar.End.RoundDown()
 			alignerr = linuxerr.EFAULT
 		}
-		ar = hostarch.AddrRange{ar.Start.RoundDown(), end}
+		ar = hostarch.AddrRange{Start: ar.Start.RoundDown(), End: end}
 
 		_, pend, perr := mm.getPMAsInternalLocked(ctx, mm.vmas.FindSegment(ar.Start), ar, at, callerIndirectCommit, false /* forPin */)
 		if perr != nil {
@@ -484,7 +484,7 @@ func (mm *MemoryManager) getPMAsInternalLocked(ctx context.Context, vseg vmaIter
 						// If we got SIGBUS during the copy, deliver SIGBUS to
 						// userspace (instead of SIGSEGV) if we're breaking
 						// copy-on-write due to application page fault.
-						err = &memmap.BusError{err}
+						err = &memmap.BusError{Err: err}
 					}
 					if fr.Length() == 0 {
 						return pstart, pseg.PrevGap(), err
@@ -556,7 +556,7 @@ func (mm *MemoryManager) getPMAsInternalLocked(ctx context.Context, vseg vmaIter
 					if len(ts) == 0 {
 						return pstart, pseg.PrevGap(), err
 					}
-					transMR := memmap.MappableRange{ts[0].Source.Start, ts[len(ts)-1].Source.End}
+					transMR := memmap.MappableRange{Start: ts[0].Source.Start, End: ts[len(ts)-1].Source.End}
 					transAR := vseg.addrRangeOf(transMR)
 					pseg = mm.pmas.Isolate(pseg, transAR)
 					unmapAR = joinAddrRanges(unmapAR, transAR)
@@ -614,7 +614,7 @@ func (mm *MemoryManager) getPMAsInternalLocked(ctx context.Context, vseg vmaIter
 }
 
 func hugepageAligned(ar hostarch.AddrRange) hostarch.AddrRange {
-	aligned := hostarch.AddrRange{ar.Start.HugeRoundDown(), ar.End}
+	aligned := hostarch.AddrRange{Start: ar.Start.HugeRoundDown(), End: ar.End}
 	if end, ok := ar.End.HugeRoundUp(); ok {
 		aligned.End = end
 	}
@@ -825,7 +825,7 @@ type PinnedRange struct {
 
 // FileRange returns the memmap.File offsets mapped by pr.
 func (pr PinnedRange) FileRange() memmap.FileRange {
-	return memmap.FileRange{pr.Offset, pr.Offset + uint64(pr.Source.Length())}
+	return memmap.FileRange{Start: pr.Offset, End: pr.Offset + uint64(pr.Source.Length())}
 }
 
 // Unpin releases the reference held by prs.
@@ -883,7 +883,7 @@ func (mm *MemoryManager) movePMAsLocked(oldAR, newAR hostarch.AddrRange) {
 	pgap := mm.pmas.FindGap(newAR.Start)
 	for i := range movedPMAs {
 		mpma := &movedPMAs[i]
-		pmaNewAR := hostarch.AddrRange{mpma.oldAR.Start + off, mpma.oldAR.End + off}
+		pmaNewAR := hostarch.AddrRange{Start: mpma.oldAR.Start + off, End: mpma.oldAR.End + off}
 		pgap = mm.pmas.Insert(pgap, pmaNewAR, mpma.pma).NextGap()
 	}
 
@@ -1124,7 +1124,7 @@ func (pseg pmaIterator) fileRangeOf(ar hostarch.AddrRange) memmap.FileRange {
 
 	pma := pseg.ValuePtr()
 	pstart := pseg.Start()
-	return memmap.FileRange{pma.off + uint64(ar.Start-pstart), pma.off + uint64(ar.End-pstart)}
+	return memmap.FileRange{Start: pma.off + uint64(ar.Start-pstart), End: pma.off + uint64(ar.End-pstart)}
 }
 
 // joinAddrRanges returns the smallest hostarch.AddrRange that is a superset of

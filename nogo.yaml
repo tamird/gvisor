@@ -402,10 +402,3 @@ analyzers:
     # Controversial.
     internal:
       exclude: [".*"]
-  composites:
-    internal:
-      exclude:
-        - ".*" # Temporary: migrate composites.
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate composites.

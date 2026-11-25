@@ -120,7 +120,7 @@ func (w *BufWriter) Close() error {
 
 	// Flush current chunk if non-empty.
 	if chunkStart := w.chunkLen * w.curChunk; chunkStart != w.bufStart {
-		w.aw.AddWrite(w.curChunk, w.sf, memmap.FileRange{uint64(chunkStart), uint64(w.bufStart)}, w.buf[chunkStart:w.bufStart])
+		w.aw.AddWrite(w.curChunk, w.sf, memmap.FileRange{Start: uint64(chunkStart), End: uint64(w.bufStart)}, w.buf[chunkStart:w.bufStart])
 		w.chunksInflight++
 	}
 
@@ -200,7 +200,7 @@ func (w *BufWriter) Write(src []byte) (int, error) {
 			for range w.chunksFlushable {
 				chunkStart := w.chunkLen * chunkToFlush
 				chunkEnd := chunkStart + w.chunkLen
-				w.aw.AddWrite(chunkToFlush, w.sf, memmap.FileRange{uint64(chunkStart), uint64(chunkEnd)}, w.buf[chunkStart:chunkEnd])
+				w.aw.AddWrite(chunkToFlush, w.sf, memmap.FileRange{Start: uint64(chunkStart), End: uint64(chunkEnd)}, w.buf[chunkStart:chunkEnd])
 				w.chunksInflight++
 				chunkToFlush++
 				if chunkToFlush >= w.numChunks {
