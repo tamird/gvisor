@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-25T12:47:27.424253+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-25T10:10:54.050204+00:00",
+  "registryDate": "2026-11-25T12:53:06.511271+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -461017,43 +461017,6 @@
       "assigned": false,
       "feedbackComplete": true,
       "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 16830,
-      "head": "62adc7d9cf16a0805efad38bedcf6d516d1b2ec0",
-      "sourceNumber": 16830,
-      "owner": "Agent",
-      "kind": "review",
-      "id": "PRR_kwDOB9IlXs8AAAABaQm8lA",
-      "needsTriage": true,
-      "url": "https://github.com/google/gvisor/pull/16830#pullrequestreview-6057213076",
-      "author": "shayonj",
-      "updatedAt": "2026-11-25T12:00:46Z",
-      "newOrChanged": true,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 17962,
-      "head": "8044063a9a1f7d76cca2656cdbee0310d2bb1266",
-      "sourceNumber": 17962,
-      "owner": "Agent",
-      "kind": "comment",
-      "id": "IC_kwDOB9IlXs8AAAABqu396A",
-      "needsTriage": true,
-      "createdAt": "2026-11-25T12:40:09Z",
-      "url": "https://github.com/google/gvisor/pull/17962#issuecomment-7162691048",
-      "author": "ayushr2",
-      "updatedAt": "2026-11-25T12:40:09Z",
-      "newOrChanged": true,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
     }
   ],
   "reviewWatchHandoff": [
@@ -461829,7 +461792,7 @@
         "disposition": "The foreign-authored POSIX wrapper proposal advanced to d063f629 and is now MERGEABLE with all collected presubmit/CLA checks successful. The old b9d conflict is historical. This does not qualify Tamir’s separate prepared aa90 fork or resolve the cross-platform design decision.",
         "nextAction": "The author and maintainers own current-source review and the cross-platform wrapper decision. Root tracks actual review/head/landing changes; do not publish the prepared fork into the author branch or transfer old qualification."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-25T12:47:17.734436+00:00"
     },
     {
       "repo": "bazel-contrib/rules_shell",
@@ -478700,7 +478663,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T10:10:54.050204+00:00"
+        "observedAt": "2026-11-25T12:53:06.511271+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -478709,7 +478672,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T10:10:54.050204+00:00"
+        "observedAt": "2026-11-25T12:53:06.511271+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -478718,7 +478681,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T10:10:54.050204+00:00"
+        "observedAt": "2026-11-25T12:53:06.511271+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -478727,7 +478690,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T10:10:54.050204+00:00"
+        "observedAt": "2026-11-25T12:53:06.511271+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -478736,7 +478699,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T10:10:54.050204+00:00"
+        "observedAt": "2026-11-25T12:53:06.511271+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -478745,7 +478708,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T10:10:54.050204+00:00"
+        "observedAt": "2026-11-25T12:53:06.511271+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -478754,7 +478717,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T10:10:54.050204+00:00"
+        "observedAt": "2026-11-25T12:53:06.511271+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -478763,7 +478726,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T10:10:54.050204+00:00"
+        "observedAt": "2026-11-25T12:53:06.511271+00:00"
       }
     },
     "issue:17832": {
@@ -478772,7 +478735,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T10:10:54.050204+00:00"
+        "observedAt": "2026-11-25T12:53:06.511271+00:00"
       }
     },
     "branch:arm-premerge-cpp-lint": {
@@ -478781,16 +478744,7 @@
         "since": "2026-11-24T18:07:30.803456+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T10:10:54.050204+00:00"
-      }
-    },
-    "branch:sysbench-summary-output": {
-      "contributor-review": {
-        "scope": "24419d916114737a9d50690a7647c11d9fd66fe9",
-        "since": "2026-11-25T01:21:15.429370+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T10:10:54.050204+00:00"
+        "observedAt": "2026-11-25T12:53:06.511271+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -478799,7 +478753,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T10:10:54.050204+00:00"
+        "observedAt": "2026-11-25T12:53:06.511271+00:00"
       }
     },
     "investigation:ci-flake-node-worker-arraybuffer-zerofill": {
@@ -478808,7 +478762,7 @@
         "since": "2026-11-25T10:10:54.050204+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T10:10:54.050204+00:00"
+        "observedAt": "2026-11-25T12:53:06.511271+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -478817,17 +478771,8 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T10:10:54.050204+00:00",
+        "observedAt": "2026-11-25T12:53:06.511271+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
-      }
-    },
-    "investigation:bazel-test-output-status": {
-      "contributor-review": {
-        "scope": "https://github.com/bazelbuild/bazel/issues/new",
-        "since": "2026-11-25T01:21:15.429370+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T10:10:54.050204+00:00"
       }
     }
   },

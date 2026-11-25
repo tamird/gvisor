@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T10:10:54.050204+00:00",
+    "updatedAt": "2026-11-25T12:53:06.511271+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -70088,13 +70088,13 @@
       "repo": "google/gvisor",
       "number": 16830,
       "ref": "review/gofer-dgram-host-writable",
-      "head": "1efbbc1dae7e49ccfdce6d0c706dfc266250974a",
+      "head": "62adc7d9cf16a0805efad38bedcf6d516d1b2ec0",
       "title": "Watch writable host datagrams on the endpoint queue",
       "url": "https://github.com/google/gvisor/pull/16830",
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:48.755399+00:00",
-      "summary": "When an external Unix datagram receiver drained, stock gVisor left the writer asleep even though a separate poll confirmed it was writable. Linux and the tested correction delivered EPOLLOUT.",
+      "summary": "Published source advanced from 1efbbc1d to 62adc7d9. Hosting reports MERGEABLE; shayon’s COMMENTED review says LGTM but is not a formal APPROVED review. Current source/check evidence must be reconciled before transferring historical qualification or review credit. Current FirstPass 2809 is failed and unclassified; GitHub validation was still running in the snapshot.",
       "evidence": [
         {
           "label": "Unix datagram drain and writable wakeup on Linux, stock and corrected gVisor",
@@ -70145,10 +70145,10 @@
       },
       "followup": {
         "owner": "root",
-        "sourceHead": "1efbbc1dae7e49ccfdce6d0c706dfc266250974a",
-        "observedAt": "2026-11-17T19:04:48.755399+00:00",
-        "disposition": "Upstream lint passed on the published formatting amendment.",
-        "nextAction": "Await maintainer review on the published head. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Follow remaining published-head checks.",
+        "sourceHead": "62adc7d9cf16a0805efad38bedcf6d516d1b2ec0",
+        "observedAt": "2026-11-25T12:53:06.511271+00:00",
+        "disposition": "Published source advanced from 1efbbc1d to 62adc7d9. Hosting reports MERGEABLE; shayon’s COMMENTED review says LGTM but is not a formal APPROVED review. Current source/check evidence must be reconciled before transferring historical qualification or review credit. Current FirstPass 2809 is failed and unclassified; GitHub validation was still running in the snapshot.",
+        "nextAction": "Root owns exact-head FirstPass 2809 classification and source/review reconciliation under the existing maintainer/performance/sensitive boundaries. No old-source cause or qualification transfers; no protected source read, source edit, build/test, unchanged retry or outreach.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16830",
           "https://github.com/tamird/gvisor/commit/6b8479b9f",
@@ -70156,10 +70156,60 @@
           "https://github.com/google/gvisor/actions/runs/42310119111/job/128209178785",
           "https://github.com/gvisor/gvisor/pull/16830",
           "https://github.com/tamird/gvisor/commit/6b8479b9f8ce19e15e5aa804b12bf5d7e6799704",
-          "https://github.com/tamird/gvisor/commit/1efbbc1dae7e49ccfdce6d0c706dfc266250974a"
+          "https://github.com/tamird/gvisor/commit/1efbbc1dae7e49ccfdce6d0c706dfc266250974a",
+          "https://github.com/google/gvisor/pull/16830#pullrequestreview-6057213076",
+          "https://buildkite.com/gvisor/first-pass/builds/2809"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change."
+        "recheckCondition": "Actual source/check/review evidence or an explicit owner disposition changes the next action.",
+        "providerHead": "62adc7d9cf16a0805efad38bedcf6d516d1b2ec0",
+        "curatedAt": "2026-11-25T12:53:06.511271+00:00",
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "title": "Current-source COMMENTED LGTM triaged without approval transfer",
+            "nextAction": "Root reconciles the new head and exact CI under the existing source/maintainer/performance boundaries. Preserve old source evidence and review state as historical; no protected source read, source adaptation, build/test, approval transfer or outreach is authorized by this metadata event.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/16830#pullrequestreview-6057213076"
+            ],
+            "binding": {
+              "reviewDecision": "REVIEW_REQUIRED",
+              "approvedHead": null,
+              "approvedAt": null,
+              "headCommittedAt": "2026-11-25T12:42:46Z",
+              "headIntroducedAt": "2026-11-25T12:42:48Z",
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 0,
+                "total": 0,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABaQm8lA",
+                    "url": "https://github.com/google/gvisor/pull/16830#pullrequestreview-6057213076",
+                    "body": "_claude on behalf of shayon_\n\nLGTM",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-11-25T12:00:46Z",
+                    "updatedAt": "2026-11-25T12:00:46Z",
+                    "authorAssociation": "MEMBER",
+                    "author": {
+                      "login": "shayonj",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "1efbbc1dae7e49ccfdce6d0c706dfc266250974a"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "62adc7d9cf16a0805efad38bedcf6d516d1b2ec0"
+            }
+          }
+        ]
       },
       "dcoAmendment": {
         "oldHead": "6b8479b9f8ce19e15e5aa804b12bf5d7e6799704",
@@ -70182,7 +70232,9 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
-      }
+      },
+      "nextStep": "Root owns exact-head FirstPass 2809 classification and source/review reconciliation under the existing maintainer/performance/sensitive boundaries. No old-source cause or qualification transfers; no protected source read, source edit, build/test, unchanged retry or outreach.",
+      "recheckCondition": "Actual source/check/review evidence or an explicit owner disposition changes the next action."
     },
     {
       "id": "pr:hermeticbuild/hermetic-llvm:908",
@@ -82917,8 +82969,8 @@
       "title": "Wait for the TCP benchmark proxy and verify the sender rate",
       "url": "https://github.com/google/gvisor/pull/17184",
       "group": "tests",
-      "status": "open",
-      "summary": "The read-only overlap assessment is complete: #17822 covers the observed startup/status/empty-rate failure. Only an unmotivated numeric/parallel SUM guard remains, without a demonstrated normal successful-producer failure. The actual close-with-reply versus retain-parser-guard decision is pending. No reply, closure or source change occurred.",
+      "status": "closed",
+      "summary": "The public proposal closed on 2026-11-25 with its approved attributed reply. The public startup/status/empty-rate issue is covered by #17822; no literal whole-source supersession is claimed. Distinct private 4aba Go rewrite and its legacy dependency remain held, not approved by the closure.",
       "evidence": [
         {
           "label": "Published standalone benchmark correction",
@@ -82933,14 +82985,14 @@
           "url": "https://github.com/tamird/gvisor/blob/208cd127d/.github/qualification/tcp_benchmark_go.result.json"
         }
       ],
-      "updatedAt": "2026-11-25T02:55:55.308741+00:00",
+      "updatedAt": "2026-11-25T12:50:33.824992+00:00",
       "followup": {
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
         "owner": "root",
-        "nextAction": "Root awaits the existing closure/scope decision. Preserve the held private Go rewrite, legacy dependency, prior evidence and performance controls until the user decides. Do not infer literal full-source supersession, post a reply, close, amend source or repeat approval questions.",
+        "nextAction": "Public closure/reply complete. Root retains the private rewrite, its source/performance boundaries and rejected-proposal history until the user decides the rewrite scope. No old-source publication, additional reply, rebase or closure action remains.",
         "mergeable": "CONFLICTING",
-        "observedAt": "2026-11-25T02:55:55.308741+00:00",
-        "recheckCondition": "The user answers the existing closure/scope question or directly relevant new source evidence changes the assessment.",
+        "observedAt": "2026-11-25T12:50:33.824992+00:00",
+        "recheckCondition": "Actual user rewrite-scope direction or new directly relevant source evidence; no periodic closure follow-up.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17184",
           "https://github.com/tamird/gvisor/commit/9c541c3ae1cd68df1741882480d5bf184396e695",
@@ -82984,9 +83036,10 @@
           "https://github.com/tamird/gvisor/actions/runs/45004532751",
           "https://github.com/tamird/gvisor/blob/ab856ed6063d63de247adbb26e01617a7a50c02d/registry.json",
           "https://github.com/google/gvisor/pull/17184#pullrequestreview-6050501416",
-          "https://github.com/gvisor/gvisor/pull/17822"
+          "https://github.com/gvisor/gvisor/pull/17822",
+          "https://github.com/gvisor/gvisor/pull/17184#issuecomment-7162263038"
         ],
-        "disposition": "The read-only overlap assessment is complete: #17822 covers the observed startup/status/empty-rate failure. Only an unmotivated numeric/parallel SUM guard remains, without a demonstrated normal successful-producer failure. The actual close-with-reply versus retain-parser-guard decision is pending. No reply, closure or source change occurred.",
+        "disposition": "The public proposal closed on 2026-11-25 with its approved attributed reply. The public startup/status/empty-rate issue is covered by #17822; no literal whole-source supersession is claimed. Distinct private 4aba Go rewrite and its legacy dependency remain held, not approved by the closure.",
         "curatedAt": "2026-11-22T14:02:28.619749+00:00",
         "implementationOwner": "approved_rebase_queue",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
@@ -83014,8 +83067,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Root awaits the existing closure/scope decision. Preserve the held private Go rewrite, legacy dependency, prior evidence and performance controls until the user decides. Do not infer literal full-source supersession, post a reply, close, amend source or repeat approval questions.",
-      "recheckCondition": "The user answers the existing closure/scope question or directly relevant new source evidence changes the assessment.",
+      "nextStep": "Public closure/reply complete. Root retains the private rewrite, its source/performance boundaries and rejected-proposal history until the user decides the rewrite scope. No old-source publication, additional reply, rebase or closure action remains.",
+      "recheckCondition": "Actual user rewrite-scope direction or new directly relevant source evidence; no periodic closure follow-up.",
       "refinement": {
         "before": {
           "head": "2aa840f4ffe655f0c749185070fba77e676186b5"
@@ -83074,18 +83127,21 @@
           "body": "Replace the TCP benchmark's shell coordinator with Go argument vectors and iperf3 JSON reporting. Keep network setup and service lifetimes in one coordinator, with CLI parsing and namespace entry separate. Resolve the declared helpers and iperf executable through Bazel runfiles.\n\nBound server and proxy startup, the complete transfer, and shutdown. Allow proxies ten seconds to flush profiles, then kill and reap remaining children. Read the final aggregate sender rate and sample proxy CPU usage before cleanup.\n\nExtend the real-transfer regression to cover stalled service launchers and bounded exit after output. Include the declared iperf tool's generated license entry and correct the README's obsolete CSV recipes.\n\nPosted by Codex on behalf of @tamird.\n",
           "summary": "The old f26 opening/amendment proposal is superseded by requested revisions, not approved: LookupEnv, line wrapping, simpler []*exec.Cmd child cleanup and commit before/after output.",
           "outcome": "changes-requested"
+        },
+        {
+          "kind": "closure",
+          "status": "settled",
+          "head": "2aa840f4ffe655f0c749185070fba77e676186b5",
+          "url": "https://github.com/google/gvisor/pull/17184",
+          "title": "Close the covered TCP startup proposal",
+          "summary": "Review closing with the prepared reply or retaining only the parser guard. The assessment found #17822 covers the observed startup/status/empty-rate failure; no normal successful-producer failure motivates the residual numeric/parallel SUM guard. No literal full-source supersession is claimed.",
+          "body": "#17822 covers the startup and client-failure cases this PR targeted. I do not have a failing case for the remaining numeric/aggregate guard, so I am closing this.\n\nPosted by Codex on behalf of @tamird.\n",
+          "outcome": "approved",
+          "note": "User-approved closure and exact retained attributed reply were delivered. Private Go rewrite remains a distinct held source; rewrite intent does not approve its previous growth.",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/17184#issuecomment-7162263038"
         }
       ],
-      "nextAction": "Root prioritizes the requested current-CI/cache research and proposed issue rewrite. On resumption, approved_rebase_queue compares the earlier lean Go baseline and identifies the smallest owning mechanism while preserving required behavior and meaningful negatives. Do not repeat an approval question or publish058.",
-      "contributorReview": {
-        "kind": "closure",
-        "status": "pending",
-        "head": "2aa840f4ffe655f0c749185070fba77e676186b5",
-        "url": "https://github.com/google/gvisor/pull/17184",
-        "title": "Close the covered TCP startup proposal",
-        "summary": "Review closing with the prepared reply or retaining only the parser guard. The assessment found #17822 covers the observed startup/status/empty-rate failure; no normal successful-producer failure motivates the residual numeric/parallel SUM guard. No literal full-source supersession is claimed.",
-        "body": "#17822 covers the startup and client-failure cases this PR targeted. I do not have a failing case for the remaining numeric/aggregate guard, so I am closing this.\n\nPosted by Codex on behalf of @tamird.\n"
-      }
+      "nextAction": "Root prioritizes the requested current-CI/cache research and proposed issue rewrite. On resumption, approved_rebase_queue compares the earlier lean Go baseline and identifies the smallest owning mechanism while preserving required behavior and meaningful negatives. Do not repeat an approval question or publish058."
     },
     {
       "id": "branch:tcp-dsack-below-ack-parity",
@@ -107082,14 +107138,14 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "fix/clang-tidy-failure",
-      "head": "df787c7f2f3dd984810e0a8dec1cc4b78e69ebdc",
-      "title": "Fail closed on clang-tidy process errors",
-      "url": "https://github.com/tamird/gvisor/commit/df787c7f2f3dd984810e0a8dec1cc4b78e69ebdc",
+      "head": "24a0f1e19e4b6a08caf252df986e70ae3f469ab6",
+      "title": "Fail when clang-tidy cannot analyze a source",
+      "url": "https://github.com/tamird/gvisor/commit/24a0f1e19e4b6a08caf252df986e70ae3f469ab6",
       "group": "analysis",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-24T18:07:30.803456+00:00",
-      "summary": "The checker fails on process errors and retains full diagnostics. Targeted Bazel regression checks and independent reviews pass; Buildifier evidence is reused. The actual independent opening decision is pending.",
-      "nextStep": "Root awaits the actual batched opening decision; preserve each proposal’s independent source and validation scope.",
+      "status": "Published as #17963",
+      "updatedAt": "2026-11-25T12:50:33.824992+00:00",
+      "summary": "The approved clang-tidy driver correction, including the requested nested-stream loop, is delivered as #17963 at 24a0f1e19. Exact fresh remote lint_test passed seven Python cases through one XML wrapper; proportional final review passed. The old df787 question is consumed.",
+      "nextStep": "Complete source-publication handoff; #17963 owns current CI/review lifecycle. No duplicate proposal, source approval or merge is implied.",
       "owner": "root",
       "evidence": [
         {
@@ -107097,27 +107153,36 @@
           "url": "https://github.com/tamird/gvisor/commit/df787c7f2f3dd984810e0a8dec1cc4b78e69ebdc"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "df787c7f2f3dd984810e0a8dec1cc4b78e69ebdc",
-        "baseHead": "4f8c693a92a3079860d75ceec65d4d221a9dc84e",
-        "url": "https://github.com/tamird/gvisor/commit/df787c7f2f3dd984810e0a8dec1cc4b78e69ebdc",
-        "title": "Fail closed on clang-tidy process errors",
-        "body": "The runner ignored clang-tidy's exit status and stderr, allowing loader failures and crashes to pass. Check both output streams for diagnostics and fail on every nonzero exit, reporting the filename, status and complete failure output.\n\nPosted by Codex on behalf of @tamird.\n",
-        "summary": "The checker fails on process errors and retains full diagnostics. Targeted Bazel regression checks and independent reviews pass; Buildifier evidence is reused. The actual independent opening decision is pending."
-      },
       "followup": {
         "owner": "root",
         "sourceHead": "df787c7f2f3dd984810e0a8dec1cc4b78e69ebdc",
-        "observedAt": "2026-11-24T18:07:30.803456+00:00",
-        "disposition": "The checker fails on process errors and retains full diagnostics. Targeted Bazel regression checks and independent reviews pass; Buildifier evidence is reused. The actual independent opening decision is pending.",
-        "nextAction": "Root awaits the actual batched opening decision; preserve each proposal’s independent source and validation scope.",
-        "recheckCondition": "Actual contributor decision or changed source/prerequisite evidence.",
+        "observedAt": "2026-11-25T12:50:33.824992+00:00",
+        "disposition": "The approved clang-tidy driver correction, including the requested nested-stream loop, is delivered as #17963 at 24a0f1e19. Exact fresh remote lint_test passed seven Python cases through one XML wrapper; proportional final review passed. The old df787 question is consumed.",
+        "nextAction": "Complete source-publication handoff; #17963 owns current CI/review lifecycle. No duplicate proposal, source approval or merge is implied.",
+        "recheckCondition": "Actual discrepancy in delivered source; use #17963 for live lifecycle changes.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/df787c7f2f3dd984810e0a8dec1cc4b78e69ebdc"
+          "https://github.com/tamird/gvisor/commit/df787c7f2f3dd984810e0a8dec1cc4b78e69ebdc",
+          "https://github.com/gvisor/gvisor/pull/17963",
+          "https://github.com/tamird/gvisor/actions/runs/45613400880/artifacts/15021501658"
         ]
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "df787c7f2f3dd984810e0a8dec1cc4b78e69ebdc",
+          "baseHead": "4f8c693a92a3079860d75ceec65d4d221a9dc84e",
+          "url": "https://github.com/tamird/gvisor/commit/df787c7f2f3dd984810e0a8dec1cc4b78e69ebdc",
+          "title": "Fail closed on clang-tidy process errors",
+          "body": "The runner ignored clang-tidy's exit status and stderr, allowing loader failures and crashes to pass. Check both output streams for diagnostics and fail on every nonzero exit, reporting the filename, status and complete failure output.\n\nPosted by Codex on behalf of @tamird.\n",
+          "summary": "The checker fails on process errors and retains full diagnostics. Targeted Bazel regression checks and independent reviews pass; Buildifier evidence is reused. The actual independent opening decision is pending.",
+          "outcome": "approved",
+          "note": "The user approved with a no-concatenation correction. Final reviewed/qualified 24a0f1e19, rather than unchanged df787, was published as #17963.",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/17963"
+        }
+      ],
+      "inactive": true,
+      "recheckCondition": "Actual discrepancy in delivered source; use #17963 for live lifecycle changes."
     },
     {
       "id": "pr:17343",
@@ -107155,34 +107220,214 @@
       "url": "https://github.com/tamird/gvisor/commit/24419d916114737a9d50690a7647c11d9fd66fe9",
       "title": "Retain the complete Sysbench summary output",
       "group": "tests",
-      "status": "Contributor review requested",
+      "status": "Approved; publication execution blocked",
       "owner": "root",
       "evidence": [],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "24419d916114737a9d50690a7647c11d9fd66fe9",
-        "baseHead": "751ff797637c3e6f4d2fb3226e391eaee782563c",
-        "url": "https://github.com/tamird/gvisor/commit/24419d916114737a9d50690a7647c11d9fd66fe9",
-        "title": "Retain the complete Sysbench summary output",
-        "body": "Retain the complete Sysbench output alongside its reported metrics so benchmark artifacts expose the completed work and summary fields. Print after stopping the timer to exclude the output cost from the measurement.\n\nPosted by Codex on behalf of @tamird.\n",
-        "summary": "Review opening the standalone one-line post-timing output change. Both architecture builds and real NoGo pass; six unchanged functional visits and two independent reviews are reused within their recorded scopes."
-      },
-      "summary": "Standalone one-line Sysbench output change 24419d916 is reviewed and qualified for publication review. Its actual opening decision is unanswered. The public commit is accessible; durable preview-ref creation remains transport-blocked. No upstream PR is open.",
-      "nextStep": "Root awaits the actual source-publication answer and normal preview transport availability. Do not duplicate the question or infer performance clearance from post-timing output qualification.",
-      "updatedAt": "2026-11-25T01:21:15.429370+00:00",
+      "summary": "Sysbench 24419d916 is approved for opening. No upstream PR exists: normal SSH signing failed, the single HTTPS new-ref fallback hit workflow-determination timeout, and a separate standard create-ref API attempt returned 404 after absence readback. No missing credential scope or new human permission is proved.",
+      "nextStep": "Root preserves the approved draft and exact-source build/NoGo receipts. Retry normal publication only on actual capability/provider recovery or a new basis; do not repeat approval, unchanged attempts, access changes or source edits.",
+      "updatedAt": "2026-11-25T12:50:33.824992+00:00",
       "followup": {
         "owner": "root",
-        "disposition": "Standalone one-line Sysbench output change 24419d916 is reviewed and qualified for publication review. Its actual opening decision is unanswered. The public commit is accessible; durable preview-ref creation remains transport-blocked. No upstream PR is open.",
-        "nextAction": "Root awaits the actual source-publication answer and normal preview transport availability. Do not duplicate the question or infer performance clearance from post-timing output qualification.",
-        "recheckCondition": "User answers the existing opening decision or normal transport demonstrably recovers.",
-        "observedAt": "2026-11-25T01:21:15.429370+00:00",
+        "disposition": "Sysbench 24419d916 is approved for opening. No upstream PR exists: normal SSH signing failed, the single HTTPS new-ref fallback hit workflow-determination timeout, and a separate standard create-ref API attempt returned 404 after absence readback. No missing credential scope or new human permission is proved.",
+        "nextAction": "Root preserves the approved draft and exact-source build/NoGo receipts. Retry normal publication only on actual capability/provider recovery or a new basis; do not repeat approval, unchanged attempts, access changes or source edits.",
+        "recheckCondition": "Actual normal SSH/provider new-ref recovery or changed source-publication evidence.",
+        "observedAt": "2026-11-25T12:50:33.824992+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/24419d916114737a9d50690a7647c11d9fd66fe9",
           "https://github.com/tamird/gvisor/actions/runs/45518239555",
           "https://github.com/tamird/gvisor/actions/runs/45518245437",
           "https://github.com/tamird/gvisor/actions/runs/45518242492",
           "https://github.com/tamird/gvisor/actions/runs/45518248382"
+        ]
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "24419d916114737a9d50690a7647c11d9fd66fe9",
+          "baseHead": "751ff797637c3e6f4d2fb3226e391eaee782563c",
+          "url": "https://github.com/tamird/gvisor/commit/24419d916114737a9d50690a7647c11d9fd66fe9",
+          "title": "Retain the complete Sysbench summary output",
+          "body": "Retain the complete Sysbench output alongside its reported metrics so benchmark artifacts expose the completed work and summary fields. Print after stopping the timer to exclude the output cost from the measurement.\n\nPosted by Codex on behalf of @tamird.\n",
+          "summary": "Review opening the standalone one-line post-timing output change. Both architecture builds and real NoGo pass; six unchanged functional visits and two independent reviews are reused within their recorded scopes.",
+          "outcome": "approved",
+          "note": "Opening this exact standalone source was approved. Publication remains execution-blocked; no upstream PR exists and no new source decision is pending."
+        }
+      ],
+      "recheckCondition": "Actual normal SSH/provider new-ref recovery or changed source-publication evidence."
+    },
+    {
+      "id": "pr:17962",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17962,
+      "head": "8044063a9a1f7d76cca2656cdbee0310d2bb1266",
+      "ref": "review/node-tap-progress-20261123",
+      "title": "Report Node runtime cases with TAP",
+      "url": "https://github.com/google/gvisor/pull/17962",
+      "group": "tests",
+      "status": "open",
+      "updatedAt": "2026-11-25T12:50:33.824992+00:00",
+      "evidence": [
+        {
+          "label": "Published source",
+          "url": "https://github.com/tamird/gvisor/commit/8044063a9a1f7d76cca2656cdbee0310d2bb1266"
+        }
+      ],
+      "summary": "Approved TAP source 8044063a is delivered in #17962. Native checks and DCO pass; FirstPass 2806 retains the verified pre-agent rolling 30-day quota failure. Ayush reported narrower TODO behavior and requested wording qualification; Tamir already replied with a scope question. The external semantic report has not been independently verified.",
+      "nextStep": "Root reconciles the reporter-wording feedback with Tamir’s existing reply before any description/source-message change or new reply. Preserve Node/FLAKY evidence limits and provider-admission follow-through; do not duplicate approval, outreach or unchanged CI retries.",
+      "recheckCondition": "Actual response on the existing discussion, verified reporter evidence, provider admission or changed source/check.",
+      "followup": {
+        "owner": "root",
+        "disposition": "Approved TAP source 8044063a is delivered in #17962. Native checks and DCO pass; FirstPass 2806 retains the verified pre-agent rolling 30-day quota failure. Ayush reported narrower TODO behavior and requested wording qualification; Tamir already replied with a scope question. The external semantic report has not been independently verified.",
+        "nextAction": "Root reconciles the reporter-wording feedback with Tamir’s existing reply before any description/source-message change or new reply. Preserve Node/FLAKY evidence limits and provider-admission follow-through; do not duplicate approval, outreach or unchanged CI retries.",
+        "recheckCondition": "Actual response on the existing discussion, verified reporter evidence, provider admission or changed source/check.",
+        "observedAt": "2026-11-25T12:53:06.511271+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17962",
+          "https://buildkite.com/gvisor/first-pass/builds/2806#01a212a9-fdcf-4e40-8016-46067b6e444e",
+          "https://github.com/google/gvisor/pull/17962#issuecomment-7162691048",
+          "https://github.com/google/gvisor/pull/17962#issuecomment-7162785797"
+        ],
+        "sourceHead": "8044063a9a1f7d76cca2656cdbee0310d2bb1266",
+        "providerHead": "8044063a9a1f7d76cca2656cdbee0310d2bb1266",
+        "mergeable": "MERGEABLE",
+        "curatedAt": "2026-11-25T12:53:06.511271+00:00",
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "title": "Reporter-wording report triaged; Tamir already replied",
+            "nextAction": "Root reconciles the reporter-wording feedback with Tamir’s existing reply before any description/source-message change or new reply. Preserve Node/FLAKY evidence limits and provider-admission follow-through; do not duplicate approval, outreach or unchanged CI retries.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/17962#issuecomment-7162691048",
+              "https://github.com/google/gvisor/pull/17962#issuecomment-7162785797"
+            ],
+            "binding": {
+              "reviewDecision": "REVIEW_REQUIRED",
+              "approvedHead": null,
+              "approvedAt": null,
+              "headCommittedAt": "2026-11-23T19:47:12Z",
+              "headIntroducedAt": null,
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 0,
+                "total": 0,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABqu396A",
+                    "url": "https://github.com/google/gvisor/pull/17962#issuecomment-7162691048",
+                    "body": "Could you qualify the TODO claim in the PR and commit descriptions? I ran `parallel/test-error-serdes.js`, which Node v22.2.0 marks `PASS, FLAKY`. When it passed, TAP printed `ok … # TODO`. When I forced the same case to exit 1, TAP printed `not ok` with no TODO and the batch failed. Someone triaging that failure can’t tell from the TAP line that Node already considers the case flaky.\n\n“TAP names each completed case and adds TODO to passing, non-skipped cases marked flaky” would describe what the current flags produce. [Node v22.2.0 reporter](https://github.com/nodejs/node/blob/v22.2.0/tools/test.py#L369-L396)\n\nCodex posting on behalf of Ayush\n",
+                    "createdAt": "2026-11-25T12:40:09Z",
+                    "updatedAt": "2026-11-25T12:40:09Z",
+                    "author": {
+                      "login": "ayushr2",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABqu9wBQ",
+                    "url": "https://github.com/google/gvisor/pull/17962#issuecomment-7162785797",
+                    "body": "You want me to describe what node's TAP reporter does in this change's commit message and PR description?",
+                    "createdAt": "2026-11-25T12:44:17Z",
+                    "updatedAt": "2026-11-25T12:44:17Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "8044063a9a1f7d76cca2656cdbee0310d2bb1266"
+            }
+          },
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "FirstPass 2806: source-bound rolling 30-day quota before agent start",
+            "nextAction": "Root follows actual admission recovery or a new source/check event through the existing CI owner. No unchanged retry, quota outreach or source-failure inference.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/2806#01a212a9-fdcf-4e40-8016-46067b6e444e"
+            ],
+            "binding": {
+              "sourceHead": "8044063a9a1f7d76cca2656cdbee0310d2bb1266",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN8G-hTA",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/2806",
+                  "kind": "status"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "pr:17963",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17963,
+      "head": "24a0f1e19e4b6a08caf252df986e70ae3f469ab6",
+      "ref": "fix/clang-tidy-failure",
+      "title": "Fail when clang-tidy cannot analyze a source",
+      "url": "https://github.com/google/gvisor/pull/17963",
+      "group": "analysis",
+      "status": "open",
+      "updatedAt": "2026-11-25T12:53:06.511271+00:00",
+      "evidence": [
+        {
+          "label": "Published source",
+          "url": "https://github.com/tamird/gvisor/commit/24a0f1e19e4b6a08caf252df986e70ae3f469ab6"
+        }
+      ],
+      "summary": "Approved final driver source 24a0f1e19 is delivered in #17963. Native checks and DCO pass; exact fresh remote lint_test passed seven Python cases/one XML wrapper. Independently source-bound FirstPass 2807 failed before agent assignment on Tamir’s rolling 30-day 360000 compute-minute quota; no source tests ran in that build.",
+      "nextStep": "Root and the existing CI/provider workstream follow actual quota/admission or current-head review/check changes. The 2807 diagnosis is its own canonical evidence, not transferred from Node 2806. No unchanged retry, quota outreach, source edit or merge.",
+      "recheckCondition": "The current exact-head CI diagnosis or actual source/review/provider event.",
+      "followup": {
+        "owner": "root",
+        "disposition": "Approved final driver source 24a0f1e19 is delivered in #17963. Native checks and DCO pass; exact fresh remote lint_test passed seven Python cases/one XML wrapper. Independently source-bound FirstPass 2807 failed before agent assignment on Tamir’s rolling 30-day 360000 compute-minute quota; no source tests ran in that build.",
+        "nextAction": "Root and the existing CI/provider workstream follow actual quota/admission or current-head review/check changes. The 2807 diagnosis is its own canonical evidence, not transferred from Node 2806. No unchanged retry, quota outreach, source edit or merge.",
+        "recheckCondition": "The current exact-head CI diagnosis or actual source/review/provider event.",
+        "observedAt": "2026-11-25T12:53:06.511271+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17963",
+          "https://buildkite.com/gvisor/first-pass/builds/2807",
+          "https://github.com/tamird/gvisor/actions/runs/45613400880/artifacts/15021501658",
+          "https://buildkite.com/gvisor/first-pass/builds/2807#01a212b0-2808-440f-b9f4-99f1dddefc18"
+        ],
+        "sourceHead": "24a0f1e19e4b6a08caf252df986e70ae3f469ab6",
+        "providerHead": "24a0f1e19e4b6a08caf252df986e70ae3f469ab6",
+        "mergeable": "MERGEABLE",
+        "attentionDispositions": [
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "FirstPass 2807: source-bound rolling 30-day quota before agent start",
+            "nextAction": "Root follows actual admission recovery or a new source/check event through the existing CI owner. No unchanged retry, quota outreach or source-failure inference.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/2807#01a212b0-2808-440f-b9f4-99f1dddefc18"
+            ],
+            "binding": {
+              "sourceHead": "24a0f1e19e4b6a08caf252df986e70ae3f469ab6",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN8Ho6rg",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/2807",
+                  "kind": "status"
+                }
+              ]
+            }
+          }
         ]
       }
     }
@@ -122549,8 +122794,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-25T10:10:54.050204+00:00",
-      "summary": "User-requested one-shot collector 45591409191 succeeded and delivered API 2026-11-25T10:07:16.271790+00:00. The prior 04:41:37 guard/05:11:37 deadline was missed after the owner ended around 03:47 with no manual observer armed. Native workflow 378998679 remains active with its ten-minute cron, but no native event newer than the 01:32:13 scheduled run is established. Unattended freshness remains an external scheduling/delivery limitation with unknown native-event cause; this recovery is not a recurring fix.",
+      "updatedAt": "2026-11-25T12:51:30.999228+00:00",
+      "summary": "Milestone collector 45615038308 initially failed source-publication receipt validation with an out-of-scope predicate. Reviewed two-file fix 6ffd4ed5 was published; failed-job-only attempt 2 of the same run succeeded and delivered API 2026-11-25T12:47:27.424253+00:00. This repairs that receipt path, not missing native schedule events. No future manual guard is armed.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122793,7 +123038,7 @@
           ]
         }
       ],
-      "nextStep": "This one-shot recovery ends after verified public delivery; no future manual guard is armed. Preserve the existing active workflow and bounded 503 read retry. Reconcile actual future native deliveries or separately established execution ownership before claiming unattended freshness; no second scheduler, reset, access change or promised foreground fallback.",
+      "nextStep": "This milestone recovery ends after verified public delivery. Preserve the failed first attempt, bounded 503 retry and missed-delivery evidence. The existing active native workflow remains configured; unattended freshness is still an external scheduling/delivery limitation with unknown event-gap cause. No new scheduler, duplicate observer, access change or promised foreground fallback.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122889,29 +123134,29 @@
         }
       ],
       "technicalOwner": "Codex",
-      "recheckCondition": "An actual new native schedule event/delivery, demonstrated source/config defect or separately established real delivery mechanism; a calculated future timestamp alone is not an armed guard.",
+      "recheckCondition": "Actual new native delivery or a separately established execution mechanism; a future timestamp alone is not an armed guard.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "This one-shot recovery ends after verified public delivery; no future manual guard is armed. Preserve the existing active workflow and bounded 503 read retry. Reconcile actual future native deliveries or separately established execution ownership before claiming unattended freshness; no second scheduler, reset, access change or promised foreground fallback.",
-        "recheckCondition": "An actual new native schedule event/delivery, demonstrated source/config defect or separately established real delivery mechanism; a calculated future timestamp alone is not an armed guard."
+        "nextAction": "This milestone recovery ends after verified public delivery. Preserve the failed first attempt, bounded 503 retry and missed-delivery evidence. The existing active native workflow remains configured; unattended freshness is still an external scheduling/delivery limitation with unknown event-gap cause. No new scheduler, duplicate observer, access change or promised foreground fallback.",
+        "recheckCondition": "Actual new native delivery or a separately established execution mechanism; a future timestamp alone is not an armed guard."
       },
       "currentHealth": {
-        "observedAt": "2026-11-25T10:10:54.050204+00:00",
+        "observedAt": "2026-11-25T12:51:30.999228+00:00",
         "owner": "root",
         "workflowState": "active",
         "actionsEnabled": true,
         "defaultWorkflowHead": "5d504727a0851a505875c8b7fc3ce85a8302a78a",
         "cron": "7,17,27,37,47,57 * * * *",
-        "latestNativeScheduleRun": 45526464103,
-        "latestNativeScheduleAt": "2026-11-25T01:32:13Z",
+        "latestNativeScheduleRun": 45594344209,
+        "latestNativeScheduleAt": "2026-11-25T10:22:22Z",
         "latestNativeScheduleConclusion": "success",
-        "currentManualSweep": 45591409191,
-        "currentSnapshotAt": "2026-11-25T10:07:16.271790+00:00",
-        "currentManualConclusion": "success",
-        "cause": "No source/config defect is demonstrated. Native event gaps have unknown external scheduling/delivery cause. The 04:41:37 guard/05:11:37 deadline was missed without an armed manual observer after the prior owner ended around 03:47; earlier 21:35 miss remains an ownership/timing failure, not proved provider dispatch delay.",
-        "nextAction": "This one-shot recovery ends after verified public delivery; no future manual guard is armed. Preserve the existing active workflow and bounded 503 read retry. Reconcile actual future native deliveries or separately established execution ownership before claiming unattended freshness; no second scheduler, reset, access change or promised foreground fallback.",
-        "recheckCondition": "An actual new native schedule event/delivery, demonstrated source/config defect or separately established real delivery mechanism; a calculated future timestamp alone is not an armed guard.",
-        "currentSnapshotSource": "User-requested one-shot manual collector 45591409191"
+        "currentManualSweep": 45615038308,
+        "currentSnapshotAt": "2026-11-25T12:47:27.424253+00:00",
+        "currentManualConclusion": "success on failed-job-only attempt 2",
+        "cause": "Native event-gap cause remains unknown; successful native deliveries do not establish cadence. The receipt-validator defect caused this run’s first-attempt failure and was fixed at 6ffd4ed5. Earlier 04:41:37/05:11:37 delivery was missed with no armed manual observer after the owner ended around03:47; the earlier21:35 miss remains ownership/timing, not proved provider dispatch delay.",
+        "nextAction": "This milestone recovery ends after verified public delivery. Preserve the failed first attempt, bounded 503 retry and missed-delivery evidence. The existing active native workflow remains configured; unattended freshness is still an external scheduling/delivery limitation with unknown event-gap cause. No new scheduler, duplicate observer, access change or promised foreground fallback.",
+        "recheckCondition": "Actual new native delivery or a separately established execution mechanism; a future timestamp alone is not an armed guard.",
+        "currentSnapshotSource": "Milestone snapshot-only run 45615038308 attempt 2"
       },
       "followup": {
         "evidence": [
@@ -122941,12 +123186,15 @@
           "https://github.com/tamird/gvisor/actions/runs/45534009507",
           "https://github.com/tamird/gvisor/actions/runs/45541397778",
           "https://github.com/tamird/gvisor/actions/runs/45591409191",
-          "https://github.com/tamird/gvisor/blob/5d504727a0851a505875c8b7fc3ce85a8302a78a/.github/workflows/work-map.yml"
+          "https://github.com/tamird/gvisor/blob/5d504727a0851a505875c8b7fc3ce85a8302a78a/.github/workflows/work-map.yml",
+          "https://github.com/tamird/gvisor/actions/runs/45615038308",
+          "https://github.com/tamird/gvisor/actions/runs/45615038308/attempts/1",
+          "https://github.com/tamird/gvisor/commit/6ffd4ed5a6d6edc5aca2b65da6fedb5388d1e58f"
         ],
-        "observedAt": "2026-11-25T10:10:54.050204+00:00",
-        "disposition": "User-requested one-shot collector 45591409191 succeeded and delivered API 2026-11-25T10:07:16.271790+00:00. The prior 04:41:37 guard/05:11:37 deadline was missed after the owner ended around 03:47 with no manual observer armed. Native workflow 378998679 remains active with its ten-minute cron, but no native event newer than the 01:32:13 scheduled run is established. Unattended freshness remains an external scheduling/delivery limitation with unknown native-event cause; this recovery is not a recurring fix.",
-        "nextAction": "This one-shot recovery ends after verified public delivery; no future manual guard is armed. Preserve the existing active workflow and bounded 503 read retry. Reconcile actual future native deliveries or separately established execution ownership before claiming unattended freshness; no second scheduler, reset, access change or promised foreground fallback.",
-        "recheckCondition": "An actual new native schedule event/delivery, demonstrated source/config defect or separately established real delivery mechanism; a calculated future timestamp alone is not an armed guard.",
+        "observedAt": "2026-11-25T12:51:30.999228+00:00",
+        "disposition": "Milestone collector 45615038308 initially failed source-publication receipt validation with an out-of-scope predicate. Reviewed two-file fix 6ffd4ed5 was published; failed-job-only attempt 2 of the same run succeeded and delivered API 2026-11-25T12:47:27.424253+00:00. This repairs that receipt path, not missing native schedule events. No future manual guard is armed.",
+        "nextAction": "This milestone recovery ends after verified public delivery. Preserve the failed first attempt, bounded 503 retry and missed-delivery evidence. The existing active native workflow remains configured; unattended freshness is still an external scheduling/delivery limitation with unknown event-gap cause. No new scheduler, duplicate observer, access change or promised foreground fallback.",
+        "recheckCondition": "Actual new native delivery or a separately established execution mechanism; a future timestamp alone is not an armed guard.",
         "owner": "root"
       }
     },
@@ -132472,9 +132720,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-25T02:17:02.181443+00:00",
+      "updatedAt": "2026-11-25T12:50:33.824992+00:00",
       "group": "analysis",
-      "summary": "54-commit analyzer series at 26090b334; Module-aware NoGo passes 891 validators per ISA. Network and MM quality holds remain. Filesystem functional coverage is 71/72 non-FUSE pairs (143/144 operations); only the documented RubySpec baseline fixture failure and eight FUSE holds remain. Four behavioral targets and open #17884 are still unresolved.",
+      "summary": "The complete 54-commit implementation at 26090b334 is reviewable; Module-aware NoGo passes 891 validators per ISA. Remaining performance gates: 40 network A/B variants, MM/syscall A/B and filesystem A/A+A/B. Eight FUSE capability holds, one Fastlane baseline functional failure and four behavioral provider/baseline failures remain distinct; #17884 is open.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -132846,10 +133094,10 @@
           ]
         }
       ],
-      "nextStep": "Root retains the A/A precision/drift and remaining performance gates; no broad equivalence or publication-readiness claim. All filesystem jobs are terminal: preserve the Fastlane 2.207.0 baseline issue and FUSE holds. #17884 remains open with its existing reviewer requests and known pre-agent quota result; no unchanged retry or outreach.",
+      "nextStep": "analysis_delivery owns the concrete Hey deadline-censoring versus complete-workload measurement blocker. Shared strict JSON/count/status collection passed all eight functional visits, then correctly rejected the N1000/C1000 Httpd case with 389 successful requests and 611 timeouts: Bazel failed, no benchmark row was accepted, cleanup passed. Verify existing whole-visit bounds and stock CLI before proposing a small timeout-policy correction; no rerun or timing is authorized here. Remaining qualification uses full categories/variants, raw benchstat and n>=24 or p<.01 criteria; an added equivalence bound or overstrict ancillary early/late protocol is not itself a submission gate.",
       "evidence": [
         {
-          "label": "Current reviewed analyzer series",
+          "label": "Complete 54-commit analyzer series: dependency first, then 53 activations",
           "url": "https://github.com/tamird/gvisor/compare/0c7e69e359dbfc284a7d109ad007395086a70cd4...26090b334cf9c5f4657ec33aef64efc6fa86ef82"
         },
         {
@@ -133105,11 +133353,11 @@
           }
         ]
       },
-      "recheckCondition": "Canonical aquery 45344645597 result at 07:05 UTC, then an actual source/coverage/compiler milestone; no unchanged timing retry or new publication question.",
+      "recheckCondition": "Owning fixture functional preflight, required workload qualification, an actual prerequisite/decision or an explicit hold change; do not duplicate the owner’s observer.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
-        "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+        "nextAction": "analysis_delivery owns the concrete Hey deadline-censoring versus complete-workload measurement blocker. Shared strict JSON/count/status collection passed all eight functional visits, then correctly rejected the N1000/C1000 Httpd case with 389 successful requests and 611 timeouts: Bazel failed, no benchmark row was accepted, cleanup passed. Verify existing whole-visit bounds and stock CLI before proposing a small timeout-policy correction; no rerun or timing is authorized here. Remaining qualification uses full categories/variants, raw benchstat and n>=24 or p<.01 criteria; an added equivalence bound or overstrict ancillary early/late protocol is not itself a submission gate.",
+        "recheckCondition": "Owning fixture functional preflight, required workload qualification, an actual prerequisite/decision or an explicit hold change; do not duplicate the owner’s observer."
       },
       "head": "26090b334cf9c5f4657ec33aef64efc6fa86ef82",
       "settledReviews": [
@@ -133204,7 +133452,7 @@
       ],
       "additionalReviews": [],
       "followup": {
-        "observedAt": "2026-11-25T02:17:02.181443+00:00",
+        "observedAt": "2026-11-25T12:50:33.824992+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45338108931",
           "https://github.com/tamird/gvisor/actions/runs/45344645597",
@@ -133272,16 +133520,45 @@
           "https://github.com/tamird/gvisor/actions/runs/45507924900",
           "https://github.com/tamird/gvisor/actions/runs/45485304739",
           "https://github.com/tamird/gvisor/actions/runs/45512164739",
-          "https://github.com/tamird/gvisor/actions/runs/45527388690/artifacts/14983234365"
+          "https://github.com/tamird/gvisor/actions/runs/45527388690/artifacts/14983234365",
+          "https://github.com/tamird/gvisor/actions/runs/45615518066",
+          "https://github.com/tamird/gvisor/actions/runs/45615522520",
+          "https://github.com/tamird/gvisor/actions/runs/45615527925",
+          "https://github.com/tamird/gvisor/actions/runs/45616323529/artifacts/15023365427",
+          "https://github.com/tamird/gvisor/actions/runs/45617576724/artifacts/15024070114"
         ],
         "owner": "root",
-        "disposition": "54-commit analyzer series at 26090b334; Module-aware NoGo passes 891 validators per ISA. Network and MM quality holds remain. Filesystem functional coverage is 71/72 non-FUSE pairs (143/144 operations); only the documented RubySpec baseline fixture failure and eight FUSE holds remain. Four behavioral targets and open #17884 are still unresolved.",
-        "nextAction": "Root retains the A/A precision/drift and remaining performance gates; no broad equivalence or publication-readiness claim. All filesystem jobs are terminal: preserve the Fastlane 2.207.0 baseline issue and FUSE holds. #17884 remains open with its existing reviewer requests and known pre-agent quota result; no unchanged retry or outreach.",
-        "recheckCondition": "Actual user decision, prerequisite landing, new directly relevant qualification evidence or explicit hold release.",
+        "disposition": "The complete 54-commit implementation at 26090b334 is reviewable; Module-aware NoGo passes 891 validators per ISA. Remaining performance gates: 40 network A/B variants, MM/syscall A/B and filesystem A/A+A/B. Eight FUSE capability holds, one Fastlane baseline functional failure and four behavioral provider/baseline failures remain distinct; #17884 is open.",
+        "nextAction": "analysis_delivery owns the concrete Hey deadline-censoring versus complete-workload measurement blocker. Shared strict JSON/count/status collection passed all eight functional visits, then correctly rejected the N1000/C1000 Httpd case with 389 successful requests and 611 timeouts: Bazel failed, no benchmark row was accepted, cleanup passed. Verify existing whole-visit bounds and stock CLI before proposing a small timeout-policy correction; no rerun or timing is authorized here. Remaining qualification uses full categories/variants, raw benchstat and n>=24 or p<.01 criteria; an added equivalence bound or overstrict ancillary early/late protocol is not itself a submission gate.",
+        "recheckCondition": "Owning fixture functional preflight, required workload qualification, an actual prerequisite/decision or an explicit hold change; do not duplicate the owner’s observer.",
         "sourceHead": "26090b334cf9c5f4657ec33aef64efc6fa86ef82",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
-        "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4"
-      }
+        "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
+        "implementationOwner": "analysis_delivery"
+      },
+      "comparisons": [
+        {
+          "title": "Review the complete analyzer implementation",
+          "description": "The 54-commit series is source-reviewable independently of the delivered clang-tidy fix.",
+          "columns": [
+            "Source",
+            "Qualification"
+          ],
+          "rows": [
+            [
+              "0c7e69e359 → 26090b334; dependencies first, then 53 analyzer activations",
+              "891 Module-aware NoGo validators pass per architecture; behavioral/performance gates below remain incomplete."
+            ]
+          ],
+          "note": "This source preview is not an upstream publication approval or a performance-clearance claim.",
+          "evidence": [
+            {
+              "label": "Complete 54-commit analyzer series: dependency first, then 53 activations",
+              "url": "https://github.com/tamird/gvisor/compare/0c7e69e359dbfc284a7d109ad007395086a70cd4...26090b334cf9c5f4657ec33aef64efc6fa86ef82"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "investigation:proc-boot-identity",
@@ -140963,8 +141240,8 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "benchmark_measurement_review / root",
-      "updatedAt": "2026-11-24T17:54:21.639001+00:00",
-      "summary": "The successful-output proposal f05f486d is delivered as #17921. The independent Node TAP 8044063a and pinned-image e17f88ff opening questions remain unanswered. Reused combined-source functional evidence retains its original FLAKY annotations; the original worker timeout cause remains unknown.",
+      "updatedAt": "2026-11-25T12:50:33.824992+00:00",
+      "summary": "Successful runtime output is delivered in #17921; the independent Node TAP proposal is now delivered as #17962. Only pinned-image e17f88ff remains an unanswered opening question. Existing functional evidence keeps its original FLAKY/source scope; original flake causation is not established.",
       "findings": [
         {
           "text": "The same shard also timed out in debugger-random-port. The log does not identify where the ArrayBuffer test stopped.",
@@ -140980,7 +141257,7 @@
           ]
         }
       ],
-      "nextStep": "Root follows #17921 validation/review and awaits the two remaining actual opening decisions. Retain the original timeout investigation for natural recurrence or new evidence; delivery does not establish a flake fix.",
+      "nextStep": "Root follows the delivered PR lifecycles and the separate pinned-image decision. Do not repeat consumed TAP/runtime-output approvals, infer a Node flake fix or transfer old qualification to a new source.",
       "evidence": [
         {
           "label": "Original Node shard",
@@ -141012,11 +141289,11 @@
         }
       ],
       "technicalOwner": "CI flake triage",
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
+      "recheckCondition": "Actual PR/source/check/review event or an answer to the remaining pinned-image question.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
-        "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+        "nextAction": "Root follows the delivered PR lifecycles and the separate pinned-image decision. Do not repeat consumed TAP/runtime-output approvals, infer a Node flake fix or transfer old qualification to a new source.",
+        "recheckCondition": "Actual PR/source/check/review event or an answer to the remaining pinned-image question."
       },
       "head": "6a2916b318c17cc636ebf92e32844bf781612eed",
       "settledReviews": [
@@ -141042,29 +141319,33 @@
           "body": "The runtime runner discarded proctor output when a batch succeeded, hiding individual Node results during the worker timeout investigation. Retain successful output through testing.T and initialize the standard testing flags before parsing options so -test.v can expose it.\n\nPosted by Codex on behalf of @tamird.\n",
           "outcome": "posted",
           "postedURL": "https://github.com/google/gvisor/pull/17921"
-        }
-      ],
-      "followup": {
-        "owner": "root",
-        "observedAt": "2026-11-24T17:54:21.639001+00:00",
-        "disposition": "The successful-output proposal f05f486d is delivered as #17921. The independent Node TAP 8044063a and pinned-image e17f88ff opening questions remain unanswered. Reused combined-source functional evidence retains its original FLAKY annotations; the original worker timeout cause remains unknown.",
-        "nextAction": "Root follows #17921 validation/review and awaits the two remaining actual opening decisions. Retain the original timeout investigation for natural recurrence or new evidence; delivery does not establish a flake fix.",
-        "recheckCondition": "Actual sibling decision, #17921 source/check/review event, natural recurrence or new causal evidence.",
-        "evidence": [
-          "https://github.com/gvisor/gvisor/pull/17921"
-        ]
-      },
-      "additionalReviews": [
+        },
         {
           "kind": "proposal",
-          "status": "pending",
+          "status": "settled",
           "head": "8044063a9a1f7d76cca2656cdbee0310d2bb1266",
           "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
           "url": "https://github.com/tamird/gvisor/commit/8044063a9a1f7d76cca2656cdbee0310d2bb1266",
           "title": "Report Node runtime cases with TAP",
           "summary": "Independent TAP-only proposal; actual opening question pending. Known Node FLAKY annotations remain disclosed.",
-          "body": "Request Node's TAP progress reporter. It records case names and marks known-flaky outcomes with TODO annotations, making those details available in captured proctor output.\n\nPosted by Codex on behalf of @tamird.\n"
-        },
+          "body": "Request Node's TAP progress reporter. It records case names and marks known-flaky outcomes with TODO annotations, making those details available in captured proctor output.\n\nPosted by Codex on behalf of @tamird.\n",
+          "outcome": "approved",
+          "note": "The approved one-line TAP proposal was published as #17962. Reused qualification retains original source/FLAKY limits.",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/17962"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-11-25T12:50:33.824992+00:00",
+        "disposition": "Successful runtime output is delivered in #17921; the independent Node TAP proposal is now delivered as #17962. Only pinned-image e17f88ff remains an unanswered opening question. Existing functional evidence keeps its original FLAKY/source scope; original flake causation is not established.",
+        "nextAction": "Root follows the delivered PR lifecycles and the separate pinned-image decision. Do not repeat consumed TAP/runtime-output approvals, infer a Node flake fix or transfer old qualification to a new source.",
+        "recheckCondition": "Actual PR/source/check/review event or an answer to the remaining pinned-image question.",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/17921",
+          "https://github.com/gvisor/gvisor/pull/17962"
+        ]
+      },
+      "additionalReviews": [
         {
           "kind": "proposal",
           "status": "pending",
@@ -144661,28 +144942,34 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/45509700206/artifacts/14974544524"
         }
       ],
-      "contributorReview": {
-        "kind": "issue",
-        "status": "pending",
-        "url": "https://github.com/bazelbuild/bazel/issues/new",
-        "title": "TestRunner output errors still return success",
-        "body": "Bazel 9.3.1 on Ubuntu 24.04 (AMD64) returned success after rejecting a\nlocal TestRunner's outputs. Compilation used remote execution and\ncaching; the test invocation used --keep_going.\n\nOur benchmark wrapper exited 0 but created root-owned files in\nTEST_UNDECLARED_OUTPUTS_DIR. Bazel correctly reported that test.xml was\nnot created and that output validation failed with \"Operation not\npermitted\". The bug is the successful command result after those errors.\n\nThe same native JSON BEP contains, for each affected target:\n\n- PASSED TestResult and PASSED TestSummary;\n- TestRunner action exitCode 1 with ACTION_OUTPUTS_NOT_CREATED;\n- another TestResult with the same ID and FAILED_TO_BUILD;\n- final overallSuccess=true and exitCode.name=SUCCESS.\n\nThe invoking shell immediately captures the nested bazel test status and\nreturns it unchanged after copying artifacts. The outer job also passed.\nA failed TestRunner output-validation action should make bazel test exit\nnonzero and agree with its final build status.\n\nObserved run: https://github.com/tamird/gvisor/actions/runs/45509700206\nNative invocation: https://app.buildbuddy.io/invocation/954ac3a7-a0bd-4570-ab1b-d976e22c607a\nRetained BEP/log: https://github.com/tamird/gvisor/actions/runs/45509700206/artifacts/14974544524\nThe artifact contains filesystem-preflight-events.json and bazel.log.\n\nWe corrected our wrapper so its recorder stays unprivileged, elevating\nonly the benchmark child. That resolved the ownership/output-validation\nfailure. This report concerns the incorrect success status; no standalone\nminimal reproducer or regression boundary has been established.\n\nPosted by Codex on behalf of @tamird.",
-        "summary": "Review filing the observed Bazel 9.3.1 success-status inconsistency with original BEP/log evidence. No minimal reproducer or regression boundary is claimed."
-      },
-      "summary": "Bazel 9.3.1 reported SUCCESS despite native TestRunner output-validation failures. The actual upstream bug-filing decision is unanswered. Our wrapper ownership correction and the full Fio functional gate are complete; this proposal concerns only Bazel status consistency.",
-      "nextStep": "Root awaits review of the existing issue draft. No issue, operator request, new investigation or source change is authorized by external feedback.",
-      "updatedAt": "2026-11-25T01:21:15.429370+00:00",
+      "summary": "The requested standalone narrow repro is retained: six-line Bash leaves one root-owned 0644 undeclared output; Bazel exits 0 while TestRunner reports exit 1/ACTION_OUTPUTS_NOT_CREATED and FAILED_TO_BUILD/final SUCCESS. Plain failing-test control exits 3. No upstream issue is filed or approved for filing by principle agreement alone.",
+      "nextStep": "Root reviews the concise report with the reproduced evidence before any actual filing decision. Preserve the existing archive and original incident; wrapper ownership and full Fio functional gates are already corrected. No operator request, test rerun or new issue-posting question is invented.",
+      "updatedAt": "2026-11-25T12:50:33.824992+00:00",
       "followup": {
         "owner": "root",
-        "disposition": "Bazel 9.3.1 reported SUCCESS despite native TestRunner output-validation failures. The actual upstream bug-filing decision is unanswered. Our wrapper ownership correction and the full Fio functional gate are complete; this proposal concerns only Bazel status consistency.",
-        "nextAction": "Root awaits review of the existing issue draft. No issue, operator request, new investigation or source change is authorized by external feedback.",
-        "recheckCondition": "User answers the existing bug-publication question or new directly relevant evidence arrives.",
-        "observedAt": "2026-11-25T01:21:15.429370+00:00",
+        "disposition": "The requested standalone narrow repro is retained: six-line Bash leaves one root-owned 0644 undeclared output; Bazel exits 0 while TestRunner reports exit 1/ACTION_OUTPUTS_NOT_CREATED and FAILED_TO_BUILD/final SUCCESS. Plain failing-test control exits 3. No upstream issue is filed or approved for filing by principle agreement alone.",
+        "nextAction": "Root reviews the concise report with the reproduced evidence before any actual filing decision. Preserve the existing archive and original incident; wrapper ownership and full Fio functional gates are already corrected. No operator request, test rerun or new issue-posting question is invented.",
+        "recheckCondition": "An actual filing decision or directly relevant repro/report evidence.",
+        "observedAt": "2026-11-25T12:50:33.824992+00:00",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/45509700206/artifacts/14974544524"
+          "https://github.com/tamird/gvisor/actions/runs/45509700206/artifacts/14974544524",
+          "https://github.com/tamird/gvisor/actions/runs/45614362902/artifacts/15019884865"
         ]
       },
-      "findings": []
+      "findings": [],
+      "settledReviews": [
+        {
+          "kind": "issue",
+          "status": "settled",
+          "url": "https://github.com/bazelbuild/bazel/issues/new",
+          "title": "TestRunner output errors still return success",
+          "body": "Bazel 9.3.1 on Ubuntu 24.04 (AMD64) returned success after rejecting a\nlocal TestRunner's outputs. Compilation used remote execution and\ncaching; the test invocation used --keep_going.\n\nOur benchmark wrapper exited 0 but created root-owned files in\nTEST_UNDECLARED_OUTPUTS_DIR. Bazel correctly reported that test.xml was\nnot created and that output validation failed with \"Operation not\npermitted\". The bug is the successful command result after those errors.\n\nThe same native JSON BEP contains, for each affected target:\n\n- PASSED TestResult and PASSED TestSummary;\n- TestRunner action exitCode 1 with ACTION_OUTPUTS_NOT_CREATED;\n- another TestResult with the same ID and FAILED_TO_BUILD;\n- final overallSuccess=true and exitCode.name=SUCCESS.\n\nThe invoking shell immediately captures the nested bazel test status and\nreturns it unchanged after copying artifacts. The outer job also passed.\nA failed TestRunner output-validation action should make bazel test exit\nnonzero and agree with its final build status.\n\nObserved run: https://github.com/tamird/gvisor/actions/runs/45509700206\nNative invocation: https://app.buildbuddy.io/invocation/954ac3a7-a0bd-4570-ab1b-d976e22c607a\nRetained BEP/log: https://github.com/tamird/gvisor/actions/runs/45509700206/artifacts/14974544524\nThe artifact contains filesystem-preflight-events.json and bazel.log.\n\nWe corrected our wrapper so its recorder stays unprivileged, elevating\nonly the benchmark child. That resolved the ownership/output-validation\nfailure. This report concerns the incorrect success status; no standalone\nminimal reproducer or regression boundary has been established.\n\nPosted by Codex on behalf of @tamird.",
+          "summary": "Review filing the observed Bazel 9.3.1 success-status inconsistency with original BEP/log evidence. No minimal reproducer or regression boundary is claimed.",
+          "outcome": "changes-requested",
+          "note": "The user agreed with the issue in principle but requested a narrow reproducer rather than filing this draft. The old filing question is superseded; no issue was posted."
+        }
+      ],
+      "recheckCondition": "An actual filing decision or directly relevant repro/report evidence."
     }
   ],
   "updatedAt": "2026-11-24T06:29:20.083295+00:00"
