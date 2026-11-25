@@ -3803,6 +3803,17 @@ test('exact upstream source publication retires only its delivery proposal and r
   draft.kind = 'proposal';
   const receipt = { ...draft, status: 'settled', outcome: 'posted', postedURL: pr.url };
   c.snapshotInput.publishedDecisions = { [row.id]: [receipt] };
+  c.registryInput.nodes = [];
+  c.registryInput.investigations = [row];
+  c.snapshotInput.prs = [];
+  const validate = () => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', c);
+  validate();
+  for (const field of ['url', 'title', 'body']) {
+    const value = receipt[field];
+    receipt[field] = ' ';
+    assert.throws(validate, /Invalid source-publication receipts/);
+    receipt[field] = value;
+  }
   c.snapshotInput.prs = [{ ...pr, head: 'c'.repeat(40), status: 'closed' }];
   assert.deepEqual(pending(), []);
   assert.ok(vm.runInContext('attentionReasons(nodeInput).some(reason => reason.id === "agent-investigation")', c));

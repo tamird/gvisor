@@ -2485,6 +2485,7 @@ function validBranchTimestamp(value) {
     && clock.getUTCHours() === Number(hour) && clock.getUTCMinutes() === Number(minute)
     && clock.getUTCSeconds() === Number(second);
 }
+const nonemptyText = value => typeof value === "string" && value.trim();
 function validateRegistry(candidate, { allowRetiredExecution = false } = {}) {
   if (!candidate?.meta || !Number.isFinite(Date.parse(candidate.meta.updatedAt)) ||
       !Array.isArray(candidate.nodes) || !Array.isArray(candidate.edges) || !Array.isArray(candidate.groups)) throw new Error("Invalid work registry");
@@ -2626,7 +2627,6 @@ function validateRegistry(candidate, { allowRetiredExecution = false } = {}) {
   if (candidate.investigations !== undefined) {
     if (!Array.isArray(candidate.investigations)) throw new Error("Invalid investigations");
     const evidenceValid = entries => Array.isArray(entries) && entries.every(entry => entry && typeof entry.label === "string" && entry.label.trim() && typeof entry.url === "string" && safeURL(entry.url));
-    const nonemptyText = value => typeof value === "string" && value.trim();
     for (const item of candidate.investigations) {
       if (!item || typeof item.id !== "string" || !/^investigation:[a-z0-9][a-z0-9-]{0,79}$/.test(item.id) || ids.has(item.id) ||
           !["active", "concluded"].includes(item.status) || ![item.title, item.owner, item.summary].every(value => typeof value === "string" && value.trim()) ||
