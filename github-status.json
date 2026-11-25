@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-25T22:12:52.030781+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-25T22:43:44.062328+00:00",
+  "registryDate": "2026-11-25T23:00:04.041520+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -463124,12 +463124,12 @@
       "mergeabilityCheckedAt": "2026-11-25T22:12:47.923302+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
+      "action": "Root awaits Tamir’s answer on exact 4049b6b148 and its supplied rebase notice. Preserve the original-branch old-head lease; no source update, notice, new test or merge is implied.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "42f14a3eda58cd5b40d590c15309ba44273195e1",
-        "disposition": "Current 42f14a3ed is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
-        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge."
+        "disposition": "Public #16827 remains at 42f14a3ed. Candidate 4049b6b148 retains only the repeated-handshake regression test after the production receive-memory fix landed in #17118. All 16 cases pass on Linux and netstack; independent reviews are clear. The actual amendment and supplied-notice question awaits Tamir.",
+        "nextAction": "Root awaits Tamir’s answer on exact 4049b6b148 and its supplied rebase notice. Preserve the original-branch old-head lease; no source update, notice, new test or merge is implied."
       },
       "conflictObservedSince": "2026-11-24T05:44:37.378279+00:00"
     },
@@ -463244,12 +463244,12 @@
       "mergeabilityCheckedAt": "2026-11-25T22:12:49.492625+00:00",
       "sourceBranchMismatch": false,
       "owner": "approved_rebase_queue",
-      "action": "approved_rebase_queue owns the conditional candidate A/B and its source-bound result under the existing bounded design. Root retains final context/source/publication review; no extra samples, retries or public source mutation is inferred.",
+      "action": "approved_rebase_queue and root assess the retained slowdown before any publication decision. Preserve the completed A/A and actual binary/source bindings; no repeat, extra samples or broad performance clearance.",
       "recordedFollowup": {
         "owner": "approved_rebase_queue",
         "sourceHead": "32fd9c26abba8ceb7d68c6aacfd565bda81f839a",
-        "disposition": "Public #17131 remains at 32fd9c26; private candidate 99628869e has completed affected functional/source qualification. Reporting recovery 45714876845 retained 50 child PIDs and 24 measured pairs; none of 60 drift/order/arm contrasts flagged, with roughly 1–4% timing resolution. This is A/A admission evidence only, not candidate A/B or performance clearance.",
-        "nextAction": "approved_rebase_queue owns the conditional candidate A/B and its source-bound result under the existing bounded design. Root retains final context/source/publication review; no extra samples, retries or public source mutation is inferred."
+        "disposition": "Public #17131 remains at 32fd9c26; private 99628869e is functionally qualified. Matched A/B 45716033027 retained 24 pairs and found a 4.51% initial-attach-cycle slowdown for four FDs/two processors (reported p<0.001), with no control flags. Allocation improvements do not erase that timing regression. Performance remains held pending source/measurement assessment.",
+        "nextAction": "approved_rebase_queue and root assess the retained slowdown before any publication decision. Preserve the completed A/A and actual binary/source bindings; no repeat, extra samples or broad performance clearance."
       },
       "conflictObservedSince": "2026-11-23T21:26:12.901588+00:00"
     },
@@ -471918,7 +471918,7 @@
         "since": "2026-11-25T22:15:30.434231+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "pr:14458": {
@@ -472681,7 +472681,7 @@
         "since": "2026-11-25T20:26:19.847463+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "pr:15202": {
@@ -473658,7 +473658,7 @@
         "since": "2026-11-25T20:26:38.821906+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "pr:15648": {
@@ -474998,7 +474998,7 @@
         "since": "2026-11-25T22:41:21.827202+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "pr:16445": {
@@ -475613,7 +475613,7 @@
         "since": "2026-11-25T22:35:10.106729+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "pr:16661": {
@@ -476394,7 +476394,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "pr:16822": {
@@ -476470,6 +476470,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-25T22:12:47.923302+00:00"
+      },
+      "contributor-review": {
+        "scope": "4049b6b148b44c411a8eb1269fe62bf4c89dbbb7",
+        "since": "2026-11-25T23:00:04.041520+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "pr:16828": {
@@ -477067,7 +477074,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "pr:16958": {
@@ -477126,7 +477133,7 @@
         "since": "2026-11-25T21:37:40.347012+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "pr:16963": {
@@ -478562,7 +478569,7 @@
         "since": "2026-11-25T22:30:31.228636+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "pr:17370": {
@@ -478587,7 +478594,7 @@
         "since": "2026-11-25T22:34:48.644451+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "pr:17376": {
@@ -478617,7 +478624,7 @@
         "since": "2026-11-25T22:30:31.228636+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "pr:17377": {
@@ -478845,7 +478852,7 @@
         "since": "2026-11-25T22:30:31.228636+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "pr:17480": {
@@ -480042,7 +480049,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -480051,7 +480058,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -480060,7 +480067,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -480069,7 +480076,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -480078,7 +480085,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -480087,7 +480094,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -480096,7 +480103,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -480105,7 +480112,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "issue:17832": {
@@ -480114,7 +480121,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "branch:hey-report-cap-accounting": {
@@ -480123,7 +480130,7 @@
         "since": "2026-11-25T22:03:16.345652+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     },
     "investigation:ci-benchmark-fuse-device": {
@@ -480132,7 +480139,7 @@
         "since": "2026-11-25T21:11:04.741354+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:43:44.062328+00:00"
+        "observedAt": "2026-11-25T23:00:04.041520+00:00"
       }
     }
   },

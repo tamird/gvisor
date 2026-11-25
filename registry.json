@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T22:43:44.062328+00:00",
+    "updatedAt": "2026-11-25T23:00:04.041520+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -29488,9 +29488,9 @@
       "title": "Build the filesystem stress-test image with Bazel",
       "url": "https://github.com/google/gvisor/pull/16401",
       "group": "bazel",
-      "status": "Published as #16401",
+      "status": "Delivered and merged",
       "updatedAt": "2026-10-26T00:34:43.615908+00:00",
-      "summary": "The approved fsstress source is published as upstream PR #16401 at exact 97c071a745 on master fb7341a1ad. It builds pinned LTP fsstress and layers its executable, notice and launch script onto the existing official @test_busybox image, preserving the shell parent. There is no contributor hold or pending agent source-review decision on this delivered proposal. Current public checks, matching imports and maintainer review are shown from the live GitHub snapshot.\n\nExact-source validation of published 97c071a745 passed in 7a5ba05a. Both architectures' LTP links were fresh remote GNU actions; each fsstress archive contained the official BusyBox base layers unchanged plus one fsstress layer, and the Make contexts matched. On AMD64/runc, two workers each produced four files. Automatic verification completed 7.817 seconds after the last execution. ARM runtime was not run this time. The three earlier gVisor filesystem test cases remain tied to their earlier 6b2 source; this new result does not extend that coverage to 97c071a745.\n\nThe source-specific official-image validation d5246ab2 and two-worker entrypoint proof fe7b2570 remain historical evidence. The foundation imported as c3e0783a through #16307 is already in master. Neither the withdrawn local BusyBox/PIDFD stack nor the independent #16374 generic archive is a delivery gate.\n\nPreserved proposal and exact-source evidence:\n\nThe actual fsstress revision is 97c071a745 on current base fb7341a1ad, published at review/fsstress-official-image-current. It builds pinned LTP fsstress and adds the executable, notice and launch script to the existing official @test_busybox image. The shell parent remains because fsstress workers exit early when their parent has PID 1. This returns to the approved official-image approach; the fsstress approval is retained, and no new contributor decision is pending. Root owns current-base delivery and will advise upstream publication.\n\nThe existing BusyBox pull is pinned for both target architectures and already mirror-first. No local BusyBox producer, parked PIDFD or new #16379 dependency is needed. The basic foundation landed through #16307 after #16097 closed; the independent generic source archive in #16374 is not required by fsstress's native Make and archive outputs. No #16374 landing gate remains.\n\nEarlier official-image evidence is retained at d5246ab2 (images and filesystem consumers) and fe7b2570 (two-worker entrypoint execution). Those runs qualify their recorded source identities; they are not a new execution of 97c071a745. The local-utility f4134e3b evidence below remains historical and does not justify shipping that withdrawn implementation.\n\nCompare the current official-image source with the former local composition:\ngit range-diff --creation-factor=999 6012e1652777e4bd4c3997f55466a324c6491a08^! 97c071a74524f2d2fc10f6f4768f1214381b7133^!\n\nCompare with the prior approved resource-layout source:\ngit range-diff --creation-factor=999 6bc049050ab0fcce55ffc823e36bfdf55deb2e1d^! 97c071a74524f2d2fc10f6f4768f1214381b7133^!\n\nHistorical dispositions and source-specific evidence:\n\nThe fsstress contributor approval is retained, but the local BusyBox proposal d450a87dd3 has been withdrawn. Earlier approved source 8e45c79086 already used the currently pinned official @test_busybox image. Agent work will return to that official-image approach and validate a revised source on the current base. The retained 6012e16527 fork head is the previous local-utility composition, not an upstream-ready replacement. No new fsstress approval is required to abandon the local utility.\n\nThe official @test_busybox pull on current upstream/master is already mirror-first and pinned for both target architectures. Reusing it adds no new pull and does not require #16379, which centralizes the registry definition. The missing basic-context exports in #16374 remain a landing gate. The foundation itself landed through #16307 after #16097 closed. Neither withdrawn d450 nor parked PIDFD is an active gate. Final source and any additional implementation prerequisites must be checked during the revision before delivery.\n\nHistorical local-utility composition and measured qualification:\n\nExact 6012e16527 is the approved fsstress proposal reparented directly onto standalone BusyBox d450a87dd3. It preserves the source-built LTP workload, shell parent, per-worker cleanup, image name and Make entry points. The existing fsstress contributor approval is retained; there is no new fsstress decision.\n\nThe independently reviewed split is qualified in f4134e3b. Both AMD64 and ARM64 images and Make contexts built. On AMD64 systrap, the three existing filesystem consumers passed, and the unchanged entrypoint ran two workers that each created four files; cleanup and cached restore passed. The canonical license-policy test passed. Both BusyBox compilations were fresh remote actions. The LTP links were cache hits joined to earlier uncached source-matched producers, so this is not a fresh LTP-link measurement. Verification completed 10.270535 seconds after the final native phase. No ARM runtime, throughput, whole-catalog regeneration or PIDFD qualification is claimed.\n\nThe basic-image foundation landed through import #16307 after source PR #16097 closed. Its missing basic-context exports remain a separate #16374 landing gate. Delivery also waits for the new standalone utility decision and its GNU/native-image/compiler ancestry; the mirror PR #16379 and parked PIDFD are not gates for this scratch pair.\n\nPreserved earlier source-specific record:\n\nThe source-built scratch refinement is published at 5ccbde as an independent child of utilities e12. Existing root/fsstress qualification and supplemental action proof apply with exact shared BusyBox union identities. Both-CPU archives, AMD64 filesystem consumers, entrypoint and cleanup are qualified; no ARM runtime is claimed. Preserve the earlier 6bc contributor grant and its explicit condition that #16097 actually lands. The shared utilities decision remains separate; no new child review question is pending. Catalog composition preserves the existing 251 records plus the approved LTP record; this is not a fresh whole-graph audit.\n\nPreserved earlier source-specific record:\n\nRequested resource relocation and equivalent base refresh are complete at 6bc049050a. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nContributor approved this exact source for opening after #16097 actually lands. Preserve the conditional grant through an equivalent rebase; do not ask again.\n\nBuild pinned LTP fsstress and its BusyBox image from declared Bazel inputs. Preserve basic/fsstress, Make and the shell parent; include the GPLv2 notice with a scoped exception. Standalone GNU dual-architecture builds, LLVM musl dual-architecture image/archive checks, three native filesystem cases and Make identity roundtrip passed. A separate unchanged ENTRYPOINT run produced eight files across two workers. Canonical current-source Fetch/Verify preserve all 196 foundation catalog blocks and add only LTP. The source remains qualified for conditional delivery. No ARM execution or performance claim.",
+      "summary": "Completed: approved official-BusyBox fsstress source 97c071a745 merged through #16401 on October 27 at 0424a4b4fa. Its source-specific qualification remains historical. No fsstress source preparation, maintainer-landing wait or local BusyBox replacement remains.",
       "links": [
         {
           "label": "Exact 97c071a745: fresh GNU links and archives on both CPUs; AMD64/runc two-worker proof",
@@ -29562,8 +29562,8 @@
         "sourceHead": "97c071a74524f2d2fc10f6f4768f1214381b7133",
         "observedAt": "2026-10-26T00:34:43.615908+00:00",
         "reviewedAt": "2026-10-22T10:14:21.290429+00:00",
-        "disposition": "Approved official-image fsstress source delivered as #16401",
-        "nextAction": "Follow current-head checks, matching imports and maintainer review through the existing intake. Keep the passed exact-source GNU image/AMD64 entrypoint validation distinct from the three earlier source-specific gVisor filesystem test cases; no ARM runtime was run in the new validation. Resolver publication is sequenced after this PR lands; no new contributor decision or public notification.",
+        "disposition": "Completed: approved official-BusyBox fsstress source 97c071a745 merged through #16401 on October 27 at 0424a4b4fa. Its source-specific qualification remains historical. No fsstress source preparation, maintainer-landing wait or local BusyBox replacement remains.",
+        "nextAction": "Complete. No fsstress follow-up or local utility rebuild; independent GNU-tools/PIDFD and resolver obligations stay on their own records.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/7a5ba05a-12dd-4122-a749-d4c1a08813a0",
           "https://github.com/google/gvisor/pull/16401",
@@ -29581,8 +29581,17 @@
           "https://github.com/google/gvisor/pull/16307",
           "https://github.com/google/gvisor/pull/16374",
           "https://github.com/tamird/gvisor/commit/8e45c79086ef50a61ed70379f89a5b684ea75db9",
-          "https://github.com/google/gvisor/pull/16379"
-        ]
+          "https://github.com/google/gvisor/pull/16379",
+          "https://github.com/gvisor/gvisor/pull/16401",
+          "https://github.com/gvisor/gvisor/commit/0424a4b4fa3105cbe3271c301e8bf6cb8adf0277"
+        ],
+        "recheckCondition": "A genuine new fsstress recurrence or explicit new work request.",
+        "curatedAt": "2026-11-25T23:00:04.041520+00:00",
+        "completion": {
+          "pr": 16401,
+          "head": "97c071a74524f2d2fc10f6f4768f1214381b7133",
+          "merge": "0424a4b4fa3105cbe3271c301e8bf6cb8adf0277"
+        }
       },
       "refinement": {
         "before": {
@@ -29592,7 +29601,10 @@
           "head": "97c071a74524f2d2fc10f6f4768f1214381b7133"
         }
       },
-      "inactive": true
+      "inactive": true,
+      "historicalSummary": "The approved fsstress source is published as upstream PR #16401 at exact 97c071a745 on master fb7341a1ad. It builds pinned LTP fsstress and layers its executable, notice and launch script onto the existing official @test_busybox image, preserving the shell parent. There is no contributor hold or pending agent source-review decision on this delivered proposal. Current public checks, matching imports and maintainer review are shown from the live GitHub snapshot.\n\nExact-source validation of published 97c071a745 passed in 7a5ba05a. Both architectures' LTP links were fresh remote GNU actions; each fsstress archive contained the official BusyBox base layers unchanged plus one fsstress layer, and the Make contexts matched. On AMD64/runc, two workers each produced four files. Automatic verification completed 7.817 seconds after the last execution. ARM runtime was not run this time. The three earlier gVisor filesystem test cases remain tied to their earlier 6b2 source; this new result does not extend that coverage to 97c071a745.\n\nThe source-specific official-image validation d5246ab2 and two-worker entrypoint proof fe7b2570 remain historical evidence. The foundation imported as c3e0783a through #16307 is already in master. Neither the withdrawn local BusyBox/PIDFD stack nor the independent #16374 generic archive is a delivery gate.\n\nPreserved proposal and exact-source evidence:\n\nThe actual fsstress revision is 97c071a745 on current base fb7341a1ad, published at review/fsstress-official-image-current. It builds pinned LTP fsstress and adds the executable, notice and launch script to the existing official @test_busybox image. The shell parent remains because fsstress workers exit early when their parent has PID 1. This returns to the approved official-image approach; the fsstress approval is retained, and no new contributor decision is pending. Root owns current-base delivery and will advise upstream publication.\n\nThe existing BusyBox pull is pinned for both target architectures and already mirror-first. No local BusyBox producer, parked PIDFD or new #16379 dependency is needed. The basic foundation landed through #16307 after #16097 closed; the independent generic source archive in #16374 is not required by fsstress's native Make and archive outputs. No #16374 landing gate remains.\n\nEarlier official-image evidence is retained at d5246ab2 (images and filesystem consumers) and fe7b2570 (two-worker entrypoint execution). Those runs qualify their recorded source identities; they are not a new execution of 97c071a745. The local-utility f4134e3b evidence below remains historical and does not justify shipping that withdrawn implementation.\n\nCompare the current official-image source with the former local composition:\ngit range-diff --creation-factor=999 6012e1652777e4bd4c3997f55466a324c6491a08^! 97c071a74524f2d2fc10f6f4768f1214381b7133^!\n\nCompare with the prior approved resource-layout source:\ngit range-diff --creation-factor=999 6bc049050ab0fcce55ffc823e36bfdf55deb2e1d^! 97c071a74524f2d2fc10f6f4768f1214381b7133^!\n\nHistorical dispositions and source-specific evidence:\n\nThe fsstress contributor approval is retained, but the local BusyBox proposal d450a87dd3 has been withdrawn. Earlier approved source 8e45c79086 already used the currently pinned official @test_busybox image. Agent work will return to that official-image approach and validate a revised source on the current base. The retained 6012e16527 fork head is the previous local-utility composition, not an upstream-ready replacement. No new fsstress approval is required to abandon the local utility.\n\nThe official @test_busybox pull on current upstream/master is already mirror-first and pinned for both target architectures. Reusing it adds no new pull and does not require #16379, which centralizes the registry definition. The missing basic-context exports in #16374 remain a landing gate. The foundation itself landed through #16307 after #16097 closed. Neither withdrawn d450 nor parked PIDFD is an active gate. Final source and any additional implementation prerequisites must be checked during the revision before delivery.\n\nHistorical local-utility composition and measured qualification:\n\nExact 6012e16527 is the approved fsstress proposal reparented directly onto standalone BusyBox d450a87dd3. It preserves the source-built LTP workload, shell parent, per-worker cleanup, image name and Make entry points. The existing fsstress contributor approval is retained; there is no new fsstress decision.\n\nThe independently reviewed split is qualified in f4134e3b. Both AMD64 and ARM64 images and Make contexts built. On AMD64 systrap, the three existing filesystem consumers passed, and the unchanged entrypoint ran two workers that each created four files; cleanup and cached restore passed. The canonical license-policy test passed. Both BusyBox compilations were fresh remote actions. The LTP links were cache hits joined to earlier uncached source-matched producers, so this is not a fresh LTP-link measurement. Verification completed 10.270535 seconds after the final native phase. No ARM runtime, throughput, whole-catalog regeneration or PIDFD qualification is claimed.\n\nThe basic-image foundation landed through import #16307 after source PR #16097 closed. Its missing basic-context exports remain a separate #16374 landing gate. Delivery also waits for the new standalone utility decision and its GNU/native-image/compiler ancestry; the mirror PR #16379 and parked PIDFD are not gates for this scratch pair.\n\nPreserved earlier source-specific record:\n\nThe source-built scratch refinement is published at 5ccbde as an independent child of utilities e12. Existing root/fsstress qualification and supplemental action proof apply with exact shared BusyBox union identities. Both-CPU archives, AMD64 filesystem consumers, entrypoint and cleanup are qualified; no ARM runtime is claimed. Preserve the earlier 6bc contributor grant and its explicit condition that #16097 actually lands. The shared utilities decision remains separate; no new child review question is pending. Catalog composition preserves the existing 251 records plus the approved LTP record; this is not a fresh whole-graph audit.\n\nPreserved earlier source-specific record:\n\nRequested resource relocation and equivalent base refresh are complete at 6bc049050a. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nContributor approved this exact source for opening after #16097 actually lands. Preserve the conditional grant through an equivalent rebase; do not ask again.\n\nBuild pinned LTP fsstress and its BusyBox image from declared Bazel inputs. Preserve basic/fsstress, Make and the shell parent; include the GPLv2 notice with a scoped exception. Standalone GNU dual-architecture builds, LLVM musl dual-architecture image/archive checks, three native filesystem cases and Make identity roundtrip passed. A separate unchanged ENTRYPOINT run produced eight files across two workers. Canonical current-source Fetch/Verify preserve all 196 foundation catalog blocks and add only LTP. The source remains qualified for conditional delivery. No ARM execution or performance claim.",
+      "nextStep": "Complete. No fsstress follow-up or local utility rebuild; independent GNU-tools/PIDFD and resolver obligations stay on their own records.",
+      "recheckCondition": "A genuine new fsstress recurrence or explicit new work request."
     },
     {
       "id": "branch:fix/goimports-make-wrapper",
@@ -31572,17 +31584,19 @@
       "title": "Prepare shared utilities for scratch images",
       "url": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c",
       "status": "Withdrawn local BusyBox composition",
-      "summary": "The broad e12 composition is not approved for shipment as a gVisor-specific BusyBox build under the contributor's current direction. Its old approval and qualification are preserved only as history. The narrower d450 local producer is also withdrawn. Existing official images supply the BusyBox applets needed by fsstress, resolver, basic/busybox and syscallbench; tmpfile uses its existing Alpine image.\n\nUseful GNU Coreutils work is separate: profile helper 1ef50322e5 needs GNU mkdir, chmod and rm --one-file-system, not BusyBox. Preserve that source and its review while reconciling only its actual GNU/compiler prerequisites. No approval here authorizes shipping a local BusyBox replacement, and PIDFD stays parked.\n\nSuperseded broad-utility disposition and qualification:\n\nThe broader approved e12 utility composition remains the recorded source for its unreparented consumers. The narrower standalone BusyBox proposal d450a87dd3 was withdrawn; fsstress is returning to its previously approved official-image approach under agent ownership. Other child sources and the parked PIDFD record are unchanged.\n\nPreserved broader-utility record:\n\nThe contributor explicitly approved e12e8a357. Existing child approvals remain valid. Delivery still waits on PIDFD source utilities and their recorded compiler/image/license ancestry.\n\nEarlier source-specific record:\n\nThe shared source-built BusyBox configuration supplies the commands used by the tmpfile, syscallbench, resolver, containerd and fsstress fixtures. It declares the Coreutils gperf generator and binds the image target CPU to musl. Final union qualification passes 25 native phases, 11 reporting controls, 10 image/context outputs, 22 program joins, two uncached tests and four syscallbench modes. Seven PIDFD programs retain the nested unsupported-kcmp skip. Both BusyBox binaries and their producer digests exactly match the separately qualified root-image configuration; union BusyBox actions are cache hits, while those root producers were uncached remote actions. No ARM runtime or ARM64 syscallbench port is claimed. Root has requested this one new shared-utilities review; child grants remain separate.",
+      "summary": "Withdrawn local BusyBox composition; no delivery decision or fsstress task remains. The official-image fsstress revision already merged as #16401. Historical grants and qualification are retained. Useful GNU tools remain independent, and PIDFD remains parked under its own holds.",
       "updatedAt": "2026-10-26T00:14:10.948933+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c",
         "observedAt": "2026-10-26T00:14:10.948933+00:00",
-        "disposition": "Local BusyBox delivery withdrawn; distinct GNU Coreutils work retained",
-        "nextAction": "Do not ship the e12 BusyBox composition. Retain useful GNU Coreutils source independently, and use official BusyBox/Alpine images for the audited consumers. Preserve old grants as history rather than current authorization for local BusyBox; leave PIDFD parked.",
+        "disposition": "Withdrawn local BusyBox composition; no delivery decision or fsstress task remains. The official-image fsstress revision already merged as #16401. Historical grants and qualification are retained. Useful GNU tools remain independent, and PIDFD remains parked under its own holds.",
+        "nextAction": "No local BusyBox/fsstress operation. Preserve the independent GNU-tools and PIDFD records without restarting this withdrawn proposal.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
-        ]
+        ],
+        "recheckCondition": "Only an explicit new scope request; no pending fsstress return-to-official-image task.",
+        "curatedAt": "2026-11-25T23:00:04.041520+00:00"
       },
       "evidence": [
         {
@@ -31590,7 +31604,10 @@
           "url": "https://github.com/tamird/gvisor/commit/d450a87dd3b88c328f8dd163bb0f593861f63805"
         }
       ],
-      "inactive": true
+      "inactive": true,
+      "historicalSummary": "The broad e12 composition is not approved for shipment as a gVisor-specific BusyBox build under the contributor's current direction. Its old approval and qualification are preserved only as history. The narrower d450 local producer is also withdrawn. Existing official images supply the BusyBox applets needed by fsstress, resolver, basic/busybox and syscallbench; tmpfile uses its existing Alpine image.\n\nUseful GNU Coreutils work is separate: profile helper 1ef50322e5 needs GNU mkdir, chmod and rm --one-file-system, not BusyBox. Preserve that source and its review while reconciling only its actual GNU/compiler prerequisites. No approval here authorizes shipping a local BusyBox replacement, and PIDFD stays parked.\n\nSuperseded broad-utility disposition and qualification:\n\nThe broader approved e12 utility composition remains the recorded source for its unreparented consumers. The narrower standalone BusyBox proposal d450a87dd3 was withdrawn; fsstress is returning to its previously approved official-image approach under agent ownership. Other child sources and the parked PIDFD record are unchanged.\n\nPreserved broader-utility record:\n\nThe contributor explicitly approved e12e8a357. Existing child approvals remain valid. Delivery still waits on PIDFD source utilities and their recorded compiler/image/license ancestry.\n\nEarlier source-specific record:\n\nThe shared source-built BusyBox configuration supplies the commands used by the tmpfile, syscallbench, resolver, containerd and fsstress fixtures. It declares the Coreutils gperf generator and binds the image target CPU to musl. Final union qualification passes 25 native phases, 11 reporting controls, 10 image/context outputs, 22 program joins, two uncached tests and four syscallbench modes. Seven PIDFD programs retain the nested unsupported-kcmp skip. Both BusyBox binaries and their producer digests exactly match the separately qualified root-image configuration; union BusyBox actions are cache hits, while those root producers were uncached remote actions. No ARM runtime or ARM64 syscallbench port is claimed. Root has requested this one new shared-utilities review; child grants remain separate.",
+      "nextStep": "No local BusyBox/fsstress operation. Preserve the independent GNU-tools and PIDFD records without restarting this withdrawn proposal.",
+      "recheckCondition": "Only an explicit new scope request; no pending fsstress return-to-official-image task."
     },
     {
       "id": "branch:source-built-containerd-image",
@@ -36183,19 +36200,21 @@
       "group": "bazel",
       "status": "Withdrawn",
       "updatedAt": "2026-10-25T23:55:28.213552+00:00",
-      "summary": "The contributor withdrew the local BusyBox build proposal d450a87dd3. A reusable external provider belongs upstream in BCR; this proposal will not be shipped and no contributor decision remains. Agent work will use the already-approved official-image approach for fsstress while assessing any reusable external provider separately. The qualification below remains historical evidence for the withdrawn local build. PIDFD stays parked.\n\nWithdrawn proposal and source-specific qualification:\n\nBuild the shell and BusyBox applets used by scratch images from pinned sources, with the image target CPU's static C toolchain and execution-platform configuration tools. Expose the executable and upstream notices as image layers, with musl notices kept separately. Exact d450a87dd3 is a direct child of GNU image-tools ae68fad953 and removes the PIDFD ancestry from this narrower utility proposal. It is newly proposed for contributor review; the older, broader e12 utilities approval remains historical and applies to its unreparented consumers.\n\nThe independently reviewed split is qualified in f4134e3b. Both AMD64 and ARM64 images and Make contexts built. On AMD64 systrap, the three existing filesystem consumers passed, and the unchanged entrypoint ran two workers that each created four files; cleanup and cached restore passed. The canonical license-policy test passed. Both BusyBox compilations were fresh remote actions. The LTP links were cache hits joined to earlier uncached source-matched producers, so this is not a fresh LTP-link measurement. Verification completed 10.270535 seconds after the final native phase. No ARM runtime, throughput, whole-catalog regeneration or PIDFD qualification is claimed.\n\nUpstream delivery still requires the GNU image-tools parent ae68fad953 and the separate declared compiler/ABI supplier 8306976dbf exposing @llvm. The GNU parent is on native-Go images 4094323ff5, whose remaining gates include #16376, #16051 and APT enumeration f45d2da255 behind #15146. The compiler keeps its own recorded prerequisites. This scratch-image pair does not require the Docker Hub mirror PR #16379.",
+      "summary": "Withdrawn local BusyBox composition; no delivery decision or fsstress task remains. The official-image fsstress revision already merged as #16401. Historical grants and qualification are retained. Useful GNU tools remain independent, and PIDFD remains parked under its own holds.",
       "followup": {
         "owner": "root",
         "sourceHead": "d450a87dd3b88c328f8dd163bb0f593861f63805",
         "observedAt": "2026-10-25T23:55:28.213552+00:00",
-        "disposition": "Local BusyBox proposal withdrawn; replacement is agent work",
-        "nextAction": "Do not publish d450a87dd3. Prepare and validate the fsstress official-image revision on the current base, retaining its existing approval. Any reusable source-built provider belongs in BCR; no new contributor decision is pending.",
+        "disposition": "Withdrawn local BusyBox composition; no delivery decision or fsstress task remains. The official-image fsstress revision already merged as #16401. Historical grants and qualification are retained. Useful GNU tools remain independent, and PIDFD remains parked under its own holds.",
+        "nextAction": "No local BusyBox/fsstress operation. Preserve the independent GNU-tools and PIDFD records without restarting this withdrawn proposal.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/d450a87dd3b88c328f8dd163bb0f593861f63805",
           "https://app.buildbuddy.io/invocation/f4134e3b-0247-4138-bf79-3acfe08fa66d",
           "https://github.com/tamird/gvisor/commit/ae68fad953586e472b8c275b3aaaf17d5f1a450f",
           "https://github.com/tamird/gvisor/commit/8306976dbfd8b5c18c7386a9cd788d33cb99a8b1"
-        ]
+        ],
+        "recheckCondition": "Only an explicit new scope request; no pending fsstress return-to-official-image task.",
+        "curatedAt": "2026-11-25T23:00:04.041520+00:00"
       },
       "evidence": [
         {
@@ -36211,7 +36230,10 @@
           "url": "https://app.buildbuddy.io/invocation/f4134e3b-0247-4138-bf79-3acfe08fa66d"
         }
       ],
-      "inactive": true
+      "inactive": true,
+      "historicalSummary": "The contributor withdrew the local BusyBox build proposal d450a87dd3. A reusable external provider belongs upstream in BCR; this proposal will not be shipped and no contributor decision remains. Agent work will use the already-approved official-image approach for fsstress while assessing any reusable external provider separately. The qualification below remains historical evidence for the withdrawn local build. PIDFD stays parked.\n\nWithdrawn proposal and source-specific qualification:\n\nBuild the shell and BusyBox applets used by scratch images from pinned sources, with the image target CPU's static C toolchain and execution-platform configuration tools. Expose the executable and upstream notices as image layers, with musl notices kept separately. Exact d450a87dd3 is a direct child of GNU image-tools ae68fad953 and removes the PIDFD ancestry from this narrower utility proposal. It is newly proposed for contributor review; the older, broader e12 utilities approval remains historical and applies to its unreparented consumers.\n\nThe independently reviewed split is qualified in f4134e3b. Both AMD64 and ARM64 images and Make contexts built. On AMD64 systrap, the three existing filesystem consumers passed, and the unchanged entrypoint ran two workers that each created four files; cleanup and cached restore passed. The canonical license-policy test passed. Both BusyBox compilations were fresh remote actions. The LTP links were cache hits joined to earlier uncached source-matched producers, so this is not a fresh LTP-link measurement. Verification completed 10.270535 seconds after the final native phase. No ARM runtime, throughput, whole-catalog regeneration or PIDFD qualification is claimed.\n\nUpstream delivery still requires the GNU image-tools parent ae68fad953 and the separate declared compiler/ABI supplier 8306976dbf exposing @llvm. The GNU parent is on native-Go images 4094323ff5, whose remaining gates include #16376, #16051 and APT enumeration f45d2da255 behind #15146. The compiler keeps its own recorded prerequisites. This scratch-image pair does not require the Docker Hub mirror PR #16379.",
+      "nextStep": "No local BusyBox/fsstress operation. Preserve the independent GNU-tools and PIDFD records without restarting this withdrawn proposal.",
+      "recheckCondition": "Only an explicit new scope request; no pending fsstress return-to-official-image task."
     },
     {
       "id": "pr:16401",
@@ -36225,14 +36247,14 @@
       "group": "bazel",
       "status": "merged",
       "updatedAt": "2026-11-06T23:37:40.578Z",
-      "summary": "The approved fsstress source is published as upstream PR #16401 at exact 97c071a745 on master fb7341a1ad. It builds pinned LTP fsstress and layers its executable, notice and launch script onto the existing official @test_busybox image, preserving the shell parent. There is no contributor hold or pending agent source-review decision on this delivered proposal. Current public checks, matching imports and maintainer review are shown from the live GitHub snapshot.\n\nNative Linux ARM64 validation now passed all three existing fsstress cases on exact 97c071a745: gofer, shared gofer and tmpfs, using systrap and the same previously qualified image. A separate deterministic witness confirmed two workers each created four empty files. The GitHub-hosted runner used real ARM64 hardware, with no emulation. Bazel exited 0; the XML/digest verdict was emitted 23.281 milliseconds after execution. Two setup repairs preceded the successful run; no manual intervention was needed to produce its verdict. This closes the native ARM64 gap for this consumer, without qualifying other images or native ARM64 BuildBuddy capacity.\n\nExact-source validation of published 97c071a745 passed in 7a5ba05a. Both architectures' LTP links were fresh remote GNU actions; each fsstress archive contained the official BusyBox base layers unchanged plus one fsstress layer, and the Make contexts matched. On AMD64/runc, two workers each produced four files. Automatic verification completed 7.817 seconds after the last execution. That earlier run did not execute ARM64 runtime tests; the older 6b2 filesystem results retain their original source scope.\n\nThe source-specific official-image validation d5246ab2 and two-worker entrypoint proof fe7b2570 remain historical evidence. The foundation imported as c3e0783a through #16307 is already in master. Neither the withdrawn local BusyBox/PIDFD stack nor the independent #16374 generic archive is a delivery gate.",
+      "summary": "Completed: approved official-BusyBox fsstress source 97c071a745 merged through #16401 on October 27 at 0424a4b4fa. Its source-specific qualification remains historical. No fsstress source preparation, maintainer-landing wait or local BusyBox replacement remains.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "97c071a74524f2d2fc10f6f4768f1214381b7133",
         "observedAt": "2026-10-26T15:10:17.359539+00:00",
         "reviewedAt": "2026-10-22T10:14:21.290429+00:00",
-        "disposition": "Approved official-image fsstress source delivered as #16401",
-        "nextAction": "Follow current-head checks, matching imports and maintainer review through the existing intake. Exact 97c071a745 now has both-architecture image builds, the AMD64/runc entrypoint witness, and native ARM64 systrap validation of all three filesystem cases plus the two-worker witness. Resolver publication remains sequenced after this PR lands; no new contributor decision or public notification.",
+        "disposition": "Completed: approved official-BusyBox fsstress source 97c071a745 merged through #16401 on October 27 at 0424a4b4fa. Its source-specific qualification remains historical. No fsstress source preparation, maintainer-landing wait or local BusyBox replacement remains.",
+        "nextAction": "Complete. No fsstress follow-up or local utility rebuild; independent GNU-tools/PIDFD and resolver obligations stay on their own records.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/40343726827/job/121644975773",
           "https://app.buildbuddy.io/invocation/7a5ba05a-12dd-4122-a749-d4c1a08813a0",
@@ -36251,8 +36273,17 @@
           "https://github.com/google/gvisor/pull/16307",
           "https://github.com/google/gvisor/pull/16374",
           "https://github.com/tamird/gvisor/commit/8e45c79086ef50a61ed70379f89a5b684ea75db9",
-          "https://github.com/google/gvisor/pull/16379"
-        ]
+          "https://github.com/google/gvisor/pull/16379",
+          "https://github.com/gvisor/gvisor/pull/16401",
+          "https://github.com/gvisor/gvisor/commit/0424a4b4fa3105cbe3271c301e8bf6cb8adf0277"
+        ],
+        "recheckCondition": "A genuine new fsstress recurrence or explicit new work request.",
+        "curatedAt": "2026-11-25T23:00:04.041520+00:00",
+        "completion": {
+          "pr": 16401,
+          "head": "97c071a74524f2d2fc10f6f4768f1214381b7133",
+          "merge": "0424a4b4fa3105cbe3271c301e8bf6cb8adf0277"
+        }
       },
       "evidence": [
         {
@@ -36275,7 +36306,11 @@
           "label": "Earlier official-image two-worker entrypoint proof; source-specific",
           "url": "https://app.buildbuddy.io/invocation/fe7b2570-6a93-4ebe-a1b8-0a348df57c34"
         }
-      ]
+      ],
+      "historicalSummary": "The approved fsstress source is published as upstream PR #16401 at exact 97c071a745 on master fb7341a1ad. It builds pinned LTP fsstress and layers its executable, notice and launch script onto the existing official @test_busybox image, preserving the shell parent. There is no contributor hold or pending agent source-review decision on this delivered proposal. Current public checks, matching imports and maintainer review are shown from the live GitHub snapshot.\n\nNative Linux ARM64 validation now passed all three existing fsstress cases on exact 97c071a745: gofer, shared gofer and tmpfs, using systrap and the same previously qualified image. A separate deterministic witness confirmed two workers each created four empty files. The GitHub-hosted runner used real ARM64 hardware, with no emulation. Bazel exited 0; the XML/digest verdict was emitted 23.281 milliseconds after execution. Two setup repairs preceded the successful run; no manual intervention was needed to produce its verdict. This closes the native ARM64 gap for this consumer, without qualifying other images or native ARM64 BuildBuddy capacity.\n\nExact-source validation of published 97c071a745 passed in 7a5ba05a. Both architectures' LTP links were fresh remote GNU actions; each fsstress archive contained the official BusyBox base layers unchanged plus one fsstress layer, and the Make contexts matched. On AMD64/runc, two workers each produced four files. Automatic verification completed 7.817 seconds after the last execution. That earlier run did not execute ARM64 runtime tests; the older 6b2 filesystem results retain their original source scope.\n\nThe source-specific official-image validation d5246ab2 and two-worker entrypoint proof fe7b2570 remain historical evidence. The foundation imported as c3e0783a through #16307 is already in master. Neither the withdrawn local BusyBox/PIDFD stack nor the independent #16374 generic archive is a delivery gate.",
+      "nextStep": "Complete. No fsstress follow-up or local utility rebuild; independent GNU-tools/PIDFD and resolver obligations stay on their own records.",
+      "recheckCondition": "A genuine new fsstress recurrence or explicit new work request.",
+      "inactive": true
     },
     {
       "id": "branch:tcp-repeated-rto-ssthresh",
@@ -70181,7 +70216,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-25T15:19:00.232145+00:00",
-      "summary": "Current 42f14a3ed is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
+      "summary": "Public #16827 remains at 42f14a3ed. Candidate 4049b6b148 retains only the repeated-handshake regression test after the production receive-memory fix landed in #17118. All 16 cases pass on Linux and netstack; independent reviews are clear. The actual amendment and supplied-notice question awaits Tamir.",
       "evidence": [
         {
           "label": "Wire receipts: native Linux, stock gVisor, corrected gVisor and TCP Nogo",
@@ -70215,17 +70250,19 @@
       "followup": {
         "sourceHead": "42f14a3eda58cd5b40d590c15309ba44273195e1",
         "owner": "root",
-        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
+        "nextAction": "Root awaits Tamir’s answer on exact 4049b6b148 and its supplied rebase notice. Preserve the original-branch old-head lease; no source update, notice, new test or merge is implied.",
         "mergeable": "CONFLICTING",
         "observedAt": "2026-11-24T05:47:43.330769+00:00",
-        "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change.",
+        "recheckCondition": "Actual answer to the asked amendment/notice question, or substantive source/review evidence.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/16827",
           "https://github.com/tamird/gvisor/commit/3732b4758e2276a9e60ff9ed250ee0a10339e8db",
-          "https://github.com/tamird/gvisor/commit/42f14a3eda58cd5b40d590c15309ba44273195e1"
+          "https://github.com/tamird/gvisor/commit/42f14a3eda58cd5b40d590c15309ba44273195e1",
+          "https://github.com/tamird/gvisor/commit/4049b6b148b44c411a8eb1269fe62bf4c89dbbb7",
+          "https://github.com/gvisor/gvisor/pull/17118"
         ],
-        "disposition": "Current 42f14a3ed is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
-        "curatedAt": "2026-11-25T15:19:00.232145+00:00"
+        "disposition": "Public #16827 remains at 42f14a3ed. Candidate 4049b6b148 retains only the repeated-handshake regression test after the production receive-memory fix landed in #17118. All 16 cases pass on Linux and netstack; independent reviews are clear. The actual amendment and supplied-notice question awaits Tamir.",
+        "curatedAt": "2026-11-25T23:00:04.041520+00:00"
       },
       "dcoAmendment": {
         "oldHead": "3732b4758e2276a9e60ff9ed250ee0a10339e8db",
@@ -70249,8 +70286,19 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
-      "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change."
+      "nextStep": "Root awaits Tamir’s answer on exact 4049b6b148 and its supplied rebase notice. Preserve the original-branch old-head lease; no source update, notice, new test or merge is implied.",
+      "recheckCondition": "Actual answer to the asked amendment/notice question, or substantive source/review evidence.",
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "4049b6b148b44c411a8eb1269fe62bf4c89dbbb7",
+        "baseHead": "42f14a3eda58cd5b40d590c15309ba44273195e1",
+        "url": "https://github.com/tamird/gvisor/commit/4049b6b148b44c411a8eb1269fe62bf4c89dbbb7",
+        "title": "Transfer TCP receive memory with the segment that owns it",
+        "summary": "The actual amendment and supplied rebase-notice question is unanswered; public source is unchanged.",
+        "body": "Scope summary of the actual unanswered request: approve replacing #16827 with exact 4049b6b148b44c411a8eb1269fe62bf4c89dbbb7 and posting the supplied notice. #17118 landed the production fix. The remaining test exercises repeated TCP handshakes carrying data and checks that the listener can reuse its receive buffer. All 16 cases passed on each of Linux and netstack; independent reviews found no issues.\n\nProposed notice:\n\nRebased on master and retained the repeated-handshake regression test. The receive-memory ownership fix already landed in #17118.\n\nPosted by Codex on behalf of @tamird.\n\nComparison command from the asked proposal:\n\ngit range-diff 42f14a3ed^! 4049b6b14^!\n",
+        "replyBody": "Rebased on master and retained the repeated-handshake regression test. The receive-memory ownership fix already landed in #17118.\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "pr:16828",
@@ -81161,7 +81209,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-25T22:03:16.345652+00:00",
-      "summary": "Public #17131 remains at 32fd9c26; private candidate 99628869e has completed affected functional/source qualification. Reporting recovery 45714876845 retained 50 child PIDs and 24 measured pairs; none of 60 drift/order/arm contrasts flagged, with roughly 1–4% timing resolution. This is A/A admission evidence only, not candidate A/B or performance clearance.",
+      "summary": "Public #17131 remains at 32fd9c26; private 99628869e is functionally qualified. Matched A/B 45716033027 retained 24 pairs and found a 4.51% initial-attach-cycle slowdown for four FDs/two processors (reported p<0.001), with no control flags. Allocation improvements do not erase that timing regression. Performance remains held pending source/measurement assessment.",
       "evidence": [
         {
           "label": "Uncached owner tests and both architecture analyzers",
@@ -81307,8 +81355,8 @@
         "owner": "approved_rebase_queue",
         "sourceHead": "32fd9c26abba8ceb7d68c6aacfd565bda81f839a",
         "observedAt": "2026-11-23T21:36:15.021685+00:00",
-        "disposition": "Public #17131 remains at 32fd9c26; private candidate 99628869e has completed affected functional/source qualification. Reporting recovery 45714876845 retained 50 child PIDs and 24 measured pairs; none of 60 drift/order/arm contrasts flagged, with roughly 1–4% timing resolution. This is A/A admission evidence only, not candidate A/B or performance clearance.",
-        "nextAction": "approved_rebase_queue owns the conditional candidate A/B and its source-bound result under the existing bounded design. Root retains final context/source/publication review; no extra samples, retries or public source mutation is inferred.",
+        "disposition": "Public #17131 remains at 32fd9c26; private 99628869e is functionally qualified. Matched A/B 45716033027 retained 24 pairs and found a 4.51% initial-attach-cycle slowdown for four FDs/two processors (reported p<0.001), with no control flags. Allocation improvements do not erase that timing regression. Performance remains held pending source/measurement assessment.",
+        "nextAction": "approved_rebase_queue and root assess the retained slowdown before any publication decision. Preserve the completed A/A and actual binary/source bindings; no repeat, extra samples or broad performance clearance.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17131",
           "https://github.com/tamird/gvisor/actions/runs/42855947112/artifacts/13784755003",
@@ -81317,11 +81365,12 @@
           "https://github.com/tamird/gvisor/commit/6e81862c424cbcfba5ffefbe1ae6123566acdcd8",
           "https://github.com/gvisor/gvisor/pull/17131#issuecomment-7054668856",
           "https://buildkite.com/gvisor/first-pass/builds/2189#01a1fb9c-740f-439f-a041-9e54b5dab32b",
-          "https://github.com/tamird/gvisor/actions/runs/45714876845"
+          "https://github.com/tamird/gvisor/actions/runs/45714876845",
+          "https://github.com/tamird/gvisor/actions/runs/45716033027"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Existing owner’s actual candidate A/B result or substantive source/review change.",
-        "curatedAt": "2026-11-25T22:42:00.270038+00:00",
+        "recheckCondition": "Evidence-backed source/measurement assessment or an actual source/review decision.",
+        "curatedAt": "2026-11-25T23:00:04.041520+00:00",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -81387,8 +81436,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "approved_rebase_queue owns the conditional candidate A/B and its source-bound result under the existing bounded design. Root retains final context/source/publication review; no extra samples, retries or public source mutation is inferred.",
-      "recheckCondition": "Existing owner’s actual candidate A/B result or substantive source/review change."
+      "nextStep": "approved_rebase_queue and root assess the retained slowdown before any publication decision. Preserve the completed A/A and actual binary/source bindings; no repeat, extra samples or broad performance clearance.",
+      "recheckCondition": "Evidence-backed source/measurement assessment or an actual source/review decision."
     },
     {
       "id": "pr:17118",
@@ -85222,7 +85271,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:55.832924+00:00",
-      "summary": "TCP uses the endpoint mutex to update the receive window, its sequence number and the buffered-byte count sampled at the last advertisement. The RTT estimator also holds the receive queue mutex when it reads the advertised window. This change lets Nogo check the existing endpoint lock at both RTT reads and in the segment acceptance and window helpers. It adds no runtime locks.\n\nOn the final commit, a fresh TCP Nogo run on native AMD64 reported zero findings for both Linux AMD64 and ARM64. On the preceding two-field version, TestZeroScaledWindowReceive passed on AMD64. Removing only the RTT helper’s endpoint-lock precondition produced three findings across its two accesses on each analyzer architecture. Each finding named the missing endpoint mutex and the held receive queue mutex. The final revision also covers the buffered-byte sample and leaves the tested Go statements unchanged.",
+      "summary": "Current 37a6d15f5 and qualified a6536561 have identical full Git trees. Retained actual uncached tcp_nogo passes with zero findings for Linux AMD64 and ARM64. Parent 53875 passed cached stack_nogo and all three checklocks fixtures whose inputs precede the sole TCP source change. The requested evidence lookup is complete; human review and the source-bound First Pass 1551 admission failure remain separate.",
       "evidence": [
         {
           "label": "Standalone proposal and permanent description",
@@ -85264,8 +85313,8 @@
         "owner": "root",
         "sourceHead": "37a6d15f5e290a3db8e7228bbc2335a5bbe19c43",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Lucas's experimental assisted COMMENTED review recommends approval and no source change. GitHub still reports REVIEW_REQUIRED. First Pass #878 remains failed; the review recommends exercising checklocks because its pipeline steps did not run.",
-        "nextAction": "Follow maintainer review of the unchanged source. Check existing exact-head AMD64/ARM64 stack Nogo evidence and establish whether the relevant nogo-tests ran; if that evidence is missing, qualify those targets remotely. Preserve the advisory First Pass failure; do not claim the review or a rerun establishes approval, and do not post an acknowledgement. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 37a6d15f5e290a3db8e7228bbc2335a5bbe19c43; observed 2026-11-17T19:29:29.454062+00:00): build 1551 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "disposition": "Current 37a6d15f5 and qualified a6536561 have identical full Git trees. Retained actual uncached tcp_nogo passes with zero findings for Linux AMD64 and ARM64. Parent 53875 passed cached stack_nogo and all three checklocks fixtures whose inputs precede the sole TCP source change. The requested evidence lookup is complete; human review and the source-bound First Pass 1551 admission failure remain separate.",
+        "nextAction": "Follow pending human review and a genuine current-head CI/admission event. No duplicate source qualification or nogo-tests run is needed; parent’s 882 cached suite results are not a whole-suite rerun on this PR.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17202",
           "https://github.com/tamird/gvisor/commit/a6536561c",
@@ -85301,14 +85350,16 @@
           "https://buildkite.com/gvisor/first-pass/builds/1551#01a1ead9-743d-4eb1-bd95-449abfcc583c",
           "https://buildkite.com/gvisor/first-pass/builds/1551#01a1ead9-743e-4616-962a-1e5b042951fc",
           "https://buildkite.com/gvisor/first-pass/builds/1551#01a1ead9-743e-414e-8901-b27524035d99",
-          "https://buildkite.com/gvisor/first-pass/builds/1551#01a1ead9-743e-4ae8-99c9-19627456ea85"
+          "https://buildkite.com/gvisor/first-pass/builds/1551#01a1ead9-743e-4ae8-99c9-19627456ea85",
+          "https://github.com/tamird/gvisor/actions/runs/42404341264/artifacts/13587295944",
+          "https://buildkite.com/gvisor/pipeline/builds/53875#01a1b5e1-9523-4ef0-87fe-73daab24e86f"
         ],
-        "recheckCondition": "New substantive feedback, source head change, relevant Nogo qualification result, or import creation/status change. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "recheckCondition": "New maintainer/source/check evidence; no unchanged retry or renewed evidence lookup.",
         "attentionDispositions": [
           {
             "reason": "author-feedback",
-            "title": "Assisted recommendation triaged; validation follow-up retained",
-            "nextAction": "Follow maintainer review of the unchanged source. Check existing exact-head AMD64/ARM64 stack Nogo evidence and establish whether the relevant nogo-tests ran; if that evidence is missing, qualify those targets remotely. Preserve the advisory First Pass failure; do not claim the review or a rerun establishes approval, and do not post an acknowledgement.",
+            "title": "Assisted recommendation triaged; exact reusable checklocks evidence verified",
+            "nextAction": "Follow pending human review and a genuine current-head CI/admission event. No duplicate source qualification or nogo-tests run is needed; parent’s 882 cached suite results are not a whole-suite rerun on this PR.",
             "evidence": [
               "https://github.com/google/gvisor/pull/17202#pullrequestreview-5896773843"
             ],
@@ -85398,7 +85449,8 @@
             }
           }
         ],
-        "mergeable": "MERGEABLE"
+        "mergeable": "MERGEABLE",
+        "curatedAt": "2026-11-25T23:00:04.041520+00:00"
       },
       "number": 17202,
       "dcoAmendment": {
@@ -85459,7 +85511,9 @@
             "sourceHead": "a6536561c6f56d5e76a64cb0a62bef2d6f3aa5ba"
           }
         ]
-      }
+      },
+      "nextStep": "Follow pending human review and a genuine current-head CI/admission event. No duplicate source qualification or nogo-tests run is needed; parent’s 882 cached suite results are not a whole-suite rerun on this PR.",
+      "recheckCondition": "New maintainer/source/check evidence; no unchanged retry or renewed evidence lookup."
     },
     {
       "id": "branch:build-test-default-outputs",
@@ -111003,7 +111057,7 @@
       "from": "branch:shared-scratch-image-utilities",
       "to": "branch:rules-img-fsstress",
       "type": "includes",
-      "reason": "Historical 6012 composition used withdrawn d450. This is not an active delivery gate; agent work is returning fsstress to the previously approved official-image approach.",
+      "reason": "Historical 6012 composition used withdrawn d450; no active delivery gate. The later official-image fsstress source 97c071a745 merged as #16401.",
       "evidence": "https://github.com/tamird/gvisor/commit/d450a87dd3b88c328f8dd163bb0f593861f63805"
     },
     {
@@ -134324,7 +134378,7 @@
       "owner": "root",
       "updatedAt": "2026-11-25T21:04:58.790048+00:00",
       "group": "analysis",
-      "summary": "Source 0edf29aac remains the completed 36-commit analyzer rewrite with scoped checker/source evidence and unchanged 891-target corpus reuse. Startup qualification is complete at its recorded scope. Syscall qualification is running; remaining HTTP budget, performance and FUSE architectural gates stay separate. The three route failures reproduce on the original parent, and #17884 remains open.",
+      "summary": "Source 0edf29aac remains the completed 36-commit analyzer rewrite with scoped checker/source evidence and unchanged 891-target corpus reuse. Startup is complete at its scope. Syscall, CPU/Memory and the corrected HTTP representative are running under existing owners. Size/Usage/Mutex precision, FUSE architecture and open #17884 remain separate; no broad performance clearance.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -134696,7 +134750,7 @@
           ]
         }
       ],
-      "nextStep": "analysis_delivery owns syscall run 45714898966: all seven original leaves, co-located A/A then conditional A/B only if the frozen primary/integrity controls pass. Consume its terminal result without duplicate polling, retries or expansion. Remaining HTTP timing admission has a technical 90-minute job-budget constraint, not a user-approval wait. Continue independent gates; retain FUSE design scope, baseline behavioral limitations and #17884.",
+      "nextStep": "analysis_delivery consumes the owned terminal results: syscall 45714898966, CPU 45716778895, Memory 45716778939 and changed-input HTTP 45716778901. HTTP budget admission is resolved; its prior run failed on verbose-output grammar before measured pairs, with all product hashes and cleanup preserved. No duplicate polling, retry or sample expansion. Continue independent gates while FUSE scope remains pending.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -135099,7 +135153,7 @@
           }
         ]
       },
-      "recheckCondition": "Existing owner’s terminal syscall qualification receipt, resolved HTTP budget/admission or a substantive prerequisite/FUSE/source event.",
+      "recheckCondition": "Existing owners’ terminal receipts or a substantive prerequisite/FUSE/source event.",
       "lifecycleCoordination": {
         "owner": "root",
         "nextAction": "Root assesses existing #15866 multiple-default and FindRoute cases before deciding any route source change. c9b remains diagnostic-only; its green projection does not qualify compatibility or alter frozen 0edf. Separately assign FUSE/MM design/parity → tiny exec-on-FUSE → GRPC and finish remaining performance qualification; #17884 remains open.",
@@ -135308,17 +135362,20 @@
           "https://github.com/tamird/gvisor/actions/runs/45696611249",
           "https://github.com/tamird/gvisor/actions/runs/45696613609",
           "https://github.com/tamird/gvisor/actions/runs/45697572977/artifacts/15061632675",
-          "https://github.com/tamird/gvisor/actions/runs/45714898966"
+          "https://github.com/tamird/gvisor/actions/runs/45714898966",
+          "https://github.com/tamird/gvisor/actions/runs/45716778895",
+          "https://github.com/tamird/gvisor/actions/runs/45716778939",
+          "https://github.com/tamird/gvisor/actions/runs/45716778901"
         ],
         "owner": "root",
-        "disposition": "Source 0edf29aac remains the completed 36-commit analyzer rewrite with scoped checker/source evidence and unchanged 891-target corpus reuse. Startup qualification is complete at its recorded scope. Syscall qualification is running; remaining HTTP budget, performance and FUSE architectural gates stay separate. The three route failures reproduce on the original parent, and #17884 remains open.",
-        "nextAction": "analysis_delivery owns syscall run 45714898966: all seven original leaves, co-located A/A then conditional A/B only if the frozen primary/integrity controls pass. Consume its terminal result without duplicate polling, retries or expansion. Remaining HTTP timing admission has a technical 90-minute job-budget constraint, not a user-approval wait. Continue independent gates; retain FUSE design scope, baseline behavioral limitations and #17884.",
-        "recheckCondition": "Existing owner’s terminal syscall qualification receipt, resolved HTTP budget/admission or a substantive prerequisite/FUSE/source event.",
+        "disposition": "Source 0edf29aac remains the completed 36-commit analyzer rewrite with scoped checker/source evidence and unchanged 891-target corpus reuse. Startup is complete at its scope. Syscall, CPU/Memory and the corrected HTTP representative are running under existing owners. Size/Usage/Mutex precision, FUSE architecture and open #17884 remain separate; no broad performance clearance.",
+        "nextAction": "analysis_delivery consumes the owned terminal results: syscall 45714898966, CPU 45716778895, Memory 45716778939 and changed-input HTTP 45716778901. HTTP budget admission is resolved; its prior run failed on verbose-output grammar before measured pairs, with all product hashes and cleanup preserved. No duplicate polling, retry or sample expansion. Continue independent gates while FUSE scope remains pending.",
+        "recheckCondition": "Existing owners’ terminal receipts or a substantive prerequisite/FUSE/source event.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-25T22:41:21.827202+00:00",
+        "curatedAt": "2026-11-25T23:00:04.041520+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -135338,6 +135395,23 @@
           "nativeAnalyzerHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
           "recorderProjectionPrefix": "d227d5c46",
           "scope": "Seven original syscall leaves, n24, co-located AA then conditional AB only if all primary contrast/product/placement/integrity controls pass. All 35 contrasts/CIs retained; no retries/expansion."
+        },
+        "performanceCurrent": {
+          "owner": "analysis_delivery",
+          "cpu": 45716778895,
+          "memory": 45716778939,
+          "httpRecovery": 45716778901,
+          "syscall": 45714898966,
+          "state": "Running; no new statistical result claimed",
+          "priorHTTP": {
+            "run": 45715790637,
+            "result": "First1000-success warmup failed only output grammar; no measured pairs/AB; hashes/cleanup passed"
+          },
+          "heldGroups": [
+            "Size",
+            "Usage",
+            "Mutex"
+          ]
         }
       },
       "comparisons": [
@@ -144125,10 +144199,10 @@
       "id": "investigation:ci-flake-java-jmx-broken-connection",
       "title": "OpenJDK JMX broken-connection test fails during listener removal",
       "group": "ci-flakes",
-      "status": "active",
+      "status": "concluded",
       "owner": "root",
       "updatedAt": "2026-11-25T02:57:09.139542+00:00",
-      "summary": "The Java 21 exclusion in #17632 merged. Natural post-landing main 55876 at master 0838783b9 dispatches Java runtime and goferfs groups with 40 shards each; mixed running/exit-0 jobs prove dispatch only. Neighboring named JMX selection/pass and skip/cache status remain unverified.",
+      "summary": "Delivered: the one-file java21.csv exclusion is byte-identical in qualified 15ed51fc4, merged 2196ec70c and tested master 0838783b9. The historically affected GoferFS Java shard 8/40 executed //test/runtimes:java21 and passed post-merge in 300.2s. Named tests remain verified pre-merge; post-merge named-case visibility is unverified because the testlogs hook reported zero logs.",
       "findings": [
         {
           "text": "The connection-failed notification arrived before the second removeNotificationListener. The JDK threw ListenerNotFoundException where its test expected IOException. Cases 1–3 passed. Buildkite’s successful retry reused a cached result.",
@@ -144161,7 +144235,7 @@
           ]
         }
       ],
-      "nextStep": "Root checks an actual required named-case report if naturally available from 55876 or another owning post-merge run. Do not infer JMX coverage from shard dispatch, guess a shard from the old missing job UUID, queue a rerun or bypass source/log holds.",
+      "nextStep": "Complete. Revisit only an actual recurrence or new named-case evidence; no rerun or stale post-landing selection lookup.",
       "evidence": [
         {
           "label": "gVisor #17632: exclude the OpenJDK JMX test on Linux",
@@ -144211,24 +144285,32 @@
         }
       ],
       "technicalOwner": "CI flake triage",
-      "recheckCondition": "A naturally available source-bound named JMX selection/outcome report or a relevant source/hold change.",
-      "lifecycleCoordination": {
-        "owner": "root",
-        "nextAction": "Root checks an actual required named-case report if naturally available from 55876 or another owning post-merge run. Do not infer JMX coverage from shard dispatch, guess a shard from the old missing job UUID, queue a rerun or bypass source/log holds.",
-        "recheckCondition": "A naturally available source-bound named JMX selection/outcome report or a relevant source/hold change."
-      },
+      "recheckCondition": "Actual recurrence or directly relevant new evidence.",
+      "lifecycleCoordination": null,
       "followup": {
         "owner": "root",
-        "disposition": "The Java 21 exclusion in #17632 merged. Natural post-landing main 55876 at master 0838783b9 dispatches Java runtime and goferfs groups with 40 shards each; mixed running/exit-0 jobs prove dispatch only. Neighboring named JMX selection/pass and skip/cache status remain unverified.",
-        "nextAction": "Root checks an actual required named-case report if naturally available from 55876 or another owning post-merge run. Do not infer JMX coverage from shard dispatch, guess a shard from the old missing job UUID, queue a rerun or bypass source/log holds.",
-        "recheckCondition": "A naturally available source-bound named JMX selection/outcome report or a relevant source/hold change.",
+        "disposition": "Delivered: the one-file java21.csv exclusion is byte-identical in qualified 15ed51fc4, merged 2196ec70c and tested master 0838783b9. The historically affected GoferFS Java shard 8/40 executed //test/runtimes:java21 and passed post-merge in 300.2s. Named tests remain verified pre-merge; post-merge named-case visibility is unverified because the testlogs hook reported zero logs.",
+        "nextAction": "Complete. Revisit only an actual recurrence or new named-case evidence; no rerun or stale post-landing selection lookup.",
+        "recheckCondition": "Actual recurrence or directly relevant new evidence.",
         "observedAt": "2026-11-25T02:57:09.139542+00:00",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17632",
           "https://github.com/gvisor/gvisor/commit/2196ec70c82e183cfa3028716c542972db870c32",
-          "https://buildkite.com/gvisor/pipeline/builds/55876"
-        ]
-      }
+          "https://buildkite.com/gvisor/pipeline/builds/55876",
+          "https://buildkite.com/gvisor/pipeline/builds/55876#01a21099-fe02-447f-9ee7-92e9caa865c7"
+        ],
+        "curatedAt": "2026-11-25T23:00:04.041520+00:00",
+        "completion": {
+          "csvBlobPrefix": "e573f7bd4",
+          "qualifiedSource": "15ed51fc4f9e492bd7ef7f7a74f17614acea92c6",
+          "mergedSource": "2196ec70c82e183cfa3028716c542972db870c32",
+          "testedMaster": "0838783b9e6907c957e99677d4a9a55d24d3cec5",
+          "postMergeShard": "GoferFS Java8/40",
+          "result": "java21 PASS300.2s",
+          "namedPostMergeVisibility": "Unverified; log_count=0; pre-merge named proof retained"
+        }
+      },
+      "inactive": true
     },
     {
       "id": "investigation:ci-flake-lisafs-teardown",
