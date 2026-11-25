@@ -29,11 +29,6 @@ import (
 	"gvisor.dev/gvisor/runsc/flag"
 )
 
-func i64Ptr(i int64) *int64   { return &i }
-func u64Ptr(i uint64) *uint64 { return &i }
-func u16Ptr(i uint16) *uint16 { return &i }
-func boolPtr(b bool) *bool    { return &b }
-
 // Update implements subcommands.Command for the "update" command.
 type Update struct {
 	containerLoader
@@ -159,7 +154,7 @@ func (u *Update) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcom
 
 	r := specs.LinuxResources{
 		Memory: &specs.LinuxMemory{
-			CheckBeforeUpdate: boolPtr(false),
+			CheckBeforeUpdate: new(false),
 		},
 		CPU:     &specs.LinuxCPU{},
 		BlockIO: &specs.LinuxBlockIO{},
@@ -188,7 +183,7 @@ func (u *Update) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcom
 		}
 
 		if u.blkioWeight != 0 {
-			r.BlockIO.Weight = u16Ptr(uint16(u.blkioWeight))
+			r.BlockIO.Weight = new(uint16(u.blkioWeight))
 		}
 
 		r.CPU.Cpus = u.cpusetCpus

@@ -188,7 +188,7 @@ func controlOne(pid int, pipe PipeInfo, action tpupb.ControlAction, timeoutSecs 
 
 	req := tpupb.ControlRequest_builder{
 		Action:      action.Enum(),
-		TimeoutSecs: proto.Int32(timeoutSecs),
+		TimeoutSecs: new(timeoutSecs),
 	}.Build()
 	reqBytes, err := proto.Marshal(req)
 	if err != nil {

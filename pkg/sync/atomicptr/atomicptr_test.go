@@ -10,21 +10,17 @@ import (
 	"testing"
 )
 
-func newInt(val int) *int {
-	return &val
-}
-
 func TestAtomicPtr(t *testing.T) {
 	var p AtomicPtrInt
 	if got := p.Load(); got != nil {
 		t.Errorf("initial value is %p (%v), wanted nil", got, got)
 	}
-	want := newInt(42)
+	want := new(42)
 	p.Store(want)
 	if got := p.Load(); got != want {
 		t.Errorf("wrong value: got %p (%v), wanted %p (%v)", got, got, want, want)
 	}
-	want = newInt(100)
+	want = new(100)
 	p.Store(want)
 	if got := p.Load(); got != want {
 		t.Errorf("wrong value: got %p (%v), wanted %p (%v)", got, got, want, want)

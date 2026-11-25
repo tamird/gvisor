@@ -26,7 +26,7 @@ import (
 )
 
 func newInt32(i int32) *int32 {
-	return &i
+	return new(i)
 }
 
 func TestSize(t *testing.T) {

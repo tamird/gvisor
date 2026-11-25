@@ -213,14 +213,18 @@ func (l *Ether) ToBytes() ([]byte, error) {
 
 // LinkAddress is a helper routine that allocates a new tcpip.LinkAddress value
 // to store v and returns a pointer to it.
+//
+//go:fix inline
 func LinkAddress(v tcpip.LinkAddress) *tcpip.LinkAddress {
-	return &v
+	return new(v)
 }
 
 // NetworkProtocolNumber is a helper routine that allocates a new
 // tcpip.NetworkProtocolNumber value to store v and returns a pointer to it.
+//
+//go:fix inline
 func NetworkProtocolNumber(v tcpip.NetworkProtocolNumber) *tcpip.NetworkProtocolNumber {
-	return &v
+	return new(v)
 }
 
 // bodySizeHint describes num of bytes left to parse for the rest of layers.
@@ -261,9 +265,9 @@ func parse(parser layerParser, b []byte) Layers {
 func parseEther(b []byte) (Layer, bodySizeHint, layerParser) {
 	h := header.Ethernet(b)
 	ether := Ether{
-		SrcAddr: LinkAddress(h.SourceAddress()),
-		DstAddr: LinkAddress(h.DestinationAddress()),
-		Type:    NetworkProtocolNumber(h.Type()),
+		SrcAddr: new(h.SourceAddress()),
+		DstAddr: new(h.DestinationAddress()),
+		Type:    new(h.Type()),
 	}
 	var nextParser layerParser
 	switch h.Type() {
@@ -416,20 +420,26 @@ func (l *IPv4) ToBytes() ([]byte, error) {
 
 // Uint16 is a helper routine that allocates a new
 // uint16 value to store v and returns a pointer to it.
+//
+//go:fix inline
 func Uint16(v uint16) *uint16 {
-	return &v
+	return new(v)
 }
 
 // Uint8 is a helper routine that allocates a new
 // uint8 value to store v and returns a pointer to it.
+//
+//go:fix inline
 func Uint8(v uint8) *uint8 {
-	return &v
+	return new(v)
 }
 
 // TCPFlags is a helper routine that allocates a new
 // header.TCPFlags value to store v and returns a pointer to it.
+//
+//go:fix inline
 func TCPFlags(v header.TCPFlags) *header.TCPFlags {
-	return &v
+	return new(v)
 }
 
 // Address is a helper routine that allocates a new net.IP value to
@@ -448,15 +458,15 @@ func parseIPv4(b []byte) (Layer, bodySizeHint, layerParser) {
 	options := h.Options()
 	tos, _ := h.TOS()
 	ipv4 := IPv4{
-		IHL:            Uint8(h.HeaderLength()),
+		IHL:            new(h.HeaderLength()),
 		TOS:            &tos,
-		TotalLength:    Uint16(h.TotalLength()),
-		ID:             Uint16(h.ID()),
-		Flags:          Uint8(h.Flags()),
-		FragmentOffset: Uint16(h.FragmentOffset()),
-		TTL:            Uint8(h.TTL()),
-		Protocol:       Uint8(h.Protocol()),
-		Checksum:       Uint16(h.Checksum()),
+		TotalLength:    new(h.TotalLength()),
+		ID:             new(h.ID()),
+		Flags:          new(h.Flags()),
+		FragmentOffset: new(h.FragmentOffset()),
+		TTL:            new(h.TTL()),
+		Protocol:       new(h.Protocol()),
+		Checksum:       new(h.Checksum()),
 		SrcAddr:        Address(h.SourceAddress()),
 		DstAddr:        Address(h.DestinationAddress()),
 		Options:        &options,
@@ -583,9 +593,9 @@ func parseIPv6(b []byte) (Layer, bodySizeHint, layerParser) {
 	ipv6 := IPv6{
 		TrafficClass:  &tos,
 		FlowLabel:     &flowLabel,
-		PayloadLength: Uint16(h.PayloadLength()),
-		NextHeader:    Uint8(h.NextHeader()),
-		HopLimit:      Uint8(h.HopLimit()),
+		PayloadLength: new(h.PayloadLength()),
+		NextHeader:    new(h.NextHeader()),
+		HopLimit:      new(h.HopLimit()),
 		SrcAddr:       Address(h.SourceAddress()),
 		DstAddr:       Address(h.DestinationAddress()),
 	}
@@ -686,8 +696,10 @@ func ipv6OptionsExtHdrToBytes(nextHeader *header.IPv6ExtensionHeaderIdentifier, 
 // IPv6ExtHdrIdent is a helper routine that allocates a new
 // header.IPv6ExtensionHeaderIdentifier value to store v and returns a pointer
 // to it.
+//
+//go:fix inline
 func IPv6ExtHdrIdent(id header.IPv6ExtensionHeaderIdentifier) *header.IPv6ExtensionHeaderIdentifier {
-	return &id
+	return new(id)
 }
 
 // ToBytes implements Layer.ToBytes.
@@ -763,8 +775,10 @@ func parseIPv6DestinationOptionsExtHdr(b []byte) (Layer, bodySizeHint, layerPars
 
 // Bool is a helper routine that allocates a new
 // bool value to store v and returns a pointer to it.
+//
+//go:fix inline
 func Bool(v bool) *bool {
-	return &v
+	return new(v)
 }
 
 // parseIPv6FragmentExtHdr parses the bytes assuming that they start
@@ -774,10 +788,10 @@ func parseIPv6FragmentExtHdr(b []byte) (Layer, bodySizeHint, layerParser) {
 	var extHdr header.IPv6FragmentExtHdr
 	copy(extHdr[:], b[2:])
 	fragLayer := IPv6FragmentExtHdr{
-		NextHeader:     IPv6ExtHdrIdent(header.IPv6ExtensionHeaderIdentifier(nextHeader)),
-		FragmentOffset: Uint16(extHdr.FragmentOffset()),
-		MoreFragments:  Bool(extHdr.More()),
-		Identification: Uint32(extHdr.ID()),
+		NextHeader:     new(header.IPv6ExtensionHeaderIdentifier(nextHeader)),
+		FragmentOffset: new(extHdr.FragmentOffset()),
+		MoreFragments:  new(extHdr.More()),
+		Identification: new(extHdr.ID()),
 	}
 	// If it is a fragment, we can't interpret it.
 	if extHdr.FragmentOffset() != 0 || extHdr.More() {
@@ -905,14 +919,18 @@ func (l *ICMPv6) ToBytes() ([]byte, error) {
 
 // ICMPv6Type is a helper routine that allocates a new ICMPv6Type value to store
 // v and returns a pointer to it.
+//
+//go:fix inline
 func ICMPv6Type(v header.ICMPv6Type) *header.ICMPv6Type {
-	return &v
+	return new(v)
 }
 
 // ICMPv6Code is a helper routine that allocates a new ICMPv6Type value to store
 // v and returns a pointer to it.
+//
+//go:fix inline
 func ICMPv6Code(v header.ICMPv6Code) *header.ICMPv6Code {
-	return &v
+	return new(v)
 }
 
 // parseICMPv6 parses the bytes assuming that they start with an ICMPv6 header.
@@ -920,16 +938,16 @@ func parseICMPv6(b []byte) (Layer, bodySizeHint, layerParser) {
 	h := header.ICMPv6(b)
 	msgType := h.Type()
 	icmpv6 := ICMPv6{
-		Type:     ICMPv6Type(msgType),
-		Code:     ICMPv6Code(h.Code()),
-		Checksum: Uint16(h.Checksum()),
+		Type:     new(msgType),
+		Code:     new(h.Code()),
+		Checksum: new(h.Checksum()),
 		Payload:  h.Payload(),
 	}
 	switch msgType {
 	case header.ICMPv6EchoRequest, header.ICMPv6EchoReply:
-		icmpv6.Ident = Uint16(h.Ident())
+		icmpv6.Ident = new(h.Ident())
 	case header.ICMPv6ParamProblem:
-		icmpv6.Pointer = Uint32(h.TypeSpecific())
+		icmpv6.Pointer = new(h.TypeSpecific())
 	}
 	return &icmpv6, bodySizeUnknown, nil
 }
@@ -966,14 +984,18 @@ func (l *ICMPv4) String() string {
 
 // ICMPv4Type is a helper routine that allocates a new header.ICMPv4Type value
 // to store t and returns a pointer to it.
+//
+//go:fix inline
 func ICMPv4Type(t header.ICMPv4Type) *header.ICMPv4Type {
-	return &t
+	return new(t)
 }
 
 // ICMPv4Code is a helper routine that allocates a new header.ICMPv4Code value
 // to store t and returns a pointer to it.
+//
+//go:fix inline
 func ICMPv4Code(t header.ICMPv4Code) *header.ICMPv4Code {
-	return &t
+	return new(t)
 }
 
 // ToBytes implements Layer.ToBytes.
@@ -1022,17 +1044,17 @@ func parseICMPv4(b []byte) (Layer, bodySizeHint, layerParser) {
 
 	msgType := h.Type()
 	icmpv4 := ICMPv4{
-		Type:     ICMPv4Type(msgType),
-		Code:     ICMPv4Code(h.Code()),
-		Checksum: Uint16(h.Checksum()),
+		Type:     new(msgType),
+		Code:     new(h.Code()),
+		Checksum: new(h.Checksum()),
 		Payload:  h.Payload(),
 	}
 	switch msgType {
 	case header.ICMPv4EchoReply, header.ICMPv4Echo:
-		icmpv4.Ident = Uint16(h.Ident())
-		icmpv4.Sequence = Uint16(h.Sequence())
+		icmpv4.Ident = new(h.Ident())
+		icmpv4.Sequence = new(h.Sequence())
 	case header.ICMPv4ParamProblem:
-		icmpv4.Pointer = Uint8(h.Pointer())
+		icmpv4.Pointer = new(h.Pointer())
 	}
 	return &icmpv4, bodySizeUnknown, nil
 }
@@ -1172,8 +1194,10 @@ func setTCPChecksum(h *header.TCP, tcp *TCP) error {
 
 // Uint32 is a helper routine that allocates a new
 // uint32 value to store v and returns a pointer to it.
+//
+//go:fix inline
 func Uint32(v uint32) *uint32 {
-	return &v
+	return new(v)
 }
 
 // parseTCP parses the bytes assuming that they start with a tcp header and
@@ -1181,15 +1205,15 @@ func Uint32(v uint32) *uint32 {
 func parseTCP(b []byte) (Layer, bodySizeHint, layerParser) {
 	h := header.TCP(b)
 	tcp := TCP{
-		SrcPort:       Uint16(h.SourcePort()),
-		DstPort:       Uint16(h.DestinationPort()),
-		SeqNum:        Uint32(h.SequenceNumber()),
-		AckNum:        Uint32(h.AckNumber()),
-		DataOffset:    Uint8(h.DataOffset()),
-		Flags:         TCPFlags(h.Flags()),
-		WindowSize:    Uint16(h.WindowSize()),
-		Checksum:      Uint16(h.Checksum()),
-		UrgentPointer: Uint16(h.UrgentPointer()),
+		SrcPort:       new(h.SourcePort()),
+		DstPort:       new(h.DestinationPort()),
+		SeqNum:        new(h.SequenceNumber()),
+		AckNum:        new(h.AckNumber()),
+		DataOffset:    new(h.DataOffset()),
+		Flags:         new(h.Flags()),
+		WindowSize:    new(h.WindowSize()),
+		Checksum:      new(h.Checksum()),
+		UrgentPointer: new(h.UrgentPointer()),
 		Options:       b[header.TCPMinimumSize:h.DataOffset()],
 	}
 	return &tcp, bodySizeUnknown, parsePayload
@@ -1270,10 +1294,10 @@ func setUDPChecksum(h *header.UDP, udp *UDP) error {
 func parseUDP(b []byte) (Layer, bodySizeHint, layerParser) {
 	h := header.UDP(b)
 	udp := UDP{
-		SrcPort:  Uint16(h.SourcePort()),
-		DstPort:  Uint16(h.DestinationPort()),
-		Length:   Uint16(h.Length()),
-		Checksum: Uint16(h.Checksum()),
+		SrcPort:  new(h.SourcePort()),
+		DstPort:  new(h.DestinationPort()),
+		Length:   new(h.Length()),
+		Checksum: new(h.Checksum()),
 	}
 	return &udp, bodySizeUnknown, parsePayload
 }

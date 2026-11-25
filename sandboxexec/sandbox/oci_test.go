@@ -148,8 +148,6 @@ func TestSpecWorkingDir(t *testing.T) {
 	}
 }
 
-func modePtr(mode uint32) *uint32 { return &mode }
-
 func TestSpecMountMode(t *testing.T) {
 	const dst = "/mnt/foo"
 
@@ -160,19 +158,19 @@ func TestSpecMountMode(t *testing.T) {
 	}{
 		{
 			name:    "TmpfsWithMode",
-			mount:   sandbox.Mount{Destination: dst, Type: sandbox.MountTypeTmpfs, Mode: modePtr(0700)},
+			mount:   sandbox.Mount{Destination: dst, Type: sandbox.MountTypeTmpfs, Mode: new(uint32(0700))},
 			wantOpt: "mode=0700",
 		},
 		{
 			name:    "TmpfsWithDefaultMode",
-			mount:   sandbox.Mount{Destination: dst, Type: sandbox.MountTypeTmpfs, Mode: modePtr(01777)},
+			mount:   sandbox.Mount{Destination: dst, Type: sandbox.MountTypeTmpfs, Mode: new(uint32(01777))},
 			wantOpt: "mode=1777",
 		},
 		{
 			// ociMount translates whatever Mode it is given; restricting Mode to
 			// tmpfs is the caller's job.
 			name:    "ModePassedThroughForBind",
-			mount:   sandbox.Mount{Source: "/tmp", Destination: dst, Type: sandbox.MountTypeBind, Mode: modePtr(0700)},
+			mount:   sandbox.Mount{Source: "/tmp", Destination: dst, Type: sandbox.MountTypeBind, Mode: new(uint32(0700))},
 			wantOpt: "mode=0700",
 		},
 	}

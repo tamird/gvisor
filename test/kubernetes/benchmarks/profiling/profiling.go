@@ -39,7 +39,6 @@ import (
 
 	"github.com/google/pprof/profile"
 	"golang.org/x/time/rate"
-	"google.golang.org/protobuf/proto"
 	"gvisor.dev/gvisor/pkg/atomicbitops"
 	"gvisor.dev/gvisor/runsc/flag"
 	k8s "gvisor.dev/gvisor/test/kubernetes"
@@ -237,7 +236,7 @@ func startOperations(ctx context.Context, k8sCtx k8sctx.KubernetesContext, c *te
 			Image:           image,
 			Name:            name,
 			Command:         op.command,
-			SecurityContext: &v13.SecurityContext{Privileged: proto.Bool(true)},
+			SecurityContext: &v13.SecurityContext{Privileged: new(true)},
 			VolumeMounts: []v13.VolumeMount{
 				{
 					Name:      "host",

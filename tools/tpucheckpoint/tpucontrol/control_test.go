@@ -88,9 +88,9 @@ func setupMultiPidPipeTest(t *testing.T, pidPipes map[int][]pipePair) {
 func marshalResponse(t *testing.T, success bool, state tpupb.RuntimeState, errMsg string) []byte {
 	t.Helper()
 	resp := tpupb.ControlResponse_builder{
-		Success:      proto.Bool(success),
+		Success:      new(success),
 		CurrentState: state.Enum(),
-		ErrorMessage: proto.String(errMsg),
+		ErrorMessage: new(errMsg),
 	}.Build()
 	data, err := proto.Marshal(resp)
 	if err != nil {

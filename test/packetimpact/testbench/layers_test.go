@@ -179,7 +179,7 @@ func TestLayerStringFormat(t *testing.T) {
 				SeqNum:     Uint32(3452155723),
 				AckNum:     Uint32(2596996163),
 				DataOffset: Uint8(5),
-				Flags:      TCPFlags(header.TCPFlagRst | header.TCPFlagAck),
+				Flags:      new(header.TCPFlagRst | header.TCPFlagAck),
 				WindowSize: Uint16(64240),
 				Checksum:   Uint16(0x2e2b),
 			},
@@ -239,8 +239,8 @@ func TestLayerStringFormat(t *testing.T) {
 		{
 			name: "Ether",
 			l: &Ether{
-				SrcAddr: LinkAddress(tcpip.LinkAddress([]byte{0x02, 0x42, 0xc5, 0x22, 0x3f, 0x0a})),
-				DstAddr: LinkAddress(tcpip.LinkAddress([]byte{0x02, 0x42, 0xc5, 0x22, 0x3f, 0x14})),
+				SrcAddr: new(tcpip.LinkAddress([]byte{0x02, 0x42, 0xc5, 0x22, 0x3f, 0x0a})),
+				DstAddr: new(tcpip.LinkAddress([]byte{0x02, 0x42, 0xc5, 0x22, 0x3f, 0x14})),
 				Type:    NetworkProtocolNumber(4),
 			},
 			want: "&testbench.Ether{" +
@@ -427,7 +427,7 @@ func TestTCPOptions(t *testing.T) {
 					Flags:          Uint8(0),
 					FragmentOffset: Uint16(0),
 					TTL:            Uint8(64),
-					Protocol:       Uint8(uint8(header.TCPProtocolNumber)),
+					Protocol:       new(uint8(header.TCPProtocolNumber)),
 					Checksum:       Uint16(0xf977),
 					SrcAddr:        Address(tcpip.AddrFrom4Slice(net.ParseIP("192.168.0.2").To4())),
 					DstAddr:        Address(tcpip.AddrFrom4Slice(net.ParseIP("192.168.0.1").To4())),
@@ -437,7 +437,7 @@ func TestTCPOptions(t *testing.T) {
 					DstPort:       Uint16(54321),
 					SeqNum:        Uint32(0),
 					AckNum:        Uint32(0),
-					Flags:         TCPFlags(header.TCPFlagSyn),
+					Flags:         new(header.TCPFlagSyn),
 					WindowSize:    Uint16(8192),
 					Checksum:      Uint16(0xf51c),
 					UrgentPointer: Uint16(0),
@@ -471,7 +471,7 @@ func TestTCPOptions(t *testing.T) {
 					Flags:          Uint8(0),
 					FragmentOffset: Uint16(0),
 					TTL:            Uint8(64),
-					Protocol:       Uint8(uint8(header.TCPProtocolNumber)),
+					Protocol:       new(uint8(header.TCPProtocolNumber)),
 					Checksum:       Uint16(0xf96c),
 					SrcAddr:        Address(tcpip.AddrFrom4Slice(net.ParseIP("192.168.0.2").To4())),
 					DstAddr:        Address(tcpip.AddrFrom4Slice(net.ParseIP("192.168.0.1").To4())),
@@ -481,7 +481,7 @@ func TestTCPOptions(t *testing.T) {
 					DstPort:       Uint16(54321),
 					SeqNum:        Uint32(0),
 					AckNum:        Uint32(0),
-					Flags:         TCPFlags(header.TCPFlagSyn),
+					Flags:         new(header.TCPFlagSyn),
 					WindowSize:    Uint16(8192),
 					Checksum:      Uint16(0xe521),
 					UrgentPointer: Uint16(0),
@@ -530,7 +530,7 @@ func TestIPv6ExtHdrOptions(t *testing.T) {
 					DstAddr: Address(tcpip.AddrFrom16Slice(net.ParseIP("fe80::dead:beef"))),
 				},
 				&IPv6HopByHopOptionsExtHdr{
-					NextHeader: IPv6ExtHdrIdent(header.IPv6NoNextHeaderIdentifier),
+					NextHeader: new(header.IPv6NoNextHeaderIdentifier),
 					Options:    []byte{0x05, 0x02, 0x00, 0x00, 0x01, 0x00},
 				},
 				&Payload{
@@ -557,7 +557,7 @@ func TestIPv6ExtHdrOptions(t *testing.T) {
 					DstAddr: Address(tcpip.AddrFromSlice(net.ParseIP("fe80::dead:beef"))),
 				},
 				&IPv6HopByHopOptionsExtHdr{
-					NextHeader: IPv6ExtHdrIdent(header.IPv6NoNextHeaderIdentifier),
+					NextHeader: new(header.IPv6NoNextHeaderIdentifier),
 					Options:    []byte{0x05, 0x02, 0x00, 0x00, 0x01, 0x00},
 				},
 				&Payload{
@@ -586,16 +586,16 @@ func TestIPv6ExtHdrOptions(t *testing.T) {
 					DstAddr: Address(tcpip.AddrFromSlice(net.ParseIP("fe80::dead:beef"))),
 				},
 				&IPv6HopByHopOptionsExtHdr{
-					NextHeader: IPv6ExtHdrIdent(header.IPv6DestinationOptionsExtHdrIdentifier),
+					NextHeader: new(header.IPv6DestinationOptionsExtHdrIdentifier),
 					Options:    []byte{0x05, 0x02, 0x00, 0x00, 0x01, 0x00},
 				},
 				&IPv6DestinationOptionsExtHdr{
-					NextHeader: IPv6ExtHdrIdent(header.IPv6ExtensionHeaderIdentifier(header.ICMPv6ProtocolNumber)),
+					NextHeader: new(header.IPv6ExtensionHeaderIdentifier(header.ICMPv6ProtocolNumber)),
 					Options:    []byte{0x05, 0x02, 0x00, 0x00, 0x01, 0x00},
 				},
 				&ICMPv6{
-					Type:     ICMPv6Type(header.ICMPv6ParamProblem),
-					Code:     ICMPv6Code(header.ICMPv6ErroneousHeader),
+					Type:     new(header.ICMPv6ParamProblem),
+					Code:     new(header.ICMPv6ErroneousHeader),
 					Checksum: Uint16(0x5f98),
 					Pointer:  Uint32(6),
 				},
@@ -620,13 +620,13 @@ func TestIPv6ExtHdrOptions(t *testing.T) {
 					DstAddr: Address(tcpip.AddrFromSlice(net.ParseIP("fe80::dead:beef"))),
 				},
 				&IPv6HopByHopOptionsExtHdr{
-					NextHeader: IPv6ExtHdrIdent(header.IPv6FragmentExtHdrIdentifier),
+					NextHeader: new(header.IPv6FragmentExtHdrIdentifier),
 					Options:    []byte{0x05, 0x02, 0x00, 0x00, 0x01, 0x00},
 				},
 				&IPv6FragmentExtHdr{
-					NextHeader:     IPv6ExtHdrIdent(header.IPv6NoNextHeaderIdentifier),
+					NextHeader:     new(header.IPv6NoNextHeaderIdentifier),
 					FragmentOffset: Uint16(100),
-					MoreFragments:  Bool(false),
+					MoreFragments:  new(false),
 					Identification: Uint32(42),
 				},
 				&Payload{
@@ -655,13 +655,13 @@ func TestIPv6ExtHdrOptions(t *testing.T) {
 					DstAddr: Address(tcpip.AddrFromSlice(net.ParseIP("fe80::dead:beef"))),
 				},
 				&IPv6DestinationOptionsExtHdr{
-					NextHeader: IPv6ExtHdrIdent(header.IPv6FragmentExtHdrIdentifier),
+					NextHeader: new(header.IPv6FragmentExtHdrIdentifier),
 					Options:    []byte{0x05, 0x02, 0x00, 0x00, 0x01, 0x00},
 				},
 				&IPv6FragmentExtHdr{
-					NextHeader:     IPv6ExtHdrIdent(header.IPv6NoNextHeaderIdentifier),
+					NextHeader:     new(header.IPv6NoNextHeaderIdentifier),
 					FragmentOffset: Uint16(100),
-					MoreFragments:  Bool(true),
+					MoreFragments:  new(true),
 					Identification: Uint32(42),
 				},
 				&Payload{
@@ -688,9 +688,9 @@ func TestIPv6ExtHdrOptions(t *testing.T) {
 					DstAddr: Address(tcpip.AddrFromSlice(net.ParseIP("fe80::dead:beef"))),
 				},
 				&IPv6FragmentExtHdr{
-					NextHeader:     IPv6ExtHdrIdent(header.IPv6NoNextHeaderIdentifier),
+					NextHeader:     new(header.IPv6NoNextHeaderIdentifier),
 					FragmentOffset: Uint16(100),
-					MoreFragments:  Bool(true),
+					MoreFragments:  new(true),
 					Identification: Uint32(42),
 				},
 				&Payload{
@@ -740,9 +740,9 @@ func TestEthernetPadding(t *testing.T) {
 	parsed := parse(parseEther, packet)
 	wanted := Layers{
 		&Ether{
-			SrcAddr: LinkAddress(tcpip.LinkAddress("\x64\x4f\x16\x3f\x5f\x0f")),
-			DstAddr: LinkAddress(tcpip.LinkAddress("\x3a\xd6\x90\x36\x18\xce")),
-			Type:    NetworkProtocolNumber(header.IPv4ProtocolNumber),
+			SrcAddr: new(tcpip.LinkAddress("\x64\x4f\x16\x3f\x5f\x0f")),
+			DstAddr: new(tcpip.LinkAddress("\x3a\xd6\x90\x36\x18\xce")),
+			Type:    new(header.IPv4ProtocolNumber),
 		},
 		&IPv4{
 			IHL:            Uint8(20),
@@ -752,7 +752,7 @@ func TestEthernetPadding(t *testing.T) {
 			Flags:          Uint8(0),
 			FragmentOffset: Uint16(0),
 			TTL:            Uint8(64),
-			Protocol:       Uint8(uint8(header.TCPProtocolNumber)),
+			Protocol:       new(uint8(header.TCPProtocolNumber)),
 			Checksum:       Uint16(0x2dba),
 			SrcAddr:        Address(tcpip.AddrFromSlice([]byte("\xac\x00\x00\x02"))),
 			DstAddr:        Address(tcpip.AddrFromSlice([]byte("\xac\x00\x00\x01"))),
@@ -763,7 +763,7 @@ func TestEthernetPadding(t *testing.T) {
 			SeqNum:        Uint32(736407783),
 			AckNum:        Uint32(2596996163),
 			DataOffset:    Uint8(24),
-			Flags:         TCPFlags(header.TCPFlagSyn | header.TCPFlagAck),
+			Flags:         new(header.TCPFlagSyn | header.TCPFlagAck),
 			WindowSize:    Uint16(29184),
 			Checksum:      Uint16(0xf267),
 			UrgentPointer: Uint16(0),
