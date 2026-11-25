@@ -142,12 +142,12 @@ func (m mapValue) String() string {
 }
 
 func (m mapValue) Set(s string) error {
-	sep := strings.Index(s, "=")
-	if sep == -1 {
+	key, value, ok := strings.Cut(s, "=")
+	if !ok {
 		return fmt.Errorf("missing '=' from '%s'", s)
 	}
 
-	m[s[:sep]] = s[sep+1:]
+	m[key] = value
 
 	return nil
 }

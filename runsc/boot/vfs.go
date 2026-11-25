@@ -205,11 +205,11 @@ func rdmaproxyRegisterDevices(info *containerInfo, vfsObj *vfs.VirtualFilesystem
 		// Snapshot attribute values are verbatim file contents; trim before
 		// parsing "major:minor".
 		devStr := strings.TrimSpace(dev.Dev)
-		sep := strings.IndexByte(devStr, ':')
-		if sep < 0 {
+		_, after, ok := strings.Cut(devStr, ":")
+		if !ok {
 			continue
 		}
-		minor64, err := strconv.ParseUint(devStr[sep+1:], 10, 32)
+		minor64, err := strconv.ParseUint(after, 10, 32)
 		if err != nil {
 			continue
 		}
