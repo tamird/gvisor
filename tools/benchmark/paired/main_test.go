@@ -15,6 +15,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"math"
 	"os/exec"
@@ -23,7 +24,27 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 )
+
+func TestVisitTimeout(t *testing.T) {
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	r := report{
+		Commands: map[string]command{
+			"A": {Argv: []string{"/bin/sleep", "60"}},
+		},
+		PinCPU:       -1,
+		VisitTimeout: 100 * time.Millisecond,
+	}
+	err := r.collect(ctx, []string{"One"}, t.TempDir())
+	if !errors.Is(err, context.DeadlineExceeded) || ctx.Err() != nil {
+		t.Fatalf("visit deadline: got %v, parent context: %v", err, ctx.Err())
+	}
+	if len(r.Visits) != 1 || r.Visits[0].PID <= 0 || r.Visits[0].ExitCode == nil || *r.Visits[0].ExitCode == 0 {
+		t.Fatalf("timed-out child was not reaped with a failure: %+v", r.Visits)
+	}
+}
 
 func TestAffinity(t *testing.T) {
 	if runtime.GOOS != "linux" {
