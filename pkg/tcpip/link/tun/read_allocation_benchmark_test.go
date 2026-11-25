@@ -16,6 +16,7 @@ package tun
 
 import (
 	"bytes"
+	"io"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/buffer"
@@ -64,7 +65,7 @@ func BenchmarkReadSegmented(b *testing.B) {
 		if i == -1 {
 			n, err := data.ReadAt(check[:], 0)
 			data.Release()
-			if err != nil || n != size || !bytes.Equal(check[:], payload[:]) {
+			if (err != nil && err != io.EOF) || n != size || !bytes.Equal(check[:], payload[:]) {
 				b.Fatalf("Read content = (%d, %v, %x), want %x", n, err, check, payload)
 			}
 			b.ResetTimer()
