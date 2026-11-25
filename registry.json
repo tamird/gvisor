@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T13:17:35.233413+00:00",
+    "updatedAt": "2026-11-25T15:19:00.232145+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1781,12 +1781,12 @@
       "group": "runtime",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-11-20T00:43:57.063788+00:00",
+      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
       "summary": "Root read complete review5985340174 and inline4636715726 on unchanged publicacf93596. The review explicitly identifies an AI reviewer on Rex’s behalf: it is an automated finding, not a new human instruction. packet_copy_feedback owns verification of Linux/Sentry socket-family behavior; the finding remains unresolved. A31-line native syscall case is under qualification in44647566688, with the original production guard unchanged pending Linux evidence. No reply or source amendment is published.",
       "followup": {
-        "disposition": "Candidate e7b9d365bfc957234050df46d52b9f5815c4513a completed its source-bound qualification: native44677577060, Sentry MmapCopy44677579344 and strict44677584539 (376 sources) passed under exact CI98bcc context. Earlier44647566688 was a terminal setup-container permission failure, not a live investigation. Public acf93596 is unchanged/open; automated inline4636715726 remains unresolved. Existing focused review closure is retained, not a new review or publication approval.",
+        "disposition": "Root read complete review5985340174 and inline4636715726 on unchanged publicacf93596. The review explicitly identifies an AI reviewer on Rex’s behalf: it is an automated finding, not a new human instruction. packet_copy_feedback owns verification of Linux/Sentry socket-family behavior; the finding remains unresolved. A31-line native syscall case is under qualification in44647566688, with the original production guard unchanged pending Linux evidence. No reply or source amendment is published.",
         "owner": "packet_copy_feedback",
-        "nextAction": "Preserve completed candidate evidence while awaiting held feature-performance qualification, an authorised ARM-KVM worker (tested routes lacked /dev/kvm), actual Daybreak availability and source approval before DCO/publication. Do not rerun completed tests or access protected source merely to restate the result.",
+        "nextAction": "Preserve completed candidate evidence while awaiting held feature-performance qualification, an authorised ARM-KVM worker (tested routes lacked /dev/kvm), source approval before DCO/publication. Do not rerun completed tests or access protected source merely to restate the result.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15064",
           "https://github.com/tamird/gvisor/commit/9708dbc9f027a6eece93b1bb9b4f1638038ff31c",
@@ -1806,7 +1806,7 @@
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-20T00:43:57.063788+00:00",
         "recheckCondition": "Actual worker/access availability, required feature-performance evidence or a source-publication decision; no new hardware commitment or approval inferred.",
-        "curatedAt": "2026-11-20T00:43:57.063788+00:00"
+        "curatedAt": "2026-11-25T15:19:00.232145+00:00"
       },
       "head": "acf93596eddca6ca31f652d75b207a8da544ff54",
       "evidence": [
@@ -1857,8 +1857,8 @@
           "reviewedAt": "2026-10-08T00:44:30.969242+00:00"
         }
       },
-      "nextStep": "packet_copy_feedback audits actual Linux/Sentry syscall evidence, then fixes the owning mechanism only if supported. Preserve publicacf93596 and existing CI/dependency requirements; root handles any eventual source-review/publication decision. No automatic acknowledgement or resolved-finding claim.",
-      "recheckCondition": "Actual Linux/Sentry conformance result, verified production correction/review readiness, or changed current source/feedback."
+      "nextStep": "Preserve completed candidate evidence while awaiting held feature-performance qualification, an authorised ARM-KVM worker (tested routes lacked /dev/kvm), source approval before DCO/publication. Do not rerun completed tests or access protected source merely to restate the result.",
+      "recheckCondition": "Actual worker/access availability, required feature-performance evidence or a source-publication decision; no new hardware commitment or approval inferred."
     },
     {
       "id": "pr:15062",
@@ -2340,14 +2340,14 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": null,
-      "updatedAt": "2026-11-25T10:10:54.050204+00:00",
-      "summary": "Unchanged 2457939ec is now conflicting against the current base. Historical LisaFS socket/node-lifetime qualification and maintainer review remain source-bound; no approval or validation transfers to a future integration delta. Earlier untrusted-queue admission evidence remains separate.",
+      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
+      "summary": "Current 2457939ec is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
       "followup": {
-        "disposition": "Unchanged 2457939ec is now conflicting against the current base. Historical LisaFS socket/node-lifetime qualification and maintainer review remain source-bound; no approval or validation transfers to a future integration delta. Earlier untrusted-queue admission evidence remains separate.",
+        "disposition": "Current 2457939ec is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
         "owner": "root",
-        "nextAction": "Root reconciles the new conflict within the existing maintainer/source coordination, preserving sensitive-work and performance boundaries before any source adaptation. No source edit, build/test, automatic reapproval, unchanged CI retry, duplicate reply or outreach follows from this metadata recovery.",
+        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
         "sourceHead": "2457939ec15647b0908859936941c569b0a04cce",
-        "mergeable": "MERGEABLE",
+        "mergeable": "CONFLICTING",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/412f99aae",
           "https://github.com/gvisor/gvisor/pull/14361",
@@ -2358,7 +2358,7 @@
           "https://buildkite.com/gvisor/first-pass/builds/1445#01a1ead1-be31-4430-8185-f9fee90713f1"
         ],
         "observedAt": "2026-11-25T10:10:54.050204+00:00",
-        "recheckCondition": "Actual source/base/mergeability change, a bounded owner disposition or explicit change to applicable source holds.",
+        "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change.",
         "attentionDispositions": [
           {
             "reason": "author-feedback",
@@ -2485,7 +2485,8 @@
               ]
             }
           }
-        ]
+        ],
+        "curatedAt": "2026-11-25T15:19:00.232145+00:00"
       },
       "head": "2457939ec15647b0908859936941c569b0a04cce",
       "evidence": [
@@ -2560,8 +2561,8 @@
           "reviewedAt": "2026-10-10T14:31:51.129671+00:00"
         }
       },
-      "nextStep": "Root reconciles the new conflict within the existing maintainer/source coordination, preserving sensitive-work and performance boundaries before any source adaptation. No source edit, build/test, automatic reapproval, unchanged CI retry, duplicate reply or outreach follows from this metadata recovery.",
-      "recheckCondition": "Actual source/base/mergeability change, a bounded owner disposition or explicit change to applicable source holds."
+      "nextStep": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
+      "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change."
     },
     {
       "id": "pr:14360",
@@ -6764,14 +6765,14 @@
       "url": "https://github.com/google/gvisor/pull/15189",
       "group": "runtime",
       "status": "open",
-      "summary": "Current exact88b54c90a is CONFLICTING. Root retains conflict ownership under the confirmed sensitive-feature hold; prior reviews/CI do not authorize current-base adaptation.",
+      "summary": "Current 88b54c90a is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
       "number": 15189,
       "reviewDecision": "",
-      "updatedAt": "2026-11-17T19:04:43.853615+00:00",
+      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
       "followup": {
-        "disposition": "Current exact88b54c90a is CONFLICTING. Root retains conflict ownership under the confirmed sensitive-feature hold; prior reviews/CI do not authorize current-base adaptation.",
+        "disposition": "Current 88b54c90a is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
         "owner": "root",
-        "nextAction": "Keep source assessment/adaptation held until actual user hold release. No protected implementation read, rebase, tests, push, outreach or new Daybreak question.",
+        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15189",
           "https://github.com/tamird/gvisor/actions/runs/42350364656/artifacts/13565357543",
@@ -6794,7 +6795,7 @@
         "sourceHead": "88b54c90a3442188496cedaa3590d10409590861",
         "mergeable": "CONFLICTING",
         "observedAt": "2026-11-24T04:47:08.376554+00:00",
-        "recheckCondition": "Actual user hold release or source/head/base/mergeability change.",
+        "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -6826,7 +6827,8 @@
               ]
             }
           }
-        ]
+        ],
+        "curatedAt": "2026-11-25T15:19:00.232145+00:00"
       },
       "head": "88b54c90a3442188496cedaa3590d10409590861",
       "evidence": [
@@ -6878,7 +6880,8 @@
         },
         "historicalOutreachClockHead": "4677b6d5ab8676013afe8e5074ca776e9aabaafd"
       },
-      "nextStep": "Keep source assessment/adaptation held until actual user hold release. No protected implementation read, rebase, tests, push, outreach or new Daybreak question."
+      "nextStep": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
+      "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change."
     },
     {
       "id": "pr:15188",
@@ -16958,8 +16961,8 @@
       "group": "rbe",
       "url": "https://github.com/google/gvisor/pull/15647",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:43.853615+00:00",
-      "summary": "Rebased onto master’s vDSO warm-up. All added and removed lines match the approved patch. The syscall and vDSO clocks stayed monotonic across live restores in both reference and calibrated modes.",
+      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
+      "summary": "Current 94e3488d9 is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
       "number": 15647,
       "reviewDecision": null,
       "evidence": [
@@ -16986,10 +16989,10 @@
       ],
       "followup": {
         "owner": "root",
-        "disposition": "Exact 94e3488d is CONFLICTING against bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa. File-metadata inspection identifies sensitive clock/startup/restore paths; actual adaptation is held by the confirmed user sensitive-work hold.",
+        "disposition": "Current 94e3488d9 is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
         "sourceHead": "94e3488d99cba57f92c7acc767eae3d2d4b0f5a5",
         "observedAt": "2026-11-23T00:18:10.610714+00:00",
-        "nextAction": "Root owns rebase on release of the sensitive-work hold. No implementation read, rebase, push or new Daybreak question is authorized while held.",
+        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
         "evidence": [
           {
             "label": "All four clock and restore results",
@@ -17004,7 +17007,8 @@
           "https://github.com/tamird/gvisor/commit/94e3488d99cba57f92c7acc767eae3d2d4b0f5a5"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "User releases the hold, or actual head/base/mergeability changes."
+        "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change.",
+        "curatedAt": "2026-11-25T15:19:00.232145+00:00"
       },
       "dcoAmendment": {
         "oldHead": "80bbb7478312a10e7335a5475c9683a76d5c17d6",
@@ -17027,7 +17031,9 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "PR reviewers"
-      }
+      },
+      "nextStep": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
+      "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change."
     },
     {
       "id": "branch:nvproxy-declared-sources",
@@ -36125,14 +36131,14 @@
       "url": "https://github.com/google/gvisor/pull/16419",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-19T02:51:50.481387+00:00",
-      "summary": "The affected matcher/parity/current-base investigation is held until actual confirmed Daybreak access. The original owner turn stopped with a cybersecurity content flag and Daybreak suggestion; no specific command or detailed rationale was supplied. This is an execution-policy hold, not missing human approval. Already-launched test-only run44836517279 is metadata-known FAILURE; the observer incorrectly treated nil TCP.SeqNum as a wildcard, so no new Linux-parity claim follows. Public0ae and productionc9-on4b are unchanged; prior ordinary proofs and separate ARM prerequisites retain their scopes.",
+      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
+      "summary": "Current 0ae405ec7 is OPEN/CONFLICTING with CHANGES_REQUESTED. Daybreak availability is confirmed. actions_bazel_cache owns the matcher/parity and current-base candidate. Prior test-only run 44836517279 failed and its observer treated nil TCP.SeqNum as a wildcard; it establishes no new Linux-parity proof. Existing qualification and ARM/performance limits remain.",
       "followup": {
-        "owner": "root",
+        "owner": "actions_bazel_cache",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
         "observedAt": "2026-11-20T23:31:27.372182+00:00",
-        "disposition": "The affected matcher/parity/current-base investigation is held until actual confirmed Daybreak access. The original owner turn stopped with a cybersecurity content flag and Daybreak suggestion; no specific command or detailed rationale was supplied. This is an execution-policy hold, not missing human approval. Already-launched test-only run44836517279 is metadata-known FAILURE; the observer incorrectly treated nil TCP.SeqNum as a wildcard, so no new Linux-parity claim follows. Public0ae and productionc9-on4b are unchanged; prior ordinary proofs and separate ARM prerequisites retain their scopes.",
-        "nextAction": "Keep matcher/current-base and sensitive source work held under the current user instruction. Do not read the held source, adapt it, run tests/retries or publish. Root retains the verified conflict and both November 20 findings as unfinished obligations; a claim or hold is not completion.",
+        "disposition": "Current 0ae405ec7 is OPEN/CONFLICTING with CHANGES_REQUESTED. Daybreak availability is confirmed. actions_bazel_cache owns the matcher/parity and current-base candidate. Prior test-only run 44836517279 failed and its observer treated nil TCP.SeqNum as a wildcard; it establishes no new Linux-parity proof. Existing qualification and ARM/performance limits remain.",
+        "nextAction": "actions_bazel_cache prepares the assigned source-bound candidate and resolves the existing reviewer findings, preserving root final review/publication and required qualification. Do not reuse old source credit for a changed integration delta or duplicate the owner’s work.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16419",
           "https://github.com/google/gvisor/pull/16419#discussion_r4504268180",
@@ -36161,7 +36167,7 @@
           "https://github.com/gvisor/gvisor/pull/16419#discussion_r4648619069",
           "https://github.com/gvisor/gvisor/pull/16419#discussion_r4648619071"
         ],
-        "recheckCondition": "Actual user instruction changing the hold and applicable access/policy checks; no repeated availability or publication request.",
+        "recheckCondition": "Assigned owner returns the candidate/qualification or current source/reviewer evidence changes.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "mergeable": "CONFLICTING",
         "qualificationHistory": [
@@ -36271,7 +36277,7 @@
           ]
         },
         "remainingNetworkOutcomeOwner": "tcp_conflict",
-        "curatedAt": "2026-11-22T14:02:28.619749+00:00",
+        "curatedAt": "2026-11-25T15:19:00.232145+00:00",
         "ciExecutionAuthorization": {
           "status": "Authorized CI-only; held for permanent Bazel mechanism migration",
           "owner": "root",
@@ -36304,7 +36310,7 @@
           ],
           "limits": "Oldbase inputs only. No currentbase/packet32/race/compiler/fullnetworkperformance shortcut."
         },
-        "implementationOwner": "tcp_go_final_contract_review"
+        "implementationOwner": "actions_bazel_cache"
       },
       "evidence": [
         {
@@ -36511,8 +36517,8 @@
           "https://github.com/tamird/gvisor/commit/0ae405ec7d1ace5894645c28910c69605c0de20e"
         ]
       },
-      "nextStep": "After Daybreak access is actually confirmed, resume the original owner’s matcher correction and current-base verification. Do not retry held diagnostics, read the held run’s logs or route the work through another agent/rephrasing. Continue unrelated authorized work independently.",
-      "recheckCondition": "Actual confirmed Daybreak access, then the original owner’s source-bound matcher/current-base evidence."
+      "nextStep": "actions_bazel_cache prepares the assigned source-bound candidate and resolves the existing reviewer findings, preserving root final review/publication and required qualification. Do not reuse old source credit for a changed integration delta or duplicate the owner’s work.",
+      "recheckCondition": "Assigned owner returns the candidate/qualification or current source/reviewer evidence changes."
     },
     {
       "id": "pr:17114",
@@ -58687,15 +58693,15 @@
       "title": "Run both iperf3 benchmark endpoints on Ubuntu Jammy",
       "group": "bazel",
       "status": "Approved source; BCR/license prerequisites open",
-      "updatedAt": "2026-11-17T20:32:28.027492+00:00",
+      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
       "url": "https://github.com/tamird/gvisor/commit/67601a14c",
       "summary": "The iperf3 benchmark uses the same Ubuntu Jammy runtime as iperf2. The AMD64 and ARM64 packages at 67601a14c contain the dynamic GNU binary and both upstream license notices. OpenSSL’s export is released. The iperf export was tested from its pending BCR change. Parallel iperf2 results measured the first matching numbered stream. iperf3 reports aggregate sender bandwidth under the same benchmark name. Start a separate baseline for the aggregate results.",
       "followup": {
         "owner": "root",
         "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
         "observedAt": "2026-11-02T17:47:05.918366+00:00",
-        "disposition": "Current four-CPU RBE admission 44973350323 genuinely passed Docker/bridge workers, paired INIT, actual runc 0–1/Sentry 2–3 affinity, all nine canonical release maps and cleanup/source guards, with zero benchmark rows. Untraced functional run 44973895706 on that admitted route still timed out at the original 30-second P64/1-KiB deadline: 64 connections, exit 124, interrupt JSON and 131,072 actual bytes, but no completed row. Actual runtime/image/CPU/quiescence/final cleanup passed. The route does not cure liveness; no full eight-mode expansion or performance pilot follows.",
-        "nextAction": "Keep sensitive mechanism investigation held pending confirmed Daybreak availability. The old five-CPU/executor-information blocker is superseded by actual four-CPU admission; it is not a required human answer. Preserve the functional failure and independent state controls, with no more Iperf expansion, timing or source permutations. Moby exception and source decisions remain independent and unanswered.",
+        "disposition": "The iperf3 benchmark uses the same Ubuntu Jammy runtime as iperf2. The AMD64 and ARM64 packages at 67601a14c contain the dynamic GNU binary and both upstream license notices. OpenSSL’s export is released. The iperf export was tested from its pending BCR change. Parallel iperf2 results measured the first matching numbered stream. iperf3 reports aggregate sender bandwidth under the same benchmark name. Start a separate baseline for the aggregate results.",
+        "nextAction": "Daybreak availability is confirmed. Root retains the unexplained P64 functional timeout and independent measurement-control, topology, Moby-exception and source-publication limits. No full-mode expansion, timing or source permutation is authorized by capability availability alone.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
@@ -58737,8 +58743,8 @@
           "owner": "root"
         },
         "technicalOwner": "Build and release",
-        "recheckCondition": "Actual confirmed Daybreak availability before sensitive investigation, or genuine source/operational user decisions; no inferred enablement or stability from admission.",
-        "curatedAt": "2026-11-21T14:40:26.293073+00:00"
+        "recheckCondition": "A bounded root investigation assignment, relevant new source/functional evidence, or an actual operational/source decision.",
+        "curatedAt": "2026-11-25T15:19:00.232145+00:00"
       },
       "refinement": {
         "before": {
@@ -58813,7 +58819,9 @@
           "outcome": "approved-with-changes",
           "at": "2026-11-02T16:20:02.085486+00:00"
         }
-      ]
+      ],
+      "nextStep": "Daybreak availability is confirmed. Root retains the unexplained P64 functional timeout and independent measurement-control, topology, Moby-exception and source-publication limits. No full-mode expansion, timing or source permutation is authorized by capability availability alone.",
+      "recheckCondition": "A bounded root investigation assignment, relevant new source/functional evidence, or an actual operational/source decision."
     },
     {
       "id": "pr:hermeticbuild/hermetic-llvm:909",
@@ -68733,8 +68741,8 @@
       "url": "https://github.com/google/gvisor/pull/16821",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:48.755399+00:00",
-      "summary": "Current exact2899ec752 is CONFLICTING. Root retains conflict ownership under the confirmed sensitive-feature hold; prior reviews/CI do not authorize current-base adaptation.",
+      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
+      "summary": "Current 2899ec752 is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
       "evidence": [
         {
           "label": "Public CI stopped fetching rules_m4 with HTTP 500; the archive now matches BCR’s checksum",
@@ -68796,10 +68804,10 @@
       "followup": {
         "sourceHead": "2899ec75263130d131ca356a3b9584715226ee28",
         "owner": "root",
-        "nextAction": "Keep source assessment/adaptation held until actual user hold release. No protected implementation read, rebase, tests, push, outreach or new Daybreak question.",
+        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
         "mergeable": "CONFLICTING",
         "observedAt": "2026-11-24T04:47:08.376554+00:00",
-        "recheckCondition": "Actual user hold release or source/head/base/mergeability change.",
+        "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/16821",
           "https://github.com/tamird/gvisor/commit/9f3a1efe5acf05722e7910b465d96c8a2c26a637",
@@ -68880,7 +68888,8 @@
             }
           }
         ],
-        "disposition": "Current exact2899ec752 is CONFLICTING. Root retains conflict ownership under the confirmed sensitive-feature hold; prior reviews/CI do not authorize current-base adaptation."
+        "disposition": "Current 2899ec752 is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
+        "curatedAt": "2026-11-25T15:19:00.232145+00:00"
       },
       "dcoAmendment": {
         "oldHead": "9f3a1efe5acf05722e7910b465d96c8a2c26a637",
@@ -68905,7 +68914,8 @@
         "priorOwner": null,
         "historicalOutreachClockHead": "9f3a1efe5acf05722e7910b465d96c8a2c26a637"
       },
-      "nextStep": "Keep source assessment/adaptation held until actual user hold release. No protected implementation read, rebase, tests, push, outreach or new Daybreak question."
+      "nextStep": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
+      "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change."
     },
     {
       "id": "pr:bazelbuild/bazel-central-registry:11519",
@@ -69656,8 +69666,8 @@
       "url": "https://github.com/google/gvisor/pull/16827",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:48.755399+00:00",
-      "summary": "Exact42f14a3eda58cd5b40d590c15309ba44273195e1 is CONFLICTING. This source transfers TCP receive memory with the owning segment; root retains conflict ownership under the confirmed unrelated sensitive-feature hold. Current-base adaptation is not authorized by prior reviews or passing checks.",
+      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
+      "summary": "Current 42f14a3ed is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
       "evidence": [
         {
           "label": "Wire receipts: native Linux, stock gVisor, corrected gVisor and TCP Nogo",
@@ -69691,16 +69701,17 @@
       "followup": {
         "sourceHead": "42f14a3eda58cd5b40d590c15309ba44273195e1",
         "owner": "root",
-        "nextAction": "Root keeps source assessment/rebase held until actual user hold release; do not read or edit protected TCP implementation, run tests, push, send outreach or re-ask Daybreak.",
+        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
         "mergeable": "CONFLICTING",
         "observedAt": "2026-11-24T05:47:43.330769+00:00",
-        "recheckCondition": "Actual user releases the sensitive-feature hold, or source/head/base/mergeability changes.",
+        "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/16827",
           "https://github.com/tamird/gvisor/commit/3732b4758e2276a9e60ff9ed250ee0a10339e8db",
           "https://github.com/tamird/gvisor/commit/42f14a3eda58cd5b40d590c15309ba44273195e1"
         ],
-        "disposition": "Exact42f14a3eda58cd5b40d590c15309ba44273195e1 is CONFLICTING. This source transfers TCP receive memory with the owning segment; root retains conflict ownership under the confirmed unrelated sensitive-feature hold. Current-base adaptation is not authorized by prior reviews or passing checks."
+        "disposition": "Current 42f14a3ed is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
+        "curatedAt": "2026-11-25T15:19:00.232145+00:00"
       },
       "dcoAmendment": {
         "oldHead": "3732b4758e2276a9e60ff9ed250ee0a10339e8db",
@@ -69724,7 +69735,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Root keeps source assessment/rebase held until actual user hold release; do not read or edit protected TCP implementation, run tests, push, send outreach or re-ask Daybreak."
+      "nextStep": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
+      "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change."
     },
     {
       "id": "pr:16828",
@@ -72133,7 +72145,7 @@
       "title": "Keep the MTU on each veth endpoint",
       "url": "https://github.com/google/gvisor/pull/16957",
       "group": "runtime",
-      "summary": "Unchanged public source f3575cb4e is now natively CONFLICTING. Existing obsolete-hook55555 diagnosis is historical bootstrap evidence, not a target failure. This new veth MTU conflict is an unfinished root-owned obligation under the existing sensitive-source/performance hold.",
+      "summary": "Current f3575cb4e is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
       "evidence": [
         {
           "label": "Proposed amendment",
@@ -72169,13 +72181,13 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:51.199074+00:00",
+      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "f3575cb4ed538695d0b7936e36662633a38b2b5e",
         "observedAt": "2026-11-24T17:06:51.520893+00:00",
-        "disposition": "Unchanged public source f3575cb4e is now natively CONFLICTING. Existing obsolete-hook55555 diagnosis is historical bootstrap evidence, not a target failure. This new veth MTU conflict is an unfinished root-owned obligation under the existing sensitive-source/performance hold.",
-        "nextAction": "Root keeps source conflict assessment/adaptation and performance review held under the existing sensitive-feature instruction. Do not read or adapt protected implementation, rebase, test, push, retry CI, send outreach or ask Daybreak again.",
+        "disposition": "Current f3575cb4e is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
+        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16957",
           "https://github.com/tamird/gvisor/commit/fea7e15b6",
@@ -72222,8 +72234,9 @@
           "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Actual user hold release, head/base/mergeability or substantive external evidence change.",
-        "base": "53e36ddeb73d8176d7ee2c40c5c8afc3b7030cda"
+        "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change.",
+        "base": "53e36ddeb73d8176d7ee2c40c5c8afc3b7030cda",
+        "curatedAt": "2026-11-25T15:19:00.232145+00:00"
       },
       "refinement": {
         "before": {
@@ -72306,12 +72319,13 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
       },
-      "nextStep": "Root keeps source conflict assessment/adaptation and performance review held under the existing sensitive-feature instruction. Do not read or adapt protected implementation, rebase, test, push, retry CI, send outreach or ask Daybreak again.",
+      "nextStep": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
       "sourceConflict": {
         "sourceHead": "f3575cb4ed538695d0b7936e36662633a38b2b5e",
         "owner": "root",
-        "nextAction": "Root keeps source conflict assessment/adaptation and performance review held under the existing sensitive-feature instruction. Do not read or adapt protected implementation, rebase, test, push, retry CI, send outreach or ask Daybreak again."
-      }
+        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge."
+      },
+      "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change."
     },
     {
       "id": "pr:16958",
@@ -77636,8 +77650,8 @@
       "url": "https://github.com/google/gvisor/pull/17026",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-17T18:16:01.120596+00:00",
-      "summary": "At 53cc614c1, Task.Clone and Task.Unshare use the root network namespace’s registry while retaining the child’s user namespace. BridgeVethRetainedNamespaceAcrossSave exercises bridge and veth connectivity to the child namespace after its creator exits. The author reports passing native Linux and ordinary, save and save-resume systrap runs and a failing frozen-base control.\n\nThe existing netlink syscall test passed on Linux. On fdd009fd9 the guest entered the test and panicked on the second unshare. With the two production call sites corrected, GoogleTest recorded OK and the guest exited 0. The fork reporter subsequently marked the expected test-log output missing.",
+      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
+      "summary": "Foreign-author source 53cc614c1 remains OPEN/CONFLICTING. Existing reviewer findings cover conflict and safety issues; no author revision has followed the November 20 update. Daybreak availability is confirmed. #17027 remains conflicting at ee441833b; #16666 advanced to 718e0616e and is mergeable. Each dependency retains its own qualification and ownership.",
       "evidence": [
         {
           "label": "Existing netlink syscall case on native Linux",
@@ -77689,8 +77703,8 @@
         "owner": "hky1999",
         "sourceHead": "53cc614c1cb28bd0a34a2cf6f0d504f3d28ac72e",
         "observedAt": "2026-11-17T18:16:01.120596+00:00",
-        "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
-        "nextAction": "hky1999 retains implementation and conflict-repair ownership. Root retains the unfinished reviewer follow-through, including the author answers and later experimental checkpoint/network-save findings. Our sensitive review/source work remains held under the current user instruction; do not route it through another agent or tool. Prior inspections do not establish a public response, resolved findings or permission for source reads/tests.",
+        "disposition": "Foreign-author source 53cc614c1 remains OPEN/CONFLICTING. Existing reviewer findings cover conflict and safety issues; no author revision has followed the November 20 update. Daybreak availability is confirmed. #17027 remains conflicting at ee441833b; #16666 advanced to 718e0616e and is mergeable. Each dependency retains its own qualification and ownership.",
+        "nextAction": "hky1999 owns the source revision and conflict repair. Root follows defensive review after a substantive author revision or response; no duplicate findings, source edits, outreach or approval transfer follows from availability.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17026#pullrequestreview-5800533049",
           "https://github.com/google/gvisor/pull/17026#discussion_r4492764964",
@@ -77700,9 +77714,10 @@
           "https://github.com/hky1999/gvisor/blob/53cc614c1/test/syscalls/linux/socket_netlink_route.cc#L3689",
           "https://github.com/gvisor/gvisor/pull/17026"
         ],
-        "recheckCondition": "Actual instructions/access-policy conditions changing our hold, or genuine author revision/integration requiring metadata reconciliation; foreign-author implementation ownership is unchanged.",
+        "recheckCondition": "Substantive author revision or response, or an actual dependency/source event.",
         "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
-        "mergeable": "CONFLICTING"
+        "mergeable": "CONFLICTING",
+        "curatedAt": "2026-11-25T15:19:00.232145+00:00"
       },
       "reviewWatch": {
         "inspected": [
@@ -77726,7 +77741,9 @@
         "reviewers": [
           "tamird"
         ]
-      }
+      },
+      "nextStep": "hky1999 owns the source revision and conflict repair. Root follows defensive review after a substantive author revision or response; no duplicate findings, source edits, outreach or approval transfer follows from availability.",
+      "recheckCondition": "Substantive author revision or response, or an actual dependency/source event."
     },
     {
       "id": "branch:state-fresh-decode-benchmark",
@@ -94243,8 +94260,8 @@
       "url": "https://github.com/google/gvisor/pull/17286",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:58.120129+00:00",
-      "summary": "Current public f069808da1b9876130c7a853fe2fbb9f815d8519 is conflicting. Timer source access, adaptation and retry remain explicitly held until Daybreak availability is actually confirmed; no confirmation exists. Historical approved-patch tests remain scoped to their original source and do not qualify a future conflict adaptation.\n\nThe timer now consumes each clock wake under the endpoint lock before calling a TCP handler. It discards canceled wakes, rearms early ones, and invokes the handler only for a due timer. This replaces the old handler-side predicate that also changed timer state.\n\nThree packet tests observed one, one, and two probes. All 60 package records, eight selected end-to-end records, and both architecture analyzers passed on ad55e4137. The proposed source differs by two comment lines. The median allocation counts were 26, 168, and 171 in both arms.\n\nAllocation size in six paired AMD64 samples:\n                                   │    stock     │               fixed                │\n                                   │     B/op     │     B/op      vs base              │\nWildcardBindClose-2                  4.844Ki ± 0%   4.852Ki ± 0%  +0.16% (p=0.002 n=6)\nKeepaliveHandshake/enabled=false-2   18.03Ki ± 1%   18.12Ki ± 1%  +0.49% (p=0.041 n=6)",
+      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
+      "summary": "Current f069808da is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
       "evidence": [
         {
           "label": "Published TCP timer wakeup fix",
@@ -94279,8 +94296,8 @@
         "owner": "root",
         "sourceHead": "f069808da1b9876130c7a853fe2fbb9f815d8519",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Current public f069808da1b9876130c7a853fe2fbb9f815d8519 is conflicting. Timer source access, adaptation and retry remain explicitly held until Daybreak availability is actually confirmed; no confirmation exists. Historical approved-patch tests remain scoped to their original source and do not qualify a future conflict adaptation.",
-        "nextAction": "Keep the explicit user hold: no timer source read, adaptation or retry. The published conflict remains an unfinished root-owned obligation. Recheck only actual instructions and access/policy conditions changing the hold; do not manufacture a pending approval question.",
+        "disposition": "Current f069808da is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
+        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17286",
           "https://github.com/tamird/gvisor/commit/97e5ddeb6",
@@ -94293,7 +94310,7 @@
           "https://buildkite.com/gvisor/first-pass/builds/1576#01a1eae4-1974-4a9c-99ad-20ab069b9703"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Actual confirmed Daybreak availability, preserving the existing source/publication boundaries.",
+        "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -94319,7 +94336,7 @@
           }
         ],
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
-        "curatedAt": "2026-11-22T14:02:28.619749+00:00"
+        "curatedAt": "2026-11-25T15:19:00.232145+00:00"
       },
       "settledReviews": [
         {
@@ -94388,7 +94405,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "Preserve the explicit Daybreak hold: no timer source read, adaptation or retry until actual availability is confirmed. Root and the existing owner recheck that condition; this is not a pending user approval."
+      "nextStep": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
+      "recheckCondition": "Checkout handoff, a bounded owner assessment, or substantive source/base/review change."
     },
     {
       "id": "pr:17287",
@@ -107613,6 +107631,39 @@
         },
         "formatPatch": "validation-45620324363/format.patch"
       }
+    },
+    {
+      "id": "pr:17971",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17971,
+      "head": "e17f88ffdd7a4e532f187741a4c58b7b09c109fc",
+      "ref": "review/node-image-bazel-20261123",
+      "title": "Expose the Node runtime image through Bazel",
+      "url": "https://github.com/google/gvisor/pull/17971",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
+      "evidence": [
+        {
+          "label": "Published image-output source",
+          "url": "https://github.com/tamird/gvisor/commit/e17f88ffdd7a4e532f187741a4c58b7b09c109fc"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "disposition": "Approved image-only source e17f88ffd is delivered in ready #17971, OPEN/MERGEABLE with DCO success. GitHub checks are in progress and FirstPass 2824 was pending at publication. Existing image declarations match the qualified combined source; no whole combined runtime or ARM qualification is inferred.",
+        "nextAction": "Root follows actual current-head CI/admission and maintainer review. The opening decision is fulfilled; no duplicate approval, source update, retry, outreach or merge.",
+        "recheckCondition": "Actual current-head check/review/admission or landing event.",
+        "curatedAt": "2026-11-25T15:19:00.232145+00:00",
+        "sourceHead": "e17f88ffdd7a4e532f187741a4c58b7b09c109fc",
+        "providerHead": "e17f88ffdd7a4e532f187741a4c58b7b09c109fc",
+        "mergeable": "MERGEABLE",
+        "observedAt": "2026-11-25T15:18:17.648950+00:00"
+      },
+      "summary": "Approved image-only source e17f88ffd is delivered in ready #17971, OPEN/MERGEABLE with DCO success. GitHub checks are in progress and FirstPass 2824 was pending at publication. Existing image declarations match the qualified combined source; no whole combined runtime or ARM qualification is inferred.",
+      "nextStep": "Root follows actual current-head CI/admission and maintainer review. The opening decision is fulfilled; no duplicate approval, source update, retry, outreach or merge.",
+      "recheckCondition": "Actual current-head check/review/admission or landing event."
     }
   ],
   "edges": [
@@ -132363,7 +132414,7 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-21T12:00:06.633567+00:00",
+      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
       "lastReviewedAt": "2026-11-20T15:54:04.733842+00:00",
       "summary": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning’s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
       "findings": [
@@ -132862,7 +132913,7 @@
           ]
         }
       ],
-      "nextStep": "Consume newly changed feedback and preserve unclosed technical obligations/Daybreak holds. The user approved removing the five-hour age-only rule, and the personal delivery skill is updated: rebase only for a verified conflict, necessary merged prerequisite, actual integration failure or explicit user request. This closes the operational policy question without changing publication/merge permissions.",
+      "nextStep": "Consume changed feedback and route source-bound obligations to existing owners. Daybreak availability is confirmed; independent technical/safety/performance requirements and publication/merge boundaries remain. Rebase only for a verified conflict, necessary prerequisite, integration failure or explicit user request.",
       "evidence": [
         {
           "label": "TCP review map",
@@ -132883,19 +132934,19 @@
       ],
       "group": "tests",
       "technicalOwner": "Codex",
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
+      "recheckCondition": "New source-bound feedback, owner evidence, dependency or actual decision change.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
-        "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+        "nextAction": "Consume changed feedback and route source-bound obligations to existing owners. Daybreak availability is confirmed; independent technical/safety/performance requirements and publication/merge boundaries remain. Rebase only for a verified conflict, necessary prerequisite, integration failure or explicit user request.",
+        "recheckCondition": "New source-bound feedback, owner evidence, dependency or actual decision change."
       },
       "followup": {
         "owner": "root",
         "observedAt": "2026-11-20T15:54:04.733842+00:00",
-        "curatedAt": "2026-11-20T16:20:16.754185+00:00",
-        "disposition": "Root accepted the complete feedback reconciliation of 466 changed entries: 246 PR entries (201 with no post-cutoff external body and 45 with complete feedback reconciled), 206 branches (160 exact-source owned actions, seven genuine stored source questions and 39 published/CI aliases), and 14 historical aliases. Later canonical human-feedback queues remained unchanged through this verified source boundary. This closes feedback accounting only; it does not certify technical validation or approve held source. Sensitive namespace, ID-map and mount production/diagnostic work remains uninspected and explicitly held by the user until confirmed Daybreak availability. Existing source gates, broad workload/performance/hardware obligations, exact pending questions and narrow checker/reader holds remain with their recorded owners; the latter do not hold Flit packaging.",
-        "nextAction": "Consume newly changed feedback daily and route source-bound actions to existing owners. Preserve all unclosed technical obligations and the explicit uninspected Daybreak carryforward; do not infer approval or new validation from this reconciliation.",
-        "recheckCondition": "A new source-bound human/automated finding or review/import change, the daily queue check, or actual confirmed Daybreak availability for the separately held work."
+        "curatedAt": "2026-11-25T15:19:00.232145+00:00",
+        "disposition": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning’s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
+        "nextAction": "Consume changed feedback and route source-bound obligations to existing owners. Daybreak availability is confirmed; independent technical/safety/performance requirements and publication/merge boundaries remain. Rebase only for a verified conflict, necessary prerequisite, integration failure or explicit user request.",
+        "recheckCondition": "New source-bound feedback, owner evidence, dependency or actual decision change."
       }
     },
     {
@@ -139184,8 +139235,8 @@
       "group": "ci-flakes",
       "status": "active",
       "owner": "eof_arm_resume",
-      "updatedAt": "2026-11-25T02:50:55.971781+00:00",
-      "summary": "EOF source 362bfd remains implementation/qualification HELD under Daybreak/sensitive-work restrictions and failed same-source measurement controls. Historical correctness and fixture results retain their exact input scopes; the full 150-leaf, n>=24 study remains outstanding. No current-runtime or performance qualification is inferred.",
+      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
+      "summary": "EOF source 362bfd remains implementation/qualification HELD under independent sensitive-work restrictions and failed same-source measurement controls; Daybreak availability is confirmed. Historical correctness and fixture results retain their exact input scopes; the full 150-leaf, n>=24 study remains outstanding. No current-runtime or performance qualification is inferred.",
       "findings": [
         {
           "text": "The original failure at runsc/gofer/net/netgofer_test.go:353 records the shutdown timeout. It does not identify the operation keeping the proxy alive. The earlier UDP idle-slot investigation failed a different assertion.",
@@ -139259,8 +139310,8 @@
       },
       "followup": {
         "owner": "eof_arm_resume",
-        "curatedAt": "2026-11-19T18:59:24.568877+00:00",
-        "disposition": "EOF source 362bfd remains implementation/qualification HELD under Daybreak/sensitive-work restrictions and failed same-source measurement controls. Historical correctness and fixture results retain their exact input scopes; the full 150-leaf, n>=24 study remains outstanding. No current-runtime or performance qualification is inferred.",
+        "curatedAt": "2026-11-25T15:19:00.232145+00:00",
+        "disposition": "EOF source 362bfd remains implementation/qualification HELD under independent sensitive-work restrictions and failed same-source measurement controls; Daybreak availability is confirmed. Historical correctness and fixture results retain their exact input scopes; the full 150-leaf, n>=24 study remains outstanding. No current-runtime or performance qualification is inferred.",
         "sourceHead": "362bfd09934c5497e4a48fb97fbe1f445152f841",
         "matchedEvidence": {
           "diagnostic": {
@@ -141422,9 +141473,9 @@
       "title": "Node’s worker ArrayBuffer zero-fill test times out",
       "group": "ci-flakes",
       "status": "active",
-      "owner": "benchmark_measurement_review / root",
-      "updatedAt": "2026-11-25T12:50:33.824992+00:00",
-      "summary": "Successful runtime output is delivered in #17921; the independent Node TAP proposal is now delivered as #17962. Only pinned-image e17f88ff remains an unanswered opening question. Existing functional evidence keeps its original FLAKY/source scope; original flake causation is not established.",
+      "owner": "root",
+      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
+      "summary": "All three independent Node/runtime proposals are delivered: runtime output #17921, TAP #17962 and pinned AMD64 image outputs #17971. The e17 opening decision is fulfilled. Existing functional evidence retains its original source/FLAKY scope; original flake causation is not established.",
       "findings": [
         {
           "text": "The same shard also timed out in debugger-random-port. The log does not identify where the ArrayBuffer test stopped.",
@@ -141440,7 +141491,7 @@
           ]
         }
       ],
-      "nextStep": "Root follows the delivered PR lifecycles and the separate pinned-image decision. Do not repeat consumed TAP/runtime-output approvals, infer a Node flake fix or transfer old qualification to a new source.",
+      "nextStep": "Root follows the three open PR lifecycles and current source-bound review/check events. Do not repeat opening questions or transfer combined runtime/architecture qualification to the image-only proposal.",
       "evidence": [
         {
           "label": "Original Node shard",
@@ -141472,11 +141523,11 @@
         }
       ],
       "technicalOwner": "CI flake triage",
-      "recheckCondition": "Actual PR/source/check/review event or an answer to the remaining pinned-image question.",
+      "recheckCondition": "Actual source/review/check/admission or landing event.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Root follows the delivered PR lifecycles and the separate pinned-image decision. Do not repeat consumed TAP/runtime-output approvals, infer a Node flake fix or transfer old qualification to a new source.",
-        "recheckCondition": "Actual PR/source/check/review event or an answer to the remaining pinned-image question."
+        "nextAction": "Root follows the three open PR lifecycles and current source-bound review/check events. Do not repeat opening questions or transfer combined runtime/architecture qualification to the image-only proposal.",
+        "recheckCondition": "Actual source/review/check/admission or landing event."
       },
       "head": "6a2916b318c17cc636ebf92e32844bf781612eed",
       "settledReviews": [
@@ -141515,31 +141566,33 @@
           "outcome": "approved",
           "note": "The approved one-line TAP proposal was published as #17962. Reused qualification retains original source/FLAKY limits.",
           "postedURL": "https://github.com/gvisor/gvisor/pull/17962"
+        },
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "e17f88ffdd7a4e532f187741a4c58b7b09c109fc",
+          "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+          "url": "https://github.com/tamird/gvisor/commit/e17f88ffdd7a4e532f187741a4c58b7b09c109fc",
+          "title": "Expose the Node runtime image through Bazel",
+          "summary": "User-approved pinned image-output proposal published as #17971.",
+          "body": "The published Node 22.2.0 runtime image had no Bazel image output. Declare its AMD64 manifest and expose the existing load, archive and context targets so runtime qualification can load the published image without rebuilding it locally.\n\nPosted by Codex on behalf of @tamird.\n",
+          "outcome": "posted",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/17971"
         }
       ],
       "followup": {
         "owner": "root",
         "observedAt": "2026-11-25T12:50:33.824992+00:00",
-        "disposition": "Successful runtime output is delivered in #17921; the independent Node TAP proposal is now delivered as #17962. Only pinned-image e17f88ff remains an unanswered opening question. Existing functional evidence keeps its original FLAKY/source scope; original flake causation is not established.",
-        "nextAction": "Root follows the delivered PR lifecycles and the separate pinned-image decision. Do not repeat consumed TAP/runtime-output approvals, infer a Node flake fix or transfer old qualification to a new source.",
-        "recheckCondition": "Actual PR/source/check/review event or an answer to the remaining pinned-image question.",
+        "disposition": "All three independent Node/runtime proposals are delivered: runtime output #17921, TAP #17962 and pinned AMD64 image outputs #17971. The e17 opening decision is fulfilled. Existing functional evidence retains its original source/FLAKY scope; original flake causation is not established.",
+        "nextAction": "Root follows the three open PR lifecycles and current source-bound review/check events. Do not repeat opening questions or transfer combined runtime/architecture qualification to the image-only proposal.",
+        "recheckCondition": "Actual source/review/check/admission or landing event.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17921",
           "https://github.com/gvisor/gvisor/pull/17962"
-        ]
+        ],
+        "curatedAt": "2026-11-25T15:19:00.232145+00:00"
       },
-      "additionalReviews": [
-        {
-          "kind": "proposal",
-          "status": "pending",
-          "head": "e17f88ffdd7a4e532f187741a4c58b7b09c109fc",
-          "baseHead": "eb263e1f414d0bceaf10decea6c73e2c77332112",
-          "url": "https://github.com/tamird/gvisor/commit/e17f88ffdd7a4e532f187741a4c58b7b09c109fc",
-          "title": "Expose the Node runtime image through Bazel",
-          "summary": "Independent pinned AMD64 image-output proposal; actual opening question pending. No image rebuild or ARM fixture claim.",
-          "body": "The published Node 22.2.0 runtime image had no Bazel image output. Declare its AMD64 manifest and expose the existing load, archive and context targets so runtime qualification can load the published image without rebuilding it locally.\n\nPosted by Codex on behalf of @tamird.\n"
-        }
-      ]
+      "additionalReviews": []
     },
     {
       "id": "investigation:ci-flake-node-error-serdes",
@@ -144813,9 +144866,9 @@
       "title": "Report client aggregate Iperf bandwidth",
       "owner": "root",
       "head": "9cf0dbbe278572fd39d877a0d542483573a0185b",
-      "updatedAt": "2026-11-21T18:06:34.151123+00:00",
+      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
       "summary": "Root holds standalone publication of the Iperf2 reporter after N24 visit 28 showed the SUM interval was 10.7154s versus the longest stream’s 11.3312s. Source 9cf remains a literal SUM parsing correction, but its unanswered publication question is suspended by the technical owner; no user rejection, approval or upstream PR is inferred.",
-      "nextStep": "BCR #11518 is merged and published metadata matches reviewed fe25. Canonical public-registry admission 45024961797 passed four labels with zero actions, clearing the qualification fallback without rebuilding the image. benchmark_measurement_review retains DING ce163 topology qualification and its unanswered Moby exception. The separate #15146 license-policy hold is not a demonstrated binary-build prerequisite. Sentry P64 remains a 30-second timeout locally and on RBE, with unknown cause and sensitive investigation held pending Daybreak availability. No unchanged retry, timing or standalone 9cf publication.",
+      "nextStep": "BCR #11518 is merged and published metadata matches reviewed fe25. Canonical public-registry admission 45024961797 passed four labels with zero actions, clearing the qualification fallback without rebuilding the image. benchmark_measurement_review retains DING ce163 topology qualification and its unanswered Moby exception. The separate #15146 license-policy hold is not a demonstrated binary-build prerequisite. Sentry P64 remains a 30-second timeout locally and on RBE, with unknown cause and sensitive investigation remains subject to root assignment and independent measurement-control requirements; Daybreak availability is confirmed. No unchanged retry, timing or standalone 9cf publication.",
       "evidence": [
         {
           "label": "Exact reviewable source and included DCO",
@@ -144850,7 +144903,15 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/45024961797"
         }
       ],
-      "findings": []
+      "findings": [],
+      "followup": {
+        "owner": "root",
+        "disposition": "Root holds standalone publication of the Iperf2 reporter after N24 visit 28 showed the SUM interval was 10.7154s versus the longest stream’s 11.3312s. Source 9cf remains a literal SUM parsing correction, but its unanswered publication question is suspended by the technical owner; no user rejection, approval or upstream PR is inferred.",
+        "nextAction": "BCR #11518 is merged and published metadata matches reviewed fe25. Canonical public-registry admission 45024961797 passed four labels with zero actions, clearing the qualification fallback without rebuilding the image. benchmark_measurement_review retains DING ce163 topology qualification and its unanswered Moby exception. The separate #15146 license-policy hold is not a demonstrated binary-build prerequisite. Sentry P64 remains a 30-second timeout locally and on RBE, with unknown cause and sensitive investigation remains subject to root assignment and independent measurement-control requirements; Daybreak availability is confirmed. No unchanged retry, timing or standalone 9cf publication.",
+        "recheckCondition": "Root returns a bounded investigation disposition, directly relevant evidence changes, or an actual outstanding source/operational decision.",
+        "curatedAt": "2026-11-25T15:19:00.232145+00:00"
+      },
+      "recheckCondition": "Root returns a bounded investigation disposition, directly relevant evidence changes, or an actual outstanding source/operational decision."
     },
     {
       "id": "investigation:httpd-client-capacity",

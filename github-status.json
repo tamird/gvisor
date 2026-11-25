@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-25T12:47:27.424253+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-25T13:17:35.233413+00:00",
+  "registryDate": "2026-11-25T15:19:00.232145+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -457162,6 +457162,301 @@
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
       },
       "checkedAt": "2026-11-25T13:14:20.938666+00:00"
+    },
+    {
+      "number": 17971,
+      "repo": "google/gvisor",
+      "title": "Expose the Node runtime image through Bazel",
+      "url": "https://github.com/google/gvisor/pull/17971",
+      "status": "open",
+      "ref": "review/node-image-bazel-20261123",
+      "head": "e17f88ffdd7a4e532f187741a4c58b7b09c109fc",
+      "base": "8075b38443e475fd4e12ef9d423e2cd460e2396d",
+      "branchHead": "e17f88ffdd7a4e532f187741a4c58b7b09c109fc",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
+      "mergeabilityCheckedAt": "2026-11-25T15:18:17.648950+00:00",
+      "headCommittedAt": "2026-11-23T19:47:12Z",
+      "headHistoryComplete": true,
+      "headRebasedFrom": null,
+      "headIntroducedAt": null,
+      "headOwner": "tamird",
+      "headRepo": "tamird/gvisor",
+      "authorLogin": "tamird",
+      "updatedAt": "2026-11-25T15:15:43Z",
+      "createdAt": "2026-11-25T15:15:43Z",
+      "mergedAt": null,
+      "closedAt": null,
+      "mergeCommit": null,
+      "githubReviewDecision": "REVIEW_REQUIRED",
+      "reviewsComplete": true,
+      "commentsComplete": true,
+      "reviewDismissals": {
+        "complete": true,
+        "items": []
+      },
+      "reviewRequests": [],
+      "codeOwnerRequests": [],
+      "reviewRequestsComplete": true,
+      "labels": [],
+      "labelsComplete": true,
+      "labelHistory": {
+        "complete": true,
+        "items": []
+      },
+      "threads": {
+        "unresolved": 0,
+        "total": 0,
+        "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
+      },
+      "checks": {
+        "state": "PENDING",
+        "total": 13,
+        "reportedTotal": 13,
+        "supersededContexts": [],
+        "complete": true,
+        "contexts": [
+          {
+            "id": "CR_kwDOB9IlXs8AAAAgb1fe9g",
+            "name": "assign",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45643169832/job/139306983158",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Auto Assign",
+            "workflowId": "W_kwDOB9IlXs4SzK41",
+            "runNumber": 4054,
+            "runAttempt": 1,
+            "purpose": "reviewer-assignment"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAgb1e47w",
+            "name": "license-check",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45643169944/job/139306973423",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Dependency licenses",
+            "workflowId": "W_kwDOB9IlXs4ZXufC",
+            "runNumber": 213,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAgb1e67A",
+            "name": "generate",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45643170144/job/139306973932",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Go",
+            "workflowId": "MDg6V29ya2Zsb3cxMjc5NTY5",
+            "runNumber": 68695,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAgb1fWYw",
+            "name": "close",
+            "state": "SUCCESS",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45643169658/job/139306980963",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Close Banned PRs",
+            "workflowId": "W_kwDOB9IlXs4UKTw0",
+            "runNumber": 3502,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAgb1fAQQ",
+            "name": "gazelle",
+            "state": "SUCCESS",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45643170372/job/139306975297",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Gazelle",
+            "workflowId": "W_kwDOB9IlXs4WaLny",
+            "runNumber": 8849,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAgb1e6zA",
+            "name": "governance-check",
+            "state": "SUCCESS",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45643170375/job/139306973900",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Governance",
+            "workflowId": "W_kwDOB9IlXs4ZXufE",
+            "runNumber": 213,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAgb1fGag",
+            "name": "fileheader",
+            "state": "SUCCESS",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45643170214/job/139306976874",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "License header",
+            "workflowId": "W_kwDOB9IlXs4U0Mzi",
+            "runNumber": 11162,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAgb1e7tA",
+            "name": "lint",
+            "state": "SUCCESS",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45643170061/job/139306974132",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Lint",
+            "workflowId": "W_kwDOB9IlXs4UkKPI",
+            "runNumber": 12258,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAgb1e8RQ",
+            "name": "notify",
+            "state": "SUCCESS",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45643170657/job/139306974277",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Pull Request Change",
+            "workflowId": "W_kwDOB9IlXs4ZQb07",
+            "runNumber": 177,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAgb1fIVw",
+            "name": "build",
+            "state": "SKIPPED",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45643170144/job/139306977367",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Go",
+            "workflowId": "MDg6V29ya2Zsb3cxMjc5NTY5",
+            "runNumber": 68695,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAgb1fHFg",
+            "name": "push",
+            "state": "SKIPPED",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45643170144/job/139306977046",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Go",
+            "workflowId": "MDg6V29ya2Zsb3cxMjc5NTY5",
+            "runNumber": 68695,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOB9IlXs8AAAAN8VjgdA",
+            "name": "buildkite/first-pass/pr",
+            "state": "PENDING",
+            "url": "https://buildkite.com/gvisor/first-pass/builds/2824",
+            "description": "Build #2824 scheduled",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAgb1d67g",
+            "name": "DCO",
+            "state": "SUCCESS",
+            "url": "https://github.com/cncf/dco2",
+            "kind": "check-run",
+            "app": "DCO-2",
+            "appSlug": "dco-2",
+            "appId": "A_kwHOAM1Res4ADt-2",
+            "workflow": null,
+            "workflowId": null,
+            "runNumber": null,
+            "runAttempt": null,
+            "purpose": "validation"
+          }
+        ]
+      },
+      "crossReferences": {
+        "complete": true,
+        "items": []
+      },
+      "reviewTimeline": {
+        "complete": true,
+        "items": []
+      },
+      "files": [
+        "MODULE.bazel",
+        "images/BUILD"
+      ],
+      "filesComplete": true,
+      "reviewDecision": "REVIEW_REQUIRED",
+      "approvedHead": null,
+      "approvedAt": null,
+      "maintainerReviewers": [],
+      "checkedAt": "2026-11-25T15:18:17.648950+00:00",
+      "imports": [],
+      "importsComplete": true,
+      "importPolicy": "none",
+      "publicImportDisposition": {
+        "binding": {
+          "sourceHead": "e17f88ffdd7a4e532f187741a4c58b7b09c109fc",
+          "approvedHead": null,
+          "currentApproval": false,
+          "complete": true,
+          "labels": [],
+          "labelsComplete": true,
+          "labelHistory": {
+            "complete": true,
+            "items": []
+          },
+          "imports": [],
+          "eligible": false
+        },
+        "scope": "none",
+        "state": "not-applicable",
+        "action": null,
+        "trigger": {
+          "label": "ready to pull",
+          "state": "unknown"
+        },
+        "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      }
     }
   ],
   "issues": {
@@ -459777,7 +460072,7 @@
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
       "sourceNumber": 16419,
-      "owner": "root",
+      "owner": "actions_bazel_cache",
       "claimed": true,
       "overdue": false,
       "kind": "inline",
@@ -459797,7 +460092,7 @@
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
       "sourceNumber": 16419,
-      "owner": "root",
+      "owner": "actions_bazel_cache",
       "claimed": true,
       "overdue": false,
       "kind": "inline",
@@ -459914,7 +460209,7 @@
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
       "sourceNumber": 16419,
-      "owner": "root",
+      "owner": "actions_bazel_cache",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABUTON0A",
       "needsTriage": false,
@@ -460081,7 +460376,7 @@
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
       "sourceNumber": 16419,
-      "owner": "root",
+      "owner": "actions_bazel_cache",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABVzsOnQ",
       "needsTriage": false,
@@ -460917,7 +461212,7 @@
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
       "sourceNumber": 16419,
-      "owner": "root",
+      "owner": "actions_bazel_cache",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABXbKd7w",
       "needsTriage": false,
@@ -461288,7 +461583,7 @@
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
       "sourceNumber": 16419,
-      "owner": "root",
+      "owner": "actions_bazel_cache",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABZaeShA",
       "needsTriage": false,
@@ -461585,12 +461880,12 @@
       "mergeabilityCheckedAt": "2026-11-25T12:44:20.116673+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Root reconciles the new conflict within the existing maintainer/source coordination, preserving sensitive-work and performance boundaries before any source adaptation. No source edit, build/test, automatic reapproval, unchanged CI retry, duplicate reply or outreach follows from this metadata recovery.",
+      "action": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "2457939ec15647b0908859936941c569b0a04cce",
-        "disposition": "Unchanged 2457939ec is now conflicting against the current base. Historical LisaFS socket/node-lifetime qualification and maintainer review remain source-bound; no approval or validation transfers to a future integration delta. Earlier untrusted-queue admission evidence remains separate.",
-        "nextAction": "Root reconciles the new conflict within the existing maintainer/source coordination, preserving sensitive-work and performance boundaries before any source adaptation. No source edit, build/test, automatic reapproval, unchanged CI retry, duplicate reply or outreach follows from this metadata recovery."
+        "disposition": "Current 2457939ec is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
+        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge."
       },
       "conflictObservedSince": "2026-11-25T10:07:08.831385+00:00"
     },
@@ -461633,12 +461928,12 @@
       "mergeabilityCheckedAt": "2026-11-25T12:44:24.388956+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Keep source assessment/adaptation held until actual user hold release. No protected implementation read, rebase, tests, push, outreach or new Daybreak question.",
+      "action": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "88b54c90a3442188496cedaa3590d10409590861",
-        "disposition": "Current exact88b54c90a is CONFLICTING. Root retains conflict ownership under the confirmed sensitive-feature hold; prior reviews/CI do not authorize current-base adaptation.",
-        "nextAction": "Keep source assessment/adaptation held until actual user hold release. No protected implementation read, rebase, tests, push, outreach or new Daybreak question."
+        "disposition": "Current 88b54c90a is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
+        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge."
       },
       "conflictObservedSince": "2026-11-24T04:40:54.661885+00:00"
     },
@@ -461705,12 +462000,12 @@
       "mergeabilityCheckedAt": "2026-11-25T12:44:28.877051+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Root owns rebase on release of the sensitive-work hold. No implementation read, rebase, push or new Daybreak question is authorized while held.",
+      "action": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "94e3488d99cba57f92c7acc767eae3d2d4b0f5a5",
-        "disposition": "Exact 94e3488d is CONFLICTING against bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa. File-metadata inspection identifies sensitive clock/startup/restore paths; actual adaptation is held by the confirmed user sensitive-work hold.",
-        "nextAction": "Root owns rebase on release of the sensitive-work hold. No implementation read, rebase, push or new Daybreak question is authorized while held."
+        "disposition": "Current 94e3488d9 is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
+        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge."
       },
       "conflictObservedSince": "2026-11-22T23:58:04.739191+00:00"
     },
@@ -461776,13 +462071,13 @@
       "checkedAt": "2026-11-25T12:46:47.642459+00:00",
       "mergeabilityCheckedAt": "2026-11-25T12:44:39.373553+00:00",
       "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Keep matcher/current-base and sensitive source work held under the current user instruction. Do not read the held source, adapt it, run tests/retries or publish. Root retains the verified conflict and both November 20 findings as unfinished obligations; a claim or hold is not completion.",
+      "owner": "actions_bazel_cache",
+      "action": "actions_bazel_cache prepares the assigned source-bound candidate and resolves the existing reviewer findings, preserving root final review/publication and required qualification. Do not reuse old source credit for a changed integration delta or duplicate the owner’s work.",
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "actions_bazel_cache",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
-        "disposition": "The affected matcher/parity/current-base investigation is held until actual confirmed Daybreak access. The original owner turn stopped with a cybersecurity content flag and Daybreak suggestion; no specific command or detailed rationale was supplied. This is an execution-policy hold, not missing human approval. Already-launched test-only run44836517279 is metadata-known FAILURE; the observer incorrectly treated nil TCP.SeqNum as a wildcard, so no new Linux-parity claim follows. Public0ae and productionc9-on4b are unchanged; prior ordinary proofs and separate ARM prerequisites retain their scopes.",
-        "nextAction": "Keep matcher/current-base and sensitive source work held under the current user instruction. Do not read the held source, adapt it, run tests/retries or publish. Root retains the verified conflict and both November 20 findings as unfinished obligations; a claim or hold is not completion."
+        "disposition": "Current 0ae405ec7 is OPEN/CONFLICTING with CHANGES_REQUESTED. Daybreak availability is confirmed. actions_bazel_cache owns the matcher/parity and current-base candidate. Prior test-only run 44836517279 failed and its observer treated nil TCP.SeqNum as a wildcard; it establishes no new Linux-parity proof. Existing qualification and ARM/performance limits remain.",
+        "nextAction": "actions_bazel_cache prepares the assigned source-bound candidate and resolves the existing reviewer findings, preserving root final review/publication and required qualification. Do not reuse old source credit for a changed integration delta or duplicate the owner’s work."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -461897,12 +462192,12 @@
       "mergeabilityCheckedAt": "2026-11-25T12:45:05.699278+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Keep source assessment/adaptation held until actual user hold release. No protected implementation read, rebase, tests, push, outreach or new Daybreak question.",
+      "action": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "2899ec75263130d131ca356a3b9584715226ee28",
-        "disposition": "Current exact2899ec752 is CONFLICTING. Root retains conflict ownership under the confirmed sensitive-feature hold; prior reviews/CI do not authorize current-base adaptation.",
-        "nextAction": "Keep source assessment/adaptation held until actual user hold release. No protected implementation read, rebase, tests, push, outreach or new Daybreak question."
+        "disposition": "Current 2899ec752 is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
+        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge."
       },
       "conflictObservedSince": "2026-11-24T04:40:57.352517+00:00"
     },
@@ -461921,12 +462216,12 @@
       "mergeabilityCheckedAt": "2026-11-25T12:45:10.491326+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Root keeps source assessment/rebase held until actual user hold release; do not read or edit protected TCP implementation, run tests, push, send outreach or re-ask Daybreak.",
+      "action": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "42f14a3eda58cd5b40d590c15309ba44273195e1",
-        "disposition": "Exact42f14a3eda58cd5b40d590c15309ba44273195e1 is CONFLICTING. This source transfers TCP receive memory with the owning segment; root retains conflict ownership under the confirmed unrelated sensitive-feature hold. Current-base adaptation is not authorized by prior reviews or passing checks.",
-        "nextAction": "Root keeps source assessment/rebase held until actual user hold release; do not read or edit protected TCP implementation, run tests, push, send outreach or re-ask Daybreak."
+        "disposition": "Current 42f14a3ed is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
+        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge."
       },
       "conflictObservedSince": "2026-11-24T05:44:37.378279+00:00"
     },
@@ -461945,12 +462240,12 @@
       "mergeabilityCheckedAt": "2026-11-25T12:45:25.905147+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Root keeps source conflict assessment/adaptation and performance review held under the existing sensitive-feature instruction. Do not read or adapt protected implementation, rebase, test, push, retry CI, send outreach or ask Daybreak again.",
+      "action": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "f3575cb4ed538695d0b7936e36662633a38b2b5e",
-        "disposition": "Unchanged public source f3575cb4e is now natively CONFLICTING. Existing obsolete-hook55555 diagnosis is historical bootstrap evidence, not a target failure. This new veth MTU conflict is an unfinished root-owned obligation under the existing sensitive-source/performance hold.",
-        "nextAction": "Root keeps source conflict assessment/adaptation and performance review held under the existing sensitive-feature instruction. Do not read or adapt protected implementation, rebase, test, push, retry CI, send outreach or ask Daybreak again."
+        "disposition": "Current f3575cb4e is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
+        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge."
       },
       "conflictObservedSince": "2026-11-24T17:03:35.215598+00:00"
     },
@@ -461969,12 +462264,12 @@
       "mergeabilityCheckedAt": "2026-11-25T12:45:30.408688+00:00",
       "sourceBranchMismatch": false,
       "owner": "hky1999",
-      "action": "hky1999 retains implementation and conflict-repair ownership. Root retains the unfinished reviewer follow-through, including the author answers and later experimental checkpoint/network-save findings. Our sensitive review/source work remains held under the current user instruction; do not route it through another agent or tool. Prior inspections do not establish a public response, resolved findings or permission for source reads/tests.",
+      "action": "hky1999 owns the source revision and conflict repair. Root follows defensive review after a substantive author revision or response; no duplicate findings, source edits, outreach or approval transfer follows from availability.",
       "recordedFollowup": {
         "owner": "hky1999",
         "sourceHead": "53cc614c1cb28bd0a34a2cf6f0d504f3d28ac72e",
-        "disposition": "Live audit confirmed the unchanged published head remains CONFLICTING. Existing approvals and qualification remain bound to their recorded revisions.",
-        "nextAction": "hky1999 retains implementation and conflict-repair ownership. Root retains the unfinished reviewer follow-through, including the author answers and later experimental checkpoint/network-save findings. Our sensitive review/source work remains held under the current user instruction; do not route it through another agent or tool. Prior inspections do not establish a public response, resolved findings or permission for source reads/tests."
+        "disposition": "Foreign-author source 53cc614c1 remains OPEN/CONFLICTING. Existing reviewer findings cover conflict and safety issues; no author revision has followed the November 20 update. Daybreak availability is confirmed. #17027 remains conflicting at ee441833b; #16666 advanced to 718e0616e and is mergeable. Each dependency retains its own qualification and ownership.",
+        "nextAction": "hky1999 owns the source revision and conflict repair. Root follows defensive review after a substantive author revision or response; no duplicate findings, source edits, outreach or approval transfer follows from availability."
       },
       "conflictObservedSince": "2026-11-14T20:02:27.078720+00:00"
     },
@@ -462065,12 +462360,12 @@
       "mergeabilityCheckedAt": "2026-11-25T12:46:06.672642+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Keep the explicit user hold: no timer source read, adaptation or retry. The published conflict remains an unfinished root-owned obligation. Recheck only actual instructions and access/policy conditions changing the hold; do not manufacture a pending approval question.",
+      "action": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "f069808da1b9876130c7a853fe2fbb9f815d8519",
-        "disposition": "Current public f069808da1b9876130c7a853fe2fbb9f815d8519 is conflicting. Timer source access, adaptation and retry remain explicitly held until Daybreak availability is actually confirmed; no confirmation exists. Historical approved-patch tests remain scoped to their original source and do not qualify a future conflict adaptation.",
-        "nextAction": "Keep the explicit user hold: no timer source read, adaptation or retry. The published conflict remains an unfinished root-owned obligation. Recheck only actual instructions and access/policy conditions changing the hold; do not manufacture a pending approval question."
+        "disposition": "Current f069808da is OPEN/CONFLICTING. Tamir confirmed Daybreak is enabled; availability is no longer a prerequisite. Current-base conflict assessment is queued with root after checkout handoff. Existing source-bound reviews, qualification limits and independent safety/performance/publication requirements remain.",
+        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge."
       },
       "conflictObservedSince": "2026-11-20T23:52:55.787276+00:00"
     },
@@ -479080,13 +479375,29 @@
         "observedAt": "2026-11-25T13:14:20.938666+00:00"
       }
     },
+    "pr:17971": {
+      "checks-pending": {
+        "scope": "17971:e17f88ffdd7a4e532f187741a4c58b7b09c109fc",
+        "since": "2026-11-25T15:18:17.648950+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-25T15:18:17.648950+00:00"
+      },
+      "maintainer-review": {
+        "scope": "e17f88ffdd7a4e532f187741a4c58b7b09c109fc",
+        "since": "2026-11-25T15:18:17.648950+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-25T15:18:17.648950+00:00"
+      }
+    },
     "branch:bazel-python-release": {
       "contributor-review": {
         "scope": "be90b48140bff63fd99eebd1f1cfa14c1fab7024",
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T13:17:35.233413+00:00"
+        "observedAt": "2026-11-25T15:19:00.232145+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -479095,7 +479406,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T13:17:35.233413+00:00"
+        "observedAt": "2026-11-25T15:19:00.232145+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -479104,7 +479415,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T13:17:35.233413+00:00"
+        "observedAt": "2026-11-25T15:19:00.232145+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -479113,7 +479424,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T13:17:35.233413+00:00"
+        "observedAt": "2026-11-25T15:19:00.232145+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -479122,7 +479433,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T13:17:35.233413+00:00"
+        "observedAt": "2026-11-25T15:19:00.232145+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -479131,7 +479442,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T13:17:35.233413+00:00"
+        "observedAt": "2026-11-25T15:19:00.232145+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -479140,7 +479451,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T13:17:35.233413+00:00"
+        "observedAt": "2026-11-25T15:19:00.232145+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -479149,7 +479460,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T13:17:35.233413+00:00"
+        "observedAt": "2026-11-25T15:19:00.232145+00:00"
       }
     },
     "issue:17832": {
@@ -479158,7 +479469,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T13:17:35.233413+00:00"
+        "observedAt": "2026-11-25T15:19:00.232145+00:00"
       }
     },
     "branch:arm-premerge-cpp-lint": {
@@ -479167,7 +479478,7 @@
         "since": "2026-11-24T18:07:30.803456+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T13:17:35.233413+00:00"
+        "observedAt": "2026-11-25T15:19:00.232145+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -479176,16 +479487,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T13:17:35.233413+00:00"
-      }
-    },
-    "investigation:ci-flake-node-worker-arraybuffer-zerofill": {
-      "contributor-review": {
-        "scope": "e17f88ffdd7a4e532f187741a4c58b7b09c109fc",
-        "since": "2026-11-25T10:10:54.050204+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T13:17:35.233413+00:00"
+        "observedAt": "2026-11-25T15:19:00.232145+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -479194,7 +479496,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T13:17:35.233413+00:00",
+        "observedAt": "2026-11-25T15:19:00.232145+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     }
