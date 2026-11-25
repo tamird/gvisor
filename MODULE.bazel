@@ -560,38 +560,38 @@ go_deps.module(
 )
 go_deps.module(
     path = "golang.org/x/crypto",
-    sum = "h1:3ZVCjf8Ggz7zneR/EHRVx68Ctf+2pmIMP2UFhh9cC6M=",
-    version = "v0.57.0",
+    sum = "h1:xS2jhqYbzNrpvkWP2YTDf4TJwBy3ykR03i8vFDxEc7c=",
+    version = "v0.59.0",
 )
 go_deps.module(
     path = "golang.org/x/mod",
-    sum = "h1:qJmnOUb4YB+FsEuM3HcWucdZASCPGhsX6uljO6pog0c=",
-    version = "v0.41.0",
+    sum = "h1:MFuq5J6s35W9D3IjkwyWc9vHh0nENOrt5K8Iof4ofmg=",
+    version = "v0.43.0",
 )
 go_deps.module(
     path = "golang.org/x/sync",
-    sum = "h1:KameEIfc1IkluZyXWLn39Wd4tURc6GbCiISGiZm2bQk=",
-    version = "v0.23.0",
+    sum = "h1:dJnifr0nMV8/SBnBvdo4eSGGnrc3O4FFx6IqvtLcmRs=",
+    version = "v0.25.0",
 )
 go_deps.module(
     path = "golang.org/x/sys",
-    sum = "h1:bbX/i/6MgT9BVLM9RT1thmxL04yeTAhbEz4SyadbXoo=",
-    version = "v0.48.0",
+    sum = "h1:dkKZEFTEKaLr1sjhs0WiKqoi8Jj5nHbS3Njmx1UoMJs=",
+    version = "v0.50.0",
 )
 go_deps.module(
     path = "golang.org/x/tools",
-    sum = "h1:k4Xc/1Om9jwkBJBo4NVLMSARBoWtK10mx+W5BnXCeAI=",
-    version = "v0.51.0",
+    sum = "h1:T3bIVp3zjHG9/aEiFk6BXxFh5/Vcbk7JA5hRq1cG8IU=",
+    version = "v0.53.0",
 )
 go_deps.module(
     path = "golang.org/x/term",
-    sum = "h1:3+OXuTbaKDgwk8jTi3aSLHRlmWqHEUDUtxnbFigO4YE=",
-    version = "v0.46.0",
+    sum = "h1:G6UU1eiSB8nl3DzeUGt7Mg+2SctI8tPS6Z5/mBt6cOk=",
+    version = "v0.48.0",
 )
 go_deps.module(
     path = "golang.org/x/net",
-    sum = "h1:79p50tfZlm0J9YfoDsSi639qSXNGVwEzOPLCxM2FsYU=",
-    version = "v0.60.0",
+    sum = "h1:HCoTmNh9EpD1PpK8gBNFY4gcTY4N+KQEO8ylfIKqFJ0=",
+    version = "v0.63.0",
 )
 go_deps.module(
     path = "github.com/google/go-cmp",
@@ -655,8 +655,8 @@ go_deps.module(
 )
 go_deps.module(
     path = "honnef.co/go/tools",
-    sum = "h1:4bH5o3b5ZULQ4UrBmP+63W9r7qIkqJClEA9ko5YKx+I=",
-    version = "v0.5.1",
+    sum = "h1:+jPbCzuYxYrcoOvCecYUFDj+XJQRmzIhJmlbpps21Zk=",
+    version = "v0.8.2",
 )
 go_deps.module(
     path = "cloud.google.com/go",
@@ -935,8 +935,8 @@ go_deps.module(
 )
 go_deps.module(
     path = "golang.org/x/telemetry",
-    sum = "h1:DftxASHKl6JolFPqoN+2WrFO53JvkHwRXvFqf8gsivA=",
-    version = "v0.0.0-20260924152758-ed294f943157",
+    sum = "h1:juaHO1dWannznOvpnfdTIjkqPDBsG9OcdkOBTBlcUCA=",
+    version = "v0.0.0-20261116191925-e77a43154acb",
 )
 go_deps.module(
     path = "golang.org/x/xerrors",

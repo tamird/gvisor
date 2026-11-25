@@ -31,6 +31,7 @@ import (
 	"github.com/google/subcommands"
 	"golang.org/x/mod/modfile"
 	"golang.org/x/term"
+	"golang.org/x/tools/go/analysis"
 	yaml "gopkg.in/yaml.v2"
 	"gvisor.dev/gvisor/runsc/flag"
 	"gvisor.dev/gvisor/tools/nogo/check"
@@ -151,8 +152,9 @@ func (c *checkCommon) execute(fn func() (check.FindingSet, facts.Serializer, err
 // Check implements subcommands.Command for the "check" command.
 type Check struct {
 	checkCommon
-	Package string
-	Binary  string
+	Package    string
+	Binary     string
+	ModuleFile string
 }
 
 // Name implements subcommands.Command.Name.
@@ -180,6 +182,7 @@ func (*Check) Usage() string {
 func (c *Check) SetFlags(fs *flag.FlagSet) {
 	c.setFlags(fs, "check")
 	fs.StringVar(&c.Package, "package", "", "package for analysis (required)")
+	fs.StringVar(&c.ModuleFile, "module-go-mod", "", "go.mod for the checked package's main module")
 }
 
 // Execute implements subcommands.Command.Execute.
@@ -187,10 +190,30 @@ func (c *Check) Execute(ctx context.Context, fs *flag.FlagSet, args ...any) subc
 	if c.Package == "" {
 		c.Package = "main" // Default, no imports.
 	}
+	var module *analysis.Module
+	if c.ModuleFile != "" {
+		m, err := readModFile(c.ModuleFile)
+		if err != nil {
+			return failure("reading module: %v", err)
+		}
+		if m.Module == nil {
+			return failure("module directive not found in %s", c.ModuleFile)
+		}
+		module = &analysis.Module{
+			Path:    m.Module.Mod.Path,
+			Version: m.Module.Mod.Version,
+			Main:    true,
+			Dir:     filepath.Dir(c.ModuleFile),
+			GoMod:   c.ModuleFile,
+		}
+		if m.Go != nil {
+			module.GoVersion = "go" + m.Go.Version
+		}
+	}
 
 	// Perform the analysis.
 	if err := c.execute(func() (check.FindingSet, facts.Serializer, error) {
-		return check.Package(c.Package /* path */, fs.Args() /* srcs */)
+		return check.Package(c.Package /* path */, fs.Args() /* srcs */, module)
 	}); err != nil {
 		return failure("%v", err)
 	}
@@ -514,6 +537,14 @@ func (r *Render) Execute(ctx context.Context, fs *flag.FlagSet, args ...any) sub
 	return subcommands.ExitSuccess
 }
 
+func readModFile(filename string) (*modfile.File, error) {
+	b, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return modfile.Parse(filename, b, nil)
+}
+
 // resolveGOVERSION sets flags.GOVERSION from flags.GOVERSIONModFile, if necessary.
 func resolveGOVERSION() error {
 	if flags.GOVERSIONModFile == "" {
@@ -524,12 +555,7 @@ func resolveGOVERSION() error {
 		return errors.New("only one of -GOVERSION or -GOVERSION-mod-file may be set")
 	}
 
-	b, err := os.ReadFile(flags.GOVERSIONModFile)
-	if err != nil {
-		return err
-	}
-
-	m, err := modfile.Parse(flags.GOVERSIONModFile, b, nil)
+	m, err := readModFile(flags.GOVERSIONModFile)
 	if err != nil {
 		return err
 	}

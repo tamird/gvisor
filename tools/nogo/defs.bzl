@@ -341,6 +341,12 @@ def _nogo_aspect_impl(target, ctx):
         "-facts=%s" % facts_file.path,
         "-package=%s" % importpath,
     ])
+
+    # Tests use a synthetic import path, so identify module ownership from
+    # the target's repository rather than its import path.
+    if not ctx.label.workspace_root:
+        args.add("-module-go-mod=%s" % ctx.file._module_file.path)
+        inputs.append(ctx.file._module_file)
     args.add_all(srcs)
     ctx.actions.run(
         inputs = inputs + srcs,
@@ -385,6 +391,10 @@ nogo_aspect = go_rule(
         "embed",
     ],
     attrs = {
+        "_module_file": attr.label(
+            default = "//:go.mod",
+            allow_single_file = True,
+        ),
         "_nogo": attr.label(
             default = "//tools/nogo:nogo_tool",
             cfg = "exec",
