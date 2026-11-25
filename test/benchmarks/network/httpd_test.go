@@ -111,6 +111,10 @@ func benchmarkHttpdContinuous(b *testing.B, concurrency []int, sizes []string) {
 
 // runHttpd configures the static serving methods to run httpd.
 func runHttpd(b *testing.B, hey *tools.Hey) {
+	hey.ExpectedStatus = 200
+	if hey.Doc == httpdDocs["notfound"] {
+		hey.ExpectedStatus = 404
+	}
 	// httpd runs on port 80.
 	const port = 80
 	httpdRunOpts := dockerutil.RunOpts{

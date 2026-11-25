@@ -136,6 +136,10 @@ func benchmarkNginxContinuous(b *testing.B, concurrency []int, sizes []string) {
 
 // runNginx configures the static serving methods to run httpd.
 func runNginx(b *testing.B, hey *tools.Hey, tmpfs bool) {
+	hey.ExpectedStatus = 200
+	if hey.Doc == nginxDocs["notfound"] {
+		hey.ExpectedStatus = 404
+	}
 	// nginx runs on port 80.
 	port := 80
 	nginxRunOpts := dockerutil.RunOpts{Image: "benchmarks/nginx"}

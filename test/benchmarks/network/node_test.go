@@ -53,6 +53,7 @@ func BenchmarkNode(b *testing.B) {
 
 // runNode runs the test for a given # of requests and concurrency.
 func runNode(b *testing.B, hey *tools.Hey) {
+	hey.ExpectedStatus = 200
 	b.Helper()
 
 	// The machine to hold Redis and the Node Server.
@@ -104,28 +105,20 @@ func runNode(b *testing.B, hey *tools.Hey) {
 	}
 	defer nodeApp.CleanUp(ctx)
 
-	// Wait until the Client sees the server as up.
 	if err := harness.WaitUntilContainerServing(ctx, clientMachine, nodeApp, port); err != nil {
-		b.Fatalf("failed to wait for node server: %v", err)
+		b.Fatalf("waiting for Node on port %d: %v", port, err)
 	}
 
 	heyCmd := hey.MakeCmd("node", port)
 
 	// the client should run on Native.
-	b.ResetTimer()
 	client := clientMachine.GetNativeContainer(ctx, b)
 	defer client.CleanUp(ctx)
-	out, err := client.Run(ctx, dockerutil.RunOpts{
+	runHTTPBenchmark(b, ctx, client, dockerutil.RunOpts{
 		Image:      "benchmarks/hey",
 		Links:      []string{nodeApp.MakeLink("node")},
 		CpusetCpus: harness.ClientCPUSet(),
-	}, heyCmd...)
-	if err != nil {
-		b.Fatalf("hey container failed: %v logs: %s", err, out)
-	}
-
-	// Stop the timer to parse the data and report stats.
-	hey.Report(b, out)
+	}, hey, heyCmd...)
 }
 
 func TestMain(m *testing.M) {

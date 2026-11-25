@@ -17,6 +17,7 @@ package network
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
@@ -59,21 +60,36 @@ func runStaticServer(b *testing.B, serverOpts dockerutil.RunOpts, serverCmd []st
 		b.Fatalf("failed to start server: %v", err)
 	}
 
-	// Make sure the server is serving.
 	if err := harness.WaitUntilContainerServing(ctx, clientMachine, server, port); err != nil {
-		b.Fatalf("failed to wait for server: %v", err)
+		b.Fatalf("waiting for %s on port %d: %v", serverOpts.Image, port, err)
 	}
 
-	// Run the client.
-	b.ResetTimer()
-	out, err := client.Run(ctx, dockerutil.RunOpts{
+	runHTTPBenchmark(b, ctx, client, dockerutil.RunOpts{
 		Image:      "benchmarks/hey",
 		Links:      []string{server.MakeLink("server")},
 		CpusetCpus: harness.ClientCPUSet(),
-	}, hey.MakeCmd("server", port)...)
-	if err != nil {
-		b.Fatalf("run failed with: %v", err)
+	}, hey, hey.MakeCmd("server", port)...)
+}
+
+// runHTTPBenchmark times HTTP client execution and reports its results.
+func runHTTPBenchmark(b *testing.B, ctx context.Context, client *dockerutil.Container, opts dockerutil.RunOpts, hey *tools.Hey, args ...string) {
+	b.Helper()
+	b.ResetTimer()
+	if err := client.Spawn(ctx, opts, args...); err != nil {
+		b.Fatalf("failed to start hey: %v", err)
 	}
+	waitErr := client.Wait(ctx)
 	b.StopTimer()
-	hey.Report(b, out)
+	stdout, stderr, err := client.OutputStreams(ctx)
+	if err != nil {
+		b.Fatalf("failed to read hey output: %v", err)
+	}
+	if stderr.Len() != 0 {
+		b.Logf("hey stderr: %s", stderr)
+	}
+	if waitErr != nil {
+		b.Fatalf("hey failed: %v\nstdout: %s", waitErr, stdout)
+	}
+	fmt.Printf("%s", stdout.Bytes())
+	hey.Report(b, stdout.Bytes())
 }

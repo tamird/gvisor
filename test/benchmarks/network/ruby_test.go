@@ -54,6 +54,7 @@ func BenchmarkRuby(b *testing.B) {
 
 // runRuby runs the test for a given # of requests and concurrency.
 func runRuby(b *testing.B, hey *tools.Hey) {
+	hey.ExpectedStatus = 200
 	// The machine to hold Redis and the Ruby Server.
 	serverMachine, err := harness.GetMachine()
 	if err != nil {
@@ -113,19 +114,13 @@ func runRuby(b *testing.B, hey *tools.Hey) {
 	heyCmd := hey.MakeCmd("ruby", port)
 
 	// the client should run on Native.
-	b.ResetTimer()
 	client := clientMachine.GetNativeContainer(ctx, b)
 	defer client.CleanUp(ctx)
-	out, err := client.Run(ctx, dockerutil.RunOpts{
+	runHTTPBenchmark(b, ctx, client, dockerutil.RunOpts{
 		Image:      "benchmarks/hey",
 		Links:      []string{rubyApp.MakeLink("ruby")},
 		CpusetCpus: harness.ClientCPUSet(),
-	}, heyCmd...)
-	if err != nil {
-		b.Fatalf("hey container failed: %v logs: %s", err, out)
-	}
-	b.StopTimer()
-	hey.Report(b, out)
+	}, hey, heyCmd...)
 }
 
 func TestMain(m *testing.M) {
