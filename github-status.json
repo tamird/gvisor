@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-25T01:19:21.877880+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-25T00:20:21.775588+00:00",
+  "registryDate": "2026-11-25T01:21:15.429370+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -460891,15 +460891,15 @@
       "checkedAt": "2026-11-25T01:19:15.641372+00:00",
       "mergeabilityCheckedAt": "2026-11-25T01:19:15.641372+00:00",
       "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Follow actual quota recovery or a new admitted build through the existing owner. No unchanged retry, operator outreach, unsupported rerequest or source churn.",
+      "owner": "root / approved_rebase_queue",
+      "action": "Root and approved_rebase_queue assess the new conflict under the existing approved-rebase workstream, preserving source semantics and review boundaries. Retain prior admission history separately; no unchanged CI retry, merge or duplicate outreach.",
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "root / approved_rebase_queue",
         "sourceHead": "b31ec1084c1cfb767db222fdf04124c7c7000b86",
-        "disposition": "Exact-head FirstPass2469 failed pre-agent upload exit80 with null agent/start and explicit Tamir1535036 rolling30-day360,000 compute-minute quota. No Bazel tests ran; empty logs did not contain the structured admission reason. Existing source qualification/approval and independent review/landing holds remain.",
-        "nextAction": "Follow actual quota recovery or a new admitted build through the existing owner. No unchanged retry, operator outreach, unsupported rerequest or source churn."
+        "disposition": "Current b31ec1084 is conflicting against the observed base. Earlier source-equivalent qualification and published notice remain historical; a new conflict needs bounded current-state assessment. Existing source/publication and performance bounds remain.",
+        "nextAction": "Root and approved_rebase_queue assess the new conflict under the existing approved-rebase workstream, preserving source semantics and review boundaries. Retain prior admission history separately; no unchanged CI retry, merge or duplicate outreach."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-25T01:19:15.641372+00:00"
     },
     {
       "repo": "google/gvisor",
@@ -461203,13 +461203,13 @@
       "checkedAt": "2026-11-25T01:19:21.257304+00:00",
       "mergeabilityCheckedAt": "2026-11-25T01:19:21.257304+00:00",
       "sourceBranchMismatch": false,
-      "owner": "approved_rebase_queue / root",
-      "action": "Root follows the existing #17780 lifecycle and scoped Hey producer preparation. Do not open duplicate PRs, re-ask source approval, transfer standalone-base qualification or adopt foreign Hey #345 as our fix. No new producer publication or outreach is authorized. Hey preview fa4 is unvalidated; its native CI delivery is unknown, with no publication question asked.",
+      "owner": "root",
+      "action": "Root publishes the qualified rebase with its exact ebc245173 lease when normal transport recovers, then follows current-head CI and the existing reviewer requests. The existing SSH-unlock question covers capability recovery; no new source decision or proven token-scope deficiency. Hey producer limitations constrain qualification claims, not this approved source delivery.",
       "recordedFollowup": {
-        "owner": "approved_rebase_queue / root",
+        "owner": "root",
         "sourceHead": "ebc2451733c1317e3cd1d2e57e0a815073f0e813",
-        "disposition": "Existing open approved source ebc245173 already contains readiness error handling and Node client cleanup with the correct ordering. Standalone candidates 46135 and 306907 duplicate that delivered topic; their new-publication intents are retired as covered by this open PR, not merged or newly delivered commits. Their private qualification stays source-scoped. Known Hey producer bugs limit HTTP qualification/body-count claims; they add no source gate to the already-approved delivery.",
-        "nextAction": "Root follows the existing #17780 lifecycle and scoped Hey producer preparation. Do not open duplicate PRs, re-ask source approval, transfer standalone-base qualification or adopt foreign Hey #345 as our fix. No new producer publication or outreach is authorized. Hey preview fa4 is unvalidated; its native CI delivery is unknown, with no publication question asked."
+        "disposition": "Public ebc245173 remains conflicting. The approved three-commit rebase 4ef1c7dd6 is qualified on both architectures and accepted by root; only publication is blocked after bounded SSH and HTTPS workflow-determination timeouts. Readiness and cleanup standalone intents remain retired as duplicates of this open PR.",
+        "nextAction": "Root publishes the qualified rebase with its exact ebc245173 lease when normal transport recovers, then follows current-head CI and the existing reviewer requests. The existing SSH-unlock question covers capability recovery; no new source decision or proven token-scope deficiency. Hey producer limitations constrain qualification claims, not this approved source delivery."
       },
       "conflictObservedSince": "2026-11-25T00:15:56.248349+00:00"
     },
@@ -478068,7 +478068,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T00:20:21.775588+00:00"
+        "observedAt": "2026-11-25T01:21:15.429370+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -478077,7 +478077,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T00:20:21.775588+00:00"
+        "observedAt": "2026-11-25T01:21:15.429370+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -478086,7 +478086,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T00:20:21.775588+00:00"
+        "observedAt": "2026-11-25T01:21:15.429370+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -478095,7 +478095,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T00:20:21.775588+00:00"
+        "observedAt": "2026-11-25T01:21:15.429370+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -478104,7 +478104,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T00:20:21.775588+00:00"
+        "observedAt": "2026-11-25T01:21:15.429370+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -478113,7 +478113,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T00:20:21.775588+00:00"
+        "observedAt": "2026-11-25T01:21:15.429370+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -478122,7 +478122,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T00:20:21.775588+00:00"
+        "observedAt": "2026-11-25T01:21:15.429370+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -478131,7 +478131,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T00:20:21.775588+00:00"
+        "observedAt": "2026-11-25T01:21:15.429370+00:00"
       }
     },
     "issue:17832": {
@@ -478140,7 +478140,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T00:20:21.775588+00:00"
+        "observedAt": "2026-11-25T01:21:15.429370+00:00"
       }
     },
     "branch:arm-premerge-cpp-lint": {
@@ -478149,7 +478149,7 @@
         "since": "2026-11-24T18:07:30.803456+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T00:20:21.775588+00:00"
+        "observedAt": "2026-11-25T01:21:15.429370+00:00"
       }
     },
     "branch:clang-tidy-process-failures": {
@@ -478158,7 +478158,16 @@
         "since": "2026-11-24T18:07:30.803456+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T00:20:21.775588+00:00"
+        "observedAt": "2026-11-25T01:21:15.429370+00:00"
+      }
+    },
+    "branch:sysbench-summary-output": {
+      "contributor-review": {
+        "scope": "24419d916114737a9d50690a7647c11d9fd66fe9",
+        "since": "2026-11-25T01:21:15.429370+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-25T01:21:15.429370+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -478167,7 +478176,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T00:20:21.775588+00:00"
+        "observedAt": "2026-11-25T01:21:15.429370+00:00"
       }
     },
     "investigation:ci-flake-node-worker-arraybuffer-zerofill": {
@@ -478176,7 +478185,7 @@
         "since": "2026-11-24T18:06:03.132845+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T00:20:21.775588+00:00"
+        "observedAt": "2026-11-25T01:21:15.429370+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -478185,8 +478194,17 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T00:20:21.775588+00:00",
+        "observedAt": "2026-11-25T01:21:15.429370+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
+      }
+    },
+    "investigation:bazel-test-output-status": {
+      "contributor-review": {
+        "scope": "https://github.com/bazelbuild/bazel/issues/new",
+        "since": "2026-11-25T01:21:15.429370+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-25T01:21:15.429370+00:00"
       }
     }
   },
