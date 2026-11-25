@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T18:47:37.715770+00:00",
+    "updatedAt": "2026-11-25T19:23:54.118607+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42795,24 +42795,31 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/systrap-stub-data",
-      "head": "6a54750c6a8b6836e3806faa63a5729b2f7621a7",
+      "head": "e0b856220893da40f3f6cb219463d3fcfb0bff97",
       "title": "Extract the mapped systrap bytes and offsets from the same ELF",
       "url": "https://github.com/tamird/gvisor/commit/6a54750c6a8b6836e3806faa63a5729b2f7621a7",
       "group": "bazel",
-      "status": "Contributor approved; landed-parent qualification queued",
-      "summary": "The offsets tool extracts .crblob from the same linked ELF. The raw stub and Go offsets match for AMD64 and ARM64 with 4 KiB and 64 KiB pages. A remote empty-root check ran the static tool with each ELF; installed AMD64 runsc started a systrap container. The outer empty-root job failed rereading its archived execution log; the original worker record verified all three cases.\n\nWith the current native C rule, the approved Go tool extracted 5,280 bytes on AMD64 and 4,864 on ARM64. All 10 and 11 generated offsets matched the ELF symbols. The same bytes linked at zero and 2 MiB. Both stubs had zero load-time relocations with the relocation tables retained. Adding an absolute pointer produced one relocation on each CPU.",
-      "updatedAt": "2026-11-25T18:47:37.715770+00:00",
+      "status": "Agent work",
+      "summary": "Unpublished current candidate e0b8562208 integrates the approved extractor onto landed #16516 (617f38be6). Graph, canonical source checks, both-architecture product/audit and linked sysmsg/systrap/runsc/Sentry consumer builds passed. The source-archive handle remains pending. Original approved remote source 6a54750c is retained; no runtime, performance or current 64 KiB qualification is claimed.",
+      "updatedAt": "2026-11-25T19:23:54.118607+00:00",
       "followup": {
         "owner": "root",
-        "sourceHead": "6a54750c6a8b6836e3806faa63a5729b2f7621a7",
+        "sourceHead": "e0b856220893da40f3f6cb219463d3fcfb0bff97",
         "observedAt": "2026-11-07T02:36:21+00:00",
-        "disposition": "Prerequisite #16516 has merged. The approved raw stub-data child remains separate and needs qualification against the landed parent before publication.",
-        "nextAction": "Root queues the approved raw stub-data integration against landed #16516 at the coordinated checkout handoff. Qualify the actual landed-parent delta before separate PR delivery; preserve original approval and source-specific limits without transferring old-base qualification.",
+        "disposition": "Unpublished current candidate e0b8562208 integrates the approved extractor onto landed #16516 (617f38be6). Graph, canonical source checks, both-architecture product/audit and linked sysmsg/systrap/runsc/Sentry consumer builds passed. The source-archive handle remains pending. Original approved remote source 6a54750c is retained; no runtime, performance or current 64 KiB qualification is claimed.",
+        "nextAction": "Root consumes the existing source-archive result 45682441151 from the qualification owner, then decides final packaging/publication review. Preserve source-bound integration evidence and original approval limits. Do not mark the candidate ready/published, open an upstream PR or invent an unanswered source question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6a54750c6a8b6836e3806faa63a5729b2f7621a7",
           "https://github.com/google/gvisor/pull/16516",
           "https://github.com/google/gvisor/pull/16518",
-          "https://github.com/google/gvisor/commit/6898ec4d5"
+          "https://github.com/google/gvisor/commit/6898ec4d5",
+          "https://github.com/tamird/gvisor/actions/runs/45680446729",
+          "https://github.com/tamird/gvisor/actions/runs/45680450732",
+          "https://github.com/tamird/gvisor/actions/runs/45680745661/artifacts/15053224116",
+          "https://github.com/tamird/gvisor/actions/runs/45680748901/artifacts/15053902182",
+          "https://github.com/tamird/gvisor/actions/runs/45682432817",
+          "https://github.com/tamird/gvisor/actions/runs/45682437180",
+          "https://github.com/tamird/gvisor/actions/runs/45682441151"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -42826,8 +42833,23 @@
           "owner": "root"
         },
         "technicalOwner": "native_runtime",
-        "recheckCondition": "Root checkout/source handoff and actual landed-parent qualification, or a changed source/prerequisite event.",
-        "curatedAt": "2026-11-25T18:47:37.715770+00:00"
+        "recheckCondition": "The existing archive handle returns terminal evidence and root records the actual packaging/publication disposition; no duplicate observer.",
+        "curatedAt": "2026-11-25T19:23:54.118607+00:00",
+        "qualificationHistory": [
+          {
+            "sourceHead": "6a54750c6a8b6836e3806faa63a5729b2f7621a7",
+            "summary": "The offsets tool extracts .crblob from the same linked ELF. The raw stub and Go offsets match for AMD64 and ARM64 with 4 KiB and 64 KiB pages. A remote empty-root check ran the static tool with each ELF; installed AMD64 runsc started a systrap container. The outer empty-root job failed rereading its archived execution log; the original worker record verified all three cases.\n\nWith the current native C rule, the approved Go tool extracted 5,280 bytes on AMD64 and 4,864 on ARM64. All 10 and 11 generated offsets matched the ELF symbols. The same bytes linked at zero and 2 MiB. Both stubs had zero load-time relocations with the relocation tables retained. Adding an absolute pointer produced one relocation on each CPU.",
+            "status": "Contributor approved; landed-parent qualification queued"
+          }
+        ],
+        "implementationOwner": "approved_rebase_queue",
+        "candidate": {
+          "head": "e0b856220893da40f3f6cb219463d3fcfb0bff97",
+          "base": "617f38be69af1bf38ca015b6d395ae827619197f",
+          "tree": "13c90d98403e0bf413ece89b10648adb50d146e2",
+          "ci": "bcbc01c6506c5843af0ecdc13235530476be2138",
+          "state": "Archive qualification pending; not ready or published"
+        }
       },
       "evidence": [
         {
@@ -42869,6 +42891,34 @@
         {
           "label": "Combined delivery proposed on #16516",
           "url": "https://github.com/tamird/gvisor/commit/b540bc616"
+        },
+        {
+          "label": "Landed-parent graph",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45680446729"
+        },
+        {
+          "label": "Canonical source checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45680450732"
+        },
+        {
+          "label": "AMD64 products/audit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45680745661/artifacts/15053224116"
+        },
+        {
+          "label": "ARM64 products/audit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45680748901/artifacts/15053902182"
+        },
+        {
+          "label": "AMD64 linked consumers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45682432817"
+        },
+        {
+          "label": "ARM64 linked consumers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45682437180"
+        },
+        {
+          "label": "Existing source-archive handle, pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45682441151"
         }
       ],
       "refinement": {
@@ -42879,8 +42929,8 @@
           "head": "6a54750c6a8b6836e3806faa63a5729b2f7621a7"
         }
       },
-      "nextStep": "Root queues the approved raw stub-data integration against landed #16516 at the coordinated checkout handoff. Qualify the actual landed-parent delta before separate PR delivery; preserve original approval and source-specific limits without transferring old-base qualification.",
-      "recheckCondition": "Root checkout/source handoff and actual landed-parent qualification, or a changed source/prerequisite event."
+      "nextStep": "Root consumes the existing source-archive result 45682441151 from the qualification owner, then decides final packaging/publication review. Preserve source-bound integration evidence and original approval limits. Do not mark the candidate ready/published, open an upstream PR or invent an unanswered source question.",
+      "recheckCondition": "The existing archive handle returns terminal evidence and root records the actual packaging/publication disposition; no duplicate observer."
     },
     {
       "id": "branch:vfs-rollback-failed-async-handler",
@@ -111822,6 +111872,18 @@
       "evidence": [
         "https://github.com/gvisor/gvisor/pull/17920"
       ]
+    },
+    {
+      "from": "investigation:ci-benchmark-fuse-device",
+      "to": "investigation:repository-lint",
+      "type": "blocked_by",
+      "label": "FUSE exec/mmap qualification",
+      "reason": "The remaining GRPC functional gate requires explicit FUSE/MM design ownership and native parity tests, then tiny exec-on-FUSE. This is a qualification prerequisite, not an adopted source patch.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/actions/runs/45681177653",
+        "https://github.com/gvisor/gvisor/issues/3234",
+        "https://github.com/gvisor/gvisor/issues/3237"
+      ]
     }
   ],
   "investigations": [
@@ -133052,9 +133114,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-25T18:07:51.449024+00:00",
+      "updatedAt": "2026-11-25T19:23:54.118607+00:00",
       "group": "analysis",
-      "summary": "The requested rewrite is complete at 0edf29aac: 36 commits, with all analyzers registered first and migration exclusions removed alongside source fixes. Its final tree differs from 26090 only by restoring the three original sanity files. Endpoint gates and two independent reviews passed; unchanged-input 891-target corpus evidence is reused. Publication readiness remains blocked by #17884 and the existing performance/baseline behavioral gates.",
+      "summary": "Source 0edf29aac remains the completed 36-commit rewrite. Sandboxsetup, docprocessor and Python qualification passed on both architectures within their recorded scopes; the Fastlane baseline diagnostic passed without explaining the original intermittent failure. The same three route failures and the FUSE GRPC exec/mmap prerequisite remain. Performance A/A qualification is separate, and #17884 remains open.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -133426,7 +133488,7 @@
           ]
         }
       ],
-      "nextStep": "Root coordinates the open #17884 prerequisite at exact base 0c7e69e359, remaining performance matrix/A/A admission, eight FUSE capability cases, the Fastlane baseline fixture and four behavioral targets: sandboxsetup_test, sandbox_test, docprocessor_test and sandbox_py_test. The rewrite is finished; no repeat restructuring, new qualification run or publication approval is implied.",
+      "nextStep": "Root coordinates the three remaining route expectations and the FUSE/MM architectural prerequisite (#3234/#3237). FUSE implementation ownership is unassigned: first assign a design owner and require native parity tests, then tiny exec-on-FUSE before GRPC. Keep #17884 and performance A/A gates separate; do not repeat completed ordinary qualification or infer publication readiness.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -133711,6 +133773,74 @@
         {
           "label": "Final one-commit analyzer code preview",
           "url": "https://github.com/tamird/gvisor/commit/a3f52992b34ef2873195b97b0856f20d061d0832"
+        },
+        {
+          "label": "Sandboxsetup AMD64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45673411421"
+        },
+        {
+          "label": "Sandboxsetup ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45675454721"
+        },
+        {
+          "label": "Docprocessor AMD64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45673421171"
+        },
+        {
+          "label": "Docprocessor ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45675464187"
+        },
+        {
+          "label": "Python sandbox AMD64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45673425836"
+        },
+        {
+          "label": "Python sandbox ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45675469954"
+        },
+        {
+          "label": "Remaining route failures AMD64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45673416144"
+        },
+        {
+          "label": "Remaining route failures ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45675458913"
+        },
+        {
+          "label": "Fastlane baseline diagnostic, reconciled inner result",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45676392866"
+        },
+        {
+          "label": "Qualified FUSE runtime admission",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45678371880"
+        },
+        {
+          "label": "FUSE ABSL visits",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45679713316"
+        },
+        {
+          "label": "FUSE RubyNoOp visits",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45679719877"
+        },
+        {
+          "label": "FUSE RubySpec visits",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45679724213"
+        },
+        {
+          "label": "Four identical FUSE GRPC failures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45679716281"
+        },
+        {
+          "label": "FUSE ELF loader / ConfigureMMap ENOSYS trace",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45681177653"
+        },
+        {
+          "label": "FUSE mmap architecture prerequisite #3234",
+          "url": "https://github.com/gvisor/gvisor/issues/3234"
+        },
+        {
+          "label": "FUSE mmap architecture prerequisite #3237",
+          "url": "https://github.com/gvisor/gvisor/issues/3237"
         }
       ],
       "reviewWatch": {
@@ -133733,11 +133863,11 @@
           }
         ]
       },
-      "recheckCondition": "Actual #17884 landing or required performance/admission, capability, fixture or named behavioral-gate evidence; root decides publication review after those gates.",
+      "recheckCondition": "An explicit FUSE/MM design owner and native parity evidence, then tiny exec-on-FUSE; actual route/prerequisite resolution or separately authorized performance qualification.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Root coordinates the open #17884 prerequisite at exact base 0c7e69e359, remaining performance matrix/A/A admission, eight FUSE capability cases, the Fastlane baseline fixture and four behavioral targets: sandboxsetup_test, sandbox_test, docprocessor_test and sandbox_py_test. The rewrite is finished; no repeat restructuring, new qualification run or publication approval is implied.",
-        "recheckCondition": "Actual #17884 landing or required performance/admission, capability, fixture or named behavioral-gate evidence; root decides publication review after those gates."
+        "nextAction": "Root coordinates the three remaining route expectations and the FUSE/MM architectural prerequisite (#3234/#3237). FUSE implementation ownership is unassigned: first assign a design owner and require native parity tests, then tiny exec-on-FUSE before GRPC. Keep #17884 and performance A/A gates separate; do not repeat completed ordinary qualification or infer publication readiness.",
+        "recheckCondition": "An explicit FUSE/MM design owner and native parity evidence, then tiny exec-on-FUSE; actual route/prerequisite resolution or separately authorized performance qualification."
       },
       "head": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
       "settledReviews": [
@@ -133917,17 +134047,34 @@
           "https://github.com/tamird/gvisor/actions/runs/45666901323",
           "https://github.com/tamird/gvisor/actions/runs/45666906105",
           "https://github.com/tamird/gvisor/actions/runs/45456834454",
-          "https://github.com/tamird/gvisor/actions/runs/45456849968"
+          "https://github.com/tamird/gvisor/actions/runs/45456849968",
+          "https://github.com/tamird/gvisor/actions/runs/45673411421",
+          "https://github.com/tamird/gvisor/actions/runs/45675454721",
+          "https://github.com/tamird/gvisor/actions/runs/45673421171",
+          "https://github.com/tamird/gvisor/actions/runs/45675464187",
+          "https://github.com/tamird/gvisor/actions/runs/45673425836",
+          "https://github.com/tamird/gvisor/actions/runs/45675469954",
+          "https://github.com/tamird/gvisor/actions/runs/45673416144",
+          "https://github.com/tamird/gvisor/actions/runs/45675458913",
+          "https://github.com/tamird/gvisor/actions/runs/45676392866",
+          "https://github.com/tamird/gvisor/actions/runs/45678371880",
+          "https://github.com/tamird/gvisor/actions/runs/45679713316",
+          "https://github.com/tamird/gvisor/actions/runs/45679719877",
+          "https://github.com/tamird/gvisor/actions/runs/45679724213",
+          "https://github.com/tamird/gvisor/actions/runs/45679716281",
+          "https://github.com/tamird/gvisor/actions/runs/45681177653",
+          "https://github.com/gvisor/gvisor/issues/3234",
+          "https://github.com/gvisor/gvisor/issues/3237"
         ],
         "owner": "root",
-        "disposition": "The requested rewrite is complete at 0edf29aac: 36 commits, with all analyzers registered first and migration exclusions removed alongside source fixes. Its final tree differs from 26090 only by restoring the three original sanity files. Endpoint gates and two independent reviews passed; unchanged-input 891-target corpus evidence is reused. Publication readiness remains blocked by #17884 and the existing performance/baseline behavioral gates.",
-        "nextAction": "Root coordinates the open #17884 prerequisite at exact base 0c7e69e359, remaining performance matrix/A/A admission, eight FUSE capability cases, the Fastlane baseline fixture and four behavioral targets: sandboxsetup_test, sandbox_test, docprocessor_test and sandbox_py_test. The rewrite is finished; no repeat restructuring, new qualification run or publication approval is implied.",
-        "recheckCondition": "Actual #17884 landing or required performance/admission, capability, fixture or named behavioral-gate evidence; root decides publication review after those gates.",
+        "disposition": "Source 0edf29aac remains the completed 36-commit rewrite. Sandboxsetup, docprocessor and Python qualification passed on both architectures within their recorded scopes; the Fastlane baseline diagnostic passed without explaining the original intermittent failure. The same three route failures and the FUSE GRPC exec/mmap prerequisite remain. Performance A/A qualification is separate, and #17884 remains open.",
+        "nextAction": "Root coordinates the three remaining route expectations and the FUSE/MM architectural prerequisite (#3234/#3237). FUSE implementation ownership is unassigned: first assign a design owner and require native parity tests, then tiny exec-on-FUSE before GRPC. Keep #17884 and performance A/A gates separate; do not repeat completed ordinary qualification or infer publication readiness.",
+        "recheckCondition": "An explicit FUSE/MM design owner and native parity evidence, then tiny exec-on-FUSE; actual route/prerequisite resolution or separately authorized performance qualification.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-25T18:07:51.449024+00:00"
+        "curatedAt": "2026-11-25T19:23:54.118607+00:00"
       },
       "comparisons": [
         {
@@ -134004,6 +134151,103 @@
             {
               "label": "Reused unchanged-input ARM64 891-target corpus",
               "url": "https://github.com/tamird/gvisor/actions/runs/45456849968"
+            }
+          ]
+        },
+        {
+          "title": "Terminal nonperformance disposition",
+          "description": "Recorded qualified fixtures and runtime products; these functional results are not a timing comparison.",
+          "columns": [
+            "Scope",
+            "Terminal evidence / remaining condition"
+          ],
+          "rows": [
+            [
+              "Ordinary targets, both architectures",
+              "Sandboxsetup 23 and docprocessor 9 pass per architecture. Python suite passed: 42 tests, one inherited skip. The same three route cases still fail; dependency effects are not independently excluded."
+            ],
+            [
+              "Baseline Fastlane diagnostic",
+              "3613 examples, zero failures, 31 pending; wrapper-parser recovery was offline. The original intermittent failure remains unexplained."
+            ],
+            [
+              "Qualified FUSE admission and visits",
+              "Both runtime arms admitted. All 16 visits reconciled: 12 pass (ABSL, RubyNoOp, RubySpec); four GRPC visits fail identically during Bazel ELF loading."
+            ],
+            [
+              "FUSE architectural prerequisite",
+              "regularFileFD.ConfigureMMap returns ENOSYS (trace 45681177653). Open #3234/#3237; COMPATIBILITY:NEW-APP-CONFIG. Implementation owner unassigned; root coordinates design/parity → tiny exec → GRPC."
+            ]
+          ],
+          "note": "ABSL’s four actual visits passed; its outer workflow failed only a stale post-run stat path and was reconciled offline. Earlier confined-host EPERM remains source-scoped. No unchanged GRPC retry, implementation or performance clearance is implied.",
+          "evidence": [
+            {
+              "label": "Sandboxsetup AMD64",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45673411421"
+            },
+            {
+              "label": "Sandboxsetup ARM64",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45675454721"
+            },
+            {
+              "label": "Docprocessor AMD64",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45673421171"
+            },
+            {
+              "label": "Docprocessor ARM64",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45675464187"
+            },
+            {
+              "label": "Python sandbox AMD64",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45673425836"
+            },
+            {
+              "label": "Python sandbox ARM64",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45675469954"
+            },
+            {
+              "label": "Remaining route failures AMD64",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45673416144"
+            },
+            {
+              "label": "Remaining route failures ARM64",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45675458913"
+            },
+            {
+              "label": "Fastlane baseline diagnostic, reconciled inner result",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45676392866"
+            },
+            {
+              "label": "Qualified FUSE runtime admission",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45678371880"
+            },
+            {
+              "label": "FUSE ABSL visits",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45679713316"
+            },
+            {
+              "label": "FUSE RubyNoOp visits",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45679719877"
+            },
+            {
+              "label": "FUSE RubySpec visits",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45679724213"
+            },
+            {
+              "label": "Four identical FUSE GRPC failures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45679716281"
+            },
+            {
+              "label": "FUSE ELF loader / ConfigureMMap ENOSYS trace",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45681177653"
+            },
+            {
+              "label": "FUSE mmap architecture prerequisite #3234",
+              "url": "https://github.com/gvisor/gvisor/issues/3234"
+            },
+            {
+              "label": "FUSE mmap architecture prerequisite #3237",
+              "url": "https://github.com/gvisor/gvisor/issues/3237"
             }
           ]
         }
@@ -139776,12 +140020,12 @@
     },
     {
       "id": "investigation:ci-benchmark-fuse-device",
-      "title": "Native runc filesystem benchmarks cannot start the FUSE server",
+      "title": "FUSE mmap blocks GRPC executable loading",
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-23T04:16:53.896263+00:00",
-      "summary": "Completed confined-worker diagnosis45109429669: the actual helper runs under docker-default(enforce), /dev/fuse opens O_RDWR (go-fuse2.3 debugfd7), then syscall.Mount fails EPERM. Supplying the device is insufficient on this worker; the denying layer is not uniquely established. No mount, readiness or I/O occurred. Owned container/tag/temp teardown and source guards pass; exit1 preserves the helper failure and there was no mount to unmount. Upstream aced2 still lacks device binding.",
+      "updatedAt": "2026-11-25T19:23:54.118607+00:00",
+      "summary": "Qualified FUSE admission passed on both baseline/candidate runtime arms. All 16 functional visits are reconciled: 12 pass across ABSL, RubyNoOp and RubySpec; all four GRPC visits fail identically because regularFileFD.ConfigureMMap returns ENOSYS while Bazel loads an ELF. The remaining issue is architectural FUSE mmap support (COMPATIBILITY:NEW-APP-CONFIG), not an unfinished admission probe. Earlier confined-host EPERM remains historical and unexplained.",
       "findings": [
         {
           "text": "The original Ruby and ABSL jobs reported “could not create fuse server: no such file or directory” for fusefs. Other filesystem variants reported benchmark timings. The two logs do not identify the missing path or establish a passing retry.",
@@ -139860,7 +140104,7 @@
           ]
         }
       ],
-      "nextStep": "The profile/device-open-versus-mount information wait is closed. Root owns the remaining functional mount blocker and an evidence-based policy/worker strategy under existing security and sensitive-work holds. No confinement relaxation, unchanged retry, Ruby/ABSL timings or new approval question follows.",
+      "nextStep": "Root coordinates an explicit FUSE/MM design owner; implementation is currently unassigned. Require native parity tests, then a tiny exec-on-FUSE gate before GRPC qualification. Do not rerun the same GRPC workload, relax confinement or infer a source/performance fix from the successful admission.",
       "evidence": [
         {
           "label": "#54492 Ruby benchmark failure",
@@ -139925,14 +140169,64 @@
         {
           "label": "Confined FUSE helper: device opens, mount EPERM, teardown preserved",
           "url": "https://github.com/tamird/gvisor/actions/runs/45109429669/artifacts/14789146378"
+        },
+        {
+          "label": "Qualified FUSE runtime admission",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45678371880"
+        },
+        {
+          "label": "FUSE ABSL visits",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45679713316"
+        },
+        {
+          "label": "FUSE RubyNoOp visits",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45679719877"
+        },
+        {
+          "label": "FUSE RubySpec visits",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45679724213"
+        },
+        {
+          "label": "Four identical FUSE GRPC failures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45679716281"
+        },
+        {
+          "label": "FUSE ELF loader / ConfigureMMap ENOSYS trace",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45681177653"
+        },
+        {
+          "label": "FUSE mmap architecture prerequisite #3234",
+          "url": "https://github.com/gvisor/gvisor/issues/3234"
+        },
+        {
+          "label": "FUSE mmap architecture prerequisite #3237",
+          "url": "https://github.com/gvisor/gvisor/issues/3237"
         }
       ],
       "technicalOwner": "CI flake triage",
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
+      "recheckCondition": "Explicit FUSE/MM design ownership and native parity evidence; then successful tiny exec-on-FUSE before reconsidering GRPC.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
-        "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+        "nextAction": "Root coordinates an explicit FUSE/MM design owner; implementation is currently unassigned. Require native parity tests, then a tiny exec-on-FUSE gate before GRPC qualification. Do not rerun the same GRPC workload, relax confinement or infer a source/performance fix from the successful admission.",
+        "recheckCondition": "Explicit FUSE/MM design ownership and native parity evidence; then successful tiny exec-on-FUSE before reconsidering GRPC."
+      },
+      "followup": {
+        "owner": "root",
+        "disposition": "Qualified FUSE admission passed on both baseline/candidate runtime arms. All 16 functional visits are reconciled: 12 pass across ABSL, RubyNoOp and RubySpec; all four GRPC visits fail identically because regularFileFD.ConfigureMMap returns ENOSYS while Bazel loads an ELF. The remaining issue is architectural FUSE mmap support (COMPATIBILITY:NEW-APP-CONFIG), not an unfinished admission probe. Earlier confined-host EPERM remains historical and unexplained.",
+        "nextAction": "Root coordinates an explicit FUSE/MM design owner; implementation is currently unassigned. Require native parity tests, then a tiny exec-on-FUSE gate before GRPC qualification. Do not rerun the same GRPC workload, relax confinement or infer a source/performance fix from the successful admission.",
+        "recheckCondition": "Explicit FUSE/MM design ownership and native parity evidence; then successful tiny exec-on-FUSE before reconsidering GRPC.",
+        "curatedAt": "2026-11-25T19:23:54.118607+00:00",
+        "implementationOwner": null,
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/45678371880",
+          "https://github.com/tamird/gvisor/actions/runs/45679713316",
+          "https://github.com/tamird/gvisor/actions/runs/45679719877",
+          "https://github.com/tamird/gvisor/actions/runs/45679724213",
+          "https://github.com/tamird/gvisor/actions/runs/45679716281",
+          "https://github.com/tamird/gvisor/actions/runs/45681177653",
+          "https://github.com/gvisor/gvisor/issues/3234",
+          "https://github.com/gvisor/gvisor/issues/3237"
+        ]
       }
     },
     {
