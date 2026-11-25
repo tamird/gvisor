@@ -63,6 +63,7 @@ func BenchmarkRubySpecTest(b *testing.B) {
 		EnableForPGO: true,
 		WantOutput:   "3613 examples, 0 failures",
 		Callback: func(b *testing.B, output string) {
+			b.Log(output)
 			loadTime, err := tools.ExtractRubyLoadTime(output)
 			if err != nil {
 				b.Errorf("ExtractRubyLoadTime failed: %v", err)
