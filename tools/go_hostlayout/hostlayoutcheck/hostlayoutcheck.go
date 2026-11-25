@@ -34,7 +34,7 @@ func Validate(t reflect.Type) error {
 
 	f := t.Field(0)
 	// We check if the type of the first field is structs.HostLayout.
-	if f.Type != reflect.TypeOf(structs.HostLayout{}) {
+	if f.Type != reflect.TypeFor[structs.HostLayout]() {
 		return fmt.Errorf("struct %v first field must be `structs.HostLayout`, got `%v`", t, f.Type)
 	}
 

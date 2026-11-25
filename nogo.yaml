@@ -426,13 +426,6 @@ analyzers:
     # Controversial.
     internal:
       exclude: [".*"]
-  reflecttypefor:
-    internal:
-      exclude:
-        - ".*" # Temporary: migrate reflecttypefor.
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate reflecttypefor.
   reflecttypeassert:
     internal:
       exclude:
