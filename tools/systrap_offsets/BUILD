@@ -5,7 +5,7 @@ package(default_applicable_licenses = ["//:license"])
 licenses(["notice"])
 
 go_binary(
-    name = "gen_offsets",
+    name = "gen_stub",
     srcs = ["main.go"],
     pure = True,
     visibility = ["//pkg/sentry/platform/systrap/sysmsg:__pkg__"],

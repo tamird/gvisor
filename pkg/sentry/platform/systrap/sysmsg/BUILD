@@ -84,36 +84,30 @@ genrule(
     ],
 )
 
-genrule(
-    name = "sighandler_binary",
+run_binary(
+    name = "sighandler_data",
     srcs = [":sighandler_object"],
-    outs = ["sighandler.built-in.bin"],
-    cmd = "$(OBJCOPY) -O binary $(SRCS) $@",
-    toolchains = [
-        cc_toolchain,
+    outs = [
+        "sighandler.built-in.bin",
+        "sighandler.go.arch",
     ],
+    args = [
+        "$(location :sighandler_object)",
+        "$(RULEDIR)/sighandler.built-in.bin",
+        "$(RULEDIR)/sighandler.go.arch",
+    ],
+    tool = "//tools/systrap_offsets:gen_stub",
 )
 
 arch_genrule(
     name = "sighandler_binary_arch",
-    src = ":sighandler_binary",
+    src = ":sighandler.built-in.bin",
     template = "sighandler.built-in.%s.bin",
-)
-
-run_binary(
-    name = "sighandler_go",
-    srcs = [":sighandler_object"],
-    outs = ["sighandler.go.arch"],
-    args = [
-        "$(location :sighandler_object)",
-        "$@",
-    ],
-    tool = "//tools/systrap_offsets:gen_offsets",
 )
 
 arch_genrule(
     name = "sighandler_go_arch",
-    src = ":sighandler_go",
+    src = ":sighandler.go.arch",
     template = "sighandler_%s.go",
 )
 
