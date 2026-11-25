@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T16:22:07.608415+00:00",
+    "updatedAt": "2026-11-25T17:09:58.436283+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36131,14 +36131,14 @@
       "url": "https://github.com/google/gvisor/pull/16419",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-25T16:21:48.259782+00:00",
-      "summary": "Public 0ae405ec7 remains conflicting with changes requested. Candidate 54d23533 on base 8075b384 passed TCP unit and four end-to-end shards remotely; formatting recovery also passed all six source paths. Packet targets stopped before testbench on read-only accept_dad setup, so no packet/Linux-parity verdict exists. The owning worker-capability preflight is running; the candidate is not ready or published.",
+      "updatedAt": "2026-11-25T17:09:58.436283+00:00",
+      "summary": "Public 0ae405ec7 remains conflicting and unpublished. Final candidate 14d87bd3f on 8075b384 passed the owning packet, TCP unit/four end-to-end and formatter gates; functional source differs only by two final comment lines. The owner reports all required independent reviews accepted. Remaining blockers are exact-source same-runner A/A then A/B/broader performance coverage, and evidence-backed resolution of external thread 4648619071.",
       "followup": {
         "owner": "actions_bazel_cache",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
         "observedAt": "2026-11-20T23:31:27.372182+00:00",
-        "disposition": "Public 0ae405ec7 remains conflicting with changes requested. Candidate 54d23533 on base 8075b384 passed TCP unit and four end-to-end shards remotely; formatting recovery also passed all six source paths. Packet targets stopped before testbench on read-only accept_dad setup, so no packet/Linux-parity verdict exists. The owning worker-capability preflight is running; the candidate is not ready or published.",
-        "nextAction": "actions_bazel_cache owns the existing packet-capability recovery and packet-only qualification, reusing the completed unit/end-to-end/format evidence. Root retains final source/performance/publication boundaries. Do not duplicate the owner’s job reads or infer parity from setup failure.",
+        "disposition": "Public 0ae405ec7 remains conflicting and unpublished. Final candidate 14d87bd3f on 8075b384 passed the owning packet, TCP unit/four end-to-end and formatter gates; functional source differs only by two final comment lines. The owner reports all required independent reviews accepted. Remaining blockers are exact-source same-runner A/A then A/B/broader performance coverage, and evidence-backed resolution of external thread 4648619071.",
+        "nextAction": "actions_bazel_cache retains finalized candidate 14d87bd3f and its source-bound receipts. Root coordinates the remaining performance qualification and authorized thread resolution before any source-publication review. No upstream amendment/reply, new approval question, timing launch or duplicate observer is implied.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16419",
           "https://github.com/google/gvisor/pull/16419#discussion_r4504268180",
@@ -36168,9 +36168,12 @@
           "https://github.com/gvisor/gvisor/pull/16419#discussion_r4648619071",
           "https://github.com/tamird/gvisor/actions/runs/45646205507",
           "https://github.com/tamird/gvisor/actions/runs/45651934531",
-          "https://github.com/tamird/gvisor/actions/runs/45652124079"
+          "https://github.com/tamird/gvisor/actions/runs/45652124079",
+          "https://github.com/tamird/gvisor/actions/runs/45657171085",
+          "https://github.com/tamird/gvisor/actions/runs/45657177837",
+          "https://github.com/tamird/gvisor/actions/runs/45658848993/artifacts/15042454959"
         ],
-        "recheckCondition": "The existing owner returns the worker/packet result or actual source/reviewer evidence changes.",
+        "recheckCondition": "Required exact-source performance/admission evidence, resolution of thread 4648619071, or actual source/publication direction.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "mergeable": "CONFLICTING",
         "qualificationHistory": [
@@ -36249,6 +36252,15 @@
               },
               "remainingNetworkOutcomeOwner": "tcp_conflict"
             }
+          },
+          {
+            "candidate": {
+              "head": "54d23533e945131c900091c00d0fbc16a4a4e781",
+              "base": "8075b38443e475fd4e12ef9d423e2cd460e2396d",
+              "ci": "98c8840ef373e79afcf05ff4b6cdb89544655579",
+              "state": "Packet qualification incomplete; unpublished"
+            },
+            "disposition": "Earlier candidate and incomplete packet-setup state retained; final source-bound qualification is recorded separately."
           }
         ],
         "qualificationUpdate": {
@@ -36280,7 +36292,7 @@
           ]
         },
         "remainingNetworkOutcomeOwner": "tcp_conflict",
-        "curatedAt": "2026-11-25T16:21:48.259782+00:00",
+        "curatedAt": "2026-11-25T17:09:58.436283+00:00",
         "ciExecutionAuthorization": {
           "status": "Authorized CI-only; held for permanent Bazel mechanism migration",
           "owner": "root",
@@ -36315,10 +36327,10 @@
         },
         "implementationOwner": "actions_bazel_cache",
         "candidate": {
-          "head": "54d23533e945131c900091c00d0fbc16a4a4e781",
+          "head": "14d87bd3f1548d582f4af624b8594906c2c9b648",
           "base": "8075b38443e475fd4e12ef9d423e2cd460e2396d",
-          "ci": "98c8840ef373e79afcf05ff4b6cdb89544655579",
-          "state": "Packet qualification incomplete; unpublished"
+          "ci": "0917db58a9f5db1ea458f30db6078bd7f5747517",
+          "state": "Functional/formatter and independent reviews complete; performance/thread gates remain; unpublished"
         }
       },
       "evidence": [
@@ -36526,8 +36538,8 @@
           "https://github.com/tamird/gvisor/commit/0ae405ec7d1ace5894645c28910c69605c0de20e"
         ]
       },
-      "nextStep": "actions_bazel_cache owns the existing packet-capability recovery and packet-only qualification, reusing the completed unit/end-to-end/format evidence. Root retains final source/performance/publication boundaries. Do not duplicate the owner’s job reads or infer parity from setup failure.",
-      "recheckCondition": "The existing owner returns the worker/packet result or actual source/reviewer evidence changes."
+      "nextStep": "actions_bazel_cache retains finalized candidate 14d87bd3f and its source-bound receipts. Root coordinates the remaining performance qualification and authorized thread resolution before any source-publication review. No upstream amendment/reply, new approval question, timing launch or duplicate observer is implied.",
+      "recheckCondition": "Required exact-source performance/admission evidence, resolution of thread 4648619071, or actual source/publication direction."
     },
     {
       "id": "pr:17114",
@@ -133004,9 +133016,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-25T16:22:07.608415+00:00",
+      "updatedAt": "2026-11-25T17:06:47.049217+00:00",
       "group": "analysis",
-      "summary": "The distinct 54-commit analyzer series at 26090b334 is complete and reviewable: dependency bump, then 53 analyzer activations/fixes. Both architectures passed all 891 fresh static validators. Publication readiness remains blocked by open prerequisite #17884, incomplete performance/A-A admission, eight FUSE capability cases, the Fastlane baseline fixture and four behavioral targets.",
+      "summary": "Current preview 26090b334 contains 54 commits and passes all 891 static validators on each architecture. The user requested a new commit structure; that revision is not yet delivered. Remaining gates are #17884, incomplete performance/A/A admission, eight FUSE cases, the Fastlane baseline fixture and four behavioral targets.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -133378,7 +133390,7 @@
           ]
         }
       ],
-      "nextStep": "analysis_delivery owns the remaining performance matrix and A/A admission. Root coordinates #17884 and the remaining capability/fixture/behavior gates: sandboxsetup_test, sandbox_test, docprocessor_test and sandbox_py_test. Preserve exact source-bound evidence and source/publication requirements; no readiness, full runtime or performance-clearance claim.",
+      "nextStep": "analysis_delivery restructures the series: first commit registers every analyzer, with migration-requiring analyzers excluded in nogo.yml. Later commits remove exclusions alongside their source fixes. Analyzers needing no source changes get no standalone commit. Remove all sanity-test additions. Root then reviews the revised series and remaining qualification gates before requesting publication review.",
       "evidence": [
         {
           "label": "Complete 54-commit analyzer series: dependency first, then 53 activations",
@@ -133637,11 +133649,11 @@
           }
         ]
       },
-      "recheckCondition": "Actual prerequisite landing, required workload/A-A qualification or a resolved named capability/fixture/behavior gate.",
+      "recheckCondition": "Revised source/commit series and its source-bound validation, or completion of a remaining prerequisite/qualification gate.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "analysis_delivery owns the remaining performance matrix and A/A admission. Root coordinates #17884 and the remaining capability/fixture/behavior gates: sandboxsetup_test, sandbox_test, docprocessor_test and sandbox_py_test. Preserve exact source-bound evidence and source/publication requirements; no readiness, full runtime or performance-clearance claim.",
-        "recheckCondition": "Actual prerequisite landing, required workload/A-A qualification or a resolved named capability/fixture/behavior gate."
+        "nextAction": "analysis_delivery restructures the series: first commit registers every analyzer, with migration-requiring analyzers excluded in nogo.yml. Later commits remove exclusions alongside their source fixes. Analyzers needing no source changes get no standalone commit. Remove all sanity-test additions. Root then reviews the revised series and remaining qualification gates before requesting publication review.",
+        "recheckCondition": "Revised source/commit series and its source-bound validation, or completion of a remaining prerequisite/qualification gate."
       },
       "head": "26090b334cf9c5f4657ec33aef64efc6fa86ef82",
       "settledReviews": [
@@ -133812,19 +133824,19 @@
           "https://github.com/tamird/gvisor/actions/runs/45617576724/artifacts/15024070114"
         ],
         "owner": "root",
-        "disposition": "The distinct 54-commit analyzer series at 26090b334 is complete and reviewable: dependency bump, then 53 analyzer activations/fixes. Both architectures passed all 891 fresh static validators. Publication readiness remains blocked by open prerequisite #17884, incomplete performance/A-A admission, eight FUSE capability cases, the Fastlane baseline fixture and four behavioral targets.",
-        "nextAction": "analysis_delivery owns the remaining performance matrix and A/A admission. Root coordinates #17884 and the remaining capability/fixture/behavior gates: sandboxsetup_test, sandbox_test, docprocessor_test and sandbox_py_test. Preserve exact source-bound evidence and source/publication requirements; no readiness, full runtime or performance-clearance claim.",
-        "recheckCondition": "Actual prerequisite landing, required workload/A-A qualification or a resolved named capability/fixture/behavior gate.",
+        "disposition": "Current preview 26090b334 contains 54 commits and passes all 891 static validators on each architecture. The user requested a new commit structure; that revision is not yet delivered. Remaining gates are #17884, incomplete performance/A/A admission, eight FUSE cases, the Fastlane baseline fixture and four behavioral targets.",
+        "nextAction": "analysis_delivery restructures the series: first commit registers every analyzer, with migration-requiring analyzers excluded in nogo.yml. Later commits remove exclusions alongside their source fixes. Analyzers needing no source changes get no standalone commit. Remove all sanity-test additions. Root then reviews the revised series and remaining qualification gates before requesting publication review.",
+        "recheckCondition": "Revised source/commit series and its source-bound validation, or completion of a remaining prerequisite/qualification gate.",
         "sourceHead": "26090b334cf9c5f4657ec33aef64efc6fa86ef82",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-25T16:22:07.608415+00:00"
+        "curatedAt": "2026-11-25T17:06:47.049217+00:00"
       },
       "comparisons": [
         {
-          "title": "Review the complete analyzer implementation",
-          "description": "The 54-commit series is source-reviewable independently of the delivered clang-tidy fix.",
+          "title": "Review the current analyzer series",
+          "description": "Current preview before the requested commit restructuring; independent of delivered clang-tidy #17963.",
           "columns": [
             "Source",
             "Qualification"
@@ -133835,7 +133847,7 @@
               "891 Module-aware NoGo validators pass per architecture; behavioral/performance gates below remain incomplete."
             ]
           ],
-          "note": "This source preview is not an upstream publication approval or a performance-clearance claim.",
+          "note": "Evidence remains bound to this source. The revised commit structure and remaining behavioral/performance qualification are not yet complete.",
           "evidence": [
             {
               "label": "Complete 54-commit analyzer series: dependency first, then 53 activations",
