@@ -409,7 +409,7 @@ func TestRestoreListenWithPreexistingConnection(t *testing.T) {
 					// Mark all non-listen restored endpoints with terminateAtRestore = true to simulate snapshot restore.
 					for _, rep := range restoredEndpoints {
 						epVal := reflect.ValueOf(rep)
-						if epVal.Kind() == reflect.Ptr {
+						if epVal.Kind() == reflect.Pointer {
 							origStateField := epVal.Elem().FieldByName("origEndpointState")
 							if origStateField.IsValid() && origStateField.Uint() != uint64(tcp.StateListen) {
 								termField := epVal.Elem().FieldByName("terminateAtRestore")
@@ -435,7 +435,7 @@ func TestRestoreListenWithPreexistingConnection(t *testing.T) {
 					var listenEP tcpip.Endpoint
 					for _, rep := range *restoredEndpointsPtr {
 						epVal := reflect.ValueOf(rep)
-						if epVal.Kind() == reflect.Ptr {
+						if epVal.Kind() == reflect.Pointer {
 							origStateField := epVal.Elem().FieldByName("origEndpointState")
 							if origStateField.IsValid() && origStateField.Uint() == uint64(tcp.StateListen) {
 								listenEP = rep.(tcpip.Endpoint)

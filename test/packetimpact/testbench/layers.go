@@ -106,7 +106,7 @@ func equalLayer(x, y Layer) bool {
 	opt := cmp.FilterValues(func(x, y any) bool {
 		for _, l := range []any{x, y} {
 			v := reflect.ValueOf(l)
-			if (v.Kind() == reflect.Ptr || v.Kind() == reflect.Slice) && v.IsNil() {
+			if (v.Kind() == reflect.Pointer || v.Kind() == reflect.Slice) && v.IsNil() {
 				return true
 			}
 		}

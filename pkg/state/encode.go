@@ -207,7 +207,7 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 	}
 
 	// If not a map, then the object must be a pointer.
-	if obj.Kind() != reflect.Ptr {
+	if obj.Kind() != reflect.Pointer {
 		Failf("attempt to record non-map and non-pointer object %#v", obj)
 	}
 
@@ -576,7 +576,7 @@ func (es *encodeState) findType(typ reflect.Type) wire.TypeSpec {
 	}
 
 	switch typ.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		return &wire.TypeSpecPointer{
 			Type: es.findType(typ.Elem()),
 		}
@@ -655,7 +655,7 @@ func isPrimitiveZero(obj reflect.Value) bool {
 	case reflect.Struct:
 		// Even zero-valued structs must run their savers.
 		return false
-	case reflect.Ptr, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+	case reflect.Pointer, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
 		reflect.String, reflect.Slice, reflect.Interface, reflect.Map:
 		return obj.IsZero()
@@ -687,7 +687,7 @@ func (es *encodeState) encodeObject(obj reflect.Value, how encodeStrategy, dest 
 		return
 	}
 	switch obj.Kind() {
-	case reflect.Ptr: // Fast path: first.
+	case reflect.Pointer: // Fast path: first.
 		r := new(wire.Ref)
 		*dest = r
 		if obj.IsNil() {

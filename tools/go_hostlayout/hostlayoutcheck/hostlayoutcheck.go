@@ -64,7 +64,7 @@ func Validate(t reflect.Type) error {
 					return fmt.Errorf("field %s: %w", field.Name, err)
 				}
 			}
-		case reflect.Ptr:
+		case reflect.Pointer:
 			if fieldType.Elem().Kind() == reflect.Struct {
 				if err := Validate(fieldType.Elem()); err != nil {
 					return fmt.Errorf("field %s: %w", field.Name, err)
