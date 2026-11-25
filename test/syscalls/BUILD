@@ -1,5 +1,5 @@
 load("//test/runner:defs.bzl", "syscall_test")
-load("//tools:defs.bzl", "more_shards", "most_shards")
+load("//tools:defs.bzl", "more_shards", "most_shards", "requires_cap_sys_admin")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -1066,6 +1066,7 @@ syscall_test(
 syscall_test(
     add_hostinet = True,
     test = "//test/syscalls/linux:socket_netlink_route_test",
+    exec_properties = requires_cap_sys_admin(ipv6 = True),
 )
 
 syscall_test(
