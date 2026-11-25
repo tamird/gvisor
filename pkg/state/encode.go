@@ -555,7 +555,7 @@ func (es *encodeState) encodeArray(obj reflect.Value, dest *wire.Object) {
 		Contents: make([]wire.Object, l),
 	}
 	*dest = a
-	for i := 0; i < l; i++ {
+	for i := range l {
 		// We need to encode the full value because arrays are encoded
 		// using the type information from only the first element.
 		es.encodeObject(obj.Index(i), encodeAsValue, &a.Contents[i])

@@ -199,7 +199,7 @@ func (lt localTypes) add(ts *ast.TypeSpec) {
 // itself. It returns "" if there is no such type.
 func (lt localTypes) basic(typ ast.Expr) (string, bool) {
 	direct := true
-	for i := 0; i < 16; i++ {
+	for range 16 {
 		switch x := typ.(type) {
 		case *ast.ParenExpr:
 			typ = x.X

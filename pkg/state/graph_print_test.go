@@ -121,7 +121,7 @@ func TestPrintGraphSliceNotation(t *testing.T) {
 
 func TestPrintGraphDeterministic(t *testing.T) {
 	x := printMapHolder{m: make(map[int]string)}
-	for i := 0; i < 32; i++ {
+	for i := range 32 {
 		x.m[i] = strings.Repeat("x", i%5+1)
 	}
 	raw := encodeRawGraph(t, &x)

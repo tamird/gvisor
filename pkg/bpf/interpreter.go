@@ -489,7 +489,7 @@ func (e *ExecutionMetrics) markInputRead(offset uint32, bytesRead int) {
 	if int(offset)+bytesRead > len(e.InputAccessed) {
 		panic(fmt.Sprintf("invalid offset or number of bytes read: offset=%d bytesRead=%d len=%d", offset, bytesRead, len(e.InputAccessed)))
 	}
-	for i := 0; i < bytesRead; i++ {
+	for i := range bytesRead {
 		e.InputAccessed[int(offset)+i] = true
 	}
 }

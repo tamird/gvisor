@@ -270,7 +270,7 @@ func (cf *cgroupControllers) Generate(ctx context.Context, buf *bytes.Buffer) er
 	var available []string
 	cf.c.fs.treeMu.RLock()
 	defer cf.c.fs.treeMu.RUnlock()
-	for ctl := firstController; ctl < numControllers; ctl++ {
+	for ctl := range numControllers {
 		if cf.c.isControllerAvailableLocked(ctl) {
 			available = append(available, ctrlTypeStr[ctl])
 		}
@@ -298,7 +298,7 @@ func (cf *cgroupSubtreeControl) Generate(ctx context.Context, buf *bytes.Buffer)
 	var enabled []string
 	cf.c.fs.treeMu.RLock()
 	defer cf.c.fs.treeMu.RUnlock()
-	for ctl := firstController; ctl < numControllers; ctl++ {
+	for ctl := range numControllers {
 		if cf.c.subtreeCtrls[ctl] {
 			enabled = append(enabled, ctrlTypeStr[ctl])
 		}

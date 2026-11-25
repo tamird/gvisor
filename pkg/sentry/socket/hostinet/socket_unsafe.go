@@ -168,7 +168,7 @@ func ioctl(ctx context.Context, fd int, io usermem.IO, sysno uintptr, args arch.
 			return 0, err
 		}
 		next, ok := ifrData.AddLength(uint64(unsafe.Sizeof(linux.EthtoolGFeatures{})))
-		for i := 0; i < blksToCopy; i++ {
+		for i := range blksToCopy {
 			if !ok {
 				return 0, linuxerr.EFAULT
 			}

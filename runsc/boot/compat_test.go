@@ -24,7 +24,7 @@ func TestOnceTracker(t *testing.T) {
 		t.Error("first call to checkAndMark, got: false, want: true")
 	}
 	o.onReported(nil)
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		if o.shouldReport(nil) {
 			t.Error("after first call to checkAndMark, got: true, want: false")
 		}
@@ -70,7 +70,7 @@ func TestArgsTracker(t *testing.T) {
 
 func TestArgsTrackerLimit(t *testing.T) {
 	c := newArgsTracker(0, 1)
-	for i := 0; i < reportLimit; i++ {
+	for i := range reportLimit {
 		regs := newRegs()
 		setArgVal(0, 123, regs)
 		setArgVal(1, uint64(i), regs)

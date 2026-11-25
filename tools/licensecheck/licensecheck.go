@@ -710,7 +710,7 @@ var (
 // permanent and reported as errNotFound.
 func httpGet(url string, header map[string]string) ([]byte, error) {
 	var lastErr error
-	for attempt := 0; attempt < 2; attempt++ {
+	for range 2 {
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
 			return nil, err

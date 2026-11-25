@@ -248,7 +248,7 @@ func stubInit() {
 	mapLen, _ = hostarch.PageRoundUp(mapLen + stubContextRegionLen)
 
 	// Try a few times to avoid cases when new mappings are created.
-	for i := 0; i < 32; i++ {
+	for i := range 32 {
 		if i == 0 { // fast path
 			// Randomize stubStart address.
 			randomOffset := uintptr(rand.Uint64()) * hostarch.PageSize

@@ -136,7 +136,7 @@ func (op *bitwise) destroy() {}
 // evaluateBitwiseBool performs the bitwise boolean operation on the source register
 // data and stores the result in the destination register.
 func evaluateBitwiseBool(sregBuf, dregBuf, mask, xor []byte) {
-	for i := 0; i < len(mask); i++ {
+	for i := range len(mask) {
 		dregBuf[i] = (sregBuf[i] & mask[i]) ^ xor[i]
 	}
 }

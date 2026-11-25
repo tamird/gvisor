@@ -530,7 +530,7 @@ func testWalk(ctx context.Context, t *testing.T, tester Tester, root lisafs.Clie
 	curDir := root
 
 	dirNames := make([]string, 0, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		name := fmt.Sprintf("tmpdir-%d", i)
 		childDir, _ := mkdir(ctx, t, curDir, name)
 		defer closeFD(ctx, t, childDir)
@@ -669,7 +669,7 @@ func testGetdents(ctx context.Context, t *testing.T, tester Tester, root lisafs.
 	// Create 10 files in tempDir.
 	n := 10
 	fileStats := make(map[string]lisafs.Statx)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		name := fmt.Sprintf("file-%d", i)
 		newFile, fileStat := mknod(ctx, t, tempDir, name)
 		defer closeFD(ctx, t, newFile)

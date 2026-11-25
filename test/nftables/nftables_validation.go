@@ -291,7 +291,7 @@ func (*tcpSNAT) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
 	var err error
 	dialAddr := net.JoinHostPort(ip.String(), "9000")
 	// Retry while the server in the container isn't up.
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		conn, err = net.DialTimeout(netutils.TCPNetwork(ipv6), dialAddr, 5*time.Second)
 		if err == nil {
 			break
@@ -498,7 +498,7 @@ func (*udpSNAT) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
 	defer conn.Close()
 
 	// Send UDP packets repeatedly to handle the connectionless startup race.
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		if ctx.Err() != nil {
 			break
 		}
@@ -670,7 +670,7 @@ func (t *mapTest) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
 	// Sync by waiting for the container to be ready to accept connections on port 8999.
 	var conn1 net.Conn
 	var err error
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		conn1, err = net.Dial(netutils.TCPNetwork(ipv6), dialAddr1)
 		if err == nil {
 			break
@@ -684,7 +684,7 @@ func (t *mapTest) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
 
 	// Send a TCP packet to port 9000 to verify SNAT is working.
 	var conn2 net.Conn
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		conn2, err = net.Dial(netutils.TCPNetwork(ipv6), dialAddr2)
 		if err == nil {
 			break
@@ -872,7 +872,7 @@ func (t *fibTest) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
 		addr := net.JoinHostPort(ip.String(), "8995")
 		var err error
 		var conn net.Conn
-		for i := 0; i < 15; i++ {
+		for range 15 {
 			conn, err = net.DialTimeout(netutils.TCPNetwork(ipv6), addr, 2*time.Second)
 			if err == nil {
 				conn.Close()
@@ -896,7 +896,7 @@ func (t *fibTest) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
 		defer conn.Close()
 
 		// Send multiple times to ensure delivery over UDP
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			conn.Write([]byte("remote_test"))
 			time.Sleep(1 * time.Second)
 		}
@@ -1074,7 +1074,7 @@ func (t *ctTest) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
 		log.Infof("ctTest (LocalAction): Waiting for sync...")
 		var conn net.Conn
 		var err error
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			conn, err = net.DialTimeout(netutils.TCPNetwork(ipv6), net.JoinHostPort(ip.String(), "8995"), 2*time.Second)
 			if err == nil {
 				conn.Close()
@@ -1237,7 +1237,7 @@ func acceptSync(network string, ip net.IP, port string, timeout time.Duration, h
 func dialSync(network string, ip net.IP, port string, retries int, handle func(net.Conn) error) error {
 	dialAddr := net.JoinHostPort(ip.String(), port)
 	var lastErr error
-	for i := 0; i < retries; i++ {
+	for range retries {
 		conn, err := net.DialTimeout(network, dialAddr, 2*time.Second)
 		if err == nil {
 			defer conn.Close()
@@ -1341,7 +1341,7 @@ func (t *tcpMasq) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) err
 		}
 		bashCmd := fmt.Sprintf("echo remote_test | %s -v -w 5 %s %d", ncCmd, dialAddr, remotePort)
 		var lastErr error
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			lastErr = runCmd("ip", "netns", "exec", "client_ns", "bash", "-c", bashCmd)
 			if lastErr == nil {
 				break
@@ -1644,7 +1644,7 @@ func (*deletionTest) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) erro
 		}(port)
 	}
 
-	for i := 0; i < len(ports); i++ {
+	for range len(ports) {
 		if err := <-errCh; err != nil {
 			return err
 		}

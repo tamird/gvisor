@@ -80,7 +80,7 @@ func BenchmarkRuntimeLockBurst(b *testing.B) {
 		var ready, finished sync.WaitGroup
 		ready.Add(32)
 		finished.Add(32)
-		for j := 0; j < 32; j++ {
+		for range 32 {
 			go func() {
 				defer finished.Done()
 				ready.Done()
@@ -101,7 +101,7 @@ func BenchmarkRuntimeLockBurst(b *testing.B) {
 
 func TestRuntimeLockCancellationHandoff(t *testing.T) {
 	p := New("test", nil, stdio.Stdio{})
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		ctx, cancel := context.WithCancel(context.Background())
 		p.mu.Lock()
 		result := make(chan error, 1)

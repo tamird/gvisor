@@ -126,7 +126,7 @@ func dumpRegs(regs *arch.Registers) string {
 
 	fmt.Fprintf(&m, "Registers:\n")
 
-	for i := 0; i < 31; i++ {
+	for i := range 31 {
 		fmt.Fprintf(&m, "\tRegs[%d]\t = %016x\n", i, regs.Regs[i])
 	}
 	fmt.Fprintf(&m, "\tSp\t = %016x\n", regs.Sp)

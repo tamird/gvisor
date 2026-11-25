@@ -217,7 +217,7 @@ func hashTypeSig(h uint64, t reflect.Type, depth int, seen []reflect.Type) uint6
 	case reflect.Struct:
 		n := t.NumField()
 		h = hashUint(h, uint64(n))
-		for i := 0; i < n; i++ {
+		for i := range n {
 			f := t.Field(i)
 			h = hashStr(h, f.Name)
 			h = hashUint(h, uint64(f.Offset))
@@ -231,7 +231,7 @@ func hashTypeSig(h uint64, t reflect.Type, depth int, seen []reflect.Type) uint6
 		if depth >= 31 {
 			return h
 		}
-		for i := 0; i < n; i++ {
+		for i := range n {
 			m := t.Method(i)
 			h = hashStr(h, m.PkgPath)
 			h = hashStr(h, m.Name)
@@ -248,12 +248,12 @@ func hashTypeSig(h uint64, t reflect.Type, depth int, seen []reflect.Type) uint6
 		h = hashUint(h, variadic)
 		in := t.NumIn()
 		h = hashUint(h, uint64(in))
-		for i := 0; i < in; i++ {
+		for i := range in {
 			h = hashTypeSig(h, t.In(i), depth+1, seen)
 		}
 		out := t.NumOut()
 		h = hashUint(h, uint64(out))
-		for i := 0; i < out; i++ {
+		for i := range out {
 			h = hashTypeSig(h, t.Out(i), depth+1, seen)
 		}
 		return h

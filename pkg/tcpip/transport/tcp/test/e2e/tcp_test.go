@@ -102,7 +102,7 @@ func testCubicWindowGrowthAfterPacketLoss(t *testing.T, recovery string, segment
 	// earned by one ACK is then less than a segment. The old implementation
 	// truncated each such increase instead of accumulating it across ACKs.
 	receivedBytes := 0
-	for round := 0; round < slowStartRounds; round++ {
+	for round := range slowStartRounds {
 		for range tcp.InitialCwnd << round {
 			c.ReceiveAndCheckPacket(queuedData, receivedBytes, segmentBytes)
 			receivedBytes += segmentBytes
@@ -1399,7 +1399,7 @@ func TestUserSuppliedMSSOnListenAccept(t *testing.T) {
 						t.Fatalf("Listen(%d): %s:", backlog, err)
 					}
 
-					for i := 0; i < clientConnects; i++ {
+					for i := range clientConnects {
 						// Send a SYN requests.
 						iss := seqnum.Value(i)
 						srcPort := context.TestPort + uint16(i)
@@ -1639,7 +1639,7 @@ func TestNoSynCookieWithoutOverflow(t *testing.T) {
 		}
 	}
 
-	for i := 0; i < backlog*5; i++ {
+	for i := range backlog * 5 {
 		doOne(i)
 	}
 }
@@ -1710,7 +1710,7 @@ func TestNoSynCookieOnFailedHandshakes(t *testing.T) {
 
 	}
 
-	for i := 0; i < backlog*5; i++ {
+	for range backlog * 5 {
 		doOne()
 	}
 }
@@ -2439,7 +2439,7 @@ func TestOutOfOrderFlood(t *testing.T) {
 	// expected.
 	data := []byte{1, 2, 3, 4, 5, 6}
 	iss := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		c.SendPacket(data[3:], &context.Headers{
 			SrcPort: context.TestPort,
 			DstPort: c.Port,
@@ -3684,7 +3684,7 @@ func TestSegmentMerging(t *testing.T) {
 			// InitialWindow but don't ACK. That should prevent
 			// anymore packets from going out.
 			var r bytes.Reader
-			for i := 0; i < tcp.InitialCwnd; i++ {
+			for i := range tcp.InitialCwnd {
 				r.Reset([]byte{0})
 				if _, err := c.EP.Write(&r, tcpip.WriteOptions{}); err != nil {
 					t.Fatalf("Write #%d failed: %s", i+1, err)
@@ -3704,7 +3704,7 @@ func TestSegmentMerging(t *testing.T) {
 
 			// Check that we get tcp.InitialCwnd packets.
 			iss := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
-			for i := 0; i < tcp.InitialCwnd; i++ {
+			for i := range tcp.InitialCwnd {
 				b := c.GetPacket()
 				defer b.Release()
 				checker.IPv4(t, b,
@@ -4762,7 +4762,7 @@ func TestMaxRetransmitsTimeout(t *testing.T) {
 	}
 
 	// Expect first transmit and MaxRetries retransmits.
-	for i := 0; i < numRetries+1; i++ {
+	for range numRetries + 1 {
 		v := c.GetPacket()
 		defer v.Release()
 		checker.IPv4(t, v, checker.TCP(
@@ -4829,7 +4829,7 @@ func TestMaxRTO(t *testing.T) {
 		checker.TCPFlagsMatch(header.TCPFlagAck, ^header.TCPFlagPsh),
 	))
 	const numRetransmits = 2
-	for i := 0; i < numRetransmits; i++ {
+	for i := range numRetransmits {
 		start := time.Now()
 		v := c.GetPacket()
 		defer v.Release()
@@ -4872,7 +4872,7 @@ func TestZeroSizedWriteRetransmit(t *testing.T) {
 	}
 	// Do not ACK the packet and expect an original transmit and a
 	// retransmit. This should not cause a panic.
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		v := c.GetPacket()
 		defer v.Release()
 		checker.IPv4(t, v, checker.TCP(
@@ -5640,7 +5640,7 @@ func TestReceivedSegmentQueuing(t *testing.T) {
 	// Send 200 segments.
 	iss := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
 	data := []byte{1, 2, 3}
-	for i := 0; i < 200; i++ {
+	for i := range 200 {
 		c.SendPacket(data, &context.Headers{
 			SrcPort: context.TestPort,
 			DstPort: c.Port,
@@ -5958,7 +5958,7 @@ func TestTimeWaitAssassination(t *testing.T) {
 			// If the new endpoint does not properly transition to connecting before
 			// taking over the port reservation, sending acks will cause the processor
 			// to panic 1-5% of the time.
-			for i := 0; i < 5; i++ {
+			for range 5 {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
@@ -6645,7 +6645,7 @@ func TestKeepalive(t *testing.T) {
 	// 5 unacked keepalives are sent. ACK each one, and check that the
 	// connection stays alive after 5.
 	iss := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		b := c.GetPacket()
 		defer b.Release()
 		checker.IPv4(t, b,
@@ -6723,7 +6723,7 @@ func TestKeepalive(t *testing.T) {
 
 	// Now receive 5 keepalives, but don't ACK them. The connection
 	// should be reset after 5.
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		b = c.GetPacket()
 		defer b.Release()
 		checker.IPv4(t, b,
@@ -6929,7 +6929,7 @@ func TestListenBacklogFull(t *testing.T) {
 	c.WQ.EventRegister(&we)
 	defer c.WQ.EventUnregister(&we)
 
-	for i := 0; i < listenBacklog; i++ {
+	for range listenBacklog {
 		_, _, err = c.EP.Accept(nil)
 		if cmp.Equal(&tcpip.ErrWouldBlock{}, err) {
 			// Wait for connection to be established.
@@ -7407,7 +7407,7 @@ func TestSYNRetransmit(t *testing.T) {
 	// Otherwise the demultiplexer can send later SYNs directly to that child.
 	listener := c.EP.(*tcp.Endpoint)
 	listener.LockUser()
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		c.SendPacket(nil, &context.Headers{
 			SrcPort: context.TestPort,
 			DstPort: context.StackPort,
@@ -7990,7 +7990,7 @@ func TestReceiveBufferAutoTuning(t *testing.T) {
 		ResumeWork()
 	})
 	latency := 1 * time.Millisecond
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		tsVal++
 
 		// Stop the worker goroutine.
@@ -9895,7 +9895,7 @@ func TestReadAfterCloseWithBufferedData(t *testing.T) {
 	defer c.Cleanup()
 	con := c.CreateConnectedWithOptionsNoDelay(header.TCPSynOptions{})
 	// Fill up the receive queue.
-	for i := 0; i < 300; i++ {
+	for range 300 {
 		con.SendPacket([]byte{1, 2, 3, 4}, nil)
 	}
 

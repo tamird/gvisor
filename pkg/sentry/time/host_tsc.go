@@ -64,7 +64,7 @@ func rawHostRdtsc() TSCValue {
 func HostTSCRealtime() (TSCValue, ReferenceNS, error) {
 	var best sample
 	found := false
-	for i := 0; i < maxSampleLoops; i++ {
+	for range maxSampleLoops {
 		var s sample
 		s.before = rawHostRdtsc()
 

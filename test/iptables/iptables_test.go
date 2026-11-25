@@ -225,7 +225,7 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 		}
 	}()
 
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		if err := <-errCh; err != nil {
 			t.Fatal(err)
 		}

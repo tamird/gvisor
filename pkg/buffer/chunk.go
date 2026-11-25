@@ -45,7 +45,7 @@ const (
 var chunkPools [numPools]sync.Pool
 
 func init() {
-	for i := 0; i < numPools; i++ {
+	for i := range numPools {
 		chunkSize := baseChunkSize * (1 << i)
 		chunkPools[i].New = func() any {
 			return &chunk{

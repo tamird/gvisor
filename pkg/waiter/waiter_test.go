@@ -90,7 +90,7 @@ func TestConcurrentRegistration(t *testing.T) {
 	ch3 := make(chan struct{})
 
 	// Create goroutines that will all register/unregister concurrently.
-	for i := 0; i < concurrency; i++ {
+	for range concurrency {
 		go func() {
 			e := NewFunctionEntry(EventIn|EventErr, func(mask EventMask) {
 				cnt++
@@ -117,7 +117,7 @@ func TestConcurrentRegistration(t *testing.T) {
 
 	// Let the goroutines register.
 	close(ch1)
-	for i := 0; i < concurrency; i++ {
+	for range concurrency {
 		<-ch2
 	}
 
@@ -129,7 +129,7 @@ func TestConcurrentRegistration(t *testing.T) {
 
 	// Let the goroutine unregister.
 	close(ch3)
-	for i := 0; i < concurrency; i++ {
+	for range concurrency {
 		<-ch2
 	}
 
@@ -147,7 +147,7 @@ func TestConcurrentNotification(t *testing.T) {
 	const waiterCount = 1000
 
 	// Register waiters.
-	for i := 0; i < waiterCount; i++ {
+	for range waiterCount {
 		e := NewFunctionEntry(EventIn|EventErr, func(mask EventMask) {
 			cnt.Add(1)
 			if mask != EventIn {
@@ -161,7 +161,7 @@ func TestConcurrentNotification(t *testing.T) {
 	// Launch notifiers.
 	ch1 := make(chan struct{})
 	ch2 := make(chan struct{})
-	for i := 0; i < concurrency; i++ {
+	for range concurrency {
 		go func() {
 			<-ch1
 			q.Notify(EventIn)
@@ -171,7 +171,7 @@ func TestConcurrentNotification(t *testing.T) {
 
 	// Let notifiers go.
 	close(ch1)
-	for i := 0; i < concurrency; i++ {
+	for range concurrency {
 		<-ch2
 	}
 

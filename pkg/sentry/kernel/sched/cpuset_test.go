@@ -19,9 +19,9 @@ import (
 )
 
 func TestNumCPUs(t *testing.T) {
-	for i := uint(0); i < 1024; i++ {
+	for i := range uint(1024) {
 		c := NewCPUSet(i)
-		for j := uint(0); j < i; j++ {
+		for j := range i {
 			c.Set(j)
 		}
 		n := c.NumCPUs()
@@ -34,7 +34,7 @@ func TestNumCPUs(t *testing.T) {
 func TestClearAbove(t *testing.T) {
 	const n = 1024
 	c := NewFullCPUSet(n)
-	for i := uint(0); i < n; i++ {
+	for i := range uint(n) {
 		cpu := n - i
 		c.ClearAbove(cpu)
 		if got := c.NumCPUs(); got != cpu {

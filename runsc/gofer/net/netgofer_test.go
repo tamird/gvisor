@@ -734,7 +734,7 @@ func TestProxyLimitsConnections(t *testing.T) {
 	}
 
 	_ = conn1.Close()
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		if conn4, err := gonet.DialTCP(clientStack, targetAddr, ipv4.ProtocolNumber); err == nil {
 			_ = conn4.Close()
 			return
@@ -980,7 +980,7 @@ func TestProxyLimitsUDPConnections(t *testing.T) {
 
 	_ = dialAndEcho("udp-flow-1")
 	_ = dialAndEcho("udp-flow-2")
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		select {
 		case <-udpDialed:
 		default:
@@ -1119,7 +1119,7 @@ func TestProxyUDPIdleTimeout(t *testing.T) {
 		t.Fatalf("second gonet.DialUDP() failed: %v", err)
 	}
 	defer conn2.Close()
-	for i := 0; i < 40; i++ {
+	for range 40 {
 		_ = conn2.SetDeadline(time.Now().Add(50 * time.Millisecond))
 		if _, err := conn2.Write([]byte("idle-timeout-2")); err != nil {
 			t.Fatalf("conn2.Write() failed: %v", err)

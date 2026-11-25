@@ -242,7 +242,7 @@ func formatTable(headers []string, rows [][]string) string {
 	}
 	b.WriteString("\n")
 	// Separator
-	for i := 0; i < numCols; i++ {
+	for i := range numCols {
 		if i > 0 {
 			b.WriteString(" | ")
 		}

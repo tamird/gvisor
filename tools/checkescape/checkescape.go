@@ -287,8 +287,8 @@ func (es *Escapes) IsEmpty() bool {
 // If local is set, then non-local escapes will also be filtered.
 func (es *Escapes) Filter(reasons []EscapeReason, local bool) {
 FilterReasons:
-	for r := EscapeReason(0); r < reasonCount; r++ {
-		for i := 0; i < len(reasons); i++ {
+	for r := range reasonCount {
+		for i := range reasons {
 			if r == reasons[i] {
 				continue FilterReasons
 			}
@@ -301,7 +301,7 @@ FilterReasons:
 	if !local {
 		return
 	}
-	for r := EscapeReason(0); r < reasonCount; r++ {
+	for r := range reasonCount {
 		// Is does meet our local requirement?
 		if len(es.CallSites[r]) > 1 {
 			es.CallSites[r] = nil
@@ -315,7 +315,7 @@ FilterReasons:
 //
 // If callSite is nil, no call is added.
 func (es *Escapes) MergeWithCall(other Escapes, callSite CallSite) {
-	for r := EscapeReason(0); r < reasonCount; r++ {
+	for r := range reasonCount {
 		if other.CallSites[r] != nil {
 			// Construct our new call chain.
 			newCallSites := other.CallSites[r]
@@ -331,7 +331,7 @@ func (es *Escapes) MergeWithCall(other Escapes, callSite CallSite) {
 // Reportf will call Reportf for each class of escapes.
 func (es *Escapes) Reportf(pass *analysis.Pass) {
 	var b bytes.Buffer // Reused for all escapes.
-	for r := EscapeReason(0); r < reasonCount; r++ {
+	for r := range reasonCount {
 		if es.CallSites[r] == nil {
 			continue
 		}
@@ -841,7 +841,7 @@ func findReasons(pass *analysis.Pass, fdecl *ast.FuncDecl) ([]EscapeReason, bool
 			// Extract specific reasons.
 			types := strings.Split(c.Text[len(magicParams):], ",")
 			found = true // For below.
-			for i := 0; i < len(types); i++ {
+			for i := range types {
 				switch types[i] {
 				case "local":
 					// Limit search to local escapes.
@@ -865,7 +865,7 @@ func findReasons(pass *analysis.Pass, fdecl *ast.FuncDecl) ([]EscapeReason, bool
 		} else if strings.HasPrefix(c.Text, testMagic) {
 			types := strings.Split(c.Text[len(testMagic):], ",")
 			local := false
-			for i := 0; i < len(types); i++ {
+			for i := range types {
 				if types[i] == "local" {
 					local = true
 				} else {
@@ -1687,7 +1687,7 @@ func run(pass *analysis.Pass, binary io.Reader) (any, error) {
 			//
 			// For tests we need only the merged escapes.
 			testReasonsFound := make(map[EscapeReason]bool)
-			for r := EscapeReason(0); r < reasonCount; r++ {
+			for r := range reasonCount {
 				if merged.CallSites[r] == nil {
 					continue
 				}

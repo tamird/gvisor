@@ -92,7 +92,7 @@ func TestMultipleAccept(t *testing.T) {
 	// Connect backlog times asynchronously.
 	var wg sync.WaitGroup
 	defer wg.Wait()
-	for i := 0; i < backlog; i++ {
+	for range backlog {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -106,7 +106,7 @@ func TestMultipleAccept(t *testing.T) {
 	}
 
 	// Accept backlog times.
-	for i := 0; i < backlog; i++ {
+	for range backlog {
 		s, err := ss.Accept()
 		if err != nil {
 			t.Errorf("Accept failed, got err %v expected nil", err)
@@ -287,7 +287,7 @@ func TestNonBlockingSend(t *testing.T) {
 
 	// Try up to 1000 writes, of 1000 bytes.
 	blockCount := 0
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		w := client.Writer(false)
 		if n, err := w.WriteVec([][]byte{make([]byte, 1000)}); n != 1000 || err != nil {
 			if err == unix.EWOULDBLOCK || err == unix.EAGAIN {
@@ -461,14 +461,14 @@ func recvFDs(t *testing.T, s *Socket, enableSize int, origFDs []int) {
 	}
 
 	// Make sure they are different from the originals.
-	for i := 0; i < len(fds); i++ {
+	for i := range len(fds) {
 		if fds[i] == origFDs[i] {
 			t.Errorf("Got original fd for index %d, expected different", i)
 		}
 	}
 
 	// Make sure they can be accessed as expected.
-	for i := 0; i < len(fds); i++ {
+	for i := range len(fds) {
 		var st unix.Stat_t
 		if err := unix.Fstat(fds[i], &st); err != nil {
 			t.Errorf("fds[%d] can't be stated, got err %v expected nil", i, err)

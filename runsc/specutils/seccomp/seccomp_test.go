@@ -964,7 +964,7 @@ func TestRandomFilterMatchesFullProgram(t *testing.T) {
 	}
 	buf := make([]byte, (&linux.SeccompData{}).SizeBytes())
 
-	for i := 0; i < 2000; i++ {
+	for range 2000 {
 		config := specs.LinuxSeccomp{
 			DefaultAction:   actions[rng.Intn(len(actions))],
 			DefaultErrnoRet: errnoRets[rng.Intn(len(errnoRets))],

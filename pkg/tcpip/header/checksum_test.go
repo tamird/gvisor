@@ -42,7 +42,7 @@ func testICMPChecksum(t *testing.T, headerChecksum func() uint16, icmpChecksum f
 	wg.Add(concurrency)
 	defer wg.Wait()
 
-	for i := 0; i < concurrency; i++ {
+	for range concurrency {
 		go func() {
 			defer wg.Done()
 
@@ -57,7 +57,7 @@ func testICMPChecksum(t *testing.T, headerChecksum func() uint16, icmpChecksum f
 			}
 		}()
 	}
-	for i := 0; i < concurrency; i++ {
+	for range concurrency {
 		<-ready
 	}
 	close(start)
@@ -146,7 +146,7 @@ func TestICMPv6Checksum(t *testing.T) {
 
 func randomAddress(size int) tcpip.Address {
 	s := make([]byte, size)
-	for i := 0; i < size; i++ {
+	for i := range size {
 		s[i] = byte(rand.Uint32())
 	}
 	return tcpip.AddrFromSlice(s)
@@ -169,7 +169,7 @@ func TestChecksummableNetworkUpdateAddress(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			for i := 0; i < 1000; i++ {
+			for range 1000 {
 				var origBytes [header.IPv4MinimumSize]byte
 				header.IPv4(origBytes[:]).Encode(&header.IPv4Fields{
 					TOS:            1,
@@ -296,7 +296,7 @@ func TestChecksummableTransportUpdatePort(t *testing.T) {
 	check(2, 0xfffe, 1)
 	check(0xfffe, 1, 2)
 	check(0xfffe, 2, 1)
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		check(uint16(rand.Uint32()), uint16(rand.Uint32()), uint16(rand.Uint32()))
 	}
 }
@@ -321,7 +321,7 @@ func TestChecksummableTransportUpdatePseudoHeaderAddress(t *testing.T) {
 		},
 	}
 
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		permanent := randomAddress(addressSize)
 		old := randomAddress(addressSize)
 		new := randomAddress(addressSize)

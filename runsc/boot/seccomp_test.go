@@ -91,7 +91,7 @@ func TestOCISeccompFilterCacheSkipsErrors(t *testing.T) {
 	conf := &config.Config{OCISeccomp: true}
 	bad := allowOnlySpec("getpid")
 	bad.Linux.Seccomp.DefaultAction = "SCMP_ACT_BOGUS"
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		if f, err := buildOCISeccompFilter(conf, bad); err == nil {
 			t.Errorf("call %d with invalid profile: got filter %p, want error", i, f)
 		}

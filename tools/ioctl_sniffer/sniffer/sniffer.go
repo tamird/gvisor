@@ -158,7 +158,7 @@ func (r *Results) String() string {
 	// each time is fine.
 	b := new(strings.Builder)
 
-	for class := ioctlClass(0); class < _numClasses; class++ {
+	for class := range ioctlClass(_numClasses) {
 		if len(r.unsupported[class]) == 0 {
 			fmt.Fprintf(b, "%v: None\n", class)
 			continue
@@ -185,7 +185,7 @@ func (r *Results) HasUnsupportedIoctl() bool {
 
 // Merge merges the results from another Results object into this one.
 func (r *Results) Merge(other *Results) {
-	for class := ioctlClass(0); class < _numClasses; class++ {
+	for class := range ioctlClass(_numClasses) {
 		for _, ioctl := range other.unsupported[class] {
 			r.AddUnsupportedIoctl(ioctl)
 		}

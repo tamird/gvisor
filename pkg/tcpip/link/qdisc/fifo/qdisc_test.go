@@ -67,11 +67,11 @@ func TestFastSimultaneousWrites(t *testing.T) {
 	nWriters := 100
 	nWrites := 100
 	var wg sync.WaitGroup
-	for i := 0; i < nWriters; i++ {
+	for range nWriters {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for j := 0; j < nWrites; j++ {
+			for range nWrites {
 				pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 					Payload: buffer.MakeWithData(v),
 				})
@@ -107,7 +107,7 @@ func TestWriteMorePacketsThanBatchSize(t *testing.T) {
 		// Close each iteration promptly below; this idempotent fallback
 		// also joins the dispatcher if the test fails first.
 		t.Cleanup(linkEp.Close)
-		for i := 0; i < want; i++ {
+		for range want {
 			pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 				Payload: buffer.MakeWithData(v),
 			})
@@ -139,17 +139,17 @@ func TestCloseConcurrentWithWritePacket(t *testing.T) {
 	const nWriters = 64
 	const nWrites = 50
 	v := make([]byte, 1)
-	for trial := 0; trial < trials; trial++ {
+	for range trials {
 		lower := &countWriter{}
 		linkEP := fifo.New(lower, 16, 1024)
 		var wg sync.WaitGroup
 		startGate := make(chan struct{})
-		for i := 0; i < nWriters; i++ {
+		for range nWriters {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
 				<-startGate
-				for j := 0; j < nWrites; j++ {
+				for range nWrites {
 					pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 						Payload: buffer.MakeWithData(v),
 					})

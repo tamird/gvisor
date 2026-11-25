@@ -740,7 +740,7 @@ func TestConsoleInDevpts(t *testing.T) {
 	// Each exec console gets its own node, which is removed after the exec
 	// process exits. Each exec therefore sees exactly two nodes: the root
 	// container console and its own.
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		pid, out, finish := startPTYExec(t, conf, c, `echo "name=$(tty) nodes=$(ls /dev/pts | grep -c '^[0-9]') end"`)
 		m := regexp.MustCompile(`name=/dev/pts/([0-9]+) nodes=([0-9]+) end`).FindStringSubmatch(out)
 		if m == nil {

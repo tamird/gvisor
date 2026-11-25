@@ -117,7 +117,7 @@ const (
 // LINT.ThenChange(./sysmsg/sysmsg_lib.c)
 
 func (q *contextQueue) init() {
-	for i := uint32(0); i < maxContextQueueEntries; i++ {
+	for i := range uint32(maxContextQueueEntries) {
 		q.ringbuffer[i] = uint64(invalidContextID)
 	}
 	// Allow tests to trigger overflows of start and end.

@@ -62,7 +62,7 @@ func TestProcidInitialized(t *testing.T) {
 	}
 
 	// Run the check on a number of different threads.
-	for i := 0; i < count; i++ {
+	for range count {
 		go checkProcid(t, &start, &done)
 	}
 

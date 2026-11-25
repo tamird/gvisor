@@ -75,7 +75,7 @@ func (n *Network) InitPluginStack(args *sentryapi.InitPluginStackArgs, _ *struct
 
 	fdNum := len(args.FilePayload.Files)
 	fds := make([]int, fdNum)
-	for i := 0; i < fdNum; i++ {
+	for i := range fdNum {
 		oldFD := args.FilePayload.Files[i].Fd()
 		if newFD, err := syscall.Dup(int(oldFD)); err != nil {
 			return fmt.Errorf("failed to dup FD")

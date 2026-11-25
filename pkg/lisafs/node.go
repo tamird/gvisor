@@ -162,7 +162,7 @@ func (n *Node) LookupChildLocked(name string) *Node {
 		return n.dynamicChildren[name]
 	}
 
-	for i := 0; i < numStaticChildren; i++ {
+	for i := range numStaticChildren {
 		if n.staticChildren[i].name == name {
 			return n.staticChildren[i].node
 		}
@@ -234,7 +234,7 @@ func (n *Node) removeChildLocked(name string) *Node {
 		return toRemove
 	}
 
-	for i := 0; i < numStaticChildren; i++ {
+	for i := range numStaticChildren {
 		if n.staticChildren[i].name == name {
 			toRemove := n.staticChildren[i].node
 			n.staticChildren[i].name = ""
@@ -255,7 +255,7 @@ func (n *Node) insertChildLocked(name string, child *Node) {
 	child.linked = true
 	// Try to insert statically first if staticChildren is still being used.
 	if n.dynamicChildren == nil {
-		for i := 0; i < numStaticChildren; i++ {
+		for i := range numStaticChildren {
 			if n.staticChildren[i].node == nil {
 				n.staticChildren[i].node = child
 				n.staticChildren[i].name = name
@@ -266,7 +266,7 @@ func (n *Node) insertChildLocked(name string, child *Node) {
 		// Ran out of static space. Need to start inserting dynamically.
 		// Shift everything to the map.
 		n.dynamicChildren = make(map[string]*Node)
-		for i := 0; i < numStaticChildren; i++ {
+		for i := range numStaticChildren {
 			// From above loop we know all staticChildren entries are non-nil.
 			n.dynamicChildren[n.staticChildren[i].name] = n.staticChildren[i].node
 			n.staticChildren[i].name = ""
@@ -288,7 +288,7 @@ func (n *Node) forEachChild(fn func(*Node)) {
 		return
 	}
 
-	for i := 0; i < numStaticChildren; i++ {
+	for i := range numStaticChildren {
 		if n.staticChildren[i].node != nil {
 			fn(n.staticChildren[i].node)
 		}

@@ -217,12 +217,8 @@ analyzers:
   rangeint:
     internal:
       exclude:
-        - ".*" # Temporary: migrate rangeint.
         # Indexed loops preserve checklocks' TryLock path analysis in LockUser.
         - '^pkg/tcpip/transport/tcp/endpoint\.go:(684|704):[0-9]+$'
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate rangeint.
   stditerators:
     internal:
       exclude:

@@ -111,7 +111,7 @@ func TestInterruptRacingWithEnable(t *testing.T) {
 			notified <- struct{}{}
 		}
 	}()
-	for i := 0; i < 10000; i++ {
+	for i := range 10000 {
 		before := r.interrupts.Load()
 		// The notification races with the Enable below.
 		notify <- struct{}{}

@@ -437,7 +437,7 @@ func extractRepeatedMatchers(rule SyscallRule) (SyscallRule, bool) {
 
 	allOtherMatchersSigs := make(map[string]struct{}, len(orRule))
 	argExprToOtherMatchersSigs := make(map[string]map[string]struct{}, len(orRule))
-	for argNum := 0; argNum < len(orRule[0].(PerArg)); argNum++ {
+	for argNum := range len(orRule[0].(PerArg)) {
 		// Check if `argNum` takes on a set of matchers common for all
 		// combinations of all other matchers.
 		// We try to extract a common matcher by three ways, which we

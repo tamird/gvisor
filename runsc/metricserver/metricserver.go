@@ -578,7 +578,7 @@ func (m *metricServer) loadSandboxesLocked(ctx context.Context) []sandboxLoadRes
 		loadSandboxCh <- sandbox
 	}
 	close(loadSandboxCh)
-	for i := 0; i < numSandboxes; i++ {
+	for range numSandboxes {
 		loadedSandboxes = append(loadedSandboxes, <-loadedSandboxesCh)
 	}
 	close(loadedSandboxesCh)
@@ -626,7 +626,7 @@ func queryMultiSandboxMetrics(ctx context.Context, loadedSandboxes []sandboxLoad
 	var wg sync.WaitGroup
 	numGoroutines := min(numSandboxes, exportParallelGoroutines)
 	wg.Add(numGoroutines)
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		go func() {
 			defer wg.Done()
 			for s := range loadedSandboxCh {

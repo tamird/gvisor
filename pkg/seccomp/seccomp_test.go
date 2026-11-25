@@ -1111,7 +1111,7 @@ func TestRandom(t *testing.T) {
 		t.Fatalf("bpf.Compile got error: %v", err)
 	}
 	buf := make([]byte, (&linux.SeccompData{}).SizeBytes())
-	for i := uint32(0); i < 200; i++ {
+	for i := range uint32(200) {
 		data := linux.SeccompData{Nr: int32(i), Arch: LINUX_AUDIT_ARCH}
 		got, err := bpf.Exec[bpf.NativeEndian](p, DataAsBPFInput(&data, buf))
 		if err != nil {

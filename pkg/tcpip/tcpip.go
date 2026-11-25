@@ -2853,7 +2853,7 @@ func (a AddressWithPrefix) Subnet() Subnet {
 			address: a.Address,
 			mask:    AddressMask{length: addrLen},
 		}
-		for i := 0; i < addrLen; i++ {
+		for i := range addrLen {
 			sub.mask.mask[i] = 0xff
 		}
 		return sub
@@ -2862,7 +2862,7 @@ func (a AddressWithPrefix) Subnet() Subnet {
 	sa := Address{length: addrLen}
 	sm := AddressMask{length: addrLen}
 	n := uint(a.PrefixLen)
-	for i := 0; i < addrLen; i++ {
+	for i := range addrLen {
 		if n >= 8 {
 			sa.addr[i] = a.Address.addr[i]
 			sm.mask[i] = 0xff

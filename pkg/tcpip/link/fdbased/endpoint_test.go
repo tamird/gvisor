@@ -794,7 +794,7 @@ func countEventFDs(t *testing.T) int {
 func TestCloseReleasesStopFDs(t *testing.T) {
 	for _, mode := range []PacketDispatchMode{Readv, RecvMMsg} {
 		before := countEventFDs(t)
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET, 0)
 			if err != nil {
 				t.Fatalf("Socketpair = %v", err)

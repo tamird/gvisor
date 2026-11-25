@@ -52,7 +52,7 @@ type IFReq struct {
 
 // Name returns the name.
 func (ifr *IFReq) Name() string {
-	for c := 0; c < len(ifr.IFName); c++ {
+	for c := range len(ifr.IFName) {
 		if ifr.IFName[c] == 0 {
 			return string(ifr.IFName[:c])
 		}

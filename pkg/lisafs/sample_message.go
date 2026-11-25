@@ -93,7 +93,7 @@ func (m *MsgDynamic) CheckedUnmarshal(src []byte) ([]byte, bool) {
 func (m *MsgDynamic) Randomize(arrLen int) {
 	m.N = primitive.Uint32(arrLen)
 	m.Arr = make([]MsgSimple, arrLen)
-	for i := 0; i < arrLen; i++ {
+	for i := range arrLen {
 		m.Arr[i].Randomize()
 	}
 }

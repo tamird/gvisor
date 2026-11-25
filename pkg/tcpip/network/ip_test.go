@@ -638,7 +638,7 @@ func TestIPv4Send(t *testing.T) {
 
 	// Allocate and initialize the payload view.
 	payload := make([]byte, 100)
-	for i := 0; i < len(payload); i++ {
+	for i := range len(payload) {
 		payload[i] = uint8(i)
 	}
 
@@ -1094,7 +1094,7 @@ func TestIPv6Send(t *testing.T) {
 
 	// Allocate and initialize the payload view.
 	payload := make([]byte, 100)
-	for i := 0; i < len(payload); i++ {
+	for i := range len(payload) {
 		payload[i] = uint8(i)
 	}
 
@@ -2055,7 +2055,7 @@ func TestICMPInclusionSize(t *testing.T) {
 			defer e.Close()
 			// Allocate and initialize the payload view.
 			payload := make([]byte, test.payloadLength)
-			for i := 0; i < len(payload); i++ {
+			for i := range len(payload) {
 				payload[i] = uint8(i)
 			}
 			// Default routes for IPv4&6 so ICMP can find a route to the remote

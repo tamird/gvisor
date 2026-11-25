@@ -817,7 +817,7 @@ func (t *Timer) Log() {
 			type colRange struct{ start, end int }
 			var ranges []colRange
 			rangeStart := -1
-			for i := 0; i < len(rows); i++ {
+			for i := range len(rows) {
 				if isBlank := rows[i][col] == ""; rangeStart == -1 && !isBlank {
 					rangeStart = i
 				} else if rangeStart != -1 && isBlank {
@@ -974,7 +974,7 @@ func barChart(fraction float64, width int) string {
 	pivotIndex := int(fraction * float64(width))
 	pivotRuneIndex := max(0, min(numChars-1, int((fraction-(float64(pivotIndex)/float64(width)))*float64(width*numChars))))
 	runes := make([]rune, width)
-	for i := 0; i < width; i++ {
+	for i := range width {
 		if i < pivotIndex {
 			runes[i] = []rune(chars)[numChars-1]
 		} else if i == pivotIndex {

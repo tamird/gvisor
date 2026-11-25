@@ -1167,7 +1167,7 @@ func (*IptFilterInputDropAllExceptOneDstPort) ContainerAction(ctx context.Contex
 	}()
 
 	// Wait for both listeners.
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		if err := <-errCh; err != nil {
 			return err
 		}

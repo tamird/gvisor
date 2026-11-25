@@ -794,7 +794,7 @@ func TestNoRootContainerPIDNSSandboxSpecChurn(t *testing.T) {
 	}
 	startNoRootContainerSandboxWithSpec(t, conf, sbID, sbSpec)
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		path := pidnsPath
 		joiner := startNoRootContainerSub(t, conf, sbID, &path)
 		if _, err := execPS(conf, joiner); err != nil {
@@ -2295,7 +2295,7 @@ func TestMultiContainerContainerDestroyStress(t *testing.T) {
 	// between batches all containers stop before starting another batch.
 	cmds := [][]string{{app, "reaper"}}
 	const batchSize = 10
-	for i := 0; i < 3*batchSize; i++ {
+	for range 3 * batchSize {
 		dir, err := os.MkdirTemp(testutil.TmpDir(), "gofer-stop-test")
 		if err != nil {
 			t.Fatal("os.MkdirTemp failed:", err)
@@ -3041,7 +3041,7 @@ func TestMultiContainerLoadSandbox(t *testing.T) {
 	defer cleanup()
 
 	// Then create unrelated containers.
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		specs, ids = createSpecs(sleepCmd, sleepCmd, sleepCmd)
 		_, cleanup, err = startContainers(conf, specs, ids)
 		if err != nil {
@@ -3587,7 +3587,7 @@ func TestDuplicateEnvVariable(t *testing.T) {
 
 	// Create files to dump `env` output.
 	files := [3]*os.File{}
-	for i := 0; i < len(files); i++ {
+	for i := range len(files) {
 		var err error
 		files[i], err = os.CreateTemp(testutil.TmpDir(), "env-var-test")
 		if err != nil {
@@ -3837,7 +3837,7 @@ func TestMultiContainerMemoryLeakStress(t *testing.T) {
 	)
 	cmds := make([][]string, 0, warmupContainers+stressContainers+1)
 	cmds = append(cmds, sleepCmd)
-	for i := 0; i < warmupContainers+stressContainers; i++ {
+	for range warmupContainers + stressContainers {
 		cmds = append(cmds, createFsTree)
 	}
 	testSpecs, ids := createSpecs(cmds...)
@@ -3909,7 +3909,7 @@ func TestMultiContainerMemoryLeakStress(t *testing.T) {
 		// Note that all fields of controlapi.MemoryUsage are exported and uint64.
 		newUsageV := reflect.ValueOf(newUsage)
 		numFields := oldUsageV.NumField()
-		for i := 0; i < numFields; i++ {
+		for i := range numFields {
 			name := oldUsageV.Type().Field(i).Name
 			if name == "Unknown" {
 				// In a full accounting, Unknown is usage that no scan for

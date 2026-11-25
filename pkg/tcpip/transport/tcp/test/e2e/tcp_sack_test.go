@@ -453,7 +453,7 @@ func TestSACKRecovery(t *testing.T) {
 	seq := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
 	expected := tcp.InitialCwnd
 	bytesRead := 0
-	for i := 0; i < iterations; i++ {
+	for i := range iterations {
 		expected = tcp.InitialCwnd << uint(i)
 		if i > 0 {
 			// Acknowledge all the data received so far if not on
@@ -479,7 +479,7 @@ func TestSACKRecovery(t *testing.T) {
 	rtxOffset := bytesRead - maxPayload*expected
 	start := c.IRS.Add(seqnum.Size(rtxOffset) + 30 + 1)
 	end := start.Add(10)
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		c.SendAckWithSACK(seq, rtxOffset, []header.SACKBlock{{start, end}})
 		end = end.Add(10)
 	}
@@ -516,7 +516,7 @@ func TestSACKRecovery(t *testing.T) {
 	// SACK Recovery algorithm. We should see no packets being released, as
 	// the cwnd at this point after entering recovery should be half of the
 	// outstanding number of packets in flight.
-	for i := 0; i < 7; i++ {
+	for range 7 {
 		c.SendAckWithSACK(seq, rtxOffset, []header.SACKBlock{{start, end}})
 		end = end.Add(10)
 	}
@@ -561,13 +561,13 @@ func TestSACKRecovery(t *testing.T) {
 	// Receive the 2 extra packets that should have been retransmitted as
 	// those should be considered lost and immediately retransmitted based
 	// on the SACK information in the previous ACK sent above.
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		c.ReceiveAndCheckPacketWithOptions(data, rtxOffset+maxPayload*(i+1), maxPayload, tsOptionSize)
 	}
 
 	// Now we should get 9 more new unsent packets as the cwnd is 323 and
 	// outstanding is 311.
-	for i := 0; i < 9; i++ {
+	for range 9 {
 		c.ReceiveAndCheckPacketWithOptions(data, bytesRead, maxPayload, tsOptionSize)
 		bytesRead += maxPayload
 	}
@@ -608,7 +608,7 @@ func TestSACKRecovery(t *testing.T) {
 	// We would expect to get expected/2  - 9 packets. But subsequent
 	// iterations will send us expected/2  + 1 (per iteration).
 	expected = expected/2 - 9
-	for i := 0; i < iterations; i++ {
+	for i := range iterations {
 		// Read all packets expected on this iteration. Don't
 		// acknowledge any of them just yet, so that we can measure the
 		// congestion window.
@@ -708,7 +708,7 @@ func TestRecoveryEntry(t *testing.T) {
 
 			var sackBlocks []header.SACKBlock
 			bytesRead := numPackets * maxPayload
-			for i := 0; i < 4; i++ {
+			for i := range 4 {
 				c.ReceiveAndCheckPacketWithOptions(data, bytesRead, maxPayload, tsOptionSize)
 				if i > 0 {
 					pStart := c.IRS.Add(1 + seqnum.Size(bytesRead))
@@ -1053,7 +1053,7 @@ func TestSACKDetectSpuriousRecoveryWithDupACK(t *testing.T) {
 
 	var options []byte
 	var bytesRead uint32
-	for i := 0; i < numPackets; i++ {
+	for i := range numPackets {
 		b := c.GetPacket()
 		defer b.Release()
 		tcpHdr := header.TCP(header.IPv4(b.AsSlice()).Payload())

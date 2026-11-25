@@ -138,7 +138,7 @@ func (cache *stringFixedCache) isInited() bool {
 
 func (cache *stringFixedCache) init(size uint64) {
 	elements := make([]stringListElem, size)
-	for i := uint64(0); i < size; i++ {
+	for i := range uint64(size) {
 		cache.namesList.PushFront(&elements[i])
 	}
 	cache.size = size

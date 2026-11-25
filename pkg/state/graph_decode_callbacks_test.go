@@ -1398,7 +1398,7 @@ func TestPooledEncoderScratchReleasesPointers(t *testing.T) {
 		runtime.KeepAlive(held)
 	}()
 
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		runtime.GC()
 		select {
 		case <-collected:

@@ -191,7 +191,7 @@ func TestForwarderDroppedStats(t *testing.T) {
 	})
 	s.SetTransportProtocolHandler(tcp.ProtocolNumber, f.HandlePacket)
 
-	for i := 0; i < maxInFlight+1; i++ {
+	for i := range maxInFlight + 1 {
 		iss := seqnum.Value(context.TestInitialSequenceNumber + i)
 		c.SendPacket(nil, &context.Headers{
 			SrcPort: uint16(context.TestPort + i),

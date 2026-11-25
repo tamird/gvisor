@@ -46,7 +46,7 @@ func TestFlushDrainsBucket(t *testing.T) {
 	gd := GRO{Dispatcher: dispatcher}
 	gd.Init(true)
 	bucket := &gd.buckets[0]
-	for i := 0; i < groBucketSize; i++ {
+	for range groBucketSize {
 		packet := stack.NewPacketBuffer(stack.PacketBufferOptions{})
 		bucket.insert(packet, nil, nil)
 	}

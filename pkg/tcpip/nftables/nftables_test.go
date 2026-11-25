@@ -4251,7 +4251,7 @@ func TestNfAttrParserNestedArray(t *testing.T) {
 
 				curr := nlmsg.NestedAttr{}
 				// Build a nested attribute with maxPolicyRecursionDepth + 1 nesting.
-				for i := 0; i < maxPolicyRecursionDepth; i++ {
+				for range maxPolicyRecursionDepth {
 					upper := nlmsg.NestedAttr{}
 					upper.PutAttr(linux.NFTA_EXPR_DATA, primitive.AsByteSlice(curr))
 					curr = upper
@@ -5663,7 +5663,7 @@ func TestDestroyTable(t *testing.T) {
 // runWriter keeps updating the NFTables ruleset.
 func runWriter(t *testing.T, stk *stack.Stack, writerID, iterations int, wg *sync.WaitGroup) {
 	defer wg.Done()
-	for j := 0; j < iterations; j++ {
+	for range iterations {
 		func() {
 			stk.LockNFTablesUpdate()
 			defer stk.UnlockNFTablesUpdate()
@@ -5701,13 +5701,13 @@ func runWriter(t *testing.T, stk *stack.Stack, writerID, iterations int, wg *syn
 func runReader(t *testing.T, stk *stack.Stack, readIterations int, wg *sync.WaitGroup) {
 	defer wg.Done()
 	pkt := makeArbitraryIPv4Packet()
-	for j := 0; j < readIterations; j++ {
+	for range readIterations {
 		activeNFT := stk.NFTables()
 		if activeNFT == nil {
 			t.Errorf("expected non-nil NFTables from stack")
 			return
 		}
-		for jj := 0; jj < 1000; jj++ {
+		for range 1000 {
 			// Evaluate NFTables ruleset.
 			if !activeNFT.CheckInput(pkt, nil, stack.IP) {
 				t.Errorf("expected CheckInput to return true (accept)")
@@ -5754,13 +5754,13 @@ func TestNFTablesConcurrentUpdateAndEvaluate(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Writers: serialize updates per-stack using LockNFTablesUpdate().
-	for i := 0; i < numWriters; i++ {
+	for i := range numWriters {
 		wg.Add(1)
 		go runWriter(t, stk, i, iterations, &wg)
 	}
 
 	// Readers: concurrently perform packet evaluations.
-	for i := 0; i < numReaders; i++ {
+	for range numReaders {
 		wg.Add(1)
 		go runReader(t, stk, readIterations, &wg)
 	}

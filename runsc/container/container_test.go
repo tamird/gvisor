@@ -3918,7 +3918,7 @@ func TestStateNonLeaderExec(t *testing.T) {
 
 // TestDestroyStarting attempts to force a race between start and destroy.
 func TestDestroyStarting(t *testing.T) {
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		spec, conf := sleepSpecConf(t)
 		rootDir, bundleDir, cleanup, err := testutil.SetupContainer(spec, conf)
 		if err != nil {
@@ -5603,7 +5603,7 @@ func TestLookupEROFS(t *testing.T) {
 			t.Fatalf("os.Mkdir() failed: %v", err)
 		}
 		randomFiles := make([]string, 0, size)
-		for i := 0; i < size; i++ {
+		for range size {
 			file, err := os.CreateTemp(sourceDir, "")
 			if err != nil {
 				t.Fatalf("os.CreateTemp() failed: %v", err)
@@ -6552,7 +6552,7 @@ func TestSaveRestoreExecReconfigure(t *testing.T) {
 
 	checkpointOpts.SaveRestoreExecContainerID = cont.ID
 	var lastImage string
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		lastImage = imageDir(fmt.Sprintf("image%d", i))
 		if err := cont.Checkpoint(conf, lastImage, checkpointOpts); err != nil {
 			t.Fatalf("checkpoint %d failed: %v", i+1, err)

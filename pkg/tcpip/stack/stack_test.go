@@ -2350,9 +2350,9 @@ func TestGetMainNICAddressAddPrimaryNonPrimary(t *testing.T) {
 
 	for _, addrLen := range []int{4, 16} {
 		t.Run(fmt.Sprintf("addrLen=%d", addrLen), func(t *testing.T) {
-			for canBe := 0; canBe < 3; canBe++ {
+			for canBe := range 3 {
 				t.Run(fmt.Sprintf("canBe=%d", canBe), func(t *testing.T) {
-					for never := 0; never < 3; never++ {
+					for never := range 3 {
 						t.Run(fmt.Sprintf("never=%d", never), func(t *testing.T) {
 							s := stack.New(stack.Options{
 								NetworkProtocols: []stack.NetworkProtocolFactory{fakeNetFactory},
@@ -5231,7 +5231,7 @@ func TestCheckLocalAddressIgnoresLoopbackTemporaryAddress(t *testing.T) {
 			}
 
 			// NIC iteration order is random.
-			for i := 0; i < 100; i++ {
+			for range 100 {
 				nicID := s.CheckLocalAddress(0, test.netProto, localAddr)
 				if nicID != externalNICID {
 					t.Fatalf("got s.CheckLocalAddress(0, %d, %s) = %d, want = %d", test.netProto, localAddr, nicID, externalNICID)

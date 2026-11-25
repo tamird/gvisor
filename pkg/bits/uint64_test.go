@@ -27,14 +27,14 @@ func TestTrailingZeros64(t *testing.T) {
 		}
 	}
 
-	for i := 0; i < 64; i++ {
+	for i := range 64 {
 		n := ^uint64(0) << uint(i)
 		if got, want := TrailingZeros64(n), i; got != want {
 			t.Errorf("TrailingZeros64(%#x): got %d, wanted %d", n, got, want)
 		}
 	}
 
-	for i := 0; i < 64; i++ {
+	for i := range 64 {
 		n := ^uint64(0) >> uint(i)
 		if got, want := TrailingZeros64(n), 0; got != want {
 			t.Errorf("TrailingZeros64(%#x): got %d, wanted %d", n, got, want)
@@ -50,14 +50,14 @@ func TestMostSignificantOne64(t *testing.T) {
 		}
 	}
 
-	for i := 0; i < 64; i++ {
+	for i := range 64 {
 		n := ^uint64(0) >> uint(i)
 		if got, want := MostSignificantOne64(n), 63-i; got != want {
 			t.Errorf("MostSignificantOne64(%#x): got %d, wanted %d", n, got, want)
 		}
 	}
 
-	for i := 0; i < 64; i++ {
+	for i := range 64 {
 		n := ^uint64(0) << uint(i)
 		if got, want := MostSignificantOne64(n), 63; got != want {
 			t.Errorf("MostSignificantOne64(%#x): got %d, wanted %d", n, got, want)

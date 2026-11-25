@@ -130,7 +130,7 @@ func (s *sampler) Reset() {
 // lowOverheadSample returns a reference clock sample with minimized syscall overhead.
 func (s *sampler) lowOverheadSample() (sample, error) {
 	for {
-		for i := 0; i < maxSampleLoops; i++ {
+		for range maxSampleLoops {
 			samp, err := s.clocks.Sample(s.clockID)
 			if err != nil {
 				return sample{}, err

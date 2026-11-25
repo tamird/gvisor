@@ -331,7 +331,7 @@ func (b *typeInfoBuilder) get(t reflect.Type) *typeInfo {
 // +checklocks:typeInfosMu
 func (b *typeInfoBuilder) plainFields(t reflect.Type) bool {
 	var off uintptr
-	for i := 0; i < t.NumField(); i++ {
+	for i := range t.NumField() {
 		f := t.Field(i)
 		if f.Offset != off {
 			return false

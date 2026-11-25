@@ -54,7 +54,7 @@ func TestTable(t *testing.T) {
 	}()
 
 	// Go through all functions and check that they return the right value.
-	for i := uintptr(0); i < maxTestSyscall; i++ {
+	for i := range uintptr(maxTestSyscall) {
 		fn := table.Lookup(i)
 		if fn == nil {
 			t.Errorf("Syscall %v is set to nil", i)

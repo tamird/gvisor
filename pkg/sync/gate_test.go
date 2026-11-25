@@ -56,7 +56,7 @@ func TestGateConcurrent(t *testing.T) {
 	totalTime := 5 * time.Second
 	timePerTest := 20 * time.Millisecond
 	numTests := int(totalTime / timePerTest)
-	for i := 0; i < numTests; i++ {
+	for range numTests {
 		testGateConcurrentOnce(t, timePerTest)
 	}
 }
@@ -76,7 +76,7 @@ func testGateConcurrentOnce(t *testing.T, d time.Duration) {
 
 	// Start a large number of goroutines that repeatedly attempt to enter the
 	// gate and get the expected result.
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

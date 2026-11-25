@@ -190,7 +190,7 @@ func TestUnregister(t *testing.T) {
 		{SemOp: -1},
 	}
 	chs := make([]chan struct{}, 0, 5)
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		ch := executeOps(ctx, t, set, ops, true)
 		chs = append(chs, ch)
 	}

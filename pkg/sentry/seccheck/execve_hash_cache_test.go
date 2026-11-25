@@ -61,7 +61,7 @@ func TestExecveHashCache(t *testing.T) {
 	}
 
 	// 5. Eviction test.
-	for i := 0; i < DefaultExecveHashCacheCapacity+10; i++ {
+	for i := range DefaultExecveHashCacheCapacity + 10 {
 		k := ExecveKey{MountID: 2, Ino: uint64(i), Size: 100, MtimeSec: 1, MtimeNsec: 0}
 		cache.Add(k, ExecveHashes{SHA256: []byte("dummy_hash_slice_thirty_two_bt")})
 	}
@@ -85,7 +85,7 @@ func TestExecveHashCacheConfigurable(t *testing.T) {
 		t.Fatalf("Capacity, want: 3, got: %d", got)
 	}
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		k := ExecveKey{MountID: 3, Ino: uint64(i), Size: 50, MtimeSec: 1, MtimeNsec: 0}
 		cache.Add(k, ExecveHashes{SHA256: []byte("dummy_hash_slice_thirty_two_bt")})
 	}

@@ -1091,7 +1091,7 @@ func TestICMPChecksumValidationSimple(t *testing.T) {
 func TestICMPChecksumValidationWithPayload(t *testing.T) {
 	const simpleBodySize = 64
 	simpleBody := func(view []byte) {
-		for i := 0; i < simpleBodySize; i++ {
+		for i := range simpleBodySize {
 			view[i] = uint8(i)
 		}
 	}
@@ -1280,7 +1280,7 @@ func TestICMPChecksumValidationWithPayload(t *testing.T) {
 func TestICMPChecksumValidationWithPayloadMultipleViews(t *testing.T) {
 	const simpleBodySize = 64
 	simpleBody := func(view []byte) {
-		for i := 0; i < simpleBodySize; i++ {
+		for i := range simpleBodySize {
 			view[i] = uint8(i)
 		}
 	}

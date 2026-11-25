@@ -366,7 +366,7 @@ func newICMPEchoPacket(t *testing.T, srcAddr, dstAddr tcpip.Address, ttl uint8, 
 func checkFragements(t *testing.T, ep *channel.Endpoint, expectedFragments []fragmentInfo, requestPkt *stack.PacketBuffer) {
 	t.Helper()
 	var fragmentedPackets []*stack.PacketBuffer
-	for i := 0; i < len(expectedFragments); i++ {
+	for range len(expectedFragments) {
 		reply := ep.Read()
 		if reply == nil {
 			t.Fatal("Expected ICMP Echo fragment through outgoing NIC")
@@ -2331,7 +2331,7 @@ func TestInvalidFragments(t *testing.T) {
 
 	payloadGen := func(payloadLen int) []byte {
 		payload := make([]byte, payloadLen)
-		for i := 0; i < len(payload); i++ {
+		for i := range len(payload) {
 			payload[i] = 0x30
 		}
 		return payload
@@ -2910,7 +2910,7 @@ func TestReceiveFragments(t *testing.T) {
 	// Build and return a UDP header containing payload.
 	udpGen := func(payloadLen int, multiplier uint8, src, dst tcpip.Address) []byte {
 		payload := make([]byte, payloadLen)
-		for i := 0; i < len(payload); i++ {
+		for i := range len(payload) {
 			payload[i] = uint8(i) * multiplier
 		}
 
@@ -3515,7 +3515,7 @@ func TestWriteStats(t *testing.T) {
 
 			test.setup(t, rt.Stack())
 			nWritten := 0
-			for i := 0; i < nPackets; i++ {
+			for range nPackets {
 				pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 					ReserveHeaderBytes: header.UDPMinimumSize + int(rt.MaxHeaderLength()),
 					Payload:            buffer.Buffer{},
@@ -3905,7 +3905,7 @@ func TestCloseLocking(t *testing.T) {
 
 		data := []byte{1, 2, 3, 4}
 
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			var r bytes.Reader
 			r.Reset(data)
 			if n, err := ep.Write(&r, tcpip.WriteOptions{}); err != nil {
@@ -3920,7 +3920,7 @@ func TestCloseLocking(t *testing.T) {
 	go func() {
 		defer wg.Done()
 
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			ch := channel.New(0, defaultMTU, "")
 			defer ch.Close()
 			if err := s.CreateNIC(nicID2, ch); err != nil {
@@ -4381,7 +4381,7 @@ func TestIcmpRateLimit(t *testing.T) {
 	}
 	for _, testCase := range tests {
 		t.Run(testCase.name, func(t *testing.T) {
-			for round := 0; round < icmpBurst+1; round++ {
+			for round := range icmpBurst + 1 {
 				pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 					Payload: buffer.MakeWithData(testCase.createPacket()),
 				})

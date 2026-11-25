@@ -472,7 +472,7 @@ func TestIPTableWritePackets(t *testing.T) {
 			genPacket: func(r *stack.Route) stack.PacketBufferList {
 				var pkts stack.PacketBufferList
 
-				for i := 0; i < acceptPackets; i++ {
+				for range acceptPackets {
 					pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 						ReserveHeaderBytes: int(r.MaxHeaderLength() + header.UDPMinimumSize),
 					})
@@ -480,7 +480,7 @@ func TestIPTableWritePackets(t *testing.T) {
 					udpHdr(hdr, r.LocalAddress(), r.RemoteAddress(), utils.LocalPort, utils.RemotePort)
 					pkts.PushBack(pkt)
 				}
-				for i := 0; i < dropPackets; i++ {
+				for range dropPackets {
 					pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 						ReserveHeaderBytes: int(r.MaxHeaderLength() + header.UDPMinimumSize),
 					})
@@ -561,7 +561,7 @@ func TestIPTableWritePackets(t *testing.T) {
 			genPacket: func(r *stack.Route) stack.PacketBufferList {
 				var pkts stack.PacketBufferList
 
-				for i := 0; i < acceptPackets; i++ {
+				for range acceptPackets {
 					pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 						ReserveHeaderBytes: int(r.MaxHeaderLength() + header.UDPMinimumSize),
 					})
@@ -569,7 +569,7 @@ func TestIPTableWritePackets(t *testing.T) {
 					udpHdr(hdr, r.LocalAddress(), r.RemoteAddress(), utils.LocalPort, utils.RemotePort)
 					pkts.PushBack(pkt)
 				}
-				for i := 0; i < dropPackets; i++ {
+				for range dropPackets {
 					pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 						ReserveHeaderBytes: int(r.MaxHeaderLength() + header.UDPMinimumSize),
 					})

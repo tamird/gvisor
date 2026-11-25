@@ -135,7 +135,7 @@ func TestChecksum(t *testing.T) {
 			// Also test different offsets into the buffers. This
 			// tests the correctness of optimizations dealing with
 			// non-64-bit aligned numbers.
-			for offset := 0; offset < 8; offset++ {
+			for offset := range 8 {
 				t.Run(fmt.Sprintf("offset %d", offset), func(t *testing.T) {
 					if offset > size {
 						t.Skip("offset is greater than buffer size")

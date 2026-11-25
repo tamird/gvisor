@@ -174,7 +174,7 @@ func (c *cgroup) freezeOrderedLocked() bool {
 // +checklocks:c.fs.treeMu
 func (c *cgroup) initRoot(ctx context.Context) {
 	arr := new(ctrlSet)
-	for i := firstController; i < numControllers; i++ {
+	for i := range numControllers {
 		// Root cgroup must have all controllers active.
 		ctrl := c.newController(i)
 		c.ctrls[i] = ctrl
@@ -197,7 +197,7 @@ func (c *cgroup) init(ctx context.Context) {
 	}
 
 	arr := new(ctrlSet)
-	for i := firstController; i < numControllers; i++ {
+	for i := range numControllers {
 		if c.parent.subtreeCtrls[i] { // +checklocksforce: c.fs.treeMu is locked
 			ctrl := c.newController(i)
 			c.ctrls[i] = ctrl

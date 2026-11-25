@@ -146,7 +146,7 @@ func TestNUDFunctions(t *testing.T) {
 
 			{
 				wantErr := test.expectedErr
-				for i := 0; i < 2; i++ {
+				for range 2 {
 					{
 						err := s.RemoveNeighbor(test.nicID, ipv6.ProtocolNumber, llAddr1)
 						if diff := cmp.Diff(wantErr, err); diff != "" {

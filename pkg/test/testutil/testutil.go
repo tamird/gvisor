@@ -872,7 +872,7 @@ func TestIndicesForShard(numTests int) ([]int, error) {
 	// Calculate!
 	var indices []int
 	numBlocks := int(math.Ceil(float64(numTests) / float64(shardTotal)))
-	for i := 0; i < numBlocks; i++ {
+	for i := range numBlocks {
 		pick := i*shardTotal + shardIndex
 		if pick < numTests {
 			indices = append(indices, pick)

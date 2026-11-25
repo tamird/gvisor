@@ -564,7 +564,7 @@ func TestMetricUpdateStageTiming(t *testing.T) {
 	} else if len(registration.Stages) != len(allStages) {
 		t.Errorf("MetricRegistration has %d stages (%v), expected %d (%v)", len(registration.Stages), registration.Stages, len(allStages), allStages)
 	} else {
-		for i := 0; i < len(allStages); i++ {
+		for i := range len(allStages) {
 			if InitStage(registration.Stages[i]) != allStages[i] {
 				t.Errorf("MetricRegistration.Stages[%d]: got %q want %q", i, registration.Stages[i], allStages[i])
 			}
@@ -669,7 +669,7 @@ func TestTimerMetric(t *testing.T) {
 
 	// Create timer data.
 	var wg sync.WaitGroup
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -678,7 +678,7 @@ func TestTimerMetric(t *testing.T) {
 			time.Sleep(250 * time.Millisecond)
 		}()
 	}
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -768,7 +768,7 @@ func TestBucketer(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			numFiniteBuckets := test.bucketer.NumFiniteBuckets()
 			t.Logf("Underflow bucket has bounds (-inf, %d)", test.bucketer.LowerBound(0))
-			for b := 0; b < numFiniteBuckets; b++ {
+			for b := range numFiniteBuckets {
 				t.Logf("Bucket %d has bounds [%d, %d)", b, test.bucketer.LowerBound(b), test.bucketer.LowerBound(b+1))
 			}
 			t.Logf("Overflow bucket has bounds [%d, +inf)", test.bucketer.LowerBound(numFiniteBuckets))

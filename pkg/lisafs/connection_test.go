@@ -154,12 +154,12 @@ func TestStress(t *testing.T) {
 		concurrency := 8
 		numMsgPerGoroutine := 5000
 		var clientWg sync.WaitGroup
-		for i := 0; i < concurrency; i++ {
+		for range concurrency {
 			clientWg.Add(1)
 			go func() {
 				defer clientWg.Done()
 
-				for j := 0; j < numMsgPerGoroutine; j++ {
+				for range numMsgPerGoroutine {
 					// Create a massive random message.
 					var req lisafs.MsgDynamic
 					req.Randomize(100)

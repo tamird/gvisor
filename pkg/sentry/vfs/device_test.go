@@ -34,7 +34,7 @@ func TestGetSharedDynamicCharDevMajor(t *testing.T) {
 	// Repeated allocations for the same key must return the same major number
 	// without consuming additional ones; in particular, many more allocations
 	// than the number of dynamic major numbers available must succeed.
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		got, err := vfsObj.GetSharedDynamicCharDevMajor(CheckpointDeviceMajorKey)
 		if err != nil {
 			t.Fatalf("GetSharedDynamicCharDevMajor(%d) failed after %d calls: %v", CheckpointDeviceMajorKey, i+1, err)

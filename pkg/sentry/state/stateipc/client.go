@@ -388,7 +388,7 @@ func (rw *asyncReadWriter) Wait(cs []stateio.Completion, minCompletions int) ([]
 	}
 	rw.ioep.resetForCompletions()
 	respErrno := rw.ioep.ioResponseHeader().Errno
-	for i := uint32(0); i < numCompletions; i++ {
+	for range uint32(numCompletions) {
 		cmp := rw.ioep.scanCompletion()
 		cs = append(cs, stateio.Completion{
 			ID:  int(cmp.ID),

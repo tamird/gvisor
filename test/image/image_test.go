@@ -154,7 +154,7 @@ func runHTTPRequest(ip string, port int) error {
 func testHTTPServer(t *testing.T, ip string, port int) {
 	const requests = 10
 	ch := make(chan error, requests)
-	for i := 0; i < requests; i++ {
+	for range requests {
 		go func() {
 			start := time.Now()
 			err := runHTTPRequest(ip, port)
@@ -163,7 +163,7 @@ func testHTTPServer(t *testing.T, ip string, port int) {
 		}()
 	}
 
-	for i := 0; i < requests; i++ {
+	for range requests {
 		err := <-ch
 		if err != nil {
 			t.Errorf("testHTTPServer(%s, %d) failed: %v", ip, port, err)

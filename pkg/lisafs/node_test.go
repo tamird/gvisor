@@ -34,7 +34,7 @@ func TestLookup(t *testing.T) {
 			truth := make(map[string]*Node)
 
 			// Fill node with children.
-			for i := 0; i < numChildren; i++ {
+			for i := range numChildren {
 				name := fmt.Sprintf("%d", i)
 				var child Node
 				child.InitLocked(name, &root)
@@ -42,7 +42,7 @@ func TestLookup(t *testing.T) {
 			}
 
 			// Test that lookup finds child correctly.
-			for i := 0; i < numChildren; i++ {
+			for i := range numChildren {
 				name := fmt.Sprintf("%d", i)
 				if got, want := root.LookupChildLocked(name), truth[name]; got != want {
 					t.Errorf("incorrect child returned by root: want %p, got %p", want, got)
@@ -67,7 +67,7 @@ func TestDelete(t *testing.T) {
 			truth := make(map[string]*Node)
 
 			// Fill node with children.
-			for i := 0; i < numChildren; i++ {
+			for i := range numChildren {
 				name := fmt.Sprintf("%d", i)
 				var child Node
 				child.InitLocked(name, &root)
@@ -75,7 +75,7 @@ func TestDelete(t *testing.T) {
 			}
 
 			// Now remove them and check if correct node is removed.
-			for i := 0; i < numChildren; i++ {
+			for i := range numChildren {
 				name := fmt.Sprintf("%d", i)
 				if got, want := root.removeChildLocked(name), truth[name]; got != want {
 					t.Errorf("root deleted incorrect node: want %p, got %p", want, got)

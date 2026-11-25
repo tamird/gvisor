@@ -917,7 +917,7 @@ func convertAddress(addr transport.Address) (linux.SockAddr, uint32) {
 	var out linux.SockAddrUnix
 	out.Family = linux.AF_UNIX
 	l := len([]byte(addr.Addr))
-	for i := 0; i < l; i++ {
+	for i := range l {
 		out.Path[i] = int8(addr.Addr[i])
 	}
 

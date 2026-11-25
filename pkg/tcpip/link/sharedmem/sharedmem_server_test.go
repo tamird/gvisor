@@ -269,7 +269,7 @@ func TestServerRoundTripStress(t *testing.T) {
 	}()
 
 	var errs errgroup.Group
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		errs.Go(func() error {
 			response, err := makeRequest(listenAddr, ctx.clientStk)
 			if err != nil {

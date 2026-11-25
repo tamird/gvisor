@@ -36,7 +36,7 @@ func (ds *dirtySet) forEach(m *machine, fn func(c *vCPU)) {
 	for index := range ds.vCPUMasks {
 		mask := ds.vCPUMasks[index].Swap(0)
 		if mask != 0 {
-			for bit := 0; bit < 64; bit++ {
+			for bit := range 64 {
 				if mask&(1<<uint64(bit)) == 0 {
 					continue
 				}

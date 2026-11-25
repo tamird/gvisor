@@ -181,7 +181,7 @@ func (s *Shell) reader(ctx context.Context) {
 				return
 			}
 		} else {
-			for i := 0; i < got; i++ {
+			for i := range got {
 				s.readCh <- byteOrError{b: b[i]}
 			}
 		}

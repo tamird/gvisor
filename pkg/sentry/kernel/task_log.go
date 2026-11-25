@@ -152,7 +152,7 @@ func (t *Task) debugDumpFrameChain() {
 		return
 	}
 	t.Debugf("Frame chain:")
-	for i := 0; i < maxFrameChainDepth; i++ {
+	for i := range maxFrameChainDepth {
 		if fp%8 != 0 {
 			t.Debugf("\tstopped at unaligned fp=%x", fp)
 			return

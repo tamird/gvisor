@@ -210,7 +210,7 @@ func (t *syscallThread) syscall(sysno uintptr, args ...arch.SyscallArgument) (ui
 	sentryMsg := t.sentryMessage
 	stubMsg := t.stubMessage
 	sentryMsg.sysno = uint64(sysno)
-	for i := 0; i < len(sentryMsg.args); i++ {
+	for i := range len(sentryMsg.args) {
 		if i < len(args) {
 			sentryMsg.args[i] = uint64(args[i].Value)
 		} else {

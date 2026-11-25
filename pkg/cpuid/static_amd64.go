@@ -63,7 +63,7 @@ func (fs FeatureSet) ToStatic() Static {
 	}
 
 	// Processor Extended State Enumeration.
-	for i := uint32(0); i < xSaveInfoNumLeaves; i++ {
+	for i := range uint32(xSaveInfoNumLeaves) {
 		in := In{Eax: uint32(xSaveInfo), Ecx: i}
 		s[in] = fs.Query(in)
 	}

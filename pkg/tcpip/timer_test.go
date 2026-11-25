@@ -154,7 +154,7 @@ func TestJobReschedule(t *testing.T) {
 	var wg sync.WaitGroup
 	var lock sync.Mutex
 
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		wg.Add(1)
 
 		go func() {
@@ -280,7 +280,7 @@ func TestJobImmediatelyCancel(t *testing.T) {
 	var lock sync.Mutex
 	ch := make(chan struct{})
 
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		lock.Lock()
 		job := tcpip.NewJob(clock, &lock, func() { ch <- struct{}{} })
 		job.Schedule(shortDuration)
@@ -314,7 +314,7 @@ func TestJobCancelledRescheduleWithoutLock(t *testing.T) {
 	job.Cancel()
 	lock.Unlock()
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		job.Schedule(middleDuration)
 
 		lock.Lock()
@@ -343,7 +343,7 @@ func TestManyCancellableTimerResetAfterBlockedOnLock(t *testing.T) {
 	lock.Lock()
 	job := tcpip.NewJob(clock, &lock, func() { ch <- struct{}{} })
 	job.Schedule(shortDuration)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		// Sleep until the timer fires and gets blocked trying to take the lock.
 		sleep(middleDuration)
 		job.Cancel()
@@ -376,7 +376,7 @@ func TestManyJobReschedulesUnderLock(t *testing.T) {
 	lock.Lock()
 	job := tcpip.NewJob(clock, &lock, func() { ch <- struct{}{} })
 	job.Schedule(shortDuration)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		job.Cancel()
 		job.Schedule(shortDuration)
 	}

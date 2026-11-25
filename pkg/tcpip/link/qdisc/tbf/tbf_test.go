@@ -378,7 +378,7 @@ func TestUnshapedPassesAllPackets(t *testing.T) {
 	// pktSize=1500 ensures len2TimeNS doesn't truncate to zero (which it
 	// would for tiny packets at this rate), so the token math is actually
 	// exercised, not just the dispatch path.
-	for i := 0; i < want; i++ {
+	for i := range want {
 		pkt := newPkt(1500)
 		if err := d.WritePacket(pkt); err != nil {
 			t.Fatalf("WritePacket %d: %v", i, err)
@@ -412,7 +412,7 @@ func TestWriteMorePacketsThanBatchSize(t *testing.T) {
 			}
 			defer d.Close()
 
-			for i := 0; i < want; i++ {
+			for i := range want {
 				pkt := newPkt(1)
 				if err := d.WritePacket(pkt); err != nil {
 					t.Fatalf("WritePacket %d: %v", i, err)
@@ -454,7 +454,7 @@ func TestBurstAbsorption(t *testing.T) {
 	}
 	defer d.Close()
 
-	for i := 0; i < allowed; i++ {
+	for i := range allowed {
 		pkt := newPkt(pktSize)
 		if err := d.WritePacket(pkt); err != nil {
 			t.Fatalf("WritePacket %d: %v", i, err)
@@ -495,7 +495,7 @@ func TestBucketCapNotExceeded(t *testing.T) {
 	clk.Advance(time.Hour)
 
 	const flood = allowed + 10
-	for i := 0; i < flood; i++ {
+	for i := range flood {
 		pkt := newPkt(pktSize)
 		if err := d.WritePacket(pkt); err != nil {
 			t.Fatalf("WritePacket %d: %v", i, err)
@@ -538,7 +538,7 @@ func TestSustainedRate(t *testing.T) {
 	}
 	defer d.Close()
 
-	for i := 0; i < queued; i++ {
+	for i := range queued {
 		pkt := newPkt(pktSize)
 		if err := d.WritePacket(pkt); err != nil {
 			t.Fatalf("WritePacket %d: %v", i, err)
@@ -653,7 +653,7 @@ func TestShapedPathBatchesAfterRefill(t *testing.T) {
 	defer d.Close()
 
 	// Drain the initial bucket so subsequent pushes park on the watchdog.
-	for i := 0; i < groupSize; i++ {
+	for i := range groupSize {
 		pkt := newPkt(pktSize)
 		if err := d.WritePacket(pkt); err != nil {
 			t.Fatalf("WritePacket %d: %v", i, err)
@@ -667,7 +667,7 @@ func TestShapedPathBatchesAfterRefill(t *testing.T) {
 
 	// Bucket empty. Queue another group; the dispatcher will park on the
 	// watchdog after peeking the head.
-	for i := 0; i < groupSize; i++ {
+	for i := range groupSize {
 		pkt := newPkt(pktSize)
 		if err := d.WritePacket(pkt); err != nil {
 			t.Fatalf("post-drain WritePacket %d: %v", i, err)
@@ -703,11 +703,11 @@ func TestFastSimultaneousWrites(t *testing.T) {
 	const nWriters = 100
 	const nWrites = 100
 	var wg sync.WaitGroup
-	for i := 0; i < nWriters; i++ {
+	for range nWriters {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for j := 0; j < nWrites; j++ {
+			for range nWrites {
 				pkt := newPkt(64)
 				// WritePacket errors (e.g. ErrNoBufferSpace if the
 				// queue ever fills) are not fatal; the goal is to
@@ -736,7 +736,7 @@ func TestCloseDrainsQueuedPackets(t *testing.T) {
 		t.Fatalf("tbf.New: %v", err)
 	}
 
-	for i := 0; i < queueLen*2; i++ {
+	for range queueLen * 2 {
 		pkt := newPkt(1514)
 		_ = d.WritePacket(pkt) // ignore overflows
 		pkt.DecRef()
@@ -756,18 +756,18 @@ func TestCloseConcurrentWithWritePacket(t *testing.T) {
 	const trials = 50
 	const nWriters = 16
 	const nWrites = 200
-	for trial := 0; trial < trials; trial++ {
+	for trial := range trials {
 		ep := &fakeEndpoint{mtu: 1500, maxHeaderLength: 14}
 		d, err := tbf.New(ep, &faketime.NullClock{}, 1<<40, 1<<20, 1024)
 		if err != nil {
 			t.Fatalf("trial %d: tbf.New: %v", trial, err)
 		}
 		var wg sync.WaitGroup
-		for i := 0; i < nWriters; i++ {
+		for range nWriters {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				for j := 0; j < nWrites; j++ {
+				for range nWrites {
 					pkt := newPkt(64)
 					_ = d.WritePacket(pkt)
 					pkt.DecRef()

@@ -543,7 +543,7 @@ func ParseTCPOptions(b []byte) TCPOptions {
 			}
 			numBlocks := (sackOptionLen - 2) / 8
 			opts.SACKBlocks = []SACKBlock{}
-			for j := 0; j < numBlocks; j++ {
+			for j := range numBlocks {
 				start := binary.BigEndian.Uint32(b[i+2+j*8:])
 				end := binary.BigEndian.Uint32(b[i+2+j*8+4:])
 				opts.SACKBlocks = append(opts.SACKBlocks, SACKBlock{

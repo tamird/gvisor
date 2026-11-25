@@ -272,7 +272,7 @@ func StartProfilingMetrics[T ProfilingMetricsWriter](opts ProfilingMetricsOption
 		// a chance to start (as unlikely as that is).
 		curWriterIndex: atomicbitops.FromInt32(snapshotRingbufferSize - 1),
 	}
-	for i := 0; i < snapshotRingbufferSize; i++ {
+	for i := range snapshotRingbufferSize {
 		s.ringbuffer[i] = make([]uint64, snapshotBufferSize*(numEntries+1))
 	}
 

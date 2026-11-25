@@ -405,7 +405,7 @@ func TestBindToDeviceDistribution(t *testing.T) {
 					}
 					endpoints := make(map[uint16]tcpip.Endpoint)
 					stats := make(map[tcpip.Endpoint]int)
-					for i := 0; i < npackets; i++ {
+					for i := range npackets {
 						// Send a packet.
 						port := uint16(i % nports)
 						payload := newPayload()

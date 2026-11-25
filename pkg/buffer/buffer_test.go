@@ -685,7 +685,7 @@ func TestReadByte(t *testing.T) {
 	readString := "abcdef123456ghijkl"
 	b := Buffer{}
 	nViews := 3
-	for i := 0; i < nViews; i++ {
+	for i := range nViews {
 		vLen := len(readString) / nViews
 		v := NewViewWithData([]byte(readString[i*vLen : (i+1)*vLen]))
 		b.appendOwned(v)
@@ -908,7 +908,7 @@ func TestChecksum(t *testing.T) {
 	b.appendOwned(NewViewWithData(data[30:70]))
 	b.appendOwned(NewViewWithData(data[70:]))
 
-	for offset := 0; offset < 100; offset++ {
+	for offset := range 100 {
 		var cs checksum.Checksumer
 		cs.Add(data[offset:])
 		dataChecksum := cs.Checksum()

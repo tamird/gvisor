@@ -202,7 +202,7 @@ func copyInIovecs(ctx marshal.CopyContext, t *Task, addr hostarch.Addr, numIovec
 	}
 
 	b := ctx.CopyScratchBuffer(iovecLength)
-	for i := 0; i < numIovecs; i++ {
+	for range numIovecs {
 		ar, err := makeIovec(ctx, t, addr, b)
 		if err != nil {
 			return []hostarch.AddrRange{}, err
