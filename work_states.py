@@ -80,7 +80,12 @@ def is_advisory_check(pr: dict, check: dict) -> bool:
 
 
 def is_approval_gate(pr: dict, check: dict) -> bool:
-    """Recognize BuildBuddy's exact provider response before CI can run."""
+    """Recognize repository governance waits without hiding validation errors."""
+    if (pr.get("repo") == "google/gvisor" and check.get("kind") == "status"
+            and check.get("name") == "maintainer-approval/master" and check.get("state") == "PENDING"
+            and re.fullmatch(r"https://github\.com/gvisor/gvisor/actions/runs/\d+", check.get("url") or "")
+            and re.fullmatch(r"(?:#\d+: )?Maintainer approvals: .+", check.get("description") or "")):
+        return True
     return (pr.get("repo") == "buildbuddy-io/buildbuddy" and check.get("kind") == "status"
             and check.get("state") == "ERROR" and check.get("description") == "Check requires approving review"
             and check.get("url") in {"https://app.buildbuddy.io", "https://app.buildbuddy.io/",
@@ -686,8 +691,11 @@ def pr_states(pr: dict, patch: dict | None = None, landing: dict | None = None) 
         states["changes-requested"] = {"scope": head}
     elif decision != "APPROVED" and not accepted_patch and not (pr.get("publicImportDisposition") or {}).get("reviewedExport"):
         states["maintainer-review"] = {"scope": head, "qualifier": "No effective approval for the current head" if pr.get("githubReviewDecision", pr.get("reviewDecision")) == "APPROVED" else None}
-    if pr["status"] == "open" and any(is_approval_gate(pr, item) for item in (pr.get("checks") or {}).get("contexts", [])):
-        states["maintainer-review"] = {"scope": head, "qualifier": "BuildBuddy requires approving review before these checks run"}
+    approval_gates = [item for item in (pr.get("checks") or {}).get("contexts", []) if is_approval_gate(pr, item)]
+    if pr["status"] == "open" and approval_gates:
+        states["maintainer-review"] = {"scope": head, "qualifier": (
+            "; ".join(item["description"] for item in approval_gates) if pr.get("repo") == "google/gvisor"
+            else "BuildBuddy requires approving review before these checks run")}
     eligible = (pr["status"] == "open" and (decision == "APPROVED" or accepted_patch)
                 and pr.get("branchHead", head) in {None, head})
     if pr.get("importPolicy", "copybara") == "none":

@@ -212,6 +212,9 @@ function isPrivateBuildkiteCheck(pr, check) {
 function isImportStatus(check) { return check.kind === "status" && ["import/copybara", "feedback/copybara"].includes(check.name); }
 function isAdvisoryCheck(pr, check) { return pr?.repo === "google/gvisor" && check.kind === "status" && check.name === "buildkite/first-pass"; }
 function isApprovalGate(pr, check) {
+  if (pr?.repo === "google/gvisor" && check.kind === "status" && check.name === "maintainer-approval/master"
+      && check.state === "PENDING" && /^https:\/\/github\.com\/gvisor\/gvisor\/actions\/runs\/\d+$/.test(check.url || "")
+      && /^(?:#\d+: )?Maintainer approvals: .+/.test(check.description || "")) return true;
   return pr?.repo === "buildbuddy-io/buildbuddy" && check.kind === "status" && check.state === "ERROR"
     && check.description === "Check requires approving review"
     && ["https://app.buildbuddy.io", "https://app.buildbuddy.io/", "https://app.buildbuddy.dev", "https://app.buildbuddy.dev/"].includes(check.url);
@@ -257,7 +260,7 @@ function checkInfo(pr) {
     : approvalGates.length ? { text: "Approval required", tone: "pending", glyph: "○" }
       : passed ? { text: serviceIssues.length ? `Passed · ${serviceIssues.join(" / ")} issue` : "Success", tone: serviceIssues.length ? "pending" : "good", glyph: serviceIssues.length ? "!" : "✓" }
       : { text: advisory.length && !substantive.length ? "Advisory" : "Unknown", tone: "unknown", glyph: "?" };
-  return { ...result, passed, detail: `${substantive.length} current validation check/status contexts${checks.complete ? "" : "; context list incomplete"}. ${canceled.length ? "A validation run was canceled. Its job details are available below. " : ""}${checks.supersededContexts?.length ? `${checks.supersededContexts.length} superseded workflow attempts remain below as history. ` : ""}${assignmentFailures.length ? "Reviewer assignment failed; its raw result remains below and is not a contributor-source failure. " : ""}${importProblems.length ? "Copybara import status needs attention; its raw result remains below and does not establish a public source-test failure. " : ""}${approvalGates.length ? "BuildBuddy requires approving review before these checks run; their raw ERROR statuses remain below. " : ""}${advisory.length ? "First Pass is advisory; its result is not qualification evidence. " : ""}GitHub's aggregate is ${checks.state}. Checks/statuses are not test-case counts.` };
+  return { ...result, passed, detail: `${substantive.length} current validation check/status contexts${checks.complete ? "" : "; context list incomplete"}. ${canceled.length ? "A validation run was canceled. Its job details are available below. " : ""}${checks.supersededContexts?.length ? `${checks.supersededContexts.length} superseded workflow attempts remain below as history. ` : ""}${assignmentFailures.length ? "Reviewer assignment failed; its raw result remains below and is not a contributor-source failure. " : ""}${importProblems.length ? "Copybara import status needs attention; its raw result remains below and does not establish a public source-test failure. " : ""}${approvalGates.length ? approvalGates.map(check => `${check.name}: ${check.description} `).join("") : ""}${advisory.length ? "First Pass is advisory; its result is not qualification evidence. " : ""}GitHub's aggregate is ${checks.state}. Checks/statuses are not test-case counts.` };
 }
 
 function checksPassed(pr) {
@@ -739,7 +742,7 @@ function attentionReasons(node, owner) {
   if (!landed && authorFailures.length) add("author-public-checks", authorFailures.map(check => `${check.name}: ${check.state}`).join("; "));
   const reviewHold = activeReviewHold(node, pr);
   const approvalGates = contexts.filter(check => isApprovalGate(pr, check));
-  if (!landed && !reviewHold && approvalGates.length && !attentionDisposition(node, "author-conflicts")?.replacement) add("maintainer-review", `${approvalGates.map(check => check.name).join("; ")}: Check requires approving review. These checks have not run.`);
+  if (!landed && !reviewHold && approvalGates.length && !attentionDisposition(node, "author-conflicts")?.replacement) add("maintainer-review", approvalGates.map(check => `${check.name}: ${check.description}${pr.repo === "buildbuddy-io/buildbuddy" ? ". These checks have not run." : ""}`).join("; "));
   const review = reviewAttention(pr, owner), decision = effectiveReviewDecision(pr);
   const acceptedPatch = approvedPatch(node), approved = decision === "APPROVED" || acceptedPatch;
   const exported = reviewedExport(node);
@@ -972,7 +975,7 @@ function appendChecks(container, pr, heading) {
   for (const check of [...(pr.checks?.contexts || []), ...(pr.checks?.supersededContexts || [])]) {
     const row = element("div", "check-row");
     const historical = pr.checks.supersededContexts?.includes(check);
-    row.append(check.url ? link(check.name, check.url) : element("span", "", check.name), element("span", "check-state", `${check.state.toLowerCase().replaceAll("_", " ")}${historical ? " · superseded attempt" : isAdvisoryCheck(pr, check) ? " · advisory" : check.purpose === "reviewer-assignment" ? " · reviewer assignment" : isImportStatus(check) ? " · import status" : isApprovalGate(pr, check) ? " · approval required; not run" : ""}`));
+    row.append(check.url ? link(check.name, check.url) : element("span", "", check.name), element("span", "check-state", `${check.state.toLowerCase().replaceAll("_", " ")}${historical ? " · superseded attempt" : isAdvisoryCheck(pr, check) ? " · advisory" : check.purpose === "reviewer-assignment" ? " · reviewer assignment" : isImportStatus(check) ? " · import status" : isApprovalGate(pr, check) ? pr.repo === "buildbuddy-io/buildbuddy" ? " · approval required; not run" : " · maintainer review" : ""}`));
     if (check.description) row.title = check.description;
     if (!check.url) row.title = "No public log URL reported. The status is reported by GitHub; logs were not inspected.";
     section.append(row);
@@ -2304,6 +2307,13 @@ function stateRecords(snapshot, node) {
     if (node.github.mergeable !== "MERGEABLE" || actionableComment(node) || requestedRebase(node.github, registry.meta.owner)) delete records["waiting-merge"];
     if (node.github.branchHead && node.github.branchHead !== node.github.head) {
       delete records["waiting-merge"]; delete records["awaiting-import"];
+    }
+    const approvalGates = (node.github.checks?.contexts || []).filter(check => isApprovalGate(node.github, check));
+    if (node.github.status === "open" && !node.github.revisionChanged && approvalGates.length) {
+      records["maintainer-review"] = { ...(records["maintainer-review"] || { scope: node.github.head, since: null, basis: "unknown" }),
+        qualifier: node.github.repo === "google/gvisor" ? approvalGates.map(check => check.description).join("; ")
+          : "BuildBuddy requires approving review before these checks run" };
+      delete records["waiting-merge"];
     }
     if (["merged", "closed"].includes(node.github.status) && node.github.conflictCheckedAt) {
       for (const key of Object.keys(records)) delete records[key];

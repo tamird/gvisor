@@ -3669,6 +3669,54 @@ test('BuildBuddy approval gates retain ERROR without claiming executed failure o
   assert.ok(idsFor(node).includes('maintainer-review'));
 });
 
+test('gVisor pending approval counts remain review work alongside independent CI', () => {
+  const node = attentionNode(); node.github.repo = 'google/gvisor'; node.github.importPolicy = 'none';
+  const gate = { name: 'maintainer-approval/master', kind: 'status', state: 'PENDING',
+    description: 'Maintainer approvals: 1, needs 2.',
+    url: 'https://github.com/gvisor/gvisor/actions/runs/45507638072' };
+  node.github.checks = { complete: true, total: 1, state: 'PENDING', contexts: [gate] };
+  const context = client(); context.nodeInput = node;
+  const run = code => vm.runInContext(code, context);
+  context.snapshotInput.workStates[node.id] = { 'checks-pending': { scope: node.github.head } };
+  assert.deepEqual(idsFor(node), ['maintainer-review']);
+  assert.ok(reasonsFor(node)[0].detail.includes(gate.description));
+  assert.equal(run('checkInfo(nodeInput.github).text'), 'Approval required');
+  assert.ok(run('checkInfo(nodeInput.github).detail').includes(gate.description));
+  assert.equal(run('checksPassed(nodeInput.github)'), false);
+  assert.equal(run('stateRecords(snapshotInput, nodeInput)["checks-pending"]'), undefined);
+  assert.equal(run('stateRecords(snapshotInput, nodeInput)["maintainer-review"].qualifier'), gate.description);
+  node.github.checks.contexts.push(serviceStatus('buildkite/pipeline/pr', 'PENDING'));
+  node.github.checks.total = 2;
+  assert.equal(run('checkInfo(nodeInput.github).text'), 'Pending');
+  assert.ok(run('stateRecords(snapshotInput, nodeInput)["checks-pending"]'));
+  assert.ok(idsFor(node).includes('maintainer-review'));
+  node.github.checks.contexts.pop(); node.github.checks.total = 1;
+  const createElement = tag => ({ tag, dataset: {}, children: [], append(...children) { this.children.push(...children); } });
+  context.document = { createElement, createTextNode: text => ({ textContent: text }) };
+  for (const description of ['Maintainer approvals: 1, needs 2 (the author did not push the head commit).',
+    '#17836: Maintainer approvals: 1, needs 1 (2 if the author did not push the head commit).']) {
+    gate.description = description;
+    assert.equal(run('stateRecords(snapshotInput, nodeInput)["maintainer-review"].qualifier'), description);
+    context.parentInput = createElement('section');
+    run('appendChecks(parentInput, nodeInput.github, "Source")');
+    const row = context.parentInput.children[0].children.at(-1);
+    assert.equal(row.children[1].textContent, 'pending · maintainer review');
+    assert.equal(row.title, description);
+  }
+  gate.state = node.github.checks.state = 'FAILURE';
+  assert.ok(idsFor(node).includes('author-public-checks'));
+  assert.ok(!idsFor(node).includes('maintainer-review'));
+  gate.state = node.github.checks.state = 'PENDING';
+  for (const description of ['The pull request is a draft.', 'No open pull request needs this status.']) {
+    gate.description = description;
+    assert.ok(!idsFor(node).includes('maintainer-review'));
+    assert.equal(run('checkInfo(nodeInput.github).text'), 'Pending');
+  }
+  gate.description = 'Maintainer approvals: 1, needs 2.';
+  node.github.checks.complete = false;
+  assert.equal(run('checkInfo(nodeInput.github).text'), 'Pending');
+});
+
 // Existing repo-qualified IDs join registered-only observations without creating duplicates.
 test('registered-only repositories require direct review and retain curated node identity', () => {
   const context = client(), repo = 'nodejs/node';

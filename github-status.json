@@ -471840,18 +471840,18 @@
       }
     },
     "pr:14343": {
-      "checks-pending": {
-        "scope": "14343:fe7a0f8e0b2e9201849722166041682662e0d21e",
-        "since": "2026-11-25T00:15:52.187119+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:46.184075+00:00"
-      },
       "changes-requested": {
         "scope": "fe7a0f8e0b2e9201849722166041682662e0d21e",
         "since": "2026-11-17T19:11:47.868378+00:00",
         "basis": "observed",
         "qualifier": null,
+        "observedAt": "2026-11-25T22:12:46.184075+00:00"
+      },
+      "maintainer-review": {
+        "scope": "fe7a0f8e0b2e9201849722166041682662e0d21e",
+        "since": "2026-11-25T22:12:46.184075+00:00",
+        "basis": "observed",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       }
     },
@@ -471899,13 +471899,6 @@
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       },
-      "checks-pending": {
-        "scope": "14361:2457939ec15647b0908859936941c569b0a04cce",
-        "since": "2026-11-25T00:15:52.187119+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:46.184075+00:00"
-      },
       "conflicts": {
         "scope": "2457939ec15647b0908859936941c569b0a04cce",
         "since": "2026-11-25T10:07:08.831385+00:00",
@@ -471917,7 +471910,7 @@
         "scope": "2457939ec15647b0908859936941c569b0a04cce",
         "since": "2026-11-17T19:11:47.868378+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       },
       "contributor-review": {
@@ -472818,11 +472811,11 @@
       }
     },
     "pr:15321": {
-      "checks-pending": {
-        "scope": "15321:75bfe160127ff01c8c7394bb4984527077ed8bf2",
-        "since": "2026-11-25T00:15:52.187119+00:00",
+      "maintainer-review": {
+        "scope": "75bfe160127ff01c8c7394bb4984527077ed8bf2",
+        "since": "2026-11-25T22:12:46.184075+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       }
     },
@@ -473184,11 +473177,11 @@
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       },
-      "checks-pending": {
-        "scope": "15449:fdce23a34c322b076944df7369772ec68ea78254",
-        "since": "2026-11-25T00:15:52.187119+00:00",
+      "maintainer-review": {
+        "scope": "fdce23a34c322b076944df7369772ec68ea78254",
+        "since": "2026-11-25T22:12:46.184075+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       }
     },
@@ -473789,13 +473782,6 @@
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       },
-      "checks-pending": {
-        "scope": "15730:58fb6b08096d65974497d16c020b3f8a0cd955a8",
-        "since": "2026-11-25T00:15:52.187119+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:46.184075+00:00"
-      },
       "conflicts": {
         "scope": "58fb6b08096d65974497d16c020b3f8a0cd955a8",
         "since": "2026-11-20T08:57:11.101594+00:00",
@@ -473807,7 +473793,7 @@
         "scope": "58fb6b08096d65974497d16c020b3f8a0cd955a8",
         "since": "2026-11-19T06:07:57.963076+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       }
     },
@@ -474278,11 +474264,11 @@
       }
     },
     "pr:15972": {
-      "checks-pending": {
-        "scope": "15972:1f277200f591d460fd51232a799a7fc5e1f8511c",
-        "since": "2026-11-25T00:15:06.498553+00:00",
+      "maintainer-review": {
+        "scope": "1f277200f591d460fd51232a799a7fc5e1f8511c",
+        "since": "2026-11-25T22:12:46.184075+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       }
     },
@@ -474569,11 +474555,11 @@
       }
     },
     "pr:16098": {
-      "checks-pending": {
-        "scope": "16098:d692a4fb41acd4deb5f3b051ac06bd4145d888f3",
-        "since": "2026-11-25T00:15:52.187119+00:00",
+      "maintainer-review": {
+        "scope": "d692a4fb41acd4deb5f3b051ac06bd4145d888f3",
+        "since": "2026-11-25T22:12:46.184075+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       }
     },
@@ -474957,18 +474943,11 @@
       }
     },
     "pr:16391": {
-      "checks-pending": {
-        "scope": "16391:e833a4cc951871ebcd3a4edee3f801851db7b0c3",
-        "since": "2026-11-25T00:15:52.187119+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:46.184075+00:00"
-      },
       "maintainer-review": {
         "scope": "e833a4cc951871ebcd3a4edee3f801851db7b0c3",
         "since": "2026-11-19T06:07:57.963093+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       }
     },
@@ -475034,11 +475013,11 @@
       }
     },
     "pr:16458": {
-      "checks-pending": {
-        "scope": "16458:f9f6e3261d13800cb3bdbdaf713d44fc142811ac",
-        "since": "2026-11-25T00:15:52.187119+00:00",
+      "maintainer-review": {
+        "scope": "f9f6e3261d13800cb3bdbdaf713d44fc142811ac",
+        "since": "2026-11-25T22:12:46.184075+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       }
     },
@@ -475251,18 +475230,18 @@
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       },
-      "checks-pending": {
-        "scope": "16507:c71526cea11bd81898c588264c0940d1fb33e511",
-        "since": "2026-11-25T00:15:52.187119+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:46.184075+00:00"
-      },
       "conflicts": {
         "scope": "c71526cea11bd81898c588264c0940d1fb33e511",
         "since": "2026-11-18T02:49:23.559025+00:00",
         "basis": "observed",
         "qualifier": null,
+        "observedAt": "2026-11-25T22:12:46.184075+00:00"
+      },
+      "maintainer-review": {
+        "scope": "c71526cea11bd81898c588264c0940d1fb33e511",
+        "since": "2026-11-25T22:12:46.184075+00:00",
+        "basis": "observed",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       }
     },
@@ -475421,18 +475400,11 @@
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       },
-      "checks-pending": {
-        "scope": "16590:695aca183de5b9c736a8f1bb7a2a80b65f894c1c",
-        "since": "2026-11-25T00:15:52.187119+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:46.184075+00:00"
-      },
       "maintainer-review": {
         "scope": "695aca183de5b9c736a8f1bb7a2a80b65f894c1c",
         "since": "2026-11-17T19:11:47.868378+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       }
     },
@@ -475464,11 +475436,11 @@
       }
     },
     "pr:16594": {
-      "checks-pending": {
-        "scope": "16594:b2cbea854fc9094a9b295a6226a90bccc4dad2ca",
-        "since": "2026-11-25T00:15:52.187119+00:00",
+      "maintainer-review": {
+        "scope": "b2cbea854fc9094a9b295a6226a90bccc4dad2ca",
+        "since": "2026-11-25T22:12:46.184075+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       }
     },
@@ -475550,18 +475522,11 @@
       }
     },
     "pr:16604": {
-      "checks-pending": {
-        "scope": "16604:7cc5ad9efdff3d4cfaa12eca45ea9156bd57492a",
-        "since": "2026-11-25T00:15:52.187119+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:46.184075+00:00"
-      },
       "maintainer-review": {
         "scope": "7cc5ad9efdff3d4cfaa12eca45ea9156bd57492a",
         "since": "2026-11-19T06:34:48.754623+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       }
     },
@@ -475815,18 +475780,11 @@
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       },
-      "checks-pending": {
-        "scope": "16710:2521133e1842de17c870f0255a0135794250b3ba",
-        "since": "2026-11-25T00:15:52.187119+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:46.184075+00:00"
-      },
       "maintainer-review": {
         "scope": "2521133e1842de17c870f0255a0135794250b3ba",
         "since": "2026-11-17T19:11:47.868378+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       }
     },
@@ -476067,18 +476025,11 @@
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       },
-      "checks-pending": {
-        "scope": "16766:0cba97076a190364b6d941135b167263f01f74ba",
-        "since": "2026-11-25T00:15:52.187119+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:46.184075+00:00"
-      },
       "maintainer-review": {
         "scope": "0cba97076a190364b6d941135b167263f01f74ba",
         "since": "2026-11-19T06:07:57.963121+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
       }
     },
@@ -476231,18 +476182,11 @@
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-25T22:12:47.923302+00:00"
       },
-      "checks-pending": {
-        "scope": "16803:d6deb3c8b96837af609b38a557590162bbbd979e",
-        "since": "2026-11-25T00:15:53.435558+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:47.923302+00:00"
-      },
       "maintainer-review": {
         "scope": "d6deb3c8b96837af609b38a557590162bbbd979e",
         "since": "2026-11-17T19:11:47.868378+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:47.923302+00:00"
       }
     },
@@ -476440,11 +476384,11 @@
       }
     },
     "pr:16822": {
-      "checks-pending": {
-        "scope": "16822:3582b3adc64b9bd5dda6f2fa72bb18494a26f9bb",
-        "since": "2026-11-25T00:15:53.435558+00:00",
+      "maintainer-review": {
+        "scope": "3582b3adc64b9bd5dda6f2fa72bb18494a26f9bb",
+        "since": "2026-11-25T22:12:47.923302+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:47.923302+00:00"
       }
     },
@@ -476611,20 +476555,20 @@
       }
     },
     "pr:16842": {
-      "checks-pending": {
-        "scope": "16842:daa2d24389d1fea28197add328e4e875488c306d",
-        "since": "2026-11-25T00:15:53.435558+00:00",
+      "maintainer-review": {
+        "scope": "daa2d24389d1fea28197add328e4e875488c306d",
+        "since": "2026-11-25T22:12:47.923302+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:47.923302+00:00"
       }
     },
     "pr:16843": {
-      "checks-pending": {
-        "scope": "16843:91b4fc2a2b3fe4a64a4d2769f982b6b381ec83d0",
-        "since": "2026-11-25T00:15:53.435558+00:00",
+      "maintainer-review": {
+        "scope": "91b4fc2a2b3fe4a64a4d2769f982b6b381ec83d0",
+        "since": "2026-11-25T22:12:47.923302+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:47.923302+00:00"
       }
     },
@@ -476713,11 +476657,11 @@
       }
     },
     "pr:16854": {
-      "checks-pending": {
-        "scope": "16854:f0e414b08b89f9486132955578fcb8d55346d33c",
-        "since": "2026-11-25T00:15:53.435558+00:00",
+      "maintainer-review": {
+        "scope": "f0e414b08b89f9486132955578fcb8d55346d33c",
+        "since": "2026-11-25T22:12:47.923302+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:47.923302+00:00"
       }
     },
@@ -477090,18 +477034,18 @@
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-25T22:12:47.923302+00:00"
       },
-      "checks-pending": {
-        "scope": "16957:f3575cb4ed538695d0b7936e36662633a38b2b5e",
-        "since": "2026-11-25T00:15:53.435558+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:47.923302+00:00"
-      },
       "conflicts": {
         "scope": "f3575cb4ed538695d0b7936e36662633a38b2b5e",
         "since": "2026-11-24T17:03:35.215598+00:00",
         "basis": "observed",
         "qualifier": null,
+        "observedAt": "2026-11-25T22:12:47.923302+00:00"
+      },
+      "maintainer-review": {
+        "scope": "f3575cb4ed538695d0b7936e36662633a38b2b5e",
+        "since": "2026-11-25T22:12:47.923302+00:00",
+        "basis": "observed",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:47.923302+00:00"
       },
       "contributor-review": {
@@ -477156,11 +477100,11 @@
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-25T22:12:47.923302+00:00"
       },
-      "checks-pending": {
-        "scope": "16962:a638ea4dc5ee08c632b5fdedabf5405383703382",
-        "since": "2026-11-25T21:05:22.746202+00:00",
+      "maintainer-review": {
+        "scope": "a638ea4dc5ee08c632b5fdedabf5405383703382",
+        "since": "2026-11-25T22:12:47.923302+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:47.923302+00:00"
       },
       "contributor-review": {
@@ -477406,18 +477350,11 @@
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-25T22:12:47.923302+00:00"
       },
-      "checks-pending": {
-        "scope": "17059:0449e8a37bba3dfdc846b847371c2e93ffa9577e",
-        "since": "2026-11-25T00:15:53.435558+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:47.923302+00:00"
-      },
       "maintainer-review": {
         "scope": "0449e8a37bba3dfdc846b847371c2e93ffa9577e",
         "since": "2026-11-17T19:11:47.868378+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:47.923302+00:00"
       }
     },
@@ -477447,18 +477384,18 @@
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-25T22:12:47.923302+00:00"
       },
-      "checks-pending": {
-        "scope": "17067:a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "since": "2026-11-25T00:15:53.435558+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:47.923302+00:00"
-      },
       "conflicts": {
         "scope": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
         "since": "2026-11-17T19:11:47.868378+00:00",
         "basis": "observed",
         "qualifier": null,
+        "observedAt": "2026-11-25T22:12:47.923302+00:00"
+      },
+      "maintainer-review": {
+        "scope": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
+        "since": "2026-11-25T22:12:47.923302+00:00",
+        "basis": "observed",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:47.923302+00:00"
       }
     },
@@ -477472,18 +477409,11 @@
       }
     },
     "pr:17083": {
-      "checks-pending": {
-        "scope": "17083:aa175bd84686b4585c413e2fabb36f1457cd52db",
-        "since": "2026-11-25T00:15:06.498553+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:01.099211+00:00"
-      },
       "maintainer-review": {
         "scope": "aa175bd84686b4585c413e2fabb36f1457cd52db",
         "since": "2026-11-23T04:14:15.688149+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:01.099211+00:00"
       }
     },
@@ -477495,18 +477425,11 @@
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-25T22:12:47.923302+00:00"
       },
-      "checks-pending": {
-        "scope": "17092:c6e997dc3e578eaf9bec750def34dacf6c3d3f60",
-        "since": "2026-11-25T00:15:53.435558+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:47.923302+00:00"
-      },
       "maintainer-review": {
         "scope": "c6e997dc3e578eaf9bec750def34dacf6c3d3f60",
         "since": "2026-11-17T19:11:47.868378+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:47.923302+00:00"
       }
     },
@@ -477536,18 +477459,11 @@
       }
     },
     "pr:17104": {
-      "checks-pending": {
-        "scope": "17104:ef6f0e2f8c9cd1ca1b2b277261f68ef5509d225e",
-        "since": "2026-11-25T00:15:53.435558+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:47.923302+00:00"
-      },
       "maintainer-review": {
         "scope": "ef6f0e2f8c9cd1ca1b2b277261f68ef5509d225e",
         "since": "2026-11-24T01:28:54.963698+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:47.923302+00:00"
       }
     },
@@ -477766,18 +477682,11 @@
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
       },
-      "checks-pending": {
-        "scope": "17167:db1540f20d049d2ce83350a8b11e1d134fcc7571",
-        "since": "2026-11-25T00:15:53.435558+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:49.492625+00:00"
-      },
       "maintainer-review": {
         "scope": "db1540f20d049d2ce83350a8b11e1d134fcc7571",
         "since": "2026-11-17T19:11:47.868378+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
       }
     },
@@ -477798,27 +477707,20 @@
       }
     },
     "pr:17169": {
-      "checks-pending": {
-        "scope": "17169:befeb49f0a05f9a5ae8c06882f1b0dc95f39b654",
-        "since": "2026-11-25T00:15:53.435558+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:49.492625+00:00"
-      },
       "maintainer-review": {
         "scope": "befeb49f0a05f9a5ae8c06882f1b0dc95f39b654",
         "since": "2026-11-19T06:07:57.963127+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
       }
     },
     "pr:17170": {
-      "checks-pending": {
-        "scope": "17170:1a322dca25c58e1f3088921133c346b77f2246e0",
-        "since": "2026-11-25T00:15:53.435558+00:00",
+      "maintainer-review": {
+        "scope": "1a322dca25c58e1f3088921133c346b77f2246e0",
+        "since": "2026-11-25T22:12:49.492625+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
       }
     },
@@ -478000,11 +477902,11 @@
       }
     },
     "pr:17221": {
-      "checks-pending": {
-        "scope": "17221:cba5d1b3f0a94c5ac55c10fc8f29af4fd8d6978e",
-        "since": "2026-11-25T00:15:55.154993+00:00",
+      "maintainer-review": {
+        "scope": "cba5d1b3f0a94c5ac55c10fc8f29af4fd8d6978e",
+        "since": "2026-11-25T22:12:49.492625+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
       }
     },
@@ -478123,18 +478025,11 @@
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
       },
-      "checks-pending": {
-        "scope": "17231:0625ac6d9ebf84c45743f244403941eafeeaa88a",
-        "since": "2026-11-25T00:15:55.154993+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:49.492625+00:00"
-      },
       "maintainer-review": {
         "scope": "0625ac6d9ebf84c45743f244403941eafeeaa88a",
         "since": "2026-11-17T19:11:47.868378+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
       }
     },
@@ -478162,18 +478057,11 @@
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
       },
-      "checks-pending": {
-        "scope": "17233:62fcd9150dab868889a3ca19af1144b62a75b688",
-        "since": "2026-11-25T00:15:55.154993+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:49.492625+00:00"
-      },
       "maintainer-review": {
         "scope": "62fcd9150dab868889a3ca19af1144b62a75b688",
         "since": "2026-11-17T19:11:47.868378+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
       }
     },
@@ -478219,18 +478107,11 @@
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
       },
-      "checks-pending": {
-        "scope": "17239:76d534aa035bc55dd9570a084fde009ef0c77a09",
-        "since": "2026-11-25T00:15:55.154993+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:49.492625+00:00"
-      },
       "maintainer-review": {
         "scope": "76d534aa035bc55dd9570a084fde009ef0c77a09",
         "since": "2026-11-17T19:11:47.868378+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
       }
     },
@@ -478242,18 +478123,11 @@
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
       },
-      "checks-pending": {
-        "scope": "17240:b2bd2fd55badd184c83835883d14e26e38af499c",
-        "since": "2026-11-25T00:15:55.154993+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:49.492625+00:00"
-      },
       "maintainer-review": {
         "scope": "b2bd2fd55badd184c83835883d14e26e38af499c",
         "since": "2026-11-17T19:11:47.868378+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
       }
     },
@@ -478265,18 +478139,11 @@
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
       },
-      "checks-pending": {
-        "scope": "17241:693cb4def2a600e7e88ff050a8e3bc2861dc8e81",
-        "since": "2026-11-25T00:15:55.154993+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:49.492625+00:00"
-      },
       "maintainer-review": {
         "scope": "693cb4def2a600e7e88ff050a8e3bc2861dc8e81",
         "since": "2026-11-17T19:11:47.868378+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
       }
     },
@@ -478313,18 +478180,11 @@
       }
     },
     "pr:17265": {
-      "checks-pending": {
-        "scope": "17265:6bbb910969fb2d87e1333c1df4e937f8545563a1",
-        "since": "2026-11-25T00:15:55.154993+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:49.492625+00:00"
-      },
       "maintainer-review": {
         "scope": "6bbb910969fb2d87e1333c1df4e937f8545563a1",
         "since": "2026-11-24T17:02:47.128245+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
       }
     },
@@ -478578,11 +478438,11 @@
       }
     },
     "pr:17297": {
-      "checks-pending": {
-        "scope": "17297:0cc542e1feffe9f26b4d3657511be4e7b79fb11d",
-        "since": "2026-11-25T00:15:55.154993+00:00",
+      "maintainer-review": {
+        "scope": "0cc542e1feffe9f26b4d3657511be4e7b79fb11d",
+        "since": "2026-11-25T22:12:49.492625+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
       }
     },
@@ -478637,11 +478497,11 @@
       }
     },
     "pr:17325": {
-      "checks-pending": {
-        "scope": "17325:e6bba3d9b6b7c2792d2e9b1b2f640f64fc9e6fc0",
-        "since": "2026-11-25T00:15:55.154993+00:00",
+      "maintainer-review": {
+        "scope": "e6bba3d9b6b7c2792d2e9b1b2f640f64fc9e6fc0",
+        "since": "2026-11-25T22:12:49.492625+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
       }
     },
@@ -478675,21 +478535,21 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
+      },
+      "maintainer-review": {
+        "scope": "65395f4d25f46c489be82141feeb009819403f19",
+        "since": "2026-11-25T22:12:49.492625+00:00",
+        "basis": "observed",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
+        "observedAt": "2026-11-25T22:12:49.492625+00:00"
       }
     },
     "pr:17370": {
-      "checks-pending": {
-        "scope": "17370:e9b31eddd7345586a03db99ec501ff4f2a5cc887",
-        "since": "2026-11-25T00:15:55.154993+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:49.492625+00:00"
-      },
       "maintainer-review": {
         "scope": "e9b31eddd7345586a03db99ec501ff4f2a5cc887",
         "since": "2026-11-18T10:35:33.536212+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
       }
     },
@@ -478715,6 +478575,13 @@
         "since": "2026-11-25T22:12:49.492625+00:00",
         "basis": "observed",
         "qualifier": null,
+        "observedAt": "2026-11-25T22:12:49.492625+00:00"
+      },
+      "maintainer-review": {
+        "scope": "cbb641db5450412e7137c46f05ba464b2ab5386a",
+        "since": "2026-11-25T22:12:49.492625+00:00",
+        "basis": "observed",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
       }
     },
@@ -478769,18 +478636,11 @@
       }
     },
     "pr:17416": {
-      "checks-pending": {
-        "scope": "17416:24841003c42c262436c161885db756eef1496a40",
-        "since": "2026-11-25T00:15:55.154993+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:50.740142+00:00"
-      },
       "maintainer-review": {
         "scope": "24841003c42c262436c161885db756eef1496a40",
         "since": "2026-11-22T09:51:12.241854+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:50.740142+00:00"
       }
     },
@@ -478801,18 +478661,11 @@
       }
     },
     "pr:17445": {
-      "checks-pending": {
-        "scope": "17445:94c7a5be59a53b5bb8dd4221a12b51e60fca2409",
-        "since": "2026-11-25T00:15:56.248349+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T22:12:50.740142+00:00"
-      },
       "maintainer-review": {
         "scope": "94c7a5be59a53b5bb8dd4221a12b51e60fca2409",
         "since": "2026-11-18T10:35:33.536212+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:50.740142+00:00"
       }
     },
@@ -478943,6 +478796,13 @@
         "since": "2026-11-25T22:12:50.740142+00:00",
         "basis": "observed",
         "qualifier": null,
+        "observedAt": "2026-11-25T22:12:50.740142+00:00"
+      },
+      "maintainer-review": {
+        "scope": "518c230da9c984c0bd8a362db2bea4ba7ee8dda6",
+        "since": "2026-11-25T22:12:50.740142+00:00",
+        "basis": "observed",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:50.740142+00:00"
       }
     },
@@ -479136,11 +478996,11 @@
         "qualifier": "Source checks failing",
         "observedAt": "2026-11-25T22:12:50.740142+00:00"
       },
-      "checks-pending": {
-        "scope": "17568:00c5cd11a3952bf965588d48dd19329cb45de332",
-        "since": "2026-11-25T00:15:56.248349+00:00",
+      "maintainer-review": {
+        "scope": "00c5cd11a3952bf965588d48dd19329cb45de332",
+        "since": "2026-11-25T22:12:50.740142+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:50.740142+00:00"
       }
     },
@@ -479256,20 +479116,20 @@
       }
     },
     "pr:17836": {
-      "checks-pending": {
-        "scope": "17836:29ff39685e49bee9d4144d6301162e359e2ec6c8",
-        "since": "2026-11-25T00:15:56.248349+00:00",
+      "maintainer-review": {
+        "scope": "29ff39685e49bee9d4144d6301162e359e2ec6c8",
+        "since": "2026-11-25T22:12:50.740142+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:50.740142+00:00"
       }
     },
     "pr:17838": {
-      "checks-pending": {
-        "scope": "17838:329a5acef8c5495f66014b93aab4cf749ba8b61a",
-        "since": "2026-11-25T00:15:56.248349+00:00",
+      "maintainer-review": {
+        "scope": "329a5acef8c5495f66014b93aab4cf749ba8b61a",
+        "since": "2026-11-25T22:12:50.740142+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:50.740142+00:00"
       }
     },
@@ -479315,11 +479175,11 @@
       }
     },
     "pr:17856": {
-      "checks-pending": {
-        "scope": "17856:2022728765e5e2a6a436272b09b13e5f04292826",
-        "since": "2026-11-25T00:15:56.248349+00:00",
+      "maintainer-review": {
+        "scope": "2022728765e5e2a6a436272b09b13e5f04292826",
+        "since": "2026-11-25T22:12:50.740142+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:50.740142+00:00"
       }
     },
@@ -479340,20 +479200,20 @@
       }
     },
     "pr:17862": {
-      "checks-pending": {
-        "scope": "17862:57691bada17528444d5137569d164234536009fa",
-        "since": "2026-11-25T00:15:56.248349+00:00",
+      "maintainer-review": {
+        "scope": "57691bada17528444d5137569d164234536009fa",
+        "since": "2026-11-25T22:12:50.740142+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:50.740142+00:00"
       }
     },
     "pr:17871": {
-      "checks-pending": {
-        "scope": "17871:dd4cd790d4915f47e66b03dd02c2c5f8a40e9c6f",
-        "since": "2026-11-25T00:15:56.248349+00:00",
+      "maintainer-review": {
+        "scope": "dd4cd790d4915f47e66b03dd02c2c5f8a40e9c6f",
+        "since": "2026-11-25T22:12:50.740142+00:00",
         "basis": "observed",
-        "qualifier": null,
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:50.740142+00:00"
       }
     },
@@ -479404,6 +479264,13 @@
         "since": "2026-11-25T22:12:50.740142+00:00",
         "basis": "observed",
         "qualifier": null,
+        "observedAt": "2026-11-25T22:12:50.740142+00:00"
+      },
+      "maintainer-review": {
+        "scope": "cafd7c0bb1ba8f37a32facc212e778ac84a1a3df",
+        "since": "2026-11-25T22:12:50.740142+00:00",
+        "basis": "observed",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:50.740142+00:00"
       }
     },
@@ -479477,6 +479344,13 @@
         "since": "2026-11-25T22:12:50.740142+00:00",
         "basis": "observed",
         "qualifier": null,
+        "observedAt": "2026-11-25T22:12:50.740142+00:00"
+      },
+      "maintainer-review": {
+        "scope": "24419d916114737a9d50690a7647c11d9fd66fe9",
+        "since": "2026-11-25T22:12:50.740142+00:00",
+        "basis": "observed",
+        "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:50.740142+00:00"
       }
     },

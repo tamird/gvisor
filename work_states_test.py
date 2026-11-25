@@ -966,3 +966,35 @@ class ApprovalGateTest(unittest.TestCase):
         pr["checks"]["contexts"].append({"name": "linux", "state": "FAILURE"})
         self.assertIn("failing", pr_states(pr))
         self.assertIn("maintainer-review", pr_states(pr))
+
+    def test_gvisor_pending_approval_count_is_review_not_running_ci(self):
+        gate = {"name": "maintainer-approval/master", "kind": "status", "state": "PENDING",
+                "description": "Maintainer approvals: 1, needs 2.",
+                "url": "https://github.com/gvisor/gvisor/actions/runs/45507638072"}
+        pr = original(repo="google/gvisor", importPolicy="none", reviewDecision="APPROVED",
+                      mergeable="MERGEABLE", checks={"complete": True, "total": 1, "state": "PENDING", "contexts": [gate]})
+        self.assertEqual(pr_states(pr), {"maintainer-review": {"scope": pr["head"], "qualifier": gate["description"]}})
+        self.assertFalse(checks_passed(pr))
+        self.assertEqual(gate["state"], "PENDING")
+        mixed = copy.deepcopy(pr)
+        mixed["checks"]["total"] = 2
+        mixed["checks"]["contexts"].append({"name": "buildkite/pipeline/pr", "state": "PENDING", "kind": "status"})
+        self.assertEqual(set(pr_states(mixed)), {"maintainer-review", "checks-pending"})
+        for description in ("Maintainer approvals: 1, needs 2 (the author did not push the head commit).",
+                            "#17836: Maintainer approvals: 1, needs 1 (2 if the author did not push the head commit)."):
+            gate["description"] = description
+            self.assertEqual(pr_states(pr)["maintainer-review"]["qualifier"], description)
+        for state in ("ERROR", "FAILURE"):
+            with self.subTest(state=state):
+                other = copy.deepcopy(pr)
+                other["checks"]["contexts"][0]["state"] = state
+                self.assertNotIn("maintainer-review", pr_states(other))
+                self.assertIn("failing", pr_states(other))
+        for description in ("The pull request is a draft.", "No open pull request needs this status."):
+            gate["description"] = description
+            self.assertNotIn("maintainer-review", pr_states(pr))
+            self.assertIn("checks-pending", pr_states(pr))
+        gate["description"] = "Maintainer approvals: 1, needs 2."
+        self.assertIn("checks-pending", pr_states({**pr, "repo": "other/gvisor"}))
+        pr["checks"]["complete"] = False
+        self.assertIn("checks-pending", pr_states(pr))
