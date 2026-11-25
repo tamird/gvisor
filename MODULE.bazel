@@ -1,0 +1,2 @@
+module(name = "test_output_repro")
+bazel_dep(name = "rules_shell", version = "0.8.0")

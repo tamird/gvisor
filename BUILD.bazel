@@ -1,0 +1,14 @@
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+sh_test(
+    name = "repro",
+    srcs = ["test.sh"],
+    local = True,
+)
+
+sh_test(
+    name = "fail",
+    srcs = ["test.sh"],
+    args = ["fail"],
+    local = True,
+)
