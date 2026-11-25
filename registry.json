@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T22:42:00.270038+00:00",
+    "updatedAt": "2026-11-25T22:43:44.062328+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -142257,11 +142257,11 @@
     {
       "id": "investigation:gpu-ollama-readiness",
       "title": "Ollama readiness clients fail before reaching the server",
-      "status": "active",
+      "status": "concluded",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-25T02:55:55.308741+00:00",
-      "summary": "The source PR closed at 7fb83c574 and export #17291 merged at c0c0c2dd6. Exact-export main 55115 passed its Ubuntu GPU job, but metadata does not prove that TestLLM executed rather than skipped or that the export contains the correction. Footer lineage diverges and protected file fingerprints differ; semantics remain unknown.",
+      "updatedAt": "2026-11-25T22:43:44.062328+00:00",
+      "summary": "Closed: the merged export c0c0c2dd6 preserves source7fb83c574’s driver lookup before RunInCgroup and NvidiaDriverVersion sandbox handoff. Exact-export build55115 explicitly passed TestLLM (529.80s), translation, code generation and OCR. Both original closure criteria are met; older different-source outcomes remain historical.",
       "findings": [
         {
           "text": "Build 54587 ran the same source on two Ubuntu GPU agents. Three completed attempts timed out in the GET / readiness loop; one other attempt was interrupted. The final attempt passed CUDA availability and the CUDA 12.8 smoke test before it started the Ollama container in 1.224 seconds. The log recorded the readiness timeout about ten minutes later. Build 54596 ran a different source and passed translation, code generation and OCR in 438.64 seconds.",
@@ -142328,7 +142328,7 @@
           ]
         }
       ],
-      "nextStep": "Root and actions_bazel_cache retain the source/import-equivalence and TestLLM outcome blockers. Obtain permitted correction-bound source/import evidence and an actual TestLLM pass/skip receipt before closing. No protected source/runtime-log read, GPU provisioning, rerun, outreach or transfer of different-source 54596 proof.",
+      "nextStep": "Complete. No remaining import-equivalence or TestLLM-outcome action; no rerun or outreach.",
       "evidence": [
         {
           "label": "Author’s correction on the source PR",
@@ -142352,24 +142352,35 @@
         }
       ],
       "technicalOwner": "CI investigation",
-      "recheckCondition": "Permitted correction/import binding and TestLLM outcome evidence arrive, or the sensitive hold explicitly changes.",
-      "lifecycleCoordination": {
-        "owner": "root / actions_bazel_cache",
-        "nextAction": "Root and actions_bazel_cache retain the source/import-equivalence and TestLLM outcome blockers. Obtain permitted correction-bound source/import evidence and an actual TestLLM pass/skip receipt before closing. No protected source/runtime-log read, GPU provisioning, rerun, outreach or transfer of different-source 54596 proof.",
-        "recheckCondition": "Permitted correction/import binding and TestLLM outcome evidence arrive, or the sensitive hold explicitly changes."
-      },
+      "recheckCondition": "A genuine new recurrence or new evidence, not the already-satisfied historical closure criteria.",
+      "lifecycleCoordination": null,
       "followup": {
         "owner": "root / actions_bazel_cache",
-        "disposition": "The source PR closed at 7fb83c574 and export #17291 merged at c0c0c2dd6. Exact-export main 55115 passed its Ubuntu GPU job, but metadata does not prove that TestLLM executed rather than skipped or that the export contains the correction. Footer lineage diverges and protected file fingerprints differ; semantics remain unknown.",
-        "nextAction": "Root and actions_bazel_cache retain the source/import-equivalence and TestLLM outcome blockers. Obtain permitted correction-bound source/import evidence and an actual TestLLM pass/skip receipt before closing. No protected source/runtime-log read, GPU provisioning, rerun, outreach or transfer of different-source 54596 proof.",
-        "recheckCondition": "Permitted correction/import binding and TestLLM outcome evidence arrive, or the sensitive hold explicitly changes.",
+        "disposition": "Closed: the merged export c0c0c2dd6 preserves source7fb83c574’s driver lookup before RunInCgroup and NvidiaDriverVersion sandbox handoff. Exact-export build55115 explicitly passed TestLLM (529.80s), translation, code generation and OCR. Both original closure criteria are met; older different-source outcomes remain historical.",
+        "nextAction": "Complete. No remaining import-equivalence or TestLLM-outcome action; no rerun or outreach.",
+        "recheckCondition": "A genuine new recurrence or new evidence, not the already-satisfied historical closure criteria.",
         "observedAt": "2026-11-25T02:55:55.308741+00:00",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/16485",
           "https://github.com/gvisor/gvisor/pull/17291",
           "https://buildkite.com/gvisor/pipeline/builds/55115#01a1d7bf-9839-4a9f-9f13-e607f9ba2644"
-        ]
-      }
+        ],
+        "curatedAt": "2026-11-25T22:43:44.062328+00:00",
+        "completion": {
+          "source": "7fb83c5740b7f0d71e8cef46aba429f97d5f5a8f",
+          "export": "c0c0c2dd6b5c3df89ea8425da78ef007f3730919",
+          "build": 55115,
+          "job": "https://buildkite.com/gvisor/pipeline/builds/55115#01a1d7bf-9839-4a9f-9f13-e607f9ba2644",
+          "sourceEquivalence": "Root directly compared createRoot driver lookup and NvidiaDriverVersion handoff. Only unrelated createGoferProcess cgroup/CPU arguments differ in this region.",
+          "TestLLM": "PASS,529.80s; translation/code generation/OCR PASS",
+          "criteriaSatisfied": [
+            "Correction-bound import equivalence",
+            "Actual TestLLM execution/pass"
+          ]
+        },
+        "historicalOutcomeLimit": "Build54596 passed a different source and was not used to establish this closure; original54587 failures and earlier metadata-only uncertainty remain in historical findings."
+      },
+      "inactive": true
     },
     {
       "id": "investigation:hermetic-llvm-race-boot",
