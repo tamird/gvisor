@@ -179,10 +179,8 @@ func shouldValidateAnnotation(key string) bool {
 	// Flag annotations controlling debug logging can change. They don't impact
 	// the restorability of the snapshot.
 	if strings.HasPrefix(key, annotationFlagPrefix) {
-		for _, allowed := range allowedRestoreFlagAnnotations {
-			if key == allowed {
-				return false
-			}
+		if slices.Contains(allowedRestoreFlagAnnotations, key) {
+			return false
 		}
 	}
 	return true

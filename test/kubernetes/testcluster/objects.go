@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 	"time"
 
@@ -550,10 +551,8 @@ func SetNodePlacementPolicyCompact(nodepool *cspb.NodePool, tpuTopology string) 
 
 // addToleration adds a toleration to the pod if it doesn't already exist.
 func addToleration(podSpec *v13.PodSpec, toleration v13.Toleration) {
-	for _, t := range podSpec.Tolerations {
-		if t == toleration {
-			return
-		}
+	if slices.Contains(podSpec.Tolerations, toleration) {
+		return
 	}
 	podSpec.Tolerations = append(podSpec.Tolerations, toleration)
 }

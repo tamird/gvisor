@@ -113,12 +113,7 @@ func optionsToFlags(opts []string, source map[string]mapping) uint32 {
 
 // IsReadonlyMount returns true if the mount options has read only option.
 func IsReadonlyMount(opts []string) bool {
-	for _, o := range opts {
-		if o == "ro" {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(opts, "ro")
 }
 
 // validateMount validates that spec mounts are correct.

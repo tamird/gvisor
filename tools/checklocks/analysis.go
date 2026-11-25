@@ -246,10 +246,8 @@ func resolveStruct(typ types.Type) (*types.Struct, bool) {
 	visited := buf[:0]
 
 	for {
-		for _, v := range visited {
-			if v == typ {
-				return nil, false
-			}
+		if slices.Contains(visited, typ) {
+			return nil, false
 		}
 		visited = append(visited, typ)
 

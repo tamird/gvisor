@@ -27,6 +27,7 @@ import (
 	"regexp"
 	"runtime"
 	"runtime/debug"
+	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -417,13 +418,7 @@ func (m *metricServer) refreshSandboxesLocked() {
 		return
 	}
 	for sandboxID, sandbox := range m.sandboxes {
-		found := false
-		for _, sid := range sandboxIDs {
-			if sid == sandboxID {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(sandboxIDs, sandboxID)
 		if !found {
 			log.Warningf("Sandbox %s no longer exists but did not explicitly unregister. Removing it.", sandboxID)
 			sandbox.cleanup()

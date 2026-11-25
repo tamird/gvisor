@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"os"
+	"slices"
 	"testing"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -244,13 +245,7 @@ func TestCreateSpecEnvExposure(t *testing.T) {
 		if err != nil {
 			t.Fatalf("createSpec failed: %v", err)
 		}
-		found := false
-		for _, env := range spec.Process.Env {
-			if env == secretName+"="+secretVal {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(spec.Process.Env, secretName+"="+secretVal)
 		if !found {
 			t.Errorf("forwarded env var %s not found in spec", secretName)
 		}

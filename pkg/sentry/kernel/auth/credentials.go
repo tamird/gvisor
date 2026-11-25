@@ -15,6 +15,8 @@
 package auth
 
 import (
+	"slices"
+
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 )
@@ -194,12 +196,7 @@ func (c *Credentials) InGroup(kgid KGID) bool {
 	if c.FilesystemKGID == kgid {
 		return true
 	}
-	for _, extraKGID := range c.ExtraKGIDs {
-		if extraKGID == kgid {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(c.ExtraKGIDs, kgid)
 }
 
 // HasCapabilityIn returns true if c has capability cp in ns.

@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -118,13 +119,7 @@ func (c *cgroupSystemd) installCompatDir(res *specs.LinuxResources) error {
 	if err := os.MkdirAll(path, 0o755); err != nil {
 		return fmt.Errorf("creating compat cgroup dir %q: %w", path, err)
 	}
-	alreadyTracked := false
-	for _, owned := range c.Own {
-		if owned == path {
-			alreadyTracked = true
-			break
-		}
-	}
+	alreadyTracked := slices.Contains(c.Own, path)
 	if !alreadyTracked {
 		c.Own = append(c.Own, path)
 	}
@@ -391,13 +386,7 @@ func (c *cgroupSystemd) resourceProps(res *specs.LinuxResources) ([]systemdDbus.
 	var resProps []systemdDbus.Property
 	for controllerName, ctrlr := range controllers2 {
 		// First check if our controller is found in the system.
-		found := false
-		for _, knownController := range c.Controllers {
-			if controllerName == knownController {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(c.Controllers, controllerName)
 		if found {
 			props, err := ctrlr.generateProperties(res)
 			if err != nil {

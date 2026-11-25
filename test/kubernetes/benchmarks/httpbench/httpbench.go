@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -353,12 +354,7 @@ func getMeasurements(data string, onlyReport []MetricType, wantPercentiles []int
 		if len(onlyReport) == 0 {
 			return true
 		}
-		for _, typ := range onlyReport {
-			if typ == m {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(onlyReport, m)
 	}
 	var metricValues []benchmetric.MetricValue
 	totalRequests := 0
