@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T19:23:54.118607+00:00",
+    "updatedAt": "2026-11-25T19:32:27.275572+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42797,18 +42797,19 @@
       "ref": "review/systrap-stub-data",
       "head": "e0b856220893da40f3f6cb219463d3fcfb0bff97",
       "title": "Extract the mapped systrap bytes and offsets from the same ELF",
-      "url": "https://github.com/tamird/gvisor/commit/6a54750c6a8b6836e3806faa63a5729b2f7621a7",
+      "url": "https://github.com/tamird/gvisor/commit/e0b856220893da40f3f6cb219463d3fcfb0bff97",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Unpublished current candidate e0b8562208 integrates the approved extractor onto landed #16516 (617f38be6). Graph, canonical source checks, both-architecture product/audit and linked sysmsg/systrap/runsc/Sentry consumer builds passed. The source-archive handle remains pending. Original approved remote source 6a54750c is retained; no runtime, performance or current 64 KiB qualification is claimed.",
-      "updatedAt": "2026-11-25T19:23:54.118607+00:00",
+      "summary": "Ready for publication review: exact e0b8562208 on landed parent 617f38be6. Graph/source, AMD64 and ARM64 product/audit and linked-consumer builds, source archive and two independent reviews are complete. The exact fork preview is public. No upstream PR is published, and no runtime, performance or current 64 KiB qualification is claimed.",
+      "updatedAt": "2026-11-25T19:32:27.275572+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "e0b856220893da40f3f6cb219463d3fcfb0bff97",
         "observedAt": "2026-11-07T02:36:21+00:00",
-        "disposition": "Unpublished current candidate e0b8562208 integrates the approved extractor onto landed #16516 (617f38be6). Graph, canonical source checks, both-architecture product/audit and linked sysmsg/systrap/runsc/Sentry consumer builds passed. The source-archive handle remains pending. Original approved remote source 6a54750c is retained; no runtime, performance or current 64 KiB qualification is claimed.",
-        "nextAction": "Root consumes the existing source-archive result 45682441151 from the qualification owner, then decides final packaging/publication review. Preserve source-bound integration evidence and original approval limits. Do not mark the candidate ready/published, open an upstream PR or invent an unanswered source question.",
+        "disposition": "Ready for publication review: exact e0b8562208 on landed parent 617f38be6. Graph/source, AMD64 and ARM64 product/audit and linked-consumer builds, source archive and two independent reviews are complete. The exact fork preview is public. No upstream PR is published, and no runtime, performance or current 64 KiB qualification is claimed.",
+        "nextAction": "Root prepares the exact e0b source/title/body and requests Tamir’s source/publication approval before opening an upstream PR. Technical qualification is complete; no additional test or transport recovery is required.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/e0b856220893da40f3f6cb219463d3fcfb0bff97",
           "https://github.com/tamird/gvisor/commit/6a54750c6a8b6836e3806faa63a5729b2f7621a7",
           "https://github.com/google/gvisor/pull/16516",
           "https://github.com/google/gvisor/pull/16518",
@@ -42819,7 +42820,8 @@
           "https://github.com/tamird/gvisor/actions/runs/45680748901/artifacts/15053902182",
           "https://github.com/tamird/gvisor/actions/runs/45682432817",
           "https://github.com/tamird/gvisor/actions/runs/45682437180",
-          "https://github.com/tamird/gvisor/actions/runs/45682441151"
+          "https://github.com/tamird/gvisor/actions/runs/45682441151",
+          "https://github.com/tamird/gvisor/actions/runs/45682441151/artifacts/15055033611"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -42833,8 +42835,8 @@
           "owner": "root"
         },
         "technicalOwner": "native_runtime",
-        "recheckCondition": "The existing archive handle returns terminal evidence and root records the actual packaging/publication disposition; no duplicate observer.",
-        "curatedAt": "2026-11-25T19:23:54.118607+00:00",
+        "recheckCondition": "Root sends the actual exact-source publication question, then Tamir’s decision or a genuine source change.",
+        "curatedAt": "2026-11-25T19:32:27.275572+00:00",
         "qualificationHistory": [
           {
             "sourceHead": "6a54750c6a8b6836e3806faa63a5729b2f7621a7",
@@ -42848,10 +42850,18 @@
           "base": "617f38be69af1bf38ca015b6d395ae827619197f",
           "tree": "13c90d98403e0bf413ece89b10648adb50d146e2",
           "ci": "bcbc01c6506c5843af0ecdc13235530476be2138",
-          "state": "Archive qualification pending; not ready or published"
+          "state": "Build/package qualified; public fork preview; ready for publication review; no upstream PR"
         }
       },
       "evidence": [
+        {
+          "label": "Current exact native fork preview",
+          "url": "https://github.com/tamird/gvisor/commit/e0b856220893da40f3f6cb219463d3fcfb0bff97"
+        },
+        {
+          "label": "Source archive: both architecture raw/Go files match audited products",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45682441151/artifacts/15055033611"
+        },
         {
           "label": "Native AMD64 Linux build of both stubs and vDSOs. Embedded bytes, symbol offsets, loader relocations, ELF mapping and versioned ABI.",
           "url": "https://github.com/tamird/gvisor/actions/runs/42261353662/artifacts/13525466589"
@@ -42917,7 +42927,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/45682437180"
         },
         {
-          "label": "Existing source-archive handle, pending",
+          "label": "Source archive qualification passed",
           "url": "https://github.com/tamird/gvisor/actions/runs/45682441151"
         }
       ],
@@ -42929,8 +42939,8 @@
           "head": "6a54750c6a8b6836e3806faa63a5729b2f7621a7"
         }
       },
-      "nextStep": "Root consumes the existing source-archive result 45682441151 from the qualification owner, then decides final packaging/publication review. Preserve source-bound integration evidence and original approval limits. Do not mark the candidate ready/published, open an upstream PR or invent an unanswered source question.",
-      "recheckCondition": "The existing archive handle returns terminal evidence and root records the actual packaging/publication disposition; no duplicate observer."
+      "nextStep": "Root prepares the exact e0b source/title/body and requests Tamir’s source/publication approval before opening an upstream PR. Technical qualification is complete; no additional test or transport recovery is required.",
+      "recheckCondition": "Root sends the actual exact-source publication question, then Tamir’s decision or a genuine source change."
     },
     {
       "id": "branch:vfs-rollback-failed-async-handler",
