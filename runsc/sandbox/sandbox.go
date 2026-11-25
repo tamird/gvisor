@@ -153,6 +153,42 @@ func (p *Pid) MarshalJSON() ([]byte, error) {
 // are synchronized within each instance. Saving or loading an instance
 // requires exclusive access to its serialized fields.
 type Sandbox struct {
+	// StartTime is the time the sandbox was started.
+	StartTime time.Time `json:"startTime"`
+
+	// CgroupJSON contains the cgroup configuration that the sandbox is part of
+	// and allow serialization of the configuration into json
+	CgroupJSON cgroup.CgroupJSON `json:"cgroup"`
+
+	// MountHints provides extra information about container mounts that apply
+	// to the entire pod.
+	MountHints *sentryapi.PodMountHints `json:"mountHints"`
+
+	// MetricMetadata are key-value pairs that are useful to export about this
+	// sandbox, but not part of the set of labels that uniquely identify it.
+	// They are static once initialized, and typically contain high-level
+	// configuration information about the sandbox.
+	MetricMetadata map[string]string `json:"metricMetadata"`
+
+	// netgoferStopped is closed when a child netgofer process has been reaped by
+	// reapNetgoferBackground.
+	netgoferStopped chan struct{} `nojson:"true"`
+
+	// CPULimits, if set, are the CPU limits of the cgroup in CgroupJSON.
+	CPULimits *CPULimits `json:"cpuLimits,omitempty"`
+
+	// RegisteredMetrics is the set of metrics registered in the sandbox before
+	// it starts running untrusted code, so that a compromised sandbox cannot
+	// produce bogus metrics.
+	// Set when the root container starts/is restored,
+	// if the sandbox is configured to export metrics at all.
+	RegisteredMetrics *metricpb.MetricRegistration `json:"registeredMetrics"`
+
+	// rootDir is the same as config.Config.RootDir. It represents the runtime
+	// root directory being used by the current runsc invocation. It's not saved
+	// to json, because the RootDir can change across runsc invocations.
+	// Depending on the caller's mount namespace, the path can vary.
+	rootDir string `nojson:"true"`
 	// ID is the id of the sandbox (immutable). By convention, this is the same
 	// ID as the first container run in the sandbox.
 	ID string `json:"id"`
@@ -165,103 +201,56 @@ type Sandbox struct {
 	// sandbox represents. Unset if not running under containerd or Kubernetes.
 	Namespace string `json:"namespace"`
 
-	// Pid is the pid of the running sandbox. May be 0 if the sandbox
-	// is not running.
-	Pid Pid `json:"pid"`
-
-	// PidIdentity is the specutils.ProcessIdentity of the sandbox process,
-	// which distinguishes it from processes that later reuse its PID.
-	// Zero if unknown.
-	PidIdentity uint64 `json:"pidIdentity,omitempty"`
-
-	// NetgoferPid is the PID of the netgofer running alongside the sandbox.
-	NetgoferPid Pid `json:"netgoferPid"`
-
-	// UID is the user ID in the parent namespace that the sandbox is running as.
-	UID int `json:"uid"`
-	// GID is the group ID in the parent namespace that the sandbox is running as.
-	GID int `json:"gid"`
-
-	// CgroupJSON contains the cgroup configuration that the sandbox is part of
-	// and allow serialization of the configuration into json
-	CgroupJSON cgroup.CgroupJSON `json:"cgroup"`
-
-	// CPULimits, if set, are the CPU limits of the cgroup in CgroupJSON.
-	CPULimits *CPULimits `json:"cpuLimits,omitempty"`
-
-	// In a sandbox with no root container and with CPULimits set,
-	// `Creating` is set to true from sandbox creation until its first
-	// subcontainer starts. During this time, the sandbox keeps its
-	// creation-time CPU limit. Cleared by `Sandbox.MarkCreated`.
-	Creating bool `json:"creating,omitempty"`
-
-	// OriginalOOMScoreAdj stores the value of oom_score_adj when the sandbox
-	// started, before it may be modified.
-	OriginalOOMScoreAdj int `json:"originalOomScoreAdj"`
-
-	// RegisteredMetrics is the set of metrics registered in the sandbox before
-	// it starts running untrusted code, so that a compromised sandbox cannot
-	// produce bogus metrics.
-	// Set when the root container starts/is restored,
-	// if the sandbox is configured to export metrics at all.
-	RegisteredMetrics *metricpb.MetricRegistration `json:"registeredMetrics"`
-
-	// MetricMetadata are key-value pairs that are useful to export about this
-	// sandbox, but not part of the set of labels that uniquely identify it.
-	// They are static once initialized, and typically contain high-level
-	// configuration information about the sandbox.
-	MetricMetadata map[string]string `json:"metricMetadata"`
+	// ControlSocketPath is the path to the sandbox's uRPC server socket.
+	// Connections to the sandbox are made through this.
+	// DO NOT access this directly, use getControlSocketPath() instead.
+	ControlSocketPath string `json:"controlSocketPath"`
 
 	// MetricServerAddress is the address of the metric server that this sandbox
 	// intends to export metrics for.
 	// Only populated if exporting metrics was requested when the sandbox was
 	// created.
 	MetricServerAddress string `json:"metricServerAddress"`
+	// GID is the group ID in the parent namespace that the sandbox is running as.
+	GID int `json:"gid"`
 
-	// ControlSocketPath is the path to the sandbox's uRPC server socket.
-	// Connections to the sandbox are made through this.
-	// DO NOT access this directly, use getControlSocketPath() instead.
-	ControlSocketPath string `json:"controlSocketPath"`
+	// OriginalOOMScoreAdj stores the value of oom_score_adj when the sandbox
+	// started, before it may be modified.
+	OriginalOOMScoreAdj int `json:"originalOomScoreAdj"`
 
-	// MountHints provides extra information about container mounts that apply
-	// to the entire pod.
-	MountHints *sentryapi.PodMountHints `json:"mountHints"`
-
-	// FSRestore indicates whether filesystem restore files were donated to the
-	// sandbox during creation.
-	FSRestore bool `json:"fsRestore"`
-
-	// StartTime is the time the sandbox was started.
-	StartTime time.Time `json:"startTime"`
-
-	// NoRootContainer records how the sandbox was booted. See
-	// Args.NoRootContainer.
-	NoRootContainer bool `json:"noRootContainer"`
-
-	// rootDir is the same as config.Config.RootDir. It represents the runtime
-	// root directory being used by the current runsc invocation. It's not saved
-	// to json, because the RootDir can change across runsc invocations.
-	// Depending on the caller's mount namespace, the path can vary.
-	rootDir string `nojson:"true"`
-
-	// child is set if a sandbox process is a child of the current process.
+	// WallTimeSaved contains the wall time saved when the sandbox has been restored.
 	//
-	// This field isn't saved to json, because only a creator of sandbox
-	// will have it as a child process.
-	child bool `nojson:"true"`
+	// +checklocks:savingsMu
+	WallTimeSaved time.Duration `json:"wallTimeSaved"`
+
+	// Pid is the pid of the running sandbox. May be 0 if the sandbox
+	// is not running.
+	Pid Pid `json:"pid"`
+
+	// UID is the user ID in the parent namespace that the sandbox is running as.
+	UID int `json:"uid"`
+
+	// NetgoferPid is the PID of the netgofer running alongside the sandbox.
+	NetgoferPid Pid `json:"netgoferPid"`
+
+	// CPUTimeSaved contains the CPU time saved when the sandbox has been restored.
+	//
+	// +checklocks:savingsMu
+	CPUTimeSaved time.Duration `json:"cpuTimeSaved"`
+
+	// PidIdentity is the specutils.ProcessIdentity of the sandbox process,
+	// which distinguishes it from processes that later reuse its PID.
+	// Zero if unknown.
+	PidIdentity uint64 `json:"pidIdentity,omitempty"`
 
 	// netgoferMu protects NetgoferPid, netgoferIsChild, and netgoferStopped.
 	netgoferMu sync.Mutex `nojson:"true"`
 
-	// netgoferIsChild is set if the netgofer process is a child of the current process.
-	netgoferIsChild bool `nojson:"true"`
-
-	// netgoferStopped is closed when a child netgofer process has been reaped by
-	// reapNetgoferBackground.
-	netgoferStopped chan struct{} `nojson:"true"`
-
 	// statusMu protects status.
 	statusMu sync.Mutex `nojson:"true"`
+
+	// savingsMu protects the cached time saved by restoration.
+	savingsMu sync.Mutex `nojson:"true"`
 
 	// status is the exit status of a sandbox process. It's only set if the
 	// child==true and the sandbox was waited on. This field allows for multiple
@@ -271,24 +260,34 @@ type Sandbox struct {
 	// +checklocks:statusMu
 	status unix.WaitStatus `nojson:"true"`
 
+	// FSRestore indicates whether filesystem restore files were donated to the
+	// sandbox during creation.
+	FSRestore bool `json:"fsRestore"`
+
+	// netgoferIsChild is set if the netgofer process is a child of the current process.
+	netgoferIsChild bool `nojson:"true"`
+
+	// child is set if a sandbox process is a child of the current process.
+	//
+	// This field isn't saved to json, because only a creator of sandbox
+	// will have it as a child process.
+	child bool `nojson:"true"`
+
 	// Checkpointed will be true when the sandbox has been checkpointed.
 	Checkpointed bool `json:"checkpointed"`
 
 	// Restored will be true when the sandbox has been restored.
 	Restored bool `json:"restored"`
 
-	// savingsMu protects the cached time saved by restoration.
-	savingsMu sync.Mutex `nojson:"true"`
+	// NoRootContainer records how the sandbox was booted. See
+	// Args.NoRootContainer.
+	NoRootContainer bool `json:"noRootContainer"`
 
-	// CPUTimeSaved contains the CPU time saved when the sandbox has been restored.
-	//
-	// +checklocks:savingsMu
-	CPUTimeSaved time.Duration `json:"cpuTimeSaved"`
-
-	// WallTimeSaved contains the wall time saved when the sandbox has been restored.
-	//
-	// +checklocks:savingsMu
-	WallTimeSaved time.Duration `json:"wallTimeSaved"`
+	// In a sandbox with no root container and with CPULimits set,
+	// `Creating` is set to true from sandbox creation until its first
+	// subcontainer starts. During this time, the sandbox keeps its
+	// creation-time CPU limit. Cleared by `Sandbox.MarkCreated`.
+	Creating bool `json:"creating,omitempty"`
 }
 
 // Getpid returns the process ID of the sandbox process.
@@ -298,11 +297,44 @@ func (s *Sandbox) Getpid() int {
 
 // Args is used to configure a new sandbox.
 type Args struct {
-	// ID is the sandbox unique identifier.
-	ID string
+	// Gcgroup is the cgroup that the sandbox is part of.
+	Cgroup cgroup.Cgroup
+
+	// File that connects to a gofer endpoint for a device mount point at /dev.
+	DevIOFile *os.File
+
+	// SpecFile is a specutils.CopySpec copy of Spec. Caller closes it.
+	SpecFile *os.File
+
+	// MountsFile is a file container mount information from the spec. It's
+	// equivalent to the mounts from the spec, except that all paths have been
+	// resolved to their final absolute location.
+	MountsFile *os.File
+
+	// PassFiles are user-supplied files from the host to be exposed to the
+	// sandboxed app.
+	PassFiles map[int]*os.File
+
+	// CPULimits, if set, are the CPU limits of `Cgroup`, which currently has
+	// the lifecycle limit.
+	CPULimits *CPULimits
+
+	// MountHints provides extra information about containers mounts that apply
+	// to the entire pod.
+	MountHints *sentryapi.PodMountHints
+
+	// CloneIntoCgroupFD, when non-nil, is an FD to `Cgroup`'s directory. The
+	// sandbox process is created inside the cgroup via `CLONE_INTO_CGROUP`.
+	CloneIntoCgroupFD *os.File
+
+	// ExecFile is the file from the host used for program execution.
+	ExecFile *os.File
 
 	// Spec is the OCI spec that describes the container.
 	Spec *specs.Spec
+
+	// ID is the sandbox unique identifier.
+	ID string
 
 	// NvidiaDriverVersion is the NVIDIA driver ABI version for nvproxy, or
 	// empty if nvproxy is disabled.
@@ -323,55 +355,18 @@ type Args struct {
 	// same order as mounts appear in the spec.
 	IOFiles []*os.File
 
-	// File that connects to a gofer endpoint for a device mount point at /dev.
-	DevIOFile *os.File
-
-	// GoferFilestoreFiles are the regular files that will back the overlayfs or
-	// tmpfs mount if a gofer mount is to be overlaid.
-	GoferFilestoreFiles []*os.File
-
 	// GoferMountConfs contains information about how the gofer mounts have been
 	// configured. The first entry is for rootfs and the following entries are
 	// for bind mounts in Spec.Mounts (in the same order).
 	GoferMountConfs specutils.GoferMountConfFlags
 
-	// MountHints provides extra information about containers mounts that apply
-	// to the entire pod.
-	MountHints *sentryapi.PodMountHints
-
-	// SpecFile is a specutils.CopySpec copy of Spec. Caller closes it.
-	SpecFile *os.File
-
-	// MountsFile is a file container mount information from the spec. It's
-	// equivalent to the mounts from the spec, except that all paths have been
-	// resolved to their final absolute location.
-	MountsFile *os.File
-
-	// Gcgroup is the cgroup that the sandbox is part of.
-	Cgroup cgroup.Cgroup
-
-	// CPULimits, if set, are the CPU limits of `Cgroup`, which currently has
-	// the lifecycle limit.
-	CPULimits *CPULimits
-
-	// CloneIntoCgroupFD, when non-nil, is an FD to `Cgroup`'s directory. The
-	// sandbox process is created inside the cgroup via `CLONE_INTO_CGROUP`.
-	CloneIntoCgroupFD *os.File
-
-	// Attached indicates that the sandbox lifecycle is attached with the caller.
-	// If the caller exits, the sandbox should exit too.
-	Attached bool
+	// GoferFilestoreFiles are the regular files that will back the overlayfs or
+	// tmpfs mount if a gofer mount is to be overlaid.
+	GoferFilestoreFiles []*os.File
 
 	// SinkFiles is the an ordered array of files to be used by seccheck sinks
 	// configured from the --pod-init-config file.
 	SinkFiles []*os.File
-
-	// PassFiles are user-supplied files from the host to be exposed to the
-	// sandboxed app.
-	PassFiles map[int]*os.File
-
-	// ExecFile is the file from the host used for program execution.
-	ExecFile *os.File
 
 	// If FSRestoreImagePaths is non-empty, it lists paths to filesystem
 	// checkpoints that should be restored. Combining bundles from different
@@ -380,7 +375,11 @@ type Args struct {
 	// checkpoint as the sentry state image. If FSRestoreDirect is true,
 	// open filesystem checkpoint files using O_DIRECT.
 	FSRestoreImagePaths []string
-	FSRestoreDirect     bool
+
+	// Attached indicates that the sandbox lifecycle is attached with the caller.
+	// If the caller exits, the sandbox should exit too.
+	Attached        bool
+	FSRestoreDirect bool
 
 	// NoRootContainer boots without a root container: no gofer FDs, no root
 	// process. See container.Args.NoRootContainer.
@@ -2167,22 +2166,19 @@ func (s *Sandbox) SignalProcessGroup(cid string, pgid int32, sig unix.Signal) er
 
 // CheckpointOpts contains the options for checkpointing a sandbox.
 type CheckpointOpts struct {
-	Compression               statefile.CompressionLevel
-	Resume                    bool
-	Direct                    bool
-	ExcludeCommittedZeroPages bool
-	CudaCheckpointPath        string
-	CudaCheckpointSequential  bool
-
-	// Save/restore exec options.
-	SaveRestoreExecArgv        string
-	SaveRestoreExecTimeout     time.Duration
-	SaveRestoreExecContainerID string
-	SplitFSCheckpointPaths     []string
-
 	// StateEngine, when non-nil, overrides the sandbox's boot-time state
 	// serialization engine for this checkpoint.
-	StateEngine *config.StateEnginePolicy
+	StateEngine                *config.StateEnginePolicy
+	Compression                statefile.CompressionLevel
+	CudaCheckpointPath         string
+	SaveRestoreExecArgv        string
+	SaveRestoreExecContainerID string
+	SplitFSCheckpointPaths     []string
+	SaveRestoreExecTimeout     time.Duration
+	Resume                     bool
+	Direct                     bool
+	ExcludeCommittedZeroPages  bool
+	CudaCheckpointSequential   bool
 }
 
 // Checkpoint sends the checkpoint call for a container in the sandbox.
@@ -2514,6 +2510,11 @@ func openFSRestoreBundleFiles(imagePath, prefix string, direct bool) ([]*os.File
 
 // FSSaveOpts holds options to FSSave.
 type FSSaveOpts struct {
+	// Paths is the list of [<prefix>=][<container>:]<path> specifications to
+	// save. Both prefixed (e.g., "rootfs=/", "fs=/data") and
+	// unprefixed (e.g., "/", "all-tmpfs", "c1:/data") formats are supported.
+	Paths []string
+
 	// If Direct is true, open checkpoint files with O_DIRECT where possible.
 	Direct bool
 
@@ -2522,11 +2523,6 @@ type FSSaveOpts struct {
 	// is successful. This is equivalent to !CheckpointOpts.Resume, and is
 	// provided for parity with that feature.
 	ExitAfterSaving bool
-
-	// Paths is the list of [<prefix>=][<container>:]<path> specifications to
-	// save. Both prefixed (e.g., "rootfs=/", "fs=/data") and
-	// unprefixed (e.g., "/", "all-tmpfs", "c1:/data") formats are supported.
-	Paths []string
 }
 
 // FSSave sends the filesystem checkpointing call to the sandbox.

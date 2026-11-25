@@ -142,8 +142,8 @@ type DriverStructName = string
 
 // DriverStruct ties an nvproxy struct type to its corresponding driver struct name.
 type DriverStruct struct {
-	Name DriverStructName
 	Type reflect.Type
+	Name DriverStructName
 }
 
 // IoctlInfo contains information about an ioctl defined by the Nvidia driver.

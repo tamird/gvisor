@@ -46,15 +46,13 @@ func TestBlockSeqOfNonemptyBlock(t *testing.T) {
 }
 
 type blockSeqTest struct {
-	desc string
-
+	desc       string
+	want       string
 	pieces     []string
-	haveOffset bool
 	offset     uint64
-	haveLimit  bool
 	limit      uint64
-
-	want string
+	haveOffset bool
+	haveLimit  bool
 }
 
 func (t blockSeqTest) NonEmptyByteSlices() [][]byte {

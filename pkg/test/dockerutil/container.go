@@ -49,30 +49,38 @@ import (
 // client. Container is backed by the official golang docker API.
 // See: https://pkg.go.dev/github.com/docker/docker.
 type Container struct {
-	Name     string
-	runtime  string
-	logger   testutil.Logger
-	client   *client.Client
-	id       string
-	mounts   []mount.Mount
-	links    []string
-	cleanups []func()
+	logger testutil.Logger
+	client *client.Client
 
 	// profile is the profiling hook associated with this container.
 	profile *profile
 
 	// sniffGPUOpts, if set, sets the rules for GPU sniffing for this container.
 	sniffGPUOpts *SniffGPUOpts
+	Name         string
+	runtime      string
+	id           string
+	mounts       []mount.Mount
+	links        []string
+	cleanups     []func()
 }
 
 // RunOpts are options for running a container.
 type RunOpts struct {
+	// "--tmpfs" has features unsupported by "--mount", especially nosuid,
+	// see https://docs.docker.com/engine/storage/tmpfs/
+	Tmpfs map[string]string
+
+	// Annotations are annotations to set on the container.
+	Annotations map[string]string
+
+	// sniffGPUOpts, if set, sets the rules for GPU sniffing during this test.
+	// Must be set via `RunOpts.SniffGPU`.
+	sniffGPUOpts *SniffGPUOpts
+
 	// Image is the image relative to images/. This will be mangled
 	// appropriately, to ensure that only first-party images are used.
 	Image string
-
-	// Memory is the memory limit in bytes.
-	Memory int
 
 	// Cpus in which to allow execution. ("0", "1", "0-2").
 	CpusetCpus string
@@ -80,23 +88,8 @@ type RunOpts struct {
 	// WorkDir sets the working directory.
 	WorkDir string
 
-	// ReadOnly sets the read-only flag.
-	ReadOnly bool
-
-	// Env are additional environment variables.
-	Env []string
-
 	// User is the user to use.
-	User string
-
-	// Optional argv to override the ENTRYPOINT specified in the image.
-	Entrypoint []string
-
-	// Privileged enables privileged mode.
-	Privileged bool
-
-	Init bool
-
+	User         string
 	CgroupnsMode string
 
 	// Sets network mode for the container. See container.NetworkMode for types. Several options will
@@ -104,36 +97,40 @@ type RunOpts struct {
 	// this handle.
 	NetworkMode string
 
+	// Env are additional environment variables.
+	Env []string
+
+	// Optional argv to override the ENTRYPOINT specified in the image.
+	Entrypoint []string
+
 	// CapAdd are the extra set of capabilities to add.
 	CapAdd []string
-
-	// CapDrop are the extra set of capabilities to drop.
-	CapDrop []string
 
 	// Mounts is the list of directories/files to be mounted inside the container.
 	Mounts []mount.Mount
 
-	// "--tmpfs" has features unsupported by "--mount", especially nosuid,
-	// see https://docs.docker.com/engine/storage/tmpfs/
-	Tmpfs map[string]string
+	// CapDrop are the extra set of capabilities to drop.
+	CapDrop []string
+
+	// DeviceRequests are device requests on the container itself.
+	DeviceRequests []container.DeviceRequest
+	Devices        []container.DeviceMapping
 
 	// Links is the list of containers to be connected to the container.
 	Links []string
 
-	// DeviceRequests are device requests on the container itself.
-	DeviceRequests []container.DeviceRequest
-
-	Devices []container.DeviceMapping
-
 	// SecurityOpts are security options to set on the container.
 	SecurityOpts []string
 
-	// sniffGPUOpts, if set, sets the rules for GPU sniffing during this test.
-	// Must be set via `RunOpts.SniffGPU`.
-	sniffGPUOpts *SniffGPUOpts
+	// Memory is the memory limit in bytes.
+	Memory int
 
-	// Annotations are annotations to set on the container.
-	Annotations map[string]string
+	// ReadOnly sets the read-only flag.
+	ReadOnly bool
+
+	// Privileged enables privileged mode.
+	Privileged bool
+	Init       bool
 }
 
 func ensureShouldRun(logger testutil.Logger) {
@@ -800,9 +797,8 @@ func (c *Container) Update(ctx context.Context, updateConfig container.UpdateCon
 // first try to run in parallel, and then re-run failing tests exclusively
 // to make sure their failure is not due to parallel execution.
 type ContainerPool struct {
-	// numContainers is the total number of containers in the pool, whether
-	// reserved or not.
-	numContainers int
+	// firstReservation is the time of the first container reservation event.
+	firstReservation time.Time
 
 	// containersCh is the main container queue channel.
 	// It is buffered with as many items as there are total containers in the
@@ -825,25 +821,25 @@ type ContainerPool struct {
 	// shutdownCh is always empty, and is closed when the pool is shutting down.
 	shutdownCh chan struct{}
 
-	// mu protects the fields below.
-	mu sync.Mutex
-
 	// statuses maps container name to their current status.
 	statuses map[*Container]containerPoolStatus
-
-	// firstReservation is the time of the first container reservation event.
-	firstReservation time.Time
+	// numContainers is the total number of containers in the pool, whether
+	// reserved or not.
+	numContainers int
 
 	// productive is the duration containers have cumulatively spent in reserved
 	// state.
 	productive time.Duration
+
+	// mu protects statuses, firstReservation, and productive.
+	mu sync.Mutex
 }
 
 // containerPoolStatus represents the status of a container in the pool.
 type containerPoolStatus struct {
 	when      time.Time
-	state     containerPoolState
 	userLabel string
+	state     containerPoolState
 }
 
 // containerPoolState is the state of a container in the pool.

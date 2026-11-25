@@ -31,15 +31,16 @@ import (
 //
 // The server is backed by a real directory on the host filesystem.
 type testFUSEServer struct {
-	fd        int
-	backDir   string
-	nextFh    uint64
 	openFiles map[uint64]*os.File
+
+	// initReply, when non-nil, overrides the FUSE_INIT reply.
+	initReply *linux.FUSEInitOut
+	backDir   string
+	fd        int
+	nextFh    uint64
 
 	// gotInitFlags records the flags offered in the FUSE_INIT request.
 	gotInitFlags uint32
-	// initReply, when non-nil, overrides the FUSE_INIT reply.
-	initReply *linux.FUSEInitOut
 }
 
 func newTestFUSEServer(fd int, backDir string) *testFUSEServer {

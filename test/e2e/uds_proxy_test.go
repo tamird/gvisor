@@ -275,10 +275,10 @@ func TestExternalUDSProxyOutbound(t *testing.T) {
 	defer tcpLn.Close()
 
 	type proxyResult struct {
+		err        error
 		remoteAddr *net.TCPAddr
 		localAddr  *net.TCPAddr
 		payload    string
-		err        error
 	}
 	proxyDone := make(chan proxyResult, 1)
 	go func() {

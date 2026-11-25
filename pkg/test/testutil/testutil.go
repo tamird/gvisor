@@ -327,8 +327,8 @@ func ConfigForBenchmark(b *testing.B) *config.Config {
 // PlatformConfig pairs a sub-test or sub-benchmark name with its sandbox
 // configuration.
 type PlatformConfig struct {
-	Name string
 	Conf *config.Config
+	Name string
 }
 
 // PlatformConfigs returns two sandbox configurations (created via newConf) for
@@ -631,9 +631,10 @@ func RunCmd(cmd *exec.Cmd) error {
 
 // Reaper reaps child processes, except those started by StartCmd.
 type Reaper struct {
+	ch chan os.Signal
+
 	// mu protects ch, which will be nil if the reaper is not running.
 	mu sync.Mutex
-	ch chan os.Signal
 }
 
 // Start starts reaping child processes.
@@ -754,6 +755,7 @@ func WaitUntilRead(r io.Reader, want string, timeout time.Duration) error {
 
 // readUntil owns the scanner and result channel. Its single result can be
 // published even after the waiter has canceled and stopped receiving.
+// EOF and read errors both mean the requested output was not found.
 func readUntil(r io.Reader, want string, cancel <-chan struct{}) <-chan bool {
 	sc := bufio.NewScanner(r)
 	result := make(chan bool, 1)

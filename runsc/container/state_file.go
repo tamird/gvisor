@@ -264,19 +264,10 @@ func (f *FullID) validate() error {
 //
 // The lock file is located at: "${s.RootDir}/${containerd-id}_sand:{sandbox-id}.lock".
 // The state file is located at: "${s.RootDir}/${containerd-id}_sand:{sandbox-id}.state".
+//
+// Fields marked nojson are not saved in the state file and will not
+// be preserved across commands.
 type StateFile struct {
-	// RootDir is the directory containing the container metadata file.
-	RootDir string `json:"rootDir"`
-
-	// ID is the sandbox+container ID.
-	ID FullID `json:"id"`
-
-	//
-	// Fields below this line are not saved in the state file and will not
-	// be preserved across commands.
-	//
-
-	once  sync.Once    `nojson:"true"`
 	flock *flock.Flock `nojson:"true"`
 
 	// loaded is the state file as last loaded or saved.
@@ -284,6 +275,13 @@ type StateFile struct {
 	// This makes it possible to use inode number matching as evidence that
 	// no concurrent write occurred.
 	loaded *os.File `nojson:"true"`
+
+	// ID is the sandbox+container ID.
+	ID FullID `json:"id"`
+
+	// RootDir is the directory containing the container metadata file.
+	RootDir string    `json:"rootDir"`
+	once    sync.Once `nojson:"true"`
 }
 
 // lock globally locks all locking operations for the container.

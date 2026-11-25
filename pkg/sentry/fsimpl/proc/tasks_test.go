@@ -433,9 +433,9 @@ func TestTasksOffset(t *testing.T) {
 	}
 
 	for _, tc := range []struct {
+		wants  map[string]vfs.Dirent
 		name   string
 		offset int64
-		wants  map[string]vfs.Dirent
 	}{
 		{
 			name:   "small offset",

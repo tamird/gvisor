@@ -54,6 +54,9 @@ const (
 
 // Config holds configuration options for the fsgofer server.
 type Config struct {
+	// Gofer process's supplementary groups.
+	Groups []int
+
 	// HostUDS signals whether the gofer can connect to host unix domain sockets.
 	HostUDS config.HostUDS
 
@@ -69,10 +72,6 @@ type Config struct {
 	// numbers, which the client derives from host device and inode numbers.
 	InodeNumbers config.InodeNumbers
 
-	// DonateMountPointFD indicates whether a host FD to the mount point should
-	// be donated to the client on Mount RPC.
-	DonateMountPointFD bool
-
 	// Gofer process's RUID.
 	RUID int
 
@@ -85,8 +84,9 @@ type Config struct {
 	// Gofer process's EGID.
 	EGID int
 
-	// Gofer process's supplementary groups.
-	Groups []int
+	// DonateMountPointFD indicates whether a host FD to the mount point should
+	// be donated to the client on Mount RPC.
+	DonateMountPointFD bool
 
 	// Whether the gofer's user namespace allows setgroups(2) and, when host
 	// unix sockets are open, the gofer was permitted to drop its own
@@ -1041,9 +1041,9 @@ func connectWithGroups(gids []int, connect func() (int, error)) (int, error) {
 }
 
 type connectResult struct {
-	sock       int
 	err        error
 	panicValue any
+	sock       int
 }
 
 func connectOnItsOwnThread(gids []int, connect func() (int, error), done chan connectResult) {
@@ -1419,9 +1419,8 @@ func (fd *openFDLisa) Renamed() {
 }
 
 type boundSocketFDLisa struct {
-	lisafs.BoundSocketFD
-
 	sock *os.File
+	lisafs.BoundSocketFD
 }
 
 var _ lisafs.BoundSocketFDImpl = (*boundSocketFDLisa)(nil)

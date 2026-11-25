@@ -26,12 +26,12 @@ import (
 )
 
 type processParams struct {
+	wantError error
+	pkt       *stack.PacketBuffer
 	first     uint16
 	last      uint16
 	more      bool
-	pkt       *stack.PacketBuffer
 	wantDone  bool
-	wantError error
 }
 
 func TestReassemblerProcess(t *testing.T) {
@@ -56,10 +56,10 @@ func TestReassemblerProcess(t *testing.T) {
 	}
 
 	tests := []struct {
+		wantPkt *stack.PacketBuffer
 		name    string
 		params  []processParams
 		want    []hole
-		wantPkt *stack.PacketBuffer
 	}{
 		{
 			name:   "No fragments",

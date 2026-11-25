@@ -124,11 +124,11 @@ func checkSerializable(typ reflect.Type, fieldName []string) error {
 // serializable fields.
 func TestSerializable(t *testing.T) {
 	for _, test := range []struct {
-		name string
 		obj  any
+		name string
 	}{
-		{"Sandbox", sandbox.Sandbox{}},
-		{"Container", container.Container{}},
+		{name: "Sandbox", obj: sandbox.Sandbox{}},
+		{name: "Container", obj: container.Container{}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			if err := checkSerializable(reflect.TypeOf(test.obj), []string{test.name}); err != nil {

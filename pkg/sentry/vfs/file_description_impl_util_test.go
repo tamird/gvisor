@@ -33,9 +33,9 @@ import (
 // fileDescription is the common fd struct which a filesystem implementation
 // embeds in all of its file description implementations as required.
 type fileDescription struct {
-	vfsfd FileDescription
 	FileDescriptionDefaultImpl
 	NoLockFD
+	vfsfd FileDescription
 }
 
 // genCount contains the number of times its DynamicBytesSource.Generate()
@@ -76,11 +76,10 @@ func (d *storeData) Write(ctx context.Context, _ *FileDescription, src usermem.I
 
 // testFD is a read-only FileDescriptionImpl representing a regular file.
 type testFD struct {
+	DentryMetadataFileDescriptionImpl
+	data DynamicBytesSource
 	fileDescription
 	DynamicBytesFileDescriptionImpl
-	DentryMetadataFileDescriptionImpl
-
-	data DynamicBytesSource
 }
 
 func newTestFD(ctx context.Context, vfsObj *VirtualFilesystem, statusFlags uint32, data DynamicBytesSource) *FileDescription {

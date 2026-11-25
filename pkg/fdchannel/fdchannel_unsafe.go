@@ -40,9 +40,9 @@ func NewConnectedSockets() ([2]int, error) {
 //
 // Endpoint is not copyable or movable by value.
 type Endpoint struct {
-	sockfd int32
-	msghdr unix.Msghdr
 	cmsg   *unix.Cmsghdr // followed by sizeofInt32 bytes of data
+	msghdr unix.Msghdr
+	sockfd int32
 }
 
 // Init must be called on zero-value Endpoints before first use. sockfd must be

@@ -56,20 +56,21 @@ var (
 
 // cgroupSystemd represents a cgroupv2 managed by systemd.
 type cgroupSystemd struct {
-	cgroupV2
-	// Name is the name of the of the systemd scope that controls the cgroups.
-	Name string
-	// Parent is the encapsulating slice.
-	Parent string
-	// ScopePrefix is the prefix for the scope name.
-	ScopePrefix string
-
 	// initialResources is retained from Install until a successful Join.
 	// It is not serialized; Update receives the current resources explicitly.
 	initialResources *specs.LinuxResources
+	dbusConn         *systemdDbus.Conn
 
+	// Name is the name of the of the systemd scope that controls the cgroups.
+	Name string
+
+	// Parent is the encapsulating slice.
+	Parent string
+
+	// ScopePrefix is the prefix for the scope name.
+	ScopePrefix string
+	cgroupV2
 	properties []systemdDbus.Property
-	dbusConn   *systemdDbus.Conn
 }
 
 func newCgroupV2Systemd(cgv2 *cgroupV2) (*cgroupSystemd, error) {

@@ -33,9 +33,9 @@ func TestWriteRaw(t *testing.T) {
 	const nicID = 1
 
 	tests := []struct {
+		expectErr tcpip.Error
 		name      string
 		len       int
-		expectErr tcpip.Error
 	}{
 		{
 			name:      "small",

@@ -56,7 +56,7 @@ func reachable[T any](root any, fn func(*T)) {
 	var walk func(v reflect.Value)
 	walk = func(v reflect.Value) {
 		if v.CanAddr() && v.Type().Size() != 0 {
-			k := addrKey{v.UnsafeAddr(), v.Type()}
+			k := addrKey{addr: v.UnsafeAddr(), typ: v.Type()}
 			if seen[k] {
 				return
 			}
@@ -190,15 +190,15 @@ func TestSharedSliceWindows(t *testing.T) {
 			return b
 		}
 		for _, test := range []struct {
-			name   string
 			window func(b []gInner) []gInner
+			name   string
 		}{
-			{"prefix", func(b []gInner) []gInner { return b[:1] }},
-			{"middle", func(b []gInner) []gInner { return b[1:2] }},
-			{"empty", func(b []gInner) []gInner { return b[2:2] }},
-			{"suffix", func(b []gInner) []gInner { return b[3:] }},
-			{"beyond_len", func(b []gInner) []gInner { return b[2:6] }},
-			{"full", func(b []gInner) []gInner { return b[:] }},
+			{name: "prefix", window: func(b []gInner) []gInner { return b[:1] }},
+			{name: "middle", window: func(b []gInner) []gInner { return b[1:2] }},
+			{name: "empty", window: func(b []gInner) []gInner { return b[2:2] }},
+			{name: "suffix", window: func(b []gInner) []gInner { return b[3:] }},
+			{name: "beyond_len", window: func(b []gInner) []gInner { return b[2:6] }},
+			{name: "full", window: func(b []gInner) []gInner { return b[:] }},
 		} {
 			for _, windowFirst := range []bool{false, true} {
 				t.Run(fmt.Sprintf("%s/window_first=%v", test.name, windowFirst), func(t *testing.T) {
@@ -1191,9 +1191,9 @@ func TestBothEnginesStatefulCallbacks(t *testing.T) {
 	type engineRun struct {
 		saved      *gRoot
 		loaded     *gRoot
+		byName     map[string]*gCallbackNode
 		data       []byte
 		loadEvents []string
-		byName     map[string]*gCallbackNode
 	}
 	runs := make(map[string]engineRun)
 

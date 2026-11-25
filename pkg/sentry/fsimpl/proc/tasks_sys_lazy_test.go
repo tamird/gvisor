@@ -103,9 +103,9 @@ func TestSysDirMkdir(t *testing.T) {
 	defer s.Destroy()
 
 	for _, tc := range []struct {
+		want error
 		dir  string
 		name string
-		want error
 	}{
 		{dir: "/proc/sys/kernel/random", name: "boot_id", want: linuxerr.EEXIST},
 		{dir: "/proc/sys/kernel/yama", name: "nonexistent", want: linuxerr.ENOENT},
@@ -126,8 +126,8 @@ func TestSysDirMkdir(t *testing.T) {
 // count, and that lazySysDirs are never empty (see lazySysDir.HasChildren).
 func TestSysDirTree(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
 		stack inet.Stack
+		name  string
 	}{
 		{name: "stack", stack: inet.NewTestStack()},
 		{name: "no stack"},

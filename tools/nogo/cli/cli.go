@@ -151,10 +151,10 @@ func (c *checkCommon) execute(fn func() (check.FindingSet, facts.Serializer, err
 
 // Check implements subcommands.Command for the "check" command.
 type Check struct {
-	checkCommon
 	Package    string
 	Binary     string
 	ModuleFile string
+	checkCommon
 }
 
 // Name implements subcommands.Command.Name.
@@ -223,10 +223,10 @@ func (c *Check) Execute(ctx context.Context, fs *flag.FlagSet, args ...any) subc
 
 // Bundle implements subcommands.Command for the "bundle" command.
 type Bundle struct {
-	checkCommon
 	Root   string
 	Prefix string
 	Filter string
+	checkCommon
 }
 
 // Name implements subcommands.Command.Name.
@@ -298,8 +298,8 @@ func (b *Bundle) Execute(ctx context.Context, fs *flag.FlagSet, args ...any) sub
 
 // Filter implements subcommands.Command for the "filter" command.
 type Filter struct {
-	Configs flags.StringList
 	Output  string
+	Configs flags.StringList
 	Text    bool
 	Test    bool
 }

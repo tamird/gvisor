@@ -55,8 +55,8 @@ func TestImmutableBytesFromString(t *testing.T) {
 func TestStringFromImmutableBytes(t *testing.T) {
 	tests := []struct {
 		name  string
-		input []byte
 		want  string
+		input []byte
 	}{
 		{
 			name:  "abc",

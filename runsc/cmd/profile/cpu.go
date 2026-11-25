@@ -28,8 +28,8 @@ import (
 
 // cpu implements subcommands.Command for the "cpu" command.
 type cpu struct {
-	duration time.Duration
 	output   string
+	duration time.Duration
 }
 
 // Name implements subcommands.Command.

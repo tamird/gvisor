@@ -27,20 +27,20 @@ import (
 
 // ExecOpts holds arguments for Exec calls.
 type ExecOpts struct {
+	// User is the user to use.
+	User string
+
+	// WorkDir is the working directory of the process.
+	WorkDir string
+
 	// Env are additional environment variables.
 	Env []string
 
 	// Privileged enables privileged mode.
 	Privileged bool
 
-	// User is the user to use.
-	User string
-
 	// Enables Tty and stdin for the created process.
 	UseTTY bool
-
-	// WorkDir is the working directory of the process.
-	WorkDir string
 
 	// NoWrap, if true, indicates that no command-line wrapping may be performed
 	// on the command line being exec'd. Otherwise, settings are inherited from
@@ -130,9 +130,9 @@ func (c *Container) execConfig(r ExecOpts, cmd []string) container.ExecOptions {
 
 // Process represents a containerized process.
 type Process struct {
+	conn      types.HijackedResponse
 	container *Container
 	execid    string
-	conn      types.HijackedResponse
 }
 
 // Write writes buf to the process's stdin.

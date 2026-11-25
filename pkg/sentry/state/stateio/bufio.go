@@ -23,8 +23,8 @@ import (
 // BufioReadCloser is a wrapper around bufio.Reader that implements io.Closer
 // by closing the underlying io.ReadCloser.
 type BufioReadCloser struct {
-	bufio.Reader
 	io.Closer
+	bufio.Reader
 }
 
 // NewBufioReadCloser returns a new BufioReadCloser whose buffer has the

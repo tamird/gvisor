@@ -46,8 +46,8 @@ const (
 )
 
 type packetInfo struct {
-	Proto    tcpip.NetworkProtocolNumber
 	Contents *stack.PacketBuffer
+	Proto    tcpip.NetworkProtocolNumber
 }
 
 type packetContents struct {
@@ -78,12 +78,12 @@ func checkPacketInfoEqual(t *testing.T, got, want packetInfo) {
 }
 
 type testContext struct {
-	t        *testing.T
-	readFDs  []int
-	writeFDs []int
 	ep       stack.LinkEndpoint
+	t        *testing.T
 	ch       chan packetInfo
 	done     chan struct{}
+	readFDs  []int
+	writeFDs []int
 }
 
 func newContext(t *testing.T, opt *Options) *testContext {
@@ -133,7 +133,7 @@ func (c *testContext) cleanup() {
 }
 
 func (c *testContext) DeliverNetworkPacket(protocol tcpip.NetworkProtocolNumber, pkt *stack.PacketBuffer) {
-	c.ch <- packetInfo{protocol, pkt.Clone()}
+	c.ch <- packetInfo{Proto: protocol, Contents: pkt.Clone()}
 }
 
 func (c *testContext) DeliverLinkPacket(tcpip.NetworkProtocolNumber, *stack.PacketBuffer) {
@@ -480,9 +480,9 @@ func TestBufConfigFirst(t *testing.T) {
 var capLengthTestCases = []struct {
 	comment     string
 	config      []int
+	wantLengths []int
 	n           int
 	wantUsed    int
-	wantLengths []int
 }{
 	{
 		comment:     "Single slice",

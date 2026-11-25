@@ -170,6 +170,14 @@ func rootIDOwnsCurrentUserns(creds *Credentials, rootID KUID) bool {
 
 // FilePrivileges contains the file privileges for a file.
 type FilePrivileges struct {
+	// "These capabilities are automatically permitted to the thread, regardless of the thread's
+	// inheritable capabilities." - capabilities(7).
+	PermittedCaps CapabilitySet
+
+	// "This set is ANDed with the thread's inheritable set to determine which inheritable capabilities
+	// are enabled in the permitted set of the thread after the execve(2)." - capabilities(7).
+	InheritableCaps CapabilitySet
+
 	// SetUserID, when not NoID, indicates that the file has the setuid bit set. It is the KUID of the
 	// owner of the file.
 	SetUserID KUID
@@ -178,19 +186,11 @@ type FilePrivileges struct {
 	// the owning group of the file.
 	SetGroupID KGID
 
-	// HasCaps indicates whether the file has capabilities attached.
-	HasCaps bool
-
 	// CapRootID is the KUID of the namespace root of the Task that created the file caps.
 	CapRootID KUID
 
-	// "These capabilities are automatically permitted to the thread, regardless of the thread's
-	// inheritable capabilities." - capabilities(7).
-	PermittedCaps CapabilitySet
-
-	// "This set is ANDed with the thread's inheritable set to determine which inheritable capabilities
-	// are enabled in the permitted set of the thread after the execve(2)." - capabilities(7).
-	InheritableCaps CapabilitySet
+	// HasCaps indicates whether the file has capabilities attached.
+	HasCaps bool
 
 	// "Determines if all of the new permitted capabilities for the thread are also raised in the
 	// effective set." - capabilities(7).

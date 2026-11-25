@@ -288,12 +288,12 @@ func (r *RouteTable) NewInstalledRoute(route stack.MulticastRoute) *InstalledRou
 
 // GetRouteResult represents the result of calling GetRouteOrInsertPending.
 type GetRouteResult struct {
-	// GetRouteResultState signals the result of calling GetRouteOrInsertPending.
-	GetRouteResultState GetRouteResultState
-
 	// InstalledRoute represents the existing installed route. This field will
 	// only be populated if the GetRouteResultState is InstalledRouteFound.
 	InstalledRoute *InstalledRoute
+
+	// GetRouteResultState signals the result of calling GetRouteOrInsertPending.
+	GetRouteResultState GetRouteResultState
 }
 
 // GetRouteResultState signals the result of calling GetRouteOrInsertPending.

@@ -167,14 +167,15 @@ func (k *Kernel) SignalAllCheckpointWaiters(err error) {
 }
 
 type checkpointWaiter struct {
-	// count indicates the checkpoint generation that this waiter is interested in.
-	count uint32
 	// callback is the function that will be called when the checkpoint generation
 	// reaches the desired count. It is set to nil after the callback is called.
 	//
 	// It is protected by the owning CheckpointWaitable's mu. The waiter has
 	// no reference to that owner, so checklocks cannot name the mutex here.
 	callback func(CheckpointGeneration, error)
+
+	// count indicates the checkpoint generation that this waiter is interested in.
+	count uint32
 }
 
 // CheckpointWaitable is a waitable object that waits for a
@@ -343,26 +344,25 @@ func (k *Kernel) loadMemoryFiles(ctx context.Context, r io.Reader) error {
 //   - Wait for various events to occur before proceeding.
 //   - Report errors as they occur.
 type AsyncMFLoader struct {
+	mainMetadataErr error
+	metadataErr     error
+	loadErr         error
+
 	// privateMFsChan is used to tell the background goroutine about private
 	// MemoryFiles, once they are known. This channel is written to exactly once.
 	privateMFsChan chan privateMFsInfo
+
+	// apfl is nil if async page loading failed to start.
+	apfl *pgalloc.AsyncPagesFileLoad
 
 	// Error fields are published by WaitGroup completion rather than a mutex:
 	// mainMFStartWg publishes mainMetadataErr and apfl, metadataWg publishes
 	// metadataErr, and loadWg publishes loadErr. Readers wait for the
 	// corresponding group.
 	// checklocks cannot express these completion-based publication boundaries.
-	mainMFStartWg   sync.WaitGroup
-	mainMetadataErr error
-
-	// apfl is nil if async page loading failed to start.
-	apfl *pgalloc.AsyncPagesFileLoad
-
-	metadataWg  sync.WaitGroup
-	metadataErr error
-
-	loadWg  sync.WaitGroup
-	loadErr error
+	mainMFStartWg sync.WaitGroup
+	metadataWg    sync.WaitGroup
+	loadWg        sync.WaitGroup
 }
 
 type privateMFsInfo struct {

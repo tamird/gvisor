@@ -816,11 +816,11 @@ func OpenDebugLogFile(logPattern string, opts log.FileOpts) (*os.File, error) {
 //   - %ID%: is replaced with SandboxID
 //   - %CID%: is replaced with CID (container ID)
 type LogFileOpts struct {
+	Timestamp time.Time
 	SandboxID string
 	CID       string
 	Command   string
 	Test      string
-	Timestamp time.Time
 }
 
 // Build implements log.FileOpts.Build.

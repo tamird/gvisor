@@ -45,12 +45,12 @@ var (
 
 // InstallOptions is the set of options to install runsc.
 type InstallOptions struct {
-	DaemonSetNamespace  string
-	DaemonSetName       string
 	Labels              map[string]string
 	NodeSelector        map[string]string
-	PauseContainerImage string
 	ExtraFlags          map[string]string
+	DaemonSetNamespace  string
+	DaemonSetName       string
+	PauseContainerImage string
 }
 
 // RunscInstallDaemonSet returns a DaemonSet spec that installs runsc in

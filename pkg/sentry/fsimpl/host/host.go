@@ -293,14 +293,17 @@ func newInode(ctx context.Context, fs *filesystem, hostFD int, savable bool, res
 
 // NewFDOptions contains options to NewFD.
 type NewFDOptions struct {
-	// If Savable is true, the host file descriptor may be saved/restored by
-	// numeric value. RestoreKey is used to map the FD after restore.
-	Savable bool
-
 	// RestoreKey is only used when Savable==true. It uniquely identifies the
 	// host FD so that a mapping to the corresponding FD can be provided during
 	// restore.
 	RestoreKey checkpoint.ResourceID
+	Flags      uint32
+	UID        auth.KUID
+	GID        auth.KGID
+
+	// If Savable is true, the host file descriptor may be saved/restored by
+	// numeric value. RestoreKey is used to map the FD after restore.
+	Savable bool
 
 	// Restorable is true if hostFD may be restored. This can be set to false
 	// for host FDs that are not going to be present after restore.
@@ -312,13 +315,10 @@ type NewFDOptions struct {
 	// If HaveFlags is true, use Flags for the new file description. Otherwise,
 	// the new file description will inherit flags from hostFD.
 	HaveFlags bool
-	Flags     uint32
 
 	// VirtualOwner allow the host file to have owner and permissions different
 	// than the underlying host file.
 	VirtualOwner bool
-	UID          auth.KUID
-	GID          auth.KGID
 
 	// If Readonly is true, we disallow operations that can potentially change
 	// the host file associated with the file descriptor.

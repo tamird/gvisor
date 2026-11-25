@@ -68,33 +68,40 @@ type Port struct {
 // NetDev is a network device associated with an RDMA device, with its
 // curated static attribute set.
 type NetDev struct {
-	Name     string            `json:"name"`
 	Attrs    map[string]string `json:"attrs"`
 	ErrAttrs map[string]int32  `json:"err_attrs,omitempty"`
+	Name     string            `json:"name"`
 }
 
 // Device is one uverbs device and everything hanging off it.
 type Device struct {
+	// IBAttrs are the static identity attributes of
+	// /sys/class/infiniband/<ibdev>/ (node_guid, fw_ver, ...).
+	IBAttrs map[string]string `json:"ib_attrs"`
+
+	// Ports maps port number ("1") to its state.
+	Ports map[string]Port `json:"ports"`
+
 	// Uverbs is the device name, e.g. "uverbs0".
 	Uverbs string `json:"uverbs"`
+
 	// IBDev is the InfiniBand device name, e.g. "mlx5_0".
 	IBDev string `json:"ibdev"`
+
 	// LeafPCI is the PCI function directory, relative to /sys.
 	LeafPCI string `json:"leaf_pci"`
+
 	// Dev is the host "major:minor" of the uverbs char device.
 	Dev        string `json:"dev"`
 	ABIVersion string `json:"abi_version"`
+
+	// NetDevs are the netdevs bound to this ibdev via device/net/.
+	NetDevs []NetDev `json:"netdevs"`
+
 	// DriverID is the kernel's enum rdma_driver_id value (RDMA_DRIVER_*)
 	// for the device, inferred at collection time from the DRIVER= field of
 	// the leaf PCI function's uevent.
 	DriverID uint32 `json:"driver_id"`
-	// IBAttrs are the static identity attributes of
-	// /sys/class/infiniband/<ibdev>/ (node_guid, fw_ver, ...).
-	IBAttrs map[string]string `json:"ib_attrs"`
-	// Ports maps port number ("1") to its state.
-	Ports map[string]Port `json:"ports"`
-	// NetDevs are the netdevs bound to this ibdev via device/net/.
-	NetDevs []NetDev `json:"netdevs"`
 }
 
 // NUMA is the /sys/devices/system/node subtree.
@@ -105,14 +112,15 @@ type NUMA struct {
 
 // Snapshot is the host sysfs snapshot for RDMA device topology.
 type Snapshot struct {
+	NUMA            *NUMA  `json:"numa,omitempty"`
 	VerbsABIVersion string `json:"verbs_abi_version"`
+
 	// PCINodes contains every PCI directory in the closure: the leaves
 	// (NICs, the functions NCCL reads in their place, GPUs) and all their
 	// ancestor bridges/roots. Sorted by Path, which places parents before
 	// children.
 	PCINodes []PCINode `json:"pci_nodes"`
 	Devices  []Device  `json:"devices"`
-	NUMA     *NUMA     `json:"numa,omitempty"`
 }
 
 // safeName matches names we are willing to reproduce inside the sandbox or

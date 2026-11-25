@@ -36,7 +36,6 @@ type pendingPacket struct {
 }
 
 type packetsPendingLinkResolutionMu struct {
-	packetsPendingLinkResolutionMutex
 
 	// The packets to send once the resolver completes.
 	//
@@ -52,6 +51,7 @@ type packetsPendingLinkResolutionMu struct {
 	//
 	// +checklocks:packetsPendingLinkResolutionMutex
 	cancelChans []<-chan struct{}
+	packetsPendingLinkResolutionMutex
 }
 
 // packetsPendingLinkResolution is a queue of packets pending link resolution.

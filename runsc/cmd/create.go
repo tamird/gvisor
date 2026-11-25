@@ -52,6 +52,9 @@ func (p *imagePaths) Set(value string) error {
 
 // Create implements subcommands.Command for the "create" command.
 type Create struct {
+	// spec is the cached OCI spec.
+	spec *specs.Spec
+
 	// bundleDir is the path to the bundle directory (defaults to the
 	// current working directory).
 	bundleDir string
@@ -67,9 +70,6 @@ type Create struct {
 	// true.
 	consoleSocket string
 
-	// passFDs are host FDs exposed to the sandboxed application.
-	passFDs sandboxsetup.FDMappings
-
 	// userLog is the path to send user-visible logs to. This log is different
 	// from debug logs. The former is meant to be consumed by the users and should
 	// contain only information that is relevant to the person running the
@@ -77,21 +77,22 @@ type Create struct {
 	// consumed by developers.
 	userLog string
 
+	// passFDs are host FDs exposed to the sandboxed application.
+	passFDs sandboxsetup.FDMappings
+
 	// fsRestoreImagePaths is the list of paths to the filesystem checkpoints to
 	// restore. Combining bundles from different checkpoints is only supported on
 	// fresh container creation (create/run); during restore, all bundles must
 	// come from the same checkpoint as the sentry state image.
+	fsRestoreImagePaths imagePaths
+
 	// fsRestoreDirect is true if files making up the filesystem checkpoint should
 	// be opened with O_DIRECT.
-	fsRestoreImagePaths imagePaths
-	fsRestoreDirect     bool
+	fsRestoreDirect bool
 
 	// noRootContainer creates a sandbox with no root container: the spec holds
 	// sandbox-wide settings only and containers are added afterwards.
 	noRootContainer bool
-
-	// spec is the cached OCI spec.
-	spec *specs.Spec
 }
 
 // Name implements subcommands.Command.Name.

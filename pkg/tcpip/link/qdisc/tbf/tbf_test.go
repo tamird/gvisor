@@ -35,21 +35,21 @@ import (
 // the batch via batch.Reset() after WritePackets returns, matching fifo and
 // channel.Endpoint. WritePackets here must therefore not DecRef.
 type fakeEndpoint struct {
-	mtu             uint32
-	maxHeaderLength uint16
-	gsoMaxSize      uint32
-	supportedGSO    stack.SupportedGSO
-
-	mu sync.Mutex
+	done chan struct{}
 
 	// +checklocks:mu
-	batchSizes []int
+	batchSizes   []int
+	supportedGSO stack.SupportedGSO
 	// +checklocks:mu
 	bytesWritten int
 	// +checklocks:mu
 	packetsWritten int
 	packetsWanted  int // 0 disables the done signal
-	done           chan struct{}
+
+	mu              sync.Mutex
+	mtu             uint32
+	gsoMaxSize      uint32
+	maxHeaderLength uint16
 }
 
 // +checklocksexclude:e.mu
@@ -168,12 +168,12 @@ func TestNewValidation(t *testing.T) {
 	const mtu = 1500
 	const hdr = 14
 	tests := []struct {
-		name      string
 		ep        *fakeEndpoint
+		name      string
+		errSubstr string
 		rate      uint64
 		burst     uint32
 		queueLen  uint32
-		errSubstr string
 	}{
 		{
 			name:      "rate zero rejected",
@@ -235,8 +235,8 @@ func TestNewSucceeds(t *testing.T) {
 	const mtu = 1500
 	const hdr = 14
 	tests := []struct {
-		name  string
 		ep    *fakeEndpoint
+		name  string
 		burst uint32
 	}{
 		{

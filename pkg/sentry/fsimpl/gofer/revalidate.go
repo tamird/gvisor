@@ -306,10 +306,6 @@ type revalidateState struct {
 	// start is the dentry where to start the revalidation of dentries.
 	start *dentry
 
-	// refreshStart indicates whether the attributes of the start dentry should
-	// be refreshed.
-	refreshStart bool
-
 	// names is just a slice of names which can be used while making LISAFS RPCs.
 	// This exists to avoid the cost of repeated string slice allocation to make
 	// RPCs.
@@ -319,6 +315,10 @@ type revalidateState struct {
 	// dentry is a child of start and each successive dentry is a child of the
 	// previous.
 	dentries []*dentry
+
+	// refreshStart indicates whether the attributes of the start dentry should
+	// be refreshed.
+	refreshStart bool
 }
 
 func makeRevalidateState(start *dentry, refreshStart bool) *revalidateState {

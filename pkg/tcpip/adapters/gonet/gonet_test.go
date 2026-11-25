@@ -44,12 +44,12 @@ const (
 func TestTimeouts(t *testing.T) {
 	nc := NewTCPConn(nil, nil)
 	dlfs := []struct {
-		name string
 		f    func(time.Time) error
+		name string
 	}{
-		{"SetDeadline", nc.SetDeadline},
-		{"SetReadDeadline", nc.SetReadDeadline},
-		{"SetWriteDeadline", nc.SetWriteDeadline},
+		{name: "SetDeadline", f: nc.SetDeadline},
+		{name: "SetReadDeadline", f: nc.SetReadDeadline},
+		{name: "SetWriteDeadline", f: nc.SetWriteDeadline},
 	}
 
 	for _, dlf := range dlfs {
@@ -776,12 +776,12 @@ func TestTCPConnTransfer(t *testing.T) {
 	const sent = "abc123"
 
 	tests := []struct {
-		name string
 		c1   net.Conn
 		c2   net.Conn
+		name string
 	}{
-		{"connected to accepted", c1, c2},
-		{"accepted to connected", c2, c1},
+		{name: "connected to accepted", c1: c1, c2: c2},
+		{name: "accepted to connected", c1: c2, c2: c1},
 	}
 
 	for _, test := range tests {
@@ -899,23 +899,23 @@ func TestDialContextTCPTimeout(t *testing.T) {
 // TestInterruptListender tests that (*TCPListener).Accept can be interrupted.
 func TestInterruptListender(t *testing.T) {
 	for _, test := range []struct {
-		name string
 		stop func(l *TCPListener) error
+		name string
 	}{
 		{
-			"Close",
-			(*TCPListener).Close,
+			name: "Close",
+			stop: (*TCPListener).Close,
 		},
 		{
-			"Shutdown",
-			func(l *TCPListener) error {
+			name: "Shutdown",
+			stop: func(l *TCPListener) error {
 				l.Shutdown()
 				return nil
 			},
 		},
 		{
-			"Double Shutdown",
-			func(l *TCPListener) error {
+			name: "Double Shutdown",
+			stop: func(l *TCPListener) error {
 				l.Shutdown()
 				l.Shutdown()
 				return nil

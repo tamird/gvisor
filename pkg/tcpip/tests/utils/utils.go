@@ -227,11 +227,10 @@ func SetupRouterStack(t *testing.T, s *stack.Stack, ep1, ep2 stack.LinkEndpoint)
 	}
 
 	for _, setup := range []struct {
-		nicID   tcpip.NICID
-		nicName string
-		ep      stack.LinkEndpoint
-
+		ep        stack.LinkEndpoint
+		nicName   string
 		addresses [2]tcpip.ProtocolAddress
+		nicID     tcpip.NICID
 	}{
 		{
 			nicID:     RouterNICID1,

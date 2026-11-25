@@ -58,19 +58,10 @@ type StartArgs struct {
 	// CID is the ID of the container to start.
 	CID string
 
-	// NumGoferFilestoreFDs is the number of gofer filestore FDs donated.
-	NumGoferFilestoreFDs int
-
-	// IsDevIoFilePresent indicates whether the dev gofer FD is present.
-	IsDevIoFilePresent bool
-
 	// GoferMountConfs contains information about how the gofer mounts have been
 	// configured. The first entry is for rootfs and the following entries are
 	// for bind mounts in Spec.Mounts (in the same order).
 	GoferMountConfs []specutils.GoferMountConf
-
-	// IsRootfsUpperTarFilePresent indicates whether the rootfs upper tar file is present.
-	IsRootfsUpperTarFilePresent bool
 
 	// FilePayload contains, in order:
 	//   * stdin, stdout, and stderr (optional: if terminal is disabled).
@@ -79,6 +70,15 @@ type StartArgs struct {
 	//   * file descriptor for rootfs upper tar file (optional)
 	//   * file descriptors to connect to gofer to serve the root filesystem.
 	urpc.FilePayload
+
+	// NumGoferFilestoreFDs is the number of gofer filestore FDs donated.
+	NumGoferFilestoreFDs int
+
+	// IsDevIoFilePresent indicates whether the dev gofer FD is present.
+	IsDevIoFilePresent bool
+
+	// IsRootfsUpperTarFilePresent indicates whether the rootfs upper tar file is present.
+	IsRootfsUpperTarFilePresent bool
 }
 
 // ContMgrDestroySubcontainer is used to stop a sub-container and free all
@@ -97,12 +97,13 @@ const ContMgrPortForward = "containerManager.PortForward"
 // PortForwardOpts contains options for port forwarding to a port in a
 // container.
 type PortForwardOpts struct {
+	// ContainerID is the container for the process being executed.
+	ContainerID string
+
 	// FilePayload contains one fd for a UDS (or local port) used for port
 	// forwarding.
 	urpc.FilePayload
 
-	// ContainerID is the container for the process being executed.
-	ContainerID string
 	// Port is the port to to forward.
 	Port uint16
 }
@@ -160,11 +161,11 @@ const ContMgrWaitPID = "containerManager.WaitPID"
 
 // WaitPIDArgs are arguments to the WaitPID method.
 type WaitPIDArgs struct {
-	// PID is the PID in the container's PID namespace.
-	PID int32
-
 	// CID is the container ID.
 	CID string
+
+	// PID is the PID in the container's PID namespace.
+	PID int32
 }
 
 // ContMgrWaitCheckpoint waits for the next Kernel checkpoint to complete.
@@ -250,9 +251,9 @@ const ContMgrCreateTraceSession = "containerManager.CreateTraceSession"
 
 // CreateTraceSessionArgs are arguments to the CreateTraceSession method.
 type CreateTraceSessionArgs struct {
+	urpc.FilePayload
 	Config seccheck.SessionConfig
 	Force  bool
-	urpc.FilePayload
 }
 
 // ContMgrDeleteTraceSession deletes a trace session.

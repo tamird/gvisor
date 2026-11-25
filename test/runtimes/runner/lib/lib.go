@@ -39,18 +39,24 @@ import (
 type ProctorSettings struct {
 	// Runner is the host runfiles path to the proctor binary to copy into the container.
 	Runner string
-	// Privileged enables privileged mode for the container.
-	Privileged bool
+
 	// CapAdd is the list of capabilities to add to the container.
 	CapAdd []string
+
 	// PerTestTimeout is the timeout for each individual test.
 	PerTestTimeout time.Duration
+
 	// RunsPerTest is the number of times to run each test.
 	// A value of 0 is the same as a value of 1, i.e. "run once".
 	RunsPerTest int
+
+	// Privileged enables privileged mode for the container.
+	Privileged bool
+
 	// If FlakyIsError is true, a flaky test will be considered as a failure.
 	// If it is false, a flaky test will be considered as passing.
 	FlakyIsError bool
+
 	// If FlakyShortCircuit is true, when runnins with RunsPerTest > 1 and a test is detected as
 	// flaky, exit immediately rather than running for all RunsPerTest attempts.
 	FlakyShortCircuit bool

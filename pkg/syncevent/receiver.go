@@ -24,13 +24,13 @@ import (
 //
 // Receiver.Init() must be called before first use.
 type Receiver struct {
-	// pending is the set of pending events. pending is accessed using atomic
-	// memory operations.
-	pending atomicbitops.Uint64
-
 	// cb is notified when new events become pending. cb is immutable after
 	// Init().
 	cb ReceiverCallback
+
+	// pending is the set of pending events. pending is accessed using atomic
+	// memory operations.
+	pending atomicbitops.Uint64
 }
 
 // ReceiverCallback receives callbacks from a Receiver.

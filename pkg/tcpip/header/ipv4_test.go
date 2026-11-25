@@ -87,8 +87,8 @@ func TestIPv4OptionsSerializer(t *testing.T) {
 func TestIPv4EncodeOptions(t *testing.T) {
 	tests := []struct {
 		name           string
-		numberOfNops   int
 		encodedOptions header.IPv4Options // reply should look like this
+		numberOfNops   int
 		wantIHL        int
 	}{
 		{

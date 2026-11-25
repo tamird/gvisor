@@ -24,10 +24,10 @@ import (
 func TestGoferEnv(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
-		profile    bool
 		environ    []string
-		gomaxprocs int
 		want       []string
+		gomaxprocs int
+		profile    bool
 	}{
 		{
 			name:       "no GODEBUG",

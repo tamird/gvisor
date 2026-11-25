@@ -75,9 +75,9 @@ type RxBuffer struct {
 //
 // This struct is thread-compatible.
 type Rx struct {
-	tx                 pipe.Tx
-	rx                 pipe.Rx
 	sharedEventFDState *atomicbitops.Uint32
+	rx                 pipe.Rx
+	tx                 pipe.Tx
 }
 
 // Init initializes the receive queue with the given pipes, and shared state

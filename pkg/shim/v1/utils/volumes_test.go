@@ -82,9 +82,9 @@ func TestUpdateVolumeAnnotations(t *testing.T) {
 	})
 
 	for _, test := range []struct {
-		name      string
 		spec      *specs.Spec
 		expected  *specs.Spec // If nil, the spec is expected to be unchanged.
+		name      string
 		expectErr bool
 	}{
 		{
@@ -823,9 +823,9 @@ func TestHostTmpfsSize(t *testing.T) {
 	defer func() { statfs = oldStatfs }()
 
 	for _, test := range []struct {
+		err      error
 		name     string
 		st       unix.Statfs_t
-		err      error
 		wantSize uint64
 		wantOK   bool
 	}{
@@ -879,9 +879,9 @@ func TestSetSizeFromHostTmpfs(t *testing.T) {
 	for _, test := range []struct {
 		name string
 		opts string // "" means no options annotation.
+		want string
 		// wantStatfs is whether the host tmpfs size is expected to be read.
 		wantStatfs bool
-		want       string
 	}{
 		{name: "no options", wantStatfs: true, want: "size=67108864"},
 		{name: "options without size", opts: "rw", wantStatfs: true, want: "rw,size=67108864"},

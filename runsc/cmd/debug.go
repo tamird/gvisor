@@ -38,9 +38,6 @@ import (
 // Debug implements subcommands.Command for the "debug" command.
 type Debug struct {
 	containerLoader
-	pid          int
-	stacks       bool
-	signal       int
 	profileBlock string
 	profileCPU   string
 	profileHeap  string
@@ -49,11 +46,14 @@ type Debug struct {
 	strace       string
 	logLevel     string
 	logPackets   string
-	delay        time.Duration
-	duration     time.Duration
-	ps           bool
 	mount        string
 	drainDcache  string
+	pid          int
+	delay        time.Duration
+	duration     time.Duration
+	signal       int
+	stacks       bool
+	ps           bool
 }
 
 // Name implements subcommands.Command.

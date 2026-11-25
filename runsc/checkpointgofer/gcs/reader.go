@@ -29,21 +29,20 @@ import (
 // Reader implements stateio.AsyncReader for a GCS object.
 type Reader struct {
 	stateio.NoRegisterClientFD
-
-	maxReadBytes uint64
-	maxRanges    int
 	obj          *storage.ObjectHandle
 	subs         chan readSubmission
 	cmps         chan stateio.Completion
 	cancel       context.CancelCauseFunc
 	workers      sync.WaitGroup
+	maxReadBytes uint64
+	maxRanges    int
 }
 
 type readSubmission struct {
+	dst   stateio.LocalClientRanges
 	id    int
 	off   int64
 	total uint64
-	dst   stateio.LocalClientRanges
 }
 
 // NewReader returns a Reader that reads from the given GCS object.

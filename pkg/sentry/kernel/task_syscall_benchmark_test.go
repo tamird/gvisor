@@ -44,8 +44,8 @@ func (myNullSink) Name() string { return "null" }
 //	  OPTIONS="--test_arg=-test.bench=BenchmarkExecuteSyscall --test_arg=-test.benchmem --test_output=all --nocache_test_results"
 func BenchmarkExecuteSyscall(b *testing.B) {
 	testCases := []struct {
-		name string
 		fm   func() seccheck.FieldMask
+		name string
 	}{
 		{
 			name: "Empty",

@@ -66,8 +66,8 @@ func TestStatefile(t *testing.T) {
 
 	for _, tc := range []struct {
 		name   string
-		engine config.StateEnginePolicy
 		want   string
+		engine config.StateEnginePolicy
 	}{
 		{name: "graph", engine: config.StateEngineGraph, want: "g1r0 = kernel.Kernel{"},
 		{name: "wire", engine: config.StateEngineWire, want: ".Kernel]{"},
@@ -290,8 +290,8 @@ func TestCheckpointStateEngineAnnotationsAndSubcommand(t *testing.T) {
 		}()
 
 		for _, tc := range []struct {
-			name string
 			args func(dir string) []string
+			name string
 		}{
 			{
 				name: "top_level_flag",
@@ -360,8 +360,8 @@ func TestCheckpointStateEngineAnnotationsAndSubcommand(t *testing.T) {
 		}()
 
 		for _, tc := range []struct {
-			name string
 			args func(dir string) []string
+			name string
 		}{
 			{
 				name: "top_level_flag",
@@ -487,8 +487,8 @@ func TestStatefileEdgeCases(t *testing.T) {
 
 		for _, tc := range []struct {
 			name string
-			args []string
 			out  string
+			args []string
 		}{
 			{
 				name: "html_corrupt_payload",

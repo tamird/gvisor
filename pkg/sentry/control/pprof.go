@@ -29,10 +29,13 @@ import (
 // Profile includes profile-related RPC stubs. It provides a way to
 // control the built-in runtime profiling facilities.
 //
-// The profile object must be instantied via NewProfile.
+// The profile object must be instantiated via NewProfile.
 type Profile struct {
 	// kernel is the kernel under profile. It's immutable.
 	kernel *kernel.Kernel
+
+	// done is closed when profiling is done.
+	done chan struct{}
 
 	// cpuMu protects CPU profiling.
 	cpuMu sync.Mutex
@@ -45,9 +48,6 @@ type Profile struct {
 
 	// traceMu protects trace profiling.
 	traceMu sync.Mutex
-
-	// done is closed when profiling is done.
-	done chan struct{}
 }
 
 // NewProfile returns a new Profile object.

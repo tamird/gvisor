@@ -58,11 +58,11 @@ type Metric struct {
 	// Name is the Prometheus metric name.
 	Name string `json:"name"`
 
-	// Type is the type of the metric.
-	Type Type `json:"type"`
-
 	// Help is an optional helpful string explaining what the metric is about.
 	Help string `json:"help"`
+
+	// Type is the type of the metric.
+	Type Type `json:"type"`
 }
 
 // writeMetricHeaderTo writes the metric comment header to the given writer.
@@ -343,19 +343,23 @@ type Bucket struct {
 
 // Histogram contains data about histogram values.
 type Histogram struct {
-	// Total is the sum of sample values across all buckets.
-	Total Number `json:"total"`
-	// Min is the minimum sample ever recorded in this histogram.
-	Min Number `json:"min"`
-	// Max is the maximum sample ever recorded in this histogram.
-	Max Number `json:"max"`
-	// SumOfSquaredDeviations is the number of squared deviations of all samples.
-	SumOfSquaredDeviations Number `json:"ssd"`
 	// Buckets contains per-bucket data.
 	// A distribution with n finite-boundary buckets should have n+2 entries here.
 	// The 0th entry is the underflow bucket (i.e. the one with -inf as lower bound),
 	// and the last aka (n+1)th entry is the overflow bucket (i.e. the one with +inf as upper bound).
 	Buckets []Bucket `json:"buckets,omitempty"`
+
+	// Total is the sum of sample values across all buckets.
+	Total Number `json:"total"`
+
+	// Min is the minimum sample ever recorded in this histogram.
+	Min Number `json:"min"`
+
+	// Max is the maximum sample ever recorded in this histogram.
+	Max Number `json:"max"`
+
+	// SumOfSquaredDeviations is the number of squared deviations of all samples.
+	SumOfSquaredDeviations Number `json:"ssd"`
 }
 
 // Data is an observation of the value of a single metric at a certain point in time.
@@ -415,24 +419,24 @@ func (d *Data) SetExternalLabels(externalLabels map[string]string) *Data {
 
 // ExportOptions contains options that control how metric data is exported in Prometheus format.
 type ExportOptions struct {
-	// CommentHeader is prepended as a comment before any metric data is exported.
-	CommentHeader string
-
 	// MetricsWritten memoizes written metric preambles (help/type comments)
 	// by metric name.
 	// If specified, this map can be used to avoid duplicate preambles across multiple snapshots.
 	// Note that this map is modified in-place during the writing process.
 	MetricsWritten map[string]bool
+
+	// CommentHeader is prepended as a comment before any metric data is exported.
+	CommentHeader string
 }
 
 // SnapshotExportOptions contains options that control how metric data is exported for an
 // individual Snapshot.
 type SnapshotExportOptions struct {
-	// ExporterPrefix is prepended to all metric names.
-	ExporterPrefix string
-
 	// ExtraLabels is added as labels for all metric values.
 	ExtraLabels map[string]string
+
+	// ExporterPrefix is prepended to all metric names.
+	ExporterPrefix string
 }
 
 // writeEscapedString writes the given string in quotation marks and with some characters escaped,
@@ -567,8 +571,8 @@ func sortedIterateLabels(labels map[string]string, out chan<- keyVal, cancelCh <
 // LabelOrError is used in OrderedLabels.
 // It represents either a key-value pair, or an error.
 type LabelOrError struct {
-	Key, Value string
 	Error      error
+	Key, Value string
 }
 
 // OrderedLabels streams the list of 'label_key="label_value"' in sorted order, except "le" which is

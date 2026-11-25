@@ -36,14 +36,14 @@ import (
 )
 
 type runsc struct {
-	dut.Ifaces
-	containerID      string
-	runscPath        string
-	runscLogsPath    string
-	bundleDir        string
-	rootDir          string
 	cleanupRootDir   func()
 	cleanupBundleDir func()
+	dut.Ifaces
+	containerID   string
+	runscPath     string
+	runscLogsPath string
+	bundleDir     string
+	rootDir       string
 }
 
 var _ dut.DUT = (*runsc)(nil)

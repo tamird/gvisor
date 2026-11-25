@@ -2165,10 +2165,10 @@ func testMultiBundleSplitFSCheckpointRestore(t *testing.T, noRootContainer bool)
 	durDir := copyCheckpointFiles(t, checkpointDir, "isolated-fs", append(prefixedFSCheckpointFiles(fsPrefix), sentryCheckpointFiles...))
 
 	for _, rtc := range []struct {
+		mutateArgs    func(*Args)
 		name          string
 		restoreDir    string
 		fsRestorePath []string
-		mutateArgs    func(*Args)
 	}{
 		{
 			name:       "AutoDiscoverBothBundles",
@@ -2213,9 +2213,9 @@ func testMultiBundleSplitFSCheckpointRestore(t *testing.T, noRootContainer bool)
 // filesystem checkpoint test.
 type splitFSTestEnv struct {
 	conf            *config.Config
-	noRootContainer bool
 	mountSource     string
 	mountDest       string
+	noRootContainer bool
 }
 
 func (e *splitFSTestEnv) newSpecs(sbID string, args ...string) (sbSpec, appSpec *specs.Spec) {
@@ -2616,9 +2616,9 @@ func TestCheckpointRestoreAdjustedTSC(t *testing.T) {
 }
 
 type workloadHopSpec struct {
+	compression      statefile.CompressionLevel
 	saveEngine       config.StateEnginePolicy
 	restoreEngine    config.StateEnginePolicy
-	compression      statefile.CompressionLevel
 	inspectStatefile bool
 }
 

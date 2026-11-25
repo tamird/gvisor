@@ -28,8 +28,8 @@ import (
 // ClientFD is a wrapper around FDID that provides client-side utilities
 // so that RPC making is easier.
 type ClientFD struct {
-	fd     FDID
 	client *Client
+	fd     FDID
 }
 
 // ID returns the underlying FDID.
@@ -663,14 +663,14 @@ func (f *ClientFD) RemoveXattr(ctx context.Context, name string) error {
 //
 // All fields are immutable.
 type ClientBoundSocketFD struct {
+	client *Client
+
 	// fd is the FDID of the bound socket on the server.
 	fd FDID
 
 	// notificationFD is the host FD that can be used to notify when new
 	// clients connect to the socket.
 	notificationFD int32
-
-	client *Client
 }
 
 // Close implements transport.BoundSocketFD.Close.

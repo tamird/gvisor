@@ -23,23 +23,22 @@ import (
 // ProcessContext uniquely identifies a thread-group/process and its environment
 // at the time of an event.
 type ProcessContext struct {
-	ThreadGroupID          int32
-	ThreadGroupStartTimeNs int64
 	ContainerID            string
 	ProcessName            string
+	ThreadGroupStartTimeNs int64
+	ThreadGroupID          int32
 	ParentThreadGroupID    int32
 }
 
 // ExecutionEvent provides a Go presentation of the ExecveInfo protobuf.
 type ExecutionEvent struct {
-	Context    ProcessContext
-	BinaryPath string
-	Argv       []string
-	Env        []string
-
 	// Sibling pipes for enriching the event.
 	PipeInputSiblingContext  *ProcessContext
 	PipeOutputSiblingContext *ProcessContext
+	BinaryPath               string
+	Argv                     []string
+	Env                      []string
+	Context                  ProcessContext
 }
 
 // ToProcessContext translates a raw ContextData protobuf into the ProcessContext struct.

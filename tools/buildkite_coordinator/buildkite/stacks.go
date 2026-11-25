@@ -34,10 +34,10 @@ const MaxBatchSize = 1000
 
 // RegisterStackRequest is the body of a stack registration.
 type RegisterStackRequest struct {
+	Metadata map[string]string `json:"metadata"`
 	Key      string            `json:"key"`
 	Type     string            `json:"type"`
 	QueueKey string            `json:"queue_key"`
-	Metadata map[string]string `json:"metadata"`
 }
 
 // Stack is a registered stack.
@@ -52,29 +52,29 @@ type Stack struct {
 
 // ScheduledJob is a job in the scheduled-jobs listing.
 type ScheduledJob struct {
-	ID              string    `json:"id"`
-	Priority        int       `json:"priority"`
-	AgentQueryRules []string  `json:"agent_query_rules"`
-	ScheduledAt     time.Time `json:"scheduled_at"`
-	RunnableAt      time.Time `json:"runnable_at"`
-	Pipeline        struct {
+	ID       string `json:"id"`
+	Pipeline struct {
 		Slug string `json:"slug"`
 		UUID string `json:"uuid"`
 	} `json:"pipeline"`
-	Build struct {
-		Number int    `json:"number"`
-		Branch string `json:"branch"`
-		UUID   string `json:"uuid"`
-	} `json:"build"`
 	Step struct {
 		Key string `json:"key"`
 	} `json:"step"`
+	AgentQueryRules []string  `json:"agent_query_rules"`
+	ScheduledAt     time.Time `json:"scheduled_at"`
+	RunnableAt      time.Time `json:"runnable_at"`
+	Build           struct {
+		Branch string `json:"branch"`
+		UUID   string `json:"uuid"`
+		Number int    `json:"number"`
+	} `json:"build"`
+	Priority int `json:"priority"`
 }
 
 // PageInfo is the pagination state of a listing.
 type PageInfo struct {
-	HasNextPage bool   `json:"has_next_page"`
 	EndCursor   string `json:"end_cursor"`
+	HasNextPage bool   `json:"has_next_page"`
 }
 
 // ClusterQueue is the queue a listing is for.
@@ -141,9 +141,9 @@ type ReserveJobsResponse struct {
 // JobAcquisitionToken is a short-lived credential that lets an agent register
 // and acquire a single job.
 type JobAcquisitionToken struct {
+	ExpiresAt time.Time `json:"expires_at"`
 	JobUUID   string    `json:"job_uuid"`
 	Token     string    `json:"job_acquisition_token"`
-	ExpiresAt time.Time `json:"expires_at"`
 }
 
 // String describes the token without printing it.
@@ -224,8 +224,8 @@ const MaxFinishDetailSize = 4096
 
 // FinishJobRequest is the body of a job finish request.
 type FinishJobRequest struct {
-	ExitStatus int    `json:"exit_status"`
 	Detail     string `json:"detail"`
+	ExitStatus int    `json:"exit_status"`
 }
 
 // FinishJob finishes the given job without running it, with the given exit

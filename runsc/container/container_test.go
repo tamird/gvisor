@@ -867,8 +867,8 @@ func TestGoferWillNeedHostRPC(t *testing.T) {
 	shifted := []specs.LinuxIDMapping{{ContainerID: 0, HostID: 100000, Size: 65536}}
 	idMapped := specs.Mount{Destination: "/mnt", Source: "/mnt", Type: "bind", UIDMappings: shifted, GIDMappings: shifted}
 	for _, tc := range []struct {
-		name string
 		spec *specs.Spec
+		name string
 		want bool
 	}{
 		{name: "no userns", spec: &specs.Spec{Linux: &specs.Linux{}}, want: partialUserNS},
@@ -1794,8 +1794,8 @@ func TestSignalUnkillablePolicyForcedSignals(t *testing.T) {
 func TestNoRootContainerRejectsRootArgs(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
-		args    Args
 		wantErr string
+		args    Args
 	}{
 		{
 			name:    "console socket",
@@ -1888,13 +1888,13 @@ func TestSignalUnkillablePolicyFaultKillsInit(t *testing.T) {
 			}
 
 			type waitResult struct {
-				ws  unix.WaitStatus
 				err error
+				ws  unix.WaitStatus
 			}
 			done := make(chan waitResult, 1)
 			go func() {
 				ws, err := cont.Wait()
-				done <- waitResult{ws, err}
+				done <- waitResult{ws: ws, err: err}
 			}()
 			select {
 			case res := <-done:
@@ -3727,9 +3727,9 @@ func TestOCISeccompErrnoRet(t *testing.T) {
 
 	for _, tc := range []struct {
 		name  string
-		sysno int
-		args  []string
 		want  string
+		args  []string
+		sysno int
 	}{
 		{name: "errno_ret_honored", sysno: unix.SYS_GETSID, want: fmt.Sprintf("failed: %v", unix.ENOSYS)},
 		{name: "no_errno_ret_defaults_to_eperm", sysno: unix.SYS_GETPGID, want: fmt.Sprintf("failed: %v", unix.EPERM)},
@@ -3963,8 +3963,8 @@ func TestCreateWorkingDir(t *testing.T) {
 		name    string
 		cwd     string
 		wantCwd string
-		pathLen int
 		wantErr string
+		pathLen int
 	}{
 		{name: "MissingDirectory", cwd: "new/working/dir", wantCwd: "new/working/dir"},
 		{name: "TrailingSlash", cwd: "new/working/dir/", wantCwd: "new/working/dir"},
@@ -4224,8 +4224,8 @@ func TestTTYField(t *testing.T) {
 
 	testCases := []struct {
 		name         string
-		useTTY       bool
 		wantTTYField string
+		useTTY       bool
 	}{
 		{
 			name:         "no tty",

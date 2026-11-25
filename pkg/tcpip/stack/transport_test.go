@@ -39,18 +39,17 @@ const (
 //
 // Headers of this protocol are fakeTransHeaderLen bytes.
 type fakeTransportEndpoint struct {
-	stack.TransportEndpointInfo
 	tcpip.DefaultSocketOptionsHandler
-
-	proto    *fakeTransportProtocol
-	peerAddr tcpip.Address
-	route    *stack.Route
+	proto *fakeTransportProtocol
+	route *stack.Route
 
 	// acceptQueue is non-nil iff bound.
 	acceptQueue []*fakeTransportEndpoint
 
 	// ops is used to set and get socket options.
 	ops tcpip.SocketOptions
+	stack.TransportEndpointInfo
+	peerAddr tcpip.Address
 }
 
 func (f *fakeTransportEndpoint) Info() tcpip.EndpointInfo {

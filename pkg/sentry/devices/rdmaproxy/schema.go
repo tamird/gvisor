@@ -116,14 +116,15 @@ const (
 
 // MethodSchema is the complete, verified description of one (object, method).
 type MethodSchema struct {
-	Dma DmaKind
+	// Attrs maps attribute id -> type. Any attribute not present here causes
+	// the request to be rejected.
+	Attrs map[uint16]AttrType
+
 	// HandleAttr is the attribute carrying this object's IDR handle, used for
 	// create/destroy resource tracking. Only meaningful when Dma tracks a
 	// handle.
 	HandleAttr uint16
-	// Attrs maps attribute id -> type. Any attribute not present here causes
-	// the request to be rejected.
-	Attrs map[uint16]AttrType
+	Dma        DmaKind
 }
 
 // schemas is the allowlist of supported (object, method) pairs, keyed by

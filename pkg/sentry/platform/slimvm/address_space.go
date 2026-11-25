@@ -77,11 +77,6 @@ func (ds *dirtySet) mark(c *vCPU) bool {
 type addressSpace struct {
 	platform.NoAddressSpaceIO
 
-	// mu is the lock for modifications to the address space.
-	//
-	// Note that the page tables themselves are not locked.
-	mu sync.Mutex
-
 	// machine is the underlying machine.
 	machine *machine
 
@@ -90,6 +85,11 @@ type addressSpace struct {
 
 	// dirtySet is the set of dirty vCPUs.
 	dirtySet dirtySet
+
+	// mu is the lock for modifications to the address space.
+	//
+	// Note that the page tables themselves are not locked.
+	mu sync.Mutex
 
 	// pcid associated with this address space.
 	pcid uint16

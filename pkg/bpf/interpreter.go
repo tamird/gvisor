@@ -387,9 +387,6 @@ func Exec[endian Endianness](p Program, in Input) (uint32, error) {
 
 // ExecutionMetrics represents the result of executing a BPF program.
 type ExecutionMetrics struct {
-	// ReturnValue is the result of the program execution.
-	ReturnValue uint32
-
 	// Coverage maps instruction indexes to whether or not they were executed.
 	// This slice has the same size as the number of instructions as the BPF
 	// program that was run, so it can be used as a way to get the program size.
@@ -400,6 +397,9 @@ type ExecutionMetrics struct {
 	// InputAccessed maps input byte offsets to whether or not they were
 	// read by the program during execution.
 	InputAccessed []bool
+
+	// ReturnValue is the result of the program execution.
+	ReturnValue uint32
 }
 
 // String returns a human-readable view of an `Execution`.

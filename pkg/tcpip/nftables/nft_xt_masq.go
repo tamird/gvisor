@@ -44,12 +44,14 @@ type masqTargetInfo struct {
 
 // compatMASQTarget implements the xtables MASQUERADE target extension.
 type compatMASQTarget struct {
-	// revision is the XTables MASQUERADE target extension revision.
-	revision uint32
 	// infoData is the raw netlink attribute payload; saved for dump.
 	infoData []byte
+
 	// info contains the port range parameters.
 	info masqTargetInfo
+
+	// revision is the XTables MASQUERADE target extension revision.
+	revision uint32
 }
 
 // evaluate implements operation.evaluate.

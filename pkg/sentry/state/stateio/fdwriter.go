@@ -29,19 +29,6 @@ import (
 // FDWriter implements AsyncWriter for a host file descriptor.
 type FDWriter struct {
 	NoRegisterClientFD
-
-	// fd is the file descriptor.
-	fd atomicbitops.Int32
-
-	// maxWriteBytes and maxRanges are AsyncWriter parameters. Both are
-	// immutable.
-	maxWriteBytes uint32
-	maxRanges     uint32
-
-	// preextend is true if fd's size should be explicitly extended before
-	// writing.
-	preextend bool
-
 	q        aio.Queue
 	inflight []fdWrite
 	cs       []aio.Completion
@@ -58,13 +45,25 @@ type FDWriter struct {
 	// reserved is the value passed to the last call to Reserve that has not
 	// yet resulted in file extension.
 	reserved int64
+
+	// fd is the file descriptor.
+	fd atomicbitops.Int32
+
+	// maxWriteBytes and maxRanges are AsyncWriter parameters. Both are
+	// immutable.
+	maxWriteBytes uint32
+	maxRanges     uint32
+
+	// preextend is true if fd's size should be explicitly extended before
+	// writing.
+	preextend bool
 }
 
 type fdWrite struct {
+	src   LocalClientRanges
 	off   int64
 	done  uint64
 	total uint64
-	src   LocalClientRanges
 }
 
 // NewFDWriter returns an FDWriter that writes to the given host file

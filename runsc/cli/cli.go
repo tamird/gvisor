@@ -382,15 +382,15 @@ func userLogEmitter(conf *config.Config, subcommand string) (log.Emitter, bool) 
 }
 
 type bufferedLog struct {
-	depth     int
-	level     log.Level
 	timestamp time.Time
 	message   string
+	depth     int
+	level     log.Level
 }
 
 type bufferedEmitter struct {
-	mu     sync.Mutex
 	buffer []bufferedLog
+	mu     sync.Mutex
 }
 
 // Emit implements log.Emitter.Emit.

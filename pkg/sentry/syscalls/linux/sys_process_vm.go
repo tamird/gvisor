@@ -159,8 +159,8 @@ const maxScratchBufferSize = 1 << 20
 
 type processVMOps struct {
 	mm     *mm.MemoryManager
-	ioOpts usermem.IOOpts
 	iovecs []hostarch.AddrRange
+	ioOpts usermem.IOOpts
 }
 
 func processVMCopyIovecs(t *kernel.Task, readOps, writeOps processVMOps) (int, error) {

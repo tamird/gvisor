@@ -50,11 +50,10 @@ var _ NetworkEndpoint = (*fwdTestNetworkEndpoint)(nil)
 // use the first three: destination address, source address, and transport
 // protocol. They're all one byte fields to simplify parsing.
 type fwdTestNetworkEndpoint struct {
-	AddressableEndpointState
-
 	nic        NetworkInterface
-	proto      *fwdTestNetworkProtocol
 	dispatcher TransportDispatcher
+	proto      *fwdTestNetworkProtocol
+	AddressableEndpointState
 
 	mu struct {
 		sync.RWMutex
@@ -170,12 +169,11 @@ var _ NetworkProtocol = (*fwdTestNetworkProtocol)(nil)
 // fwdTestNetworkProtocol is a network-layer protocol that implements Address
 // resolution.
 type fwdTestNetworkProtocol struct {
-	stack *Stack
-
+	stack                  *Stack
 	neigh                  *neighborCache
-	addrResolveDelay       time.Duration
 	onLinkAddressResolved  func(*neighborCache, tcpip.Address, tcpip.LinkAddress)
 	onResolveStaticAddress func(tcpip.Address) (tcpip.LinkAddress, bool)
+	addrResolveDelay       time.Duration
 }
 
 func (*fwdTestNetworkProtocol) Number() tcpip.NetworkProtocolNumber {
@@ -261,11 +259,11 @@ var _ LinkEndpoint = (*fwdTestLinkEndpoint)(nil)
 
 type fwdTestLinkEndpoint struct {
 	dispatcher NetworkDispatcher
-	mtu        uint32
-	linkAddr   tcpip.LinkAddress
 
 	// C is where outbound packets are queued.
-	C chan *PacketBuffer
+	C        chan *PacketBuffer
+	linkAddr tcpip.LinkAddress
+	mtu      uint32
 }
 
 // InjectInbound injects an inbound packet.

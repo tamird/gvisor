@@ -25,20 +25,37 @@ import (
 // BufReader implements io.ReadCloser for an AsyncReader by reading into a
 // buffering memfd.
 type BufReader struct {
+	// bufErr is the error returned at the end of the current chunk.
+	bufErr error
+
+	// df represents the file backing the buffer. df is immutable.
+	df DestinationFile
+
+	// ar is the data source. ar is immutable.
+	ar AsyncReader
+
+	// If waitErr is non-nil, it is the error returned by ar.Wait().
+	waitErr error
+
+	// chunks holds read completion state for each chunk. The chunks slice
+	// header is immutable.
+	chunks []bufReaderChunk
+
 	// The BufReader's buffer is logically divided into numChunks chunks of
 	// equal length. Each chunk is filled from the AsyncReader as soon as it
 	// becomes empty.
 
 	// buf is the whole buffer. buf[bufStart:bufEnd] is the unread part of the
-	// current chunk. bufErr is the error to be returned at the end of the
 	// current chunk.
-	buf      []byte
+	buf []byte
+
+	// cs is a slice of completions whose storage is reused by all calls to
+	// ar.Wait(). The cs slice header is immutable.
+	cs []Completion
+
+	// buf[bufStart:bufEnd] is the unread part of the current chunk.
 	bufStart int
 	bufEnd   int
-	bufErr   error
-
-	// If waitErr is non-nil, it is the error returned by ar.Wait().
-	waitErr error
 
 	// curChunk is the index of the current chunk.
 	curChunk int
@@ -47,6 +64,10 @@ type BufReader struct {
 	// immutable.
 	numChunks int
 
+	// refillOffset is the offset in ar at which the next chunk to be refilled
+	// should be read.
+	refillOffset int64
+
 	// chunksRefillable is the number of chunks preceding curChunk that should
 	// be read.
 	chunksRefillable int
@@ -54,33 +75,15 @@ type BufReader struct {
 	// chunkLen is the size of each chunk in bytes. chunkLen is immutable.
 	chunkLen int
 
-	// chunks holds read completion state for each chunk. The chunks slice
-	// header is immutable.
-	chunks []bufReaderChunk
-
 	// stopReading is set after any call to ar.Wait() returns a non-nil
 	// Completion.Err. stopReading is primarily used to avoid issuing useless
 	// reads after reaching EOF.
 	stopReading bool
-
-	// refillOffset is the offset in ar at which the next chunk to be refilled
-	// should be read.
-	refillOffset int64
-
-	// ar is the data source. ar is immutable.
-	ar AsyncReader
-
-	// df represents the file backing the buffer. df is immutable.
-	df DestinationFile
-
-	// cs is a slice of completions whose storage is reused by all calls to
-	// ar.Wait(). The cs slice header is immutable.
-	cs []Completion
 }
 
 type bufReaderChunk struct {
-	readyLen int
 	err      error
+	readyLen int
 }
 
 // NewBufReader returns a BufReader that reads from ar. If size is positive, it

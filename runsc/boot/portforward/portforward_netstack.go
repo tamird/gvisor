@@ -33,12 +33,15 @@ import (
 type netstackConn struct {
 	// ep is the tcpip.Endpoint on which to read and write.
 	ep tcpip.Endpoint
-	// port is the port on which to connect.
-	port uint16
+
 	// wq is the WaitQueue for this connection to wait on notifications.
 	wq *waiter.Queue
+
 	// once makes sure Close is called once.
 	once sync.Once
+
+	// port is the port on which to connect.
+	port uint16
 }
 
 // NewNetstackConn creates a new port forwarding connection to the given

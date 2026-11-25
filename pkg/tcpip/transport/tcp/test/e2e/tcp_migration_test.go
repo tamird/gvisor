@@ -210,8 +210,8 @@ func TestRestoreListenWithPreexistingConnection(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name        string
 		setupProbes func(t *testing.T, c *testcontext.Context) []tcpip.Endpoint
+		name        string
 	}{
 		{
 			name: "EstablishedProbeConnection",

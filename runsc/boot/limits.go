@@ -36,9 +36,9 @@ func findName(lt limits.LimitType) string {
 var defaults defs
 
 type defs struct {
-	mu  sync.Mutex
-	set *limits.LimitSet
 	err error
+	set *limits.LimitSet
+	mu  sync.Mutex
 }
 
 func (d *defs) get() (*limits.LimitSet, error) {

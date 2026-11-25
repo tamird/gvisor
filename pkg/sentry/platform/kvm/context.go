@@ -34,14 +34,14 @@ type platformContext struct {
 	// machine is the parent machine, and is immutable.
 	machine *machine
 
-	// info is the linux.SignalInfo cached for this platformContext.
-	info linux.SignalInfo
+	// cpu is the vCPU this platformContext acquired for its last switch.
+	cpu atomic.Pointer[vCPU]
 
 	// interrupt is the interrupt platformContext.
 	interrupt interrupt.Forwarder
 
-	// cpu is the vCPU this platformContext acquired for its last switch.
-	cpu atomic.Pointer[vCPU]
+	// info is the linux.SignalInfo cached for this platformContext.
+	info linux.SignalInfo
 
 	// lastUsedCPU is the last CPU ID used by this platformContext.
 	lastUsedCPU atomicbitops.Int32

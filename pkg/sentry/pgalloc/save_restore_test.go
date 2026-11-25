@@ -481,8 +481,8 @@ func BenchmarkSaveToDiskBacked(b *testing.B) {
 // put it between the successful reads so that they straddle the error.
 type shortPageBatch struct {
 	stateio.AsyncReader
-	queued int
 	sizes  []uint64
+	queued int
 }
 
 func (r *shortPageBatch) AddRead(id int, off int64, file stateio.DestinationFile, fr memmap.FileRange, dst []byte) {

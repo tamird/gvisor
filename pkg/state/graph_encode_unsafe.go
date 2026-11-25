@@ -78,9 +78,13 @@ type chunk struct {
 //     StateSave runs at most once per value.
 type encObject struct {
 	// base is the address of the object, and keeps it alive.
-	base      unsafe.Pointer
+	base unsafe.Pointer
+	ti   *typeInfo
+
+	// x holds the state of arrays and of objects that absorbed others.
+	x *objExtra
+
 	addr, end uintptr
-	ti        *typeInfo
 	n         uintptr
 	isArray   bool
 	isMap     bool
@@ -101,9 +105,6 @@ type encObject struct {
 	ch     chunk
 	hasCov bool
 	hasCh  bool
-
-	// x holds the state of arrays and of objects that absorbed others.
-	x *objExtra
 
 	// stamp deduplicates query results.
 	stamp uint32
@@ -189,14 +190,14 @@ func (es *graphEncodeState) addChunk(o *encObject, ch chunk) {
 
 // encTarget is the target of pointers: a location within an object.
 type encTarget struct {
-	obj int32
-	off uintptr
-	ti  *typeInfo
-	// next is the next target with the same address, or -1.
-	next int32
+	ti *typeInfo
 	// ptr keeps zero-sized pointees alive until save resolves addr.
 	ptr  unsafe.Pointer
+	off  uintptr
 	addr uintptr
+	obj  int32
+	// next is the next target with the same address, or -1.
+	next int32
 }
 
 // work is an object, or a range of array elements, to encode.
@@ -223,8 +224,8 @@ type blockEntry struct {
 
 // splice is an encoding to reuse when encoding a containing object.
 type splice struct {
-	addr  uintptr
 	ti    *typeInfo
+	addr  uintptr
 	count uintptr
 	seg   segment
 	used  bool
@@ -239,70 +240,10 @@ type traversalKey struct {
 
 // graphEncodeState is the state of Save.
 type graphEncodeState struct {
-	ctx context.Context
-
-	// out holds the encodings of objects.
-	out encBuf
-
-	// final holds the stream.
-	final encBuf
-
-	objs    chunked[encObject]
-	targets chunked[encTarget]
-
-	typeCache typeCache
-
-	// byAddr maps addresses to the first target at that address.
-	byAddr addrMap
-	// maps maps map pointers to their targets.
-	maps map[unsafe.Pointer]int32
-	// blocks maps blocks of memory to the objects that intersect them.
-	blocks       addrMap
-	blockEntries []blockEntry
-	stamp        uint32
-	queryResult  []int32
-
-	queue     []work
-	queueHead int
-
-	// zeroTargets are targets of zero-sized types.
-	zeroTargets []int32
-
+	typeCache  typeCache
+	ctx        context.Context
 	traversals map[traversalKey]bool
-
-	// splices are the encodings to reuse while encoding the current work,
-	// sorted by address. [spliceLo, spliceLo+spliceSpan) bounds the addresses
-	// of remaining unused splices (spliceSpan == 0 when none remain).
-	splices              []splice
-	spliceLo, spliceSpan uintptr
-
-	// refs are the targets referenced in out, in order. segRefs indexes
-	// refs by the non-empty segments of out, which are created in order and
-	// cover it. They are kept outside of segments to keep encObject small.
-	refs      []int32
-	segRefs   []segmentRefs
-	liveBits  []bool
-	liveQueue []int32
-	// refMarks marks targets with refStamp, for pruneUnreachable.
-	refMarks []uint32
-	refStamp uint32
-
-	types typeTable
-
-	binaryBuf []byte
-
-	mapSlots map[*typeInfo]mapSlots
-
-	// coverBuf and absorbBuf are scratch slices reused across cover and
-	// newContainer calls.
-	coverBuf  []elemRange
-	absorbBuf []int32
-	// tmpRange and tmpChunk are 1-element arrays sliced via [:] in coveredList
-	// and chunkList to return a 1-element slice for inline single-range arrays
-	// (o.cov / o.ch) without heap allocation or taking a slice into movable
-	// chunked[encObject] storage.
-	tmpRange [1]elemRange
-	tmpChunk [1]chunk
+	mapSlots   map[*typeInfo]mapSlots
 
 	// mapPtr holds the map being encoded.
 	mapPtr unsafe.Pointer
@@ -310,7 +251,63 @@ type graphEncodeState struct {
 	// copies are storage for copies of values, by type.
 	copies map[*typeInfo][]reflect.Value
 
-	stats graphStats
+	// maps maps map pointers to their targets.
+	maps         map[unsafe.Pointer]int32
+	types        typeTable
+	blockEntries []blockEntry
+	binaryBuf    []byte
+	queryResult  []int32
+	queue        []work
+
+	// zeroTargets are targets of zero-sized types.
+	zeroTargets []int32
+
+	// coverBuf and absorbBuf are scratch slices reused across cover and
+	// newContainer calls.
+	coverBuf []elemRange
+
+	// refs are the targets referenced in out, in order. segRefs indexes
+	// refs by the non-empty segments of out, which are created in order and
+	// cover it. They are kept outside of segments to keep encObject small.
+	refs []int32
+
+	// out holds the encodings of objects.
+	out encBuf
+
+	// splices are the encodings to reuse while encoding the current work,
+	// sorted by address. [spliceLo, spliceLo+spliceSpan) bounds the addresses
+	// of remaining unused splices (spliceSpan == 0 when none remain).
+	splices []splice
+
+	// final holds the stream.
+	final     encBuf
+	liveQueue []int32
+	segRefs   []segmentRefs
+	liveBits  []bool
+	absorbBuf []int32
+
+	// refMarks marks targets with refStamp, for pruneUnreachable.
+	refMarks []uint32
+	objs     chunked[encObject]
+	targets  chunked[encTarget]
+
+	// byAddr maps addresses to the first target at that address.
+	byAddr addrMap
+
+	// blocks maps blocks of memory to the objects that intersect them.
+	blocks addrMap
+	stats  graphStats
+
+	// tmpRange and tmpChunk are 1-element arrays sliced via [:] in coveredList
+	// and chunkList to return a 1-element slice for inline single-range arrays
+	// (o.cov / o.ch) without heap allocation or taking a slice into movable
+	// chunked[encObject] storage.
+	tmpChunk             [1]chunk
+	tmpRange             [1]elemRange
+	spliceLo, spliceSpan uintptr
+	queueHead            int
+	stamp                uint32
+	refStamp             uint32
 }
 
 // graphDummyAddr returns the runtime address of zero-sized allocations.

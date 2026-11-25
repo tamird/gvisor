@@ -221,8 +221,8 @@ func (e LinePosition) Simplified() string {
 //
 // These can be chained.
 type CallSite struct {
-	LocalPos token.Pos
 	Resolved LinePosition
+	LocalPos token.Pos
 }
 
 // IsValid indicates whether the CallSite is valid or not.
@@ -240,8 +240,8 @@ func (cs *CallSite) IsValid() bool {
 //
 // All fields are exported for gob.
 type Escapes struct {
-	CallSites [reasonCount][]CallSite
 	Details   [reasonCount]string
+	CallSites [reasonCount][]CallSite
 	Omitted   [reasonCount]int
 }
 
@@ -621,10 +621,10 @@ func (calls callSet) forKind(kind callKind) callSet {
 // An entry line associates it conservatively with a source body. Zero means
 // that ownership is known only to the source file named by TEXT.
 type compiledFunction struct {
+	unlocated callSet
 	symbol    gosym.Sym
 	filename  string
 	entryLine int
-	unlocated callSet
 }
 
 type compiledCode struct {

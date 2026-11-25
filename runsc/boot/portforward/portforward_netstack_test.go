@@ -29,16 +29,15 @@ import (
 )
 
 type baseTCPEndpointImpl struct {
-	mu sync.Mutex
-
-	// +checklocks:mu
-	closed bool
-
 	// +checklocks:mu
 	readBuf bytes.Buffer
 
 	// +checklocks:mu
 	writeBuf bytes.Buffer
+	mu       sync.Mutex
+
+	// +checklocks:mu
+	closed bool
 }
 
 // read reads data from the buffer that "Write" writes to.
@@ -124,8 +123,8 @@ func (b *baseTCPEndpointImpl) Shutdown(shutdown tcpip.ShutdownFlags) tcpip.Error
 
 func TestNetstackProxy(t *testing.T) {
 	for _, tc := range []struct {
-		name     string
 		requests map[string]string
+		name     string
 	}{
 		{
 			name: "single",
@@ -326,10 +325,9 @@ func TestNetstackConnReadHandlesShortWrite(t *testing.T) {
 }
 
 type chunkedPacketReadImpl struct {
-	mu sync.Mutex
-
 	// +checklocks:mu
 	data []byte
+	mu   sync.Mutex
 }
 
 func (c *chunkedPacketReadImpl) Close() {}
@@ -366,10 +364,10 @@ func (c *chunkedPacketReadImpl) Shutdown(tcpip.ShutdownFlags) tcpip.Error {
 
 type bufferConn struct {
 	name string
-	mu   sync.Mutex
 
 	// +checklocks:mu
 	buf bytes.Buffer
+	mu  sync.Mutex
 }
 
 func (b *bufferConn) Name() string {
@@ -423,8 +421,8 @@ func TestDoCopyDrainsLargeRead(t *testing.T) {
 
 type readinessRaceEndpoint struct {
 	tcpip.Endpoint
-	impl tcpErrImpl
 	wq   waiter.Queue
+	impl tcpErrImpl
 }
 
 func (e *readinessRaceEndpoint) Read(dst io.Writer, opts tcpip.ReadOptions) (tcpip.ReadResult, tcpip.Error) {

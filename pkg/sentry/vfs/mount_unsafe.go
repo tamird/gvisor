@@ -82,7 +82,7 @@ type mountTable struct {
 	// intrinsics and inline assembly, limiting the performance of this
 	// approach.)
 
-	seq sync.SeqCount `state:"nosave"`
+	slots unsafe.Pointer `state:"nosave"` // []mountSlot; never nil after Init
 
 	// size holds both length (number of elements) and capacity (number of
 	// slots): capacity is stored as its base-2 log (referred to as order) in
@@ -94,8 +94,7 @@ type mountTable struct {
 	// thus this bit packing gets us more bits for the length (vs. storing
 	// length and cap in separate uint32s) for ~free.
 	size atomicbitops.Uint64
-
-	slots unsafe.Pointer `state:"nosave"` // []mountSlot; never nil after Init
+	seq  sync.SeqCount `state:"nosave"`
 }
 
 type mountSlot struct {

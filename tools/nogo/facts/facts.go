@@ -38,8 +38,8 @@ type Serializer interface {
 
 // item is used for serialiation.
 type item struct {
-	Key   string
 	Value any
+	Key   string
 }
 
 // writeItems is an implementation of Serialize.

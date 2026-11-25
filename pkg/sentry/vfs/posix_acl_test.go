@@ -83,12 +83,12 @@ func aclEqual(a, b PosixACL) bool {
 func TestParsePosixACL(t *testing.T) {
 	ns := auth.NewRootUserNamespace()
 	for _, tc := range []struct {
-		name string
-		src  []byte
 		// wantErr is the expected error; nil means success, in which case want
 		// is compared against the parsed result.
 		wantErr *errors.Error
 		want    *PosixACL
+		name    string
+		src     []byte
 	}{
 		{
 			name: "minimal",

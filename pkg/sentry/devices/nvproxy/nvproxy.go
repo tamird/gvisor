@@ -44,17 +44,17 @@ import (
 
 // Options holds arguments to Register.
 type Options struct {
+	HostSettings *nvconf.HostSettings
+
 	// DriverVersion is the Nvidia GPU driver version.
 	DriverVersion nvconf.DriverVersion
-
-	// AllowUnsupportedDriver allows nvproxy to be initialized with an
-	// unsupported driver version.
-	AllowUnsupportedDriver bool
 
 	// DriverCaps is the set of driver capabilities exposed to applications.
 	DriverCaps nvconf.DriverCaps
 
-	HostSettings *nvconf.HostSettings
+	// AllowUnsupportedDriver allows nvproxy to be initialized with an
+	// unsupported driver version.
+	AllowUnsupportedDriver bool
 
 	// If UseDevGofer is true, open device files via gofer.
 	UseDevGofer bool

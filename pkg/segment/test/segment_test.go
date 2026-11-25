@@ -488,9 +488,9 @@ func TestMerge(t *testing.T) {
 	tests := []struct {
 		name      string
 		initial   []Range
-		split     bool
-		splitAddr int
 		final     []Range
+		splitAddr int
+		split     bool
 	}{
 		{
 			name:    "InsertRange merges after existing segment",
@@ -535,9 +535,9 @@ Tests:
 func TestIsolate(t *testing.T) {
 	tests := []struct {
 		name    string
+		final   []Range
 		initial Range
 		bounds  Range
-		final   []Range
 	}{
 		{
 			name:    "Isolate does not split a segment that falls inside bounds",
@@ -594,8 +594,8 @@ func TestMutateRange(t *testing.T) {
 	tests := []struct {
 		name      string
 		initial   []FlatSegment
-		increment Range
 		final     []FlatSegment
+		increment Range
 	}{
 		{
 			name:      "MutateRange no-op in empty set",

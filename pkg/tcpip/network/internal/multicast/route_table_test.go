@@ -91,10 +91,10 @@ func installedRouteComparer(a *InstalledRoute, b *InstalledRoute) bool {
 
 func TestInit(t *testing.T) {
 	tests := []struct {
-		name        string
 		config      Config
-		invokeTwice bool
 		wantErr     error
+		name        string
+		invokeTwice bool
 	}{
 		{
 			name:        "MissingClock",
@@ -267,8 +267,8 @@ func TestAddInstalledRouteWithPending(t *testing.T) {
 
 	testCases := []struct {
 		name    string
-		advance time.Duration
 		want    []*stack.PacketBuffer
+		advance time.Duration
 	}{
 		{
 			name:    "not expired",
@@ -417,7 +417,7 @@ func TestRemoveAllInstalledRoutes(t *testing.T) {
 	}
 
 	routes := map[stack.UnicastSourceAndMulticastDestination]stack.MulticastRoute{
-		defaultRouteKey:              defaultRoute,
+		defaultRouteKey: defaultRoute,
 		{Source: otherAddress, Destination: otherAddress}: defaultRoute,
 	}
 

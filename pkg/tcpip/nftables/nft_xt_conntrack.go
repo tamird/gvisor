@@ -48,10 +48,12 @@ type ctMatchInfo struct {
 // It evaluates connection tracking state and
 // direction against packet conntrack info.
 type compatCTMatch struct {
-	// revision is the XTables conntrack match extension revision (1, 2, or 3).
-	revision uint32
 	// infoData is the raw netlink attribute payload for serialization (NFTA_MATCH_INFO).
 	infoData []byte
+
+	// revision is the XTables conntrack match extension revision (1, 2, or 3).
+	revision uint32
+
 	// info holds the precomputed match flags and state masks.
 	info ctMatchInfo
 }

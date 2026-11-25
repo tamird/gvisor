@@ -75,9 +75,9 @@ func (*InternalSubCommand) InternalFetchSpec() (string, *specs.Spec, error) {
 var ErrorLogger io.Writer
 
 type jsonError struct {
+	Time  time.Time `json:"time"`
 	Msg   string    `json:"msg"`
 	Level string    `json:"level"`
-	Time  time.Time `json:"time"`
 }
 
 // Writer writes to log and stdout.

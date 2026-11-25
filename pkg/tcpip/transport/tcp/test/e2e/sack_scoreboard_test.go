@@ -119,8 +119,8 @@ func TestSACKScoreboardIsRangeLost(t *testing.T) {
 	const largeMSS = 1 << 15
 	for _, test := range []struct {
 		name        string
-		mss         uint16
 		sackedBytes seqnum.Size
+		mss         uint16
 		lost        bool
 	}{
 		{name: "below_byte_threshold", mss: smss, sackedBytes: 2*smss - 1},

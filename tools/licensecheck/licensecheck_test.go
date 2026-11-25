@@ -136,10 +136,10 @@ func TestLLVMSourceDependency(t *testing.T) {
 func TestModuleLicenses(t *testing.T) {
 	const prefix = "example.com/module@v1.0.0/"
 	for _, test := range []struct {
-		name    string
 		files   map[string]string
-		want    Licenses
+		name    string
 		wantErr string
+		want    Licenses
 	}{
 		{
 			name: "split notices",

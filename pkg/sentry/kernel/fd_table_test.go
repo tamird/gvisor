@@ -36,10 +36,10 @@ const (
 
 // testFD is a read-only FileDescriptionImpl representing a regular file.
 type testFD struct {
-	vfsfd vfs.FileDescription
 	vfs.FileDescriptionDefaultImpl
 	vfs.DentryMetadataFileDescriptionImpl
 	vfs.NoLockFD
+	vfsfd vfs.FileDescription
 }
 
 // Release implements FileDescriptionImpl.Release.

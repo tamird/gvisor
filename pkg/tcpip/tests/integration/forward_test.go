@@ -69,12 +69,11 @@ func TestForwarding(t *testing.T) {
 
 	type endpointAndAddresses struct {
 		serverEP         tcpip.Endpoint
-		serverAddr       tcpip.Address
-		serverReadableCH chan struct{}
-
 		clientEP         tcpip.Endpoint
-		clientAddr       tcpip.Address
+		serverReadableCH chan struct{}
 		clientReadableCH chan struct{}
+		serverAddr       tcpip.Address
+		clientAddr       tcpip.Address
 	}
 
 	newEP := func(t *testing.T, s *stack.Stack, transProto tcpip.TransportProtocolNumber, netProto tcpip.NetworkProtocolNumber) (tcpip.Endpoint, chan struct{}) {
@@ -95,8 +94,8 @@ func TestForwarding(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
 		epAndAddrs func(t *testing.T, host1Stack, routerStack, host2Stack *stack.Stack, proto tcpip.TransportProtocolNumber) endpointAndAddresses
+		name       string
 	}{
 		{
 			name: "IPv4 host1 server with host2 client",
@@ -165,11 +164,11 @@ func TestForwarding(t *testing.T) {
 	}
 
 	subTests := []struct {
-		name               string
-		proto              tcpip.TransportProtocolNumber
 		expectedConnectErr tcpip.Error
 		setupServer        func(t *testing.T, ep tcpip.Endpoint)
 		setupServerConn    func(t *testing.T, ep tcpip.Endpoint, ch <-chan struct{}, clientAddr tcpip.FullAddress) (tcpip.Endpoint, chan struct{})
+		name               string
+		proto              tcpip.TransportProtocolNumber
 		needRemoteAddr     bool
 	}{
 		{
@@ -374,12 +373,12 @@ func TestUnicastForwarding(t *testing.T) {
 	)
 
 	tests := []struct {
-		name             string
-		netProto         tcpip.NetworkProtocolNumber
-		srcAddr, dstAddr tcpip.Address
 		rx               func(*channel.Endpoint, tcpip.Address, tcpip.Address)
-		expectForward    bool
 		checker          func(*testing.T, *buffer.View)
+		name             string
+		srcAddr, dstAddr tcpip.Address
+		netProto         tcpip.NetworkProtocolNumber
+		expectForward    bool
 	}{
 		{
 			name:          "IPv4 link-local source",
@@ -550,10 +549,10 @@ func TestPerInterfaceForwarding(t *testing.T) {
 	)
 
 	tests := []struct {
-		name             string
-		srcAddr, dstAddr tcpip.Address
 		rx               func(*channel.Endpoint, tcpip.Address, tcpip.Address)
 		checker          func(*testing.T, *buffer.View)
+		name             string
+		srcAddr, dstAddr tcpip.Address
 	}{
 		{
 			name:    "IPv4 unicast",
@@ -641,10 +640,10 @@ func TestPerInterfaceForwarding(t *testing.T) {
 
 			nicsInfo := s.NICInfo()
 			for _, subTest := range [...]struct {
-				nicID            tcpip.NICID
 				nicEP            *channel.Endpoint
-				otherNICID       tcpip.NICID
 				otherNICEP       *channel.Endpoint
+				nicID            tcpip.NICID
+				otherNICID       tcpip.NICID
 				expectForwarding bool
 			}{
 				{

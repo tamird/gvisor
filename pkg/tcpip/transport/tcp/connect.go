@@ -714,9 +714,9 @@ func (h *handshake) transitionToStateEstablishedLocked(s *segment) {
 }
 
 type backoffTimer struct {
+	t          tcpip.Timer
 	timeout    time.Duration
 	maxTimeout time.Duration
-	t          tcpip.Timer
 }
 
 func newBackoffTimer(clock tcpip.Clock, timeout, maxTimeout time.Duration, f func()) (*backoffTimer, tcpip.Error) {
@@ -826,17 +826,17 @@ func makeSynOptions(opts header.TCPSynOptions) []byte {
 // tcpFields is a struct to carry different parameters required by the
 // send*TCP variant functions below.
 type tcpFields struct {
+	opts      []byte
 	id        stack.TransportEndpointID
-	ttl       uint8
-	tos       uint8
-	flags     header.TCPFlags
 	seq       seqnum.Value
 	ack       seqnum.Value
 	rcvWnd    seqnum.Size
-	opts      []byte
 	txHash    uint32
-	df        bool
 	expOptVal uint16
+	ttl       uint8
+	tos       uint8
+	flags     header.TCPFlags
+	df        bool
 }
 
 func (e *Endpoint) countRetransmits(packets uint64) {

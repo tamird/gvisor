@@ -33,10 +33,9 @@ const ContMgrEvent = "containerManager.Event"
 
 // EventOut is the return type of the Event command.
 type EventOut struct {
-	Event Event `json:"event"`
-
 	// ContainerUsage maps each container ID to its total CPU usage.
 	ContainerUsage map[string]uint64 `json:"containerUsage"`
+	Event          Event             `json:"event"`
 }
 
 // Event struct for encoding the event data to JSON. Corresponds to runc's
@@ -50,10 +49,10 @@ type Event struct {
 // Stats is the runc specific stats structure for stability when encoding and
 // decoding stats.
 type Stats struct {
+	NetworkInterfaces []*NetworkInterface `json:"network_interfaces"`
 	CPU               CPU                 `json:"cpu"`
 	Memory            Memory              `json:"memory"`
 	Pids              Pids                `json:"pids"`
-	NetworkInterfaces []*NetworkInterface `json:"network_interfaces"`
 }
 
 // Pids contains stats on processes.
@@ -72,12 +71,12 @@ type MemoryEntry struct {
 
 // Memory contains stats on memory.
 type Memory struct {
-	Cache     uint64            `json:"cache,omitempty"`
+	Raw       map[string]uint64 `json:"raw,omitempty"`
 	Usage     MemoryEntry       `json:"usage"`
 	Swap      MemoryEntry       `json:"swap"`
 	Kernel    MemoryEntry       `json:"kernel"`
 	KernelTCP MemoryEntry       `json:"kernelTCP"`
-	Raw       map[string]uint64 `json:"raw,omitempty"`
+	Cache     uint64            `json:"cache,omitempty"`
 }
 
 // CPU contains stats on the CPU.
@@ -87,8 +86,8 @@ type CPU struct {
 
 // CPUUsage contains stats on CPU usage.
 type CPUUsage struct {
+	PerCPU []uint64 `json:"percpu,omitempty"`
 	Kernel uint64   `json:"kernel,omitempty"`
 	User   uint64   `json:"user,omitempty"`
 	Total  uint64   `json:"total,omitempty"`
-	PerCPU []uint64 `json:"percpu,omitempty"`
 }

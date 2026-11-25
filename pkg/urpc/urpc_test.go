@@ -27,14 +27,14 @@ type test struct {
 
 type testArg struct {
 	StringArg string
-	IntArg    int
 	FilePayload
+	IntArg int
 }
 
 type testResult struct {
 	StringResult string
-	IntResult    int
 	FilePayload
+	IntResult int
 }
 
 func (t test) Func(a *testArg, r *testResult) error {

@@ -67,9 +67,9 @@ func masqueradeFilter(netProto tcpip.NetworkProtocolNumber) stack.IPHeaderFilter
 func TestMasqueradeTargetMakerUnmarshal(t *testing.T) {
 	for _, test := range []struct {
 		name      string
-		netProto  tcpip.NetworkProtocolNumber
 		buf       []byte
 		wantPorts stack.PortOrIdentRange
+		netProto  tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:     "ipv4",
@@ -145,8 +145,8 @@ func TestMasqueradeTargetMakerUnmarshal(t *testing.T) {
 func TestMasqueradeTargetMakerUnmarshalInvalid(t *testing.T) {
 	for _, test := range []struct {
 		name     string
-		netProto tcpip.NetworkProtocolNumber
 		buf      []byte
+		netProto tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:     "ipv4 short",
@@ -236,10 +236,10 @@ func TestMasqueradeTargetMakerUnmarshalInvalid(t *testing.T) {
 
 func TestMasqueradeTargetMakerMarshalWithoutRaw(t *testing.T) {
 	for _, test := range []struct {
-		name     string
-		netProto tcpip.NetworkProtocolNumber
-		ports    stack.PortOrIdentRange
 		want     marshal.Marshallable
+		name     string
+		ports    stack.PortOrIdentRange
+		netProto tcpip.NetworkProtocolNumber
 	}{
 		{
 			name:     "ipv4",

@@ -239,6 +239,8 @@ func ZeroTemperaturePrompt(text string) *Prompt {
 
 // Prompt is an sglang prompt.
 type Prompt struct {
+	// Options maps parameter names to JSON-compatible values.
+	Options map[string]any
 
 	// Text is the prompt string.
 	// Common leading whitespace will be removed.
@@ -247,9 +249,6 @@ type Prompt struct {
 	// images is a set of attached images.
 	// Use AddImage to add an image.
 	images [][]byte
-
-	// Options maps parameter names to JSON-compatible values.
-	Options map[string]any
 }
 
 // AddImage attaches an image to the prompt.
@@ -376,8 +375,8 @@ type responseJSON struct {
 
 // Response represents a response to a query from SGLang.
 type Response struct {
-	data    []*responseJSON
 	metrics llmutil.ResponseMetrics
+	data    []*responseJSON
 }
 
 // Done returns whether the response was completely generated.

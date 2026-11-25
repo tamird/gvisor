@@ -119,9 +119,9 @@ type apmShardMutationData struct {
 }
 
 type apmShardLookupData struct {
-	seq   sync.SeqCount  // allows atomic reads of slots+mask
 	slots unsafe.Pointer // [mask+1]slot or nil; protected by rehashMu/seq
 	mask  uintptr        // always (a power of 2) - 1; protected by rehashMu/seq
+	seq   sync.SeqCount  // allows atomic reads of slots+mask
 }
 
 const (

@@ -16,6 +16,8 @@
 
 package ring0
 
+import "gvisor.dev/gvisor/pkg/ring0/pagetables"
+
 const (
 	// UserspaceSize is the total size of userspace.
 	UserspaceSize = uintptr(1) << VirtualAddressBits
@@ -26,6 +28,16 @@ const (
 	// KernelStartAddress is the starting kernel address.
 	KernelStartAddress = ^uintptr(0) - (UserspaceSize - 1)
 )
+
+// Kernel is a global kernel object.
+//
+// This contains global state, shared by multiple CPUs.
+type Kernel struct {
+	KernelArchState
+
+	// PageTables are the kernel pagetables; this must be provided.
+	PageTables *pagetables.PageTables
+}
 
 // KernelArchState contains architecture-specific state.
 type KernelArchState struct {

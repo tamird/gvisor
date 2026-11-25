@@ -399,6 +399,9 @@ func (p *numberPacker) portTo(other *numberPacker, n packedNumber) packedNumber 
 // the owning Verifier's mutex. The snapshot has no owner backpointer from
 // which checklocks could name that lock.
 type distributionSnapshot struct {
+	// numSamples is the number of samples in each bucket.
+	numSamples []packedNumber
+
 	// sum is the sum of all samples across all buckets.
 	sum packedNumber
 
@@ -417,24 +420,18 @@ type distributionSnapshot struct {
 	// If non-zero, it is always a floating-point number.
 	// It is only meaningful when count >= 2.
 	ssd packedNumber
-
-	// numSamples is the number of samples in each bucket.
-	numSamples []packedNumber
 }
 
 // verifiableMetric verifies a single metric within a Verifier.
 type verifiableMetric struct {
 	// Definition fields and the verifier pointer are not reassigned after
 	// construction.
-	metadata              *pb.MetricMetadata
-	wantMetric            Metric
-	numFields             uint32
-	verifier              *Verifier
-	allowedFieldValues    map[string]map[string]struct{}
-	wantBucketUpperBounds []Number
+	metadata           *pb.MetricMetadata
+	verifier           *Verifier
+	allowedFieldValues map[string]map[string]struct{}
 
-	// The following fields are used to verify that values are actually increasing monotonically.
-	// They are mapped by their combination of field values.
+	// lastCounterValue and lastDistributionSnapshot track monotonic values.
+	// They are keyed by their combination of field values.
 
 	// lastCounterValue is used for counter metrics.
 	//
@@ -445,6 +442,9 @@ type verifiableMetric struct {
 	//
 	// +checklocks:verifier.mu
 	lastDistributionSnapshot map[string]*distributionSnapshot
+	wantMetric               Metric
+	wantBucketUpperBounds    []Number
+	numFields                uint32
 }
 
 // newVerifiableMetric creates a new verifiableMetric that can verify the
@@ -808,11 +808,14 @@ func (v *verifiableMetric) repackUnseen(metricFieldsSeen map[string]struct{}, ol
 // A single Verifier should be used per sandbox. It is expected to be reused across exports such
 // that it can enforce the export snapshot timestamp is strictly monotonically increasing.
 type Verifier struct {
+	// lastTimestamp is the snapshot timestamp of the last successfully-verified snapshot.
+	//
+	// +checklocks:mu
+	lastTimestamp time.Time
+
 	// knownMetrics is populated at construction and not modified afterward.
 	// Per-metric verification history is protected by mu.
 	knownMetrics map[string]*verifiableMetric
-
-	mu sync.Mutex
 
 	// internMap is used to intern strings relevant to this verifier only.
 	// Globally-relevant strings should be interned in globalInternMap.
@@ -825,11 +828,7 @@ type Verifier struct {
 	//
 	// +checklocks:mu
 	lastPacker *numberPacker
-
-	// lastTimestamp is the snapshot timestamp of the last successfully-verified snapshot.
-	//
-	// +checklocks:mu
-	lastTimestamp time.Time
+	mu         sync.Mutex
 }
 
 // NewVerifier returns a new metric verifier that can verify the integrity of snapshots against

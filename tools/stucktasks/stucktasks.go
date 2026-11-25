@@ -113,9 +113,9 @@ func analyzeStackDump(scanner *bufio.Scanner, out io.Writer, stuckIds map[uint]s
 
 	// Create histogram with all unique stacks.
 	type counter struct {
-		count int
-		ids   []uint
 		*stack
+		ids   []uint
+		count int
 	}
 	uniq := make(map[string]*counter)
 	for _, stack := range stacks {
@@ -247,7 +247,7 @@ func parseGoroutineID(line string) (uint, error) {
 }
 
 type stack struct {
-	id        uint
 	signature string
 	lines     []string
+	id        uint
 }

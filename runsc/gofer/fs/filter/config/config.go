@@ -29,14 +29,14 @@ import (
 
 // Options are seccomp filter related options.
 type Options struct {
+	VendorSyscalls   precompiledseccomp.VarSyscallNumbers
+	ExtraRules       []seccomp.SyscallRules
 	UDSOpenEnabled   bool
 	UDSCreateEnabled bool
 	ProfileEnabled   bool
 	DirectFS         bool
 	LisafsNeeded     bool
 	CgoEnabled       bool
-	VendorSyscalls   precompiledseccomp.VarSyscallNumbers
-	ExtraRules       []seccomp.SyscallRules
 }
 
 // vendorSyscalls is the set of vendor-specific syscalls that the gofer may

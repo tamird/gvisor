@@ -164,22 +164,22 @@ func main() {
 
 			weight += 10
 			data := struct {
-				Title        string
-				OS           string
-				Arch         string
+				Title    string
+				OS       string
+				Arch     string
+				Syscalls []struct {
+					Name    string
+					DocURL  string
+					Support string
+					Note    string
+					URLs    []string
+					Number  uintptr
+				}
 				Weight       int
 				Total        int
 				Supported    int
 				Unsupported  int
 				Undocumented int
-				Syscalls     []struct {
-					Name    string
-					Number  uintptr
-					DocURL  string
-					Support string
-					Note    string
-					URLs    []string
-				}
 			}{
 				Title:        cases.Title(language.Und, cases.NoLower).String(osName) + "/" + archName,
 				OS:           osName,
@@ -191,11 +191,11 @@ func main() {
 				Undocumented: 0,
 				Syscalls: []struct {
 					Name    string
-					Number  uintptr
 					DocURL  string
 					Support string
 					Note    string
 					URLs    []string
+					Number  uintptr
 				}{},
 			}
 
@@ -218,11 +218,11 @@ func main() {
 
 				data.Syscalls = append(data.Syscalls, struct {
 					Name    string
-					Number  uintptr
 					DocURL  string
 					Support string
 					Note    string
 					URLs    []string
+					Number  uintptr
 				}{
 					Name:    s.Name,
 					Number:  num,

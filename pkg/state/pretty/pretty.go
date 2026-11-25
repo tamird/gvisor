@@ -28,8 +28,8 @@ import (
 )
 
 type printer struct {
-	html      bool
 	typeSpecs map[string]*wire.Type
+	html      bool
 }
 
 func (p *printer) escape(s string) string {
@@ -275,8 +275,8 @@ func (p *printer) printStream(w io.Writer, r io.Reader) (err error) {
 		// loop in decode.go. But we don't register type information,
 		// etc. and just print the raw structures.
 		type objectAndID struct {
-			id  uint64
 			obj wire.Object
+			id  uint64
 		}
 		var (
 			tid     uint64 = 1

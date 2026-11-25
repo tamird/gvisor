@@ -186,12 +186,12 @@ func (c *testContext) sendV6Packet(payload []byte, h *headers, linkEpID tcpip.NI
 
 func TestTransportDemuxerRegister(t *testing.T) {
 	for _, test := range []struct {
+		want  tcpip.Error
 		name  string
 		proto tcpip.NetworkProtocolNumber
-		want  tcpip.Error
 	}{
-		{"failure", ipv6.ProtocolNumber, &tcpip.ErrUnknownProtocol{}},
-		{"success", ipv4.ProtocolNumber, nil},
+		{name: "failure", proto: ipv6.ProtocolNumber, want: &tcpip.ErrUnknownProtocol{}},
+		{name: "success", proto: ipv4.ProtocolNumber, want: nil},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			s := stack.New(stack.Options{
@@ -216,23 +216,23 @@ func TestTransportDemuxerRegister(t *testing.T) {
 
 func TestTransportDemuxerRegisterMultiple(t *testing.T) {
 	type test struct {
-		flags ports.Flags
 		want  tcpip.Error
+		flags ports.Flags
 	}
 	for _, subtest := range []struct {
 		name  string
 		tests []test
 	}{
 		{"zeroFlags", []test{
-			{ports.Flags{}, nil},
-			{ports.Flags{}, &tcpip.ErrPortInUse{}},
+			{flags: ports.Flags{}, want: nil},
+			{flags: ports.Flags{}, want: &tcpip.ErrPortInUse{}},
 		}},
 		{"multibindFlags", []test{
 			// Allow multiple registrations same TransportEndpointID with multibind flags.
-			{ports.Flags{LoadBalanced: true, MostRecent: true}, nil},
-			{ports.Flags{LoadBalanced: true, MostRecent: true}, nil},
+			{flags: ports.Flags{LoadBalanced: true, MostRecent: true}, want: nil},
+			{flags: ports.Flags{LoadBalanced: true, MostRecent: true}, want: nil},
 			// Disallow registration w/same ID for a non-multibindflag.
-			{ports.Flags{TupleOnly: true}, &tcpip.ErrPortInUse{}},
+			{flags: ports.Flags{TupleOnly: true}, want: &tcpip.ErrPortInUse{}},
 		}},
 	} {
 		t.Run(subtest.name, func(t *testing.T) {
@@ -272,12 +272,12 @@ func TestBindToDeviceDistribution(t *testing.T) {
 		bindToDevice tcpip.NICID
 	}
 	tcs := []struct {
-		name string
-		// endpoints will received the inject packets.
-		endpoints []endpointSockopts
 		// wantDistributions is the want ratio of packets received on each
 		// endpoint for each NIC on which packets are injected.
 		wantDistributions map[tcpip.NICID][]float64
+		name              string
+		// endpoints will received the inject packets.
+		endpoints []endpointSockopts
 	}{
 		{
 			name: "BindPortReuse",

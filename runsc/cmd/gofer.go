@@ -103,24 +103,23 @@ type goferSyncFDs struct {
 // filesystem gofer.  This command should not be called directly.
 type Gofer struct {
 	util.InternalSubCommand
-	bundleDir  string
-	ioFDs      sandboxsetup.IntFlags
-	devIoFD    int
-	applyCaps  bool
-	setUpRoot  bool
-	mountConfs specutils.GoferMountConfFlags
+	stopProfiling func()
+	bundleDir     string
+	ioFDs         sandboxsetup.IntFlags
+	mountConfs    specutils.GoferMountConfFlags
+	profileFDs    profile.FDArgs
+	syncFDs       goferSyncFDs
+	devIoFD       int
 
 	// uid and gid are the user and group IDs to switch to after setting up the
 	// user namespace.
-	uid int
-	gid int
-
+	uid              int
+	gid              int
 	specFD           int
 	mountsFD         int
 	goferToHostRPCFD int
-	profileFDs       profile.FDArgs
-	syncFDs          goferSyncFDs
-	stopProfiling    func()
+	applyCaps        bool
+	setUpRoot        bool
 }
 
 // Name implements subcommands.Command.
@@ -414,9 +413,10 @@ func (g *Gofer) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcomm
 func (g *Gofer) serve(spec *specs.Spec, conf *config.Config, root string, ruid int, euid int, rgid int, egid int, groups []int, canSetGroups bool) subcommands.ExitStatus {
 	type connectionConfig struct {
 		sock      *unet.Socket
+		mount     *specs.Mount
 		mountPath string
 		readonly  bool
-		mount     *specs.Mount
+
 		// devGofer is true only for the dev gofer connection, which serves
 		// host device files to the sentry's device proxies (e.g. nvproxy). A
 		// container mount whose destination happens to be "/dev" is not a dev

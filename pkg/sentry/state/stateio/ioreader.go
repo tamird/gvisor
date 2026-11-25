@@ -28,18 +28,18 @@ type IOReader struct {
 	NoRegisterClientFD
 
 	src          io.ReaderAt
-	maxReadBytes uint64
-	maxRanges    int
 	subs         chan ioReaderSubmission
 	cmps         chan Completion
 	shutdown     chan struct{}
 	workers      sync.WaitGroup
+	maxReadBytes uint64
+	maxRanges    int
 }
 
 type ioReaderSubmission struct {
+	dst LocalClientRanges
 	id  int
 	off int64
-	dst LocalClientRanges
 }
 
 // NewIOReader returns a IOReader that reads from src. It takes ownership

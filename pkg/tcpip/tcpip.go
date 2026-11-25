@@ -722,18 +722,18 @@ type ReadOptions struct {
 
 // ReadResult represents result for a successful Endpoint.Read.
 type ReadResult struct {
+	// ControlMessages is the control messages received.
+	ControlMessages ReceivableControlMessages
+
+	// RemoteAddr is the remote address if ReadOptions.NeedAddr is true.
+	RemoteAddr FullAddress
+
 	// Count is the number of bytes received and written to the buffer.
 	Count int
 
 	// Total is the number of bytes of the received packet. This can be used to
 	// determine whether the read is truncated.
 	Total int
-
-	// ControlMessages is the control messages received.
-	ControlMessages ReceivableControlMessages
-
-	// RemoteAddr is the remote address if ReadOptions.NeedAddr is true.
-	RemoteAddr FullAddress
 
 	// LinkPacketInfo is the link-layer information of the received packet if
 	// ReadOptions.NeedLinkPacketInfo is true.
@@ -1287,9 +1287,6 @@ type TCPInfoOption struct {
 	// RTO is the retransmission timeout for the endpoint.
 	RTO time.Duration
 
-	// State is the current endpoint protocol state.
-	State EndpointState
-
 	// CcState is the congestion control state.
 	CcState CongestionControlState
 
@@ -1305,6 +1302,9 @@ type TCPInfoOption struct {
 	// SndSsthresh is the threshold between slow start and congestion
 	// avoidance.
 	SndSsthresh uint32
+
+	// State is the current endpoint protocol state.
+	State EndpointState
 
 	// ReorderSeen indicates if reordering is seen in the endpoint.
 	ReorderSeen bool

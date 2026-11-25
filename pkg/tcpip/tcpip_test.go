@@ -150,13 +150,13 @@ func TestSubnetPrefix(t *testing.T) {
 
 func TestSubnetCreation(t *testing.T) {
 	tests := []struct {
+		want error
 		a    string
 		m    string
-		want error
 	}{
-		{"\xa0", "\xf0", nil},
-		{"\xaa", "\xf0", errSubnetAddressMasked},
-		{"", "", nil},
+		{a: "\xa0", m: "\xf0", want: nil},
+		{a: "\xaa", m: "\xf0", want: errSubnetAddressMasked},
+		{a: "", m: "", want: nil},
 	}
 	for _, tt := range tests {
 		if _, err := NewSubnet(AddrFromSlice(padTo4(tt.a)), MaskFromBytes(padTo4(tt.m))); err != tt.want {
@@ -230,19 +230,19 @@ func TestAddressString(t *testing.T) {
 func TestAddressWithPrefixSubnet(t *testing.T) {
 	tests := []struct {
 		addr       string
-		prefixLen  int
 		subnetAddr string
 		subnetMask string
+		prefixLen  int
 	}{
-		{"\xaa\x55\x33\x42", -1, "\x00\x00\x00\x00", "\x00\x00\x00\x00"},
-		{"\xaa\x55\x33\x42", 0, "\x00\x00\x00\x00", "\x00\x00\x00\x00"},
-		{"\xaa\x55\x33\x42", 1, "\x80\x00\x00\x00", "\x80\x00\x00\x00"},
-		{"\xaa\x55\x33\x42", 7, "\xaa\x00\x00\x00", "\xfe\x00\x00\x00"},
-		{"\xaa\x55\x33\x42", 8, "\xaa\x00\x00\x00", "\xff\x00\x00\x00"},
-		{"\xaa\x55\x33\x42", 24, "\xaa\x55\x33\x00", "\xff\xff\xff\x00"},
-		{"\xaa\x55\x33\x42", 31, "\xaa\x55\x33\x42", "\xff\xff\xff\xfe"},
-		{"\xaa\x55\x33\x42", 32, "\xaa\x55\x33\x42", "\xff\xff\xff\xff"},
-		{"\xaa\x55\x33\x42", 33, "\xaa\x55\x33\x42", "\xff\xff\xff\xff"},
+		{addr: "\xaa\x55\x33\x42", prefixLen: -1, subnetAddr: "\x00\x00\x00\x00", subnetMask: "\x00\x00\x00\x00"},
+		{addr: "\xaa\x55\x33\x42", prefixLen: 0, subnetAddr: "\x00\x00\x00\x00", subnetMask: "\x00\x00\x00\x00"},
+		{addr: "\xaa\x55\x33\x42", prefixLen: 1, subnetAddr: "\x80\x00\x00\x00", subnetMask: "\x80\x00\x00\x00"},
+		{addr: "\xaa\x55\x33\x42", prefixLen: 7, subnetAddr: "\xaa\x00\x00\x00", subnetMask: "\xfe\x00\x00\x00"},
+		{addr: "\xaa\x55\x33\x42", prefixLen: 8, subnetAddr: "\xaa\x00\x00\x00", subnetMask: "\xff\x00\x00\x00"},
+		{addr: "\xaa\x55\x33\x42", prefixLen: 24, subnetAddr: "\xaa\x55\x33\x00", subnetMask: "\xff\xff\xff\x00"},
+		{addr: "\xaa\x55\x33\x42", prefixLen: 31, subnetAddr: "\xaa\x55\x33\x42", subnetMask: "\xff\xff\xff\xfe"},
+		{addr: "\xaa\x55\x33\x42", prefixLen: 32, subnetAddr: "\xaa\x55\x33\x42", subnetMask: "\xff\xff\xff\xff"},
+		{addr: "\xaa\x55\x33\x42", prefixLen: 33, subnetAddr: "\xaa\x55\x33\x42", subnetMask: "\xff\xff\xff\xff"},
 	}
 	for _, tt := range tests {
 		ap := AddressWithPrefix{Address: AddrFromSlice([]byte(tt.addr)), PrefixLen: tt.prefixLen}
@@ -362,11 +362,11 @@ func TestSaveStdClock(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, tc := range []struct {
-		name  string
 		clock *stdClock
+		name  string
 	}{
-		{"live", clock},
-		{"restored", &restored},
+		{name: "live", clock: clock},
+		{name: "restored", clock: &restored},
 	} {
 		// Neither clock can have advanced by more than the time spent
 		// saving and restoring it.

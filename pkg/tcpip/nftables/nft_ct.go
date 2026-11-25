@@ -74,26 +74,32 @@ func (k ctKey) String() string {
 
 // ctGet loads conntrack data into a register.
 type ctGet struct {
-	// key is the key to query conntrack for.
-	key uint32
 	// dregIdx is the index of the destination register in registerSet.data.
 	dregIdx int
-	// dir is the reply or original direction.
-	dir uint8
+
 	// len is the length of data to copy.
 	len int
+
+	// key is the key to query conntrack for.
+	key uint32
+
+	// dir is the reply or original direction.
+	dir uint8
 }
 
 // ctSet sets data from a register.
 type ctSet struct {
-	// key is the key to set data for.
-	key uint32
 	// sregIdx is the index of the source register in registerSet.data.
 	sregIdx int
-	// dir is the reply or original direction.
-	dir uint8
+
 	// len is the length of data to copy.
 	len int
+
+	// key is the key to set data for.
+	key uint32
+
+	// dir is the reply or original direction.
+	dir uint8
 }
 
 // ctInfoOpts returns the ConntrackInfoOpts for the current operation.

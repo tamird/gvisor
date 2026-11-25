@@ -712,13 +712,13 @@ func TestTimerMetric(t *testing.T) {
 
 func TestBucketer(t *testing.T) {
 	for _, test := range []struct {
-		name                    string
 		bucketer                Bucketer
+		name                    string
+		firstFewLowerBounds     []int64
+		successiveBucketSamples []int64
 		minSample               int64
 		maxSample               int64
 		step                    int64
-		firstFewLowerBounds     []int64
-		successiveBucketSamples []int64
 	}{
 		{
 			name:                "static-sized buckets",
@@ -871,9 +871,9 @@ func TestFieldMapperWithFields(t *testing.T) {
 	}
 
 	for _, test := range []struct {
+		errOnCreation error
 		name          string
 		fields        []Field
-		errOnCreation error
 	}{
 		{
 			name:          "FieldMapper8x10",
@@ -1049,12 +1049,12 @@ func TestMetricProfiling(t *testing.T) {
 	for _, test := range []struct {
 		name                 string
 		profilingMetricsFlag string
+		expectedHeader       string // If unspecified, computed automatically for non-field metrics.
 		metricNames          []string
 		firstMetricFields    []Field
-		expectedHeader       string // If unspecified, computed automatically for non-field metrics.
-		lossy                bool
 		incrementMetricBy    []uint64
 		numIterations        uint64
+		lossy                bool
 		errOnStartProfiling  bool
 	}{
 		{

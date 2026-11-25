@@ -32,39 +32,48 @@ import (
 // FSBenchmark represents a set of work to perform within a container that is instrumented with
 // different filesystem configurations.
 type FSBenchmark struct {
-	// Image is the Docker image to load.
-	Image string
-	// WorkDir is where the action takes place.
-	// The commands below are run from a directory that has the same file as what the container image
-	// has at this directory.
-	WorkDir string
-	// RunCmd is the command to run to execute the benchmark.
-	RunCmd []string
-	// WantOutput, if set, is verified to be a substring of the output of RunCmd.
-	WantOutput string
-	// CleanCmd, if set, is run to clean up between benchmarks.
-	CleanCmd []string
-	// EnableForPGO is whether this benchmark should be run for PGO benchmarks.
-	EnableForPGO bool
-	// Variants is a list of benchmark variants to run.
-	// If unset, the typical set is used.
-	Variants []Variant
 	// Callback is an optional function that is called after each execution of
 	// the workload being benchmarked. It can be used to perform workload
 	// specific metric reporting.
 	Callback func(b *testing.B, output string)
+
+	// Image is the Docker image to load.
+	Image string
+
+	// WorkDir is where the action takes place.
+	// The commands below are run from a directory that has the same file as what the container image
+	// has at this directory.
+	WorkDir string
+
+	// WantOutput, if set, is verified to be a substring of the output of RunCmd.
+	WantOutput string
+
+	// RunCmd is the command to run to execute the benchmark.
+	RunCmd []string
+
+	// CleanCmd, if set, is run to clean up between benchmarks.
+	CleanCmd []string
+
+	// Variants is a list of benchmark variants to run.
+	// If unset, the typical set is used.
+	Variants []Variant
+
+	// EnableForPGO is whether this benchmark should be run for PGO benchmarks.
+	EnableForPGO bool
 }
 
 // Variant is a specific configuration for a benchmark.
 // Dimensions here are clean/dirty cache (do or don't drop caches)
 // and if the mount on which we are compiling is a tmpfs/bind mount.
 type Variant struct {
-	// EnableForPGO is whether this variant should be run for PGO benchmarks.
-	EnableForPGO bool
-	// clearCache drops caches before running.
-	clearCache bool
 	// fsType is the type of filesystem to use.
 	fsType harness.FileSystemType
+
+	// EnableForPGO is whether this variant should be run for PGO benchmarks.
+	EnableForPGO bool
+
+	// clearCache drops caches before running.
+	clearCache bool
 }
 
 // TypicalVariants returns the typical full set of benchmark variants.

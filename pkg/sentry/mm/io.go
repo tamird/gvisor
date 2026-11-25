@@ -936,15 +936,15 @@ func (mm *MemoryManager) getIOMappingsTrackedLocked(pseg pmaIterator, ar hostarc
 }
 
 type ioBuf struct {
-	unbufBytesBefore uint64
 	file             memmap.File
-	off              uint64
 	buf              *[]byte
+	unbufBytesBefore uint64
+	off              uint64
 }
 
 type ioBufTracker struct {
-	write bool
 	bufs  []ioBuf
+	write bool
 }
 
 var ioBufTrackerPool = sync.Pool{

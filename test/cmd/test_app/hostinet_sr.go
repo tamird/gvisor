@@ -32,10 +32,10 @@ import (
 // continuously logs the result of operations against them so tests can
 // observe socket behavior across checkpoint/restore.
 type hostinetSR struct {
-	file   string
-	target string
 	tcpRaw sys.RawConn
 	udpRaw sys.RawConn
+	file   string
+	target string
 }
 
 // Name implements subcommands.Command.Name.

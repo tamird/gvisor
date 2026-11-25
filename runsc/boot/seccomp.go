@@ -32,8 +32,8 @@ import (
 // builds it one time.
 // kernel.SyscallFilter is immutable, so tasks can share it.
 var ociSeccompCache = struct {
-	mu      sync.Mutex
 	filters map[[sha256.Size]byte]*kernel.SyscallFilter
+	mu      sync.Mutex
 }{filters: make(map[[sha256.Size]byte]*kernel.SyscallFilter)}
 
 func buildOCISeccompFilter(conf *config.Config, spec *specs.Spec) (*kernel.SyscallFilter, error) {

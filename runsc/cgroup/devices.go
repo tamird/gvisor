@@ -35,12 +35,15 @@ const DeviceAny = -1
 type DeviceRule struct {
 	// Type is "c" for character devices or "b" for block devices.
 	Type string `json:"type"`
-	// Major is the device's major number, or DeviceAny.
-	Major int64 `json:"major"`
-	// Minor is the device's minor number, or DeviceAny.
-	Minor int64 `json:"minor"`
+
 	// Access is any combination of 'r' (read), 'w' (write) and 'm' (mknod).
 	Access string `json:"access"`
+
+	// Major is the device's major number, or DeviceAny.
+	Major int64 `json:"major"`
+
+	// Minor is the device's minor number, or DeviceAny.
+	Minor int64 `json:"minor"`
 }
 
 // String returns the rule in the devices cgroup's "type major:minor access"

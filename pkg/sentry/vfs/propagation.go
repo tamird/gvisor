@@ -529,7 +529,6 @@ func (vfs *VirtualFilesystem) propagateUmount(mnts []*Mount) []*Mount {
 	// Iterate through the mounts from the leafs back to the root.
 	for i := len(mnts) - 1; i >= 0; i-- {
 		mnt := mnts[i]
-
 		// If a mount has already been visited we know all its peers and followers
 		// have been visited so there's no need to visit them again.
 		if _, ok := processed[mnt]; ok {

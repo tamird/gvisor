@@ -250,11 +250,11 @@ func (s *recycledInoConnImpl) SupportedMessages() []lisafs.MID {
 }
 
 type recycledInoControlFD struct {
-	lisafs.ControlFD
 	lisafs.ControlFDImpl
 	connImpl *recycledInoConnImpl
-	isRoot   bool
-	stat     lisafs.Statx
+	lisafs.ControlFD
+	stat   lisafs.Statx
+	isRoot bool
 }
 
 func (fd *recycledInoControlFD) FD() *lisafs.ControlFD { return &fd.ControlFD }
@@ -319,8 +319,8 @@ func (fd *recycledInoControlFD) Open(flags uint32) (*lisafs.OpenFD, int, error) 
 }
 
 type recycledInoOpenFD struct {
-	lisafs.OpenFD
 	lisafs.OpenFDImpl
+	lisafs.OpenFD
 	stat lisafs.Statx
 }
 

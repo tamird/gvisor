@@ -43,32 +43,32 @@ const (
 //
 // typeInfos are immutable once published, except for slots.
 type typeInfo struct {
-	id           int32 // unique small integer for per-stream tables
-	typ          reflect.Type
-	rtype        unsafe.Pointer
-	kind         reflect.Kind
-	size         uintptr
-	alignMask    uintptr
-	elem         *typeInfo // element type of pointers, slices, arrays, and maps
-	key          *typeInfo // key type of maps
-	length       uintptr   // length of arrays
-	direct       bool      // stored directly in interface data word
-	pod          bool      // saved as raw memory representation
-	inlineStruct bool      // contains inline structs with StateSave methods
-	emptyIface   bool      // interface with no methods
-	needsExact   bool      // contains or points to non-empty interfaces or maps
-	partial      bool      // decode may leave unsaved memory untouched
-	hooks        bool      // StateLoad may run non-generated code
-	structKind   structKind
-	methodItab   unsafe.Pointer // itab of StructType or binaryObject for *typ
-	name         string
-	registered   bool
-	sliceType    atomic.Pointer[reflect.Type]
+	typ              reflect.Type
+	rtype            unsafe.Pointer
+	elem             *typeInfo      // element type of pointers, slices, arrays, and maps
+	key              *typeInfo      // key type of maps
+	methodItab       unsafe.Pointer // itab of StructType or binaryObject for *typ
+	sliceType        atomic.Pointer[reflect.Type]
+	valSlot, ptrSlot slotEntry
+	name             string
+	// slots caches field types saved/loaded by SaverLoader methods, by slot.
+	slots     []atomic.Pointer[slotEntry]
+	kind      reflect.Kind
+	size      uintptr
+	alignMask uintptr
+	length    uintptr // length of arrays
+	id        int32   // unique small integer for per-stream tables
 	// hintBytes and hintTargets record the size of the last graph with this root type.
 	hintBytes, hintTargets atomic.Int32
-	valSlot, ptrSlot       slotEntry
-	// slots caches field types saved/loaded by SaverLoader methods, by slot.
-	slots []atomic.Pointer[slotEntry]
+	direct                 bool // stored directly in interface data word
+	pod                    bool // saved as raw memory representation
+	inlineStruct           bool // contains inline structs with StateSave methods
+	emptyIface             bool // interface with no methods
+	needsExact             bool // contains or points to non-empty interfaces or maps
+	partial                bool // decode may leave unsaved memory untouched
+	hooks                  bool // StateLoad may run non-generated code
+	structKind             structKind
+	registered             bool
 }
 
 // slotEntry is the cached type of a struct field slot.

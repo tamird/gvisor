@@ -41,13 +41,15 @@ const maxNumAttrs = 64
 type xlat struct {
 	// attr points into the request's attrs slice.
 	attr *ib.UverbsAttr
+
+	// outBuf, when non-nil, is a sentry PTR_OUT staging buffer whose contents
+	// are copied back to the guest pointer (orig) after a successful call.
+	outBuf []byte
+
 	// orig is the original guest value of the data field, restored before the
 	// buffer is copied back so the guest never observes a sentry pointer,
 	// host fd, or relocated address.
 	orig uint64
-	// outBuf, when non-nil, is a sentry PTR_OUT staging buffer whose contents
-	// are copied back to the guest pointer (orig) after a successful call.
-	outBuf []byte
 }
 
 // Ioctl implements vfs.FileDescriptionImpl.Ioctl.

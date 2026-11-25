@@ -33,12 +33,12 @@ import (
 // MockLinkEndpoint is an endpoint used for testing, it stores packets written
 // to it and can mock errors.
 type MockLinkEndpoint struct {
+	err tcpip.Error
+
 	// WrittenPackets is where packets written to the endpoint are stored.
 	WrittenPackets []*stack.PacketBuffer
-
-	mtu          uint32
-	err          tcpip.Error
-	allowPackets int
+	allowPackets   int
+	mtu            uint32
 }
 
 // NewMockLinkEndpoint creates a new MockLinkEndpoint.

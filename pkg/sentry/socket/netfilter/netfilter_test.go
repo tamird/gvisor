@@ -238,9 +238,9 @@ func TestCheckLoopsAndChainsUnreachableLoop(t *testing.T) {
 
 func TestCheckTargetHooks(t *testing.T) {
 	for _, test := range []struct {
+		want  *syserr.Error
 		name  string
 		table stack.Table
-		want  *syserr.Error
 	}{
 		{
 			name: "redirect on postrouting",
@@ -408,10 +408,10 @@ func TestParseTargetTable(t *testing.T) {
 	filter := emptyIPv4Filter
 	filter.Protocol = header.TCPProtocolNumber
 	for _, test := range []struct {
-		name      string
 		target    target
-		tableName string
 		want      *syserr.Error
+		name      string
+		tableName string
 	}{
 		{
 			name: "redirect in the filter table",
@@ -482,8 +482,8 @@ func TestParseTargetTable(t *testing.T) {
 func TestModifyEntriesTableOrder(t *testing.T) {
 	for _, test := range []struct {
 		name      string
-		rules     []stack.Rule
 		tableName string
+		rules     []stack.Rule
 		ipv6      bool
 	}{
 		{
@@ -548,8 +548,8 @@ func TestParseTargetsRejectHandler(t *testing.T) {
 		NetworkProtocols: []stack.NetworkProtocolFactory{ipv4.NewProtocol, ipv6.NewProtocol},
 	})
 	for _, test := range []struct {
-		name   string
 		target target
+		name   string
 		ipv6   bool
 	}{
 		{
@@ -649,8 +649,8 @@ func TestSetEntriesTargetHooks(t *testing.T) {
 
 func TestSetEntriesLoopOrder(t *testing.T) {
 	for _, test := range []struct {
-		name   string
 		target stack.Target
+		name   string
 		ipv6   bool
 		tcp    bool
 	}{

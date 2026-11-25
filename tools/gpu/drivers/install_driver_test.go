@@ -96,17 +96,17 @@ func TestDriverInstalls(t *testing.T) {
 	installError := errors.New("install failed")
 	uninstallError := errors.New("uninstall failed")
 	for _, test := range []struct {
-		name         string
-		current      nvconf.DriverVersion
 		inspectErr   error
 		hostErr      error
 		readErr      error
-		wantChecksum string
 		uninstallErr error
 		installErr   error
 		wantErr      error
-		mismatch     bool
+		name         string
+		wantChecksum string
 		wantSteps    string
+		current      nvconf.DriverVersion
+		mismatch     bool
 	}{
 		{name: "already_installed", current: version, wantChecksum: checksum(content), wantSteps: "inspect"},
 		{name: "absent", wantChecksum: checksum(content), wantSteps: "inspect preflight download install"},

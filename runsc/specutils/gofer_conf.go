@@ -122,9 +122,9 @@ func (l *GoferMountConfLowerType) Set(v string) error {
 
 // GoferMountConf describes how a gofer mount is configured in the sandbox.
 type GoferMountConf struct {
+	Size  string                  `json:"size,omitempty"`
 	Lower GoferMountConfLowerType `json:"lower"`
 	Upper GoferMountConfUpperType `json:"upper"`
-	Size  string                  `json:"size,omitempty"`
 }
 
 // String returns a human-readable string representing the gofer mount config.

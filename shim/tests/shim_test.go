@@ -44,9 +44,9 @@ func TestMain(m *testing.M) {
 }
 
 type testCase struct {
-	name      string
 	shimArgs  map[string]any
 	runscArgs map[string]any
+	name      string
 }
 
 // TestCreateKillWaitSandbox verifies that a sandbox can be created, started,

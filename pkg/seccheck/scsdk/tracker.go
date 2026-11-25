@@ -98,12 +98,12 @@ type ProcessKey struct {
 
 // ProcessInfo contains tracked state for a process inside a gVisor sandbox.
 type ProcessInfo struct {
-	Key                 ProcessKey
 	ContainerID         string
 	ProcessName         string
 	BinaryPath          string
 	Argv                []string
 	Env                 []string
+	Key                 ProcessKey
 	ParentThreadGroupID int32
 }
 
@@ -122,8 +122,8 @@ type EnrichedExecveEvent struct {
 
 // ProcessTracker manages the lifecycle of process metadata across Seccheck events.
 type ProcessTracker struct {
-	mu        sync.RWMutex
 	processes map[ProcessKey]*ProcessInfo
+	mu        sync.RWMutex
 }
 
 // NewProcessTracker creates an initialized ProcessTracker.

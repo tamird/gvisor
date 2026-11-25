@@ -236,12 +236,12 @@ func testMultiContainerCheckpointRestore(t *testing.T, conf *config.Config, comp
 // - When 'all' is true, all tmpfs filesystems are checkpointed and restored.
 func TestFSCheckpointCommand(t *testing.T) {
 	for _, tc := range []struct {
+		modifyManifest func(t *testing.T, imagePath string)
 		name           string
 		savePath       string
 		lostPath       string
 		all            bool
 		multipaths     bool
-		modifyManifest func(t *testing.T, imagePath string)
 	}{
 		{name: "root", savePath: "/", lostPath: "/homedir"},
 		{name: "all", savePath: "/", lostPath: "/homedir", all: true},

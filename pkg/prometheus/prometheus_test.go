@@ -273,28 +273,32 @@ func TestVerifier(t *testing.T) {
 		return testStart.Add(time.Duration(n) * time.Millisecond)
 	}
 	for _, test := range []struct {
-		Name string
 		// At is the time at which the test executes.
 		// If unset, `testStart` is assumed.
 		At time.Time
+
 		// Registration is the metric registration data.
 		Registration *pb.MetricRegistration
-		// WantVerifierCreationErr is true if the test expects the
-		// creation of the Verifier to fail. All the fields below it
-		// are ignored in this case.
-		WantVerifierCreationErr bool
-		// WantSuccess is a sequence of Snapshots to present to
-		// the verifier. The test expects all of them to pass verification.
-		// If unset, the test simply presents the WantFail Snapshot.
-		// If both WantSuccess and WantFail are unset, the test presents
-		// an empty snapshot and expects it to succeed.
-		WantSuccess []*Snapshot
+
 		// WantFail is a Snapshot to present to the verifier after all
 		// snapshots in WantSuccess have been presented.
 		// The test expects this Snapshot to fail verification.
 		// If unset, the test does not present any snapshot after
 		// having presented the WantSuccess Snapshots.
 		WantFail *Snapshot
+		Name     string
+
+		// WantSuccess is a sequence of Snapshots to present to
+		// the verifier. The test expects all of them to pass verification.
+		// If unset, the test simply presents the WantFail Snapshot.
+		// If both WantSuccess and WantFail are unset, the test presents
+		// an empty snapshot and expects it to succeed.
+		WantSuccess []*Snapshot
+
+		// WantVerifierCreationErr is true if the test expects the
+		// creation of the Verifier to fail. WantSuccess and WantFail
+		// are ignored in this case.
+		WantVerifierCreationErr bool
 	}{
 		{
 			Name: "no metrics, empty snapshot",
@@ -1231,7 +1235,6 @@ func TestSnapshotToPrometheus(t *testing.T) {
 		return newSnapshotAt(testStart)
 	}
 	for _, test := range []struct {
-		Name string
 
 		// Snapshot will be rendered as Prometheus and compared against WantData.
 		Snapshot *Snapshot
@@ -1241,15 +1244,16 @@ func TestSnapshotToPrometheus(t *testing.T) {
 
 		// SnapshotExportOptions dictates the options used during Snapshot rendering.
 		SnapshotExportOptions SnapshotExportOptions
-
-		// WantFail, if true, indicates that the test is expected to fail when
-		// rendering or parsing the snapshot data.
-		WantFail bool
+		Name                  string
 
 		// WantData is Prometheus text format that matches the data in Snapshot.
 		// The substring "{TIMESTAMP}" will be replaced with the value of
 		// `testStart` in milliseconds.
 		WantData string
+
+		// WantFail, if true, indicates that the test is expected to fail when
+		// rendering or parsing the snapshot data.
+		WantFail bool
 	}{
 		{
 			Name:     "empty snapshot",

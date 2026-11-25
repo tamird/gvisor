@@ -741,8 +741,6 @@ type apsRange struct {
 // apsOp tracks async page save state corresponding to a single AIO write
 // operation.
 type apsOp struct {
-	// total is the number of bytes to be written by the operation.
-	total uint64
 
 	// amfs represents the MemoryFile being saved.
 	amfs *asyncMemoryFileSave
@@ -752,6 +750,8 @@ type apsOp struct {
 
 	// iovecs contains mappings of frs.
 	iovecs []unix.Iovec
+	// total is the number of bytes to be written by the operation.
+	total uint64
 }
 
 // StartAsyncPagesFileSave constructs asynchronous saving state for the pages
@@ -1112,25 +1112,27 @@ func (apfs *AsyncPagesFileSave) main() {
 // LoadOpts provides options to MemoryFile.LoadFrom().
 type LoadOpts struct {
 	// If PagesFile is not nil, then page contents will be read from PagesFile,
-	// starting at offset PagesFileOffset, rather than from r. After LoadFrom
-	// returns, PagesFileOffset will be updated to the offset of the first byte
-	// in PagesFile after this MemoryFile's contents.
-	//
+	// starting at offset PagesFileOffset, rather than from r.
+	PagesFile *AsyncPagesFileLoad
+
 	// Reading from PagesFile may continue after LoadFrom returns. If
 	// DoneCallback is not nil, it will be called when reading for this
 	// MemoryFile completes. DoneCallback will be called whether or not
 	// LoadFrom returns a non-nil error.
-	//
-	// Invariant: PagesFileOffset must be page-aligned.
-	PagesFile       *AsyncPagesFileLoad
-	PagesFileOffset uint64
-	DoneCallback    func(error)
+	DoneCallback func(error)
 
 	// Optional timeline for the restore process.
 	// If async page loading is enabled, a forked timeline will be created, so
 	// ownership of this timeline remains in the hands of the caller of
 	// LoadFrom.
 	Timeline *timing.Timeline
+
+	// PagesFileOffset is the offset in PagesFile at which page contents start.
+	// If PagesFile is not nil, LoadFrom updates it to the offset of the first
+	// byte in PagesFile after this MemoryFile's contents.
+	//
+	// Invariant: PagesFileOffset must be page-aligned.
+	PagesFileOffset uint64
 }
 
 // LoadFrom loads MemoryFile state from the given stream.
@@ -1472,15 +1474,15 @@ type asyncMemoryFileLoad struct {
 
 // aplUnloadedInfo is the value type of asyncMemoryFileLoad.unloaded.
 type aplUnloadedInfo struct {
+
+	// waiters queues goroutines waiting for these pages to be loaded.
+	waiters []*aplWaiter
 	// off is the offset into the pages file at which the represented pages
 	// begin.
 	off uint64
 
 	// started is true if a read has been enqueued for these pages.
 	started bool
-
-	// waiters queues goroutines waiting for these pages to be loaded.
-	waiters []*aplWaiter
 }
 
 type aplWaiter struct {
@@ -1510,11 +1512,6 @@ var aplWaiterPool = sync.Pool{
 // aplOp tracks async page load state corresponding to a single AIO read
 // operation.
 type aplOp struct {
-	// total is the number of bytes to be read by the operation.
-	total uint64
-
-	// end is the pages file offset at which the read ends.
-	end uint64
 
 	// amfl represents the MemoryFile being loaded.
 	amfl *asyncMemoryFileLoad
@@ -1524,6 +1521,11 @@ type aplOp struct {
 
 	// iovecs contains mappings of frs.
 	iovecs []unix.Iovec
+	// total is the number of bytes to be read by the operation.
+	total uint64
+
+	// end is the pages file offset at which the read ends.
+	end uint64
 
 	// If tempRef is true, a temporary reference is held on pages in frs that
 	// should be dropped after completion.

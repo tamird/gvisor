@@ -37,8 +37,8 @@ func alignPad(length int, align uint) int {
 
 // Message contains a complete serialized netlink message.
 type Message struct {
-	hdr linux.NetlinkMessageHeader
 	buf []byte
+	hdr linux.NetlinkMessageHeader
 }
 
 // NewMessage creates a new Message containing the passed header.
@@ -236,12 +236,8 @@ func (n *NestedAttr) PutAttrString(atype uint16, s string) {
 
 // MessageSet contains a series of netlink messages.
 type MessageSet struct {
-	// Multi indicates that this a multi-part message, to be terminated by
-	// NLMSG_DONE. NLMSG_DONE is sent even if the set contains only one
-	// Message.
-	//
-	// If Multi is set, all added messages will have NLM_F_MULTI set.
-	Multi bool
+	// Messages contains the messages in the set.
+	Messages []*Message
 
 	// PortID is the destination port for all messages.
 	PortID int32
@@ -249,8 +245,12 @@ type MessageSet struct {
 	// Seq is the sequence counter for all messages in the set.
 	Seq uint32
 
-	// Messages contains the messages in the set.
-	Messages []*Message
+	// Multi indicates that this a multi-part message, to be terminated by
+	// NLMSG_DONE. NLMSG_DONE is sent even if the set contains only one
+	// Message.
+	//
+	// If Multi is set, all added messages will have NLM_F_MULTI set.
+	Multi bool
 
 	// ContainsError indicates that the message set contains at least one error.
 	ContainsError bool

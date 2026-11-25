@@ -58,51 +58,52 @@ var (
 
 // Init represents an initial process for a container.
 type Init struct {
-	wg        sync.WaitGroup
-	initState initState
+	exited time.Time
 
 	// mu is used to ensure that `Start()` and `Exited()` calls return in
 	// the right order when invoked in separate go routines.  This is the
 	// case within the shim implementation as it makes use of the reaper
 	// interface.
-	mu runtimeMutex
+	mu            runtimeMutex
+	initState     initState
+	rootfsCleanup utils.Cleanup
+	Monitor       ProcessMonitor
+	console       console.Console
+	Platform      stdio.Platform
+	io            runc.IO
+	stdin         io.Closer
 
 	waitBlock chan struct{}
+	ioDone    chan struct{}
+	runtime   *runsccmd.Runsc
+	UserLog   string
+	Bundle    string
 
 	WorkDir string
+	Rootfs  string
 
-	id        string
-	Bundle    string
-	console   console.Console
-	Platform  stdio.Platform
-	io        runc.IO
-	runtime   *runsccmd.Runsc
-	status    int
-	exited    time.Time
-	pid       int
-	closers   []io.Closer
-	stdin     io.Closer
-	stdio     stdio.Stdio
-	Rootfs    string
-	IoUID     int
-	IoGID     int
-	Sandbox   bool
-	UserLog   string
-	Monitor   ProcessMonitor
-	FuseAbort bool
+	id string
 	// K8sPodUID is the Kubernetes Pod UID (UUID) used for resolving host volume
 	// mounts under /var/lib/kubelet/pods/<uid>. Note that this is distinct from
 	// containerd's SandboxID.
 	K8sPodUID string
-
+	stdio     stdio.Stdio
+	closers   []io.Closer
+	wg        sync.WaitGroup
+	pid       int
+	IoGID     int
 	// sandboxPidfd pins the sandbox process identity. It is only populated for
 	// the sandbox task and is used when explicit SIGKILL --all times out.
+	sandboxPidfd int
+	IoUID        int
+	status       int
+	ioWaitOnce   sync.Once
+	ioCloseOnce  sync.Once
+
+	// sandboxPidfdMu protects sandboxPidfd.
 	sandboxPidfdMu sync.Mutex
-	sandboxPidfd   int
-	ioWaitOnce     sync.Once
-	ioDone         chan struct{}
-	ioCloseOnce    sync.Once
-	rootfsCleanup  utils.Cleanup
+	Sandbox        bool
+	FuseAbort      bool
 }
 
 // NewRunsc returns a new runsc instance for a process.
@@ -287,8 +288,8 @@ func (p *Init) lockRuntimeFor(parent context.Context, timeout time.Duration) (co
 
 // runtimeMutex is a zero-value, context-aware lock for runtime and state calls.
 type runtimeMutex struct {
-	once  sync.Once
 	token chan struct{}
+	once  sync.Once
 }
 
 func (m *runtimeMutex) acquire(ctx context.Context) error {

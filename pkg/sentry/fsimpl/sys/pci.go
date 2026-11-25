@@ -140,9 +140,9 @@ func (s pciAddressSet) Swap(i, j int) {
 // virtual function addresses, and its IOMMU group number.
 type pciDeviceInfo struct {
 	path       string
+	virtfn     pciAddressSet
 	iommuGroup int
 	physfn     pciAddress
-	virtfn     pciAddressSet
 }
 
 // pciDeviceInfos returns the information about all PCI devices on the host in a

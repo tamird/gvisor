@@ -66,10 +66,10 @@ func (s RecordField) String() string {
 
 // RecordDef represents the definition of a record (struct or union).
 type RecordDef struct {
+	Source  string
 	Fields  []RecordField
 	Size    uint64
 	IsUnion bool `json:"is_union"`
-	Source  string
 }
 
 // Equals returns true if the two record definitions are equal. We ignore the source of the records.

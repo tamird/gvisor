@@ -29,11 +29,12 @@ import (
 // created here. Therefore we use the intermediary (source), which is created
 // on initialization of the platform.
 type subprocessPool struct {
-	mu     sync.Mutex
 	source *subprocess
+
 	// available stores all subprocesses that are available for reuse.
 	// +checklocks:mu
 	available []*subprocess
+	mu        sync.Mutex
 }
 
 func (p *subprocessPool) markAvailable(s *subprocess) {

@@ -108,12 +108,12 @@ type fieldList []fieldEntry
 
 // resolvedValue identifies a lock through SSA or an exported global identity.
 type resolvedValue struct {
-	value     ssa.Value
-	fieldList fieldList
+	value ssa.Value
 
 	// key identifies an imported global whose declaration or package is absent
 	// from SSA. It is synthesized where the declaration's type is available.
-	key string
+	key       string
+	fieldList fieldList
 }
 
 // makeResolvedValue makes a new resolvedValue.
@@ -197,12 +197,12 @@ type globalGuard struct {
 	// PackageName is the package where the object lives.
 	PackageName string
 
-	// FieldList is the traversal path from object.
-	FieldList fieldList
-
 	// Key preserves the complete lock identity when export data omits the
 	// private global or the caller does not directly import its package.
 	Key string
+
+	// FieldList is the traversal path from object.
+	FieldList fieldList
 }
 
 func globalLockKey(pkgPath, name string) string {
@@ -257,12 +257,12 @@ func (f *fieldGuard) resolveField(_ *passContext, _ *lockState, parent ssa.Value
 
 // parameterGuard is a parameter-based guard.
 type parameterGuard struct {
-	// Index is the parameter index of the object that contains the
-	// guarding mutex.
-	Index int
 
 	// fieldList is the traversal path from the parameter.
 	FieldList fieldList
+	// Index is the parameter index of the object that contains the
+	// guarding mutex.
+	Index int
 }
 
 // resolveStatic implements functionGuardResolver.resolveStatic.
@@ -277,15 +277,15 @@ func (p *parameterGuard) resolveCall(_ *passContext, _ *lockState, args []ssa.Va
 
 // returnGuard is a return-based guard.
 type returnGuard struct {
+
+	// FieldList is the traversal path from the return value.
+	FieldList fieldList
 	// Index is the index of the return value.
 	Index int
 
 	// NeedsExtract is used in the case of a return value, and indicates
 	// that the field must be extracted from a tuple.
 	NeedsExtract bool
-
-	// FieldList is the traversal path from the return value.
-	FieldList fieldList
 }
 
 // resolveCommon implements resolution for both cases.

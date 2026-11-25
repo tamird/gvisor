@@ -115,8 +115,8 @@ func queryMetrics(t *testing.T, metricSock string) string {
 // Test variants for grouping.
 
 type metricServerTestCase struct {
-	name     string
 	shimArgs map[string]any
+	name     string
 }
 
 var metricServerTestCases = []metricServerTestCase{

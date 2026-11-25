@@ -62,8 +62,8 @@ type Driver interface {
 // driverRegistry holds Drivers registered by per-vendor packages keyed by
 // Driver.Name() (which must match the host PCI driver name).
 type driverRegistry struct {
-	mu      sync.RWMutex
 	drivers map[string]Driver
+	mu      sync.RWMutex
 }
 
 var registryOnce sync.Once

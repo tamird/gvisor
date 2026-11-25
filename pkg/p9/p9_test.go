@@ -21,12 +21,12 @@ import (
 
 func TestFileModeHelpers(t *testing.T) {
 	fns := map[FileMode]struct {
-		// name identifies the file mode.
-		name string
-
 		// function is the function that should return true given the
 		// right FileMode.
 		function func(m FileMode) bool
+
+		// name identifies the file mode.
+		name string
 	}{
 		ModeRegular: {
 			name:     "regular",

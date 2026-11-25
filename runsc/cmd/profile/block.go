@@ -28,8 +28,8 @@ import (
 
 // block implements subcommands.Command for the "block" command.
 type block struct {
-	duration time.Duration
 	output   string
+	duration time.Duration
 }
 
 // Name implements subcommands.Command.

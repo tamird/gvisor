@@ -42,8 +42,8 @@ type ExecveHashes struct {
 }
 
 type execveEntry struct {
-	key    ExecveKey
 	hashes ExecveHashes
+	key    ExecveKey
 }
 
 // ExecveHashOptions defines which binary check algorithms are enabled or requested
@@ -56,11 +56,11 @@ type ExecveHashOptions struct {
 // ExecveHashCache provides a thread-safe, bounded LRU cache mapping binary filesystem
 // keys to digests.
 type ExecveHashCache struct {
-	mu       sync.Mutex
-	capacity int
-	opts     ExecveHashOptions
 	entries  map[ExecveKey]*list.Element
 	lru      *list.List
+	capacity int
+	mu       sync.Mutex
+	opts     ExecveHashOptions
 }
 
 // NewExecveHashCache constructs a new ExecveHashCache with the specified capacity and options.

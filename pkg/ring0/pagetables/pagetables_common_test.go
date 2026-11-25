@@ -26,10 +26,10 @@ type mapping struct {
 }
 
 type checkVisitor struct {
-	expected []mapping // Input.
-	current  int       // Temporary.
-	found    []mapping // Output.
 	failed   string    // Output.
+	expected []mapping // Input.
+	found    []mapping // Output.
+	current  int       // Temporary.
 }
 
 func (v *checkVisitor) visit(start uintptr, pte *PTE, align uintptr) bool {

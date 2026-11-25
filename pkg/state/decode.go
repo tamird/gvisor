@@ -55,12 +55,12 @@ func (uc userCallback) callbackRun(*decodeState) {
 // registered (via register), the storage for the object will be created, but
 // it will not be decoded until the object is encountered in the stream.
 type objectDecodeState struct {
-	// id is the id for this object.
-	id objectID
 
-	// typ is the id for this typeID. This may be zero if this is not a
-	// type-registered structure.
-	typ typeID
+	// callbacksInline is inline storage for callbacks.
+	callbacksInline [2]internalCallback
+
+	pendingEntry odsListElem
+	leafEntry    odsListElem
 
 	// obj is the object. This may or may not be valid yet, depending on
 	// whether complete returns true. However, regardless of whether the
@@ -76,17 +76,17 @@ type objectDecodeState struct {
 	// distinct types.
 	obj reflect.Value
 
-	// blockedBy is the number of dependencies this object has.
-	blockedBy int
-
-	// callbacksInline is inline storage for callbacks.
-	callbacksInline [2]internalCallback
-
 	// callbacks is a set of callbacks to execute on load.
 	callbacks []internalCallback
+	// id is the id for this object.
+	id objectID
 
-	pendingEntry odsListElem
-	leafEntry    odsListElem
+	// typ is the id for this typeID. This may be zero if this is not a
+	// type-registered structure.
+	typ typeID
+
+	// blockedBy is the number of dependencies this object has.
+	blockedBy int
 }
 
 type odsListElem struct {

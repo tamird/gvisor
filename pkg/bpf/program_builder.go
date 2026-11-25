@@ -257,6 +257,15 @@ func (f ProgramFragment) String() string {
 // FragmentOutcomes represents the set of outcomes that a ProgramFragment
 // execution may result into.
 type FragmentOutcomes struct {
+	// MayJumpToUnresolvedLabels is the set of named labels that have not yet
+	// been added to the program (the labels are not resolvable) but that the
+	// fragment may jump to.
+	MayJumpToUnresolvedLabels map[string]struct{}
+
+	// MayReturnImmediate contains the set of possible immediate return values
+	// that the fragment may return.
+	MayReturnImmediate map[linux.BPFAction]struct{}
+
 	// MayFallThrough is true if executing the fragment may cause it to start
 	// executing the program instruction that comes right after the last
 	// instruction in this fragment (i.e. at `Fragment.toPC`).
@@ -269,15 +278,6 @@ type FragmentOutcomes struct {
 	// If the fragment jumps to an unresolved label, this will instead be
 	// indicated in `MayJumpToUnresolvedLabels`.
 	MayJumpToKnownOffsetBeyondFragment bool
-
-	// MayJumpToUnresolvedLabels is the set of named labels that have not yet
-	// been added to the program (the labels are not resolvable) but that the
-	// fragment may jump to.
-	MayJumpToUnresolvedLabels map[string]struct{}
-
-	// MayReturnImmediate contains the set of possible immediate return values
-	// that the fragment may return.
-	MayReturnImmediate map[linux.BPFAction]struct{}
 
 	// MayReturnRegisterA is true if the fragment may return the value of
 	// register A.

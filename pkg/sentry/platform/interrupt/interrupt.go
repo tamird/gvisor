@@ -41,12 +41,12 @@ const (
 //
 // This helps platform implementations with Interrupt semantics.
 type Forwarder struct {
-	// state of the interrupt forwarder.
-	state atomicbitops.Uint32
-
 	// Dst is notified while `state` is `forwarderEnabled`. It is immutable,
 	// and must be set before any function on `Forwarder` is called.
 	Dst Receiver
+
+	// state of the interrupt forwarder.
+	state atomicbitops.Uint32
 }
 
 // Enable attempts to enable interrupt forwarding.

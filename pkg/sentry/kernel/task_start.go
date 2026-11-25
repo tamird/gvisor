@@ -33,8 +33,50 @@ import (
 
 // TaskConfig defines the configuration of a new Task (see below).
 type TaskConfig struct {
+
+	// InitialCgroupV2 is the cgroup2 node the new task starts in. Only
+	// consulted when the task is created from a non-task context (i.e.
+	// CreateProcess); if nil, the root cgroup is used.
+	InitialCgroupV2 Cgroup2
+
+	// FDTable is the FDTable of the new task. A reference must be held on
+	// FDTable, which is transferred to TaskSet.NewTask whether or not it
+	// succeeds.
+	FDTable *FDTable
+
+	// InitialCgroups are the cgroups the container is initialised to.
+	InitialCgroups map[Cgroup]struct{}
+
+	// ThreadGroup is the ThreadGroup the new task belongs to.
+	ThreadGroup *ThreadGroup
+
+	// IPCNamespace is the IPCNamespace of the new task.
+	IPCNamespace *IPCNamespace
+
+	// CgroupNamespace is the CgroupNamespace of the new task.
+	CgroupNamespace *CgroupNamespace
+
+	// FSContext is the FSContext of the new task. A reference must be held on
+	// FSContext, which is transferred to TaskSet.NewTask whether or not it
+	// succeeds.
+	FSContext *FSContext
 	// Kernel is the owning Kernel.
 	Kernel *Kernel
+
+	// Credentials is the Credentials of the new task. A reference must be held
+	// on Credentials.UserNamespace, which is transferred to TaskSet.NewTask
+	// whether or not it succeeds.
+	Credentials *auth.Credentials
+
+	// SessionKeyring is the session keyring associated with the parent task.
+	// It may be nil.
+	SessionKeyring *auth.Key
+
+	// UserCounters is user resource counters.
+	UserCounters *UserCounters
+
+	// NetworkNamespace is the network namespace to be used for the new task.
+	NetworkNamespace *inet.Namespace
 
 	// Parent is the new task's parent. Parent may be nil.
 	Parent *Task
@@ -43,93 +85,51 @@ type TaskConfig struct {
 	// task's parent.
 	InheritParent *Task
 
-	// ThreadGroup is the ThreadGroup the new task belongs to.
-	ThreadGroup *ThreadGroup
-
-	// SignalMask is the new task's initial signal mask.
-	SignalMask linux.SignalSet
+	// UTSNamespace is the UTSNamespace of the new task.
+	UTSNamespace *UTSNamespace
 
 	// TaskImage is the TaskImage of the new task. Ownership of the
 	// TaskImage is transferred to TaskSet.NewTask, whether or not it
 	// succeeds.
 	TaskImage *TaskImage
 
-	// FSContext is the FSContext of the new task. A reference must be held on
-	// FSContext, which is transferred to TaskSet.NewTask whether or not it
-	// succeeds.
-	FSContext *FSContext
+	// MountNamespace is the MountNamespace of the new task.
+	MountNamespace *vfs.MountNamespace
 
-	// FDTable is the FDTableof the new task. A reference must be held on
-	// FDMap, which is transferred to TaskSet.NewTask whether or not it
-	// succeeds.
-	FDTable *FDTable
-
-	// Credentials is the Credentials of the new task. A reference must be held
-	// on Credentials.UserNamespace, which is transferred to TaskSet.NewTask
-	// whether or not it succeeds.
-	Credentials *auth.Credentials
-
-	// NoNewPrivs determines if the task can gain new privileges.
-	NoNewPrivs bool
-
-	// Niceness is the niceness of the new task.
-	Niceness int
-
-	// NetworkNamespace is the network namespace to be used for the new task.
-	NetworkNamespace *inet.Namespace
+	// ContainerID is the container the new task belongs to.
+	ContainerID string
 
 	// AllowedCPUMask contains the cpus that this task can run on.
 	AllowedCPUMask sched.CPUSet
 
-	// UTSNamespace is the UTSNamespace of the new task.
-	UTSNamespace *UTSNamespace
-
-	// IPCNamespace is the IPCNamespace of the new task.
-	IPCNamespace *IPCNamespace
-
-	// CgroupNamespace is the CgroupNamespace of the new task.
-	CgroupNamespace *CgroupNamespace
-
-	// MountNamespace is the MountNamespace of the new task.
-	MountNamespace *vfs.MountNamespace
-
 	// RSeqAddr is a pointer to the userspace linux.RSeq structure.
 	RSeqAddr hostarch.Addr
+
+	// Niceness is the niceness of the new task.
+	Niceness int
+
+	// SignalMask is the new task's initial signal mask.
+	SignalMask linux.SignalSet
+
+	// Origin indicates the origins of the new task.
+	Origin TaskOrigin
+
+	// cgroupFD is the CLONE_INTO_CGROUP file descriptor. Valid only if
+	// cloneIntoCgroup is true.
+	cgroupFD uint64
 
 	// RSeqSignature is the signature that the rseq abort IP must be signed
 	// with.
 	RSeqSignature uint32
 
-	// ContainerID is the container the new task belongs to.
-	ContainerID string
-
-	// InitialCgroups are the cgroups the container is initialised to.
-	InitialCgroups map[Cgroup]struct{}
-
-	// InitialCgroupV2 is the cgroup2 node the new task starts in. Only
-	// consulted when the task is created from a non-task context (i.e.
-	// CreateProcess); if nil, the root cgroup is used.
-	InitialCgroupV2 Cgroup2
-
-	// UserCounters is user resource counters.
-	UserCounters *UserCounters
-
-	// SessionKeyring is the session keyring associated with the parent task.
-	// It may be nil.
-	SessionKeyring *auth.Key
-
 	// Personality is the personality of the parent task.
 	Personality uint32
 
-	// Origin indicates the origins of the new task.
-	Origin TaskOrigin
+	// NoNewPrivs determines if the task can gain new privileges.
+	NoNewPrivs bool
 
 	// used by clone(CLONE_PIDFD)
 	makePIDFD bool
-
-	// cgroupFD is the CLONE_INTO_CGROUP file descriptor. Valid only if
-	// cloneIntoCgroup is true.
-	cgroupFD uint64
 	// Set only if CLONE_INTO_CGROUP is passed to clone.
 	cloneIntoCgroup bool
 }

@@ -111,12 +111,12 @@ func sortSrcs(srcs []string) (goFiles []string, nonGoFiles []string) {
 
 // importerEntry is a single entry in the importer.
 type importerEntry struct {
-	ready    sync.WaitGroup
-	pkg      *types.Package
-	findings FindingSet
 	err      error
-	factsMu  sync.Mutex
+	pkg      *types.Package
 	facts    *facts.Package
+	findings FindingSet
+	ready    sync.WaitGroup
+	factsMu  sync.Mutex
 }
 
 // importer is an almost-implementation of go/types.Importer.
@@ -125,28 +125,29 @@ type importerEntry struct {
 // files, and the facts. Note that this importer implementation will always
 // pass when a given package is not available.
 type importer struct {
-	fset *token.FileSet
+	// factsErr is the first error loading package facts.
+	//
+	// +checklocks:mu
+	factsErr error
+	fset     *token.FileSet
 
 	// sources is a map from package path to the source file paths in that
 	// package.
 	//
 	// N.B. key is the package path (including GOROOT vendor/ prefix if any),
 	// not the import path (what appears in the import declaration).
-	sources map[string][]string
-
-	// roots is the set of potential GOROOT prefixes on the file paths in sources.
-	// GOROOT is effectively a merged version of these roots.
-	roots []string
-
+	sources   map[string][]string
 	analyzers map[*analysis.Analyzer]analyzer
-
-	// mu protects cache, bundles, and factsErr (see below).
-	mu sync.Mutex
 
 	// cache is keyed by package path (see sources above).
 	//
 	// +checklocks:mu
-	cache map[string]*importerEntry
+	cache   map[string]*importerEntry
+	imports map[string]*types.Package // key is package path (see sources above).
+
+	// roots is the set of potential GOROOT prefixes on the file paths in sources.
+	// GOROOT is effectively a merged version of these roots.
+	roots []string
 
 	// bundles and each bundle's decoded-package cache are protected by mu.
 	// A bundle has no link to this importer, so checklocks cannot express
@@ -155,14 +156,11 @@ type importer struct {
 	// +checklocks:mu
 	bundles []*facts.Bundle
 
-	// factsErr is the first error loading package facts.
-	//
-	// +checklocks:mu
-	factsErr error
+	// mu protects cache, bundles, and factsErr.
+	mu sync.Mutex
 
 	// importsMu protects imports.
 	importsMu sync.Mutex
-	imports   map[string]*types.Package // key is package path (see sources above).
 }
 
 // loadBundles loads all bundle files.

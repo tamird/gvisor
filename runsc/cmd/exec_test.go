@@ -30,9 +30,9 @@ import (
 
 func TestUser(t *testing.T) {
 	testCases := []struct {
+		wantErr error
 		input   string
 		want    user
-		wantErr error
 	}{
 		{input: "0", want: user{kuid: 0, kuidSet: true, kgid: 0, kgidSet: false}},
 		{input: "7", want: user{kuid: 7, kuidSet: true, kgid: 0, kgidSet: false}},
@@ -62,12 +62,12 @@ func TestUser(t *testing.T) {
 
 func TestCLIArgs(t *testing.T) {
 	testCases := []struct {
-		name     string
-		ex       Exec
 		spec     specs.Process
-		argv     []string
-		expected controlapi.ExecArgs
 		wantErr  error
+		name     string
+		expected controlapi.ExecArgs
+		argv     []string
+		ex       Exec
 	}{
 		{
 			name: "spec used by default",
@@ -157,10 +157,10 @@ func TestCLIArgs(t *testing.T) {
 func TestJSONArgs(t *testing.T) {
 	testCases := []struct {
 		name     string
-		ex       Exec
 		spec     specs.Process
 		p        specs.Process
 		expected controlapi.ExecArgs
+		ex       Exec
 	}{
 		{
 			name: "flags overridden by process file",

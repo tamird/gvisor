@@ -221,11 +221,11 @@ func TestSandboxOptions(t *testing.T) {
 
 func TestSandboxOptionsSudoIDs(t *testing.T) {
 	for _, tc := range []struct {
-		name    string
+		wantErr error
 		env     map[string]string
+		name    string
 		wantUID uint32
 		wantGID uint32
-		wantErr error
 	}{
 		{
 			name:    "unset",
@@ -310,9 +310,9 @@ func TestParseArgs(t *testing.T) {
 
 	tests := []struct {
 		name        string
+		errContains string
 		args        []string
 		wantArgs    []string
-		errContains string
 	}{
 		{
 			name:     "NoFlags",
@@ -430,10 +430,10 @@ func TestParseFlags(t *testing.T) {
 	rootBind := sandbox.Mount{Type: sandbox.MountTypeBind, Source: "/", Destination: "/", ReadOnly: true, Recursive: true, Private: true, NoSuid: true, NoDev: true}
 
 	tests := []struct {
-		name        string
-		args        []string
 		wantCfg     *bwrapConfig
+		name        string
 		errContains string
+		args        []string
 	}{
 		{
 			name: "ClearEnv",
@@ -996,18 +996,18 @@ func TestMakeHostDirs(t *testing.T) {
 	t.Cleanup(func() { unix.Umask(oldMask) })
 
 	tests := []struct {
-		name string
 		// setup prepares the host directory root and returns the --dir path
 		// under it, relative to root.
-		setup func(t *testing.T, root string) string
-		ro    bool
-		perms uint32
+		setup       func(t *testing.T, root string) string
+		name        string
+		errContains string
+		perms       uint32
 		// wantMode is the mode of the directory afterwards, 0 when no directory
 		// may exist at the path.
 		wantMode os.FileMode
 		// wantParentMode is the mode of the directory's parent afterwards.
 		wantParentMode os.FileMode
-		errContains    string
+		ro             bool
 	}{
 		{
 			name:           "Creates",

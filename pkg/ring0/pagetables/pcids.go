@@ -20,8 +20,6 @@ import (
 
 // PCIDs is a simple PCID database.
 type PCIDs struct {
-	mu sync.Mutex
-
 	// cache are the assigned page tables.
 	//
 	// +checklocks:mu
@@ -31,6 +29,7 @@ type PCIDs struct {
 	//
 	// +checklocks:mu
 	avail []uint16
+	mu    sync.Mutex
 }
 
 // NewPCIDs returns a new PCID database.

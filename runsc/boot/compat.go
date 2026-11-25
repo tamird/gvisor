@@ -49,12 +49,11 @@ type compatEmitter struct {
 	// nameMap is fixed at construction.
 	nameMap strace.SyscallMap
 
-	mu sync.Mutex
-
 	// trackers map syscall number to the respective tracker instance.
 	//
 	// +checklocks:mu
 	trackers map[uint64]syscallTracker
+	mu       sync.Mutex
 }
 
 func newCompatEmitter(logFD int) (*compatEmitter, error) {
@@ -175,10 +174,11 @@ func (o *onceTracker) onReported(_ *rpb.Registers) {
 // argsTracker reports only once for each different combination of arguments.
 // It's used for generic syscalls like ioctl to report once per 'cmd'.
 type argsTracker struct {
-	// argsIdx is the syscall arguments to use as unique ID.
-	argsIdx  []int
 	reported map[string]struct{}
-	count    int
+
+	// argsIdx is the syscall arguments to use as unique ID.
+	argsIdx []int
+	count   int
 }
 
 func newArgsTracker(argIdx ...int) *argsTracker {

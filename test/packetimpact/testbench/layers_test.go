@@ -320,68 +320,68 @@ func TestConnectionMatch(t *testing.T) {
 
 func TestLayersDiff(t *testing.T) {
 	for _, tt := range []struct {
-		x, y Layers
 		want string
+		x, y Layers
 	}{
 		{
-			Layers{&Ether{Type: NetworkProtocolNumber(12)}, &TCP{DataOffset: Uint8(5), SeqNum: Uint32(5)}},
-			Layers{&Ether{Type: NetworkProtocolNumber(13)}, &TCP{DataOffset: Uint8(7), SeqNum: Uint32(6)}},
-			"Ether:       Type: 12 13\n" +
+			x: Layers{&Ether{Type: NetworkProtocolNumber(12)}, &TCP{DataOffset: Uint8(5), SeqNum: Uint32(5)}},
+			y: Layers{&Ether{Type: NetworkProtocolNumber(13)}, &TCP{DataOffset: Uint8(7), SeqNum: Uint32(6)}},
+			want: "Ether:       Type: 12 13\n" +
 				"  TCP:     SeqNum:  5  6\n" +
 				"       DataOffset:  5  7\n",
 		},
 		{
-			Layers{&Ether{Type: NetworkProtocolNumber(12)}, &UDP{SrcPort: Uint16(123)}},
-			Layers{&Ether{Type: NetworkProtocolNumber(13)}, &TCP{DataOffset: Uint8(7), SeqNum: Uint32(6)}},
-			"Ether:       Type:  12 13\n" +
+			x: Layers{&Ether{Type: NetworkProtocolNumber(12)}, &UDP{SrcPort: Uint16(123)}},
+			y: Layers{&Ether{Type: NetworkProtocolNumber(13)}, &TCP{DataOffset: Uint8(7), SeqNum: Uint32(6)}},
+			want: "Ether:       Type:  12 13\n" +
 				"(UDP doesn't match TCP)\n" +
 				"  UDP:    SrcPort: 123   \n" +
 				"  TCP:     SeqNum:      6\n" +
 				"       DataOffset:      7\n",
 		},
 		{
-			Layers{&UDP{SrcPort: Uint16(123)}},
-			Layers{&Ether{Type: NetworkProtocolNumber(13)}, &TCP{DataOffset: Uint8(7), SeqNum: Uint32(6)}},
-			"(UDP doesn't match Ether)\n" +
+			x: Layers{&UDP{SrcPort: Uint16(123)}},
+			y: Layers{&Ether{Type: NetworkProtocolNumber(13)}, &TCP{DataOffset: Uint8(7), SeqNum: Uint32(6)}},
+			want: "(UDP doesn't match Ether)\n" +
 				"  UDP: SrcPort: 123   \n" +
 				"Ether:    Type:     13\n" +
 				"(missing matches TCP)\n",
 		},
 		{
-			Layers{nil, &UDP{SrcPort: Uint16(123)}},
-			Layers{&Ether{Type: NetworkProtocolNumber(13)}, &TCP{DataOffset: Uint8(7), SeqNum: Uint32(6)}},
-			"(nil matches Ether)\n" +
+			x: Layers{nil, &UDP{SrcPort: Uint16(123)}},
+			y: Layers{&Ether{Type: NetworkProtocolNumber(13)}, &TCP{DataOffset: Uint8(7), SeqNum: Uint32(6)}},
+			want: "(nil matches Ether)\n" +
 				"(UDP doesn't match TCP)\n" +
 				"UDP:    SrcPort: 123  \n" +
 				"TCP:     SeqNum:     6\n" +
 				"     DataOffset:     7\n",
 		},
 		{
-			Layers{&Ether{Type: NetworkProtocolNumber(13)}, &IPv4{IHL: Uint8(4)}, &TCP{DataOffset: Uint8(7), SeqNum: Uint32(6)}},
-			Layers{&Ether{Type: NetworkProtocolNumber(13)}, &IPv4{IHL: Uint8(6)}, &TCP{DataOffset: Uint8(7), SeqNum: Uint32(6)}},
-			"(Ether matches Ether)\n" +
+			x: Layers{&Ether{Type: NetworkProtocolNumber(13)}, &IPv4{IHL: Uint8(4)}, &TCP{DataOffset: Uint8(7), SeqNum: Uint32(6)}},
+			y: Layers{&Ether{Type: NetworkProtocolNumber(13)}, &IPv4{IHL: Uint8(6)}, &TCP{DataOffset: Uint8(7), SeqNum: Uint32(6)}},
+			want: "(Ether matches Ether)\n" +
 				"IPv4: IHL: 4 6\n" +
 				"(TCP matches TCP)\n",
 		},
 		{
-			Layers{&Payload{Bytes: []byte("foo")}},
-			Layers{&Payload{Bytes: []byte("bar")}},
-			"Payload: Bytes: [102 111 111] [98 97 114]\n",
+			x:    Layers{&Payload{Bytes: []byte("foo")}},
+			y:    Layers{&Payload{Bytes: []byte("bar")}},
+			want: "Payload: Bytes: [102 111 111] [98 97 114]\n",
 		},
 		{
-			Layers{&Payload{Bytes: []byte("")}},
-			Layers{&Payload{}},
-			"",
+			x:    Layers{&Payload{Bytes: []byte("")}},
+			y:    Layers{&Payload{}},
+			want: "",
 		},
 		{
-			Layers{&Payload{Bytes: []byte("")}},
-			Layers{&Payload{Bytes: []byte("")}},
-			"",
+			x:    Layers{&Payload{Bytes: []byte("")}},
+			y:    Layers{&Payload{Bytes: []byte("")}},
+			want: "",
 		},
 		{
-			Layers{&UDP{}},
-			Layers{&TCP{}},
-			"(UDP doesn't match TCP)\n" +
+			x: Layers{&UDP{}},
+			y: Layers{&TCP{}},
+			want: "(UDP doesn't match TCP)\n" +
 				"(UDP)\n" +
 				"(TCP)\n",
 		},

@@ -186,9 +186,9 @@ func TestUserAndGroup(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		bwrapArgs []string
 		wantUID   string
 		wantGID   string
+		bwrapArgs []string
 	}{
 		{
 			name: "DefaultUser",
@@ -282,8 +282,8 @@ func TestHostname(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		bwrapArgs  []string
 		wantOutput string
+		bwrapArgs  []string
 	}{
 		{
 			name: "Hostname",
@@ -333,8 +333,8 @@ func TestProc(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		bwrapArgs  []string
 		wantOutput string
+		bwrapArgs  []string
 	}{
 		{
 			name: "Proc",
@@ -385,8 +385,8 @@ func TestCapabilities(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		bwrapArgs  []string
 		wantOutput string
+		bwrapArgs  []string
 	}{
 		{
 			name: "CapDropAll",
@@ -451,8 +451,8 @@ func TestArgv0(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		bwrapArgs  []string
 		wantOutput string
+		bwrapArgs  []string
 	}{
 		{
 			name: "CustomArgv0",
@@ -503,8 +503,8 @@ func TestPerms(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		bwrapArgs  []string
 		wantOutput string
+		bwrapArgs  []string
 	}{
 		{
 			name: "TmpfsPerms",
@@ -681,20 +681,20 @@ func TestDir(t *testing.T) {
 	// directory. Each case gets a fresh one.
 	const hostDir = "HOST_DIR"
 	tests := []struct {
-		name string
 		// setup prepares hostDir before the run.
-		setup func(t *testing.T, hostDir string)
-		// bwrapArgs are the arguments, with hostDir standing in for the host
-		// directory.
-		bwrapArgs  []string
+		setup      func(t *testing.T, hostDir string)
+		name       string
 		wantOutput string
 		// wantErr, if set, is text the failed run's stderr must contain.
 		wantErr string
+		// wantHostFile is a path under hostDir that must exist afterwards.
+		wantHostFile string
+		// bwrapArgs are the arguments, with hostDir standing in for the host
+		// directory.
+		bwrapArgs []string
 		// wantHostMode is the mode of hostDir/new afterwards, 0 if it must not
 		// exist.
 		wantHostMode os.FileMode
-		// wantHostFile is a path under hostDir that must exist afterwards.
-		wantHostFile string
 	}{
 		// Without a bind mount behind DEST, --dir is a tmpfs stand-in.
 		{
@@ -1015,8 +1015,8 @@ func TestAsPID1Argv0(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		bwrapArgs []string
 		wantArgv0 string
+		bwrapArgs []string
 		wantPID1  bool
 	}{
 		{

@@ -88,8 +88,8 @@ func TestFileParsing(t *testing.T) {
 func TestCombine(t *testing.T) {
 	for _, test := range []struct {
 		name string
-		in   []string
 		out  string
+		in   []string
 	}{
 		{
 			name: "0",

@@ -59,10 +59,10 @@ type Command struct {
 	Cluster                  clusterflag.Flag
 	DaemonSetName            string
 	DaemonSetNamespace       string
-	EnablePerPodFlagOverride bool
 	Image                    string
 	PauseContainerImage      string
 	RunscFlags               string
+	EnablePerPodFlagOverride bool
 }
 
 // Name implements subcommands.Command.Name.

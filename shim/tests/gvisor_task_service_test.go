@@ -227,14 +227,14 @@ func TestGvisorTaskService(t *testing.T) {
 			// 4. Test Wait
 			for _, wt := range []struct {
 				name          string
+				expectErr     string
 				val           pb.WaitRequest_WaitType
 				expectTimeout bool
-				expectErr     string
 			}{
-				{"WaitCheckpoint", pb.WaitRequest_CHECKPOINT, true, ""},
-				{"WaitRestore", pb.WaitRequest_RESTORE, false, "cannot wait for restore"},
-				{"WaitFSCheckpoint", pb.WaitRequest_FSCHECKPOINT, true, ""},
-				{"WaitFSRestore", pb.WaitRequest_FSRESTORE, false, "filesystem restore is not enabled"},
+				{name: "WaitCheckpoint", val: pb.WaitRequest_CHECKPOINT, expectTimeout: true, expectErr: ""},
+				{name: "WaitRestore", val: pb.WaitRequest_RESTORE, expectTimeout: false, expectErr: "cannot wait for restore"},
+				{name: "WaitFSCheckpoint", val: pb.WaitRequest_FSCHECKPOINT, expectTimeout: true, expectErr: ""},
+				{name: "WaitFSRestore", val: pb.WaitRequest_FSRESTORE, expectTimeout: false, expectErr: "filesystem restore is not enabled"},
 			} {
 				t.Run(wt.name+"Timeout", func(t *testing.T) {
 					ctx, cancel := context.WithTimeout(t.Context(), 1*time.Second)

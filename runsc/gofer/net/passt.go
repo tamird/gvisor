@@ -278,8 +278,8 @@ func copyPasstToSentry(sentry io.Writer, passt io.Reader) error {
 
 // passtCopyResult is the result of one copy direction.
 type passtCopyResult struct {
-	fromSentry bool
 	err        error
+	fromSentry bool
 }
 
 // sandboxExited reports whether the copy stopped because the sentry closed

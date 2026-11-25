@@ -23,9 +23,9 @@ import (
 )
 
 type jsonLog struct {
+	Time  time.Time `json:"time"`
 	Msg   string    `json:"msg"`
 	Level Level     `json:"level"`
-	Time  time.Time `json:"time"`
 }
 
 // MarshalJSON implements json.Marshaler.MarashalJSON.

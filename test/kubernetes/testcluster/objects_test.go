@@ -62,12 +62,12 @@ func TestGetPersistentVolume(t *testing.T) {
 
 func TestSetContainerResources(t *testing.T) {
 	testCases := []struct {
-		name          string
 		pod           *v23.Pod
-		containerName string
-		requests      ContainerResourcesRequest
-		wantErr       string
 		wantPod       func(t *testing.T, got *v23.Pod)
+		name          string
+		containerName string
+		wantErr       string
+		requests      ContainerResourcesRequest
 	}{
 		{
 			name: "empty container name, single container, empty requests",

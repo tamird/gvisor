@@ -28,21 +28,21 @@ import (
 
 // Options configures an egress Filter.
 type Options struct {
-	// AllowLoopback determines whether destinations on loopback addresses
-	// (127.0.0.0/8 and ::1) are permitted.
-	AllowLoopback bool
-
 	// LocalAddrs overrides the set of host interface addresses rejected by the
 	// filter. If nil, New queries the host network interfaces using
 	// net.InterfaceAddrs(). This query must be performed before seccomp filters
 	// are installed.
 	LocalAddrs []net.IP
+
+	// AllowLoopback determines whether destinations on loopback addresses
+	// (127.0.0.0/8 and ::1) are permitted.
+	AllowLoopback bool
 }
 
 // Filter validates whether a destination is permitted for outbound traffic.
 type Filter struct {
-	allowLoopback bool
 	localAddrs    map[tcpip.Address]struct{}
+	allowLoopback bool
 }
 
 // New creates a new Filter with the given options.

@@ -136,7 +136,6 @@ analyzers:
   fieldalignment:
     internal:
       exclude:
-        - ".*" # Temporary: migrate fieldalignment.
         # CPU offsets, including self at zero, are fixed by hardware entry assembly.
         - '^pkg/ring0/defs\.go:63:10$'
         # CPUArchState offsets are fixed by entry_amd64.s.
@@ -174,7 +173,6 @@ analyzers:
         - '^pkg/sentry/pgalloc/save_restore\.go:(647|1339|1444):[0-9]+$'
     generated:
       exclude:
-        - ".*" # Temporary: migrate fieldalignment.
         # Shard padding separates mutation and lookup data into cache lines.
         - '^bazel-out/[^/]+/bin/pkg/(sync/locking/atomicptrmap_(ancestors|goroutine)_unsafe|sentry/state/stateipc/(destination|source)file_atomicptrmap_unsafe|sync/atomicptrmap/test_atomicptrmap(_sharded)?_unsafe)\.go:(85|87):[0-9]+$'
         - '^bazel-out/[^/]+/bin/pkg/sentry/state/stateipc/(destination|source)file_atomicptrmap_unsafe\.go:79:[0-9]+$'
@@ -196,7 +194,7 @@ analyzers:
     internal:
       exclude:
         # readUntil treats read errors and EOF as an unsuccessful match.
-        - '^pkg/test/testutil/testutil\.go:758:8$'
+        - '^pkg/test/testutil/testutil\.go:760:8$'
   slicesbackward:
     internal:
       exclude:
@@ -231,7 +229,7 @@ analyzers:
       exclude:
         # An identical reflect.Value descriptor in disjoint ranges means inconsistent
         # address registration; distinct objects may have equal contents.
-        - '^pkg/state/encode\.go:894:[0-9]+$'
+        - '^pkg/state/encode\.go:893:[0-9]+$'
   errorsas:
     external: # Enabled.
       exclude:

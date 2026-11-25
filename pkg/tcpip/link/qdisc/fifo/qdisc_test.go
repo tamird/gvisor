@@ -33,14 +33,14 @@ var _ stack.LinkWriter = (*countWriter)(nil)
 
 // countWriter implements LinkWriter.
 type countWriter struct {
-	mu sync.Mutex
+	done chan struct{}
 
 	// +checklocks:mu
 	packetsWritten int
 
 	// packetsWanted and done are initialized before publication to the dispatcher.
 	packetsWanted int
-	done          chan struct{}
+	mu            sync.Mutex
 }
 
 // +checklocksexclude:cw.mu

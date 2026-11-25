@@ -28,8 +28,8 @@ import (
 
 // mutex implements subcommands.Command for the "mutex" command.
 type mutex struct {
-	duration time.Duration
 	output   string
+	duration time.Duration
 }
 
 // Name implements subcommands.Command.

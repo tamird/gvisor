@@ -24,10 +24,10 @@ import (
 func TestParseBundles(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
-		in      []string
 		defPfx  string
-		wantErr bool
+		in      []string
 		want    []Bundle
+		wantErr bool
 	}{
 		{
 			name: "empty",

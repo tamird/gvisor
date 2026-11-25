@@ -62,26 +62,37 @@ const (
 // FileServer implements stateipc.AsyncFileServerImpl for reading checkpoint
 // files from GCS.
 type FileServer struct {
-	ctx                     context.Context
-	client                  *storage.Client
+	ctx          context.Context
+	bucket       *storage.BucketHandle
+	client       *storage.Client
+	cancel       context.CancelCauseFunc
+	objectPrefix string
+	background   sync.WaitGroup
+
+	// pcuEnabledOnce initializes the cached parallel composite upload decision.
+	pcuEnabledOnce          sync.Once
 	allowCheckpointReads    bool
+	pcuMode                 ParallelCompositeUploadMode
 	allowCheckpointWrites   bool
 	allowFSCheckpointReads  bool
 	allowFSCheckpointWrites bool
-	pcuMode                 ParallelCompositeUploadMode
-	bucket                  *storage.BucketHandle
-	objectPrefix            string
-	cancel                  context.CancelCauseFunc
 
-	background sync.WaitGroup
-
-	// Only used if allowWrites == true:
-	pcuEnabledOnce sync.Once
-	pcuEnabled     bool
+	// pcuEnabled is the decision initialized by pcuEnabledOnce.
+	pcuEnabled bool
 }
 
 // FileServerOptions provides options to NewFileServer.
 type FileServerOptions struct {
+	// If TokenSource is not nil, it provides authentication tokens. Otherwise,
+	// application default credentials will be used.
+	TokenSource oauth2.TokenSource
+
+	// Bucket is the name of the GCS bucket.
+	Bucket string
+
+	// ObjectPrefix is prepended to each filename to form GCS object names.
+	ObjectPrefix string
+
 	// AllowCheckpointReads enables checkpoint reading.
 	AllowCheckpointReads bool
 
@@ -93,16 +104,6 @@ type FileServerOptions struct {
 
 	// AllowFSCheckpointWrites enables filesystem checkpoint writing.
 	AllowFSCheckpointWrites bool
-
-	// If TokenSource is not nil, it provides authentication tokens. Otherwise,
-	// application default credentials will be used.
-	TokenSource oauth2.TokenSource
-
-	// Bucket is the name of the GCS bucket.
-	Bucket string
-
-	// ObjectPrefix is prepended to each filename to form GCS object names.
-	ObjectPrefix string
 
 	// ParallelCompositeUpload controls whether parallel composite upload is
 	// used for writing the pages file.

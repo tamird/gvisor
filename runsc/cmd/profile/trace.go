@@ -28,8 +28,8 @@ import (
 
 // trace implements subcommands.Command for the "trace" command.
 type trace struct {
-	duration time.Duration
 	output   string
+	duration time.Duration
 }
 
 // Name implements subcommands.Command.

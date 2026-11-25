@@ -214,8 +214,8 @@ func enqueue(link *channel.Endpoint, b byte) tcpip.Error {
 func TestPumpDrainsBeforeSleeping(t *testing.T) {
 	n := newPump(t)
 	type result struct {
-		data []byte
 		err  tcpip.Error
+		data []byte
 	}
 	received := make(chan result, 2)
 	n.links[1].Attach(pumpDispatcher(func(pkt *stack.PacketBuffer) {

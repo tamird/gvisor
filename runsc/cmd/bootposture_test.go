@@ -42,16 +42,16 @@ import (
 const postureFDLimit = 4096
 
 type postureCase struct {
-	name           string
-	directfs       bool
-	network        config.NetworkType
-	extraFDClasses []string
+	name string
 
 	// platform overrides the gVisor platform; leave empty to use the default.
-	platform string
+	platform       string
+	extraFDClasses []string
+	network        config.NetworkType
 
 	// fdLimit, when non-zero, is passed as --fdlimit.
-	fdLimit int
+	fdLimit  int
+	directfs bool
 
 	// coreTags is passed as --enable-core-tags.
 	coreTags bool

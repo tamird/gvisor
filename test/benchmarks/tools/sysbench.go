@@ -86,12 +86,12 @@ func (s *SysbenchCPU) parseEvents(data string) (float64, error) {
 
 // SysbenchMemory is for 'sysbench [FLAGS] memory run' and holds Memory specific arguments.
 type SysbenchMemory struct {
-	SysbenchBase
-	BlockSize     int    // size of test memory block in megabytes [1].
 	Scope         string // memory access scope {global, local} [global].
-	HugeTLB       bool   // allocate memory from HugeTLB [off].
 	OperationType string // type of memory ops {read, write, none} [write].
 	AccessMode    string // access mode {seq, rnd} [seq].
+	SysbenchBase
+	BlockSize int  // size of test memory block in megabytes [1].
+	HugeTLB   bool // allocate memory from HugeTLB [off].
 }
 
 // MakeCmd makes commands for SysbenchMemory.

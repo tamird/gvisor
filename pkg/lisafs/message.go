@@ -354,12 +354,13 @@ func (*MountReq) String() string {
 
 // MountResp represents a Mount response.
 type MountResp struct {
-	Root Inode
+	// SupportedMs holds all the supported messages.
+	SupportedMs []MID
+	Root        Inode
+
 	// MaxMessageSize is the maximum size of messages communicated between the
 	// client and server in bytes. This includes the communication header.
 	MaxMessageSize primitive.Uint32
-	// SupportedMs holds all the supported messages.
-	SupportedMs []MID
 }
 
 // String implements fmt.Stringer.String.
@@ -489,8 +490,8 @@ func (s *SetStatResp) String() string {
 // WalkReq is used to request to walk multiple path components at once. This
 // is used for both Walk and WalkStat.
 type WalkReq struct {
-	DirFD FDID
 	Path  StringArray
+	DirFD FDID
 }
 
 // String implements fmt.Stringer.String.
@@ -561,8 +562,8 @@ func walkStatusToString(ws WalkStatus) string {
 // WalkResp is used to communicate the inodes walked by the server. In memory,
 // the inode array is preceded by a uint16 integer denoting array length.
 type WalkResp struct {
-	Status WalkStatus
 	Inodes []Inode
+	Status WalkStatus
 }
 
 // String implements fmt.Stringer.String. This ensures that the Inode slice is
@@ -710,9 +711,9 @@ type createCommon struct {
 
 // OpenCreateAtReq is used to make OpenCreateAt requests.
 type OpenCreateAtReq struct {
+	Name SizedString
 	createCommon
 	Flags primitive.Uint32
-	Name  SizedString
 }
 
 // String implements fmt.Stringer.String.
@@ -894,8 +895,8 @@ func (r *PReadReq) String() string {
 
 // PReadResp is used to return the result of pread(2).
 type PReadResp struct {
-	NumBytes primitive.Uint64
 	Buf      []byte
+	NumBytes primitive.Uint64
 }
 
 // String implements fmt.Stringer.String.
@@ -929,10 +930,10 @@ func (r *PReadResp) CheckedUnmarshal(src []byte) ([]byte, bool) {
 
 // PWriteReq is used to pwrite(2) on an FD.
 type PWriteReq struct {
+	Buf      []byte
 	Offset   primitive.Uint64
 	FD       FDID
 	NumBytes primitive.Uint32
-	Buf      []byte
 }
 
 // String implements fmt.Stringer.String.
@@ -986,8 +987,8 @@ func (w *PWriteResp) String() string {
 
 // MkdirAtReq is used to make MkdirAt requests.
 type MkdirAtReq struct {
-	createCommon
 	Name SizedString
+	createCommon
 }
 
 // String implements fmt.Stringer.String.
@@ -1033,10 +1034,10 @@ func (m *MkdirAtResp) String() string {
 
 // MknodAtReq is used to make MknodAt requests.
 type MknodAtReq struct {
+	Name SizedString
 	createCommon
 	Minor primitive.Uint32
 	Major primitive.Uint32
-	Name  SizedString
 }
 
 // String implements fmt.Stringer.String.
@@ -1086,11 +1087,11 @@ func (m *MknodAtResp) String() string {
 
 // SymlinkAtReq is used to make SymlinkAt request.
 type SymlinkAtReq struct {
+	Name   SizedString
+	Target SizedString
 	DirFD  FDID
 	UID    UID
 	GID    GID
-	Name   SizedString
-	Target SizedString
 }
 
 // String implements fmt.Stringer.String.
@@ -1146,9 +1147,9 @@ func (s *SymlinkAtResp) String() string {
 
 // LinkAtReq is used to make LinkAt requests.
 type LinkAtReq struct {
+	Name   SizedString
 	DirFD  FDID
 	Target FDID
-	Name   SizedString
 }
 
 // String implements fmt.Stringer.String.
@@ -1398,9 +1399,9 @@ func (g *GIDArray) CheckedUnmarshal(src []byte) ([]byte, bool) {
 
 // ConnectWithGroupsReq is used to make a ConnectWithGroups request. The response is also ConnectResp.
 type ConnectWithGroupsReq struct {
-	ConnectWithCredsReq
 	// Groups are the supplementary groups to connect with.
 	Groups GIDArray
+	ConnectWithCredsReq
 }
 
 // String implements fmt.Stringer.String.
@@ -1434,9 +1435,9 @@ func (c *ConnectWithGroupsReq) CheckedUnmarshal(src []byte) ([]byte, bool) {
 
 // BindAtReq is used to make BindAt requests.
 type BindAtReq struct {
+	Name SizedString
 	createCommon
 	SockType primitive.Uint32
-	Name     SizedString
 }
 
 // SizeBytes implements marshal.Marshallable.SizeBytes.
@@ -1544,9 +1545,9 @@ func (a *AcceptResp) CheckedUnmarshal(src []byte) ([]byte, bool) {
 
 // UnlinkAtReq is used to make UnlinkAt request.
 type UnlinkAtReq struct {
+	Name  SizedString
 	DirFD FDID
 	Flags primitive.Uint32
-	Name  SizedString
 }
 
 // String implements fmt.Stringer.String.
@@ -1591,10 +1592,10 @@ func (*UnlinkAtResp) String() string {
 // RenameAtReq is used to make RenameAt requests. Note that the request takes in
 // the to-be-renamed file's FD instead of oldDir and oldName like renameat(2).
 type RenameAtReq struct {
-	OldDir  FDID
-	NewDir  FDID
 	OldName SizedString
 	NewName SizedString
+	OldDir  FDID
+	NewDir  FDID
 }
 
 // String implements fmt.Stringer.String.
@@ -1699,12 +1700,12 @@ func (g *Getdents64Req) String() string {
 // the device numbers of the entry's file, or zero if the server does not
 // report them.
 type Dirent64 struct {
+	Name     SizedString
 	Ino      primitive.Uint64
+	Off      primitive.Uint64
 	DevMinor primitive.Uint32
 	DevMajor primitive.Uint32
-	Off      primitive.Uint64
 	Type     primitive.Uint8
-	Name     SizedString
 }
 
 // String implements fmt.Stringer.String.
@@ -1809,9 +1810,9 @@ func (g *Getdents64Resp) CheckedUnmarshal(src []byte) ([]byte, bool) {
 // FGetXattrReq is used to make FGetXattr requests. The response to this is
 // just a SizedString containing the xattr value.
 type FGetXattrReq struct {
+	Name    SizedString
 	FD      FDID
 	BufSize primitive.Uint32
-	Name    SizedString
 }
 
 // String implements fmt.Stringer.String.
@@ -1872,10 +1873,10 @@ func (g *FGetXattrResp) CheckedUnmarshal(src []byte) ([]byte, bool) {
 
 // FSetXattrReq is used to make FSetXattr requests. It has no response.
 type FSetXattrReq struct {
-	FD    FDID
-	Flags primitive.Uint32
 	Name  SizedString
 	Value SizedString
+	FD    FDID
+	Flags primitive.Uint32
 }
 
 // String implements fmt.Stringer.String.
@@ -1925,8 +1926,8 @@ func (*FSetXattrResp) String() string {
 
 // FRemoveXattrReq is used to make FRemoveXattr requests. It has no response.
 type FRemoveXattrReq struct {
-	FD   FDID
 	Name SizedString
+	FD   FDID
 }
 
 // String implements fmt.Stringer.String.

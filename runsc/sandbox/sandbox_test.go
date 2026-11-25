@@ -37,8 +37,8 @@ func TestGetGCSURIFromImagePath(t *testing.T) {
 	testCases := []struct {
 		name      string
 		content   string
-		writeOpts bool
 		want      string
+		writeOpts bool
 	}{
 		{
 			name:      "missing file",
@@ -99,15 +99,15 @@ func TestGetGCSURIFromImagePath(t *testing.T) {
 
 type fakeCgroup struct {
 	cgroup.Cgroup
-	numCPU       int
 	numCPUErr    error
-	cpuQuota     int64
 	cpuQuotaErr  error
-	cpuPeriod    int64
 	cpuPeriodErr error
+	updates      []specs.LinuxCPU
+	numCPU       int
+	cpuQuota     int64
+	cpuPeriod    int64
 	quotaReads   int
 	periodReads  int
-	updates      []specs.LinuxCPU
 }
 
 func (f *fakeCgroup) Update(res *specs.LinuxResources) error {
@@ -131,14 +131,14 @@ func (f *fakeCgroup) CPUPeriod() (int64, error) {
 
 func TestCalculateCPUNum(t *testing.T) {
 	for _, tc := range []struct {
+		numCPUErr       error
+		limits          *CPULimits
 		name            string
 		numCPU          int
-		numCPUErr       error
 		cpuQuota        int64
 		cpuPeriod       int64
-		limits          *CPULimits
-		cpuNumFromQuota bool
 		want            int
+		cpuNumFromQuota bool
 	}{
 		{
 			name:      "cgroup NumCPU error fallback to runtime.NumCPU",
@@ -310,15 +310,15 @@ func TestLifecycleCPUNum(t *testing.T) {
 func TestNewCPULimits(t *testing.T) {
 	quotaRes := &specs.LinuxResources{CPU: &specs.LinuxCPU{Quota: new(int64(25000))}}
 	for _, tc := range []struct {
+		res           *specs.LinuxResources
 		name          string
 		creation      string
 		lifecycle     string
-		res           *specs.LinuxResources
-		wantNil       bool
 		wantApp       int64
 		wantPeriod    uint64
 		wantCreation  int64
 		wantLifecycle int64
+		wantNil       bool
 	}{
 		{
 			name:          "default case",
@@ -394,13 +394,13 @@ func TestNewCPULimits(t *testing.T) {
 				t.Fatalf("NewCPULimits() = nil")
 			}
 			for _, got := range []struct {
-				name  string
 				cpu   specs.LinuxCPU
+				name  string
 				quota int64
 			}{
-				{"App", l.App, tc.wantApp},
-				{"Creation", l.Creation, tc.wantCreation},
-				{"Lifecycle", l.Lifecycle, tc.wantLifecycle},
+				{name: "App", cpu: l.App, quota: tc.wantApp},
+				{name: "Creation", cpu: l.Creation, quota: tc.wantCreation},
+				{name: "Lifecycle", cpu: l.Lifecycle, quota: tc.wantLifecycle},
 			} {
 				if *got.cpu.Quota != got.quota || *got.cpu.Period != tc.wantPeriod {
 					t.Errorf("%s = %d/%d, want %d/%d", got.name, *got.cpu.Quota, *got.cpu.Period, got.quota, tc.wantPeriod)
@@ -580,8 +580,8 @@ func TestOpenFSRestoreFilesForLocalCheckpointErrors(t *testing.T) {
 
 	for _, tc := range []struct {
 		name    string
-		paths   []string
 		wantErr string
+		paths   []string
 	}{
 		{name: "duplicate explicit prefix path", paths: []string{filepath.Join(dir, "rootfs"), filepath.Join(dir, "rootfs")}, wantErr: "duplicate filesystem checkpoint bundle"},
 		{name: "duplicate mixing directory and explicit prefix", paths: []string{dir, filepath.Join(dir, "rootfs")}, wantErr: "duplicate filesystem checkpoint bundle"},
@@ -655,8 +655,8 @@ func TestIsGCSRestorePath(t *testing.T) {
 func TestSentryGODEBUG(t *testing.T) {
 	for _, tc := range []struct {
 		name string
-		conf config.Config
 		want []string
+		conf config.Config
 	}{
 		{
 			name: "default",

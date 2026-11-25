@@ -31,9 +31,6 @@ import (
 // AsyncFileClient provides async I/O by communicating with an AsyncFileServer,
 // which may be in another process.
 type AsyncFileClient struct {
-	asyncFileClientRefs
-
-	filesMu sync.Mutex
 
 	// files contains the endpoints to shut down if the server disconnects.
 	//
@@ -41,8 +38,11 @@ type AsyncFileClient struct {
 	files map[*asyncReadWriter]struct{}
 
 	uc           *urpc.Client
-	watchdog     sync.WaitGroup
 	watchdogStop eventfd.Eventfd
+	watchdog     sync.WaitGroup
+	asyncFileClientRefs
+
+	filesMu sync.Mutex
 }
 
 // NewAsyncFileClient returns an AsyncFileClient that communicates with an
@@ -183,25 +183,23 @@ func (c *AsyncFileClient) open(path string, mode int) (*asyncReadWriter, error) 
 // Any given asyncReadWriter functions either as an AsyncReader or an
 // AsyncWriter, never both at the same time.
 type asyncReadWriter struct {
-	// Immutable fields:
+	connectErr error
+
+	// client, maxIOBytes, maxRanges, maxParallel, handle, and isReader are immutable.
 	client      *AsyncFileClient
+	ioep        ioEndpoint
+	connectorWG sync.WaitGroup
+	reserve     uint64
+	connectOnce sync.Once
 	maxIOBytes  uint32
 	maxRanges   uint32
 	maxParallel uint32
 	handle      uint32
-	isReader    bool
 
 	// numSubmissions is the number of submissions to be sent to the server by
 	// the next call to Wait().
 	numSubmissions uint32
-
-	ioep ioEndpoint
-
-	connectOnce sync.Once
-	connectErr  error
-	connectorWG sync.WaitGroup
-
-	reserve uint64
+	isReader       bool
 }
 
 // Close implements stateio.AsyncReader.Close and stateio.AsyncWriter.Close.

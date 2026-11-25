@@ -74,35 +74,43 @@ func (n *DUTUname) IsFuchsia() bool {
 // DUTTestNet describes the test network setup on dut and how the testbench
 // should connect with an existing DUT.
 type DUTTestNet struct {
-	// LocalMAC is the local MAC address on the test network.
-	LocalMAC net.HardwareAddr
-	// RemoteMAC is the DUT's MAC address on the test network.
-	RemoteMAC net.HardwareAddr
-	// LocalIPv4 is the local IPv4 address on the test network.
-	LocalIPv4 net.IP
-	// RemoteIPv4 is the DUT's IPv4 address on the test network.
-	RemoteIPv4 net.IP
-	// IPv4PrefixLength is the network prefix length of the IPv4 test network.
-	IPv4PrefixLength int
-	// LocalIPv6 is the local IPv6 address on the test network.
-	LocalIPv6 net.IP
-	// RemoteIPv6 is the DUT's IPv6 address on the test network.
-	RemoteIPv6 net.IP
-	// LocalDevID is the ID of the local interface on the test network.
-	LocalDevID uint32
-	// RemoteDevID is the ID of the remote interface on the test network.
-	RemoteDevID uint32
 	// LocalDevName is the device that testbench uses to inject traffic.
 	LocalDevName string
+
 	// RemoteDevName is the device name on the DUT, individual tests can
 	// use the name to construct tests.
 	RemoteDevName string
 
-	// The following two fields on actually on the control network instead
-	// of the test network, including them for convenience.
+	// LocalMAC is the local MAC address on the test network.
+	LocalMAC net.HardwareAddr
+
+	// RemoteMAC is the DUT's MAC address on the test network.
+	RemoteMAC net.HardwareAddr
+
+	// LocalIPv4 is the local IPv4 address on the test network.
+	LocalIPv4 net.IP
+
+	// RemoteIPv4 is the DUT's IPv4 address on the test network.
+	RemoteIPv4 net.IP
+
+	// LocalIPv6 is the local IPv6 address on the test network.
+	LocalIPv6 net.IP
+
+	// RemoteIPv6 is the DUT's IPv6 address on the test network.
+	RemoteIPv6 net.IP
 
 	// POSIXServerIP is the POSIX server's IP address on the control network.
 	POSIXServerIP net.IP
+
+	// IPv4PrefixLength is the network prefix length of the IPv4 test network.
+	IPv4PrefixLength int
+
+	// LocalDevID is the ID of the local interface on the test network.
+	LocalDevID uint32
+
+	// RemoteDevID is the ID of the remote interface on the test network.
+	RemoteDevID uint32
+
 	// POSIXServerPort is the UDP port the POSIX server is bound to on the
 	// control network.
 	POSIXServerPort uint16

@@ -96,8 +96,8 @@ func TestSyscallVars(t *testing.T) {
 	}
 	buf := make([]byte, (&linux.SeccompData{}).SizeBytes())
 	for _, test := range []struct {
-		name    string
 		sn      VarSyscallNumbers
+		name    string
 		wantErr bool
 	}{
 		{

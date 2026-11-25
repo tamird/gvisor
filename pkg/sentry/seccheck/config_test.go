@@ -115,8 +115,8 @@ func TestLifecycle(t *testing.T) {
 func TestFailure(t *testing.T) {
 	for _, tc := range []struct {
 		name string
-		conf SessionConfig
 		err  string
+		conf SessionConfig
 	}{
 		{
 			name: "point",

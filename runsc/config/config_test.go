@@ -736,8 +736,8 @@ func TestOverrideAllowlist(t *testing.T) {
 	for _, tc := range []struct {
 		flag  string
 		value string
-		force bool
 		error string
+		force bool
 	}{
 		{
 			flag:  "debug",
@@ -967,11 +967,15 @@ func TestBundles(t *testing.T) {
 		}
 	}
 	for _, test := range []struct {
-		// Name of the test.
-		Name string
-
 		// List of bundles that exist for the purpose of this test.
 		BundleConfig map[BundleName]Bundle
+
+		// If bundles were successfully applied, this function is called to compare
+		// pre-bundle-application and post-bundle-application configs.
+		Verify func(t *testing.T, old, new *Config)
+
+		// Name of the test.
+		Name string
 
 		// Command-line arguments passed as explicit flags.
 		CommandLine []string
@@ -981,10 +985,6 @@ func TestBundles(t *testing.T) {
 
 		// Whether we expect applying bundles to fail.
 		WantErr bool
-
-		// If bundles were successfully applied, this function is called to compare
-		// pre-bundle-application and post-bundle-application configs.
-		Verify func(t *testing.T, old, new *Config)
 	}{
 		{
 			Name:         "empty bundle",
@@ -1156,9 +1156,9 @@ func TestBundles(t *testing.T) {
 func TestBundleValidate(t *testing.T) {
 	defaultVerify := func(err error) error { return err }
 	for _, tc := range []struct {
-		name   string
 		bundle Bundle
 		verify func(err error) error
+		name   string
 	}{
 		{
 			name:   "empty bundle",

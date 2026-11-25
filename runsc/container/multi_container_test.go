@@ -1109,10 +1109,10 @@ func TestMultiContainerTarRootfsUpperLayer(t *testing.T) {
 
 type execDesc struct {
 	c    *Container
-	cmd  []string
 	name string
-	want int
 	err  string
+	cmd  []string
+	want int
 }
 
 func execMany(t *testing.T, conf *config.Config, execs []execDesc) {

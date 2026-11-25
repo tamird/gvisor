@@ -24,9 +24,9 @@ type Deque[T any] struct {
 	// Invariants:
 	// - len(buf) is 0 or a power of 2.
 	// - If len(buf) == 0, off == 0; otherwise off < len(buf).
+	buf []T
 	off uint64
 	len uint64
-	buf []T
 }
 
 // Preconditions: d.len == len(d.buf).

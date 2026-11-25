@@ -26,15 +26,15 @@ import (
 type decObject struct {
 	base unsafe.Pointer
 	ti   *typeInfo
+	// mapType is the type of map objects, known once they are referred to.
+	mapType *typeInfo
+	exact   *typeInfo
 	// size is the size of the object in bytes.
 	size uintptr
 	kind uint8
-	// mapType is the type of map objects, known once they are referred to.
-	mapType *typeInfo
 	// inexact is true for objects whose type is only known to have the
 	// layout of ti. exact is their type, once known from a reference.
 	inexact bool
-	exact   *typeInfo
 }
 
 // decodeCallback is a post-decode callback run once an object has been decoded
@@ -72,54 +72,57 @@ type graphObjectDecodeState struct {
 
 // graphDecodeState is the state of Load.
 type graphDecodeState struct {
-	ctx context.Context
-	in  decBuf
+	itabCache itabCache
+	ctx       context.Context
 
-	types []*typeInfo
-	// typeNames are the names of named types, which may not be registered.
-	typeNames []string
-	objs      []decObject
-	ods       []graphObjectDecodeState
-	cbs       []decodeCallback
-	targets   []unsafe.Pointer
+	// mapPtr holds the map being decoded.
+	mapPtr unsafe.Pointer
+
+	// valueScratch holds storage for values loaded by Source.LoadValueTo,
+	// by type.
+	valueScratch map[*typeInfo]unsafe.Pointer
+	shapeCache   [128]traversalKey
+	cbs          []decodeCallback
+	ods          []graphObjectDecodeState
+	targets      []unsafe.Pointer
+
 	// targetObjs are the objects of targets, or -1.
 	targetObjs []int32
+	objs       []decObject
+
+	// typeNames are the names of named types, which may not be registered.
+	typeNames []string
+	types     []*typeInfo
+
+	// strings is the current allocation for string data.
+	strings []byte
+	in      decBuf
+	stats   graphStats
+
+	// hooks counts the runs of code that may retain the addresses of
+	// decoded values: callbacks, and the methods of structs with hooks.
+	hooks uint64
+
+	// deferred counts callbacks queued for post-decode execution.
+	deferred uint64
+
+	// refs counts object references resolved so far.
+	refs uint64
 
 	// cur is the object being decoded.
 	cur int32
+
 	// lastRef is the object referred to by the last decoded pointer, slice,
 	// map or interface, or -1.
 	lastRef int32
+
 	// keepZero is true while decoding the root object: like the zero values
 	// of fields, which are not encoded, zero values do not overwrite the
 	// root's existing state.
 	keepZero bool
 
-	// mapPtr holds the map being decoded.
-	mapPtr unsafe.Pointer
-
 	// noCallbacks disables user callbacks.
 	noCallbacks bool
-
-	// hooks counts the runs of code that may retain the addresses of
-	// decoded values: callbacks, and the methods of structs with hooks.
-	hooks uint64
-	// deferred counts callbacks queued for post-decode execution.
-	deferred uint64
-	// refs counts object references resolved so far.
-	refs uint64
-
-	// strings is the current allocation for string data.
-	strings []byte
-
-	itabCache  itabCache
-	shapeCache [128]traversalKey
-
-	// valueScratch holds storage for values loaded by Source.LoadValueTo,
-	// by type.
-	valueScratch map[*typeInfo]unsafe.Pointer
-
-	stats graphStats
 }
 
 // graphDecodeStatePool holds decodeStates for reuse.

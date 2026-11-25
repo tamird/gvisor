@@ -173,11 +173,19 @@ func TestCanLock(t *testing.T) {
 
 func TestSetLock(t *testing.T) {
 	tests := []struct {
+		// uid of lock attempter.
+		uid UniqueID
+		// err is the expected results.
+		err error
 		// description of test.
 		name string
 
 		// LockSet entries to pre-fill.
 		before []entry
+
+		// Expected layout of the set after locking
+		// if err is nil.
+		after []entry
 
 		// Description of region to lock:
 		//
@@ -185,16 +193,8 @@ func TestSetLock(t *testing.T) {
 		start uint64
 		// end is the end file offset of the lock.
 		end uint64
-		// uid of lock attempter.
-		uid UniqueID
 		// lock type requested.
 		lockType LockType
-		// err is the expected results.
-		err error
-
-		// Expected layout of the set after locking
-		// if err is nil.
-		after []entry
 	}{
 		{
 			name:     "set zero length ReadLock on empty set",
@@ -719,11 +719,16 @@ func TestFileLocksFirstUse(t *testing.T) {
 
 func TestUnlock(t *testing.T) {
 	tests := []struct {
+		// uid of lock holder.
+		uid UniqueID
 		// description of test.
 		name string
 
 		// LockSet entries to pre-fill.
 		before []entry
+
+		// Expected layout of the set after unlocking.
+		after []entry
 
 		// Description of region to unlock:
 		//
@@ -731,11 +736,6 @@ func TestUnlock(t *testing.T) {
 		start uint64
 		// end is the end file start of the lock.
 		end uint64
-		// uid of lock holder.
-		uid UniqueID
-
-		// Expected layout of the set after unlocking.
-		after []entry
 	}{
 		{
 			name:  "unlock zero length on empty set",

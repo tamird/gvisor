@@ -89,9 +89,9 @@ func generateSamples(n int, overhead TSCValue) []sample {
 // TestSample ensures that samples can be collected.
 func TestSample(t *testing.T) {
 	testCases := []struct {
+		err     error
 		name    string
 		samples []sample
-		err     error
 	}{
 		{
 			name: "basic",

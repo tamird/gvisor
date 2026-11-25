@@ -31,8 +31,8 @@ import (
 // GoferClient is the lisafs client for the /dev gofer connection.
 type GoferClient struct {
 	clientFD lisafs.ClientFD
-	hostFD   int
 	contName string
+	hostFD   int
 }
 
 // NewGoferClient establishes the LISAFS connection to the dev gofer server.

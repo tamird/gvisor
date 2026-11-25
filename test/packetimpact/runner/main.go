@@ -205,8 +205,8 @@ func main() {
 
 type dutProcess struct {
 	cmd       *exec.Cmd
-	id        int
 	completeR *os.File
+	id        int
 	dutNetNS  netNS
 }
 
@@ -265,9 +265,9 @@ func newDUT(ctx context.Context, id int, dutBinary string, dutArgs dutArgList) (
 		}
 
 		for _, conf := range []struct {
-			ns   netNS
 			addr *netlink.Addr
 			veth *netlink.Veth
+			ns   netNS
 		}{
 			{ns: currentNetNS, addr: tbIPv4, veth: &tbVeth},
 			{ns: dutNetNS, addr: dutIPv4, veth: &dutVeth},

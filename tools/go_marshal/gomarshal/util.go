@@ -228,11 +228,11 @@ func emit(out io.Writer, indent int, a ...any) {
 // sourceBuffer provides a convenient way to build up go source fragments in
 // memory. May be safely zero-value initialized. Not thread-safe.
 type sourceBuffer struct {
-	// Current indentation level.
-	indent int
-
 	// Memory buffer containing contents while they're being generated.
 	b bytes.Buffer
+
+	// Current indentation level.
+	indent int
 }
 
 func (b *sourceBuffer) reset() {
@@ -277,20 +277,24 @@ func (b *sourceBuffer) Write(buf []byte) (int, error) {
 
 // importStmt represents a single import statement.
 type importStmt struct {
-	// Local name of the imported package.
-	name string
-	// Import path.
-	path string
-	// Indicates whether the local name is an alias, or simply the final
-	// component of the path.
-	aliased bool
-	// Indicates whether this import was referenced by generated code.
-	used bool
 	// AST node and file set representing the import statement, if any. These
 	// are only non-nil if the import statement originates from an input source
 	// file.
 	spec *ast.ImportSpec
 	fset *token.FileSet
+
+	// Local name of the imported package.
+	name string
+
+	// Import path.
+	path string
+
+	// Indicates whether the local name is an alias, or simply the final
+	// component of the path.
+	aliased bool
+
+	// Indicates whether this import was referenced by generated code.
+	used bool
 }
 
 func newImport(p string) *importStmt {

@@ -92,20 +92,19 @@ var netgoferCaps = &specs.LinuxCapabilities{}
 //     connections will be reset upon restore.
 type Netgofer struct {
 	util.InternalSubCommand
-
+	activeConns    chan struct{}
+	dialContext    func(ctx context.Context, network, addr string) (net.Conn, error)
+	ready          chan struct{}
+	egressFilter   *egressfilter.Filter
+	profileFDs     profile.FDArgs
 	udsFD          int
 	passtFD        int
+	udpIdleTimeout time.Duration
 	mtu            int
+	maxActiveConns int
 	applyCaps      bool
 	allowLoopback  bool
 	disableSeccomp bool
-	maxActiveConns int
-	udpIdleTimeout time.Duration
-	activeConns    chan struct{}
-	egressFilter   *egressfilter.Filter
-	ready          chan struct{}
-	dialContext    func(ctx context.Context, network, addr string) (net.Conn, error)
-	profileFDs     profile.FDArgs
 	profileEnabled bool
 }
 

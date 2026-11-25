@@ -119,8 +119,8 @@ func TestNeighborSolicitationWithSourceLinkLayerOption(t *testing.T) {
 
 	tests := []struct {
 		name             string
-		optsBuf          []byte
 		expectedLinkAddr tcpip.LinkAddress
+		optsBuf          []byte
 	}{
 		{
 			name:             "Valid",
@@ -249,14 +249,14 @@ func TestNeighborSolicitationResponse(t *testing.T) {
 
 	tests := []struct {
 		name                   string
+		naDstLinkAddr          tcpip.LinkAddress
 		nsOpts                 header.NDPOptionsSerializer
 		nsSrc                  tcpip.Address
 		nsDst                  tcpip.Address
-		nsInvalid              bool
-		naDstLinkAddr          tcpip.LinkAddress
-		naSolicited            bool
 		naSrc                  tcpip.Address
 		naDst                  tcpip.Address
+		nsInvalid              bool
+		naSolicited            bool
 		performsLinkResolution bool
 		forwardingEnabled      bool
 	}{
@@ -754,11 +754,11 @@ func TestNDPValidation(t *testing.T) {
 	})
 
 	types := []struct {
-		name        string
-		typ         header.ICMPv6Type
-		size        int
-		extraData   []byte
 		statCounter func(tcpip.ICMPv6ReceivedPacketStats) *tcpip.StatCounter
+		name        string
+		extraData   []byte
+		size        int
+		typ         header.ICMPv6Type
 		routerOnly  bool
 	}{
 		{
@@ -1087,78 +1087,78 @@ func TestNeighborAdvertisementValidation(t *testing.T) {
 func TestRouterAdvertValidation(t *testing.T) {
 	tests := []struct {
 		name            string
+		ndpPayload      []byte
 		src             tcpip.Address
 		hopLimit        uint8
 		code            header.ICMPv6Code
-		ndpPayload      []byte
 		expectedSuccess bool
 	}{
 		{
-			"OK",
-			lladdr0,
-			255,
-			0,
-			[]byte{
+			name:     "OK",
+			src:      lladdr0,
+			hopLimit: 255,
+			code:     0,
+			ndpPayload: []byte{
 				0, 0, 0, 0,
 				0, 0, 0, 0,
 				0, 0, 0, 0,
 			},
-			true,
+			expectedSuccess: true,
 		},
 		{
-			"NonLinkLocalSourceAddr",
-			addr1,
-			255,
-			0,
-			[]byte{
+			name:     "NonLinkLocalSourceAddr",
+			src:      addr1,
+			hopLimit: 255,
+			code:     0,
+			ndpPayload: []byte{
 				0, 0, 0, 0,
 				0, 0, 0, 0,
 				0, 0, 0, 0,
 			},
-			false,
+			expectedSuccess: false,
 		},
 		{
-			"HopLimitNot255",
-			lladdr0,
-			254,
-			0,
-			[]byte{
+			name:     "HopLimitNot255",
+			src:      lladdr0,
+			hopLimit: 254,
+			code:     0,
+			ndpPayload: []byte{
 				0, 0, 0, 0,
 				0, 0, 0, 0,
 				0, 0, 0, 0,
 			},
-			false,
+			expectedSuccess: false,
 		},
 		{
-			"NonZeroCode",
-			lladdr0,
-			255,
-			1,
-			[]byte{
+			name:     "NonZeroCode",
+			src:      lladdr0,
+			hopLimit: 255,
+			code:     1,
+			ndpPayload: []byte{
 				0, 0, 0, 0,
 				0, 0, 0, 0,
 				0, 0, 0, 0,
 			},
-			false,
+			expectedSuccess: false,
 		},
 		{
-			"NDPPayloadTooSmall",
-			lladdr0,
-			255,
-			0,
-			[]byte{
+			name:     "NDPPayloadTooSmall",
+			src:      lladdr0,
+			hopLimit: 255,
+			code:     0,
+			ndpPayload: []byte{
 				0, 0, 0, 0,
 				0, 0, 0, 0,
 				0, 0, 0,
 			},
-			false,
+			expectedSuccess: false,
 		},
 		{
-			"OKWithOptions",
-			lladdr0,
-			255,
-			0,
-			[]byte{
+			name:     "OKWithOptions",
+			src:      lladdr0,
+			hopLimit: 255,
+			code:     0,
+			ndpPayload: []byte{
 				// RA payload
 				0, 0, 0, 0,
 				0, 0, 0, 0,
@@ -1176,14 +1176,14 @@ func TestRouterAdvertValidation(t *testing.T) {
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
 			},
-			true,
+			expectedSuccess: true,
 		},
 		{
-			"OptionWithZeroLength",
-			lladdr0,
-			255,
-			0,
-			[]byte{
+			name:     "OptionWithZeroLength",
+			src:      lladdr0,
+			hopLimit: 255,
+			code:     0,
+			ndpPayload: []byte{
 				// RA payload
 				0, 0, 0, 0,
 				0, 0, 0, 0,
@@ -1202,7 +1202,7 @@ func TestRouterAdvertValidation(t *testing.T) {
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
 			},
-			false,
+			expectedSuccess: false,
 		},
 	}
 

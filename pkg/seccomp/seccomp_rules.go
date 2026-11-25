@@ -204,12 +204,14 @@ func (hmeq halfMaskedEqual) HalfRender(program *syscallProgram, labelSet *labelS
 // rules. Rather, it acts as an intermediate representation for the rules that
 // can be expressed as an AND of two 32-bit values.
 type splitMatcher struct {
-	// repr is the `Repr` of the original `ValueMatcher` (pre-split).
-	repr string
 	// highMatcher is the half-value matcher to verify the high 32 bits.
 	highMatcher halfValueMatcher
+
 	// lowMatcher is the half-value matcher to verify the low 32 bits.
 	lowMatcher halfValueMatcher
+
+	// repr is the `Repr` of the original `ValueMatcher` (pre-split).
+	repr string
 }
 
 // String implements `ValueMatcher.String`.

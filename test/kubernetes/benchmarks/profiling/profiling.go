@@ -429,11 +429,11 @@ func processProfileRun(ctx context.Context, t *testing.T, run *profileRun) error
 // next should be the base64 decoder.
 type dirStreamReader struct {
 	logsReader io.ReadCloser
-	buf        bytes.Buffer
 	checksum   hash.Hash
 	dataCh     chan []byte
 	errCh      chan error
 	progressFn func(readBytes, estimatedTotalBytes int64)
+	buf        bytes.Buffer
 }
 
 // processLogs reads container logs and writes base64 data to `r.dataCh`.

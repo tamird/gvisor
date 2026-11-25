@@ -247,15 +247,15 @@ func withErrnoRet(act seccomp.Action, errnoRet *uint) (seccomp.Action, error) {
 
 // ociRule is one entry of `specs.LinuxSeccomp.Syscalls`.
 type ociRule struct {
-	// sysnos are the syscall numbers that the rule applies to.
-	sysnos []uintptr
-
 	// rule matches the syscall arguments.
 	// It is `seccomp.MatchAll` if the entry has no argument conditions.
 	rule seccomp.SyscallRule
 
 	// action applies when `rule` matches.
 	action seccomp.Action
+
+	// sysnos are the syscall numbers that the rule applies to.
+	sysnos []uintptr
 }
 
 // convertRules converts the OCI seccomp rules of `s` to `ociRule`s. It keeps

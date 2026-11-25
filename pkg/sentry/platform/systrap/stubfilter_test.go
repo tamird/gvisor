@@ -36,13 +36,13 @@ func TestStubFilterPrecompiled(t *testing.T) {
 		stubStart := rand.Uint64N(1<<47) &^ uint64(hostarch.PageMask)
 		stubSysmsgStart := stubStart + 0x5000
 		for _, test := range []struct {
-			name string
 			vars precompiledseccomp.Values
 			fn   func(precompiledseccomp.Values) *seccomp.Program
+			name string
 		}{
-			{stubfilter.StubProcessName, stubfilter.StubProcessVars(stubStart, stubROMapLen), stubfilter.StubProcess},
-			{stubfilter.SysmsgThreadName, stubfilter.SysmsgThreadVars(stubStart, stubSysmsgStart), stubfilter.SysmsgThread},
-			{stubfilter.SyscallThreadName, nil, stubfilter.SyscallThread},
+			{name: stubfilter.StubProcessName, vars: stubfilter.StubProcessVars(stubStart, stubROMapLen), fn: stubfilter.StubProcess},
+			{name: stubfilter.SysmsgThreadName, vars: stubfilter.SysmsgThreadVars(stubStart, stubSysmsgStart), fn: stubfilter.SysmsgThread},
+			{name: stubfilter.SyscallThreadName, vars: nil, fn: stubfilter.SyscallThread},
 		} {
 			want, _, err := test.fn(test.vars).Build()
 			if err != nil {

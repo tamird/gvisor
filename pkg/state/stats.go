@@ -39,14 +39,14 @@ func CollectStats(enable bool) {
 }
 
 type graphStats struct {
-	used    bool
-	enabled bool
+	byType  map[*typeInfo]*statEntry
+	stack   []*typeInfo
 	objects int
 	bytes   int
 	elapsed int64
-	byType  map[*typeInfo]*statEntry
-	stack   []*typeInfo
 	last    int64
+	used    bool
+	enabled bool
 }
 
 func (s *graphStats) init() {
@@ -127,7 +127,6 @@ func (s *graphStats) String() string {
 //
 // All exported receivers accept nil.
 type Stats struct {
-	graph graphStats
 
 	// byType contains a breakdown of time spent by type.
 	//
@@ -143,6 +142,7 @@ type Stats struct {
 	// hard-code as "state.default". This is only resolved by calling fini
 	// on the stats object.
 	names []string
+	graph graphStats
 
 	// last is the monotonic time of the last sample.
 	last int64
@@ -193,8 +193,8 @@ func (s *Stats) done() {
 }
 
 type sliceEntry struct {
-	name  string
 	entry *statEntry
+	name  string
 }
 
 // String returns a table representation of the stats.

@@ -27,11 +27,11 @@ import (
 )
 
 type virtualRegion struct {
+	filename string
 	region
+	offset     uintptr
 	accessType hostarch.AccessType
 	shared     bool
-	offset     uintptr
-	filename   string
 }
 
 // mapsLine matches a single line from /proc/PID/maps.

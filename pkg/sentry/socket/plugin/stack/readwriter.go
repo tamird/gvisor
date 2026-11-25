@@ -25,15 +25,14 @@ import (
 )
 
 type pluginStackRW struct {
+	iovs [3]syscall.Iovec
+
+	// Reused as msg_control for read.
+	to     []byte
 	handle uint32
 
 	// Represent both input and output flags.
 	flags uint32
-
-	// Reused as msg_control for read.
-	to []byte
-
-	iovs [3]syscall.Iovec
 }
 
 var pluginStackRWPool = sync.Pool{

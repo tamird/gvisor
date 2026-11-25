@@ -67,12 +67,11 @@ for !done {
 //
 // sharedBuffer is *not* thread safe.
 type sharedBuffer struct {
-	bs safemem.BlockSeq
-
 	// copy is allocated once and reused on subsequent calls to view. We don't
 	// use the Task's copy scratch buffer because these buffers may be accessed
 	// from a background context.
 	copy []byte
+	bs   safemem.BlockSeq
 
 	// needsWriteback indicates whether we need to copy out back data from the
 	// slice returned by the last view() call.

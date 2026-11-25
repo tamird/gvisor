@@ -298,8 +298,8 @@ func TestBitmapNumOnes(t *testing.T) {
 }
 
 type bitmapForEachTestcase struct {
-	start, end uint32
 	expected   map[uint32]bool
+	start, end uint32
 }
 
 func TestForEach(t *testing.T) {
@@ -310,21 +310,21 @@ func TestForEach(t *testing.T) {
 	bitmap.FlipRange(1005, 1006)
 	bitmap.FlipRange(1096, 1098)
 	testcases := []bitmapForEachTestcase{
-		{0, 0, map[uint32]bool{}},
-		{0, 100, map[uint32]bool{}},
-		{1003, 1004, map[uint32]bool{1003: true}},
-		{1003, 1006, map[uint32]bool{1003: true, 1005: true}},
-		{1000, 2000, map[uint32]bool{1003: true, 1005: true, 1096: true, 1097: true}},
-		{1000, 1097, map[uint32]bool{1003: true, 1005: true, 1096: true}},
-		{1060, 1097, map[uint32]bool{1096: true}},
-		{0, bitmapSize, func() map[uint32]bool {
+		{start: 0, end: 0, expected: map[uint32]bool{}},
+		{start: 0, end: 100, expected: map[uint32]bool{}},
+		{start: 1003, end: 1004, expected: map[uint32]bool{1003: true}},
+		{start: 1003, end: 1006, expected: map[uint32]bool{1003: true, 1005: true}},
+		{start: 1000, end: 2000, expected: map[uint32]bool{1003: true, 1005: true, 1096: true, 1097: true}},
+		{start: 1000, end: 1097, expected: map[uint32]bool{1003: true, 1005: true, 1096: true}},
+		{start: 1060, end: 1097, expected: map[uint32]bool{1096: true}},
+		{start: 0, end: bitmapSize, expected: func() map[uint32]bool {
 			m := make(map[uint32]bool)
 			for _, i := range bitmap.ToSlice() {
 				m[i] = true
 			}
 			return m
 		}()},
-		{234, 356, func() map[uint32]bool {
+		{start: 234, end: 356, expected: func() map[uint32]bool {
 			m := make(map[uint32]bool)
 			for i := uint32(234); i < 356; i++ {
 				m[i] = true

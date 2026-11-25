@@ -34,23 +34,23 @@ import (
 
 // Restore implements subcommands.Command for the "restore" command.
 type Restore struct {
-	// Restore flags are a super-set of those for Create.
-	Create
-
 	containerLoader
 
 	// imagePath is the path to the saved container image
 	imagePath string
+
+	// Restore flags are a super-set of those for Create.
+	Create
+
+	// directIO controls whether O_DIRECT is used for reading the checkpoint
+	// pages file.
+	directIO sandbox.DirectIO
 
 	// detach indicates that runsc has to start a process and exit without waiting it.
 	detach bool
 
 	// direct is deprecated in favor of directIO.
 	direct bool
-
-	// directIO controls whether O_DIRECT is used for reading the checkpoint
-	// pages file.
-	directIO sandbox.DirectIO
 
 	// If background is true, the container image may continue to be read after
 	// the restore command exits. For large images, this significantly shortens

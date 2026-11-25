@@ -33,13 +33,13 @@ import (
 
 // mockPublisher records published events for test assertions.
 type mockPublisher struct {
-	mu     sync.Mutex
 	events []mockEvent
+	mu     sync.Mutex
 }
 
 type mockEvent struct {
-	topic string
 	event events.Event
+	topic string
 }
 
 func (p *mockPublisher) Publish(_ context.Context, topic string, event events.Event) error {
@@ -360,12 +360,12 @@ func TestWatcherV2IsOOMBaseline(t *testing.T) {
 // cgroup's count includes the rest of the pod.
 func TestWatcherV2IsOOMReadErrorSkipsParent(t *testing.T) {
 	for _, tc := range []struct {
-		name string
 		err  error
+		name string
 	}{
-		{"permission-denied", &os.PathError{Op: "open", Path: testCgroupPath, Err: unix.EACCES}},
-		{"io-error", &os.PathError{Op: "read", Path: testCgroupPath, Err: unix.EIO}},
-		{"no-oom-kill-entry", fmt.Errorf("no oom_kill entry in %s", testCgroupPath)},
+		{name: "permission-denied", err: &os.PathError{Op: "open", Path: testCgroupPath, Err: unix.EACCES}},
+		{name: "io-error", err: &os.PathError{Op: "read", Path: testCgroupPath, Err: unix.EIO}},
+		{name: "no-oom-kill-entry", err: fmt.Errorf("no oom_kill entry in %s", testCgroupPath)},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			w := newTestWatcherV2(&mockPublisher{})
@@ -424,16 +424,16 @@ func TestParseOOMKill(t *testing.T) {
 // removed, which is what arms the pod cgroup fallback.
 func TestCgroupGone(t *testing.T) {
 	for _, tc := range []struct {
-		name string
 		err  error
+		name string
 		want bool
 	}{
-		{"enoent", &os.PathError{Op: "open", Err: unix.ENOENT}, true},
-		{"enodev", &os.PathError{Op: "read", Err: unix.ENODEV}, true},
-		{"eacces", &os.PathError{Op: "open", Err: unix.EACCES}, false},
-		{"eio", &os.PathError{Op: "read", Err: unix.EIO}, false},
-		{"wrapped-enoent", fmt.Errorf("read: %w", unix.ENOENT), true},
-		{"plain", fmt.Errorf("malformed"), false},
+		{name: "enoent", err: &os.PathError{Op: "open", Err: unix.ENOENT}, want: true},
+		{name: "enodev", err: &os.PathError{Op: "read", Err: unix.ENODEV}, want: true},
+		{name: "eacces", err: &os.PathError{Op: "open", Err: unix.EACCES}, want: false},
+		{name: "eio", err: &os.PathError{Op: "read", Err: unix.EIO}, want: false},
+		{name: "wrapped-enoent", err: fmt.Errorf("read: %w", unix.ENOENT), want: true},
+		{name: "plain", err: fmt.Errorf("malformed"), want: false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if got := cgroupGone(tc.err); got != tc.want {

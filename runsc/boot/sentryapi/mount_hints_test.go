@@ -132,8 +132,8 @@ func TestPodMountHintsErrors(t *testing.T) {
 // hint is omitted and ignored.
 func TestPodMountHintsIgnore(t *testing.T) {
 	for _, tst := range []struct {
-		name        string
 		annotations map[string]string
+		name        string
 	}{
 		{
 			name: "invalid source",

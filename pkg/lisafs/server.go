@@ -25,19 +25,19 @@ import (
 // servers serving the same filesystem subtree. Server also manages the
 // lifecycle of all connections.
 type Server struct {
-	// connWg counts the number of active connections being tracked.
-	connWg sync.WaitGroup
-
-	// renameMu synchronizes rename operations within this filesystem tree.
-	renameMu sync.RWMutex
+	// root is the root of the filesystem tree being managed by this server.
+	// root is immutable. Server holds a ref on root for its entire lifetime.
+	root *Node
 
 	// handlers is a list of RPC handlers which can be indexed by the handler's
 	// corresponding MID.
 	handlers []RPCHandler
 
-	// root is the root of the filesystem tree being managed by this server.
-	// root is immutable. Server holds a ref on root for its entire lifetime.
-	root *Node
+	// connWg counts the number of active connections being tracked.
+	connWg sync.WaitGroup
+
+	// renameMu synchronizes rename operations within this filesystem tree.
+	renameMu sync.RWMutex
 }
 
 // ConnectionOpts defines connection-specific behavior.

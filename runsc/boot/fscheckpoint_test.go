@@ -29,10 +29,10 @@ import (
 // against a corrupted checkpoint manifest, in which the offsets of a resource
 // may point outside of the blob that holds it.
 type boundsTestCase struct {
+	readErr   error
 	name      string
 	start     uint64
 	end       uint64
-	readErr   error
 	expectErr bool
 }
 

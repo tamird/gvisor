@@ -513,9 +513,9 @@ func TestFilterInputInvertDportDrop(t *testing.T) {
 
 func TestFilterAddrs(t *testing.T) {
 	tcs := []struct {
-		ipv6  bool
 		addrs []string
 		want  []string
+		ipv6  bool
 	}{
 		{
 			ipv6:  false,

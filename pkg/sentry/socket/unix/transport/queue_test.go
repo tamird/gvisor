@@ -56,20 +56,20 @@ func (m *mockRights) Release(ctx context.Context) {
 // of the success/error paths of the Enqueue call.
 func TestEnqueueRightsOwnership(t *testing.T) {
 	for _, test := range []struct {
-		name string
+		wantErr *syserr.Error
+		name    string
+
+		data [][]byte
 
 		// limit and used are the initial capacity and occupancy of the queue.
 		limit int64
 		used  int64
+
+		wantN int64
 		// closed closes the queue before enqueuing.
-		closed bool
-
-		data         [][]byte
-		discardEmpty bool
-		truncate     bool
-
-		wantN           int64
-		wantErr         *syserr.Error
+		closed          bool
+		discardEmpty    bool
+		truncate        bool
 		wantQueued      bool
 		wantTransferred bool
 	}{

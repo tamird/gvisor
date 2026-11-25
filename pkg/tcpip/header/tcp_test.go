@@ -150,19 +150,19 @@ func TestTCPParseOptions(t *testing.T) {
 
 func TestTCPFlags(t *testing.T) {
 	for _, tt := range []struct {
-		flags header.TCPFlags
 		want  string
+		flags header.TCPFlags
 	}{
-		{header.TCPFlagFin, "F       "},
-		{header.TCPFlagSyn, " S      "},
-		{header.TCPFlagRst, "  R     "},
-		{header.TCPFlagPsh, "   P    "},
-		{header.TCPFlagAck, "    A   "},
-		{header.TCPFlagUrg, "     U  "},
-		{header.TCPFlagEce, "      E "},
-		{header.TCPFlagCwr, "       C"},
-		{header.TCPFlagSyn | header.TCPFlagAck, " S  A   "},
-		{header.TCPFlagFin | header.TCPFlagAck, "F   A   "},
+		{flags: header.TCPFlagFin, want: "F       "},
+		{flags: header.TCPFlagSyn, want: " S      "},
+		{flags: header.TCPFlagRst, want: "  R     "},
+		{flags: header.TCPFlagPsh, want: "   P    "},
+		{flags: header.TCPFlagAck, want: "    A   "},
+		{flags: header.TCPFlagUrg, want: "     U  "},
+		{flags: header.TCPFlagEce, want: "      E "},
+		{flags: header.TCPFlagCwr, want: "       C"},
+		{flags: header.TCPFlagSyn | header.TCPFlagAck, want: " S  A   "},
+		{flags: header.TCPFlagFin | header.TCPFlagAck, want: "F   A   "},
 	} {
 		if got := tt.flags.String(); got != tt.want {
 			t.Errorf("got TCPFlags(%#b).String() = %s, want = %s", tt.flags, got, tt.want)

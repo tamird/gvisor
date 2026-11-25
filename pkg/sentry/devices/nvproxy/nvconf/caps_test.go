@@ -32,8 +32,8 @@ import (
 func TestNVIDIAFlagsSkipsPrivilegedCaps(t *testing.T) {
 	for _, tc := range []struct {
 		name string
-		caps DriverCaps
 		want []string
+		caps DriverCaps
 	}{
 		{
 			name: "all_plus_profiling",

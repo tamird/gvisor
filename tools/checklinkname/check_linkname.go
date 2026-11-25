@@ -233,9 +233,9 @@ func (u *UnresolvedLinknames) resolveRemaining(pass *analysis.Pass, resolvePos f
 // linknameSymbol describes the symbol names in a single //go:linkname
 // directive.
 type linknameSymbols struct {
-	pos    token.Pos
 	local  string
 	remote string
+	pos    token.Pos
 }
 
 func findLinknames(pass *analysis.Pass, f *ast.File) (names []linknameSymbols) {

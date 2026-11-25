@@ -659,11 +659,11 @@ func (i *SyscallInfo) sendExit(t *kernel.Task, elapsed time.Duration, output []s
 }
 
 type syscallContext struct {
-	info        SyscallInfo
-	args        arch.SyscallArguments
 	start       time.Time
+	info        SyscallInfo
 	logOutput   []string
 	eventOutput []string
+	args        arch.SyscallArguments
 	flags       uint32
 }
 

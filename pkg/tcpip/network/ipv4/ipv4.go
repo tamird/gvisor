@@ -1132,7 +1132,7 @@ func (e *endpoint) forwardMulticastPacket(h header.IPv4, pkt *stack.PacketBuffer
 		e.emitMulticastEvent(func(disp stack.MulticastForwardingEventDispatcher) {
 			disp.OnMissingRoute(stack.MulticastPacketContext{
 				SourceAndDestination: stack.UnicastSourceAndMulticastDestination{Source: h.SourceAddress(), Destination: h.DestinationAddress()},
-				InputInterface: e.nic.ID(),
+				InputInterface:       e.nic.ID(),
 			})
 		})
 	case multicast.PacketQueuedInPendingRoute:
@@ -1189,7 +1189,7 @@ func (e *endpoint) forwardValidatedMulticastPacket(pkt *stack.PacketBuffer, inst
 		e.emitMulticastEvent(func(disp stack.MulticastForwardingEventDispatcher) {
 			disp.OnUnexpectedInputInterface(stack.MulticastPacketContext{
 				SourceAndDestination: stack.UnicastSourceAndMulticastDestination{Source: h.SourceAddress(), Destination: h.DestinationAddress()},
-				InputInterface: e.nic.ID(),
+				InputInterface:       e.nic.ID(),
 			}, installedRoute.ExpectedInputInterface)
 		})
 		return &ip.ErrUnexpectedMulticastInputInterface{}

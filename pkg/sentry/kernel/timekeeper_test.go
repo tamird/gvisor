@@ -401,9 +401,9 @@ func TestTimekeeperTimerLifecycle(t *testing.T) {
 	type actionFn func(tk *Timekeeper, timer tcpip.Timer, params *VDSOParamPage)
 
 	type step struct {
+		action     actionFn
 		desc       string
 		clockTime  time.Duration
-		action     actionFn
 		expectFire bool
 	}
 
@@ -449,8 +449,8 @@ func TestTimekeeperTimerLifecycle(t *testing.T) {
 
 	testCases := []struct {
 		name              string
-		afterFuncDuration time.Duration
 		steps             []step
+		afterFuncDuration time.Duration
 	}{
 		{
 			name:              "BasicAfterFunc",

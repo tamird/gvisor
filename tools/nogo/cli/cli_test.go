@@ -85,8 +85,8 @@ func TestGoVersionResolutionFailure(t *testing.T) {
 	}
 	for _, tc := range []struct {
 		name    string
-		args    []string
 		wantErr string
+		args    []string
 	}{
 		{
 			name:    "missing_file",

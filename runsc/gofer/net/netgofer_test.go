@@ -57,12 +57,12 @@ var (
 
 type halfClosePipeConn struct {
 	net.Conn
+	readErr    error
 	r          *io.PipeReader
 	w          *io.PipeWriter
 	mu         sync.Mutex
 	closed     bool
 	writeClose bool
-	readErr    error
 }
 
 func newHalfClosePipePair() (*halfClosePipeConn, *halfClosePipeConn) {
@@ -819,8 +819,8 @@ func TestProxyRejectsDisallowedDestinations(t *testing.T) {
 	udpPort6 := uint16(udpPC6.LocalAddr().(*net.UDPAddr).Port)
 	cases := []struct {
 		name     string
-		netProto tcpip.NetworkProtocolNumber
 		addr     tcpip.Address
+		netProto tcpip.NetworkProtocolNumber
 		udpPort  uint16
 	}{
 		{
@@ -1028,8 +1028,8 @@ func TestProxyLimitsUDPConnections(t *testing.T) {
 
 type closeNotifyingConn struct {
 	net.Conn
-	closeOnce sync.Once
 	closed    chan struct{}
+	closeOnce sync.Once
 }
 
 func (c *closeNotifyingConn) Close() error {

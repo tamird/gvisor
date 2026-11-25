@@ -111,9 +111,9 @@ type Feature string
 
 // TestEnvironment represents the environment in which a sample test runs.
 type TestEnvironment struct {
+	Features        map[Feature]bool
 	NumGPUs         int
 	RuntimeIsGVisor bool
-	Features        map[Feature]bool
 }
 
 // GetEnvironment returns the environment in which a sample test runs.

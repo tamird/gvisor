@@ -40,8 +40,8 @@ type cleanupCall struct {
 
 // Cleanup bounds waits while sharing one in-flight operation per resource.
 type Cleanup struct {
-	mu      sync.Mutex
 	pending map[string]*cleanupCall
+	mu      sync.Mutex
 }
 
 // Run lets canceled callers retry without starting another blocked worker.

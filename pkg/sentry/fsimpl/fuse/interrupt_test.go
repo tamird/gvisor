@@ -87,15 +87,15 @@ func TestHandleInterruptReply(t *testing.T) {
 	conn.mu.Lock()
 	defer conn.mu.Unlock()
 	for _, tc := range []struct {
+		wantErr error
 		name    string
 		unique  linux.FUSEOpID
 		size    uint32
-		wantErr error
 	}{
-		{"unknown request", fut.unique + 100, size, linuxerr.ENOENT},
-		{"unsent request", unsentFut.unique, size, linuxerr.ENOENT},
-		{"bad size", fut.unique, size + 8, linuxerr.EINVAL},
-		{"EAGAIN without interrupt", fut.unique, size, linuxerr.EINVAL},
+		{name: "unknown request", unique: fut.unique + 100, size: size, wantErr: linuxerr.ENOENT},
+		{name: "unsent request", unique: unsentFut.unique, size: size, wantErr: linuxerr.ENOENT},
+		{name: "bad size", unique: fut.unique, size: size + 8, wantErr: linuxerr.EINVAL},
+		{name: "EAGAIN without interrupt", unique: fut.unique, size: size, wantErr: linuxerr.EINVAL},
 	} {
 		if got, err := interruptReplyLocked(conn, tc.unique, unix.EAGAIN, tc.size); got != nil || err != tc.wantErr {
 			t.Errorf("%s: got (%v, %v), want (nil, %v)", tc.name, got, err, tc.wantErr)

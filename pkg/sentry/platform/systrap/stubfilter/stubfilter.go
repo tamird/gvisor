@@ -236,13 +236,13 @@ func SyscallThread(precompiledseccomp.Values) *seccomp.Program {
 func PrecompiledPrograms() ([]precompiledseccomp.Program, error) {
 	var programs []precompiledseccomp.Program
 	for _, p := range []struct {
-		name string
 		vars precompiledseccomp.Values
 		fn   func(precompiledseccomp.Values) *seccomp.Program
+		name string
 	}{
-		{StubProcessName, StubProcessVars(0, 0), StubProcess},
-		{SysmsgThreadName, SysmsgThreadVars(0, 0), SysmsgThread},
-		{SyscallThreadName, nil, SyscallThread},
+		{name: StubProcessName, vars: StubProcessVars(0, 0), fn: StubProcess},
+		{name: SysmsgThreadName, vars: SysmsgThreadVars(0, 0), fn: SysmsgThread},
+		{name: SyscallThreadName, vars: nil, fn: SyscallThread},
 	} {
 		program, err := precompiledseccomp.Precompile(p.name, slices.Collect(maps.Keys(p.vars)), p.fn)
 		if err != nil {

@@ -40,8 +40,8 @@ const (
 
 // failData indicates an expected failure.
 type failData struct {
-	pos   token.Pos
 	wants []string
+	pos   token.Pos
 }
 
 // positionKey is a simple position string.

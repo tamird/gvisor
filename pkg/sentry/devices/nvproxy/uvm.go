@@ -163,15 +163,16 @@ func (fd *uvmFD) IsNvidiaDeviceFD() {}
 
 // uvmIoctlState holds the state of a call to uvmIoctl().
 type uvmIoctlState struct {
-	nvp    *nvproxy
-	hostFD int32
+	ctx context.Context
+	nvp *nvproxy
+
 	// toolsFD is the /dev/nvidia-uvm-tools FD the ioctl was issued on, or
 	// nil if it was issued on /dev/nvidia-uvm.
 	toolsFD         *uvmToolsFD
-	ctx             context.Context
 	t               *kernel.Task
-	cmd             uint32
 	ioctlParamsAddr hostarch.Addr
+	hostFD          int32
+	cmd             uint32
 }
 
 func uvmIoctlNoParams(ui *uvmIoctlState) (uintptr, error) {

@@ -53,9 +53,14 @@ const (
 //
 // This struct is thread-compatible.
 type timer struct {
-	state timerState
-
 	clock tcpip.Clock
+
+	// timer is the clock timer used to wait on.
+	timer tcpip.Timer
+
+	// callback is the function that's called when the timer expires.
+	callback func()
+	state    timerState
 
 	// target is the expiration time of the current timer. It is only
 	// meaningful in the enabled state.
@@ -64,12 +69,6 @@ type timer struct {
 	// clockTarget is the expiration time of the clock timer. It is
 	// meaningful in the enabled and orphaned states.
 	clockTarget tcpip.MonotonicTime
-
-	// timer is the clock timer used to wait on.
-	timer tcpip.Timer
-
-	// callback is the function that's called when the timer expires.
-	callback func()
 }
 
 // init initializes the timer. Once it expires the function callback

@@ -80,18 +80,17 @@ const (
 //
 // This is a convenience type for defining ptrace operations.
 type thread struct {
-	tgid int32
-	tid  int32
-
-	// sysmsgStackID is a stack ID in subprocess.sysmsgStackPool.
-	sysmsgStackID uint64
+	logPrefix atomic.Pointer[string]
 
 	// initRegs are the initial registers for the first thread.
 	//
 	// These are used for the register set for system calls.
 	initRegs arch.Registers
 
-	logPrefix atomic.Pointer[string]
+	// sysmsgStackID is a stack ID in subprocess.sysmsgStackPool.
+	sysmsgStackID uint64
+	tgid          int32
+	tid           int32
 }
 
 // requestThread is used to request a new sysmsg thread. A thread identifier will
@@ -128,20 +127,29 @@ const (
 // subprocess is a collection of threads being traced.
 type subprocess struct {
 	platform.NoAddressSpaceIO
-	subprocessRefs
+
+	// usertrap is the state of the usertrap table which contains syscall
+	// trampolines.
+	usertrap *usertrap.State
 
 	// requests is used to signal creation of new threads.
 	requests chan any
 
-	// sysmsgInitRegs is used to reset sysemu regs.
-	sysmsgInitRegs arch.Registers
-
-	// mu protects the following fields.
-	mu sync.Mutex
+	// contextQueue is a queue of all contexts that are ready to switch back to
+	// user mode.
+	contextQueue *contextQueue
+	// sysmsgThreads is a collection of all active sysmsg threads in the
+	// subprocess.
+	sysmsgThreads map[uint32]*sysmsgThread
 
 	// faultedContexts is the set of contexts for which it's possible that
 	// platformContext.lastFaultSP == this subprocess.
 	faultedContexts map[*platformContext]struct{}
+
+	// memoryFile is used to allocate a sysmsg stack which is shared between a
+	// stub process and the Sentry.
+	memoryFile    *pgalloc.MemoryFile
+	syscallThread *syscallThread
 
 	// sysmsgStackPool is a pool of available sysmsg stacks.
 	sysmsgStackPool pool.Pool
@@ -149,41 +157,33 @@ type subprocess struct {
 	// threadContextPool is a pool of available sysmsg.ThreadContext IDs.
 	threadContextPool pool.Pool
 
+	// sysmsgInitRegs is used to reset sysemu regs.
+	sysmsgInitRegs arch.Registers
+
 	// threadContextRegion defines the ThreadContext memory region start
 	// within the sentry address space.
 	threadContextRegion uintptr
-
-	// memoryFile is used to allocate a sysmsg stack which is shared between a
-	// stub process and the Sentry.
-	memoryFile *pgalloc.MemoryFile
-
-	// usertrap is the state of the usertrap table which contains syscall
-	// trampolines.
-	usertrap *usertrap.State
-
-	syscallThreadMu sync.Mutex
-	syscallThread   *syscallThread
-
-	// sysmsgThreadsMu protects sysmsgThreads
-	sysmsgThreadsMu sync.RWMutex
-	// sysmsgThreads is a collection of all active sysmsg threads in the
-	// subprocess.
-	sysmsgThreads map[uint32]*sysmsgThread
-
-	// kickSysmsgMu protects numSysmsgThreads and sentry-side write access to
-	// s.contextQueue.numThreadsToWakeup
-	kickSysmsgMu sync.Mutex
+	subprocessRefs
 	// numSysmsgThreads counts the number of active sysmsg threads; we use a
 	// counter instead of using len(sysmsgThreads) because we need to synchronize
 	// how many threads get created _before_ the creation happens.
 	numSysmsgThreads int
 
-	// contextQueue is a queue of all contexts that are ready to switch back to
-	// user mode.
-	contextQueue *contextQueue
+	// sysmsgThreadsMu protects sysmsgThreads
+	sysmsgThreadsMu sync.RWMutex
 
 	// aliveMu synchronizes active subprocess operations with termination.
 	aliveMu sync.RWMutex
+
+	syscallThreadMu sync.Mutex
+
+	// mu protects faultedContexts, sysmsgStackPool, threadContextPool,
+	// threadContextRegion, memoryFile, and usertrap.
+	mu sync.Mutex
+
+	// kickSysmsgMu protects numSysmsgThreads and sentry-side write access to
+	// s.contextQueue.numThreadsToWakeup
+	kickSysmsgMu sync.Mutex
 
 	// dead indicates whether the subprocess is alive or not.
 	dead atomicbitops.Bool

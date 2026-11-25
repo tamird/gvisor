@@ -22,10 +22,10 @@ package time
 // MonotonicRawOk is false.
 type UpdateResult struct {
 	Monotonic      Parameters
-	MonotonicOk    bool
 	Realtime       Parameters
-	RealtimeOk     bool
 	MonotonicRaw   Parameters
+	MonotonicOk    bool
+	RealtimeOk     bool
 	MonotonicRawOk bool
 }
 

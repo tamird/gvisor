@@ -31,22 +31,22 @@ import (
 
 // Reference describes the posture of process the sandbox was launched from.
 type Reference struct {
-	// Umask is the reference process's umask, e.g. "0022".
-	Umask string
-
-	// PermittedCaps is the reference process's permitted capability set.
-	PermittedCaps []string
-
 	// Limits is the reference process's resource limits.
 	Limits map[string]string
 
-	// StdioFDs holds the FD classes of the reference process's own
-	// stdin/stdout/stderr.
-	StdioFDs []string
+	// Umask is the reference process's umask, e.g. "0022".
+	Umask string
 
 	// TMPDIR is the value of the reference process's `TMPDIR` environment
 	// variable, or empty if it is unset.
 	TMPDIR string
+
+	// PermittedCaps is the reference process's permitted capability set.
+	PermittedCaps []string
+
+	// StdioFDs holds the FD classes of the reference process's own
+	// stdin/stdout/stderr.
+	StdioFDs []string
 }
 
 // SelfReference builds a `Reference` from the calling process.
@@ -197,32 +197,17 @@ var baseFDClasses = []string{
 // or at least the subset of it that determines its expected security posture.
 type ExpectedOpts struct {
 	// Ref describes the process the sandbox was launched from.
-	Ref Reference
-
-	// Sandbox config options follow.
-
-	DirectFS             bool
-	NetworkMode          string
-	EnableRaw            bool
-	RequiresCapSysPtrace bool
-	SpecHasUserNamespace bool
-	NetNamespaceTarget   string
-	CgoEnabled           bool
-	GoDebug              string
-	CoreTags             bool
-
-	// Cgroup is whether `runsc` put the sandbox in a cgroup.
-	Cgroup bool
-
-	// ChildOfRef is whether the sandbox is expected to be a direct child
-	// of the reference process. False under shim.
-	ChildOfRef bool
+	Ref                Reference
+	NetworkMode        string
+	NetNamespaceTarget string
+	GoDebug            string
 
 	// Umask defaults to Ref.Umask, then to "0022".
 	Umask string
 
 	// NOFILE defaults to LimitSameAsRef.
 	NOFILE string
+
 	// MEMLOCK defaults to LimitUnlimited.
 	MEMLOCK string
 
@@ -231,6 +216,20 @@ type ExpectedOpts struct {
 	ExtraRootEntries []string
 	ExtraFDClasses   []string
 	ExtraMounts      []string
+
+	DirectFS             bool
+	EnableRaw            bool
+	RequiresCapSysPtrace bool
+	SpecHasUserNamespace bool
+	CgoEnabled           bool
+	CoreTags             bool
+
+	// Cgroup is whether `runsc` put the sandbox in a cgroup.
+	Cgroup bool
+
+	// ChildOfRef is whether the sandbox is expected to be a direct child
+	// of the reference process. False under shim.
+	ChildOfRef bool
 }
 
 // HostNetwork returns true if the sandbox is using hostinet.

@@ -164,8 +164,8 @@ func TestConfigureIPForwarding(t *testing.T) {
 
 	cases := []struct {
 		comment string
-		initial bool
 		str     string
+		initial bool
 		final   bool
 	}{
 		{
@@ -293,8 +293,8 @@ func TestConfigureRouteLocalnet(t *testing.T) {
 
 	var cases = []struct {
 		comment string
-		initial bool
 		str     string
+		initial bool
 		final   bool
 	}{
 		{comment: `disabled; write 1 enables`, initial: false, str: "1", final: true},

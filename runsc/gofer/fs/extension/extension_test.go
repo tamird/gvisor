@@ -41,8 +41,8 @@ func (fakeExtension) SeccompRules() seccomp.SyscallRules {
 }
 
 type flagExtension struct {
-	fakeExtension
 	setFlagsSeen *bool
+	fakeExtension
 }
 
 func (f flagExtension) SetFlags(*flag.FlagSet) {
@@ -52,8 +52,8 @@ func (f flagExtension) SetFlags(*flag.FlagSet) {
 }
 
 type prepareExtension struct {
-	fakeExtension
 	prepareGofer func(GoferPrepareContext) (GoferPrepareResult, error)
+	fakeExtension
 }
 
 func (f prepareExtension) PrepareGofer(ctx GoferPrepareContext) (GoferPrepareResult, error) {

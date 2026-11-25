@@ -104,8 +104,8 @@ func newTestNeighborResolver(nudDisp NUDDispatcher, config NUDConfigurations, cl
 
 // testEntryStore contains a set of IP to NeighborEntry mappings.
 type testEntryStore struct {
-	mu         sync.RWMutex
 	entriesMap map[tcpip.Address]NeighborEntry
+	mu         sync.RWMutex
 }
 
 func toAddress(i uint16) tcpip.Address {
@@ -196,10 +196,10 @@ func (s *testEntryStore) set(i uint16, linkAddr tcpip.LinkAddress) {
 // neighbor probe.
 type testNeighborResolver struct {
 	clock                tcpip.Clock
-	neigh                neighborCache
 	entries              *testEntryStore
-	delay                time.Duration
 	onLinkAddressRequest func()
+	neigh                neighborCache
+	delay                time.Duration
 	dropReplies          bool
 }
 
@@ -460,8 +460,8 @@ func newTestContext(c NUDConfigurations) testContext {
 }
 
 type overflowOptions struct {
-	startAtEntryIndex uint16
 	wantStaticEntries []NeighborEntry
+	startAtEntryIndex uint16
 }
 
 func (c *testContext) overflowCache(opts overflowOptions) error {

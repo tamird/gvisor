@@ -20,9 +20,9 @@ import (
 
 func TestBuilder(t *testing.T) {
 	type testCase struct {
-		pcs   []string // path components in reverse order
 		after string
 		want  string
+		pcs   []string // path components in reverse order
 	}
 	tests := []testCase{
 		{

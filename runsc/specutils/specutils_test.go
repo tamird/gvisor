@@ -255,11 +255,11 @@ func TestWaitForReadyTimeout(t *testing.T) {
 
 func TestSpecInvalid(t *testing.T) {
 	for _, test := range []struct {
-		name            string
 		spec            specs.Spec
+		name            string
+		error           string
 		conf            config.Config
 		noRootContainer bool
-		error           string
 	}{
 		{
 			name: "valid",
@@ -590,8 +590,8 @@ func TestSpecInvalid(t *testing.T) {
 func TestSeccomp(t *testing.T) {
 	const containerName = "cont1"
 	for _, tc := range []struct {
-		name           string
 		spec           specs.Spec
+		name           string
 		seccompPresent bool
 	}{
 		{
@@ -719,11 +719,11 @@ func TestNvidiaDriverCapabilities(t *testing.T) {
 	for _, tc := range []struct {
 		name        string
 		allowedCaps string
-		wantAllowed nvconf.DriverCaps // Capabilities allowed at the sandbox configuration level.
-		noEnv       bool              // If true, no env variable is set.
 		envCaps     string
-		legacy      bool
+		wantAllowed nvconf.DriverCaps // Capabilities allowed at the sandbox configuration level.
 		wantActual  nvconf.DriverCaps // Capabilities allowed for the container.
+		noEnv       bool              // If true, no env variable is set.
+		legacy      bool
 	}{
 		{
 			name:        "unspecified",
@@ -1219,8 +1219,8 @@ func TestValidateSpecForContainerOOMScoreAdj(t *testing.T) {
 	intPtr := func(i int) *int { return &i }
 
 	for _, tc := range []struct {
-		name     string
 		old, new *specs.Spec
+		name     string
 		wantErr  bool
 	}{
 		{name: "same", old: newSpec(intPtr(500), false), new: newSpec(intPtr(500), false)},
@@ -1267,8 +1267,8 @@ func TestValidateSpecForContainerMountAnnotationOptionsSize(t *testing.T) {
 	}
 
 	for _, tc := range []struct {
-		name     string
 		old, new *specs.Spec
+		name     string
 		wantErr  bool
 	}{
 		{

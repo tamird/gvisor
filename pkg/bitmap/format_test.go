@@ -22,15 +22,15 @@ import (
 
 func TestFormat(t *testing.T) {
 	tests := []struct {
-		input  []uint32
 		output string
+		input  []uint32
 	}{
-		{[]uint32{1, 2, 3, 4, 7}, "1-4,7"},
-		{[]uint32{2}, "2"},
-		{[]uint32{0, 1, 2}, "0-2"},
-		{[]uint32{}, ""},
-		{[]uint32{1, 3, 4, 5, 6, 9, 11, 13, 14, 15, 16, 17}, "1,3-6,9,11,13-17"},
-		{[]uint32{2, 3, 10, 12, 13, 14, 15, 16, 20, 21, 33, 34, 47}, "2-3,10,12-16,20-21,33-34,47"},
+		{input: []uint32{1, 2, 3, 4, 7}, output: "1-4,7"},
+		{input: []uint32{2}, output: "2"},
+		{input: []uint32{0, 1, 2}, output: "0-2"},
+		{input: []uint32{}, output: ""},
+		{input: []uint32{1, 3, 4, 5, 6, 9, 11, 13, 14, 15, 16, 17}, output: "1,3-6,9,11,13-17"},
+		{input: []uint32{2, 3, 10, 12, 13, 14, 15, 16, 20, 21, 33, 34, 47}, output: "2-3,10,12-16,20-21,33-34,47"},
 	}
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("case-%d", i), func(t *testing.T) {
@@ -102,8 +102,8 @@ func TestParseBounds(t *testing.T) {
 	for _, test := range []struct {
 		name      string
 		input     string
-		limit     uint32
 		want      []uint32
+		limit     uint32
 		wantError bool
 	}{
 		{name: "empty", input: "", limit: 0, want: []uint32{}},

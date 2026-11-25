@@ -29,8 +29,8 @@ func actionName(a tpupb.ControlAction) string {
 
 // DiscoveryError indicates failure to find libtpu control threads.
 type DiscoveryError struct {
-	PID int
 	Err error
+	PID int
 }
 
 // Error implements error.Error.
@@ -43,9 +43,9 @@ func (e *DiscoveryError) Unwrap() error { return e.Err }
 
 // TimeoutError indicates the operation timed out waiting for a response.
 type TimeoutError struct {
-	Action tpupb.ControlAction
-	TID    int
 	Err    error
+	TID    int
+	Action tpupb.ControlAction
 }
 
 // Error implements error.Error.
@@ -58,9 +58,9 @@ func (e *TimeoutError) Unwrap() error { return e.Err }
 
 // ProtocolError indicates a wire-format or response parsing failure.
 type ProtocolError struct {
-	Action tpupb.ControlAction
-	TID    int
 	Err    error
+	TID    int
+	Action tpupb.ControlAction
 }
 
 // Error implements error.Error.
@@ -73,10 +73,10 @@ func (e *ProtocolError) Unwrap() error { return e.Err }
 
 // ControlFailedError indicates libtpu returned success=false.
 type ControlFailedError struct {
-	Action       tpupb.ControlAction
-	TID          int
-	CurrentState tpupb.RuntimeState
 	ErrorMessage string
+	TID          int
+	Action       tpupb.ControlAction
+	CurrentState tpupb.RuntimeState
 }
 
 // Error implements error.Error.

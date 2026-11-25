@@ -199,11 +199,10 @@ func TestRefreshSandboxesReadsLockedState(t *testing.T) {
 }
 
 type fakeFileInfo struct {
-	fs.FileInfo
-
 	modTime time.Time
-	size    int64
-	sys     any
+	fs.FileInfo
+	sys  any
+	size int64
 }
 
 func (f *fakeFileInfo) ModTime() time.Time { return f.modTime }
@@ -217,8 +216,8 @@ func TestSufficientlyEqualStats(t *testing.T) {
 	now := time.Now()
 	twoHoursAgo := now.Add(-2 * time.Hour)
 	for _, test := range []struct {
-		name string
 		a, b os.FileInfo
+		name string
 		want bool
 	}{
 		{

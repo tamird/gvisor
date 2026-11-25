@@ -69,9 +69,9 @@ func (t eventType) String() string {
 }
 
 type eventInfo struct {
-	eventType eventType
-	nicID     tcpip.NICID
 	entry     stack.NeighborEntry
+	nicID     tcpip.NICID
+	eventType eventType
 }
 
 func (e eventInfo) String() string {
@@ -256,8 +256,8 @@ func TestDirectReply(t *testing.T) {
 func TestDirectRequest(t *testing.T) {
 	tests := []struct {
 		name           string
-		senderAddr     tcpip.Address
 		senderLinkAddr tcpip.LinkAddress
+		senderAddr     tcpip.Address
 		targetAddr     tcpip.Address
 		isValid        bool
 	}{
@@ -583,14 +583,14 @@ func TestLinkAddressRequest(t *testing.T) {
 	testAddr := tcpip.AddrFrom4Slice([]byte{1, 2, 3, 4})
 
 	tests := []struct {
-		name                                            string
-		nicAddr                                         tcpip.Address
-		localAddr                                       tcpip.Address
-		remoteLinkAddr                                  tcpip.LinkAddress
 		linkErr                                         tcpip.Error
 		expectedErr                                     tcpip.Error
-		expectedLocalAddr                               tcpip.Address
+		name                                            string
+		remoteLinkAddr                                  tcpip.LinkAddress
 		expectedRemoteLinkAddr                          tcpip.LinkAddress
+		nicAddr                                         tcpip.Address
+		localAddr                                       tcpip.Address
+		expectedLocalAddr                               tcpip.Address
 		expectedRequestsSent                            uint64
 		expectedRequestBadLocalAddressErrors            uint64
 		expectedRequestInterfaceHasNoLocalAddressErrors uint64

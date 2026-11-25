@@ -73,10 +73,12 @@ func lookupCompatMatchRevision(name string, rev uint32, family stack.AddressFami
 type compatNoopMatch struct {
 	// name is the name of the match extension (e.g., "tcp" or "udp").
 	name string
-	// revision is the match extension revision.
-	revision uint32
+
 	// infoData is the raw netlink attribute payload; saved for dump.
 	infoData []byte
+
+	// revision is the match extension revision.
+	revision uint32
 }
 
 // comment matches always succeed (net/netfilter/xt_comment.c:comment_mt).

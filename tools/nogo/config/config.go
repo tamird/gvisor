@@ -27,12 +27,13 @@ type GroupName string
 
 // Group represents a named collection of files.
 type Group struct {
+	regex *regexp.Regexp `yaml:"-"`
+
 	// Name is the short name for the group.
 	Name GroupName `yaml:"name"`
 
 	// Regex matches all full paths in the group.
-	Regex string         `yaml:"regex"`
-	regex *regexp.Regexp `yaml:"-"`
+	Regex string `yaml:"regex"`
 
 	// Default determines the default group behavior.
 	//
@@ -203,11 +204,6 @@ func (a AnalyzerConfig) shouldReport(groupConfig *Group, fullPos, msg string) (r
 
 // Config is a nogo configuration.
 type Config struct {
-	// Prefixes defines a set of regular expressions that
-	// are standard "prefixes", so that files can be grouped
-	// and specific rules applied to individual groups.
-	Groups []Group `yaml:"groups"`
-
 	// Global is the global analyzer config.
 	Global AnalyzerConfig `yaml:"global"`
 
@@ -216,6 +212,11 @@ type Config struct {
 	// value is either a boolean (enable/disable), or a map to
 	// the groups above.
 	Analyzers map[string]AnalyzerConfig `yaml:"analyzers"`
+
+	// Prefixes defines a set of regular expressions that
+	// are standard "prefixes", so that files can be grouped
+	// and specific rules applied to individual groups.
+	Groups []Group `yaml:"groups"`
 }
 
 // Merge merges two configurations.

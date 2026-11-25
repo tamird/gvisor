@@ -28,13 +28,14 @@ import (
 
 // eventProcessor carries display state across multiple events.
 type eventProcessor struct {
-	filtering bool
-	// filtered is the number of events omitted since printing the last matching
-	// event. Only meaningful when filtering == true.
-	filtered uint64
 	// allowlist is the set of event names to display. If empty, all events are
 	// displayed.
 	allowlist map[string]bool
+
+	// filtered is the number of events omitted since printing the last matching
+	// event. Only meaningful when filtering == true.
+	filtered  uint64
+	filtering bool
 }
 
 // newEventProcessor creates a new EventProcessor with filters.

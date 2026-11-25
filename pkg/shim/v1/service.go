@@ -108,11 +108,6 @@ func NewShimRedirector(ctx context.Context, publisher shim.Publisher, sd shutdow
 // It intercepts some calls to the task service and forwards all calls
 // to extension.TaskServiceExt which actually implements the service interface.
 type shimRedirector struct {
-	mu sync.Mutex
-
-	// shimAddress is the location of the UDS used to communicate to containerd.
-	shimAddress string
-
 	// main is the extension.TaskServiceExt that is used for all calls to the
 	// container's shim, except for the cases where `ext` is set.
 	//
@@ -124,7 +119,13 @@ type shimRedirector struct {
 	// for all calls to the container's shim.
 	//
 	// +checklocks:mu
-	ext extension.TaskServiceExt
+	ext            extension.TaskServiceExt
+	shutdown       shutdown.Service
+	runtimeOptions *rsc.Options
+
+	// shimAddress is the location of the UDS used to communicate to containerd.
+	shimAddress string
+	mu          sync.Mutex
 
 	// extInitialized indicates whether the pod extension constructor has
 	// already been called.
@@ -134,9 +135,6 @@ type shimRedirector struct {
 
 	// grouping indicates if shim grouping is enabled.
 	grouping bool
-
-	shutdown       shutdown.Service
-	runtimeOptions *rsc.Options
 }
 
 var _ extension.TaskServiceExt = (*shimRedirector)(nil)

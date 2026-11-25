@@ -460,8 +460,8 @@ func TestCgroupPath(t *testing.T) {
 // Test cases that cgroup path should not be updated.
 func TestCgroupNoUpdate(t *testing.T) {
 	for _, tc := range []struct {
-		name string
 		spec *specs.Spec
+		name string
 	}{
 		{
 			name: "empty",

@@ -200,13 +200,13 @@ type Logger interface {
 
 // BasicLogger is the default implementation of Logger.
 type BasicLogger struct {
-	// +checkatomic
-	Level
-
 	// Emitter receives enabled log messages. BasicLogger does not synchronize
 	// access to it. Callers must synchronize field replacement with logging
 	// calls and provide any synchronization needed for concurrent Emit calls.
 	Emitter
+
+	// +checkatomic
+	Level
 }
 
 // Debugf implements logger.Debugf.

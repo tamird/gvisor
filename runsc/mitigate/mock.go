@@ -20,10 +20,10 @@ import "strings"
 type MockCPU struct {
 	Name           string
 	VendorID       string
-	Family         int64
-	Model          int64
 	ModelName      string
 	Bugs           string
+	Family         int64
+	Model          int64
 	PhysicalCores  int64
 	Cores          int64
 	ThreadsPerCore int64

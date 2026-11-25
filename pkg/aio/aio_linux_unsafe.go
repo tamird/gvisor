@@ -46,10 +46,10 @@ import (
 // - O_DIRECT writes that do not extend a file's size, subject to the same
 // constraints, will probably work.
 type LinuxQueue struct {
-	ctxID    uintptr
 	iocbs    []linux.IOCallback
 	iocbPtrs []*linux.IOCallback
 	ioevs    []linux.IOEvent
+	ctxID    uintptr
 }
 
 // NewLinuxQueue returns a new LinuxQueue with the given capacity.

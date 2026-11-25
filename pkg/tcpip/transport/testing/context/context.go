@@ -268,9 +268,9 @@ func (c *Context) InjectPacket(netProto tcpip.NetworkProtocolNumber, buf []byte)
 // readExpectations holds information about the expected outcome when reading
 // from the context's endpoint.
 type readExpectations struct {
-	nothingToRead  bool
-	payload        []byte
 	addresses      Header4Tuple
+	payload        []byte
+	nothingToRead  bool
 	readShouldFail bool
 }
 

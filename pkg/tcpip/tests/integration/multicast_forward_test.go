@@ -247,14 +247,14 @@ func TestAddMulticastRoute(t *testing.T) {
 	}
 
 	tests := []struct {
+		wantErr                                       tcpip.Error
 		name                                          string
+		multicastForwardingEventsBeforeAddRouteCalled []multicastForwardingEvent
 		srcAddr, dstAddr                              addrType
 		routeIncomingNICID                            tcpip.NICID
 		routeOutgoingNICID                            tcpip.NICID
 		omitOutgoingInterfaces                        bool
-		multicastForwardingEventsBeforeAddRouteCalled []multicastForwardingEvent
 		expectForward                                 bool
-		wantErr                                       tcpip.Error
 	}{
 		{
 			name:               "no pending packets",
@@ -501,8 +501,8 @@ func TestEnableMulticastForwardingE(t *testing.T) {
 	eventDispatcher := &fakeMulticastEventDispatcher{}
 
 	type enableMulticastForwardingResult struct {
-		AlreadyEnabled bool
 		Err            tcpip.Error
+		AlreadyEnabled bool
 	}
 
 	tests := []struct {
@@ -513,17 +513,17 @@ func TestEnableMulticastForwardingE(t *testing.T) {
 		{
 			name:            "success",
 			eventDispatcher: eventDispatcher,
-			wantResult:      []enableMulticastForwardingResult{{false, nil}},
+			wantResult:      []enableMulticastForwardingResult{{AlreadyEnabled: false, Err: nil}},
 		},
 		{
 			name:            "already enabled",
 			eventDispatcher: eventDispatcher,
-			wantResult:      []enableMulticastForwardingResult{{false, nil}, {true, nil}},
+			wantResult:      []enableMulticastForwardingResult{{AlreadyEnabled: false, Err: nil}, {AlreadyEnabled: true, Err: nil}},
 		},
 		{
 			name:            "invalid event dispatcher",
 			eventDispatcher: nil,
-			wantResult:      []enableMulticastForwardingResult{{false, &tcpip.ErrInvalidOptionValue{}}},
+			wantResult:      []enableMulticastForwardingResult{{AlreadyEnabled: false, Err: &tcpip.ErrInvalidOptionValue{}}},
 		},
 	}
 	for _, test := range tests {
@@ -537,7 +537,7 @@ func TestEnableMulticastForwardingE(t *testing.T) {
 
 				for _, wantResult := range test.wantResult {
 					alreadyEnabled, err := s.EnableMulticastForwardingForProtocol(protocol, test.eventDispatcher)
-					result := enableMulticastForwardingResult{alreadyEnabled, err}
+					result := enableMulticastForwardingResult{AlreadyEnabled: alreadyEnabled, Err: err}
 					if !cmp.Equal(result, wantResult, cmpopts.EquateErrors()) {
 						t.Errorf("s.EnableMulticastForwardingForProtocol(%d, %#v) = (%t, %s), want = (%t, %s)", protocol, test.eventDispatcher, alreadyEnabled, err, wantResult.AlreadyEnabled, wantResult.Err)
 					}
@@ -555,9 +555,9 @@ func TestMulticastRouteLastUsedTime(t *testing.T) {
 	}
 
 	tests := []struct {
+		wantErr          tcpip.Error
 		name             string
 		srcAddr, dstAddr addrType
-		wantErr          tcpip.Error
 	}{
 		{
 			name:    "success",
@@ -701,9 +701,9 @@ func TestRemoveMulticastRoute(t *testing.T) {
 	}
 
 	tests := []struct {
+		wantErr          tcpip.Error
 		name             string
 		srcAddr, dstAddr addrType
-		wantErr          tcpip.Error
 	}{
 		{
 			name:    "success",
@@ -862,17 +862,17 @@ func TestMulticastForwarding(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                                 string
-		dstAddr                              addrType
-		ttl                                  uint8
-		routeInputInterface                  tcpip.NICID
-		disableMulticastForwardingForNIC     bool
 		updateMulticastForwardingForProtocol func(*testing.T, *stack.Stack, tcpip.NetworkProtocolNumber, stack.MulticastForwardingEventDispatcher)
+		name                                 string
+		expectedForwardingInterfaces         []tcpip.NICID
+		dstAddr                              addrType
+		routeInputInterface                  tcpip.NICID
 		removeOutputInterface                tcpip.NICID
+		ttl                                  uint8
+		disableMulticastForwardingForNIC     bool
 		expectMissingRouteEvent              bool
 		expectUnexpectedInputInterfaceEvent  bool
 		joinMulticastGroup                   bool
-		expectedForwardingInterfaces         []tcpip.NICID
 	}{
 		{
 			name:                         "forward only",

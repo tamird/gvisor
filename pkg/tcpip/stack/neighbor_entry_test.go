@@ -107,9 +107,9 @@ func (t testEntryEventType) String() string {
 
 // Fields are exported for use with cmp.Diff.
 type testEntryEventInfo struct {
-	EventType testEntryEventType
-	NICID     tcpip.NICID
 	Entry     NeighborEntry
+	NICID     tcpip.NICID
+	EventType testEntryEventType
 }
 
 func (e testEntryEventInfo) String() string {
@@ -120,10 +120,9 @@ func (e testEntryEventInfo) String() string {
 // events upon certain NUD state machine events.
 type testNUDDispatcher struct {
 	mu struct {
-		sync.Mutex
-
 		// +checklocks:Mutex
 		events []testEntryEventInfo
+		sync.Mutex
 	}
 }
 
@@ -161,18 +160,17 @@ func (d *testNUDDispatcher) OnNeighborRemoved(nicID tcpip.NICID, entry NeighborE
 
 type entryTestLinkResolver struct {
 	mu struct {
-		sync.Mutex
-
 		// +checklocks:Mutex
 		probes []entryTestProbeInfo
+		sync.Mutex
 	}
 }
 
 var _ LinkAddressResolver = (*entryTestLinkResolver)(nil)
 
 type entryTestProbeInfo struct {
-	RemoteAddress     tcpip.Address
 	RemoteLinkAddress tcpip.LinkAddress
+	RemoteAddress     tcpip.Address
 	LocalAddress      tcpip.Address
 }
 

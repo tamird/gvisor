@@ -31,14 +31,14 @@ import (
 
 // lockInfo describes a held lock.
 type lockInfo struct {
-	exclusive bool
 	object    types.Object
+	exclusive bool
 }
 
 // valueIdentity preserves the identity resolved when a value was evaluated.
 type valueIdentity struct {
-	key    string
 	object types.Object
+	key    string
 
 	// Boolean facts are retained only for values loaded from private locals.
 	boolean      bool
@@ -64,11 +64,6 @@ type lockState struct {
 	// from a value that is no longer known.
 	stored map[string]valueIdentity
 
-	// unknownMemory means that an absent stored entry no longer identifies
-	// untouched initial memory. Reads instead assign a fresh identity and
-	// cache it until the contents change or a join loses that fact.
-	unknownMemory bool
-
 	// memoryIDs allocates identities shared across forks and inline calls.
 	// Its progress is not part of the facts compared at control-flow joins.
 	memoryIDs *atomic.Uint64
@@ -79,19 +74,24 @@ type lockState struct {
 	// loaded records evaluated values independently of subsequent stores.
 	loaded map[*ssa.UnOp]valueIdentity
 
-	// defers are the stack of defers that have been pushed.
-	defers []*ssa.Defer
-
 	// refs indicates the number of references on this structure. If it's
 	// greater than one, we will do copy-on-write.
 	refs *int32
+
+	// defers are the stack of defers that have been pushed.
+	defers []*ssa.Defer
+
+	// unknownMemory means that an absent stored entry no longer identifies
+	// untouched initial memory. Reads instead assign a fresh identity and
+	// cache it until the contents change or a join loses that fact.
+	unknownMemory bool
 }
 
 // valueIDAllocator allocates deterministic unique numbers for SSA values.
 type valueIDAllocator struct {
-	mu   sync.Mutex
 	ids  map[ssa.Value]uint64
 	next uint64
+	mu   sync.Mutex
 }
 
 func (a *valueIDAllocator) idFor(v ssa.Value) uint64 {

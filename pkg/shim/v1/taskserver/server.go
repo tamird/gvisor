@@ -37,9 +37,9 @@ type GvisorTaskServiceExt interface {
 // Instead of going through containerd, this server provides a direct interface to task operations
 // with running sandboxes.
 type GvisorTaskServiceEndpoint struct {
+	l       net.Listener
 	server  *ttrpc.Server
 	address string
-	l       net.Listener
 }
 
 // NewServer creates a new GvisorTaskServer.

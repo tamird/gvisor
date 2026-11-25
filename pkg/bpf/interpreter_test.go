@@ -26,14 +26,14 @@ import (
 
 func TestCompilationErrors(t *testing.T) {
 	for _, test := range []struct {
+
+		// expectedErr is the expected compilation error.
+		expectedErr error
 		// desc is the test's description.
 		desc string
 
 		// insns is the BPF instructions to be compiled.
 		insns []Instruction
-
-		// expectedErr is the expected compilation error.
-		expectedErr error
 	}{
 		{
 			desc:        "Instructions must not be nil",
@@ -115,14 +115,14 @@ func TestCompilationErrors(t *testing.T) {
 func TestExecErrors(t *testing.T) {
 	var reused ExecutionMetrics
 	for _, test := range []struct {
+
+		// expectedErr is the expected execution error.
+		expectedErr error
 		// desc is the test's description.
 		desc string
 
 		// insns is the BPF instructions to be executed.
 		insns []Instruction
-
-		// expectedErr is the expected execution error.
-		expectedErr error
 	}{
 		{
 			desc: "An out-of-bounds load of input data is an execution error",
@@ -205,6 +205,10 @@ func TestValidInstructions(t *testing.T) {
 		}
 	}
 	for _, test := range []struct {
+
+		// expected is the expected result of executing the BPF program.
+		// It takes in the instructions and input that the test will run.
+		expected func(insns []Instruction, input []byte) ExecutionMetrics
 		// desc is the test's description.
 		desc string
 
@@ -213,10 +217,6 @@ func TestValidInstructions(t *testing.T) {
 
 		// input is the input data. Note that input will be read as big-endian.
 		input Input
-
-		// expected is the expected result of executing the BPF program.
-		// It takes in the instructions and input that the test will run.
-		expected func(insns []Instruction, input []byte) ExecutionMetrics
 	}{
 		{
 			desc: "Return of immediate",
@@ -998,11 +998,11 @@ func TestSimpleFilter(t *testing.T) {
 		// desc is the test's description.
 		desc string
 
-		// SeccompData is the input data.
-		data linux.SeccompData
-
 		// expected is the expected execution result of the BPF program.
 		expected ExecutionMetrics
+
+		// SeccompData is the input data.
+		data linux.SeccompData
 	}{
 		{
 			desc: "Invalid arch is rejected",

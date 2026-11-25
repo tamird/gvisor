@@ -185,8 +185,8 @@ func TestSackDisabledConnect(t *testing.T) {
 func TestSackPermittedAccept(t *testing.T) {
 	for _, tc := range []struct {
 		name          string
-		cookieEnabled bool
 		wndScale      int
+		cookieEnabled bool
 		noPeerSACK    bool
 		noTimestamp   bool
 		wantSACK      bool
@@ -260,15 +260,15 @@ func TestSackPermittedAccept(t *testing.T) {
 // sent for out of order packets.
 func TestSackDisabledAccept(t *testing.T) {
 	type testCase struct {
-		cookieEnabled bool
 		wndScale      int
 		wndSize       uint16
+		cookieEnabled bool
 	}
 
 	testCases := []testCase{
 		// When cookie is used window scaling is disabled.
-		{true, -1, 0xffff}, // When cookie is used window scaling is disabled.
-		{false, 5, 0x8000}, // 0x8000 * 2^5 = 1<<20 = 1MB window (the default).
+		{cookieEnabled: true, wndScale: -1, wndSize: 0xffff}, // When cookie is used window scaling is disabled.
+		{cookieEnabled: false, wndScale: 5, wndSize: 0x8000}, // 0x8000 * 2^5 = 1<<20 = 1MB window (the default).
 	}
 
 	for _, tc := range testCases {
@@ -324,49 +324,49 @@ func TestSackDisabledAccept(t *testing.T) {
 
 func TestUpdateSACKBlocks(t *testing.T) {
 	testCases := []struct {
+		sackBlocks []header.SACKBlock
+		updated    []header.SACKBlock
 		segStart   seqnum.Value
 		segEnd     seqnum.Value
 		rcvNxt     seqnum.Value
-		sackBlocks []header.SACKBlock
-		updated    []header.SACKBlock
 	}{
 		// Trivial cases where current SACK block list is empty and we
 		// have an out of order delivery.
-		{10, 11, 2, []header.SACKBlock{}, []header.SACKBlock{{Start: 10, End: 11}}},
-		{10, 12, 2, []header.SACKBlock{}, []header.SACKBlock{{Start: 10, End: 12}}},
-		{10, 20, 2, []header.SACKBlock{}, []header.SACKBlock{{Start: 10, End: 20}}},
+		{segStart: 10, segEnd: 11, rcvNxt: 2, sackBlocks: []header.SACKBlock{}, updated: []header.SACKBlock{{Start: 10, End: 11}}},
+		{segStart: 10, segEnd: 12, rcvNxt: 2, sackBlocks: []header.SACKBlock{}, updated: []header.SACKBlock{{Start: 10, End: 12}}},
+		{segStart: 10, segEnd: 20, rcvNxt: 2, sackBlocks: []header.SACKBlock{}, updated: []header.SACKBlock{{Start: 10, End: 20}}},
 
 		// Cases where current SACK block list is not empty and we have
 		// an out of order delivery. Tests that the updated SACK block
 		// list has the first block as the one that contains the new
 		// SACK block representing the segment that was just delivered.
-		{10, 11, 9, []header.SACKBlock{{Start: 12, End: 20}}, []header.SACKBlock{{Start: 10, End: 11}, {Start: 12, End: 20}}},
-		{24, 30, 9, []header.SACKBlock{{Start: 12, End: 20}}, []header.SACKBlock{{Start: 24, End: 30}, {Start: 12, End: 20}}},
-		{24, 30, 9, []header.SACKBlock{{Start: 12, End: 20}, {Start: 32, End: 40}}, []header.SACKBlock{{Start: 24, End: 30}, {Start: 12, End: 20}, {Start: 32, End: 40}}},
+		{segStart: 10, segEnd: 11, rcvNxt: 9, sackBlocks: []header.SACKBlock{{Start: 12, End: 20}}, updated: []header.SACKBlock{{Start: 10, End: 11}, {Start: 12, End: 20}}},
+		{segStart: 24, segEnd: 30, rcvNxt: 9, sackBlocks: []header.SACKBlock{{Start: 12, End: 20}}, updated: []header.SACKBlock{{Start: 24, End: 30}, {Start: 12, End: 20}}},
+		{segStart: 24, segEnd: 30, rcvNxt: 9, sackBlocks: []header.SACKBlock{{Start: 12, End: 20}, {Start: 32, End: 40}}, updated: []header.SACKBlock{{Start: 24, End: 30}, {Start: 12, End: 20}, {Start: 32, End: 40}}},
 
 		// Ensure that we only retain header.MaxSACKBlocks and drop the
 		// oldest one if adding a new block exceeds
 		// header.MaxSACKBlocks.
-		{24, 30, 9,
-			[]header.SACKBlock{{Start: 12, End: 20}, {Start: 32, End: 40}, {Start: 42, End: 50}, {Start: 52, End: 60}, {Start: 62, End: 70}, {Start: 72, End: 80}},
-			[]header.SACKBlock{{Start: 24, End: 30}, {Start: 12, End: 20}, {Start: 32, End: 40}, {Start: 42, End: 50}, {Start: 52, End: 60}, {Start: 62, End: 70}}},
+		{segStart: 24, segEnd: 30, rcvNxt: 9,
+			sackBlocks: []header.SACKBlock{{Start: 12, End: 20}, {Start: 32, End: 40}, {Start: 42, End: 50}, {Start: 52, End: 60}, {Start: 62, End: 70}, {Start: 72, End: 80}},
+			updated:    []header.SACKBlock{{Start: 24, End: 30}, {Start: 12, End: 20}, {Start: 32, End: 40}, {Start: 42, End: 50}, {Start: 52, End: 60}, {Start: 62, End: 70}}},
 
 		// Cases where segment extends an existing SACK block.
-		{10, 12, 9, []header.SACKBlock{{Start: 12, End: 20}}, []header.SACKBlock{{Start: 10, End: 20}}},
-		{10, 22, 9, []header.SACKBlock{{Start: 12, End: 20}}, []header.SACKBlock{{Start: 10, End: 22}}},
-		{10, 22, 9, []header.SACKBlock{{Start: 12, End: 20}}, []header.SACKBlock{{Start: 10, End: 22}}},
-		{15, 22, 9, []header.SACKBlock{{Start: 12, End: 20}}, []header.SACKBlock{{Start: 12, End: 22}}},
-		{15, 25, 9, []header.SACKBlock{{Start: 12, End: 20}}, []header.SACKBlock{{Start: 12, End: 25}}},
-		{11, 25, 9, []header.SACKBlock{{Start: 12, End: 20}}, []header.SACKBlock{{Start: 11, End: 25}}},
-		{10, 12, 9, []header.SACKBlock{{Start: 12, End: 20}, {Start: 32, End: 40}}, []header.SACKBlock{{Start: 10, End: 20}, {Start: 32, End: 40}}},
-		{10, 22, 9, []header.SACKBlock{{Start: 12, End: 20}, {Start: 32, End: 40}}, []header.SACKBlock{{Start: 10, End: 22}, {Start: 32, End: 40}}},
-		{10, 22, 9, []header.SACKBlock{{Start: 12, End: 20}, {Start: 32, End: 40}}, []header.SACKBlock{{Start: 10, End: 22}, {Start: 32, End: 40}}},
-		{15, 22, 9, []header.SACKBlock{{Start: 12, End: 20}, {Start: 32, End: 40}}, []header.SACKBlock{{Start: 12, End: 22}, {Start: 32, End: 40}}},
-		{15, 25, 9, []header.SACKBlock{{Start: 12, End: 20}, {Start: 32, End: 40}}, []header.SACKBlock{{Start: 12, End: 25}, {Start: 32, End: 40}}},
-		{11, 25, 9, []header.SACKBlock{{Start: 12, End: 20}, {Start: 32, End: 40}}, []header.SACKBlock{{Start: 11, End: 25}, {Start: 32, End: 40}}},
+		{segStart: 10, segEnd: 12, rcvNxt: 9, sackBlocks: []header.SACKBlock{{Start: 12, End: 20}}, updated: []header.SACKBlock{{Start: 10, End: 20}}},
+		{segStart: 10, segEnd: 22, rcvNxt: 9, sackBlocks: []header.SACKBlock{{Start: 12, End: 20}}, updated: []header.SACKBlock{{Start: 10, End: 22}}},
+		{segStart: 10, segEnd: 22, rcvNxt: 9, sackBlocks: []header.SACKBlock{{Start: 12, End: 20}}, updated: []header.SACKBlock{{Start: 10, End: 22}}},
+		{segStart: 15, segEnd: 22, rcvNxt: 9, sackBlocks: []header.SACKBlock{{Start: 12, End: 20}}, updated: []header.SACKBlock{{Start: 12, End: 22}}},
+		{segStart: 15, segEnd: 25, rcvNxt: 9, sackBlocks: []header.SACKBlock{{Start: 12, End: 20}}, updated: []header.SACKBlock{{Start: 12, End: 25}}},
+		{segStart: 11, segEnd: 25, rcvNxt: 9, sackBlocks: []header.SACKBlock{{Start: 12, End: 20}}, updated: []header.SACKBlock{{Start: 11, End: 25}}},
+		{segStart: 10, segEnd: 12, rcvNxt: 9, sackBlocks: []header.SACKBlock{{Start: 12, End: 20}, {Start: 32, End: 40}}, updated: []header.SACKBlock{{Start: 10, End: 20}, {Start: 32, End: 40}}},
+		{segStart: 10, segEnd: 22, rcvNxt: 9, sackBlocks: []header.SACKBlock{{Start: 12, End: 20}, {Start: 32, End: 40}}, updated: []header.SACKBlock{{Start: 10, End: 22}, {Start: 32, End: 40}}},
+		{segStart: 10, segEnd: 22, rcvNxt: 9, sackBlocks: []header.SACKBlock{{Start: 12, End: 20}, {Start: 32, End: 40}}, updated: []header.SACKBlock{{Start: 10, End: 22}, {Start: 32, End: 40}}},
+		{segStart: 15, segEnd: 22, rcvNxt: 9, sackBlocks: []header.SACKBlock{{Start: 12, End: 20}, {Start: 32, End: 40}}, updated: []header.SACKBlock{{Start: 12, End: 22}, {Start: 32, End: 40}}},
+		{segStart: 15, segEnd: 25, rcvNxt: 9, sackBlocks: []header.SACKBlock{{Start: 12, End: 20}, {Start: 32, End: 40}}, updated: []header.SACKBlock{{Start: 12, End: 25}, {Start: 32, End: 40}}},
+		{segStart: 11, segEnd: 25, rcvNxt: 9, sackBlocks: []header.SACKBlock{{Start: 12, End: 20}, {Start: 32, End: 40}}, updated: []header.SACKBlock{{Start: 11, End: 25}, {Start: 32, End: 40}}},
 
 		// Cases where segment contains rcvNxt.
-		{10, 20, 15, []header.SACKBlock{{Start: 20, End: 30}, {Start: 40, End: 50}}, []header.SACKBlock{{Start: 40, End: 50}}},
+		{segStart: 10, segEnd: 20, rcvNxt: 15, sackBlocks: []header.SACKBlock{{Start: 20, End: 30}, {Start: 40, End: 50}}, updated: []header.SACKBlock{{Start: 40, End: 50}}},
 	}
 
 	for _, tc := range testCases {
@@ -383,20 +383,20 @@ func TestUpdateSACKBlocks(t *testing.T) {
 
 func TestTrimSackBlockList(t *testing.T) {
 	testCases := []struct {
-		rcvNxt     seqnum.Value
 		sackBlocks []header.SACKBlock
 		trimmed    []header.SACKBlock
+		rcvNxt     seqnum.Value
 	}{
 		// Simple cases where we trim whole entries.
-		{2, []header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}}, []header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}}},
-		{21, []header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}}, []header.SACKBlock{{Start: 22, End: 30}, {Start: 32, End: 40}}},
-		{31, []header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}}, []header.SACKBlock{{Start: 32, End: 40}}},
-		{40, []header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}}, []header.SACKBlock{}},
+		{rcvNxt: 2, sackBlocks: []header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}}, trimmed: []header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}}},
+		{rcvNxt: 21, sackBlocks: []header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}}, trimmed: []header.SACKBlock{{Start: 22, End: 30}, {Start: 32, End: 40}}},
+		{rcvNxt: 31, sackBlocks: []header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}}, trimmed: []header.SACKBlock{{Start: 32, End: 40}}},
+		{rcvNxt: 40, sackBlocks: []header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}}, trimmed: []header.SACKBlock{}},
 		// Cases where we need to update a block.
-		{12, []header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}}, []header.SACKBlock{{Start: 12, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}}},
-		{23, []header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}}, []header.SACKBlock{{Start: 23, End: 30}, {Start: 32, End: 40}}},
-		{33, []header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}}, []header.SACKBlock{{Start: 33, End: 40}}},
-		{41, []header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}}, []header.SACKBlock{}},
+		{rcvNxt: 12, sackBlocks: []header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}}, trimmed: []header.SACKBlock{{Start: 12, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}}},
+		{rcvNxt: 23, sackBlocks: []header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}}, trimmed: []header.SACKBlock{{Start: 23, End: 30}, {Start: 32, End: 40}}},
+		{rcvNxt: 33, sackBlocks: []header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}}, trimmed: []header.SACKBlock{{Start: 33, End: 40}}},
+		{rcvNxt: 41, sackBlocks: []header.SACKBlock{{Start: 10, End: 20}, {Start: 22, End: 30}, {Start: 32, End: 40}}, trimmed: []header.SACKBlock{}},
 	}
 	for _, tc := range testCases {
 		var sack tcp.SACKInfo
@@ -820,9 +820,9 @@ func TestDetectSpuriousRecoveryWithRTO(t *testing.T) {
 		return timestampOption(h.ParsedOptions().TSEcr+1, 0)
 	}
 	for _, tc := range []struct {
+		ackOptions   func(header.TCP) []byte
 		name         string
 		negotiateTS  bool
-		ackOptions   func(header.TCP) []byte
 		wantSpurious bool
 	}{
 		{name: "timestamps", negotiateTS: true, ackOptions: buildTSOptionFromHeader, wantSpurious: true},
@@ -943,14 +943,14 @@ func TestEifelRetransmissionTimestamps(t *testing.T) {
 	const highTimestamp = 3 << 30
 	for _, tc := range []struct {
 		name        string
-		start       uint32
 		timeouts    int
+		start       uint32
 		ackOriginal bool
 	}{
-		{"wrap/original", nearWrap, 1, true},
-		{"wrap/repair", nearWrap, 1, false},
-		{"two_timeouts/original", highTimestamp, 2, true},
-		{"two_timeouts/repair", highTimestamp, 2, false},
+		{name: "wrap/original", start: nearWrap, timeouts: 1, ackOriginal: true},
+		{name: "wrap/repair", start: nearWrap, timeouts: 1, ackOriginal: false},
+		{name: "two_timeouts/original", start: highTimestamp, timeouts: 2, ackOriginal: true},
+		{name: "two_timeouts/repair", start: highTimestamp, timeouts: 2, ackOriginal: false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			clock := faketime.NewManualClock()

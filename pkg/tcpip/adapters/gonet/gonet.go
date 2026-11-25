@@ -47,11 +47,11 @@ func (e *timeoutError) Temporary() bool { return true }
 // A TCPListener is a wrapper around a TCP tcpip.Endpoint that implements
 // net.Listener.
 type TCPListener struct {
-	stack      *stack.Stack
 	ep         tcpip.Endpoint
+	stack      *stack.Stack
 	wq         *waiter.Queue
-	cancelOnce sync.Once
 	cancel     chan struct{}
+	cancelOnce sync.Once
 }
 
 // NewTCPListener creates a new TCPListener from a listening tcpip.Endpoint.
@@ -128,16 +128,18 @@ func (l *TCPListener) Addr() net.Addr {
 }
 
 type deadlineTimer struct {
-	mu sync.Mutex
-
 	// +checklocks:mu
 	readTimer *time.Timer
+
 	// +checklocks:mu
 	readCancelCh chan struct{}
+
 	// +checklocks:mu
 	writeTimer *time.Timer
+
 	// +checklocks:mu
 	writeCancelCh chan struct{}
+	mu            sync.Mutex
 }
 
 func newDeadlineTimer() deadlineTimer {
@@ -244,9 +246,14 @@ func (d *deadlineTimer) SetDeadline(t time.Time) error {
 // interface.
 type TCPConn struct {
 	deadlineTimer
-
-	wq *waiter.Queue
 	ep tcpip.Endpoint
+	wq *waiter.Queue
+
+	// read contains bytes that have been read from the endpoint,
+	// but haven't yet been returned.
+	//
+	// +checklocks:readMu
+	read []byte
 
 	// readMu serializes reads.
 	//
@@ -254,12 +261,6 @@ type TCPConn struct {
 	// If both readMu and deadlineTimer.mu are to be used in a single
 	// request, readMu must be acquired before deadlineTimer.mu.
 	readMu sync.Mutex
-
-	// read contains bytes that have been read from the endpoint,
-	// but haven't yet been returned.
-	//
-	// +checklocks:readMu
-	read []byte
 }
 
 // NewTCPConn creates a new TCPConn.
@@ -565,10 +566,9 @@ func DialContextTCP(ctx context.Context, s *stack.Stack, addr tcpip.FullAddress,
 // A UDPConn is a wrapper around a UDP tcpip.Endpoint that implements
 // net.Conn and net.PacketConn.
 type UDPConn struct {
-	deadlineTimer
-
 	ep tcpip.Endpoint
 	wq *waiter.Queue
+	deadlineTimer
 }
 
 // NewUDPConn creates a new UDPConn.

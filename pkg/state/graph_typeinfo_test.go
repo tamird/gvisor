@@ -57,14 +57,14 @@ func (h *testPrintHolder) StateLoad(_ context.Context, s Source) {
 type unregMapVal int
 
 type testNestedExactHolder struct {
-	ifaceMatrix [][]testIface
-	ifacePtrs   []*testIface
 	ifacePtrPtr **testIface
 	slicePtr    *[]testIface
-	mapMatrix   [][]map[string]testIface
-	mapPtrs     []*map[string]testIface
-	nestedAlias [][]map[string]unregMapVal
 	directAlias map[string]unregMapVal
+	ifacePtrs   []*testIface
+	mapPtrs     []*map[string]testIface
+	ifaceMatrix [][]testIface
+	mapMatrix   [][]map[string]testIface
+	nestedAlias [][]map[string]unregMapVal
 }
 
 func (*testNestedExactHolder) StateTypeName() string { return "state.testNestedExactHolder" }
@@ -594,11 +594,11 @@ func TestStatsNilAndZeroString(t *testing.T) {
 // pointer, slice, and array objects.
 type defIndirectRoot struct {
 	pp            **defIface
-	ptrSlice      []*defIface
 	slicePtr      *[]defIface
-	nestedSlice   [][]defIface
 	mapPtrPtr     **map[string]defIface
 	zeroArrPtrPtr **[0]defIface
+	ptrSlice      []*defIface
+	nestedSlice   [][]defIface
 }
 
 func (*defIndirectRoot) StateTypeName() string { return "state.defIndirectRoot" }

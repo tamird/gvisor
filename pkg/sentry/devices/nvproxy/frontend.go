@@ -266,11 +266,11 @@ func frontendIoctlCmd(nr, argSize uint32) uintptr {
 
 // frontendIoctlState holds the state of a call to frontendFD.Ioctl().
 type frontendIoctlState struct {
-	fd              *frontendFD
 	ctx             context.Context
+	fd              *frontendFD
 	t               *kernel.Task
-	nr              uint32
 	ioctlParamsAddr hostarch.Addr
+	nr              uint32
 	ioctlParamsSize uint32
 }
 
