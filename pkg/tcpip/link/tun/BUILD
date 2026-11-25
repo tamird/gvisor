@@ -77,3 +77,16 @@ go_test(
         "//pkg/tcpip/stack",
     ],
 )
+
+go_test(
+    name = "read_allocation_benchmark_test",
+    srcs = ["read_allocation_benchmark_test.go"],
+    embed = [":tun"],
+    tags = ["manual"],
+    deps = [
+        "//pkg/buffer",
+        "//pkg/tcpip/header",
+        "//pkg/tcpip/link/channel",
+        "//pkg/tcpip/stack",
+    ],
+)
