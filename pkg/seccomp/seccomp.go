@@ -18,6 +18,7 @@ package seccomp
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -897,9 +898,7 @@ func (ors orderedRuleSets) renderBST(program *syscallProgram, ls *labelSet, alre
 			possibleActions[ra.action] = struct{}{}
 		}
 	}
-	sort.Slice(orderedSysnos, func(i, j int) bool {
-		return orderedSysnos[i] < orderedSysnos[j]
-	})
+	slices.Sort(orderedSysnos)
 	frag := program.Record()
 	root := createBST(orderedSysnos)
 	root.root = true

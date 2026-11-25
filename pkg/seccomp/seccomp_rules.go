@@ -16,7 +16,7 @@ package seccomp
 
 import (
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 
 	"golang.org/x/sys/unix"
@@ -981,9 +981,7 @@ func (sr SyscallRules) Sysnos() []uintptr {
 	for sysno := range sr.rules {
 		sysnos = append(sysnos, sysno)
 	}
-	sort.Slice(sysnos, func(i, j int) bool {
-		return sysnos[i] < sysnos[j]
-	})
+	slices.Sort(sysnos)
 	return sysnos
 }
 

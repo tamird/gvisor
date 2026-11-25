@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"reflect"
 	"slices"
-	"sort"
 
 	"gvisor.dev/gvisor/pkg/atomicbitops"
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -707,9 +706,7 @@ func (n *nic) primaryAddresses() []tcpip.ProtocolAddress {
 	}
 	// Sort the network protocol numbers so that IPv4 address is always
 	// added to the list before IPv6 address.
-	sort.Slice(protocolNumbers, func(i, j int) bool {
-		return protocolNumbers[i] < protocolNumbers[j]
-	})
+	slices.Sort(protocolNumbers)
 
 	for _, p := range protocolNumbers {
 		addressableEndpoint, ok := n.networkEndpoints[p].(AddressableEndpoint)

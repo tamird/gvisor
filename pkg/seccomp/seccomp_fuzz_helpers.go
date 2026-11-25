@@ -19,7 +19,7 @@ package seccomp
 // and a helper function to generate test cases based on `RuleSet`s.
 
 import (
-	"sort"
+	"slices"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 )
@@ -85,9 +85,7 @@ func (sr SyscallRules) UsefulTestCases() []linux.SeccompData {
 			for interestingValue := range interestingValuesMap {
 				interestingValues = append(interestingValues, interestingValue)
 			}
-			sort.Slice(interestingValues, func(i, j int) bool {
-				return interestingValues[i] < interestingValues[j]
-			})
+			slices.Sort(interestingValues)
 
 			// Generate test cases.
 			newSysnoCases := make([]linux.SeccompData, 0, len(sysnoCases)*len(interestingValues))

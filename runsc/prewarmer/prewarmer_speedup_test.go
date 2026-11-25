@@ -21,7 +21,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"sort"
+	"slices"
 	"strconv"
 	"testing"
 	"time"
@@ -67,7 +67,7 @@ func timedRun(t *testing.T, cmd *exec.Cmd) time.Duration {
 
 func p50(durations []time.Duration) time.Duration {
 	sorted := append([]time.Duration(nil), durations...)
-	sort.Slice(sorted, func(i, j int) bool { return sorted[i] < sorted[j] })
+	slices.Sort(sorted)
 	return sorted[len(sorted)/2]
 }
 
