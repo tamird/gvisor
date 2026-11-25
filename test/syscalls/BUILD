@@ -1307,8 +1307,8 @@ syscall_test(
 )
 
 syscall_test(
-    test = "//test/syscalls/linux:tuntap_test",
     exec_properties = requires_cap_sys_admin(ipv6 = True),
+    test = "//test/syscalls/linux:tuntap_test",
 )
 
 syscall_test(
