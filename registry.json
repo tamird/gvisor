@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T22:15:30.434231+00:00",
+    "updatedAt": "2026-11-25T22:42:00.270038+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -6508,12 +6508,12 @@
       "url": "https://github.com/google/gvisor/pull/15449",
       "group": "runtime",
       "status": "open",
-      "summary": "Published #15449 remains at fdce23a34 with exact-head maintainer approval. Main 55733 failed during the obsolete pre-command fork-ref fetch before builds/tests; no import is open. Daybreak availability is complete, and approved_rebase_queue now owns clean-rebase preparation. Independent source/performance and publication-review requirements remain.",
+      "summary": "Public #15449 remains at fdce23a34. Same-patch current-base candidate a78af8fa3c has completed affected functional/source/strict qualification. Parent/candidate performance preflights failed before execution on a fixture error; corrected-fixture runs are in progress. Direct TUN performance remains unmeasured; historical main55733 bootstrap failure is separate.",
       "updatedAt": "2026-11-25T21:11:54.232115+00:00",
       "followup": {
-        "disposition": "Published #15449 remains at fdce23a34 with exact-head maintainer approval. Main 55733 failed during the obsolete pre-command fork-ref fetch before builds/tests; no import is open. Daybreak availability is complete, and approved_rebase_queue now owns clean-rebase preparation. Independent source/performance and publication-review requirements remain.",
-        "owner": "approved_rebase_queue / root",
-        "nextAction": "approved_rebase_queue prepares the clean source-bound rebase incorporating the landed hook removal, qualifies the actual integration and returns it for root publication review. No unchanged retry or duplicate hook fix; preserve approval on its exact old head until explicitly reconciled.",
+        "disposition": "Public #15449 remains at fdce23a34. Same-patch current-base candidate a78af8fa3c has completed affected functional/source/strict qualification. Parent/candidate performance preflights failed before execution on a fixture error; corrected-fixture runs are in progress. Direct TUN performance remains unmeasured; historical main55733 bootstrap failure is separate.",
+        "owner": "approved_rebase_queue",
+        "nextAction": "approved_rebase_queue consumes corrected-fixture runs 45715198464/45715202026 and returns the source-bound result. Root retains final source/performance/publication review; no unchanged failed-fixture retry or generic-network proof substitution.",
         "sourceHead": "fdce23a34c322b076944df7369772ec68ea78254",
         "evidence": [
           "https://github.com/google/gvisor/pull/15449",
@@ -6538,13 +6538,21 @@
           "https://github.com/google/gvisor/pull/15449#pullrequestreview-6029040089",
           "https://buildkite.com/gvisor/pipeline/builds/55733",
           "https://github.com/gvisor/gvisor/pull/17735",
-          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
+          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321",
+          "https://github.com/tamird/gvisor/actions/runs/45715198464",
+          "https://github.com/tamird/gvisor/actions/runs/45715202026"
         ],
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-23T22:28:52.692599+00:00",
-        "recheckCondition": "Existing owner’s exact rebase/qualification milestone or actual source/review/check event.",
+        "recheckCondition": "Existing owner’s corrected-fixture terminal result or root review/source milestone.",
         "providerHead": "fdce23a34c322b076944df7369772ec68ea78254",
-        "curatedAt": "2026-11-25T21:11:54.232115+00:00"
+        "curatedAt": "2026-11-25T22:42:00.270038+00:00",
+        "candidate": {
+          "head": "a78af8fa3c443b0242685dd17935912c6f7ddb4a",
+          "ciPrefix": "ce9e04b793f1",
+          "state": "Affected functional/source/strict complete; performance fixture recovery running",
+          "upstreamPublished": false
+        }
       },
       "head": "fdce23a34c322b076944df7369772ec68ea78254",
       "number": 15449,
@@ -6662,8 +6670,8 @@
           "reviewedAt": "2026-10-09T19:16:38.099061+00:00"
         }
       },
-      "nextStep": "approved_rebase_queue prepares the clean source-bound rebase incorporating the landed hook removal, qualifies the actual integration and returns it for root publication review. No unchanged retry or duplicate hook fix; preserve approval on its exact old head until explicitly reconciled.",
-      "recheckCondition": "Existing owner’s exact rebase/qualification milestone or actual source/review/check event."
+      "nextStep": "approved_rebase_queue consumes corrected-fixture runs 45715198464/45715202026 and returns the source-bound result. Root retains final source/performance/publication review; no unchanged failed-fixture retry or generic-network proof substitution.",
+      "recheckCondition": "Existing owner’s corrected-fixture terminal result or root review/source milestone."
     },
     {
       "id": "branch:rbe-platform-matrix",
@@ -36339,13 +36347,13 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-25T22:04:11.018203+00:00",
-      "summary": "Public #16419 remains unchanged at 0ae405ec7; candidate 14d87bd3f retains its functional/source/review evidence. Baseline-only calibration 45704792383 verified 50 hash-matched transfers and 24 measured pairs: B/A +1.275%, 95% paired interval −1.183% to +3.794%. Root released one matched broad-throughput A/B with existing products and the same bounded design. This supports estimation only, not equivalence, repeated-RTO-specific benefit or overall performance clearance.",
+      "summary": "Public #16419 remains at 0ae405ec7; candidate 14d87bd3f retains its scoped functional/source/review evidence. The matched broad-throughput A/B completed 24 measured pairs: candidate contrast −0.295%, paired 95% interval −2.224% to +1.673%. No directional difference was detected under that model; this is not equivalence, full-network qualification or a repeated-RTO-specific benefit. The actual reply question about Linux’s repeated closed-window reduction awaits Tamir.",
       "followup": {
         "owner": "actions_bazel_cache / root",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
         "observedAt": "2026-11-20T23:31:27.372182+00:00",
-        "disposition": "Public #16419 remains unchanged at 0ae405ec7; candidate 14d87bd3f retains its functional/source/review evidence. Baseline-only calibration 45704792383 verified 50 hash-matched transfers and 24 measured pairs: B/A +1.275%, 95% paired interval −1.183% to +3.794%. Root released one matched broad-throughput A/B with existing products and the same bounded design. This supports estimation only, not equivalence, repeated-RTO-specific benefit or overall performance clearance.",
-        "nextAction": "The existing qualification owner executes the one root-authorized matched broad-throughput A/B under the frozen bounded design, without extra samples/retries or a forced-RTO framework. Root then assesses the retained result and remaining broader network/loss and thread4648619071 requirements before source-publication review.",
+        "disposition": "Public #16419 remains at 0ae405ec7; candidate 14d87bd3f retains its scoped functional/source/review evidence. The matched broad-throughput A/B completed 24 measured pairs: candidate contrast −0.295%, paired 95% interval −2.224% to +1.673%. No directional difference was detected under that model; this is not equivalence, full-network qualification or a repeated-RTO-specific benefit. The actual reply question about Linux’s repeated closed-window reduction awaits Tamir.",
+        "nextAction": "Root awaits Tamir’s answer on the exact reply to Lucas, then assesses the scoped result and remaining broader network/loss qualification before source-publication review. No extra samples, automatic retry, foreign-source edit or whole-PR approval is inferred.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16419",
           "https://github.com/google/gvisor/pull/16419#discussion_r4504268180",
@@ -36380,9 +36388,10 @@
           "https://github.com/tamird/gvisor/actions/runs/45657177837",
           "https://github.com/tamird/gvisor/actions/runs/45658848993/artifacts/15042454959",
           "https://github.com/tamird/gvisor/actions/runs/45698335217/artifacts/15062545605",
-          "https://github.com/tamird/gvisor/actions/runs/45704792383/artifacts/15065374378"
+          "https://github.com/tamird/gvisor/actions/runs/45704792383/artifacts/15065374378",
+          "https://github.com/tamird/gvisor/actions/runs/45710153246"
         ],
-        "recheckCondition": "The authorized matched A/B result or substantive source/review/control evidence; no automatic expansion.",
+        "recheckCondition": "Actual reply decision, root’s remaining performance/publication disposition or substantive new source/review evidence.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "mergeable": "CONFLICTING",
         "qualificationHistory": [
@@ -36501,7 +36510,7 @@
           ]
         },
         "remainingNetworkOutcomeOwner": "tcp_conflict",
-        "curatedAt": "2026-11-25T22:04:11.018203+00:00",
+        "curatedAt": "2026-11-25T22:41:21.827202+00:00",
         "ciExecutionAuthorization": {
           "status": "Authorized CI-only; held for permanent Bazel mechanism migration",
           "owner": "root",
@@ -36571,7 +36580,20 @@
           "hashesAndPlacementCleanupVerified": true,
           "scope": "Baseline only; estimation under frozen paired model, no equivalence/repeated-RTO benefit claim"
         },
-        "matchedABAuthorization": "Root released one broad-throughput A/B using existing products and same bounded design; no dispatch handle required to publish this disposition."
+        "matchedABAuthorization": "Root released one broad-throughput A/B using existing products and same bounded design; no dispatch handle required to publish this disposition.",
+        "matchedAB": {
+          "candidate": "14d87bd3f1548d582f4af624b8594906c2c9b648",
+          "baseline": "8075b38443e475fd4e12ef9d423e2cd460e2396d",
+          "run": 45710153246,
+          "artifact": 15068792229,
+          "measuredPairs": 24,
+          "estimatePercent": -0.2945,
+          "paired95IntervalPercent": [
+            -2.2237,
+            1.6726
+          ],
+          "limits": "Exact product hashes, 50 raw transfers, placement and cleanup verified. Frozen A/A +1.2751% interval[-1.1830,+3.7943] was not bias-subtracted. No equivalence/full-network/repeated-RTO-specific benefit claim."
+        }
       },
       "evidence": [
         {
@@ -36786,8 +36808,17 @@
           "https://github.com/tamird/gvisor/commit/0ae405ec7d1ace5894645c28910c69605c0de20e"
         ]
       },
-      "nextStep": "The existing qualification owner executes the one root-authorized matched broad-throughput A/B under the frozen bounded design, without extra samples/retries or a forced-RTO framework. Root then assesses the retained result and remaining broader network/loss and thread4648619071 requirements before source-publication review.",
-      "recheckCondition": "The authorized matched A/B result or substantive source/review/control evidence; no automatic expansion."
+      "nextStep": "Root awaits Tamir’s answer on the exact reply to Lucas, then assesses the scoped result and remaining broader network/loss qualification before source-publication review. No extra samples, automatic retry, foreign-source edit or whole-PR approval is inferred.",
+      "recheckCondition": "Actual reply decision, root’s remaining performance/publication disposition or substantive new source/review evidence.",
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
+        "url": "https://github.com/google/gvisor/pull/16419#discussion_r4648619071",
+        "title": "Explain Linux’s repeated closed-window threshold reduction",
+        "summary": "The actual question to post this reply is unanswered. It does not approve a source amendment or the whole PR.",
+        "body": "Yes, the next timeout can reduce ssthresh to 2 here. That matches Linux: with the window closed and eight segments unacknowledged, we observed ssthresh fall from 5 to 2 with Reno and from 7 to 2 with CUBIC. Moving the assignment above the probe return would prevent that second reduction. [Linux results](https://github.com/tamird/gvisor/actions/runs/45657171085)\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "pr:17114",
@@ -81130,7 +81161,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-25T22:03:16.345652+00:00",
-      "summary": "Public #17131 remains at 32fd9c26a; current-base candidate 99628869e9 completed affected normal/race/NoGo, linked and source qualification on both architectures. Each normal/race architecture has 96 ordinary and two NoGo records with zero failures/skips. The only new integration delta adapts a stale upstream benchmark constructor; the approved production patch is preserved. Root final review remains; no benchmark timing, current performance acceptance or public update is claimed.",
+      "summary": "Public #17131 remains at 32fd9c26; private candidate 99628869e has completed affected functional/source qualification. Reporting recovery 45714876845 retained 50 child PIDs and 24 measured pairs; none of 60 drift/order/arm contrasts flagged, with roughly 1–4% timing resolution. This is A/A admission evidence only, not candidate A/B or performance clearance.",
       "evidence": [
         {
           "label": "Uncached owner tests and both architecture analyzers",
@@ -81273,11 +81304,11 @@
         }
       ],
       "followup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue",
         "sourceHead": "32fd9c26abba8ceb7d68c6aacfd565bda81f839a",
         "observedAt": "2026-11-23T21:36:15.021685+00:00",
-        "disposition": "Public #17131 remains at 32fd9c26a; current-base candidate 99628869e9 completed affected normal/race/NoGo, linked and source qualification on both architectures. Each normal/race architecture has 96 ordinary and two NoGo records with zero failures/skips. The only new integration delta adapts a stale upstream benchmark constructor; the approved production patch is preserved. Root final review remains; no benchmark timing, current performance acceptance or public update is claimed.",
-        "nextAction": "Root performs final source/context review of exact 99628869e9 and records the actual publication disposition. No Daybreak availability or quota-only wait remains; qualification does not authorize publication or new timing.",
+        "disposition": "Public #17131 remains at 32fd9c26; private candidate 99628869e has completed affected functional/source qualification. Reporting recovery 45714876845 retained 50 child PIDs and 24 measured pairs; none of 60 drift/order/arm contrasts flagged, with roughly 1–4% timing resolution. This is A/A admission evidence only, not candidate A/B or performance clearance.",
+        "nextAction": "approved_rebase_queue owns the conditional candidate A/B and its source-bound result under the existing bounded design. Root retains final context/source/publication review; no extra samples, retries or public source mutation is inferred.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17131",
           "https://github.com/tamird/gvisor/actions/runs/42855947112/artifacts/13784755003",
@@ -81285,11 +81316,12 @@
           "https://github.com/tamird/gvisor/commit/98e6e5430c348b8078a6627b227ab342f5388493",
           "https://github.com/tamird/gvisor/commit/6e81862c424cbcfba5ffefbe1ae6123566acdcd8",
           "https://github.com/gvisor/gvisor/pull/17131#issuecomment-7054668856",
-          "https://buildkite.com/gvisor/first-pass/builds/2189#01a1fb9c-740f-439f-a041-9e54b5dab32b"
+          "https://buildkite.com/gvisor/first-pass/builds/2189#01a1fb9c-740f-439f-a041-9e54b5dab32b",
+          "https://github.com/tamird/gvisor/actions/runs/45714876845"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Root’s final review/recorded decision or a genuine source/review event.",
-        "curatedAt": "2026-11-25T22:03:16.345652+00:00",
+        "recheckCondition": "Existing owner’s actual candidate A/B result or substantive source/review change.",
+        "curatedAt": "2026-11-25T22:42:00.270038+00:00",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -81355,8 +81387,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "Root performs final source/context review of exact 99628869e9 and records the actual publication disposition. No Daybreak availability or quota-only wait remains; qualification does not authorize publication or new timing.",
-      "recheckCondition": "Root’s final review/recorded decision or a genuine source/review event."
+      "nextStep": "approved_rebase_queue owns the conditional candidate A/B and its source-bound result under the existing bounded design. Root retains final context/source/publication review; no extra samples, retries or public source mutation is inferred.",
+      "recheckCondition": "Existing owner’s actual candidate A/B result or substantive source/review change."
     },
     {
       "id": "pr:17118",
@@ -93437,7 +93469,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-19T16:20:03.380488+00:00",
-      "summary": "Foreign author source is now 22401767a, natively MERGEABLE/REVIEW_REQUIRED. Prior source reviews, functional results and external performance claims do not qualify this changed head. Root current-source reviewer follow-through remains unfinished under the confirmed sensitive-feature hold; the foreign author retains implementation ownership. Native Go45441491513 failed //:gopath analysis because proxy.golang.org returned an HTTP/2 INTERNAL_ERROR fetching containerd/cgroups/v3 v3.0.5; no target-source regression is established. FirstPass2678 is pending.",
+      "summary": "Current author source 22401767a resolves our two prior inline requests: restore checks the saved startCork value, and the obsolete payload.Len() assertion is removed. The other reviewer’s idle-cork post-restore timing assertion is present. Separate uncorked progress and ordinary short writes remain tracked in open #17893/#17894. The generate failure, author-measured regressions and unfinished full review remain; no approval is claimed.",
       "evidence": [
         {
           "label": "Timer restore",
@@ -93503,9 +93535,9 @@
         "mergeable": "MERGEABLE",
         "sourceHead": "22401767ad9317e22aaebb118d3f0dafd031d6a1",
         "observedAt": "2026-11-24T17:06:51.520893+00:00",
-        "disposition": "Foreign author source is now 22401767a, natively MERGEABLE/REVIEW_REQUIRED. Prior source reviews, functional results and external performance claims do not qualify this changed head. Root current-source reviewer follow-through remains unfinished under the confirmed sensitive-feature hold; the foreign author retains implementation ownership. Native Go45441491513 failed //:gopath analysis because proxy.golang.org returned an HTTP/2 INTERNAL_ERROR fetching containerd/cgroups/v3 v3.0.5; no target-source regression is established. FirstPass2678 is pending.",
-        "nextAction": "Root retains current-source review under the sensitive hold. Follow actual author/provider evidence without protected source reads, tests, timings, foreign edits, duplicate outreach or transfer of old-head approval. No unchanged CI retry.",
-        "recheckCondition": "Actual new author/provider evidence, changed source/base or user releases the hold.",
+        "disposition": "Current author source 22401767a resolves our two prior inline requests: restore checks the saved startCork value, and the obsolete payload.Len() assertion is removed. The other reviewer’s idle-cork post-restore timing assertion is present. Separate uncorked progress and ordinary short writes remain tracked in open #17893/#17894. The generate failure, author-measured regressions and unfinished full review remain; no approval is claimed.",
+        "nextAction": "Root finishes the remaining current-source review, preserving the author’s implementation ownership and measured-regression/CI limitations. Follow #17893/#17894 on their own scopes. No duplicate reply, review request, foreign-source edit or unchanged CI retry. The Daybreak availability wait is retired.",
+        "recheckCondition": "Substantive author response/revision, changed CI evidence or a completed root review milestone.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17264",
           "https://github.com/gvisor/gvisor/commit/e5f0f6f7fc500b646b4a0dbd738f142e1a9032a2",
@@ -93531,10 +93563,12 @@
           "https://github.com/google/gvisor/pull/17264#discussion_r4673268482",
           "https://github.com/google/gvisor/commit/b98b4d2f6f7d6f1381cf4b0305ce3d4b8a967554",
           "https://buildkite.com/gvisor/first-pass/builds/2646",
-          "https://github.com/gvisor/gvisor/actions/runs/45441491513/job/138613530223"
+          "https://github.com/gvisor/gvisor/actions/runs/45441491513/job/138613530223",
+          "https://github.com/gvisor/gvisor/pull/17893",
+          "https://github.com/gvisor/gvisor/pull/17894"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
-        "curatedAt": "2026-11-19T16:20:03.380488+00:00",
+        "curatedAt": "2026-11-25T22:34:48.644451+00:00",
         "footerHeadReconciliation": {
           "old": "0aa0a1abf8a6586ae534f80a683f76aceb35d74a",
           "new": "92e403ef2d8cb7e24a334d37dabb248cef3b4407",
@@ -93561,7 +93595,8 @@
           "limits": "Dependency ZIP transport failed during //:gopath analysis; FirstPass pending, no target-source failure established."
         }
       },
-      "nextStep": "Root retains current-source review under the sensitive hold. Follow actual author/provider evidence without protected source reads, tests, timings, foreign edits, duplicate outreach or transfer of old-head approval. No unchanged CI retry."
+      "nextStep": "Root finishes the remaining current-source review, preserving the author’s implementation ownership and measured-regression/CI limitations. Follow #17893/#17894 on their own scopes. No duplicate reply, review request, foreign-source edit or unchanged CI retry. The Daybreak availability wait is retired.",
+      "recheckCondition": "Substantive author response/revision, changed CI evidence or a completed root review milestone."
     },
     {
       "id": "pr:17265",
@@ -97212,7 +97247,7 @@
       "head": "cbb641db5450412e7137c46f05ba464b2ab5386a",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:58.120129+00:00",
-      "summary": "Current source cbb641db54 has maintainer approval. Main 55965 failed in the repository pre-command fetch of literal ref tamird, before builds or tests; this is not a source-test verdict. Existing qualification retains its source scope.",
+      "summary": "Public #17376 remains at cbb641db54. Qualified same-topic rebase b57013d8ab picks up the existing Buildkite fork-fetch fix. The actual amendment and supplied-notice question awaits Tamir; no branch update or notice has occurred. Runtime and performance evidence retain their original source scopes.",
       "evidence": [
         {
           "label": "Published LuaJIT release",
@@ -97244,11 +97279,11 @@
         }
       ],
       "followup": {
-        "owner": "approved_delivery_batch",
+        "owner": "root",
         "sourceHead": "cbb641db5450412e7137c46f05ba464b2ab5386a",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Current source cbb641db54 has maintainer approval. Main 55965 failed in the repository pre-command fetch of literal ref tamird, before builds or tests; this is not a source-test verdict. Existing qualification retains its source scope.",
-        "nextAction": "approved_delivery_batch prepares the necessary base refresh containing the existing hook removal, then scoped validation and root final publication review. No unchanged retry, duplicate fix, outreach or merge.",
+        "disposition": "Public #17376 remains at cbb641db54. Qualified same-topic rebase b57013d8ab picks up the existing Buildkite fork-fetch fix. The actual amendment and supplied-notice question awaits Tamir; no branch update or notice has occurred. Runtime and performance evidence retain their original source scopes.",
+        "nextAction": "Root awaits Tamir’s answer to the actual batched question. Amend only this original branch and post one supplied notice if approved; preserve the exact old-head lease and existing reviewer requests. No duplicate CI retry, outreach or merge.",
         "mergeable": "MERGEABLE",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fa3d27991",
@@ -97257,9 +97292,15 @@
           "https://github.com/tamird/gvisor/commit/cbb641db5450412e7137c46f05ba464b2ab5386a",
           "https://buildkite.com/gvisor/first-pass/builds/1583",
           "https://buildkite.com/gvisor/first-pass/builds/1583#01a1eae1-b324-4140-9556-46166ee21064",
-          "https://buildkite.com/gvisor/pipeline/builds/55965"
+          "https://buildkite.com/gvisor/pipeline/builds/55965",
+          "https://github.com/tamird/gvisor/commit/b57013d8abd255b013ab99c924139853eb3b3e7a",
+          "https://github.com/tamird/gvisor/actions/runs/45712747888",
+          "https://github.com/tamird/gvisor/actions/runs/45712751040",
+          "https://github.com/tamird/gvisor/actions/runs/45712754333",
+          "https://github.com/tamird/gvisor/actions/runs/45712758031",
+          "https://github.com/tamird/gvisor/actions/runs/45712762297"
         ],
-        "recheckCondition": "Existing owner’s source-bound rebase milestone, or genuine source/check/review change.",
+        "recheckCondition": "Actual answer to the batched amendment/notice question, or a substantive source/review change.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -97283,7 +97324,15 @@
             }
           }
         ],
-        "curatedAt": "2026-11-25T22:15:30.434231+00:00"
+        "curatedAt": "2026-11-25T22:30:31.228636+00:00",
+        "candidate": {
+          "head": "b57013d8abd255b013ab99c924139853eb3b3e7a",
+          "base": "e28474f026f4f6d6cfa46710e34f01786d54477e",
+          "ci": "6d4af77f0f1a43cc7d80bc038943192b6071f441",
+          "equivalence": "identical ordered additions/deletions; range-diff only surrounding images/BUILD context changed",
+          "state": "Qualified; actual amendment/notice decision pending",
+          "upstreamPublished": false
+        }
       },
       "dcoAmendment": {
         "oldHead": "fa3d2799126d2db7d489319ddaa6abd84adf19cf",
@@ -97307,8 +97356,19 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Agent"
       },
-      "nextStep": "approved_delivery_batch prepares the necessary base refresh containing the existing hook removal, then scoped validation and root final publication review. No unchanged retry, duplicate fix, outreach or merge.",
-      "recheckCondition": "Existing owner’s source-bound rebase milestone, or genuine source/check/review change."
+      "nextStep": "Root awaits Tamir’s answer to the actual batched question. Amend only this original branch and post one supplied notice if approved; preserve the exact old-head lease and existing reviewer requests. No duplicate CI retry, outreach or merge.",
+      "recheckCondition": "Actual answer to the batched amendment/notice question, or a substantive source/review change.",
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "b57013d8abd255b013ab99c924139853eb3b3e7a",
+        "baseHead": "cbb641db5450412e7137c46f05ba464b2ab5386a",
+        "url": "https://github.com/tamird/gvisor/commit/b57013d8abd255b013ab99c924139853eb3b3e7a",
+        "title": "Build the wrk2 benchmark image with Bazel",
+        "summary": "The actual batched question for this exact branch amendment and one supplied notice is unanswered. Public source is unchanged.",
+        "body": "Scope summary of the actual unanswered batched request: approve amending #17376 from cbb641db5450412e7137c46f05ba464b2ab5386a to b57013d8abd255b013ab99c924139853eb3b3e7a and posting one supplied rebase notice. The topic additions/deletions are preserved. Current-base qualification uses the established 12-path support projection; packaging checks do not establish fresh runtime or performance results.\n\nProposed notice:\n\nRebased on master to pick up the Buildkite fork-fetch fix\n\nPosted by Codex on behalf of @tamird.\n\nComparison:\n\ngit range-diff cbb641db5450412e7137c46f05ba464b2ab5386a^! b57013d8abd255b013ab99c924139853eb3b3e7a^!\n",
+        "replyBody": "Rebased on master to pick up the Buildkite fork-fetch fix\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "pr:17377",
@@ -100129,7 +100189,7 @@
       "head": "518c230da9c984c0bd8a362db2bea4ba7ee8dda6",
       "title": "Stabilize the Fastlane token check in the Ruby benchmark",
       "group": "ci-flakes",
-      "summary": "Current source 518c230da9 has maintainer approval. Main 55963 failed in the repository pre-command fetch of literal ref tamird, before builds or tests; this is not a source-test verdict. Existing qualification retains its source scope.",
+      "summary": "Public #17479 remains at 518c230da9. Qualified same-topic rebase b0d665d9f2 picks up the existing Buildkite fork-fetch fix. The actual amendment and supplied-notice question awaits Tamir; no branch update or notice has occurred. Runtime and performance evidence retain their original source scopes.",
       "evidence": [
         {
           "label": "Published gVisor fix",
@@ -100169,11 +100229,11 @@
       "status": "open",
       "updatedAt": "2026-11-17T19:05:00.391405+00:00",
       "followup": {
-        "owner": "approved_delivery_batch",
+        "owner": "root",
         "sourceHead": "518c230da9c984c0bd8a362db2bea4ba7ee8dda6",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Current source 518c230da9 has maintainer approval. Main 55963 failed in the repository pre-command fetch of literal ref tamird, before builds or tests; this is not a source-test verdict. Existing qualification retains its source scope.",
-        "nextAction": "approved_delivery_batch prepares the necessary base refresh containing the existing hook removal, then scoped validation and root final publication review. No unchanged retry, duplicate fix, outreach or merge.",
+        "disposition": "Public #17479 remains at 518c230da9. Qualified same-topic rebase b0d665d9f2 picks up the existing Buildkite fork-fetch fix. The actual amendment and supplied-notice question awaits Tamir; no branch update or notice has occurred. Runtime and performance evidence retain their original source scopes.",
+        "nextAction": "Root awaits Tamir’s answer to the actual batched question. Amend only this original branch and post one supplied notice if approved; preserve the exact old-head lease and existing reviewer requests. No duplicate CI retry, outreach or merge.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17479",
           "https://github.com/google/gvisor/pull/17479#issuecomment-6799672981",
@@ -100182,10 +100242,12 @@
           "https://github.com/tamird/gvisor/commit/518c230da9c984c0bd8a362db2bea4ba7ee8dda6",
           "https://buildkite.com/gvisor/first-pass/builds/1600",
           "https://buildkite.com/gvisor/first-pass/builds/1600#01a1eae2-d984-443d-ad21-f186d7c761e0",
-          "https://buildkite.com/gvisor/pipeline/builds/55963"
+          "https://buildkite.com/gvisor/pipeline/builds/55963",
+          "https://github.com/tamird/gvisor/commit/b0d665d9f298bf84db405213b403467d8470af4f",
+          "https://github.com/tamird/gvisor/actions/runs/45712767233"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Existing owner’s source-bound rebase milestone, or genuine source/check/review change.",
+        "recheckCondition": "Actual answer to the batched amendment/notice question, or a substantive source/review change.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -100209,7 +100271,15 @@
             }
           }
         ],
-        "curatedAt": "2026-11-25T22:15:30.434231+00:00"
+        "curatedAt": "2026-11-25T22:30:31.228636+00:00",
+        "candidate": {
+          "head": "b0d665d9f298bf84db405213b403467d8470af4f",
+          "base": "e28474f026f4f6d6cfa46710e34f01786d54477e",
+          "ci": "f2b7016a6c6ff94d8527bfd19605ff5ee3b4e978",
+          "equivalence": "identical stable patch ID",
+          "state": "Qualified; actual amendment/notice decision pending",
+          "upstreamPublished": false
+        }
       },
       "dcoAmendment": {
         "oldHead": "99759b1ed1acb8dbcacfc46ed129d3ec5a14c4dd",
@@ -100233,8 +100303,19 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "approved_delivery_batch prepares the necessary base refresh containing the existing hook removal, then scoped validation and root final publication review. No unchanged retry, duplicate fix, outreach or merge.",
-      "recheckCondition": "Existing owner’s source-bound rebase milestone, or genuine source/check/review change."
+      "nextStep": "Root awaits Tamir’s answer to the actual batched question. Amend only this original branch and post one supplied notice if approved; preserve the exact old-head lease and existing reviewer requests. No duplicate CI retry, outreach or merge.",
+      "recheckCondition": "Actual answer to the batched amendment/notice question, or a substantive source/review change.",
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "b0d665d9f298bf84db405213b403467d8470af4f",
+        "baseHead": "518c230da9c984c0bd8a362db2bea4ba7ee8dda6",
+        "url": "https://github.com/tamird/gvisor/commit/b0d665d9f298bf84db405213b403467d8470af4f",
+        "title": "Stabilize the Fastlane token check in the Ruby benchmark",
+        "summary": "The actual batched question for this exact branch amendment and one supplied notice is unanswered. Public source is unchanged.",
+        "body": "Scope summary of the actual unanswered batched request: approve amending #17479 from 518c230da9c984c0bd8a362db2bea4ba7ee8dda6 to b0d665d9f298bf84db405213b403467d8470af4f and posting one supplied rebase notice. The topic additions/deletions are preserved. Current-base qualification uses the established 12-path support projection; packaging checks do not establish fresh runtime or performance results.\n\nProposed notice:\n\nRebased on master to pick up the Buildkite fork-fetch fix\n\nPosted by Codex on behalf of @tamird.\n\nComparison:\n\ngit range-diff 518c230da9c984c0bd8a362db2bea4ba7ee8dda6^! b0d665d9f298bf84db405213b403467d8470af4f^!\n",
+        "replyBody": "Rebased on master to pick up the Buildkite fork-fetch fix\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "head": "c4098b8d0fdcf02ea31202c40f54a4c774c794fc",
@@ -101330,7 +101411,7 @@
       "title": "Separate pgalloc sharing counts from occupancy",
       "url": "https://github.com/google/gvisor/pull/17374",
       "status": "open",
-      "summary": "Foreign author source is now d461541e1, natively MERGEABLE/REVIEW_REQUIRED. Prior source reviews, functional results and external performance claims do not qualify this changed head. Root current-source reviewer follow-through remains unfinished under the confirmed sensitive-feature hold; the foreign author retains implementation ownership.",
+      "summary": "Current author source d461541e1 has the requested author-reported checkpoint-save comparison: 24 paired samples each for Nginx and an empty sandbox. Source review found that FirstSharedRange([x,x)) strictly inside a shared segment returns true, unlike the parent; its sole current production caller uses a nonempty range. The actual proposed inline COMMENTED review awaits Tamir. No source approval or general performance clearance is established.",
       "updatedAt": "2026-11-19T16:20:03.380488+00:00",
       "evidence": [
         {
@@ -101391,8 +101472,8 @@
         "owner": "root",
         "sourceHead": "d461541e18fbb43999c7656ebddb85ecdb0b6a2f",
         "observedAt": "2026-11-24T17:06:51.520893+00:00",
-        "disposition": "Foreign author source is now d461541e1, natively MERGEABLE/REVIEW_REQUIRED. Prior source reviews, functional results and external performance claims do not qualify this changed head. Root current-source reviewer follow-through remains unfinished under the confirmed sensitive-feature hold; the foreign author retains implementation ownership.",
-        "nextAction": "Root retains current-source review under the sensitive hold. Follow actual author/provider evidence without protected source reads, tests, timings, foreign edits, duplicate outreach or transfer of old-head approval. No unchanged CI retry.",
+        "disposition": "Current author source d461541e1 has the requested author-reported checkpoint-save comparison: 24 paired samples each for Nginx and an empty sandbox. Source review found that FirstSharedRange([x,x)) strictly inside a shared segment returns true, unlike the parent; its sole current production caller uses a nonempty range. The actual proposed inline COMMENTED review awaits Tamir. No source approval or general performance clearance is established.",
+        "nextAction": "Root awaits Tamir’s answer on the proposed inline comment at pgalloc.go:1243. Preserve the author’s implementation ownership and remaining review scope; post nothing until approved. The obsolete Daybreak availability wait is retired.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17374#discussion_r4545607204",
           "https://github.com/google/gvisor/pull/17374#discussion_r4576254625",
@@ -101414,7 +101495,7 @@
           "https://buildkite.com/gvisor/first-pass/builds/2428#01a208b9-9eae-46bd-9f0d-c6bd2bac97aa",
           "https://github.com/google/gvisor/commit/a8107e23ece0cf1f5152e2f4da4fb5e6cba0c7ea"
         ],
-        "recheckCondition": "Actual new author/provider evidence, changed source/base or user releases the hold.",
+        "recheckCondition": "Actual answer to the inline-review question, author revision/response or relevant new technical evidence.",
         "incomingReview": {
           "repo": "google/gvisor",
           "number": 17374,
@@ -101438,7 +101519,7 @@
             "note": "Response delivered; root verified tamird absent from native requested_reviewers after submission. Source approval withheld pending broad workload benchmark."
           }
         },
-        "curatedAt": "2026-11-21T15:21:17.931599+00:00",
+        "curatedAt": "2026-11-25T22:34:48.644451+00:00",
         "footerHeadReconciliation": {
           "old": "80c001d2b316feaa887a5ee53498d6ee55799a6a",
           "new": "b04021b975f4eb1087ffaf46152dfe966bb62305",
@@ -101465,7 +101546,14 @@
           "limits": "Attempt1 actual target timeout/failure, cause unclassified; attempt2 pre-agent daily quota. No source-cause or broad-workload qualification claim."
         },
         "providerHead": "d461541e18fbb43999c7656ebddb85ecdb0b6a2f",
-        "mergeable": "MERGEABLE"
+        "mergeable": "MERGEABLE",
+        "pendingInlineReview": {
+          "head": "d461541e18fbb43999c7656ebddb85ecdb0b6a2f",
+          "path": "pkg/sentry/pgalloc/pgalloc.go",
+          "line": 1243,
+          "event": "COMMENTED",
+          "state": "Actual question pending; not posted"
+        }
       },
       "reviewWatch": {
         "inspected": [
@@ -101482,7 +101570,17 @@
           }
         ]
       },
-      "nextStep": "Root retains current-source review under the sensitive hold. Follow actual author/provider evidence without protected source reads, tests, timings, foreign edits, duplicate outreach or transfer of old-head approval. No unchanged CI retry."
+      "nextStep": "Root awaits Tamir’s answer on the proposed inline comment at pgalloc.go:1243. Preserve the author’s implementation ownership and remaining review scope; post nothing until approved. The obsolete Daybreak availability wait is retired.",
+      "recheckCondition": "Actual answer to the inline-review question, author revision/response or relevant new technical evidence.",
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "d461541e18fbb43999c7656ebddb85ecdb0b6a2f",
+        "url": "https://github.com/google/gvisor/pull/17374",
+        "title": "Post the FirstSharedRange edge-case review",
+        "summary": "The actual question to post this inline COMMENTED review is unanswered. It does not grant source approval.",
+        "body": "The paired Nginx and empty-sandbox checkpoint results address my benchmark question. One edge case remains: when `[x,x)` lies strictly inside a shared segment, `FirstSharedRange` now returns an empty range and `true`. Could you preserve the previous `false` result and add that case to the existing range-query test?\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "pr:16485",
@@ -107408,7 +107506,7 @@
       "title": "tcp: send new data as the loss probe when the congestion window is full",
       "url": "https://github.com/google/gvisor/pull/16660",
       "status": "open",
-      "summary": "The author offered to include the remaining retransmitted-probe correction. Root still owes the TCP correctness choice and current-source reconciliation; the user confirmed keeping sensitive work held. Current source is 2c1ea17a; older 0bf evidence is historical. An outdated flag or earlier inspection is not completion.",
+      "summary": "Exact current source 2c1ea17a6 checks the accepted ACK bounds for the new-data probe episode. The retransmitted-probe path belongs to the still-open common-validation companion #16378. The actual scope-reply question is pending; this is not approval of the whole PR or authorization to edit the foreign branch.",
       "reviewWatch": {
         "owner": "root",
         "reviewers": [
@@ -107431,11 +107529,25 @@
         "owner": "root",
         "sourceHead": "2c1ea17a6be7c217a0bc8c52631ee0e2fd7539fc",
         "observedAt": "2026-11-22T13:44:34.842618+00:00",
-        "nextAction": "Keep the sensitive TCP reviewer choice held under the current user instruction. Root must reconcile the author’s proposed retransmitted-probe scope with current source 2c1ea17a when actual instructions and access/policy conditions permit. adios-404 retains implementation ownership; do not reply, edit the author branch or run source/tests from this metadata assignment.",
-        "recheckCondition": "Actual user instruction changing the hold or genuine author feedback; preserve the unresolved reviewer choice until a concrete disposition.",
+        "nextAction": "Root awaits Tamir’s answer on the proposed reply to discussion 4419960483. Keep retransmitted-probe work with #16378; do not post, edit foreign source or launch tests from this metadata assignment. The obsolete user availability hold is retired.",
+        "recheckCondition": "Actual answer to the reply question, or substantive author/source evidence affecting the two-path scope.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16660#discussion_r4419960483"
-        ]
+          "https://github.com/google/gvisor/pull/16660#discussion_r4419960483",
+          "https://github.com/gvisor/gvisor/pull/16378"
+        ],
+        "disposition": "Exact current source 2c1ea17a6 checks the accepted ACK bounds for the new-data probe episode. The retransmitted-probe path belongs to the still-open common-validation companion #16378. The actual scope-reply question is pending; this is not approval of the whole PR or authorization to edit the foreign branch.",
+        "curatedAt": "2026-11-25T22:35:10.106729+00:00"
+      },
+      "nextStep": "Root awaits Tamir’s answer on the proposed reply to discussion 4419960483. Keep retransmitted-probe work with #16378; do not post, edit foreign source or launch tests from this metadata assignment. The obsolete user availability hold is retired.",
+      "recheckCondition": "Actual answer to the reply question, or substantive author/source evidence affecting the two-path scope.",
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "2c1ea17a6be7c217a0bc8c52631ee0e2fd7539fc",
+        "url": "https://github.com/google/gvisor/pull/16660#discussion_r4419960483",
+        "title": "Keep retransmitted probes with the common-validation companion",
+        "summary": "The actual scope-reply question is unanswered; no whole-PR approval or foreign-source commitment is inferred.",
+        "body": "The new-data probe change addresses my comment. Please leave the retransmitted-probe case to #16378 so both paths can use the common ACK validation.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -107935,23 +108047,48 @@
       "status": "open",
       "owner": "root",
       "evidence": [],
-      "summary": "Current source 65395f4d25 has maintainer approval. Main 55966 failed in the repository pre-command fetch of literal ref tamird, before builds or tests; this is not a source-test verdict. Existing qualification retains its source scope.",
-      "nextStep": "approved_delivery_batch prepares the necessary base refresh containing the existing hook removal, then scoped validation and root final publication review. No unchanged retry, duplicate fix, outreach or merge.",
+      "summary": "Public #17343 remains at 65395f4d25. Qualified same-topic rebase 7f28ffee3f picks up the existing Buildkite fork-fetch fix. The actual amendment and supplied-notice question awaits Tamir; no branch update or notice has occurred. Runtime and performance evidence retain their original source scopes.",
+      "nextStep": "Root awaits Tamir’s answer to the actual batched question. Amend only this original branch and post one supplied notice if approved; preserve the exact old-head lease and existing reviewer requests. No duplicate CI retry, outreach or merge.",
       "updatedAt": "2026-11-24T20:51:36.949756+00:00",
       "followup": {
-        "disposition": "Current source 65395f4d25 has maintainer approval. Main 55966 failed in the repository pre-command fetch of literal ref tamird, before builds or tests; this is not a source-test verdict. Existing qualification retains its source scope.",
-        "nextAction": "approved_delivery_batch prepares the necessary base refresh containing the existing hook removal, then scoped validation and root final publication review. No unchanged retry, duplicate fix, outreach or merge.",
-        "recheckCondition": "Existing owner’s source-bound rebase milestone, or genuine source/check/review change.",
+        "disposition": "Public #17343 remains at 65395f4d25. Qualified same-topic rebase 7f28ffee3f picks up the existing Buildkite fork-fetch fix. The actual amendment and supplied-notice question awaits Tamir; no branch update or notice has occurred. Runtime and performance evidence retain their original source scopes.",
+        "nextAction": "Root awaits Tamir’s answer to the actual batched question. Amend only this original branch and post one supplied notice if approved; preserve the exact old-head lease and existing reviewer requests. No duplicate CI retry, outreach or merge.",
+        "recheckCondition": "Actual answer to the batched amendment/notice question, or a substantive source/review change.",
         "observedAt": "2026-11-24T20:51:36.949756+00:00",
         "evidence": [
           "https://github.com/google/gvisor/pull/17343#pullrequestreview-6046141593",
-          "https://buildkite.com/gvisor/pipeline/builds/55966"
+          "https://buildkite.com/gvisor/pipeline/builds/55966",
+          "https://github.com/tamird/gvisor/commit/7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
+          "https://github.com/tamird/gvisor/actions/runs/45712734039",
+          "https://github.com/tamird/gvisor/actions/runs/45712737342",
+          "https://github.com/tamird/gvisor/actions/runs/45712739682",
+          "https://github.com/tamird/gvisor/actions/runs/45712742623",
+          "https://github.com/tamird/gvisor/actions/runs/45712745038"
         ],
-        "owner": "approved_delivery_batch",
+        "owner": "root",
         "sourceHead": "65395f4d25f46c489be82141feeb009819403f19",
-        "curatedAt": "2026-11-25T22:15:30.434231+00:00"
+        "curatedAt": "2026-11-25T22:30:31.228636+00:00",
+        "candidate": {
+          "head": "7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
+          "base": "e28474f026f4f6d6cfa46710e34f01786d54477e",
+          "ci": "da4eb81f50692ec313d0cb161d8cea07784dfdee",
+          "equivalence": "identical stable patch ID",
+          "state": "Qualified; actual amendment/notice decision pending",
+          "upstreamPublished": false
+        }
       },
-      "recheckCondition": "Existing owner’s source-bound rebase milestone, or genuine source/check/review change."
+      "recheckCondition": "Actual answer to the batched amendment/notice question, or a substantive source/review change.",
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
+        "baseHead": "65395f4d25f46c489be82141feeb009819403f19",
+        "url": "https://github.com/tamird/gvisor/commit/7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
+        "title": "Build the Hackbench image from pinned source",
+        "summary": "The actual batched question for this exact branch amendment and one supplied notice is unanswered. Public source is unchanged.",
+        "body": "Scope summary of the actual unanswered batched request: approve amending #17343 from 65395f4d25f46c489be82141feeb009819403f19 to 7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6 and posting one supplied rebase notice. The topic additions/deletions are preserved. Current-base qualification uses the established 12-path support projection; packaging checks do not establish fresh runtime or performance results.\n\nProposed notice:\n\nRebased on master to pick up the Buildkite fork-fetch fix\n\nPosted by Codex on behalf of @tamird.\n\nComparison:\n\ngit range-diff 65395f4d25f46c489be82141feeb009819403f19^! 7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6^!\n",
+        "replyBody": "Rebased on master to pick up the Buildkite fork-fetch fix\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "branch:sysbench-summary-output",
@@ -134187,7 +134324,7 @@
       "owner": "root",
       "updatedAt": "2026-11-25T21:04:58.790048+00:00",
       "group": "analysis",
-      "summary": "Source 0edf29aac remains the completed 36-commit analyzer rewrite. The original-parent AMD64 control reproduces all three route failures with the same assertion discrepancies, closing AMD attribution to the analyzer rewrite. Native 0edf still has those failures on both architectures. Diagnostic c9b is retired; FUSE GRPC exec/mmap, remaining performance qualification and open #17884 stay separate.",
+      "summary": "Source 0edf29aac remains the completed 36-commit analyzer rewrite with scoped checker/source evidence and unchanged 891-target corpus reuse. Startup qualification is complete at its recorded scope. Syscall qualification is running; remaining HTTP budget, performance and FUSE architectural gates stay separate. The three route failures reproduce on the original parent, and #17884 remains open.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -134559,7 +134696,7 @@
           ]
         }
       ],
-      "nextStep": "Root retains the reproduced route failures as a source-bound baseline limitation, not an unresolved AMD analyzer-attribution question. Do not integrate retired c9b or require an ARM parent run for this AMD attribution. Continue other required analyzer gates while the separate FUSE scope question is pending. analysis_delivery owns FUSE design inventory only; implementation would require its own scope decision, native parity and tiny exec-on-FUSE before GRPC. Retain #17884 and remaining performance qualification.",
+      "nextStep": "analysis_delivery owns syscall run 45714898966: all seven original leaves, co-located A/A then conditional A/B only if the frozen primary/integrity controls pass. Consume its terminal result without duplicate polling, retries or expansion. Remaining HTTP timing admission has a technical 90-minute job-budget constraint, not a user-approval wait. Continue independent gates; retain FUSE design scope, baseline behavioral limitations and #17884.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -134962,7 +135099,7 @@
           }
         ]
       },
-      "recheckCondition": "Actual baseline-route/source-contract evidence, explicit FUSE/MM design/parity, prerequisite landing or authorized performance progress.",
+      "recheckCondition": "Existing owner’s terminal syscall qualification receipt, resolved HTTP budget/admission or a substantive prerequisite/FUSE/source event.",
       "lifecycleCoordination": {
         "owner": "root",
         "nextAction": "Root assesses existing #15866 multiple-default and FindRoute cases before deciding any route source change. c9b remains diagnostic-only; its green projection does not qualify compatibility or alter frozen 0edf. Separately assign FUSE/MM design/parity → tiny exec-on-FUSE → GRPC and finish remaining performance qualification; #17884 remains open.",
@@ -135170,17 +135307,18 @@
           "https://github.com/tamird/gvisor/commit/c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6",
           "https://github.com/tamird/gvisor/actions/runs/45696611249",
           "https://github.com/tamird/gvisor/actions/runs/45696613609",
-          "https://github.com/tamird/gvisor/actions/runs/45697572977/artifacts/15061632675"
+          "https://github.com/tamird/gvisor/actions/runs/45697572977/artifacts/15061632675",
+          "https://github.com/tamird/gvisor/actions/runs/45714898966"
         ],
         "owner": "root",
-        "disposition": "Source 0edf29aac remains the completed 36-commit analyzer rewrite. The original-parent AMD64 control reproduces all three route failures with the same assertion discrepancies, closing AMD attribution to the analyzer rewrite. Native 0edf still has those failures on both architectures. Diagnostic c9b is retired; FUSE GRPC exec/mmap, remaining performance qualification and open #17884 stay separate.",
-        "nextAction": "Root retains the reproduced route failures as a source-bound baseline limitation, not an unresolved AMD analyzer-attribution question. Do not integrate retired c9b or require an ARM parent run for this AMD attribution. Continue other required analyzer gates while the separate FUSE scope question is pending. analysis_delivery owns FUSE design inventory only; implementation would require its own scope decision, native parity and tiny exec-on-FUSE before GRPC. Retain #17884 and remaining performance qualification.",
-        "recheckCondition": "Actual baseline-route/source-contract evidence, explicit FUSE/MM design/parity, prerequisite landing or authorized performance progress.",
+        "disposition": "Source 0edf29aac remains the completed 36-commit analyzer rewrite with scoped checker/source evidence and unchanged 891-target corpus reuse. Startup qualification is complete at its recorded scope. Syscall qualification is running; remaining HTTP budget, performance and FUSE architectural gates stay separate. The three route failures reproduce on the original parent, and #17884 remains open.",
+        "nextAction": "analysis_delivery owns syscall run 45714898966: all seven original leaves, co-located A/A then conditional A/B only if the frozen primary/integrity controls pass. Consume its terminal result without duplicate polling, retries or expansion. Remaining HTTP timing admission has a technical 90-minute job-budget constraint, not a user-approval wait. Continue independent gates; retain FUSE design scope, baseline behavioral limitations and #17884.",
+        "recheckCondition": "Existing owner’s terminal syscall qualification receipt, resolved HTTP budget/admission or a substantive prerequisite/FUSE/source event.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-25T21:04:58.790048+00:00",
+        "curatedAt": "2026-11-25T22:41:21.827202+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -135192,6 +135330,14 @@
           "parentFailures": 3,
           "matchingConditions": "All three have the FDBasedLinks discrepancy; SingleInterface and MultipleInterfaces also lack default gateways.",
           "scope": "AMD original-parent attribution only; no ARM parent run. Original0edf gates retain three failures per architecture. Struct-print layouts differ due to field reordering; logs are not claimed byte-identical."
+        },
+        "syscallQualification": {
+          "owner": "analysis_delivery",
+          "run": 45714898966,
+          "state": "Running; no timing result accepted yet",
+          "nativeAnalyzerHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
+          "recorderProjectionPrefix": "d227d5c46",
+          "scope": "Seven original syscall leaves, n24, co-located AA then conditional AB only if all primary contrast/product/placement/integrity controls pass. All 35 contrasts/CIs retained; no retries/expansion."
         }
       },
       "comparisons": [

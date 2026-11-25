@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-25T22:12:52.030781+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-25T22:15:30.434231+00:00",
+  "registryDate": "2026-11-25T22:42:00.270038+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -461648,7 +461648,7 @@
       "number": 17131,
       "head": "32fd9c26abba8ceb7d68c6aacfd565bda81f839a",
       "sourceNumber": 17131,
-      "owner": "root",
+      "owner": "approved_rebase_queue",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABWiSJNg",
       "needsTriage": false,
@@ -462156,7 +462156,7 @@
       "number": 15449,
       "head": "fdce23a34c322b076944df7369772ec68ea78254",
       "sourceNumber": 15449,
-      "owner": "approved_rebase_queue / root",
+      "owner": "approved_rebase_queue",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABXbKjHQ",
       "needsTriage": false,
@@ -462656,7 +462656,7 @@
       "number": 17343,
       "head": "65395f4d25f46c489be82141feeb009819403f19",
       "sourceNumber": 17343,
-      "owner": "approved_delivery_batch",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABaGDMmQ",
       "needsTriage": false,
@@ -462675,7 +462675,7 @@
       "repo": "google/gvisor",
       "number": 16660,
       "head": "2c1ea17a6be7c217a0bc8c52631ee0e2fd7539fc",
-      "action": "Keep the sensitive TCP reviewer choice held under the current user instruction. Root must reconcile the author’s proposed retransmitted-probe scope with current source 2c1ea17a when actual instructions and access/policy conditions permit. adios-404 retains implementation ownership; do not reply, edit the author branch or run source/tests from this metadata assignment.",
+      "action": "Root awaits Tamir’s answer on the proposed reply to discussion 4419960483. Keep retransmitted-probe work with #16378; do not post, edit foreign source or launch tests from this metadata assignment. The obsolete user availability hold is retired.",
       "claimed": true,
       "firstObservedHead": "2c1ea17a6be7c217a0bc8c52631ee0e2fd7539fc",
       "reviewHead": null,
@@ -462695,7 +462695,7 @@
       "repo": "google/gvisor",
       "number": 17374,
       "head": "d461541e18fbb43999c7656ebddb85ecdb0b6a2f",
-      "action": "Root retains current-source review under the sensitive hold. Follow actual author/provider evidence without protected source reads, tests, timings, foreign edits, duplicate outreach or transfer of old-head approval. No unchanged CI retry.",
+      "action": "Root awaits Tamir’s answer on the proposed inline comment at pgalloc.go:1243. Preserve the author’s implementation ownership and remaining review scope; post nothing until approved. The obsolete Daybreak availability wait is retired.",
       "claimed": true,
       "firstObservedHead": "80c001d2b316feaa887a5ee53498d6ee55799a6a",
       "reviewHead": null,
@@ -462715,7 +462715,7 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "22401767ad9317e22aaebb118d3f0dafd031d6a1",
-      "action": "Root retains current-source review under the sensitive hold. Follow actual author/provider evidence without protected source reads, tests, timings, foreign edits, duplicate outreach or transfer of old-head approval. No unchanged CI retry.",
+      "action": "Root finishes the remaining current-source review, preserving the author’s implementation ownership and measured-regression/CI limitations. Follow #17893/#17894 on their own scopes. No duplicate reply, review request, foreign-source edit or unchanged CI retry. The Daybreak availability wait is retired.",
       "claimed": true,
       "firstObservedHead": "e5f0f6f7fc500b646b4a0dbd738f142e1a9032a2",
       "reviewHead": null,
@@ -462735,7 +462735,7 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "22401767ad9317e22aaebb118d3f0dafd031d6a1",
-      "action": "Root retains current-source review under the sensitive hold. Follow actual author/provider evidence without protected source reads, tests, timings, foreign edits, duplicate outreach or transfer of old-head approval. No unchanged CI retry.",
+      "action": "Root finishes the remaining current-source review, preserving the author’s implementation ownership and measured-regression/CI limitations. Follow #17893/#17894 on their own scopes. No duplicate reply, review request, foreign-source edit or unchanged CI retry. The Daybreak availability wait is retired.",
       "claimed": true,
       "firstObservedHead": "3389a2aa144abf8f474fc65bcabc84487564ee86",
       "reviewHead": null,
@@ -462755,7 +462755,7 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "22401767ad9317e22aaebb118d3f0dafd031d6a1",
-      "action": "Root retains current-source review under the sensitive hold. Follow actual author/provider evidence without protected source reads, tests, timings, foreign edits, duplicate outreach or transfer of old-head approval. No unchanged CI retry.",
+      "action": "Root finishes the remaining current-source review, preserving the author’s implementation ownership and measured-regression/CI limitations. Follow #17893/#17894 on their own scopes. No duplicate reply, review request, foreign-source edit or unchanged CI retry. The Daybreak availability wait is retired.",
       "claimed": true,
       "firstObservedHead": "0ec767e4d4f1ec1bdf56d3675e06b860a02d7e19",
       "reviewHead": null,
@@ -462980,12 +462980,12 @@
       "mergeabilityCheckedAt": "2026-11-25T22:12:46.184075+00:00",
       "sourceBranchMismatch": false,
       "owner": "actions_bazel_cache / root",
-      "action": "The existing qualification owner executes the one root-authorized matched broad-throughput A/B under the frozen bounded design, without extra samples/retries or a forced-RTO framework. Root then assesses the retained result and remaining broader network/loss and thread4648619071 requirements before source-publication review.",
+      "action": "Root awaits Tamir’s answer on the exact reply to Lucas, then assesses the scoped result and remaining broader network/loss qualification before source-publication review. No extra samples, automatic retry, foreign-source edit or whole-PR approval is inferred.",
       "recordedFollowup": {
         "owner": "actions_bazel_cache / root",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
-        "disposition": "Public #16419 remains unchanged at 0ae405ec7; candidate 14d87bd3f retains its functional/source/review evidence. Baseline-only calibration 45704792383 verified 50 hash-matched transfers and 24 measured pairs: B/A +1.275%, 95% paired interval −1.183% to +3.794%. Root released one matched broad-throughput A/B with existing products and the same bounded design. This supports estimation only, not equivalence, repeated-RTO-specific benefit or overall performance clearance.",
-        "nextAction": "The existing qualification owner executes the one root-authorized matched broad-throughput A/B under the frozen bounded design, without extra samples/retries or a forced-RTO framework. Root then assesses the retained result and remaining broader network/loss and thread4648619071 requirements before source-publication review."
+        "disposition": "Public #16419 remains at 0ae405ec7; candidate 14d87bd3f retains its scoped functional/source/review evidence. The matched broad-throughput A/B completed 24 measured pairs: candidate contrast −0.295%, paired 95% interval −2.224% to +1.673%. No directional difference was detected under that model; this is not equivalence, full-network qualification or a repeated-RTO-specific benefit. The actual reply question about Linux’s repeated closed-window reduction awaits Tamir.",
+        "nextAction": "Root awaits Tamir’s answer on the exact reply to Lucas, then assesses the scoped result and remaining broader network/loss qualification before source-publication review. No extra samples, automatic retry, foreign-source edit or whole-PR approval is inferred."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -463243,13 +463243,13 @@
       "checkedAt": "2026-11-25T22:12:49.492625+00:00",
       "mergeabilityCheckedAt": "2026-11-25T22:12:49.492625+00:00",
       "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Root performs final source/context review of exact 99628869e9 and records the actual publication disposition. No Daybreak availability or quota-only wait remains; qualification does not authorize publication or new timing.",
+      "owner": "approved_rebase_queue",
+      "action": "approved_rebase_queue owns the conditional candidate A/B and its source-bound result under the existing bounded design. Root retains final context/source/publication review; no extra samples, retries or public source mutation is inferred.",
       "recordedFollowup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue",
         "sourceHead": "32fd9c26abba8ceb7d68c6aacfd565bda81f839a",
-        "disposition": "Public #17131 remains at 32fd9c26a; current-base candidate 99628869e9 completed affected normal/race/NoGo, linked and source qualification on both architectures. Each normal/race architecture has 96 ordinary and two NoGo records with zero failures/skips. The only new integration delta adapts a stale upstream benchmark constructor; the approved production patch is preserved. Root final review remains; no benchmark timing, current performance acceptance or public update is claimed.",
-        "nextAction": "Root performs final source/context review of exact 99628869e9 and records the actual publication disposition. No Daybreak availability or quota-only wait remains; qualification does not authorize publication or new timing."
+        "disposition": "Public #17131 remains at 32fd9c26; private candidate 99628869e has completed affected functional/source qualification. Reporting recovery 45714876845 retained 50 child PIDs and 24 measured pairs; none of 60 drift/order/arm contrasts flagged, with roughly 1–4% timing resolution. This is A/A admission evidence only, not candidate A/B or performance clearance.",
+        "nextAction": "approved_rebase_queue owns the conditional candidate A/B and its source-bound result under the existing bounded design. Root retains final context/source/publication review; no extra samples, retries or public source mutation is inferred."
       },
       "conflictObservedSince": "2026-11-23T21:26:12.901588+00:00"
     },
@@ -471918,7 +471918,7 @@
         "since": "2026-11-25T22:15:30.434231+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:15:30.434231+00:00"
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "pr:14458": {
@@ -472681,7 +472681,7 @@
         "since": "2026-11-25T20:26:19.847463+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:15:30.434231+00:00"
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "pr:15202": {
@@ -473658,7 +473658,7 @@
         "since": "2026-11-25T20:26:38.821906+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:15:30.434231+00:00"
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "pr:15648": {
@@ -474992,6 +474992,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
+      },
+      "contributor-review": {
+        "scope": "0ae405ec7d1ace5894645c28910c69605c0de20e",
+        "since": "2026-11-25T22:41:21.827202+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "pr:16445": {
@@ -475600,6 +475607,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-25T22:12:46.184075+00:00"
+      },
+      "contributor-review": {
+        "scope": "2c1ea17a6be7c217a0bc8c52631ee0e2fd7539fc",
+        "since": "2026-11-25T22:35:10.106729+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "pr:16661": {
@@ -476380,7 +476394,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:15:30.434231+00:00"
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "pr:16822": {
@@ -477053,7 +477067,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:15:30.434231+00:00"
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "pr:16958": {
@@ -477112,7 +477126,7 @@
         "since": "2026-11-25T21:37:40.347012+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:15:30.434231+00:00"
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "pr:16963": {
@@ -478542,6 +478556,13 @@
         "basis": "observed",
         "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
+      },
+      "contributor-review": {
+        "scope": "7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
+        "since": "2026-11-25T22:30:31.228636+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "pr:17370": {
@@ -478560,6 +478581,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-25T22:12:01.099211+00:00"
+      },
+      "contributor-review": {
+        "scope": "d461541e18fbb43999c7656ebddb85ecdb0b6a2f",
+        "since": "2026-11-25T22:34:48.644451+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "pr:17376": {
@@ -478583,6 +478611,13 @@
         "basis": "observed",
         "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:49.492625+00:00"
+      },
+      "contributor-review": {
+        "scope": "b57013d8abd255b013ab99c924139853eb3b3e7a",
+        "since": "2026-11-25T22:30:31.228636+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "pr:17377": {
@@ -478804,6 +478839,13 @@
         "basis": "observed",
         "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T22:12:50.740142+00:00"
+      },
+      "contributor-review": {
+        "scope": "b0d665d9f298bf84db405213b403467d8470af4f",
+        "since": "2026-11-25T22:30:31.228636+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "pr:17480": {
@@ -480000,7 +480042,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:15:30.434231+00:00"
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -480009,7 +480051,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:15:30.434231+00:00"
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -480018,7 +480060,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:15:30.434231+00:00"
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -480027,7 +480069,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:15:30.434231+00:00"
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -480036,7 +480078,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:15:30.434231+00:00"
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -480045,7 +480087,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:15:30.434231+00:00"
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -480054,7 +480096,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:15:30.434231+00:00"
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -480063,7 +480105,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:15:30.434231+00:00"
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "issue:17832": {
@@ -480072,7 +480114,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:15:30.434231+00:00"
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "branch:hey-report-cap-accounting": {
@@ -480081,7 +480123,7 @@
         "since": "2026-11-25T22:03:16.345652+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:15:30.434231+00:00"
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     },
     "investigation:ci-benchmark-fuse-device": {
@@ -480090,7 +480132,7 @@
         "since": "2026-11-25T21:11:04.741354+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T22:15:30.434231+00:00"
+        "observedAt": "2026-11-25T22:42:00.270038+00:00"
       }
     }
   },
