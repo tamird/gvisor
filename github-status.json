@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-25T21:06:11.877960+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-25T21:21:11.017479+00:00",
+  "registryDate": "2026-11-25T21:37:40.347012+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -462676,12 +462676,12 @@
       "mergeabilityCheckedAt": "2026-11-25T21:06:06.777147+00:00",
       "sourceBranchMismatch": false,
       "owner": "actions_bazel_cache / root",
-      "action": "Root and the existing qualification owner resolve the repeated-RTO workload admission requirement before the required same-runner A/A then A/B comparison. Keep the qualified candidate and source/thread boundaries separate; no candidate/performance result is inferred from the six baseline transfers.",
+      "action": "Root and the qualification owner prepare the existing exact-source same-runner A/A-before-A/B and required broader network/loss comparison within practical precision/duration and timing authorization; stop on failed A/A. Do not require a new forced-RTO fixture or repeated RTO in every timed sample. Preserve the unmeasured repeated-RTO-specific benefit caveat and authorized resolution of thread 4648619071 before publication review.",
       "recordedFollowup": {
         "owner": "actions_bazel_cache / root",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
-        "disposition": "Public 0ae405ec7 remains conflicting and unpublished. Final candidate 14d87bd3f on 8075b384 passed the owning packet, TCP unit/four end-to-end and formatter gates; functional source differs only by two final comment lines. The owner reports all required independent reviews accepted. Remaining blockers are exact-source same-runner A/A then A/B/broader performance coverage, and evidence-backed resolution of external thread 4648619071. The new baseline-only preflight completed six transfers with child cleanup and placement verified, but observed only one warmup RTO; repeated RTO remains unproven. The candidate did not execute in that preflight and no A/A or A/B was performed.",
-        "nextAction": "Root and the existing qualification owner resolve the repeated-RTO workload admission requirement before the required same-runner A/A then A/B comparison. Keep the qualified candidate and source/thread boundaries separate; no candidate/performance result is inferred from the six baseline transfers."
+        "disposition": "Public #16419 remains unchanged at 0ae405ec7. Candidate 14d87bd3f retains accepted functional/source/review evidence. The baseline-only six-transfer preflight verifies placement/cleanup and a working route with retransmits/SACK recovery, making broad A/A technically feasible for planning. Repeated-RTO-specific benefit is unmeasured, but repeated RTO in every timed sample is not a retained requirement. No A/A or A/B has run; independent measurement and external-thread gates remain.",
+        "nextAction": "Root and the qualification owner prepare the existing exact-source same-runner A/A-before-A/B and required broader network/loss comparison within practical precision/duration and timing authorization; stop on failed A/A. Do not require a new forced-RTO fixture or repeated RTO in every timed sample. Preserve the unmeasured repeated-RTO-specific benefit caveat and authorized resolution of thread 4648619071 before publication review."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -472491,7 +472491,7 @@
         "since": "2026-11-25T20:26:19.847463+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:21:11.017479+00:00"
+        "observedAt": "2026-11-25T21:37:40.347012+00:00"
       }
     },
     "pr:15202": {
@@ -473468,7 +473468,7 @@
         "since": "2026-11-25T20:26:38.821906+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:21:11.017479+00:00"
+        "observedAt": "2026-11-25T21:37:40.347012+00:00"
       }
     },
     "pr:15648": {
@@ -476239,7 +476239,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:21:11.017479+00:00"
+        "observedAt": "2026-11-25T21:37:40.347012+00:00"
       }
     },
     "pr:16822": {
@@ -476912,7 +476912,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:21:11.017479+00:00"
+        "observedAt": "2026-11-25T21:37:40.347012+00:00"
       }
     },
     "pr:16958": {
@@ -476965,6 +476965,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-25T21:05:22.746202+00:00"
+      },
+      "contributor-review": {
+        "scope": "b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3",
+        "since": "2026-11-25T21:37:40.347012+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-25T21:37:40.347012+00:00"
       }
     },
     "pr:16963": {
@@ -479943,7 +479950,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:21:11.017479+00:00"
+        "observedAt": "2026-11-25T21:37:40.347012+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -479952,7 +479959,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:21:11.017479+00:00"
+        "observedAt": "2026-11-25T21:37:40.347012+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -479961,7 +479968,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:21:11.017479+00:00"
+        "observedAt": "2026-11-25T21:37:40.347012+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -479970,7 +479977,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:21:11.017479+00:00"
+        "observedAt": "2026-11-25T21:37:40.347012+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -479979,7 +479986,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:21:11.017479+00:00"
+        "observedAt": "2026-11-25T21:37:40.347012+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -479988,7 +479995,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:21:11.017479+00:00"
+        "observedAt": "2026-11-25T21:37:40.347012+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -479997,7 +480004,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:21:11.017479+00:00"
+        "observedAt": "2026-11-25T21:37:40.347012+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -480006,7 +480013,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:21:11.017479+00:00"
+        "observedAt": "2026-11-25T21:37:40.347012+00:00"
       }
     },
     "issue:17832": {
@@ -480015,7 +480022,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:21:11.017479+00:00"
+        "observedAt": "2026-11-25T21:37:40.347012+00:00"
       }
     },
     "investigation:ci-benchmark-fuse-device": {
@@ -480024,17 +480031,7 @@
         "since": "2026-11-25T21:11:04.741354+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T21:21:11.017479+00:00"
-      }
-    },
-    "investigation:cc-format-declared-inputs": {
-      "contributor-review": {
-        "scope": "060bf21948760589331fc213c783da4a8ec3b671",
-        "since": "2026-11-22T18:34:16+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T21:21:11.017479+00:00",
-        "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
+        "observedAt": "2026-11-25T21:37:40.347012+00:00"
       }
     }
   },

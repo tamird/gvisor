@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T21:21:11.017479+00:00",
+    "updatedAt": "2026-11-25T21:37:40.347012+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36209,14 +36209,14 @@
       "url": "https://github.com/google/gvisor/pull/16419",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-25T21:04:58.790048+00:00",
-      "summary": "Public 0ae405ec7 remains conflicting and unpublished. Final candidate 14d87bd3f on 8075b384 passed the owning packet, TCP unit/four end-to-end and formatter gates; functional source differs only by two final comment lines. The owner reports all required independent reviews accepted. Remaining blockers are exact-source same-runner A/A then A/B/broader performance coverage, and evidence-backed resolution of external thread 4648619071. The new baseline-only preflight completed six transfers with child cleanup and placement verified, but observed only one warmup RTO; repeated RTO remains unproven. The candidate did not execute in that preflight and no A/A or A/B was performed.",
+      "updatedAt": "2026-11-25T21:26:04.252166+00:00",
+      "summary": "Public #16419 remains unchanged at 0ae405ec7. Candidate 14d87bd3f retains accepted functional/source/review evidence. The baseline-only six-transfer preflight verifies placement/cleanup and a working route with retransmits/SACK recovery, making broad A/A technically feasible for planning. Repeated-RTO-specific benefit is unmeasured, but repeated RTO in every timed sample is not a retained requirement. No A/A or A/B has run; independent measurement and external-thread gates remain.",
       "followup": {
         "owner": "actions_bazel_cache / root",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
         "observedAt": "2026-11-20T23:31:27.372182+00:00",
-        "disposition": "Public 0ae405ec7 remains conflicting and unpublished. Final candidate 14d87bd3f on 8075b384 passed the owning packet, TCP unit/four end-to-end and formatter gates; functional source differs only by two final comment lines. The owner reports all required independent reviews accepted. Remaining blockers are exact-source same-runner A/A then A/B/broader performance coverage, and evidence-backed resolution of external thread 4648619071. The new baseline-only preflight completed six transfers with child cleanup and placement verified, but observed only one warmup RTO; repeated RTO remains unproven. The candidate did not execute in that preflight and no A/A or A/B was performed.",
-        "nextAction": "Root and the existing qualification owner resolve the repeated-RTO workload admission requirement before the required same-runner A/A then A/B comparison. Keep the qualified candidate and source/thread boundaries separate; no candidate/performance result is inferred from the six baseline transfers.",
+        "disposition": "Public #16419 remains unchanged at 0ae405ec7. Candidate 14d87bd3f retains accepted functional/source/review evidence. The baseline-only six-transfer preflight verifies placement/cleanup and a working route with retransmits/SACK recovery, making broad A/A technically feasible for planning. Repeated-RTO-specific benefit is unmeasured, but repeated RTO in every timed sample is not a retained requirement. No A/A or A/B has run; independent measurement and external-thread gates remain.",
+        "nextAction": "Root and the qualification owner prepare the existing exact-source same-runner A/A-before-A/B and required broader network/loss comparison within practical precision/duration and timing authorization; stop on failed A/A. Do not require a new forced-RTO fixture or repeated RTO in every timed sample. Preserve the unmeasured repeated-RTO-specific benefit caveat and authorized resolution of thread 4648619071 before publication review.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16419",
           "https://github.com/google/gvisor/pull/16419#discussion_r4504268180",
@@ -36252,7 +36252,7 @@
           "https://github.com/tamird/gvisor/actions/runs/45658848993/artifacts/15042454959",
           "https://github.com/tamird/gvisor/actions/runs/45698335217/artifacts/15062545605"
         ],
-        "recheckCondition": "Source-bound repeated-RTO admission and authorized comparison evidence, or resolution of external thread4648619071.",
+        "recheckCondition": "Substantiated measurement-plan/control and timing authorization, actual source/review evidence, or resolution of thread4648619071; no unchanged retry.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "mergeable": "CONFLICTING",
         "qualificationHistory": [
@@ -36371,7 +36371,7 @@
           ]
         },
         "remainingNetworkOutcomeOwner": "tcp_conflict",
-        "curatedAt": "2026-11-25T21:04:58.790048+00:00",
+        "curatedAt": "2026-11-25T21:26:04.252166+00:00",
         "ciExecutionAuthorization": {
           "status": "Authorized CI-only; held for permanent Bazel mechanism migration",
           "owner": "root",
@@ -36420,7 +36420,10 @@
           "warmupRTOs": 1,
           "repeatedRTOEstablished": false,
           "candidateExecuted": false,
-          "AAorAB": false
+          "AAorAB": false,
+          "broadAAFeasibleForPlanning": true,
+          "repeatedRTOEveryTimedSampleRequired": false,
+          "repeatedRTOBenefitMeasured": false
         }
       },
       "evidence": [
@@ -36632,8 +36635,8 @@
           "https://github.com/tamird/gvisor/commit/0ae405ec7d1ace5894645c28910c69605c0de20e"
         ]
       },
-      "nextStep": "Root and the existing qualification owner resolve the repeated-RTO workload admission requirement before the required same-runner A/A then A/B comparison. Keep the qualified candidate and source/thread boundaries separate; no candidate/performance result is inferred from the six baseline transfers.",
-      "recheckCondition": "Source-bound repeated-RTO admission and authorized comparison evidence, or resolution of external thread4648619071."
+      "nextStep": "Root and the qualification owner prepare the existing exact-source same-runner A/A-before-A/B and required broader network/loss comparison within practical precision/duration and timing authorization; stop on failed A/A. Do not require a new forced-RTO fixture or repeated RTO in every timed sample. Preserve the unmeasured repeated-RTO-specific benefit caveat and authorized resolution of thread 4648619071 before publication review.",
+      "recheckCondition": "Substantiated measurement-plan/control and timing authorization, actual source/review evidence, or resolution of thread4648619071; no unchanged retry."
     },
     {
       "id": "pr:17114",
@@ -108377,16 +108380,16 @@
           "url": "https://buildkite.com/gvisor/pipeline/builds/55936"
         }
       ],
-      "summary": "Published #16962 remains at a638ea4dc. Zkoopmans approved this exact head. Main 55936 failed three pipeline-upload attempts before source execution: its obsolete pre-command branch check cannot fetch remote ref tamird. Current upstream removes that check. Root verified a clean same-patch rebase and assigned approved_rebase_queue; no rebase or retry is published.",
-      "nextStep": "approved_rebase_queue prepares the exact same-patch rebase for root’s publication review and the authorized reviewer notification. Preserve the existing approval on a638; do not transfer it silently to a future head, retry unchanged CI or merge.",
-      "recheckCondition": "Assigned owner’s exact rebase/publication-review milestone or actual current-head CI/review change.",
-      "updatedAt": "2026-11-25T21:11:04.741354+00:00",
+      "summary": "Public #16962 remains at a638ea4dc with its exact-head approval. Clean same-patch rebase b2b018bfeb has strict = range-diff and passing AMD64/ARM64 optimized opaque archives; no new Kind cluster ran. The actual amendment and supplied rebase-notice question is pending and may be dismissed without approval. No source/notice mutation has occurred.",
+      "nextStep": "Root awaits Tamir’s explicit answer on exact b2b018bfeb and the supplied rebase notice. Dismissal does not authorize publication. Preserve the expected a638 old-head lease and existing review boundaries; no unchanged CI retry or merge.",
+      "recheckCondition": "Actual answer/dismissal of the asked amendment question, or a genuine changed source/review requirement.",
+      "updatedAt": "2026-11-25T21:37:40.347012+00:00",
       "followup": {
-        "owner": "approved_rebase_queue / root",
-        "disposition": "Published #16962 remains at a638ea4dc. Zkoopmans approved this exact head. Main 55936 failed three pipeline-upload attempts before source execution: its obsolete pre-command branch check cannot fetch remote ref tamird. Current upstream removes that check. Root verified a clean same-patch rebase and assigned approved_rebase_queue; no rebase or retry is published.",
-        "nextAction": "approved_rebase_queue prepares the exact same-patch rebase for root’s publication review and the authorized reviewer notification. Preserve the existing approval on a638; do not transfer it silently to a future head, retry unchanged CI or merge.",
-        "recheckCondition": "Assigned owner’s exact rebase/publication-review milestone or actual current-head CI/review change.",
-        "curatedAt": "2026-11-25T21:11:04.741354+00:00",
+        "owner": "root",
+        "disposition": "Public #16962 remains at a638ea4dc with its exact-head approval. Clean same-patch rebase b2b018bfeb has strict = range-diff and passing AMD64/ARM64 optimized opaque archives; no new Kind cluster ran. The actual amendment and supplied rebase-notice question is pending and may be dismissed without approval. No source/notice mutation has occurred.",
+        "nextAction": "Root awaits Tamir’s explicit answer on exact b2b018bfeb and the supplied rebase notice. Dismissal does not authorize publication. Preserve the expected a638 old-head lease and existing review boundaries; no unchanged CI retry or merge.",
+        "recheckCondition": "Actual answer/dismissal of the asked amendment question, or a genuine changed source/review requirement.",
+        "curatedAt": "2026-11-25T21:37:40.347012+00:00",
         "sourceHead": "a638ea4dc5ee08c632b5fdedabf5405383703382",
         "providerHead": "a638ea4dc5ee08c632b5fdedabf5405383703382",
         "mergeable": "MERGEABLE",
@@ -108408,14 +108411,17 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/16962",
           "https://github.com/google/gvisor/pull/16962#pullrequestreview-6064201357",
-          "https://buildkite.com/gvisor/pipeline/builds/55936"
+          "https://buildkite.com/gvisor/pipeline/builds/55936",
+          "https://github.com/tamird/gvisor/commit/b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3",
+          "https://github.com/tamird/gvisor/actions/runs/45703283876",
+          "https://github.com/tamird/gvisor/actions/runs/45703289124"
         ],
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
             "action": "ci-infrastructure-retry",
             "title": "Main 55936: obsolete pre-command fetch before source execution",
-            "nextAction": "approved_rebase_queue prepares the exact same-patch rebase for root’s publication review and the authorized reviewer notification. Preserve the existing approval on a638; do not transfer it silently to a future head, retry unchanged CI or merge.",
+            "nextAction": "Root awaits Tamir’s explicit answer on exact b2b018bfeb and the supplied rebase notice. Dismissal does not authorize publication. Preserve the expected a638 old-head lease and existing review boundaries; no unchanged CI retry or merge.",
             "evidence": [
               "https://buildkite.com/gvisor/pipeline/builds/55936"
             ],
@@ -108431,6 +108437,80 @@
               ]
             }
           }
+        ],
+        "askedComparisonCommand": "git range-diff a638ea4dc5^! b2b018bfeb^!",
+        "candidate": {
+          "head": "b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3",
+          "base": "87857526f88307c5edefb1f247e7cbfa04ac733c",
+          "tree": "b16f4b6ff917c84c8a62850bdbf99115bae607ca",
+          "ci": "33aa32716e7c625ab89632fa45e0084cc5e7a8f3",
+          "comparison": "Strict = single-commit range-diff",
+          "publication": "Actual amendment/notice question pending; public PR unchanged",
+          "qualificationScope": "Optimized standard opaque bzip2 release archive on each architecture; no new Kind cluster/runtime test"
+        }
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3",
+        "baseHead": "a638ea4dc5ee08c632b5fdedabf5405383703382",
+        "url": "https://github.com/tamird/gvisor/commit/b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3",
+        "title": "Build only the release archive installed by Kind",
+        "summary": "The actual exact-source amendment and supplied rebase-notice decision is pending. Dismissal is not approval; public source is unchanged.",
+        "body": "Scope summary of the actual unanswered request: approve amending #16962 to exact b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3 and posting the supplied notice. The strict range-diff is =. Both optimized standard opaque release archives passed on AMD64/ARM64 qualification; no new Kind cluster or runtime result is claimed. No source or notice mutation has occurred.\n\nProposed notice:\n\nRebased on master to pick up the fork CI bootstrap fix.\n\nPosted by Codex on behalf of @tamird.\n\nComparison command from the asked proposal:\n\ngit range-diff a638ea4dc5^! b2b018bfeb^!\n",
+        "replyBody": "Rebased on master to pick up the fork CI bootstrap fix.\n\nPosted by Codex on behalf of @tamird."
+      }
+    },
+    {
+      "id": "branch:compile-commands-shared-qualification",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "group": "bazel",
+      "evidence": [
+        {
+          "label": "Exact downstream qualification source",
+          "url": "https://github.com/tamird/gvisor/commit/a5d63384e9796eaedcd334be02e7e08a646663a4"
+        },
+        {
+          "label": "Native shared caller migration",
+          "url": "https://github.com/tamird/gvisor/commit/ec0b648d29902032914413f7a132f99b895c1332"
+        },
+        {
+          "label": "Existing qualification branch",
+          "url": "https://github.com/tamird/gvisor/tree/qualification/compile-commands-shared-20261120"
+        }
+      ],
+      "ref": "qualification/compile-commands-shared-20261120",
+      "head": "a5d63384e9796eaedcd334be02e7e08a646663a4",
+      "title": "Qualify shared compilation-database callers in gVisor",
+      "url": "https://github.com/tamird/gvisor/commit/a5d63384e9796eaedcd334be02e7e08a646663a4",
+      "status": "Qualification only; adoption not approved",
+      "owner": "root",
+      "summary": "Existing downstream gVisor qualification branch a5d63384e9 contains ec0b648d29, the shared compilation-database caller migration. This is qualification-only work, not an approved upstream gVisor PR or permanent fork pin. Supplier #236 is still open; approved producer 44774d5 has that exact #236 head as parent, and released v0.22.4 predates both.",
+      "nextStep": "Root keeps this downstream work linked to the supplier/adoption investigation. Follow the actual #236/producer release path; separately review any gVisor adoption proposal and qualification scope before a source-publication request. Do not repeat tests, create a new PR, adopt a permanent fork pin or perform outreach from this record.",
+      "recheckCondition": "Actual supplier #236 landing, compatible producer release or an explicit downstream adoption/source decision.",
+      "updatedAt": "2026-11-25T21:33:31.776628+00:00",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "a5d63384e9796eaedcd334be02e7e08a646663a4",
+        "disposition": "Existing downstream gVisor qualification branch a5d63384e9 contains ec0b648d29, the shared compilation-database caller migration. This is qualification-only work, not an approved upstream gVisor PR or permanent fork pin. Supplier #236 is still open; approved producer 44774d5 has that exact #236 head as parent, and released v0.22.4 predates both.",
+        "nextAction": "Root keeps this downstream work linked to the supplier/adoption investigation. Follow the actual #236/producer release path; separately review any gVisor adoption proposal and qualification scope before a source-publication request. Do not repeat tests, create a new PR, adopt a permanent fork pin or perform outreach from this record.",
+        "recheckCondition": "Actual supplier #236 landing, compatible producer release or an explicit downstream adoption/source decision.",
+        "curatedAt": "2026-11-25T21:33:31.776628+00:00",
+        "nativeCallerMigration": "ec0b648d29902032914413f7a132f99b895c1332",
+        "sourceDeliveryApproval": "Not granted for upstream gVisor or permanent fork pin",
+        "branchRefObservation": {
+          "repo": "tamird/gvisor",
+          "ref": "qualification/compile-commands-shared-20261120",
+          "head": "a5d63384e9796eaedcd334be02e7e08a646663a4",
+          "state": "present",
+          "source": "Exact branches-where-head API readback",
+          "owner": "root"
+        },
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/a5d63384e9796eaedcd334be02e7e08a646663a4",
+          "https://github.com/tamird/gvisor/commit/ec0b648d29902032914413f7a132f99b895c1332",
+          "https://github.com/kiron1/bazel-compile-commands/pull/236"
         ]
       }
     }
@@ -112519,6 +112599,17 @@
       "evidence": [
         "https://github.com/tamird/gvisor/commit/c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6",
         "https://github.com/gvisor/gvisor/pull/15866"
+      ]
+    },
+    {
+      "from": "branch:compile-commands-shared-qualification",
+      "to": "investigation:bazel-compile-commands-pipes",
+      "type": "includes",
+      "label": "Downstream gVisor qualification only",
+      "reason": "Makes existing shared caller migration discoverable under its supplier/adoption investigation; does not authorize an upstream PR or permanent fork pin.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/a5d63384e9796eaedcd334be02e7e08a646663a4",
+        "https://github.com/tamird/gvisor/commit/ec0b648d29902032914413f7a132f99b895c1332"
       ]
     }
   ],
@@ -145730,8 +145821,8 @@
       "group": "bazel",
       "owner": "root",
       "technicalOwner": "compdb_final_correctness",
-      "updatedAt": "2026-11-21T12:00:06.633567+00:00",
-      "summary": "Exact LLVM producer44774d5c6b106d09460c5bb85ac64506a712c35b is user-approved and its scoped product/caller proof is complete. Supplier #236 remains OPEN/unmerged at324cf87, with substantive checks passing and only release upload skipped. Producer publication remains prerequisite-blocked; no gVisor adoption or permanent fork pin is approved.",
+      "updatedAt": "2026-11-25T21:33:31.776628+00:00",
+      "summary": "LLVM producer 44774d5 is user-approved with scoped product/caller proof complete, but publication remains blocked on open supplier #236 at 324cf87, its exact parent. Public release v0.22.4 predates both. Downstream gVisor qualification a5d63384e9 (shared caller migration ec0b648d29) is now linked below; upstream gVisor adoption and a permanent fork pin are not approved.",
       "findings": [
         {
           "text": "All Linux owning/style gates and all three native Windows cases passed, and two final independent reviewers found no blocker. The coordinator’s independent source-tree comparison found only .github/workflows/main.yaml different between test CI7f and intended55; this supports the exact tested-source binding, not new publication authority.",
@@ -145761,28 +145852,51 @@
           "url": "https://github.com/tamird/bazel-compile-commands/commit/f611b9a07aeb262daf01c0cfdc53b7e9ce4b41b3"
         },
         {
-          "label": "Actual pending source proposal",
+          "label": "Approved producer source; prerequisite-blocked",
           "url": "https://github.com/tamird/bazel-compile-commands/commit/44774d5c6b106d09460c5bb85ac64506a712c35b"
+        },
+        {
+          "label": "Downstream gVisor qualification, not adoption approval",
+          "url": "https://github.com/tamird/gvisor/commit/a5d63384e9796eaedcd334be02e7e08a646663a4"
+        },
+        {
+          "label": "Shared gVisor caller migration",
+          "url": "https://github.com/tamird/gvisor/commit/ec0b648d29902032914413f7a132f99b895c1332"
         }
       ],
-      "nextStep": "Root waits for supplier #236 landing, then performs the already-authorized one-commit producer publication and follows compatible release/adoption. Do not repeat approval, startup/caller qualification, builds or outreach.",
+      "nextStep": "Root follows actual #236 landing, then the already-authorized one-commit producer publication and compatible release/adoption path. Retain the linked gVisor qualification work separately; no repeat approval, tests/builds or outreach, and no unapproved upstream gVisor PR or permanent fork pin.",
       "recheckCondition": "Actual LLVM startup/caller/source-review evidence and user direction, followed by a compatible upstream release/pin.",
       "head": "44774d5c6b106d09460c5bb85ac64506a712c35b",
       "followup": {
         "owner": "root",
         "implementationOwner": "root",
         "observedAt": "2026-11-24T05:47:43.330769+00:00",
-        "disposition": "Exact LLVM producer44774d5c6b106d09460c5bb85ac64506a712c35b is user-approved and its scoped product/caller proof is complete. Supplier #236 remains OPEN/unmerged at324cf87, with substantive checks passing and only release upload skipped. Producer publication remains prerequisite-blocked; no gVisor adoption or permanent fork pin is approved.",
-        "nextAction": "Root waits for supplier #236 landing, then performs the already-authorized one-commit producer publication and follows compatible release/adoption. Do not repeat approval, startup/caller qualification, builds or outreach.",
+        "disposition": "LLVM producer 44774d5 is user-approved with scoped product/caller proof complete, but publication remains blocked on open supplier #236 at 324cf87, its exact parent. Public release v0.22.4 predates both. Downstream gVisor qualification a5d63384e9 (shared caller migration ec0b648d29) is now linked below; upstream gVisor adoption and a permanent fork pin are not approved.",
+        "nextAction": "Root follows actual #236 landing, then the already-authorized one-commit producer publication and compatible release/adoption path. Retain the linked gVisor qualification work separately; no repeat approval, tests/builds or outreach, and no unapproved upstream gVisor PR or permanent fork pin.",
         "recheckCondition": "Actual supplier #236 landing/release or changed source/review evidence.",
         "evidence": [
           "https://github.com/tamird/bazel-compile-commands/commit/df68514d2c922a7ecf8026f3954f615ec21251b7",
           "https://github.com/tamird/gvisor/blob/040e89ac391d29bdbc3f5a517eb2ef659055e068/registry.json",
           "https://github.com/kiron1/bazel-compile-commands/pull/236",
-          "https://github.com/kiron1/bazel-compile-commands/actions/runs/44807549343"
+          "https://github.com/kiron1/bazel-compile-commands/actions/runs/44807549343",
+          "https://github.com/tamird/gvisor/commit/a5d63384e9796eaedcd334be02e7e08a646663a4",
+          "https://github.com/tamird/gvisor/commit/ec0b648d29902032914413f7a132f99b895c1332"
         ],
         "publicationQuestionStatus": "Exact447 publication is approved, prerequisite-blocked by236; earlierf611 readiness-withdrawn proposal remains superseded.",
-        "curatedAt": "2026-11-20T23:41:26.383263+00:00"
+        "curatedAt": "2026-11-25T21:33:31.776628+00:00",
+        "downstreamQualification": {
+          "id": "branch:compile-commands-shared-qualification",
+          "head": "a5d63384e9796eaedcd334be02e7e08a646663a4",
+          "ref": "qualification/compile-commands-shared-20261120",
+          "nativeCallerMigration": "ec0b648d29902032914413f7a132f99b895c1332",
+          "scope": "Qualification only; gVisor source publication/permanent fork pin not approved"
+        },
+        "supplierReleaseObservation": {
+          "tag": "v0.22.4",
+          "includes236": false,
+          "includesApproved447": false,
+          "source": "Root verified latest public release"
+        }
       },
       "settledReviews": [
         {
@@ -146043,9 +146157,9 @@
       "title": "Declare C/C++ formatting inputs in Bazel",
       "owner": "declared_formatting_resume",
       "head": "060bf21948760589331fc213c783da4a8ec3b671",
-      "updatedAt": "2026-11-23T21:36:15.021685+00:00",
-      "summary": "The supplier correction is merged through rules_lint1112, but the formatter still pins2.9.1: release and qualified adoption are not established. Current060 prototype qualification retains its actual native/ARM/license limits, private pinned-API coupling and LLVM wheel23.1.1→23.1.2 change. The user’s low-priority formatting hold remains; supplier landing does not make the formatter publication-ready.",
-      "nextStep": "Retain the user’s formatting hold. Recheck an actual supplier release and reviewed pinned integration only when this work is resumed; do not repeat the fulfilled supplier source-fix/PR step, start a rewrite or infer publication approval.",
+      "updatedAt": "2026-11-25T21:33:31.776628+00:00",
+      "summary": "Formatter source 060bf2194 remains held. Its exact public commit link resolves and the review ref is absent; no authorized current delivery needs a ref write. The unused create-ref exception request is withdrawn, not granted. Supplier #1112 is merged, but verified rules_lint release remains v2.9.1; release and qualified adoption are not established. Existing prototype/native/ARM/license and pinned-API limits remain.",
+      "nextStep": "Retain the user’s formatter hold. Reconsider only an actual compatible supplier release and reviewed integration when the work is resumed. No branch creation, API fallback, source/workstream restart or new question is authorized or needed; existing SSH then operation-scoped HTTPS authorization is unchanged.",
       "evidence": [
         {
           "label": "Actual reviewable clean source",
@@ -146159,19 +146273,39 @@
           "body": "clang-format currently selects files through Git and downloads a separate tool. Declare its sources and configuration in Bazel and use the existing LLVM tool, preserving the lint check/fix commands and validating workspace paths before fixing.\n\nPackage globs include new matching files without Git staging. Other linters retain their existing input discovery.\n\nPosted by Codex on behalf of @tamird.\n",
           "summary": "Reuse bazel-contrib/rules_lint instead of per-BUILD clang_format_inputs.",
           "outcome": "CHANGES-REQUESTED"
-        }
-      ],
-      "additionalReviews": [
+        },
         {
           "kind": "exception",
-          "status": "pending",
+          "status": "settled",
           "head": "060bf21948760589331fc213c783da4a8ec3b671",
           "url": "https://github.com/tamird/gvisor/commit/060bf21948760589331fc213c783da4a8ec3b671",
           "title": "Allow create-only fork refs after Git failure",
           "summary": "Use the existing GitHub create-ref API only for absent review/* or qualification/* refs in tamird/gvisor after normal Git and its one-operation HTTPS fallback fail. Existing source approvals remain required.",
-          "body": "Scope summary: permit create-only GitHub ref writes using existing authorized credentials, only for absent review/* or qualification/* refs in tamird/gvisor after normal Git and its one-operation HTTPS fallback fail. No force, existing-ref updates or other repositories. Source-publication approval boundaries remain unchanged.\n\nThe triggering ref is refs/heads/review/clang-format-rules-lint-20261122 at 060bf21948760589331fc213c783da4a8ec3b671. It remains absent. The alternate API write was rejected by automatic approval review and was not performed."
+          "body": "Scope summary: permit create-only GitHub ref writes using existing authorized credentials, only for absent review/* or qualification/* refs in tamird/gvisor after normal Git and its one-operation HTTPS fallback fail. No force, existing-ref updates or other repositories. Source-publication approval boundaries remain unchanged.\n\nThe triggering ref is refs/heads/review/clang-format-rules-lint-20261122 at 060bf21948760589331fc213c783da4a8ec3b671. It remains absent. The alternate API write was rejected by automatic approval review and was not performed.",
+          "outcome": "withdrawn",
+          "note": "Withdrawn: no current operation is needed. The formatter is held, its exact commit link resolves and its review ref is absent. This is not approval or a grant for GitHub API ref creation. The historical automatic-review rejection and original proposed operation are retained."
         }
-      ]
+      ],
+      "additionalReviews": [],
+      "recheckCondition": "Actual resumption plus compatible release/reviewed source evidence; no pending execution exception.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "060bf21948760589331fc213c783da4a8ec3b671",
+        "disposition": "Formatter source 060bf2194 remains held. Its exact public commit link resolves and the review ref is absent; no authorized current delivery needs a ref write. The unused create-ref exception request is withdrawn, not granted. Supplier #1112 is merged, but verified rules_lint release remains v2.9.1; release and qualified adoption are not established. Existing prototype/native/ARM/license and pinned-API limits remain.",
+        "nextAction": "Retain the user’s formatter hold. Reconsider only an actual compatible supplier release and reviewed integration when the work is resumed. No branch creation, API fallback, source/workstream restart or new question is authorized or needed; existing SSH then operation-scoped HTTPS authorization is unchanged.",
+        "recheckCondition": "Actual resumption plus compatible release/reviewed source evidence; no pending execution exception.",
+        "curatedAt": "2026-11-25T21:33:31.776628+00:00",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/060bf21948760589331fc213c783da4a8ec3b671",
+          "https://github.com/bazel-contrib/rules_lint/pull/1112"
+        ],
+        "reviewRefObservation": {
+          "ref": "review/clang-format-rules-lint-20261122",
+          "state": "absent",
+          "source": "Root verified exact ref absence; no operation required"
+        },
+        "apiCreateRefAuthority": "Not granted; stale exception withdrawn, historical automatic rejection retained"
+      }
     },
     {
       "id": "investigation:iperf-aggregate-reporting",
