@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T17:09:58.436283+00:00",
+    "updatedAt": "2026-11-25T18:07:51.449024+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -133016,9 +133016,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-25T17:06:47.049217+00:00",
+      "updatedAt": "2026-11-25T18:07:51.449024+00:00",
       "group": "analysis",
-      "summary": "Current preview 26090b334 contains 54 commits and passes all 891 static validators on each architecture. The user requested a new commit structure; that revision is not yet delivered. Remaining gates are #17884, incomplete performance/A/A admission, eight FUSE cases, the Fastlane baseline fixture and four behavioral targets.",
+      "summary": "The requested rewrite is complete at 0edf29aac: 36 commits, with all analyzers registered first and migration exclusions removed alongside source fixes. Its final tree differs from 26090 only by restoring the three original sanity files. Endpoint gates and two independent reviews passed; unchanged-input 891-target corpus evidence is reused. Publication readiness remains blocked by #17884 and the existing performance/baseline behavioral gates.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -133390,8 +133390,56 @@
           ]
         }
       ],
-      "nextStep": "analysis_delivery restructures the series: first commit registers every analyzer, with migration-requiring analyzers excluded in nogo.yml. Later commits remove exclusions alongside their source fixes. Analyzers needing no source changes get no standalone commit. Remove all sanity-test additions. Root then reviews the revised series and remaining qualification gates before requesting publication review.",
+      "nextStep": "Root coordinates the open #17884 prerequisite at exact base 0c7e69e359, remaining performance matrix/A/A admission, eight FUSE capability cases, the Fastlane baseline fixture and four behavioral targets: sandboxsetup_test, sandbox_test, docprocessor_test and sandbox_py_test. The rewrite is finished; no repeat restructuring, new qualification run or publication approval is implied.",
       "evidence": [
+        {
+          "label": "Current 36-commit analyzer series",
+          "url": "https://github.com/tamird/gvisor/compare/0c7e69e359dbfc284a7d109ad007395086a70cd4...0edf29aac22811b7ef84d6da461c54edb5af8d78"
+        },
+        {
+          "label": "Current native source 0edf29aac",
+          "url": "https://github.com/tamird/gvisor/commit/0edf29aac22811b7ef84d6da461c54edb5af8d78"
+        },
+        {
+          "label": "First endpoint AMD64: 47 functional cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45666474583"
+        },
+        {
+          "label": "First endpoint ARM64: 47 functional cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45666479508"
+        },
+        {
+          "label": "Corrected first AMD64: four NoGo cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45669418875"
+        },
+        {
+          "label": "Corrected first ARM64: four NoGo cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45669423282"
+        },
+        {
+          "label": "Final AMD64: eight targets, 52 cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45666489287"
+        },
+        {
+          "label": "Final ARM64: eight targets, 52 cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45666493305"
+        },
+        {
+          "label": "First endpoint source checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45666901323"
+        },
+        {
+          "label": "Final endpoint source checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45666906105"
+        },
+        {
+          "label": "Reused unchanged-input AMD64 891-target corpus",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45456834454"
+        },
+        {
+          "label": "Reused unchanged-input ARM64 891-target corpus",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45456849968"
+        },
         {
           "label": "Complete 54-commit analyzer series: dependency first, then 53 activations",
           "url": "https://github.com/tamird/gvisor/compare/0c7e69e359dbfc284a7d109ad007395086a70cd4...26090b334cf9c5f4657ec33aef64efc6fa86ef82"
@@ -133649,13 +133697,13 @@
           }
         ]
       },
-      "recheckCondition": "Revised source/commit series and its source-bound validation, or completion of a remaining prerequisite/qualification gate.",
+      "recheckCondition": "Actual #17884 landing or required performance/admission, capability, fixture or named behavioral-gate evidence; root decides publication review after those gates.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "analysis_delivery restructures the series: first commit registers every analyzer, with migration-requiring analyzers excluded in nogo.yml. Later commits remove exclusions alongside their source fixes. Analyzers needing no source changes get no standalone commit. Remove all sanity-test additions. Root then reviews the revised series and remaining qualification gates before requesting publication review.",
-        "recheckCondition": "Revised source/commit series and its source-bound validation, or completion of a remaining prerequisite/qualification gate."
+        "nextAction": "Root coordinates the open #17884 prerequisite at exact base 0c7e69e359, remaining performance matrix/A/A admission, eight FUSE capability cases, the Fastlane baseline fixture and four behavioral targets: sandboxsetup_test, sandbox_test, docprocessor_test and sandbox_py_test. The rewrite is finished; no repeat restructuring, new qualification run or publication approval is implied.",
+        "recheckCondition": "Actual #17884 landing or required performance/admission, capability, fixture or named behavioral-gate evidence; root decides publication review after those gates."
       },
-      "head": "26090b334cf9c5f4657ec33aef64efc6fa86ef82",
+      "head": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -133750,6 +133798,8 @@
       "followup": {
         "observedAt": "2026-11-25T12:50:33.824992+00:00",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/0edf29aac22811b7ef84d6da461c54edb5af8d78",
+          "https://github.com/tamird/gvisor/compare/0c7e69e359dbfc284a7d109ad007395086a70cd4...0edf29aac22811b7ef84d6da461c54edb5af8d78",
           "https://github.com/tamird/gvisor/actions/runs/45338108931",
           "https://github.com/tamird/gvisor/actions/runs/45344645597",
           "https://github.com/tamird/gvisor/actions/runs/45345401016/artifacts/14898435114",
@@ -133821,37 +133871,103 @@
           "https://github.com/tamird/gvisor/actions/runs/45615522520",
           "https://github.com/tamird/gvisor/actions/runs/45615527925",
           "https://github.com/tamird/gvisor/actions/runs/45616323529/artifacts/15023365427",
-          "https://github.com/tamird/gvisor/actions/runs/45617576724/artifacts/15024070114"
+          "https://github.com/tamird/gvisor/actions/runs/45617576724/artifacts/15024070114",
+          "https://github.com/tamird/gvisor/actions/runs/45666474583",
+          "https://github.com/tamird/gvisor/actions/runs/45666479508",
+          "https://github.com/tamird/gvisor/actions/runs/45669418875",
+          "https://github.com/tamird/gvisor/actions/runs/45669423282",
+          "https://github.com/tamird/gvisor/actions/runs/45666489287",
+          "https://github.com/tamird/gvisor/actions/runs/45666493305",
+          "https://github.com/tamird/gvisor/actions/runs/45666901323",
+          "https://github.com/tamird/gvisor/actions/runs/45666906105",
+          "https://github.com/tamird/gvisor/actions/runs/45456834454",
+          "https://github.com/tamird/gvisor/actions/runs/45456849968"
         ],
         "owner": "root",
-        "disposition": "Current preview 26090b334 contains 54 commits and passes all 891 static validators on each architecture. The user requested a new commit structure; that revision is not yet delivered. Remaining gates are #17884, incomplete performance/A/A admission, eight FUSE cases, the Fastlane baseline fixture and four behavioral targets.",
-        "nextAction": "analysis_delivery restructures the series: first commit registers every analyzer, with migration-requiring analyzers excluded in nogo.yml. Later commits remove exclusions alongside their source fixes. Analyzers needing no source changes get no standalone commit. Remove all sanity-test additions. Root then reviews the revised series and remaining qualification gates before requesting publication review.",
-        "recheckCondition": "Revised source/commit series and its source-bound validation, or completion of a remaining prerequisite/qualification gate.",
-        "sourceHead": "26090b334cf9c5f4657ec33aef64efc6fa86ef82",
+        "disposition": "The requested rewrite is complete at 0edf29aac: 36 commits, with all analyzers registered first and migration exclusions removed alongside source fixes. Its final tree differs from 26090 only by restoring the three original sanity files. Endpoint gates and two independent reviews passed; unchanged-input 891-target corpus evidence is reused. Publication readiness remains blocked by #17884 and the existing performance/baseline behavioral gates.",
+        "nextAction": "Root coordinates the open #17884 prerequisite at exact base 0c7e69e359, remaining performance matrix/A/A admission, eight FUSE capability cases, the Fastlane baseline fixture and four behavioral targets: sandboxsetup_test, sandbox_test, docprocessor_test and sandbox_py_test. The rewrite is finished; no repeat restructuring, new qualification run or publication approval is implied.",
+        "recheckCondition": "Actual #17884 landing or required performance/admission, capability, fixture or named behavioral-gate evidence; root decides publication review after those gates.",
+        "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-25T17:06:47.049217+00:00"
+        "curatedAt": "2026-11-25T18:07:51.449024+00:00"
       },
       "comparisons": [
         {
-          "title": "Review the current analyzer series",
-          "description": "Current preview before the requested commit restructuring; independent of delivered clang-tidy #17963.",
+          "title": "Review the completed analyzer rewrite",
+          "description": "Current 36-commit source; independent of delivered clang-tidy #17963. Remaining delivery gates are listed above.",
           "columns": [
-            "Source",
-            "Qualification"
+            "Scope",
+            "Verified evidence"
           ],
           "rows": [
             [
-              "0c7e69e359 → 26090b334; dependencies first, then 53 analyzer activations",
-              "891 Module-aware NoGo validators pass per architecture; behavioral/performance gates below remain incomplete."
+              "0c7e69e359 → 0edf29aac; 36 commits",
+              "All analyzers register first; later commits remove migration exclusions with source fixes. Three sanity files match the original base."
+            ],
+            [
+              "First and final endpoints, per architecture",
+              "First: 47 functional cases plus four corrected NoGo cases. Final: eight targets and 52 cases. Both endpoint source checks passed."
+            ],
+            [
+              "36-prefix / 1044-anchor audit",
+              "Structural/exclusion and tracked-source audit passed; not every prefix was compiled or corpus-tested."
+            ],
+            [
+              "891-target corpus",
+              "Reused only for unchanged inputs; the changed sanity surface is qualified separately. Two independent reviews accepted."
             ]
           ],
-          "note": "Evidence remains bound to this source. The revised commit structure and remaining behavioral/performance qualification are not yet complete.",
+          "note": "The initial four NoGo wrappers failed a stale position expectation; corrected gates passed. Final native 0edf has the same tree as qualified 91102396b8; qualification does not clear the remaining performance or baseline behavioral gates.",
           "evidence": [
             {
-              "label": "Complete 54-commit analyzer series: dependency first, then 53 activations",
-              "url": "https://github.com/tamird/gvisor/compare/0c7e69e359dbfc284a7d109ad007395086a70cd4...26090b334cf9c5f4657ec33aef64efc6fa86ef82"
+              "label": "Current 36-commit analyzer series",
+              "url": "https://github.com/tamird/gvisor/compare/0c7e69e359dbfc284a7d109ad007395086a70cd4...0edf29aac22811b7ef84d6da461c54edb5af8d78"
+            },
+            {
+              "label": "Current native source 0edf29aac",
+              "url": "https://github.com/tamird/gvisor/commit/0edf29aac22811b7ef84d6da461c54edb5af8d78"
+            },
+            {
+              "label": "First endpoint AMD64: 47 functional cases",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45666474583"
+            },
+            {
+              "label": "First endpoint ARM64: 47 functional cases",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45666479508"
+            },
+            {
+              "label": "Corrected first AMD64: four NoGo cases",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45669418875"
+            },
+            {
+              "label": "Corrected first ARM64: four NoGo cases",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45669423282"
+            },
+            {
+              "label": "Final AMD64: eight targets, 52 cases",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45666489287"
+            },
+            {
+              "label": "Final ARM64: eight targets, 52 cases",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45666493305"
+            },
+            {
+              "label": "First endpoint source checks",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45666901323"
+            },
+            {
+              "label": "Final endpoint source checks",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45666906105"
+            },
+            {
+              "label": "Reused unchanged-input AMD64 891-target corpus",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45456834454"
+            },
+            {
+              "label": "Reused unchanged-input ARM64 891-target corpus",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45456849968"
             }
           ]
         }
