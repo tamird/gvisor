@@ -59,12 +59,13 @@ type affinity struct {
 }
 
 type report struct {
-	Commands  map[string]command `json:"commands"`
-	Platform  string             `json:"platform"`
-	Error     string             `json:"error,omitempty"`
-	Visits    []visit            `json:"visits"`
-	PinCPU    int                `json:"pin_cpu"`
-	Preflight bool               `json:"preflight"`
+	Commands     map[string]command `json:"commands"`
+	Platform     string             `json:"platform"`
+	Error        string             `json:"error,omitempty"`
+	Visits       []visit            `json:"visits"`
+	PinCPU       int                `json:"pin_cpu"`
+	VisitTimeout time.Duration      `json:"visit_timeout_ns"`
+	Preflight    bool               `json:"preflight"`
 }
 
 func main() {
@@ -84,9 +85,13 @@ func run() error {
 	cases := flag.String("cases", "", "JSON map from Bazel test labels to canonical benchfmt names")
 	preflight := flag.Bool("preflight", false, "validate two pairs with one-iteration results")
 	pinCPU := flag.Int("pin-cpu", -1, "bind children to this allowed logical CPU; -1 leaves affinity unchanged")
+	visitTimeout := flag.Duration("visit-timeout", 0, "maximum wall-clock duration of one benchmark process; required")
 	flag.Parse()
 	if *pinCPU < -1 {
 		return fmt.Errorf("pin-cpu must be -1 or a non-negative logical CPU")
+	}
+	if *visitTimeout <= 0 {
+		return fmt.Errorf("visit-timeout must be positive")
 	}
 	var inventory map[string][]string
 	if err := json.Unmarshal([]byte(*cases), &inventory); err != nil {
@@ -105,7 +110,13 @@ func run() error {
 	if output == "" {
 		return fmt.Errorf("TEST_UNDECLARED_OUTPUTS_DIR must name the Bazel output directory")
 	}
-	r := report{Preflight: *preflight, PinCPU: *pinCPU, Platform: runtime.GOOS + "/" + runtime.GOARCH, Commands: make(map[string]command)}
+	r := report{
+		Preflight:    *preflight,
+		PinCPU:       *pinCPU,
+		VisitTimeout: *visitTimeout,
+		Platform:     runtime.GOOS + "/" + runtime.GOARCH,
+		Commands:     make(map[string]command),
+	}
 	for arm, raw := range map[string]string{"A": *a, "B": *b} {
 		argv := slices.Clone(flag.Args())
 		if raw != "" {
@@ -186,7 +197,8 @@ func (r *report) collect(ctx context.Context, expected []string, output string) 
 		for _, arm := range order {
 			v := visit{Pair: pair, Arm: string(arm)}
 			argv := r.Commands[v.Arm].Argv
-			cmd := exec.CommandContext(ctx, argv[0], argv[1:]...)
+			visitCtx, cancel := context.WithTimeout(ctx, r.VisitTimeout)
+			cmd := exec.CommandContext(visitCtx, argv[0], argv[1:]...)
 			cmd.WaitDelay = 5 * time.Second
 			var out bytes.Buffer
 			cmd.Stdout, cmd.Stderr = &out, os.Stderr
@@ -195,6 +207,8 @@ func (r *report) collect(ctx context.Context, expected []string, output string) 
 			if err == nil {
 				err = cmd.Wait()
 			}
+			err = errors.Join(err, visitCtx.Err())
+			cancel()
 			if cmd.ProcessState != nil {
 				v.PID = cmd.ProcessState.Pid()
 				exitCode := cmd.ProcessState.ExitCode()
