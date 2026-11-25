@@ -20,5 +20,6 @@ go_library(
         "//test/benchmarks/harness",
         "//test/benchmarks/tools",
         "//test/metricsviz",
+        "@com_github_docker_docker//api/types/container:go_default_library",
     ],
 )
