@@ -16,6 +16,7 @@ package refs
 
 import (
 	"fmt"
+	"strings"
 
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/sync"
@@ -155,7 +156,8 @@ func doLeakCheck() {
 	leaked := len(liveObjects)
 	if leaked > 0 {
 		n := 0
-		msg := fmt.Sprintf("Leak checking detected %d leaked objects:\n", leaked)
+		var msg strings.Builder
+		fmt.Fprintf(&msg, "Leak checking detected %d leaked objects:\n", leaked)
 		for obj := range liveObjects {
 			skip := false
 			if o, ok := obj.(leakCheckDisabled); ok {
@@ -165,15 +167,15 @@ func doLeakCheck() {
 				log.Debugf("%s", obj.LeakMessage())
 				continue
 			}
-			msg += obj.LeakMessage() + "\n"
+			msg.WriteString(obj.LeakMessage() + "\n")
 			n++
 		}
 		if n == 0 {
 			return
 		}
 		if leakCheckPanicEnabled() {
-			panic(msg)
+			panic(msg.String())
 		}
-		log.Warningf("%s", msg)
+		log.Warningf("%s", msg.String())
 	}
 }

@@ -19,6 +19,7 @@ import (
 	"container/heap"
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -241,11 +242,12 @@ func (mc *ManualClock) stopTimerLocked(mt *manualTimer) {
 
 	timers, ok := mc.mu.timers[t]
 	if !ok {
-		err := fmt.Sprintf("tried to stop an active timer but the clock does not have anything scheduled for the timer @ t = %s %p\nScheduled timers @:", t.UTC(), mt)
+		var err strings.Builder
+		fmt.Fprintf(&err, "tried to stop an active timer but the clock does not have anything scheduled for the timer @ t = %s %p\nScheduled timers @:", t.UTC(), mt)
 		for t := range mc.mu.timers {
-			err += fmt.Sprintf("%s\n", t.UTC())
+			fmt.Fprintf(&err, "%s\n", t.UTC())
 		}
-		panic(err)
+		panic(err.String())
 	}
 
 	if _, ok := timers[mt]; !ok {
