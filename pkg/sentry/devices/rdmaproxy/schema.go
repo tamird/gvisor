@@ -15,6 +15,7 @@
 package rdmaproxy
 
 import (
+	"maps"
 	"sync"
 
 	"gvisor.dev/gvisor/pkg/abi/ib"
@@ -354,9 +355,7 @@ func buildSchemas() map[uint32]*MethodSchema {
 	// Merge the driver-namespace (object, method) pairs each registered vendor
 	// plug-in models (e.g. the mlx5 UAR); these carry no core DMA semantics.
 	rangeDrivers(func(d Driver) {
-		for k, s := range d.Schemas() {
-			m[k] = s
-		}
+		maps.Copy(m, d.Schemas())
 	})
 	return m
 }

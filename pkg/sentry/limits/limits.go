@@ -16,6 +16,8 @@
 package limits
 
 import (
+	"maps"
+
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/sync"
 )
@@ -175,9 +177,7 @@ func (l *LimitSet) GetCopy() *LimitSet {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	copyData := make(map[LimitType]Limit)
-	for k, v := range l.data {
-		copyData[k] = v
-	}
+	maps.Copy(copyData, l.data)
 	return &LimitSet{
 		data: copyData,
 	}

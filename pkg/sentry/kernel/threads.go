@@ -16,6 +16,7 @@ package kernel
 
 import (
 	"fmt"
+	"maps"
 
 	"gvisor.dev/gvisor/pkg/atomicbitops"
 	"gvisor.dev/gvisor/pkg/context"
@@ -757,9 +758,7 @@ func (t *Task) Children() map[*Task]struct{} {
 	defer t.tg.pidns.owner.mu.RUnlock()
 
 	children := make(map[*Task]struct{}, len(t.children))
-	for child, val := range t.children {
-		children[child] = val
-	}
+	maps.Copy(children, t.children)
 
 	return children
 }

@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"slices"
 	"strings"
@@ -267,9 +268,7 @@ func (m *Model) RaiseTemperature() {
 func (m *Model) Copy() *Model {
 	modelCopy := *m
 	modelCopy.Options = make(map[string]any, len(m.Options))
-	for k, v := range m.Options {
-		modelCopy.Options[k] = v
-	}
+	maps.Copy(modelCopy.Options, m.Options)
 	return &modelCopy
 }
 

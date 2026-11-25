@@ -21,6 +21,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"maps"
 	"os"
 	"sort"
 	"strings"
@@ -469,9 +470,7 @@ func (g *Generator) Run() error {
 		// done before the loop below because we need to process all ASTs before
 		// we start requesting imports to be copied one by one as we encounter
 		// them in each generated source.
-		for name, i := range g.collectImports(a, fsets[i]) {
-			is[name] = i
-		}
+		maps.Copy(is, g.collectImports(a, fsets[i]))
 	}
 
 	var impls []*interfaceGenerator

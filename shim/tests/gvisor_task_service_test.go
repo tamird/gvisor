@@ -17,6 +17,7 @@ package shim_test
 import (
 	"context"
 	"errors"
+	"maps"
 	"net"
 	"os"
 	"path/filepath"
@@ -78,17 +79,13 @@ func TestGvisorTaskService(t *testing.T) {
 				"enable_hibernate_server": true,
 				"root":                    rootTmp,
 			}
-			for k, v := range tc.shimArgs {
-				shimArgs[k] = v
-			}
+			maps.Copy(shimArgs, tc.shimArgs)
 
 			runscArgs := map[string]any{
 				"overlay2":       "all:self",
 				"ignore-cgroups": "true",
 			}
-			for k, v := range tc.runscArgs {
-				runscArgs[k] = v
-			}
+			maps.Copy(runscArgs, tc.runscArgs)
 
 			containerd := shimutils.NewMockContainerd(t, shimArgs, runscArgs)
 

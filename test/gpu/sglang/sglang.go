@@ -20,6 +20,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 
@@ -203,9 +204,7 @@ func (p *Prompt) RaiseTemperature() {
 func (p *Prompt) Copy() *Prompt {
 	promptCopy := *p
 	promptCopy.Options = make(map[string]any, len(p.Options))
-	for k, v := range p.Options {
-		promptCopy.Options[k] = v
-	}
+	maps.Copy(promptCopy.Options, p.Options)
 	return &promptCopy
 }
 

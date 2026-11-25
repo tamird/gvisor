@@ -17,6 +17,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -259,9 +260,7 @@ func (g *Gofer) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcomm
 		overrides["apply-caps"] = "false"
 		overrides["setup-root"] = "false"
 		overrides["rpc-fd"] = "-1" // Skip the `goferToHostRPCFD >= 0` branch on re-exec.
-		for key, value := range extensionPrepare.FlagOverrides {
-			overrides[key] = value
-		}
+		maps.Copy(overrides, extensionPrepare.FlagOverrides)
 		args := sandboxsetup.PrepareArgs(g.Name(), f, overrides)
 		util.Fatalf("setCapsAndCallSelf(%v, %v): %v", args, capsToApply, sandboxsetup.SetCapsAndCallSelf(args, capsToApply))
 		// Prevent the specFile finalizer from closing specFD before re-exec.

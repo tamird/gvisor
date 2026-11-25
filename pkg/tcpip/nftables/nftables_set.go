@@ -17,6 +17,7 @@ package nftables
 import (
 	"bytes"
 	"fmt"
+	"maps"
 	"math"
 	"slices"
 
@@ -1547,9 +1548,7 @@ func (s *setMapBackend) RemoveAll() *syserr.AnnotatedError {
 // Clone implements NftSetBackend.Clone.
 func (s *setMapBackend) Clone() NftSetBackend {
 	mCopy := make(map[string]int, len(s.m))
-	for k, v := range s.m {
-		mCopy[k] = v
-	}
+	maps.Copy(mCopy, s.m)
 	return &setMapBackend{
 		keyLen:  s.keyLen,
 		dataLen: s.dataLen,

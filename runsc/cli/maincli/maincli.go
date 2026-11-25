@@ -16,6 +16,8 @@
 package maincli
 
 import (
+	"maps"
+
 	"github.com/google/subcommands"
 	"gvisor.dev/gvisor/runsc/cli"
 	"gvisor.dev/gvisor/runsc/cmd"
@@ -95,9 +97,7 @@ func commands() (map[util.SubCommand]string, []subcommands.Command) {
 	}
 
 	// Merge alias commands.
-	for k, v := range alias.Commands() {
-		cmds[k] = v
-	}
+	maps.Copy(cmds, alias.Commands())
 
 	helpCmds := []subcommands.Command{
 		// For historical reasons, these subcommands are invoked as `runsc help

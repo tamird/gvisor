@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"math"
 	"net"
 	"net/http"
@@ -390,9 +391,7 @@ func (m MetricData) GetPrometheusContainerInteger(want WantMetric) (int64, time.
 	if want.Namespace != "" {
 		labels["namespace_name"] = want.Namespace
 	}
-	for k, v := range want.ExtraLabels {
-		labels[k] = v
-	}
+	maps.Copy(labels, want.ExtraLabels)
 	return m.GetPrometheusInteger(want.Metric, labels)
 }
 

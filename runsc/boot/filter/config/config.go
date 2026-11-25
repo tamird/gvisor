@@ -18,6 +18,7 @@ package config
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"runtime"
 	"strings"
@@ -174,9 +175,7 @@ func (opt Options) Vars() precompiledseccomp.Values {
 		vars[procSelfFDVarName] = opt.ProcSelfFD
 	}
 	vars.SetUint64(selfPIDVarName, uint64(os.Getpid()))
-	for varName, value := range opt.Platform.Variables() {
-		vars[varName] = value
-	}
+	maps.Copy(vars, opt.Platform.Variables())
 	opt.VendorSyscalls.SetVars(vars)
 	return vars
 }

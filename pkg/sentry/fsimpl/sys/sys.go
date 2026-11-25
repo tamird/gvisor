@@ -18,6 +18,7 @@ package sys
 import (
 	"bytes"
 	"fmt"
+	"maps"
 	"os"
 	"path"
 	"strconv"
@@ -165,9 +166,7 @@ func (fsType FilesystemType) GetFilesystem(ctx context.Context, vfsObj *vfs.Virt
 			if err != nil {
 				return nil, nil, err
 			}
-			for dir, sub := range sysDevicesSub {
-				devicesSub[dir] = sub
-			}
+			maps.Copy(devicesSub, sysDevicesSub)
 
 			deviceDirs, err := fs.newDeviceClassDir(ctx, creds, []string{accelDevice, vfioDevice}, sysDevicesPath, pciInfos)
 			if err != nil {
@@ -181,9 +180,7 @@ func (fsType FilesystemType) GetFilesystem(ctx context.Context, vfsObj *vfs.Virt
 			if err != nil {
 				return nil, nil, err
 			}
-			for name, sub := range pciDevicesSub {
-				pciDevices[name] = sub
-			}
+			maps.Copy(pciDevices, pciDevicesSub)
 
 			iommuGroups, err := fs.mirrorIOMMUGroups(ctx, creds, iommuGroupsPath, pciInfos)
 			if err != nil {
@@ -207,15 +204,9 @@ func (fsType FilesystemType) GetFilesystem(ctx context.Context, vfsObj *vfs.Virt
 				}
 				devicesSub[name] = sub
 			}
-			for name, sub := range rdmaDirs.class {
-				classSub[name] = sub
-			}
-			for name, sub := range rdmaDirs.busPCIDevices {
-				pciDevices[name] = sub
-			}
-			for name, sub := range rdmaDirs.busPCIDrivers {
-				pciDrivers[name] = sub
-			}
+			maps.Copy(classSub, rdmaDirs.class)
+			maps.Copy(pciDevices, rdmaDirs.busPCIDevices)
+			maps.Copy(pciDrivers, rdmaDirs.busPCIDrivers)
 		}
 		fs.enableNUMATopology = idata.EnableNUMATopology
 		if fs.enableNUMATopology {
