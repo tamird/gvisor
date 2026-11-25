@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools:defs.bzl", "go_library", "go_test", "requires_cap_sys_admin")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -47,6 +47,7 @@ go_test(
         "specutils_test.go",
     ],
     embed = [":specutils"],
+    exec_properties = requires_cap_sys_admin(),
     deps = [
         "//pkg/sentry/devices/nvproxy/nvconf",
         "//runsc/config",
