@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-25T23:15:59.484334+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-25T23:46:02.842655+00:00",
+  "registryDate": "2026-11-25T23:55:50.246211+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -471930,7 +471930,7 @@
         "since": "2026-11-25T22:15:30.434231+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     },
     "pr:14458": {
@@ -472693,7 +472693,7 @@
         "since": "2026-11-25T20:26:19.847463+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     },
     "pr:15202": {
@@ -473195,6 +473195,13 @@
         "basis": "observed",
         "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T23:15:55.245590+00:00"
+      },
+      "contributor-review": {
+        "scope": "https://github.com/google/gvisor/pull/15449",
+        "since": "2026-11-25T23:55:50.246211+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     },
     "pr:15453": {
@@ -473670,7 +473677,7 @@
         "since": "2026-11-25T20:26:38.821906+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     },
     "pr:15648": {
@@ -475010,7 +475017,7 @@
         "since": "2026-11-25T22:41:21.827202+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     },
     "pr:16445": {
@@ -475625,7 +475632,7 @@
         "since": "2026-11-25T22:35:10.106729+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     },
     "pr:16661": {
@@ -476406,7 +476413,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     },
     "pr:16822": {
@@ -476488,7 +476495,7 @@
         "since": "2026-11-25T23:00:04.041520+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     },
     "pr:16828": {
@@ -477086,7 +477093,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     },
     "pr:16958": {
@@ -477139,13 +477146,6 @@
         "basis": "observed",
         "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-25T23:15:57.105500+00:00"
-      },
-      "contributor-review": {
-        "scope": "b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3",
-        "since": "2026-11-25T21:37:40.347012+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
       }
     },
     "pr:16963": {
@@ -478592,7 +478592,7 @@
         "since": "2026-11-25T22:34:48.644451+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     },
     "pr:17376": {
@@ -480005,7 +480005,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -480014,7 +480014,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -480023,7 +480023,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -480032,7 +480032,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -480041,7 +480041,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -480050,7 +480050,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -480059,7 +480059,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -480068,7 +480068,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     },
     "issue:17832": {
@@ -480077,7 +480077,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     },
     "branch:hey-report-cap-accounting": {
@@ -480086,7 +480086,7 @@
         "since": "2026-11-25T22:03:16.345652+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     },
     "investigation:ci-benchmark-fuse-device": {
@@ -480095,7 +480095,7 @@
         "since": "2026-11-25T21:11:04.741354+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:46:02.842655+00:00"
+        "observedAt": "2026-11-25T23:55:50.246211+00:00"
       }
     }
   },

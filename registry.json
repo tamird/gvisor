@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T23:46:02.842655+00:00",
+    "updatedAt": "2026-11-25T23:55:50.246211+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -6508,13 +6508,13 @@
       "url": "https://github.com/google/gvisor/pull/15449",
       "group": "runtime",
       "status": "open",
-      "summary": "Public #15449 remains at fdce23a34; private a78af8fa3c retains its functional/source/strict qualification. Direct outgoing TUN Read A/B completed 24 pairs after passing A/A controls: 589.7→526.0 ns/op (−10.8%), with both arms at 8 B/op and 1 alloc/op. Scope is one fresh segmented 1500-byte queue/Read/Release path, not user-memory copy, guest RTT or all networking.",
+      "summary": "Source a78af8fa3c and the standing rebase notice are delivered. GitHub checks, DCO and First Pass 2925 passed; the earlier startup-warning retry explicitly passed, with cause still unknown. Native APPROVED coexists with required “Maintainer approvals: 1, needs 2.” Only the optional benchmark paragraph awaits Tamir; source delivery is complete and broader application performance remains open.",
       "updatedAt": "2026-11-25T21:11:54.232115+00:00",
       "followup": {
-        "disposition": "Public #15449 remains at fdce23a34; private a78af8fa3c retains its functional/source/strict qualification. Direct outgoing TUN Read A/B completed 24 pairs after passing A/A controls: 589.7→526.0 ns/op (−10.8%), with both arms at 8 B/op and 1 alloc/op. Scope is one fresh segmented 1500-byte queue/Read/Release path, not user-memory copy, guest RTT or all networking.",
+        "disposition": "Source a78af8fa3c and the standing rebase notice are delivered. GitHub checks, DCO and First Pass 2925 passed; the earlier startup-warning retry explicitly passed, with cause still unknown. Native APPROVED coexists with required “Maintainer approvals: 1, needs 2.” Only the optional benchmark paragraph awaits Tamir; source delivery is complete and broader application performance remains open.",
         "owner": "approved_rebase_queue",
-        "nextAction": "Root assesses the scoped TUN result and remaining broader network/performance requirements before a publication decision. approved_rebase_queue retains the source-bound receipt; no extra samples, retry, generic-proof substitution or source approval is inferred.",
-        "sourceHead": "fdce23a34c322b076944df7369772ec68ea78254",
+        "nextAction": "Root awaits the actual optional-description answer and the existing second maintainer approval. approved_rebase_queue retains current-head CI ownership. No source/rebase/notice approval wait, rebuild or unchanged retry.",
+        "sourceHead": "a78af8fa3c443b0242685dd17935912c6f7ddb4a",
         "evidence": [
           "https://github.com/google/gvisor/pull/15449",
           "https://github.com/google/gvisor/actions/runs/37655169313/job/112908325933",
@@ -6542,18 +6542,19 @@
           "https://github.com/tamird/gvisor/actions/runs/45715198464",
           "https://github.com/tamird/gvisor/actions/runs/45715202026",
           "https://github.com/tamird/gvisor/actions/runs/45717265861",
-          "https://github.com/tamird/gvisor/actions/runs/45717943665"
+          "https://github.com/tamird/gvisor/actions/runs/45717943665",
+          "https://github.com/gvisor/gvisor/pull/15449#issuecomment-7177600158"
         ],
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-23T22:28:52.692599+00:00",
-        "recheckCondition": "Root’s evidence-backed remaining-scope/publication assessment or actual source/review evidence.",
-        "providerHead": "fdce23a34c322b076944df7369772ec68ea78254",
-        "curatedAt": "2026-11-25T23:15:02.675448+00:00",
+        "recheckCondition": "Actual optional paragraph answer, additional approval or substantive source/check event.",
+        "providerHead": "a78af8fa3c443b0242685dd17935912c6f7ddb4a",
+        "curatedAt": "2026-11-25T23:55:50.246211+00:00",
         "candidate": {
           "head": "a78af8fa3c443b0242685dd17935912c6f7ddb4a",
           "ciPrefix": "ce9e04b793f1",
-          "state": "Functional/source/strict and scoped outgoing-TUN AA/AB complete; broader performance/publication assessment remains",
-          "upstreamPublished": false
+          "state": "Published under existing grant; scoped TUN result retained; optional body paragraph pending",
+          "upstreamPublished": true
         },
         "tunReadAB": {
           "run": 45717943665,
@@ -6565,9 +6566,33 @@
           "bytesPerOp": 8,
           "allocsPerOp": 1,
           "scope": "Fresh1500-byte three-view outgoing queue/Read/Release;not user-memory copy/guest RTT;broadernetworking open"
+        },
+        "currentPublishedLifecycle": {
+          "head": "a78af8fa3c443b0242685dd17935912c6f7ddb4a",
+          "status": "open",
+          "mergeable": "MERGEABLE",
+          "githubReviewDecision": "APPROVED",
+          "notice": "https://github.com/gvisor/gvisor/pull/15449#issuecomment-7177600158",
+          "descriptionUnchanged": true,
+          "autoMergeRequest": null,
+          "firstPass": {
+            "build": 2925,
+            "state": "SUCCESS"
+          },
+          "provenance": "Saved delivery/checkpoint receipts; full API clock unchanged"
+        },
+        "receiptCheckpoint": {
+          "at": "2026-11-25T23:48:00Z",
+          "head": "a78af8fa3c443b0242685dd17935912c6f7ddb4a",
+          "mergeable": "MERGEABLE",
+          "githubReviewDecision": "APPROVED",
+          "reviewRequests": [],
+          "maintainerDescription": "Maintainer approvals: 1, needs 2.",
+          "mainObserved": false,
+          "scope": "Saved source-bound checkpoint, not a new global API sample"
         }
       },
-      "head": "fdce23a34c322b076944df7369772ec68ea78254",
+      "head": "a78af8fa3c443b0242685dd17935912c6f7ddb4a",
       "number": 15449,
       "evidence": [
         {
@@ -6683,8 +6708,16 @@
           "reviewedAt": "2026-10-09T19:16:38.099061+00:00"
         }
       },
-      "nextStep": "Root assesses the scoped TUN result and remaining broader network/performance requirements before a publication decision. approved_rebase_queue retains the source-bound receipt; no extra samples, retry, generic-proof substitution or source approval is inferred.",
-      "recheckCondition": "Root’s evidence-backed remaining-scope/publication assessment or actual source/review evidence."
+      "nextStep": "Root awaits the actual optional-description answer and the existing second maintainer approval. approved_rebase_queue retains current-head CI ownership. No source/rebase/notice approval wait, rebuild or unchanged retry.",
+      "recheckCondition": "Actual optional paragraph answer, additional approval or substantive source/check event.",
+      "contributorReview": {
+        "kind": "information",
+        "status": "pending",
+        "url": "https://github.com/google/gvisor/pull/15449",
+        "title": "Approve an optional benchmark paragraph for #15449",
+        "summary": "Optional PR-description addition for published source a78af8fa3c only. Source/rebase/notice are complete; no merge permission or broader performance acceptance is requested.",
+        "body": "Reading and releasing a fresh 1,500-byte segmented TUN packet took 526.0 ns/op, down from 589.7 ns/op (10.8%, 24 pairs). Both versions used 8 B/op and 1 allocation/op. [Paired measurements](https://github.com/tamird/gvisor/actions/runs/45717943665/artifacts/15070593278)."
+      }
     },
     {
       "id": "branch:rbe-platform-matrix",
@@ -97329,7 +97362,7 @@
       "head": "b57013d8abd255b013ab99c924139853eb3b3e7a",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:58.120129+00:00",
-      "summary": "Published source b57013d8ab and the standard rebase notice are verified. Recovered original approval and standing source-only rebase authority cover delivery; the obsolete amendment question is superseded, not newly answered. Current native receipt is MERGEABLE/APPROVED with DCO passing and new CI in progress; prior qualification retains its source/runtime/performance limits.",
+      "summary": "Published source b57013d8ab and its standard notice are complete under recovered original grants. At the retained checkpoint, non-Go GitHub checks passed while Go and the new First Pass were still live. Native APPROVED coexists with required “Maintainer approvals: 1, needs 2.” No new source/runtime/performance or whole-main pass is implied.",
       "evidence": [
         {
           "label": "Published LuaJIT release",
@@ -97364,8 +97397,8 @@
         "owner": "approved_rebase_queue",
         "sourceHead": "b57013d8abd255b013ab99c924139853eb3b3e7a",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Published source b57013d8ab and the standard rebase notice are verified. Recovered original approval and standing source-only rebase authority cover delivery; the obsolete amendment question is superseded, not newly answered. Current native receipt is MERGEABLE/APPROVED with DCO passing and new CI in progress; prior qualification retains its source/runtime/performance limits.",
-        "nextAction": "approved_rebase_queue owns the existing current-head CI follow-through. Root retains normal maintainer/publication boundaries; preserve pending reviewer requests. No new approval ask, watcher, retry, quota attribution or merge.",
+        "disposition": "Published source b57013d8ab and its standard notice are complete under recovered original grants. At the retained checkpoint, non-Go GitHub checks passed while Go and the new First Pass were still live. Native APPROVED coexists with required “Maintainer approvals: 1, needs 2.” No new source/runtime/performance or whole-main pass is implied.",
+        "nextAction": "approved_rebase_queue follows the existing current-head CI and second-approval lifecycle. Preserve pending reviewer requests; no repeated approval question, retry, outreach or merge.",
         "mergeable": "MERGEABLE",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fa3d27991",
@@ -97384,7 +97417,7 @@
           "https://github.com/gvisor/gvisor/pull/17376#issuecomment-7177892142",
           "https://buildkite.com/gvisor/first-pass/builds/2928"
         ],
-        "recheckCondition": "Existing owner’s actual current-head CI/review/source event; the global API sample predates this targeted publication receipt.",
+        "recheckCondition": "Existing owner’s actual terminal CI, additional approval or substantive source event.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -97408,7 +97441,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-25T23:46:02.842655+00:00",
+        "curatedAt": "2026-11-25T23:55:50.246211+00:00",
         "candidate": {
           "head": "b57013d8abd255b013ab99c924139853eb3b3e7a",
           "base": "e28474f026f4f6d6cfa46710e34f01786d54477e",
@@ -97439,6 +97472,21 @@
           },
           "provenance": "17376-publication-receipt.json; saved exact native/provider/comment readbacks",
           "scope": "Targeted delivery receipt, not a new full API snapshot; old check results do not qualify the new head."
+        },
+        "receiptCheckpoint": {
+          "at": "2026-11-25T23:48:00Z",
+          "head": "b57013d8abd255b013ab99c924139853eb3b3e7a",
+          "mergeable": "MERGEABLE",
+          "githubReviewDecision": "APPROVED",
+          "reviewRequests": [
+            {
+              "__typename": "User",
+              "login": "trantoji"
+            }
+          ],
+          "maintainerDescription": "Maintainer approvals: 1, needs 2.",
+          "mainObserved": false,
+          "scope": "Saved source-bound checkpoint, not a new global API sample"
         }
       },
       "dcoAmendment": {
@@ -97463,8 +97511,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Agent"
       },
-      "nextStep": "approved_rebase_queue owns the existing current-head CI follow-through. Root retains normal maintainer/publication boundaries; preserve pending reviewer requests. No new approval ask, watcher, retry, quota attribution or merge.",
-      "recheckCondition": "Existing owner’s actual current-head CI/review/source event; the global API sample predates this targeted publication receipt.",
+      "nextStep": "approved_rebase_queue follows the existing current-head CI and second-approval lifecycle. Preserve pending reviewer requests; no repeated approval question, retry, outreach or merge.",
+      "recheckCondition": "Existing owner’s actual terminal CI, additional approval or substantive source event.",
       "settledReviews": [
         {
           "kind": "amendment",
@@ -100303,7 +100351,7 @@
       "head": "b0d665d9f298bf84db405213b403467d8470af4f",
       "title": "Stabilize the Fastlane token check in the Ruby benchmark",
       "group": "ci-flakes",
-      "summary": "Published source b0d665d9f2 and the standard rebase notice are verified. Recovered original approval and standing source-only rebase authority cover delivery; the obsolete amendment question is superseded, not newly answered. Current native receipt is MERGEABLE/APPROVED with DCO passing and new CI in progress; prior qualification retains its source/runtime/performance limits.",
+      "summary": "Published source b0d665d9f2 and its standard notice are complete under recovered original grants. At the retained checkpoint, non-Go GitHub checks passed while Go and the new First Pass were still live. Native APPROVED coexists with required “Maintainer approvals: 1, needs 2.” No new source/runtime/performance or whole-main pass is implied.",
       "evidence": [
         {
           "label": "Published gVisor fix",
@@ -100346,8 +100394,8 @@
         "owner": "approved_rebase_queue",
         "sourceHead": "b0d665d9f298bf84db405213b403467d8470af4f",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Published source b0d665d9f2 and the standard rebase notice are verified. Recovered original approval and standing source-only rebase authority cover delivery; the obsolete amendment question is superseded, not newly answered. Current native receipt is MERGEABLE/APPROVED with DCO passing and new CI in progress; prior qualification retains its source/runtime/performance limits.",
-        "nextAction": "approved_rebase_queue owns the existing current-head CI follow-through. Root retains normal maintainer/publication boundaries; preserve pending reviewer requests. No new approval ask, watcher, retry, quota attribution or merge.",
+        "disposition": "Published source b0d665d9f2 and its standard notice are complete under recovered original grants. At the retained checkpoint, non-Go GitHub checks passed while Go and the new First Pass were still live. Native APPROVED coexists with required “Maintainer approvals: 1, needs 2.” No new source/runtime/performance or whole-main pass is implied.",
+        "nextAction": "approved_rebase_queue follows the existing current-head CI and second-approval lifecycle. Preserve pending reviewer requests; no repeated approval question, retry, outreach or merge.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17479",
           "https://github.com/google/gvisor/pull/17479#issuecomment-6799672981",
@@ -100363,7 +100411,7 @@
           "https://buildkite.com/gvisor/first-pass/builds/2929"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Existing owner’s actual current-head CI/review/source event; the global API sample predates this targeted publication receipt.",
+        "recheckCondition": "Existing owner’s actual terminal CI, additional approval or substantive source event.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -100387,7 +100435,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-25T23:46:02.842655+00:00",
+        "curatedAt": "2026-11-25T23:55:50.246211+00:00",
         "candidate": {
           "head": "b0d665d9f298bf84db405213b403467d8470af4f",
           "base": "e28474f026f4f6d6cfa46710e34f01786d54477e",
@@ -100418,6 +100466,21 @@
           },
           "provenance": "17479-publication-receipt.json; saved exact native/provider/comment readbacks",
           "scope": "Targeted delivery receipt, not a new full API snapshot; old check results do not qualify the new head."
+        },
+        "receiptCheckpoint": {
+          "at": "2026-11-25T23:48:00Z",
+          "head": "b0d665d9f298bf84db405213b403467d8470af4f",
+          "mergeable": "MERGEABLE",
+          "githubReviewDecision": "APPROVED",
+          "reviewRequests": [
+            {
+              "__typename": "User",
+              "login": "kerumeto"
+            }
+          ],
+          "maintainerDescription": "Maintainer approvals: 1, needs 2.",
+          "mainObserved": false,
+          "scope": "Saved source-bound checkpoint, not a new global API sample"
         }
       },
       "dcoAmendment": {
@@ -100442,8 +100505,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "approved_rebase_queue owns the existing current-head CI follow-through. Root retains normal maintainer/publication boundaries; preserve pending reviewer requests. No new approval ask, watcher, retry, quota attribution or merge.",
-      "recheckCondition": "Existing owner’s actual current-head CI/review/source event; the global API sample predates this targeted publication receipt.",
+      "nextStep": "approved_rebase_queue follows the existing current-head CI and second-approval lifecycle. Preserve pending reviewer requests; no repeated approval question, retry, outreach or merge.",
+      "recheckCondition": "Existing owner’s actual terminal CI, additional approval or substantive source event.",
       "settledReviews": [
         {
           "kind": "amendment",
@@ -108210,13 +108273,13 @@
       "status": "open",
       "owner": "root",
       "evidence": [],
-      "summary": "Published source 7f28ffee3f and the standard rebase notice are verified. Recovered original approval and standing source-only rebase authority cover delivery; the obsolete amendment question is superseded, not newly answered. Current native receipt is MERGEABLE/APPROVED with DCO passing and new CI in progress; prior qualification retains its source/runtime/performance limits.",
-      "nextStep": "approved_rebase_queue owns the existing current-head CI follow-through. Root retains normal maintainer/publication boundaries; preserve pending reviewer requests. No new approval ask, watcher, retry, quota attribution or merge.",
+      "summary": "Published source 7f28ffee3f and its standard notice are complete under recovered original grants. At the retained checkpoint, non-Go GitHub checks passed while Go and the new First Pass were still live. Native APPROVED coexists with required “Maintainer approvals: 1, needs 2.” No new source/runtime/performance or whole-main pass is implied.",
+      "nextStep": "approved_rebase_queue follows the existing current-head CI and second-approval lifecycle. Preserve pending reviewer requests; no repeated approval question, retry, outreach or merge.",
       "updatedAt": "2026-11-24T20:51:36.949756+00:00",
       "followup": {
-        "disposition": "Published source 7f28ffee3f and the standard rebase notice are verified. Recovered original approval and standing source-only rebase authority cover delivery; the obsolete amendment question is superseded, not newly answered. Current native receipt is MERGEABLE/APPROVED with DCO passing and new CI in progress; prior qualification retains its source/runtime/performance limits.",
-        "nextAction": "approved_rebase_queue owns the existing current-head CI follow-through. Root retains normal maintainer/publication boundaries; preserve pending reviewer requests. No new approval ask, watcher, retry, quota attribution or merge.",
-        "recheckCondition": "Existing owner’s actual current-head CI/review/source event; the global API sample predates this targeted publication receipt.",
+        "disposition": "Published source 7f28ffee3f and its standard notice are complete under recovered original grants. At the retained checkpoint, non-Go GitHub checks passed while Go and the new First Pass were still live. Native APPROVED coexists with required “Maintainer approvals: 1, needs 2.” No new source/runtime/performance or whole-main pass is implied.",
+        "nextAction": "approved_rebase_queue follows the existing current-head CI and second-approval lifecycle. Preserve pending reviewer requests; no repeated approval question, retry, outreach or merge.",
+        "recheckCondition": "Existing owner’s actual terminal CI, additional approval or substantive source event.",
         "observedAt": "2026-11-24T20:51:36.949756+00:00",
         "evidence": [
           "https://github.com/google/gvisor/pull/17343#pullrequestreview-6046141593",
@@ -108232,7 +108295,7 @@
         ],
         "owner": "approved_rebase_queue",
         "sourceHead": "7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
-        "curatedAt": "2026-11-25T23:46:02.842655+00:00",
+        "curatedAt": "2026-11-25T23:55:50.246211+00:00",
         "candidate": {
           "head": "7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
           "base": "e28474f026f4f6d6cfa46710e34f01786d54477e",
@@ -108259,9 +108322,19 @@
           },
           "provenance": "17343-publication-receipt.json; saved exact native/provider/comment readbacks",
           "scope": "Targeted delivery receipt, not a new full API snapshot; old check results do not qualify the new head."
+        },
+        "receiptCheckpoint": {
+          "at": "2026-11-25T23:48:00Z",
+          "head": "7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
+          "mergeable": "MERGEABLE",
+          "githubReviewDecision": "APPROVED",
+          "reviewRequests": [],
+          "maintainerDescription": "Maintainer approvals: 1, needs 2.",
+          "mainObserved": false,
+          "scope": "Saved source-bound checkpoint, not a new global API sample"
         }
       },
-      "recheckCondition": "Existing owner’s actual current-head CI/review/source event; the global API sample predates this targeted publication receipt.",
+      "recheckCondition": "Existing owner’s actual terminal CI, additional approval or substantive source event.",
       "settledReviews": [
         {
           "kind": "amendment",
@@ -108930,7 +109003,7 @@
       "type": "pr",
       "repo": "google/gvisor",
       "number": 16962,
-      "head": "a638ea4dc5ee08c632b5fdedabf5405383703382",
+      "head": "b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3",
       "ref": "proposal/kind-release-archive",
       "title": "Build only the release archive installed by Kind",
       "url": "https://github.com/google/gvisor/pull/16962",
@@ -108950,18 +109023,18 @@
           "url": "https://buildkite.com/gvisor/pipeline/builds/55936"
         }
       ],
-      "summary": "Public #16962 remains at a638ea4dc with its exact-head approval. Clean same-patch b2b018bfeb and its supplied rebase-notice question remain pending; both optimized opaque archives passed. First Pass 2867 actually admitted AMD64 build/unit jobs, which timed out without named failed targets; no evidence implicates Kind archive selection. No new Kind cluster or publication occurred.",
-      "nextStep": "Root awaits Tamir’s explicit answer on exact b2b018bfeb and the supplied rebase notice. Dismissal does not authorize publication. Preserve the expected a638 old-head lease and existing review boundaries; no unchanged CI retry or merge.",
-      "recheckCondition": "Actual answer/dismissal of the asked amendment question, or a genuine changed source/review requirement.",
+      "summary": "Published #16962 is now at b2b018bfeb with the verified rebase notice. Recovered exact original approval plus standing rebase authority cover delivery; the obsolete question is superseded, not newly answered. Native receipt is MERGEABLE/APPROVED with DCO passing; First Pass 2936 started without failed attempts. Prior opaque-archive evidence retains its scope; no new Kind cluster or runtime result is claimed.",
+      "nextStep": "approved_rebase_queue owns current-head CI follow-through. Preserve nybidari’s pending request; no duplicate approval ask, retry, reviewer request or merge.",
+      "recheckCondition": "Existing owner’s actual CI/review/source event; full API sample predates the targeted delivery receipt.",
       "updatedAt": "2026-11-25T21:37:40.347012+00:00",
       "followup": {
-        "owner": "root",
-        "disposition": "Public #16962 remains at a638ea4dc with its exact-head approval. Clean same-patch b2b018bfeb and its supplied rebase-notice question remain pending; both optimized opaque archives passed. First Pass 2867 actually admitted AMD64 build/unit jobs, which timed out without named failed targets; no evidence implicates Kind archive selection. No new Kind cluster or publication occurred.",
-        "nextAction": "Root awaits Tamir’s explicit answer on exact b2b018bfeb and the supplied rebase notice. Dismissal does not authorize publication. Preserve the expected a638 old-head lease and existing review boundaries; no unchanged CI retry or merge.",
-        "recheckCondition": "Actual answer/dismissal of the asked amendment question, or a genuine changed source/review requirement.",
-        "curatedAt": "2026-11-25T21:37:40.347012+00:00",
-        "sourceHead": "a638ea4dc5ee08c632b5fdedabf5405383703382",
-        "providerHead": "a638ea4dc5ee08c632b5fdedabf5405383703382",
+        "owner": "approved_rebase_queue",
+        "disposition": "Published #16962 is now at b2b018bfeb with the verified rebase notice. Recovered exact original approval plus standing rebase authority cover delivery; the obsolete question is superseded, not newly answered. Native receipt is MERGEABLE/APPROVED with DCO passing; First Pass 2936 started without failed attempts. Prior opaque-archive evidence retains its scope; no new Kind cluster or runtime result is claimed.",
+        "nextAction": "approved_rebase_queue owns current-head CI follow-through. Preserve nybidari’s pending request; no duplicate approval ask, retry, reviewer request or merge.",
+        "recheckCondition": "Existing owner’s actual CI/review/source event; full API sample predates the targeted delivery receipt.",
+        "curatedAt": "2026-11-25T23:55:50.246211+00:00",
+        "sourceHead": "b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3",
+        "providerHead": "b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-25T21:05:22.746202+00:00",
         "approval": {
@@ -108985,7 +109058,8 @@
           "https://github.com/tamird/gvisor/commit/b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3",
           "https://github.com/tamird/gvisor/actions/runs/45703283876",
           "https://github.com/tamird/gvisor/actions/runs/45703289124",
-          "https://buildkite.com/gvisor/first-pass/builds/2867"
+          "https://buildkite.com/gvisor/first-pass/builds/2867",
+          "https://github.com/gvisor/gvisor/pull/16962#issuecomment-7178157856"
         ],
         "attentionDispositions": [
           {
@@ -109025,19 +109099,54 @@
           "result": "Admitted AMD64 runsc/pkg and cgroupv2 unit jobs timed out, exit -1, no named failed targets. Build interrupted during analysis; unit log ended after static-link warnings and cancellation. Cause not established; not a quota diagnosis.",
           "owner": "root",
           "recheckCondition": "Actual new source/check evidence; no unchanged retry."
+        },
+        "currentPublishedLifecycle": {
+          "head": "b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3",
+          "status": "open",
+          "mergeable": "MERGEABLE",
+          "githubReviewDecision": "APPROVED",
+          "reviewRequests": [
+            {
+              "__typename": "User",
+              "login": "nybidari"
+            }
+          ],
+          "autoMergeRequest": null,
+          "notice": "https://github.com/gvisor/gvisor/pull/16962#issuecomment-7178157856",
+          "descriptionUnchanged": true,
+          "firstPass": {
+            "build": 2936,
+            "state": "PENDING",
+            "url": "https://buildkite.com/gvisor/first-pass/builds/2936"
+          },
+          "provenance": "16962-publication-receipt.json and saved exact provider/native/comment readbacks; not a new full snapshot"
         }
       },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3",
-        "baseHead": "a638ea4dc5ee08c632b5fdedabf5405383703382",
-        "url": "https://github.com/tamird/gvisor/commit/b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3",
-        "title": "Build only the release archive installed by Kind",
-        "summary": "The actual exact-source amendment and supplied rebase-notice decision is pending. Dismissal is not approval; public source is unchanged.",
-        "body": "Scope summary of the actual unanswered request: approve amending #16962 to exact b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3 and posting the supplied notice. The strict range-diff is =. Both optimized standard opaque release archives passed on AMD64/ARM64 qualification; no new Kind cluster or runtime result is claimed. No source or notice mutation has occurred.\n\nProposed notice:\n\nRebased on master to pick up the fork CI bootstrap fix.\n\nPosted by Codex on behalf of @tamird.\n\nComparison command from the asked proposal:\n\ngit range-diff a638ea4dc5^! b2b018bfeb^!\n",
-        "replyBody": "Rebased on master to pick up the fork CI bootstrap fix.\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "head": "b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3",
+          "baseHead": "a638ea4dc5ee08c632b5fdedabf5405383703382",
+          "url": "https://github.com/tamird/gvisor/commit/b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3",
+          "title": "Build only the release archive installed by Kind",
+          "summary": "The actual exact-source amendment and supplied rebase-notice decision is pending. Dismissal is not approval; public source is unchanged.",
+          "body": "Scope summary of the actual unanswered request: approve amending #16962 to exact b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3 and posting the supplied notice. The strict range-diff is =. Both optimized standard opaque release archives passed on AMD64/ARM64 qualification; no new Kind cluster or runtime result is claimed. No source or notice mutation has occurred.\n\nProposed notice:\n\nRebased on master to pick up the fork CI bootstrap fix.\n\nPosted by Codex on behalf of @tamird.\n\nComparison command from the asked proposal:\n\ngit range-diff a638ea4dc5^! b2b018bfeb^!\n",
+          "replyBody": "Rebased on master to pick up the fork CI bootstrap fix.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "superseded",
+          "at": "2026-11-25T23:55:50.246211+00:00",
+          "resolution": "Covered by recovered exact original branch approval and standing source-only rebase/notice authority; not a new answer or approval.",
+          "authority": {
+            "record": "registry.json nodes[branch:kind-release-archive].settledReviews",
+            "approvedHead": "dab2124cde6f1c76d44ff2af7c297566d86c10f5",
+            "approvedAt": "2026-11-04T15:00:00Z",
+            "lineage": "DCO-onlydab→a638 identicaltree/parents; strict=a638→b2b and cleanautomaticreplaytreeb16f4b6ff917c84c8a62850bdbf99115bae607ca",
+            "basis": "Originalexactsourceapproval plusindependentstandingrebase/push/noticegrant; unansweredextraquestionnotusedasgrant",
+            "laterHoldAudit": "No actual later user hold/denial, separate qualification gate or execution-policy rejection found in currentcanonicalrecord/fullhumanfeedback. Genericdismissalwarningdoesnotrevokepriorgrant."
+          },
+          "publicationURL": "https://github.com/gvisor/gvisor/pull/16962#issuecomment-7178157856"
+        }
+      ]
     },
     {
       "id": "branch:compile-commands-shared-qualification",
