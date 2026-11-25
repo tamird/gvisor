@@ -1759,6 +1759,16 @@ function dagLayout(nodes, content) {
   // shape close to the viewport instead of building one long vertical strip.
   isolates.sort((a, b) => a.type.localeCompare(b.type) || (a.number || 0) - (b.number || 0) || a.title.localeCompare(b.title));
   for (const node of isolates) panels.push({ node, width: CARD.width, height: CARD.height });
+  // Owned work in progress leads the initial viewport, newest updates first.
+  // Stable ties retain the existing dependency-impact ordering.
+  for (const panel of panels) {
+    const members = panel.node ? [panel.node] : [...panel.chain.ids].map(id => byId.get(id));
+    const work = members.filter(node => node.type === "investigation" && node.status === "active" && node.owner && node.nextStep
+      || node.status === "Agent work" && node.followup?.owner && node.followup.nextAction);
+    panel.working = work.length > 0;
+    panel.updated = Math.max(0, ...work.map(node => Date.parse(node.updatedAt) || 0));
+  }
+  panels.sort((a, b) => Number(b.working) - Number(a.working) || b.updated - a.updated);
   const box = $("graph-stage").getBoundingClientRect(), gap = 16;
   const area = panels.reduce((total, panel) => total + (panel.width + gap) * (panel.height + gap), 0);
   const aspect = Math.max(.5, box.width / Math.max(box.height - 44, 1));

@@ -3280,6 +3280,39 @@ test('graph selection outlines only direct prerequisites and dependents without 
   assert.deepEqual(b.arrows, baseline.arrows); assert.deepEqual(c.arrows, baseline.arrows);
   assert.deepEqual(baseline.arrows.map(el => el.class), ['edge depends_on', 'edge blocked_by', 'edge depends_on']);
   assert.deepEqual(render(null), baseline);
+
+  const waiting = Array.from({ length: 12 }, (_, i) => attentionNode(100 + i));
+  const current = { id: 'investigation:current', type: 'investigation', title: 'Current owned work',
+    status: 'active', owner: 'agent', nextStep: 'Finish the current change.', updatedAt: '2026-10-14T12:00:00Z' };
+  const base = { id: 'branch:base', type: 'branch', title: 'Required base', status: 'Awaiting prerequisites' };
+  const isolate = { id: 'branch:isolated', type: 'branch', title: 'Other owned work', status: 'Agent work',
+    updatedAt: '2026-10-13T12:00:00Z', followup: { owner: 'agent', nextAction: 'Finish the isolated change.' } };
+  nodes.push(...waiting, base, current, isolate);
+  context.edgesInput.push(...waiting.map(node => ({ from: 'd', to: node.id, type: 'depends_on' })),
+    { from: base.id, to: current.id, type: 'depends_on' });
+  vm.runInContext('model = {...model, nodes: nodesInput, edges: edgesInput}', context);
+  const drawn = render(null);
+  const positions = () => JSON.parse(vm.runInContext('JSON.stringify(Object.fromEntries(bounds.positions))', context));
+  const first = positions();
+  assert.ok(first[current.id].x + 216 < 1000 && first[current.id].y + 70 < 756);
+  assert.ok(first[current.id].y < first[waiting[0].id].y);
+  assert.ok(first[isolate.id].y < first[waiting[0].id].y);
+  assert.ok(first[base.id].x < first[current.id].x);
+  assert.deepEqual(drawn.arrows.map(edge => [edge['data-from'], edge['data-to'], edge.class]),
+    context.edgesInput.filter(edge => ['depends_on', 'blocked_by'].includes(edge.type))
+      .map(edge => [edge.from, edge.to, 'edge ' + edge.type]));
+
+  context.snapshotInput.checkedAt = '2026-10-20T12:00:00Z';
+  isolate.followup.observedAt = context.snapshotInput.checkedAt;
+  for (const node of waiting) node.github.checkedAt = context.snapshotInput.checkedAt;
+  vm.runInContext('liveSnapshot = snapshotInput; model = {...model, checkedAt: snapshotInput.checkedAt}', context);
+  render(null);
+  assert.deepEqual(positions(), first);
+
+  Object.assign(nodes[0], { updatedAt: current.updatedAt,
+    followup: { owner: 'agent', nextAction: 'Continue the larger component.' } });
+  render(null);
+  assert.ok(positions()[waiting[0].id].y < positions()[current.id].y);
 });
 
 test('default visibility hides inactive history but retains live, blocked and newly actionable work', () => {
