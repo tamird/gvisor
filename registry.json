@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T02:17:02.181443+00:00",
+    "updatedAt": "2026-11-25T02:40:09.723370+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -82916,7 +82916,7 @@
       "url": "https://github.com/google/gvisor/pull/17184",
       "group": "tests",
       "status": "open",
-      "summary": "Exact 4aba completed two independent full-source final reviews without source blockers. Production replaces 582 shell lines with 580 Go lines; full change is net +164, including 163 lines of distinct lifecycle coverage. Functional qualification does not establish comparative performance. Public head and rejected-draft publication boundary remain unchanged.",
+      "summary": "Public 2aa840f4 remains conflicting and now has shailend-g changes requested: merged #17822 overlaps its readiness/retry/client-result handling, and the reviewer asks whether the residual ss wait and numeric-rate check are still wanted. This is external review evidence, not verified source equivalence or a new commitment. Private 4aba retains completed exact-source reviews and functional evidence; comparative performance remains unmet.",
       "evidence": [
         {
           "label": "Published standalone benchmark correction",
@@ -82931,14 +82931,14 @@
           "url": "https://github.com/tamird/gvisor/blob/208cd127d/.github/qualification/tcp_benchmark_go.result.json"
         }
       ],
-      "updatedAt": "2026-11-24T07:20:26.610975+00:00",
+      "updatedAt": "2026-11-25T02:40:09.723370+00:00",
       "followup": {
         "sourceHead": "2aa840f4ffe655f0c749185070fba77e676186b5",
-        "owner": "root",
-        "nextAction": "Retain reviewed source and existing functional evidence. Complete comparative performance only when a demonstrated stable same-source A/A route is available; do not expand samples or retry unchanged timings. Present any final publication proposal only after its remaining evidence and scope are concrete.",
+        "owner": "root / approved_rebase_queue",
+        "nextAction": "approved_rebase_queue owns the read-only full public-patch/merged #17822 overlap assessment for root. Preserve rejected private Go rewrite proposals, source/performance holds and old superseded asks. No source change, adopted reviewer scope, reply, closure or new publication question is authorized.",
         "mergeable": "CONFLICTING",
-        "observedAt": "2026-11-24T05:38:02.473380+00:00",
-        "recheckCondition": "A qualified stable performance route, new source-bound measurement evidence, a concrete source finding or a user decision changes the next action. No additional execution approval is needed for otherwise authorized validation.",
+        "observedAt": "2026-11-25T02:40:09.723370+00:00",
+        "recheckCondition": "The existing owner returns its bounded read-only overlap assessment, or actual source/review evidence or user scope changes.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17184",
           "https://github.com/tamird/gvisor/commit/9c541c3ae1cd68df1741882480d5bf184396e695",
@@ -82980,9 +82980,11 @@
           "https://github.com/tamird/gvisor/commit/f6f9382a055959d59857f9688ab57bc15ae853b4",
           "https://github.com/tamird/gvisor/actions/runs/45004530900",
           "https://github.com/tamird/gvisor/actions/runs/45004532751",
-          "https://github.com/tamird/gvisor/blob/ab856ed6063d63de247adbb26e01617a7a50c02d/registry.json"
+          "https://github.com/tamird/gvisor/blob/ab856ed6063d63de247adbb26e01617a7a50c02d/registry.json",
+          "https://github.com/google/gvisor/pull/17184#pullrequestreview-6050501416",
+          "https://github.com/gvisor/gvisor/pull/17822"
         ],
-        "disposition": "Exact 4aba completed two independent full-source final reviews without source blockers. Production replaces 582 shell lines with 580 Go lines; full change is net +164, including 163 lines of distinct lifecycle coverage. Functional qualification does not establish comparative performance. Public head and rejected-draft publication boundary remain unchanged.",
+        "disposition": "Public 2aa840f4 remains conflicting and now has shailend-g changes requested: merged #17822 overlaps its readiness/retry/client-result handling, and the reviewer asks whether the residual ss wait and numeric-rate check are still wanted. This is external review evidence, not verified source equivalence or a new commitment. Private 4aba retains completed exact-source reviews and functional evidence; comparative performance remains unmet.",
         "curatedAt": "2026-11-22T14:02:28.619749+00:00",
         "implementationOwner": "approved_rebase_queue",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
@@ -83010,7 +83012,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Retain reviewed source and existing functional evidence. Complete comparative performance only when a demonstrated stable same-source A/A route is available; do not expand samples or retry unchanged timings. Present any final publication proposal only after its remaining evidence and scope are concrete.",
+      "nextStep": "approved_rebase_queue owns the read-only full public-patch/merged #17822 overlap assessment for root. Preserve rejected private Go rewrite proposals, source/performance holds and old superseded asks. No source change, adopted reviewer scope, reply, closure or new publication question is authorized.",
       "recheckCondition": "A qualified stable performance route, new source-bound measurement evidence, a concrete source finding or a user decision changes the next action. No additional execution approval is needed for otherwise authorized validation.",
       "refinement": {
         "before": {
@@ -122536,8 +122538,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-25T02:17:02.181443+00:00",
-      "summary": "Native scheduled collector 45526464103 completed successfully and delivered API 2026-11-25T01:34:47.677164+00:00; this newer sample was reused, so the earlier fallback guard required no dispatch. This proves this delivery, not a cause for prior missing schedule events. The earlier missed deadline remains an ownership/timing failure; bounded 503 read retries remain.",
+      "updatedAt": "2026-11-25T02:40:09.723370+00:00",
+      "summary": "The due native-first guard found no newer/live delivery. Versioned API dispatch returned collector 45534009507 directly, with creation at 2026-11-25T02:35:10Z; it completed successfully and delivered API 2026-11-25T02:38:22.758878+00:00. The earlier scheduled delivery remains valid evidence of that run, not a proved cause for gaps. Prior missed-deadline ownership and bounded 503 read retry facts remain unchanged.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -122780,7 +122782,7 @@
           ]
         }
       ],
-      "nextStep": "tracker_health_resume owns the next native-first guard at 02:34:47 UTC and deadline 03:04:47, with root supervision. Reuse actual fresh/live native work before at most one necessary versioned direct-ID fallback. No new scheduler, duplicate watcher, speculative reset or metadata clock reset.",
+      "nextStep": "tracker_health_resume owns the next native-first guard at 03:38:22 UTC and deadline 04:08:22, with root supervision. Reuse actual fresh/live native delivery before at most one necessary versioned direct-ID fallback; no duplicate observer, new scheduler, speculative reset or metadata clock reset.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -122924,11 +122926,12 @@
           "https://github.com/tamird/gvisor/actions/runs/45516302399",
           "https://github.com/gvisor/gvisor/actions/runs/45507638072",
           "https://github.com/tamird/gvisor/actions/runs/45524494233",
-          "https://github.com/tamird/gvisor/actions/runs/45526464103"
+          "https://github.com/tamird/gvisor/actions/runs/45526464103",
+          "https://github.com/tamird/gvisor/actions/runs/45534009507"
         ],
-        "observedAt": "2026-11-25T02:17:02.181443+00:00",
-        "disposition": "Native scheduled collector 45526464103 completed successfully and delivered API 2026-11-25T01:34:47.677164+00:00; this newer sample was reused, so the earlier fallback guard required no dispatch. This proves this delivery, not a cause for prior missing schedule events. The earlier missed deadline remains an ownership/timing failure; bounded 503 read retries remain.",
-        "nextAction": "tracker_health_resume owns the next native-first guard at 02:34:47 UTC and deadline 03:04:47, with root supervision. Reuse actual fresh/live native work before at most one necessary versioned direct-ID fallback. No new scheduler, duplicate watcher, speculative reset or metadata clock reset.",
+        "observedAt": "2026-11-25T02:40:09.723370+00:00",
+        "disposition": "The due native-first guard found no newer/live delivery. Versioned API dispatch returned collector 45534009507 directly, with creation at 2026-11-25T02:35:10Z; it completed successfully and delivered API 2026-11-25T02:38:22.758878+00:00. The earlier scheduled delivery remains valid evidence of that run, not a proved cause for gaps. Prior missed-deadline ownership and bounded 503 read retry facts remain unchanged.",
+        "nextAction": "tracker_health_resume owns the next native-first guard at 03:38:22 UTC and deadline 04:08:22, with root supervision. Reuse actual fresh/live native delivery before at most one necessary versioned direct-ID fallback; no duplicate observer, new scheduler, speculative reset or metadata clock reset.",
         "recheckCondition": "Actual newer/live native delivery or the next due freshness guard.",
         "owner": "root"
       }
