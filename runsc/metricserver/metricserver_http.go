@@ -41,13 +41,13 @@ var httpOK = httpResult{code: http.StatusOK}
 // +checklocksexclude:m.mu
 func (m *metricServer) serveIndex(w *httpResponseWriter, req *http.Request) httpResult {
 	if req.URL.Path != "/" {
-		if strings.HasPrefix(req.URL.Path, "/metrics?") {
+		if after, ok := strings.CutPrefix(req.URL.Path, "/metrics?"); ok {
 			// Prometheus's scrape_config.metrics_path takes in a query path and automatically encodes
 			// all special characters in it to %-form, including the "?" character.
 			// This can prevent use of query parameters, and we end up here instead.
 			// To address this, rewrite the URL to undo this transformation.
 			// This means requesting "/metrics%3Ffoo=bar" is rewritten to "/metrics?foo=bar".
-			req.URL.RawQuery = strings.TrimPrefix(req.URL.Path, "/metrics?")
+			req.URL.RawQuery = after
 			req.URL.Path = "/metrics"
 			return m.serveMetrics(w, req)
 		}

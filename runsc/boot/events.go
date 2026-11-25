@@ -160,8 +160,8 @@ func (cm *containerManager) getCPUUsageFromCgroups() (map[string]uint64, error) 
 		if isV2 {
 			for _, line := range strings.Split(valStr, "\n") {
 				line = strings.TrimSpace(line)
-				if strings.HasPrefix(line, "usage_usec ") {
-					usec, err := strconv.ParseUint(strings.TrimPrefix(line, "usage_usec "), 10, 64)
+				if after, ok := strings.CutPrefix(line, "usage_usec "); ok {
+					usec, err := strconv.ParseUint(after, 10, 64)
 					if err != nil {
 						return nil, fmt.Errorf("parsing usage_usec in cpu.stat: %w", err)
 					}

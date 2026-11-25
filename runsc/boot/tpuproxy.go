@@ -92,8 +92,8 @@ func getTPUDeviceRemapIDs(ctx context.Context, k *kernel.Kernel, specs map[strin
 	for _, spec := range specs {
 		if spec.Linux != nil {
 			for _, dev := range spec.Linux.Devices {
-				if strings.HasPrefix(dev.Path, "/dev/vfio/") {
-					groupStr := strings.TrimPrefix(dev.Path, "/dev/vfio/")
+				if after, ok := strings.CutPrefix(dev.Path, "/dev/vfio/"); ok {
+					groupStr := after
 					if groupNum, err := strconv.ParseUint(groupStr, 10, 32); err == nil {
 						groups[uint32(groupNum)] = struct{}{}
 					}
