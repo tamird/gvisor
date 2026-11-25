@@ -2003,9 +2003,7 @@ func (f *MemoryFile) startEvictionsLocked() bool {
 //   - f.mu must be locked.
 func (f *MemoryFile) startEvictionGoroutineLocked(user EvictableMemoryUser, info *evictableMemoryUserInfo) {
 	info.evicting = true
-	f.evictionWG.Add(1)
-	go func() { // S/R-SAFE: f.evictionWG
-		defer f.evictionWG.Done()
+	f.evictionWG.Go(func() { // S/R-SAFE: f.evictionWG
 		for {
 			f.mu.Lock()
 			info, ok := f.evictable[user]
@@ -2032,7 +2030,7 @@ func (f *MemoryFile) startEvictionGoroutineLocked(user EvictableMemoryUser, info
 			f.mu.Unlock()
 			user.Evict(context.Background(), er)
 		}
-	}()
+	})
 }
 
 // WaitForEvictions blocks until f is no longer evicting any evictable

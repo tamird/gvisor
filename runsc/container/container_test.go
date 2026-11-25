@@ -3944,20 +3944,16 @@ func TestDestroyStarting(t *testing.T) {
 			t.Fatalf("error loading container: %v", err)
 		}
 		wg := sync.WaitGroup{}
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			// Ignore failures, start can fail if destroy runs first.
 			_ = startCont.Start(conf)
-		}()
+		})
 
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if err := c.Destroy(); err != nil {
 				t.Errorf("deleting non-started container failed: %v", err)
 			}
-		}()
+		})
 		wg.Wait()
 	}
 }

@@ -886,11 +886,9 @@ func (k *Kernel) saveToLocked(ctx context.Context, stateFile, pagesMetadata io.W
 	)
 	if parallelMFSave {
 		// Parallelize MemoryFile save and kernel save. Both are independent.
-		mfSaveWg.Add(1)
-		go func() {
-			defer mfSaveWg.Done()
+		mfSaveWg.Go(func() {
 			mfSaveErr = k.saveMemoryFiles(ctx, nil, pagesMetadata, pagesFile, mfsToSaveActual, appMFExcludeCommittedZeroPages, resume) // transfers ownership
-		}()
+		})
 		pagesCleanup.Release()
 		// Defer a Wait() so we wait for k.saveMemoryFiles() to complete even if we
 		// error out without reaching the other Wait() below.

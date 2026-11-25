@@ -77,9 +77,7 @@ func testGateConcurrentOnce(t *testing.T, d time.Duration) {
 	// Start a large number of goroutines that repeatedly attempt to enter the
 	// gate and get the expected result.
 	for range numGoroutines {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for ctx.Err() == nil {
 				closedBeforeEnter := atomic.LoadInt32(&closeState) == 2
 				if g.Enter() {
@@ -102,7 +100,7 @@ func testGateConcurrentOnce(t *testing.T, d time.Duration) {
 				// Go does not preempt busy loops until Go 1.14.
 				runtime.Gosched()
 			}
-		}()
+		})
 	}
 
 	// Allow goroutines to enter the gate successfully for half of the test's

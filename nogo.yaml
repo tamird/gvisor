@@ -194,12 +194,8 @@ analyzers:
   waitgroupgo:
     internal:
       exclude:
-        - ".*" # Temporary: migrate waitgroupgo.
         # The pinned compiler keeps an escaping callback plus WaitGroup.Go's wrapper.
         - '^pkg/sentry/kernel/aio\.go:29:2$'
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate waitgroupgo.
   scannererr:
     internal:
       exclude:

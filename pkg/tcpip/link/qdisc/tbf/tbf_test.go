@@ -704,9 +704,7 @@ func TestFastSimultaneousWrites(t *testing.T) {
 	const nWrites = 100
 	var wg sync.WaitGroup
 	for range nWriters {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range nWrites {
 				pkt := newPkt(64)
 				// WritePacket errors (e.g. ErrNoBufferSpace if the
@@ -715,7 +713,7 @@ func TestFastSimultaneousWrites(t *testing.T) {
 				_ = d.WritePacket(pkt)
 				pkt.DecRef()
 			}
-		}()
+		})
 	}
 	wg.Wait()
 	d.Close()
@@ -764,15 +762,13 @@ func TestCloseConcurrentWithWritePacket(t *testing.T) {
 		}
 		var wg sync.WaitGroup
 		for range nWriters {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				for range nWrites {
 					pkt := newPkt(64)
 					_ = d.WritePacket(pkt)
 					pkt.DecRef()
 				}
-			}()
+			})
 		}
 		d.Close()
 		wg.Wait()

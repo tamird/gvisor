@@ -2168,9 +2168,7 @@ func TestConcurrentFragmentWrites(t *testing.T) {
 	var wg sync.WaitGroup
 	defer wg.Wait()
 	for range 3 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range 10 {
 				for _, f := range fragments {
 					hdr := prependable.New(header.IPv6MinimumSize)
@@ -2196,7 +2194,7 @@ func TestConcurrentFragmentWrites(t *testing.T) {
 					pkt.DecRef()
 				}
 			}
-		}()
+		})
 	}
 }
 

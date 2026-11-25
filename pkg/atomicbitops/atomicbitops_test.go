@@ -330,11 +330,9 @@ func TestAddFloat64(t *testing.T) {
 			fParallel2 := FromFloat64(a)
 			var wg sync.WaitGroup
 			spawn := func(f func()) {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
+				wg.Go(func() {
 					f()
-				}()
+				})
 			}
 			spawn(func() {
 				fCanonical += b

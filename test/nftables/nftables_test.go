@@ -76,9 +76,7 @@ func nftablesTest(t *testing.T, test TestCase, ipv6 bool) {
 
 	// Run our side of the test.
 	errCh := make(chan error, 2)
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		if err := test.LocalAction(ctx, ip, ipv6); err != nil && !errors.Is(err, context.Canceled) {
 			errCh <- fmt.Errorf("LocalAction failed: %v", err)
 		} else {
@@ -87,12 +85,10 @@ func nftablesTest(t *testing.T, test TestCase, ipv6 bool) {
 		if test.LocalSufficient() {
 			errCh <- nil
 		}
-	}()
+	})
 
 	// Run the container side.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		// Wait for the final statement. This structure has the side
 		// effect that all container logs will appear within the
 		// individual test context.
@@ -104,7 +100,7 @@ func nftablesTest(t *testing.T, test TestCase, ipv6 bool) {
 		if test.ContainerSufficient() {
 			errCh <- nil
 		}
-	}()
+	})
 
 	for range 2 {
 		if err := <-errCh; err != nil {

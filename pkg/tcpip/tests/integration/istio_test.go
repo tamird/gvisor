@@ -224,16 +224,12 @@ func newTestContext(t *testing.T) *testContext {
 }
 
 func (ctx *testContext) startServers(t *testing.T) {
-	ctx.wg.Add(1)
-	go func() {
-		defer ctx.wg.Done()
+	ctx.wg.Go(func() {
 		ctx.startHTTPServer()
-	}()
-	ctx.wg.Add(1)
-	go func() {
-		defer ctx.wg.Done()
+	})
+	ctx.wg.Go(func() {
 		ctx.startTCPProxyServer(t)
-	}()
+	})
 }
 
 func (ctx *testContext) startTCPProxyServer(t *testing.T) {

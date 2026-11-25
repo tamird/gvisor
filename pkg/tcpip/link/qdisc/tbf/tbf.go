@@ -193,11 +193,9 @@ func New(lower stack.LinkEndpoint, clock tcpip.Clock, rate uint64, burst, queueL
 		timeCheckpoint: clock.NowMonotonic(),
 	}
 	d.queue.Init(int(queueLen))
-	d.wg.Add(1)
-	go func() {
-		defer d.wg.Done()
+	d.wg.Go(func() {
 		d.dispatchLoop()
-	}()
+	})
 	return d, nil
 }
 

@@ -183,16 +183,14 @@ func ChannelHandler(c *Connection, comm Communicator, payloadLen uint32) (uint32
 	}
 
 	// Start servicing the channel in a separate goroutine.
-	c.activeWg.Add(1)
-	go func() {
+	c.activeWg.Go(func() {
 		if err := c.service(ch); err != nil {
 			// Don't log shutdown error which is expected during server shutdown.
 			if _, ok := err.(flipcall.ShutdownError); !ok {
 				log.Warningf("lisafs.Connection.service(channel = @%p): %v", ch, err)
 			}
 		}
-		c.activeWg.Done()
-	}()
+	})
 
 	clientDataFD, err := unix.Dup(desc.FD)
 	if err != nil {

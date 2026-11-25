@@ -894,14 +894,12 @@ func (t *Task) execOnDestroyActions() {
 	}
 	ctx := t.k.SupervisorContext()
 	// Block S/R until all actions is executed.
-	t.k.tasks.aioGoroutines.Add(1)
 	// Run in another goroutine to avoid extra lock dependencies.
-	go func() {
-		defer t.k.tasks.aioGoroutines.Done()
+	t.k.tasks.aioGoroutines.Go(func() {
 		for act := range actions {
 			act.TaskDestroyAction(ctx)
 		}
-	}()
+	})
 }
 
 // Preconditions: The TaskSet mutex must be locked.

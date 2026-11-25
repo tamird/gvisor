@@ -670,22 +670,18 @@ func TestTimerMetric(t *testing.T) {
 	// Create timer data.
 	var wg sync.WaitGroup
 	for range 5 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			op := timer.Start(&fieldValFoo)
 			defer op.Finish(&fieldValQuux)
 			time.Sleep(250 * time.Millisecond)
-		}()
+		})
 	}
 	for range 3 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			op := timer.Start()
 			defer op.Finish(&fieldValFoo, &fieldValQuux)
 			time.Sleep(750 * time.Millisecond)
-		}()
+		})
 	}
 	wg.Wait()
 	EmitMetricUpdate()

@@ -93,16 +93,14 @@ func TestMultipleAccept(t *testing.T) {
 	var wg sync.WaitGroup
 	defer wg.Wait()
 	for range backlog {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			s, err := Connect(name, false)
 			if err != nil {
 				t.Errorf("Connect failed, got err %v expected nil", err)
 				return
 			}
 			s.Close()
-		}()
+		})
 	}
 
 	// Accept backlog times.
@@ -603,14 +601,12 @@ func TestCloseAfterAcceptStart(t *testing.T) {
 	}
 
 	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		time.Sleep(50 * time.Millisecond)
 		if err := ss.Close(); err != nil {
 			t.Errorf("Close failed, got err %v expected nil", err)
 		}
-	}()
+	})
 
 	if _, err := ss.Accept(); err == nil {
 		t.Errorf("Accept on closed SocketServer, got err %v, want != nil", err)
@@ -631,16 +627,14 @@ func TestReleaseAfterAcceptStart(t *testing.T) {
 	}
 
 	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		time.Sleep(50 * time.Millisecond)
 		fd, err := ss.Release()
 		if err != nil {
 			t.Errorf("Release failed, got err %v expected nil", err)
 		}
 		unix.Close(fd)
-	}()
+	})
 
 	if _, err := ss.Accept(); err == nil {
 		t.Errorf("Accept on closed SocketServer, got err %v, want != nil", err)

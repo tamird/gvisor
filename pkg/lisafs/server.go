@@ -92,11 +92,9 @@ func (s *Server) withRenameReadLock(fn func() error) error {
 
 // StartConnection starts the connection on a separate goroutine and tracks it.
 func (s *Server) StartConnection(c *Connection) {
-	s.connWg.Add(1)
-	go func() {
+	s.connWg.Go(func() {
 		c.Run()
-		s.connWg.Done()
-	}()
+	})
 }
 
 // Wait waits for all connections started via StartConnection() to terminate.

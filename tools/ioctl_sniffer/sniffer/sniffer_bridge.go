@@ -145,12 +145,10 @@ func (s *Server) Serve(ctx context.Context) error {
 				return
 			}
 
-			s.connectionsWG.Add(1)
-			go func() {
+			s.connectionsWG.Go(func() {
 				conn := Connection{conn: conn}
 				s.resultsChan <- conn.ReadHookOutput(ctx)
-				s.connectionsWG.Done()
-			}()
+			})
 		}
 	}()
 

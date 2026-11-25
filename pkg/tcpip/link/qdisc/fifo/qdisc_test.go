@@ -68,9 +68,7 @@ func TestFastSimultaneousWrites(t *testing.T) {
 	nWrites := 100
 	var wg sync.WaitGroup
 	for range nWriters {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range nWrites {
 				pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 					Payload: buffer.MakeWithData(v),
@@ -79,7 +77,7 @@ func TestFastSimultaneousWrites(t *testing.T) {
 				linkEP.WritePacket(pkt)
 				pkt.DecRef()
 			}
-		}()
+		})
 	}
 	wg.Wait()
 	linkEP.Close()
@@ -145,9 +143,7 @@ func TestCloseConcurrentWithWritePacket(t *testing.T) {
 		var wg sync.WaitGroup
 		startGate := make(chan struct{})
 		for range nWriters {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				<-startGate
 				for range nWrites {
 					pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
@@ -157,7 +153,7 @@ func TestCloseConcurrentWithWritePacket(t *testing.T) {
 					linkEP.WritePacket(pkt)
 					pkt.DecRef()
 				}
-			}()
+			})
 		}
 		close(startGate)
 		runtime.Gosched()

@@ -299,9 +299,7 @@ func (e *endpoint) Attach(dispatcher stack.NetworkDispatcher) {
 
 		// Spin up a goroutine to monitor for peer shutdown.
 		if e.peerFD >= 0 {
-			e.completed.Add(1)
-			go func() {
-				defer e.completed.Done()
+			e.completed.Go(func() {
 				b := make([]byte, 1)
 				// When sharedmem endpoint is in use the peerFD is never used for any data
 				// transfer and this Read should only return if the peer is shutting down.
@@ -313,7 +311,7 @@ func (e *endpoint) Attach(dispatcher stack.NetworkDispatcher) {
 						e.onClosed(tcpip.TranslateErrno(errno))
 					}
 				}
-			}()
+			})
 		}
 
 		// Link endpoints are not savable. When transportation endpoints

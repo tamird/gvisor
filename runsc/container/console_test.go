@@ -431,15 +431,13 @@ func TestJobControlSignalRootContainer(t *testing.T) {
 		ws unix.WaitStatus
 		wg sync.WaitGroup
 	)
-	wg.Add(1)
-	go func() {
+	wg.Go(func() {
 		var err error
 		ws, err = c.Wait()
 		if err != nil {
 			t.Errorf("error waiting on container: %v", err)
 		}
-		wg.Done()
-	}()
+	})
 
 	// Wait for bash to start.
 	expectedPL := []*controlapi.Process{
