@@ -426,13 +426,6 @@ analyzers:
     # Controversial.
     internal:
       exclude: [".*"]
-  errorsastype:
-    internal:
-      exclude:
-        - ".*" # Temporary: migrate errorsastype.
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate errorsastype.
   stdversion:
     internal:
       exclude:

@@ -285,8 +285,7 @@ func (c *cgroupSystemd) Join() (func(), error) {
 // exists.
 func unitAlreadyExists(err error) bool {
 	if err != nil {
-		var derr dbus.Error
-		if errors.As(err, &derr) {
+		if derr, ok := errors.AsType[dbus.Error](err); ok {
 			return strings.Contains(derr.Name, "org.freedesktop.systemd1.UnitExists")
 		}
 	}

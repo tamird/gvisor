@@ -230,8 +230,7 @@ func (h *hostinetSR) logResult(op string, err error) {
 		h.logf("%s ERRNO=%d", op, errno)
 		return
 	}
-	var netErr net.Error
-	if errors.As(err, &netErr) && netErr.Timeout() {
+	if netErr, ok := errors.AsType[net.Error](err); ok && netErr.Timeout() {
 		h.logf("%s TIMEOUT", op)
 		return
 	}
@@ -264,9 +263,5 @@ func (h *hostinetSR) mustRawConn(c syscallConner) sys.RawConn {
 
 // errnoOf unwraps the errno from err, if any.
 func errnoOf(err error) (sys.Errno, bool) {
-	var errno sys.Errno
-	if errors.As(err, &errno) {
-		return errno, true
-	}
-	return 0, false
+	return errors.AsType[sys.Errno](err)
 }

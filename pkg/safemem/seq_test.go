@@ -267,8 +267,7 @@ func TestCopySeqToUnsafeFault(t *testing.T) {
 	if n != uint64(pageSize) {
 		t.Errorf("CopySeqToUnsafe: got %d bytes copied, wanted %d", n, pageSize)
 	}
-	var busErr safecopy.BusError
-	if !errors.As(err, &busErr) {
+	if _, ok := errors.AsType[safecopy.BusError](err); !ok {
 		t.Errorf("CopySeqToUnsafe: got error %v, wanted safecopy.BusError", err)
 	}
 	if !bytes.Equal(m[:pageSize], src[:pageSize]) {

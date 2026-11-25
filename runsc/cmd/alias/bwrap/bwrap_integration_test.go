@@ -997,8 +997,7 @@ func TestAsPID1ExitStatus(t *testing.T) {
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	err := testutil.RunCmd(cmd)
-	var exitErr *exec.ExitError
-	if !errors.As(err, &exitErr) || exitErr.ExitCode() != 7 {
+	if exitErr, ok := errors.AsType[*exec.ExitError](err); !ok || exitErr.ExitCode() != 7 {
 		t.Errorf("runsc bwrap = %v, want exit status 7\nStderr: %s", err, stderr.String())
 	}
 }

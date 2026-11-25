@@ -569,8 +569,7 @@ func TestRunPasstModeWithSeccomp(t *testing.T) {
 	_ = peers.sentry.Close()
 	waited = true
 	if err := cmd.Wait(); err != nil {
-		var exitErr *exec.ExitError
-		if errors.As(err, &exitErr) {
+		if _, ok := errors.AsType[*exec.ExitError](err); ok {
 			t.Fatalf("seccomp child exited with %v; output:\n%s", err, out.String())
 		}
 		t.Fatalf("cmd.Wait() failed: %v", err)

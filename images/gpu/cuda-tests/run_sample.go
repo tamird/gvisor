@@ -224,7 +224,7 @@ func (c *Command) ExitCode(ctx context.Context) (int, error) {
 	if c.waitErr == nil {
 		return 0, nil
 	}
-	if exitErr := (*exec.ExitError)(nil); errors.As(c.waitErr, &exitErr) {
+	if exitErr, ok := errors.AsType[*exec.ExitError](c.waitErr); ok {
 		return exitErr.ExitCode(), nil
 	}
 	return 0, fmt.Errorf("process exit did not carry exit code: %w", c.waitErr)
@@ -1036,7 +1036,7 @@ func Main(ctx context.Context) (int, error) {
 		if err != nil {
 			log("> Test failed: %s (%s)", testName, err)
 			lastErr = fmt.Errorf("test %q failed: %w", testName, err)
-			if exitErr := (*exec.ExitError)(nil); errors.As(err, &exitErr) && exitErr.ExitCode() > 0 {
+			if exitErr, ok := errors.AsType[*exec.ExitError](err); ok && exitErr.ExitCode() > 0 {
 				exitCode = exitErr.ExitCode()
 			}
 			continue
