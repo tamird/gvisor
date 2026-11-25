@@ -246,8 +246,8 @@ while [[ $# -gt 0 ]]; do
       echo " --xdp                 use AF_XDP socket instead of AF_PACKET"
       echo " --no-user-ns          don't run in a new user namespace. Useful for testing as root"
       echo ""
-      echo "The output will of the script will be:"
-      echo "  <throughput> <client-cpu-usage> <server-cpu-usage>"
+      echo "Output is a benchfmt row with throughput and the selected proxy CPU load:"
+      echo "  BenchmarkTCP/... 1 <throughput> Mb/s <cpu-load> cpu-time"
       exit 1
   esac
   shift
@@ -329,7 +329,13 @@ if [[ "$(echo "$half_duplicate" | bc -q)" != "0" ]]; then
   duplicate_opt="duplicate ${half_duplicate}%"
 fi
 
-exec unshare "${unshare_opts[@]}" -m -n -f -p --mount-proc /bin/bash << EOF
+case "$(uname -m)" in
+  x86_64) goarch=amd64 ;;
+  aarch64) goarch=arm64 ;;
+  *) echo "unsupported benchmark architecture: $(uname -m)" >&2; exit 1 ;;
+esac
+
+exec unshare "${unshare_opts[@]}" -m -n -f -p --mount-proc --kill-child /bin/bash << EOF
 set -e -m
 
 if [[ ${verbose} == "true" ]]; then
@@ -570,6 +576,9 @@ hostgro=true
 if [[ "${disable_linux_gro}" ]]; then
   hostgro=false
 fi
+
+echo "goos: linux"
+echo "goarch: ${goarch}"
 
 if ${client}; then
   echo "BenchmarkTCP/role=client/host-gso=\$hostgso/host-gro=\$hostgro 1 \$mbits Mb/s \$client_cpu_load cpu-time"
