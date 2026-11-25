@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T18:07:51.449024+00:00",
+    "updatedAt": "2026-11-25T18:10:18.891890+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -111772,9 +111772,10 @@
       "from": "pr:17884",
       "to": "investigation:repository-lint",
       "type": "depends_on",
-      "reason": "The current 54-commit analyzer series has exact prerequisite parent 0c7e69e359 from open #17884. Its landing remains a source-delivery prerequisite; focused qualification does not complete behavioral or performance obligations.",
+      "reason": "The analyzer series retains exact base 0c7e69e359 from open #17884. Its landing remains a source-delivery prerequisite; endpoint/static qualification does not complete behavioral or performance obligations.",
       "evidence": [
         "https://github.com/gvisor/gvisor/pull/17884",
+        "https://github.com/tamird/gvisor/compare/0c7e69e359dbfc284a7d109ad007395086a70cd4...0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "https://github.com/tamird/gvisor/compare/0c7e69e359dbfc284a7d109ad007395086a70cd4...26090b334cf9c5f4657ec33aef64efc6fa86ef82"
       ]
     },
