@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-25T16:17:23.742287+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-25T18:10:18.891890+00:00",
+  "registryDate": "2026-11-25T18:47:37.715770+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -235001,14 +235001,14 @@
       "repo": "google/gvisor",
       "title": "Generate systrap stub offsets from the linked ELF",
       "url": "https://github.com/google/gvisor/pull/16516",
-      "status": "open",
+      "status": "merged",
       "ref": "review/systrap-elf-offsets",
       "head": "d890ca5f5151167a7fb02694bd8d6e6209fff2d4",
       "base": "8075b38443e475fd4e12ef9d423e2cd460e2396d",
       "branchHead": "d890ca5f5151167a7fb02694bd8d6e6209fff2d4",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
-      "mergeabilityCheckedAt": "2026-11-25T16:14:10.696124+00:00",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-11-25T18:46:22.232664+00:00",
       "headCommittedAt": "2026-11-25T15:15:33Z",
       "headHistoryComplete": true,
       "headRebasedFrom": "a9594385d15d2e17e5dd7491be94d774f47fa80e",
@@ -235016,11 +235016,11 @@
       "headOwner": "tamird",
       "headRepo": "tamird/gvisor",
       "authorLogin": "tamird",
-      "updatedAt": "2026-11-25T15:15:36Z",
+      "updatedAt": "2026-11-25T17:12:29Z",
       "createdAt": "2026-10-27T18:03:43Z",
-      "mergedAt": null,
-      "closedAt": null,
-      "mergeCommit": null,
+      "mergedAt": "2026-11-25T17:12:28Z",
+      "closedAt": "2026-11-25T17:12:29Z",
+      "mergeCommit": "617f38be69af1bf38ca015b6d395ae827619197f",
       "githubReviewDecision": "APPROVED",
       "reviewsComplete": true,
       "commentsComplete": true,
@@ -235044,7 +235044,32 @@
       "labelsComplete": true,
       "labelHistory": {
         "complete": true,
-        "items": []
+        "items": [
+          {
+            "__typename": "LabeledEvent",
+            "id": "LE_lADOB9IlXs8AAAABaX9h_M8AAAAIrbKC-Q",
+            "createdAt": "2026-11-25T16:27:30Z",
+            "actor": {
+              "login": "tamird",
+              "__typename": "User"
+            },
+            "label": {
+              "name": "ready to test"
+            }
+          },
+          {
+            "__typename": "UnlabeledEvent",
+            "id": "UNLE_lADOB9IlXs8AAAABaX9h_M8AAAAIrbLbPg",
+            "createdAt": "2026-11-25T16:27:42Z",
+            "actor": {
+              "login": "github-actions",
+              "__typename": "Bot"
+            },
+            "label": {
+              "name": "ready to test"
+            }
+          }
+        ]
       },
       "threads": {
         "unresolved": 0,
@@ -235097,6 +235122,18 @@
             "body": "What happened to CI here? All the jobs appear to have been externally killed (repeatedly)?",
             "createdAt": "2026-11-24T15:24:18Z",
             "updatedAt": "2026-11-24T15:24:18Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABqzzgng",
+            "url": "https://github.com/google/gvisor/pull/16516#issuecomment-7167860894",
+            "body": "Rebased on master.\n\nPosted by Codex on behalf of @tamird.\n",
+            "createdAt": "2026-11-25T16:22:06Z",
+            "updatedAt": "2026-11-25T16:22:06Z",
             "author": {
               "login": "tamird",
               "__typename": "User"
@@ -235174,9 +235211,25 @@
       },
       "checks": {
         "state": "SUCCESS",
-        "total": 12,
-        "reportedTotal": 12,
-        "supersededContexts": [],
+        "total": 14,
+        "reportedTotal": 15,
+        "supersededContexts": [
+          {
+            "id": "CR_kwDOB9IlXs8AAAAgb1alCA",
+            "name": "notify",
+            "state": "SUCCESS",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45643149565/job/139306902792",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Pull Request Change",
+            "workflowId": "W_kwDOB9IlXs4ZQb07",
+            "runNumber": 176,
+            "runAttempt": 1,
+            "purpose": "validation"
+          }
+        ],
         "complete": true,
         "contexts": [
           {
@@ -235270,17 +235323,32 @@
             "purpose": "validation"
           },
           {
-            "id": "CR_kwDOB9IlXs8AAAAgb1alCA",
+            "id": "CR_kwDOB9IlXs8AAAAgc2YYCg",
             "name": "notify",
             "state": "SUCCESS",
-            "url": "https://github.com/gvisor/gvisor/actions/runs/45643149565/job/139306902792",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45662290395/job/139375024138",
             "kind": "check-run",
             "app": "GitHub Actions",
             "appSlug": "github-actions",
             "appId": "MDM6QXBwMTUzNjg=",
             "workflow": "Pull Request Change",
             "workflowId": "W_kwDOB9IlXs4ZQb07",
-            "runNumber": 176,
+            "runNumber": 190,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAgcarMxQ",
+            "name": "remove",
+            "state": "SUCCESS",
+            "url": "https://github.com/gvisor/gvisor/actions/runs/45654080490/job/139345972421",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Remove \"ready to test\" label",
+            "workflowId": "W_kwDOB9IlXs4ZO0Xm",
+            "runNumber": 134,
             "runAttempt": 1,
             "purpose": "validation"
           },
@@ -235335,6 +235403,16 @@
             "state": "SUCCESS",
             "url": "https://buildkite.com/gvisor/first-pass/builds/2823",
             "description": "Build #2823 passed (25 minutes, 21 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOB9IlXs8AAAAN8fZllA",
+            "name": "buildkite/pipeline/pr",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/gvisor/pipeline/builds/55911",
+            "description": "Build #55911 passed (44 minutes, 46 seconds)",
             "app": null,
             "kind": "status",
             "purpose": "validation"
@@ -235409,16 +235487,10 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-11-25T16:16:29.141419+00:00",
-      "mergeabilityObservation": {
-        "state": "MERGEABLE",
-        "head": "d890ca5f5151167a7fb02694bd8d6e6209fff2d4",
-        "base": "8075b38443e475fd4e12ef9d423e2cd460e2396d",
-        "checkedAt": "2026-11-25T16:14:10.696124+00:00"
-      },
+      "checkedAt": "2026-11-25T18:46:22.232664+00:00",
+      "imports": [],
       "importsComplete": true,
       "importPolicy": "none",
-      "imports": [],
       "maintainerReviewers": [
         "etienneperot",
         "manninglucas"
@@ -235433,7 +235505,32 @@
           "labelsComplete": true,
           "labelHistory": {
             "complete": true,
-            "items": []
+            "items": [
+              {
+                "__typename": "LabeledEvent",
+                "id": "LE_lADOB9IlXs8AAAABaX9h_M8AAAAIrbKC-Q",
+                "createdAt": "2026-11-25T16:27:30Z",
+                "actor": {
+                  "login": "tamird",
+                  "__typename": "User"
+                },
+                "label": {
+                  "name": "ready to test"
+                }
+              },
+              {
+                "__typename": "UnlabeledEvent",
+                "id": "UNLE_lADOB9IlXs8AAAABaX9h_M8AAAAIrbLbPg",
+                "createdAt": "2026-11-25T16:27:42Z",
+                "actor": {
+                  "login": "github-actions",
+                  "__typename": "Bot"
+                },
+                "label": {
+                  "name": "ready to test"
+                }
+              }
+            ]
           },
           "imports": [],
           "eligible": false
@@ -461550,24 +461647,6 @@
     },
     {
       "repo": "google/gvisor",
-      "number": 16516,
-      "head": "d890ca5f5151167a7fb02694bd8d6e6209fff2d4",
-      "sourceNumber": 16516,
-      "owner": "root",
-      "kind": "review",
-      "id": "PRR_kwDOB9IlXs8AAAABX2pTRQ",
-      "needsTriage": false,
-      "url": "https://github.com/google/gvisor/pull/16516#pullrequestreview-5895770949",
-      "author": "manninglucas",
-      "updatedAt": "2026-11-13T18:02:05Z",
-      "newOrChanged": false,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
       "number": 16597,
       "head": "ebd4fe7f691f7903c0efaeab5f0113958b4193e3",
       "sourceNumber": 16597,
@@ -474608,12 +474687,12 @@
       }
     },
     "pr:16516": {
-      "maintainer-review": {
+      "merged": {
         "scope": "d890ca5f5151167a7fb02694bd8d6e6209fff2d4",
-        "since": "2026-11-25T16:16:29.141419+00:00",
-        "basis": "observed",
-        "qualifier": "No effective approval for the current head",
-        "observedAt": "2026-11-25T16:16:29.141419+00:00"
+        "since": "2026-11-25T17:12:28Z",
+        "basis": "transition",
+        "qualifier": null,
+        "observedAt": "2026-11-25T18:46:22.232664+00:00"
       }
     },
     "pr:16518": {
@@ -479559,7 +479638,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T18:10:18.891890+00:00"
+        "observedAt": "2026-11-25T18:47:37.715770+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -479568,7 +479647,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T18:10:18.891890+00:00"
+        "observedAt": "2026-11-25T18:47:37.715770+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -479577,7 +479656,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T18:10:18.891890+00:00"
+        "observedAt": "2026-11-25T18:47:37.715770+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -479586,7 +479665,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T18:10:18.891890+00:00"
+        "observedAt": "2026-11-25T18:47:37.715770+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -479595,7 +479674,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T18:10:18.891890+00:00"
+        "observedAt": "2026-11-25T18:47:37.715770+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -479604,7 +479683,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T18:10:18.891890+00:00"
+        "observedAt": "2026-11-25T18:47:37.715770+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -479613,7 +479692,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T18:10:18.891890+00:00"
+        "observedAt": "2026-11-25T18:47:37.715770+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -479622,7 +479701,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T18:10:18.891890+00:00"
+        "observedAt": "2026-11-25T18:47:37.715770+00:00"
       }
     },
     "issue:17832": {
@@ -479631,7 +479710,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T18:10:18.891890+00:00"
+        "observedAt": "2026-11-25T18:47:37.715770+00:00"
       }
     },
     "branch:arm-premerge-cpp-lint": {
@@ -479640,7 +479719,7 @@
         "since": "2026-11-24T18:07:30.803456+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T18:10:18.891890+00:00"
+        "observedAt": "2026-11-25T18:47:37.715770+00:00"
       }
     },
     "investigation:runtime-startup": {
@@ -479649,7 +479728,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T18:10:18.891890+00:00"
+        "observedAt": "2026-11-25T18:47:37.715770+00:00"
       }
     },
     "investigation:cc-format-declared-inputs": {
@@ -479658,7 +479737,7 @@
         "since": "2026-11-22T18:34:16+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T18:10:18.891890+00:00",
+        "observedAt": "2026-11-25T18:47:37.715770+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/aa96c20111c99e1bd0cc47a4b127caac74435616/registry.json"
       }
     }
