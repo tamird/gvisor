@@ -101,7 +101,7 @@ func (m *AtomicPtrMap) shard(hash uintptr) *apmShard {
 	// nogo is dumb).
 	const indexLSB = unsafe.Sizeof(uintptr(0))*8 - ShardOrder
 	index := hash >> indexLSB
-	return (*apmShard)(unsafe.Pointer(uintptr(unsafe.Pointer(&m.shards)) + (index * unsafe.Sizeof(apmShard{}))))
+	return (*apmShard)(unsafe.Add(unsafe.Pointer(&m.shards), index*unsafe.Sizeof(apmShard{})))
 }
 
 type apmShard struct {
@@ -171,7 +171,7 @@ type apmSlot struct {
 }
 
 func apmSlotAt(slots unsafe.Pointer, pos uintptr) *apmSlot {
-	return (*apmSlot)(unsafe.Pointer(uintptr(slots) + pos*unsafe.Sizeof(apmSlot{})))
+	return (*apmSlot)(unsafe.Add(slots, pos*unsafe.Sizeof(apmSlot{})))
 }
 
 var tombstoneObj byte

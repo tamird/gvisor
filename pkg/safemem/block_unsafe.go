@@ -114,7 +114,7 @@ func (b Block) DropFirst64(n uint64) Block {
 		return Block{}
 	}
 	return Block{
-		start:        unsafe.Pointer(uintptr(b.start) + uintptr(n)),
+		start:        unsafe.Add(b.start, n),
 		length:       b.length - int(n),
 		needSafecopy: b.needSafecopy,
 	}

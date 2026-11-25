@@ -138,5 +138,5 @@ func (ep *Endpoint) recvFD(nonblock bool) (int, error) {
 
 func (ep *Endpoint) cmsgData() *int32 {
 	// unix.CmsgLen(0) == unix.cmsgAlignOf(unix.SizeofCmsghdr)
-	return (*int32)(unsafe.Pointer(uintptr(unsafe.Pointer(ep.cmsg)) + uintptr(unix.CmsgLen(0))))
+	return (*int32)(unsafe.Add(unsafe.Pointer(ep.cmsg), unix.CmsgLen(0)))
 }
