@@ -20,8 +20,10 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"maps"
 	"math"
 	"runtime"
+	"slices"
 	"sync/atomic"
 	"time"
 
@@ -2233,7 +2235,7 @@ func (aplUnloadedSetFunctions) Split(fr memmap.FileRange, ul aplUnloadedInfo, sp
 		// "copy-on-append", saving an allocation if ul2 is never appended-to.
 		// This is safe since existing elements in ul.waiters will never be
 		// mutated.
-		waiters: ul.waiters[:len(ul.waiters):len(ul.waiters)],
+		waiters: slices.Clip(ul.waiters),
 	}
 	return ul, ul2
 }

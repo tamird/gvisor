@@ -410,13 +410,6 @@ analyzers:
     # Controversial.
     internal:
       exclude: [".*"]
-  slicesclip:
-    internal:
-      exclude:
-        - ".*" # Temporary: migrate slicesclip.
-    generated:
-      exclude:
-        - ".*" # Temporary: migrate slicesclip.
   slicescontains:
     internal:
       exclude:
