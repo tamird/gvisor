@@ -29885,8 +29885,8 @@
       "url": "https://github.com/tamird/gvisor/commit/768579797",
       "group": "bazel",
       "status": "Waiting for the package release and #17168",
-      "updatedAt": "2026-11-17T20:32:28.027492+00:00",
-      "summary": "Ubuntu\u2019s packaged tcpdump captured both payloads on the any and loopback interfaces under runc and corrected systrap on native AMD64 and ARM64. All eight captures verified the dropped UID and GID. The AMD64 trace also confirmed PACKET_RESERVE readback.\n\nThe rules_distroless 0.11.1 release proposed for BCR lists only two of the 47 installed packages in the dpkg status file. The revised 225-entry catalog passed Fetch and Verify. Its manually recorded Ubuntu keyring matched the 3,607 bytes in Ubuntu\u2019s source archive. Both Make archives matched the earlier builds. The corresponding BCR release and supplier inventory fix are open. The separate source-built revision remains approved on its original conditions.\n\nWith rules_distroless #294 applied to 0.11.1, dpkg lists all 47 installed packages in each image. All versions and architectures matched the signed lock. All 1,882 AMD64 and 1,881 ARM64 regular-file comparisons matched the signed packages. Both Make image archives built and the license check passed. The AMD64 image also ran tcpdump under runc. This run inspected the ARM64 archive.\n\nThe registry\u2019s two macOS jobs stop at the GnuPG setup because brew is missing. Its Bazel 8 jobs on Debian and Ubuntu fail with native repository rules disabled. The generated tar and zstd toolchains still load local_config_platform. On Bazel 8.8.2, rules_distroless\u2019s direct pin of aspect_bazel_lib 2.14.0 caused both obsolete toolchain loads. Updating that pin to 2.19.1 cleared both. The signed February 2024 Debian snapshot then returned HTTP 503, before any candidate smoke test ran.",
+      "updatedAt": "2026-11-26T06:25:44.630702+00:00",
+      "summary": "Tcpdump resource relocation and scoped image/runtime/package qualification are complete. Distro revision768579797 still requires #17168 and a usable BCR release containing rules_distroless #294; #294/BCR#11526 remain open. Even v0.11.2 lacks the required package inventory mechanism. The separate original source-built approval is preserved; no upstream PR is open.",
       "links": [
         {
           "label": "Signed Ubuntu package revision",
@@ -29933,8 +29933,8 @@
         "owner": "root",
         "sourceHead": "768579797b0d15dedee7b974dde31d09e529a152",
         "observedAt": "2026-11-09T21:42:44+00:00",
-        "disposition": "Both image inventories and payloads verified with the supplier fix.",
-        "nextAction": "Use the BCR release containing rules_distroless #294 when it is available. The 0.11.1 registry submission has maintainer approval and four failed presubmit jobs. The all-interfaces capture needs gVisor #17168.",
+        "disposition": "Tcpdump resource relocation and scoped image/runtime/package qualification are complete. Distro revision768579797 still requires #17168 and a usable BCR release containing rules_distroless #294; #294/BCR#11526 remain open. Even v0.11.2 lacks the required package inventory mechanism. The separate original source-built approval is preserved; no upstream PR is open.",
+        "nextAction": "Retain completed resource relocation, image/runtime/package evidence and the separate original source-built approval. Distro revision768579797 remains blocked by #17168 and a usable BCR release containing rules_distroless #294. #294 and BCR #11526 remain OPEN; released v0.11.2 still selects only root package controls and lacks package_controls.bzl, so the supplier-inventory prerequisite is not satisfied by that newer tag. No resource replay, automatic retry or upstream opening.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42703973355/artifacts/13713441827",
           "https://github.com/bazel-contrib/rules_distroless/pull/294",
@@ -29953,7 +29953,19 @@
           "owner": "root"
         },
         "technicalOwner": "Agent",
-        "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings."
+        "recheckCondition": "The named APT/shared-base or supplier/#17168 prerequisite advances, or actual source/publication evidence changes. Preserve exact-source approvals and independent holds.",
+        "curatedAt": "2026-11-26T06:25:44.630702+00:00",
+        "imageResourceReconciliation": {
+          "observedAt": "2026-11-26T06:18:56.196579+00:00",
+          "sourceProof": [
+            "ACL48d and sudo18b exact fork refs verified; no upstream exact-ref PR aliases",
+            "Both owning image_manifest declarations use //images:helper_base; filecapc684 same",
+            "Current master images/BUILD and published #16871 lack helper_base; current master MODULE has no rules_distroless/gawk/rules_cc_autoconf override",
+            "Current upstream checker has no apt/* enumeration implementation; f45 topic remains separate",
+            "v0.11.2 apt/private/translate_dependency_set.bzl dpkg_status still uses root _PACKAGES control targets; package_controls.bzl absent"
+          ],
+          "noNewDelivery": true
+        }
       },
       "evidence": [
         {
@@ -30238,9 +30250,9 @@
       "title": "Assemble the ACL test image from pinned packages",
       "url": "https://github.com/tamird/gvisor/commit/48d5e28f1403617d5f277b0b70fef9f3c72b7e8b",
       "group": "bazel",
-      "status": "Contributor approved; resource layout complete; awaiting prerequisites",
-      "updatedAt": "2026-11-17T20:32:28.027492+00:00",
-      "summary": "Requested resource relocation and equivalent base refresh are complete at 48d5e28f14. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nThe requested resource-directory move now passes strict archive and Make-context byte equality on both architectures. A same-public-label source build isolates the eleven sudo/ACL resource references and matches all eight retained after-layout outputs. Earlier alias comparisons failed only because raw-layer history included the alias names; those failed results remain explicit. Independent terminal acceptance confirms all eight outputs; equivalent descendant publication follows the delivered basic foundation; contributor approval and existing runtime/license evidence remain valid.\n\nApproved source and prior validation:\n\nContributor approved opening after the shared GNU and existing image/license prerequisites. Exact b92 is an equivalent image commit on the clarified GNU parent; only the inherited three-line TODO differs from approved 2fb. Both architecture image outputs, configurations, inventories and twelve executable hashes retain exact qualification identity; Make and native-runc/gVisor consumers pass. The full 291-entry catalog, including 92 APT records, Fetch and Verify pass. Original timeout, classification and schema failures remain preserved. No new contributor question or runtime replay is needed.",
+      "status": "Contributor approved; APT enumeration and shared-base integration pending",
+      "updatedAt": "2026-11-26T06:25:44.630702+00:00",
+      "summary": "Existing accepted source and fork publication are complete at 48d5e28f14. Resource/output acceptance does not need repeating. Upstream opening still requires APT enumeration (#15146 and its source-review gate) and the missing actual shared APT base; #16871 supplies pure-Go helpers, not helper_base. Existing approval, runtime/license evidence and independent holds remain scoped.",
       "links": [
         {
           "label": "Ordinary GNU entry passes",
@@ -30295,8 +30307,8 @@
         "owner": "root",
         "sourceHead": "48d5e28f1403617d5f277b0b70fef9f3c72b7e8b",
         "observedAt": "2026-10-23T01:53:03.128488+00:00",
-        "disposition": "Contributor approved; resource layout complete; awaiting prerequisites",
-        "nextAction": "Finish independent result acceptance and publish the narrow resource move above equivalent prerequisites, then open only after those prerequisites actually land.",
+        "disposition": "Existing accepted source and fork publication are complete at 48d5e28f14. Resource/output acceptance does not need repeating. Upstream opening still requires APT enumeration (#15146 and its source-review gate) and the missing actual shared APT base; #16871 supplies pure-Go helpers, not helper_base. Existing approval, runtime/license evidence and independent holds remain scoped.",
+        "nextAction": "Retain the existing source approval and completed resource-layout/output acceptance. Do not repeat resource relocation, independent acceptance or fork publication. Upstream opening still waits for the APT enumeration topic f45d2da255 (itself held for #15146 landing and source review), and integration/landing of the image\u2019s actual shared APT base and still-needed GNU support. #16051 and #16374 are merged. #16871 is a different pure-Go helper successor and does not supply //images:helper_base. Reassess the GNU override against current hermetic LLVM during the first active consumer integration; do not publish an unused historical producer or transfer old qualification to changed inputs.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b92aa4385085f350c3488b68ca3c6a1848e2a14c",
           "https://github.com/tamird/gvisor/commit/48d5e28f1403617d5f277b0b70fef9f3c72b7e8b"
@@ -30313,7 +30325,31 @@
           "owner": "root"
         },
         "technicalOwner": "work_map_current",
-        "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings."
+        "recheckCondition": "The named APT/shared-base or supplier/#17168 prerequisite advances, or actual source/publication evidence changes. Preserve exact-source approvals and independent holds.",
+        "resourceLayoutCompletion": {
+          "state": "Complete and public",
+          "source": "48d5e28f1403617d5f277b0b70fef9f3c72b7e8b",
+          "upstreamPR": "None",
+          "approval": "Existing approval retained; not a new grant",
+          "actualSharedBase": "//images:helper_base absent from current upstream and #16871",
+          "fulfilledPrerequisites": [
+            16051,
+            16374
+          ],
+          "packet": "image-resource-queue-reconciliation-20261126.json"
+        },
+        "curatedAt": "2026-11-26T06:25:44.630702+00:00",
+        "imageResourceReconciliation": {
+          "observedAt": "2026-11-26T06:18:56.196579+00:00",
+          "sourceProof": [
+            "ACL48d and sudo18b exact fork refs verified; no upstream exact-ref PR aliases",
+            "Both owning image_manifest declarations use //images:helper_base; filecapc684 same",
+            "Current master images/BUILD and published #16871 lack helper_base; current master MODULE has no rules_distroless/gawk/rules_cc_autoconf override",
+            "Current upstream checker has no apt/* enumeration implementation; f45 topic remains separate",
+            "v0.11.2 apt/private/translate_dependency_set.bzl dpkg_status still uses root _PACKAGES control targets; package_controls.bzl absent"
+          ],
+          "noNewDelivery": true
+        }
       },
       "refinement": {
         "before": {
@@ -30333,9 +30369,9 @@
       "title": "Declare the file-capability test image",
       "url": "https://github.com/tamird/gvisor/commit/c684613a66293f371d06e1437f3f4a57c96ed112",
       "group": "bazel",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-11-17T20:32:28.027492+00:00",
-      "summary": "Contributor approval is complete. Exact c684 is an equivalent image commit on the clarified GNU prerequisite; its full tree differs from approved d4b6 only by the inherited three-line TODO. Both architecture archives, filesystem inventories, twelve executable identities and capability bytes match the runtime-qualified image. Make and all twenty-two runtime records pass without skips; canonical Fetch/Verify pass with 273 entries, including 74 APT records. Earlier failures and cached-action attribution remain preserved. Open after the shared GNU and existing image/license prerequisites land; do not ask again.",
+      "status": "Contributor approved; APT enumeration and shared-base integration pending",
+      "updatedAt": "2026-11-26T06:25:44.630702+00:00",
+      "summary": "Existing accepted source and fork publication are complete at c684613a66. Resource/output acceptance does not need repeating. Upstream opening still requires APT enumeration (#15146 and its source-review gate) and the missing actual shared APT base; #16871 supplies pure-Go helpers, not helper_base. Existing approval, runtime/license evidence and independent holds remain scoped.",
       "links": [
         {
           "label": "Passing image and runtime qualification",
@@ -30366,8 +30402,8 @@
         "owner": "root",
         "sourceHead": "c684613a66293f371d06e1437f3f4a57c96ed112",
         "observedAt": "2026-10-22T10:37:37.771699+00:00",
-        "disposition": "Contributor approved; waiting for prerequisites",
-        "nextAction": "Wait for actual prerequisite landings and preserve the existing contributor approval.",
+        "disposition": "Existing accepted source and fork publication are complete at c684613a66. Resource/output acceptance does not need repeating. Upstream opening still requires APT enumeration (#15146 and its source-review gate) and the missing actual shared APT base; #16871 supplies pure-Go helpers, not helper_base. Existing approval, runtime/license evidence and independent holds remain scoped.",
+        "nextAction": "Retain the existing source approval and completed resource-layout/output acceptance. Do not repeat resource relocation, independent acceptance or fork publication. Upstream opening still waits for the APT enumeration topic f45d2da255 (itself held for #15146 landing and source review), and integration/landing of the image\u2019s actual shared APT base and still-needed GNU support. #16051 and #16374 are merged. #16871 is a different pure-Go helper successor and does not supply //images:helper_base. Reassess the GNU override against current hermetic LLVM during the first active consumer integration; do not publish an unused historical producer or transfer old qualification to changed inputs.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c684613a66293f371d06e1437f3f4a57c96ed112"
         ],
@@ -30383,7 +30419,31 @@
           "owner": "root"
         },
         "technicalOwner": "work_map_current",
-        "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings."
+        "recheckCondition": "The named APT/shared-base or supplier/#17168 prerequisite advances, or actual source/publication evidence changes. Preserve exact-source approvals and independent holds.",
+        "resourceLayoutCompletion": {
+          "state": "Complete and public",
+          "source": "c684613a66293f371d06e1437f3f4a57c96ed112",
+          "upstreamPR": "None",
+          "approval": "Existing approval retained; not a new grant",
+          "actualSharedBase": "//images:helper_base absent from current upstream and #16871",
+          "fulfilledPrerequisites": [
+            16051,
+            16374
+          ],
+          "packet": "image-resource-queue-reconciliation-20261126.json"
+        },
+        "curatedAt": "2026-11-26T06:25:44.630702+00:00",
+        "imageResourceReconciliation": {
+          "observedAt": "2026-11-26T06:18:56.196579+00:00",
+          "sourceProof": [
+            "ACL48d and sudo18b exact fork refs verified; no upstream exact-ref PR aliases",
+            "Both owning image_manifest declarations use //images:helper_base; filecapc684 same",
+            "Current master images/BUILD and published #16871 lack helper_base; current master MODULE has no rules_distroless/gawk/rules_cc_autoconf override",
+            "Current upstream checker has no apt/* enumeration implementation; f45 topic remains separate",
+            "v0.11.2 apt/private/translate_dependency_set.bzl dpkg_status still uses root _PACKAGES control targets; package_controls.bzl absent"
+          ],
+          "noNewDelivery": true
+        }
       },
       "refinement": {
         "before": {
@@ -30504,9 +30564,9 @@
       "title": "Fix GNU tools used for image assembly",
       "group": "bazel",
       "url": "https://github.com/tamird/gvisor/commit/ae68fad95",
-      "status": "Contributor approved; awaiting first active consumer",
-      "updatedAt": "2026-11-17T20:32:28.027492+00:00",
-      "summary": "The image-tool build needs gawk 5.4 for its regex fixes. The accompanying rules_cc_autoconf patch lets the GNU compiler find its selected linker during configure probes. Neither change uses an Ollama or profiling image. The approved gawk catalog entry covers the entire source bundle with LicenseRef-Gawk-source-bundle, which requires #16051. The original GNU and AMD64/ARM64 checks apply to the reviewed source; a standalone rebase has not been qualified.",
+      "status": "Contributor approved; awaiting APT consumer integration",
+      "updatedAt": "2026-11-26T06:25:44.630702+00:00",
+      "summary": "Approved GNU source ae68fad953 is already public and #16051 is fulfilled. Reassess whether its historical gawk/configure overrides remain necessary during the first actual shared-APT consumer integration under current hermetic LLVM; no standalone unused producer delivery is due.",
       "links": [
         {
           "label": "Shared prerequisite source",
@@ -30529,8 +30589,8 @@
         "owner": "root",
         "sourceHead": "ae68fad953586e472b8c275b3aaaf17d5f1a450f",
         "observedAt": "2026-10-31T02:41:05.863202+00:00",
-        "disposition": "Contributor approved; awaiting pinned-license support",
-        "nextAction": "The pinned-license support prerequisite16051 is fulfilled. Rebase with the first active image that still needs gawk, then verify its configure probes and regenerated catalog; no standalone unused producer delivery is implied.",
+        "disposition": "Approved GNU source ae68fad953 is already public and #16051 is fulfilled. Reassess whether its historical gawk/configure overrides remain necessary during the first actual shared-APT consumer integration under current hermetic LLVM; no standalone unused producer delivery is due.",
+        "nextAction": "Retain approved source ae68fad953 and completed #16051 support. Coordinate with the active ACL/sudo/filecap shared-APT consumer integration after APT enumeration\u2019s #15146/source-review gate; verify whether the historical gawk/configure overrides are still necessary under current hermetic LLVM. No standalone unused GNU producer, image rebuild or old approval replay is needed merely for this queue reconciliation.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ae68fad95",
           "https://github.com/google/gvisor/pull/16051"
@@ -30547,7 +30607,19 @@
           "owner": "root"
         },
         "technicalOwner": "work_map_current",
-        "recheckCondition": "An actual active image consumer requiring gawk and coordinated checkout allocation."
+        "recheckCondition": "The named APT/shared-base or supplier/#17168 prerequisite advances, or actual source/publication evidence changes. Preserve exact-source approvals and independent holds.",
+        "curatedAt": "2026-11-26T06:25:44.630702+00:00",
+        "imageResourceReconciliation": {
+          "observedAt": "2026-11-26T06:18:56.196579+00:00",
+          "sourceProof": [
+            "ACL48d and sudo18b exact fork refs verified; no upstream exact-ref PR aliases",
+            "Both owning image_manifest declarations use //images:helper_base; filecapc684 same",
+            "Current master images/BUILD and published #16871 lack helper_base; current master MODULE has no rules_distroless/gawk/rules_cc_autoconf override",
+            "Current upstream checker has no apt/* enumeration implementation; f45 topic remains separate",
+            "v0.11.2 apt/private/translate_dependency_set.bzl dpkg_status still uses root _PACKAGES control targets; package_controls.bzl absent"
+          ],
+          "noNewDelivery": true
+        }
       },
       "refinement": {
         "before": {
@@ -30567,9 +30639,9 @@
       "title": "Assemble the sudo test image from pinned packages",
       "url": "https://github.com/tamird/gvisor/commit/18bc62e2b65a531265d3505c2e6b45805e09ece4",
       "group": "bazel",
-      "status": "Contributor approved; resource layout complete; awaiting prerequisites",
-      "updatedAt": "2026-11-17T20:32:28.027492+00:00",
-      "summary": "Requested resource relocation and equivalent base refresh are complete at 18bc62e2b6. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nThe requested resource-directory move now passes strict archive and Make-context byte equality on both architectures. A same-public-label source build isolates the eleven sudo/ACL resource references and matches all eight retained after-layout outputs. Earlier alias comparisons failed only because raw-layer history included the alias names; those failed results remain explicit. Independent terminal acceptance confirms all eight outputs; equivalent descendant publication follows the delivered basic foundation; contributor approval and existing runtime/license evidence remain valid.\n\nApproved source and prior validation:\n\nThe contributor approved exact 5b957 subject to grouping baked-in resources under an image-specific directory. The same requested convention covers the active ACL, tcpdump, fsstress and tmpfile resources. All fifteen moves preserve source bytes, modes, installed names and BUILD contracts; a controlled two-architecture comparison is submitted against independently reviewed source 5eee before publication. The earlier historical tmpfile archive hash comparison failed because the gzip stream differs, while the exact image config and complete uncompressed layers match. This original failure is preserved. No new contributor question is pending.\n\nThe shared GNU and existing image prerequisites still govern opening. The image uses declared pinned Ubuntu packages with explicit PAM/accounts/setuid metadata. Both architecture archive/loader/notice checks and Make pass. All four native and four systrap privilege cases passed; that run retains its teardown failure. A separate lifecycle-only run passed exact original daemon restoration after retrying the observed missing PID file. The full 358-entry catalog, including 159 APT records, Fetch/Verify pass. The final image preserves the audited payload; its new parent contributes only the approved GNU TODO. No ARM runtime or fresh cached-assembly execution claim.",
+      "status": "Contributor approved; APT enumeration and shared-base integration pending",
+      "updatedAt": "2026-11-26T06:25:44.630702+00:00",
+      "summary": "Existing accepted source and fork publication are complete at 18bc62e2b6. Resource/output acceptance does not need repeating. Upstream opening still requires APT enumeration (#15146 and its source-review gate) and the missing actual shared APT base; #16871 supplies pure-Go helpers, not helper_base. Existing approval, runtime/license evidence and independent holds remain scoped.",
       "links": [
         {
           "label": "Reviewed declared image",
@@ -30644,8 +30716,8 @@
         "owner": "root",
         "sourceHead": "18bc62e2b65a531265d3505c2e6b45805e09ece4",
         "observedAt": "2026-10-23T01:53:03.128488+00:00",
-        "disposition": "Contributor approved; resource layout complete; awaiting prerequisites",
-        "nextAction": "Finish independent result acceptance and publish the narrow resource move above equivalent prerequisites, then open only after those prerequisites actually land.",
+        "disposition": "Existing accepted source and fork publication are complete at 18bc62e2b6. Resource/output acceptance does not need repeating. Upstream opening still requires APT enumeration (#15146 and its source-review gate) and the missing actual shared APT base; #16871 supplies pure-Go helpers, not helper_base. Existing approval, runtime/license evidence and independent holds remain scoped.",
+        "nextAction": "Retain the existing source approval and completed resource-layout/output acceptance. Do not repeat resource relocation, independent acceptance or fork publication. Upstream opening still waits for the APT enumeration topic f45d2da255 (itself held for #15146 landing and source review), and integration/landing of the image\u2019s actual shared APT base and still-needed GNU support. #16051 and #16374 are merged. #16871 is a different pure-Go helper successor and does not supply //images:helper_base. Reassess the GNU override against current hermetic LLVM during the first active consumer integration; do not publish an unused historical producer or transfer old qualification to changed inputs.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/5b957f3600186aa5eb9606c3ede4ee96a2726a11",
           "https://github.com/tamird/gvisor/commit/18bc62e2b65a531265d3505c2e6b45805e09ece4"
@@ -30662,7 +30734,31 @@
           "owner": "root"
         },
         "technicalOwner": "work_map_current",
-        "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings."
+        "recheckCondition": "The named APT/shared-base or supplier/#17168 prerequisite advances, or actual source/publication evidence changes. Preserve exact-source approvals and independent holds.",
+        "resourceLayoutCompletion": {
+          "state": "Complete and public",
+          "source": "18bc62e2b65a531265d3505c2e6b45805e09ece4",
+          "upstreamPR": "None",
+          "approval": "Existing approval retained; not a new grant",
+          "actualSharedBase": "//images:helper_base absent from current upstream and #16871",
+          "fulfilledPrerequisites": [
+            16051,
+            16374
+          ],
+          "packet": "image-resource-queue-reconciliation-20261126.json"
+        },
+        "curatedAt": "2026-11-26T06:25:44.630702+00:00",
+        "imageResourceReconciliation": {
+          "observedAt": "2026-11-26T06:18:56.196579+00:00",
+          "sourceProof": [
+            "ACL48d and sudo18b exact fork refs verified; no upstream exact-ref PR aliases",
+            "Both owning image_manifest declarations use //images:helper_base; filecapc684 same",
+            "Current master images/BUILD and published #16871 lack helper_base; current master MODULE has no rules_distroless/gawk/rules_cc_autoconf override",
+            "Current upstream checker has no apt/* enumeration implementation; f45 topic remains separate",
+            "v0.11.2 apt/private/translate_dependency_set.bzl dpkg_status still uses root _PACKAGES control targets; package_controls.bzl absent"
+          ],
+          "noNewDelivery": true
+        }
       }
     },
     {
@@ -53660,7 +53756,7 @@
           "url": "https://github.com/tamird/gvisor/commit/724058a9bb631d9e7b123ebba4b794aee2daa2ae"
         }
       ],
-      "updatedAt": "2026-11-26T06:01:09.268312+00:00",
+      "updatedAt": "2026-11-26T06:25:44.630702+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "724058a9bb631d9e7b123ebba4b794aee2daa2ae",
@@ -53763,9 +53859,10 @@
         "status": "pending",
         "head": "724058a9bb631d9e7b123ebba4b794aee2daa2ae",
         "url": "https://github.com/tamird/gvisor/commit/724058a9bb631d9e7b123ebba4b794aee2daa2ae",
-        "title": "Check release staging without building runsc",
-        "summary": "Actual exact-source opening question is pending; audited qualification and independent source review are complete.",
-        "body": "Approve opening a PR for exact 724058a9bb631d9e7b123ebba4b794aee2daa2ae? The existing checker now validates the current nine-member release layout. Audited Make acceptance and failure controls, manifest-only build, dependency queries and archive-action analysis passed. Real GCS, a native Buildkite worker and full lint-cc were not freshly exercised. No upstream PR has been submitted."
+        "title": "Check staged archives against the release layout",
+        "summary": "Actual submitted opening question for exact 724058a9bb; unanswered.",
+        "body": "Approve opening a gVisor PR for \u201cCheck staged archives against the release layout\u201d?\n\nhttps://github.com/tamird/gvisor/commit/724058a9bb631d9e7b123ebba4b794aee2daa2ae\n\nCI currently builds runsc, the Sentry and a release archive just to read nine filenames. The change generates that list from the same Bazel mapping that packages the archive. The existing Make check accepted complete archives with extra files and rejected missing files, damaged archives and failed downloads. No release binaries were built during qualification. Independent review passed. I\u2019ll add the authorized DCO trailer before publication.\n\nhttps://github.com/tamird/gvisor/actions/runs/45764082881",
+        "reviewCommand": "git show 724058a9bb631d9e7b123ebba4b794aee2daa2ae"
       }
     },
     {
@@ -107624,13 +107721,13 @@
       "url": "https://github.com/gvisor/gvisor/issues/17832",
       "group": "rbe",
       "status": "open",
-      "summary": "Revised cache sourcee61e5c1d8 and refreshed #17832 title/body now have two separate unanswered publication questions. The source covers eight Bazel jobs across seven workflows; native governance/license callers passed with11/52disk-cache hits and two final reviews accepted. Prior six-job asks remain superseded. Go exportf850 remains separately pending; no RBE/end-to-end speedup is established.",
+      "summary": "The e61e5c1d8 cache-source and issue-text questions are withdrawn: landed #17914 adds do.yml AMD64/ARM64 Make callers missing from that revision. actions_bazel_cache owns revised candidate preparation and validation; no successor approval question has been asked. Go-export f850 remains a separate actual pending decision.",
       "followup": {
         "owner": "root",
         "observedAt": "2026-11-25T13:09:11.551551+00:00",
-        "disposition": "Revised cache sourcee61e5c1d8 and refreshed #17832 title/body now have two separate unanswered publication questions. The source covers eight Bazel jobs across seven workflows; native governance/license callers passed with11/52disk-cache hits and two final reviews accepted. Prior six-job asks remain superseded. Go exportf850 remains separately pending; no RBE/end-to-end speedup is established.",
-        "nextAction": "Root consumes the actual cache-PR, refreshed issue-title/body and Go-export decisions independently. Technical cache review is complete; neither the preview nor another decision authorizes source publication, issue editing or merge.",
-        "recheckCondition": "Actual answer to one of the three independent questions or substantive source/review evidence.",
+        "disposition": "The e61e5c1d8 cache-source and issue-text questions are withdrawn: landed #17914 adds do.yml AMD64/ARM64 Make callers missing from that revision. actions_bazel_cache owns revised candidate preparation and validation; no successor approval question has been asked. Go-export f850 remains a separate actual pending decision.",
+        "nextAction": "actions_bazel_cache prepares and validates the cache revision covering the newly landed do.yml Make callers, then returns the exact source and revised issue text for review. Do not act on the withdrawn e61 source/drafts. Root handles the unchanged Go-export opening decision independently.",
+        "recheckCondition": "Revised source/coverage and review evidence, or an answer to the distinct Go-export question.",
         "evidence": [
           "https://github.com/gvisor/gvisor/issues/17832",
           "https://github.com/google/gvisor/issues/17832#issuecomment-7097716495",
@@ -107655,7 +107752,7 @@
           "https://github.com/tamird/gvisor/actions/runs/45747835406",
           "https://github.com/tamird/gvisor/actions/runs/45747835362"
         ],
-        "curatedAt": "2026-11-26T03:23:27.234261+00:00",
+        "curatedAt": "2026-11-26T06:25:44.630702+00:00",
         "supersededExecutionBlocker": {
           "nextAction": "Root consumes each existing decision independently: open the cache 86cffbf72 PR, replace the issue body with the current measured-scope draft, and open the Go export f8500dffe PR. Canonical lint coverage is reconciled through unchanged-input parent evidence. Deliver approved changes through the existing authorized routes; the unpublished Go export fork ref still needs its SSH/HTTPS execution blocker to clear.",
           "recordedAt": "2026-11-24T06:29:20.083295+00:00",
@@ -107673,10 +107770,9 @@
         },
         "cacheCoverageRevision": {
           "owner": "actions_bazel_cache",
-          "supersededSource": "86cffbf727d4a5628ca2a324fe3c06ec21d7c24c",
+          "supersededSource": "e61e5c1d8052e797c30c4cfe1dc754250c4d57db",
           "master": "3e9bbb3cc75e4dd3d074541d5e43b5adbc4dfcfc",
-          "reason": "Superseded coverage: master3e9bbb3cc adds governance.yml\u2192make governance-check\u2192bazel test and license_check.yml\u2192make license-check\u2192bazel run. Old six-job source and issue-body all-current-jobs wording are stale. Revised candidate/review are owned by actions_bazel_cache; no approval granted.",
-          "candidate": "e61e5c1d8052e797c30c4cfe1dc754250c4d57db",
+          "reason": "Landed #17914 adds do.yml AMD64/ARM64 Make callers absent from e61; e61 questions withdrawn with user notified.",
           "callerGates": {
             "governance": 45747835406,
             "license": 45747835362,
@@ -107685,11 +107781,12 @@
               52
             ]
           },
-          "stage": "Two actual pending source/issue publication questions; technical review complete"
+          "stage": "Agent-owned revised candidate preparation; no successor question asked",
+          "historicalCandidate": "e61e5c1d8052e797c30c4cfe1dc754250c4d57db"
         }
       },
-      "updatedAt": "2026-11-26T03:23:27.234261+00:00",
-      "nextStep": "Root consumes the actual cache-PR, refreshed issue-title/body and Go-export decisions independently. Technical cache review is complete; neither the preview nor another decision authorizes source publication, issue editing or merge.",
+      "updatedAt": "2026-11-26T06:25:44.630702+00:00",
+      "nextStep": "actions_bazel_cache prepares and validates the cache revision covering the newly landed do.yml Make callers, then returns the exact source and revised issue text for review. Do not act on the withdrawn e61 source/drafts. Root handles the unchanged Go-export opening decision independently.",
       "recheckCondition": "Technical review milestone for revised cache source/text or actual Go-export answer.",
       "reviewWatch": {
         "inspected": [
@@ -107736,6 +107833,35 @@
           "outcome": "superseded",
           "at": "2026-11-26T02:56:15.794316+00:00",
           "note": "Superseded coverage: master3e9bbb3cc adds governance.yml\u2192make governance-check\u2192bazel test and license_check.yml\u2192make license-check\u2192bazel run. Old six-job source and issue-body all-current-jobs wording are stale. Revised candidate/review are owned by actions_bazel_cache; no approval granted."
+        },
+        {
+          "kind": "proposal",
+          "status": "withdrawn",
+          "head": "e61e5c1d8052e797c30c4cfe1dc754250c4d57db",
+          "baseHead": "3e9bbb3cc75e4dd3d074541d5e43b5adbc4dfcfc",
+          "url": "https://github.com/tamird/gvisor/commit/e61e5c1d8052e797c30c4cfe1dc754250c4d57db",
+          "title": "Cache Bazel builds in GitHub Actions",
+          "summary": "Actual submitted opening question for the revised eight-job/seven-workflow source; unanswered. Both independent final reviews and native governance/license callers passed. No RBE or end-to-end speedup claim.",
+          "body": "The eight Bazel jobs across seven GitHub Actions workflows started with empty action and repository caches. Restore Bazel disk, repository and Bazelisk caches through one shared setup action, including the paths used by Docker-wrapped Make builds.\n\nRestore the source checkout after Go export before cache post-processing hashes the manifests. Keep Go publishing isolated, and use GitHub-managed cache scoping without introducing BuildBuddy credentials into PR-controlled jobs.\n\nPosted by Codex on behalf of @tamird.\n",
+          "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/rbe-cache-research/refresh-pr-body.txt",
+          "sourceSha256": "00f41095fac92e20158c0916f7b8a30a56ce7aefd187c29b7a1002d86839ff7a",
+          "reviewCommand": "git show e61e5c1d8052e797c30c4cfe1dc754250c4d57db",
+          "outcome": "withdrawn",
+          "at": "2026-11-26T06:25:44.630702+00:00",
+          "note": "Root withdrew the e61-bound question and notified the user: landed #17914 adds do.yml AMD64/ARM64 Make callers absent from this source. Historical source/draft retained; no approval granted."
+        },
+        {
+          "kind": "proposal",
+          "status": "withdrawn",
+          "url": "https://github.com/gvisor/gvisor/issues/17832",
+          "title": "Reduce PR CI latency with Bazel reuse and remote execution",
+          "summary": "Separate actual submitted question to replace this existing issue title/body with the exact refreshed draft. No issue update has been posted; Go export remains a third independent decision.",
+          "body": "Keep Buildkite as the orchestrator. First enable caching for the existing GitHub Actions builds, then measure whether remote execution reduces the remaining build and test time. Replacing Buildkite is a separate decision. Buildkite already shares Bazel action results; the proposed RBE benefit is concurrent execution of independent cache misses.\n\nThe proposed [cache-only patch](https://github.com/tamird/gvisor/commit/e61e5c1d8052e797c30c4cfe1dc754250c4d57db) covers all eight Bazel jobs across seven GitHub Actions workflows with GitHub-managed disk, repository and Bazelisk caches. It preserves GitHub's existing branch-scoped PR cache isolation and the workflows' permissions and credentials. [Governance](https://github.com/tamird/gvisor/actions/runs/45747835406) reported 11 disk-cache hits; [Dependency licenses](https://github.com/tamird/gvisor/actions/runs/45747835362) reported 52 and verified all 225 dependencies.\n\nWe have observed remote parallelism, but have not measured its speedup against a cache-enabled local baseline. One [fork invocation](https://app.buildbuddy.io/invocation/6c83284e-f123-43a2-8063-4a633b20dba7) recorded up to 14 simultaneous remote executions: 1,866 seconds of recorded action intervals within a 348-second span. The complete build took 396 seconds. Summed action time is not a serial baseline, and the profile captured only part of the executions. A controlled comparison remains necessary.\n\nTwo recent builds illustrate delays beyond compilation. [Build 55727](https://buildkite.com/gvisor/pipeline/builds/55727) took 62m53s; its last Go-runtime workload used nine attempts spanning 60m24s. [Build 55724](https://buildkite.com/gvisor/pipeline/builds/55724) took 51m47s; its last ARM64 Docker workload used six attempts spanning 47m59s. These examples identify finish-determining retry chains, not a representative latency distribution or a reconstructed dependency critical path. Separately, [build 55748's Windows attempt](https://buildkite.com/gvisor/pipeline/builds/55748#01a20ba6-9ca1-4088-96df-d29b12cd33fa) timed out fetching Go-export history after Bazel's work. RBE cannot remove that Git phase. Its fix is being qualified separately. We still need to establish how much of the complete PR critical path is eligible for RBE.\n\nBefore enabling untrusted PR execution, validate the trust boundary in a disposable environment with no release consumers:\n\n- PR-controlled repository rules and actions receive no trusted cache-write or release credential.\n- Server policy prevents untrusted clients and executor result publication from replacing trusted action results, even when the PR changes flags or instance names. Read results back with a trusted identity to verify denied writes.\n- Workers and snapshots isolate trust domains. Different API keys alone do not establish this.\n\nBuildBuddy's pinned source [accepts CAS-write-only execution keys](https://github.com/buildbuddy-io/buildbuddy/blob/c622472f1/enterprise/server/remote_execution/execution_server/execution_server.go#L1242-L1246), [uses the submitting task's identity for execution](https://github.com/buildbuddy-io/buildbuddy/blob/c622472f1/enterprise/server/scheduling/priority_task_scheduler/priority_task_scheduler.go#L633-L644), and [requires CACHE_WRITE for action-cache writes](https://github.com/buildbuddy-io/buildbuddy/blob/c622472f1/server/remote_cache/action_cache_server/action_cache_server.go#L386-L395). This identifies mechanisms to test; it does not prove the hosted configuration. The [OCI network-isolation correction](https://github.com/buildbuddy-io/buildbuddy/pull/14275) is merged, but deployment to the hosted workers remains unverified.\n\nPrivileged tests are not categorically excluded: existing fork qualification ran namespace tests remotely on [AMD64](https://github.com/tamird/gvisor/actions/runs/44905173511/artifacts/14706968774) and [ARM64](https://github.com/tamird/gvisor/actions/runs/44905178697/artifacts/14707548246), and [native/systrap PTY syscall targets](https://github.com/tamird/gvisor/actions/runs/45261803627/artifacts/14861107334) passed on AMD64. These prove specific worker configurations, not support for the full syscall, runtime, KVM or GPU matrix. Keep unsupported device workloads on existing capacity.\n\nAfter the security gate, compare cache-enabled local execution with RBE at the same source, toolchain, configuration and workload. Preflight actual permissions, devices and cleanup first. Report complete job latency, retries, setup, analysis, cache hits and execution overlap separately. Keep required checks until coverage and reporting match; keep fresh benchmark measurements separate from cacheable builds. Under-five-minute ordinary PR validation remains a target, not a demonstrated result.\n\nBuildBuddy's [published free plan](https://www.buildbuddy.io/pricing/) includes open-source projects, 100 GB of cache transfer and up to 80 Linux execution cores. No paid migration is proposed; extra project capacity or commitments need confirmation. Bazel's Remote Execution API permits other providers, while provider-specific worker properties and isolation still require validation when switching.\n\nPosted by Codex on behalf of @tamird.\n",
+          "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/rbe-cache-research/refresh-issue-body-draft.txt",
+          "sourceSha256": "21d6dd5a5bbd13055e337b79cda49b051c92c413c1daddba63604c46b7540fb7",
+          "outcome": "withdrawn",
+          "at": "2026-11-26T06:25:44.630702+00:00",
+          "note": "Root withdrew the e61-bound question and notified the user: landed #17914 adds do.yml AMD64/ARM64 Make callers absent from this source. Historical source/draft retained; no approval granted."
         }
       ],
       "additionalReviews": [
@@ -107750,16 +107876,6 @@
           "body": "Go export fetched its selected Go commit from a temporary local clone even when cloning had already copied that commit. With Buildkite's blobless checkout, that fetch enumerated about 189,000 objects; the Windows attempt in build 55748 timed out in this phase.\n\nKeep the original fetch when the commit is absent. Otherwise, let checkout retrieve the missing Go-tip blobs through the original promisor sources. Local cloning copies their packs without their remote configuration, so register those object-source URLs in the temporary clone and resolve relative local paths against the source repository. Keep invalid boolean configuration fatal. Export assembly and merge construction are unchanged.\n\nShallow-source merge limitations remain. Full generated-export assembly has not been rebuilt; this patch does not explain unrelated CI cancellations.\n\nPosted by Codex on behalf of @tamird.\n",
           "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/go-export-promisor-pr-body.txt",
           "sourceSha256": "6e4c040184c00fa0f58e930703680dcbb289d12b163941e61ad9308e38656302"
-        },
-        {
-          "kind": "proposal",
-          "status": "pending",
-          "url": "https://github.com/gvisor/gvisor/issues/17832",
-          "title": "Reduce PR CI latency with Bazel reuse and remote execution",
-          "summary": "Separate actual submitted question to replace this existing issue title/body with the exact refreshed draft. No issue update has been posted; Go export remains a third independent decision.",
-          "body": "Keep Buildkite as the orchestrator. First enable caching for the existing GitHub Actions builds, then measure whether remote execution reduces the remaining build and test time. Replacing Buildkite is a separate decision. Buildkite already shares Bazel action results; the proposed RBE benefit is concurrent execution of independent cache misses.\n\nThe proposed [cache-only patch](https://github.com/tamird/gvisor/commit/e61e5c1d8052e797c30c4cfe1dc754250c4d57db) covers all eight Bazel jobs across seven GitHub Actions workflows with GitHub-managed disk, repository and Bazelisk caches. It preserves GitHub's existing branch-scoped PR cache isolation and the workflows' permissions and credentials. [Governance](https://github.com/tamird/gvisor/actions/runs/45747835406) reported 11 disk-cache hits; [Dependency licenses](https://github.com/tamird/gvisor/actions/runs/45747835362) reported 52 and verified all 225 dependencies.\n\nWe have observed remote parallelism, but have not measured its speedup against a cache-enabled local baseline. One [fork invocation](https://app.buildbuddy.io/invocation/6c83284e-f123-43a2-8063-4a633b20dba7) recorded up to 14 simultaneous remote executions: 1,866 seconds of recorded action intervals within a 348-second span. The complete build took 396 seconds. Summed action time is not a serial baseline, and the profile captured only part of the executions. A controlled comparison remains necessary.\n\nTwo recent builds illustrate delays beyond compilation. [Build 55727](https://buildkite.com/gvisor/pipeline/builds/55727) took 62m53s; its last Go-runtime workload used nine attempts spanning 60m24s. [Build 55724](https://buildkite.com/gvisor/pipeline/builds/55724) took 51m47s; its last ARM64 Docker workload used six attempts spanning 47m59s. These examples identify finish-determining retry chains, not a representative latency distribution or a reconstructed dependency critical path. Separately, [build 55748's Windows attempt](https://buildkite.com/gvisor/pipeline/builds/55748#01a20ba6-9ca1-4088-96df-d29b12cd33fa) timed out fetching Go-export history after Bazel's work. RBE cannot remove that Git phase. Its fix is being qualified separately. We still need to establish how much of the complete PR critical path is eligible for RBE.\n\nBefore enabling untrusted PR execution, validate the trust boundary in a disposable environment with no release consumers:\n\n- PR-controlled repository rules and actions receive no trusted cache-write or release credential.\n- Server policy prevents untrusted clients and executor result publication from replacing trusted action results, even when the PR changes flags or instance names. Read results back with a trusted identity to verify denied writes.\n- Workers and snapshots isolate trust domains. Different API keys alone do not establish this.\n\nBuildBuddy's pinned source [accepts CAS-write-only execution keys](https://github.com/buildbuddy-io/buildbuddy/blob/c622472f1/enterprise/server/remote_execution/execution_server/execution_server.go#L1242-L1246), [uses the submitting task's identity for execution](https://github.com/buildbuddy-io/buildbuddy/blob/c622472f1/enterprise/server/scheduling/priority_task_scheduler/priority_task_scheduler.go#L633-L644), and [requires CACHE_WRITE for action-cache writes](https://github.com/buildbuddy-io/buildbuddy/blob/c622472f1/server/remote_cache/action_cache_server/action_cache_server.go#L386-L395). This identifies mechanisms to test; it does not prove the hosted configuration. The [OCI network-isolation correction](https://github.com/buildbuddy-io/buildbuddy/pull/14275) is merged, but deployment to the hosted workers remains unverified.\n\nPrivileged tests are not categorically excluded: existing fork qualification ran namespace tests remotely on [AMD64](https://github.com/tamird/gvisor/actions/runs/44905173511/artifacts/14706968774) and [ARM64](https://github.com/tamird/gvisor/actions/runs/44905178697/artifacts/14707548246), and [native/systrap PTY syscall targets](https://github.com/tamird/gvisor/actions/runs/45261803627/artifacts/14861107334) passed on AMD64. These prove specific worker configurations, not support for the full syscall, runtime, KVM or GPU matrix. Keep unsupported device workloads on existing capacity.\n\nAfter the security gate, compare cache-enabled local execution with RBE at the same source, toolchain, configuration and workload. Preflight actual permissions, devices and cleanup first. Report complete job latency, retries, setup, analysis, cache hits and execution overlap separately. Keep required checks until coverage and reporting match; keep fresh benchmark measurements separate from cacheable builds. Under-five-minute ordinary PR validation remains a target, not a demonstrated result.\n\nBuildBuddy's [published free plan](https://www.buildbuddy.io/pricing/) includes open-source projects, 100 GB of cache transfer and up to 80 Linux execution cores. No paid migration is proposed; extra project capacity or commitments need confirmation. Bazel's Remote Execution API permits other providers, while provider-specific worker properties and isolation still require validation when switching.\n\nPosted by Codex on behalf of @tamird.\n",
-          "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/rbe-cache-research/refresh-issue-body-draft.txt",
-          "sourceSha256": "21d6dd5a5bbd13055e337b79cda49b051c92c413c1daddba63604c46b7540fb7"
         }
       ],
       "evidence": [
@@ -107779,20 +107895,7 @@
           "label": "Native license caller with52disk hits",
           "url": "https://github.com/tamird/gvisor/actions/runs/45747835362"
         }
-      ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "e61e5c1d8052e797c30c4cfe1dc754250c4d57db",
-        "baseHead": "3e9bbb3cc75e4dd3d074541d5e43b5adbc4dfcfc",
-        "url": "https://github.com/tamird/gvisor/commit/e61e5c1d8052e797c30c4cfe1dc754250c4d57db",
-        "title": "Cache Bazel builds in GitHub Actions",
-        "summary": "Actual submitted opening question for the revised eight-job/seven-workflow source; unanswered. Both independent final reviews and native governance/license callers passed. No RBE or end-to-end speedup claim.",
-        "body": "The eight Bazel jobs across seven GitHub Actions workflows started with empty action and repository caches. Restore Bazel disk, repository and Bazelisk caches through one shared setup action, including the paths used by Docker-wrapped Make builds.\n\nRestore the source checkout after Go export before cache post-processing hashes the manifests. Keep Go publishing isolated, and use GitHub-managed cache scoping without introducing BuildBuddy credentials into PR-controlled jobs.\n\nPosted by Codex on behalf of @tamird.\n",
-        "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/rbe-cache-research/refresh-pr-body.txt",
-        "sourceSha256": "00f41095fac92e20158c0916f7b8a30a56ce7aefd187c29b7a1002d86839ff7a",
-        "reviewCommand": "git show e61e5c1d8052e797c30c4cfe1dc754250c4d57db"
-      }
+      ]
     },
     {
       "id": "pr:kiron1/bazel-compile-commands:236",
@@ -114451,6 +114554,24 @@
       "to": "investigation:repository-lint",
       "type": "includes",
       "label": "Size cache-reset integrity correction; independent publication question"
+    },
+    {
+      "from": "branch:apt-license-enumeration-upstream",
+      "to": "branch:rules-img-libacl",
+      "type": "depends_on",
+      "reason": "Image introduces apt/* catalog records; shared APT enumeration requires #15146 landing and its own source-review delivery."
+    },
+    {
+      "from": "branch:apt-license-enumeration-upstream",
+      "to": "branch:rules-img-sudo",
+      "type": "depends_on",
+      "reason": "Image introduces apt/* catalog records; shared APT enumeration requires #15146 landing and its own source-review delivery."
+    },
+    {
+      "from": "branch:apt-license-enumeration-upstream",
+      "to": "branch:rules-img-filecap",
+      "type": "depends_on",
+      "reason": "Image introduces apt/* catalog records; shared APT enumeration requires #15146 landing and its own source-review delivery."
     }
   ],
   "investigations": [
@@ -148985,5 +149106,5 @@
       "inactive": true
     }
   ],
-  "updatedAt": "2026-11-26T06:11:59.708714+00:00"
+  "updatedAt": "2026-11-26T06:25:44.630702+00:00"
 }
