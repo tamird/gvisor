@@ -37,6 +37,10 @@ func BenchmarkCoverageLifecycle(b *testing.B) {
 	if output == "" {
 		b.Fatal("TEST_UNDECLARED_OUTPUTS_DIR is required")
 	}
+	output, err := os.MkdirTemp(output, "coverage-child-")
+	if err != nil {
+		b.Fatal(err)
+	}
 	for _, mode := range []string{"off", "on"} {
 		b.Run(mode, func(b *testing.B) {
 			b.StopTimer()

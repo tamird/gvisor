@@ -108,6 +108,7 @@ release_tars(
     bins = RELEASE_TAR_EXTRA_BINS,
     flavor = "coverage",
     visibility = [
+        "//test/benchmarks/harness:__pkg__",
         "//test/runner:__pkg__",
         "//tools/bazeldefs/tests/coverage:__pkg__",
     ],

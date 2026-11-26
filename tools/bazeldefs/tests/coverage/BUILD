@@ -6,6 +6,7 @@ go_test(
     data = ["//debian:gvisor-release-coverage-tar-zstd"],
     local = True,
     tags = ["manual"],
+    visibility = ["//test/benchmarks/harness:__pkg__"],
     target_compatible_with = [
         "@platforms//cpu:x86_64",
         "@platforms//os:linux",
