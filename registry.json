@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T04:15:51.438230+00:00",
+    "updatedAt": "2026-11-26T04:19:05.042657+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -63665,9 +63665,9 @@
       "title": "Check the set lock when accessing SysV semaphores",
       "url": "https://github.com/tamird/gvisor/commit/09b196bf630b2a6be83ab28e6c7611f7e766a023",
       "group": "runtime",
-      "status": "Agent work: functional gates passed; remaining qualification open",
-      "updatedAt": "2026-11-26T04:15:51.438230+00:00",
-      "summary": "Native 09b196bf63 is unchanged. Ordinary ARM run 45751139112 passed eight Go, 30 systrap and 29 Linux cases; SemOpNamespace skipped because CAP_SYS_ADMIN was unavailable. Execution was fresh and remote, with no failures. Only safe logs, XML and metadata were published. Capable-worker graph 45752935381 passed; the one skipped case is dispatched as 45753550154, awaiting its owner’s audit. Race-resume exit 66 remains unexplained. ARM save/restore, race, #17127, performance and publication limits remain.",
+      "status": "Ordinary ARM functional complete; remaining qualification open",
+      "updatedAt": "2026-11-26T04:19:05.042657+00:00",
+      "summary": "Native 09b196bf63 is unchanged. Ordinary ARM functional coverage is complete: eight Go, 30 native Linux and 30 systrap cases passed fresh and remotely. Run 45753550154 executed exactly SemOpNamespace, with no skip or failure, filling the sole earlier capability skip. Source/index/credential cleanup guards passed; five safe log/XML/metadata files and no state/archive were published. Race-resume exit 66 remains unexplained; ARM checkpoint/race, #17127, performance and publication limits remain.",
       "evidence": [
         {
           "label": "Two architecture analyzers on all 23 marked cases in fa6b9080f",
@@ -63740,6 +63740,10 @@
         {
           "label": "Single missing namespace case;owner audit pending",
           "url": "https://github.com/tamird/gvisor/actions/runs/45753550154"
+        },
+        {
+          "label": "Named native ARM namespace execution closes the sole skip",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45753550154/artifacts/15086731827"
         }
       ],
       "settledReviews": [
@@ -63786,11 +63790,11 @@
         }
       },
       "followup": {
-        "owner": "approved_rebase_queue",
+        "owner": "root",
         "sourceHead": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
         "observedAt": "2026-11-18T21:05:51.124797+00:00",
-        "disposition": "Native 09b196bf63 is unchanged. Ordinary ARM run 45751139112 passed eight Go, 30 systrap and 29 Linux cases; SemOpNamespace skipped because CAP_SYS_ADMIN was unavailable. Execution was fresh and remote, with no failures. Only safe logs, XML and metadata were published. Capable-worker graph 45752935381 passed; the one skipped case is dispatched as 45753550154, awaiting its owner’s audit. Race-resume exit 66 remains unexplained. ARM save/restore, race, #17127, performance and publication limits remain.",
-        "nextAction": "approved_rebase_queue consumes run 45753550154 and verifies the actual SemOpNamespace XML, source and cleanup. Reuse the verified ordinary ARM results and diagnostic retention. Do not repeat save/resume or infer full qualification or the old failure’s cause.",
+        "disposition": "Native 09b196bf63 is unchanged. Ordinary ARM functional coverage is complete: eight Go, 30 native Linux and 30 systrap cases passed fresh and remotely. Run 45753550154 executed exactly SemOpNamespace, with no skip or failure, filling the sole earlier capability skip. Source/index/credential cleanup guards passed; five safe log/XML/metadata files and no state/archive were published. Race-resume exit 66 remains unexplained; ARM checkpoint/race, #17127, performance and publication limits remain.",
+        "nextAction": "Root assesses the separate remaining race save/resume, ARM checkpoint/race, #17127 and performance/source-publication gates. Ordinary ARM is complete; no remaining namespace dispatch or repeated ordinary cases are needed. Do not infer host-wide IPC cleanup, the old failure’s cause or full qualification.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42954488637/artifacts/13827402659",
           "https://github.com/tamird/gvisor/actions/runs/42958677889/artifacts/13828218556",
@@ -63805,7 +63809,8 @@
           "https://github.com/tamird/gvisor/actions/runs/45751139112",
           "https://github.com/tamird/gvisor/actions/runs/45751139112/artifacts/15085649162",
           "https://github.com/tamird/gvisor/actions/runs/45752935381",
-          "https://github.com/tamird/gvisor/actions/runs/45753550154"
+          "https://github.com/tamird/gvisor/actions/runs/45753550154",
+          "https://github.com/tamird/gvisor/actions/runs/45753550154/artifacts/15086731827"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -63817,8 +63822,8 @@
           "nextAction": "Owner prepares missing-only ARM execution, race, C++ and performance qualification, reusing valid source/native evidence and unchanged compiler inputs. Keep prerequisite #17127 and explicit publication approval separate.",
           "recheckCondition": "Remaining-gate plan/result, prerequisite landing, source or contributor decision changes."
         },
-        "technicalOwner": "approved_rebase_queue",
-        "recheckCondition": "The existing owner’s terminal namespace artifact audit, substantive diagnostic/source evidence, or a prerequisite/publication decision.",
+        "technicalOwner": "root",
+        "recheckCondition": "Substantive remaining-gate evidence, an actual prerequisite/source event or a source-publication decision.",
         "qualificationHistory": [
           {
             "sourceHead": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
@@ -64280,7 +64285,7 @@
             44316942020
           ]
         },
-        "curatedAt": "2026-11-26T04:15:51.438230+00:00",
+        "curatedAt": "2026-11-26T04:19:05.042657+00:00",
         "preparedSyscallConsumer": {
           "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
           "plan": "8adfbf18fadfd0c5a5cd3c64528939c3c90b55ce",
@@ -64379,14 +64384,21 @@
           "run": 45751139112,
           "native": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
           "ci": "11e81191f70442a816795d1d605a18a55d3e331a",
-          "state": "Terminal partial functional qualification",
-          "scope": "Go owner,Linux30,ordinary systrap30;CI-only13pathRBEsupport;no save/resume/race/performance claim",
+          "state": "Complete scoped ordinary functional coverage",
+          "scope": "Prior 45751139112 plus exactly one named namespace execution; no repeated earlier cases or ARM checkpoint/race/performance acceptance",
           "goPASS": 8,
           "systrapPASS": 30,
-          "nativePASS": 29,
-          "nativeSkip": "SemOpNamespace:CAP_SYS_ADMIN unavailable",
+          "nativePASS": 30,
           "failures": 0,
-          "artifact": 15085649162
+          "artifact": 15085649162,
+          "nativeSkipRecoveredBy": 45753550154,
+          "totalActual": {
+            "go": 8,
+            "nativeLinux": 30,
+            "systrap": 30
+          },
+          "historicalNativeSkip": "SemOpNamespace:CAP_SYS_ADMIN unavailable",
+          "nativeSkippedCurrent": 0
         },
         "namespaceRecovery": {
           "graph": 45752935381,
@@ -64394,10 +64406,19 @@
           "run": 45753550154,
           "native": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
           "ci": "cd5d200a2802b5919b84ff42a2ac1143c9122899",
-          "state": "Owner terminal artifact audit pending",
+          "state": "Terminal audited PASS",
           "expected": [
             "SemaphoreTest.SemOpNamespace"
-          ]
+          ],
+          "artifact": 15086731827,
+          "executed": [
+            "SemaphoreTest.SemOpNamespace"
+          ],
+          "passed": 1,
+          "skipped": 0,
+          "failed": 0,
+          "strategy": "fresh remote",
+          "cleanup": "Source/index/credential guards PASS;five safe files;no state/archive;no host-wide IPC inventory claim"
         }
       },
       "contributorChangesRequested": {
@@ -108430,16 +108451,16 @@
       "url": "https://github.com/google/gvisor/pull/17885",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-26T04:15:51.438230+00:00",
-      "summary": "Delivered 057d07808 and Node #67595 remain complete; First Pass 2904 and DCO pass. Main 55964 timed out compiling V8 after the patched image tag was missing. The changed TLS test never ran on that attempt. Nine of ten partitions exited successfully, but a verified sibling returned cached Bazel PASS after local image construction: zero of one tests executed. This is setup/cache evidence, not TLS test qualification.",
+      "updatedAt": "2026-11-26T04:19:05.042657+00:00",
+      "summary": "Delivered 057d07808 and Node #67595 remain complete. Main 55964 failed in local V8 image construction before the TLS test; a successful sibling built locally then returned cached Bazel PASS. CPU image checks and all 40 Node attempts share main build UUID 01a214b6-7872-4979-93ce-f77737c21f0d, so a same-build handoff is structurally possible. First Pass 2904 is a separate build. No native artifact transfer preflight has executed.",
       "followup": {
         "owner": "root",
         "sourceHead": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
         "providerHead": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
         "observedAt": "2026-11-24T06:20:46.557823+00:00",
-        "disposition": "Delivered 057d07808 and Node #67595 remain complete; First Pass 2904 and DCO pass. Main 55964 timed out compiling V8 after the patched image tag was missing. The changed TLS test never ran on that attempt. Nine of ten partitions exited successfully, but a verified sibling returned cached Bazel PASS after local image construction: zero of one tests executed. This is setup/cache evidence, not TLS test qualification.",
-        "nextAction": "Root and the CI image pipeline owner investigate a same-build artifact handoff for the unchanged patched image. The compiled-base overlay is rejected: #17971 lacks the TLS patch and does not enforce matching bootstrap inputs. No blind retry, speculative TLS edit, registry write or publication follows.",
-        "recheckCondition": "A qualified native same-build artifact producer/consumer boundary, or a published image bound to the approved TLS source. Landing #17971 alone is insufficient.",
+        "disposition": "Delivered 057d07808 and Node #67595 remain complete. Main 55964 failed in local V8 image construction before the TLS test; a successful sibling built locally then returned cached Bazel PASS. CPU image checks and all 40 Node attempts share main build UUID 01a214b6-7872-4979-93ce-f77737c21f0d, so a same-build handoff is structurally possible. First Pass 2904 is a separate build. No native artifact transfer preflight has executed.",
+        "nextAction": "Root needs an existing authorized fork Buildkite pipeline/build handle before the source-bound artifact preflight. No such route is present in the retained registry/remotes or fork webhook/status evidence, and no connected tool/local API credential is available; this does not prove no private pipeline exists. Stop before upstream pipeline edits, registry writes or Node compilation. Preserve the rejected stale-base overlay and exact patched-image requirement.",
+        "recheckCondition": "An existing authorized fork pipeline/build handle, a qualified same-build artifact handoff, or a source-bound published patched image. First Pass success alone is not main-build artifact proof.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17885",
           "https://buildkite.com/gvisor/first-pass/builds/2468",
@@ -108451,7 +108472,7 @@
           "https://buildkite.com/gvisor/pipeline/builds/55964#01a215b7-64b2-429c-9851-b459d26fe16d",
           "https://buildkite.com/gvisor/pipeline/builds/55964#01a214b6-9c62-4297-8edd-1426545fee1a"
         ],
-        "curatedAt": "2026-11-26T04:15:51.438230+00:00",
+        "curatedAt": "2026-11-26T04:19:05.042657+00:00",
         "mainTerminal": {
           "build": 55964,
           "state": "FAILURE",
@@ -108467,10 +108488,40 @@
           "boundary": "load-runtimes builds before cached Bazel decision;test-image builds locally and does not publish across workers;registry writes release-only",
           "rejectedOverlay": "Retagging an old compiled base cannot enforce version/patch/build-input parity;#17971 is not patched-tag substitution",
           "nextOwner": "root / CI image pipeline owner",
-          "artifactContract": "Under investigation;not implemented or qualified"
+          "artifactContract": "Preflight not dispatched: authorized fork Buildkite admission unavailable"
+        },
+        "artifactPreflightAdmission": {
+          "main": {
+            "id": "01a214b6-7872-4979-93ce-f77737c21f0d",
+            "number": 55964,
+            "path": "/gvisor/pipeline/builds/55964",
+            "commit_id": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
+            "branch_name": "tamird:fix/node22-tls-loopback-backport-20261123"
+          },
+          "firstPass": {
+            "id": "01a214b6-7896-46fa-96c4-f8e79b5eb62b",
+            "number": 2904,
+            "path": "/gvisor/first-pass/builds/2904",
+            "commit_id": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
+            "branch_name": "tamird:fix/node22-tls-loopback-backport-20261123"
+          },
+          "actualJobMembership": "Canonical main55964 jobs endpoint contains the CPU image checks and all40 Node attempts (10 logical shards including retries). Same main build permits a same-build design; First Pass is a separate build.",
+          "checkedInAccessPolicy": {
+            "source": "3e9bbb3cc",
+            "files": [
+              "tools/buildkite_coordinator/storage.go:150",
+              "tools/buildkite_coordinator/storage.go:157",
+              "tools/buildkite_coordinator/main.go:304"
+            ],
+            "scope": "ObjectCreator and ObjectViewer downscoped to assignment buildUUID/; source evidence, not a performed deployed-token transfer test."
+          },
+          "retryContract": "Retry attempts have new jobUUIDs under the same buildUUID. Default artifact download selects the latest producer attempt; missing current-attempt artifacts must fail, without include-retried-jobs fallback. A retried consumer can reuse an unchanged successful producer artifact.",
+          "forkAdmission": "No named authorized fork Buildkite execution route found in retained registry/remotes or fork webhook/status metadata. No connected Buildkite tool or existing local Buildkite API credential. These observations do not prove that no private pipeline exists. Root asked for any existing route receipt.",
+          "state": "No preflight dispatched. Stop at unavailable authorized fork admission unless root supplies an existing pipeline/build handle. No upstream pipeline edits, registry writes or Node compilation.",
+          "meaning": "Source policy and actual job membership only; no performed deployed-token artifact transfer test"
         }
       },
-      "recheckCondition": "A qualified native same-build artifact producer/consumer boundary, or a published image bound to the approved TLS source. Landing #17971 alone is insufficient.",
+      "recheckCondition": "An existing authorized fork pipeline/build handle, a qualified same-build artifact handoff, or a source-bound published patched image. First Pass success alone is not main-build artifact proof.",
       "evidence": [
         {
           "label": "Final Node setup timeout before TLS execution",
@@ -148521,5 +148572,5 @@
       "inactive": true
     }
   ],
-  "updatedAt": "2026-11-26T04:15:51.438230+00:00"
+  "updatedAt": "2026-11-26T04:19:05.042657+00:00"
 }
