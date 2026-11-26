@@ -65,6 +65,31 @@ func TestComparisonFlags(t *testing.T) {
 			t.Fatalf("accepted invalid report %q", data)
 		}
 	}
+	t.Run("control only", func(t *testing.T) {
+		dir := t.TempDir()
+		input := filepath.Join(dir, "input")
+		row := "goos: " + runtime.GOOS + "\ngoarch: " + runtime.GOARCH + "\nBenchmarkOne 1 10 ns/op\n"
+		if err := os.WriteFile(input, []byte(row), 0644); err != nil {
+			t.Fatal(err)
+		}
+		r := report{
+			Commands: map[string]command{
+				"A": {Argv: []string{"/bin/false"}},
+				"B": {Argv: []string{"/bin/cat", input}},
+			},
+			PinCPU:       -1,
+			VisitTimeout: time.Second,
+		}
+		if err := r.compare(t.Context(), []string{"One"}, dir, benchstat, .01, .95, true); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := os.Stat(filepath.Join(dir, "aa", "comparison.json")); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := os.Stat(filepath.Join(dir, "ab")); !errors.Is(err, os.ErrNotExist) {
+			t.Fatalf("candidate comparison started: %v", err)
+		}
+	})
 }
 
 func TestVisitTimeout(t *testing.T) {

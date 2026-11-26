@@ -22,6 +22,55 @@ benchmark_test(
     ],
 )
 
+sh_test(
+    name = "grpc_dirty_bindfs_control_test",
+    timeout = "eternal",
+    srcs = ["//tools/benchmark/paired:test.sh"],
+    args = [
+        "$(rootpath //test/benchmarks/harness:filesystem_comparison_host_docker)",
+        "$(rootpath //tools/benchmark/paired)",
+        "$(rootpath :paired_products.json)",
+        "-benchstat=$(rootpath @org_golang_x_perf//cmd/benchstat:benchstat)",
+        shell.quote("-cases=" + json.encode({
+            "//test/benchmarks/fs:grpc_dirty_bindfs_control_test": [
+                "BuildGRPC/page_cache.dirty/filesystem.bindfs",
+            ],
+        })),
+        "-control-only",
+        "-visit-timeout=10m",
+        "-iterations=1",
+        "-metric-units=sec/op",
+        "-alpha=0.00025",
+        "-confidence=0.95",
+    ] + [
+        shell.quote("-" + arm + "=" + json.encode([
+            "$(rootpath :bazel_test)",
+            "-test.run=^$$",
+            "-test.bench=^BenchmarkBuildGRPC$$/^page_cache[.]dirty$$/^filesystem[.]bindfs$$",
+            "-test.benchtime=1x",
+            "-test.count=1",
+            "-test.v",
+            "--config_path=/etc/docker/daemon.json",
+            "--pgo-benchmarks=false",
+            "--runtime=benchmark-candidate",
+        ]))
+        for arm in [
+            "a",
+            "b",
+        ]
+    ],
+    data = [
+        "paired_products.json",
+        ":bazel_test",
+        "//test/benchmarks/harness:filesystem_comparison_host_docker",
+        "//tools/benchmark/paired",
+        "@org_golang_x_perf//cmd/benchstat",
+    ],
+    local = True,
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//cpu:x86_64"],
+)
+
 benchmark_test(
     name = "fio_test",
     srcs = ["fio_test.go"],

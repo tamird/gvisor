@@ -29,7 +29,7 @@ import (
 	"strings"
 )
 
-func (r report) compare(ctx context.Context, expected []string, output, benchstat string, alpha, confidence float64) error {
+func (r report) compare(ctx context.Context, expected []string, output, benchstat string, alpha, confidence float64, controlOnly bool) error {
 	original := r.Commands
 	for _, phase := range []string{"aa", "ab"} {
 		directory := filepath.Join(output, phase)
@@ -124,6 +124,9 @@ func (r report) compare(ctx context.Context, expected []string, output, benchsta
 			return nil
 		}
 		fmt.Printf("MATCHED_%s_COMPLETE\n", phase)
+		if controlOnly {
+			return nil
+		}
 	}
 	return nil
 }

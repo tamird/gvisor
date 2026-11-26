@@ -89,6 +89,7 @@ func run() error {
 	cases := flag.String("cases", "", "JSON map from Bazel test labels to canonical benchfmt names")
 	casesFile := flag.String("cases-file", "", "file containing the cases JSON instead of -cases")
 	benchstat := flag.String("benchstat", "", "benchstat executable; collect A/A then conditional A/B when set")
+	controlOnly := flag.Bool("control-only", false, "collect and report A/A only; requires benchstat")
 	validate := flag.Bool("validate", false, "validate inputs without starting benchmark processes")
 	alpha := flag.Float64("alpha", 0.01, "predeclared per-contrast significance threshold")
 	confidence := flag.Float64("confidence", 0.95, "confidence level for benchstat estimates")
@@ -106,6 +107,9 @@ func run() error {
 	}
 	if *iterations < 0 {
 		return fmt.Errorf("iterations must be non-negative")
+	}
+	if *controlOnly && *benchstat == "" {
+		return fmt.Errorf("control-only requires benchstat")
 	}
 	if !(*alpha > 0 && *alpha < 1 && *confidence > 0 && *confidence < 1) {
 		return fmt.Errorf("alpha and confidence must be between zero and one")
@@ -182,10 +186,13 @@ func run() error {
 	if *validate {
 		return nil
 	}
+	if *controlOnly {
+		r.Commands["A"] = r.Commands["B"]
+	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	if *benchstat != "" && !r.Preflight {
-		return r.compare(ctx, expected, output, *benchstat, *alpha, *confidence)
+		return r.compare(ctx, expected, output, *benchstat, *alpha, *confidence, *controlOnly)
 	}
 	return r.record(ctx, expected, output)
 }
