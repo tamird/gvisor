@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T11:32:57.655715+00:00",
+    "updatedAt": "2026-11-26T11:38:02.447359+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40906,7 +40906,7 @@
       "group": "bazel",
       "status": "open",
       "summary": "Prepared e2101026eb now has a functionally usable AMD64 normal opaque baseline/candidate pair: baseline archive build 45808877775 and its retained benign-guest report passed, alongside the existing candidate archive/report. Current static parity remains 117,318 legacy positions included in 117,320 candidate positions, zero missing; four candidate reports and 24 KCOV cases passed. This is functional provenance, not performance qualification or publication approval.",
-      "updatedAt": "2026-11-26T11:32:57.655715+00:00",
+      "updatedAt": "2026-11-26T11:38:02.447359+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
@@ -41006,14 +41006,8 @@
           "https://github.com/tamird/gvisor/actions/runs/45798978937",
           "https://github.com/tamird/gvisor/actions/runs/45803632211",
           "https://app.buildbuddy.io/invocation/e909d87e-a556-4e7b-be14-8f8fc4e8e213",
-          {
-            "label": "Current baseline opaque archive build",
-            "url": "https://github.com/tamird/gvisor/actions/runs/45808877775"
-          },
-          {
-            "label": "Retained baseline guest and report artifact",
-            "url": "https://github.com/tamird/gvisor/actions/runs/45810571304/artifacts/15112412051"
-          }
+          "https://github.com/tamird/gvisor/actions/runs/45808877775",
+          "https://github.com/tamird/gvisor/actions/runs/45810571304/artifacts/15112412051"
         ],
         "mergeable": "CONFLICTING",
         "recheckCondition": "Actual current-base final review, metric-compatible performance/control evidence or submitted publication decision; no duplicate archive/report or static-parity run.",
@@ -41351,7 +41345,7 @@
           "proofSHA256": "8cfa9665fca33bd1625d96c7b184d3b8454523fbfe87c0b7bd9744d867d14c0b",
           "recheckCondition": "Root permanent-mechanism decision, same-operation execution-review result or actual fidelity evidence."
         },
-        "curatedAt": "2026-11-26T11:32:57.655715+00:00",
+        "curatedAt": "2026-11-26T11:38:02.447359+00:00",
         "permanentBazelFirstLayer": {
           "testSource": "340e1072aa5a3d47e01ff68dffea34f91be4a9f4",
           "ciSource": "fa452727d8d6af2399f8644f9d64a40dc5d902ae",
@@ -42249,6 +42243,14 @@
         {
           "label": "Source-bound position comparison invocation",
           "url": "https://app.buildbuddy.io/invocation/e909d87e-a556-4e7b-be14-8f8fc4e8e213"
+        },
+        {
+          "label": "Current baseline opaque archive build",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45808877775"
+        },
+        {
+          "label": "Retained baseline guest and report artifact",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45810571304/artifacts/15112412051"
         }
       ],
       "number": 16507,
@@ -151080,5 +151082,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-26T11:32:57.655715+00:00"
+  "updatedAt": "2026-11-26T11:38:02.447359+00:00"
 }
