@@ -1,0 +1,39 @@
+Keep the pinned Fastlane benchmark reproducible without changing its 3,613
+selected examples. Backport the upstream token-time adjustment [1].
+
+Legacy CBC checks padding rather than authenticating the password. A random
+salt can give the wrong key valid padding [2]. Use a known invalid fixture
+for this error path while running the real encryption and decryption.
+
+[1]: https://github.com/fastlane/fastlane/commit/2beac83f8
+[2]: https://github.com/fastlane/fastlane/issues/21663
+
+diff --git a/spaceship/lib/spaceship/connect_api/token.rb b/spaceship/lib/spaceship/connect_api/token.rb
+--- a/spaceship/lib/spaceship/connect_api/token.rb
++++ b/spaceship/lib/spaceship/connect_api/token.rb
+@@ -102,3 +102,4 @@
+           iss: issuer_id,
+-          iat: now.to_i,
++          # Reduce the issued-at-time in case our time is slighly ahead of Apple's servers, which causes the token to be rejected.
++          iat: now.to_i - 60,
+           exp: @expiration.to_i,
+diff --git a/spaceship/spec/connect_api/token_spec.rb b/spaceship/spec/connect_api/token_spec.rb
+--- a/spaceship/spec/connect_api/token_spec.rb
++++ b/spaceship/spec/connect_api/token_spec.rb
+@@ -217,3 +217,3 @@
+       expect(payload['iss']).to eq(issuer_id)
+-      expect(payload['iat']).to eq(Time.now.to_i)
++      expect(payload['iat']).to be < Time.now.to_i
+       expect(payload['aud']).to eq('appstoreconnect-v1')
+diff --git a/match/spec/encryption/openssl_spec.rb b/match/spec/encryption/openssl_spec.rb
+--- a/match/spec/encryption/openssl_spec.rb
++++ b/match/spec/encryption/openssl_spec.rb
+@@ -25,6 +25,8 @@
+     end
+ 
+     it "raises an exception if invalid password is passed" do
++      # Keep the legacy CBC error-path fixture deterministic.
++      allow(SecureRandom).to receive(:random_bytes).with(8).and_return("\0" * 8)
+       @e.encrypt_files
+       expect(File.read(@full_path)).to_not(eq(@content))
+ 
