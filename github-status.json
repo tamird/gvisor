@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-26T00:19:47.268281+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-26T00:25:23.324029+00:00",
+  "registryDate": "2026-11-26T00:39:54.598989+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -463042,7 +463042,7 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "22401767ad9317e22aaebb118d3f0dafd031d6a1",
-      "action": "Root finishes the remaining current-source review, preserving the author’s implementation ownership and measured-regression/CI limitations. Follow #17893/#17894 on their own scopes. No duplicate reply, review request, foreign-source edit or unchanged CI retry. The Daybreak availability wait is retired.",
+      "action": "Await the existing decision to post the exact performance-evidence COMMENTED review. Keep author implementation ownership and separate #17893/#17894 scopes; no repeated question, foreign-source edit or unchanged CI retry.",
       "claimed": true,
       "firstObservedHead": "e5f0f6f7fc500b646b4a0dbd738f142e1a9032a2",
       "reviewHead": null,
@@ -463062,7 +463062,7 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "22401767ad9317e22aaebb118d3f0dafd031d6a1",
-      "action": "Root finishes the remaining current-source review, preserving the author’s implementation ownership and measured-regression/CI limitations. Follow #17893/#17894 on their own scopes. No duplicate reply, review request, foreign-source edit or unchanged CI retry. The Daybreak availability wait is retired.",
+      "action": "Await the existing decision to post the exact performance-evidence COMMENTED review. Keep author implementation ownership and separate #17893/#17894 scopes; no repeated question, foreign-source edit or unchanged CI retry.",
       "claimed": true,
       "firstObservedHead": "3389a2aa144abf8f474fc65bcabc84487564ee86",
       "reviewHead": null,
@@ -463082,7 +463082,7 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "22401767ad9317e22aaebb118d3f0dafd031d6a1",
-      "action": "Root finishes the remaining current-source review, preserving the author’s implementation ownership and measured-regression/CI limitations. Follow #17893/#17894 on their own scopes. No duplicate reply, review request, foreign-source edit or unchanged CI retry. The Daybreak availability wait is retired.",
+      "action": "Await the existing decision to post the exact performance-evidence COMMENTED review. Keep author implementation ownership and separate #17893/#17894 scopes; no repeated question, foreign-source edit or unchanged CI retry.",
       "claimed": true,
       "firstObservedHead": "0ec767e4d4f1ec1bdf56d3675e06b860a02d7e19",
       "reviewHead": null,
@@ -463211,12 +463211,12 @@
       "mergeabilityCheckedAt": "2026-11-26T00:19:41.696322+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "benchmark_measurement_review prepares and executes the assigned identical-parent A/A, then returns its source/product/control receipt. Root remains accountable for broad performance and any eventual publication decision. No candidate A/B or extra samples are inferred from the fixture assessment.",
+      "action": "Root assesses the completed parent A/A before any candidate comparison. Recovery-path inference needs a workload that actually demonstrates recovery and suitable measurement precision. No candidate run or retry is authorized; preserve the separate source-publication and broad-performance boundaries.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "f11f74a174170eedf4b158ef111937c4533d4abe",
-        "disposition": "Public f11f74a174 remains unchanged; private d015e4c537 has completed functional/source qualification and both final static reviews. Root assigned benchmark_measurement_review the same-source parent A/A using the unchanged maintained TCP bulk-transfer fixture. Historical different-arm n=12 and sparse-ACK n=8 evidence do not qualify this control. Independent Iperf P64 and rewritten-TCP holds do not block the assigned A/A.",
-        "nextAction": "benchmark_measurement_review prepares and executes the assigned identical-parent A/A, then returns its source/product/control receipt. Root remains accountable for broad performance and any eventual publication decision. No candidate A/B or extra samples are inferred from the fixture assessment."
+        "disposition": "Public f11f74a remains unchanged; private d015e4c53 has accepted static reviews and source/functional checks. The four-variant parent A/A completed 200 full 64 MiB transfers, with no SACK recoveries and four retransmits in one transfer. No adjusted contrasts flagged, but drift/order uncertainty reaches 11% elapsed and 12% rate. This does not establish small-effect stability, recovery-path performance or candidate qualification.",
+        "nextAction": "Root assesses the completed parent A/A before any candidate comparison. Recovery-path inference needs a workload that actually demonstrates recovery and suitable measurement precision. No candidate run or retry is authorized; preserve the separate source-publication and broad-performance boundaries."
       },
       "conflictObservedSince": "2026-11-20T22:49:23.248038+00:00"
     },
@@ -463355,12 +463355,12 @@
       "mergeabilityCheckedAt": "2026-11-26T00:19:41.696322+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Recorder bf96bd54092f4af422a9d0136151622e955800e2 passes execution/data-integrity qualification: 12 verbatim process files, all 90 rows/15 cases and manifest bindings; three fresh remote unit cases per architecture, source checks and four final reviews are complete. Static validators were cached. The expected cancellation failure reaped its child and retained a manifest-linked zero-byte file, without partial benchmark-row proof. UPSTREAM HELD: only transient direct Go operations were retired; no maintained caller migrated. Grouped presentation, non-Linux runtime and cross-revision products remain unqualified. Pinned A/A 45063972774 still FAILS 38 intervals; its 0.5% band/four contrasts were agent choices, not user requirements. Performance, producer479 and analyzer scope remain unfinished. No more timing, A/A, A/B or source expansion is authorized.",
+      "action": "Root reconciles the maintained-caller, producer479 and cross-revision requirements before any authorized next step. Recorder bf96 has scoped execution/data-integrity qualification, but no maintained caller migration or grouped/non-Linux/cross-revision qualification. Keep source57 publication/performance held, historical inconclusive startup controls and unresolved ARM affinity explicit. The 0.5% A/A band was an agent choice, not a user regression budget. Any later replacement must incorporate the landed fork-fetch fix; no unchanged public-head retry or new timing/source expansion.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "disposition": "Public c715 remains unchanged/conflicting; source 57 is not publication-approved. Strict current eb263 comparison 44979111210 is audited PASS: legacy 116,100 is included in candidate 116,102, 2,418 protobuf positions each, zero missing/two additional; candidate hash matches its previously compiled product. No identity claim is made for the additional positions. Source-bound compiler/functionality/ZIP evidence and two implementation reviews are complete; controlled performance remains open. Exact public head Pipeline 55416 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure.",
-        "nextAction": "Recorder bf96bd54092f4af422a9d0136151622e955800e2 passes execution/data-integrity qualification: 12 verbatim process files, all 90 rows/15 cases and manifest bindings; three fresh remote unit cases per architecture, source checks and four final reviews are complete. Static validators were cached. The expected cancellation failure reaped its child and retained a manifest-linked zero-byte file, without partial benchmark-row proof. UPSTREAM HELD: only transient direct Go operations were retired; no maintained caller migrated. Grouped presentation, non-Linux runtime and cross-revision products remain unqualified. Pinned A/A 45063972774 still FAILS 38 intervals; its 0.5% band/four contrasts were agent choices, not user requirements. Performance, producer479 and analyzer scope remain unfinished. No more timing, A/A, A/B or source expansion is authorized."
+        "nextAction": "Root reconciles the maintained-caller, producer479 and cross-revision requirements before any authorized next step. Recorder bf96 has scoped execution/data-integrity qualification, but no maintained caller migration or grouped/non-Linux/cross-revision qualification. Keep source57 publication/performance held, historical inconclusive startup controls and unresolved ARM affinity explicit. The 0.5% A/A band was an agent choice, not a user regression budget. Any later replacement must incorporate the landed fork-fetch fix; no unchanged public-head retry or new timing/source expansion."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -463595,12 +463595,12 @@
       "mergeabilityCheckedAt": "2026-11-26T00:19:45.338944+00:00",
       "sourceBranchMismatch": false,
       "owner": "approved_rebase_queue",
-      "action": "Root and approved_rebase_queue assess the retained control’s drift and precision before any candidate timing. No repeat, worker-wide inference, timing expansion or end-to-end latency claim; source/performance/publication boundaries remain.",
+      "action": "Hold candidate timing pending materially different measurement evidence or contributor disposition. Root has completed review of the retained control and fixture: the fixture measures manual-clock Advance that triggers a real ACK, with no established noise cause. Do not reassess identical files, rerun, expand scope or claim end-to-end latency.",
       "recordedFollowup": {
         "owner": "approved_rebase_queue",
         "sourceHead": "f069808da1b9876130c7a853fe2fbb9f815d8519",
         "disposition": "Public #17286 remains at f069808da; private 2d81758a1054 retains affected functional/source qualification. Timing-path admission proved an actual DelayedACKs counter increment. Same-source control 45719158653 had no adjusted flags, but Setup’s early/late baseline median moved +9.2% and the delayed-ACK late interval reached ±15%. Candidate timing is held; simulated timing does not establish end-to-end latency.",
-        "nextAction": "Root and approved_rebase_queue assess the retained control’s drift and precision before any candidate timing. No repeat, worker-wide inference, timing expansion or end-to-end latency claim; source/performance/publication boundaries remain."
+        "nextAction": "Hold candidate timing pending materially different measurement evidence or contributor disposition. Root has completed review of the retained control and fixture: the fixture measures manual-clock Advance that triggers a real ACK, with no established noise cause. Do not reassess identical files, rerun, expand scope or claim end-to-end latency."
       },
       "conflictObservedSince": "2026-11-20T23:52:55.787276+00:00"
     },
@@ -463619,12 +463619,12 @@
       "mergeabilityCheckedAt": "2026-11-26T00:19:46.673134+00:00",
       "sourceBranchMismatch": false,
       "owner": "approved_rebase_queue / root",
-      "action": "The missing legacy benchmark prerequisite is delivered as #17871 at exact 6eaaa8495. Root follows its CI/review lifecycle. Preserve the original 38 component and four checkpoint/restore controls, both inconclusive GraphLoad A/A results and independent production/performance gates; no new timing or source publication follows from benchmark delivery.",
+      "action": "Follow the delivered benchmark prerequisite #17871 at dd4cd790d4915f47e66b03dd02c2c5f8a40e9c6f, currently GitHub APPROVED, through its own CI/maintainer lifecycle. Production b08 and private56c remain separate: original 38 component rows and four checkpoint/restore controls, inconclusive A/A results and source/publication gates remain. No benchmark opening decision remains and no new timing follows from delivery.",
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "b08bf67a0996f2732d82ad5b35949048cc2139f0",
         "disposition": "Public b08bf67 remains conflicting and unchanged. Private conflict recovery 56c7c9ff77e5f7644292094cae6a9e67f5fe1a60 preserves upstream signaling-NaN fixes/tests and the zero-dispatch topic. Both architectures passed 15 state targets (five Go, ten Nogo), with 11,810 XML records, 85 intentional wire-slice skips and zero failures each; all five source checks passed. Both independent correctness and performance/style reviews found no blockers. This is not publication approval or performance qualification: seven component A/A results remain inconclusive and four broad controls remain unqualified.",
-        "nextAction": "The missing legacy benchmark prerequisite is delivered as #17871 at exact 6eaaa8495. Root follows its CI/review lifecycle. Preserve the original 38 component and four checkpoint/restore controls, both inconclusive GraphLoad A/A results and independent production/performance gates; no new timing or source publication follows from benchmark delivery."
+        "nextAction": "Follow the delivered benchmark prerequisite #17871 at dd4cd790d4915f47e66b03dd02c2c5f8a40e9c6f, currently GitHub APPROVED, through its own CI/maintainer lifecycle. Production b08 and private56c remain separate: original 38 component rows and four checkpoint/restore controls, inconclusive A/A results and source/publication gates remain. No benchmark opening decision remains and no new timing follows from delivery."
       },
       "conflictObservedSince": "2026-11-20T21:07:20.274292+00:00"
     },
@@ -471982,7 +471982,7 @@
         "since": "2026-11-25T22:15:30.434231+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "pr:14458": {
@@ -472745,7 +472745,7 @@
         "since": "2026-11-25T20:26:19.847463+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "pr:15202": {
@@ -473246,7 +473246,7 @@
         "since": "2026-11-25T23:55:50.246211+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "pr:15453": {
@@ -473722,7 +473722,7 @@
         "since": "2026-11-25T20:26:38.821906+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "pr:15648": {
@@ -475062,7 +475062,7 @@
         "since": "2026-11-25T22:41:21.827202+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "pr:16445": {
@@ -475677,7 +475677,7 @@
         "since": "2026-11-25T22:35:10.106729+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "pr:16661": {
@@ -476458,7 +476458,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "pr:16822": {
@@ -476540,7 +476540,7 @@
         "since": "2026-11-25T23:00:04.041520+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "pr:16828": {
@@ -477138,7 +477138,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "pr:16958": {
@@ -478248,6 +478248,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-26T00:19:45.338944+00:00"
+      },
+      "contributor-review": {
+        "scope": "22401767ad9317e22aaebb118d3f0dafd031d6a1",
+        "since": "2026-11-26T00:39:54.598989+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "pr:17265": {
@@ -478623,7 +478630,7 @@
         "since": "2026-11-25T22:34:48.644451+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "pr:17376": {
@@ -480015,7 +480022,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -480024,7 +480031,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -480033,7 +480040,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -480042,7 +480049,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -480051,7 +480058,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -480060,7 +480067,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -480069,7 +480076,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -480078,7 +480085,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "issue:17832": {
@@ -480087,7 +480094,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "branch:hey-report-cap-accounting": {
@@ -480096,7 +480103,7 @@
         "since": "2026-11-25T22:03:16.345652+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     },
     "investigation:ci-benchmark-fuse-device": {
@@ -480105,7 +480112,7 @@
         "since": "2026-11-25T21:11:04.741354+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T00:25:23.324029+00:00"
+        "observedAt": "2026-11-26T00:39:54.598989+00:00"
       }
     }
   },

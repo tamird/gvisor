@@ -36,6 +36,23 @@ test('registry requires an aware update timestamp for collected branches', () =>
   validate();
 });
 
+test('PR and branch actions have one authoritative field', () => {
+  const context = client();
+  const node = { id: 'branch:benchmark', type: 'branch', followup: { nextAction: 'Follow the current PR.' } };
+  context.registryInput = { ...context.registryInput, nodes: [node], groups: [], edges: [] };
+  const validate = () => vm.runInContext('validateRegistry(registryInput, { authoring: true })', context);
+  validate();
+  for (const type of ['pr', 'branch']) {
+    Object.assign(node, { type, id: type === 'pr' ? 'pr:1' : 'branch:benchmark', repo: 'google/gvisor',
+      number: 1, url: 'https://github.com/google/gvisor/pull/1' });
+    node.nextStep = 'Await the already-completed publication decision.';
+    vm.runInContext('validateRegistry(registryInput)', context);
+    assert.throws(validate, /Use followup.nextAction/);
+    delete node.nextStep;
+    validate();
+  }
+});
+
 test('a requested rebase belongs to its author and source head', () => {
   const c = client();
   c.pr = { authorLogin: 'tamird', head: 'a'.repeat(40),

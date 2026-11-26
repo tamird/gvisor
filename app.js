@@ -2507,7 +2507,7 @@ function validBranchTimestamp(value) {
     && clock.getUTCSeconds() === Number(second);
 }
 const nonemptyText = value => typeof value === "string" && value.trim();
-function validateRegistry(candidate, { allowRetiredExecution = false } = {}) {
+function validateRegistry(candidate, { allowRetiredExecution = false, authoring = false } = {}) {
   if (!candidate?.meta || !Number.isFinite(Date.parse(candidate.meta.updatedAt)) ||
       !Array.isArray(candidate.nodes) || !Array.isArray(candidate.edges) || !Array.isArray(candidate.groups)) throw new Error("Invalid work registry");
   const policies = repositoryPolicies(candidate);
@@ -2521,6 +2521,8 @@ function validateRegistry(candidate, { allowRetiredExecution = false } = {}) {
         node.id !== prIdentity(node, candidate) ||
         node.url !== `https://github.com/${node.repo}/pull/${node.number}`) throw new Error("Invalid PR repository identity");
   for (const node of candidate.nodes) {
+    if (authoring && ["pr", "branch"].includes(node.type) && node.nextStep !== undefined)
+      throw new Error(`Use followup.nextAction for ${node.id}; nextStep belongs to investigations`);
     if (node.type === "branch" && node.head && !validBranchTimestamp(node.updatedAt))
       throw new Error(`Invalid branch update timestamp for ${node.id}`);
     if (node.inactive !== undefined && typeof node.inactive !== "boolean") throw new Error("Invalid inactive classification");

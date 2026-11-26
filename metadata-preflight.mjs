@@ -13,7 +13,7 @@ vm.runInContext(readFileSync(resolve(root, "draft.js"), "utf8"), context, { file
 vm.runInContext(source.slice(0, -'start();\n'.length), context, { filename: 'app.js' });
 context.candidateRegistry = JSON.parse(bytes['registry.json']);
 context.candidateSnapshot = JSON.parse(bytes['github-status.json']);
-vm.runInContext('validateRegistry(candidateRegistry); validateSnapshot(candidateSnapshot, candidateRegistry);', context);
+vm.runInContext('validateRegistry(candidateRegistry, { authoring: true }); validateSnapshot(candidateSnapshot, candidateRegistry);', context);
 const nodes = vm.runInContext("registryNodes(candidateRegistry)", context);
 const prURLs = new Set(nodes.filter(node => node.type === 'pr').map(node => node.url));
 for (const node of nodes) {

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T00:25:23.324029+00:00",
+    "updatedAt": "2026-11-26T00:39:54.598989+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -987,7 +987,6 @@
           }
         }
       },
-      "nextStep": "Root awaits the existing maintainer hold disposition; do not send another follow-up or revise source under the hold. Any later authorized revision must preserve the landed SPDX LicenseRef handling and graph.repoRefs refactor in the sole conflicting file.",
       "recheckCondition": "Maintainer’s exception/hold response or explicit user direction, then source-bound conflict assessment and required validation."
     },
     {
@@ -1125,7 +1124,7 @@
         "sourceHead": "afb6198869d091f721f559dc0e2eceb0c6bb5455",
         "observedAt": "2026-11-23T23:03:59.853434+00:00",
         "disposition": "At the22:17:49 snapshot, exact source afb619886 still reports DCO ACTION_REQUIRED (CR_kwDOB9IlXs8AAAAf71CUbg). Retained evidence establishes the valid sole topic sign-off and wrong-range provider result. Upstream127 fixes the range bug, but fixed-app deployment and actual affected-check recomputation remain unverified. Existing source approval and independent landing/import/main conditions are unchanged. The independent import/packaging hold remains; do not push a Copybara/export branch.",
-        "nextAction": "Root follows actual app deployment and corrected current-source DCO results, plus the existing source-specific maintainer/import/main lifecycle. Do not change approved source, manually override/sign off, request operators, perform unsupported rerequests, retry unchanged checks or post unapproved prose.",
+        "nextAction": "Follow genuine new-head events or an actually updated DCO check, alongside the existing source-specific maintainer/import/main lifecycle. DCO2 #127 merged and its image built successfully, but public deployment is unverified and the retained Nov21/22 checks predate the fix. The handler processes opened/synchronize, ignores ordinary check-run rerequests, and its requested action is an override. No fake commit, override, human clickops, unchanged retry or unapproved prose.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42849078055/artifacts/13780790760",
           "https://github.com/tamird/gvisor/compare/4ecb0b121...45137f922",
@@ -1159,9 +1158,10 @@
           "https://github.com/cncf/dco2/commit/2b9ce5f80e5fe366e624285b335d075feeb88c0c",
           "https://github.com/cncf/dco2/actions/runs/45167328676",
           "https://github.com/gvisor/gvisor/pull/15106#issuecomment-7099750008",
-          "https://github.com/cncf/dco2/pull/127"
+          "https://github.com/cncf/dco2/pull/127",
+          "https://github.com/cncf/dco2/blob/2b9ce5f/src/dco/event/mod.rs"
         ],
-        "recheckCondition": "Actual corrected check/deployment or substantive maintainer/import/current-head main event.",
+        "recheckCondition": "A genuine new source-head event or actually updated source-bound DCO/check/import result.",
         "attentionDispositions": [
           {
             "reason": "author-feedback",
@@ -1868,7 +1868,6 @@
           "reviewedAt": "2026-10-08T00:44:30.969242+00:00"
         }
       },
-      "nextStep": "Preserve completed candidate evidence while awaiting held feature-performance qualification, an authorised ARM-KVM worker (tested routes lacked /dev/kvm), source approval before DCO/publication. Do not rerun completed tests or access protected source merely to restate the result.",
       "recheckCondition": "Actual worker/access availability, required feature-performance evidence or a source-publication decision; no new hardware commitment or approval inferred."
     },
     {
@@ -2584,7 +2583,6 @@
           "reviewedAt": "2026-10-10T14:31:51.129671+00:00"
         }
       },
-      "nextStep": "Root awaits Tamir’s answer on exact 9c2cdb328 and the supplied rebase notice. Preserve public source and the expected-old-head lease until approval; do not repeat completed validation.",
       "recheckCondition": "Actual answer to the asked amendment/notice question, or changed source/review evidence.",
       "contributorReview": {
         "kind": "amendment",
@@ -4200,8 +4198,8 @@
           "https://github.com/google/gvisor/pull/16766#issuecomment-6807082318",
           "https://github.com/gvisor/gvisor/pull/17590"
         ],
-        "recheckCondition": "A new re-import head or exact-head recurrence with attributable compiler/cache/memory evidence.",
-        "curatedAt": "2026-11-20T16:20:16.754185+00:00",
+        "recheckCondition": "A new Carzh re-import head or exact-head recurrence with attributable compiler/cache/memory evidence.",
+        "curatedAt": "2026-11-26T00:39:54.598989+00:00",
         "priorImportNextAction": "Await the re-import and internal approval. DCO import coordination: Root coordinates #17590 at 7d4bf516f07f. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17590,
@@ -4312,8 +4310,7 @@
           }
         }
       },
-      "nextStep": "Root continues the existing compiler/setup-cost investigation and watches Carzh’s internal approval/re-import. Preserve the explicit no-code-action note and source-specific CI history; do not rerun or rewrite the Python release change because of this feedback audit.",
-      "recheckCondition": "Actual compiler/setup evidence, current-head CI or importing-maintainer disposition changes."
+      "recheckCondition": "A new Carzh re-import head or exact-head recurrence with attributable compiler/cache/memory evidence."
     },
     {
       "id": "branch:bazel-clang-tidy-llvm",
@@ -4416,8 +4413,7 @@
         "title": "Run clang-tidy through Bazel compile actions",
         "body": "A source file can compile with different flags and headers in different\ntargets. Running clang-tidy once per source in a local execution root\nmisses those differences and keeps Bazel from scheduling lint remotely.\n\nRun the LLVM toolchain's clang-tidy for each configured compilation of\nrepository sources. Pass the compile action's arguments, declared\ninputs and clang-tidy's matching builtin headers. Share header\ndiscovery with the editor's compilation database and include transitive\ngenerated sources in that database. Keep generated and third-party\nsources outside the lint selection.\n\nDeclare a serialized Clang frontend diagnostics file for each action.\nClang writes it even on a clean run, so Bazel can invoke clang-tidy\ndirectly without a shell. Read clang-tidy findings in the Bazel action\nlog. With warnings treated as errors, clang-tidy's exit status replaces\nthe Python diagnostic parser and thread pool.",
         "summary": "Open this clang-tidy change after the compiler migration and the standalone C correction in #17446 land? Both architecture selections passed. Across each full and focused invocation, the verified diagnostics cover all 380 AMD64 and 379 ARM64 C/C++ units. The aggregate reporter expected four cached stub actions to repeat.\n\ngit -C ~/code/gvisor range-diff 49c4a3a92^! 89a85fa8f^!"
-      },
-      "nextStep": "The independent C/header prerequisite #17446 is landed and source-verified. Review submission only after the remaining LLVM compiler migration and existing source/publication conditions are satisfied; historical full-selection qualification stays source-bound."
+      }
     },
     {
       "id": "pr:15307",
@@ -6713,7 +6709,6 @@
           "reviewedAt": "2026-10-09T19:16:38.099061+00:00"
         }
       },
-      "nextStep": "Root awaits the actual optional-description answer and the existing second maintainer approval. approved_rebase_queue retains current-head CI ownership. No source/rebase/notice approval wait, rebuild or unchanged retry.",
       "recheckCondition": "Actual optional paragraph answer, additional approval or substantive source/check event.",
       "contributorReview": {
         "kind": "information",
@@ -6988,7 +6983,6 @@
         },
         "historicalOutreachClockHead": "4677b6d5ab8676013afe8e5074ca776e9aabaafd"
       },
-      "nextStep": "Root awaits Tamir’s decision on exact 40d658b147 and the standard rebase notice. Publish only after approval, preserving the exact expected public-head lease and existing qualification limits.",
       "recheckCondition": "Tamir’s response to the actual amendment question, or a genuine changed source/base/review requirement.",
       "contributorReview": {
         "kind": "amendment",
@@ -7371,7 +7365,6 @@
         ]
       },
       "updatedAt": "2026-11-17T20:32:28.027492+00:00",
-      "nextStep": "Root follows actual changes in the existing website and Python suppliers. Preserve the historical fork comparison proof; do not start another extraction, permanent fork pin or publication decision before those suppliers change.",
       "recheckCondition": "Actual declared-jekyll-site or bazel-python-release supplier/source/review change.",
       "historicalSummary": "The mixed release Make change is open as #16490. The website and Python selections remain separate.\n\nUpstream delivery needs smaller Bazel-native extraction units. The reviewed architecture keeps qualify.sh and the Python selector as temporary fork comparison tooling; durable behavior should use configured test owners and native suites. These existing component branches remain evidence/comparison inputs, not independently ready upstream PRs. The individual source cuts still need implementation and review.\n\nPublished head ff47eae25757e50d8e66319b2b2d3cb4189bceb9 descends from eb6a71ba1 and is included in primary qualification. It adds graph-owned release artifacts, Python distributions and website outputs to the mixed invocation. Both-architecture artifacts and two uncached remote tests passed in parent 89df3a5e-1f08-4bb8-aa09-40d46eccaaca, which then failed its metadata assertion because the graph also contains an exec-configured runsc for the website. Metadata-only continuation 97d28482-c93b-4cd7-844f-03a063068545 passed with zero actions; independent reconciliation distinguishes three target configurations from that exec tool. This closes the bounded component proof, not the broader qualification run, whose independently reconciled outcome remains failed."
     },
@@ -9445,7 +9438,6 @@
         "recheckCondition": "An actual remaining prerequisite landing or current-source qualification event, preserving existing approval and scope bindings.",
         "curatedAt": "2026-11-25T18:47:37.715770+00:00"
       },
-      "nextStep": "Root retains the approved compiler proposal behind its remaining recorded #16522, #17067 and #17444 prerequisites and current-source qualification limits. #16516 is merged and is no longer an outstanding prerequisite; this does not complete the other compiler gates or authorize publication.",
       "recheckCondition": "An actual remaining prerequisite landing or current-source qualification event, preserving existing approval and scope bindings."
     },
     {
@@ -11289,11 +11281,11 @@
           "recheckCondition": "Proposal decision or exact current ref/head, source/base or qualification change."
         },
         "owner": "declared_formatting_resume / root",
-        "nextAction": "Await the recorded Bazel issue-filing decision. If approved, publish its exact draft only; retain the full input-coverage and source-owning-interface obligation and the separate be47 publication question.",
-        "recheckCondition": "Actual issue-posting answer or concrete canonical File interface/full-input coverage evidence; no implementation or source approval inferred.",
+        "nextAction": "Await the existing Bazel issue-filing decision; full MODULE/.bzl input coverage and the separate be47 source proposal remain distinct. Root evaluates a smaller owning-input interface before any held direct-label implementation. No catalog, exporter, adapter or partial registration framework is authorized.",
+        "recheckCondition": "Actual existing issue/source decision or concrete owning-File/full-input coverage evidence.",
         "observedAt": "2026-11-17T19:58:25.300843+00:00",
         "sourceHead": "63c29f4ef205ae9a8dec3b96e4bb3e32581d6c40",
-        "curatedAt": "2026-11-21T14:00:19.559771+00:00",
+        "curatedAt": "2026-11-26T00:39:54.598989+00:00",
         "disposition": "Root actually asked for approval to file the Bazel feature issue “Expose the owning BUILD file as an action input”; the question is unanswered and nothing has been posted. A File-valued owning-BUILD accessor addresses one blocker only; full MODULE/.bzl input coverage remains unproven. Partial indexed operations and registration frameworks remain held. Delivered #17816 and pending be47 retain separate scopes.",
         "permanentFormatterMilestone": {
           "source": "723486ddd865d3044c5b515865b3a43de6356fde",
@@ -11485,8 +11477,7 @@
           "note": "User requested aspect_rules_lint reuse. Source assessment identifies declared-source format_test and format_multirun as viable replacements for most custom rule/runner dispatch. Verify exact source membership, flags and JSON error semantics with a cheap remote preflight before revising the unapproved proposal."
         }
       ],
-      "nextStep": "Root evaluates a materially smaller existing mechanism before source implementation. Keep the direct-label implementation held and preserve the proven Aspect primitive; no user question or expansion into a catalog/exporter/adapter. The delivered supplier PR has its separate existing review/CI owner.",
-      "recheckCondition": "PR review/source/check/import change, actual quota recovery or next minimal declared-input milestone.",
+      "recheckCondition": "Actual existing issue/source decision or concrete owning-File/full-input coverage evidence.",
       "contributorReview": {
         "kind": "issue",
         "status": "pending",
@@ -12427,7 +12418,6 @@
         "recheckCondition": "Current-head CI, substantive technical feedback or import lifecycle changes; named technical holds remain.",
         "holdsPreserved": {}
       },
-      "nextStep": "Keep standalone EOF delivery and remaining architecture/performance obligations moving through shared owners. Preserve original Netip failure and private importing hold; standalone EOF proof does not qualify public Netip or clear the hold.",
       "recheckCondition": "EOF prerequisite delivery, missing architecture/performance evidence or substantive importer/source feedback."
     },
     {
@@ -16532,7 +16522,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:43.853615+00:00",
-      "summary": "Public f11f74a174 remains unchanged; private d015e4c537 has completed functional/source qualification and both final static reviews. Root assigned benchmark_measurement_review the same-source parent A/A using the unchanged maintained TCP bulk-transfer fixture. Historical different-arm n=12 and sparse-ACK n=8 evidence do not qualify this control. Independent Iperf P64 and rewritten-TCP holds do not block the assigned A/A.",
+      "summary": "Public f11f74a remains unchanged; private d015e4c53 has accepted static reviews and source/functional checks. The four-variant parent A/A completed 200 full 64 MiB transfers, with no SACK recoveries and four retransmits in one transfer. No adjusted contrasts flagged, but drift/order uncertainty reaches 11% elapsed and 12% rate. This does not establish small-effect stability, recovery-path performance or candidate qualification.",
       "number": 15634,
       "reviewDecision": null,
       "evidence": [
@@ -16629,10 +16619,10 @@
       ],
       "followup": {
         "owner": "root",
-        "disposition": "Public f11f74a174 remains unchanged; private d015e4c537 has completed functional/source qualification and both final static reviews. Root assigned benchmark_measurement_review the same-source parent A/A using the unchanged maintained TCP bulk-transfer fixture. Historical different-arm n=12 and sparse-ACK n=8 evidence do not qualify this control. Independent Iperf P64 and rewritten-TCP holds do not block the assigned A/A.",
+        "disposition": "Public f11f74a remains unchanged; private d015e4c53 has accepted static reviews and source/functional checks. The four-variant parent A/A completed 200 full 64 MiB transfers, with no SACK recoveries and four retransmits in one transfer. No adjusted contrasts flagged, but drift/order uncertainty reaches 11% elapsed and 12% rate. This does not establish small-effect stability, recovery-path performance or candidate qualification.",
         "sourceHead": "f11f74a174170eedf4b158ef111937c4533d4abe",
         "observedAt": "2026-11-20T23:41:26.383263+00:00",
-        "nextAction": "benchmark_measurement_review prepares and executes the assigned identical-parent A/A, then returns its source/product/control receipt. Root remains accountable for broad performance and any eventual publication decision. No candidate A/B or extra samples are inferred from the fixture assessment.",
+        "nextAction": "Root assesses the completed parent A/A before any candidate comparison. Recovery-path inference needs a workload that actually demonstrates recovery and suitable measurement precision. No candidate run or retry is authorized; preserve the separate source-publication and broad-performance boundaries.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15634",
           "https://github.com/tamird/gvisor/actions/runs/41091511027/artifacts/12994247763",
@@ -16669,10 +16659,11 @@
           "https://buildkite.com/gvisor/first-pass/builds/1454#01a1ead6-2077-4a61-8951-2ccc3f48ae1f",
           "https://github.com/tamird/gvisor/commit/d015e4c537be52d4a0bbeda2cd04c3f54efa8d0d",
           "https://github.com/tamird/gvisor/actions/runs/41253178508/artifacts/13061718262",
-          "https://github.com/tamird/gvisor/actions/runs/40997495310/artifacts/12951717490"
+          "https://github.com/tamird/gvisor/actions/runs/40997495310/artifacts/12951717490",
+          "https://github.com/tamird/gvisor/actions/runs/45729863445/artifacts/15076018902"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Existing owner’s accepted A/A handle/terminal receipt or substantive source/review evidence.",
+        "recheckCondition": "Root disposition or materially different recovery/stability evidence; no repeat reading or unchanged control.",
         "implementationOwner": "approved_rebase_queue",
         "curatedAt": "2026-11-26T00:18:21.223046+00:00",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
@@ -16691,6 +16682,16 @@
           "packageTree": "e5bf57adc1ff4278af018c4bbad99eb4784fae65",
           "scope": "All four original CUBIC/SACK cases;0/100us batching and RACK toggles;64MiB one-way transfer;common Go1.27.3/MODULE/go.mod",
           "historicalLimit": "Prior broad n12 differs in source arms; old sparse-ACK n8 is change-specific. Neither is current same-source control."
+        },
+        "broadPerformanceControl": {
+          "run": 45729863445,
+          "artifact": 15076018902,
+          "parent": "4b3af1c2a1eaf79480ce2c6aa59dbf3ac623624d",
+          "transfers": 200,
+          "pairs": 24,
+          "adjustedRejections": "0/80",
+          "SACKRecoveries": 0,
+          "limits": "No small-effect stability/equivalence or candidate qualification."
         }
       },
       "outreachReviewClock": {
@@ -16725,7 +16726,6 @@
         "priorOwner": "netstack owner",
         "historicalOutreachClockHead": "679d14eed77a4ce6029065d88248c8ce0902c270"
       },
-      "nextStep": "benchmark_measurement_review prepares and executes the assigned identical-parent A/A, then returns its source/product/control receipt. Root remains accountable for broad performance and any eventual publication decision. No candidate A/B or extra samples are inferred from the fixture assessment.",
       "recheckCondition": "Existing owner’s accepted A/A handle/terminal receipt or substantive source/review evidence."
     },
     {
@@ -17212,7 +17212,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "PR reviewers"
       },
-      "nextStep": "Root awaits Tamir’s decision on exact e1e2d03562 and the standard rebase notice. Publish only after approval, preserving the exact expected public-head lease and source-bound qualification limits.",
       "recheckCondition": "Tamir’s response to the actual amendment question, or a genuine changed source/base/review requirement.",
       "contributorReview": {
         "kind": "amendment",
@@ -28107,7 +28106,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Agent"
       },
-      "nextStep": "Root follows genuine new source-bound feedback or maintainer landing/current CI events. Do not reopen the addressed fixture row, repeat its published answer, infer private integration or merge authority.",
       "recheckCondition": "New/edited feedback, changed source/review evidence or maintainer landing; collection time alone does not reopen consumed feedback."
     },
     {
@@ -29684,7 +29682,6 @@
       },
       "inactive": true,
       "historicalSummary": "The approved fsstress source is published as upstream PR #16401 at exact 97c071a745 on master fb7341a1ad. It builds pinned LTP fsstress and layers its executable, notice and launch script onto the existing official @test_busybox image, preserving the shell parent. There is no contributor hold or pending agent source-review decision on this delivered proposal. Current public checks, matching imports and maintainer review are shown from the live GitHub snapshot.\n\nExact-source validation of published 97c071a745 passed in 7a5ba05a. Both architectures' LTP links were fresh remote GNU actions; each fsstress archive contained the official BusyBox base layers unchanged plus one fsstress layer, and the Make contexts matched. On AMD64/runc, two workers each produced four files. Automatic verification completed 7.817 seconds after the last execution. ARM runtime was not run this time. The three earlier gVisor filesystem test cases remain tied to their earlier 6b2 source; this new result does not extend that coverage to 97c071a745.\n\nThe source-specific official-image validation d5246ab2 and two-worker entrypoint proof fe7b2570 remain historical evidence. The foundation imported as c3e0783a through #16307 is already in master. Neither the withdrawn local BusyBox/PIDFD stack nor the independent #16374 generic archive is a delivery gate.\n\nPreserved proposal and exact-source evidence:\n\nThe actual fsstress revision is 97c071a745 on current base fb7341a1ad, published at review/fsstress-official-image-current. It builds pinned LTP fsstress and adds the executable, notice and launch script to the existing official @test_busybox image. The shell parent remains because fsstress workers exit early when their parent has PID 1. This returns to the approved official-image approach; the fsstress approval is retained, and no new contributor decision is pending. Root owns current-base delivery and will advise upstream publication.\n\nThe existing BusyBox pull is pinned for both target architectures and already mirror-first. No local BusyBox producer, parked PIDFD or new #16379 dependency is needed. The basic foundation landed through #16307 after #16097 closed; the independent generic source archive in #16374 is not required by fsstress's native Make and archive outputs. No #16374 landing gate remains.\n\nEarlier official-image evidence is retained at d5246ab2 (images and filesystem consumers) and fe7b2570 (two-worker entrypoint execution). Those runs qualify their recorded source identities; they are not a new execution of 97c071a745. The local-utility f4134e3b evidence below remains historical and does not justify shipping that withdrawn implementation.\n\nCompare the current official-image source with the former local composition:\ngit range-diff --creation-factor=999 6012e1652777e4bd4c3997f55466a324c6491a08^! 97c071a74524f2d2fc10f6f4768f1214381b7133^!\n\nCompare with the prior approved resource-layout source:\ngit range-diff --creation-factor=999 6bc049050ab0fcce55ffc823e36bfdf55deb2e1d^! 97c071a74524f2d2fc10f6f4768f1214381b7133^!\n\nHistorical dispositions and source-specific evidence:\n\nThe fsstress contributor approval is retained, but the local BusyBox proposal d450a87dd3 has been withdrawn. Earlier approved source 8e45c79086 already used the currently pinned official @test_busybox image. Agent work will return to that official-image approach and validate a revised source on the current base. The retained 6012e16527 fork head is the previous local-utility composition, not an upstream-ready replacement. No new fsstress approval is required to abandon the local utility.\n\nThe official @test_busybox pull on current upstream/master is already mirror-first and pinned for both target architectures. Reusing it adds no new pull and does not require #16379, which centralizes the registry definition. The missing basic-context exports in #16374 remain a landing gate. The foundation itself landed through #16307 after #16097 closed. Neither withdrawn d450 nor parked PIDFD is an active gate. Final source and any additional implementation prerequisites must be checked during the revision before delivery.\n\nHistorical local-utility composition and measured qualification:\n\nExact 6012e16527 is the approved fsstress proposal reparented directly onto standalone BusyBox d450a87dd3. It preserves the source-built LTP workload, shell parent, per-worker cleanup, image name and Make entry points. The existing fsstress contributor approval is retained; there is no new fsstress decision.\n\nThe independently reviewed split is qualified in f4134e3b. Both AMD64 and ARM64 images and Make contexts built. On AMD64 systrap, the three existing filesystem consumers passed, and the unchanged entrypoint ran two workers that each created four files; cleanup and cached restore passed. The canonical license-policy test passed. Both BusyBox compilations were fresh remote actions. The LTP links were cache hits joined to earlier uncached source-matched producers, so this is not a fresh LTP-link measurement. Verification completed 10.270535 seconds after the final native phase. No ARM runtime, throughput, whole-catalog regeneration or PIDFD qualification is claimed.\n\nThe basic-image foundation landed through import #16307 after source PR #16097 closed. Its missing basic-context exports remain a separate #16374 landing gate. Delivery also waits for the new standalone utility decision and its GNU/native-image/compiler ancestry; the mirror PR #16379 and parked PIDFD are not gates for this scratch pair.\n\nPreserved earlier source-specific record:\n\nThe source-built scratch refinement is published at 5ccbde as an independent child of utilities e12. Existing root/fsstress qualification and supplemental action proof apply with exact shared BusyBox union identities. Both-CPU archives, AMD64 filesystem consumers, entrypoint and cleanup are qualified; no ARM runtime is claimed. Preserve the earlier 6bc contributor grant and its explicit condition that #16097 actually lands. The shared utilities decision remains separate; no new child review question is pending. Catalog composition preserves the existing 251 records plus the approved LTP record; this is not a fresh whole-graph audit.\n\nPreserved earlier source-specific record:\n\nRequested resource relocation and equivalent base refresh are complete at 6bc049050a. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nContributor approved this exact source for opening after #16097 actually lands. Preserve the conditional grant through an equivalent rebase; do not ask again.\n\nBuild pinned LTP fsstress and its BusyBox image from declared Bazel inputs. Preserve basic/fsstress, Make and the shell parent; include the GPLv2 notice with a scoped exception. Standalone GNU dual-architecture builds, LLVM musl dual-architecture image/archive checks, three native filesystem cases and Make identity roundtrip passed. A separate unchanged ENTRYPOINT run produced eight files across two workers. Canonical current-source Fetch/Verify preserve all 196 foundation catalog blocks and add only LTP. The source remains qualified for conditional delivery. No ARM execution or performance claim.",
-      "nextStep": "Complete. No fsstress follow-up or local utility rebuild; independent GNU-tools/PIDFD and resolver obligations stay on their own records.",
       "recheckCondition": "A genuine new fsstress recurrence or explicit new work request."
     },
     {
@@ -31687,7 +31684,6 @@
       ],
       "inactive": true,
       "historicalSummary": "The broad e12 composition is not approved for shipment as a gVisor-specific BusyBox build under the contributor's current direction. Its old approval and qualification are preserved only as history. The narrower d450 local producer is also withdrawn. Existing official images supply the BusyBox applets needed by fsstress, resolver, basic/busybox and syscallbench; tmpfile uses its existing Alpine image.\n\nUseful GNU Coreutils work is separate: profile helper 1ef50322e5 needs GNU mkdir, chmod and rm --one-file-system, not BusyBox. Preserve that source and its review while reconciling only its actual GNU/compiler prerequisites. No approval here authorizes shipping a local BusyBox replacement, and PIDFD stays parked.\n\nSuperseded broad-utility disposition and qualification:\n\nThe broader approved e12 utility composition remains the recorded source for its unreparented consumers. The narrower standalone BusyBox proposal d450a87dd3 was withdrawn; fsstress is returning to its previously approved official-image approach under agent ownership. Other child sources and the parked PIDFD record are unchanged.\n\nPreserved broader-utility record:\n\nThe contributor explicitly approved e12e8a357. Existing child approvals remain valid. Delivery still waits on PIDFD source utilities and their recorded compiler/image/license ancestry.\n\nEarlier source-specific record:\n\nThe shared source-built BusyBox configuration supplies the commands used by the tmpfile, syscallbench, resolver, containerd and fsstress fixtures. It declares the Coreutils gperf generator and binds the image target CPU to musl. Final union qualification passes 25 native phases, 11 reporting controls, 10 image/context outputs, 22 program joins, two uncached tests and four syscallbench modes. Seven PIDFD programs retain the nested unsupported-kcmp skip. Both BusyBox binaries and their producer digests exactly match the separately qualified root-image configuration; union BusyBox actions are cache hits, while those root producers were uncached remote actions. No ARM runtime or ARM64 syscallbench port is claimed. Root has requested this one new shared-utilities review; child grants remain separate.",
-      "nextStep": "No local BusyBox/fsstress operation. Preserve the independent GNU-tools and PIDFD records without restarting this withdrawn proposal.",
       "recheckCondition": "Only an explicit new scope request; no pending fsstress return-to-official-image task."
     },
     {
@@ -32431,8 +32427,7 @@
           "url": "https://github.com/tamird/gvisor/compare/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d...8b2c4cbe03cc70e2f14e849b952b2216e130197a"
         }
       ],
-      "inactive": true,
-      "nextStep": "No separate branch action remains; follow only an actual merge/source discrepancy."
+      "inactive": true
     },
     {
       "id": "branch:rules-img-bun-spawn",
@@ -32714,8 +32709,7 @@
           "label": "Reviewed mirror amendment and prior source comparison",
           "url": "https://github.com/tamird/gvisor/compare/34ae8afe757c6dd9e4ebefb9352bf407040c3830...33a66c674d55deb90ec6e6bfecc4a55e738b2af4"
         }
-      ],
-      "nextStep": "Follow pr:17915 for current-head CI, maintainer review and import; do not repeat opening or delivery."
+      ]
     },
     {
       "id": "branch:tcp-cookie-sack-negotiation",
@@ -35867,7 +35861,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "Follow the existing exact-head reviewer/import and actor-owned CI watches. Recheck admission only after actual provider recovery or a new source/check event; no retry, duplicate notification or automatic merge.",
       "recheckCondition": "Genuine exact-head review/import/check change or independently evidenced quota clearance."
     },
     {
@@ -36314,7 +36307,6 @@
       ],
       "inactive": true,
       "historicalSummary": "The contributor withdrew the local BusyBox build proposal d450a87dd3. A reusable external provider belongs upstream in BCR; this proposal will not be shipped and no contributor decision remains. Agent work will use the already-approved official-image approach for fsstress while assessing any reusable external provider separately. The qualification below remains historical evidence for the withdrawn local build. PIDFD stays parked.\n\nWithdrawn proposal and source-specific qualification:\n\nBuild the shell and BusyBox applets used by scratch images from pinned sources, with the image target CPU's static C toolchain and execution-platform configuration tools. Expose the executable and upstream notices as image layers, with musl notices kept separately. Exact d450a87dd3 is a direct child of GNU image-tools ae68fad953 and removes the PIDFD ancestry from this narrower utility proposal. It is newly proposed for contributor review; the older, broader e12 utilities approval remains historical and applies to its unreparented consumers.\n\nThe independently reviewed split is qualified in f4134e3b. Both AMD64 and ARM64 images and Make contexts built. On AMD64 systrap, the three existing filesystem consumers passed, and the unchanged entrypoint ran two workers that each created four files; cleanup and cached restore passed. The canonical license-policy test passed. Both BusyBox compilations were fresh remote actions. The LTP links were cache hits joined to earlier uncached source-matched producers, so this is not a fresh LTP-link measurement. Verification completed 10.270535 seconds after the final native phase. No ARM runtime, throughput, whole-catalog regeneration or PIDFD qualification is claimed.\n\nUpstream delivery still requires the GNU image-tools parent ae68fad953 and the separate declared compiler/ABI supplier 8306976dbf exposing @llvm. The GNU parent is on native-Go images 4094323ff5, whose remaining gates include #16376, #16051 and APT enumeration f45d2da255 behind #15146. The compiler keeps its own recorded prerequisites. This scratch-image pair does not require the Docker Hub mirror PR #16379.",
-      "nextStep": "No local BusyBox/fsstress operation. Preserve the independent GNU-tools and PIDFD records without restarting this withdrawn proposal.",
       "recheckCondition": "Only an explicit new scope request; no pending fsstress return-to-official-image task."
     },
     {
@@ -36390,7 +36382,6 @@
         }
       ],
       "historicalSummary": "The approved fsstress source is published as upstream PR #16401 at exact 97c071a745 on master fb7341a1ad. It builds pinned LTP fsstress and layers its executable, notice and launch script onto the existing official @test_busybox image, preserving the shell parent. There is no contributor hold or pending agent source-review decision on this delivered proposal. Current public checks, matching imports and maintainer review are shown from the live GitHub snapshot.\n\nNative Linux ARM64 validation now passed all three existing fsstress cases on exact 97c071a745: gofer, shared gofer and tmpfs, using systrap and the same previously qualified image. A separate deterministic witness confirmed two workers each created four empty files. The GitHub-hosted runner used real ARM64 hardware, with no emulation. Bazel exited 0; the XML/digest verdict was emitted 23.281 milliseconds after execution. Two setup repairs preceded the successful run; no manual intervention was needed to produce its verdict. This closes the native ARM64 gap for this consumer, without qualifying other images or native ARM64 BuildBuddy capacity.\n\nExact-source validation of published 97c071a745 passed in 7a5ba05a. Both architectures' LTP links were fresh remote GNU actions; each fsstress archive contained the official BusyBox base layers unchanged plus one fsstress layer, and the Make contexts matched. On AMD64/runc, two workers each produced four files. Automatic verification completed 7.817 seconds after the last execution. That earlier run did not execute ARM64 runtime tests; the older 6b2 filesystem results retain their original source scope.\n\nThe source-specific official-image validation d5246ab2 and two-worker entrypoint proof fe7b2570 remain historical evidence. The foundation imported as c3e0783a through #16307 is already in master. Neither the withdrawn local BusyBox/PIDFD stack nor the independent #16374 generic archive is a delivery gate.",
-      "nextStep": "Complete. No fsstress follow-up or local utility rebuild; independent GNU-tools/PIDFD and resolver obligations stay on their own records.",
       "recheckCondition": "A genuine new fsstress recurrence or explicit new work request.",
       "inactive": true
     },
@@ -36925,7 +36916,6 @@
           "https://github.com/tamird/gvisor/commit/0ae405ec7d1ace5894645c28910c69605c0de20e"
         ]
       },
-      "nextStep": "Root awaits Tamir’s answer on the exact reply to Lucas, then assesses the scoped result and remaining broader network/loss qualification before source-publication review. No extra samples, automatic retry, foreign-source edit or whole-PR approval is inferred.",
       "recheckCondition": "Actual reply decision, root’s remaining performance/publication disposition or substantive new source/review evidence.",
       "contributorReview": {
         "kind": "reply",
@@ -38365,7 +38355,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
       },
-      "nextStep": "Root follows remaining maintainer review and actual landing/source changes. Source delivery is complete; no duplicate request, retry, source change or merge is authorized.",
       "sourceConflict": {
         "sourceHead": "303aee0fb294bcf676c2579d24b6821d0578a603",
         "owner": "root",
@@ -38579,7 +38568,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
       },
-      "nextStep": "Root follows actual quota/admission recovery, a newly admitted current-head run, maintainer review or import. Canonical diagnosis is complete; no unchanged retry, duplicate diagnosis, quota outreach, source amendment or merge is authorized.",
       "sourceConflict": {
         "sourceHead": "9354eb0eeba8d44da40cdae3235e51e890e82b63",
         "owner": "root",
@@ -39447,9 +39435,9 @@
           "https://buildkite.com/gvisor/first-pass/builds/1470#01a1eada-1d1b-4771-883c-45447a638bea"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Final scoped prose acceptance and valid source-bound performance evidence, or actual new source/review guidance.",
+        "recheckCondition": "Valid source-bound broad performance/A/A evidence or substantive new source/review guidance; prose correction 428e8fdf is complete.",
         "implementationOwner": "approved_rebase_queue",
-        "curatedAt": "2026-11-22T14:02:28.619749+00:00",
+        "curatedAt": "2026-11-26T00:39:54.598989+00:00",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112"
       },
       "dcoAmendment": {
@@ -39474,8 +39462,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "approved_rebase_queue/root finish the scoped prose handoff and preserve exact code/input evidence. Root closes the required broad performance/A-A gate on a verified suitable worker before a concrete qualified-source review; no current pending human decision or public push.",
-      "recheckCondition": "Final scoped prose acceptance and valid source-bound performance evidence, or actual new source/review guidance."
+      "recheckCondition": "Valid source-bound broad performance/A/A evidence or substantive new source/review guidance; prose correction 428e8fdf is complete."
     },
     {
       "id": "pr:16499",
@@ -40685,7 +40672,7 @@
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
         "disposition": "Public c715 remains unchanged/conflicting; source 57 is not publication-approved. Strict current eb263 comparison 44979111210 is audited PASS: legacy 116,100 is included in candidate 116,102, 2,418 protobuf positions each, zero missing/two additional; candidate hash matches its previously compiled product. No identity claim is made for the additional positions. Source-bound compiler/functionality/ZIP evidence and two implementation reviews are complete; controlled performance remains open. Exact public head Pipeline 55416 fails the obsolete pre-command branch check before validation: remote ref tamird is missing. Landed 909c3dce2 removes that check; this is bootstrap evidence, not a target failure.",
-        "nextAction": "Recorder bf96bd54092f4af422a9d0136151622e955800e2 passes execution/data-integrity qualification: 12 verbatim process files, all 90 rows/15 cases and manifest bindings; three fresh remote unit cases per architecture, source checks and four final reviews are complete. Static validators were cached. The expected cancellation failure reaped its child and retained a manifest-linked zero-byte file, without partial benchmark-row proof. UPSTREAM HELD: only transient direct Go operations were retired; no maintained caller migrated. Grouped presentation, non-Linux runtime and cross-revision products remain unqualified. Pinned A/A 45063972774 still FAILS 38 intervals; its 0.5% band/four contrasts were agent choices, not user requirements. Performance, producer479 and analyzer scope remain unfinished. No more timing, A/A, A/B or source expansion is authorized.",
+        "nextAction": "Root reconciles the maintained-caller, producer479 and cross-revision requirements before any authorized next step. Recorder bf96 has scoped execution/data-integrity qualification, but no maintained caller migration or grouped/non-Linux/cross-revision qualification. Keep source57 publication/performance held, historical inconclusive startup controls and unresolved ARM affinity explicit. The 0.5% A/A band was an agent choice, not a user regression budget. Any later replacement must incorporate the landed fork-fetch fix; no unchanged public-head retry or new timing/source expansion.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -40767,7 +40754,7 @@
           "https://github.com/tamird/gvisor/actions/runs/45070660673/artifacts/14773501134"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Existing scope/necessity and maintained-caller integration requirements, followed by an actual authorized next step. The rejected optional grouped-presentation dispatch is an execution constraint, not a pending human approval; do not retry via another route.",
+        "recheckCondition": "Actual scope/maintained-caller or source-bound performance evidence and an authorized next step; no retry of rejected optional execution via another route.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "qualificationHistory": [
           {
@@ -41091,7 +41078,7 @@
           "proofSHA256": "8cfa9665fca33bd1625d96c7b184d3b8454523fbfe87c0b7bd9744d867d14c0b",
           "recheckCondition": "Root permanent-mechanism decision, same-operation execution-review result or actual fidelity evidence."
         },
-        "curatedAt": "2026-11-22T14:02:28.619749+00:00",
+        "curatedAt": "2026-11-26T00:39:54.598989+00:00",
         "permanentBazelFirstLayer": {
           "testSource": "340e1072aa5a3d47e01ff68dffea34f91be4a9f4",
           "ciSource": "fa452727d8d6af2399f8644f9d64a40dc5d902ae",
@@ -41434,8 +41421,7 @@
           "https://github.com/tamird/gvisor/commit/c71526cea11bd81898c588264c0940d1fb33e511"
         ]
       },
-      "nextStep": "AMD StartupEmpty same-source control 44988289000 completed the original 50 visits with 24 N=1 observations per arm and balanced AB/BA positions, but remains INCONCLUSIVE: ratio interval [0.9208590976, 1.1026682723], drift and order checks fail the fixed [0.995, 1.005] precision band. The earlier control 44987386374 is separate retained evidence, not pooled or reinterpreted. No further measurements or candidate/syscall/Hackbench expansion; source 57 remains performance-held and ARM effective affinity unresolved. Existing BuildBuddy executor inventory returned HTTP 403, so capacity is unverified; await existing executor information or read permission without new credentials or blind retries. Proposed 0.5% precision is investigative, not a user regression budget. The already-prepared replacement must import the landed hook fix; do not rewrite or retry the obsolete public head solely for bootstrap failure.",
-      "recheckCondition": "Actual missing performance evidence, final source review or substantive maintainer/import change."
+      "recheckCondition": "Actual scope/maintained-caller or source-bound performance evidence and an authorized next step; no retry of rejected optional execution via another route."
     },
     {
       "id": "branch:reproducible-debian-changelog",
@@ -42990,7 +42976,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
       },
-      "nextStep": "Root follows requested current-head maintainer re-review and internal adapter/landing conditions. Preserve existing source, private-cleaner and workload limits; no source/reply repeat, unchanged CI retry or duplicate outreach.",
       "recheckCondition": "A genuine maintainer/import/check event or evidenced provider admission recovery."
     },
     {
@@ -43393,7 +43378,6 @@
           "head": "6a54750c6a8b6836e3806faa63a5729b2f7621a7"
         }
       },
-      "nextStep": "Follow the current PR lifecycle at #17982; no opening decision remains.",
       "recheckCondition": "Actual canonical PR lifecycle change.",
       "inactive": true
     },
@@ -44956,7 +44940,6 @@
           "note": "User approved14ee4cb6 test inclusion and requested a single squashed commit; owner is executing authorized amendment."
         }
       ],
-      "nextStep": "Root follows current-head maintainer review and actual provider quota/admission or check changes through the existing lifecycle. Publication and routine notice are complete; locked SSH is not a blocker. No duplicate source question, unchanged retry, quota outreach, reviewer request or merge.",
       "recheckCondition": "Actual source/review/check/admission event; no dedicated watcher or SSH-unlock wait."
     },
     {
@@ -45454,8 +45437,7 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
-      },
-      "nextStep": "No source or closure action remains. Preserve independent historical checkpoint-dump evidence in its existing investigation."
+      }
     },
     {
       "id": "pr:16592",
@@ -47154,7 +47136,6 @@
         "recheckCondition": "Current-head CI, substantive technical feedback or import lifecycle changes; named technical holds remain.",
         "holdsPreserved": {}
       },
-      "nextStep": "Root verifies original request, any approval/supersession and exact source binding before projecting a contributor queue or publishing. Preserve qualification and current public source; do not re-ask, assume approval or add a manual-DCO task.",
       "recheckCondition": "Verified original request/approval provenance or substantive source/qualification change."
     },
     {
@@ -47517,7 +47498,6 @@
         "recheckCondition": "The listed exact import merges/closes, changes its footer source revision, or its importing maintainer explicitly confirms the source metadata rewrite can proceed. Recheck live source/fork heads immediately before any write.",
         "holdsPreserved": {}
       },
-      "nextStep": "Root follows the existing maintainer-owned #17301 import route and actual source/check events. Do not create a competing fork refresh or retry unchanged main 55850. Preserve the separate FirstPass 2723 timeout evidence and performance requirements; no new source or infrastructure cause is inferred.",
       "recheckCondition": "Maintainer-owned import/source change or substantive new CI/review/performance evidence."
     },
     {
@@ -49791,7 +49771,7 @@
       "title": "Use Cpplint from Bazel for source lint",
       "url": "https://github.com/google/gvisor/pull/16663",
       "group": "analysis",
-      "summary": "Public6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef remains conflicting. Qualified replacement651437132bf0054f1742ab2dce694f28a9ee0dc4 is now in an actual pending amendment question: four files (+19/-25), Cpplint1.4.0 to maintained BCR2.0.2, wheel installer removed and development-dependency boundary preserved. AMD/ARM492-input callers, unit/license/negative/status checks, final formatting and independent reviews passed at their recorded scopes. Dependency-boundary controls behaved as expected; whole-graph analysis is blocked by the unchanged LLVM extension and is not claimed green. Declared source-input actions remain separate unfinished work. DCO is included; no publication has occurred.",
+      "summary": "User-approved Cpplint source 651437132 is published. GitHub-native source checks and DCO pass; source-bound FirstPass2283 failed before agent assignment on the author's rolling 30-day 360000 compute-minute quota. The original reply and milantracy re-request were posted. Maintainer review/import and admission recovery remain; full declared-source migration is separate.",
       "evidence": [
         {
           "label": "Posted question to Ryan about the Buildkite clang-tidy target",
@@ -50105,7 +50085,7 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "651437132bf0054f1742ab2dce694f28a9ee0dc4",
         "observedAt": "2026-11-21T06:54:13.036908+00:00",
-        "disposition": "Published user-approved source remains mergeable. All GitHub-native execution checks and DCO pass in the canonical snapshot. FirstPass 2283 independently failed before agent assignment: exit 80, null agent_id/started_at, stack_errored, author 1535036 rolling 30-day quota of 360,000 compute minutes. No Bazel target ran; main admission and maintainer review remain distinct.",
+        "disposition": "User-approved Cpplint source 651437132 is published. GitHub-native source checks and DCO pass; source-bound FirstPass2283 failed before agent assignment on the author's rolling 30-day 360000 compute-minute quota. The original reply and milantracy re-request were posted. Maintainer review/import and admission recovery remain; full declared-source migration is separate.",
         "nextAction": "Existing source/provider owner rechecks evidenced admission recovery or an actual source/check event. No manual retry, quota-owner outreach, source change or additional polling is implied. approved_rebase_queue retains the review/import lifecycle. The original-thread reply and supported milantracy re-request are saved alongside existing xinzhong; the generic404 was an operation mismatch, not a remaining permission or human-decision blocker. Full declared-source inventory remains separate.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16663",
@@ -50129,9 +50109,9 @@
         "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
         "providerHead": "6e4ccf010975bf5e9ff6614925f6fbf38df9c5ef",
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Actual reply to the pending amendment question or a source/qualification change.",
+        "recheckCondition": "Actual current-head CI/admission, reviewer response, source revision or import event; no amendment answer remains due.",
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
-        "curatedAt": "2026-11-21T12:20:58.751348+00:00",
+        "curatedAt": "2026-11-26T00:39:54.598989+00:00",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -50156,8 +50136,7 @@
           }
         ]
       },
-      "nextStep": "Await the reply to the existing exact651 amendment question. Root publishes only after that decision, preserving the reviewed title/description and the broader input-migration boundary. No repeat question, mechanical-approval inference or source-head advance.",
-      "recheckCondition": "Actual reply to the pending amendment question or a source/qualification change."
+      "recheckCondition": "Actual current-head CI/admission, reviewer response, source revision or import event; no amendment answer remains due."
     },
     {
       "id": "pr:16664",
@@ -51307,7 +51286,6 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted."
       },
-      "nextStep": "Follow the existing exact-head reviewer/import and actor-owned CI watches. Recheck admission only after actual provider recovery or a new source/check event; no retry, duplicate notification or automatic merge.",
       "recheckCondition": "Genuine exact-head review/import/check change or independently evidenced quota clearance."
     },
     {
@@ -54317,7 +54295,6 @@
         "recheckCondition": "Current-head CI, substantive technical feedback or import lifecycle changes; named technical holds remain.",
         "holdsPreserved": {}
       },
-      "nextStep": "Retain the fork source under canonical seven-day/public-source protections; let normal cleanup determine eligibility. No ad hoc deletion, new archive scheme or agent merge action. Follow genuine post-merge regression or dependent adoption evidence only.",
       "recheckCondition": "Canonical cleanup eligibility no earlier than2026-11-27, or actual post-merge/dependency evidence."
     },
     {
@@ -55068,8 +55045,7 @@
           "label": "Four raw manifest rows from the archived static wrapper in the Linux sandbox",
           "url": "https://github.com/tamird/gvisor/actions/runs/42571822658/artifacts/13653547725"
         }
-      ],
-      "nextStep": "The author and maintainers own current-source review and the cross-platform wrapper decision. Root tracks actual review/head/landing changes; do not publish the prepared fork into the author branch or transfer old qualification."
+      ]
     },
     {
       "id": "branch:bazel-native-test-xml",
@@ -57890,7 +57866,6 @@
           "qualificationTransferred": false
         }
       },
-      "nextStep": "Follow the author-owned successor on a substantive review/source event. Do not post a duplicate reply, create another successor or infer Tamir review assignment or whole-source approval.",
       "recheckCondition": "Substantive author/successor review or source evidence."
     },
     {
@@ -58142,7 +58117,6 @@
           }
         ]
       },
-      "nextStep": "Source lifecycle complete. Preserve history and foreign-owned branch; no courtesy reply, approval request or cleanup.",
       "recheckCondition": "Substantive post-merge regression or evidence discrepancy."
     },
     {
@@ -59418,7 +59392,6 @@
           "at": "2026-11-02T16:20:02.085486+00:00"
         }
       ],
-      "nextStep": "Daybreak availability is confirmed. Root retains the unexplained P64 functional timeout and independent measurement-control, topology, Moby-exception and source-publication limits. No full-mode expansion, timing or source permutation is authorized by capability availability alone.",
       "recheckCondition": "A bounded root investigation assignment, relevant new source/functional evidence, or an actual operational/source decision."
     },
     {
@@ -62321,8 +62294,7 @@
           "metadataOnly": true,
           "reviewsAndGatesPreserved": true
         }
-      },
-      "nextStep": "The foreign author owns branch refresh to incorporate the merged hook fix. Root and approved_rebase_queue track the dependency and new-head CI only. Foreign TCP edits/rebases and sensitive review remain held; no duplicate fix, unchanged retry or outreach."
+      }
     },
     {
       "id": "branch:hostinet-exit-linger",
@@ -64384,7 +64356,6 @@
         "priorOwner": "TCP workstream",
         "priorProviderHead": "85b67686f3cd61965db6393190969dab98c8d5c3"
       },
-      "nextStep": "Retain the fork source under the canonical seven-day and public-source protections; let normal cleanup determine actual eligibility after retention. No ad hoc deletion, new archive scheme or agent merge action. Follow only a genuine post-merge regression or dependent adoption event.",
       "recheckCondition": "Canonical cleanup eligibility no earlier than2026-11-27, or an actual post-merge regression/dependency event."
     },
     {
@@ -68076,7 +68047,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
       },
-      "nextStep": "Follow Ryan’s existing requested review and import of exact c4ba49a4, with1492 admission/CI tracked separately. Replace the stale df7f next-action binding; no duplicate notification or new contributor decision.",
       "recheckCondition": "Substantive requested-review/import response or exact-head CI/admission change."
     },
     {
@@ -69549,7 +69519,6 @@
         "priorOwner": null,
         "historicalOutreachClockHead": "9f3a1efe5acf05722e7910b465d96c8a2c26a637"
       },
-      "nextStep": "Root awaits Tamir’s response for exact a97c0844e8, the reviewed description and supplied rebase reply. Preserve the expected old-head lease and existing source/measurement limits; do not push, edit the PR or post the reply before the answer.",
       "recheckCondition": "Tamir’s answer to the actual amendment question, or a genuine changed source/review requirement.",
       "contributorReview": {
         "kind": "amendment",
@@ -69824,7 +69793,6 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted."
       },
-      "nextStep": "Root follows the reviewer’s response or substantive source evidence. Preserve the separate import/integration ancestry requirements and existing CI provenance; no duplicate request or automatic approval.",
       "recheckCondition": "Reviewer response/source event or independently resolved import/integration ancestry."
     },
     {
@@ -70386,7 +70354,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Root awaits Tamir’s answer on exact 4049b6b148 and its supplied rebase notice. Preserve the original-branch old-head lease; no source update, notice, new test or merge is implied.",
       "recheckCondition": "Actual answer to the asked amendment/notice question, or substantive source/review evidence.",
       "contributorReview": {
         "kind": "amendment",
@@ -70934,7 +70901,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
       },
-      "nextStep": "Root owns exact-head FirstPass 2809 classification and source/review reconciliation under the existing maintainer/performance/sensitive boundaries. No old-source cause or qualification transfers; no protected source read, source edit, build/test, unchanged retry or outreach.",
       "recheckCondition": "Actual source/check/review evidence or an explicit owner disposition changes the next action."
     },
     {
@@ -71239,7 +71205,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Follow actual remaining GitHub checks, the existing trantoji review/upstream2499 disposition and evidenced provider admission recovery. The rebase and notice are delivered; no duplicate outreach or retry.",
       "recheckCondition": "Exact-head check/review/import change or independently evidenced provider recovery."
     },
     {
@@ -73002,7 +72967,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
       },
-      "nextStep": "Root awaits Tamir’s response for exact 299a4bf8f4, the reviewed description and supplied rebase reply. Preserve the expected old-head lease and existing source/measurement limits; do not push, edit the PR or post the reply before the answer.",
       "sourceConflict": {
         "sourceHead": "f3575cb4ed538695d0b7936e36662633a38b2b5e",
         "owner": "root",
@@ -73246,8 +73210,7 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
-      },
-      "nextStep": "No open-PR/import wait remains. Root rechecks only an actual landing/source discrepancy; no ref deletion, retry, reply or new child work follows."
+      }
     },
     {
       "id": "pr:14101",
@@ -75117,7 +75080,6 @@
           "qualification": "Original reviews and declined draft retain their original heads; no new code review or performance approval."
         }
       },
-      "nextStep": "Retain foreign implementation ownership and root held reviewer obligation separately. Recheck actual author evidence or user hold release, without protected source reads/tests, claimed-fix verification, reply, or transferred approval.",
       "recheckCondition": "The author’s changed source/base/mergeability or substantive review/dependency evidence."
     },
     {
@@ -77124,7 +77086,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "root / existing Systrap native stub workstream"
       },
-      "nextStep": "approved_rebase_queue / root retains the existing requested-rebase and source-authority bounds. Current-PR preparation is separate from the prepared replacement’s #16522 publication prerequisite. Preserve performance/internal holds; do not transfer historical strict qualification to new master or raw5026.",
       "recheckCondition": "Reviewable current-base resolution or actual16522 landing/source approval/performance evidence."
     },
     {
@@ -77164,7 +77125,6 @@
           "url": "https://github.com/bazel-contrib/buildtools/pull/1527#issuecomment-6672580185"
         }
       ],
-      "nextStep": "Delivery complete. Preserve merged source/review history; no new source fix, policy-response request or outreach.",
       "recheckCondition": "A separately evidenced post-merge regression or adoption issue.",
       "followup": {
         "owner": "root",
@@ -77757,7 +77717,6 @@
           "scope": "Exact-head CI result; no technical approval or new performance qualification"
         }
       },
-      "nextStep": "Retain landing evidence and the independent image-stall/performance obligations; no further PR reply, CI retry or foreign branch mutation.",
       "recheckCondition": "New independent runtime/performance evidence; no remaining PR merge wait."
     },
     {
@@ -78436,7 +78395,6 @@
           "tamird"
         ]
       },
-      "nextStep": "hky1999 owns the source revision and conflict repair. Root follows defensive review after a substantive author revision or response; no duplicate findings, source edits, outreach or approval transfer follows from availability.",
       "recheckCondition": "Substantive author revision or response, or an actual dependency/source event."
     },
     {
@@ -78853,7 +78811,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "Root preserves the failed A/A performance hold and unresolved public findings. Reconsider only on substantiated measurement-control change or new review/source evidence; no unchanged timings, sample expansion or speculative quiet-worker retry.",
       "recheckCondition": "Substantiated measurement-control change, or a new review/source event."
     },
     {
@@ -79009,8 +78966,7 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
-      },
-      "nextStep": "Root follows existing maintainer/import review and actual new-head CI events through the canonical collector. The bounded CI watch is retired; delivered rebase, notice and affected qualification retain their recorded source scope."
+      }
     },
     {
       "id": "pr:17105",
@@ -80298,7 +80254,6 @@
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
         "curatedAt": "2026-11-20T20:48:41.652999+00:00"
       },
-      "nextStep": "Root follows kekawia’s source refresh and re-evaluates the exact resulting source composition and retained review/performance obligations. Preserve author ownership; no foreign push, speculative fix or automatic notification.",
       "recheckCondition": "The author’s changed source/base/mergeability or substantive review/dependency evidence."
     },
     {
@@ -81538,7 +81493,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "Root and approved_rebase_queue follow actual #17929/#17930 source or landing, then assess only a small residual/test follow-up. Preserve the private candidate and measured slowdown; no duplicate production rewrite, foreign approval transfer, retry, outreach or publication.",
       "recheckCondition": "Actual #17929/#17930 revision/landing and a bounded residual-scope assessment."
     },
     {
@@ -81663,8 +81617,7 @@
           "reportedAction": "User reports thumbs-up reactions",
           "externalMessagePosted": false
         }
-      },
-      "nextStep": "No reply is needed, as the user instructed for the earlier threads. Close the merged lifecycle without another comment, source work or claimed independent performance verification."
+      }
     },
     {
       "id": "branch:declare-x-text-direct",
@@ -83410,7 +83363,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "Retain the fork source under normal seven-day/public-source protections and let canonical cleanup establish eligibility. Follow only an actual post-merge regression or dependent adoption event; no ad hoc deletion or agent merge action.",
       "recheckCondition": "Canonical cleanup eligibility no earlier than2026-11-27, or actual post-merge/dependency evidence."
     },
     {
@@ -83828,7 +83780,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Public closure/reply complete. Root retains the private rewrite, its source/performance boundaries and rejected-proposal history until the user decides the rewrite scope. No old-source publication, additional reply, rebase or closure action remains.",
       "recheckCondition": "Actual user rewrite-scope direction or new directly relevant source evidence; no periodic closure follow-up.",
       "refinement": {
         "before": {
@@ -85614,7 +85565,6 @@
           }
         ]
       },
-      "nextStep": "Follow pending human review and a genuine current-head CI/admission event. No duplicate source qualification or nogo-tests run is needed; parent’s 882 cached suite results are not a whole-suite rerun on this PR.",
       "recheckCondition": "New maintainer/source/check evidence; no unchanged retry or renewed evidence lookup."
     },
     {
@@ -88189,7 +88139,7 @@
       "url": "https://github.com/tamird/gvisor/commit/122b98abd",
       "group": "tests",
       "status": "Published",
-      "summary": "Authorized equivalent rebase daa14d03eb6e7fc312496fb740bdae0a00a02312 is delivered on public17336 and its fork branch, OPEN/MERGEABLE/BLOCKED with DCO success. All current GitHub Go, lint, Gazelle, file-header and label checks pass; build/push are intentionally skipped. First Pass2080 remains an upload-only exit80 before tests with empty logs and unknown cause, separate from17816’s2076. Rebase comment7043294523 is posted, two existing review requests remain and auto-merge is null; no new disablement or outreach is inferred. Old b29 authorization/provenance work is complete.",
+      "summary": "Exact publisheddaa14d03eb6e7fc312496fb740bdae0a00a02312 remains OPEN/MERGEABLE. First Pass2080 is now independently diagnosed from its own provider upload record: exit80, stack_errored=true, agent_id=null, stack_error_detail=\"Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes\". Canonical job logs are empty; no test job ran. This resolves the prior unknown cause without inferring it from another build. All current GitHub source checks and DCO pass; existing reviewer/import obligations remain.",
       "evidence": [
         {
           "label": "All ten cases on a pidfs-capable worker",
@@ -88369,7 +88319,7 @@
             "sourceBase": "1f33fe3003455db178b97f3b43d3a012f1611994"
           }
         },
-        "curatedAt": "2026-11-20T17:52:51.752391+00:00"
+        "curatedAt": "2026-11-26T00:39:54.598989+00:00"
       },
       "inactive": true,
       "dcoAmendment": {
@@ -88386,7 +88336,6 @@
           "https://github.com/tamird/gvisor/commit/237c2c5e246394424eaac57437305cdc22d62fbe"
         ]
       },
-      "nextStep": "Root follows exact-source First Pass admission evidence and existing reviewer/import disposition; preserve the equivalent-source evidence and current DCO. No source churn, repeated comment/review request or agent merge action.",
       "recheckCondition": "Provider admission diagnostics/current checks or substantive reviewer/source change."
     },
     {
@@ -92226,7 +92175,6 @@
         "recheckCondition": "Current-head CI, substantive technical feedback or import lifecycle changes; named technical holds remain.",
         "holdsPreserved": {}
       },
-      "nextStep": "Follow current maintainer review and provider quota recovery without retry, duplicate CI-owner outreach or source churn. Keep the separate route fix outside the published pure rebase until its own review/approval.",
       "recheckCondition": "Provider admission/current checks or maintainer feedback changes; separate route-fix review readiness."
     },
     {
@@ -93625,7 +93573,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-19T16:20:03.380488+00:00",
-      "summary": "Current author source 22401767a resolves our two prior inline requests: restore checks the saved startCork value, and the obsolete payload.Len() assertion is removed. The other reviewer’s idle-cork post-restore timing assertion is present. Separate uncorked progress and ordinary short writes remain tracked in open #17893/#17894. The generate failure, author-measured regressions and unfinished full review remain; no approval is claimed.",
+      "summary": "Full current-source review at 22401767a is complete. Earlier restore and short-write comments are addressed; no new demonstrated timer defect was found. Author-reported 27%/40% fragmented MSG_MORE slowdowns lack linked exact-revision/raw benchstat evidence. The actual COMMENTED-review posting question is pending. Generate failed on proxy.golang.org HTTP/2 INTERNAL_ERROR before target validation; no whole-PR approval or rerun.",
       "evidence": [
         {
           "label": "Timer restore",
@@ -93691,9 +93639,9 @@
         "mergeable": "MERGEABLE",
         "sourceHead": "22401767ad9317e22aaebb118d3f0dafd031d6a1",
         "observedAt": "2026-11-24T17:06:51.520893+00:00",
-        "disposition": "Current author source 22401767a resolves our two prior inline requests: restore checks the saved startCork value, and the obsolete payload.Len() assertion is removed. The other reviewer’s idle-cork post-restore timing assertion is present. Separate uncorked progress and ordinary short writes remain tracked in open #17893/#17894. The generate failure, author-measured regressions and unfinished full review remain; no approval is claimed.",
-        "nextAction": "Root finishes the remaining current-source review, preserving the author’s implementation ownership and measured-regression/CI limitations. Follow #17893/#17894 on their own scopes. No duplicate reply, review request, foreign-source edit or unchanged CI retry. The Daybreak availability wait is retired.",
-        "recheckCondition": "Substantive author response/revision, changed CI evidence or a completed root review milestone.",
+        "disposition": "Full current-source review at 22401767a is complete. Earlier restore and short-write comments are addressed; no new demonstrated timer defect was found. Author-reported 27%/40% fragmented MSG_MORE slowdowns lack linked exact-revision/raw benchstat evidence. The actual COMMENTED-review posting question is pending. Generate failed on proxy.golang.org HTTP/2 INTERNAL_ERROR before target validation; no whole-PR approval or rerun.",
+        "nextAction": "Await the existing decision to post the exact performance-evidence COMMENTED review. Keep author implementation ownership and separate #17893/#17894 scopes; no repeated question, foreign-source edit or unchanged CI retry.",
+        "recheckCondition": "Answer to the actual COMMENTED-review question, source-bound benchmark evidence, substantive author revision/response or changed CI.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17264",
           "https://github.com/gvisor/gvisor/commit/e5f0f6f7fc500b646b4a0dbd738f142e1a9032a2",
@@ -93724,7 +93672,7 @@
           "https://github.com/gvisor/gvisor/pull/17894"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
-        "curatedAt": "2026-11-25T22:34:48.644451+00:00",
+        "curatedAt": "2026-11-26T00:39:54.598989+00:00",
         "footerHeadReconciliation": {
           "old": "0aa0a1abf8a6586ae534f80a683f76aceb35d74a",
           "new": "92e403ef2d8cb7e24a334d37dabb248cef3b4407",
@@ -93751,8 +93699,16 @@
           "limits": "Dependency ZIP transport failed during //:gopath analysis; FirstPass pending, no target-source failure established."
         }
       },
-      "nextStep": "Root finishes the remaining current-source review, preserving the author’s implementation ownership and measured-regression/CI limitations. Follow #17893/#17894 on their own scopes. No duplicate reply, review request, foreign-source edit or unchanged CI retry. The Daybreak availability wait is retired.",
-      "recheckCondition": "Substantive author response/revision, changed CI evidence or a completed root review milestone."
+      "recheckCondition": "Answer to the actual COMMENTED-review question, source-bound benchmark evidence, substantive author revision/response or changed CI.",
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "22401767ad9317e22aaebb118d3f0dafd031d6a1",
+        "url": "https://github.com/google/gvisor/pull/17264",
+        "title": "Request source-bound MSG_MORE performance evidence",
+        "summary": "Actual accepted question to post this COMMENTED review; awaiting Tamir. No whole-PR approval.",
+        "body": "The restore and short-write changes address my earlier comments. Could you link the before/after benchstat output and the two revisions for the bulk and fragmented workloads? What accounts for the 27% and 40% slowdowns with `MSG_MORE`?\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "pr:17265",
@@ -93820,8 +93776,7 @@
           ],
           "limits": "Native provider context only; no current-source review or broad-workload qualification."
         }
-      },
-      "nextStep": "Root retains current-source review under the sensitive hold. Follow actual author/provider evidence without protected source reads, tests, timings, foreign edits, duplicate outreach or transfer of old-head approval. No unchanged CI retry."
+      }
     },
     {
       "id": "branch:fuse-create-capability",
@@ -95022,7 +94977,7 @@
         "sourceHead": "f069808da1b9876130c7a853fe2fbb9f815d8519",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
         "disposition": "Public #17286 remains at f069808da; private 2d81758a1054 retains affected functional/source qualification. Timing-path admission proved an actual DelayedACKs counter increment. Same-source control 45719158653 had no adjusted flags, but Setup’s early/late baseline median moved +9.2% and the delayed-ACK late interval reached ±15%. Candidate timing is held; simulated timing does not establish end-to-end latency.",
-        "nextAction": "Root and approved_rebase_queue assess the retained control’s drift and precision before any candidate timing. No repeat, worker-wide inference, timing expansion or end-to-end latency claim; source/performance/publication boundaries remain.",
+        "nextAction": "Hold candidate timing pending materially different measurement evidence or contributor disposition. Root has completed review of the retained control and fixture: the fixture measures manual-clock Advance that triggers a real ACK, with no established noise cause. Do not reassess identical files, rerun, expand scope or claim end-to-end latency.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17286",
           "https://github.com/tamird/gvisor/commit/97e5ddeb6",
@@ -95037,7 +94992,7 @@
           "https://github.com/tamird/gvisor/actions/runs/45719158653"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Evidence-backed source/measurement assessment or substantive source/review evidence.",
+        "recheckCondition": "Materially different source-bound measurement evidence or substantive contributor disposition.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -95132,7 +95087,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "Root and approved_rebase_queue assess the retained control’s drift and precision before any candidate timing. No repeat, worker-wide inference, timing expansion or end-to-end latency claim; source/performance/publication boundaries remain.",
       "recheckCondition": "Evidence-backed source/measurement assessment or substantive source/review evidence."
     },
     {
@@ -97557,7 +97511,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Agent"
       },
-      "nextStep": "Follow event-driven additional maintainer approval, natural main/check events or source changes. Existing requested reviewers remain; no recurring CI polling, source question, retry, outreach or merge.",
       "recheckCondition": "Actual maintainer/main/source event. No recurring CI watch.",
       "settledReviews": [
         {
@@ -97801,7 +97754,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "Close the worker/lint recovery bookkeeping using the retained per-architecture proofs. Carry the three proven baseline failures as a separate owned obligation rather than silently changing Go or calling369 owners green. Root follows actual main/provider/review and workload/performance gates; the e33 helper publication decision remains separate.",
       "recheckCondition": "Actual baseline-failure disposition, current-head main/provider evidence, valid required workload results or reply to the helper proposal."
     },
     {
@@ -98306,8 +98258,7 @@
           "note": "Published upstream as one commit on the exact approved head."
         }
       ],
-      "inactive": true,
-      "nextStep": "Complete; follow no further #17446 review/import wait. Retain the historical source and evidence without branch deletion."
+      "inactive": true
     },
     {
       "id": "pr:17444",
@@ -99077,8 +99028,7 @@
         "evidence": [
           "https://github.com/tamird/gvisor/commit/08eb4bb3605759f7cd942a0d6a1a900d0eb80a5c"
         ]
-      },
-      "nextStep": "Complete. No source, review or import action remains. Only the exact #17446 landing prerequisites are satisfied; dependent work retains its separate validation and authorization limits."
+      }
     },
     {
       "id": "pr:17456",
@@ -99174,8 +99124,8 @@
       "followup": {
         "owner": "buildifier_license_fix / root",
         "sourceHead": "4b845306c75b9ad0d09d31cdb86d68dc64171fe9",
-        "nextAction": "Root follows actual app deployment and corrected current-source DCO results, plus the existing source-specific maintainer/import/main lifecycle. Do not change approved source, manually override/sign off, request operators, perform unsupported rerequests, retry unchanged checks or post unapproved prose.",
-        "recheckCondition": "Actual corrected check/deployment or substantive maintainer/import/current-head main event.",
+        "nextAction": "Follow genuine new-head events or an actually updated DCO check, alongside the existing source-specific maintainer/import/main lifecycle. DCO2 #127 merged and its image built successfully, but public deployment is unverified and the retained Nov21/22 checks predate the fix. The handler processes opened/synchronize, ignores ordinary check-run rerequests, and its requested action is an override. No fake commit, override, human clickops, unchanged retry or unapproved prose.",
+        "recheckCondition": "A genuine new source-head event or actually updated source-bound DCO/check/import result.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17562",
           "https://github.com/google/gvisor/pull/17456#issuecomment-6975559077",
@@ -99190,7 +99140,8 @@
           "https://github.com/cncf/dco2/actions/runs/45167328676",
           "https://github.com/google/gvisor/pull/17456#pullrequestreview-6024588277",
           "https://github.com/google/gvisor/pull/17456",
-          "https://github.com/cncf/dco2/pull/127"
+          "https://github.com/cncf/dco2/pull/127",
+          "https://github.com/cncf/dco2/blob/2b9ce5f/src/dco/event/mod.rs"
         ],
         "dcoCoordinationHistory": [
           {
@@ -99449,10 +99400,10 @@
       "followup": {
         "sourceHead": "bc55ab6327453ed38e289b2b1b1f7197b38087e8",
         "owner": "approved_rebase_queue / root",
-        "nextAction": "Root follows actual app deployment and corrected current-source DCO results, plus the existing source-specific maintainer/import/main lifecycle. Do not change approved source, manually override/sign off, request operators, perform unsupported rerequests, retry unchanged checks or post unapproved prose.",
+        "nextAction": "Follow genuine new-head events or an actually updated DCO check, alongside the existing source-specific maintainer/import/main lifecycle. DCO2 #127 merged and its image built successfully, but public deployment is unverified and the retained Nov21/22 checks predate the fix. The handler processes opened/synchronize, ignores ordinary check-run rerequests, and its requested action is an override. No fake commit, override, human clickops, unchanged retry or unapproved prose. Exact-bc55 main validation remains unobserved; old55576 belongs to3ee54.",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-23T23:03:59.853434+00:00",
-        "recheckCondition": "Actual corrected check/deployment or substantive maintainer/import/current-head main event.",
+        "recheckCondition": "A genuine new source-head event or actually updated source-bound DCO/check/import result.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17470",
           "https://github.com/tamird/gvisor/commit/60ec8592c1c5fcec63846664b77a1bec5018b97c",
@@ -99469,7 +99420,9 @@
           "https://github.com/cncf/dco2/issues/126",
           "https://github.com/google/gvisor/pull/17470",
           "https://github.com/cncf/dco2/pull/127",
-          "https://github.com/cncf/dco2/commit/2b9ce5f80e5fe366e624285b335d075feeb88c0c"
+          "https://github.com/cncf/dco2/commit/2b9ce5f80e5fe366e624285b335d075feeb88c0c",
+          "https://github.com/cncf/dco2/actions/runs/45167328676",
+          "https://github.com/cncf/dco2/blob/2b9ce5f/src/dco/event/mod.rs"
         ],
         "latestReviewObservation": {
           "checkedAt": "2026-11-18T19:22:58.577211+00:00",
@@ -99495,7 +99448,7 @@
             }
           ]
         },
-        "curatedAt": "2026-11-21T15:21:17.931599+00:00",
+        "curatedAt": "2026-11-26T00:39:54.598989+00:00",
         "disposition": "At the22:17:49 snapshot, exact source bc55ab632 still reports DCO ACTION_REQUIRED (CR_kwDOB9IlXs8AAAAf1eBJVA). Retained evidence establishes the valid sole topic sign-off and wrong-range provider result. Upstream127 fixes the range bug, but fixed-app deployment and actual affected-check recomputation remain unverified. Existing source approval and independent landing/import/main conditions are unchanged. First Pass2223/non-DCO validation scope is retained, but no exact-bc55 main result is established; old55576 belongs to3ee54. The already-requested maintainer trigger is not a new outreach task."
       },
       "dcoAmendment": {
@@ -99520,7 +99473,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Root follows actual app deployment and corrected current-source DCO results, plus the existing source-specific maintainer/import/main lifecycle. Do not change approved source, manually override/sign off, request operators, perform unsupported rerequests, retry unchanged checks or post unapproved prose. Keep exact-bc55 main validation open until actually observed; issue126 feedback is no longer a pending bug-report step.",
       "recheckCondition": "Exact-bc55 main status/build or maintainer-trigger event, DCO app result, or reply to the existing external-report posting question.",
       "settledReviews": [
         {
@@ -99646,10 +99598,10 @@
       "followup": {
         "sourceHead": "b08bf67a0996f2732d82ad5b35949048cc2139f0",
         "owner": "approved_rebase_queue / root",
-        "nextAction": "The missing legacy benchmark prerequisite is delivered as #17871 at exact 6eaaa8495. Root follows its CI/review lifecycle. Preserve the original 38 component and four checkpoint/restore controls, both inconclusive GraphLoad A/A results and independent production/performance gates; no new timing or source publication follows from benchmark delivery.",
+        "nextAction": "Follow the delivered benchmark prerequisite #17871 at dd4cd790d4915f47e66b03dd02c2c5f8a40e9c6f, currently GitHub APPROVED, through its own CI/maintainer lifecycle. Production b08 and private56c remain separate: original 38 component rows and four checkpoint/restore controls, inconclusive A/A results and source/publication gates remain. No benchmark opening decision remains and no new timing follows from delivery.",
         "mergeable": "CONFLICTING",
         "observedAt": "2026-11-20T23:27:51.953187+00:00",
-        "recheckCondition": "Actual benchmark-only publication decision and prerequisite delivery, with independent source-bound production/performance gates preserved.",
+        "recheckCondition": "Actual #17871 source/CI/maintainer event, evidence-backed measurement change or valid source-bound production/performance results.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17472",
           "https://github.com/tamird/gvisor/commit/6827c2cfbc7102549d4ea74eb602516db2635a16",
@@ -99674,7 +99626,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44979306818"
         ],
         "implementationOwner": "approved_rebase_queue",
-        "curatedAt": "2026-11-22T14:02:28.619749+00:00",
+        "curatedAt": "2026-11-26T00:39:54.598989+00:00",
         "disposition": "Public b08bf67 remains conflicting and unchanged. Private conflict recovery 56c7c9ff77e5f7644292094cae6a9e67f5fe1a60 preserves upstream signaling-NaN fixes/tests and the zero-dispatch topic. Both architectures passed 15 state targets (five Go, ten Nogo), with 11,810 XML records, 85 intentional wire-slice skips and zero failures each; all five source checks passed. Both independent correctness and performance/style reviews found no blockers. This is not publication approval or performance qualification: seven component A/A results remain inconclusive and four broad controls remain unqualified.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112"
       },
@@ -99700,8 +99652,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "The missing benchmark prerequisite is qualified and has an actual pending publication question in investigation:legacy-state-udp-benchmarks for 408f2c192. Root awaits that answer; no upstream PR or production amendment exists. Required component matrix remains 38 rows: 32 state (22 upstream plus 10 wire) and 6 UDP, with 4 checkpoint/restore broad controls separate. Both GraphLoad controls remain INCONCLUSIVE under fixed ±2% containment; no further timing, pooled rows, routing attribution or separate 150-network gate.",
-      "recheckCondition": "An evidence-backed drift cause/environment change and valid source-bound broad/A-A results."
+      "recheckCondition": "Actual #17871 source/CI/maintainer event, evidence-backed measurement change or valid source-bound production/performance results."
     },
     {
       "id": "pr:bazel-contrib/bazel-gazelle:2513",
@@ -100554,7 +100505,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "Follow event-driven additional maintainer approval, natural main/check events or source changes. Existing requested reviewers remain; no recurring CI polling, source question, retry, outreach or merge.",
       "recheckCondition": "Actual maintainer/main/source event. No recurring CI watch.",
       "settledReviews": [
         {
@@ -101055,7 +101005,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Complete. No source, review, import or dependency action remains. Retain the landing and prior CI evidence; reopen only for an actual discrepancy.",
       "recheckCondition": "Actual Go-export delivery, agent progress/cancellation/lock evidence, replacement run or substantive source/review/import event."
     },
     {
@@ -101213,7 +101162,7 @@
         "nextAction": "No open source-PR review/import obligation remains. Preserve source evidence and edge history; existing descendants retain only their own remaining obligations. No ref deletion, outreach or new source authority.",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-23T16:10:34.503992+00:00",
-        "recheckCondition": "Actual new upstream evidence or an existing descendant’s own prerequisite/consumer change.",
+        "recheckCondition": "Only actual new source evidence or an existing descendant's own event; the source review/import wait is complete.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17492",
           "https://github.com/tamird/gvisor/commit/2ca38c700a1f17a2520e456022b2840285296185",
@@ -101231,7 +101180,7 @@
           "https://github.com/tamird/gvisor/actions/runs/44889765892",
           "https://github.com/gvisor/gvisor/commit/253b20a3de467bb4430d0766f9e1e2dfc82c95b8"
         ],
-        "curatedAt": "2026-11-21T10:53:48.994925+00:00",
+        "curatedAt": "2026-11-26T00:39:54.598989+00:00",
         "disposition": "Native GitHub confirms this source merged at 2026-11-23T15:48:07Z as 253b20a3de467bb4430d0766f9e1e2dfc82c95b8. The open source-PR review/import wait is fulfilled. The sole topic script exactly matches the merged result. Source-bound closure is verified; no duplicate branch alias has this exact head. Related prerequisite edges are fulfilled, while descendant-specific gates and superseded lifecycles remain distinct.",
         "permanentTransactionBaseline": {
           "productionSource": "b75c76bbee31f309bd3a7bdb125a4b28e96086a1",
@@ -101336,8 +101285,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Root follows existing maintainer review/import and merge events. Source CI is terminal; no execution watch, repeated outreach or further retry remains.",
-      "recheckCondition": "Provider admission recovery, exact-head check/review/import change or substantive source feedback."
+      "recheckCondition": "Only actual new source evidence or an existing descendant's own event; the source review/import wait is complete."
     },
     {
       "id": "branch:gazelle-public-go-repository-config",
@@ -101630,8 +101578,7 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
-      },
-      "nextStep": "Root follows actual quota/admission recovery, a newly admitted current-head run, maintainer review or import. Canonical diagnosis is complete; no unchanged retry, duplicate diagnosis, quota outreach, source amendment or merge is authorized."
+      }
     },
     {
       "id": "pr:nodejs/node:67426",
@@ -101835,7 +101782,6 @@
           }
         ]
       },
-      "nextStep": "Root awaits Tamir’s answer on the proposed inline comment at pgalloc.go:1243. Preserve the author’s implementation ownership and remaining review scope; post nothing until approved. The obsolete Daybreak availability wait is retired.",
       "recheckCondition": "Actual answer to the inline-review question, author revision/response or relevant new technical evidence.",
       "contributorReview": {
         "kind": "review",
@@ -102299,8 +102245,7 @@
         "evidence": [
           "https://github.com/gvisor/gvisor/commit/751ff797637c3e6f4d2fb3226e391eaee782563c"
         ]
-      },
-      "nextStep": "Complete; retain the branch/evidence history without deletion or a new publication question."
+      }
     },
     {
       "id": "pr:17544",
@@ -103270,7 +103215,6 @@
         ]
       },
       "summary": "Merged as e009ed0ed55d15be6070bbf968ff14f82c41b6b7 at 2026-11-19T18:54:28Z. Source review and quota obligations are complete. Exact local and fork source refs are absent. Export17651 remains closed unmerged and foreign-owned; preserve its history and branch.",
-      "nextStep": "Source lifecycle complete. Preserve existing archive/import history; no branch deletion, quota retry, review request or source push is needed. Any reappearing ref must pass the existing cleanup eligibility/archive process.",
       "recheckCondition": "An archive/ref discrepancy or substantive post-merge regression."
     },
     {
@@ -103381,7 +103325,6 @@
         "priorOwner": null
       },
       "summary": "Merged as 751ff7976 from unchanged approved f3c485cd. The source owner verified both changed files byte/mode-identical to the landing, with the same topic changes. Effective native, DCO, FirstPass, main and maintainer checks pass. Source/alias closure is complete; no dependency edge or child is unblocked. Whole-base qualification is not transferred.",
-      "nextStep": "Complete. Retain source-bound qualification and the separate #17836 Docker-cancellation/unknown-stall limits; no source, review or import action remains.",
       "recheckCondition": "Actual source/landing discrepancy; no periodic wait or retry."
     },
     {
@@ -103902,7 +103845,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": null
       },
-      "nextStep": "Root follows existing #17836 maintainer review/import/landing and actual changed provider evidence. #17836 is OPEN/MERGEABLE with prior green qualification and requested carzh/shailend-g; no duplicate patch, retry, outreach or merge authority is implied.",
       "recheckCondition": "Actual #17836 review/import/landing or new bounded source-bound failure evidence.",
       "settledReviews": [
         {
@@ -104381,7 +104323,6 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "Root follows the existing additional-approval and source/landing lifecycle. No repeated CI poll, reviewer request, unchanged retry or merge.",
       "recheckCondition": "Actual additional approval, source/check event or landing."
     },
     {
@@ -104724,7 +104665,6 @@
           "decisionNote": "User explicitly requested no reply and reported using thumbs-up reactions. This withdraws this exact pending draft; no message/review was posted. The reaction report is user-supplied, not a new GitHub API observation; at records curation time."
         }
       ],
-      "nextStep": "Retain the fork source under canonical seven-day/public-source protections; let normal cleanup determine eligibility. Follow actual post-merge regression/dependent adoption only; no ad hoc delete or agent merge.",
       "recheckCondition": "Canonical cleanup eligibility no earlier than2026-11-27 or actual post-merge/dependency evidence."
     },
     {
@@ -104744,7 +104684,7 @@
         "observedAt": "2026-11-18T06:58:20.703035+00:00",
         "disposition": "The preserved b5933c08 readiness/timing obligations are delivered through current 17780 at 5c8a182619525e77d210a31a9b9ff575251165f3: both readiness errors are checked, Node client cleanup is deferred, the client is constructed before shared runHey, ResetTimer is immediately before Spawn and StopTimer precedes output/report handling. Original source/evidence remain historical; no combined-proposal decision remains.",
         "nextAction": "Follow the existing canonical pr:17780 review/import/check lifecycle. This predecessor has no separate implementation, approval, reply or rerun obligation.",
-        "recheckCondition": "New canonical17780 source/review/import event or actual lineage contradiction.",
+        "recheckCondition": "Actual canonical #17780 source/review/import event or a demonstrated lineage contradiction.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b5933c08f6a5730dc174dbe3e377c70c01c6ef20",
           "https://github.com/tamird/gvisor/actions/runs/44227951959",
@@ -104775,11 +104715,10 @@
             "https://github.com/tamird/gvisor/actions/runs/44250351891"
           ]
         },
-        "curatedAt": "2026-11-21T14:40:26.293073+00:00"
+        "curatedAt": "2026-11-26T00:39:54.598989+00:00"
       },
       "updatedAt": "2026-11-20T15:00:40.305787+00:00",
-      "nextStep": "Root reconciles current benchmark source, original request/approval and delivery lineage before any user-decision projection. Preserve predecessor evidence/dependency scope; do not repeat a historical combined-proposal question.",
-      "recheckCondition": "Verified current source/decision provenance or delivery-lineage change.",
+      "recheckCondition": "Actual canonical #17780 source/review/import event or a demonstrated lineage contradiction.",
       "inactive": true
     },
     {
@@ -104800,14 +104739,13 @@
         "observedAt": "2026-11-18T05:07:20.408252+00:00",
         "disposition": "Preserved ead57716 is the Nov18 Iperf2 human-output parser and reported-payload MB/s change. It is not included in approved 67601a14 Iperf3 JSON image, which reports aggregate sum_sent bandwidth only. The user requested separate Iperf3/BCR+JSON delivery. Retire the old combined-proposal decision projection without claiming byte-for-byte delivery or supersession of this metric.",
         "nextAction": "Root reconciles any remaining reported-payload metric requirement against the Iperf3 direction after the real image prerequisites. Preserve ead source/evidence as held; no new source question or approval is inferred.",
-        "recheckCondition": "Iperf3 image prerequisite landing or concrete metric-scope decision.",
+        "recheckCondition": "Concrete reported-payload metric-scope decision or actual Iperf3 prerequisite change; preserved Iperf2 source remains held.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/44231202091"
         ],
-        "curatedAt": "2026-11-21T14:40:26.293073+00:00"
+        "curatedAt": "2026-11-26T00:39:54.598989+00:00"
       },
-      "nextStep": "Root reconciles current benchmark source, original request/approval and delivery lineage before any user-decision projection. Preserve predecessor evidence/dependency scope; do not repeat a historical combined-proposal question.",
-      "recheckCondition": "Verified current source/decision provenance or delivery-lineage change.",
+      "recheckCondition": "Concrete reported-payload metric-scope decision or actual Iperf3 prerequisite change; preserved Iperf2 source remains held.",
       "inactive": true
     },
     {
@@ -105898,7 +105836,6 @@
         }
       },
       "number": 17780,
-      "nextStep": "Root follows current-head maintainer review and actual provider quota/admission or check changes through the existing lifecycle. Publication and routine notice are complete; locked SSH is not a blocker. No duplicate source question, unchanged retry, quota outreach, reviewer request or merge.",
       "recheckCondition": "Actual source/review/check/admission event; no dedicated watcher or SSH-unlock wait."
     },
     {
@@ -105997,13 +105934,13 @@
       "group": "ci-flakes",
       "status": "closed",
       "updatedAt": "2026-11-21T04:22:28.091102+00:00",
-      "summary": "The collaborator approval gate remains satisfied. Gurgunday confirmed the author’s existing landing question and added another exact-head approval on unchanged 15c2edb5. The PR remains OPEN/APPROVED/MERGEABLE but natively BLOCKED with three pending GitHub Jenkins contexts. This is maintainer landing/CI-reporting follow-through, not a new source failure or agent merge authorization.",
+      "summary": "Upstream delivery is complete by manual landing:660c1040592c4332520e7d783360139c8298cb52 names PR67595 and is upstream main. Root verified its changed-file set, statuses and blob IDs exactly match reviewed15c2edb. Native GitHub mergedAt remains null; this is landed-by-commit, not an API merge claim. Maintainer Jake’s notice is source-bound.",
       "followup": {
         "owner": "root",
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
         "disposition": "Upstream delivery is complete by manual landing:660c1040592c4332520e7d783360139c8298cb52 names PR67595 and is upstream main. Root verified its changed-file set, statuses and blob IDs exactly match reviewed15c2edb. Native GitHub mergedAt remains null; this is landed-by-commit, not an API merge claim. Maintainer Jake’s notice is source-bound.",
-        "nextAction": "Upstream delivery remains complete. The pinned Node22 fixture backport is technically qualified at057d; root owns its independent unanswered gVisor publication question. Prior technical owner node22_backport_delivery/evidence is retained on the TLS investigation. No duplicate upstream CI/outreach or approval transfer.",
-        "recheckCondition": "Actual separate pinned-fixture backport or post-landing regression.",
+        "nextAction": "No upstream delivery or CI wait remains. The technically qualified pinned Node22 fixture backport at057d has its independent unanswered gVisor publication question on the TLS investigation; follow that owning record without transferring upstream approval.",
+        "recheckCondition": "Actual pinned-fixture backport decision or post-landing recurrence.",
         "publishedDelivery": {
           "base": "b7df44bf9c85a6104b9158b616999e3d2c58be5d",
           "head": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
@@ -106214,7 +106151,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-21T09:19:34.135838+00:00",
+        "curatedAt": "2026-11-26T00:39:54.598989+00:00",
         "memberReview": {
           "author": "bnb",
           "association": "MEMBER",
@@ -106598,8 +106535,7 @@
           "note": "User posted a shorter landing-status question directly; do not post the verbose rerun draft or ask again."
         }
       ],
-      "nextStep": "Root follows accessible GitHub status changes and the maintainer response to the existing elapsed-CI question. Preserve current approval and source-bound validation. No repeated CI request, manual retry, access workaround or new contributor decision.",
-      "recheckCondition": "Accessible current-head status or maintainer response changes.",
+      "recheckCondition": "Actual pinned-fixture backport decision or post-landing recurrence.",
       "inactive": true
     },
     {
@@ -106701,7 +106637,6 @@
           "note": "Global macro proposal withdrawn as written: rules_go already documents GO_TEST_WRAP_TESTV=1 and intentionally defaults it off to reduce failure-log volume (rules_go issue3835). Root will use the existing opt-in for qualification consumers needing per-case XML and verify the narrower configuration, rather than publish a duplicate global mechanism."
         }
       ],
-      "nextStep": "Reuse the existing option and audited controls in new qualification recipes. No upstream global-macro PR or repeated source-approval question.",
       "recheckCondition": "A changed wrapper/toolchain or actual correctness/performance-mode requirement."
     },
     {
@@ -106739,7 +106674,6 @@
           "https://buildkite.com/gvisor/pipeline/builds/55459"
         ]
       },
-      "nextStep": "Source delivery complete. Preserve the fork source ref and evidence; recheck existing canonical cleanup eligibility no earlier than2026-11-27, requiring archive/public-source protections and squash handling before any deletion. Do not retry quota jobs or request review again.",
       "recheckCondition": "Canonical retention/cleanup recheck on or after2026-11-27, or a substantive post-merge regression."
     },
     {
@@ -106908,7 +106842,6 @@
         }
       },
       "updatedAt": "2026-11-19T19:21:16.819846+00:00",
-      "nextStep": "Root assesses a standard compilation-database replacement and prepares the requested Bazel/RBE migration proposal. Preserve both qualified refs and evidence; hold further Buildkite/typechecker work and source publication until direction is resolved. Do not repeat either source-review question.",
       "recheckCondition": "User direction on the migration proposal or standard compilation-database replacement, or explicit release of the hold.",
       "ref": "research/buildkite-metadata-typed-current"
     },
@@ -106965,7 +106898,6 @@
         ]
       },
       "summary": "Merged by the maintainer at2026-11-21T06:16:49Z as8da0d1568267faca963bfe36d7c1c64ac851362f, from9c2814db01620f643809f38f3f2e929ab35f4aef. The supplier/license amendment is delivered and PR-level review/CI waits are complete. The broader declared-input formatting migration retains its separate design owner and open scope.",
-      "nextStep": "Retain the source branch under existing cleanup retention/public-source protections. No further PR reply, re-request or CI retry is needed. Continue the separately owned declared-input formatting design; this landing does not complete that migration.",
       "recheckCondition": "Canonical cleanup eligibility after retention/protection checks, or actual new post-landing feedback affecting the delivered supplier."
     },
     {
@@ -107011,7 +106943,6 @@
         ]
       },
       "summary": "Qualified source preserved. The user requested revision of the first topic and then held further Buildkite/typechecker investment while considering a standard compilation-database replacement and Bazel/RBE migration. This proposal is not approved or awaiting an active source-review answer; no upstream publication occurred.",
-      "nextStep": "Root assesses a standard compilation-database replacement and prepares the requested Bazel/RBE migration proposal. Preserve both qualified refs and evidence; hold further Buildkite/typechecker work and source publication until direction is resolved. Do not repeat either source-review question.",
       "recheckCondition": "User direction on the migration proposal or standard compilation-database replacement, or explicit release of the hold."
     },
     {
@@ -107156,7 +107087,6 @@
           "https://github.com/kiron1/bazel-compile-commands/actions/runs/44807549343"
         ]
       },
-      "nextStep": "Root follows #236’s actual maintainer/release events while investigating the producer toolchain choice. No merge command, producer PR, new publication question or permanent fork pin is authorized by this hold.",
       "recheckCondition": "Actual #236 maintainer/release change or evidence-based producer direction."
     },
     {
@@ -107192,7 +107122,6 @@
         "curatedAt": "2026-11-21T03:15:14.927530+00:00",
         "mergeable": "MERGEABLE"
       },
-      "nextStep": "Root follows the already-requested maintainer review of29ff and genuine feedback, import or merge events. No duplicate review request, CI retry or active CI watch remains. Preserve the independently owned nested-Docker investigation without making it a prerequisite for this completed mitigation.",
       "recheckCondition": "New substantive reviewer feedback, approval/import/merge event or source/check change.",
       "updatedAt": "2026-11-21T03:15:14.927530+00:00"
     },
@@ -107243,7 +107172,6 @@
           }
         ]
       },
-      "nextStep": "Root follows maintainer/import review and actual admission/check events; quota diagnosis is terminal with no rerun or CI ping. The Go export watchers are closed. Root handles any reporting-auth consideration within the existing export pilot without expanding permissions.",
       "recheckCondition": "A genuine maintainer/check event or evidenced admission recovery."
     },
     {
@@ -107806,7 +107734,6 @@
         "disposition": "Exact current source 2c1ea17a6 checks the accepted ACK bounds for the new-data probe episode. The retransmitted-probe path belongs to the still-open common-validation companion #16378. The actual scope-reply question is pending; this is not approval of the whole PR or authorization to edit the foreign branch.",
         "curatedAt": "2026-11-25T22:35:10.106729+00:00"
       },
-      "nextStep": "Root awaits Tamir’s answer on the proposed reply to discussion 4419960483. Keep retransmitted-probe work with #16378; do not post, edit foreign source or launch tests from this metadata assignment. The obsolete user availability hold is retired.",
       "recheckCondition": "Actual answer to the reply question, or substantive author/source evidence affecting the two-path scope.",
       "contributorReview": {
         "kind": "reply",
@@ -107959,7 +107886,6 @@
         ],
         "curatedAt": "2026-11-25T23:15:02.675448+00:00"
       },
-      "nextStep": "Root follows the current admitted main 55964 through the canonical lifecycle and consumes actual terminal/diagnostic evidence. Do not retry unchanged work or transfer old image/cancellation causes.",
       "recheckCondition": "Actual terminal main 55964/check/review/source event."
     },
     {
@@ -108029,7 +107955,6 @@
       "status": "open",
       "updatedAt": "2026-11-24T12:39:14.280154+00:00",
       "summary": "Published #17915 retains its exact approved source. Current main 55961 and First Pass 2901 passed; prior admission/attempt failures remain historical. Native GitHub reports APPROVED, while required maintainer-approval/master explicitly reports “Maintainer approvals: 1, needs 2.” The second approval remains outstanding.",
-      "nextStep": "Root follows the existing second-approval and current-head maintainer lifecycle. No CI repair, quota retry, duplicate reviewer request, source amendment or merge is authorized.",
       "followup": {
         "disposition": "Published #17915 retains its exact approved source. Current main 55961 and First Pass 2901 passed; prior admission/attempt failures remain historical. Native GitHub reports APPROVED, while required maintainer-approval/master explicitly reports “Maintainer approvals: 1, needs 2.” The second approval remains outstanding.",
         "nextAction": "Root follows the existing second-approval and current-head maintainer lifecycle. No CI repair, quota retry, duplicate reviewer request, source amendment or merge is authorized.",
@@ -108076,7 +108001,6 @@
         }
       ],
       "summary": "Approved source ea66bb33d6 is published as #17920, OPEN/MERGEABLE with DCO passing and review required. FirstPass 2866 failed before agent allocation: author 1535036 reached the rolling 30-day 360,000 compute-minute quota. No source tests ran in that build.",
-      "nextStep": "Root follows the actual current-head CI and maintainer review. Recheck on quota reset or a new CI event; no source repair is indicated by the admission failure.",
       "followup": {
         "owner": "root",
         "observedAt": "2026-11-25T20:11:49.549391+00:00",
@@ -108174,7 +108098,6 @@
         }
       ],
       "summary": "Published #17921 remains OPEN/MERGEABLE at f05f486dc. Native validation and DCO are green; existing maintainer requests are pending. FirstPass2685 retains the verified pre-agent rolling30-day360,000 compute-minute quota; no tests ran in that build. The source-publication decision is complete.",
-      "nextStep": "Root follows actual maintainer review and provider admission/check events through the normal canonical sweep. No duplicate request, quota outreach, unchanged retry or merge is authorized.",
       "followup": {
         "owner": "root",
         "observedAt": "2026-11-24T18:50:04.549616+00:00",
@@ -108201,7 +108124,6 @@
       "status": "Published as #17920",
       "updatedAt": "2026-11-25T20:13:29.584037+00:00",
       "summary": "Approved source delivered as #17920; this proposal is complete. Follow the canonical PR for current review and CI.",
-      "nextStep": "Follow the current PR lifecycle at #17920; no opening decision remains.",
       "owner": "root",
       "evidence": [
         {
@@ -108271,7 +108193,6 @@
       "status": "Published as #17963",
       "updatedAt": "2026-11-25T12:50:33.824992+00:00",
       "summary": "The approved clang-tidy driver correction, including the requested nested-stream loop, is delivered as #17963 at 24a0f1e19. Exact fresh remote lint_test passed seven Python cases through one XML wrapper; proportional final review passed. The old df787 question is consumed.",
-      "nextStep": "Complete source-publication handoff; #17963 owns current CI/review lifecycle. No duplicate proposal, source approval or merge is implied.",
       "owner": "root",
       "evidence": [
         {
@@ -108323,7 +108244,6 @@
       "owner": "root",
       "evidence": [],
       "summary": "Published 7f28ffee3f has passing exact-head GitHub Actions validation, DCO and First Pass 2927; canonical First Pass had no failed attempts. Source delivery and notice are complete. Maintainer status remains pending, last detailed as “Maintainer approvals: 1, needs 2.” No main build is observed or inferred green.",
-      "nextStep": "Follow event-driven additional maintainer approval, natural main/check events or source changes. Existing requested reviewers remain; no recurring CI polling, source question, retry, outreach or merge.",
       "updatedAt": "2026-11-24T20:51:36.949756+00:00",
       "followup": {
         "disposition": "Published 7f28ffee3f has passing exact-head GitHub Actions validation, DCO and First Pass 2927; canonical First Pass had no failed attempts. Source delivery and notice are complete. Maintainer status remains pending, last detailed as “Maintainer approvals: 1, needs 2.” No main build is observed or inferred green.",
@@ -108419,7 +108339,6 @@
       "owner": "root",
       "evidence": [],
       "summary": "The approved Sysbench 24419d916 proposal is delivered as #17970. Its previous SSH/HTTPS/API new-ref failures remain historical; no source-publication or unlock question remains outstanding.",
-      "nextStep": "Complete handoff. Canonical #17970 owns current CI/review and provider-admission follow-through; no duplicate source opening or new credential request.",
       "updatedAt": "2026-11-25T13:17:35.233413+00:00",
       "followup": {
         "owner": "root",
@@ -108479,7 +108398,6 @@
         }
       ],
       "summary": "TAP-only source 8044063a remains open. Shayon formally approved this exact head; the aggregate remains REVIEW_REQUIRED. Main 55910 passed. Current FirstPass 2816 independently failed before agent allocation on author 1535036’s rolling 30-day 360000 compute-minute quota. Ayush’s reporter-wording report and Tamir’s existing scope question remain unresolved; no semantic defect is independently verified.",
-      "nextStep": "Root follows the existing reporter-wording discussion, maintainer review and actual admission/check changes. Preserve original FLAKY/source limits; no duplicate reply, source amendment, approval question, retry or quota outreach.",
       "recheckCondition": "Actual discussion response, source/review/check or quota-admission change.",
       "followup": {
         "owner": "root",
@@ -108599,7 +108517,6 @@
         }
       ],
       "summary": "Approved final driver source 24a0f1e19 is delivered in #17963. Native checks and DCO pass; exact fresh remote lint_test passed seven Python cases/one XML wrapper. Independently source-bound FirstPass 2807 failed before agent assignment on Tamir’s rolling 30-day 360000 compute-minute quota; no source tests ran in that build.",
-      "nextStep": "Root and the existing CI/provider workstream follow actual quota/admission or current-head review/check changes. The 2807 diagnosis is its own canonical evidence, not transferred from Node 2806. No unchanged retry, quota outreach, source edit or merge.",
       "recheckCondition": "The current exact-head CI diagnosis or actual source/review/provider event.",
       "followup": {
         "owner": "root",
@@ -108660,7 +108577,6 @@
         }
       ],
       "summary": "Published #17970 retains its exact approved source. Current main 55962 and First Pass 2902 passed; prior admission/attempt failures remain historical. Native GitHub reports APPROVED, while required maintainer-approval/master explicitly reports “Maintainer approvals: 1, needs 2.” The second approval remains outstanding.",
-      "nextStep": "Root follows the existing second-approval and current-head maintainer lifecycle. No CI repair, quota retry, duplicate reviewer request, source amendment or merge is authorized.",
       "recheckCondition": "Actual additional approval, changed source/check event or landing.",
       "followup": {
         "owner": "root",
@@ -108750,7 +108666,6 @@
         }
       ],
       "summary": "Exact Hey source 5f17b6735 has accepted final source review and native validation 45708706041: the old regression is red, zero-success null compatibility is preserved, and candidate full/race suites pass. The actual upstream rakyll/hey publication question is pending. This independent producer change does not approve downstream adoption or clear analyzer performance.",
-      "nextStep": "Root awaits Tamir’s source-publication decision for exact 5f17b6735 to rakyll/hey. Do not open an upstream PR or adopt this downstream before the respective authorization; no further validation or timing is launched here.",
       "recheckCondition": "Actual source-publication answer or changed source/review evidence; downstream adoption remains separate.",
       "followup": {
         "owner": "root",
@@ -108868,7 +108783,6 @@
         ]
       },
       "summary": "Published image-only source e17f88ffd remains OPEN/MERGEABLE with REVIEW_REQUIRED. DCO and native GitHub validation are green. FirstPass 2824 failed solely at pipeline upload before agent allocation: author 1535036 reached the rolling 30-day 360000 compute-minute quota. No source/test execution occurred in that build.",
-      "nextStep": "Root follows quota reset or a new current-head CI/review event. Publication is complete; this is an admission wait, not source repair. Preserve image-only qualification limits, with no retry, duplicate opening question, outreach or merge.",
       "recheckCondition": "Actual quota reset or new CI/review/source event."
     },
     {
@@ -108893,7 +108807,6 @@
       "url": "https://github.com/google/gvisor/pull/17982",
       "status": "open",
       "summary": "Approved source e0b8562208 is published as #17982, OPEN/MERGEABLE with DCO passing and review required. FirstPass 2865 failed before agent allocation: author 1535036 reached the rolling 30-day 360,000 compute-minute quota. No source tests ran in that build.",
-      "nextStep": "Root follows the actual current-head CI and maintainer review. Recheck on quota reset or a new CI event; no source repair is indicated by the admission failure. Retain the PR head ref until merged.",
       "recheckCondition": "Quota reset, new CI/review event, actual head change or merge.",
       "updatedAt": "2026-11-25T20:13:29.584037+00:00",
       "followup": {
@@ -108964,7 +108877,6 @@
       "status": "Retired; diagnostic evidence only",
       "owner": "root",
       "summary": "Retired from source delivery. Diagnostic c9b projection passes 89 sandbox cases with one RDMA hardware skip per architecture, including the three route failures. Root confirmed it errors on gatewayless /0 and multiple same-family defaults, contrary to #15866’s gatewayless-first-default and route-order contract. The green gate does not qualify this compatibility behavior; retain the source and results as diagnostic evidence only.",
-      "nextStep": "No source-delivery action or approval question. Preserve c9b’s diagnostic evidence; original-parent AMD attribution is complete and reproduces all three failures. This does not restore c9b’s incompatible source behavior.",
       "recheckCondition": "A genuinely new source/compatibility disposition; no retry or competing publication of this retired candidate.",
       "updatedAt": "2026-11-25T20:50:20.001455+00:00",
       "followup": {
@@ -109076,7 +108988,6 @@
         }
       ],
       "summary": "Published b2b018bfeb has passing GitHub Actions validation, DCO and exact-head First Pass 2936 with zero failed attempts. The newer full snapshot reports MERGEABLE, superseding the saved 00:12 UNKNOWN without any conflict inference. Native GitHub APPROVED remains distinct from effective review and required “Maintainer approvals: 1, needs 2.” No required main, new Kind cluster or runtime pass is observed.",
-      "nextStep": "Root follows actual additional approval, main/check/source or conflict events. The local CI observer is closed; preserve nybidari’s pending request. No recurring polling, unchanged retry, source churn or merge.",
       "recheckCondition": "Actual maintainer/main/source/mergeability event.",
       "updatedAt": "2026-11-25T21:37:40.347012+00:00",
       "followup": {
@@ -109237,7 +109148,6 @@
       "status": "Qualification only; adoption not approved",
       "owner": "root",
       "summary": "Existing downstream gVisor qualification branch a5d63384e9 contains ec0b648d29, the shared compilation-database caller migration. This is qualification-only work, not an approved upstream gVisor PR or permanent fork pin. Supplier #236 is still open; approved producer 44774d5 has that exact #236 head as parent, and released v0.22.4 predates both.",
-      "nextStep": "Root keeps this downstream work linked to the supplier/adoption investigation. Follow the actual #236/producer release path; separately review any gVisor adoption proposal and qualification scope before a source-publication request. Do not repeat tests, create a new PR, adopt a permanent fork pin or perform outreach from this record.",
       "recheckCondition": "Actual supplier #236 landing, compatible producer release or an explicit downstream adoption/source decision.",
       "updatedAt": "2026-11-25T21:33:31.776628+00:00",
       "followup": {
@@ -134651,7 +134561,7 @@
       "owner": "root",
       "updatedAt": "2026-11-25T21:04:58.790048+00:00",
       "group": "analysis",
-      "summary": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, syscall, CPU/Memory and RubyNoOp comparisons are complete at their recorded precision. Three RubySpec A/A runs stopped on workload assertions before benchstat or A/B; HTTP and remaining ABSL work stay owned. Size/Usage/Mutex, FUSE architecture and open #17884 retain independent limits.",
+      "summary": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, syscall, CPU/Memory and RubyNoOp comparisons are complete at recorded precision. Fio's declared target passed full functional admission and its matched AA→conditional AB is running. RubySpec workload assertions, HTTP/ABSL, Size/Usage/Mutex, FUSE architecture and open #17884 retain independent limits.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -135023,7 +134933,7 @@
           ]
         }
       ],
-      "nextStep": "analysis_delivery reuses the already-qualified #17479 Fastlane image/input on both arms for future tmpfs RubySpec qualification; no new patch or source review is needed. Root and the existing owner independently assess the FUSE/rootfs OpenSSL invalid-password failure. Preserve all incomplete A/A failures and remaining HTTP/ABSL ownership; no duplicate observer, blind rerun or source-regression claim.",
+      "nextStep": "analysis_delivery consumes its existing Fio matched and Size cache-reset admission results; no duplicate observer or timing retry. Reuse qualified #17479 input on both RubySpec tmpfs arms and assess the independent OpenSSL failure. Remaining HTTP/ABSL and prerequisite/architecture obligations stay with their existing owners.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -135404,6 +135314,14 @@
         {
           "label": "AMD original-parent route attribution: all three assertions also fail",
           "url": "https://github.com/tamird/gvisor/actions/runs/45697572977/artifacts/15061632675"
+        },
+        {
+          "label": "Owned Fio matched qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45728693661"
+        },
+        {
+          "label": "Full Fio functional admission",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45727720891"
         }
       ],
       "reviewWatch": {
@@ -135648,14 +135566,14 @@
           "https://github.com/gvisor/gvisor/pull/17479"
         ],
         "owner": "root",
-        "disposition": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, syscall, CPU/Memory and RubyNoOp comparisons are complete at their recorded precision. Three RubySpec A/A runs stopped on workload assertions before benchstat or A/B; HTTP and remaining ABSL work stay owned. Size/Usage/Mutex, FUSE architecture and open #17884 retain independent limits.",
-        "nextAction": "analysis_delivery reuses the already-qualified #17479 Fastlane image/input on both arms for future tmpfs RubySpec qualification; no new patch or source review is needed. Root and the existing owner independently assess the FUSE/rootfs OpenSSL invalid-password failure. Preserve all incomplete A/A failures and remaining HTTP/ABSL ownership; no duplicate observer, blind rerun or source-regression claim.",
+        "disposition": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, syscall, CPU/Memory and RubyNoOp comparisons are complete at recorded precision. Fio's declared target passed full functional admission and its matched AA→conditional AB is running. RubySpec workload assertions, HTTP/ABSL, Size/Usage/Mutex, FUSE architecture and open #17884 retain independent limits.",
+        "nextAction": "analysis_delivery consumes its existing Fio matched and Size cache-reset admission results; no duplicate observer or timing retry. Reuse qualified #17479 input on both RubySpec tmpfs arms and assess the independent OpenSSL failure. Remaining HTTP/ABSL and prerequisite/architecture obligations stay with their existing owners.",
         "recheckCondition": "Owner’s workload-reliability disposition, remaining terminal qualification receipts or substantive prerequisite/source evidence.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-26T00:25:23.323460+00:00",
+        "curatedAt": "2026-11-26T00:39:54.598989+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -135733,6 +135651,19 @@
               "adoption": "Reuse input on both arms in future qualification; no new patch/review or upstream-landing wait",
               "exampleCount": 3613
             }
+          },
+          "fio": {
+            "owner": "analysis_delivery",
+            "run": 45728693661,
+            "state": "Declared Bazel target; same-source AA then conditional AB in progress",
+            "preflight": 45727720891,
+            "scope": "Functional288 rows/864 values/all48 leaves,18 product bindings and cleanup passed. Matched original48 leaves×3 metrics, n24/N1; no statistical result yet."
+          },
+          "sizeCacheIntegrity": {
+            "owner": "analysis_delivery",
+            "source": "174c54aac30bcfd6a7ba4fc14b256665a929edd3",
+            "state": "Direct positive/negative cache-reset admissions running; no new timing",
+            "limits": "Old source ignored six reset errors and old Size dispatch lacked sudo. Old A/A does not establish successful resets; this does not explain its variation."
           }
         }
       },
