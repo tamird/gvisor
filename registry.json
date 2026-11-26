@@ -25185,19 +25185,26 @@
       "head": "d7dcfd359c1eaaece9f4ab39434e58bd50e61dff",
       "url": "https://github.com/google/gvisor/pull/15106",
       "group": "release",
-      "status": "Delivered; current CI and maintainer review pending",
-      "updatedAt": "2026-10-20T13:04:03.294181+00:00",
-      "summary": "After the approved mechanical publication, root found a separate compatibility issue with merged ZIP import enforcement760b: the Go-export helper still directly imports archive/zip. Root owns a narrow public amendment and its canonical validation in gvisor-15049. The mechanical rebase and authorized reply remain completed; they do not establish semantic validation against the new enforcement. Current Gazelle also retains the separate inherited unused //pkg/zip dependency covered by16031.\n\nThe contributor-approved sidecar amendment is published at d7dcfd359c. Its code is unchanged from approved7709; the temporal context was removed from the commit/body and included in the authorized post-update reviewer comment. Root verified exact public head and matching tracking. No contributor decision remains.\n\nHistorical qualification and delivery evidence:\n\nUser approved exact 7709f36fdf22e4116ce8c06c7e97d7d5ac784111 for updating existing PR #15106. Assigned delivery owner: root. Publish the approved amendment through existing PR #15106 with exact-head/source-equivalence verification. Remove temporal Preserve/added-by0e12 context from commit and body; place that context in the authorized post-update reviewer comment. Qualification and historical failure records remain unchanged.\n\nHistorical proposal and qualification record:\n\nThe proposed #15106 amendment includes required Go/C sidecar inputs in the exported module. Its retained validation covers three owning tests/seven positives, actual archive parity2496/2496 and final canonical formatting. The exact three formatting hunks separate runtime/archive-tested d2e4 from final7709. Root requested publication/reply approval once; public fc959 remains unchanged.",
+      "status": "Historical delivery through #15106",
+      "updatedAt": "2026-11-26T07:41:31.491746+00:00",
+      "summary": "Historical d7dcfd359 sidecar source belongs to delivered Go source-archive work in #15106. The live canonical PR is tamird:go-export-archive at afb619886; its assembler imports gvisor.dev/gvisor/pkg/zip and BUILD declares //pkg/zip, so the old task to prepare a ZIP-proxy amendment is complete. Current DCO/import/maintainer lifecycle belongs to #15106. Distinct f850 promisor-source work remains a separate actual proposal under #17832.",
       "followup": {
-        "owner": "root",
         "sourceHead": "d7dcfd359c1eaaece9f4ab39434e58bd50e61dff",
         "observedAt": "2026-10-20T12:59:34.372581+00:00",
-        "disposition": "Published amendment; new ZIP proxy compatibility correction active",
-        "nextAction": "Prepare and validate the narrow Go-export ZIP proxy amendment, then use the appropriate contributor review for changed code. No duplicate fixer or blind retry.",
+        "disposition": "Historical d7dcfd359 sidecar source belongs to delivered Go source-archive work in #15106. The live canonical PR is tamird:go-export-archive at afb619886; its assembler imports gvisor.dev/gvisor/pkg/zip and BUILD declares //pkg/zip, so the old task to prepare a ZIP-proxy amendment is complete. Current DCO/import/maintainer lifecycle belongs to #15106. Distinct f850 promisor-source work remains a separate actual proposal under #17832.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15106",
           "https://github.com/google/gvisor/commit/760b80785"
-        ]
+        ],
+        "curatedAt": "2026-11-26T07:41:31.491746+00:00",
+        "canonicalDelivery": {
+          "pr": 15106,
+          "ref": "go-export-archive",
+          "head": "afb6198869d091f721f559dc0e2eceb0c6bb5455",
+          "zipCorrection": "tools/go_export/main.go imports gvisor.dev/gvisor/pkg/zip; owning BUILD declares //pkg/zip",
+          "scope": "Retires historical ZIP implementation task, not PR lifecycle or f850 proposal",
+          "evidence": "https://github.com/tamird/gvisor/blob/afb6198869d091f721f559dc0e2eceb0c6bb5455/tools/go_export/main.go"
+        }
       },
       "evidence": [
         {
@@ -25207,6 +25214,18 @@
         {
           "label": "Authorized post-update reviewer context",
           "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6291124754"
+        },
+        {
+          "label": "Current delivered archive source uses the ZIP proxy",
+          "url": "https://github.com/tamird/gvisor/blob/afb6198869d091f721f559dc0e2eceb0c6bb5455/tools/go_export/main.go"
+        },
+        {
+          "label": "Current ZIP proxy build dependency",
+          "url": "https://github.com/tamird/gvisor/blob/afb6198869d091f721f559dc0e2eceb0c6bb5455/tools/go_export/BUILD"
+        },
+        {
+          "label": "Actual current PR lifecycle",
+          "url": "https://github.com/gvisor/gvisor/pull/15106"
         }
       ],
       "refinement": {
@@ -46040,11 +46059,19 @@
         {
           "label": "Lucas approved b2cbea854 on November 5",
           "url": "https://github.com/google/gvisor/pull/16594#pullrequestreview-5790902474"
+        },
+        {
+          "label": "Source-bound TestSudo export failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54284"
+        },
+        {
+          "label": "Merged corrected TestSudo reland",
+          "url": "https://github.com/gvisor/gvisor/pull/17556"
         }
       ],
-      "updatedAt": "2026-11-17T19:01:06.487079+00:00",
+      "updatedAt": "2026-11-26T07:41:31.491746+00:00",
       "status": "Approved; awaiting current-source import",
-      "summary": "Published b2cbea854 includes the early-return cleanup and TestMountPromiseResolvedAfterRegister, which drives the owning wait helper after registration and checks the resolved mount and open waiter channel. The optional cleanup/test requests are implemented. Recorded VFS-suite/NoGo evidence retains its source scope; no in-tree registration caller or private-export integration is claimed.",
+      "summary": "Exact export #16647 at 08242cbb11 has eight latest unretried shard-4 integration timeouts, all naming TestSudo at 15 minutes. Its ancestry lacks rollback #17412 and fixed reland #17556. Public evidence supports refreshing the owning integration base; separate private internal failures remain undiagnosed.",
       "refinement": {
         "before": {
           "head": "f11e71355d869135bab5bdadb03d2a9f9ee65eab",
@@ -46059,8 +46086,8 @@
         "owner": "root",
         "sourceHead": "b2cbea854fc9094a9b295a6226a90bccc4dad2ca",
         "observedAt": "2026-11-17T19:01:06.487079+00:00",
-        "disposition": "Published b2cbea854 includes the early-return cleanup and TestMountPromiseResolvedAfterRegister, which drives the owning wait helper after registration and checks the resolved mount and open waiter channel. The optional cleanup/test requests are implemented. Recorded VFS-suite/NoGo evidence retains its source scope; no in-tree registration caller or private-export integration is claimed.",
-        "nextAction": "Follow the matching current export and the existing TestSudo recovery; require importing maintainer original internal diagnostic for any separate failure. Do not leave obsolete wait-for-first-export instructions.\nRefresh the owning internal/export base onto fixed master and qualify the integration partition containing TestSudo; do not invent another mount/inotify/eventfd/FUSE fix or issue. For older-source17387 retain current approved source and ask importing maintainer to consume it. DCO import coordination: Root coordinates #16647 at 08242cbb11a2. Inspect the listed import\u2019s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch. DCO audit: this exact unsigned head has no DCO run/suite and remains bound to a live exact-source import; preserve it until importing-owner coordination before any same-tree sign-off rewrite.",
+        "disposition": "Exact export #16647 at 08242cbb11 has eight latest unretried shard-4 integration timeouts, all naming TestSudo at 15 minutes. Its ancestry lacks rollback #17412 and fixed reland #17556. Public evidence supports refreshing the owning integration base; separate private internal failures remain undiagnosed.",
+        "nextAction": "Importing owner refreshes the existing internal/export integration onto the #17556 fix, then qualifies the affected integration partition. Root awaits the single proposed comment on #16842 covering all three imports; do not duplicate #16854\u2019s existing generic reimport request. Preserve exact source/DCO-import coordination; no mount/eventfd/inotify patch, unchanged-head retry or export-branch push.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16594",
           "https://github.com/tamird/gvisor/commit/8d9ce8738115e23dec693545967f2c21124df6df",
@@ -46079,8 +46106,8 @@
           "https://github.com/gvisor/gvisor/pull/17556",
           "https://github.com/gvisor/gvisor/pull/16647"
         ],
-        "recheckCondition": "Fresh exact source/import feedback or importing maintainer error detail.\nRefreshed exact export includes fixed integration ancestry and owning integration partition passes; inspect any distinct remaining internal error. DCO coordination recheck: The listed exact import merges/closes, changes its footer source revision, or its importing maintainer explicitly confirms the source metadata rewrite can proceed. Recheck live source/fork heads immediately before any write.",
-        "curatedAt": "2026-11-26T07:25:22.110658+00:00",
+        "recheckCondition": "Actual importing-owner/source/base change and owning integration evidence; the submitted one-comment outreach decision remains separate.",
+        "curatedAt": "2026-11-26T07:41:31.491746+00:00",
         "projectFeedback": {
           "source": "b2cbea854fc9094a9b295a6226a90bccc4dad2ca",
           "state": "Optional early-return and regression-coverage suggestions implemented; remaining importing-maintainer/TestSudo integration wait is independent.",
@@ -46111,7 +46138,18 @@
           "nextAction": "Preserve current imported revision; importing-owner coordination before any same-tree DCO rewrite. Missing app event alone would not supply the absent trailer.",
           "observedAt": "2026-11-26T07:22:31.393956+00:00",
           "requiredApp": 974774
-        }
+        },
+        "publicTestSudoReconciliation": {
+          "export": 16647,
+          "head": "08242cbb11a2e5c31a181ceec55579e6f1211fe1",
+          "build": 54284,
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54284",
+          "namedTestSudoTimeouts": 8,
+          "integrationTimeouts": 8,
+          "checkout403": 0,
+          "fixAncestryAbsent": true
+        },
+        "privateCause": "Unknown for internal36128/36132/36082; not equated with public timeouts"
       },
       "reapproval": {
         "kind": "content-amendment",
@@ -60688,9 +60726,9 @@
       "head": "daa2d24389d1fea28197add328e4e875488c306d",
       "title": "Honor IN_MASK_CREATE when adding inotify watches",
       "url": "https://github.com/google/gvisor/pull/16842",
-      "updatedAt": "2026-11-17T19:01:06.487079+00:00",
+      "updatedAt": "2026-11-26T07:41:31.491746+00:00",
       "status": "open",
-      "summary": "A second create-only inotify watch silently replaced IN_OPEN with IN_MODIFY. Linux returns EEXIST and preserves the original watch, even through another hard link. Stock failed three of six shared cases; Linux and fixed gVisor passed all six. The gVisor hard-link comparison used tmpfs.",
+      "summary": "Exact export #17398 at 414a285f63 has eight latest unretried shard-4 integration timeouts, all naming TestSudo at 15 minutes. Four separate checkout HTTP403 failures also occurred before project execution. Its ancestry lacks rollback #17412 and fixed reland #17556. Public evidence supports refreshing the owning integration base; separate private internal failures remain undiagnosed.",
       "evidence": [
         {
           "label": "Six native Linux syscall cases, three kernfs tests and both Nogo checks passed on the rebased source",
@@ -60735,6 +60773,14 @@
         {
           "label": "Reply to Alexander on the EEXIST comment",
           "url": "https://github.com/google/gvisor/pull/16842#discussion_r4529053275"
+        },
+        {
+          "label": "Source-bound TestSudo export failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54243"
+        },
+        {
+          "label": "Merged corrected TestSudo reland",
+          "url": "https://github.com/gvisor/gvisor/pull/17556"
         }
       ],
       "settledReviews": [
@@ -60783,8 +60829,8 @@
         "owner": "root",
         "sourceHead": "daa2d24389d1fea28197add328e4e875488c306d",
         "observedAt": "2026-11-17T19:01:06.487079+00:00",
-        "disposition": "CI #17398 at 414a285f63dfc554b34610240fe344665291f91e: Repeated final integration_test timeouts show TestSudo waiting in Process.Logs, matching investigation:ci-flake-sudo-exec-timeout. Rollback17412 and fixed reland17556 are now verified MERGED; this old export has no fresh passing result. Private failures remain separately undiagnosed. Some final jobs also fail Git checkout with HTTP403, a distinct CI access failure before source execution.",
-        "nextAction": "Refresh the owning internal/export base onto fixed master and qualify the integration partition containing TestSudo; do not invent another mount/inotify/eventfd/FUSE fix or issue. For older-source17387 retain current approved source and ask importing maintainer to consume it. DCO import coordination: Root coordinates #17398 at 414a285f63df. Inspect the listed import\u2019s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch. DCO audit: this exact unsigned head has no DCO run/suite and remains bound to a live exact-source import; preserve it until importing-owner coordination before any same-tree sign-off rewrite.",
+        "disposition": "Exact export #17398 at 414a285f63 has eight latest unretried shard-4 integration timeouts, all naming TestSudo at 15 minutes. Four separate checkout HTTP403 failures also occurred before project execution. Its ancestry lacks rollback #17412 and fixed reland #17556. Public evidence supports refreshing the owning integration base; separate private internal failures remain undiagnosed.",
+        "nextAction": "Importing owner refreshes the existing internal/export integration onto the #17556 fix, then qualifies the affected integration partition. Root awaits the single proposed comment on #16842 covering all three imports; do not duplicate #16854\u2019s existing generic reimport request. Preserve exact source/DCO-import coordination; no mount/eventfd/inotify patch, unchanged-head retry or export-branch push.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/aab0e06b4",
           "https://github.com/tamird/gvisor/actions/runs/42009462257/artifacts/13407460630",
@@ -60798,7 +60844,7 @@
           "https://github.com/gvisor/gvisor/pull/17556",
           "https://github.com/gvisor/gvisor/pull/17398"
         ],
-        "recheckCondition": "Refreshed exact export includes fixed integration ancestry and owning integration partition passes; inspect any distinct remaining internal error. DCO coordination recheck: The listed exact import merges/closes, changes its footer source revision, or its importing maintainer explicitly confirms the source metadata rewrite can proceed. Recheck live source/fork heads immediately before any write.",
+        "recheckCondition": "Actual importing-owner/source/base change and owning integration evidence; the submitted one-comment outreach decision remains separate.",
         "currentDCOAudit": {
           "number": 16842,
           "head": "daa2d24389d1fea28197add328e4e875488c306d",
@@ -60822,7 +60868,18 @@
           "observedAt": "2026-11-26T07:22:31.393956+00:00",
           "requiredApp": 974774
         },
-        "curatedAt": "2026-11-26T07:25:22.110658+00:00"
+        "curatedAt": "2026-11-26T07:41:31.491746+00:00",
+        "publicTestSudoReconciliation": {
+          "export": 17398,
+          "head": "414a285f63dfc554b34610240fe344665291f91e",
+          "build": 54243,
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54243",
+          "namedTestSudoTimeouts": 8,
+          "integrationTimeouts": 8,
+          "checkout403": 4,
+          "fixAncestryAbsent": true
+        },
+        "privateCause": "Unknown for internal36128/36132/36082; not equated with public timeouts"
       },
       "dcoCoordination": {
         "owner": "root",
@@ -60840,6 +60897,15 @@
         "nextAction": "Preserve current imported revision; importing-owner coordination before any same-tree DCO rewrite. Missing app event alone would not supply the absent trailer.",
         "recheckCondition": "Exact import/source lifecycle change or explicit importing-owner coordination before any source rewrite.",
         "holdsPreserved": {}
+      },
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "daa2d24389d1fea28197add328e4e875488c306d",
+        "url": "https://github.com/google/gvisor/pull/16842",
+        "title": "Request the three imports include the TestSudo fix",
+        "summary": "Actual submitted one-comment outreach question; unanswered. No public comment sent.",
+        "body": "The import builds for this PR, #16594 and #16854 all timed out in TestSudo on bases that predate its fix in #17556. Could you refresh the three imports onto a base containing that fix and rerun the affected integration tests?\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -61327,7 +61393,7 @@
       "title": "Release the eventfd file after a failed host import",
       "url": "https://github.com/google/gvisor/pull/16854",
       "group": "runtime",
-      "summary": "When an eventfd import failed at the sentry descriptor limit, the VFS still counted the abandoned file. The fix releases that file and leaves the donated descriptor open for its caller.",
+      "summary": "Exact export #17006 at ed094e6272 has eight latest unretried shard-4 integration timeouts, all naming TestSudo at 15 minutes. Its ancestry lacks rollback #17412 and fixed reland #17556. Public evidence supports refreshing the owning integration base; separate private internal failures remain undiagnosed.",
       "evidence": [
         {
           "label": "Published the production-only rebase and replied on the review thread",
@@ -61352,10 +61418,18 @@
         {
           "label": "Production-only amendment on the master containing #16627",
           "url": "https://github.com/tamird/gvisor/compare/94c03f66c...f0e414b08"
+        },
+        {
+          "label": "Source-bound TestSudo export failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54288"
+        },
+        {
+          "label": "Merged corrected TestSudo reland",
+          "url": "https://github.com/gvisor/gvisor/pull/17556"
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-17T19:01:06.487079+00:00",
+      "updatedAt": "2026-11-26T07:41:31.491746+00:00",
       "head": "f0e414b08b89f9486132955578fcb8d55346d33c",
       "settledReviews": [
         {
@@ -61395,9 +61469,9 @@
           "https://github.com/gvisor/gvisor/pull/17556",
           "https://github.com/gvisor/gvisor/pull/17006"
         ],
-        "disposition": "CI #16854 at f0e414b08b89f9486132955578fcb8d55346d33c: feedback/copybara FAILED belongs to the exact current source, which has an open matching export. The corresponding public export failure is grouped under the known TestSudo incident; internal cause is not publicly established.\n\nCI #17006 at ed094e62728b2ff4b167e121fbc29ec61cd05383: Repeated final integration_test timeouts show TestSudo waiting in Process.Logs, matching investigation:ci-flake-sudo-exec-timeout. Rollback17412 and fixed reland17556 are now verified MERGED; this old export has no fresh passing result. Private failures remain separately undiagnosed.",
-        "nextAction": "Follow the matching current export and the existing TestSudo recovery; require importing maintainer original internal diagnostic for any separate failure. Do not leave obsolete wait-for-first-export instructions.\nRefresh the owning internal/export base onto fixed master and qualify the integration partition containing TestSudo; do not invent another mount/inotify/eventfd/FUSE fix or issue. For older-source17387 retain current approved source and ask importing maintainer to consume it. DCO import coordination: Root coordinates #17006 at ed094e62728b. Inspect the listed import\u2019s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch. DCO audit: this exact unsigned head has no DCO run/suite and remains bound to a live exact-source import; preserve it until importing-owner coordination before any same-tree sign-off rewrite.",
-        "recheckCondition": "Fresh exact source/import feedback or importing maintainer error detail.\nRefreshed exact export includes fixed integration ancestry and owning integration partition passes; inspect any distinct remaining internal error. DCO coordination recheck: The listed exact import merges/closes, changes its footer source revision, or its importing maintainer explicitly confirms the source metadata rewrite can proceed. Recheck live source/fork heads immediately before any write.",
+        "disposition": "Exact export #17006 at ed094e6272 has eight latest unretried shard-4 integration timeouts, all naming TestSudo at 15 minutes. Its ancestry lacks rollback #17412 and fixed reland #17556. Public evidence supports refreshing the owning integration base; separate private internal failures remain undiagnosed.",
+        "nextAction": "Importing owner refreshes the existing internal/export integration onto the #17556 fix, then qualifies the affected integration partition. Root awaits the single proposed comment on #16842 covering all three imports; do not duplicate #16854\u2019s existing generic reimport request. Preserve exact source/DCO-import coordination; no mount/eventfd/inotify patch, unchanged-head retry or export-branch push.",
+        "recheckCondition": "Actual importing-owner/source/base change and owning integration evidence; the submitted one-comment outreach decision remains separate.",
         "owner": "root",
         "observedAt": "2026-11-17T19:01:06.487079+00:00",
         "sourceHead": "f0e414b08b89f9486132955578fcb8d55346d33c",
@@ -61424,7 +61498,18 @@
           "observedAt": "2026-11-26T07:22:31.393956+00:00",
           "requiredApp": 974774
         },
-        "curatedAt": "2026-11-26T07:25:22.110658+00:00"
+        "curatedAt": "2026-11-26T07:41:31.491746+00:00",
+        "publicTestSudoReconciliation": {
+          "export": 17006,
+          "head": "ed094e62728b2ff4b167e121fbc29ec61cd05383",
+          "build": 54288,
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54288",
+          "namedTestSudoTimeouts": 8,
+          "integrationTimeouts": 8,
+          "checkout403": 0,
+          "fixAncestryAbsent": true
+        },
+        "privateCause": "Unknown for internal36128/36132/36082; not equated with public timeouts"
       },
       "dcoCoordination": {
         "owner": "root",
@@ -84499,9 +84584,9 @@
       "title": "Wait for the TCP benchmark proxy and verify the sender rate",
       "url": "https://github.com/tamird/gvisor/commit/9c541c3ae",
       "group": "tests",
-      "status": "Delivered",
-      "updatedAt": "2026-11-17T20:32:28.027492+00:00",
-      "summary": "Both the unchanged parent and public PR exited zero with no transfer. With only the fork benchmark script changed, the PR ran both netstack proxies for 30 seconds, sending 38.8 MiB and receiving 32.2 MiB. A forced iperf3 exit of 7 propagated to the caller. The matched controls distinguish the existing benchmark problem from the PR\u2019s port validation. The script now waits for the local listener without consuming its first connection and requires a numeric sender rate.",
+      "status": "Historical delivery; #17184 closed",
+      "updatedAt": "2026-11-26T07:45:08.133883+00:00",
+      "summary": "This historical benchmark correction was delivered through #17184, which is now closed after the user-approved disposition. No maintainer-review or import follow-up remains on this alias. Separate parser/source proposals, successor work and their holds retain their own records; this retirement grants no source approval.",
       "evidence": [
         {
           "label": "Published standalone benchmark correction",
@@ -84529,11 +84614,9 @@
         }
       ],
       "followup": {
-        "owner": "root",
         "observedAt": "2026-11-07T12:42:32+00:00",
         "sourceHead": "9c541c3ae1cd68df1741882480d5bf184396e695",
-        "disposition": "The approved correction is published as #17184.",
-        "nextAction": "Follow #17184 for maintainer review and import.",
+        "disposition": "This historical benchmark correction was delivered through #17184, which is now closed after the user-approved disposition. No maintainer-review or import follow-up remains on this alias. Separate parser/source proposals, successor work and their holds retain their own records; this retirement grants no source approval.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17184",
           "https://github.com/tamird/gvisor/actions/runs/42372178933/artifacts/13574098943"
@@ -84556,9 +84639,15 @@
           "recheckCondition": "Exact ref/head change, canonical PR feedback/check/import or terminal-state change, dependency landing or contributor decision.",
           "owner": "root"
         },
-        "technicalOwner": "Source PR owner",
-        "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings."
-      }
+        "terminalCanonical": {
+          "number": 17184,
+          "head": "2aa840f4ffe655f0c749185070fba77e676186b5",
+          "status": "closed",
+          "url": "https://github.com/gvisor/gvisor/pull/17184",
+          "scope": "Historical delivery alias only; no successor/source hold transfer"
+        }
+      },
+      "inactive": true
     },
     {
       "id": "pr:16893",
@@ -140906,8 +140995,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-17T19:01:06.487079+00:00",
-      "summary": "The corrected TestSudo reland #17556 merged as dd72c9dc6 on Nov15 after rollback #17412. Retained exports #16647/#17398/#17006/#17387 still sit one commit past common dd49ce763 and lack the 201 intervening commits through that fix. Their old timeout records do not establish a new failure on corrected master.",
+      "updatedAt": "2026-11-26T07:41:31.491746+00:00",
+      "summary": "Public exports #16647/#17006/#17398 each have eight final TestSudo integration timeouts on ancestry lacking merged fix #17556; #17398 also has four independent checkout HTTP403 failures. The fix\u2019s public explanation matches the strace/group-stop hang. Private internal36128/36132/36082 causes remain unknown; no new failure on corrected master is established.",
       "findings": [
         {
           "text": "The four tests ran for 14m38s to 14m41s. An intervening #54238 attempt exited \u22121 without this timeout. Passing parallel shards exercised other tests.",
@@ -141101,7 +141190,7 @@
           ]
         }
       ],
-      "nextStep": "Importing maintainers refresh the affected export bases, then validate the owning integration partition on the new heads. Root follows actual export-head changes; no repeated tests on stale branches, duplicate fix or new outreach.",
+      "nextStep": "Importing maintainers refresh the existing integrations onto fixed ancestry and qualify the affected integration partition. Root awaits the one actual comment-approval question on #16842; no duplicate request on #16854, new patch, unchanged retry or claim about private causes.",
       "evidence": [
         {
           "label": "Cgroup v1 original",
@@ -141244,15 +141333,15 @@
       "recheckCondition": "Changed export head incorporating the corrected reland, then its owning integration result.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
-        "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+        "nextAction": "Importing maintainers refresh the existing integrations onto fixed ancestry and qualify the affected integration partition. Root awaits the one actual comment-approval question on #16842; no duplicate request on #16854, new patch, unchanged retry or claim about private causes.",
+        "recheckCondition": "Changed exact export ancestry and owning test evidence, or an answer to the actual one-comment outreach question."
       },
       "followup": {
-        "disposition": "The corrected TestSudo reland #17556 merged as dd72c9dc6 on Nov15 after rollback #17412. Retained exports #16647/#17398/#17006/#17387 still sit one commit past common dd49ce763 and lack the 201 intervening commits through that fix. Their old timeout records do not establish a new failure on corrected master.",
-        "nextAction": "Importing maintainers refresh the affected export bases, then validate the owning integration partition on the new heads. Root follows actual export-head changes; no repeated tests on stale branches, duplicate fix or new outreach.",
-        "recheckCondition": "Changed export head incorporating the corrected reland, then its owning integration result.",
+        "disposition": "Public exports #16647/#17006/#17398 each have eight final TestSudo integration timeouts on ancestry lacking merged fix #17556; #17398 also has four independent checkout HTTP403 failures. The fix\u2019s public explanation matches the strace/group-stop hang. Private internal36128/36132/36082 causes remain unknown; no new failure on corrected master is established.",
+        "nextAction": "Importing maintainers refresh the existing integrations onto fixed ancestry and qualify the affected integration partition. Root awaits the one actual comment-approval question on #16842; no duplicate request on #16854, new patch, unchanged retry or claim about private causes.",
+        "recheckCondition": "Changed exact export ancestry and owning test evidence, or an answer to the actual one-comment outreach question.",
         "owner": "root",
-        "curatedAt": "2026-11-26T00:20:19.325827+00:00",
+        "curatedAt": "2026-11-26T07:41:31.491746+00:00",
         "staleExports": {
           "16647": "08242cbb1",
           "17398": "414a285f6",
@@ -141262,7 +141351,51 @@
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17556",
           "https://github.com/gvisor/gvisor/commit/dd72c9dc6"
-        ]
+        ],
+        "threeExportResults": {
+          "scope": "Public export CI only; no private Buildkite cause inferred.",
+          "builds": [
+            {
+              "export": 16647,
+              "head": "08242cbb11a2e5c31a181ceec55579e6f1211fe1",
+              "build": 54284,
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54284",
+              "namedTestSudoTimeouts": 8,
+              "integrationTimeouts": 8,
+              "checkout403": 0,
+              "fixAncestryAbsent": true
+            },
+            {
+              "export": 17006,
+              "head": "ed094e62728b2ff4b167e121fbc29ec61cd05383",
+              "build": 54288,
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54288",
+              "namedTestSudoTimeouts": 8,
+              "integrationTimeouts": 8,
+              "checkout403": 0,
+              "fixAncestryAbsent": true
+            },
+            {
+              "export": 17398,
+              "head": "414a285f63dfc554b34610240fe344665291f91e",
+              "build": 54243,
+              "url": "https://buildkite.com/gvisor/pipeline/builds/54243",
+              "namedTestSudoTimeouts": 8,
+              "integrationTimeouts": 8,
+              "checkout403": 4,
+              "fixAncestryAbsent": true
+            }
+          ],
+          "matchedIncident": {
+            "rollbackPR": 17412,
+            "rollbackMerge": "0b0397ab64a82916aa27a9e62e304d0786394fec",
+            "fixPR": 17556,
+            "fixMerge": "dd72c9dc685f08cbb966e55590dd609c6f61330b",
+            "explanation": "17556 public PR body explicitly attributes TestSudo timeout to the early return in15938 leaving strace waiting on an existing group stop.",
+            "ancestry": "None of the three exact export heads contains either rollback or fixed reland."
+          },
+          "remainingUnknown": "Private internal builds36128/36132/36082 remain undiagnosed; public evidence cannot establish their causes."
+        }
       }
     },
     {
@@ -150028,5 +150161,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-26T07:25:22.110658+00:00"
+  "updatedAt": "2026-11-26T07:41:31.491746+00:00"
 }
