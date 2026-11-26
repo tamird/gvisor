@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T10:20:46.917706+00:00",
+    "updatedAt": "2026-11-26T10:51:08.137311+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40905,14 +40905,14 @@
       "url": "https://github.com/google/gvisor/pull/16507",
       "group": "bazel",
       "status": "open",
-      "summary": "Prepared e2101026eb passes four benign report combinations and 24 KCOV cases across both architectures and flavors, with no KCOV skips or failures. Eight binaries, four complete archives and the 226-entry catalog also pass. Current-source static inclusion remains under audit; source archives match and the patched SDK built remotely. Performance and publication remain held; canonical-runner EACCES is unresolved.",
-      "updatedAt": "2026-11-26T10:20:46.917706+00:00",
+      "summary": "Prepared e2101026eb passes current AMD64 normal static parity: all 117,318 legacy positions are included in 117,320 candidate positions, with zero missing and 2,418 generated-PB positions each. Exact candidate ELF and source-archive identities match prior qualification. Four reports and 24 KCOV cases remain passed. Performance controls, current-base final review and publication approval remain outstanding; runner EACCES is separate.",
+      "updatedAt": "2026-11-26T10:49:50.407884+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
-        "disposition": "Prepared e2101026eb passes four benign report combinations and 24 KCOV cases across both architectures and flavors, with no KCOV skips or failures. Eight binaries, four complete archives and the 226-entry catalog also pass. Current-source static inclusion remains under audit; source archives match and the patched SDK built remotely. Performance and publication remain held; canonical-runner EACCES is unresolved.",
-        "nextAction": "For prepared e2101026eb (public c715 unchanged), audit current-source parity run 45798978937. Report/KCOV functional checks have passed; performance controls and complete A/B release identities remain unqualified. Retain the runner EACCES limitation and historical timing limits. No timing or publication approval is inferred.",
+        "disposition": "Prepared e2101026eb passes current AMD64 normal static parity: all 117,318 legacy positions are included in 117,320 candidate positions, with zero missing and 2,418 generated-PB positions each. Exact candidate ELF and source-archive identities match prior qualification. Four reports and 24 KCOV cases remain passed. Performance controls, current-base final review and publication approval remain outstanding; runner EACCES is separate.",
+        "nextAction": "For prepared e2101026eb (public c715 unchanged), root completes current-base final review and the remaining performance controls/A-B release provenance before requesting publication approval. The AMD64 normal static-inclusion dependency is resolved; do not repeat its old module failure or infer race/ARM static parity. Keep the historical canonical-runner EACCES limitation separate.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -41003,10 +41003,12 @@
           "https://github.com/tamird/gvisor/actions/runs/45792664585/artifacts/15104250700",
           "https://github.com/tamird/gvisor/actions/runs/45797082588",
           "https://github.com/tamird/gvisor/actions/runs/45797886145",
-          "https://github.com/tamird/gvisor/actions/runs/45798978937"
+          "https://github.com/tamird/gvisor/actions/runs/45798978937",
+          "https://github.com/tamird/gvisor/actions/runs/45803632211",
+          "https://app.buildbuddy.io/invocation/e909d87e-a556-4e7b-be14-8f8fc4e8e213"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Existing owner\u2019s audited parity result or actual source/performance/publication disposition; no duplicate polling or Uname retry.",
+        "recheckCondition": "Actual current-base final review, performance qualification or submitted source/publication decision; no stale module-input wait.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "qualificationHistory": [
           {
@@ -41207,6 +41209,16 @@
                 "recheckCondition": "Explicit user decision on this exact prepared payload; preserve frozen bytes."
               }
             }
+          },
+          {
+            "run": 45798978937,
+            "sourceHead": "e2101026eb7e6601ed02a04dff43069e11d5d189",
+            "scope": "Superseded legacy-build dependency failure",
+            "state": "Historical failure; resolved",
+            "validatorExecuted": false,
+            "failure": "Original pinned module ZIPs unavailable under unchanged isolated worker policy",
+            "resolution": "RESOLVED by standard repository-fetch go mod download+verify, declared file proxy and actual fresh offline preflight45802944433; worker network=off unchanged. Earlier45798978937 failure retained as superseded historical evidence.",
+            "successorRun": 45803632211
           }
         ],
         "qualificationUpdate": {
@@ -41331,7 +41343,7 @@
           "proofSHA256": "8cfa9665fca33bd1625d96c7b184d3b8454523fbfe87c0b7bd9744d867d14c0b",
           "recheckCondition": "Root permanent-mechanism decision, same-operation execution-review result or actual fidelity evidence."
         },
-        "curatedAt": "2026-11-26T10:20:46.917706+00:00",
+        "curatedAt": "2026-11-26T10:49:50.407884+00:00",
         "permanentBazelFirstLayer": {
           "testSource": "340e1072aa5a3d47e01ff68dffea34f91be4a9f4",
           "ciSource": "fa452727d8d6af2399f8644f9d64a40dc5d902ae",
@@ -41554,28 +41566,42 @@
         },
         "currentStaticParity": {
           "native": "e2101026eb7e6601ed02a04dff43069e11d5d189",
-          "source": "1dfabcdc48ee21d56317faf11cad156d1de37a64",
-          "baselineSource": "6f00faa4208c98aff14e772429a608907f572cff",
-          "run": 45798978937,
-          "state": "Existing owner\u2019s current-source legacy Sentry/static inclusion audit pending; no verdict yet",
-          "configuration": "amd64 normal, nostamp, same shared worker/cache/network settings, fresh test result",
-          "sourceArchives": {
-            "baselineRun": 45797082588,
-            "candidateRun": 45797079447,
-            "SHA256": "55772745932767a146a1eecb3fa810207bb766f2e56c75b65ae1275e04c6c34b",
-            "bytes": 19423908,
-            "equal": true,
-            "scope": "Go source archive equality, not A/B runtime release equality"
+          "base": "c3efd8c9381c89b78c1d86b6c64a49d53ee938f8",
+          "source": "99c350acbb061cfadf3340c96d492d910bcc4ea2",
+          "run": 45803632211,
+          "state": "PASS: current AMD64 normal complete legacy static position set included",
+          "verdict": "PASS: complete legacy static position set included in candidate",
+          "actualTest": {
+            "cases": 1,
+            "failures": 0,
+            "skips": 0,
+            "strategy": "remote",
+            "fresh": true,
+            "seconds": 1.234
           },
-          "correctedGraph": {
-            "run": 45798288146,
-            "result": "PASS"
+          "comparison": {
+            "additional_positions": 2,
+            "candidate_binary_sha256": "f5806dd0b3adb8c090736080f9ef04bedfbcae9ec1584bb98ef3f6c129179a0c",
+            "legacy_binary_sha256": "f6a86db3a5458df893d8381ee5fed1a7c21633efe2d0a9deef827f430d3597b0",
+            "legacy_positions": 117318,
+            "legacy_protobuf_positions": 2418,
+            "missing_positions": 0,
+            "positions": 117320,
+            "protobuf_positions": 2418,
+            "source_export_sha256": "55772745932767a146a1eecb3fa810207bb766f2e56c75b65ae1275e04c6c34b"
           },
-          "toolsPreflight": {
-            "run": 45797079447,
-            "Go": "1.27.3",
-            "result": "PASS; no SDK build/module download in preflight"
+          "additionalPositions": "Two additional distinct candidate positions; the unchanged validator reports their count, not their names. No claim identifying their source locations. Both candidate/legacy outputs passed full position grammar, positive ordered intervals, unique PCs, Sentry presence, generated PB presence, and exclusion checks.",
+          "identityCorrespondence": {
+            "candidateBinary": "Exact SHA equals previously qualified AMD normal coverage Sentry from45784602741 and archive-backed report/KCOV production",
+            "sourceArchive": "Exact SHA equals both baseline/candidate current gopath exports45797079447/45797082588 (19423908bytes)",
+            "legacyBinary": "Fresh current-source module-mode build, original pinned Go1.27.3/go.mod/go.sum; not historical legacy binary or GOPATH resolver substitution",
+            "sdk": "Reused pinned patched Go1.27.3 producer45797886145 SHA7805c5b29ece5c57337871f920258bf4465740cf7debb9c7062938dac9792a98",
+            "manifests": "go.mod blob6efaf3884e6b48c9ecb9ff3c622e3aec8d03d371 andgo.sum blob7835f843768bb04feaadb125707099d71e15b67b unchanged from current baseline; build log both cmp successful"
           },
+          "sourcePreservation": "Exact CI metadata99c350acbb, post-run HEAD/tracked/index/credential-cleanup checks successful. Native e210 unchanged.",
+          "dependencyResolution": "RESOLVED by standard repository-fetch go mod download+verify, declared file proxy and actual fresh offline preflight45802944433; worker network=off unchanged. Earlier45798978937 failure retained as superseded historical evidence.",
+          "scope": "Current AMD64 normal complete static inventory inclusion, not byte-identical binaries, identical PC addresses, race/ARM static inventory parity, timing, or all-base qualification. Four report/24KCOV runtime evidence remains separately scoped.",
+          "remaining": "Performance remains held/unestablished. Current-base final source/review and actual publication approval still required; no upstream amendment/reply authorized. Syscall-runner EACCES remains separate historical caller issue, not a report/static blocker.",
           "SDK": {
             "run": 45797886145,
             "result": "PASS",
@@ -41583,14 +41609,17 @@
             "execution": "fresh remote make.bash;164.529s total157.91s criticalpath",
             "SHA256": "7805c5b29ece5c57337871f920258bf4465740cf7debb9c7062938dac9792a98",
             "bytes": 67148918,
-            "sourcePreservation": "Existing scripts/version/module/internal-import patch are exact matched qualified/current baseline inputs; no network/cache policy changes."
+            "sourcePreservation": "Existing scripts/version/module/internal-import patch are exact matched qualified/current baseline inputs; no network/cache policy changes.",
+            "scope": "Fresh at production run45797886145; reused pinned artifact for current parity"
           },
-          "priorVisibilityFailure": {
-            "run": 45797076471,
-            "scope": "CI fixture visibility only; corrected graph passed"
-          },
-          "remaining": "Actual current legacy Sentry generation and static position set inclusion; no verdict inferred from historical output. Verify candidate ELF hash matches qualified current product and archive matches exact baseline export.",
-          "limits": "No current inclusion verdict transferred from historical6759/4b3 output; original cache/network settings retained. No timing/publication approval."
+          "sourceArchives": {
+            "baselineRun": 45797082588,
+            "candidateRun": 45797079447,
+            "SHA256": "55772745932767a146a1eecb3fa810207bb766f2e56c75b65ae1275e04c6c34b",
+            "bytes": 19423908,
+            "equal": true,
+            "scope": "Go source archive equality, not A/B runtime release equality"
+          }
         },
         "mainBootstrap": {
           "build": 55416,
@@ -41908,7 +41937,7 @@
             ],
             "canonicalRunnerResolved": false
           },
-          "scope": "Eight binary/four opaque archive products and named source/catalog gates plus four benign report profiles and24KCOV cases are complete. Current static inclusion and performance remain separate; canonical runner EACCES unresolved.",
+          "scope": "Eight binaries, four opaque archives, named source/catalog gates, four report profiles and24KCOV cases retain their scoped passes. Current AMD64 normal static inclusion now passes. No race/ARM static inclusion, timing or publication approval is inferred.",
           "timingAuthorized": false,
           "upstreamPublicationApproved": false,
           "functionalProof": {
@@ -42003,6 +42032,18 @@
               }
             },
             "scope": "Actual direct shipped do CLI; benign guest report generation and24actual named KCOV passes. Not canonical Uname, full static inclusion, timings or source-publication approval."
+          },
+          "staticInclusion": {
+            "run": 45803632211,
+            "matrixScope": "AMD64 normal only",
+            "verdict": "PASS",
+            "legacy": 117318,
+            "candidate": 117320,
+            "missing": 0,
+            "additional": 2,
+            "generatedPBEach": 2418,
+            "candidateBinarySHA256": "f5806dd0b3adb8c090736080f9ef04bedfbcae9ec1584bb98ef3f6c129179a0c",
+            "sourceArchiveSHA256": "55772745932767a146a1eecb3fa810207bb766f2e56c75b65ae1275e04c6c34b"
           }
         },
         "technicalOwner": "approved_rebase_queue",
@@ -42136,6 +42177,14 @@
         {
           "label": "Current legacy-position inclusion audit; owner pending",
           "url": "https://github.com/tamird/gvisor/actions/runs/45798978937"
+        },
+        {
+          "label": "Current AMD64 normal static inclusion PASS",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45803632211"
+        },
+        {
+          "label": "Source-bound position comparison invocation",
+          "url": "https://app.buildbuddy.io/invocation/e909d87e-a556-4e7b-be14-8f8fc4e8e213"
         }
       ],
       "number": 16507,
@@ -137042,9 +137091,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-26T07:25:22.110658+00:00",
+      "updatedAt": "2026-11-26T10:51:08.137311+00:00",
       "group": "analysis",
-      "summary": "Source 0edf29aac remains the completed 36-commit analyzer rewrite; filesystem matched data cover 71 leaves. Corrected Node A/A integrity passed, but retained-pair sensitivity holds candidate timing: C25 elapsed median contrast moved \u22120.25% early to \u22124.73% late despite balanced order; latency/QPS paired medians stay within \u00b10.62%. No Node A/B or retry. Remaining filesystem/FUSE and other performance limits stay separate.",
+      "summary": "Source 0edf29aac is unchanged. The gRPC dirty-bindfs candidate-only A/A completed 50 successful children and 24 retained pairs, with no corrected flags across five comparisons. Its test passed; only post-test BES upload failed. No A/B or cross-worker stability is established. The 71 filesystem leaves with matched data remain scoped; other gRPC controls, FUSE, Node stability and broader qualification remain open.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -137416,7 +137465,7 @@
           ]
         }
       ],
-      "nextStep": "Hold Node candidate comparison without retry: retained temporal/order sensitivity is material to its few-percent precision; no cause or equivalence is established. Existing owners advance only separately authorized remaining workload gates; preserve the gRPC/FUSE, Ruby drift, Fio precision, incomplete Abseil, source-decision and #17884 conditions. Do not repeat completed cohorts.",
+      "nextStep": "Root resolves the separate artifact-fetch credential boundary before another cheap runner check, then chooses valid worker/control binding and execution budget for candidate comparison. A/B alone is about 5h 9m; fresh co-located A/A+A/B is about 10h 18m, beyond the 6h hosted cap. Five other non-FUSE controls, both FUSE holds and the Node candidate hold remain; no timing authorization is inferred.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -137877,6 +137926,10 @@
         {
           "label": "Corrected Node A/A, actual precision and drift limits",
           "url": "https://github.com/tamird/gvisor/actions/runs/45769403144"
+        },
+        {
+          "label": "Complete dirty-bindfs A/A data; post-test BES failure only",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45761231714/artifacts/15108186254"
         }
       ],
       "reviewWatch": {
@@ -137902,8 +137955,8 @@
       "recheckCondition": "Materially different measurement evidence or actual contributor/authorization disposition; preserve no-AB/no-retry for this Node control.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Hold Node candidate comparison without retry: retained temporal/order sensitivity is material to its few-percent precision; no cause or equivalence is established. Existing owners advance only separately authorized remaining workload gates; preserve the gRPC/FUSE, Ruby drift, Fio precision, incomplete Abseil, source-decision and #17884 conditions. Do not repeat completed cohorts.",
-        "recheckCondition": "Materially different measurement evidence or actual contributor/authorization disposition; preserve no-AB/no-retry for this Node control."
+        "nextAction": "Root resolves valid worker/control binding and execution budget before gRPC candidate comparison: A/B alone is about5h9m; fresh co-located A/A+A/B is about10h18m, above the6h hosted cap. Keep remote capability assessment separate. Five other non-FUSE controls, both FUSE gRPC holds and Node candidate HOLD remain; no live filesystem run or automatic timing authorization.",
+        "recheckCondition": "An actual accepted worker/control/budget plan or new source-bound qualification evidence; no retry or A/A-to-A/B inference across workers."
       },
       "head": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
       "settledReviews": [
@@ -138130,17 +138183,18 @@
           "https://github.com/tamird/gvisor/actions/runs/45737714897",
           "https://github.com/tamird/gvisor/actions/runs/45759909463",
           "https://github.com/tamird/gvisor/actions/runs/45761231714",
-          "https://github.com/tamird/gvisor/actions/runs/45769403144"
+          "https://github.com/tamird/gvisor/actions/runs/45769403144",
+          "https://github.com/tamird/gvisor/actions/runs/45761231714/artifacts/15108186254"
         ],
         "owner": "root",
-        "disposition": "Source 0edf29aac remains the completed 36-commit analyzer rewrite; filesystem matched data cover 71 leaves. Corrected Node A/A integrity passed, but retained-pair sensitivity holds candidate timing: C25 elapsed median contrast moved \u22120.25% early to \u22124.73% late despite balanced order; latency/QPS paired medians stay within \u00b10.62%. No Node A/B or retry. Remaining filesystem/FUSE and other performance limits stay separate.",
-        "nextAction": "Hold Node candidate comparison without retry: retained temporal/order sensitivity is material to its few-percent precision; no cause or equivalence is established. Existing owners advance only separately authorized remaining workload gates; preserve the gRPC/FUSE, Ruby drift, Fio precision, incomplete Abseil, source-decision and #17884 conditions. Do not repeat completed cohorts.",
-        "recheckCondition": "Materially different measurement evidence or actual contributor/authorization disposition; preserve no-AB/no-retry for this Node control.",
+        "disposition": "Source 0edf29aac is unchanged. The gRPC dirty-bindfs candidate-only A/A completed 50 successful children and 24 retained pairs, with no corrected flags across five comparisons. Its test passed; only post-test BES upload failed. No A/B or cross-worker stability is established. The 71 filesystem leaves with matched data remain scoped; other gRPC controls, FUSE, Node stability and broader qualification remain open.",
+        "nextAction": "Root resolves the separate artifact-fetch credential boundary before another cheap runner check, then chooses valid worker/control binding and execution budget for candidate comparison. A/B alone is about 5h 9m; fresh co-located A/A+A/B is about 10h 18m, beyond the 6h hosted cap. Five other non-FUSE controls, both FUSE holds and the Node candidate hold remain; no timing authorization is inferred.",
+        "recheckCondition": "An actual accepted worker/control/budget plan or new source-bound qualification evidence; no retry or A/A-to-A/B inference across workers.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-26T07:25:22.110658+00:00",
+        "curatedAt": "2026-11-26T10:51:08.137311+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -138339,7 +138393,7 @@
           },
           "grpcQualification": {
             "owner": "analysis_delivery",
-            "state": "First non-FUSE A/A-only control running;noABresult",
+            "state": "Complete candidate-only dirty-bindfs A/A; no candidate comparison",
             "run": 45761231714,
             "source": "58d843fffb7b71f9ba3836539d22d1e877e37dbf",
             "case": "BuildGRPC/page_cache.dirty/filesystem.bindfs",
@@ -138351,8 +138405,42 @@
               "cleanup": 0,
               "scope": "Actual workloadN1only,not paired statistical evidence"
             },
-            "expectedTerminal": "50candidate-onlychildren,AA-onlyreportdirectory,all5contrasts/flags/CIs,18products/cleanup;noautomaticAB/retry",
-            "remaining": "Six non-FUSE controls/candidatecomparisons not complete;two baselineFUSE ENOSYS leaves separatefeaturehold"
+            "remaining": "Five other non-FUSE controls and all gRPC candidate comparisons remain; two baseline FUSE ENOSYS leaves are separate",
+            "artifact": 15108186254,
+            "artifactSHA256": "40c6b8c4b34b5a975cbdac5cc5ea72bd70dcace7707a7a0d5937736f43a99ac6",
+            "children": 50,
+            "retainedPairs": 24,
+            "warmupChildren": 2,
+            "candidateOnly": true,
+            "candidateComparison": false,
+            "runner": 1000091086,
+            "benchmarkSHA256": "ab0e0b255ebf523210400ba457e24846ff1336ae7cb7ee23f6ec90cf0c6e2038",
+            "sameBinaryAndArgv": true,
+            "all18ProductsVerified": true,
+            "cleanup": 0,
+            "correctedFlags": "0/5",
+            "alpha": 0.00025,
+            "primary": {
+              "ASeconds": 370.0498355585,
+              "BSeconds": 369.911416439,
+              "p": 0.675,
+              "n": 24,
+              "medianCI": "0% rounded; not zero uncertainty"
+            },
+            "retainedOrderEffect": {
+              "BFirstSecondPercent": 0.59,
+              "p": 0.033,
+              "correctedFlag": false
+            },
+            "testResult": "PASSED in18572.8s",
+            "workflowResult": "Exit38 only after post-test BES stream timeout; data intact",
+            "limits": "No A/B, equivalence or cross-worker stability claim",
+            "executionBudget": {
+              "ABAlone": "About5h9m",
+              "freshCoLocatedAAPlusAB": "About10h18m; exceeds6h hosted cap",
+              "next": "Root resolves valid worker/control binding and feasible budget before any candidate comparison",
+              "remoteCapabilityAssessment": "Separate grpcPlacementPreflight:12h request accepted;401 artifact fetch before Docker fixture. Effective max and fixture capabilities unproven."
+            }
           },
           "filesystemMatchedData": {
             "source": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
@@ -138396,6 +138484,31 @@
               "decision": "Hold fullscopeNodeAB: C10commontrend largelycancels, but observed temporal/order sensitivity remains material for C25elapsed and comparable to reportedfew-percentprecision. No new significancegate/threshold/samples, no AB/retry."
             },
             "decision": "HOLD candidate comparison; no AB or retry."
+          },
+          "grpcPlacementPreflight": {
+            "source": "58d843fffb7b71f9ba3836539d22d1e877e37dbf",
+            "runnerInvocation": "https://app.buildbuddy.io/invocation/c036fe05-31f5-423b-a68b-4344b44939b9",
+            "bazelInvocation": "https://app.buildbuddy.io/invocation/2d5bd2b7-f5d4-4bdc-a5e2-6c6dae7dd8f6",
+            "requested": {
+              "os": "linux",
+              "arch": "amd64",
+              "timeout": "12h",
+              "dockerUser": "root",
+              "init-dockerd": "true",
+              "EstimatedCPU": "4",
+              "automaticRetries": false
+            },
+            "actual": "Hosted runner executed exact source; Bazel9.3.1 analysis attempted. No Docker fixture or benchmark children executed.",
+            "terminalFailure": "Repository startup_baseline_release download of GitHub Actions artifact14935569879 returned401Unauthorized. bb view nested invocation --errors confirms earliest cause.",
+            "provenLimit": "12h request accepted and runner began; effective service timeout maximum is not proven by a one-minute run.",
+            "notProven": [
+              "Docker fixture/root capabilities",
+              "actual4CPU allocation",
+              "cleanup of workload-owned resources (fixture never executed)",
+              "12h execution durability"
+            ],
+            "next": "Resolve authenticated immutable artifact fetch using existing authorized repository credential boundary; repeat only changed-input cheap admission before any timings. No source or protocol change required.",
+            "credentialForwarding": false
           }
         }
       },
@@ -150807,5 +150920,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-26T10:20:46.917706+00:00"
+  "updatedAt": "2026-11-26T10:51:08.137311+00:00"
 }
