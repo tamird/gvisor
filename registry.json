@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T00:39:54.598989+00:00",
+    "updatedAt": "2026-11-26T01:00:57.925509+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -109173,6 +109173,52 @@
           "https://github.com/kiron1/bazel-compile-commands/pull/236"
         ]
       }
+    },
+    {
+      "id": "branch:size-cache-reset-integrity",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/size-cache-reset-integrity-20261125",
+      "head": "5ad880c7c7b1b609fa792b121d30cf5964ccbbe4",
+      "title": "Reject Size results when cache reset fails",
+      "url": "https://github.com/tamird/gvisor/commit/5ad880c7c7b1b609fa792b121d30cf5964ccbbe4",
+      "group": "analysis",
+      "status": "Contributor review",
+      "updatedAt": "2026-11-26T01:00:57.925509+00:00",
+      "summary": "Prepared one-file Size benchmark correction checks all six cache resets and defers cleanup safely. The public standalone source has the exact tested file blob. NoGo/Goimports, both-runtime functional positives, deterministic cache-failure negative coverage and independent reviews pass at their recorded scopes. Statistical Size precision and current upstream runtime qualification remain unestablished.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "5ad880c7c7b1b609fa792b121d30cf5964ccbbe4",
+        "base": "eb8c4bb4842faa6b5df685c5e401128274a36f0c",
+        "disposition": "Prepared one-file Size benchmark correction checks all six cache resets and defers cleanup safely. The public standalone source has the exact tested file blob. NoGo/Goimports, both-runtime functional positives, deterministic cache-failure negative coverage and independent reviews pass at their recorded scopes. Statistical Size precision and current upstream runtime qualification remain unestablished.",
+        "nextAction": "Await Tamir’s already-submitted opening decision for exact 5ad880c7c7b1b609fa792b121d30cf5964ccbbe4. No upstream PR or new timing cohort is authorized; preserve the functional-only product/source scope.",
+        "recheckCondition": "Answer to the actual exact-source publication question or substantive source/review evidence.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/5ad880c7c7b1b609fa792b121d30cf5964ccbbe4",
+          "https://github.com/tamird/gvisor/actions/runs/45729383839",
+          "https://github.com/tamird/gvisor/actions/runs/45729386701",
+          "https://github.com/tamird/gvisor/actions/runs/45730506808",
+          "https://github.com/tamird/gvisor/actions/runs/45730509291"
+        ],
+        "qualification": {
+          "qualifiedSource": "174c54aac30bcfd6a7ba4fc14b256665a929edd3",
+          "fileBlob": "157c7a397aa7aadd85c62ca3ac76cb83401ee0d6",
+          "positive": 45730506808,
+          "negative": 45730509291,
+          "scope": "Three positive N1 rows and six reset checks; deterministic negative three failed XML cases/zero numeric rows;18 original frozen0edf products and cleanup0. Not a second-reset-specific injection, statistical precision or whole current-runtime qualification."
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "5ad880c7c7b1b609fa792b121d30cf5964ccbbe4",
+        "baseHead": "eb8c4bb4842faa6b5df685c5e401128274a36f0c",
+        "url": "https://github.com/tamird/gvisor/commit/5ad880c7c7b1b609fa792b121d30cf5964ccbbe4",
+        "title": "Reject Size results when cache reset fails",
+        "summary": "Actual submitted question to open this one-file upstream PR; unanswered. Functional/error-path qualification is complete, with measurement limits separate.",
+        "body": "Size benchmarks reported memory estimates even when a cache reset failed. Stop at each failed reset and report the error at its call site.\n\nDefer empty-container cleanup so a failed second reset releases the containers. Deferred metrics collection reads the container logs before cleanup removes them.\n\nPosted by Codex on behalf of @tamird.\n",
+        "reviewCommand": "git show 5ad880c7c7b1b609fa792b121d30cf5964ccbbe4"
+      }
     }
   ],
   "edges": [
@@ -113292,6 +113338,12 @@
       "type": "includes",
       "reason": "RubySpec fixture reuses the existing qualified Fastlane input on both arms. This is an input-composition link, not a new source-review or upstream-landing prerequisite.",
       "evidence": "https://github.com/gvisor/gvisor/pull/17479"
+    },
+    {
+      "from": "branch:size-cache-reset-integrity",
+      "to": "investigation:repository-lint",
+      "type": "includes",
+      "label": "Size cache-reset integrity correction; independent publication question"
     }
   ],
   "investigations": [
@@ -134559,9 +134611,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-25T21:04:58.790048+00:00",
+      "updatedAt": "2026-11-26T01:00:57.925509+00:00",
       "group": "analysis",
-      "summary": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, syscall, CPU/Memory and RubyNoOp comparisons are complete at recorded precision. Fio's declared target passed full functional admission and its matched AA→conditional AB is running. RubySpec workload assertions, HTTP/ABSL, Size/Usage/Mutex, FUSE architecture and open #17884 retain independent limits.",
+      "summary": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, syscall, CPU/Memory, RubyNoOp and one original high-concurrency HTTP group completed comparisons at recorded precision. RubySpec bindfs completed A/A but stopped A/B on OpenSSL; other RubySpec failures remain. Fio/ABSL stay owned and live. Size integrity is verified with a separate publication decision; statistical holds, FUSE architecture and open #17884 remain.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -134933,7 +134985,7 @@
           ]
         }
       ],
-      "nextStep": "analysis_delivery consumes its existing Fio matched and Size cache-reset admission results; no duplicate observer or timing retry. Reuse qualified #17479 input on both RubySpec tmpfs arms and assess the independent OpenSSL failure. Remaining HTTP/ABSL and prerequisite/architecture obligations stay with their existing owners.",
+      "nextStep": "Existing owners consume Fio/ABSL results and investigate the independent Ruby OpenSSL fixture failure. Reuse qualified #17479 input on both tmpfs RubySpec arms. Await the separate Size opening decision; no new timing cohort, duplicate observer or blanket performance clearance.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -135322,6 +135374,18 @@
         {
           "label": "Full Fio functional admission",
           "url": "https://github.com/tamird/gvisor/actions/runs/45727720891"
+        },
+        {
+          "label": "Scoped HTTP matched terminal",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45718197392"
+        },
+        {
+          "label": "RubySpec bindfs partial comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45722585457"
+        },
+        {
+          "label": "Size cache-failure negative control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45730509291"
         }
       ],
       "reviewWatch": {
@@ -135566,14 +135630,14 @@
           "https://github.com/gvisor/gvisor/pull/17479"
         ],
         "owner": "root",
-        "disposition": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, syscall, CPU/Memory and RubyNoOp comparisons are complete at recorded precision. Fio's declared target passed full functional admission and its matched AA→conditional AB is running. RubySpec workload assertions, HTTP/ABSL, Size/Usage/Mutex, FUSE architecture and open #17884 retain independent limits.",
-        "nextAction": "analysis_delivery consumes its existing Fio matched and Size cache-reset admission results; no duplicate observer or timing retry. Reuse qualified #17479 input on both RubySpec tmpfs arms and assess the independent OpenSSL failure. Remaining HTTP/ABSL and prerequisite/architecture obligations stay with their existing owners.",
-        "recheckCondition": "Owner’s workload-reliability disposition, remaining terminal qualification receipts or substantive prerequisite/source evidence.",
+        "disposition": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, syscall, CPU/Memory, RubyNoOp and one original high-concurrency HTTP group completed comparisons at recorded precision. RubySpec bindfs completed A/A but stopped A/B on OpenSSL; other RubySpec failures remain. Fio/ABSL stay owned and live. Size integrity is verified with a separate publication decision; statistical holds, FUSE architecture and open #17884 remain.",
+        "nextAction": "Existing owners consume Fio/ABSL results and investigate the independent Ruby OpenSSL fixture failure. Reuse qualified #17479 input on both tmpfs RubySpec arms. Await the separate Size opening decision; no new timing cohort, duplicate observer or blanket performance clearance.",
+        "recheckCondition": "Owner-audited Fio/ABSL terminal evidence, existing fixture/source milestones or actual pending publication decisions; all other qualification scopes remain separate.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-26T00:39:54.598989+00:00",
+        "curatedAt": "2026-11-26T01:00:57.925509+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -135613,7 +135677,11 @@
           },
           "httpRecovery": {
             "run": 45718197392,
-            "state": "Owned recovery in progress;no result transferred from earlier failed warmup"
+            "state": "AA and AB complete for original ContinuousHttpd1MiB/C1000/N1000 group only",
+            "children": 100,
+            "correctedFlags": "0/15 each phase",
+            "primary95CIs": "AA4–10%, AB4–14%",
+            "scope": "100 raw workload reports;1000 HTTP200/zero errors each,18 product hashes and cleanup0. No fine-precision/equivalence or other-group clearance."
           },
           "rubyNoOpPreflight": {
             "run": 45718730945,
@@ -135650,6 +135718,13 @@
               "status": "Existing qualified Fastlane backport; b075 fixture lacks it",
               "adoption": "Reuse input on both arms in future qualification; no new patch/review or upstream-landing wait",
               "exampleCount": 3613
+            },
+            "bindfs": {
+              "run": 45722585457,
+              "state": "Complete unflagged AA; AB stopped at dirty OpenSSL assertion, pair15B",
+              "successfulABChildren": 32,
+              "failedABChildren": 1,
+              "limits": "Partial AB, no candidate conclusion. Independent workload reliability issue; no successful-subset selection or unchanged retry."
             }
           },
           "fio": {
@@ -135660,10 +135735,12 @@
             "scope": "Functional288 rows/864 values/all48 leaves,18 product bindings and cleanup passed. Matched original48 leaves×3 metrics, n24/N1; no statistical result yet."
           },
           "sizeCacheIntegrity": {
-            "owner": "analysis_delivery",
             "source": "174c54aac30bcfd6a7ba4fc14b256665a929edd3",
-            "state": "Direct positive/negative cache-reset admissions running; no new timing",
-            "limits": "Old source ignored six reset errors and old Size dispatch lacked sudo. Old A/A does not establish successful resets; this does not explain its variation."
+            "proposal": "branch:size-cache-reset-integrity",
+            "state": "Positive/negative functional integrity verified; standalone opening question pending",
+            "positive": 45730506808,
+            "negative": 45730509291,
+            "limits": "Old green negative did not trigger a failure; old Size controls do not establish successful resets. Statistical hold remains; no cause or current-runtime equivalence claim."
           }
         }
       },
@@ -139816,8 +139893,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-12T19:22:51+00:00",
-      "summary": "Two Node 22.2.0 debugger tests timed out in Buildkite build 54379. Both failing shards ran again and passed on the same source.",
+      "updatedAt": "2026-11-26T01:00:57.925509+00:00",
+      "summary": "Build54705 logs partially identify the missing debugger progress: heap-profiler waited after “Writing snapshot: 409600”; low-level and random-port attached but received no initial break. Source5bf4e2c34 already doubles the Node22.2.0 helper timeout from5s to10s via timeouts.patch. The outer debugger-list timeout is separate; no common cause is established.",
       "findings": [
         {
           "text": "In parallel/test-debugger-heap-profiler.js, Node rejected a second snapshot while the first was running, wrote 3,785,613 bytes, then timed out waiting ten seconds for the debugger prompt. The other shard reported the outer timeout for parallel/test-debugger-list.js without an inner assertion. The retry completed in 142.9 seconds with six of eight shard results cached.",
@@ -139889,7 +139966,7 @@
           ]
         }
       ],
-      "nextStep": "Capture the last debugger prompt and child-process state during a failing full shard, along with its test ordering and concurrency.",
+      "nextStep": "On a naturally failing full shard, obtain timestamped debugger progress and child-process state with test order/concurrency. Do not repeat isolated retries or enlarge timeouts; the last-output portion is already partially recovered.",
       "evidence": [
         {
           "label": "Paired Linux comparison of the two Node versions",
@@ -139914,14 +139991,29 @@
         {
           "label": "Original TAP results from both Node releases",
           "url": "https://github.com/tamird/gvisor/actions/runs/43014104301/artifacts/13853099766"
+        },
+        {
+          "label": "Observed heap-profiler and low-level debugger progress",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54705#01a1d0fb-b10b-472c-a8cc-5a0a6c83fcbe"
+        },
+        {
+          "label": "Observed random-port debugger progress",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/54705#01a1d0fb-b10b-4650-a9fc-f6a62a9a8959"
         }
       ],
       "technicalOwner": "CI flake triage",
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
+      "recheckCondition": "Actual failing-shard timestamped progress/child state or substantive source evidence; no new workflow, retry or outreach.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
-        "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+        "nextAction": "On a naturally failing full shard, obtain timestamped debugger progress and child-process state with test order/concurrency. Do not repeat isolated retries or enlarge timeouts; the last-output portion is already partially recovered.",
+        "recheckCondition": "Actual failing-shard timestamped progress/child state or substantive source evidence; no new workflow, retry or outreach."
+      },
+      "followup": {
+        "owner": "root",
+        "disposition": "Build54705 logs partially identify the missing debugger progress: heap-profiler waited after “Writing snapshot: 409600”; low-level and random-port attached but received no initial break. Source5bf4e2c34 already doubles the Node22.2.0 helper timeout from5s to10s via timeouts.patch. The outer debugger-list timeout is separate; no common cause is established.",
+        "nextAction": "On a naturally failing full shard, obtain timestamped debugger progress and child-process state with test order/concurrency. Do not repeat isolated retries or enlarge timeouts; the last-output portion is already partially recovered.",
+        "recheckCondition": "Actual failing-shard timestamped progress/child state or substantive source evidence; no new workflow, retry or outreach.",
+        "curatedAt": "2026-11-26T01:00:57.925509+00:00"
       }
     },
     {
