@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-25T23:15:59.484334+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-25T23:55:50.246211+00:00",
+  "registryDate": "2026-11-26T00:05:51.079754+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -462938,12 +462938,12 @@
       "mergeabilityCheckedAt": "2026-11-25T23:15:55.245590+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Latest private source d015e4c537be52d4a0bbeda2cd04c3f54efa8d0d includes the agreed public Insert/private insert correction. Both architecture qualifications and source checks passed; both final static reviews were accepted. Root retains the broad performance gate and any eventual qualified-source publication decision. No new adversarial review or source rewrite is the next action; public f11 remains unchanged.",
+      "action": "Root owns the remaining broad performance assessment and any eventual qualified-source publication decision. Reuse the accepted static reviews; do not assign another source rewrite or adversarial-review round.",
       "recordedFollowup": {
         "owner": "root",
         "sourceHead": "f11f74a174170eedf4b158ef111937c4533d4abe",
-        "disposition": "Fresh adaptation4d7e686c passed functional, Nogo, source and C++ gates. Performance and adversarial review remain open; publicf11 is unchanged and the adaptation is not approved for publication. The old1454 CI record is separate from this work.",
-        "nextAction": "Latest private source d015e4c537be52d4a0bbeda2cd04c3f54efa8d0d includes the agreed public Insert/private insert correction. Both architecture qualifications and source checks passed; both final static reviews were accepted. Root retains the broad performance gate and any eventual qualified-source publication decision. No new adversarial review or source rewrite is the next action; public f11 remains unchanged."
+        "disposition": "Public f11f74a174 is unchanged. Later private candidate d015e4c537 includes the accepted Insert/private insert correction; both architecture qualifications and source checks passed, and both final static reviews were accepted. Broad performance and eventual publication review remain; no static-review task or approval question is reopened.",
+        "nextAction": "Root owns the remaining broad performance assessment and any eventual qualified-source publication decision. Reuse the accepted static reviews; do not assign another source rewrite or adversarial-review round."
       },
       "conflictObservedSince": "2026-11-20T22:49:23.248038+00:00"
     },
@@ -471930,7 +471930,7 @@
         "since": "2026-11-25T22:15:30.434231+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     },
     "pr:14458": {
@@ -472693,7 +472693,7 @@
         "since": "2026-11-25T20:26:19.847463+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     },
     "pr:15202": {
@@ -473201,7 +473201,7 @@
         "since": "2026-11-25T23:55:50.246211+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     },
     "pr:15453": {
@@ -473677,7 +473677,7 @@
         "since": "2026-11-25T20:26:38.821906+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     },
     "pr:15648": {
@@ -475017,7 +475017,7 @@
         "since": "2026-11-25T22:41:21.827202+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     },
     "pr:16445": {
@@ -475632,7 +475632,7 @@
         "since": "2026-11-25T22:35:10.106729+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     },
     "pr:16661": {
@@ -476413,7 +476413,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     },
     "pr:16822": {
@@ -476495,7 +476495,7 @@
         "since": "2026-11-25T23:00:04.041520+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     },
     "pr:16828": {
@@ -477093,7 +477093,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     },
     "pr:16958": {
@@ -478592,7 +478592,7 @@
         "since": "2026-11-25T22:34:48.644451+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     },
     "pr:17376": {
@@ -480005,7 +480005,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -480014,7 +480014,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -480023,7 +480023,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -480032,7 +480032,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -480041,7 +480041,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -480050,7 +480050,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -480059,7 +480059,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -480068,7 +480068,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     },
     "issue:17832": {
@@ -480077,7 +480077,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     },
     "branch:hey-report-cap-accounting": {
@@ -480086,7 +480086,7 @@
         "since": "2026-11-25T22:03:16.345652+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     },
     "investigation:ci-benchmark-fuse-device": {
@@ -480095,7 +480095,7 @@
         "since": "2026-11-25T21:11:04.741354+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-25T23:55:50.246211+00:00"
+        "observedAt": "2026-11-26T00:05:51.079754+00:00"
       }
     }
   },

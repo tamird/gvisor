@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-25T23:55:50.246211+00:00",
+    "updatedAt": "2026-11-26T00:05:51.079754+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -16527,7 +16527,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:43.853615+00:00",
-      "summary": "Fresh adaptation4d7e686c passed functional, Nogo, source and C++ gates. Performance and adversarial review remain open; publicf11 is unchanged and the adaptation is not approved for publication. The old1454 CI record is separate from this work.",
+      "summary": "Public f11f74a174 is unchanged. Later private candidate d015e4c537 includes the accepted Insert/private insert correction; both architecture qualifications and source checks passed, and both final static reviews were accepted. Broad performance and eventual publication review remain; no static-review task or approval question is reopened.",
       "number": 15634,
       "reviewDecision": null,
       "evidence": [
@@ -16624,10 +16624,10 @@
       ],
       "followup": {
         "owner": "root",
-        "disposition": "Fresh adaptation4d7e686c passed functional, Nogo, source and C++ gates. Performance and adversarial review remain open; publicf11 is unchanged and the adaptation is not approved for publication. The old1454 CI record is separate from this work.",
+        "disposition": "Public f11f74a174 is unchanged. Later private candidate d015e4c537 includes the accepted Insert/private insert correction; both architecture qualifications and source checks passed, and both final static reviews were accepted. Broad performance and eventual publication review remain; no static-review task or approval question is reopened.",
         "sourceHead": "f11f74a174170eedf4b158ef111937c4533d4abe",
         "observedAt": "2026-11-20T23:41:26.383263+00:00",
-        "nextAction": "Latest private source d015e4c537be52d4a0bbeda2cd04c3f54efa8d0d includes the agreed public Insert/private insert correction. Both architecture qualifications and source checks passed; both final static reviews were accepted. Root retains the broad performance gate and any eventual qualified-source publication decision. No new adversarial review or source rewrite is the next action; public f11 remains unchanged.",
+        "nextAction": "Root owns the remaining broad performance assessment and any eventual qualified-source publication decision. Reuse the accepted static reviews; do not assign another source rewrite or adversarial-review round.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15634",
           "https://github.com/tamird/gvisor/actions/runs/41091511027/artifacts/12994247763",
@@ -16661,13 +16661,20 @@
           "https://buildkite.com/gvisor/first-pass/builds/1454#01a1ead6-2076-4117-a604-45c1dfec8c75",
           "https://buildkite.com/gvisor/first-pass/builds/1454#01a1ead6-2076-4f95-bbfb-475105e2d6a6",
           "https://buildkite.com/gvisor/first-pass/builds/1454#01a1ead6-2076-4b23-a6b9-ab65f8ae04de",
-          "https://buildkite.com/gvisor/first-pass/builds/1454#01a1ead6-2077-4a61-8951-2ccc3f48ae1f"
+          "https://buildkite.com/gvisor/first-pass/builds/1454#01a1ead6-2077-4a61-8951-2ccc3f48ae1f",
+          "https://github.com/tamird/gvisor/commit/d015e4c537be52d4a0bbeda2cd04c3f54efa8d0d"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Actual performance/adversarial findings and qualified source, or new maintainer guidance.",
+        "recheckCondition": "Actual broad performance/source evidence or a publication decision.",
         "implementationOwner": "approved_rebase_queue",
-        "curatedAt": "2026-11-22T14:02:28.619749+00:00",
-        "base": "eb263e1f414d0bceaf10decea6c73e2c77332112"
+        "curatedAt": "2026-11-26T00:05:51.079754+00:00",
+        "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+        "candidate": {
+          "head": "d015e4c537be52d4a0bbeda2cd04c3f54efa8d0d",
+          "staticReviews": "Both accepted",
+          "state": "Broad performance and eventual publication assessment remain",
+          "upstreamPublished": false
+        }
       },
       "outreachReviewClock": {
         "head": "679d14eed77a4ce6029065d88248c8ce0902c270",
@@ -16701,8 +16708,8 @@
         "priorOwner": "netstack owner",
         "historicalOutreachClockHead": "679d14eed77a4ce6029065d88248c8ce0902c270"
       },
-      "nextStep": "approved_rebase_queue closes the owned performance and adversarial-review obligations, then presents a qualified exact-source handoff for any required publication review. No current human question or public push is inferred.",
-      "recheckCondition": "Actual performance/adversarial findings and qualified source, or new maintainer guidance."
+      "nextStep": "Root owns the remaining broad performance assessment and any eventual qualified-source publication decision. Reuse the accepted static reviews; do not assign another source rewrite or adversarial-review round.",
+      "recheckCondition": "Actual broad performance/source evidence or a publication decision."
     },
     {
       "id": "pr:15618",
@@ -57788,7 +57795,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-03T14:10:33.767303+00:00",
-      "summary": "The author applied the tested guard: an unexpected SYN-ACK and a repeated FIN are ACKed with the old sequence numbers in TIME_WAIT. Only a bare SYN may reopen through the forwarder. The revised tests also cover a forwarder that declines the connection.",
+      "summary": "Tamir already answered the duplicate-reopen question. adios-404 opened successor #17844 at 8f9da8a3, preserving original authorship, with TestForwarderReopenWithDuplicateSyn, the SYN-ACK guard and declined-SYN cases. Successor review requests target konstantin-s-bogom and manninglucas, not Tamir; no old qualification or approval is transferred.",
       "evidence": [
         {
           "label": "Reply to Carsten about duplicate reconnect SYNs",
@@ -57844,14 +57851,29 @@
         "mergeable": "MERGEABLE",
         "sourceHead": "ed8a800c0c2d10916616ad2e0a791976fbd60274",
         "observedAt": "2026-11-18T02:57:42.449215+00:00",
-        "disposition": "Root owns lifecycle reconciliation of this existing tracked item. Current provider head/state/mergeability are verified in the collector; retained summary evidence remains scoped to its historical revisions.",
-        "nextAction": "Verify the current TIME_WAIT SYN-only forwarder guard and declined-forwarder tests against the complete reviewer thread; follow the source/import lifecycle without transferring old approval.",
-        "recheckCondition": "Current source or import head, CI, human feedback, dependency landing or contributor decision changes; re-evaluate the exact affected obligation before further delivery.",
+        "disposition": "Tamir already answered the duplicate-reopen question. adios-404 opened successor #17844 at 8f9da8a3, preserving original authorship, with TestForwarderReopenWithDuplicateSyn, the SYN-ACK guard and declined-SYN cases. Successor review requests target konstantin-s-bogom and manninglucas, not Tamir; no old qualification or approval is transferred.",
+        "nextAction": "Follow the author-owned successor on a substantive review/source event. Do not post a duplicate reply, create another successor or infer Tamir review assignment or whole-source approval.",
+        "recheckCondition": "Substantive author/successor review or source evidence.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15019"
+          "https://github.com/google/gvisor/pull/15019",
+          "https://github.com/gvisor/gvisor/pull/17844"
         ],
-        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00"
-      }
+        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
+        "curatedAt": "2026-11-26T00:05:51.079754+00:00",
+        "successor": {
+          "number": 17844,
+          "headPrefix": "8f9da8a3",
+          "author": "adios-404",
+          "originalAuthorshipPreserved": true,
+          "requestedReviewers": [
+            "konstantin-s-bogom",
+            "manninglucas"
+          ],
+          "qualificationTransferred": false
+        }
+      },
+      "nextStep": "Follow the author-owned successor on a substantive review/source event. Do not post a duplicate reply, create another successor or infer Tamir review assignment or whole-source approval.",
+      "recheckCondition": "Substantive author/successor review or source evidence."
     },
     {
       "id": "pr:16865",
@@ -69571,7 +69593,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:48.755399+00:00",
-      "summary": "Opening /dev/fuse leaves the device unattached. Linux reports POLLERR and allows epoll to watch it. gVisor returned EPERM in the matching poll and epoll cases.",
+      "summary": "Kerumeto’s request to disable save around the two EPOLLET observations is fixed; Tamir replied and the thread is resolved. The formal CHANGES_REQUESTED review remains active. The standing-authorized native re-request is verified with kerumeto alongside existing manninglucas/xinzhong; import ancestry remains a separate obligation.",
       "evidence": [
         {
           "label": "Public CI stopped fetching rules_m4 with HTTP 500; the archive now matches BCR’s checksum",
@@ -69661,8 +69683,8 @@
         "owner": "root",
         "sourceHead": "a3aadfeb432f66fc5984778bba84c8f5ce7edb99",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "CI #17387 at ef71418599d48b6dab0db76d3a315e54d3f382b1: Repeated final integration_test timeouts show TestSudo waiting in Process.Logs, matching investigation:ci-flake-sudo-exec-timeout. Rollback17412 and fixed reland17556 are now verified MERGED; this old export has no fresh passing result. Private failures remain separately undiagnosed.",
-        "nextAction": "Refresh the owning internal/export base onto fixed master and qualify the integration partition containing TestSudo; do not invent another mount/inotify/eventfd/FUSE fix or issue. For older-source17387 retain current approved source and ask importing maintainer to consume it. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source a3aadfeb432f66fc5984778bba84c8f5ce7edb99; observed 2026-11-17T19:29:29.454062+00:00): build 1496 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "disposition": "Kerumeto’s request to disable save around the two EPOLLET observations is fixed; Tamir replied and the thread is resolved. The formal CHANGES_REQUESTED review remains active. The standing-authorized native re-request is verified with kerumeto alongside existing manninglucas/xinzhong; import ancestry remains a separate obligation.",
+        "nextAction": "Root follows the reviewer’s response or substantive source evidence. Preserve the separate import/integration ancestry requirements and existing CI provenance; no duplicate request or automatic approval.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16818",
           "https://github.com/google/gvisor/pull/16818#discussion_r4532722608",
@@ -69711,7 +69733,7 @@
           "https://buildkite.com/gvisor/first-pass/builds/1496#01a1ead5-697b-465b-9835-dd216788573d",
           "https://buildkite.com/gvisor/first-pass/builds/1496#01a1ead5-697b-4d53-96fe-6f1f046a2257"
         ],
-        "recheckCondition": "Refreshed exact export includes fixed integration ancestry and owning integration partition passes; inspect any distinct remaining internal error. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "recheckCondition": "Reviewer response/source event or independently resolved import/integration ancestry.",
         "mergeable": "MERGEABLE",
         "attentionDispositions": [
           {
@@ -69760,7 +69782,8 @@
               ]
             }
           }
-        ]
+        ],
+        "curatedAt": "2026-11-26T00:05:51.079754+00:00"
       },
       "dcoAmendment": {
         "oldHead": "037c883bda925d55948e055af0dff72c311b49c2",
@@ -69782,7 +69805,9 @@
           "https://github.com/tamird/gvisor/commit/a3aadfeb432f66fc5984778bba84c8f5ce7edb99"
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted."
-      }
+      },
+      "nextStep": "Root follows the reviewer’s response or substantive source evidence. Preserve the separate import/integration ancestry requirements and existing CI provenance; no duplicate request or automatic approval.",
+      "recheckCondition": "Reviewer response/source event or independently resolved import/integration ancestry."
     },
     {
       "id": "pr:16823",
@@ -97362,7 +97387,7 @@
       "head": "b57013d8abd255b013ab99c924139853eb3b3e7a",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:58.120129+00:00",
-      "summary": "Published source b57013d8ab and its standard notice are complete under recovered original grants. At the retained checkpoint, non-Go GitHub checks passed while Go and the new First Pass were still live. Native APPROVED coexists with required “Maintainer approvals: 1, needs 2.” No new source/runtime/performance or whole-main pass is implied.",
+      "summary": "Published b57013d8ab has passing exact-head GitHub Actions validation, DCO and First Pass 2928; canonical First Pass had no failed attempts. Source delivery and notice are complete. Maintainer status remains pending, last detailed as “Maintainer approvals: 1, needs 2.” No main build is observed or inferred green.",
       "evidence": [
         {
           "label": "Published LuaJIT release",
@@ -97397,8 +97422,8 @@
         "owner": "approved_rebase_queue",
         "sourceHead": "b57013d8abd255b013ab99c924139853eb3b3e7a",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Published source b57013d8ab and its standard notice are complete under recovered original grants. At the retained checkpoint, non-Go GitHub checks passed while Go and the new First Pass were still live. Native APPROVED coexists with required “Maintainer approvals: 1, needs 2.” No new source/runtime/performance or whole-main pass is implied.",
-        "nextAction": "approved_rebase_queue follows the existing current-head CI and second-approval lifecycle. Preserve pending reviewer requests; no repeated approval question, retry, outreach or merge.",
+        "disposition": "Published b57013d8ab has passing exact-head GitHub Actions validation, DCO and First Pass 2928; canonical First Pass had no failed attempts. Source delivery and notice are complete. Maintainer status remains pending, last detailed as “Maintainer approvals: 1, needs 2.” No main build is observed or inferred green.",
+        "nextAction": "Follow event-driven additional maintainer approval, natural main/check events or source changes. Existing requested reviewers remain; no recurring CI polling, source question, retry, outreach or merge.",
         "mergeable": "MERGEABLE",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fa3d27991",
@@ -97417,7 +97442,7 @@
           "https://github.com/gvisor/gvisor/pull/17376#issuecomment-7177892142",
           "https://buildkite.com/gvisor/first-pass/builds/2928"
         ],
-        "recheckCondition": "Existing owner’s actual terminal CI, additional approval or substantive source event.",
+        "recheckCondition": "Actual maintainer/main/source event. No recurring CI watch.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -97441,7 +97466,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-25T23:55:50.246211+00:00",
+        "curatedAt": "2026-11-26T00:05:51.079754+00:00",
         "candidate": {
           "head": "b57013d8abd255b013ab99c924139853eb3b3e7a",
           "base": "e28474f026f4f6d6cfa46710e34f01786d54477e",
@@ -97467,7 +97492,8 @@
           "notice": "https://github.com/gvisor/gvisor/pull/17376#issuecomment-7177892142",
           "descriptionUnchanged": true,
           "firstPass": {
-            "state": "PENDING",
+            "build": 2928,
+            "state": "SUCCESS",
             "url": "https://buildkite.com/gvisor/first-pass/builds/2928"
           },
           "provenance": "17376-publication-receipt.json; saved exact native/provider/comment readbacks",
@@ -97511,8 +97537,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Agent"
       },
-      "nextStep": "approved_rebase_queue follows the existing current-head CI and second-approval lifecycle. Preserve pending reviewer requests; no repeated approval question, retry, outreach or merge.",
-      "recheckCondition": "Existing owner’s actual terminal CI, additional approval or substantive source event.",
+      "nextStep": "Follow event-driven additional maintainer approval, natural main/check events or source changes. Existing requested reviewers remain; no recurring CI polling, source question, retry, outreach or merge.",
+      "recheckCondition": "Actual maintainer/main/source event. No recurring CI watch.",
       "settledReviews": [
         {
           "kind": "amendment",
@@ -100351,7 +100377,7 @@
       "head": "b0d665d9f298bf84db405213b403467d8470af4f",
       "title": "Stabilize the Fastlane token check in the Ruby benchmark",
       "group": "ci-flakes",
-      "summary": "Published source b0d665d9f2 and its standard notice are complete under recovered original grants. At the retained checkpoint, non-Go GitHub checks passed while Go and the new First Pass were still live. Native APPROVED coexists with required “Maintainer approvals: 1, needs 2.” No new source/runtime/performance or whole-main pass is implied.",
+      "summary": "Published b0d665d9f2 has passing exact-head GitHub Actions validation, DCO and First Pass 2929; canonical First Pass had no failed attempts. Source delivery and notice are complete. Maintainer status remains pending, last detailed as “Maintainer approvals: 1, needs 2.” No main build is observed or inferred green.",
       "evidence": [
         {
           "label": "Published gVisor fix",
@@ -100394,8 +100420,8 @@
         "owner": "approved_rebase_queue",
         "sourceHead": "b0d665d9f298bf84db405213b403467d8470af4f",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Published source b0d665d9f2 and its standard notice are complete under recovered original grants. At the retained checkpoint, non-Go GitHub checks passed while Go and the new First Pass were still live. Native APPROVED coexists with required “Maintainer approvals: 1, needs 2.” No new source/runtime/performance or whole-main pass is implied.",
-        "nextAction": "approved_rebase_queue follows the existing current-head CI and second-approval lifecycle. Preserve pending reviewer requests; no repeated approval question, retry, outreach or merge.",
+        "disposition": "Published b0d665d9f2 has passing exact-head GitHub Actions validation, DCO and First Pass 2929; canonical First Pass had no failed attempts. Source delivery and notice are complete. Maintainer status remains pending, last detailed as “Maintainer approvals: 1, needs 2.” No main build is observed or inferred green.",
+        "nextAction": "Follow event-driven additional maintainer approval, natural main/check events or source changes. Existing requested reviewers remain; no recurring CI polling, source question, retry, outreach or merge.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17479",
           "https://github.com/google/gvisor/pull/17479#issuecomment-6799672981",
@@ -100411,7 +100437,7 @@
           "https://buildkite.com/gvisor/first-pass/builds/2929"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Existing owner’s actual terminal CI, additional approval or substantive source event.",
+        "recheckCondition": "Actual maintainer/main/source event. No recurring CI watch.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -100435,7 +100461,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-25T23:55:50.246211+00:00",
+        "curatedAt": "2026-11-26T00:05:51.079754+00:00",
         "candidate": {
           "head": "b0d665d9f298bf84db405213b403467d8470af4f",
           "base": "e28474f026f4f6d6cfa46710e34f01786d54477e",
@@ -100461,7 +100487,8 @@
           "notice": "https://github.com/gvisor/gvisor/pull/17479#issuecomment-7177944558",
           "descriptionUnchanged": true,
           "firstPass": {
-            "state": "PENDING",
+            "build": 2929,
+            "state": "SUCCESS",
             "url": "https://buildkite.com/gvisor/first-pass/builds/2929"
           },
           "provenance": "17479-publication-receipt.json; saved exact native/provider/comment readbacks",
@@ -100505,8 +100532,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "approved_rebase_queue follows the existing current-head CI and second-approval lifecycle. Preserve pending reviewer requests; no repeated approval question, retry, outreach or merge.",
-      "recheckCondition": "Existing owner’s actual terminal CI, additional approval or substantive source event.",
+      "nextStep": "Follow event-driven additional maintainer approval, natural main/check events or source changes. Existing requested reviewers remain; no recurring CI polling, source question, retry, outreach or merge.",
+      "recheckCondition": "Actual maintainer/main/source event. No recurring CI watch.",
       "settledReviews": [
         {
           "kind": "amendment",
@@ -108273,13 +108300,13 @@
       "status": "open",
       "owner": "root",
       "evidence": [],
-      "summary": "Published source 7f28ffee3f and its standard notice are complete under recovered original grants. At the retained checkpoint, non-Go GitHub checks passed while Go and the new First Pass were still live. Native APPROVED coexists with required “Maintainer approvals: 1, needs 2.” No new source/runtime/performance or whole-main pass is implied.",
-      "nextStep": "approved_rebase_queue follows the existing current-head CI and second-approval lifecycle. Preserve pending reviewer requests; no repeated approval question, retry, outreach or merge.",
+      "summary": "Published 7f28ffee3f has passing exact-head GitHub Actions validation, DCO and First Pass 2927; canonical First Pass had no failed attempts. Source delivery and notice are complete. Maintainer status remains pending, last detailed as “Maintainer approvals: 1, needs 2.” No main build is observed or inferred green.",
+      "nextStep": "Follow event-driven additional maintainer approval, natural main/check events or source changes. Existing requested reviewers remain; no recurring CI polling, source question, retry, outreach or merge.",
       "updatedAt": "2026-11-24T20:51:36.949756+00:00",
       "followup": {
-        "disposition": "Published source 7f28ffee3f and its standard notice are complete under recovered original grants. At the retained checkpoint, non-Go GitHub checks passed while Go and the new First Pass were still live. Native APPROVED coexists with required “Maintainer approvals: 1, needs 2.” No new source/runtime/performance or whole-main pass is implied.",
-        "nextAction": "approved_rebase_queue follows the existing current-head CI and second-approval lifecycle. Preserve pending reviewer requests; no repeated approval question, retry, outreach or merge.",
-        "recheckCondition": "Existing owner’s actual terminal CI, additional approval or substantive source event.",
+        "disposition": "Published 7f28ffee3f has passing exact-head GitHub Actions validation, DCO and First Pass 2927; canonical First Pass had no failed attempts. Source delivery and notice are complete. Maintainer status remains pending, last detailed as “Maintainer approvals: 1, needs 2.” No main build is observed or inferred green.",
+        "nextAction": "Follow event-driven additional maintainer approval, natural main/check events or source changes. Existing requested reviewers remain; no recurring CI polling, source question, retry, outreach or merge.",
+        "recheckCondition": "Actual maintainer/main/source event. No recurring CI watch.",
         "observedAt": "2026-11-24T20:51:36.949756+00:00",
         "evidence": [
           "https://github.com/google/gvisor/pull/17343#pullrequestreview-6046141593",
@@ -108295,7 +108322,7 @@
         ],
         "owner": "approved_rebase_queue",
         "sourceHead": "7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
-        "curatedAt": "2026-11-25T23:55:50.246211+00:00",
+        "curatedAt": "2026-11-26T00:05:51.079754+00:00",
         "candidate": {
           "head": "7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
           "base": "e28474f026f4f6d6cfa46710e34f01786d54477e",
@@ -108317,7 +108344,8 @@
           "notice": "https://github.com/gvisor/gvisor/pull/17343#issuecomment-7177815802",
           "descriptionUnchanged": true,
           "firstPass": {
-            "state": "PENDING",
+            "build": 2927,
+            "state": "SUCCESS",
             "url": "https://buildkite.com/gvisor/first-pass/builds/2927"
           },
           "provenance": "17343-publication-receipt.json; saved exact native/provider/comment readbacks",
@@ -108334,7 +108362,7 @@
           "scope": "Saved source-bound checkpoint, not a new global API sample"
         }
       },
-      "recheckCondition": "Existing owner’s actual terminal CI, additional approval or substantive source event.",
+      "recheckCondition": "Actual maintainer/main/source event. No recurring CI watch.",
       "settledReviews": [
         {
           "kind": "amendment",
@@ -126184,10 +126212,10 @@
     {
       "id": "investigation:runtime-startup",
       "title": "Runtime startup performance",
-      "status": "active",
+      "status": "concluded",
       "owner": "root",
       "updatedAt": "2026-11-25T21:47:17.640135+00:00",
-      "summary": "The approved ce163 Moby rebuild and owning Bazel empty-selection validation remain complete. Separately, the recorded DING functional route passed ten native and ten systrap topology rows; systrap run 45706372749 used 1024 KiB with zero failures/skips. Exact nine-product runtime/config binding and restoration passed. These are functional results, not timing approval or performance evidence; earlier failed wrappers remain historical.",
+      "summary": "The recorded CLI and container-startup comparisons are complete, including integrated state proposal 3a38641f0: CLI 2.380→2.397 ms and StartupEmpty 283.7→265.8 ms, with no established difference or equivalence. The Nginx HTTP-readiness fix merged as #16499. No unfinished startup-specific action is identified from these recorded sources; other proposals retain their own source/performance prerequisites.",
       "findings": [
         {
           "text": "A stopped Nginx worker still has an open listener: the old port check passed while the GET timed out. After resuming that worker, the same GET returned HTTP 200. Both existing AMD64 checkpoint and restore benchmarks completed with the new probe. The benchmark measures readiness to serve a request, including Docker exec time.",
@@ -126203,7 +126231,7 @@
           ]
         },
         {
-          "text": "runsc now restores pages in the background by default; runsc wait --restore marks completion of page loading. The Nginx benchmark says it times HTTP readiness, but its current probe only searches the socket tables for the port. A matching entry does not establish that Nginx has served a request. Record HTTP readiness and completed page loading as distinct milestones when comparing restore performance.",
+          "text": "At recorded source 9f2bc5e75, the Nginx restore benchmark searched socket tables; that did not establish service readiness. The later HTTP-readiness correction merged as #16499. Background page loading and HTTP readiness remain distinct milestones when interpreting the preserved comparisons.",
           "evidence": [
             {
               "label": "Defaults for background restore and committed zero pages",
@@ -126281,7 +126309,7 @@
           ]
         },
         {
-          "text": "The gofer eagerly constructed cgo seccomp rules during package initialization, including for pure-Go binaries and precompiled-filter hits. The independent correction constructs a fresh rule set only when generating CgoEnabled rules. Existing config tests and analyzers pass on both architectures, with original-output and source-to-binary verification complete. A matched pure-Go AMD64 trace on the qualification branch removes 648 bytes and seven allocations; executable lengths are unchanged. This branch includes the separate musl clone rule, so those counts are not a standalone result. The check supplies no latency or plugin-runtime measurement. Contributor review of the standalone correction is now requested.",
+          "text": "The gofer eagerly constructed cgo seccomp rules during package initialization, including for pure-Go binaries and precompiled-filter hits. The independent correction constructs a fresh rule set only when generating CgoEnabled rules. Existing config tests and analyzers pass on both architectures, with original-output and source-to-binary verification complete. A matched pure-Go AMD64 trace on the qualification branch removes 648 bytes and seven allocations; executable lengths are unchanged. This branch includes the separate musl clone rule, so those counts are not a standalone result. The check supplies no latency or plugin-runtime measurement. The separate initialization correction later merged as d5b092c053; its original qualification limits remain.",
           "evidence": [
             {
               "label": "Independent gofer correction",
@@ -126436,7 +126464,7 @@
           ]
         }
       ],
-      "nextStep": "Root and benchmark_measurement_review coordinate remaining workload/performance planning under the existing timing boundaries. Executable-path recovery and the ten-topology functional check are complete; do not repeat those gates or infer a timing result. Preserve independent P64/source-publication and measurement limits.",
+      "nextStep": "Complete for the recorded startup comparison scope. Do not repeat the completed CLI/StartupEmpty or Nginx-readiness work. DING/Iperf functionality and its remaining controls belong to the separate Iperf investigation; no new timing or general current-source clearance.",
       "evidence": [
         {
           "label": "Merged Nginx restore-benchmark HTTP readiness change",
@@ -126491,44 +126519,12 @@
           "url": "https://github.com/buildbuddy-io/buildbuddy/blob/168813c94525e5106459531fb629429d5fe2fb60/proto/scheduler.proto#L568"
         },
         {
-          "label": "Predeclared Iperf same-source diagnostic; reporting mismatch",
-          "url": "https://github.com/tamird/gvisor/actions/runs/44924729979"
-        },
-        {
           "label": "Corrected one-leaf n=2 same-source diagnostic",
           "url": "https://github.com/tamird/gvisor/actions/runs/44927626779"
         },
         {
           "label": "Completed N24 diagnostic demonstrating producer interval mismatch",
           "url": "https://github.com/tamird/gvisor/actions/runs/44930399362"
-        },
-        {
-          "label": "DING package/protocol or corrected startup boundary",
-          "url": "https://github.com/tamird/gvisor/actions/runs/44956385628"
-        },
-        {
-          "label": "DING package/protocol or corrected startup boundary",
-          "url": "https://github.com/tamird/gvisor/actions/runs/44956762450"
-        },
-        {
-          "label": "Approved remote rebuild and package checks",
-          "url": "https://github.com/tamird/gvisor/actions/runs/45691659853"
-        },
-        {
-          "label": "Owning Bazel build/TestMain validation",
-          "url": "https://github.com/tamird/gvisor/actions/runs/45692299082"
-        },
-        {
-          "label": "Initial DING harness preflight; no transfers",
-          "url": "https://github.com/tamird/gvisor/actions/runs/45698369467"
-        },
-        {
-          "label": "DING functional binding/restoration or ten systrap topology rows",
-          "url": "https://github.com/tamird/gvisor/actions/runs/45705007458"
-        },
-        {
-          "label": "DING functional binding/restoration or ten systrap topology rows",
-          "url": "https://github.com/tamird/gvisor/actions/runs/45706372749"
         }
       ],
       "comparisons": [
@@ -126651,12 +126647,8 @@
         }
       ],
       "technicalOwner": "Codex",
-      "recheckCondition": "Actual separately authorized performance/measurement-control or relevant source/prerequisite progress.",
-      "lifecycleCoordination": {
-        "owner": "root",
-        "nextAction": "Root and benchmark_measurement_review coordinate remaining workload/performance planning under the existing timing boundaries. Executable-path recovery and the ten-topology functional check are complete; do not repeat those gates or infer a timing result. Preserve independent P64/source-publication and measurement limits.",
-        "recheckCondition": "Actual separately authorized performance/measurement-control or relevant source/prerequisite progress."
-      },
+      "recheckCondition": "An actual new startup source/boundary, named startup workload failure or explicit new comparison request.",
+      "lifecycleCoordination": null,
       "group": "runtime",
       "repo": "google/gvisor",
       "additionalReviews": [],
@@ -126668,66 +126660,24 @@
           "summary": "The user confirmed keeping sensitive work held.",
           "body": "Scope summary, not a verbatim question: confirm current Daybreak availability for the explicitly held #16419 matcher/current-base work and related investigations with an existing source-access hold. This reuses the existing information request. Availability alone does not authorize source access, implementation, tests or retries beyond the actual access and policy checks.",
           "outcome": "keep-held"
-        },
-        {
-          "kind": "exception",
-          "status": "settled",
-          "head": "ce1634b4adf686f6067b4fed388de417efd43ddd",
-          "url": "https://github.com/tamird/gvisor/commit/ce1634b4adf686f6067b4fed388de417efd43ddd",
-          "title": "Permit one remote Moby rebuild",
-          "summary": "Tamir approved the exact remote ce163 Moby rebuild and permanently authorized routine remote builds within authorized work. Source publication and measurements remain separate.",
-          "body": "Scope summary, not a verbatim question: permit one remote canonical `make rebuild-moby ARCH=x86_64 DOCKER_BUILD=false` on gVisor source ce1634b4adf686f6067b4fed388de417efd43ddd, capped at 30 minutes, without image publication, followed by Bazel validation. Generic CI authorization does not answer this specific exception to the Bazel-only rule.",
-          "outcome": "approved"
         }
       ],
       "followup": {
         "owner": "root",
-        "disposition": "The approved ce163 Moby rebuild and owning Bazel empty-selection validation remain complete. Separately, the recorded DING functional route passed ten native and ten systrap topology rows; systrap run 45706372749 used 1024 KiB with zero failures/skips. Exact nine-product runtime/config binding and restoration passed. These are functional results, not timing approval or performance evidence; earlier failed wrappers remain historical.",
-        "nextAction": "Root and benchmark_measurement_review coordinate remaining workload/performance planning under the existing timing boundaries. Executable-path recovery and the ten-topology functional check are complete; do not repeat those gates or infer a timing result. Preserve independent P64/source-publication and measurement limits.",
-        "recheckCondition": "Actual separately authorized performance/measurement-control or relevant source/prerequisite progress.",
-        "curatedAt": "2026-11-25T21:47:17.640135+00:00",
-        "sourceHead": "ce1634b4adf686f6067b4fed388de417efd43ddd",
-        "remoteBuild": {
-          "run": 45691659853,
-          "operation": "make rebuild-moby ARCH=x86_64 DOCKER_BUILD=false",
-          "capSeconds": 1800,
-          "imagePublished": false,
-          "buildExit": 0,
-          "imageDigest": "sha256:f4b706b7068e741b4f6ebfd05aad7cd38bd50420d91b4a508bb12e829d06f7c9",
-          "wrapperFailure": "Subsequent git-describe string assertion; recovered offline without rebuild",
-          "validationRun": 45692299082,
-          "validationStatus": "PASS: owning moby_test build and empty-selection TestMain on exact ce163"
-        },
+        "disposition": "The recorded CLI and container-startup comparisons are complete, including integrated state proposal 3a38641f0: CLI 2.380→2.397 ms and StartupEmpty 283.7→265.8 ms, with no established difference or equivalence. The Nginx HTTP-readiness fix merged as #16499. No unfinished startup-specific action is identified from these recorded sources; other proposals retain their own source/performance prerequisites.",
+        "nextAction": "Complete for the recorded startup comparison scope. Do not repeat the completed CLI/StartupEmpty or Nginx-readiness work. DING/Iperf functionality and its remaining controls belong to the separate Iperf investigation; no new timing or general current-source clearance.",
+        "recheckCondition": "An actual new startup source/boundary, named startup workload failure or explicit new comparison request.",
+        "curatedAt": "2026-11-26T00:05:51.079754+00:00",
+        "sourceHead": "3a38641f03edeb40fd50059cbb1559720f5ad04b",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/45691659853",
-          "https://github.com/tamird/gvisor/actions/runs/45692299082",
-          "https://github.com/tamird/gvisor/actions/runs/45698369467",
-          "https://github.com/tamird/gvisor/actions/runs/45705007458",
-          "https://github.com/tamird/gvisor/actions/runs/45706372749"
+          "https://github.com/tamird/gvisor/commit/3a38641f03edeb40fd50059cbb1559720f5ad04b",
+          "https://app.buildbuddy.io/invocation/057306de-648f-41e3-b4b4-d7d92a31c3d5",
+          "https://github.com/gvisor/gvisor/pull/16499"
         ],
-        "executionOwner": "benchmark_measurement_review",
-        "dingFunctionalPreflight": {
-          "run": 45698369467,
-          "imageSetup": "Passed",
-          "transfers": 0,
-          "failure": "Wrapper changed working directory before resolving executable",
-          "owner": "analysis_delivery",
-          "state": "Historical zero-transfer wrapper failure; later functional qualification complete"
-        },
-        "currentDINGFunctionalQualification": {
-          "owner": "benchmark_measurement_review",
-          "runtimeBindingAndRestorationRun": 45705007458,
-          "systrapRun": 45706372749,
-          "topologiesPerRuntime": 10,
-          "transferKiB": 1024,
-          "systrapFailures": 0,
-          "systrapSkips": 0,
-          "nativeTenPreviouslyPassed": true,
-          "releaseProductsVerified": 9,
-          "timingApproval": false,
-          "performanceResult": false
-        }
-      }
+        "completedScope": "Recorded CLI/StartupEmpty source comparisons and merged HTTP-readiness prerequisite; inconclusive results retain exact source/fixture limits.",
+        "networkFixtureMovedTo": "investigation:iperf-aggregate-reporting"
+      },
+      "inactive": true
     },
     {
       "id": "investigation:qemu-prebuilt-generator",
@@ -132635,8 +132585,8 @@
       "owner": "root",
       "group": "runtime",
       "updatedAt": "2026-11-18T09:21:28.062516+00:00",
-      "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "For #10343, obtain packet captures spanning recovery on an affected proxy connection. The eight Linux repeats delivered data in every measured interval. Keep the M003 Reno control separate. For #15253 compare captures or GSO metadata from the Kubernetes interfaces, and follow the duplicate reconnect reply on #15019. For #16887, the approved exact COMMENTED response was posted at 1668e58d4c0cb17ecb5fcf6457389575a3c01459. Await before/after results from an existing broad network benchmark before full approval; the response supplies no fresh runtime validation. Re-review new source or evidence. The unresolved #16660 retransmitted-probe reviewer choice is tracked on its exact PR card and remains held; its Oct30 reply predates the broad watch but is not completed.",
+      "summary": "Track the independent TCP recovery, pressure and application-latency obligations. #16887 is closed after its author withdrew the performance claim; its obsolete broad-results ask is retired. #16660’s scope reply remains on its own actual pending decision.",
+      "nextStep": "For #10343 retain the affected-proxy recovery capture obligation and separate M003 Reno control. For #15253 retain Kubernetes-interface capture/GSO evidence. Follow #15019’s author-owned successor and the existing #16660 pending reply; do not revive #16887 measurements or a stale sensitive-availability wait.",
       "findings": [
         {
           "text": "Reusing the receive buffers in #17187 reduced whole-Sentry allocations per GiB received by 63.16% on the single-worker TCP download (p < 0.001). Skipping flow parsing in #17188 alone yielded 55.48k allocations/GiB against 55.36k on stock (p = 0.378). The earlier two-build comparison had measured a 63.18% reduction with both changes applied.",
@@ -134057,7 +134007,7 @@
         }
       ],
       "technicalOwner": "Netstack",
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
+      "recheckCondition": "Substantive author/source/capture evidence or an actual pending-reply answer.",
       "lifecycleCoordination": {
         "owner": "root",
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
@@ -134098,6 +134048,17 @@
         "reviewedPackageSHA256": "5e0d9a79b831d2cf9eb990259ab669922c92fe37eab59421b28b913c5c130126",
         "localPlanProofSHA256": "5705072624a17ca8724f0735959e2aecaf2d97c34d9dae24437a9c40cbfabfbc",
         "approvalReason": "Automatic approval review requires exact trusted user authorization to expose this reviewed support payload on the public fork; forbids alternate execution. User question pending."
+      },
+      "followup": {
+        "disposition": "Track the independent TCP recovery, pressure and application-latency obligations. #16887 is closed after its author withdrew the performance claim; its obsolete broad-results ask is retired. #16660’s scope reply remains on its own actual pending decision.",
+        "nextAction": "For #10343 retain the affected-proxy recovery capture obligation and separate M003 Reno control. For #15253 retain Kubernetes-interface capture/GSO evidence. Follow #15019’s author-owned successor and the existing #16660 pending reply; do not revive #16887 measurements or a stale sensitive-availability wait.",
+        "recheckCondition": "Substantive author/source/capture evidence or an actual pending-reply answer.",
+        "curatedAt": "2026-11-26T00:05:51.079754+00:00",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/16887",
+          "https://github.com/gvisor/gvisor/pull/16660",
+          "https://github.com/gvisor/gvisor/pull/17844"
+        ]
       }
     },
     {
@@ -134647,7 +134608,7 @@
       "owner": "root",
       "updatedAt": "2026-11-25T21:04:58.790048+00:00",
       "group": "analysis",
-      "summary": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, all seven syscall leaves and CPU/Memory completed their scoped A/A and admitted A/B. Syscall contrasts were unflagged with primary intervals up to 7–8%; CPU/Memory had no prespecified flags at their recorded precision. These results do not establish fine equivalence or full performance clearance. HTTP recovery is running; Size/Usage/Mutex, FUSE and open #17884 remain separate.",
+      "summary": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, syscall, CPU/Memory and eight-leaf RubyNoOp comparisons are complete at their recorded precision; RubyNoOp primary intervals reach 5–6%, without a demonstrated regression or equivalence. HTTP and the full RubySpec/ABSL splits remain owned and running. Size/Usage/Mutex, FUSE architecture and open #17884 retain independent limits.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -135019,7 +134980,7 @@
           ]
         }
       ],
-      "nextStep": "analysis_delivery consumes HTTP recovery 45718197392 and the eight-leaf RubyNoOp functional preflight 45718730945. Do not repeat completed syscall/CPU/Memory measurements or treat a cheap preflight as full A/A. Preserve the remaining category, precision, FUSE architecture and prerequisite limits.",
+      "nextStep": "analysis_delivery consumes the existing HTTP and full original RubySpec/ABSL terminal artifacts. Reuse completed groups; do not repeat samples, expand scope or treat the earlier cheap preflight as the full category. Preserve all precision, baseline behavioral, FUSE and prerequisite limits.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -135422,7 +135383,7 @@
           }
         ]
       },
-      "recheckCondition": "Existing owner’s terminal qualification receipt or substantive prerequisite/FUSE/source evidence.",
+      "recheckCondition": "Existing owners’ terminal receipts or a substantive prerequisite/FUSE/source event.",
       "lifecycleCoordination": {
         "owner": "root",
         "nextAction": "Root assesses existing #15866 multiple-default and FindRoute cases before deciding any route source change. c9b remains diagnostic-only; its green projection does not qualify compatibility or alter frozen 0edf. Separately assign FUSE/MM design/parity → tiny exec-on-FUSE → GRPC and finish remaining performance qualification; #17884 remains open.",
@@ -135636,17 +135597,18 @@
           "https://github.com/tamird/gvisor/actions/runs/45716778939",
           "https://github.com/tamird/gvisor/actions/runs/45716778901",
           "https://github.com/tamird/gvisor/actions/runs/45718197392",
-          "https://github.com/tamird/gvisor/actions/runs/45718730945"
+          "https://github.com/tamird/gvisor/actions/runs/45718730945",
+          "https://github.com/tamird/gvisor/actions/runs/45722340702"
         ],
         "owner": "root",
-        "disposition": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, all seven syscall leaves and CPU/Memory completed their scoped A/A and admitted A/B. Syscall contrasts were unflagged with primary intervals up to 7–8%; CPU/Memory had no prespecified flags at their recorded precision. These results do not establish fine equivalence or full performance clearance. HTTP recovery is running; Size/Usage/Mutex, FUSE and open #17884 remain separate.",
-        "nextAction": "analysis_delivery consumes HTTP recovery 45718197392 and the eight-leaf RubyNoOp functional preflight 45718730945. Do not repeat completed syscall/CPU/Memory measurements or treat a cheap preflight as full A/A. Preserve the remaining category, precision, FUSE architecture and prerequisite limits.",
-        "recheckCondition": "Existing owner’s terminal qualification receipt or substantive prerequisite/FUSE/source evidence.",
+        "disposition": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, syscall, CPU/Memory and eight-leaf RubyNoOp comparisons are complete at their recorded precision; RubyNoOp primary intervals reach 5–6%, without a demonstrated regression or equivalence. HTTP and the full RubySpec/ABSL splits remain owned and running. Size/Usage/Mutex, FUSE architecture and open #17884 retain independent limits.",
+        "nextAction": "analysis_delivery consumes the existing HTTP and full original RubySpec/ABSL terminal artifacts. Reuse completed groups; do not repeat samples, expand scope or treat the earlier cheap preflight as the full category. Preserve all precision, baseline behavioral, FUSE and prerequisite limits.",
+        "recheckCondition": "Existing owners’ terminal receipts or a substantive prerequisite/FUSE/source event.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-25T23:15:02.675448+00:00",
+        "curatedAt": "2026-11-26T00:05:51.079754+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -135697,7 +135659,12 @@
             "Usage",
             "Mutex"
           ],
-          "productBinding": "All18 product identities and cleanup verified for completed syscall/CPU/Memory;no fine-equivalence claim"
+          "productBinding": "All18 product identities and cleanup verified for completed syscall/CPU/Memory;no fine-equivalence claim",
+          "rubyNoOp": {
+            "run": 45722340702,
+            "state": "AA and admitted AB complete",
+            "scope": "All eight original leaves;100 children/800rows;40contrasts perphase unflagged. Primary95%CIs AA1–6%/AB1–5%;ancillary11%/10%;medians−3.01%to+1.98%;no equivalence claim."
+          }
         }
       },
       "comparisons": [
@@ -147120,8 +147087,8 @@
       "owner": "root",
       "head": "9cf0dbbe278572fd39d877a0d542483573a0185b",
       "updatedAt": "2026-11-25T20:43:01.329836+00:00",
-      "summary": "Root holds standalone publication of the Iperf2 reporter after N24 visit 28 showed the SUM interval was 10.7154s versus the longest stream’s 11.3312s. Source 9cf remains a literal SUM parsing correction, but its unanswered publication question is suspended by the technical owner; no user rejection, approval or upstream PR is inferred.",
-      "nextStep": "BCR #11518 is merged and published metadata matches reviewed fe25. Canonical public-registry admission 45024961797 passed four labels with zero actions, clearing the qualification fallback without rebuilding the image. Root retains the separate DING ce163 topology qualification. The Moby remote-build exception was approved, and the exact ce163 image build/package checks plus owning Bazel build/empty-selection validation are complete; no build approval remains. The separate #15146 license-policy hold is not a demonstrated binary-build prerequisite. Sentry P64 remains a 30-second timeout locally and on RBE, with unknown cause and sensitive investigation remains subject to root assignment and independent measurement-control requirements; Daybreak availability is confirmed. No unchanged retry, timing or standalone 9cf publication.",
+      "summary": "Standalone Iperf2 reporter publication remains technically held by the measured SUM/longest-stream interval mismatch. The separate ce163 DING fixture is functionally qualified for ten native and ten systrap topologies with exact product/config restoration; this is not timing approval or a performance comparison. The original P64 timeout and reporting/source-publication limits remain separate.",
+      "nextStep": "Root assesses the Iperf SUM interval and P64 evidence under their existing measurement boundaries. Moby build/package/empty-TestMain and ten-topology functional gates are complete; no remote-build approval or startup-card dependency remains. No unchanged retry, new timing or standalone reporter publication.",
       "evidence": [
         {
           "label": "Exact reviewable source and included DCO",
@@ -147154,17 +147121,105 @@
         {
           "label": "Published BCR admission",
           "url": "https://github.com/tamird/gvisor/actions/runs/45024961797"
+        },
+        {
+          "label": "Predeclared Iperf same-source diagnostic; reporting mismatch",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44924729979"
+        },
+        {
+          "label": "DING package/protocol or corrected startup boundary",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44956385628"
+        },
+        {
+          "label": "DING package/protocol or corrected startup boundary",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44956762450"
+        },
+        {
+          "label": "Approved remote rebuild and package checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45691659853"
+        },
+        {
+          "label": "Owning Bazel build/TestMain validation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45692299082"
+        },
+        {
+          "label": "Initial DING harness preflight; no transfers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45698369467"
+        },
+        {
+          "label": "DING functional binding/restoration or ten systrap topology rows",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45705007458"
+        },
+        {
+          "label": "DING functional binding/restoration or ten systrap topology rows",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45706372749"
         }
       ],
       "findings": [],
       "followup": {
         "owner": "root",
-        "disposition": "Root holds standalone publication of the Iperf2 reporter after N24 visit 28 showed the SUM interval was 10.7154s versus the longest stream’s 11.3312s. Source 9cf remains a literal SUM parsing correction, but its unanswered publication question is suspended by the technical owner; no user rejection, approval or upstream PR is inferred.",
-        "nextAction": "BCR #11518 is merged and published metadata matches reviewed fe25. Canonical public-registry admission 45024961797 passed four labels with zero actions, clearing the qualification fallback without rebuilding the image. Root retains the separate DING ce163 topology qualification. The Moby remote-build exception was approved, and the exact ce163 image build/package checks plus owning Bazel build/empty-selection validation are complete; no build approval remains. The separate #15146 license-policy hold is not a demonstrated binary-build prerequisite. Sentry P64 remains a 30-second timeout locally and on RBE, with unknown cause and sensitive investigation remains subject to root assignment and independent measurement-control requirements; Daybreak availability is confirmed. No unchanged retry, timing or standalone 9cf publication.",
-        "recheckCondition": "Root returns a bounded investigation disposition, directly relevant evidence changes, or an actual outstanding source/operational decision.",
-        "curatedAt": "2026-11-25T20:43:01.329836+00:00"
+        "disposition": "Standalone Iperf2 reporter publication remains technically held by the measured SUM/longest-stream interval mismatch. The separate ce163 DING fixture is functionally qualified for ten native and ten systrap topologies with exact product/config restoration; this is not timing approval or a performance comparison. The original P64 timeout and reporting/source-publication limits remain separate.",
+        "nextAction": "Root assesses the Iperf SUM interval and P64 evidence under their existing measurement boundaries. Moby build/package/empty-TestMain and ten-topology functional gates are complete; no remote-build approval or startup-card dependency remains. No unchanged retry, new timing or standalone reporter publication.",
+        "recheckCondition": "Evidence-backed reporting/P64 disposition, changed source/control evidence or an actual source-publication decision.",
+        "curatedAt": "2026-11-26T00:05:51.079754+00:00",
+        "remoteBuild": {
+          "run": 45691659853,
+          "operation": "make rebuild-moby ARCH=x86_64 DOCKER_BUILD=false",
+          "capSeconds": 1800,
+          "imagePublished": false,
+          "buildExit": 0,
+          "imageDigest": "sha256:f4b706b7068e741b4f6ebfd05aad7cd38bd50420d91b4a508bb12e829d06f7c9",
+          "wrapperFailure": "Subsequent git-describe string assertion; recovered offline without rebuild",
+          "validationRun": 45692299082,
+          "validationStatus": "PASS: owning moby_test build and empty-selection TestMain on exact ce163"
+        },
+        "dingFunctionalPreflight": {
+          "run": 45698369467,
+          "imageSetup": "Passed",
+          "transfers": 0,
+          "failure": "Wrapper changed working directory before resolving executable",
+          "owner": "analysis_delivery",
+          "state": "Historical zero-transfer wrapper failure; later functional qualification complete"
+        },
+        "currentDINGFunctionalQualification": {
+          "owner": "benchmark_measurement_review",
+          "runtimeBindingAndRestorationRun": 45705007458,
+          "systrapRun": 45706372749,
+          "topologiesPerRuntime": 10,
+          "transferKiB": 1024,
+          "systrapFailures": 0,
+          "systrapSkips": 0,
+          "nativeTenPreviouslyPassed": true,
+          "releaseProductsVerified": 9,
+          "timingApproval": false,
+          "performanceResult": false
+        },
+        "executionOwner": "benchmark_measurement_review",
+        "dingSourceHead": "ce1634b4adf686f6067b4fed388de417efd43ddd",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/45691659853",
+          "https://github.com/tamird/gvisor/actions/runs/44924729979",
+          "https://github.com/tamird/gvisor/actions/runs/45692299082",
+          "https://github.com/tamird/gvisor/actions/runs/44956762450",
+          "https://github.com/tamird/gvisor/actions/runs/45705007458",
+          "https://github.com/tamird/gvisor/actions/runs/45706372749",
+          "https://github.com/tamird/gvisor/actions/runs/45698369467",
+          "https://github.com/tamird/gvisor/actions/runs/44956385628"
+        ]
       },
-      "recheckCondition": "Root returns a bounded investigation disposition, directly relevant evidence changes, or an actual outstanding source/operational decision."
+      "recheckCondition": "Evidence-backed reporting/P64 disposition, changed source/control evidence or an actual source-publication decision.",
+      "settledReviews": [
+        {
+          "kind": "exception",
+          "status": "settled",
+          "head": "ce1634b4adf686f6067b4fed388de417efd43ddd",
+          "url": "https://github.com/tamird/gvisor/commit/ce1634b4adf686f6067b4fed388de417efd43ddd",
+          "title": "Permit one remote Moby rebuild",
+          "summary": "Tamir approved the exact remote ce163 Moby rebuild and permanently authorized routine remote builds within authorized work. Source publication and measurements remain separate.",
+          "body": "Scope summary, not a verbatim question: permit one remote canonical `make rebuild-moby ARCH=x86_64 DOCKER_BUILD=false` on gVisor source ce1634b4adf686f6067b4fed388de417efd43ddd, capped at 30 minutes, without image publication, followed by Bazel validation. Generic CI authorization does not answer this specific exception to the Bazel-only rule.",
+          "outcome": "approved"
+        }
+      ]
     },
     {
       "id": "investigation:httpd-client-capacity",
