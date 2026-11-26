@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T11:41:06.718254+00:00",
+    "updatedAt": "2026-11-26T11:54:16.015819+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -16571,8 +16571,8 @@
       "url": "https://github.com/google/gvisor/pull/15634",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:43.853615+00:00",
-      "summary": "Public f11f74a remains unchanged; private d015e4c53 has accepted static reviews and source/functional checks. The four-variant parent A/A completed 200 full 64 MiB transfers, with no SACK recoveries and four retransmits in one transfer. No adjusted contrasts flagged, but drift/order uncertainty reaches 11% elapsed and 12% rate. This does not establish small-effect stability, recovery-path performance or candidate qualification.",
+      "updatedAt": "2026-11-26T11:54:16.015819+00:00",
+      "summary": "Public f11f74a remains unchanged; private d015e4c53 retains accepted static reviews and functional/source checks. Root retained the completed broad loss-free control: 200 full 64 MiB transfers, zero SACK recoveries and four retransmits in one transfer. No candidate comparison will run on this fixture. The eight-pair sparse-ACK microbenchmark is a separate historical component result; broad recovery-path performance and source approval remain separate.",
       "number": 15634,
       "reviewDecision": null,
       "evidence": [
@@ -16669,10 +16669,10 @@
       ],
       "followup": {
         "owner": "root",
-        "disposition": "Public f11f74a remains unchanged; private d015e4c53 has accepted static reviews and source/functional checks. The four-variant parent A/A completed 200 full 64 MiB transfers, with no SACK recoveries and four retransmits in one transfer. No adjusted contrasts flagged, but drift/order uncertainty reaches 11% elapsed and 12% rate. This does not establish small-effect stability, recovery-path performance or candidate qualification.",
+        "disposition": "Public f11f74a remains unchanged; private d015e4c53 retains accepted static reviews and functional/source checks. Root retained the completed broad loss-free control: 200 full 64 MiB transfers, zero SACK recoveries and four retransmits in one transfer. No candidate comparison will run on this fixture. The eight-pair sparse-ACK microbenchmark is a separate historical component result; broad recovery-path performance and source approval remain separate.",
         "sourceHead": "f11f74a174170eedf4b158ef111937c4533d4abe",
         "observedAt": "2026-11-20T23:41:26.383263+00:00",
-        "nextAction": "Root assesses the completed parent A/A before any candidate comparison. Recovery-path inference needs a workload that actually demonstrates recovery and suitable measurement precision. No candidate run or retry is authorized; preserve the separate source-publication and broad-performance boundaries.",
+        "nextAction": "Retain the completed broad loss-free A/A control and its uncertainty; no candidate comparison on this fixture and no unchanged rerun. Reopen recovery-path performance only when an existing representative workload demonstrates recovery during functional admission with adequate precision. Keep source approval and the historical eight-pair sparse-ACK component result separate.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15634",
           "https://github.com/tamird/gvisor/actions/runs/41091511027/artifacts/12994247763",
@@ -16713,9 +16713,9 @@
           "https://github.com/tamird/gvisor/actions/runs/45729863445/artifacts/15076018902"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Root disposition or materially different recovery/stability evidence; no repeat reading or unchanged control.",
+        "recheckCondition": "An existing representative workload with demonstrated recovery and adequate precision, or an actual source/review decision; no unchanged control or candidate run.",
         "implementationOwner": "approved_rebase_queue",
-        "curatedAt": "2026-11-26T00:18:21.223046+00:00",
+        "curatedAt": "2026-11-26T11:54:16.015819+00:00",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "candidate": {
           "head": "d015e4c537be52d4a0bbeda2cd04c3f54efa8d0d",
@@ -16725,13 +16725,14 @@
         },
         "assignedAA": {
           "executionOwner": "benchmark_measurement_review",
-          "status": "Assigned preparation; exact-parent CI-only projection of accepted e7ec recorder/tool dependencies is being prepared. No dispatched handle or timing samples.",
+          "status": "Completed and disposition decided: retain the broad loss-free control; no candidate comparison on this fixture and no unchanged rerun.",
           "parent": "4b3af1c2a1eaf79480ce2c6aa59dbf3ac623624d",
           "bothArms": "Same exact parent",
           "fixture": "//pkg/tcpip/transport/tcp/test/benchmarks:netstack_bench_test / BenchmarkBulkBatchedLocalhost",
           "packageTree": "e5bf57adc1ff4278af018c4bbad99eb4784fae65",
           "scope": "All four original CUBIC/SACK cases;0/100us batching and RACK toggles;64MiB one-way transfer;common Go1.27.3/MODULE/go.mod",
-          "historicalLimit": "Prior broad n12 differs in source arms; old sparse-ACK n8 is change-specific. Neither is current same-source control."
+          "historicalLimit": "Prior broad n12 differs in source arms; old sparse-ACK n8 is change-specific. Neither is current same-source control.",
+          "run": 45729863445
         },
         "broadPerformanceControl": {
           "run": 45729863445,
@@ -16741,7 +16742,12 @@
           "pairs": 24,
           "adjustedRejections": "0/80",
           "SACKRecoveries": 0,
-          "limits": "No small-effect stability/equivalence or candidate qualification."
+          "limits": "No small-effect stability/equivalence or candidate qualification.",
+          "disposition": "Retain broad loss-free control; not recovery-path or candidate qualification. No unchanged rerun.",
+          "retransmits": 4,
+          "transfersWithRetransmits": 1,
+          "candidateComparison": "Not proceeding on this fixture",
+          "reopenCondition": "Existing representative workload demonstrates recovery in functional admission and has adequate precision."
         }
       },
       "outreachReviewClock": {
@@ -40914,14 +40920,14 @@
       "url": "https://github.com/google/gvisor/pull/16507",
       "group": "bazel",
       "status": "open",
-      "summary": "Prepared e2101026eb now has a functionally usable AMD64 normal opaque baseline/candidate pair: baseline archive build 45808877775 and its retained benign-guest report passed, alongside the existing candidate archive/report. Current static parity remains 117,318 legacy positions included in 117,320 candidate positions, zero missing; four candidate reports and 24 KCOV cases passed. This is functional provenance, not performance qualification or publication approval.",
-      "updatedAt": "2026-11-26T11:38:02.447359+00:00",
+      "summary": "Prepared e2101026eb has verified report-off/on functional smokes on both frozen releases: runs 45812516017 and 45813625070 used the same checked c900cae5 executable, all guests exited zero, off produced no report and on produced one valid profile; cleanup passed. Smoke timings were discarded. Static parity remains 117,318 legacy positions included in 117,320 candidate positions, zero missing. This establishes the caller/metric and opaque pair, not A/A, A/B, performance or publication approval.",
+      "updatedAt": "2026-11-26T11:54:16.015819+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
-        "disposition": "Prepared e2101026eb now has a functionally usable AMD64 normal opaque baseline/candidate pair: baseline archive build 45808877775 and its retained benign-guest report passed, alongside the existing candidate archive/report. Current static parity remains 117,318 legacy positions included in 117,320 candidate positions, zero missing; four candidate reports and 24 KCOV cases passed. This is functional provenance, not performance qualification or publication approval.",
-        "nextAction": "For prepared e2101026eb (public c715 unchanged), root completes current-base final review and metric-compatible performance producer/control qualification before requesting publication approval. The normal AMD64 opaque pair and static-inclusion dependencies are resolved. Preserve the separate historical syscall-runner EACCES limitation; do not infer race/ARM static parity, timings or source approval.",
+        "disposition": "Prepared e2101026eb has verified report-off/on functional smokes on both frozen releases: runs 45812516017 and 45813625070 used the same checked c900cae5 executable, all guests exited zero, off produced no report and on produced one valid profile; cleanup passed. Smoke timings were discarded. Static parity remains 117,318 legacy positions included in 117,320 candidate positions, zero missing. This establishes the caller/metric and opaque pair, not A/A, A/B, performance or publication approval.",
+        "nextAction": "Root advances same-host broad functional admission using frozen opaque releases and benchmark/image identities; no timing yet. The report-off/on metric/caller gap is resolved with the same checked executable on both releases. Root owns in-progress AMD/ARM C++ lint 45813582592/45813586276 and current-base final review; do not duplicate observation. Preserve performance/source-publication boundaries and historical syscall-runner EACCES separately.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -41016,10 +41022,12 @@
           "https://github.com/tamird/gvisor/actions/runs/45803632211",
           "https://app.buildbuddy.io/invocation/e909d87e-a556-4e7b-be14-8f8fc4e8e213",
           "https://github.com/tamird/gvisor/actions/runs/45808877775",
-          "https://github.com/tamird/gvisor/actions/runs/45810571304/artifacts/15112412051"
+          "https://github.com/tamird/gvisor/actions/runs/45810571304/artifacts/15112412051",
+          "https://github.com/tamird/gvisor/actions/runs/45812516017/artifacts/15112544332",
+          "https://github.com/tamird/gvisor/actions/runs/45813625070/artifacts/15114720462"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Actual current-base final review, metric-compatible performance/control evidence or submitted publication decision; no duplicate archive/report or static-parity run.",
+        "recheckCondition": "Actual same-host broad functional admission, root-owned lint terminal evidence or current-base review/source decision; no new timing or duplicate smoke run.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "qualificationHistory": [
           {
@@ -41354,7 +41362,7 @@
           "proofSHA256": "8cfa9665fca33bd1625d96c7b184d3b8454523fbfe87c0b7bd9744d867d14c0b",
           "recheckCondition": "Root permanent-mechanism decision, same-operation execution-review result or actual fidelity evidence."
         },
-        "curatedAt": "2026-11-26T11:38:02.447359+00:00",
+        "curatedAt": "2026-11-26T11:54:16.015819+00:00",
         "permanentBazelFirstLayer": {
           "testSource": "340e1072aa5a3d47e01ff68dffea34f91be4a9f4",
           "ciSource": "fa452727d8d6af2399f8644f9d64a40dc5d902ae",
@@ -42111,6 +42119,114 @@
             "warning": "Baseline original instrumented Go controller prints GOCOVERDIR not set; this refers to Go runtime coverage-file emission, not absence of requested gVisor profile. Actual744828byte position report retained and validated. No source/flag workaround.",
             "cacheAndSafety": "Archive digest from build BEP exactly equals actual caller-retained file; report caller build reports5198remote-cache hits,2057internal,zero remote actions (no rebuilt binaries). Exact source/HEAD/index/tracked and credential-cleanup guards pass both jobs. Scoped runtime/temp directory removed by existing successful EXIT trap; artifact whitelist contains only intended reports/logs/release package, no runtime state/checkpoint. No persistent watcher remains.",
             "remaining": "No timings run. Metric-compatible performance producer/control and statistical/broad requirements remain; source57/e210 publication hold and current-base final review remain. Historical syscall-runner EACCES remains separate and unresolved. No new user decision requested."
+          },
+          "lifecycleProducer": {
+            "disposition": "Report-cost metric/caller gap resolved as fork-only functional admission; no measurements or AA/AB",
+            "native": {
+              "baseline": "c3efd8c9381c89b78c1d86b6c64a49d53ee938f8",
+              "candidate": "e2101026eb7e6601ed02a04dff43069e11d5d189"
+            },
+            "fixture": {
+              "path": "tools/bazeldefs/tests/coverage/coverage_lifecycle_test.go",
+              "target": "//tools/bazeldefs/tests/coverage:coverage_lifecycle_test",
+              "goBlob": "4267f13bc5bbac81af302860fc6696013dae55e8",
+              "baselineCI": "d440ede69b1ae06ef24ba63259f3ee781511af0d",
+              "baselineExecutedCI": "b8ab5cf69e6be48fd1a1643032ef2d53f0b8fd1a",
+              "candidateCI": "4d2ba80ad4224adc80deaeea28cace0d5a6a7cb6",
+              "compiledSHA256": "c900cae5ec9d1169db98d137c807489bcbf87a757f004d3ddbe9478c428957ce",
+              "compiledBytes": 4173984,
+              "identityProof": "Both BEP output maps identify the same actual executed target path and digest. Candidate additionally sha256sum-checks actual executable against baseline digest before guest and retains benchmark.sha256. Same source alone was not used as executable proof.",
+              "selectedRuntimeInput": "-coverage-runtime=<selected opaque archive installed runsc>; adjacent complete gvisor-bin passed unchanged by existing caller",
+              "timedBoundary": "cmd.Run (process Start/Wait including harmless guest and exit/report generation); context/argv/log setup, archive installation, report inspection and cleanup untimed. Not isolated serializer CPU."
+            },
+            "baseline": {
+              "run": 45812516017,
+              "artifactURL": "https://github.com/tamird/gvisor/actions/runs/45812516017/artifacts/15112544332",
+              "archiveSHA256": "c1a739b8790a723945cef9b0d318cfe0bdf9b8530d09acc172e0455670b24906",
+              "leaves": [
+                {
+                  "name": "off",
+                  "iterations": 1,
+                  "timing": "discarded"
+                },
+                {
+                  "name": "on",
+                  "iterations": 1,
+                  "timing": "discarded"
+                }
+              ],
+              "offReports": 0,
+              "onReports": [
+                {
+                  "path": "bazel-amd64-45812516017-1/_temp/bazel-qualification/artifacts/coverage-lifecycle-baseline-smoke/BenchmarkCoverageLifecycle/on/0/reports/runsc.log.20261126-114157.937718.cov.txt",
+                  "sha256": "5c3a8607874eb125cc079402bce365605d364b137bbe1eed081dc01be2288958",
+                  "bytes": 747342,
+                  "positions": 11853,
+                  "sentry": 7508,
+                  "generatedPB": 55,
+                  "pbFiles": 16,
+                  "syntaxExclusions": "PASS"
+                }
+              ],
+              "audit": "/private/tmp/gvisor-owner-20261117.knEPWo/16507-lifecycle-functional-smoke-audit.json"
+            },
+            "candidate": {
+              "run": 45813625070,
+              "artifactURL": "https://github.com/tamird/gvisor/actions/runs/45813625070/artifacts/15114720462",
+              "archiveSHA256": "c2718b424cf18241e2ca498d4b63263a2e88610492b5464fef378f41148eeb17",
+              "leaves": [
+                {
+                  "name": "off",
+                  "iterations": 1,
+                  "timing": "discarded"
+                },
+                {
+                  "name": "on",
+                  "iterations": 1,
+                  "timing": "discarded"
+                }
+              ],
+              "offReports": 0,
+              "onReports": [
+                {
+                  "path": "bazel-amd64-45813625070-1/_temp/bazel-qualification/artifacts/coverage-lifecycle-candidate-smoke/BenchmarkCoverageLifecycle/on/0/reports/runsc.log.20261126-114852.798738.cov.txt",
+                  "sha256": "123a2b8df80c35ef20194465191b10abdb8d09e3fcc769235bec6a7f9e3b28e6",
+                  "bytes": 746251,
+                  "positions": 11834,
+                  "sentry": 7492,
+                  "generatedPB": 55,
+                  "pbFiles": 16,
+                  "syntaxExclusions": "PASS"
+                }
+              ],
+              "audit": "/private/tmp/gvisor-owner-20261117.knEPWo/16507-lifecycle-candidate-functional-smoke-audit.json"
+            },
+            "qualification": "Both sources actually executed harmless /bin/true once per mode, exit0. In each source, actual off/on argv identical except coverage-report flag; sidecar path/environment common. Both on profiles satisfy full established positive ordered interval grammar, unique positions, Sentry/generatedPB and exclusion contracts. Both off directories were checked empty. All4timing values deliberately discarded. Both source/credential guards and owned-work deletion+absence assertion PASS; no state/checkpoint artifacts.",
+            "sourceChecks": {
+              "run": 45813126857,
+              "result": "PASS Goimports/Buildifier/spelling on formatted baselineCI",
+              "reused": "Exact Go file/target postimages used by candidate; only archive binding/visibility differs. Candidate compilation and source-preservation validated separately. No fullC++lint/NoGo claim for this CI-only fixture."
+            },
+            "formatRecovery": "Initial45812524615 found Buildifier-only CI support formatting; applied emitted changes in4files. Completed baseline functional inputs preserved; no baseline repeat.",
+            "broad": {
+              "invocation": "/private/tmp/gvisor-owner-20261117.knEPWo/16507-broad-workload-invocation.json",
+              "targets": [
+                "//test/benchmarks/base:startup_test",
+                "//test/benchmarks/base:syscallbench_test"
+              ],
+              "leaves": "Original StartupEmpty+all7syscall/fork leaves",
+              "preparedOnly": true,
+              "nextAdmission": "Freeze current benchmark executables/images and verify declared Docker runtime mapping to whole baseline archive on actual local controller. Existing paired e7 tool supports identical argv AA; this is not a new framework requirement."
+            },
+            "remaining": "No timing series/A-A/A-B/stability/broad performance pass established. A subsequent paired run must stage/freeze the two complete archived releases and the now-proven single benchmark executable on one timed host. Initial benchmark source/caller gap is no longer a blocker. Existing performance/current-base review/publication boundaries remain; no new approval hold introduced.",
+            "checkout": "Restored/released516e4814ae qualification/node-accounting-control-20261126 clean tracked/index with originalpycache preserved",
+            "observers": "All foreground handles terminal; no watcher/live job"
+          },
+          "currentCppLint": {
+            "owner": "root",
+            "status": "in progress at supplied owner observation; not independently polled",
+            "AMD": 45813582592,
+            "ARM": 45813586276
           }
         },
         "technicalOwner": "approved_rebase_queue",
@@ -151114,5 +151230,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-26T11:41:06.718254+00:00"
+  "updatedAt": "2026-11-26T11:54:16.015819+00:00"
 }
