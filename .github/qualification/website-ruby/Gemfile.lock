@@ -1,0 +1,172 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    addressable (2.7.0)
+      public_suffix (>= 2.0.2, < 5.0)
+    autoprefixer-rails (9.8.6.5)
+      execjs
+    colorator (1.1.0)
+    concurrent-ruby (1.1.6)
+    em-websocket (0.5.1)
+      eventmachine (>= 0.12.9)
+      http_parser.rb (~> 0.6.0)
+    ethon (0.12.0)
+      ffi (>= 1.3.0)
+    eventmachine (1.2.7)
+    execjs (2.7.0)
+    ffi (1.12.2)
+    forwardable-extended (2.6.0)
+    html-proofer (3.15.3)
+      addressable (~> 2.3)
+      mercenary (~> 0.3)
+      nokogumbo (~> 2.0)
+      parallel (~> 1.3)
+      rainbow (~> 3.0)
+      typhoeus (~> 1.3)
+      yell (~> 2.0)
+    http_parser.rb (0.6.0)
+    i18n (1.8.2)
+      concurrent-ruby (~> 1.0)
+    jekyll (4.0.0)
+      addressable (~> 2.4)
+      colorator (~> 1.0)
+      em-websocket (~> 0.5)
+      i18n (>= 0.9.5, < 2)
+      jekyll-sass-converter (~> 2.0)
+      jekyll-watch (~> 2.0)
+      kramdown (~> 2.1)
+      kramdown-parser-gfm (~> 1.0)
+      liquid (~> 4.0)
+      mercenary (~> 0.3.3)
+      pathutil (~> 0.9)
+      rouge (~> 3.0)
+      safe_yaml (~> 1.0)
+      terminal-table (~> 1.8)
+    jekyll-autoprefixer (1.0.2)
+      autoprefixer-rails (~> 9.3)
+    jekyll-sass-converter (2.1.0)
+      sassc (> 2.0.1, < 3.0)
+    jekyll-watch (2.2.1)
+      listen (~> 3.0)
+    kramdown (2.2.1)
+      rexml
+    kramdown-parser-gfm (1.1.0)
+      kramdown (~> 2.0)
+    liquid (4.0.3)
+    listen (3.3.0)
+      rb-fsevent (~> 0.10, >= 0.10.3)
+      rb-inotify (~> 0.9, >= 0.9.10)
+    mercenary (0.3.6)
+    mini_portile2 (2.4.0)
+    nokogiri (1.10.9)
+      mini_portile2 (~> 2.4.0)
+    nokogumbo (2.0.2)
+      nokogiri (~> 1.8, >= 1.8.4)
+    parallel (1.19.1)
+    pathutil (0.16.2)
+      forwardable-extended (~> 2.6)
+    public_suffix (4.0.5)
+    rainbow (3.0.0)
+    rb-fsevent (0.10.4)
+    rb-inotify (0.10.1)
+      ffi (~> 1.0)
+    rexml (3.2.3)
+    rouge (3.19.0)
+    safe_yaml (1.0.5)
+    sassc (2.3.0)
+      ffi (~> 1.9)
+    terminal-table (1.8.0)
+      unicode-display_width (~> 1.1, >= 1.1.1)
+    typhoeus (1.4.0)
+      ethon (>= 0.9.0)
+    unicode-display_width (1.7.0)
+    yell (2.2.2)
+
+PLATFORMS
+  ruby
+  x86_64-linux
+
+DEPENDENCIES
+  addressable (= 2.7.0)
+  autoprefixer-rails (= 9.8.6.5)
+  colorator (= 1.1.0)
+  concurrent-ruby (= 1.1.6)
+  em-websocket (= 0.5.1)
+  ethon (= 0.12.0)
+  eventmachine (= 1.2.7)
+  execjs (= 2.7.0)
+  ffi (= 1.12.2)
+  forwardable-extended (= 2.6.0)
+  html-proofer (= 3.15.3)
+  http_parser.rb (= 0.6.0)
+  i18n (= 1.8.2)
+  jekyll (= 4.0.0)
+  jekyll-autoprefixer (= 1.0.2)
+  jekyll-sass-converter (= 2.1.0)
+  jekyll-watch (= 2.2.1)
+  kramdown (= 2.2.1)
+  kramdown-parser-gfm (= 1.1.0)
+  liquid (= 4.0.3)
+  listen (= 3.3.0)
+  mercenary (= 0.3.6)
+  mini_portile2 (= 2.4.0)
+  nokogiri (= 1.10.9)
+  nokogumbo (= 2.0.2)
+  parallel (= 1.19.1)
+  pathutil (= 0.16.2)
+  public_suffix (= 4.0.5)
+  rainbow (= 3.0.0)
+  rb-fsevent (= 0.10.4)
+  rb-inotify (= 0.10.1)
+  rexml (= 3.2.3)
+  rouge (= 3.19.0)
+  safe_yaml (= 1.0.5)
+  sassc (= 2.3.0)
+  terminal-table (= 1.8.0)
+  typhoeus (= 1.4.0)
+  unicode-display_width (= 1.7.0)
+  yell (= 2.2.2)
+
+CHECKSUMS
+  addressable (2.7.0) sha256=5e9b62fe1239091ea9b2893cd00ffe1bcbdd9371f4e1d35fac595c98c5856cbb
+  autoprefixer-rails (9.8.6.5) sha256=15b036f5fac8d1b0439bec7881cf1322ba86474c81d93e02be42741b476770ea
+  colorator (1.1.0) sha256=e2f85daf57af47d740db2a32191d1bdfb0f6503a0dfbc8327d0c9154d5ddfc38
+  concurrent-ruby (1.1.6) sha256=14da21d5cfe9ccb02e9359b01cb7291e0167ded0ec805d4f3a4b2b4ffa418324
+  em-websocket (0.5.1) sha256=c39e6d64352eca13aedf4f5d7009666ab7f3ddce75410b883c467cf0e5465caf
+  ethon (0.12.0) sha256=e99d3095e89f82c5a7e63d9261ddf4a21f28ae5d12a9d3abaa6920cce6cbef3d
+  eventmachine (1.2.7) sha256=994016e42aa041477ba9cff45cbe50de2047f25dd418eba003e84f0d16560972
+  execjs (2.7.0) sha256=e1fae0c5c831934c47d92363b4ea66ef2951350ab91b5d8d3174342b9c2ee5fb
+  ffi (1.12.2) sha256=048ad01d5369f67075f943c16f1058f10663af2a66eedb87d921316ba1828e82
+  forwardable-extended (2.6.0) sha256=1bec948c469bbddfadeb3bd90eb8c85f6e627a412a3e852acfd7eaedbac3ec97
+  html-proofer (3.15.3) sha256=d1eef0ec692b6480d5630bfa18480fdee5007910d9c3ff9c85488af3b3f94ea1
+  http_parser.rb (0.6.0) sha256=f11d0aec50ef26a7d1f991e627ac88acdb5979282aeba7a5c3be6ce0636ed196
+  i18n (1.8.2) sha256=95cf147081cc6f1dbfb32a8f29a03afe8b0f4da6a300d37d34e0f74a6868994b
+  jekyll (4.0.0) sha256=4a1dc48895d525bfb98cd562bf03ab6dd2727b5795360877c90e12670b9fec3a
+  jekyll-autoprefixer (1.0.2) sha256=7aee7ef80ea1cce9f33fbff979189e19867c3677b26c96b24a2a874410d3fe27
+  jekyll-sass-converter (2.1.0) sha256=bb25965bfdec2c61220192f45d9358d34a9fce388f72ec95119fc6cc09c9cc12
+  jekyll-watch (2.2.1) sha256=bc44ed43f5e0a552836245a54dbff3ea7421ecc2856707e8a1ee203a8387a7e1
+  kramdown (2.2.1) sha256=c6b22245c496fe26869db2f4cccac30b7b2ffab99768a39450e2b656299a3515
+  kramdown-parser-gfm (1.1.0) sha256=fb39745516427d2988543bf01fc4cf0ab1149476382393e0e9c48592f6581729
+  liquid (4.0.3) sha256=7e15a957fbeb424dec15b52311880524954ce6e384ba9171e21ff98f142c0f7e
+  listen (3.3.0) sha256=0f91c5287358feee216f41e00a5b70ec125dd5c1d8fe51a014e864a29842041f
+  mercenary (0.3.6) sha256=2a084b18f5692c86a633e185d5311ba6d11fc46c802eb414ae05368178078a82
+  mini_portile2 (2.4.0) sha256=7e178a397ad62bb8a96977986130dc81f1b13201c6dd95a48bd8cec1dda5f797
+  nokogiri (1.10.9) sha256=d562108c5cdf7e9208c267107a0a54581d868689aefed9c5480898bb4033478a
+  nokogumbo (2.0.2) sha256=3acd625616ec8505fe9c1b22e100f834180419acb109ee6a7b20d8bce5b5b26b
+  parallel (1.19.1) sha256=c27ee2925978e8100f49063fd60f625522a6e96b08541ac26e7f2a72d594518a
+  pathutil (0.16.2) sha256=e43b74365631cab4f6d5e4228f812927efc9cb2c71e62976edcb252ee948d589
+  public_suffix (4.0.5) sha256=efbc976b8f8cd7e2f9387b41ad4dc5447bcc7e862cf3afd909f13b0048a3dc6f
+  rainbow (3.0.0) sha256=13ce4ffc3c94fb7a842117ecabdcdc5ff7fa27bec15ea44137b9f9abe575622d
+  rb-fsevent (0.10.4) sha256=0741522cac72db1fc15250453b557a57f896a60ede7ba64f73e281688fd42bcd
+  rb-inotify (0.10.1) sha256=050062d4f31d307cca52c3f6a7f4b946df8de25fc4bd373e1a5142e41034a7ca
+  rexml (3.2.3) sha256=90381d4a2f7841c66c747f52a2612395a43671b31532643dda2086787667e638
+  rouge (3.19.0) sha256=65b0914e26b1f7f40fd5e591b7d9071c7c6ef80bcd260de85c65a2d30e605980
+  safe_yaml (1.0.5) sha256=a6ac2d64b7eb027bdeeca1851fe7e7af0d668e133e8a88066a0c6f7087d9f848
+  sassc (2.3.0) sha256=6f0e15b0aab4b76ef29404b1d27b07850bd66c0d690eab05376cc389d6b6eee3
+  terminal-table (1.8.0) sha256=13371f069af18e9baa4e44d404a4ada9301899ce0530c237ac1a96c19f652294
+  typhoeus (1.4.0) sha256=fff9880d5dc35950e7706cf132fd297f377c049101794be1cf01c95567f642d4
+  unicode-display_width (1.7.0) sha256=cad681071867a4cf52613412e379e39e85ac72b1d236677a2001187d448b231a
+  yell (2.2.2) sha256=1d166f3cc3b6dc49a59778ea7156ed6d8de794c15106d48ffd6cbb061b9b26bc
+
+BUNDLED WITH
+   2.6.9
