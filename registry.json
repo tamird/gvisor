@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T12:40:09.280960+00:00",
+    "updatedAt": "2026-11-26T13:44:39.551373+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40920,14 +40920,14 @@
       "url": "https://github.com/google/gvisor/pull/16507",
       "group": "bazel",
       "status": "open",
-      "summary": "Prepared e2101026eb passed same-host functional admission: 18 fresh processes, 60 N1 leaf visits across report modes and all eight broad leaves on both releases; six valid on-profiles, off empty, zero failures/skips and cleanup passed. Frozen opaque release and common executable identities were verified before/after; raw times were discarded. Static parity remains 117,318 legacy positions included in 117,320 candidate positions, zero missing. AMD C++ lint passed; ARM found only the inherited ssize_t header issue already addressed by #17920. No A/A, A/B or publication approval is established.",
-      "updatedAt": "2026-11-26T12:38:58.600426+00:00",
+      "summary": "Prepared e2101026eb remains performance-held. Initial worker-scoped A/A completed 150 fresh processes and all ten report/startup/syscall leaves, but report/startup resolution remains weak. The later same-worker syscall control 45825464797 ran all seven leaves; uncacheable fork early/late median rose 1151.680 to 1168.148 microseconds (+1.43%) and crossed the predeclared drift threshold. Conditional candidate A/B did not start. Functional inputs and current AMD64 normal static parity remain verified; no source-publication approval or performance acceptance.",
+      "updatedAt": "2026-11-26T13:43:57.355117+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
-        "disposition": "Prepared e2101026eb passed same-host functional admission: 18 fresh processes, 60 N1 leaf visits across report modes and all eight broad leaves on both releases; six valid on-profiles, off empty, zero failures/skips and cleanup passed. Frozen opaque release and common executable identities were verified before/after; raw times were discarded. Static parity remains 117,318 legacy positions included in 117,320 candidate positions, zero missing. AMD C++ lint passed; ARM found only the inherited ssize_t header issue already addressed by #17920. No A/A, A/B or publication approval is established.",
-        "nextAction": "Root advances controlled same-source A/A with the verified immutable release/tool bundle and existing stop rules, then conditional comparison only if admitted. Same-host input, recorder, Docker and broad-caller functional setup is complete. Root finishes current-base review and tracks #17920 for the inherited ARM header finding; do not copy its fix or repeat unchanged lint. Preserve source-publication and performance boundaries and historical syscall-runner EACCES separately.",
+        "disposition": "Prepared e2101026eb remains performance-held. Initial worker-scoped A/A completed 150 fresh processes and all ten report/startup/syscall leaves, but report/startup resolution remains weak. The later same-worker syscall control 45825464797 ran all seven leaves; uncacheable fork early/late median rose 1151.680 to 1168.148 microseconds (+1.43%) and crossed the predeclared drift threshold. Conditional candidate A/B did not start. Functional inputs and current AMD64 normal static parity remain verified; no source-publication approval or performance acceptance.",
+        "nextAction": "Root assesses the observed control limitation before any further measurement: syscall A/A drift stopped candidate comparison, and report/startup comparisons remain held at their demonstrated resolution. No unchanged retry, extra samples or future-worker stability transfer. Preserve completed input/runtime/report/KCOV/static proof, inherited ARM header dependency #17920, current-base review and source-publication boundaries.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -41025,10 +41025,12 @@
           "https://github.com/tamird/gvisor/actions/runs/45810571304/artifacts/15112412051",
           "https://github.com/tamird/gvisor/actions/runs/45812516017/artifacts/15112544332",
           "https://github.com/tamird/gvisor/actions/runs/45813625070/artifacts/15114720462",
-          "https://github.com/tamird/gvisor/actions/runs/45817774382/artifacts/15116492869"
+          "https://github.com/tamird/gvisor/actions/runs/45817774382/artifacts/15116492869",
+          "https://github.com/tamird/gvisor/actions/runs/45821799969/artifacts/15119296597",
+          "https://github.com/tamird/gvisor/actions/runs/45825464797/artifacts/15119959776"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Actual source-bound A/A admission/results, current-base final review, or #17920 integration; no repeated functional setup, duplicate header fix or inferred publication approval.",
+        "recheckCondition": "Materially different, substantiated workload/control evidence or contributor/source disposition; no automatic repeated A/A or candidate comparison.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "qualificationHistory": [
           {
@@ -41363,7 +41365,7 @@
           "proofSHA256": "8cfa9665fca33bd1625d96c7b184d3b8454523fbfe87c0b7bd9744d867d14c0b",
           "recheckCondition": "Root permanent-mechanism decision, same-operation execution-review result or actual fidelity evidence."
         },
-        "curatedAt": "2026-11-26T12:38:58.600426+00:00",
+        "curatedAt": "2026-11-26T13:43:57.355117+00:00",
         "permanentBazelFirstLayer": {
           "testSource": "340e1072aa5a3d47e01ff68dffea34f91be4a9f4",
           "ciSource": "fa452727d8d6af2399f8644f9d64a40dc5d902ae",
@@ -42292,6 +42294,67 @@
             },
             "nextAction": "Stop at requested admission. Existing pipeline can now stage one immutable bundle withboth opaque releases andcommon executable for controlledsame-source work when owning instructions permit. Preserve report cmd.Run lifecycle boundary, original eight broadleaves, same-host placement andscientificcontrol stop rules; no sample expansion.",
             "observers": "none; all foreground handles terminal"
+          },
+          "initialSameSourceAA": {
+            "run": 45821799969,
+            "artifactURL": "https://github.com/tamird/gvisor/actions/runs/45821799969/artifacts/15119296597",
+            "source": "fe0314b48beb77faa0bf5cdc8b9b5fa8fb1b75a5",
+            "processes": 150,
+            "retainedPairsPerGroup": 24,
+            "leaves": 10,
+            "retainedRows": 480,
+            "validOnProfiles": 50,
+            "offReports": 0,
+            "scientificDisposition": {
+              "result": "Completed worker-scoped A/A controls; no family-significant contrast, no equivalence conclusion and no A/B authorized or run.",
+              "report": "Off A82.372ms ±7% versus B80.214ms ±4% (-2.620%); on A120.804ms ±4% versus B121.209ms ±2% (+0.335%). Descriptive 95% median intervals, rounded native display. On A-first/second median shift+4.080%; A early/late+2.189%, B early/late-1.533%. These short N1 groups do not resolve small single-digit or sub-percent differences reliably; no effect-size exclusion bound computed.",
+              "startup": "A153.368ms ±2%, B153.925ms ±2% (+0.363%). Early/late shifts A-1.040%, B-1.307%; split per-arm CIs reach6%. No sub-percent precision claim.",
+              "syscalls": "All seven full-arm descriptive CIs round to0–1%; zero is display rounding, not zero uncertainty. A/B median shifts range-0.154% to+1.137%; maximum absolute early/late shift1.399%, maximum first/second1.239%. Uncacheable fork B early/late-1.281%, nominalp=.006; does not pass predeclared family alpha.0002. Supports finer descriptive resolution than the lifecycle groups on this worker, not an adjusted equivalence guarantee.",
+              "calibration": "All336 retained syscall metric rows used actual adaptive N, not N1. Across arms/leaves measured rows imply1.0439–1.2416s; N roughly193446–606828 for getpid/seccomp leaves and828–902 for fork. Each leaf/arm exact min/median/max retained in groups.*.calibration.",
+              "cost": "Three group recorder wall durations10.816734s,13.833536s,831.965231s (856.615502s total). Syscall adaptive calibration/setup consumes most cost; group duration is not an endpoint.",
+              "nextAction": "Root may use these observed resolution/cost limits to decide whether a later co-located comparison is worth starting. Current worker is released; no stability transfer to a future host, no automatic A/B admission from zero flags, no extra samples."
+            }
+          },
+          "syscallMatchedControl": {
+            "run": 45825464797,
+            "source": "fe0314b48beb77faa0bf5cdc8b9b5fa8fb1b75a5",
+            "url": "https://github.com/tamird/gvisor/actions/runs/45825464797",
+            "artifactURL": "https://github.com/tamird/gvisor/actions/runs/45825464797/artifacts/15119959776",
+            "artifactBytes": 75666205,
+            "nativeOutcome": "SUCCESS (control collection and expected conditional stop completed)",
+            "scientificDisposition": "HOLD: same-worker AA showed family-significant drift; conditional AB NOT RUN. No unchanged retry or expanded samples.",
+            "phase": "AA baseline only",
+            "visits": 50,
+            "retainedPairs": 24,
+            "warmupPairs": 1,
+            "rawRows": 350,
+            "retainedRows": 336,
+            "flags": [
+              {
+                "contrast": "A-early-late",
+                "row": [
+                  "ForkUnderSeccomp/seccomp.uncacheable-4",
+                  "0.00115168",
+                  "1%",
+                  "0.0011681480000000001",
+                  "1%",
+                  "+1.43%",
+                  "p=0.000 n=12"
+                ]
+              }
+            ],
+            "flagMeaning": "Native benchstat emits +1.43% at alpha=.0002; displayed p=.000 is rounded, not exact zero. A early1151.680us vs late1168.148us, both native descriptive95%CI rounded±1%, n12each.",
+            "CPUHeader": [
+              "goos: linux",
+              "goarch: amd64",
+              "cpu: Intel(R) Xeon(R) 6975P-C"
+            ],
+            "controllerAffinity": "pid 3412's current affinity list: 0-3",
+            "workerScope": "Single GHA controller/helper PID recorded in worker-phase-continuity.json. Timed children local; both runtimes installed and product-verified before AA. Actual Intel6975P-C differs from earlier AMD9V74 controller; prior worker stability was not transferred. No cause for current drift has been isolated.",
+            "monotonicWallSeconds": 833.056474146,
+            "remaining": "No candidate syscall comparison or performance acceptance. Original report/startup candidate comparisons remain held after retainedN1resolution assessment. No source/publication change. Root must resolve actual worker/control limitation before any further measurement; no automatic extraAA/samples.",
+            "observer": "none; no new watcher created forcheckpoint; downloader97066finished",
+            "candidateComparison": false
           }
         },
         "technicalOwner": "approved_rebase_queue",
@@ -60726,7 +60789,7 @@
       "title": "Run both iperf3 benchmark endpoints on Ubuntu Jammy",
       "group": "bazel",
       "status": "Approved source; P64 functional completion held",
-      "updatedAt": "2026-11-26T08:09:25.520848+00:00",
+      "updatedAt": "2026-11-26T13:43:57.355117+00:00",
       "url": "https://github.com/tamird/gvisor/commit/67601a14c",
       "summary": "Approved source67601a14c directly pins released iperf3.18.0.bcr.1; BCR and the ce163 build prerequisites are complete. Its explicit aggregate sender metric does not require the old Iperf2 SUM parser. Landing remains held on P64 completion in the maintained caller, including calibration. Retained native success and Sentry/debug timeouts do not identify a blocking function or establish performance.",
       "followup": {
@@ -60734,7 +60797,7 @@
         "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
         "observedAt": "2026-11-02T17:47:05.918366+00:00",
         "disposition": "Approved source67601a14c directly pins released iperf3.18.0.bcr.1; BCR and the ce163 build prerequisites are complete. Its explicit aggregate sender metric does not require the old Iperf2 SUM parser. Landing remains held on P64 completion in the maintained caller, including calibration. Retained native success and Sentry/debug timeouts do not identify a blocking function or establish performance.",
-        "nextAction": "Root/analysis_delivery uses the retained native/Sentry completion and debug evidence to localize the remaining P64 completion interval or identify a verified applicable upstream fix. Do not repeat stock debug output, the deferred-cancellation experiment or unchanged old heads; do not increase timeouts, drop P64/calibration, clamp bytes or infer zero delivered data from an incomplete receiver summary. Preserve source/publication and performance bounds.",
+        "nextAction": "analysis_delivery advances the bounded changed-input P64 functional calibration with periodic stats disabled (-i 0) and final JSON retained. Diagnostic 45830276007 entered its first timer at 19.8956 seconds and did not return before interruption; stats timestamps progressed from 19.899 to 26.988 seconds, with no byte-check/cancel/join marker. This narrows the interval before cancellation, not a blocking function or throughput result. No result, timeout increase, dropped P64/calibration or publication approval is inferred.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
@@ -60777,8 +60840,8 @@
           "owner": "root"
         },
         "technicalOwner": "analysis_delivery / root",
-        "recheckCondition": "Actual new source/functional evidence that localizes or resolves P64 completion, or an explicit owning technical disposition. No new run is authorized by this metadata update.",
-        "curatedAt": "2026-11-26T08:09:25.520848+00:00",
+        "recheckCondition": "Owner-reported changed-input functional calibration and actual final JSON/runtime/cleanup evidence; no unchanged diagnostic repeat or cancellation-bug conclusion.",
+        "curatedAt": "2026-11-26T13:43:57.355117+00:00",
         "bcrPublication": {
           "pr": 11518,
           "merge": "70404f85e",
@@ -60836,7 +60899,128 @@
           ],
           "stockMarkerBoundary": "Sender threads stopped is emitted after sender joins and before final stats/TEST_END; absence does not identify the blocking function; presence alone would not prove TEST_END",
           "selectedPatch": null,
-          "newRun": false
+          "newRun": false,
+          "currentMilestoneDiagnostic": {
+            "source": "26dc311a0feb2484f1bd20baecfd0b0e9b424127",
+            "parent": "617d29e27dd11370a800ca592e8e078d9105ced6",
+            "ref": "qualification/iperf-p64-completion-milestones-20261126",
+            "run": 45830276007,
+            "url": "https://github.com/tamird/gvisor/actions/runs/45830276007",
+            "status": "TERMINAL_FAILURE_EXPECTED",
+            "request": "iperf-p64-completion-dispatch-inputs.json",
+            "scope": "Stock Iperf3.18 client, max12 monotonic main-thread milestones: client.enter, firsttimers.enter/exit, firstlimit.check, firstcancellation/join boundaries. Original64streams/1KiB/30sclient+5skill, existingnativeworker/3mGo/240sBazel. No runtime/backport/debug-level changes.",
+            "sourceDelta": "3files97insertions (externalunifiedpatch plus moduleoverride/export); no projectworkload/runtime changes.",
+            "firstRejectedDispatch": "gh defaulted upstream;404 workflow not found, no run. Fixed by explicit --repo tamird/gvisor.",
+            "checkout": "Restored516e4814ae qualification/node-accounting-control-20261126, trackedclean, original tools/buildkite/__pycache__/ preserved. Released.",
+            "next": "Root decision on one changed-input functional calibration with documented Iperf3 -i0 (disables periodic stats/reporter timers, preserves finalJSONsummaries) while retaining64streams/1KiB/30stimeout/backend/cpuset. No rerun dispatched at this audit checkpoint.",
+            "grpcOwner": "Originalhostedstudyf828a443/client66317 remains independent, next17:30UTCcheckpoint.",
+            "artifact": 15122357771,
+            "artifactFile": "iperf-p64-milestones-45830276007.zip",
+            "log": "iperf-p64-milestones-45830276007.log",
+            "markers": [
+              "P64_MILESTONE 0.067481685 client.enter rc=0 done=0 omit=0 sent=0 received=0 goal=1024",
+              "P64_MILESTONE 19.895638516 timers.enter rc=0 done=0 omit=0 sent=131072 received=0 goal=1024"
+            ],
+            "identities": [
+              {
+                "shared_docker_version": "28.0.4",
+                "images": [
+                  {
+                    "Containers": -1,
+                    "Created": 0,
+                    "Id": "sha256:4ec2ca30da271ed0cf9b223d77906743437af46bb7e1175b6d46386f7ef4abec",
+                    "Labels": {
+                      "org.opencontainers.image.version": "24.04"
+                    },
+                    "ParentId": "",
+                    "RepoDigests": [],
+                    "RepoTags": [
+                      "gvisor.dev/images/benchmarks/iperf:latest"
+                    ],
+                    "SharedSize": -1,
+                    "Size": 84595254
+                  }
+                ],
+                "registered_runtimes": [
+                  "gvisor-worker-6tbbkaz3nj3kxouridu6b5xizz",
+                  "gvisor-worker-hhy7rj7uiahnypdzzoehetryqz"
+                ],
+                "release_entrypoints": [
+                  "/home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/bazel-out/k8-fastbuild/bin/release/runsc",
+                  "/home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/bazel-out/k8-fastbuild/bin/release/runsc"
+                ]
+              },
+              {
+                "paired_visit": 0,
+                "paired_worker": "PAYUEBTSQZ5BRTJMUR4QIJDSLK",
+                "paired_block": 0,
+                "paired_warmup": false,
+                "arm": "BASE",
+                "runtime_source": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+                "pair_process": 9369,
+                "runsc_entrypoint_sha256": "be14f918ceec4fdffeea239a344566a1c10e606bdd7f7fbccd689624ae454b24",
+                "benchmark_sha256": "c942042e94a0c24e6e952c052c0bfa378aef05d00fada49751ba58a182a22b92"
+              },
+              {
+                "quiescent_visit": 0,
+                "remaining_release_processes": {}
+              },
+              {
+                "owned_runsc_empty": true
+              },
+              {
+                "owned_runsc_empty": true
+              },
+              {
+                "owned_daemon_stopped": true,
+                "owned_daemon_files_removed": true
+              }
+            ],
+            "releaseComparison": "Both nine-file release inventories identical to retained stock617worker run44967627779; runscbe14.../Sentry054597... . No runtime changes.",
+            "client": {
+              "version": "iperf 3.18",
+              "test_start": {
+                "protocol": "TCP",
+                "num_streams": 64,
+                "blksize": 131072,
+                "omit": 0,
+                "duration": 0,
+                "bytes": 1024,
+                "blocks": 0,
+                "reverse": 0,
+                "tos": 0,
+                "target_bitrate": 0,
+                "bidir": 0,
+                "fqrate": 0,
+                "interval": 1
+              },
+              "sum_sent": {
+                "start": 0,
+                "end": 30.074293,
+                "seconds": 30.074293,
+                "bytes": 131072,
+                "bits_per_second": 34866.18953935176,
+                "retransmits": 1,
+                "sender": true
+              },
+              "sum_received": {
+                "start": 0,
+                "end": 30.074293,
+                "seconds": 30.074293,
+                "bytes": 0,
+                "bits_per_second": 0,
+                "sender": true
+              },
+              "error": "interrupt - the client has terminated"
+            },
+            "firstInterval": {
+              "streams": 64,
+              "minimumEnd": 19.899113,
+              "maximumEnd": 26.987727
+            },
+            "finding": "Client enters first tmr_run at19.895638516monotonic with131072sent/goal1024; no timerexit, limitcheck, cancel orjoin before30sinterrupt. First emitted64-streamstats interval timestamps span19.899113..26.987727. Not a demonstrated pthread_cancel/join stall. Periodic stats/reporter timers are1s; pinned tmr_run reschedules each by oneperiod and list-resorts, allowing accumulated missedticks to run before bytecompletion check.",
+            "unknown": "This bounded result does not isolate one syscall or prove a deadlock/runtime defect. Timestamped interval progress indicates expensive timer processing. Receiver0 is interrupted/incomplete result, not evidence for completedthroughput."
+          }
         },
         "metricDisposition": {
           "selectedVehicle": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
@@ -72549,8 +72733,8 @@
       "url": "https://github.com/google/gvisor/pull/16830",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:48.755399+00:00",
-      "summary": "Published source advanced from 1efbbc1d to 62adc7d9. Hosting reports MERGEABLE; shayon’s COMMENTED review says LGTM but is not a formal APPROVED review. Current source/check evidence must be reconciled before transferring historical qualification or review credit. Current FirstPass 2809 is failed and unclassified; GitHub validation was still running in the snapshot.",
+      "updatedAt": "2026-11-26T13:44:39.551373+00:00",
+      "summary": "Public #16830 remains at 62adc7d9. Shayonj formally approved this exact head at 13:00:35 UTC; the older COMMENTED LGTM is historical. GitHub reports APPROVED, while the tracker effective decision remains REVIEW_REQUIRED. Current main56026 reports success; newer FirstPass3023 failed and its cause is unclassified. Earlier qualification and CI diagnoses retain their source scope.",
       "evidence": [
         {
           "label": "Unix datagram drain and writable wakeup on Linux, stock and corrected gVisor",
@@ -72603,8 +72787,8 @@
         "owner": "root",
         "sourceHead": "62adc7d9cf16a0805efad38bedcf6d516d1b2ec0",
         "observedAt": "2026-11-25T12:53:06.511271+00:00",
-        "disposition": "Published source advanced from 1efbbc1d to 62adc7d9. Hosting reports MERGEABLE; shayon’s COMMENTED review says LGTM but is not a formal APPROVED review. Current source/check evidence must be reconciled before transferring historical qualification or review credit. Current FirstPass 2809 is failed and unclassified; GitHub validation was still running in the snapshot.",
-        "nextAction": "Root owns exact-head FirstPass 2809 classification and source/review reconciliation under the existing maintainer/performance/sensitive boundaries. No old-source cause or qualification transfers; no protected source read, source edit, build/test, unchanged retry or outreach.",
+        "disposition": "Public #16830 remains at 62adc7d9. Shayonj formally approved this exact head at 13:00:35 UTC; the older COMMENTED LGTM is historical. GitHub reports APPROVED, while the tracker effective decision remains REVIEW_REQUIRED. Current main56026 reports success; newer FirstPass3023 failed and its cause is unclassified. Earlier qualification and CI diagnoses retain their source scope.",
+        "nextAction": "Root classifies new exact-head FirstPass3023 and reconciles the remaining effective-review/source obligations. Preserve the formal current-head approval and successful main status; do not transfer the old2809 cause, historical source qualification or infer merge/publication authority. No unchanged retry or outreach.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16830",
           "https://github.com/tamird/gvisor/commit/6b8479b9f",
@@ -72614,12 +72798,15 @@
           "https://github.com/tamird/gvisor/commit/6b8479b9f8ce19e15e5aa804b12bf5d7e6799704",
           "https://github.com/tamird/gvisor/commit/1efbbc1dae7e49ccfdce6d0c706dfc266250974a",
           "https://github.com/google/gvisor/pull/16830#pullrequestreview-6057213076",
-          "https://buildkite.com/gvisor/first-pass/builds/2809"
+          "https://buildkite.com/gvisor/first-pass/builds/2809",
+          "https://github.com/google/gvisor/pull/16830#pullrequestreview-6074549208",
+          "https://buildkite.com/gvisor/first-pass/builds/3023",
+          "https://buildkite.com/gvisor/pipeline/builds/56026"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Actual source/check/review evidence or an explicit owner disposition changes the next action.",
+        "recheckCondition": "Canonical3023 outcome evidence, actual review/source/check change or root disposition; no unchanged polling.",
         "providerHead": "62adc7d9cf16a0805efad38bedcf6d516d1b2ec0",
-        "curatedAt": "2026-11-25T12:53:06.511271+00:00",
+        "curatedAt": "2026-11-26T13:44:39.551373+00:00",
         "attentionDispositions": [
           {
             "reason": "author-feedback",
@@ -72665,7 +72852,38 @@
               "sourceHead": "62adc7d9cf16a0805efad38bedcf6d516d1b2ec0"
             }
           }
-        ]
+        ],
+        "qualificationHistory": [
+          {
+            "at": "2026-11-26T13:44:39.551373+00:00",
+            "priorDisposition": "Published source advanced from 1efbbc1d to 62adc7d9. Hosting reports MERGEABLE; shayon’s COMMENTED review says LGTM but is not a formal APPROVED review. Current source/check evidence must be reconciled before transferring historical qualification or review credit. Current FirstPass 2809 is failed and unclassified; GitHub validation was still running in the snapshot.",
+            "priorNextAction": "Root owns exact-head FirstPass 2809 classification and source/review reconciliation under the existing maintainer/performance/sensitive boundaries. No old-source cause or qualification transfers; no protected source read, source edit, build/test, unchanged retry or outreach.",
+            "scope": "Superseded by actual current-head review/check observations; no earlier CI cause transfer."
+          }
+        ],
+        "currentReviewAndCI": {
+          "head": "62adc7d9cf16a0805efad38bedcf6d516d1b2ec0",
+          "review": {
+            "reviewer": "shayonj",
+            "state": "APPROVED",
+            "at": "2026-11-26T13:00:35Z",
+            "url": "https://github.com/google/gvisor/pull/16830#pullrequestreview-6074549208"
+          },
+          "nativeGitHubDecision": "APPROVED",
+          "trackerEffectiveDecision": "REVIEW_REQUIRED",
+          "main": {
+            "build": 56026,
+            "reportedState": "SUCCESS",
+            "url": "https://buildkite.com/gvisor/pipeline/builds/56026"
+          },
+          "firstPass": {
+            "build": 3023,
+            "state": "FAILURE",
+            "cause": "Unclassified; no old2809 quota cause transfer",
+            "url": "https://buildkite.com/gvisor/first-pass/builds/3023"
+          },
+          "observedAt": "2026-11-26T13:42:03.995449+00:00"
+        }
       },
       "dcoAmendment": {
         "oldHead": "6b8479b9f8ce19e15e5aa804b12bf5d7e6799704",
@@ -84873,8 +85091,8 @@
       "title": "Claim TCP processor queue membership atomically",
       "group": "runtime",
       "status": "Contributor approved; qualifying integration",
-      "updatedAt": "2026-11-18T22:30:58.775869+00:00",
-      "summary": "Two peer queues can contend for the same TCP listener. Replacing the membership mutex with one atomic claim removed 63 net lines. On two AMD64 CPUs, rejected duplicate queue operations fell from 20.24 to 12.01 ns and a successful dequeue/requeue from 25.20 to 17.24 ns. The 16-pair benchmark measures queue operations. The ordinary and race TCP suites, both architecture analyzers and both single-processor scheduling controls passed.\n\nA fresh-connection HTTP/1.1 benchmark on two CPUs found no statistically distinguishable change with one or 16 concurrent clients (16 alternating pairs, 2,048 requests per sample). Every response matched. In a separate 16-client run on the parent, both TCP processors queued the listener. Of 2,235 duplicate enqueue attempts, 1,133 found the listener already queued on the other processor.",
+      "updatedAt": "2026-11-26T13:43:57.355117+00:00",
+      "summary": "Existing atomic candidate/source approvals and qualification remain scoped. The original 70-by-four capability screen is now dispatched through shared Bazel owners. BASE HTTPD C1/N1 passed, but the 20-second C1000/N1000 preflight retained 296 HTTP 200 and 704 client timeouts: workload failure with correct accounting/cleanup. Four frozen releases are verified; category outcomes are not yet qualification.",
       "evidence": [
         {
           "label": "Original benchstat, sixteen paired samples, race and Nogo results",
@@ -84897,8 +85115,8 @@
         "owner": "root",
         "sourceHead": "a8e54633f47fda892caa896ab37f3200b662cccf",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
-        "disposition": "Candidate1298a7c preserves the approved patch over merged prerequisite. Native TCP62 per architecture, race63 AMD64 and focused fairness fixtures passed. Saved missing-owner XML verifies e2e405+nogo1 per architecture, zero failures/skips; source lint passed both and AMD64 C++ lint passed. Original harness failures retained: terminal-control PASS prefix and unsupported per-architecture Nogo stdout marker. ARM64 C++ baseline limitation stays explicit. Performance and final independent source review remain open.",
-        "nextAction": "Root migrates the existing shared70-case four-runtime qualification into permanent Bazel owners and thin Actions before further execution. The same exact CI-only operation is authorized for re-review under the new standing CI grant; the historical action rejection is not a pending human decision. Do not launch the frozen per-item driver, bypass a renewed rejection, amend source PRs or infer statistical qualification.",
+        "disposition": "Existing atomic candidate/source approvals and qualification remain scoped. The original 70-by-four capability screen is now dispatched through shared Bazel owners. BASE HTTPD C1/N1 passed, but the 20-second C1000/N1000 preflight retained 296 HTTP 200 and 704 client timeouts: workload failure with correct accounting/cleanup. Four frozen releases are verified; category outcomes are not yet qualification.",
+        "nextAction": "benchmark_measurement_review audits the four original category screens (HTTPD 45829528325, Node 45829532497, Ruby 45829536505, Redis 45829540840) and retains failed baseline outcomes. The shared mechanism is operating; the historical rejection is not a pending human decision. Preserve original 70-by-four scope and source/performance/publication boundaries; do not mirror the observer or infer 280 passed outcomes.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/a8e54633f",
           "https://github.com/google/gvisor/pull/17045",
@@ -84917,7 +85135,7 @@
           "recheckCondition": "Exact ref/head change, canonical PR feedback/check/import or terminal-state change, dependency landing or contributor decision.",
           "owner": "root"
         },
-        "recheckCondition": "Root shared-mechanism decision, same-operation execution-review result, actual qualification evidence or source/dependency event.",
+        "recheckCondition": "Owner-audited category outcomes or material workload/source evidence; no duplicate screen or statistics from capability admission.",
         "qualificationHistory": [
           {
             "disposition": "Approved for publication after #17045 lands.",
@@ -84984,9 +85202,9 @@
           }
         },
         "remainingNetworkOutcomeOwner": "tcp_conflict",
-        "curatedAt": "2026-11-18T22:30:58.775869+00:00",
+        "curatedAt": "2026-11-26T13:43:57.355117+00:00",
         "ciExecutionAuthorization": {
-          "status": "Authorized CI-only; held for permanent Bazel mechanism migration",
+          "status": "Authorized CI-only capability screen dispatched through shared Bazel mechanism; source publication and statistical qualification separate",
           "owner": "root",
           "historicalPlan": "2da1c9afe20217ba15542a884d88735501dd477c",
           "sourcePRPublicationApprovedByThisGrant": false,
@@ -84994,6 +85212,50 @@
             "file": "tcp-full-category-outcomes-publication-approval-package.json",
             "sha256": "16b649d36d3625042152615568ab55dfdbdfa68ea910e5b38f1b7a268a8b9bce"
           }
+        },
+        "capabilityScreen": {
+          "owner": "benchmark_measurement_review",
+          "scope": "Original70 variants across four frozen runtimes; functional outcomes only, not 280 accepted outcomes or statistics",
+          "source": "f998a3409a6a40ae8da233409d5674e218a732f7",
+          "baseAdmission": {
+            "run": 45824285166,
+            "artifact": 15119396498,
+            "HTTPD1MiBC1N1": "1 HTTP 200 / zero errors; cleanup/source guards passed"
+          },
+          "changed20sC1000Admission": {
+            "run": 45825483811,
+            "artifact": 15120132535,
+            "requests": 1000,
+            "HTTP200": 296,
+            "clientTimeouts": 704,
+            "workload": "FAIL",
+            "accountingAndCleanup": "PASS"
+          },
+          "frozenInputs": "Four original complete nine-member releases verified; six original image IDs unchanged",
+          "categoryDispatches": [
+            {
+              "category": "httpd",
+              "source": "f998a3409a6a40ae8da233409d5674e218a732f7",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45829528325"
+            },
+            {
+              "category": "node",
+              "source": "f998a3409a6a40ae8da233409d5674e218a732f7",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45829532497"
+            },
+            {
+              "category": "ruby",
+              "source": "f998a3409a6a40ae8da233409d5674e218a732f7",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45829536505"
+            },
+            {
+              "category": "redis",
+              "source": "f998a3409a6a40ae8da233409d5674e218a732f7",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45829540840"
+            }
+          ],
+          "state": "First screen dispatched; outcomes pending owner audit",
+          "next": "Owner audits exact original screen outcomes and diagnostics; no statistical clearance or source/publication approval inferred."
         }
       },
       "refinement": {
@@ -109054,13 +109316,13 @@
       "url": "https://github.com/gvisor/gvisor/issues/17832",
       "group": "rbe",
       "status": "open",
-      "summary": "Successor cache source b245b95c47 and the refreshed #17832 title/body have two actual unanswered publication questions. At base bf581410, it covers nine Bazel job definitions in eight workflows, including do.yml’s two architecture entries. Source tests passed; Make preflight verifies command expansion only, not Docker/ARM runtime or speedup. Withdrawn e61 history and the distinct Go-export decision remain intact. A separate ordinary-build probe had 510 remote cache hits and 136 internal actions, with no compiler/generator spawn execution; no matched execution speedup was measured. A separate ordinary release build recorded 416 remote executions and 2,787 cache hits; its profile has 132 worker spans, peak overlap 14. This measures worker overlap, not local speedup or PR latency.",
+      "summary": "Cache source b245b95c47, refreshed #17832 prose and separate Go-export decisions remain unanswered and unchanged. A matched #16587 changelog build pair produced the same binary with four shared-cache hits and eight internal actions in each arm, zero executing spawns. Wall times 12.043/9.080 seconds and provider times 67/81 seconds are descriptive warm-cache observations, not executor speedup. The separate ordinary release build has 416 remote executions and peak recorded worker overlap 14.",
       "followup": {
         "owner": "root",
         "observedAt": "2026-11-25T13:09:11.551551+00:00",
-        "disposition": "Successor cache source b245b95c47 and the refreshed #17832 title/body have two actual unanswered publication questions. At base bf581410, it covers nine Bazel job definitions in eight workflows, including do.yml’s two architecture entries. Source tests passed; Make preflight verifies command expansion only, not Docker/ARM runtime or speedup. Withdrawn e61 history and the distinct Go-export decision remain intact. A separate ordinary-build probe had 510 remote cache hits and 136 internal actions, with no compiler/generator spawn execution; no matched execution speedup was measured. A separate ordinary release build recorded 416 remote executions and 2,787 cache hits; its profile has 132 worker spans, peak overlap 14. This measures worker overlap, not local speedup or PR latency.",
+        "disposition": "Cache source b245b95c47, refreshed #17832 prose and separate Go-export decisions remain unanswered and unchanged. A matched #16587 changelog build pair produced the same binary with four shared-cache hits and eight internal actions in each arm, zero executing spawns. Wall times 12.043/9.080 seconds and provider times 67/81 seconds are descriptive warm-cache observations, not executor speedup. The separate ordinary release build has 416 remote executions and peak recorded worker overlap 14.",
         "nextAction": "Root consumes the actual b245 cache-PR and revised issue-title/body decisions independently; approved_delivery_batch owns the cache revision. Preserve the distinct Go-export opening decision. No source publication, issue edit, merge or runtime/speedup result is inferred.",
-        "recheckCondition": "An actual answer to one of the three independent questions or substantive source/coverage evidence.",
+        "recheckCondition": "Actual publication answers or an already-required newly changed build with comparable independent misses; run the cache-reading/non-uploading sandbox arm first where practical. No unchanged warm-build retry or PR latency claim.",
         "evidence": [
           "https://github.com/gvisor/gvisor/issues/17832",
           "https://github.com/google/gvisor/issues/17832#issuecomment-7097716495",
@@ -109089,7 +109351,7 @@
           "https://github.com/tamird/gvisor/actions/runs/45768612458/artifacts/15092842201",
           "https://github.com/tamird/gvisor/actions/runs/45771527305/artifacts/15093907787"
         ],
-        "curatedAt": "2026-11-26T12:38:58.600426+00:00",
+        "curatedAt": "2026-11-26T13:43:57.355117+00:00",
         "supersededExecutionBlocker": {
           "nextAction": "Root consumes each existing decision independently: open the cache 86cffbf72 PR, replace the issue body with the current measured-scope draft, and open the Go export f8500dffe PR. Canonical lint coverage is reconciled through unchanged-input parent evidence. Deliver approved changes through the existing authorized routes; the unpublished Go export fork ref still needs its SSH/HTTPS execution blocker to clear.",
           "recordedAt": "2026-11-24T06:29:20.083295+00:00",
@@ -109279,9 +109541,37 @@
             "sumWorkerExecutionSeconds": 569.739
           },
           "scope": "Worker process spans only; excludes queues, uploads and cache activity. No measured local comparison or PR latency. Cache proposal workflows/actions/Makefile/tools/bazel.mk unchanged from bf581410 to c3efd8c93."
+        },
+        "matchedWarmCachePair": {
+          "owner": "actions_bazel_cache",
+          "pr": 16587,
+          "native": "4ffc7923f64734cacfb01319dda3965432413f5a",
+          "ci": "088b3e8a8cd73559c3591cce1b1678eece9e97c5",
+          "target": "//debian:changelog_tool",
+          "local": {
+            "run": 45828524560,
+            "artifact": 15121815787,
+            "wallSeconds": 12.043,
+            "jobSeconds": 67
+          },
+          "RBE": {
+            "run": 45829128380,
+            "artifact": 15122041576,
+            "wallSeconds": 9.08,
+            "jobSeconds": 81
+          },
+          "eachArm": {
+            "spawnCacheHits": 4,
+            "internal": 8,
+            "executingSpawns": 0
+          },
+          "productSHA256": "898a454467a671d2f822393010fb476516914c50ede940e4eaca386c2949f0af",
+          "productBytes": 1962144,
+          "result": "Descriptive warm-cache pair only; no executing-spawn or worker-parallelism speedup measured. Source/configuration/product/counters preserved; earlier remote-only overlap is separate.",
+          "recheck": "An already-required build on newly changed source with independent cache misses. Where practical run cache-reading/non-uploading sandbox arm before its first normal RBE qualification. No unchanged changelog retry."
         }
       },
-      "updatedAt": "2026-11-26T12:38:58.600426+00:00",
+      "updatedAt": "2026-11-26T13:43:57.355117+00:00",
       "nextStep": "Root consumes the actual b245 cache-PR and revised issue-title/body decisions independently; approved_delivery_batch owns the cache revision. Preserve the distinct Go-export opening decision. No source publication, issue edit, merge or runtime/speedup result is inferred.",
       "recheckCondition": "Technical review milestone for revised cache source/text or actual Go-export answer.",
       "reviewWatch": {
@@ -148390,9 +148680,9 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-26T07:25:22.110658+00:00",
+      "updatedAt": "2026-11-26T13:43:57.355117+00:00",
       "summary": "The 207 open authored gVisor PRs report 193 passing DCO checks. Three signed PR commits are marked valid by stale wrong-range failures; eleven genuinely unsigned single-commit heads have no DCO run or suite and each has a live exact-source import. Current required DCO app is 974774. Provider #127 merged and its image built, but deployment is unverified.",
-      "nextStep": "Root preserves the eleven imported revisions and coordinates with their importing owners before any same-tree sign-off rewrite. For #15106/#17456/#17470, follow actual provider deployment/recomputation or genuine new-head evidence; their introduced commits are valid, so no contributor trailer repair is warranted. No unsupported rerequest, override, fake commit, unchanged retry or outreach.",
+      "nextStep": "Root preserves the eleven approved unsigned native revisions and exact-source imports under the existing hold, coordinating before any trailer rewrite. Eight green exports have no submitted human reviews/comments; six have no requested reviewer. This is our coordination disposition, not eight maintainer instructions. Existing master requires last-push approval and DCO. For three valid introduced commits with stale wrong-range failures, follow genuine updated checks/deployment evidence; no fake commits, override, unsupported rerequest or outreach.",
       "completedMetadataAmendments": 179,
       "activeImportCoordination": [
         15106,
@@ -149176,9 +149466,9 @@
       "followup": {
         "owner": "root",
         "disposition": "The 207 open authored gVisor PRs report 193 passing DCO checks. Three signed PR commits are marked valid by stale wrong-range failures; eleven genuinely unsigned single-commit heads have no DCO run or suite and each has a live exact-source import. Current required DCO app is 974774. Provider #127 merged and its image built, but deployment is unverified.",
-        "nextAction": "Root preserves the eleven imported revisions and coordinates with their importing owners before any same-tree sign-off rewrite. For #15106/#17456/#17470, follow actual provider deployment/recomputation or genuine new-head evidence; their introduced commits are valid, so no contributor trailer repair is warranted. No unsupported rerequest, override, fake commit, unchanged retry or outreach.",
+        "nextAction": "Root preserves the eleven approved unsigned native revisions and exact-source imports under the existing hold, coordinating before any trailer rewrite. Eight green exports have no submitted human reviews/comments; six have no requested reviewer. This is our coordination disposition, not eight maintainer instructions. Existing master requires last-push approval and DCO. For three valid introduced commits with stale wrong-range failures, follow genuine updated checks/deployment evidence; no fake commits, override, unsupported rerequest or outreach.",
         "recheckCondition": "Import source/head/lifecycle change or importing-owner coordination; actual updated provider/check evidence.",
-        "curatedAt": "2026-11-26T07:25:22.110658+00:00"
+        "curatedAt": "2026-11-26T13:43:57.355117+00:00"
       },
       "currentDCOAudit": {
         "observedAt": "2026-11-26T07:22:31.393956+00:00",
@@ -149473,6 +149763,15 @@
           "nativeRerequest": "unsupported at current published upstream source; process_check_run_event returns unless RequestedAction; #48 remains open",
           "action": "No source amendments, reruns, or outreach. Preserve active imports; coordinate any eventual same-tree sign-off rewrite with importing owner."
         }
+      },
+      "ownerCoordinationDisposition": {
+        "sourcePRs": 11,
+        "sourceApproval": "Approved native source heads; exact open Copybara source bindings retained",
+        "greenExports": 8,
+        "greenExportsWithNoSubmittedReviewsOrHumanComments": 8,
+        "greenExportsWithoutRequestedReviewer": 6,
+        "requiredMasterRules": "Last-push approval and DCO",
+        "authority": "Preserving revisions and coordinating with importing owners is our disposition under the existing hold, not instructions from eight maintainers."
       }
     },
     {
@@ -150926,9 +151225,9 @@
       "title": "Report client aggregate Iperf bandwidth",
       "owner": "root",
       "head": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
-      "updatedAt": "2026-11-26T08:09:25.520848+00:00",
+      "updatedAt": "2026-11-26T13:43:57.355117+00:00",
       "summary": "Approved Iperf3 vehicle 67601a14c supplies aggregate sender bytes/rate; the standalone Iperf2 reporter is superseded only for that metric. P64 completion remains a functional blocker. A retained debug control with the deferred-cancellation backport timed out before any captured sender-stopped or TEST_END marker; its blocking boundary is unlocalized. Payload divided by outer benchmark elapsed time remains a separate undelivered metric.",
-      "nextStep": "Root/analysis_delivery uses the retained native/Sentry completion and debug evidence to localize the remaining P64 completion interval or identify a verified applicable upstream fix. Do not repeat stock debug output, the deferred-cancellation experiment or unchanged old heads; do not increase timeouts, drop P64/calibration, clamp bytes or infer zero delivered data from an incomplete receiver summary. Preserve source/publication and performance bounds.",
+      "nextStep": "analysis_delivery advances the bounded changed-input P64 functional calibration with periodic stats disabled (-i 0) and final JSON retained. Diagnostic 45830276007 entered its first timer at 19.8956 seconds and did not return before interruption; stats timestamps progressed from 19.899 to 26.988 seconds, with no byte-check/cancel/join marker. This narrows the interval before cancellation, not a blocking function or throughput result. No result, timeout increase, dropped P64/calibration or publication approval is inferred.",
       "evidence": [
         {
           "label": "Exact reviewable source and included DCO",
@@ -151019,9 +151318,9 @@
       "followup": {
         "owner": "root",
         "disposition": "Approved Iperf3 vehicle 67601a14c supplies aggregate sender bytes/rate; the standalone Iperf2 reporter is superseded only for that metric. P64 completion remains a functional blocker. A retained debug control with the deferred-cancellation backport timed out before any captured sender-stopped or TEST_END marker; its blocking boundary is unlocalized. Payload divided by outer benchmark elapsed time remains a separate undelivered metric.",
-        "nextAction": "Root/analysis_delivery uses the retained native/Sentry completion and debug evidence to localize the remaining P64 completion interval or identify a verified applicable upstream fix. Do not repeat stock debug output, the deferred-cancellation experiment or unchanged old heads; do not increase timeouts, drop P64/calibration, clamp bytes or infer zero delivered data from an incomplete receiver summary. Preserve source/publication and performance bounds.",
-        "recheckCondition": "Actual new source/functional evidence that localizes or resolves P64 completion, or an explicit owning technical disposition. No new run is authorized by this metadata update.",
-        "curatedAt": "2026-11-26T08:09:25.520848+00:00",
+        "nextAction": "analysis_delivery advances the bounded changed-input P64 functional calibration with periodic stats disabled (-i 0) and final JSON retained. Diagnostic 45830276007 entered its first timer at 19.8956 seconds and did not return before interruption; stats timestamps progressed from 19.899 to 26.988 seconds, with no byte-check/cancel/join marker. This narrows the interval before cancellation, not a blocking function or throughput result. No result, timeout increase, dropped P64/calibration or publication approval is inferred.",
+        "recheckCondition": "Owner-reported changed-input functional calibration and actual final JSON/runtime/cleanup evidence; no unchanged diagnostic repeat or cancellation-bug conclusion.",
+        "curatedAt": "2026-11-26T13:43:57.355117+00:00",
         "remoteBuild": {
           "run": 45691659853,
           "operation": "make rebuild-moby ARCH=x86_64 DOCKER_BUILD=false",
@@ -151137,7 +151436,128 @@
           ],
           "stockMarkerBoundary": "Sender threads stopped is emitted after sender joins and before final stats/TEST_END; absence does not identify the blocking function; presence alone would not prove TEST_END",
           "selectedPatch": null,
-          "newRun": false
+          "newRun": false,
+          "currentMilestoneDiagnostic": {
+            "source": "26dc311a0feb2484f1bd20baecfd0b0e9b424127",
+            "parent": "617d29e27dd11370a800ca592e8e078d9105ced6",
+            "ref": "qualification/iperf-p64-completion-milestones-20261126",
+            "run": 45830276007,
+            "url": "https://github.com/tamird/gvisor/actions/runs/45830276007",
+            "status": "TERMINAL_FAILURE_EXPECTED",
+            "request": "iperf-p64-completion-dispatch-inputs.json",
+            "scope": "Stock Iperf3.18 client, max12 monotonic main-thread milestones: client.enter, firsttimers.enter/exit, firstlimit.check, firstcancellation/join boundaries. Original64streams/1KiB/30sclient+5skill, existingnativeworker/3mGo/240sBazel. No runtime/backport/debug-level changes.",
+            "sourceDelta": "3files97insertions (externalunifiedpatch plus moduleoverride/export); no projectworkload/runtime changes.",
+            "firstRejectedDispatch": "gh defaulted upstream;404 workflow not found, no run. Fixed by explicit --repo tamird/gvisor.",
+            "checkout": "Restored516e4814ae qualification/node-accounting-control-20261126, trackedclean, original tools/buildkite/__pycache__/ preserved. Released.",
+            "next": "Root decision on one changed-input functional calibration with documented Iperf3 -i0 (disables periodic stats/reporter timers, preserves finalJSONsummaries) while retaining64streams/1KiB/30stimeout/backend/cpuset. No rerun dispatched at this audit checkpoint.",
+            "grpcOwner": "Originalhostedstudyf828a443/client66317 remains independent, next17:30UTCcheckpoint.",
+            "artifact": 15122357771,
+            "artifactFile": "iperf-p64-milestones-45830276007.zip",
+            "log": "iperf-p64-milestones-45830276007.log",
+            "markers": [
+              "P64_MILESTONE 0.067481685 client.enter rc=0 done=0 omit=0 sent=0 received=0 goal=1024",
+              "P64_MILESTONE 19.895638516 timers.enter rc=0 done=0 omit=0 sent=131072 received=0 goal=1024"
+            ],
+            "identities": [
+              {
+                "shared_docker_version": "28.0.4",
+                "images": [
+                  {
+                    "Containers": -1,
+                    "Created": 0,
+                    "Id": "sha256:4ec2ca30da271ed0cf9b223d77906743437af46bb7e1175b6d46386f7ef4abec",
+                    "Labels": {
+                      "org.opencontainers.image.version": "24.04"
+                    },
+                    "ParentId": "",
+                    "RepoDigests": [],
+                    "RepoTags": [
+                      "gvisor.dev/images/benchmarks/iperf:latest"
+                    ],
+                    "SharedSize": -1,
+                    "Size": 84595254
+                  }
+                ],
+                "registered_runtimes": [
+                  "gvisor-worker-6tbbkaz3nj3kxouridu6b5xizz",
+                  "gvisor-worker-hhy7rj7uiahnypdzzoehetryqz"
+                ],
+                "release_entrypoints": [
+                  "/home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/bazel-out/k8-fastbuild/bin/release/runsc",
+                  "/home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/bazel-out/k8-fastbuild/bin/release/runsc"
+                ]
+              },
+              {
+                "paired_visit": 0,
+                "paired_worker": "PAYUEBTSQZ5BRTJMUR4QIJDSLK",
+                "paired_block": 0,
+                "paired_warmup": false,
+                "arm": "BASE",
+                "runtime_source": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+                "pair_process": 9369,
+                "runsc_entrypoint_sha256": "be14f918ceec4fdffeea239a344566a1c10e606bdd7f7fbccd689624ae454b24",
+                "benchmark_sha256": "c942042e94a0c24e6e952c052c0bfa378aef05d00fada49751ba58a182a22b92"
+              },
+              {
+                "quiescent_visit": 0,
+                "remaining_release_processes": {}
+              },
+              {
+                "owned_runsc_empty": true
+              },
+              {
+                "owned_runsc_empty": true
+              },
+              {
+                "owned_daemon_stopped": true,
+                "owned_daemon_files_removed": true
+              }
+            ],
+            "releaseComparison": "Both nine-file release inventories identical to retained stock617worker run44967627779; runscbe14.../Sentry054597... . No runtime changes.",
+            "client": {
+              "version": "iperf 3.18",
+              "test_start": {
+                "protocol": "TCP",
+                "num_streams": 64,
+                "blksize": 131072,
+                "omit": 0,
+                "duration": 0,
+                "bytes": 1024,
+                "blocks": 0,
+                "reverse": 0,
+                "tos": 0,
+                "target_bitrate": 0,
+                "bidir": 0,
+                "fqrate": 0,
+                "interval": 1
+              },
+              "sum_sent": {
+                "start": 0,
+                "end": 30.074293,
+                "seconds": 30.074293,
+                "bytes": 131072,
+                "bits_per_second": 34866.18953935176,
+                "retransmits": 1,
+                "sender": true
+              },
+              "sum_received": {
+                "start": 0,
+                "end": 30.074293,
+                "seconds": 30.074293,
+                "bytes": 0,
+                "bits_per_second": 0,
+                "sender": true
+              },
+              "error": "interrupt - the client has terminated"
+            },
+            "firstInterval": {
+              "streams": 64,
+              "minimumEnd": 19.899113,
+              "maximumEnd": 26.987727
+            },
+            "finding": "Client enters first tmr_run at19.895638516monotonic with131072sent/goal1024; no timerexit, limitcheck, cancel orjoin before30sinterrupt. First emitted64-streamstats interval timestamps span19.899113..26.987727. Not a demonstrated pthread_cancel/join stall. Periodic stats/reporter timers are1s; pinned tmr_run reschedules each by oneperiod and list-resorts, allowing accumulated missedticks to run before bytecompletion check.",
+            "unknown": "This bounded result does not isolate one syscall or prove a deadlock/runtime defect. Timestamped interval progress indicates expensive timer processing. Receiver0 is interrupted/incomplete result, not evidence for completedthroughput."
+          }
         }
       },
       "recheckCondition": "Actual new source/functional evidence that localizes or resolves P64 completion, or an explicit owning technical disposition. No new run is authorized by this metadata update.",
@@ -151521,5 +151941,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-26T12:40:09.280960+00:00"
+  "updatedAt": "2026-11-26T13:44:39.551373+00:00"
 }
