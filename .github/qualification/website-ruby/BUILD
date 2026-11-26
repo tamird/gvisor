@@ -2,6 +2,7 @@ load("@rules_ruby//ruby:defs.bzl", "rb_binary")
 exports_files(["Gemfile", "Gemfile.lock"])
 genrule(
     name = "native_tools",
+    visibility = ["@website_bundle//:__pkg__"],
     outs = ["native-tools.txt"],
     cmd = "set -eu; { for tool in cc c++ make; do command -v $$tool; done; cc --version; make --version; uname -m; } >$@",
     exec_compatible_with = ["//tools/bazeldefs:rbe_ubuntu24_c"],
