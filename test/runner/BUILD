@@ -1,8 +1,15 @@
+load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 load("//tools:defs.bzl", "bzl_library", "go_binary", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+native_binary(
+    name = "coverage_archive_tar",
+    src = "@bsd_tar_toolchains//:resolved_target_toolchain",
+    testonly = True,
 )
 
 go_binary(
@@ -13,6 +20,7 @@ go_binary(
         "xml.go",
     ],
     data = [
+        ":coverage_archive_tar",
         "//debian:gvisor-release-coverage-tar-zstd",
         "//debian:gvisor-release-race-coverage-tar-zstd",
         "//test/runner/fuse",

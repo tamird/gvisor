@@ -1345,6 +1345,10 @@ syscall_test(
 )
 
 syscall_test(
+    exec_properties = {
+        "test.dockerUser": "root",
+        "test.workload-isolation-type": "firecracker",
+    },
     test = "//test/syscalls/linux:uname_test",
 )
 

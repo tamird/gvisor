@@ -1036,3 +1036,6 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+coverage_bsd_tar = use_extension("@tar.bzl//tar:extensions.bzl", "toolchains")
+use_repo(coverage_bsd_tar, "bsd_tar_toolchains")
