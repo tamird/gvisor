@@ -1,0 +1,90 @@
+--- a/src/iperf_client_api.c
++++ b/src/iperf_client_api.c
+@@ -29,6 +29,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <time.h>
+ #include <unistd.h>
+ #include <signal.h>
+ #include <sys/types.h>
+@@ -51,6 +52,29 @@
+ #define TCP_CA_NAME_MAX 16
+ #endif /* TCP_CA_NAME_MAX */
+ #endif /* HAVE_TCP_CONGESTION */
++
++/* Qualification-only: bounded, main-thread completion milestones. */
++static void
++p64_milestone(struct iperf_test *test, const char *phase, int result)
++{
++    static unsigned int count;
++    struct timespec now;
++    char line[256];
++    int len;
++
++    if (test->num_streams != 64 || count >= 12)
++        return;
++    ++count;
++    if (clock_gettime(CLOCK_MONOTONIC, &now) != 0)
++        return;
++    len = snprintf(line, sizeof(line),
++        "P64_MILESTONE %lld.%09ld %s rc=%d done=%d omit=%d sent=%llu received=%llu goal=%llu\n",
++        (long long)now.tv_sec, now.tv_nsec, phase, result, test->done, test->omitting,
++        (unsigned long long)test->bytes_sent, (unsigned long long)test->bytes_received,
++        (unsigned long long)test->settings->bytes);
++    if (len > 0 && (size_t)len < sizeof(line))
++        (void)write(STDERR_FILENO, line, len);
++}
+ 
+ void *
+ iperf_client_worker_run(void *s) {
+@@ -577,12 +601,15 @@
+     int64_t timeout_us;
+     int64_t rcv_timeout_us;
+     int i_errno_save;
++    int diagnostic_first_check = 1;
+ 
+     if (NULL == test)
+     {
+         iperf_err(NULL, "No test\n");
+         return -1;
+     }
++
++    p64_milestone(test, "client.enter", 0);
+ 
+     if (test->logfile)
+         if (iperf_open_logfile(test) < 0)
+@@ -732,7 +759,14 @@
+ 
+             /* Run the timers. */
+             iperf_time_now(&now);
++            if (diagnostic_first_check)
++                p64_milestone(test, "timers.enter", 0);
+             tmr_run(&now);
++            if (diagnostic_first_check) {
++                p64_milestone(test, "timers.exit", 0);
++                p64_milestone(test, "limit.check", 0);
++                diagnostic_first_check = 0;
++            }
+ 
+ 	    /*
+ 	     * Is the test done yet?  We have to be out of omitting
+@@ -755,14 +789,18 @@
+                         int rc;
+                         sp->done = 1;
+                         if (sp->thread_created == 1) {
++                            p64_milestone(test, "cancel.enter", 0);
+                             rc = pthread_cancel(sp->thr);
++                            p64_milestone(test, "cancel.exit", rc);
+                             if (rc != 0 && rc != ESRCH) {
+                                 i_errno = IEPTHREADCANCEL;
+                                 errno = rc;
+                                 iperf_err(test, "sender cancel in pthread_cancel - %s", iperf_strerror(i_errno));
+                                 goto cleanup_and_fail;
+                             }
++                            p64_milestone(test, "join.enter", 0);
+                             rc = pthread_join(sp->thr, NULL);
++                            p64_milestone(test, "join.exit", rc);
+                             if (rc != 0 && rc != ESRCH) {
+                                 i_errno = IEPTHREADJOIN;
+                                 errno = rc;
