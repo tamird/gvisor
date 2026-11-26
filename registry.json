@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T13:44:39.551373+00:00",
+    "updatedAt": "2026-11-26T14:48:39.896255+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -60789,15 +60789,15 @@
       "title": "Run both iperf3 benchmark endpoints on Ubuntu Jammy",
       "group": "bazel",
       "status": "Approved source; P64 functional completion held",
-      "updatedAt": "2026-11-26T13:43:57.355117+00:00",
+      "updatedAt": "2026-11-26T14:47:52.575095+00:00",
       "url": "https://github.com/tamird/gvisor/commit/67601a14c",
-      "summary": "Approved source67601a14c directly pins released iperf3.18.0.bcr.1; BCR and the ce163 build prerequisites are complete. Its explicit aggregate sender metric does not require the old Iperf2 SUM parser. Landing remains held on P64 completion in the maintained caller, including calibration. Retained native success and Sentry/debug timeouts do not identify a blocking function or establish performance.",
+      "summary": "The private sender-only early-done remedy with interval 0 passed P64 twice with matching sender/receiver totals, but the full original caller matrix failed: native P4 and Sentry P4/P16 download timed out, and OneConnection failed with producer output dropped. Owning parser/argv fixtures passed. P64 success is functional evidence only, not full compatibility, throughput or publication qualification.",
       "followup": {
         "owner": "root",
         "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
         "observedAt": "2026-11-02T17:47:05.918366+00:00",
-        "disposition": "Approved source67601a14c directly pins released iperf3.18.0.bcr.1; BCR and the ce163 build prerequisites are complete. Its explicit aggregate sender metric does not require the old Iperf2 SUM parser. Landing remains held on P64 completion in the maintained caller, including calibration. Retained native success and Sentry/debug timeouts do not identify a blocking function or establish performance.",
-        "nextAction": "analysis_delivery advances the bounded changed-input P64 functional calibration with periodic stats disabled (-i 0) and final JSON retained. Diagnostic 45830276007 entered its first timer at 19.8956 seconds and did not return before interruption; stats timestamps progressed from 19.899 to 26.988 seconds, with no byte-check/cancel/join marker. This narrows the interval before cancellation, not a blocking function or throughput result. No result, timeout increase, dropped P64/calibration or publication approval is inferred.",
+        "disposition": "The private sender-only early-done remedy with interval 0 passed P64 twice with matching sender/receiver totals, but the full original caller matrix failed: native P4 and Sentry P4/P16 download timed out, and OneConnection failed with producer output dropped. Owning parser/argv fixtures passed. P64 success is functional evidence only, not full compatibility, throughput or publication qualification.",
+        "nextAction": "analysis_delivery restores the original reporting interval in the next narrowly scoped remedy and validates the original native/Sentry caller matrix. Preserve interval 0 P64 successes and native P4/other matrix failures as separate evidence; do not narrow the workload, increase timeouts or infer a version upgrade, throughput result or source publication grant. Supplier/general review remains separate.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
@@ -60840,8 +60840,8 @@
           "owner": "root"
         },
         "technicalOwner": "analysis_delivery / root",
-        "recheckCondition": "Owner-reported changed-input functional calibration and actual final JSON/runtime/cleanup evidence; no unchanged diagnostic repeat or cancellation-bug conclusion.",
-        "curatedAt": "2026-11-26T13:43:57.355117+00:00",
+        "recheckCondition": "Owner-reported original-interval remedy and complete caller-matrix evidence with exact products/finalJSON/cleanup; no unchanged matrix retry or partial-success clearance.",
+        "curatedAt": "2026-11-26T14:47:52.575095+00:00",
         "bcrPublication": {
           "pr": 11518,
           "merge": "70404f85e",
@@ -61020,6 +61020,171 @@
             },
             "finding": "Client enters first tmr_run at19.895638516monotonic with131072sent/goal1024; no timerexit, limitcheck, cancel orjoin before30sinterrupt. First emitted64-streamstats interval timestamps span19.899113..26.987727. Not a demonstrated pthread_cancel/join stall. Periodic stats/reporter timers are1s; pinned tmr_run reschedules each by oneperiod and list-resorts, allowing accumulated missedticks to run before bytecompletion check.",
             "unknown": "This bounded result does not isolate one syscall or prove a deadlock/runtime defect. Timestamped interval progress indicates expensive timer processing. Receiver0 is interrupted/incomplete result, not evidence for completedthroughput."
+          },
+          "senderOnlyRemedy": {
+            "source": "979989a6e6a98c1d51a63448d99f72aec6305da2",
+            "parent": "3324e3c792ef8e6be03a329e453566fd014a0672",
+            "run": 45837103925,
+            "url": "https://github.com/tamird/gvisor/actions/runs/45837103925",
+            "status": "PASS",
+            "request": "iperf-stop-before-join-dispatch-inputs.json",
+            "producerPatch": "When the client completion condition is satisfied, set shared done early only if mode==SENDER. Original unconditional post-loop done remains. All64 creation and per-stream cancellation/join retained. No diagnostics, runtime or receiver/bidirectional ordering changes.",
+            "scope": "Existing interval-zero caller, stockasync cancellation, original64streams/1KiB/30s+5skill,3mGo/240sBazel, Sentry-only existing selector. Functionalonly.",
+            "next": "Check actual completion/error-free sender+receiver finalJSON and cleanup. If admitted, full8callerleaves for native and Sentry independently plus existingtools_test argvexpectation/update. Supplier-general correctness/publication remains separate.",
+            "checkout": "Restored516e4814ae,cleantracked+originalpycache,released.",
+            "artifact": 15126391723,
+            "artifactFile": "iperf-sender-remedy-45837103925.zip",
+            "log": "iperf-sender-remedy-45837103925.log",
+            "visits": [
+              {
+                "sent": {
+                  "start": 0,
+                  "end": 18.152364,
+                  "seconds": 18.152364,
+                  "bytes": 262144,
+                  "bits_per_second": 115530.51712713562,
+                  "retransmits": 0,
+                  "sender": true
+                },
+                "received": {
+                  "start": 0,
+                  "end": 18.152811,
+                  "seconds": 18.152811,
+                  "bytes": 262144,
+                  "bits_per_second": 115527.67227070231,
+                  "sender": true
+                },
+                "test": {
+                  "protocol": "TCP",
+                  "num_streams": 64,
+                  "blksize": 131072,
+                  "omit": 0,
+                  "duration": 0,
+                  "bytes": 1024,
+                  "blocks": 0,
+                  "reverse": 0,
+                  "tos": 0,
+                  "target_bitrate": 0,
+                  "bidir": 0,
+                  "fqrate": 0,
+                  "interval": 0
+                }
+              },
+              {
+                "sent": {
+                  "start": 0,
+                  "end": 21.647569,
+                  "seconds": 21.647569,
+                  "bytes": 131072,
+                  "bits_per_second": 48438.51057825477,
+                  "retransmits": 0,
+                  "sender": true
+                },
+                "received": {
+                  "start": 0,
+                  "end": 21.648047,
+                  "seconds": 21.648047,
+                  "bytes": 131072,
+                  "bits_per_second": 48437.441031054674,
+                  "sender": true
+                },
+                "test": {
+                  "protocol": "TCP",
+                  "num_streams": 64,
+                  "blksize": 131072,
+                  "omit": 0,
+                  "duration": 0,
+                  "bytes": 1024,
+                  "blocks": 0,
+                  "reverse": 0,
+                  "tos": 0,
+                  "target_bitrate": 0,
+                  "bidir": 0,
+                  "fqrate": 0,
+                  "interval": 0
+                }
+              }
+            ],
+            "cleanup": "Empty quiescentreleaseprocesses, ownedrunscempty twice, daemonstopped/filesremoved; actualclient0-1/server2-3, Sentrybe14/runscsourceunchanged."
+          },
+          "callerMatrix": {
+            "source": "7cc713d96b820deabf4d9c523e78b96a6a4b7d4f",
+            "onlyChangeFromQualifiedRemedy": "ExistingTestIperfMakeCmd expectedargv addsinterval0; benchmark/producer/runtime sourceunchanged.",
+            "gates": [
+              {
+                "role": "NATIVE",
+                "run": 45838189040,
+                "status": "FAILURE_PARTIAL",
+                "request": "iperf-full-matrix-native-dispatch-inputs.json",
+                "artifact": 15127585294,
+                "log": "iperf-matrix-native-45838189040.log",
+                "completeVisits": 1,
+                "plannedVisits": 2,
+                "passedLeaves": [
+                  "IperfManyConnections/operation.Upload/parallel.16-4",
+                  "IperfManyConnections/operation.Download/parallel.16-4",
+                  "IperfManyConnections/operation.Upload/parallel.64-4",
+                  "IperfManyConnections/operation.Download/parallel.64-4"
+                ],
+                "failedLeaves": [
+                  "BenchmarkIperfOneConnection/operation.Upload",
+                  "BenchmarkIperfOneConnection/operation.Download",
+                  "BenchmarkIperfManyConnections/operation.Upload/parallel.4",
+                  "BenchmarkIperfManyConnections/operation.Download/parallel.4"
+                ],
+                "cleanup": "Quiescent runtime processes empty; ownedrunscempty; daemon stopped/files removed; exact runtime/CPU sets retained.",
+                "blocker": "Both OneConnection cases failrc1 with dropped produceroutput; nativeP4both and SentryP4/P16Download fail30sclientdeadline. No admitted fullmatrix. Valid successful finalJSON retained in rawlog."
+              },
+              {
+                "role": "SENTRY",
+                "run": 45838200708,
+                "status": "FAILURE_PARTIAL",
+                "request": "iperf-full-matrix-sentry-dispatch-inputs.json",
+                "artifact": 15126223377,
+                "log": "iperf-matrix-sentry-45838200708.log",
+                "completeVisits": 1,
+                "plannedVisits": 2,
+                "passedLeaves": [
+                  "IperfManyConnections/operation.Upload/parallel.4-4",
+                  "IperfManyConnections/operation.Upload/parallel.16-4",
+                  "IperfManyConnections/operation.Upload/parallel.64-4",
+                  "IperfManyConnections/operation.Download/parallel.64-4"
+                ],
+                "failedLeaves": [
+                  "BenchmarkIperfOneConnection/operation.Upload",
+                  "BenchmarkIperfOneConnection/operation.Download",
+                  "BenchmarkIperfManyConnections/operation.Download/parallel.4",
+                  "BenchmarkIperfManyConnections/operation.Download/parallel.16"
+                ],
+                "cleanup": "Quiescent runtime processes empty; ownedrunscempty; daemon stopped/files removed; exact runtime/CPU sets retained.",
+                "blocker": "Both OneConnection cases failrc1 with dropped produceroutput; nativeP4both and SentryP4/P16Download fail30sclientdeadline. No admitted fullmatrix. Valid successful finalJSON retained in rawlog."
+              },
+              {
+                "role": "owningTestIperf+MakeCmd",
+                "run": 45838208795,
+                "status": "PASS",
+                "request": "iperf-owning-fixture-dispatch-inputs.json",
+                "artifact": 15127397375,
+                "artifactFile": "iperf-owning-fixture-45838208795.zip",
+                "results": "TestIperf aggregate/error/missing/no-transfer/invalidJSON and MakeCmd passed."
+              }
+            ],
+            "coverage": "Original8leaves: OneConnectionUpload/Download, ManyConnectionsUpload/DownloadP4/P16/P64. Two existingselectedvisits perendpoint, N1/1KiB, no throughputcomparison.",
+            "budgets": "Fullmatrix16leafvisits×existing30sclient bound+60scleanup+60ssetup→10mGo/11mBazel. Client30s+5skillunchanged; OneConnection retainsitsoriginalclientpolicy.",
+            "next": "Verify actualall16leafrows/endpoint, finalsender+receiverpositive/errorfreeJSON, identityandcleanup. Then assesssmallmatchingproducerfix againstcurrent3.22.1, no moduleupgradeprerequisite orpublicationgrant.",
+            "checkout": "Restored516e4814ae,cleantracked+originalpycache,released."
+          },
+          "stockP4Control": {
+            "source": "3324e3c792ef8e6be03a329e453566fd014a0672",
+            "request": "iperf-stock-p4-control-dispatch-inputs.json",
+            "status": "FAILURE_EXECUTED",
+            "purpose": "Stock-i0/noearlydone nativevisit1, P4Upload+Download, original30sclient; distinguishes no-timerworkaroundbaseline fromcandidate regression.",
+            "run": 45840173458,
+            "url": "https://github.com/tamird/gvisor/actions/runs/45840173458",
+            "artifact": 15128011403,
+            "artifactFile": "iperf-stock-p4-control-45840173458.zip",
+            "log": "iperf-stock-p4-control-45840173458.log",
+            "result": "BothnativeP4leaves time out at29.999439/30.004492s,262144sent/receiver0,interval0, stockproducerwithoutshutdownpatch. Cleanupempty/stopped/filesremoved. Confirms failure existswithoutcandidateearlydonepatch; staticproducerhasnocontrollerwakeupwithinterval0."
           }
         },
         "metricDisposition": {
@@ -64014,8 +64179,8 @@
       "title": "netstack: end a lingering close when the peer acknowledges the FIN",
       "url": "https://github.com/google/gvisor/pull/16787",
       "status": "open",
-      "updatedAt": "2026-11-26T02:30:13.367576+00:00",
-      "summary": "The author refreshed the public branch to 0e0295b65e. Exact-head First Pass2968, DCO, native checks and maintainer2/2 status pass. Native GitHub reports APPROVED/MERGEABLE, no requested reviewers, and all named checks green. Approval records retain original submission times, so the tracker’s stricter effective source-review decision remains REVIEW_REQUIRED. Old6869/main55839 fork-hook failure is historical, not a failure of the new head.",
+      "updatedAt": "2026-11-26T14:48:39.896255+00:00",
+      "summary": "Foreign-author #16787 remains at 0e0295b65e, native APPROVED/MERGEABLE with existing named checks green; stricter effective source review remains distinct. The author now asks to start Pipeline via approval or ready-to-test label after merging master. Their local-test and unchanged-patch statements are author-reported. The old fork-hook failure is historical; no approval, label, trigger or source move was performed.",
       "evidence": [
         {
           "label": "Author’s offer to include the tested commit",
@@ -64059,9 +64224,9 @@
         "mergeable": "MERGEABLE",
         "sourceHead": "0e0295b65ea33e97c07545f04e32eee873d7fc4d",
         "observedAt": "2026-11-26T02:27:01.977045+00:00",
-        "disposition": "The author refreshed the public branch to 0e0295b65e. Exact-head First Pass2968, DCO, native checks and maintainer2/2 status pass. Native GitHub reports APPROVED/MERGEABLE, no requested reviewers, and all named checks green. Approval records retain original submission times, so the tracker’s stricter effective source-review decision remains REVIEW_REQUIRED. Old6869/main55839 fork-hook failure is historical, not a failure of the new head.",
-        "nextAction": "Root follows actual review/lifecycle requirements on the foreign author’s new head; no source moves. Native APPROVED and the tracker’s stricter effective decision remain distinct. The old author-refresh wait is fulfilled; no old qualification transfer or merge authority.",
-        "recheckCondition": "New source-bound check, review, source or lifecycle event.",
+        "disposition": "Foreign-author #16787 remains at 0e0295b65e, native APPROVED/MERGEABLE with existing named checks green; stricter effective source review remains distinct. The author now asks to start Pipeline via approval or ready-to-test label after merging master. Their local-test and unchanged-patch statements are author-reported. The old fork-hook failure is historical; no approval, label, trigger or source move was performed.",
+        "nextAction": "Root assesses the author’s current Pipeline request against actual source/review and CI authority. Preserve foreign-source ownership and the distinction between native approval and effective source review; do not grant approval from the comment, apply a label, transfer old qualification or infer merge authority.",
+        "recheckCondition": "Root disposition of the actual author request, or new source-bound review/check/lifecycle evidence; no unchanged polling or duplicate outreach.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16787",
           "https://github.com/google/gvisor/pull/16787#pullrequestreview-6029118218",
@@ -64070,10 +64235,11 @@
           "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321",
           "https://github.com/google/gvisor/pull/16787#pullrequestreview-6045704912",
           "https://buildkite.com/gvisor/pipeline/builds/55839",
-          "https://buildkite.com/gvisor/pipeline/builds/55839#01a20efa-ce5e-4869-8cef-4743a0da24eb"
+          "https://buildkite.com/gvisor/pipeline/builds/55839#01a20efa-ce5e-4869-8cef-4743a0da24eb",
+          "https://github.com/google/gvisor/pull/16787#issuecomment-7194263130"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
-        "curatedAt": "2026-11-26T02:30:13.367576+00:00",
+        "curatedAt": "2026-11-26T14:48:39.896255+00:00",
         "ownAuthorDCOLineage": {
           "observedAt": "2026-11-18T11:43:42.194827+00:00",
           "pr": 16787,
@@ -64143,6 +64309,15 @@
           },
           "metadataOnly": true,
           "reviewsAndGatesPreserved": true
+        },
+        "authorPipelineRequest": {
+          "url": "https://github.com/google/gvisor/pull/16787#issuecomment-7194263130",
+          "author": "adios-404",
+          "at": "2026-11-26T14:05:29Z",
+          "head": "0e0295b65ea33e97c07545f04e32eee873d7fc4d",
+          "request": "Start Pipeline through a new approval or ready-to-test label",
+          "authorClaims": "Master merged cleanly, PR edits unchanged and local TCP/native syscall tests passed; approvals/auto-merge retained. Author-reported, not independent source or runtime qualification.",
+          "disposition": "Root review/CI coordination only; no label, approval, merge or outreach performed."
         }
       }
     },
@@ -70809,8 +70984,8 @@
       "url": "https://github.com/google/gvisor/pull/14999",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-18T21:49:57.504662+00:00",
-      "summary": "Author source advanced to 2b096ecc6 with clang-format and linux/limits.h corrections and updated STREAM/SEQPACKET description. The author reports 31 peer-group cases passed on prior bdf1068 under systrap/save/save_resume and native root; sandbox-user-namespace setgroups EPERM also affects uidgid_test_native. Those prior-source claims are not new-head execution proof.",
+      "updatedAt": "2026-11-26T14:47:52.575095+00:00",
+      "summary": "Current #14999 source 2b096ecc has a genuinely unsigned sole introduced commit, confirmed by DCO check137211965199. Author anzal1 owns certification; this is separate from DCO2 wrong-base handling. Existing source-review reconciliation and historical bdf qualification remain scoped; no additional outreach.",
       "followup": {
         "owner": "root",
         "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
@@ -70818,15 +70993,15 @@
         "mergeable": "MERGEABLE",
         "sourceHead": "2b096ecc6cbe58cb80521653e28c60bf8fee3661",
         "observedAt": "2026-11-24T05:47:43.330769+00:00",
-        "disposition": "New explicitly automated review6033934299 on exact2b096ecc reports no findings. It adds no source task or human approval; existing actual source-feedback/qualification and publication limits remain.",
-        "nextAction": "Root follows the existing reviewer’s current-source reconciliation on 2b096ecc. FirstPass2324 now passes; DCO remains action-required with no diagnosis established here. Preserve the source-bound prior bdf qualification and actual source/access constraints; no foreign branch amendment or new sensitive-source test is inferred.",
-        "recheckCondition": "Existing reviewer reconciliation, genuine new author feedback or exact-head CI result.",
+        "disposition": "Current #14999 source 2b096ecc has a genuinely unsigned sole introduced commit, confirmed by DCO check137211965199. Author anzal1 owns certification; this is separate from DCO2 wrong-base handling. Existing source-review reconciliation and historical bdf qualification remain scoped; no additional outreach.",
+        "nextAction": "Root continues the existing current-source reviewer reconciliation. Source author anzal1 owns certification of the sole unsigned introduced commit 2b096ecc; the existing DCO check already requests its sign-off. Recheck an actual author head change, without extra outreach. Preserve prior bdf qualification as historical and independent review/source boundaries; this is not a DCO2 wrong-base failure.",
+        "recheckCondition": "Actual author head/sign-off update, substantive review response or new exact-source check evidence.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14999",
           "https://github.com/google/gvisor/pull/14999#pullrequestreview-6033934299"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
-        "curatedAt": "2026-11-18T21:49:57.504662+00:00",
+        "curatedAt": "2026-11-26T14:47:52.575095+00:00",
         "reviewPing": {
           "url": "https://github.com/gvisor/gvisor/pull/14999#issuecomment-6986819507",
           "state": "Review request only; no new source delta or authorization"
@@ -70874,6 +71049,15 @@
           "prior": "bdf1068d1ad7ecd626d71553e361402f966e223d",
           "current": "2b096ecc6cbe58cb80521653e28c60bf8fee3661",
           "scope": "Only socket_unix_peercred.cc formatting/include changed; production files unchanged. Prior31-case execution remains author-reported and source-scoped, not a new run."
+        },
+        "currentDCOClassification": {
+          "check": 137211965199,
+          "head": "2b096ecc6cbe58cb80521653e28c60bf8fee3661",
+          "description": "Sign-off not found on sole introduced commit 2b096ecc",
+          "signoffTrailers": 0,
+          "author": "anzal1",
+          "owner": "source author",
+          "scope": "Actual unsigned introduced commit; separate from DCO2 wrong-base handling."
         }
       }
     },
@@ -72733,8 +72917,8 @@
       "url": "https://github.com/google/gvisor/pull/16830",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-26T13:44:39.551373+00:00",
-      "summary": "Public #16830 remains at 62adc7d9. Shayonj formally approved this exact head at 13:00:35 UTC; the older COMMENTED LGTM is historical. GitHub reports APPROVED, while the tracker effective decision remains REVIEW_REQUIRED. Current main56026 reports success; newer FirstPass3023 failed and its cause is unclassified. Earlier qualification and CI diagnoses retain their source scope.",
+      "updatedAt": "2026-11-26T14:47:52.575095+00:00",
+      "summary": "Public #16830 at 62adc7d9 has Shayonj formal current-head approval; native GitHub reports APPROVED, tracker effective decision remains REVIEW_REQUIRED. Main build 56026 reports success. First Pass 3023 failed pipeline upload before agent assignment/start solely on its own 30-day 360,000 compute-minute author quota record. No source/test failure or old-build cause transfer is claimed.",
       "evidence": [
         {
           "label": "Unix datagram drain and writable wakeup on Linux, stock and corrected gVisor",
@@ -72787,8 +72971,8 @@
         "owner": "root",
         "sourceHead": "62adc7d9cf16a0805efad38bedcf6d516d1b2ec0",
         "observedAt": "2026-11-25T12:53:06.511271+00:00",
-        "disposition": "Public #16830 remains at 62adc7d9. Shayonj formally approved this exact head at 13:00:35 UTC; the older COMMENTED LGTM is historical. GitHub reports APPROVED, while the tracker effective decision remains REVIEW_REQUIRED. Current main56026 reports success; newer FirstPass3023 failed and its cause is unclassified. Earlier qualification and CI diagnoses retain their source scope.",
-        "nextAction": "Root classifies new exact-head FirstPass3023 and reconciles the remaining effective-review/source obligations. Preserve the formal current-head approval and successful main status; do not transfer the old2809 cause, historical source qualification or infer merge/publication authority. No unchanged retry or outreach.",
+        "disposition": "Public #16830 at 62adc7d9 has Shayonj formal current-head approval; native GitHub reports APPROVED, tracker effective decision remains REVIEW_REQUIRED. Main build 56026 reports success. First Pass 3023 failed pipeline upload before agent assignment/start solely on its own 30-day 360,000 compute-minute author quota record. No source/test failure or old-build cause transfer is claimed.",
+        "nextAction": "Root follows quota availability or an actual new CI/review/source event for #16830; do not retry the unchanged source. Preserve formal current-head approval, main success and the distinct effective-review/source obligations. First Pass 3023 classification is complete; no source repair, outreach or merge authority follows.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16830",
           "https://github.com/tamird/gvisor/commit/6b8479b9f",
@@ -72804,9 +72988,9 @@
           "https://buildkite.com/gvisor/pipeline/builds/56026"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Canonical3023 outcome evidence, actual review/source/check change or root disposition; no unchanged polling.",
+        "recheckCondition": "Quota availability, new CI event or substantive review/source change; no unchanged retry or repeated classification.",
         "providerHead": "62adc7d9cf16a0805efad38bedcf6d516d1b2ec0",
-        "curatedAt": "2026-11-26T13:44:39.551373+00:00",
+        "curatedAt": "2026-11-26T14:47:52.575095+00:00",
         "attentionDispositions": [
           {
             "reason": "author-feedback",
@@ -72879,8 +73063,15 @@
           "firstPass": {
             "build": 3023,
             "state": "FAILURE",
-            "cause": "Unclassified; no old2809 quota cause transfer",
-            "url": "https://buildkite.com/gvisor/first-pass/builds/3023"
+            "cause": "Exact build 3023 pre-agent 30-day author quota",
+            "url": "https://buildkite.com/gvisor/first-pass/builds/3023",
+            "exitStatus": 80,
+            "stackErrored": true,
+            "agentAssigned": false,
+            "started": false,
+            "logPresent": false,
+            "stackErrorDetail": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+            "provenance": "Root canonical reader underlying structured jobs record for this exact build/head; not old2809 transfer."
           },
           "observedAt": "2026-11-26T13:42:03.995449+00:00"
         }
@@ -85091,8 +85282,8 @@
       "title": "Claim TCP processor queue membership atomically",
       "group": "runtime",
       "status": "Contributor approved; qualifying integration",
-      "updatedAt": "2026-11-26T13:43:57.355117+00:00",
-      "summary": "Existing atomic candidate/source approvals and qualification remain scoped. The original 70-by-four capability screen is now dispatched through shared Bazel owners. BASE HTTPD C1/N1 passed, but the 20-second C1000/N1000 preflight retained 296 HTTP 200 and 704 client timeouts: workload failure with correct accounting/cleanup. Four frozen releases are verified; category outcomes are not yet qualification.",
+      "updatedAt": "2026-11-26T14:47:52.575095+00:00",
+      "summary": "Original 70-by-four capability screen completed 280 outcomes: 245 passed, 35 HTTPD failed; all original C<=100 HTTPD, Node/Ruby and Redis Go cases passed. Redis completed/retry operation counts remain unknown. A separate corrected Apache-capacity C1000 cohort passed 32/36: all eight non-10Mb variants passed across four frozen sources; static 10Mb still timed out on each. Original outcomes and configurations remain intact. No current-head, throughput or statistical qualification.",
       "evidence": [
         {
           "label": "Original benchstat, sixteen paired samples, race and Nogo results",
@@ -85115,8 +85306,8 @@
         "owner": "root",
         "sourceHead": "a8e54633f47fda892caa896ab37f3200b662cccf",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
-        "disposition": "Existing atomic candidate/source approvals and qualification remain scoped. The original 70-by-four capability screen is now dispatched through shared Bazel owners. BASE HTTPD C1/N1 passed, but the 20-second C1000/N1000 preflight retained 296 HTTP 200 and 704 client timeouts: workload failure with correct accounting/cleanup. Four frozen releases are verified; category outcomes are not yet qualification.",
-        "nextAction": "benchmark_measurement_review audits the four original category screens (HTTPD 45829528325, Node 45829532497, Ruby 45829536505, Redis 45829540840) and retains failed baseline outcomes. The shared mechanism is operating; the historical rejection is not a pending human decision. Preserve original 70-by-four scope and source/performance/publication boundaries; do not mirror the observer or infer 280 passed outcomes.",
+        "disposition": "Original 70-by-four capability screen completed 280 outcomes: 245 passed, 35 HTTPD failed; all original C<=100 HTTPD, Node/Ruby and Redis Go cases passed. Redis completed/retry operation counts remain unknown. A separate corrected Apache-capacity C1000 cohort passed 32/36: all eight non-10Mb variants passed across four frozen sources; static 10Mb still timed out on each. Original outcomes and configurations remain intact. No current-head, throughput or statistical qualification.",
+        "nextAction": "benchmark_measurement_review follows existing BASE client/server capacity evidence for static 10Mb/C1000. Preserve original 245/35 and distinct corrected 32/36 cohorts, exact frozen sources and accounting. Do not repeat the full screen or treat failed QPS/Redis rates as completed-work counts. Root retains source review and broader performance/publication boundaries.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/a8e54633f",
           "https://github.com/google/gvisor/pull/17045",
@@ -85135,7 +85326,7 @@
           "recheckCondition": "Exact ref/head change, canonical PR feedback/check/import or terminal-state change, dependency landing or contributor decision.",
           "owner": "root"
         },
-        "recheckCondition": "Owner-audited category outcomes or material workload/source evidence; no duplicate screen or statistics from capability admission.",
+        "recheckCondition": "Owner-audited changed-input capacity evidence or substantive source disposition; no unchanged full-screen retry or statistical inference.",
         "qualificationHistory": [
           {
             "disposition": "Approved for publication after #17045 lands.",
@@ -85202,7 +85393,7 @@
           }
         },
         "remainingNetworkOutcomeOwner": "tcp_conflict",
-        "curatedAt": "2026-11-26T13:43:57.355117+00:00",
+        "curatedAt": "2026-11-26T14:47:52.575095+00:00",
         "ciExecutionAuthorization": {
           "status": "Authorized CI-only capability screen dispatched through shared Bazel mechanism; source publication and statistical qualification separate",
           "owner": "root",
@@ -85215,47 +85406,100 @@
         },
         "capabilityScreen": {
           "owner": "benchmark_measurement_review",
-          "scope": "Original70 variants across four frozen runtimes; functional outcomes only, not 280 accepted outcomes or statistics",
           "source": "f998a3409a6a40ae8da233409d5674e218a732f7",
-          "baseAdmission": {
-            "run": 45824285166,
-            "artifact": 15119396498,
-            "HTTPD1MiBC1N1": "1 HTTP 200 / zero errors; cleanup/source guards passed"
+          "state": "Original 280 outcomes complete; functional only",
+          "aggregate": {
+            "attempted_leaf_outcomes": 280,
+            "HTTPD_valid": 133,
+            "HTTPD_failed": 35,
+            "Node_Ruby_go_success_cases": 32,
+            "Redis_go_success_cases": 80,
+            "Go_success_cases_total": 245,
+            "Go_failed_cases_total": 35,
+            "cleanup_successful_source_visits": 16,
+            "all_expected_final_N_executed": true,
+            "raw_client_summaries": 524,
+            "raw_HTTP_summaries": 364,
+            "raw_Redis_CSV_summaries": 160,
+            "HTTP_result_count": 73900,
+            "HTTP_expected_status_counts": {
+              "200": 50838,
+              "404": 3412
+            },
+            "HTTP_client_timeouts": 19650,
+            "Redis_visible_setup_rows": 40,
+            "Redis_actual_completed_or_retry_counts": "unknown",
+            "missing_or_unexpected_leaves": 0,
+            "statistical_qualification": false
           },
-          "changed20sC1000Admission": {
-            "run": 45825483811,
-            "artifact": 15120132535,
-            "requests": 1000,
-            "HTTP200": 296,
-            "clientTimeouts": 704,
-            "workload": "FAIL",
-            "accountingAndCleanup": "PASS"
+          "HTTPD": {
+            "run": 45829528325,
+            "artifact": 15124460491,
+            "C1000_original": {
+              "BASE": {
+                "expectedStatus": 4078,
+                "timeouts": 4922
+              },
+              "RTO": {
+                "expectedStatus": 3780,
+                "timeouts": 5220
+              },
+              "PAWS": {
+                "expectedStatus": 4410,
+                "timeouts": 4590
+              },
+              "atomic": {
+                "expectedStatus": 4082,
+                "timeouts": 4918
+              }
+            },
+            "lowerConcurrency": "All original C<=100 cases passed",
+            "QPSLimit": "Failed visits do not supply valid throughput"
           },
-          "frozenInputs": "Four original complete nine-member releases verified; six original image IDs unchanged",
-          "categoryDispatches": [
-            {
-              "category": "httpd",
-              "source": "f998a3409a6a40ae8da233409d5674e218a732f7",
-              "url": "https://github.com/tamird/gvisor/actions/runs/45829528325"
+          "NodeRuby": "All original variants passed, 16016 HTTP200 per category and zero errors",
+          "Redis": "80 final N1000 Go cases passed;160CSV summaries and40setup rows retained; actual completed/retry operation counts unknown",
+          "frozenSources": "BASE1f/RTO f944/atomic1298/PAWS983d only; no current-head transfer",
+          "capacityPrerequisite": {
+            "publishedPR": 17862,
+            "head": "57691bada17528444d5137569d164234536009fa",
+            "setting": "AsyncRequestWorkerFactor40",
+            "BASEControlRun": 45835430768,
+            "artifact": 15125481299,
+            "result": "Same1MiB/C=N1000/t20 BASE case1000HTTP200/zeroerrors; one functional case only"
+          },
+          "correctedC1000Cohort": {
+            "source": "cc6ed49ec8fc8daa6431349362853f67f51617a6",
+            "run": 45836487373,
+            "artifact": 15125308440,
+            "attempted": 36,
+            "passed": 32,
+            "failed": 4,
+            "singleHostSourceOrder": "BRPA",
+            "scope": "All nine original C1000 variants across four frozen sources, N1000/t20. Distinct configuration; original 245/35 and lowerC/Node/Ruby/Redis evidence preserved.",
+            "onlyFailure": "Static10Mb/C1000 on all four sources",
+            "HTTP200AndTimeouts": {
+              "BASE": [
+                891,
+                109
+              ],
+              "RTO": [
+                858,
+                142
+              ],
+              "PAWS": [
+                838,
+                162
+              ],
+              "atomic": [
+                841,
+                159
+              ]
             },
-            {
-              "category": "node",
-              "source": "f998a3409a6a40ae8da233409d5674e218a732f7",
-              "url": "https://github.com/tamird/gvisor/actions/runs/45829532497"
-            },
-            {
-              "category": "ruby",
-              "source": "f998a3409a6a40ae8da233409d5674e218a732f7",
-              "url": "https://github.com/tamird/gvisor/actions/runs/45829536505"
-            },
-            {
-              "category": "redis",
-              "source": "f998a3409a6a40ae8da233409d5674e218a732f7",
-              "url": "https://github.com/tamird/gvisor/actions/runs/45829540840"
-            }
-          ],
-          "state": "First screen dispatched; outcomes pending owner audit",
-          "next": "Owner audits exact original screen outcomes and diagnostics; no statistical clearance or source/publication approval inferred."
+            "otherEightVariants": "1000expectedstatus/zeroerrors each",
+            "calibrations": "All36N1 correct",
+            "cleanup": "All4cleanup0; products/source guards PASS"
+          },
+          "statisticalQualification": false
         }
       },
       "refinement": {
@@ -97779,7 +98023,7 @@
       "group": "bazel",
       "head": "b2d9986a40604f82df42c322122ad61313104cfa",
       "status": "open",
-      "updatedAt": "2026-11-17T19:01:06.487079+00:00",
+      "updatedAt": "2026-11-26T14:47:52.575095+00:00",
       "summary": "Skylib’s build_test can use a declared marker tool on the execution platform and a declared runner on the target platform. Callers can supply either independently. Omitted tools retain their existing defaults. The private Linux consumer exposed 16 empty markers and one runner in its runfiles while building all 17 checked files.\n\nWith supplier b2d9986a4, an explicit test_suite under --build_tests_only built all 16 declared gVisor ELF binaries per architecture. Each runner had 16 empty markers in its runfiles and none of the 16 binaries. The uncached AMD64 runner ran natively and the ARM64 runner ran under QEMU on AMD64. The direct AMD64 build_test and the explicit suite both rejected the deliberately broken startup benchmark with the same compiler error.\n\nThe final revision keeps the same marker, runner and permanent test. All ten queried labels had the expected effective sizes on the final source. The checked-in reference matches the canonical Stardoc output.",
       "evidence": [
         {
@@ -97852,13 +98096,26 @@
       "followup": {
         "evidence": [
           "https://github.com/bazelbuild/bazel-skylib/pull/648",
-          "https://buildkite.com/bazel/bazel-skylib/builds/4674"
+          "https://buildkite.com/bazel/bazel-skylib/builds/4674",
+          "https://github.com/bazelbuild/bazel-skylib/pull/647",
+          "https://buildkite.com/bazel/bazel-skylib/builds/4700#01a21527-3243-4392-a955-98d1bfc9ef0c"
         ],
         "disposition": "CI #648 at b2d9986a40604f82df42c322122ad61313104cfa: Buildifier10.2.0 exits4 for deprecated make-location usages in unchanged rules/private/maprule_util.bzl and rules/run_binary.bzl. PR changed docs/build_test_doc.md, rules/BUILD, rules/build_test.bzl, tests/native_binary/BUILD and write_marker.cc only.",
-        "nextAction": "Resolve repository baseline warnings or tool-version policy through the owning CI workstream; preserve build_test proposal behavior and do not broaden it into unrelated location-macro rewrites without authorization.",
-        "recheckCondition": "Maintainer baseline/tool-policy correction makes exact-source Buildifier pass; then follow other checks.",
+        "nextAction": "Follow existing Skylib #647 landing, then verify #648 integration and CI on the fixed base. #647 fixes the exact unchanged baseline Buildifier warnings; it is a CI prerequisite, not a code dependency. Preserve the existing build_test proposal and reviews; no duplicate patch, warning rewrite or outreach.",
+        "recheckCondition": "Actual #647 landing or relevant baseline/source/check change, then #648 integration result.",
         "owner": "root",
-        "observedAt": "2026-11-17T19:01:06.487079+00:00"
+        "observedAt": "2026-11-17T19:01:06.487079+00:00",
+        "sourceHead": "b2d9986a40604f82df42c322122ad61313104cfa",
+        "baselineCIPrerequisite": {
+          "repo": "bazelbuild/bazel-skylib",
+          "number": 647,
+          "head": "f64c8d9fa",
+          "url": "https://github.com/bazelbuild/bazel-skylib/pull/647",
+          "state": "OPEN; own checks SUCCESS at root observation",
+          "scope": "CI prerequisite only, not a build_test code dependency",
+          "proof": "Master a920cdfe build4700 fails Buildifier in the two files byte-identical on #648; #647 fixes the exact remaining make-location warnings after merged #646."
+        },
+        "curatedAt": "2026-11-26T14:47:52.575095+00:00"
       }
     },
     {
@@ -109351,7 +109608,7 @@
           "https://github.com/tamird/gvisor/actions/runs/45768612458/artifacts/15092842201",
           "https://github.com/tamird/gvisor/actions/runs/45771527305/artifacts/15093907787"
         ],
-        "curatedAt": "2026-11-26T13:43:57.355117+00:00",
+        "curatedAt": "2026-11-26T14:47:52.575095+00:00",
         "supersededExecutionBlocker": {
           "nextAction": "Root consumes each existing decision independently: open the cache 86cffbf72 PR, replace the issue body with the current measured-scope draft, and open the Go export f8500dffe PR. Canonical lint coverage is reconciled through unchanged-input parent evidence. Deliver approved changes through the existing authorized routes; the unpublished Go export fork ref still needs its SSH/HTTPS execution blocker to clear.",
           "recordedAt": "2026-11-24T06:29:20.083295+00:00",
@@ -109569,9 +109826,34 @@
           "productBytes": 1962144,
           "result": "Descriptive warm-cache pair only; no executing-spawn or worker-parallelism speedup measured. Source/configuration/product/counters preserved; earlier remote-only overlap is separate.",
           "recheck": "An already-required build on newly changed source with independent cache misses. Where practical run cache-reading/non-uploading sandbox arm before its first normal RBE qualification. No unchanged changelog retry."
+        },
+        "buildkiteWallTimeEvidence": {
+          "ARM_Docker_55724": {
+            "attempts": 6,
+            "unsuccessfulExecutionSeconds": 2550.9,
+            "finalSuccessSeconds": 321.3,
+            "gapsSeconds": 7.1
+          },
+          "Go_runtime_55727": {
+            "attempts": 9,
+            "unsuccessfulExecutionSeconds": 2761.6,
+            "finalSuccessSeconds": 853.0,
+            "gapsSeconds": 9.1,
+            "passingJob": "01a20a08-868a-4616-90e6-d713620cebc6",
+            "target": "//test/runtimes:go1.22",
+            "targetSeconds": 608.2,
+            "lastShard": "Shard2of4 still running alone at610s",
+            "bazelPhaseSeconds": 635.678,
+            "criticalPathSeconds": 621.25,
+            "actionCacheHits": 5261,
+            "remoteCacheHits": 23,
+            "localActions": 8
+          },
+          "method": "Actual retried_in_job_uuid links plus start/finish; close gate followed",
+          "limits": "Job runtimes are not Bazel compiler time or a predicted RBE win. A five-minute goal for this workload requires addressing the long runtime shard itself. Pending source/issue questions and exact drafts unchanged."
         }
       },
-      "updatedAt": "2026-11-26T13:43:57.355117+00:00",
+      "updatedAt": "2026-11-26T14:47:52.575095+00:00",
       "nextStep": "Root consumes the actual b245 cache-PR and revised issue-title/body decisions independently; approved_delivery_batch owns the cache revision. Preserve the distinct Go-export opening decision. No source publication, issue edit, merge or runtime/speedup result is inferred.",
       "recheckCondition": "Technical review milestone for revised cache source/text or actual Go-export answer.",
       "reviewWatch": {
@@ -151225,9 +151507,9 @@
       "title": "Report client aggregate Iperf bandwidth",
       "owner": "root",
       "head": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
-      "updatedAt": "2026-11-26T13:43:57.355117+00:00",
-      "summary": "Approved Iperf3 vehicle 67601a14c supplies aggregate sender bytes/rate; the standalone Iperf2 reporter is superseded only for that metric. P64 completion remains a functional blocker. A retained debug control with the deferred-cancellation backport timed out before any captured sender-stopped or TEST_END marker; its blocking boundary is unlocalized. Payload divided by outer benchmark elapsed time remains a separate undelivered metric.",
-      "nextStep": "analysis_delivery advances the bounded changed-input P64 functional calibration with periodic stats disabled (-i 0) and final JSON retained. Diagnostic 45830276007 entered its first timer at 19.8956 seconds and did not return before interruption; stats timestamps progressed from 19.899 to 26.988 seconds, with no byte-check/cancel/join marker. This narrows the interval before cancellation, not a blocking function or throughput result. No result, timeout increase, dropped P64/calibration or publication approval is inferred.",
+      "updatedAt": "2026-11-26T14:47:52.575095+00:00",
+      "summary": "The private sender-only early-done remedy with interval 0 passed P64 twice with matching sender/receiver totals, but the full original caller matrix failed: native P4 and Sentry P4/P16 download timed out, and OneConnection failed with producer output dropped. Owning parser/argv fixtures passed. P64 success is functional evidence only, not full compatibility, throughput or publication qualification.",
+      "nextStep": "analysis_delivery restores the original reporting interval in the next narrowly scoped remedy and validates the original native/Sentry caller matrix. Preserve interval 0 P64 successes and native P4/other matrix failures as separate evidence; do not narrow the workload, increase timeouts or infer a version upgrade, throughput result or source publication grant. Supplier/general review remains separate.",
       "evidence": [
         {
           "label": "Exact reviewable source and included DCO",
@@ -151317,10 +151599,10 @@
       "findings": [],
       "followup": {
         "owner": "root",
-        "disposition": "Approved Iperf3 vehicle 67601a14c supplies aggregate sender bytes/rate; the standalone Iperf2 reporter is superseded only for that metric. P64 completion remains a functional blocker. A retained debug control with the deferred-cancellation backport timed out before any captured sender-stopped or TEST_END marker; its blocking boundary is unlocalized. Payload divided by outer benchmark elapsed time remains a separate undelivered metric.",
-        "nextAction": "analysis_delivery advances the bounded changed-input P64 functional calibration with periodic stats disabled (-i 0) and final JSON retained. Diagnostic 45830276007 entered its first timer at 19.8956 seconds and did not return before interruption; stats timestamps progressed from 19.899 to 26.988 seconds, with no byte-check/cancel/join marker. This narrows the interval before cancellation, not a blocking function or throughput result. No result, timeout increase, dropped P64/calibration or publication approval is inferred.",
-        "recheckCondition": "Owner-reported changed-input functional calibration and actual final JSON/runtime/cleanup evidence; no unchanged diagnostic repeat or cancellation-bug conclusion.",
-        "curatedAt": "2026-11-26T13:43:57.355117+00:00",
+        "disposition": "The private sender-only early-done remedy with interval 0 passed P64 twice with matching sender/receiver totals, but the full original caller matrix failed: native P4 and Sentry P4/P16 download timed out, and OneConnection failed with producer output dropped. Owning parser/argv fixtures passed. P64 success is functional evidence only, not full compatibility, throughput or publication qualification.",
+        "nextAction": "analysis_delivery restores the original reporting interval in the next narrowly scoped remedy and validates the original native/Sentry caller matrix. Preserve interval 0 P64 successes and native P4/other matrix failures as separate evidence; do not narrow the workload, increase timeouts or infer a version upgrade, throughput result or source publication grant. Supplier/general review remains separate.",
+        "recheckCondition": "Owner-reported original-interval remedy and complete caller-matrix evidence with exact products/finalJSON/cleanup; no unchanged matrix retry or partial-success clearance.",
+        "curatedAt": "2026-11-26T14:47:52.575095+00:00",
         "remoteBuild": {
           "run": 45691659853,
           "operation": "make rebuild-moby ARCH=x86_64 DOCKER_BUILD=false",
@@ -151557,6 +151839,171 @@
             },
             "finding": "Client enters first tmr_run at19.895638516monotonic with131072sent/goal1024; no timerexit, limitcheck, cancel orjoin before30sinterrupt. First emitted64-streamstats interval timestamps span19.899113..26.987727. Not a demonstrated pthread_cancel/join stall. Periodic stats/reporter timers are1s; pinned tmr_run reschedules each by oneperiod and list-resorts, allowing accumulated missedticks to run before bytecompletion check.",
             "unknown": "This bounded result does not isolate one syscall or prove a deadlock/runtime defect. Timestamped interval progress indicates expensive timer processing. Receiver0 is interrupted/incomplete result, not evidence for completedthroughput."
+          },
+          "senderOnlyRemedy": {
+            "source": "979989a6e6a98c1d51a63448d99f72aec6305da2",
+            "parent": "3324e3c792ef8e6be03a329e453566fd014a0672",
+            "run": 45837103925,
+            "url": "https://github.com/tamird/gvisor/actions/runs/45837103925",
+            "status": "PASS",
+            "request": "iperf-stop-before-join-dispatch-inputs.json",
+            "producerPatch": "When the client completion condition is satisfied, set shared done early only if mode==SENDER. Original unconditional post-loop done remains. All64 creation and per-stream cancellation/join retained. No diagnostics, runtime or receiver/bidirectional ordering changes.",
+            "scope": "Existing interval-zero caller, stockasync cancellation, original64streams/1KiB/30s+5skill,3mGo/240sBazel, Sentry-only existing selector. Functionalonly.",
+            "next": "Check actual completion/error-free sender+receiver finalJSON and cleanup. If admitted, full8callerleaves for native and Sentry independently plus existingtools_test argvexpectation/update. Supplier-general correctness/publication remains separate.",
+            "checkout": "Restored516e4814ae,cleantracked+originalpycache,released.",
+            "artifact": 15126391723,
+            "artifactFile": "iperf-sender-remedy-45837103925.zip",
+            "log": "iperf-sender-remedy-45837103925.log",
+            "visits": [
+              {
+                "sent": {
+                  "start": 0,
+                  "end": 18.152364,
+                  "seconds": 18.152364,
+                  "bytes": 262144,
+                  "bits_per_second": 115530.51712713562,
+                  "retransmits": 0,
+                  "sender": true
+                },
+                "received": {
+                  "start": 0,
+                  "end": 18.152811,
+                  "seconds": 18.152811,
+                  "bytes": 262144,
+                  "bits_per_second": 115527.67227070231,
+                  "sender": true
+                },
+                "test": {
+                  "protocol": "TCP",
+                  "num_streams": 64,
+                  "blksize": 131072,
+                  "omit": 0,
+                  "duration": 0,
+                  "bytes": 1024,
+                  "blocks": 0,
+                  "reverse": 0,
+                  "tos": 0,
+                  "target_bitrate": 0,
+                  "bidir": 0,
+                  "fqrate": 0,
+                  "interval": 0
+                }
+              },
+              {
+                "sent": {
+                  "start": 0,
+                  "end": 21.647569,
+                  "seconds": 21.647569,
+                  "bytes": 131072,
+                  "bits_per_second": 48438.51057825477,
+                  "retransmits": 0,
+                  "sender": true
+                },
+                "received": {
+                  "start": 0,
+                  "end": 21.648047,
+                  "seconds": 21.648047,
+                  "bytes": 131072,
+                  "bits_per_second": 48437.441031054674,
+                  "sender": true
+                },
+                "test": {
+                  "protocol": "TCP",
+                  "num_streams": 64,
+                  "blksize": 131072,
+                  "omit": 0,
+                  "duration": 0,
+                  "bytes": 1024,
+                  "blocks": 0,
+                  "reverse": 0,
+                  "tos": 0,
+                  "target_bitrate": 0,
+                  "bidir": 0,
+                  "fqrate": 0,
+                  "interval": 0
+                }
+              }
+            ],
+            "cleanup": "Empty quiescentreleaseprocesses, ownedrunscempty twice, daemonstopped/filesremoved; actualclient0-1/server2-3, Sentrybe14/runscsourceunchanged."
+          },
+          "callerMatrix": {
+            "source": "7cc713d96b820deabf4d9c523e78b96a6a4b7d4f",
+            "onlyChangeFromQualifiedRemedy": "ExistingTestIperfMakeCmd expectedargv addsinterval0; benchmark/producer/runtime sourceunchanged.",
+            "gates": [
+              {
+                "role": "NATIVE",
+                "run": 45838189040,
+                "status": "FAILURE_PARTIAL",
+                "request": "iperf-full-matrix-native-dispatch-inputs.json",
+                "artifact": 15127585294,
+                "log": "iperf-matrix-native-45838189040.log",
+                "completeVisits": 1,
+                "plannedVisits": 2,
+                "passedLeaves": [
+                  "IperfManyConnections/operation.Upload/parallel.16-4",
+                  "IperfManyConnections/operation.Download/parallel.16-4",
+                  "IperfManyConnections/operation.Upload/parallel.64-4",
+                  "IperfManyConnections/operation.Download/parallel.64-4"
+                ],
+                "failedLeaves": [
+                  "BenchmarkIperfOneConnection/operation.Upload",
+                  "BenchmarkIperfOneConnection/operation.Download",
+                  "BenchmarkIperfManyConnections/operation.Upload/parallel.4",
+                  "BenchmarkIperfManyConnections/operation.Download/parallel.4"
+                ],
+                "cleanup": "Quiescent runtime processes empty; ownedrunscempty; daemon stopped/files removed; exact runtime/CPU sets retained.",
+                "blocker": "Both OneConnection cases failrc1 with dropped produceroutput; nativeP4both and SentryP4/P16Download fail30sclientdeadline. No admitted fullmatrix. Valid successful finalJSON retained in rawlog."
+              },
+              {
+                "role": "SENTRY",
+                "run": 45838200708,
+                "status": "FAILURE_PARTIAL",
+                "request": "iperf-full-matrix-sentry-dispatch-inputs.json",
+                "artifact": 15126223377,
+                "log": "iperf-matrix-sentry-45838200708.log",
+                "completeVisits": 1,
+                "plannedVisits": 2,
+                "passedLeaves": [
+                  "IperfManyConnections/operation.Upload/parallel.4-4",
+                  "IperfManyConnections/operation.Upload/parallel.16-4",
+                  "IperfManyConnections/operation.Upload/parallel.64-4",
+                  "IperfManyConnections/operation.Download/parallel.64-4"
+                ],
+                "failedLeaves": [
+                  "BenchmarkIperfOneConnection/operation.Upload",
+                  "BenchmarkIperfOneConnection/operation.Download",
+                  "BenchmarkIperfManyConnections/operation.Download/parallel.4",
+                  "BenchmarkIperfManyConnections/operation.Download/parallel.16"
+                ],
+                "cleanup": "Quiescent runtime processes empty; ownedrunscempty; daemon stopped/files removed; exact runtime/CPU sets retained.",
+                "blocker": "Both OneConnection cases failrc1 with dropped produceroutput; nativeP4both and SentryP4/P16Download fail30sclientdeadline. No admitted fullmatrix. Valid successful finalJSON retained in rawlog."
+              },
+              {
+                "role": "owningTestIperf+MakeCmd",
+                "run": 45838208795,
+                "status": "PASS",
+                "request": "iperf-owning-fixture-dispatch-inputs.json",
+                "artifact": 15127397375,
+                "artifactFile": "iperf-owning-fixture-45838208795.zip",
+                "results": "TestIperf aggregate/error/missing/no-transfer/invalidJSON and MakeCmd passed."
+              }
+            ],
+            "coverage": "Original8leaves: OneConnectionUpload/Download, ManyConnectionsUpload/DownloadP4/P16/P64. Two existingselectedvisits perendpoint, N1/1KiB, no throughputcomparison.",
+            "budgets": "Fullmatrix16leafvisits×existing30sclient bound+60scleanup+60ssetup→10mGo/11mBazel. Client30s+5skillunchanged; OneConnection retainsitsoriginalclientpolicy.",
+            "next": "Verify actualall16leafrows/endpoint, finalsender+receiverpositive/errorfreeJSON, identityandcleanup. Then assesssmallmatchingproducerfix againstcurrent3.22.1, no moduleupgradeprerequisite orpublicationgrant.",
+            "checkout": "Restored516e4814ae,cleantracked+originalpycache,released."
+          },
+          "stockP4Control": {
+            "source": "3324e3c792ef8e6be03a329e453566fd014a0672",
+            "request": "iperf-stock-p4-control-dispatch-inputs.json",
+            "status": "FAILURE_EXECUTED",
+            "purpose": "Stock-i0/noearlydone nativevisit1, P4Upload+Download, original30sclient; distinguishes no-timerworkaroundbaseline fromcandidate regression.",
+            "run": 45840173458,
+            "url": "https://github.com/tamird/gvisor/actions/runs/45840173458",
+            "artifact": 15128011403,
+            "artifactFile": "iperf-stock-p4-control-45840173458.zip",
+            "log": "iperf-stock-p4-control-45840173458.log",
+            "result": "BothnativeP4leaves time out at29.999439/30.004492s,262144sent/receiver0,interval0, stockproducerwithoutshutdownpatch. Cleanupempty/stopped/filesremoved. Confirms failure existswithoutcandidateearlydonepatch; staticproducerhasnocontrollerwakeupwithinterval0."
           }
         }
       },
@@ -151941,5 +152388,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-26T13:44:39.551373+00:00"
+  "updatedAt": "2026-11-26T14:48:39.896255+00:00"
 }
