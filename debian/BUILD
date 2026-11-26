@@ -1,6 +1,7 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("//tools:arch.bzl", "select_arch")
 load("//tools:defs.bzl", "pkg_deb", "pkg_tar", "version")
-load("//tools:release.bzl", "SIDECARS", "release_archives", "release_tars")
+load("//tools:release.bzl", "SIDECARS", "release_archives", "release_layout", "release_tars")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -74,6 +75,13 @@ pkg_deb(
 RELEASE_TAR_EXTRA_BINS = {
     "//shim:containerd-shim-runsc-v1": "containerd-shim-runsc-v1",
 }
+
+# The staged-archive check needs filenames without configuring the binaries.
+write_file(
+    name = "release-members",
+    out = "release-members.txt",
+    content = sorted(release_layout("default", RELEASE_TAR_EXTRA_BINS).values()),
+)
 
 # Downloadable bzip2 and zstd archives of the uninstrumented release.
 release_tars(

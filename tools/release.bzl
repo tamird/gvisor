@@ -150,6 +150,21 @@ release_files = rule(
     toolchains = COPY_FILE_TOOLCHAINS,
 )
 
+def release_layout(flavor, bins):
+    """Returns release binary labels mapped to their installed filenames.
+
+    Args:
+      flavor: One of FLAVORS.
+      bins: Additional top-level binary labels mapped to installed filenames.
+
+    Returns:
+      A dict from binary labels to installed paths.
+    """
+    files = {RUNSC[flavor]: "runsc"}
+    files.update(bins)
+    files.update({src: "gvisor-bin/" + path for src, path in sidecars(flavor).items()})
+    return files
+
 def release_tars(name, flavor, bins, basename = None, visibility = None):
     """Builds the two downloadable release archives for an instrumentation flavor.
 
@@ -162,9 +177,7 @@ def release_tars(name, flavor, bins, basename = None, visibility = None):
     """
     if not cov_available and "coverage" in flavor:
         return
-    files = {RUNSC[flavor]: "runsc"}
-    files.update(bins)
-    files.update({src: "gvisor-bin/" + path for src, path in sidecars(flavor).items()})
+    files = release_layout(flavor, bins)
 
     # A fixed timestamp, numeric root ownership and executable modes make the
     # archive independent of the worker that built it.
