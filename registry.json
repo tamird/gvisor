@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T01:29:42.574138+00:00",
+    "updatedAt": "2026-11-26T01:47:16.498762+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31164,13 +31164,13 @@
       "url": "https://github.com/google/gvisor/pull/16254",
       "group": "bazel",
       "status": "open",
-      "summary": "The rebase preserves master’s newer rules_python license record and the existing four-library gRPC patch. Two full catalog fetches reproduced the checked-in bytes, and all four libraries built. The PR is mergeable and awaiting upstream review.\n\nHistorical record:\n\nThe contributor has been asked to authorize the direct reply to Etienne and a clearer description; the public source remains 5eb5b76e. The concrete follow-up is the Bazel-built Rust smoke-test image. Its hello-world executable does not use Protobuf, but the repository-wide license audit evaluates the full module graph and failed in Protobuf’s transitive Rust resolver without producer-owned lockfiles. Stable 36.2 still lacks those files; 37.0-rc1 supplies them. A qualified 35.1 lockfile backport plus rules_rust override also works, so the RC trades roughly 40 KB of generated backport for the small gRPC reflection-header dependency patch. Waiting for stable 37 is a reasonable alternative offered in the proposed reply. The human question remains open; no public reply, description edit or source amendment has been made.\n\nEarlier source-specific record:\n\nApproved Protobuf upgrade delivered independently as #16254 on current upstream8938. Exact source changes match approved1e27, including the clarified gRPC35.1/Protobuf37 rationale and removal TODO. The user withdrew the upstream issue request; no human issue URL gate remains. Only the two approved canonical catalog records change; current unrelated records and the landed libbpf fix are preserved. Existing source-specific qualification is retained, with no new standalone runtime claim. Compare git range-diff 1e27ec7e1^! 5eb5b76e2^!.\n\nEarlier source-specific record:\n\nThe contributor explicitly approved e8c022855 and requested the gRPC compatibility issue or patch upstream with a reference retained in the local patch. Existing release/catalog/generated-code evidence remains accepted.\n\nEarlier source-specific record:\n\nUse released Protobuf 37.0-rc1 and remove the generated-lock backport. Canonical Fetch/Verify passes without a rules_rust override. Four gRPC libraries now explicitly depend on Protobuf C++ reflection headers; focused existing C++/Go generated consumers pass on both CPUs. The 201-record catalog changes only Protobuf and selected rules_python metadata with unchanged license sets.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe separate Protobuf 37.0-rc1 upgrade supplies release Rust lockfiles and audited catalog records, removing the generated-lock backport and rules_rust override. Four gRPC 1.84 libraries explicitly declare the C++ reflection dependency. Canonical Fetch/Verify and eight configured generated-code build owners passed. The native analyzer passed but its remote XML/log were not captured by the strict reporter; the narrow URI correction and final image equality checks are running. Earlier compile/bootstrap/reporting failures remain preserved.",
+      "summary": "Public e79462224 remains open on the released-Rust-lockfile proposal. Etienne asked to wait for stable Protobuf37; the official latest stable release is still v36.2. Existing canonical catalog and four-gRPC-library qualification remains source-bound. Old amendment/reply discussion is historical, not a current unanswered publication decision.",
       "followup": {
         "owner": "root",
         "sourceHead": "e794622247027309e4f983d2e9426c5d944159ae",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Etienne review6004157066 requests waiting for stable Protobuf37. The official release API still identifies37.0-rc3 as prerelease and36.2 as latest stable; the existing Protobuf/Rust dependency hold remains.",
-        "nextAction": "Wait for stable Protobuf37 before evaluating the stable pin and rerunning the existing four gRPC targets. Preserve independent CI and source obligations; no new source question or reply.",
+        "disposition": "Public e79462224 remains open on the released-Rust-lockfile proposal. Etienne asked to wait for stable Protobuf37; the official latest stable release is still v36.2. Existing canonical catalog and four-gRPC-library qualification remains source-bound. Old amendment/reply discussion is historical, not a current unanswered publication decision.",
+        "nextAction": "Await an actual stable Protobuf37 release, then assess the stable pin against the existing qualified dependency changes. Preserve independent source/CI and review boundaries; no new source question, reply or build is implied by this audit.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16254#issuecomment-6382233256",
           "https://app.buildbuddy.io/invocation/b2b6fa55-f597-4060-8af1-39eae50d1ad3",
@@ -31304,8 +31304,15 @@
           }
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
-        "curatedAt": "2026-11-21T09:19:34.135838+00:00"
+        "recheckCondition": "Actual stable Protobuf37 release or substantive maintainer/source evidence.",
+        "curatedAt": "2026-11-26T01:47:16.498762+00:00",
+        "stableReleaseObservation": {
+          "version": "v36.2",
+          "publishedAt": "2026-09-17T17:33:01Z",
+          "url": "https://github.com/protocolbuffers/protobuf/releases/tag/v36.2",
+          "curatedAt": "2026-11-26T01:47:16.498762+00:00",
+          "requestedStable": "37"
+        }
       },
       "updatedAt": "2026-11-17T19:05:02.369627+00:00",
       "refinement": {
@@ -35796,7 +35803,7 @@
         "sourceHead": "9979fae516482553fd5042632a9ca2878ef9830e",
         "observedAt": "2026-11-21T01:03:19.304590+00:00",
         "disposition": "The approved current-base rebase 9979fae516482553fd5042632a9ca2878ef9830e is published by exact lease; native source is OPEN/MERGEABLE and DCO passes. Rebase notice7054668052 is posted. First Pass2188 is independently diagnosed as pre-agent admission rejection: exit80, stack_errored=true, agent_id=null and author1535036 rolling30-day360,000-compute-minute quota. No target ran. Lint, Gazelle and file-header checks pass; the original rebase owner retains the remaining Go-generation watch. Existing source/runtime/performance limits remain separate.",
-        "nextAction": "Follow the existing exact-head reviewer/import and actor-owned CI watches. Recheck admission only after actual provider recovery or a new source/check event; no retry, duplicate notification or automatic merge.",
+        "nextAction": "Root follows Lucas’s substantive response to the existing source/rationale replies and the current PR lifecycle. Tamir already explained why the old logicalLen suggestion and FIN-bearing probe expectation were not adopted; do not silently treat that explanation as independent Linux parity or whole-PR approval. No duplicate reply, unchanged CI retry or old Go-generation watch remains.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16770#discussion_r4544575279",
           "https://github.com/google/gvisor/pull/16770#discussion_r4544575285",
@@ -35813,8 +35820,8 @@
           "https://buildkite.com/gvisor/first-pass/builds/2188#01a1fb9c-1562-4d5f-aba0-899362af4b14"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Genuine exact-head review/import/check change or independently evidenced quota clearance.",
-        "curatedAt": "2026-11-21T01:10:25.460Z",
+        "recheckCondition": "Substantive reviewer response, changed source/check evidence or actual lifecycle event.",
+        "curatedAt": "2026-11-26T01:47:16.498762+00:00",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -35837,7 +35844,14 @@
               ]
             }
           }
-        ]
+        ],
+        "projectFeedback": {
+          "state": "Existing reviewer requests answered with source/rationale; no new unowned action or automatic adoption of an older compatibility suggestion.",
+          "evidence": [
+            "https://github.com/gvisor/gvisor/pull/16770#discussion_r4544763355",
+            "https://github.com/gvisor/gvisor/pull/16770#discussion_r4544763569"
+          ]
+        }
       },
       "dcoAmendment": {
         "oldHead": "a4edcc73eed1eea4cfb7b88fdf2f1deb89952415",
@@ -35861,7 +35875,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "recheckCondition": "Genuine exact-head review/import/check change or independently evidenced quota clearance."
+      "recheckCondition": "Substantive reviewer response, changed source/check evidence or actual lifecycle event."
     },
     {
       "id": "branch:nft-compat-inet-autoload",
@@ -41311,6 +41325,13 @@
             "file": "coverage-current-legacy-44570817821-evidence.json",
             "sha256": "f2011f2f25fbb8734b853212416c1cc6f7bed6b9af09eb50a2b8efc24b8e5c7c"
           }
+        },
+        "mainBootstrap": {
+          "build": 55416,
+          "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
+          "state": "Repository pre-command failed fetching literal ref tamird before project tests",
+          "evidence": "https://buildkite.com/gvisor/pipeline/builds/55416",
+          "classification": "Root source-bound canonical-reader diagnosis; distinct from FirstPass admission/runtime outcomes. Existing source/import/performance boundaries remain."
         }
       },
       "evidence": [
@@ -41509,12 +41530,12 @@
       "group": "analysis",
       "status": "merged",
       "updatedAt": "2026-11-21T09:33:07.303823+00:00",
-      "summary": "The amended EncodeStatefile benchmark preserves the raw modes, uses the input checkpoint’s metadata and compression, and reloads the final output after timing stops. An AMD64 Nginx checkpoint run decoded a 296,028-byte state file and reloaded the 296,018-byte output. #16508 is open; this checks one iteration, not a speedup.",
+      "summary": "EncodeStatefile benchmark source24c1b39e is merged. Its recorded Nginx checkpoint one-iteration encode/reload evidence is functional only, not a speedup. The published response and source-delivery obligations are complete; no new source or reply task remains.",
       "followup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "24c1b39e498eb0f4635694e8a9b1ebe179257fb6",
         "observedAt": "2026-11-23T02:07:13.958421+00:00",
-        "disposition": "Delivery complete: exact24c1b39e merged as a8cf14d44 at01:40:14UTC; the sole checkpointfile.go blob exactly matches the qualified source. No separate Copybara import or actual dependency edge remains; prior main55599/FirstPass2264/native/DCO evidence is historical.",
+        "disposition": "EncodeStatefile benchmark source24c1b39e is merged. Its recorded Nginx checkpoint one-iteration encode/reload evidence is functional only, not a speedup. The published response and source-delivery obligations are complete; no new source or reply task remains.",
         "nextAction": "No open delivery or dependent-source task remains. Preserve exact merge/source/qualification evidence; no ref deletion or outgoing message is authorized.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16508",
@@ -41563,7 +41584,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-21T10:53:48.994925+00:00",
+        "curatedAt": "2026-11-26T01:47:16.498762+00:00",
         "currentCI": {
           "source": "24c1b39e498eb0f4635694e8a9b1ebe179257fb6",
           "requiredFirstPass": 2264,
@@ -45793,7 +45814,7 @@
       ],
       "updatedAt": "2026-11-17T19:01:06.487079+00:00",
       "status": "Approved; awaiting current-source import",
-      "summary": "Stock VFS panicked when a mount resolved between waiter registration and notification. Under the same controlled schedule, the fixed lookup returned the newly mounted root and unregistered. The ordinary VFS suite passed all 39 cases, and Nogo passed for AMD64 and ARM64. This exercises the optional mount-promise API; no in-tree registration caller was found. The resolved-after-registration path now returns before the wait. The reviewed VFS source matches the tested 39-case suite. The previous controlled schedule remains a fork witness; a mount-block event arrives after both loads.",
+      "summary": "Published b2cbea854 includes the early-return cleanup and TestMountPromiseResolvedAfterRegister, which drives the owning wait helper after registration and checks the resolved mount and open waiter channel. The optional cleanup/test requests are implemented. Recorded VFS-suite/NoGo evidence retains its source scope; no in-tree registration caller or private-export integration is claimed.",
       "refinement": {
         "before": {
           "head": "f11e71355d869135bab5bdadb03d2a9f9ee65eab",
@@ -45808,7 +45829,7 @@
         "owner": "root",
         "sourceHead": "b2cbea854fc9094a9b295a6226a90bccc4dad2ca",
         "observedAt": "2026-11-17T19:01:06.487079+00:00",
-        "disposition": "CI #16594 at b2cbea854fc9094a9b295a6226a90bccc4dad2ca: feedback/copybara FAILED belongs to the exact current source, which has an open matching export. The corresponding public export failure is grouped under the known TestSudo incident; internal cause is not publicly established.\n\nCI #16647 at 08242cbb11a2e5c31a181ceec55579e6f1211fe1: Repeated final integration_test timeouts show TestSudo waiting in Process.Logs, matching investigation:ci-flake-sudo-exec-timeout. Rollback17412 and fixed reland17556 are now verified MERGED; this old export has no fresh passing result. Private failures remain separately undiagnosed.",
+        "disposition": "Published b2cbea854 includes the early-return cleanup and TestMountPromiseResolvedAfterRegister, which drives the owning wait helper after registration and checks the resolved mount and open waiter channel. The optional cleanup/test requests are implemented. Recorded VFS-suite/NoGo evidence retains its source scope; no in-tree registration caller or private-export integration is claimed.",
         "nextAction": "Follow the matching current export and the existing TestSudo recovery; require importing maintainer original internal diagnostic for any separate failure. Do not leave obsolete wait-for-first-export instructions.\nRefresh the owning internal/export base onto fixed master and qualify the integration partition containing TestSudo; do not invent another mount/inotify/eventfd/FUSE fix or issue. For older-source17387 retain current approved source and ask importing maintainer to consume it. DCO import coordination: Root coordinates #16647 at 08242cbb11a2. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16594",
@@ -45828,7 +45849,16 @@
           "https://github.com/gvisor/gvisor/pull/17556",
           "https://github.com/gvisor/gvisor/pull/16647"
         ],
-        "recheckCondition": "Fresh exact source/import feedback or importing maintainer error detail.\nRefreshed exact export includes fixed integration ancestry and owning integration partition passes; inspect any distinct remaining internal error. DCO coordination recheck: The listed exact import merges/closes, changes its footer source revision, or its importing maintainer explicitly confirms the source metadata rewrite can proceed. Recheck live source/fork heads immediately before any write."
+        "recheckCondition": "Fresh exact source/import feedback or importing maintainer error detail.\nRefreshed exact export includes fixed integration ancestry and owning integration partition passes; inspect any distinct remaining internal error. DCO coordination recheck: The listed exact import merges/closes, changes its footer source revision, or its importing maintainer explicitly confirms the source metadata rewrite can proceed. Recheck live source/fork heads immediately before any write.",
+        "curatedAt": "2026-11-26T01:47:16.498762+00:00",
+        "projectFeedback": {
+          "source": "b2cbea854fc9094a9b295a6226a90bccc4dad2ca",
+          "state": "Optional early-return and regression-coverage suggestions implemented; remaining importing-maintainer/TestSudo integration wait is independent.",
+          "evidence": [
+            "https://github.com/gvisor/gvisor/blob/b2cbea854fc9094a9b295a6226a90bccc4dad2ca/pkg/sentry/vfs/mount_test.go#L239",
+            "https://github.com/gvisor/gvisor/pull/16594#pullrequestreview-5758483291"
+          ]
+        }
       },
       "reapproval": {
         "kind": "content-amendment",
@@ -47459,6 +47489,13 @@
           "status": "open",
           "owner": "maintainer-owned",
           "source": "Root verified matching import; independent of automatic native-repository import policy"
+        },
+        "mainBootstrap": {
+          "build": 55850,
+          "sourceHead": "b214855fa038fd770d1dc3e3a3984ba922282104",
+          "state": "Repository pre-command failed fetching literal ref tamird before project tests",
+          "evidence": "https://buildkite.com/gvisor/pipeline/builds/55850",
+          "classification": "Root source-bound canonical-reader diagnosis; distinct from FirstPass admission/runtime outcomes. Existing source/import/performance boundaries remain."
         }
       },
       "reapproval": {
@@ -68887,7 +68924,7 @@
       "repo": "google/gvisor",
       "number": 14999,
       "ref": "feat/so-peergroups",
-      "head": "bdf1068d1ad7ecd626d71553e361402f966e223d",
+      "head": "2b096ecc6cbe58cb80521653e28c60bf8fee3661",
       "title": "Implement SO_PEERGROUPS for Unix sockets",
       "url": "https://github.com/google/gvisor/pull/14999",
       "group": "runtime",
@@ -68952,6 +68989,11 @@
             "file": "14999-coverage-review-consumption.json",
             "sha256": "c7aaf9fcf749e443646e275313a3fcb1c385b0beba065fb7009b975f1071112b"
           }
+        },
+        "currentSourceComparison": {
+          "prior": "bdf1068d1ad7ecd626d71553e361402f966e223d",
+          "current": "2b096ecc6cbe58cb80521653e28c60bf8fee3661",
+          "scope": "Only socket_unix_peercred.cc formatting/include changed; production files unchanged. Prior31-case execution remains author-reported and source-scoped, not a new run."
         }
       }
     },
@@ -72910,7 +72952,15 @@
           "ownerReceipt": "16821-16957-strict-final-audit.json"
         },
         "finalIndependentReviews": "Both accepted; no remaining formatting finding",
-        "askedComparisonCommand": "git range-diff f3575cb4ed^! 299a4bf8f^!"
+        "askedComparisonCommand": "git range-diff f3575cb4ed^! 299a4bf8f^!",
+        "mainBootstrap": {
+          "build": 55555,
+          "sourceHead": "f3575cb4ed538695d0b7936e36662633a38b2b5e",
+          "state": "Repository pre-command failed fetching literal ref tamird before project tests",
+          "evidence": "https://buildkite.com/gvisor/pipeline/builds/55555",
+          "classification": "Root source-bound canonical-reader diagnosis; distinct from FirstPass admission/runtime outcomes. Existing source/import/performance boundaries remain.",
+          "preparedCandidate": "299a4bf8f489b96c7d148e1fa9f2d7c7171925d4 already incorporates upstream909c3dce2; pending source decision remains, no new rebase/run."
+        }
       },
       "refinement": {
         "before": {
@@ -76886,7 +76936,7 @@
       "group": "bazel",
       "status": "open",
       "updatedAt": "2026-11-24T20:55:31.712040+00:00",
-      "summary": "Public a3ca22afe was last observed CONFLICTING; GitHub is now recomputing mergeability. #17446 landed with C/header inputs identical to the historical strict-composition CI, satisfying that landing prerequisite only. Raw5026 strict failures and the separate original runtime evidence retain their scopes. #16522, root review, performance and internal adapter integration remain open.",
+      "summary": "Public a3ca22afe is confirmed dirty against root-verified current basebf5df9a1c. approved_rebase_queue has queued current-PR rebase preparation after #17444. #17446 landing satisfies only its exact C/header prerequisite; replacement #16522, internal adapter, root review and performance obligations remain independent.",
       "evidence": [
         {
           "label": "Revised #17089 source with explicit ARM64 layouts for 4 KiB and 64 KiB pages",
@@ -77037,8 +77087,8 @@
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
         "observedAt": "2026-11-24T20:55:31.712040+00:00",
-        "disposition": "Public a3ca22afe was last observed CONFLICTING; GitHub is now recomputing mergeability. #17446 landed with C/header inputs identical to the historical strict-composition CI, satisfying that landing prerequisite only. Raw5026 strict failures and the separate original runtime evidence retain their scopes. #16522, root review, performance and internal adapter integration remain open.",
-        "nextAction": "approved_rebase_queue / root retains the existing requested-rebase and source-authority bounds. Current-PR preparation is separate from the prepared replacement’s #16522 publication prerequisite. Preserve performance/internal holds; do not transfer historical strict qualification to new master or raw5026.",
+        "disposition": "Public a3ca22afe is confirmed dirty against root-verified current basebf5df9a1c. approved_rebase_queue has queued current-PR rebase preparation after #17444. #17446 landing satisfies only its exact C/header prerequisite; replacement #16522, internal adapter, root review and performance obligations remain independent.",
+        "nextAction": "approved_rebase_queue prepares the current PR after #17444 under the existing source-authority boundary. Preserve the replacement’s #16522 prerequisite and independent qualification/internal/performance gates; no historical strict-proof transfer to a new base.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17067#discussion_r4486895273",
           "https://github.com/tamird/gvisor/commit/7f6ecfff61b465c2ae00d20ee4ebaad09d430519",
@@ -77079,15 +77129,28 @@
           "https://github.com/google/gvisor/pull/17067#issuecomment-7139245011",
           "https://github.com/google/gvisor/commit/e597012bfea79de2a377822696c3c22a3cc7dbeb"
         ],
-        "recheckCondition": "Actual source/base/mergeability change, #16522 landing, existing reviewed integration or qualified performance evidence.",
+        "recheckCondition": "Existing owner’s source-bound preparation/validation milestone or actual prerequisite/source event.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "mergeable": "CONFLICTING",
-        "curatedAt": "2026-11-22T14:02:28.619749+00:00",
+        "curatedAt": "2026-11-26T01:47:16.498762+00:00",
         "actionableComment": {
           "kind": "review",
           "commentId": "PRR_kwDOB9IlXs8AAAABZMfcOw",
           "url": "https://github.com/google/gvisor/pull/17067#pullrequestreview-5985786939",
           "head": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a"
+        },
+        "rootCurrentBaseObservation": {
+          "source": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
+          "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
+          "state": "mergeable=false/dirty per root direct REST",
+          "curatedAt": "2026-11-26T01:47:16.498762+00:00"
+        },
+        "mainBootstrap": {
+          "build": 55478,
+          "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
+          "state": "Repository pre-command failed fetching literal ref tamird before project tests",
+          "evidence": "https://buildkite.com/gvisor/pipeline/builds/55478",
+          "classification": "Root source-bound canonical-reader diagnosis; distinct from FirstPass admission/runtime outcomes. Existing source/import/performance boundaries remain."
         }
       },
       "dcoAmendment": {
@@ -77112,7 +77175,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "root / existing Systrap native stub workstream"
       },
-      "recheckCondition": "Reviewable current-base resolution or actual16522 landing/source approval/performance evidence."
+      "recheckCondition": "Existing owner’s source-bound preparation/validation milestone or actual prerequisite/source event."
     },
     {
       "id": "pr:bazel-contrib/buildtools:1527",
@@ -98304,7 +98367,7 @@
         "sourceHead": "53f2efd95be8bed7e53be3e681a37f7a519a7c16",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
         "disposition": "Exact public53f2efd95 has a new formal GitHub approval; repository governance still reports one of two maintainer approvals. Main55988 failed both attempts in repository pre-command fetching literal ref tamird after checkout, before project tests. FirstPass2952 started on the same head. Historical FirstPass1585 daily-quota evidence is separate; no new source failure or green main result is inferred.",
-        "nextAction": "approved_rebase_queue prepares a same-patch current-base rebase incorporating merged #17735/909c3dce2, which removes the exact obsolete fork-fetch hook. Preserve exact-source qualification and final publication boundaries. FirstPass2952 remains separately live; no unchanged retry or duplicate fix.",
+        "nextAction": "approved_rebase_queue qualifies strict-equal rebase candidatead7b865833 on actual basef6b3afd736. GNU/musl graph and source gates45737000190/45737003365/45737005712 are dispatched, with no result inferred. After exact qualification, use the recovered original05bf approval and standing mechanical publication/notice grant; verify new-head review state rather than transferring old approvals. Current public53f2 and FirstPass2952 remain separate.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17444",
           "https://github.com/tamird/gvisor/commit/05bf77c06",
@@ -98377,7 +98440,7 @@
           "https://github.com/gvisor/gvisor/pull/17735"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Owner’s same-patch rebase/validation/review milestone or exact-head FirstPass2952 result; no repeated old-hook diagnosis.",
+        "recheckCondition": "Existing owner’s graph/source, affected-product and final publication milestone; no duplicate watcher or unchanged public-head retry.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -98401,7 +98464,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-26T01:28:23.740644+00:00",
+        "curatedAt": "2026-11-26T01:47:16.498762+00:00",
         "currentCI": {
           "head": "53f2efd95be8bed7e53be3e681a37f7a519a7c16",
           "main": 55988,
@@ -98410,6 +98473,26 @@
           "firstPass": 2952,
           "firstPassState": "PENDING at sample",
           "maintainerApproval": "Maintainer approvals: 1, needs 2."
+        },
+        "currentCandidate": {
+          "native": "ad7b865833d3c68da3a36aa010a167a7a18bbf42",
+          "base": "f6b3afd7368b3ef9e0e92302e248c94e0db22f2b",
+          "ci": "ae684f27ed88fc9f6641734bb344099d02dd616e",
+          "sourcePatch": "strict equal",
+          "state": "Preview published;qualification in progress; publicPR53f2 unchanged",
+          "owner": "approved_rebase_queue",
+          "runs": [
+            45737000190,
+            45737003365,
+            45737005712
+          ]
+        },
+        "mainBootstrap": {
+          "build": 55988,
+          "sourceHead": "53f2efd95be8bed7e53be3e681a37f7a519a7c16",
+          "state": "Repository pre-command failed fetching literal ref tamird before project tests",
+          "evidence": "https://buildkite.com/gvisor/pipeline/builds/55988",
+          "classification": "Root source-bound canonical-reader diagnosis; distinct from FirstPass admission/runtime outcomes. Existing source/import/performance boundaries remain."
         }
       },
       "settledReviews": [
@@ -105979,8 +106062,8 @@
         "owner": "root",
         "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
         "disposition": "Upstream delivery is complete by manual landing:660c1040592c4332520e7d783360139c8298cb52 names PR67595 and is upstream main. Root verified its changed-file set, statuses and blob IDs exactly match reviewed15c2edb. Native GitHub mergedAt remains null; this is landed-by-commit, not an API merge claim. Maintainer Jake’s notice is source-bound.",
-        "nextAction": "No upstream delivery or CI wait remains. The technically qualified pinned Node22 fixture backport at057d has its independent unanswered gVisor publication question on the TLS investigation; follow that owning record without transferring upstream approval.",
-        "recheckCondition": "Actual pinned-fixture backport decision or post-landing recurrence.",
+        "nextAction": "Upstream manual landing660c1040592c and the approved gVisor backport #17885 are delivered. No upstream review/CI or backport-publication question remains. Follow only canonical #17885 for its current CI/review lifecycle; no duplicate owner, source work or outreach.",
+        "recheckCondition": "Actual post-landing recurrence or canonical #17885 lifecycle evidence.",
         "publishedDelivery": {
           "base": "b7df44bf9c85a6104b9158b616999e3d2c58be5d",
           "head": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
@@ -106191,7 +106274,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-26T00:39:54.598989+00:00",
+        "curatedAt": "2026-11-26T01:47:16.498762+00:00",
         "memberReview": {
           "author": "bnb",
           "association": "MEMBER",
@@ -106248,7 +106331,7 @@
           {
             "reason": "author-feedback",
             "title": "Verified manual landing; upstream wait complete",
-            "nextAction": "No upstream approval/CI/queue wait remains. Root resumes the existing pinned Node22 fixture-backport owner with its recorded qualification and authorization; that separate obligation remains on the TLS investigation. No duplicate upstream CI or outreach.",
+            "nextAction": "Upstream delivery and the approved #17885 backport are complete. Follow only canonical #17885 current CI/review; no upstream approval, publication or duplicate outreach wait.",
             "evidence": [
               "https://github.com/nodejs/node/pull/67595#issuecomment-7080248335",
               "https://github.com/nodejs/node/pull/67595#issuecomment-7080379119",
@@ -106575,7 +106658,7 @@
           "note": "User posted a shorter landing-status question directly; do not post the verbose rerun draft or ask again."
         }
       ],
-      "recheckCondition": "Actual pinned-fixture backport decision or post-landing recurrence.",
+      "recheckCondition": "Actual post-landing recurrence or canonical #17885 lifecycle evidence.",
       "inactive": true
     },
     {
@@ -107906,15 +107989,15 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-24T06:27:10.701611+00:00",
-      "summary": "Current First Pass 2904 passed at published 057d07808. Replacement main 55964 remains pending; earlier main 55757 cancellation/image-loading failures are historical. No whole-run pass or new source-cause attribution is established.",
+      "summary": "Approved pinned Node22 TLS backport057d07808 is delivered. Governance, FirstPass2904 and DCO pass; main55964 is still live. Root’s inspected attempts were interrupted or terminated during Node image loading, with one successful retry and no observed TLS assertion in failure lines. No root cause or whole-suite clearance is inferred.",
       "followup": {
         "owner": "root",
         "sourceHead": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
         "providerHead": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
         "observedAt": "2026-11-24T06:20:46.557823+00:00",
-        "disposition": "Current First Pass 2904 passed at published 057d07808. Replacement main 55964 remains pending; earlier main 55757 cancellation/image-loading failures are historical. No whole-run pass or new source-cause attribution is established.",
-        "nextAction": "Root follows the current admitted main 55964 through the canonical lifecycle and consumes actual terminal/diagnostic evidence. Do not retry unchanged work or transfer old image/cancellation causes.",
-        "recheckCondition": "Actual terminal main 55964/check/review/source event.",
+        "disposition": "Approved pinned Node22 TLS backport057d07808 is delivered. Governance, FirstPass2904 and DCO pass; main55964 is still live. Root’s inspected attempts were interrupted or terminated during Node image loading, with one successful retry and no observed TLS assertion in failure lines. No root cause or whole-suite clearance is inferred.",
+        "nextAction": "Root follows the canonical main55964 terminal result and current maintainer lifecycle. Preserve original incident limits and source-bound retry history; no duplicate observer, unchanged retry, publication decision or causal fix claim.",
+        "recheckCondition": "Main55964 terminal or substantive new source/reviewer/provider evidence.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17885",
           "https://buildkite.com/gvisor/first-pass/builds/2468",
@@ -107924,9 +108007,9 @@
           "https://buildkite.com/gvisor/pipeline/builds/55964",
           "https://buildkite.com/gvisor/first-pass/builds/2904"
         ],
-        "curatedAt": "2026-11-25T23:15:02.675448+00:00"
+        "curatedAt": "2026-11-26T01:47:16.498762+00:00"
       },
-      "recheckCondition": "Actual terminal main 55964/check/review/source event."
+      "recheckCondition": "Main55964 terminal or substantive new source/reviewer/provider evidence."
     },
     {
       "id": "pr:buildbuddy-io/buildbuddy:14275",
@@ -134171,9 +134254,9 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-25T15:19:00.232145+00:00",
-      "lastReviewedAt": "2026-11-20T15:54:04.733842+00:00",
-      "summary": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning’s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
+      "updatedAt": "2026-11-26T01:47:16.498762+00:00",
+      "lastReviewedAt": "2026-11-26T01:47:16.498762+00:00",
+      "summary": "Completed source-bound feedback reconciliation for all 101 changed-work leads and current feedback inventories on 223 open owned PRs. Reviewed 76 recent external posts plus 9 unchanged-head updates and 13 Lucas optional/nit rows. The apparent optional-cleanup gaps already have published fixes; stale mount-test, merged benchmark, stable-Protobuf and delivered Node/backport descriptions are corrected. No new unowned implementation request was found.",
       "findings": [
         {
           "text": "The November 12 sweep inspected 90 changed URLs through 17:46 UTC, representing 87 distinct source revisions. The 69 pull requests had 79 review threads, each read to completion. Current replies and revisions address Lucas’s changes on TUN ownership, TCP recovery, receive-window and veth work. On #16770 the later probe is data without FIN. Tamir answered why the existing test does not assert a separate FIN-bearing window-edge packet.",
@@ -134670,7 +134753,7 @@
           ]
         }
       ],
-      "nextStep": "Consume changed feedback and route source-bound obligations to existing owners. Daybreak availability is confirmed; independent technical/safety/performance requirements and publication/merge boundaries remain. Rebase only for a verified conflict, necessary prerequisite, integration failure or explicit user request.",
+      "nextStep": "Recheck genuinely new source-bound feedback, proposal/landing changes and the next due daily review. Preserve existing owners and actual pending decisions; optional comments remain evidence to assess, not automatic new source commitments. Current multi-commit contributions are allowed; historical one-commit counts are not a submission restriction.",
       "evidence": [
         {
           "label": "TCP review map",
@@ -134691,19 +134774,32 @@
       ],
       "group": "tests",
       "technicalOwner": "Codex",
-      "recheckCondition": "New source-bound feedback, owner evidence, dependency or actual decision change.",
+      "recheckCondition": "New human feedback or source/landing evidence, changed project guidance or the next actual daily review condition.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Consume changed feedback and route source-bound obligations to existing owners. Daybreak availability is confirmed; independent technical/safety/performance requirements and publication/merge boundaries remain. Rebase only for a verified conflict, necessary prerequisite, integration failure or explicit user request.",
-        "recheckCondition": "New source-bound feedback, owner evidence, dependency or actual decision change."
+        "nextAction": "Recheck genuinely new source-bound feedback, proposal/landing changes and the next due daily review. Preserve existing owners and actual pending decisions; optional comments remain evidence to assess, not automatic new source commitments. Current multi-commit contributions are allowed; historical one-commit counts are not a submission restriction.",
+        "recheckCondition": "New human feedback or source/landing evidence, changed project guidance or the next actual daily review condition."
       },
       "followup": {
         "owner": "root",
-        "observedAt": "2026-11-20T15:54:04.733842+00:00",
-        "curatedAt": "2026-11-25T15:19:00.232145+00:00",
-        "disposition": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning’s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
-        "nextAction": "Consume changed feedback and route source-bound obligations to existing owners. Daybreak availability is confirmed; independent technical/safety/performance requirements and publication/merge boundaries remain. Rebase only for a verified conflict, necessary prerequisite, integration failure or explicit user request.",
-        "recheckCondition": "New source-bound feedback, owner evidence, dependency or actual decision change."
+        "observedAt": "2026-11-26T01:23:16.161346+00:00",
+        "curatedAt": "2026-11-26T01:47:16.498762+00:00",
+        "disposition": "Completed source-bound feedback reconciliation for all 101 changed-work leads and current feedback inventories on 223 open owned PRs. Reviewed 76 recent external posts plus 9 unchanged-head updates and 13 Lucas optional/nit rows. The apparent optional-cleanup gaps already have published fixes; stale mount-test, merged benchmark, stable-Protobuf and delivered Node/backport descriptions are corrected. No new unowned implementation request was found.",
+        "nextAction": "Recheck genuinely new source-bound feedback, proposal/landing changes and the next due daily review. Preserve existing owners and actual pending decisions; optional comments remain evidence to assess, not automatic new source commitments. Current multi-commit contributions are allowed; historical one-commit counts are not a submission restriction.",
+        "recheckCondition": "New human feedback or source/landing evidence, changed project guidance or the next actual daily review condition.",
+        "lastAudit": {
+          "completedAt": "2026-11-26T01:47:16.498762+00:00",
+          "sourceObservationAt": "2026-11-26T01:23:16.161346+00:00",
+          "leads": 101,
+          "openOwnedPRs": 223,
+          "externalRecentRows": 76,
+          "unchangedHeadRows": 9,
+          "LucasCleanupRows": 13,
+          "newUnownedImplementationActions": 0,
+          "receipt": "project-feedback-current-audit.json",
+          "sha256": "a4650311c6ebb7eddd9b3fb409c3f7ef525e89e758aecb5e415fc8ebc912f178",
+          "limits": "Feedback reconciliation with retained exact-source reviews;no source builds/timing/outreach or new whole-implementation approval."
+        }
       }
     },
     {
@@ -134713,7 +134809,7 @@
       "owner": "root",
       "updatedAt": "2026-11-26T01:00:57.925509+00:00",
       "group": "analysis",
-      "summary": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, syscall, CPU/Memory, RubyNoOp and one HTTP group have scoped matched results. Corrected dirty-rootfs RubySpec functional visits pass on baseline/candidate (3613/0/31 each), while prior incomplete comparisons remain retained. Fio/ABSL stay owned/live. Size precision, FUSE architecture and open #17884 remain separate.",
+      "summary": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Fio’s original 48-leaf AA+AB is complete with timing intervals at most 3% but wide throughput uncertainty. Dirty-FUSE ABSL completed AA, then AB stopped on a pinned-dependency HTTP403. Earlier matched and Ruby functional results retain their exact scopes; remaining fixture/performance, FUSE architecture and #17884 gates stay separate.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -135085,7 +135181,7 @@
           ]
         }
       ],
-      "nextStep": "Existing owners audit Fio/ABSL terminal evidence and assess the corrected Ruby fixture’s next qualification step; no new timing authority or completed Ruby comparison follows from two functional visits. Keep the actual Size opening question, statistical limits and FUSE feature scope independent.",
+      "nextStep": "Existing owners resolve the remaining workload/dependency and precision gates before further authorized qualification. Fio needs no repeated matched run; dirty-FUSE ABSL has no complete candidate result. Keep the actual Size decision and FUSE scope question separate; no blanket performance clearance or new timing authority.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -135494,6 +135590,10 @@
         {
           "label": "Corrected RubySpec candidate functional",
           "url": "https://github.com/tamird/gvisor/actions/runs/45735107440"
+        },
+        {
+          "label": "Dirty-FUSE ABSL partial comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45722613653"
         }
       ],
       "reviewWatch": {
@@ -135738,14 +135838,14 @@
           "https://github.com/gvisor/gvisor/pull/17479"
         ],
         "owner": "root",
-        "disposition": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, syscall, CPU/Memory, RubyNoOp and one HTTP group have scoped matched results. Corrected dirty-rootfs RubySpec functional visits pass on baseline/candidate (3613/0/31 each), while prior incomplete comparisons remain retained. Fio/ABSL stay owned/live. Size precision, FUSE architecture and open #17884 remain separate.",
-        "nextAction": "Existing owners audit Fio/ABSL terminal evidence and assess the corrected Ruby fixture’s next qualification step; no new timing authority or completed Ruby comparison follows from two functional visits. Keep the actual Size opening question, statistical limits and FUSE feature scope independent.",
+        "disposition": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Fio’s original 48-leaf AA+AB is complete with timing intervals at most 3% but wide throughput uncertainty. Dirty-FUSE ABSL completed AA, then AB stopped on a pinned-dependency HTTP403. Earlier matched and Ruby functional results retain their exact scopes; remaining fixture/performance, FUSE architecture and #17884 gates stay separate.",
+        "nextAction": "Existing owners resolve the remaining workload/dependency and precision gates before further authorized qualification. Fio needs no repeated matched run; dirty-FUSE ABSL has no complete candidate result. Keep the actual Size decision and FUSE scope question separate; no blanket performance clearance or new timing authority.",
         "recheckCondition": "Owner-audited Fio/ABSL terminal evidence, existing fixture/source milestones or actual pending publication decisions; all other qualification scopes remain separate.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-26T01:28:23.740644+00:00",
+        "curatedAt": "2026-11-26T01:47:16.498762+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -135842,11 +135942,14 @@
             }
           },
           "fio": {
-            "owner": "analysis_delivery",
             "run": 45728693661,
-            "state": "Declared Bazel target; same-source AA then conditional AB in progress",
-            "preflight": 45727720891,
-            "scope": "Functional288 rows/864 values/all48 leaves,18 product bindings and cleanup passed. Matched original48 leaves×3 metrics, n24/N1; no statistical result yet."
+            "owner": "analysis_delivery",
+            "state": "All48 leaves AA and AB complete",
+            "children": 100,
+            "contrastsPerPhase": 720,
+            "flagsPerPhase": 0,
+            "primaryTiming95CIMaxPercent": 3,
+            "limits": "Throughput/IOPS primary uncertainty reaches100%; split contrasts up122%. No fine throughput precision or equivalence claim;18 product hashes and cleanup0."
           },
           "sizeCacheIntegrity": {
             "source": "174c54aac30bcfd6a7ba4fc14b256665a929edd3",
@@ -135855,6 +135958,16 @@
             "positive": 45730506808,
             "negative": 45730509291,
             "limits": "Old green negative did not trigger a failure; old Size controls do not establish successful resets. Statistical hold remains; no cause or current-runtime equivalence claim."
+          },
+          "abslDirtyFuse": {
+            "run": 45722613653,
+            "state": "AA complete;AB stopped before full comparison",
+            "aaChildren": 50,
+            "aaFlags": "0/5",
+            "abSuccessful": 13,
+            "abFailed": 1,
+            "failure": "Baseline pair5A could not fetch pinned Bazel platforms0.0.10 from GitHub release:HTTP403.",
+            "limits": "No complete candidate estimate or Sentry compatibility failure proven;no successful-subset analysis/unchanged retry."
           }
         }
       },
@@ -141680,11 +141793,11 @@
     {
       "id": "investigation:ci-flake-node-tls-autoselectfamily",
       "title": "Node’s Internet TLS connection test reports a connection reset",
-      "status": "active",
+      "status": "concluded",
       "group": "ci-flakes",
       "owner": "root",
       "updatedAt": "2026-11-23T18:40:13.679878+00:00",
-      "summary": "The user-approved057d Node22 TLS backport is delivered as gVisor17885 and verified MERGEABLE, with new checks pending. Prior exact-image runc and systrap TLS cases passed; no new Node/image build, full-suite or ARM claim. Original Node67595 landing is complete; the original reset cause remains unknown.",
+      "summary": "The Node test landed upstream as660c1040592c, and its approved pinned Node22 backport is delivered as gVisor #17885 at057d07808. Governance, FirstPass2904 and DCO pass; main55964 remains with its canonical owner. Inspected failed attempts stopped during Node image loading or were interrupted, without a TLS assertion. The original reset cause remains unknown; no full-suite/ARM or causal-fix claim.",
       "findings": [
         {
           "text": "The pinned test opens two TLS connections to the same host on port 443. One enables automatic address-family selection and the other disables it. The default hostname is nodejs.org and can be overridden by the test environment. The failure has yet to be attributed to either connection.",
@@ -141730,7 +141843,7 @@
           ]
         }
       ],
-      "nextStep": "Root/approved delivery owner follows the published PR’s actual current-head checks, review and landing events. No open source-publication approval wait remains; original investigation/evidence limits remain distinct.",
+      "nextStep": "Follow only canonical #17885 for actual main/review/landing events. Source delivery is complete; reopen this historical incident on an actual relevant recurrence or new source-bound evidence, not another publication question.",
       "evidence": [
         {
           "label": "#54502 Node TLS failure",
@@ -141826,11 +141939,11 @@
         }
       ],
       "technicalOwner": "CI flake triage",
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
+      "recheckCondition": "Actual TLS recurrence/new evidence; #17885 owns its ordinary current CI/review lifecycle.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
-        "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+        "nextAction": "Follow only canonical #17885 for actual main/review/landing events. Source delivery is complete; reopen this historical incident on an actual relevant recurrence or new source-bound evidence, not another publication question.",
+        "recheckCondition": "Actual TLS recurrence/new evidence; #17885 owns its ordinary current CI/review lifecycle."
       },
       "followup": {
         "qualificationHistory": [
@@ -141850,12 +141963,16 @@
             }
           }
         ],
-        "curatedAt": "2026-11-18T23:27:40.021573+00:00",
-        "nextAction": "Follow canonical Node.js#67595 at15c2ed through actual upstream CI and maintainer review; no personal-DCO/submission decision remains. Preserve old5bf qualification/version scopes. After upstream landing, the existing pinned Node22 image backport remains a separate recorded need.",
+        "curatedAt": "2026-11-26T01:47:16.498762+00:00",
+        "nextAction": "Follow only canonical #17885 for actual main/review/landing events. Source delivery is complete; reopen this historical incident on an actual relevant recurrence or new source-bound evidence, not another publication question.",
         "owner": "root",
-        "recheckCondition": "Node67595 source, CI, human review or landing/backport event.",
-        "sourceHead": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-        "disposition": "Approved exact test postimages rebased through the own-fork GitData API; normal author/committer/DCO/Assisted and exact title/body readbacks verified. No local checkout or foreign gVisor objects were needed."
+        "recheckCondition": "Actual TLS recurrence/new evidence; #17885 owns its ordinary current CI/review lifecycle.",
+        "sourceHead": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
+        "disposition": "The Node test landed upstream as660c1040592c, and its approved pinned Node22 backport is delivered as gVisor #17885 at057d07808. Governance, FirstPass2904 and DCO pass; main55964 remains with its canonical owner. Inspected failed attempts stopped during Node image loading or were interrupted, without a TLS assertion. The original reset cause remains unknown; no full-suite/ARM or causal-fix claim.",
+        "evidence": [
+          "https://github.com/nodejs/node/commit/660c1040592c4332520e7d783360139c8298cb52",
+          "https://github.com/gvisor/gvisor/pull/17885"
+        ]
       },
       "linkedPR": "pr:nodejs/node:67595"
     },

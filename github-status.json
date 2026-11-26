@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-26T01:23:16.161346+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-26T01:29:42.574138+00:00",
+  "registryDate": "2026-11-26T01:47:16.498762+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -463598,12 +463598,12 @@
       "mergeabilityCheckedAt": "2026-11-26T01:23:13.330389+00:00",
       "sourceBranchMismatch": false,
       "owner": "approved_rebase_queue / root",
-      "action": "approved_rebase_queue / root retains the existing requested-rebase and source-authority bounds. Current-PR preparation is separate from the prepared replacement’s #16522 publication prerequisite. Preserve performance/internal holds; do not transfer historical strict qualification to new master or raw5026.",
+      "action": "approved_rebase_queue prepares the current PR after #17444 under the existing source-authority boundary. Preserve the replacement’s #16522 prerequisite and independent qualification/internal/performance gates; no historical strict-proof transfer to a new base.",
       "recordedFollowup": {
         "owner": "approved_rebase_queue / root",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-        "disposition": "Public a3ca22afe was last observed CONFLICTING; GitHub is now recomputing mergeability. #17446 landed with C/header inputs identical to the historical strict-composition CI, satisfying that landing prerequisite only. Raw5026 strict failures and the separate original runtime evidence retain their scopes. #16522, root review, performance and internal adapter integration remain open.",
-        "nextAction": "approved_rebase_queue / root retains the existing requested-rebase and source-authority bounds. Current-PR preparation is separate from the prepared replacement’s #16522 publication prerequisite. Preserve performance/internal holds; do not transfer historical strict qualification to new master or raw5026."
+        "disposition": "Public a3ca22afe is confirmed dirty against root-verified current basebf5df9a1c. approved_rebase_queue has queued current-PR rebase preparation after #17444. #17446 landing satisfies only its exact C/header prerequisite; replacement #16522, internal adapter, root review and performance obligations remain independent.",
+        "nextAction": "approved_rebase_queue prepares the current PR after #17444 under the existing source-authority boundary. Preserve the replacement’s #16522 prerequisite and independent qualification/internal/performance gates; no historical strict-proof transfer to a new base."
       },
       "conflictObservedSince": "2026-11-17T19:11:47.868378+00:00"
     },
@@ -472033,7 +472033,7 @@
         "since": "2026-11-25T22:15:30.434231+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "pr:14458": {
@@ -472796,7 +472796,7 @@
         "since": "2026-11-25T20:26:19.847463+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "pr:15202": {
@@ -473297,7 +473297,7 @@
         "since": "2026-11-25T23:55:50.246211+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "pr:15453": {
@@ -473773,7 +473773,7 @@
         "since": "2026-11-25T20:26:38.821906+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "pr:15648": {
@@ -475113,7 +475113,7 @@
         "since": "2026-11-25T22:41:21.827202+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "pr:16445": {
@@ -475728,7 +475728,7 @@
         "since": "2026-11-25T22:35:10.106729+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "pr:16661": {
@@ -476509,7 +476509,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "pr:16822": {
@@ -476591,7 +476591,7 @@
         "since": "2026-11-25T23:00:04.041520+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "pr:16828": {
@@ -476998,7 +476998,7 @@
         "since": "2026-11-26T01:29:42.574138+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "pr:16875": {
@@ -477196,7 +477196,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "pr:16958": {
@@ -478312,7 +478312,7 @@
         "since": "2026-11-26T00:39:54.598989+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "pr:17265": {
@@ -478688,7 +478688,7 @@
         "since": "2026-11-25T22:34:48.644451+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "pr:17376": {
@@ -480087,7 +480087,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -480096,7 +480096,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -480105,7 +480105,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -480114,7 +480114,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -480123,7 +480123,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -480132,7 +480132,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -480141,7 +480141,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -480150,7 +480150,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "issue:17832": {
@@ -480159,7 +480159,7 @@
         "since": "2026-11-23T20:29:42.991432+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "branch:hey-report-cap-accounting": {
@@ -480168,7 +480168,7 @@
         "since": "2026-11-25T22:03:16.345652+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "branch:size-cache-reset-integrity": {
@@ -480177,7 +480177,7 @@
         "since": "2026-11-26T01:00:57.925509+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     },
     "investigation:ci-benchmark-fuse-device": {
@@ -480186,7 +480186,7 @@
         "since": "2026-11-25T21:11:04.741354+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T01:29:42.574138+00:00"
+        "observedAt": "2026-11-26T01:47:16.498762+00:00"
       }
     }
   },
@@ -481695,414 +481695,9 @@
     "lastCompletedScope": "Exact preserved last full local/fork audit; limited80-ref merged-only cleanup remains separately recorded and does not advance the broader audit clock."
   },
   "projectFeedbackReview": {
-    "lastReviewed": "2026-11-20T15:54:04.733842+00:00",
-    "dailyReviewDue": true,
-    "changedWork": {
-      "https://github.com/google/gvisor/pull/17118": {
-        "head": "98b52778ff1c9364ec20e7b368fcb27a7d614a4e",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/17281": {
-        "head": "e0cc4964a9b942dc28902ff08ed041b2608a8760",
-        "status": "open"
-      },
-      "https://github.com/kiron1/bazel-compile-commands/pull/236": {
-        "head": "324cf87d3065afb993520a4104720ef7c7647b0b",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/16857": {
-        "head": "a70f8cdc56996fe14b46aaabbdfb19985f8d957c",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/17181": {
-        "head": "a1da8410eb9708a5e08fed9dfc95e8b98c74b1ec",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/17568": {
-        "head": "00c5cd11a3952bf965588d48dd19329cb45de332",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/16737": {
-        "head": "30093b47e846cf89b693fa6b5676e2de5839b10c",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/17836": {
-        "head": "29ff39685e49bee9d4144d6301162e359e2ec6c8",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/16522": {
-        "head": "c125b0e272ddb337b4c78588c79a86b2f5e228b6",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17763": {
-        "head": "ab45538513c30723c6fe2cdcfc36d1a6fd96f543",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/17838": {
-        "head": "329a5acef8c5495f66014b93aab4cf749ba8b61a",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17082": {
-        "head": "b9aadcf1b8a629ebc7659f7af38d8e88dfa3ba65",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/16666": {
-        "head": "718e0616e8fb5295b88691f7d2a9171bd4a2c9df",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/16770": {
-        "head": "9979fae516482553fd5042632a9ca2878ef9830e",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17131": {
-        "head": "32fd9c26abba8ceb7d68c6aacfd565bda81f839a",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17022": {
-        "head": "881bcc233a023ac188d0c3dd8d8d4f3770b7e3f3",
-        "status": "open"
-      },
-      "https://github.com/tamird/gvisor/commit/fb4513fe56a2a8fb94fbd6da8d6c61c827dc5688": {
-        "head": "fb4513fe56a2a8fb94fbd6da8d6c61c827dc5688",
-        "status": "Supplier step landed as #17816; declared-input migration remains open"
-      },
-      "https://github.com/tamird/gvisor/commit/ca0536a0e": {
-        "head": "ca0536a0eb74b24e306098f6bfb8ee1f1c60742f",
-        "status": "Superseded by delivered #17780"
-      },
-      "https://github.com/google/gvisor/pull/17470": {
-        "head": "bc55ab6327453ed38e289b2b1b1f7197b38087e8",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/16834": {
-        "head": "bec09fb06c6ca5924a5001dca1cb43be2ea71e26",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17641": {
-        "head": "3810f2bbe2a84d9b7e90a4ecf2535e4691874648",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17378": {
-        "head": "8cab980c14e1011e7855955944adc66b1b2554c4",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17816": {
-        "head": "9c2814db01620f643809f38f3f2e929ab35f4aef",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/17492": {
-        "head": "a4b0381bb2b121ec576780dbd65d881b50d837db",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/16051": {
-        "head": "c0c76ca28a6ee79682e22dab6cf0d8b2327e3ea7",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/16490": {
-        "head": "28a5f72059346d1c74e1146c17e42a7ca388518f",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/16508": {
-        "head": "24c1b39e498eb0f4635694e8a9b1ebe179257fb6",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/16843": {
-        "head": "91b4fc2a2b3fe4a64a4d2769f982b6b381ec83d0",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17456": {
-        "head": "4b845306c75b9ad0d09d31cdb86d68dc64171fe9",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/16663": {
-        "head": "651437132bf0054f1742ab2dce694f28a9ee0dc4",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17853": {
-        "head": "3e39c3a0c85601525990460f46d124bb66c927f7",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17854": {
-        "head": "b64c59c1b06d72919b250766609b328d87a05076",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17855": {
-        "head": "5ad44c8892f6d9ce773e448357a83917b3c79b5b",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/17856": {
-        "head": "2022728765e5e2a6a436272b09b13e5f04292826",
-        "status": "open"
-      },
-      "https://github.com/tamird/gvisor/commit/ad1733f2d": {
-        "head": "ad1733f2db32e45107eff7390c13df112d248f4b",
-        "status": "Approved predecessor; consolidated source review pending"
-      },
-      "https://github.com/google/gvisor/pull/15146": {
-        "head": "d279425e0defee09168de15f54f82b63f1e2a8a9",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17861": {
-        "head": "8e869b906e5a651a377178f1cf3621a798042397",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17862": {
-        "head": "57691bada17528444d5137569d164234536009fa",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/16516": {
-        "head": "d890ca5f5151167a7fb02694bd8d6e6209fff2d4",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/15106": {
-        "head": "afb6198869d091f721f559dc0e2eceb0c6bb5455",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17416": {
-        "head": "24841003c42c262436c161885db756eef1496a40",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/16591": {
-        "head": "d1b274f9eb8d7734c13ab3c6765ac3f9145856ff",
-        "status": "closed"
-      },
-      "https://github.com/bazelbuild/bazel-central-registry/pull/11518": {
-        "head": "fe25c8ed035077d6f3afe56d9b0d0411a6455b99",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/14999": {
-        "head": "2b096ecc6cbe58cb80521653e28c60bf8fee3661",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17871": {
-        "head": "dd4cd790d4915f47e66b03dd02c2c5f8a40e9c6f",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/16887": {
-        "head": "f16198b9425460ecbbd1312a60f1ab57478df1df",
-        "status": "closed"
-      },
-      "https://github.com/google/gvisor/pull/17265": {
-        "head": "6bbb910969fb2d87e1333c1df4e937f8545563a1",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17374": {
-        "head": "d461541e18fbb43999c7656ebddb85ecdb0b6a2f",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17873": {
-        "head": "967d146c614ab2c3897fdfb28a42ad96db423a5c",
-        "status": "open"
-      },
-      "https://github.com/protocolbuffers/protobuf/pull/31530": {
-        "head": "2f8840c6402bc2c5db1cef382adbaee1d89cecf7",
-        "status": "open"
-      },
-      "https://github.com/bazel-contrib/rules_lint/pull/1112": {
-        "head": "a3fbb54b2930347d57dc1c607f5e7546f738e7a2",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/17083": {
-        "head": "aa175bd84686b4585c413e2fabb36f1457cd52db",
-        "status": "open"
-      },
-      "https://github.com/nodejs/node/pull/67595": {
-        "head": "15c2edb5708cf8ac75b01360cff2372ecee0be23",
-        "status": "closed"
-      },
-      "https://github.com/google/gvisor/pull/17264": {
-        "head": "22401767ad9317e22aaebb118d3f0dafd031d6a1",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/16904": {
-        "head": "2a2862327306d9b0bc53dfffaa6e649837352e8d",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/17884": {
-        "head": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/16587": {
-        "head": "4ffc7923f64734cacfb01319dda3965432413f5a",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17885": {
-        "head": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
-        "status": "open"
-      },
-      "https://github.com/buildbuddy-io/buildbuddy/pull/14275": {
-        "head": "0f9557ec5cf3b4baedb2a454d74b118a36a4b2e1",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/16098": {
-        "head": "d692a4fb41acd4deb5f3b051ac06bd4145d888f3",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17780": {
-        "head": "4ef1c7dd6c58f85305c19070c3f666d903559bb7",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/16961": {
-        "head": "e0cbd5ea2de2bd79901bdcea796e25eeaa2acdba",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/17484": {
-        "head": "57eccb8495c241c967d9b1522a9e41263225e36b",
-        "status": "merged"
-      },
-      "https://github.com/tamird/gvisor/commit/9c63274cbc2a17dfabac062d229c3ac45ed8a4e9": {
-        "head": "9c63274cbc2a17dfabac062d229c3ac45ed8a4e9",
-        "status": "LicenseRef integration publication review requested"
-      },
-      "https://github.com/google/gvisor/pull/16466": {
-        "head": "0a9681ef9cdaf1a3640c64438d0507351a050fac",
-        "status": "merged"
-      },
-      "https://github.com/google/gvisor/pull/17104": {
-        "head": "ef6f0e2f8c9cd1ca1b2b277261f68ef5509d225e",
-        "status": "open"
-      },
-      "https://github.com/tamird/gvisor/commit/33a66c674d55deb90ec6e6bfecc4a55e738b2af4": {
-        "head": "cafd7c0bb1ba8f37a32facc212e778ac84a1a3df",
-        "status": "Delivered"
-      },
-      "https://github.com/google/gvisor/pull/16871": {
-        "head": "24959d472baf3aa7405ac1d3d3b88e47af8f7f76",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/16458": {
-        "head": "f9f6e3261d13800cb3bdbdaf713d44fc142811ac",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/16462": {
-        "head": "ce539633fa36f5f73f9e85a1cdc907be23ef1be5",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17915": {
-        "head": "cafd7c0bb1ba8f37a32facc212e778ac84a1a3df",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17920": {
-        "head": "ea66bb33d6f8130664a38035fdccb1e878a8a5f6",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17921": {
-        "head": "f05f486dc0182b1a9c3e55b33fb3ccde3f0a75b0",
-        "status": "open"
-      },
-      "https://github.com/tamird/gvisor/commit/6d9a3fa8ee4f33cc89afeaeaeeab0b1a7410d742": {
-        "head": "6d9a3fa8ee4f33cc89afeaeaeeab0b1a7410d742",
-        "status": "Published as #17920"
-      },
-      "https://github.com/tamird/gvisor/commit/df787c7f2f3dd984810e0a8dec1cc4b78e69ebdc": {
-        "head": "df787c7f2f3dd984810e0a8dec1cc4b78e69ebdc",
-        "status": "Contributor review requested"
-      },
-      "https://github.com/google/gvisor/pull/17446": {
-        "head": "af4126a4619b3c4c851fb6d10afecd1817fa8105",
-        "status": "merged"
-      },
-      "https://github.com/bazelbuild/bazel/pull/30837": {
-        "head": "d063f629beda6e4add527fafb1c5022c6dc98e3f",
-        "status": "open"
-      },
-      "https://github.com/tamird/gvisor/commit/4e82d9605": {
-        "head": "4e82d96053956477eed5782e780581d68e5ff6fc",
-        "status": "Published"
-      },
-      "https://github.com/google/gvisor/pull/17546": {
-        "head": "92c2c4ff86b674a8d910e2227312e161f1d4613d",
-        "status": "Published as #17546"
-      },
-      "https://github.com/tamird/gvisor/commit/24419d916114737a9d50690a7647c11d9fd66fe9": {
-        "head": "24419d916114737a9d50690a7647c11d9fd66fe9",
-        "status": "Published as #17970"
-      },
-      "https://github.com/google/gvisor/pull/16830": {
-        "head": "62adc7d9cf16a0805efad38bedcf6d516d1b2ec0",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17184": {
-        "head": "2aa840f4ffe655f0c749185070fba77e676186b5",
-        "status": "closed"
-      },
-      "https://github.com/google/gvisor/pull/17962": {
-        "head": "8044063a9a1f7d76cca2656cdbee0310d2bb1266",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17963": {
-        "head": "24a0f1e19e4b6a08caf252df986e70ae3f469ab6",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17970": {
-        "head": "24419d916114737a9d50690a7647c11d9fd66fe9",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17971": {
-        "head": "e17f88ffdd7a4e532f187741a4c58b7b09c109fc",
-        "status": "open"
-      },
-      "https://github.com/tamird/gvisor/commit/67601a14c": {
-        "head": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
-        "status": "Approved source; BCR/license prerequisites open"
-      },
-      "https://github.com/tamird/gvisor/commit/24a0f1e19e4b6a08caf252df986e70ae3f469ab6": {
-        "head": "24a0f1e19e4b6a08caf252df986e70ae3f469ab6",
-        "status": "Published as #17963"
-      },
-      "https://github.com/tamird/hey/commit/fa4c4219db59298cdec5dd21ea07b3aff25a2c97": {
-        "head": "fa4c4219db59298cdec5dd21ea07b3aff25a2c97",
-        "status": "Agent work"
-      },
-      "https://github.com/tamird/gvisor/commit/8178e3fe5": {
-        "head": "8178e3fe5fa3684427a9c78a66c0a268668de86c",
-        "status": "Approved; waiting for remaining compiler prerequisites"
-      },
-      "https://github.com/tamird/gvisor/commit/e0b856220893da40f3f6cb219463d3fcfb0bff97": {
-        "head": "e0b856220893da40f3f6cb219463d3fcfb0bff97",
-        "status": "Published as #17982"
-      },
-      "https://github.com/google/gvisor/pull/17982": {
-        "head": "e0b856220893da40f3f6cb219463d3fcfb0bff97",
-        "status": "open"
-      },
-      "https://github.com/tamird/gvisor/commit/c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6": {
-        "head": "c9b368ac8d8a49a585faa8e3aa3fd3d88acc0fd6",
-        "status": "Retired; diagnostic evidence only"
-      },
-      "https://github.com/tamird/hey/commit/5f17b673523e57b344c91c8d8b59b97b5ec2f984": {
-        "head": "5f17b673523e57b344c91c8d8b59b97b5ec2f984",
-        "status": "Contributor review requested"
-      },
-      "https://github.com/tamird/gvisor/commit/a5d63384e9796eaedcd334be02e7e08a646663a4": {
-        "head": "a5d63384e9796eaedcd334be02e7e08a646663a4",
-        "status": "Qualification only; adoption not approved"
-      },
-      "https://github.com/google/gvisor/pull/15449": {
-        "head": "a78af8fa3c443b0242685dd17935912c6f7ddb4a",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/16962": {
-        "head": "b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17343": {
-        "head": "7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17376": {
-        "head": "b57013d8abd255b013ab99c924139853eb3b3e7a",
-        "status": "open"
-      },
-      "https://github.com/google/gvisor/pull/17479": {
-        "head": "b0d665d9f298bf84db405213b403467d8470af4f",
-        "status": "open"
-      },
-      "https://github.com/tamird/gvisor/commit/5ad880c7c7b1b609fa792b121d30cf5964ccbbe4": {
-        "head": "5ad880c7c7b1b609fa792b121d30cf5964ccbbe4",
-        "status": "Contributor review"
-      }
-    }
+    "lastReviewed": "2026-11-26T01:47:16.498762+00:00",
+    "dailyReviewDue": false,
+    "changedWork": {}
   },
   "ciFlakes": {
     "checkedAt": "2026-11-26T01:23:16.161346+00:00",
