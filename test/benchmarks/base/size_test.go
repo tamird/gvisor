@@ -27,6 +27,13 @@ import (
 	"gvisor.dev/gvisor/test/metricsviz"
 )
 
+func dropCaches(b *testing.B, machine harness.Machine) {
+	b.Helper()
+	if err := harness.DropCaches(machine); err != nil {
+		b.Fatal(err)
+	}
+}
+
 // BenchmarkSizeEmpty creates N empty containers and reads memory usage from
 // /proc/meminfo.
 func BenchmarkSizeEmpty(b *testing.B) {
@@ -43,7 +50,7 @@ func BenchmarkSizeEmpty(b *testing.B) {
 	}()
 
 	// DropCaches before the test.
-	harness.DropCaches(machine)
+	dropCaches(b, machine)
 
 	// Check available memory on 'machine'.
 	cmd, args := meminfo.MakeCmd()
@@ -70,7 +77,7 @@ func BenchmarkSizeEmpty(b *testing.B) {
 	}
 
 	// Drop caches again before second measurement.
-	harness.DropCaches(machine)
+	dropCaches(b, machine)
 
 	// Check available memory after containers are up.
 	after, err := machine.RunCommand(cmd, args...)
@@ -90,7 +97,7 @@ func BenchmarkSizeNginx(b *testing.B) {
 	defer machine.CleanUp()
 
 	// DropCaches for the first measurement.
-	harness.DropCaches(machine)
+	dropCaches(b, machine)
 
 	// Measure MemAvailable before creating containers.
 	meminfo := tools.Meminfo{}
@@ -119,7 +126,7 @@ func BenchmarkSizeNginx(b *testing.B) {
 	}
 
 	// DropCaches after servers are created.
-	harness.DropCaches(machine)
+	dropCaches(b, machine)
 	// Take after measurement.
 	after, err := machine.RunCommand(cmd, args...)
 	if err != nil {
@@ -143,7 +150,7 @@ func BenchmarkSizeNode(b *testing.B) {
 	defer redis.CleanUp(ctx)
 
 	// DropCaches after redis is created.
-	harness.DropCaches(machine)
+	dropCaches(b, machine)
 
 	// Take before measurement.
 	meminfo := tools.Meminfo{}
@@ -174,7 +181,7 @@ func BenchmarkSizeNode(b *testing.B) {
 	}
 
 	// DropCaches after servers are created.
-	harness.DropCaches(machine)
+	dropCaches(b, machine)
 	// Take after measurement.
 	cmd, args = meminfo.MakeCmd()
 	after, err := machine.RunCommand(cmd, args...)
