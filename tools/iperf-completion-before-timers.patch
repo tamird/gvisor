@@ -1,0 +1,52 @@
+diff --git a/src/iperf_client_api.c b/src/iperf_client_api.c
+--- a/src/iperf_client_api.c
++++ b/src/iperf_client_api.c
+@@ -560,6 +560,18 @@
+ }
+ 
+ 
++static int
++client_count_limit_reached(struct iperf_test *test)
++{
++    return !test->omitting &&
++        ((test->settings->bytes != 0 &&
++          (test->bytes_sent >= test->settings->bytes ||
++           test->bytes_received >= test->settings->bytes)) ||
++         (test->settings->blocks != 0 &&
++          (test->blocks_sent >= test->settings->blocks ||
++           test->blocks_received >= test->settings->blocks)));
++}
++
+ int
+ iperf_run_client(struct iperf_test * test)
+ {
+@@ -732,7 +744,10 @@
+ 
+             /* Run the timers. */
+             iperf_time_now(&now);
+-            tmr_run(&now);
++            /* A completed sender needs final statistics, not overdue
++             * periodic work. */
++            if (test->mode != SENDER || !client_count_limit_reached(test))
++                tmr_run(&now);
+ 
+ 	    /*
+ 	     * Is the test done yet?  We have to be out of omitting
+@@ -742,12 +757,11 @@
+ 	     * cases of the client being the sender and the client
+ 	     * being the receiver.
+ 	     */
+-	    if ((!test->omitting) &&
+-	        (test->done ||
+-	         (test->settings->bytes != 0 && (test->bytes_sent >= test->settings->bytes ||
+-						 test->bytes_received >= test->settings->bytes)) ||
+-	         (test->settings->blocks != 0 && (test->blocks_sent >= test->settings->blocks ||
+-						  test->blocks_received >= test->settings->blocks)))) {
++            if ((!test->omitting && test->done) ||
++                client_count_limit_reached(test)) {
++                /* Let all sender loops stop before draining them one at a time. */
++                if (test->mode == SENDER)
++                    test->done = 1;
+ 
+                 /* Cancel outstanding sender threads */
+                 SLIST_FOREACH(sp, &test->streams, streams) {
