@@ -55,7 +55,7 @@ sh_test(
     ] + [
         "-" + arm + "=" + json.encode([
             "$(rootpath :fio_test)",
-            "-test.run=^$",
+            "-test.run=^$$",
             "-test.bench=^BenchmarkFio",
             "-test.benchtime=1x",
             "-test.count=1",
