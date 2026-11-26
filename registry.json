@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T11:38:02.447359+00:00",
+    "updatedAt": "2026-11-26T11:41:06.718254+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -11860,14 +11860,14 @@
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-19T18:59:24.568877+00:00",
+      "updatedAt": "2026-11-26T11:41:06.718254+00:00",
       "summary": "Caller-completion egress/Nogo, state and three network owners passed; netgofer TCP-limit teardown failed while a matched parent passed once. An independently reproduced reader EOF bug now has a tested fix; linkage to that teardown and remaining ARM compiler/performance gates stay open.",
       "followup": {
         "owner": "root",
         "sourceHead": "58fb6b08096d65974497d16c020b3f8a0cd955a8",
         "observedAt": "2026-11-17T19:01:06.487079+00:00",
         "disposition": "Footer-only DCO metadata is published and green; technical source/import obligations remain. Preserve nybidari internal dependency and landing coordination.",
-        "nextAction": "Keep standalone EOF delivery and remaining architecture/performance obligations moving through shared owners. Preserve original Netip failure and private importing hold; standalone EOF proof does not qualify public Netip or clear the hold.",
+        "nextAction": "Root follows overlapping upstream #17762 by carzh at bd37284f1 and related #17761 before considering another standalone EOF publication. Compare its empty-message contract with fork ad9845338; preserve separate architecture/performance and private-import obligations. No teardown cause, public Netip qualification or importing clearance follows from either source.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15730",
           "https://github.com/tamird/gvisor/commit/3aaa8098b",
@@ -11882,8 +11882,8 @@
           "https://github.com/gvisor/gvisor/pull/17626"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "EOF prerequisite delivery, missing architecture/performance evidence or substantive importer/source feedback.",
-        "curatedAt": "2026-11-22T14:02:28.619749+00:00",
+        "recheckCondition": "Substantive #17762/#17761 source or review evidence, exact architecture/performance qualification, or importer feedback; no competing publication or outreach inferred.",
+        "curatedAt": "2026-11-26T11:41:06.718254+00:00",
         "priorImportNextAction": "Importing maintainer must read the original failed internal job and provide the first actionable error or correct the internal change. Root follows the exact source/import without guessing a source fix. DCO import coordination: Root coordinates #17626 at 0e17e2f614e9. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17626,
@@ -12097,7 +12097,16 @@
           },
           "limit": "Supported ARM correctness complete; full controlled performance and public Netip/import qualification remain open."
         },
-        "base": "eb263e1f414d0bceaf10decea6c73e2c77332112"
+        "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+        "overlappingEOFPublication": {
+          "pr": 17762,
+          "issue": 17761,
+          "author": "carzh",
+          "head": "bd37284f1",
+          "url": "https://github.com/gvisor/gvisor/pull/17762",
+          "forkSource": "ad9845338",
+          "disposition": "Open upstream PR and fork have different empty-message semantics. Neither establishes the cause of #15730 teardown or clears its private-import hold."
+        }
       },
       "evidence": [
         {
@@ -74422,7 +74431,7 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-25T21:21:11.017479+00:00",
+      "updatedAt": "2026-11-26T11:41:06.718254+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "f3575cb4ed538695d0b7936e36662633a38b2b5e",
@@ -74485,7 +74494,7 @@
         "mergeable": "CONFLICTING",
         "recheckCondition": "Tamir’s answer to the actual amendment question, or a genuine changed source/review requirement.",
         "base": "53e36ddeb73d8176d7ee2c40c5c8afc3b7030cda",
-        "curatedAt": "2026-11-25T21:21:11.017479+00:00",
+        "curatedAt": "2026-11-26T11:41:06.718254+00:00",
         "candidate": {
           "head": "299a4bf8f489b96c7d148e1fa9f2d7c7171925d4",
           "publication": "Actual source/description/rebase-reply question pending; public PR unchanged"
@@ -74506,7 +74515,19 @@
           "evidence": "https://buildkite.com/gvisor/pipeline/builds/55555",
           "classification": "Root source-bound canonical-reader diagnosis; distinct from FirstPass admission/runtime outcomes. Existing source/import/performance boundaries remain.",
           "preparedCandidate": "299a4bf8f489b96c7d148e1fa9f2d7c7171925d4 already incorporates upstream909c3dce2; pending source decision remains, no new rebase/run."
-        }
+        },
+        "qualificationHistory": [
+          {
+            "at": "2026-11-26T11:41:06.718254+00:00",
+            "sourceHead": "f3575cb4ed538695d0b7936e36662633a38b2b5e",
+            "state": "Removed obsolete redundant same-owner conflict assignment; exact-head followup owns the pending candidate decision.",
+            "priorSourceConflict": {
+              "sourceHead": "f3575cb4ed538695d0b7936e36662633a38b2b5e",
+              "owner": "root",
+              "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge."
+            }
+          }
+        ]
       },
       "refinement": {
         "before": {
@@ -74588,11 +74609,6 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Maintainer"
-      },
-      "sourceConflict": {
-        "sourceHead": "f3575cb4ed538695d0b7936e36662633a38b2b5e",
-        "owner": "root",
-        "nextAction": "Root coordinates the existing conflict owner after checkout handoff, assesses the actual integration delta, and retains required qualification and final source review before publication. Daybreak availability does not approve new source, relax safety requirements or authorize outreach/merge."
       },
       "recheckCondition": "Tamir’s answer to the actual amendment question, or a genuine changed source/review requirement.",
       "contributorReview": {
@@ -137157,7 +137173,7 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-26T11:32:57.655715+00:00",
+      "updatedAt": "2026-11-26T11:41:06.718254+00:00",
       "group": "analysis",
       "summary": "Source 0edf29aac is unchanged. The gRPC dirty-bindfs candidate-only A/A completed 50 successful children and 24 retained pairs, with no corrected flags across five comparisons. Its test passed; only post-test BES upload failed. No A/B or cross-worker stability is established. The 71 filesystem leaves with matched data remain scoped; other gRPC controls, FUSE, Node stability and broader qualification remain open.",
       "findings": [
@@ -137531,7 +137547,7 @@
           ]
         }
       ],
-      "nextStep": "analysis_delivery audits original baseline producer recovery 45810749174 for the exact archive digest and cache outputs, then verifies synthetic non-systemd reload/restoration and runtime identities before real measurement. The Go helper on 0452ed02dd has passed formatting, compilation and identity positive/negative checks. Direct same-scope cache upload was acknowledged but readback returned NotFound; no further direct retry. The observed 12-hour budget is verified, not full fixture admission. Other gRPC controls, both FUSE holds and the Node candidate hold remain.",
+      "nextStep": "analysis_delivery verifies the synthetic non-systemd reload/restoration fixture and exact runtime/archive identities before real measurement. Original baseline producer 45810749174 passed, retaining exact cb479886 archive (40,270,884 bytes); same-group native download and SHA256 verification succeeded with installed bb 5.0.507 using bare HASH/SIZE. Earlier URI argument forms were misparsed. Go helper formatting, compilation and identity controls passed; actual reload/restoration remains unproven. Other gRPC controls, both FUSE holds and the Node candidate hold remain.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -138254,13 +138270,13 @@
         ],
         "owner": "root",
         "disposition": "Source 0edf29aac is unchanged. The gRPC dirty-bindfs candidate-only A/A completed 50 successful children and 24 retained pairs, with no corrected flags across five comparisons. Its test passed; only post-test BES upload failed. No A/B or cross-worker stability is established. The 71 filesystem leaves with matched data remain scoped; other gRPC controls, FUSE, Node stability and broader qualification remain open.",
-        "nextAction": "analysis_delivery audits original baseline producer recovery 45810749174 for the exact archive digest and cache outputs, then verifies synthetic non-systemd reload/restoration and runtime identities before real measurement. The Go helper on 0452ed02dd has passed formatting, compilation and identity positive/negative checks. Direct same-scope cache upload was acknowledged but readback returned NotFound; no further direct retry. The observed 12-hour budget is verified, not full fixture admission. Other gRPC controls, both FUSE holds and the Node candidate hold remain.",
-        "recheckCondition": "Terminal producer artifact/hash audit, then actual synthetic reload/restoration and runtime admission; no real measurement or automatic candidate comparison before those gates.",
+        "nextAction": "analysis_delivery verifies the synthetic non-systemd reload/restoration fixture and exact runtime/archive identities before real measurement. Original baseline producer 45810749174 passed, retaining exact cb479886 archive (40,270,884 bytes); same-group native download and SHA256 verification succeeded with installed bb 5.0.507 using bare HASH/SIZE. Earlier URI argument forms were misparsed. Go helper formatting, compilation and identity controls passed; actual reload/restoration remains unproven. Other gRPC controls, both FUSE holds and the Node candidate hold remain.",
+        "recheckCondition": "Actual synthetic reload/restoration and runtime/archive binding evidence, then an accepted worker/control plan; no full fixture admission, timing or cross-worker stability inferred.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-26T11:32:57.655715+00:00",
+        "curatedAt": "2026-11-26T11:41:06.718254+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -138576,7 +138592,7 @@
               "Cross-worker measurement stability",
               "General tenant maximum or 12-hour durability"
             ],
-            "next": "analysis_delivery audits original producer recovery 45810749174 for exact cb479 archive and same-cache outputs, then executes the synthetic reload/restoration admission before real measurement.",
+            "next": "analysis_delivery verifies the synthetic non-systemd reload/restoration fixture and exact runtime/archive binding before any real measurement.",
             "immutableBaselineAssessment": {
               "producerSource": "b231e0bc296cbe3dfb08e44cd92845885542464f",
               "nativeBaseline": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -138651,7 +138667,7 @@
                 "actual": "Hosted runner executed exact source; Bazel9.3.1 analysis attempted. No Docker fixture or benchmark children executed."
               }
             ],
-            "state": "Non-systemd fixture admission pending; no measurements",
+            "state": "Canonical baseline archive and consumption verified; synthetic reload/restoration admission remains",
             "selectedInputRoute": "Canonical native baseline rebuild, opaque archive digest verification and standard override_repository; no credential forwarding.",
             "currentSource": "0452ed02dd33cf662143a3a4abfa28a2a9f4b9b6",
             "currentQualification": "Go helper compiled; socket/PID/config identity and mismatch rejection passed. Buildifier and canonical Goimports passed. Full reload/restoration fixture remains unexecuted.",
@@ -138669,7 +138685,23 @@
               "source": "b231e0bc296cbe3dfb08e44cd92845885542464f",
               "request": "grpc-baseline-producer-recovery-request.json",
               "scope": "Unchanged original capture invocation/configuration; normalBazelcacheproducer. No newworkflow/source/collector/timing.",
-              "next": "Terminalartifact audit of exactcb479archive and producer cache output; then held synthetic fixture with same input."
+              "status": "SUCCESS",
+              "artifact": 15112757503,
+              "producerInvocation": "e2852ce3-173d-4e9f-bede-0480be68fdda",
+              "group": "GR7777278340284790152",
+              "groupRead": true,
+              "publicPermissions": {},
+              "archiveSHA256": "cb479886af63e2616c04640084fa8d4822a84716b8b6ee2996c2548d68d7a57e",
+              "archiveBytes": 40270884,
+              "cacheSummary": "2787remote cachehits,416remote,1280internal;4483actions",
+              "previousConsumptionFailure": "One post-producer nativebb download of BEPURI failed FailedPrecondition/NotFound manifestKey. CLI URI/resource-name normalization remains unproven; do not call servicebug.",
+              "consumption": {
+                "status": "PASS",
+                "method": "Installed bb 5.0.507 native download using bare HASH/SIZE in the same group",
+                "sha256": "cb479886af63e2616c04640084fa8d4822a84716b8b6ee2996c2548d68d7a57e",
+                "bytes": 40270884,
+                "scope": "Exact downloaded bytes verified; prior argument forms were misparsed, not a proven cache service defect."
+              }
             }
           }
         }
@@ -151082,5 +151114,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-26T11:38:02.447359+00:00"
+  "updatedAt": "2026-11-26T11:41:06.718254+00:00"
 }
