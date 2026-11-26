@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-26T02:47:59.077473+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-26T02:30:13.367576+00:00",
+  "registryDate": "2026-11-26T02:56:15.794316+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -463584,12 +463584,12 @@
       "mergeabilityCheckedAt": "2026-11-26T02:45:21.099484+00:00",
       "sourceBranchMismatch": false,
       "owner": "approved_rebase_queue",
-      "action": "approved_rebase_queue owns active substantive conflict triage and checkout sequencing. Preserve this item’s independent import/source, review and performance boundaries; no grant is inferred for held publication or foreign-source changes.",
+      "action": "approved_rebase_queue completes the exact owning gates and source-bound review for native 58ee25232e. Preserve independent import, performance and publication boundaries; no old qualification transfer.",
       "recordedFollowup": {
         "owner": "approved_rebase_queue",
         "sourceHead": "d692a4fb41acd4deb5f3b051ac06bd4145d888f3",
-        "disposition": "Current d692a4fb4 retains successful native validation and exact-head kerumeto approval; the canonical aggregate is APPROVED. Fixture inline4619004827 is outdated, its fix and answer6993741644 are published, and all currently observed public feedback has been consumed. Private internal compiler integration is not claimed; maintainer landing remains separate. Current snapshot reports CONFLICTING on unchanged d692a4fb41.",
-        "nextAction": "approved_rebase_queue owns active substantive conflict triage and checkout sequencing. Preserve this item’s independent import/source, review and performance boundaries; no grant is inferred for held publication or foreign-source changes."
+        "disposition": "Public d692a4fb41 remains conflicting and unchanged. Existing owner prepared native 58ee25232e on master3e9bbb3cc, preserving independent upstream changes and the logical topic edits. Initial graph/format checks pass; exact owning qualification and publication review remain. No candidate is published to this PR.",
+        "nextAction": "approved_rebase_queue completes the exact owning gates and source-bound review for native 58ee25232e. Preserve independent import, performance and publication boundaries; no old qualification transfer."
       },
       "conflictObservedSince": "2026-11-26T02:27:43.419551+00:00"
     },
@@ -463680,12 +463680,12 @@
       "mergeabilityCheckedAt": "2026-11-26T02:45:39.876248+00:00",
       "sourceBranchMismatch": false,
       "owner": "approved_rebase_queue",
-      "action": "approved_rebase_queue owns active substantive conflict triage and checkout sequencing. Preserve this item’s independent import/source, review and performance boundaries; no grant is inferred for held publication or foreign-source changes.",
+      "action": "approved_rebase_queue completes the exact owning gates and source-bound review for native ddc89a6409. Preserve independent import, performance and publication boundaries; no old qualification transfer.",
       "recordedFollowup": {
         "owner": "approved_rebase_queue",
         "sourceHead": "2521133e1842de17c870f0255a0135794250b3ba",
-        "disposition": "The published rebase contains one commit. Master added _go_importpath to the same Starlark load. Both generators produced exactly the files that master generated. On macOS, 11,487 state test records passed and 85 skipped. All 204 host-layout records passed. Current snapshot reports CONFLICTING on unchanged 2521133e18.",
-        "nextAction": "approved_rebase_queue owns active substantive conflict triage and checkout sequencing. Preserve this item’s independent import/source, review and performance boundaries; no grant is inferred for held publication or foreign-source changes."
+        "disposition": "Public 2521133e18 remains conflicting and unchanged. Existing owner prepared native ddc89a6409 on master3e9bbb3cc, preserving independent upstream changes and the logical topic edits. Initial graph/format checks pass; exact owning qualification and publication review remain. No candidate is published to this PR.",
+        "nextAction": "approved_rebase_queue completes the exact owning gates and source-bound review for native ddc89a6409. Preserve independent import, performance and publication boundaries; no old qualification transfer."
       },
       "conflictObservedSince": "2026-11-26T02:27:43.419551+00:00"
     },
@@ -463944,12 +463944,12 @@
       "mergeabilityCheckedAt": "2026-11-26T02:46:47.365840+00:00",
       "sourceBranchMismatch": false,
       "owner": "approved_rebase_queue",
-      "action": "approved_rebase_queue owns active substantive conflict triage and checkout sequencing. Preserve this item’s independent import/source, review and performance boundaries; no grant is inferred for held publication or foreign-source changes.",
+      "action": "approved_rebase_queue completes the exact owning gates and source-bound review for native 68390a1983. Preserve independent import, performance and publication boundaries; no old qualification transfer.",
       "recordedFollowup": {
         "owner": "approved_rebase_queue",
         "sourceHead": "daa14d03eb6e7fc312496fb740bdae0a00a02312",
-        "disposition": "Approved equivalent refresh daa14d03eb6e7fc312496fb740bdae0a00a02312 is delivered with DCO and all GitHub checks passing. First Pass2080 has an independently verified pre-agent rolling30-day360000-compute-minute quota rejection. Existing source-branch qualification history is retained on branch:shim-wedged-runtime-tests. Current snapshot reports CONFLICTING on unchanged daa14d03eb.",
-        "nextAction": "approved_rebase_queue owns active substantive conflict triage and checkout sequencing. Preserve this item’s independent import/source, review and performance boundaries; no grant is inferred for held publication or foreign-source changes."
+        "disposition": "Public daa14d03eb remains conflicting and unchanged. Existing owner prepared native 68390a1983 on master3e9bbb3cc, preserving independent upstream changes and the logical topic edits. Initial graph/format checks pass; exact owning qualification and publication review remain. No candidate is published to this PR.",
+        "nextAction": "approved_rebase_queue completes the exact owning gates and source-bound review for native 68390a1983. Preserve independent import, performance and publication boundaries; no old qualification transfer."
       },
       "conflictObservedSince": "2026-11-26T02:27:46.637994+00:00"
     },
@@ -463992,12 +463992,12 @@
       "mergeabilityCheckedAt": "2026-11-26T02:47:06.983360+00:00",
       "sourceBranchMismatch": false,
       "owner": "approved_rebase_queue",
-      "action": "approved_rebase_queue owns active substantive conflict triage and checkout sequencing. Preserve this item’s independent import/source, review and performance boundaries; no grant is inferred for held publication or foreign-source changes.",
+      "action": "approved_rebase_queue completes the exact owning gates and source-bound review for native 6707b53611. Preserve independent import, performance and publication boundaries; no old qualification transfer.",
       "recordedFollowup": {
         "owner": "approved_rebase_queue",
         "sourceHead": "8e869b906e5a651a377178f1cf3621a798042397",
-        "disposition": "Delivered8e869b906 already declares the exact helper and runsc/sandbox target; native BUILD/defs/bazeldefs blob IDs match CIa96. No prerequisite source amendment or new publication question is required. CIa96 projects that delivered prerequisite onto35d: AMD45309461331 reports90 cases/3 failures/1 skip and ARM45309464136 reports90/3/2. All11 namespaceEPERM failures are gone; three route-expectation failures remain root-owned qualification/protected-source blockers. RXE skips apply on both architectures and ARM open_tree is unsupported. Existing13-target passes belong to35d, not native8e runtime equivalence. Current snapshot reports CONFLICTING on unchanged 8e869b906e.",
-        "nextAction": "approved_rebase_queue owns active substantive conflict triage and checkout sequencing. Preserve this item’s independent import/source, review and performance boundaries; no grant is inferred for held publication or foreign-source changes."
+        "disposition": "Public 8e869b906e remains conflicting and unchanged. Existing owner prepared native 6707b53611 on master3e9bbb3cc, preserving independent upstream changes and the logical topic edits. Initial graph/format checks pass; exact owning qualification and publication review remain. No candidate is published to this PR.",
+        "nextAction": "approved_rebase_queue completes the exact owning gates and source-bound review for native 6707b53611. Preserve independent import, performance and publication boundaries; no old qualification transfer."
       },
       "conflictObservedSince": "2026-11-26T02:27:47.597739+00:00"
     },
@@ -472271,7 +472271,7 @@
         "since": "2026-11-25T22:15:30.434231+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "pr:14458": {
@@ -473034,7 +473034,7 @@
         "since": "2026-11-25T20:26:19.847463+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "pr:15202": {
@@ -473535,7 +473535,7 @@
         "since": "2026-11-25T23:55:50.246211+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "pr:15453": {
@@ -474011,7 +474011,7 @@
         "since": "2026-11-25T20:26:38.821906+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "pr:15648": {
@@ -475358,7 +475358,7 @@
         "since": "2026-11-25T22:41:21.827202+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "pr:16445": {
@@ -475973,7 +475973,7 @@
         "since": "2026-11-25T22:35:10.106729+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "pr:16661": {
@@ -476761,7 +476761,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "pr:16822": {
@@ -476843,7 +476843,7 @@
         "since": "2026-11-25T23:00:04.041520+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "pr:16828": {
@@ -477250,7 +477250,7 @@
         "since": "2026-11-26T01:29:42.574138+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "pr:16875": {
@@ -477448,7 +477448,7 @@
         "since": "2026-11-25T21:21:11.017479+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "pr:16958": {
@@ -478564,7 +478564,7 @@
         "since": "2026-11-26T00:39:54.598989+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "pr:17265": {
@@ -478947,7 +478947,7 @@
         "since": "2026-11-25T22:34:48.644451+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "pr:17376": {
@@ -479163,7 +479163,7 @@
         "since": "2026-11-26T02:19:45.141533+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "pr:17480": {
@@ -480346,7 +480346,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -480355,7 +480355,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -480364,7 +480364,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -480373,7 +480373,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -480382,7 +480382,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -480391,7 +480391,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -480400,7 +480400,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -480409,16 +480409,16 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "issue:17832": {
       "contributor-review": {
-        "scope": "86cffbf727d4a5628ca2a324fe3c06ec21d7c24c",
-        "since": "2026-11-23T20:29:42.991432+00:00",
+        "scope": "f8500dffed4bace8841b900232beb6fd19740cd7",
+        "since": "2026-11-26T02:56:15.794316+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "branch:hey-report-cap-accounting": {
@@ -480427,7 +480427,7 @@
         "since": "2026-11-25T22:03:16.345652+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "branch:size-cache-reset-integrity": {
@@ -480436,7 +480436,7 @@
         "since": "2026-11-26T01:00:57.925509+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "branch:absl-prefetch": {
@@ -480445,7 +480445,7 @@
         "since": "2026-11-26T02:19:45.141533+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     },
     "investigation:ci-benchmark-fuse-device": {
@@ -480454,7 +480454,7 @@
         "since": "2026-11-25T21:11:04.741354+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T02:30:13.367576+00:00"
+        "observedAt": "2026-11-26T02:56:15.794316+00:00"
       }
     }
   },
