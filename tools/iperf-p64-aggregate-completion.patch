@@ -1,0 +1,129 @@
+--- a/src/iperf_client_api.c
++++ b/src/iperf_client_api.c
+@@ -29,6 +29,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <time.h>
+ #include <unistd.h>
+ #include <signal.h>
+ #include <sys/types.h>
+@@ -51,6 +52,38 @@
+ #define TCP_CA_NAME_MAX 16
+ #endif /* TCP_CA_NAME_MAX */
+ #endif /* HAVE_TCP_CONGESTION */
++
++/* Qualification-only main-thread counters; no per-stream diagnostic I/O. */
++static volatile sig_atomic_t p64_created, p64_cancel_started, p64_cancel_returned;
++static volatile sig_atomic_t p64_join_started, p64_join_returned, p64_timer_returned;
++static volatile sig_atomic_t p64_printed;
++static struct timespec p64_created_at, p64_goal_at;
++
++void
++iperf_p64_snapshot(struct iperf_test *test)
++{
++    struct timespec now;
++    char line[512];
++    int len;
++
++    if (test->role != 'c' || test->num_streams != 64 || p64_printed)
++        return;
++    p64_printed = 1;
++    if (clock_gettime(CLOCK_MONOTONIC, &now) != 0)
++        return;
++    len = snprintf(line, sizeof(line),
++        "P64_SUMMARY now=%lld.%09ld created_at=%lld.%09ld goal_at=%lld.%09ld "
++        "created=%d timer_returned=%d cancel_started=%d cancel_returned=%d "
++        "join_started=%d join_returned=%d state=%d done=%d sent=%llu goal=%llu\n",
++        (long long)now.tv_sec, now.tv_nsec,
++        (long long)p64_created_at.tv_sec, p64_created_at.tv_nsec,
++        (long long)p64_goal_at.tv_sec, p64_goal_at.tv_nsec,
++        p64_created, p64_timer_returned, p64_cancel_started, p64_cancel_returned,
++        p64_join_started, p64_join_returned, test->state, test->done,
++        (unsigned long long)test->bytes_sent, (unsigned long long)test->settings->bytes);
++    if (len > 0 && (size_t)len < sizeof(line))
++        (void)write(STDERR_FILENO, line, len);
++}
+ 
+ void *
+ iperf_client_worker_run(void *s) {
+@@ -538,6 +571,8 @@
+     }
+     struct iperf_stream *sp;
+ 
++    iperf_p64_snapshot(test);
++
+     /* Close all stream sockets */
+     SLIST_FOREACH(sp, &test->streams, streams) {
+         close(sp->socket);
+@@ -716,6 +751,7 @@
+                         goto cleanup_and_fail;
+                     }
+                     sp->thread_created = 1;
++                    ++p64_created;
+                     if (test->debug_level >= DEBUG_LEVEL_INFO) {
+                         iperf_printf(test, "Thread FD %d created\n", sp->socket);
+                     }
+@@ -727,12 +763,14 @@
+                     i_errno = IEPTHREADATTRDESTROY;
+                     goto cleanup_and_fail;
+                 }
++                (void)clock_gettime(CLOCK_MONOTONIC, &p64_created_at);
+ 
+ 	    }
+ 
+             /* Run the timers. */
+             iperf_time_now(&now);
+             tmr_run(&now);
++            p64_timer_returned = 1;
+ 
+ 	    /*
+ 	     * Is the test done yet?  We have to be out of omitting
+@@ -749,20 +787,26 @@
+ 	         (test->settings->blocks != 0 && (test->blocks_sent >= test->settings->blocks ||
+ 						  test->blocks_received >= test->settings->blocks)))) {
+ 
++                (void)clock_gettime(CLOCK_MONOTONIC, &p64_goal_at);
++
+                 /* Cancel outstanding sender threads */
+                 SLIST_FOREACH(sp, &test->streams, streams) {
+                     if (sp->sender) {
+                         int rc;
+                         sp->done = 1;
+                         if (sp->thread_created == 1) {
++                            ++p64_cancel_started;
+                             rc = pthread_cancel(sp->thr);
++                            ++p64_cancel_returned;
+                             if (rc != 0 && rc != ESRCH) {
+                                 i_errno = IEPTHREADCANCEL;
+                                 errno = rc;
+                                 iperf_err(test, "sender cancel in pthread_cancel - %s", iperf_strerror(i_errno));
+                                 goto cleanup_and_fail;
+                             }
++                            ++p64_join_started;
+                             rc = pthread_join(sp->thr, NULL);
++                            ++p64_join_returned;
+                             if (rc != 0 && rc != ESRCH) {
+                                 i_errno = IEPTHREADJOIN;
+                                 errno = rc;
+--- a/src/iperf_api.c
++++ b/src/iperf_api.c
+@@ -4818,6 +4818,8 @@
+ void
+ iperf_got_sigend(struct iperf_test *test)
+ {
++    iperf_p64_snapshot(test);
++
+     /*
+      * If we're the client, or if we're a server and running a test,
+      * then dump out the accumulated stats so far.
+--- a/src/iperf_api.h
++++ b/src/iperf_api.h
+@@ -355,6 +355,7 @@
+ int iperf_create_streams(struct iperf_test *, int sender);
+ int iperf_handle_message_client(struct iperf_test *);
+ int iperf_client_end(struct iperf_test *);
++void iperf_p64_snapshot(struct iperf_test *test);
+ 
+ /* Server routines. */
+ int iperf_run_server(struct iperf_test *);
