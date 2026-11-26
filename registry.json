@@ -57278,14 +57278,14 @@
       "group": "bazel",
       "status": "Agent work",
       "url": "https://github.com/tamird/gvisor/commit/a5265547f",
-      "updatedAt": "2026-11-26T06:11:59.708714+00:00",
-      "summary": "The old a5265547f8 website renderer/publisher migration retains historical qualification but needs current-base integration. Its trust-root fix is now the separate reviewed b8c204be9 proposal, awaiting Tamir\u2019s actual opening decision. Shared bootstrap is fulfilled; no unlanded LLVM prerequisite was established.",
+      "updatedAt": "2026-11-26T07:04:10.906515+00:00",
+      "summary": "The old a5265547f8 renderer/publisher migration remains unintegrated. Its maintained Ruby feasibility reached a real Nokogiri1.10.9/Ruby3.4.11 native-extension incompatibility before CSS or HTML checking. Tamir\u2019s actual question now asks whether to include a supported checker/parser migration or keep the current renderer. The separate reviewed b8c trust pin and existing Docker publisher can proceed independently.",
       "followup": {
         "owner": "root",
         "sourceHead": "a5265547f8c17b32b19021c4d8f9100c1012c2aa",
         "observedAt": "2026-11-08T22:36:47+00:00",
-        "disposition": "The old a5265547f8 website renderer/publisher migration retains historical qualification but needs current-base integration. Its trust-root fix is now the separate reviewed b8c204be9 proposal, awaiting Tamir\u2019s actual opening decision. Shared bootstrap is fulfilled; no unlanded LLVM prerequisite was established.",
-        "nextAction": "Root integrates the old renderer/publisher edits onto current source without copying obsolete content or selections, and reconciles delivery-version/license inputs. Follow the standalone trust-bundle pin on branch:website-google-roots-pin; its qualification does not qualify the full renderer migration or authorize deployment.",
+        "disposition": "The old a5265547f8 renderer/publisher migration remains unintegrated. Its maintained Ruby feasibility reached a real Nokogiri1.10.9/Ruby3.4.11 native-extension incompatibility before CSS or HTML checking. Tamir\u2019s actual question now asks whether to include a supported checker/parser migration or keep the current renderer. The separate reviewed b8c trust pin and existing Docker publisher can proceed independently.",
+        "nextAction": "Root awaits the actual checker/parser scope choice. If included, compare current output and checker acceptance using the stated parity gates before proposing source upstream. Do not repeat incompatible dependency trials, treat this scope choice as pin approval, or block the independent CA pin/current Docker publisher.",
         "evidence": [
           {
             "label": "Buildkite release with local registry authentication and a simulated Cloud Run deployment",
@@ -57303,7 +57303,8 @@
           "https://github.com/tamird/gvisor/blob/a5265547f8c17b32b19021c4d8f9100c1012c2aa/website/jekyll.bzl",
           "https://github.com/tamird/gvisor/commit/d07e6af4340a332335e3a08eb92cfc15687c2e02",
           "https://github.com/tamird/gvisor/actions/runs/45764764503",
-          "https://github.com/tamird/gvisor/actions/runs/45764769667"
+          "https://github.com/tamird/gvisor/actions/runs/45764769667",
+          "https://github.com/tamird/gvisor/actions/runs/45770079130/artifacts/15093523995"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -57317,8 +57318,8 @@
           "owner": "root"
         },
         "technicalOwner": "actions_bazel_cache",
-        "recheckCondition": "Current-base migration/catalog evidence or an actual source/publication decision; standalone pin lifecycle is tracked separately.",
-        "curatedAt": "2026-11-26T06:11:59.708714+00:00",
+        "recheckCondition": "Answer to the actual checker/parser scope question or substantive source/architecture evidence.",
+        "curatedAt": "2026-11-26T07:04:10.906515+00:00",
         "compilerAssessment": {
           "websiteSource": "a5265547f8c17b32b19021c4d8f9100c1012c2aa",
           "declaredSupplier": "llvm0.8.24, MODULE.bazel:18",
@@ -57353,6 +57354,42 @@
           "grpcAlternative": "115 roots vs Google21;19 shared/96 extra/2 missing, not a matching replacement",
           "oldMigration": "a526 remains separate; copying its obsolete tree is unsafe",
           "owningRecord": "branch:website-google-roots-pin"
+        },
+        "rendererFeasibility": {
+          "source": "e8283606baf7ceb13fb53cceabe9ceed7fb9b494",
+          "run": 45770079130,
+          "artifact": 15093523995,
+          "state": "FAILURE at remote BundleInstall; renderer not run.",
+          "actualIncompatibility": "Nokogiri1.10.9 extconf.rb138 passes three positional arguments to Ruby3.4.11mkmf.try_compile(accepts1..2), raising ArgumentError before C-probing completes. v1.10.10 retains the same call. This is not the generic missing-headers message.",
+          "architectureDecision": {
+            "recommendation": "Choose one coordinated supported runtime/checker/parser migration, not more isolated version trials; original customRuby2.7SDK is not the desired simplification. No upstream source approval is inferred.",
+            "minimalChangedPackageSet": {
+              "listen": "3.2.1\u21923.3.0(already approved for feasibility)",
+              "html-proofer": "3.15.3\u21923.19.3(first stable3.x release dropping Nokogumbo)",
+              "nokogiri": "1.10.9\u21921.19.7(current source-supported Ruby3.4 release; compatibility floor1.18.0)",
+              "mini_portile2": "2.4.0\u21922.8.9(satisfies Nokogiri~>2.8.2)",
+              "racc": "add1.8.1(satisfies~>1.4; matches Ruby3.4.11 bundled_gems)",
+              "nokogumbo": "remove2.0.2"
+            },
+            "runtime": "PortableMRI3.4.11 and retainedNode12.15.0 through maintained rules; other styling/checker pins unchanged at first. No bespokeSDK/source-builtRuby.",
+            "supportedVsValidated": "This is a source/metadata-supported candidate set, not proven full-stack execution compatibility. No additional versions have been changed or tried.",
+            "whyNotNokogiriOnly": "Old HTMLProofer requires Nokogumbo~>2.0. Its Nokogiri~>1.8,>=1.8.4 allows modern1.x in metadata, but Nokogumbo upstream says final2.0.5 cannot support Ruby>=3.2.",
+            "parserChange": "libxml2 moves2.9.10\u21922.13.9(Nokogiri1.10.9\u21921.19.7), plus integrated NokogiriHTML5 replaces Nokogumbo. Parser/checker acceptance can change even when site bytes do not.",
+            "parityRequired": [
+              "Complete the existing current-Sass/Autoprefixer+HTML-checker positive/negative preflight, with source/action-platform receipts.",
+              "Then render fixed-date CURRENT content with old/new paths, checking file inventory/content/CSS/URLs and documented date fields; do not transfer obsolete old CSS golden or copy old content.",
+              "Compare HTML validation acceptance and retain NoOpener/favicon/internal-link protections plus disabled external fetches.",
+              "Verify current Make build/server/publish behavior and serving image files/config using existing local-registry/simulated-deploy evidence patterns; actual deployment remains unauthorized."
+            ],
+            "sources": [
+              "https://github.com/rubys/nokogumbo#notice-end-of-life",
+              "https://rubygems.org/gems/html-proofer/versions/3.19.3",
+              "https://nokogiri.org/CHANGELOG.html#v1180-2024-12-25",
+              "https://github.com/sparklemotion/nokogiri/blob/v1.19.7/dependencies.yml",
+              "https://github.com/ruby/ruby/blob/v3_4_11/gems/bundled_gems"
+            ]
+          },
+          "scope": "No CSS render or HTML checker executed. Coordinated migration is proposed, not implemented or publication-approved."
         }
       },
       "refinement": {
@@ -57473,6 +57510,10 @@
         {
           "label": "Pinned fetch and full catalog validation",
           "url": "https://github.com/tamird/gvisor/actions/runs/45764769667"
+        },
+        {
+          "label": "Actual Nokogiri/Ruby incompatibility; no renderer/checker execution",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45770079130/artifacts/15093523995"
         }
       ],
       "links": [
@@ -57504,7 +57545,15 @@
           "label": "Standalone current-master trust-bundle pin decision",
           "url": "https://tamird.github.io/gvisor/?view=table#branch%3Awebsite-google-roots-pin"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "information",
+        "status": "pending",
+        "url": "https://github.com/tamird/gvisor/actions/runs/45770079130",
+        "title": "Choose website checker/parser migration scope",
+        "summary": "Actual submitted scope question; unanswered. Separate from b8c trust-pin source approval.",
+        "body": "Should the website renderer migration include upgrading its HTML checker and parser? The maintained Bazel Ruby toolchain gets past dependency resolution, but the current Nokogiri fails to compile on Ruby 3.4, and the checker\u2019s Nokogumbo dependency does not support Ruby 3.2 or newer. The proposed migration uses HTMLProofer 3.19.3 and Nokogiri 1.19.7, removes Nokogumbo, and changes the parser used to validate the site. I would compare current site output and checker behavior before proposing it upstream. The separate CA pin and the existing Docker publisher can proceed independently.\n\nhttps://github.com/tamird/gvisor/actions/runs/45770079130\n\nOptions: Include checker migration / Keep current renderer."
+      }
     },
     {
       "id": "branch:tun-setiff-copyout",
@@ -107721,11 +107770,11 @@
       "url": "https://github.com/gvisor/gvisor/issues/17832",
       "group": "rbe",
       "status": "open",
-      "summary": "Successor cache source b245b95c47 and the refreshed #17832 title/body have two actual unanswered publication questions. At base bf581410, it covers nine Bazel job definitions in eight workflows, including do.yml\u2019s two architecture entries. Source tests passed; Make preflight verifies command expansion only, not Docker/ARM runtime or speedup. Withdrawn e61 history and the distinct Go-export decision remain intact.",
+      "summary": "Successor cache source b245b95c47 and the refreshed #17832 title/body have two actual unanswered publication questions. At base bf581410, it covers nine Bazel job definitions in eight workflows, including do.yml\u2019s two architecture entries. Source tests passed; Make preflight verifies command expansion only, not Docker/ARM runtime or speedup. Withdrawn e61 history and the distinct Go-export decision remain intact. A separate ordinary-build probe had 510 remote cache hits and 136 internal actions, with no compiler/generator spawn execution; no matched execution speedup was measured.",
       "followup": {
         "owner": "root",
         "observedAt": "2026-11-25T13:09:11.551551+00:00",
-        "disposition": "Successor cache source b245b95c47 and the refreshed #17832 title/body have two actual unanswered publication questions. At base bf581410, it covers nine Bazel job definitions in eight workflows, including do.yml\u2019s two architecture entries. Source tests passed; Make preflight verifies command expansion only, not Docker/ARM runtime or speedup. Withdrawn e61 history and the distinct Go-export decision remain intact.",
+        "disposition": "Successor cache source b245b95c47 and the refreshed #17832 title/body have two actual unanswered publication questions. At base bf581410, it covers nine Bazel job definitions in eight workflows, including do.yml\u2019s two architecture entries. Source tests passed; Make preflight verifies command expansion only, not Docker/ARM runtime or speedup. Withdrawn e61 history and the distinct Go-export decision remain intact. A separate ordinary-build probe had 510 remote cache hits and 136 internal actions, with no compiler/generator spawn execution; no matched execution speedup was measured.",
         "nextAction": "Root consumes the actual b245 cache-PR and revised issue-title/body decisions independently; approved_delivery_batch owns the cache revision. Preserve the distinct Go-export opening decision. No source publication, issue edit, merge or runtime/speedup result is inferred.",
         "recheckCondition": "An actual answer to one of the three independent questions or substantive source/coverage evidence.",
         "evidence": [
@@ -107753,9 +107802,10 @@
           "https://github.com/tamird/gvisor/actions/runs/45747835362",
           "https://github.com/tamird/gvisor/commit/b245b95c473225833d389569b42b7397fad4d987",
           "https://github.com/tamird/gvisor/actions/runs/45768609331/artifacts/15092339833",
-          "https://github.com/tamird/gvisor/actions/runs/45768612458/artifacts/15092842201"
+          "https://github.com/tamird/gvisor/actions/runs/45768612458/artifacts/15092842201",
+          "https://github.com/tamird/gvisor/actions/runs/45771527305/artifacts/15093907787"
         ],
-        "curatedAt": "2026-11-26T06:38:21.475106+00:00",
+        "curatedAt": "2026-11-26T07:04:10.906515+00:00",
         "supersededExecutionBlocker": {
           "nextAction": "Root consumes each existing decision independently: open the cache 86cffbf72 PR, replace the issue body with the current measured-scope draft, and open the Go export f8500dffe PR. Canonical lint coverage is reconciled through unchanged-input parent evidence. Deliver approved changes through the existing authorized routes; the unpublished Go export fork ref still needs its SSH/HTTPS execution blocker to clear.",
           "recordedAt": "2026-11-24T06:29:20.083295+00:00",
@@ -107828,9 +107878,108 @@
           "currentJobDefinitions": 9,
           "currentWorkflows": 8
         },
-        "technicalOwner": "approved_delivery_batch"
+        "technicalOwner": "approved_delivery_batch",
+        "matchedExecutionFeasibility": {
+          "source": "19e1bc9b17c078e1531cefecd712500d6ae43b23",
+          "selection": {
+            "run": 45771353204,
+            "artifact": 15094431247,
+            "result": "PASS cquery of actual stack closure:10 configured go_template nodes/7unique labels each have empty DefaultInfo.files; ordinary direct template build cannot materialize the declared10products",
+            "proof": "_temp/bazel-qualification/artifacts/template-default-files.txt"
+          },
+          "ordinaryCacheProbe": {
+            "run": 45771527305,
+            "artifact": 15093907787,
+            "invocation": "0b7096c1-2962-486e-a9b7-a20022dafab0",
+            "target": "//pkg/tcpip/stack:stack",
+            "result": "PASS with remote-required-cached mode, no new remote computation",
+            "runnerCount": [
+              {
+                "name": "total",
+                "count": 646
+              },
+              {
+                "name": "remote cache hit",
+                "count": 510,
+                "execKind": "Remote"
+              },
+              {
+                "name": "internal",
+                "count": 136
+              }
+            ],
+            "localActionCacheStatistics": {
+              "sizeInBytes": "313407",
+              "saveTimeInMs": "4",
+              "misses": 646,
+              "missDetails": [
+                {},
+                {
+                  "reason": "DIFFERENT_DEPS"
+                },
+                {
+                  "reason": "DIFFERENT_ENVIRONMENT"
+                },
+                {
+                  "reason": "DIFFERENT_FILES"
+                },
+                {
+                  "reason": "CORRUPTED_CACHE_ENTRY"
+                },
+                {
+                  "reason": "NOT_CACHED",
+                  "count": 645
+                },
+                {
+                  "reason": "UNCONDITIONAL_EXECUTION",
+                  "count": 1
+                },
+                {
+                  "reason": "DIGEST_MISMATCH"
+                }
+              ]
+            },
+            "timingMetrics": {
+              "cpuTimeInMs": "45020",
+              "wallTimeInMs": "36119",
+              "analysisPhaseTimeInMs": "28732",
+              "executionPhaseTimeInMs": "5516",
+              "actionsExecutionStartInMs": "30574",
+              "criticalPathTime": "4.644853286s"
+            },
+            "canonicalRelevantOptions": [
+              {
+                "optionName": "remote_cache",
+                "optionValue": "grpcs://remote.buildbuddy.io"
+              },
+              {
+                "optionName": "remote_executor",
+                "optionValue": "grpcs://remote.buildbuddy.io"
+              },
+              {
+                "optionName": "jobs",
+                "optionValue": "50"
+              },
+              {
+                "optionName": "remote_upload_local_results",
+                "optionValue": "false"
+              },
+              {
+                "optionName": "experimental_remote_require_cached",
+                "optionValue": "1"
+              },
+              {
+                "optionName": "remote_download_outputs",
+                "optionValue": "minimal"
+              }
+            ],
+            "interpretation": "510 remote result hits and136 internal actions; local Bazel action-cache misses646 describe fresh local outputbase, not remote misses. No local/sandbox/remote spawn execution reported. 36.106s elapsed/4.64s critical path are cache-validation observations, not local-vs-RBE speedup."
+          },
+          "decision": "Hold timed comparison: selected current/post-change ordinary workload has zero executing cache misses. A historical preimage would not establish a matched newly changed-input pair against the already cached postimage. No cache eviction, cache-bypass flags, unique diagnostic source, new cache namespace, synthetic provider or archive-wide rebuild will be used to manufacture concurrency.",
+          "remainingEvidenceGap": "Need a naturally pending real generator/build-input change with sufficient comparable unfilled action keys, or an explicitly authorized separate cache-isolation design; verify parent shared-cache state and both arms before timing."
+        }
       },
-      "updatedAt": "2026-11-26T06:38:21.475106+00:00",
+      "updatedAt": "2026-11-26T07:04:10.906515+00:00",
       "nextStep": "Root consumes the actual b245 cache-PR and revised issue-title/body decisions independently; approved_delivery_batch owns the cache revision. Preserve the distinct Go-export opening decision. No source publication, issue edit, merge or runtime/speedup result is inferred.",
       "recheckCondition": "Technical review milestone for revised cache source/text or actual Go-export answer.",
       "reviewWatch": {
@@ -107961,6 +108110,10 @@
         {
           "label": "Make command-expansion preflight, not runtime",
           "url": "https://github.com/tamird/gvisor/actions/runs/45768612458/artifacts/15092842201"
+        },
+        {
+          "label": "Remote cache reuse, not matched execution speedup",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45771527305/artifacts/15093907787"
         }
       ],
       "contributorReview": {
@@ -135936,9 +136089,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-26T05:26:36.856313+00:00",
+      "updatedAt": "2026-11-26T07:04:10.906515+00:00",
       "group": "analysis",
-      "summary": "Source 0edf29aac remains the completed 36-commit analyzer rewrite. Filesystem matched data cover 71 leaves: 48 Fio, eight RubyNoOp, eight RubySpec and seven Abseil. Ruby FUSE completed A/A and A/B before a separate BES timeout: clean elapsed \u22120.398%, dirty +0.369%, primary intervals 1\u20133%, no corrected flags. This is not full filesystem clearance: Ruby rootfs drift, Fio throughput precision, one incomplete Abseil cohort and missing gRPC comparisons remain.",
+      "summary": "Source 0edf29aac remains the completed 36-commit analyzer rewrite; filesystem matched data cover 71 leaves. Corrected Node A/A completed all four N1000 leaves with no corrected flags, but whole-client timing intervals reach 5%, ancillary intervals 18%, and common early/late drift remains. No Node candidate comparison has run. Filesystem drift/precision, incomplete Abseil and missing gRPC comparisons remain separate.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -136310,7 +136463,7 @@
           ]
         }
       ],
-      "nextStep": "The performance owner audits gRPC dirty-bindfs A/A-only run 45761231714 after its verified N1 admission. It is the first of six non-FUSE controls; no gRPC A/B is complete or automatically authorized. Two baseline FUSE gRPC leaves still fail ELF loading with ENOSYS. Preserve every leaf, Ruby rootfs drift, Fio throughput limits, dirty-FUSE Abseil fetch stop, source decisions and #17884. Do not repeat completed cohorts.",
+      "nextStep": "The performance owner audits gRPC dirty-bindfs A/A-only run 45761231714 after its verified N1 admission. It is the first of six non-FUSE controls; no gRPC A/B is complete or automatically authorized. Two baseline FUSE gRPC leaves still fail ELF loading with ENOSYS. Preserve every leaf, Ruby rootfs drift, Fio throughput limits, dirty-FUSE Abseil fetch stop, source decisions and #17884. Do not repeat completed cohorts. Corrected Node A/A run 45769403144 validates repaired fixture/execution integrity only: no candidate A/B yet and no stationarity/equivalence claim. Preserve actual timing authorization and same-worker admission requirements; do not repeat completed controls.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -136767,6 +136920,10 @@
         {
           "label": "First gRPC A/A-only control;owner terminal audit pending",
           "url": "https://github.com/tamird/gvisor/actions/runs/45761231714"
+        },
+        {
+          "label": "Corrected Node A/A, actual precision and drift limits",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45769403144"
         }
       ],
       "reviewWatch": {
@@ -137019,17 +137176,18 @@
           "https://github.com/tamird/gvisor/actions/runs/45722602120",
           "https://github.com/tamird/gvisor/actions/runs/45737714897",
           "https://github.com/tamird/gvisor/actions/runs/45759909463",
-          "https://github.com/tamird/gvisor/actions/runs/45761231714"
+          "https://github.com/tamird/gvisor/actions/runs/45761231714",
+          "https://github.com/tamird/gvisor/actions/runs/45769403144"
         ],
         "owner": "root",
-        "disposition": "Source 0edf29aac remains the completed 36-commit analyzer rewrite. Filesystem matched data cover 71 leaves: 48 Fio, eight RubyNoOp, eight RubySpec and seven Abseil. Ruby FUSE completed A/A and A/B before a separate BES timeout: clean elapsed \u22120.398%, dirty +0.369%, primary intervals 1\u20133%, no corrected flags. This is not full filesystem clearance: Ruby rootfs drift, Fio throughput precision, one incomplete Abseil cohort and missing gRPC comparisons remain.",
-        "nextAction": "The performance owner audits gRPC dirty-bindfs A/A-only run 45761231714 after its verified N1 admission. It is the first of six non-FUSE controls; no gRPC A/B is complete or automatically authorized. Two baseline FUSE gRPC leaves still fail ELF loading with ENOSYS. Preserve every leaf, Ruby rootfs drift, Fio throughput limits, dirty-FUSE Abseil fetch stop, source decisions and #17884. Do not repeat completed cohorts.",
-        "recheckCondition": "The existing owner\u2019s terminal gRPC control audit, substantive remaining-gate evidence, an actual prerequisite/source event, or an answer to an existing decision.",
+        "disposition": "Source 0edf29aac remains the completed 36-commit analyzer rewrite; filesystem matched data cover 71 leaves. Corrected Node A/A completed all four N1000 leaves with no corrected flags, but whole-client timing intervals reach 5%, ancillary intervals 18%, and common early/late drift remains. No Node candidate comparison has run. Filesystem drift/precision, incomplete Abseil and missing gRPC comparisons remain separate.",
+        "nextAction": "The performance owner audits gRPC dirty-bindfs A/A-only run 45761231714 after its verified N1 admission. It is the first of six non-FUSE controls; no gRPC A/B is complete or automatically authorized. Two baseline FUSE gRPC leaves still fail ELF loading with ENOSYS. Preserve every leaf, Ruby rootfs drift, Fio throughput limits, dirty-FUSE Abseil fetch stop, source decisions and #17884. Do not repeat completed cohorts. Corrected Node A/A run 45769403144 validates repaired fixture/execution integrity only: no candidate A/B yet and no stationarity/equivalence claim. Preserve actual timing authorization and same-worker admission requirements; do not repeat completed controls.",
+        "recheckCondition": "Existing qualification owner\u2019s terminal evidence or actual authorization/prerequisite change; no unchanged-run retry.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-26T05:26:36.856313+00:00",
+        "curatedAt": "2026-11-26T07:04:10.906515+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -137255,6 +137413,28 @@
             "scope": "Completed paired data,not blanket statistical acceptance or fullfilesystemqualification",
             "remaining": "Abseil dirtyFUSE AB incomplete;gRPC8 lacks completed paired candidate evidence;two baselineFUSE gRPC ENOSYS leaves separate",
             "RubyCorrectedFlags": "AA0/80;AB1/80 rootfs candidateearly/late+2.61%;all16primarycandidatecontrastsunflagged"
+          },
+          "nodeCorrectedAA": {
+            "source": "516e4814ae988a3f8c9aba934d38a3ba2d6b2447",
+            "native": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
+            "run": 45769403144,
+            "children": 50,
+            "uniquePIDs": 50,
+            "benchmarkRows": 200,
+            "fullBatchResponses": 200000,
+            "retainedStatisticalBatchResponses": 192000,
+            "primaryMedianCIMaxPercentByUnit": {
+              "sec/op": 5,
+              "average_latency.s": 2,
+              "requests_per_second.QPS": 2
+            },
+            "allContrastMedianCIMaxPercent": 18,
+            "correctedFlags": [],
+            "cleanupExit": 0,
+            "rawManifestSHA256": "db60d649e77ab57e2d0c13ae6cd71140810e57b59c9738d32370f0c1a342f43a",
+            "noAB": true,
+            "scope": "Corrected Node clientexecution interval, all4originalN1000leaves,24counterbalancedpairs/arm. One-response Go calibrations excluded from requestedbatch counts.",
+            "variability": "Wholeclientelapsed has3\u20135%primarymedianCIs and commonpositiveearly/late drift: C10A+5.96%,B+3.96%; ancillaryCIs reach18%. Heylatency/QPS primaryCIs1\u20132%. No demonstrated label-specific confounding, not proof of stationarity/equivalence."
           }
         }
       },
@@ -149187,5 +149367,5 @@
       "inactive": true
     }
   ],
-  "updatedAt": "2026-11-26T06:38:21.475106+00:00"
+  "updatedAt": "2026-11-26T07:04:10.906515+00:00"
 }
