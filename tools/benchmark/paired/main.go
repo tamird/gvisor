@@ -60,6 +60,7 @@ type affinity struct {
 }
 
 type report struct {
+	reference    map[string]*benchfmt.Result
 	Commands     map[string]command `json:"commands"`
 	Units        []string           `json:"units,omitempty"`
 	Platform     string             `json:"platform"`
@@ -232,7 +233,6 @@ func startChild(cmd *exec.Cmd, cpu int) (*affinity, error) {
 }
 
 func (r *report) collect(ctx context.Context, expected []string, output string) error {
-	var reference map[string]*benchfmt.Result
 	for i, order := range schedule(r.Preflight) {
 		pair := i - 1
 		for _, arm := range order {
@@ -284,9 +284,9 @@ func (r *report) collect(ctx context.Context, expected []string, output string) 
 					}
 				}
 			}
-			if err == nil && reference != nil {
+			if err == nil && r.reference != nil {
 				for name, value := range results {
-					previous := reference[name]
+					previous := r.reference[name]
 					if !bytes.Equal(previous.Name.Full(), value.Name.Full()) {
 						err = fmt.Errorf("%s: benchmark CPU configuration changed from %q to %q", name, previous.Name, value.Name)
 						break
@@ -309,8 +309,8 @@ func (r *report) collect(ctx context.Context, expected []string, output string) 
 					}
 				}
 			}
-			if reference == nil {
-				reference = results
+			if r.reference == nil {
+				r.reference = results
 			}
 			r.Visits = append(r.Visits, v)
 			if err != nil {

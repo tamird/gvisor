@@ -39,6 +39,7 @@ benchmark_test(
 # The complete Fio family has 48 leaves, three metrics, and five contrasts.
 sh_test(
     name = "fio_paired_test",
+    timeout = "eternal",
     srcs = ["//tools/benchmark/paired:test.sh"],
     args = [
         "$(rootpath //test/benchmarks/harness:filesystem_comparison_host_docker)",
@@ -63,7 +64,10 @@ sh_test(
             "--pgo-benchmarks=false",
             "--runtime=benchmark-" + runtime,
         ])
-        for arm, runtime in [("a", "baseline"), ("b", "candidate")]
+        for arm, runtime in [
+            ("a", "baseline"),
+            ("b", "candidate"),
+        ]
     ],
     data = [
         "fio_cases.json",
@@ -71,12 +75,11 @@ sh_test(
         ":fio_test",
         "//test/benchmarks/harness:filesystem_comparison_host_docker",
         "//tools/benchmark/paired",
-        "@org_golang_x_perf//cmd/benchstat:benchstat",
+        "@org_golang_x_perf//cmd/benchstat",
     ],
     local = True,
     tags = ["manual"],
     target_compatible_with = ["@platforms//cpu:x86_64"],
-    timeout = "eternal",
 )
 
 benchmark_test(

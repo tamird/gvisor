@@ -26,7 +26,7 @@ go_binary(
 go_test(
     name = "paired_test",
     srcs = SRCS + ["main_test.go"],
-    data = ["@org_golang_x_perf//cmd/benchstat:benchstat"],
+    data = ["@org_golang_x_perf//cmd/benchstat"],
     env = {"PAIRED_BENCHSTAT": "$(rootpath @org_golang_x_perf//cmd/benchstat:benchstat)"},
     deps = DEPS + ["//pkg/test/testutil"],
 )
