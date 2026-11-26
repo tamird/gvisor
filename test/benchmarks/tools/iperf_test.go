@@ -89,7 +89,11 @@ func TestIperfMakeCmd(t *testing.T) {
 	for _, parallel := range []int{0, 4, 16, 64} {
 		i := Iperf{Num: 128, Parallel: parallel}
 		got := i.MakeCmd("server", 5001)
-		want := []string{"iperf3", "--json", "--length", "128K", "--bytes", "128K", "--client", "server", "--port", "5001"}
+		want := []string{
+			"iperf3", "--json", "--interval", "0",
+			"--length", "128K", "--bytes", "128K",
+			"--client", "server", "--port", "5001",
+		}
 		if parallel > 0 {
 			want = append(want, "--parallel", fmt.Sprint(parallel))
 		}
