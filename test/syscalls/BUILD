@@ -937,16 +937,16 @@ syscall_test(
 syscall_test(
     size = "large",
     add_hostinet = True,
-    limit_ephemeral_ports = True,
-    shard_count = most_shards,
-    # Takes too long for TSAN. Creates a lot of TCP sockets.
-    tags = ["nogotsan"],
-    test = "//test/syscalls/linux:socket_inet_loopback_nogotsan_test",
     exec_properties = {
         "test.dockerUser": "root",
         "test.network-enable-ipv6": "true",
         "test.workload-isolation-type": "firecracker",
     },
+    limit_ephemeral_ports = True,
+    shard_count = most_shards,
+    # Takes too long for TSAN. Creates a lot of TCP sockets.
+    tags = ["nogotsan"],
+    test = "//test/syscalls/linux:socket_inet_loopback_nogotsan_test",
 )
 
 syscall_test(
@@ -1013,14 +1013,14 @@ syscall_test(
 syscall_test(
     size = "medium",
     add_hostinet = True,
-    # Takes too long to run with S/R.
-    save = False,
-    test = "//test/syscalls/linux:socket_ipv4_udp_unbound_loopback_test",
     exec_properties = {
         "test.dockerUser": "root",
         "test.network-enable-ipv6": "true",
         "test.workload-isolation-type": "firecracker",
     },
+    # Takes too long to run with S/R.
+    save = False,
+    test = "//test/syscalls/linux:socket_ipv4_udp_unbound_loopback_test",
 )
 
 syscall_test(
