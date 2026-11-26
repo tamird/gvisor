@@ -61,7 +61,7 @@ func BenchmarkRubySpecTest(b *testing.B) {
 		WorkDir:      "/fastlane",
 		RunCmd:       []string{"bash", "/files/run_fastlane_tests.sh"},
 		EnableForPGO: true,
-		WantOutput:   "3613 examples, 0 failures",
+		WantOutput:   "3679 examples, 0 failures",
 		Callback: func(b *testing.B, output string) {
 			b.Log(output)
 			loadTime, err := tools.ExtractRubyLoadTime(output)
