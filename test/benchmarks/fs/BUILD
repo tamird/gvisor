@@ -86,6 +86,57 @@ benchmark_test(
     ],
 )
 
+# Retain the eight-leaf Abseil family's alpha .01 / 40 contrasts.
+sh_test(
+    name = "absl_dirty_fuse_paired_test",
+    timeout = "eternal",
+    srcs = ["absl_paired.sh"],
+    args = [
+        "$(rootpath //test/benchmarks/harness:filesystem_comparison_host_docker)",
+        "$(rootpath //tools/benchmark/paired)",
+        "$(rootpath :paired_products.json)",
+        "$(rootpath //images:benchmarks/absl/Dockerfile.x86_64)",
+        "-benchstat=$(rootpath @org_golang_x_perf//cmd/benchstat:benchstat)",
+        shell.quote("-cases=" + json.encode({
+            "//test/benchmarks/fs:absl_dirty_fuse_paired_test": [
+                "BuildABSL/page_cache.dirty/filesystem.fusefs",
+            ],
+        })),
+        "-visit-timeout=4m",
+        "-iterations=1",
+        "-metric-units=sec/op",
+        "-alpha=0.00025",
+        "-confidence=0.95",
+    ] + [
+        shell.quote("-" + arm + "=" + json.encode([
+            "$(rootpath :bazel_test)",
+            "-test.run=^$$",
+            "-test.bench=^BenchmarkBuildABSL$$/^page_cache[.]dirty$$/^filesystem[.]fusefs$$",
+            "-test.benchtime=1x",
+            "-test.count=1",
+            "-test.v",
+            "--config_path=/etc/docker/daemon.json",
+            "--pgo-benchmarks=false",
+            "--runtime=benchmark-" + runtime,
+        ]))
+        for arm, runtime in [
+            ("a", "baseline"),
+            ("b", "candidate"),
+        ]
+    ],
+    data = [
+        "paired_products.json",
+        ":bazel_test",
+        "//images:benchmarks/absl/Dockerfile.x86_64",
+        "//test/benchmarks/harness:filesystem_comparison_host_docker",
+        "//tools/benchmark/paired",
+        "@org_golang_x_perf//cmd/benchstat",
+    ],
+    local = True,
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//cpu:x86_64"],
+)
+
 # The complete Fio family has 48 leaves, three metrics, and five contrasts.
 sh_test(
     name = "fio_paired_test",
