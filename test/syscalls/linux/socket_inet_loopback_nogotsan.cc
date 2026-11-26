@@ -165,8 +165,8 @@ TEST_P(SocketMultiProtocolInetLoopbackTest,
 TEST_P(SocketMultiProtocolInetLoopbackTest,
        UDPBindMayBindOtherBoundPortsReuseAddr) {
   ProtocolTestParam const& param = GetParam();
-  // UDP sockets are allowed to bind/listen on an already bound port w/
-  // SO_REUSEADDR even when requesting a port from the kernel.
+  // UDP sockets may reuse an occupied ephemeral port with SO_REUSEADDR. Host
+  // kernels may instead require a free port when bind requests port zero.
   SKIP_IF(param.type != SOCK_DGRAM);
 
   DisableSave ds;  // Too many syscalls.
@@ -190,7 +190,6 @@ TEST_P(SocketMultiProtocolInetLoopbackTest,
   SKIP_IF(nports > 1000);
 
   // Exhaust all ephemeral ports.
-  bool duplicate_binding = false;
   while (true) {
     // Bind the v4 loopback on a v4 socket.
     TestAddress const& test_addr = V4Loopback();
@@ -202,9 +201,14 @@ TEST_P(SocketMultiProtocolInetLoopbackTest,
                            &kSockOptOn, sizeof(kSockOptOn)),
                 SyscallSucceeds());
 
-    ASSERT_THAT(
-        bind(bound_fd.get(), AsSockAddr(&bound_addr), test_addr.addr_len),
-        SyscallSucceeds());
+    int ret = bind(bound_fd.get(), AsSockAddr(&bound_addr), test_addr.addr_len);
+    if (ret != 0) {
+      ASSERT_THAT(ret, SyscallFailsWithErrno(EADDRINUSE));
+      ASSERT_TRUE(!IsRunningOnGvisor() || IsRunningWithHostinet());
+      // The ephemeral range includes both endpoints.
+      ASSERT_EQ(bound_sockets.size(), nports + 1);
+      break;
+    }
 
     // Get the port that we bound.
     socklen_t bound_addr_len = test_addr.addr_len;
@@ -215,11 +219,9 @@ TEST_P(SocketMultiProtocolInetLoopbackTest,
 
     auto [iter, inserted] = bound_sockets.emplace(port, std::move(bound_fd));
     if (!inserted) {
-      duplicate_binding = true;
       break;
     }
   }
-  ASSERT_TRUE(duplicate_binding);
 }
 
 INSTANTIATE_TEST_SUITE_P(AllFamilies, SocketMultiProtocolInetLoopbackTest,
