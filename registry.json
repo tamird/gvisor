@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T03:11:52.515605+00:00",
+    "updatedAt": "2026-11-26T03:14:13.682000+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27171,7 +27171,7 @@
       "url": "https://github.com/google/gvisor/pull/16098",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-26T03:11:52.515605+00:00",
+      "updatedAt": "2026-11-26T03:14:13.682000+00:00",
       "summary": "Source-equivalent rebase 58ee25232e is delivered and MERGEABLE; the rebase notice is posted. The old d692 approval was dismissed; Kerumeto is natively requested. Exact-head First Pass2987 failed upload before agent allocation: author30-day360000-compute-minute quota, not project test execution. DCO passes; remaining native Actions are followed at their actual states.",
       "followup": {
         "owner": "root / approved_rebase_queue",
@@ -27234,7 +27234,7 @@
           ],
           "publication": "Final metadata-only certification revision published 06b8ee2c46ca4f71c261da86f7b1905032e8b08f; qualified prepared tree unchanged"
         },
-        "curatedAt": "2026-11-26T03:11:52.515605+00:00",
+        "curatedAt": "2026-11-26T03:14:13.682000+00:00",
         "publicationConditionHistory": [
           {
             "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
@@ -27508,7 +27508,7 @@
           {
             "reason": "author-feedback",
             "title": "Current public feedback already addressed",
-            "nextAction": "Preserve the current d692 fixture repair and posted answer6993741644. All currently observed public feedback is consumed; root follows genuine new feedback or maintainer landing/internal validation. No duplicate repair/reply/outreach.",
+            "nextAction": "Preserve the exact58ee fixture repair and published answer6993741644. Root verified BUILD and check_test.go byte-identical to d692 and fresh both-architecture TestCompilerImportIdentity PASS. No new direct reply; private compiler integration remains unverified. Follow genuinely new source-bound feedback or lifecycle events.",
             "evidence": [
               "https://github.com/google/gvisor/pull/16098#discussion_r4619004827",
               "https://github.com/google/gvisor/pull/16098#issuecomment-6993741644",
@@ -27516,11 +27516,11 @@
               "https://github.com/google/gvisor/pull/16098#pullrequestreview-6045055527"
             ],
             "binding": {
-              "reviewDecision": "APPROVED",
-              "approvedHead": "d692a4fb41acd4deb5f3b051ac06bd4145d888f3",
-              "approvedAt": "2026-11-24T18:28:56Z",
-              "headCommittedAt": "2026-11-24T15:32:54Z",
-              "headIntroducedAt": "2026-11-24T15:33:00Z",
+              "reviewDecision": "REVIEW_REQUIRED",
+              "approvedHead": null,
+              "approvedAt": null,
+              "headCommittedAt": "2026-11-26T02:36:26Z",
+              "headIntroducedAt": "2026-11-26T03:08:28Z",
               "headHistoryComplete": true,
               "threads": {
                 "unresolved": 5,
@@ -27537,6 +27537,18 @@
                     "body": "Replaced the singular rootpath/environment-variable fixture with a package-relative runfile alias. The alias uses the existing compiler-export selector, so it handles the compiler export without assuming a single DefaultInfo output or passing a workspace prefix to FindFile. The current public Bazel provider emitted flags.x; adapter/runfile analysis and the uncached TestCompilerImportIdentity passed. I have not run the private internal compiler integration.\n\nPosted by Codex on behalf of @tamird.\n",
                     "createdAt": "2026-11-18T22:39:52Z",
                     "updatedAt": "2026-11-18T22:39:52Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABrAwPDA",
+                    "url": "https://github.com/google/gvisor/pull/16098#issuecomment-7181438732",
+                    "body": "Rebased on master to resolve the build-rule conflict.\n\nPosted by Codex on behalf of @tamird.\n",
+                    "createdAt": "2026-11-26T03:08:57Z",
+                    "updatedAt": "2026-11-26T03:08:57Z",
                     "author": {
                       "login": "tamird",
                       "__typename": "User"
@@ -27567,7 +27579,7 @@
                     "state": "COMMENTED",
                     "submittedAt": "2026-11-03T14:29:38Z",
                     "updatedAt": "2026-11-03T14:29:38Z",
-                    "authorAssociation": "CONTRIBUTOR",
+                    "authorAssociation": "MEMBER",
                     "author": {
                       "login": "tamird",
                       "__typename": "User"
@@ -27584,7 +27596,7 @@
                     "state": "COMMENTED",
                     "submittedAt": "2026-11-03T14:29:41Z",
                     "updatedAt": "2026-11-03T14:29:41Z",
-                    "authorAssociation": "CONTRIBUTOR",
+                    "authorAssociation": "MEMBER",
                     "author": {
                       "login": "tamird",
                       "__typename": "User"
@@ -27601,7 +27613,7 @@
                     "state": "COMMENTED",
                     "submittedAt": "2026-11-03T14:29:43Z",
                     "updatedAt": "2026-11-03T14:29:43Z",
-                    "authorAssociation": "CONTRIBUTOR",
+                    "authorAssociation": "MEMBER",
                     "author": {
                       "login": "tamird",
                       "__typename": "User"
@@ -27669,7 +27681,7 @@
                     "state": "COMMENTED",
                     "submittedAt": "2026-11-24T15:32:27Z",
                     "updatedAt": "2026-11-24T15:32:27Z",
-                    "authorAssociation": "CONTRIBUTOR",
+                    "authorAssociation": "MEMBER",
                     "author": {
                       "login": "tamird",
                       "__typename": "User"
@@ -27683,9 +27695,9 @@
                     "id": "PRR_kwDOB9IlXs8AAAABaFA6Jw",
                     "url": "https://github.com/google/gvisor/pull/16098#pullrequestreview-6045055527",
                     "body": "",
-                    "state": "APPROVED",
+                    "state": "DISMISSED",
                     "submittedAt": "2026-11-24T18:28:56Z",
-                    "updatedAt": "2026-11-24T18:28:56Z",
+                    "updatedAt": "2026-11-26T03:08:28Z",
                     "authorAssociation": "MEMBER",
                     "author": {
                       "login": "kerumeto",
@@ -27850,7 +27862,7 @@
                   }
                 ]
               },
-              "sourceHead": "d692a4fb41acd4deb5f3b051ac06bd4145d888f3"
+              "sourceHead": "58ee25232e6f1a1f616b20774c679359caa1765e"
             }
           },
           {
@@ -27876,29 +27888,9 @@
           }
         ],
         "feedbackReconciliation": {
-          "state": "Current d692 feedback verified complete: old fixture inline outdated, repair/answer posted and later public findings addressed. No new source/reply/notification required; private internal compiler integration remains unverified.",
-          "receipt": {
-            "file": "nogo-16098-feedback-20261119-reconciled.json",
-            "sha256": "a350c733362d5deb07a5edfb762095ed0318208fd41333c3cf785e38d6a45b2f"
-          },
-          "currentVerification": {
-            "sourceHead": "d692a4fb41acd4deb5f3b051ac06bd4145d888f3",
-            "targetedReadAt": "2026-11-25T21:53:12.772592+00:00",
-            "feedbackItems": 19,
-            "threads": 5,
-            "bodyAndIdentityChangesSinceCanonicalObservation": false,
-            "membershipMetadataOnlyChanged": true,
-            "relevantSourceBlobsIdenticalToTriaged06b8": true,
-            "retirementChecks": {
-              "oldRowRetired": true,
-              "changedHeadEligible": true,
-              "changedFindingBodyEligible": true,
-              "incompleteFeedbackEligible": true,
-              "newReplyEligible": true,
-              "freshnessOnlyDoesNotReopen": true,
-              "membershipOnlyDoesNotReopen": true
-            }
-          }
+          "sourceHead": "58ee25232e6f1a1f616b20774c679359caa1765e",
+          "rootAudit": "Inline4619004827 unchanged sinceNov18; current data label and package-relative FindFile exactly preserve d692; posted answer6993741644 addresses it. No new reply needed.",
+          "privateIntegration": "unverified"
         },
         "providerHead": "58ee25232e6f1a1f616b20774c679359caa1765e",
         "candidate": {
@@ -148346,5 +148338,5 @@
       "inactive": true
     }
   ],
-  "updatedAt": "2026-11-26T03:11:52.515605+00:00"
+  "updatedAt": "2026-11-26T03:14:13.682000+00:00"
 }
