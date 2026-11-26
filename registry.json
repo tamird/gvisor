@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T02:56:15.794316+00:00",
+    "updatedAt": "2026-11-26T03:11:52.515605+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27166,19 +27166,19 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "nogo-export-data",
-      "head": "d692a4fb41acd4deb5f3b051ac06bd4145d888f3",
+      "head": "58ee25232e6f1a1f616b20774c679359caa1765e",
       "title": "Generate Nogo export data from source",
       "url": "https://github.com/google/gvisor/pull/16098",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-26T02:56:15.794316+00:00",
-      "summary": "Public d692a4fb41 remains conflicting and unchanged. Existing owner prepared native 58ee25232e on master3e9bbb3cc, preserving independent upstream changes and the logical topic edits. Initial graph/format checks pass; exact owning qualification and publication review remain. No candidate is published to this PR.",
+      "updatedAt": "2026-11-26T03:11:52.515605+00:00",
+      "summary": "Source-equivalent rebase 58ee25232e is delivered and MERGEABLE; the rebase notice is posted. The old d692 approval was dismissed; Kerumeto is natively requested. Exact-head First Pass2987 failed upload before agent allocation: author30-day360000-compute-minute quota, not project test execution. DCO passes; remaining native Actions are followed at their actual states.",
       "followup": {
-        "owner": "approved_rebase_queue",
-        "sourceHead": "d692a4fb41acd4deb5f3b051ac06bd4145d888f3",
-        "observedAt": "2026-11-26T02:27:43.419551+00:00",
-        "disposition": "Public d692a4fb41 remains conflicting and unchanged. Existing owner prepared native 58ee25232e on master3e9bbb3cc, preserving independent upstream changes and the logical topic edits. Initial graph/format checks pass; exact owning qualification and publication review remain. No candidate is published to this PR.",
-        "nextAction": "approved_rebase_queue completes the exact owning gates and source-bound review for native 58ee25232e. Preserve independent import, performance and publication boundaries; no old qualification transfer.",
+        "owner": "root / approved_rebase_queue",
+        "sourceHead": "58ee25232e6f1a1f616b20774c679359caa1765e",
+        "observedAt": "2026-11-26T03:11:06.030918+00:00",
+        "disposition": "Source-equivalent rebase 58ee25232e is delivered and MERGEABLE; the rebase notice is posted. The old d692 approval was dismissed; Kerumeto is natively requested. Exact-head First Pass2987 failed upload before agent allocation: author30-day360000-compute-minute quota, not project test execution. DCO passes; remaining native Actions are followed at their actual states.",
+        "nextAction": "Existing owner follows native CI/review events and quota availability. Conflict preparation/source delivery is complete; no unchanged retry, old-head failure transfer, duplicate review request or merge operation. Preserve independent import, performance and substantive review conditions.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16098",
           "https://github.com/tamird/gvisor/commit/66eb27741",
@@ -27207,10 +27207,12 @@
           "https://buildkite.com/gvisor/pipeline/builds/55830",
           "https://github.com/google/gvisor/pull/16098#issuecomment-6993741644",
           "https://github.com/tamird/gvisor/actions/runs/45744607237",
-          "https://github.com/tamird/gvisor/actions/runs/45744609960"
+          "https://github.com/tamird/gvisor/actions/runs/45744609960",
+          "https://github.com/gvisor/gvisor/pull/16098#issuecomment-7181438732",
+          "https://buildkite.com/gvisor/first-pass/builds/2987#01a215d3-7acc-43cd-aa6f-f6c4b2cf71fb"
         ],
-        "mergeable": "CONFLICTING",
-        "recheckCondition": "Existing owner’s terminal owning-gate/source-review milestone or actual prerequisite/source event.",
+        "mergeable": "MERGEABLE",
+        "recheckCondition": "Actual source-bound CI/reviewer response, quota availability or prerequisite/lifecycle change.",
         "preparedRevision": {
           "head": "f09702e855ccb3a0da8708479b3563d56da82768",
           "base": "b29c8320a862a77f4c55894d00c56eb5850c8066",
@@ -27232,7 +27234,7 @@
           ],
           "publication": "Final metadata-only certification revision published 06b8ee2c46ca4f71c261da86f7b1905032e8b08f; qualified prepared tree unchanged"
         },
-        "curatedAt": "2026-11-26T02:56:15.794316+00:00",
+        "curatedAt": "2026-11-26T03:11:52.515605+00:00",
         "publicationConditionHistory": [
           {
             "policyCommit": "9ad3ba91c673248c8e522cbca3c37087375b3b25",
@@ -27898,16 +27900,68 @@
             }
           }
         },
-        "providerHead": "7bca7b25f93434a14c2c003d38339e54c4f40906",
+        "providerHead": "58ee25232e6f1a1f616b20774c679359caa1765e",
         "candidate": {
           "head": "58ee25232e6f1a1f616b20774c679359caa1765e",
           "base": "3e9bbb3cc75e4dd3d074541d5e43b5adbc4dfcfc",
           "url": "https://github.com/tamird/gvisor/commit/58ee25232e6f1a1f616b20774c679359caa1765e",
           "ci": "5cbe7694d00d2da13d6163aec085830fa2accac6",
           "initialGraphAndSource": "PASS per root terminal handoff",
-          "owningGates": "pending",
+          "owningGates": "Qualified and delivered; source prep complete",
           "logicalEditsIdentical": true
-        }
+        },
+        "deliveryReceipt": {
+          "number": 16098,
+          "head": "58ee25232e6f1a1f616b20774c679359caa1765e",
+          "mergeable": "MERGEABLE",
+          "reviewDecision": "REVIEW_REQUIRED",
+          "reviewRequests": [
+            "kerumeto"
+          ],
+          "notice": "https://github.com/gvisor/gvisor/pull/16098#issuecomment-7181438732",
+          "firstPass": {
+            "number": 2987,
+            "sourceVerifiedBy": "first-pass-2987-new-head-diagnosis.json",
+            "job": "https://buildkite.com/gvisor/first-pass/builds/2987#01a215d3-7acc-43cd-aa6f-f6c4b2cf71fb",
+            "exit": 80,
+            "stackError": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+            "agentAssigned": false
+          },
+          "autoMergeOperated": false,
+          "bodyChanged": false,
+          "qualification": {
+            "ci": "5cbe7694d00d2da13d6163aec085830fa2accac6",
+            "runs": [
+              45745657818,
+              45745660410
+            ],
+            "bothArchitectures": {
+              "targets": 5,
+              "checkerXMLRecords": 25,
+              "NoGoXMLRecords": 4,
+              "failures": 0,
+              "skips": 0,
+              "freshRemote": true,
+              "compilerImportIdentity": "PASS"
+            },
+            "guards": "exact source, worktree/index and credential cleanup PASS",
+            "contextReview": "root plus independent final context review CLEAR"
+          }
+        },
+        "firstPassAdmission": {
+          "head": "58ee25232e6f1a1f616b20774c679359caa1765e",
+          "number": 2987,
+          "sourceVerifiedBy": "first-pass-2987-new-head-diagnosis.json",
+          "job": "https://buildkite.com/gvisor/first-pass/builds/2987#01a215d3-7acc-43cd-aa6f-f6c4b2cf71fb",
+          "exit": 80,
+          "stackError": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+          "agentAssigned": false,
+          "classification": "Pre-agent quota admission failure; no tests executed"
+        },
+        "nativeReviewRequests": [
+          "kerumeto"
+        ],
+        "duplicateReapprovalOutreach": "Native requests already exist; no repeat sender"
       },
       "evidence": [
         {
@@ -28049,6 +28103,14 @@
         {
           "label": "Current-base native candidate, not PR-delivered",
           "url": "https://github.com/tamird/gvisor/commit/58ee25232e6f1a1f616b20774c679359caa1765e"
+        },
+        {
+          "label": "Published rebase notice",
+          "url": "https://github.com/gvisor/gvisor/pull/16098#issuecomment-7181438732"
+        },
+        {
+          "label": "Exact-head pre-agent quota receipt",
+          "url": "https://buildkite.com/gvisor/first-pass/builds/2987#01a215d3-7acc-43cd-aa6f-f6c4b2cf71fb"
         }
       ],
       "refinement": {
@@ -28121,7 +28183,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Agent"
       },
-      "recheckCondition": "Existing owner’s terminal owning-gate/source-review milestone or actual prerequisite/source event."
+      "recheckCondition": "Actual source-bound CI/reviewer response, quota availability or prerequisite/lifecycle change."
     },
     {
       "id": "pr:16096",
@@ -52974,12 +53036,12 @@
       "number": 16710,
       "group": "bazel",
       "ref": "review/stateify-output-path",
-      "head": "2521133e1842de17c870f0255a0135794250b3ba",
+      "head": "ddc89a6409fde68c70efbd19d8130806db9cafa4",
       "title": "Generate checkpoint methods without a host shell",
       "url": "https://github.com/google/gvisor/pull/16710",
       "status": "open",
-      "summary": "Public 2521133e18 remains conflicting and unchanged. Existing owner prepared native ddc89a6409 on master3e9bbb3cc, preserving independent upstream changes and the logical topic edits. Initial graph/format checks pass; exact owning qualification and publication review remain. No candidate is published to this PR.",
-      "updatedAt": "2026-11-26T02:56:15.794316+00:00",
+      "summary": "Source-equivalent rebase ddc89a6409 is delivered and MERGEABLE; the rebase notice is posted. The old Manning approval was dismissed; Manning and Parth are both natively requested. Historical b5/7ef reapproval metadata is not current approval. Exact-head First Pass2985 failed upload before agent allocation: author30-day360000-compute-minute quota, not project test execution. DCO passes; remaining native Actions are followed at their actual states.",
+      "updatedAt": "2026-11-26T03:11:52.515605+00:00",
       "evidence": [
         {
           "label": "Seven identical production outputs and scratch qualification",
@@ -53120,6 +53182,14 @@
         {
           "label": "Current-base native candidate, not PR-delivered",
           "url": "https://github.com/tamird/gvisor/commit/ddc89a6409fde68c70efbd19d8130806db9cafa4"
+        },
+        {
+          "label": "Published rebase notice",
+          "url": "https://github.com/gvisor/gvisor/pull/16710#issuecomment-7181346313"
+        },
+        {
+          "label": "Exact-head pre-agent quota receipt",
+          "url": "https://buildkite.com/gvisor/first-pass/builds/2985#01a215cd-906d-4abd-b65a-7549b4ceab5b"
         }
       ],
       "settledReviews": [
@@ -53169,11 +53239,11 @@
         }
       ],
       "followup": {
-        "owner": "approved_rebase_queue",
-        "sourceHead": "2521133e1842de17c870f0255a0135794250b3ba",
-        "observedAt": "2026-11-26T02:27:43.419551+00:00",
-        "disposition": "Public 2521133e18 remains conflicting and unchanged. Existing owner prepared native ddc89a6409 on master3e9bbb3cc, preserving independent upstream changes and the logical topic edits. Initial graph/format checks pass; exact owning qualification and publication review remain. No candidate is published to this PR.",
-        "nextAction": "approved_rebase_queue completes the exact owning gates and source-bound review for native ddc89a6409. Preserve independent import, performance and publication boundaries; no old qualification transfer.",
+        "owner": "root / approved_rebase_queue",
+        "sourceHead": "ddc89a6409fde68c70efbd19d8130806db9cafa4",
+        "observedAt": "2026-11-26T03:11:06.030918+00:00",
+        "disposition": "Source-equivalent rebase ddc89a6409 is delivered and MERGEABLE; the rebase notice is posted. The old Manning approval was dismissed; Manning and Parth are both natively requested. Historical b5/7ef reapproval metadata is not current approval. Exact-head First Pass2985 failed upload before agent allocation: author30-day360000-compute-minute quota, not project test execution. DCO passes; remaining native Actions are followed at their actual states.",
+        "nextAction": "Existing owner follows native CI/review events and quota availability. Conflict preparation/source delivery is complete; no unchanged retry, old-head failure transfer, duplicate review request or merge operation. Preserve independent import, performance and substantive review conditions.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16710",
           "https://github.com/tamird/gvisor/commit/b5a8cd681",
@@ -53186,10 +53256,12 @@
           "https://buildkite.com/gvisor/first-pass/builds/1482",
           "https://buildkite.com/gvisor/first-pass/builds/1482#01a1ead5-b2bb-4f25-88fe-34666dcce79c",
           "https://github.com/tamird/gvisor/actions/runs/45744612414",
-          "https://github.com/tamird/gvisor/actions/runs/45744614846"
+          "https://github.com/tamird/gvisor/actions/runs/45744614846",
+          "https://github.com/gvisor/gvisor/pull/16710#issuecomment-7181346313",
+          "https://buildkite.com/gvisor/first-pass/builds/2985#01a215cd-906d-4abd-b65a-7549b4ceab5b"
         ],
-        "mergeable": "CONFLICTING",
-        "recheckCondition": "Existing owner’s terminal owning-gate/source-review milestone or actual prerequisite/source event.",
+        "mergeable": "MERGEABLE",
+        "recheckCondition": "Actual source-bound CI/reviewer response, quota availability or prerequisite/lifecycle change.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -53213,25 +53285,62 @@
             }
           }
         ],
-        "curatedAt": "2026-11-26T02:56:15.794316+00:00",
+        "curatedAt": "2026-11-26T03:11:52.515605+00:00",
         "candidate": {
           "head": "ddc89a6409fde68c70efbd19d8130806db9cafa4",
           "base": "3e9bbb3cc75e4dd3d074541d5e43b5adbc4dfcfc",
           "url": "https://github.com/tamird/gvisor/commit/ddc89a6409fde68c70efbd19d8130806db9cafa4",
           "ci": "b34faf9024829a43ccea8bf159048b181132d24e",
           "initialGraphAndSource": "PASS per root terminal handoff",
-          "owningGates": "pending",
+          "owningGates": "Qualified and delivered; source prep complete",
           "logicalEditsIdentical": true
+        },
+        "providerHead": "ddc89a6409fde68c70efbd19d8130806db9cafa4",
+        "deliveryReceipt": {
+          "number": 16710,
+          "head": "ddc89a6409fde68c70efbd19d8130806db9cafa4",
+          "mergeable": "MERGEABLE",
+          "reviewDecision": "REVIEW_REQUIRED",
+          "reviewRequests": [
+            "manninglucas",
+            "parth-opensrc"
+          ],
+          "notice": "https://github.com/gvisor/gvisor/pull/16710#issuecomment-7181346313",
+          "firstPass": {
+            "number": 2985,
+            "sourceVerifiedBy": "first-pass-2985-new-head-diagnosis.json",
+            "job": "https://buildkite.com/gvisor/first-pass/builds/2985#01a215cd-906d-4abd-b65a-7549b4ceab5b",
+            "exit": 80,
+            "stackError": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+            "agentAssigned": false
+          },
+          "autoMergeOperated": false,
+          "bodyChanged": false
+        },
+        "firstPassAdmission": {
+          "head": "ddc89a6409fde68c70efbd19d8130806db9cafa4",
+          "number": 2985,
+          "sourceVerifiedBy": "first-pass-2985-new-head-diagnosis.json",
+          "job": "https://buildkite.com/gvisor/first-pass/builds/2985#01a215cd-906d-4abd-b65a-7549b4ceab5b",
+          "exit": 80,
+          "stackError": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+          "agentAssigned": false,
+          "classification": "Pre-agent quota admission failure; no tests executed"
+        },
+        "nativeReviewRequests": [
+          "parth-opensrc",
+          "manninglucas"
+        ],
+        "duplicateReapprovalOutreach": "Native requests already exist; no repeat sender",
+        "historicalReapproval": {
+          "kind": "patch-preserving-rebase",
+          "method": "reviewed-source-diff",
+          "head": "b5a8cd681c362098ce375bc787a2063a79d9af6a",
+          "approvedHead": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e",
+          "diffSha256": "05dea6d341a7bed43532fcf244cd27288d66312b5635de2279c4d3ef197392f4",
+          "summary": "The signed rebase preserves the source changes. Master added _go_importpath to the same load line. Both generated outputs match master.",
+          "evidence": "https://github.com/tamird/gvisor/commit/b5a8cd681"
         }
-      },
-      "reapproval": {
-        "kind": "patch-preserving-rebase",
-        "method": "reviewed-source-diff",
-        "head": "b5a8cd681c362098ce375bc787a2063a79d9af6a",
-        "approvedHead": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e",
-        "diffSha256": "05dea6d341a7bed43532fcf244cd27288d66312b5635de2279c4d3ef197392f4",
-        "summary": "The signed rebase preserves the source changes. Master added _go_importpath to the same load line. Both generated outputs match master.",
-        "evidence": "https://github.com/tamird/gvisor/commit/b5a8cd681"
       },
       "refinement": {
         "before": {
@@ -107153,13 +107262,13 @@
       "url": "https://github.com/gvisor/gvisor/issues/17832",
       "group": "rbe",
       "status": "open",
-      "summary": "The old cache86cffbf72 proposal and its issue rewrite are superseded because two new Bazel-backed Actions jobs were omitted. actions_bazel_cache owns updated source and validation before fresh review. Historical source/draft/evidence remain retained. The separate Go-export f8500dffe opening question remains unanswered; its fork preview is delivered, with no RBE speedup or full export-assembly claim.",
+      "summary": "Old six-job cache source86cff and its issue draft remain superseded. Both new caller gates passed for revised d511 source; actions_bazel_cache owns final technical review and corrected issue wording. No revised publication question is pending. The separate Go-export f850 opening question remains unanswered; its fork preview is delivered.",
       "followup": {
         "owner": "root",
         "observedAt": "2026-11-25T13:09:11.551551+00:00",
-        "disposition": "The old cache86cffbf72 proposal and its issue rewrite are superseded because two new Bazel-backed Actions jobs were omitted. actions_bazel_cache owns updated source and validation before fresh review. Historical source/draft/evidence remain retained. The separate Go-export f8500dffe opening question remains unanswered; its fork preview is delivered, with no RBE speedup or full export-assembly claim.",
-        "nextAction": "actions_bazel_cache updates cache coverage for governance and license-check alongside the original six callers, then obtains revised source review. Root preserves the separate pending Go-export opening decision. Do not present the superseded cache or issue-body asks as actionable approval questions.",
-        "recheckCondition": "Revised cache candidate and validation/review milestone, or an answer to the independent Go-export question.",
+        "disposition": "Old six-job cache source86cff and its issue draft remain superseded. Both new caller gates passed for revised d511 source; actions_bazel_cache owns final technical review and corrected issue wording. No revised publication question is pending. The separate Go-export f850 opening question remains unanswered; its fork preview is delivered.",
+        "nextAction": "Complete technical source/issue-text review of the revised cache coverage before any new publication decision. Root independently awaits the existing Go-export answer; do not revive retired cache/issue asks.",
+        "recheckCondition": "Technical review milestone for revised cache source/text or actual Go-export answer.",
         "evidence": [
           "https://github.com/gvisor/gvisor/issues/17832",
           "https://github.com/google/gvisor/issues/17832#issuecomment-7097716495",
@@ -107181,7 +107290,7 @@
           "https://buildkite.com/gvisor/pipeline/builds/55802#01a20bff-5c2f-4bc4-aa29-331c9ed53e14",
           "https://github.com/tamird/gvisor/tree/review/go-export-promisor-20261124"
         ],
-        "curatedAt": "2026-11-26T02:56:15.794316+00:00",
+        "curatedAt": "2026-11-26T03:11:52.515605+00:00",
         "supersededExecutionBlocker": {
           "nextAction": "Root consumes each existing decision independently: open the cache 86cffbf72 PR, replace the issue body with the current measured-scope draft, and open the Go export f8500dffe PR. Canonical lint coverage is reconciled through unchanged-input parent evidence. Deliver approved changes through the existing authorized routes; the unpublished Go export fork ref still needs its SSH/HTTPS execution blocker to clear.",
           "recordedAt": "2026-11-24T06:29:20.083295+00:00",
@@ -107201,12 +107310,15 @@
           "owner": "actions_bazel_cache",
           "supersededSource": "86cffbf727d4a5628ca2a324fe3c06ec21d7c24c",
           "master": "3e9bbb3cc75e4dd3d074541d5e43b5adbc4dfcfc",
-          "reason": "Superseded coverage: master3e9bbb3cc adds governance.yml→make governance-check→bazel test and license_check.yml→make license-check→bazel run. Old six-job source and issue-body all-current-jobs wording are stale. Revised candidate/review are owned by actions_bazel_cache; no approval granted."
+          "reason": "Superseded coverage: master3e9bbb3cc adds governance.yml→make governance-check→bazel test and license_check.yml→make license-check→bazel run. Old six-job source and issue-body all-current-jobs wording are stale. Revised candidate/review are owned by actions_bazel_cache; no approval granted.",
+          "candidate": "d511 (root-reported current revision; no full SHA/link asserted)",
+          "callerGates": "Both PASS",
+          "stage": "technical review; no publication decision"
         }
       },
-      "updatedAt": "2026-11-26T02:56:15.794316+00:00",
-      "nextStep": "actions_bazel_cache updates cache coverage for governance and license-check alongside the original six callers, then obtains revised source review. Root preserves the separate pending Go-export opening decision. Do not present the superseded cache or issue-body asks as actionable approval questions.",
-      "recheckCondition": "Revised cache candidate and validation/review milestone, or an answer to the independent Go-export question.",
+      "updatedAt": "2026-11-26T03:11:52.515605+00:00",
+      "nextStep": "Complete technical source/issue-text review of the revised cache coverage before any new publication decision. Root independently awaits the existing Go-export answer; do not revive retired cache/issue asks.",
+      "recheckCondition": "Technical review milestone for revised cache source/text or actual Go-export answer.",
       "reviewWatch": {
         "inspected": [
           {
@@ -107391,23 +107503,25 @@
       "repo": "google/gvisor",
       "number": 17336,
       "ref": "review/shared-testprocess-systrap-wait",
-      "head": "daa14d03eb6e7fc312496fb740bdae0a00a02312",
+      "head": "68390a19836c84dd13b153e313a4a4508875efa2",
       "title": "Use one test process for shim timeouts and runsc lifecycle tests",
       "url": "https://github.com/google/gvisor/pull/17336",
       "group": "tests",
       "status": "open",
-      "summary": "Public daa14d03eb remains conflicting and unchanged. Existing owner prepared native 68390a1983 on master3e9bbb3cc, preserving independent upstream changes and the logical topic edits. Initial graph/format checks pass; exact owning qualification and publication review remain. No candidate is published to this PR.",
+      "summary": "Source-equivalent rebase 68390a1983 is delivered and MERGEABLE; the rebase notice is posted. Konstantin and Trantoji remain requested. Worker-property support for specutils is CI-only, not native source. Exact-head First Pass2986 failed upload before agent allocation: author30-day360000-compute-minute quota, not project test execution. DCO passes; remaining native Actions are followed at their actual states.",
       "followup": {
-        "owner": "approved_rebase_queue",
-        "sourceHead": "daa14d03eb6e7fc312496fb740bdae0a00a02312",
-        "disposition": "Public daa14d03eb remains conflicting and unchanged. Existing owner prepared native 68390a1983 on master3e9bbb3cc, preserving independent upstream changes and the logical topic edits. Initial graph/format checks pass; exact owning qualification and publication review remain. No candidate is published to this PR.",
-        "nextAction": "approved_rebase_queue completes the exact owning gates and source-bound review for native 68390a1983. Preserve independent import, performance and publication boundaries; no old qualification transfer.",
-        "recheckCondition": "Existing owner’s terminal owning-gate/source-review milestone or actual prerequisite/source event.",
+        "owner": "root / approved_rebase_queue",
+        "sourceHead": "68390a19836c84dd13b153e313a4a4508875efa2",
+        "disposition": "Source-equivalent rebase 68390a1983 is delivered and MERGEABLE; the rebase notice is posted. Konstantin and Trantoji remain requested. Worker-property support for specutils is CI-only, not native source. Exact-head First Pass2986 failed upload before agent allocation: author30-day360000-compute-minute quota, not project test execution. DCO passes; remaining native Actions are followed at their actual states.",
+        "nextAction": "Existing owner follows native CI/review events and quota availability. Conflict preparation/source delivery is complete; no unchanged retry, old-head failure transfer, duplicate review request or merge operation. Preserve independent import, performance and substantive review conditions.",
+        "recheckCondition": "Actual source-bound CI/reviewer response, quota availability or prerequisite/lifecycle change.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17336#issuecomment-7043294523",
           "https://buildkite.com/gvisor/first-pass/builds/2080#01a1f98c-c6cc-41dd-bd48-7162d05981e0",
           "https://github.com/tamird/gvisor/actions/runs/45744617126",
-          "https://github.com/tamird/gvisor/actions/runs/45744619298"
+          "https://github.com/tamird/gvisor/actions/runs/45744619298",
+          "https://github.com/gvisor/gvisor/pull/17336#issuecomment-7181375353",
+          "https://buildkite.com/gvisor/first-pass/builds/2986#01a215cf-4688-4247-b458-5788db3b46a0"
         ],
         "attentionDispositions": [
           {
@@ -107432,16 +107546,16 @@
             }
           }
         ],
-        "mergeable": "CONFLICTING",
-        "observedAt": "2026-11-26T02:27:46.637994+00:00",
-        "curatedAt": "2026-11-26T02:56:15.794316+00:00",
+        "mergeable": "MERGEABLE",
+        "observedAt": "2026-11-26T03:11:06.030918+00:00",
+        "curatedAt": "2026-11-26T03:11:52.515605+00:00",
         "candidate": {
           "head": "68390a19836c84dd13b153e313a4a4508875efa2",
           "base": "3e9bbb3cc75e4dd3d074541d5e43b5adbc4dfcfc",
           "url": "https://github.com/tamird/gvisor/commit/68390a19836c84dd13b153e313a4a4508875efa2",
           "ci": "6b475265e86d09adc651b0e78a05095da5c76883",
           "initialGraphAndSource": "PASS per root terminal handoff",
-          "owningGates": "pending",
+          "owningGates": "Qualified and delivered; source prep complete",
           "logicalEditsIdentical": true,
           "workerPrerequisite": {
             "source": "6707b53611b69dfd664366174a41c5d10636e649",
@@ -107453,13 +107567,58 @@
             ],
             "scope": "CI-only exact existing requiredworker properties forspecutils; no route/runtimecode or defaultworkflowpolicy change"
           }
-        }
+        },
+        "providerHead": "68390a19836c84dd13b153e313a4a4508875efa2",
+        "deliveryReceipt": {
+          "number": 17336,
+          "head": "68390a19836c84dd13b153e313a4a4508875efa2",
+          "mergeable": "MERGEABLE",
+          "reviewDecision": "REVIEW_REQUIRED",
+          "reviewRequests": [
+            "konstantin-s-bogom",
+            "trantoji"
+          ],
+          "notice": "https://github.com/gvisor/gvisor/pull/17336#issuecomment-7181375353",
+          "firstPass": {
+            "number": 2986,
+            "sourceVerifiedBy": "first-pass-2986-new-head-diagnosis.json",
+            "job": "https://buildkite.com/gvisor/first-pass/builds/2986#01a215cf-4688-4247-b458-5788db3b46a0",
+            "exit": 80,
+            "stackError": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+            "agentAssigned": false
+          },
+          "autoMergeOperated": false,
+          "bodyChanged": false
+        },
+        "firstPassAdmission": {
+          "head": "68390a19836c84dd13b153e313a4a4508875efa2",
+          "number": 2986,
+          "sourceVerifiedBy": "first-pass-2986-new-head-diagnosis.json",
+          "job": "https://buildkite.com/gvisor/first-pass/builds/2986#01a215cf-4688-4247-b458-5788db3b46a0",
+          "exit": 80,
+          "stackError": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+          "agentAssigned": false,
+          "classification": "Pre-agent quota admission failure; no tests executed"
+        },
+        "nativeReviewRequests": [
+          "konstantin-s-bogom",
+          "trantoji"
+        ],
+        "duplicateReapprovalOutreach": "Native requests already exist; no repeat sender"
       },
-      "updatedAt": "2026-11-26T02:56:15.794316+00:00",
+      "updatedAt": "2026-11-26T03:11:52.515605+00:00",
       "evidence": [
         {
           "label": "Current-base native candidate, not PR-delivered",
           "url": "https://github.com/tamird/gvisor/commit/68390a19836c84dd13b153e313a4a4508875efa2"
+        },
+        {
+          "label": "Published rebase notice",
+          "url": "https://github.com/gvisor/gvisor/pull/17336#issuecomment-7181375353"
+        },
+        {
+          "label": "Exact-head pre-agent quota receipt",
+          "url": "https://buildkite.com/gvisor/first-pass/builds/2986#01a215cf-4688-4247-b458-5788db3b46a0"
         }
       ]
     },
@@ -107746,19 +107905,19 @@
       "repo": "google/gvisor",
       "number": 17861,
       "group": "analysis",
-      "head": "8e869b906e5a651a377178f1cf3621a798042397",
+      "head": "6707b53611b69dfd664366174a41c5d10636e649",
       "title": "Declare unit test capability requirements",
       "url": "https://github.com/google/gvisor/pull/17861",
       "status": "open",
-      "updatedAt": "2026-11-26T02:56:15.794316+00:00",
-      "summary": "Public 8e869b906e remains conflicting and unchanged. Existing owner prepared native 6707b53611 on master3e9bbb3cc, preserving independent upstream changes and the logical topic edits. Initial graph/format checks pass; exact owning qualification and publication review remain. No candidate is published to this PR.",
+      "updatedAt": "2026-11-26T03:11:52.515605+00:00",
+      "summary": "Source-equivalent rebase 6707b53611 is delivered and MERGEABLE; the rebase notice is posted. Milan’s substantive objection remains; Trantoji is requested. Three unchanged route assertions and four root-only skips remain explicit. Exact-head First Pass2984 failed upload before agent allocation: author30-day360000-compute-minute quota, not project test execution. DCO passes; remaining native Actions are followed at their actual states.",
       "followup": {
-        "owner": "approved_rebase_queue",
-        "sourceHead": "8e869b906e5a651a377178f1cf3621a798042397",
-        "mergeable": "CONFLICTING",
-        "disposition": "Public 8e869b906e remains conflicting and unchanged. Existing owner prepared native 6707b53611 on master3e9bbb3cc, preserving independent upstream changes and the logical topic edits. Initial graph/format checks pass; exact owning qualification and publication review remain. No candidate is published to this PR.",
-        "nextAction": "approved_rebase_queue completes the exact owning gates and source-bound review for native 6707b53611. Preserve independent import, performance and publication boundaries; no old qualification transfer.",
-        "recheckCondition": "Existing owner’s terminal owning-gate/source-review milestone or actual prerequisite/source event.",
+        "owner": "root / approved_rebase_queue",
+        "sourceHead": "6707b53611b69dfd664366174a41c5d10636e649",
+        "mergeable": "MERGEABLE",
+        "disposition": "Source-equivalent rebase 6707b53611 is delivered and MERGEABLE; the rebase notice is posted. Milan’s substantive objection remains; Trantoji is requested. Three unchanged route assertions and four root-only skips remain explicit. Exact-head First Pass2984 failed upload before agent allocation: author30-day360000-compute-minute quota, not project test execution. DCO passes; remaining native Actions are followed at their actual states.",
+        "nextAction": "Existing owner follows native CI/review events and quota availability. Conflict preparation/source delivery is complete; no unchanged retry, old-head failure transfer, duplicate review request or merge operation. Preserve independent import, performance and substantive review conditions.",
+        "recheckCondition": "Actual source-bound CI/reviewer response, quota availability or prerequisite/lifecycle change.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17861",
           "https://buildkite.com/gvisor/first-pass/builds/2301#01a20034-61d8-4402-8dfe-b2c59fb8e7a3",
@@ -107767,7 +107926,9 @@
           "https://github.com/tamird/gvisor/actions/runs/45309461331",
           "https://github.com/tamird/gvisor/actions/runs/45309464136",
           "https://github.com/tamird/gvisor/actions/runs/45744621493",
-          "https://github.com/tamird/gvisor/actions/runs/45744623939"
+          "https://github.com/tamird/gvisor/actions/runs/45744623939",
+          "https://github.com/gvisor/gvisor/pull/17861#issuecomment-7181347352",
+          "https://buildkite.com/gvisor/first-pass/builds/2984#01a215cd-8c5f-4dbc-8386-2ac8d1b8e9d7"
         ],
         "attentionDispositions": [
           {
@@ -107792,22 +107953,65 @@
             }
           }
         ],
-        "observedAt": "2026-11-26T02:27:47.597739+00:00",
-        "curatedAt": "2026-11-26T02:56:15.794316+00:00",
+        "observedAt": "2026-11-26T03:11:06.030918+00:00",
+        "curatedAt": "2026-11-26T03:11:52.515605+00:00",
         "candidate": {
           "head": "6707b53611b69dfd664366174a41c5d10636e649",
           "base": "3e9bbb3cc75e4dd3d074541d5e43b5adbc4dfcfc",
           "url": "https://github.com/tamird/gvisor/commit/6707b53611b69dfd664366174a41c5d10636e649",
           "ci": "e2339baac6461f9832b442e76e4f9e4c5f146f58",
           "initialGraphAndSource": "PASS per root terminal handoff",
-          "owningGates": "pending",
+          "owningGates": "Qualified and delivered; source prep complete",
           "logicalEditsIdentical": true
-        }
+        },
+        "providerHead": "6707b53611b69dfd664366174a41c5d10636e649",
+        "deliveryReceipt": {
+          "number": 17861,
+          "head": "6707b53611b69dfd664366174a41c5d10636e649",
+          "mergeable": "MERGEABLE",
+          "reviewDecision": "CHANGES_REQUESTED",
+          "reviewRequests": [
+            "trantoji"
+          ],
+          "notice": "https://github.com/gvisor/gvisor/pull/17861#issuecomment-7181347352",
+          "firstPass": {
+            "number": 2984,
+            "sourceVerifiedBy": "first-pass-2984-new-head-diagnosis.json",
+            "job": "https://buildkite.com/gvisor/first-pass/builds/2984#01a215cd-8c5f-4dbc-8386-2ac8d1b8e9d7",
+            "exit": 80,
+            "stackError": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+            "agentAssigned": false
+          },
+          "autoMergeOperated": false,
+          "bodyChanged": false
+        },
+        "firstPassAdmission": {
+          "head": "6707b53611b69dfd664366174a41c5d10636e649",
+          "number": 2984,
+          "sourceVerifiedBy": "first-pass-2984-new-head-diagnosis.json",
+          "job": "https://buildkite.com/gvisor/first-pass/builds/2984#01a215cd-8c5f-4dbc-8386-2ac8d1b8e9d7",
+          "exit": 80,
+          "stackError": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+          "agentAssigned": false,
+          "classification": "Pre-agent quota admission failure; no tests executed"
+        },
+        "nativeReviewRequests": [
+          "trantoji"
+        ],
+        "duplicateReapprovalOutreach": "Native requests already exist; no repeat sender"
       },
       "evidence": [
         {
           "label": "Current-base native candidate, not PR-delivered",
           "url": "https://github.com/tamird/gvisor/commit/6707b53611b69dfd664366174a41c5d10636e649"
+        },
+        {
+          "label": "Published rebase notice",
+          "url": "https://github.com/gvisor/gvisor/pull/17861#issuecomment-7181347352"
+        },
+        {
+          "label": "Exact-head pre-agent quota receipt",
+          "url": "https://buildkite.com/gvisor/first-pass/builds/2984#01a215cd-8c5f-4dbc-8386-2ac8d1b8e9d7"
         }
       ]
     },
@@ -134991,9 +135195,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-26T02:56:15.794316+00:00",
+      "updatedAt": "2026-11-26T03:11:52.515605+00:00",
       "group": "analysis",
-      "summary": "Native0edf29aac remains the completed36-commit analyzer rewrite. Four original-image Abseil workloads completed AA+AB; clean FUSE was1.48% slower (p=.007,above corrected .00025 threshold), with100 successful visits and later BEP-upload failure. Three leaves remain active;dirty-FUSE AB is incomplete on HTTP403. Fio and other scoped results retain their limits; prefetch source is separately pending review.",
+      "summary": "Native0edf remains the completed36-commit analyzer rewrite. Ruby tmpfs completed AA+AB with no flagged contrasts; rootfs has a corrected+2.61% candidate early/late drift despite unflagged primary comparisons. Scoped Fio/HTTP/syscall/CPU/Memory/Abseil results retain their bounds. Remaining workload, fixture, FUSE architecture and #17884 gates remain separate.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -135365,7 +135569,7 @@
           ]
         }
       ],
-      "nextStep": "Existing owners finish remaining workload/dependency and precision gates. Do not repeat completed Fio/Abseil comparisons or treat unflagged corrected tests as equivalence. Preserve separate source decisions, FUSE architecture and #17884 gates.",
+      "nextStep": "Existing owners assess remaining terminal workload and measurement-quality evidence. Preserve rootfs Ruby drift without retry or analyzer-causality inference; do not repeat completed comparisons. Keep source decisions and architectural prerequisites distinct.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -135794,6 +135998,14 @@
         {
           "label": "ABSL clean-FUSE complete AA and AB; later upload failure",
           "url": "https://github.com/tamird/gvisor/actions/runs/45722610237"
+        },
+        {
+          "label": "Ruby tmpfs complete AA and AB",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45737103786"
+        },
+        {
+          "label": "Ruby rootfs complete execution;corrected drift finding",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45737105626"
         }
       ],
       "reviewWatch": {
@@ -135816,11 +136028,11 @@
           }
         ]
       },
-      "recheckCondition": "Owner-confirmed terminal workload evidence, actual prerequisite/source change or answer to an existing decision.",
+      "recheckCondition": "Owner-confirmed remaining workload evidence, actual prerequisite/source event or answer to an existing decision.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Existing owners finish remaining workload/dependency and precision gates. Do not repeat completed Fio/Abseil comparisons or treat unflagged corrected tests as equivalence. Preserve separate source decisions, FUSE architecture and #17884 gates.",
-        "recheckCondition": "Owner-confirmed terminal workload evidence, actual prerequisite/source change or answer to an existing decision."
+        "nextAction": "Existing owners assess remaining terminal workload and measurement-quality evidence. Preserve rootfs Ruby drift without retry or analyzer-causality inference; do not repeat completed comparisons. Keep source decisions and architectural prerequisites distinct.",
+        "recheckCondition": "Owner-confirmed remaining workload evidence, actual prerequisite/source event or answer to an existing decision."
       },
       "head": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
       "settledReviews": [
@@ -136039,17 +136251,19 @@
           "https://github.com/tamird/gvisor/actions/runs/45722607167",
           "https://github.com/tamird/gvisor/actions/runs/45722599766",
           "https://github.com/tamird/gvisor/actions/runs/45722604330",
-          "https://github.com/tamird/gvisor/actions/runs/45722610237"
+          "https://github.com/tamird/gvisor/actions/runs/45722610237",
+          "https://github.com/tamird/gvisor/actions/runs/45737103786",
+          "https://github.com/tamird/gvisor/actions/runs/45737105626"
         ],
         "owner": "root",
-        "disposition": "Native0edf29aac remains the completed36-commit analyzer rewrite. Four original-image Abseil workloads completed AA+AB; clean FUSE was1.48% slower (p=.007,above corrected .00025 threshold), with100 successful visits and later BEP-upload failure. Three leaves remain active;dirty-FUSE AB is incomplete on HTTP403. Fio and other scoped results retain their limits; prefetch source is separately pending review.",
-        "nextAction": "Existing owners finish remaining workload/dependency and precision gates. Do not repeat completed Fio/Abseil comparisons or treat unflagged corrected tests as equivalence. Preserve separate source decisions, FUSE architecture and #17884 gates.",
-        "recheckCondition": "Owner-confirmed terminal workload evidence, actual prerequisite/source change or answer to an existing decision.",
+        "disposition": "Native0edf remains the completed36-commit analyzer rewrite. Ruby tmpfs completed AA+AB with no flagged contrasts; rootfs has a corrected+2.61% candidate early/late drift despite unflagged primary comparisons. Scoped Fio/HTTP/syscall/CPU/Memory/Abseil results retain their bounds. Remaining workload, fixture, FUSE architecture and #17884 gates remain separate.",
+        "nextAction": "Existing owners assess remaining terminal workload and measurement-quality evidence. Preserve rootfs Ruby drift without retry or analyzer-causality inference; do not repeat completed comparisons. Keep source decisions and architectural prerequisites distinct.",
+        "recheckCondition": "Owner-confirmed remaining workload evidence, actual prerequisite/source event or answer to an existing decision.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-26T02:56:15.794316+00:00",
+        "curatedAt": "2026-11-26T03:11:52.515605+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -136145,7 +136359,24 @@
               "scope": "Dirty rootfs RubySpec N1 on each original runtime product set;3613 examples,0 failures,31 pending per arm;18 product hashes and cleanup0. Functional only, not completed A/A/A/B or retroactive clearance of old OpenSSL/JWT failures.",
               "nextState": "All eight original leaves admitted; finite measurements running under analysis_delivery. No terminal comparison inferred."
             },
-            "fixtureAmendment": "pr:17479 contributor decision for d260f684af; current public b0d unchanged."
+            "fixtureAmendment": "pr:17479 contributor decision for d260f684af; current public b0d unchanged.",
+            "directMatched": {
+              "source": "7d3c1cbc9bcc1641c1e3951223045dcc4a5ff6c1",
+              "tmpfs": {
+                "run": 45737103786,
+                "state": "AA and AB complete;all contrasts unflagged",
+                "children": 100,
+                "maxMedianCIPercent": 4
+              },
+              "rootfs": {
+                "run": 45737105626,
+                "state": "AA and AB executed;primary contrasts unflagged but corrected candidate early/late drift flagged",
+                "children": 100,
+                "candidateEarlyLatePercent": 2.611274432999422,
+                "maxMedianCIPercent": 3
+              },
+              "scope": "Original clean/dirty cases;3613 examples/0failures/31pending per visit;18 frozen products and cleanup verified. Rootfs drift is a measurement-quality limit, not proven analyzer causality or equivalence. No automatic retry."
+            }
           },
           "fio": {
             "run": 45728693661,
@@ -148115,5 +148346,5 @@
       "inactive": true
     }
   ],
-  "updatedAt": "2026-11-26T02:56:15.794316+00:00"
+  "updatedAt": "2026-11-26T03:11:52.515605+00:00"
 }
