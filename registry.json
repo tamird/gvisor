@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T01:00:57.925509+00:00",
+    "updatedAt": "2026-11-26T01:29:42.574138+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -58220,11 +58220,11 @@
       "ref": "proposal/state-shared-slice-growth",
       "head": "f0a6a2dd4027ff6bef9b0d99b043016f6a8c1665",
       "title": "Extend shared slice backing arrays without a chain of parents",
-      "url": "https://github.com/tamird/gvisor/commit/df7d6899c",
+      "url": "https://github.com/tamird/gvisor/commit/f0a6a2dd4027ff6bef9b0d99b043016f6a8c1665",
       "group": "runtime",
       "status": "Published as #16874",
-      "summary": "Currentf0a6 has an automated pointer-bearing same-start growth coverage finding and Ayush’s third-window990 overlap/negative-control report. These are external test-coverage claims, not independent validation or new source authorization. Root retains the source/test follow-through under the unrelated protected-feature hold.",
-      "updatedAt": "2026-11-17T20:32:28.027492+00:00",
+      "summary": "Historical delivery alias for public #16874 at f0a6. Its current test amendment and actual pending reply/source decision are tracked on canonical pr:16874; original source and qualification evidence remain retained.",
+      "updatedAt": "2026-11-26T01:22:25.993293+00:00",
       "evidence": [
         {
           "label": "Revised commit and significant original benchstat rows",
@@ -58284,11 +58284,11 @@
         }
       },
       "followup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue",
         "sourceHead": "f0a6a2dd4027ff6bef9b0d99b043016f6a8c1665",
         "observedAt": "2026-11-23T19:35:06.669147+00:00",
-        "disposition": "Currentf0a6 has an automated pointer-bearing same-start growth coverage finding and Ayush’s third-window990 overlap/negative-control report. These are external test-coverage claims, not independent validation or new source authorization. Root retains the source/test follow-through under the unrelated protected-feature hold.",
-        "nextAction": "Keep the new coverage findings visible and unresolved. Root assesses the requested source/test revision only after the applicable feature hold is released; no encoder/source read, test run, benchmark or unapproved reply follows.",
+        "disposition": "Historical delivery alias for public #16874 at f0a6. Its current test amendment and actual pending reply/source decision are tracked on canonical pr:16874; original source and qualification evidence remain retained.",
+        "nextAction": "Follow canonical pr:16874 for its exact pending amendment/reply decision and PR lifecycle; no separate alias work or approval remains.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16874",
           "https://github.com/gvisor/gvisor/pull/16874",
@@ -58296,10 +58296,15 @@
           "https://github.com/tamird/gvisor/commit/f0a6a2dd4027ff6bef9b0d99b043016f6a8c1665",
           "https://github.com/google/gvisor/pull/16874#pullrequestreview-6026992766",
           "https://github.com/google/gvisor/pull/16874#discussion_r4670172399",
-          "https://github.com/google/gvisor/pull/16874#pullrequestreview-6027215766"
+          "https://github.com/google/gvisor/pull/16874#pullrequestreview-6027215766",
+          "https://github.com/tamird/gvisor/commit/4162e5c47a836f10c20292c32878b2c14d6f03f8",
+          "https://github.com/tamird/gvisor/actions/runs/45734696579",
+          "https://github.com/tamird/gvisor/actions/runs/45734608925",
+          "https://github.com/tamird/gvisor/actions/runs/45734608925/artifacts/15077564606",
+          "https://github.com/tamird/gvisor/actions/runs/45734696579/artifacts/15077653617"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "User hold release, actual new author/reviewer evidence or changed source.",
+        "recheckCondition": "Canonical #16874 source/review/decision event.",
         "branchRefObservation": {
           "repo": "tamird/gvisor",
           "ref": "proposal/state-shared-slice-growth",
@@ -58317,7 +58322,26 @@
           "nextAction": "Reverify this exact ref before delivery; follow the canonical PR alias where present.",
           "recheckCondition": "Exact ref/head change, canonical PR feedback/check/import or terminal-state change, dependency landing or contributor decision.",
           "owner": "root"
-        }
+        },
+        "curatedAt": "2026-11-26T01:28:23.740644+00:00",
+        "currentCandidate": {
+          "native": "4162e5c47a836f10c20292c32878b2c14d6f03f8",
+          "publicHead": "f0a6a2dd4027ff6bef9b0d99b043016f6a8c1665",
+          "ci": "ff5ed59c6408256cdd8b8aa144e49f1804b85a50",
+          "bazelVersion": "8.8.1",
+          "source": 45734696579,
+          "sourceState": "PASS per retained root audit",
+          "unitNoGo": 45734608925,
+          "unitNoGoState": "PASS;remote/fresh",
+          "scope": "Only graph_test.go; no production change/publication grant. Unused9.3.1 ref supplied no results.",
+          "unitArtifact": 15077564606,
+          "unitRecords": 11562,
+          "unitFailures": 0,
+          "intendedUnsupportedWindowSkips": 89,
+          "noGoRecords": 1,
+          "finalReview": "PASS;actual amendment/reply decision submitted"
+        },
+        "publishedSourceStatus": "Public #16874 remains at f0a6; Agent work denotes qualification of its unpublished test candidate, not delivery reversal."
       },
       "dcoAmendment": {
         "oldHead": "df7d6899cc87c642732764f294030e03d2c3d208",
@@ -58340,7 +58364,9 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "State checkpointing"
-      }
+      },
+      "recheckCondition": "Existing original-Bazel8.8.1 qualification terminal audit, focused review or substantive source/reviewer event.",
+      "inactive": true
     },
     {
       "id": "branch:nogo-sandbox-actions",
@@ -98272,13 +98298,13 @@
       "group": "bazel",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:58.120129+00:00",
-      "summary": "TLDK passes a packet socket and a vhost-net descriptor to DPDK. Upgrading past the patched 18.11 release requires porting those two driver arguments. This revision gives both vendor files the name BUILD and removes the proposed Go stack test.",
+      "summary": "Exact public53f2efd95 has a new formal GitHub approval; repository governance still reports one of two maintainer approvals. Main55988 failed both attempts in repository pre-command fetching literal ref tamird after checkout, before project tests. FirstPass2952 started on the same head. Historical FirstPass1585 daily-quota evidence is separate; no new source failure or green main result is inferred.",
       "followup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue / root",
         "sourceHead": "53f2efd95be8bed7e53be3e681a37f7a519a7c16",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "The contributor approved the single commit. It is published on #17444.",
-        "nextAction": "Follow the checks and maintainer review on #17444. DCO metadata follow-up: DCO is successful on the identical-tree replacement; preserve exact historical approvals and qualification. Inspect retained failures on the new head: buildkite/first-pass/pr.\n\nRequired first-pass CI (source 53f2efd95be8bed7e53be3e681a37f7a519a7c16; observed 2026-11-17T19:29:29.454062+00:00): build 1585 has buildkite/first-pass/pr FAILURE. Provider rejected latest failed job attempts before agent assignment: GitHub author 1535036 reached 36000 compute-minutes/day. CI owner: root; external dependency: upstream Buildkite CI/provider owner (specific human not verified). CI next action: Track quota clearance with the upstream CI owner; reconcile any evidenced prior bootstrap/runtime failure separately before an authorized retry. Do not infer a source regression or rebase all branches from shared bootstrap exposure. Recheck: Provider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "disposition": "Exact public53f2efd95 has a new formal GitHub approval; repository governance still reports one of two maintainer approvals. Main55988 failed both attempts in repository pre-command fetching literal ref tamird after checkout, before project tests. FirstPass2952 started on the same head. Historical FirstPass1585 daily-quota evidence is separate; no new source failure or green main result is inferred.",
+        "nextAction": "approved_rebase_queue prepares a same-patch current-base rebase incorporating merged #17735/909c3dce2, which removes the exact obsolete fork-fetch hook. Preserve exact-source qualification and final publication boundaries. FirstPass2952 remains separately live; no unchanged retry or duplicate fix.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17444",
           "https://github.com/tamird/gvisor/commit/05bf77c06",
@@ -98344,10 +98370,14 @@
           "https://github.com/tamird/gvisor/commit/05bf77c06363722bf88804952650daf4c1f357d7",
           "https://github.com/tamird/gvisor/commit/53f2efd95be8bed7e53be3e681a37f7a519a7c16",
           "https://buildkite.com/gvisor/first-pass/builds/1585",
-          "https://buildkite.com/gvisor/first-pass/builds/1585#01a1eae1-b3db-4325-9707-4b09f818ee73"
+          "https://buildkite.com/gvisor/first-pass/builds/1585#01a1eae1-b3db-4325-9707-4b09f818ee73",
+          "https://buildkite.com/gvisor/pipeline/builds/55988",
+          "https://buildkite.com/gvisor/first-pass/builds/2952",
+          "https://github.com/gvisor/gvisor/pull/17444#pullrequestreview-6067034201",
+          "https://github.com/gvisor/gvisor/pull/17735"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "New published-head CI result, substantive reviewer feedback, import status change, or prerequisite landing. Recheck on a DCO/CI status change or a source/import head change.\n\nProvider quota clears or required-check state/source head changes; resume through the existing CI investigation, with no additional poller.",
+        "recheckCondition": "Owner’s same-patch rebase/validation/review milestone or exact-head FirstPass2952 result; no repeated old-hook diagnosis.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -98370,7 +98400,17 @@
               ]
             }
           }
-        ]
+        ],
+        "curatedAt": "2026-11-26T01:28:23.740644+00:00",
+        "currentCI": {
+          "head": "53f2efd95be8bed7e53be3e681a37f7a519a7c16",
+          "main": 55988,
+          "mainState": "FAILURE before project tests",
+          "cause": "Both pre-command attempts fail fetching literal remote ref tamird after checkout.",
+          "firstPass": 2952,
+          "firstPassState": "PENDING at sample",
+          "maintainerApproval": "Maintainer approvals: 1, needs 2."
+        }
       },
       "settledReviews": [
         {
@@ -109218,6 +109258,63 @@
         "summary": "Actual submitted question to open this one-file upstream PR; unanswered. Functional/error-path qualification is complete, with measurement limits separate.",
         "body": "Size benchmarks reported memory estimates even when a cache reset failed. Stop at each failed reset and report the error at its call site.\n\nDefer empty-container cleanup so a failed second reset releases the containers. Deferred metrics collection reads the container logs before cleanup removes them.\n\nPosted by Codex on behalf of @tamird.\n",
         "reviewCommand": "git show 5ad880c7c7b1b609fa792b121d30cf5964ccbbe4"
+      }
+    },
+    {
+      "id": "pr:16874",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16874,
+      "ref": "proposal/state-shared-slice-growth",
+      "head": "f0a6a2dd4027ff6bef9b0d99b043016f6a8c1665",
+      "title": "Grow shared slice backing arrays in place",
+      "url": "https://github.com/google/gvisor/pull/16874",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-26T01:29:42.574138+00:00",
+      "summary": "Public #16874 remains at f0a6a2dd4. Test-only candidate4162e5c47 adds the reported990 window/offset, growing_prefix cap1 row and nonnil gInner.p fixture. Original Bazel8.8.1 unit and actual NoGo checks, formatting/source checks and focused final review pass. The actual amendment/reply question is pending; no upstream update or new performance claim.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "f0a6a2dd4027ff6bef9b0d99b043016f6a8c1665",
+        "disposition": "Public #16874 remains at f0a6a2dd4. Test-only candidate4162e5c47 adds the reported990 window/offset, growing_prefix cap1 row and nonnil gInner.p fixture. Original Bazel8.8.1 unit and actual NoGo checks, formatting/source checks and focused final review pass. The actual amendment/reply question is pending; no upstream update or new performance claim.",
+        "nextAction": "Await Tamir’s existing decision to amend #16874 to exact4162e5c47 and post the supplied Ayush reply. Qualification and final review are complete; no repeat question, new execution or source push before that answer.",
+        "recheckCondition": "Answer to the actual exact-source amendment/reply question or substantive author/source/review event.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/4162e5c47a836f10c20292c32878b2c14d6f03f8",
+          "https://github.com/tamird/gvisor/actions/runs/45734696579",
+          "https://github.com/tamird/gvisor/actions/runs/45734608925",
+          "https://github.com/tamird/gvisor/actions/runs/45734608925/artifacts/15077564606",
+          "https://github.com/tamird/gvisor/actions/runs/45734696579/artifacts/15077653617"
+        ],
+        "currentCandidate": {
+          "native": "4162e5c47a836f10c20292c32878b2c14d6f03f8",
+          "publicHead": "f0a6a2dd4027ff6bef9b0d99b043016f6a8c1665",
+          "ci": "ff5ed59c6408256cdd8b8aa144e49f1804b85a50",
+          "bazelVersion": "8.8.1",
+          "source": 45734696579,
+          "sourceState": "PASS per retained root audit",
+          "unitNoGo": 45734608925,
+          "unitNoGoState": "PASS;remote/fresh",
+          "scope": "Only graph_test.go; no production change/publication grant. Unused9.3.1 ref supplied no results.",
+          "unitArtifact": 15077564606,
+          "unitRecords": 11562,
+          "unitFailures": 0,
+          "intendedUnsupportedWindowSkips": 89,
+          "noGoRecords": 1,
+          "finalReview": "PASS;actual amendment/reply decision submitted"
+        }
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "4162e5c47a836f10c20292c32878b2c14d6f03f8",
+        "baseHead": "f0a6a2dd4027ff6bef9b0d99b043016f6a8c1665",
+        "url": "https://github.com/tamird/gvisor/commit/4162e5c47a836f10c20292c32878b2c14d6f03f8",
+        "title": "Grow shared slice backing arrays in place",
+        "summary": "Actual submitted source amendment and Ayush-reply question; unanswered. Existing PR title/description are outside this asked change.",
+        "body": "Approve amending #16874 to 4162e5c47a836f10c20292c32878b2c14d6f03f8 and replying to Ayush. The test-only correction is qualified with the native Bazel8.8.1 unit/actual NoGo and source checks; focused final review passed. No production change or new performance claim is proposed.",
+        "replyBody": "Updated the third window to start at 990 and corrected its expected offset.\n\nPosted by Codex on behalf of @tamird.",
+        "reviewCommand": "git range-diff f0a6a2dd4027ff6bef9b0d99b043016f6a8c1665^! 4162e5c47a836f10c20292c32878b2c14d6f03f8^!"
       }
     }
   ],
@@ -124645,8 +124742,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-25T20:13:29.584037+00:00",
-      "summary": "Due native-first inspection found no newer or live native delivery. Sole manual fallback 45727579893 was accepted by direct API response, created 00:16:41 UTC and succeeded with API sample 2026-11-26T00:19:47.268281+00:00. The last verified scheduled run remains 45690562113 at 19:59 on Nov25. This one-shot recovery does not demonstrate recurring unattended delivery; missing native-event cause remains unknown.",
+      "updatedAt": "2026-11-26T01:28:23.740644+00:00",
+      "summary": "Due native-first inspection found no newer or live native delivery. Sole manual fallback 45735089178 was accepted by direct API response, created 01:20:26 UTC and succeeded with API sample 2026-11-26T01:23:16.161346+00:00. Last verified native scheduled run remains 45690562113 at 19:59 Nov25. This is one-shot recovery, not demonstrated recurring delivery; missing native-event cause remains unknown.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -124889,7 +124986,7 @@
           ]
         }
       ],
-      "nextStep": "Finish this one-shot public proof and release its observer. Preserve prior missed-delivery evidence and bounded 503 read retry. No future fallback or observer is armed, and no scheduler repair is claimed.",
+      "nextStep": "Complete this one-shot public proof and release. Preserve the missed-delivery ownership evidence and bounded 503 read retry. No future observer/fallback is armed and no scheduler repair is claimed.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -125057,20 +125154,23 @@
           "https://github.com/tamird/gvisor/actions/runs/45719620987",
           "https://github.com/tamird/gvisor/actions/runs/45727579893"
         ],
-        "observedAt": "2026-11-25T12:51:30.999228+00:00",
-        "disposition": "Due native-first inspection found no newer or live native delivery. Sole manual fallback 45727579893 was accepted by direct API response, created 00:16:41 UTC and succeeded with API sample 2026-11-26T00:19:47.268281+00:00. The last verified scheduled run remains 45690562113 at 19:59 on Nov25. This one-shot recovery does not demonstrate recurring unattended delivery; missing native-event cause remains unknown.",
-        "nextAction": "Finish this one-shot public proof and release its observer. Preserve prior missed-delivery evidence and bounded 503 read retry. No future fallback or observer is armed, and no scheduler repair is claimed.",
-        "recheckCondition": "Actual subsequent native delivery or a separately assigned current reconciliation.",
+        "observedAt": "2026-11-26T01:28:23.740644+00:00",
+        "disposition": "Due native-first inspection found no newer or live native delivery. Sole manual fallback 45735089178 was accepted by direct API response, created 01:20:26 UTC and succeeded with API sample 2026-11-26T01:23:16.161346+00:00. Last verified native scheduled run remains 45690562113 at 19:59 Nov25. This is one-shot recovery, not demonstrated recurring delivery; missing native-event cause remains unknown.",
+        "nextAction": "Complete this one-shot public proof and release. Preserve the missed-delivery ownership evidence and bounded 503 read retry. No future observer/fallback is armed and no scheduler repair is claimed.",
+        "recheckCondition": "Actual native delivery/live handle or freshness condition2026-11-26T02:23:16.161346+00:00, deadline2026-11-26T02:53:16.161346+00:00; no observer is armed.",
         "owner": "root",
-        "curatedAt": "2026-11-26T00:22:54.469787+00:00",
+        "curatedAt": "2026-11-26T01:28:23.740644+00:00",
         "collectorReceipt": {
-          "run": 45700702767,
-          "job": 139509739237,
-          "createdAt": "2026-11-25T21:03:01Z",
-          "completedBy": "2026-11-25T21:06:39Z",
-          "apiCheckedAt": "2026-11-25T21:06:11.877960+00:00",
-          "outreachSkipped": true,
-          "recurringCoverageProven": false
+          "id": 45735089178,
+          "event": "workflow_dispatch",
+          "createdAt": "2026-11-26T01:20:26Z",
+          "terminalAt": "2026-11-26T01:23:34Z",
+          "checkedAt": "2026-11-26T01:23:16.161346+00:00",
+          "nativeSnapshot": "393c285b7047ee6ead88eb237d3ba3ffbca0038a",
+          "nextFreshnessCondition": "2026-11-26T02:23:16.161346+00:00",
+          "freshnessDeadline": "2026-11-26T02:53:16.161346+00:00",
+          "observerArmed": false,
+          "scheduledDeliveryProven": false
         }
       }
     },
@@ -134613,7 +134713,7 @@
       "owner": "root",
       "updatedAt": "2026-11-26T01:00:57.925509+00:00",
       "group": "analysis",
-      "summary": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, syscall, CPU/Memory, RubyNoOp and one original high-concurrency HTTP group completed comparisons at recorded precision. RubySpec bindfs completed A/A but stopped A/B on OpenSSL; other RubySpec failures remain. Fio/ABSL stay owned and live. Size integrity is verified with a separate publication decision; statistical holds, FUSE architecture and open #17884 remain.",
+      "summary": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, syscall, CPU/Memory, RubyNoOp and one HTTP group have scoped matched results. Corrected dirty-rootfs RubySpec functional visits pass on baseline/candidate (3613/0/31 each), while prior incomplete comparisons remain retained. Fio/ABSL stay owned/live. Size precision, FUSE architecture and open #17884 remain separate.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -134985,7 +135085,7 @@
           ]
         }
       ],
-      "nextStep": "Existing owners consume Fio/ABSL results and investigate the independent Ruby OpenSSL fixture failure. Reuse qualified #17479 input on both tmpfs RubySpec arms. Await the separate Size opening decision; no new timing cohort, duplicate observer or blanket performance clearance.",
+      "nextStep": "Existing owners audit Fio/ABSL terminal evidence and assess the corrected Ruby fixture’s next qualification step; no new timing authority or completed Ruby comparison follows from two functional visits. Keep the actual Size opening question, statistical limits and FUSE feature scope independent.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -135386,6 +135486,14 @@
         {
           "label": "Size cache-failure negative control",
           "url": "https://github.com/tamird/gvisor/actions/runs/45730509291"
+        },
+        {
+          "label": "Corrected RubySpec baseline functional",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45735105058"
+        },
+        {
+          "label": "Corrected RubySpec candidate functional",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45735107440"
         }
       ],
       "reviewWatch": {
@@ -135630,14 +135738,14 @@
           "https://github.com/gvisor/gvisor/pull/17479"
         ],
         "owner": "root",
-        "disposition": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, syscall, CPU/Memory, RubyNoOp and one original high-concurrency HTTP group completed comparisons at recorded precision. RubySpec bindfs completed A/A but stopped A/B on OpenSSL; other RubySpec failures remain. Fio/ABSL stay owned and live. Size integrity is verified with a separate publication decision; statistical holds, FUSE architecture and open #17884 remain.",
-        "nextAction": "Existing owners consume Fio/ABSL results and investigate the independent Ruby OpenSSL fixture failure. Reuse qualified #17479 input on both tmpfs RubySpec arms. Await the separate Size opening decision; no new timing cohort, duplicate observer or blanket performance clearance.",
+        "disposition": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, syscall, CPU/Memory, RubyNoOp and one HTTP group have scoped matched results. Corrected dirty-rootfs RubySpec functional visits pass on baseline/candidate (3613/0/31 each), while prior incomplete comparisons remain retained. Fio/ABSL stay owned/live. Size precision, FUSE architecture and open #17884 remain separate.",
+        "nextAction": "Existing owners audit Fio/ABSL terminal evidence and assess the corrected Ruby fixture’s next qualification step; no new timing authority or completed Ruby comparison follows from two functional visits. Keep the actual Size opening question, statistical limits and FUSE feature scope independent.",
         "recheckCondition": "Owner-audited Fio/ABSL terminal evidence, existing fixture/source milestones or actual pending publication decisions; all other qualification scopes remain separate.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-26T01:00:57.925509+00:00",
+        "curatedAt": "2026-11-26T01:28:23.740644+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -135725,6 +135833,12 @@
               "successfulABChildren": 32,
               "failedABChildren": 1,
               "limits": "Partial AB, no candidate conclusion. Independent workload reliability issue; no successful-subset selection or unchanged retry."
+            },
+            "functionalRecovery": {
+              "source": "1dd9a26fb3",
+              "baseline": 45735105058,
+              "candidate": 45735107440,
+              "scope": "Dirty rootfs RubySpec N1 on each original runtime product set;3613 examples,0 failures,31 pending per arm;18 product hashes and cleanup0. Functional only, not completed A/A/A/B or retroactive clearance of old OpenSSL/JWT failures."
             }
           },
           "fio": {
