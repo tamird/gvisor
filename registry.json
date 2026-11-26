@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T14:48:39.896255+00:00",
+    "updatedAt": "2026-11-26T15:52:16.104921+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -26,7 +26,8 @@
       "bazelbuild/bazel-skylib": "none",
       "keith/buildifier-prebuilt": "none",
       "kiron1/bazel-compile-commands": "none",
-      "bazel-contrib/rules_lint": "none"
+      "bazel-contrib/rules_lint": "none",
+      "esnet/iperf": "none"
     },
     "registeredOnlyRepositories": [
       "nodejs/node",
@@ -44,7 +45,8 @@
       "bazelbuild/bazel-skylib",
       "keith/buildifier-prebuilt",
       "kiron1/bazel-compile-commands",
-      "bazel-contrib/rules_lint"
+      "bazel-contrib/rules_lint",
+      "esnet/iperf"
     ],
     "registryDate": "2026-11-01",
     "branchCleanup": {
@@ -60789,15 +60791,15 @@
       "title": "Run both iperf3 benchmark endpoints on Ubuntu Jammy",
       "group": "bazel",
       "status": "Approved source; P64 functional completion held",
-      "updatedAt": "2026-11-26T14:47:52.575095+00:00",
+      "updatedAt": "2026-11-26T15:52:16.104921+00:00",
       "url": "https://github.com/tamird/gvisor/commit/67601a14c",
-      "summary": "The private sender-only early-done remedy with interval 0 passed P64 twice with matching sender/receiver totals, but the full original caller matrix failed: native P4 and Sentry P4/P16 download timed out, and OneConnection failed with producer output dropped. Owning parser/argv fixtures passed. P64 success is functional evidence only, not full compatibility, throughput or publication qualification.",
+      "summary": "The fork-only original-interval 3.18 remedy passed the complete native/Sentry 32-row caller matrix and independent longer accounting checks. It is distinct from stock released software. Current supplier source ee3f2f309 is local-only, qualified on Linux and independently reviewed; its actual upstream publication decision is pending. Reviewed backport integration versus compatible BCR release/adoption remains unresolved and unapproved downstream. Older tiny paced Sentry discrepancy remains scoped.",
       "followup": {
         "owner": "root",
         "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
         "observedAt": "2026-11-02T17:47:05.918366+00:00",
-        "disposition": "The private sender-only early-done remedy with interval 0 passed P64 twice with matching sender/receiver totals, but the full original caller matrix failed: native P4 and Sentry P4/P16 download timed out, and OneConnection failed with producer output dropped. Owning parser/argv fixtures passed. P64 success is functional evidence only, not full compatibility, throughput or publication qualification.",
-        "nextAction": "analysis_delivery restores the original reporting interval in the next narrowly scoped remedy and validates the original native/Sentry caller matrix. Preserve interval 0 P64 successes and native P4/other matrix failures as separate evidence; do not narrow the workload, increase timeouts or infer a version upgrade, throughput result or source publication grant. Supplier/general review remains separate.",
+        "disposition": "The fork-only original-interval 3.18 remedy passed the complete native/Sentry 32-row caller matrix and independent longer accounting checks. It is distinct from stock released software. Current supplier source ee3f2f309 is local-only, qualified on Linux and independently reviewed; its actual upstream publication decision is pending. Reviewed backport integration versus compatible BCR release/adoption remains unresolved and unapproved downstream. Older tiny paced Sentry discrepancy remains scoped.",
+        "nextAction": "Root awaits the separate exact local-source Iperf supplier publication answer. Preserve the qualified 3.18 consumer backport as fork-only evidence; choose reviewed backport integration or compatible BCR release/adoption only after the actual downstream source decision. No further build-authorization ask, stock-release equivalence, throughput qualification or publication grant is inferred.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
@@ -60840,8 +60842,8 @@
           "owner": "root"
         },
         "technicalOwner": "analysis_delivery / root",
-        "recheckCondition": "Owner-reported original-interval remedy and complete caller-matrix evidence with exact products/finalJSON/cleanup; no unchanged matrix retry or partial-success clearance.",
-        "curatedAt": "2026-11-26T14:47:52.575095+00:00",
+        "recheckCondition": "Actual supplier publication answer or material reviewed downstream integration/release evidence; no repeat caller matrix.",
+        "curatedAt": "2026-11-26T15:52:16.104921+00:00",
         "bcrPublication": {
           "pr": 11518,
           "merge": "70404f85e",
@@ -61185,6 +61187,508 @@
             "artifactFile": "iperf-stock-p4-control-45840173458.zip",
             "log": "iperf-stock-p4-control-45840173458.log",
             "result": "BothnativeP4leaves time out at29.999439/30.004492s,262144sent/receiver0,interval0, stockproducerwithoutshutdownpatch. Cleanupempty/stopped/filesremoved. Confirms failure existswithoutcandidateearlydonepatch; staticproducerhasnocontrollerwakeupwithinterval0."
+          },
+          "completionBeforeTimers": {
+            "source": "c1e3052832f73ec52908f694cc888a7a8237ab08",
+            "parent": "617d29e27dd11370a800ca592e8e078d9105ced6",
+            "caller": "OriginalMakeCmd,TestIperfMakeCmd andreportinterval1 restored exactly to617; no qualification-only-i0flag.",
+            "producer": "Existingcountlimitpredicate factored intohelper. Skipperiodiccallbacks onlyforattainedSENDERbyte/blockgoaloutsideomit; retainsduration/reverse/bidirectional timers anddirectfinalstatscallback. Sender-onlyshared-donebeforeteardown retained.",
+            "preflights": [
+              {
+                "role": "NATIVE",
+                "run": 45841127263,
+                "status": "PASS",
+                "request": "iperf-before-timers-native-preflight-inputs.json",
+                "artifact": 15128720677,
+                "log": "iperf-before-timers-native-45841127263.log",
+                "reports": [
+                  {
+                    "case": "BenchmarkIperfManyConnections/operation.Upload/parallel.4-4",
+                    "streams": 4,
+                    "bytes": 262144,
+                    "senderSeconds": 1.005582,
+                    "receiverSeconds": 1.00567
+                  },
+                  {
+                    "case": "BenchmarkIperfManyConnections/operation.Download/parallel.4-4",
+                    "streams": 4,
+                    "bytes": 262144,
+                    "senderSeconds": 1.004998,
+                    "receiverSeconds": 1.005084
+                  },
+                  {
+                    "case": "BenchmarkIperfManyConnections/operation.Upload/parallel.64-4",
+                    "streams": 64,
+                    "bytes": 131072,
+                    "senderSeconds": 0.002883,
+                    "receiverSeconds": 0.003005
+                  },
+                  {
+                    "case": "BenchmarkIperfManyConnections/operation.Download/parallel.64-4",
+                    "streams": 64,
+                    "bytes": 131072,
+                    "senderSeconds": 0.002842,
+                    "receiverSeconds": 0.002979
+                  }
+                ],
+                "cleanup": "Empty runtime processes, owned runsc empty, daemon stopped/files removed; correct client/server CPU sets retained."
+              },
+              {
+                "role": "SENTRY",
+                "run": 45841138448,
+                "status": "PASS",
+                "request": "iperf-before-timers-sentry-preflight-inputs.json",
+                "artifact": 15129120600,
+                "log": "iperf-before-timers-sentry-45841138448.log",
+                "reports": [
+                  {
+                    "case": "BenchmarkIperfManyConnections/operation.Upload/parallel.4-4",
+                    "streams": 4,
+                    "bytes": 131072,
+                    "senderSeconds": 0.060377,
+                    "receiverSeconds": 0.060831
+                  },
+                  {
+                    "case": "BenchmarkIperfManyConnections/operation.Download/parallel.4-4",
+                    "streams": 4,
+                    "bytes": 524288,
+                    "senderSeconds": 1.002962,
+                    "receiverSeconds": 1.003247
+                  },
+                  {
+                    "case": "BenchmarkIperfManyConnections/operation.Upload/parallel.64-4",
+                    "streams": 64,
+                    "bytes": 131072,
+                    "senderSeconds": 14.744896,
+                    "receiverSeconds": 14.745586
+                  },
+                  {
+                    "case": "BenchmarkIperfManyConnections/operation.Download/parallel.64-4",
+                    "streams": 64,
+                    "bytes": 8388608,
+                    "senderSeconds": 1.066356,
+                    "receiverSeconds": 1.066781
+                  }
+                ],
+                "cleanup": "Empty runtime processes, owned runsc empty, daemon stopped/files removed; correct client/server CPU sets retained."
+              }
+            ],
+            "coverage": "Oneexistingselectedvisit/role;P4+P64Upload/Download4leaves,N1/1KiB,original30s+5skill;5mGo/6mBazel scaledfixturebudget.",
+            "next": "Afteraffectedcalibrationadmission, verifyordinarylongertransferperiodic+finalintervalbyteaccounting and fulloriginal8leafindependentmatrix; no supplierpublicationapproval.",
+            "checkout": "Restored516e4814ae,cleantracked+originalpycache,released.",
+            "producerImage": "sha256:98ffe299f09eba7cb4b8f6800bb66372cab7a94ac5a84f3554da52e6da815f3b",
+            "fullMatrix": [
+              {
+                "role": "NATIVE",
+                "run": 45842103720,
+                "status": "PASS",
+                "request": "iperf-original-interval-matrix-native-inputs.json",
+                "artifact": 15127958356,
+                "log": "iperf-original-matrix-native-45842103720.log",
+                "completedRows": 16,
+                "distinctLeaves": 8,
+                "producerReports": 16,
+                "identity": [
+                  {
+                    "paired_visit": 1,
+                    "paired_worker": "AXS42RIRLS22OXIR3ACYDHKW4Q",
+                    "paired_block": 0,
+                    "paired_warmup": false,
+                    "arm": "NATIVE",
+                    "runtime_source": "native-runc:9c1d6487f5139f4d71113e3a3eef1a4c881d7714b39ee47ed22bff9aba856b4d",
+                    "pair_process": 9109,
+                    "runsc_entrypoint_sha256": "",
+                    "benchmark_sha256": "c942042e94a0c24e6e952c052c0bfa378aef05d00fada49751ba58a182a22b92"
+                  },
+                  {
+                    "paired_visit": 2,
+                    "paired_worker": "AXS42RIRLS22OXIR3ACYDHKW4Q",
+                    "paired_block": 0,
+                    "paired_warmup": false,
+                    "arm": "NATIVE",
+                    "runtime_source": "native-runc:9c1d6487f5139f4d71113e3a3eef1a4c881d7714b39ee47ed22bff9aba856b4d",
+                    "pair_process": 9109,
+                    "runsc_entrypoint_sha256": "",
+                    "benchmark_sha256": "c942042e94a0c24e6e952c052c0bfa378aef05d00fada49751ba58a182a22b92"
+                  }
+                ],
+                "image": "sha256:98ffe299f09eba7cb4b8f6800bb66372cab7a94ac5a84f3554da52e6da815f3b",
+                "results": [
+                  {
+                    "streams": 1,
+                    "bytes": 131072,
+                    "seconds": 1.00185
+                  },
+                  {
+                    "streams": 1,
+                    "bytes": 131072,
+                    "seconds": 1.001086
+                  },
+                  {
+                    "streams": 4,
+                    "bytes": 262144,
+                    "seconds": 1.006931
+                  },
+                  {
+                    "streams": 4,
+                    "bytes": 262144,
+                    "seconds": 1.005006
+                  },
+                  {
+                    "streams": 16,
+                    "bytes": 262144,
+                    "seconds": 0.002468
+                  },
+                  {
+                    "streams": 16,
+                    "bytes": 131072,
+                    "seconds": 0.000551
+                  },
+                  {
+                    "streams": 64,
+                    "bytes": 262144,
+                    "seconds": 0.020997
+                  },
+                  {
+                    "streams": 64,
+                    "bytes": 131072,
+                    "seconds": 0.001925
+                  },
+                  {
+                    "streams": 1,
+                    "bytes": 131072,
+                    "seconds": 1.001169
+                  },
+                  {
+                    "streams": 1,
+                    "bytes": 131072,
+                    "seconds": 1.001085
+                  },
+                  {
+                    "streams": 4,
+                    "bytes": 262144,
+                    "seconds": 1.004357
+                  },
+                  {
+                    "streams": 4,
+                    "bytes": 262144,
+                    "seconds": 1.005589
+                  },
+                  {
+                    "streams": 16,
+                    "bytes": 131072,
+                    "seconds": 0.000518
+                  },
+                  {
+                    "streams": 16,
+                    "bytes": 131072,
+                    "seconds": 0.000526
+                  },
+                  {
+                    "streams": 64,
+                    "bytes": 131072,
+                    "seconds": 0.002133
+                  },
+                  {
+                    "streams": 64,
+                    "bytes": 131072,
+                    "seconds": 0.001765
+                  }
+                ],
+                "cleanup": "Bothvisitsquiescent;ownedrunscempty;daemonstopped/filesremoved;client0-1/server2-3."
+              },
+              {
+                "role": "SENTRY",
+                "run": 45842112570,
+                "status": "PASS",
+                "request": "iperf-original-interval-matrix-sentry-inputs.json",
+                "artifact": 15129061612,
+                "log": "iperf-original-matrix-sentry-45842112570.log",
+                "completedRows": 16,
+                "distinctLeaves": 8,
+                "producerReports": 16,
+                "identity": [
+                  {
+                    "paired_visit": 0,
+                    "paired_worker": "JF4XSOOOR3TK6XAYULZQPAYQYE",
+                    "paired_block": 0,
+                    "paired_warmup": false,
+                    "arm": "SENTRY",
+                    "runtime_source": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+                    "pair_process": 9223,
+                    "runsc_entrypoint_sha256": "be14f918ceec4fdffeea239a344566a1c10e606bdd7f7fbccd689624ae454b24",
+                    "benchmark_sha256": "c942042e94a0c24e6e952c052c0bfa378aef05d00fada49751ba58a182a22b92"
+                  },
+                  {
+                    "paired_visit": 3,
+                    "paired_worker": "JF4XSOOOR3TK6XAYULZQPAYQYE",
+                    "paired_block": 0,
+                    "paired_warmup": false,
+                    "arm": "SENTRY",
+                    "runtime_source": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+                    "pair_process": 9223,
+                    "runsc_entrypoint_sha256": "be14f918ceec4fdffeea239a344566a1c10e606bdd7f7fbccd689624ae454b24",
+                    "benchmark_sha256": "c942042e94a0c24e6e952c052c0bfa378aef05d00fada49751ba58a182a22b92"
+                  }
+                ],
+                "image": "sha256:98ffe299f09eba7cb4b8f6800bb66372cab7a94ac5a84f3554da52e6da815f3b",
+                "results": [
+                  {
+                    "streams": 1,
+                    "bytes": 131072,
+                    "seconds": 1.001482
+                  },
+                  {
+                    "streams": 1,
+                    "bytes": 131072,
+                    "seconds": 1.001046
+                  },
+                  {
+                    "streams": 4,
+                    "bytes": 131072,
+                    "seconds": 0.046116
+                  },
+                  {
+                    "streams": 4,
+                    "bytes": 524288,
+                    "seconds": 1.002181
+                  },
+                  {
+                    "streams": 16,
+                    "bytes": 131072,
+                    "seconds": 1.196776
+                  },
+                  {
+                    "streams": 16,
+                    "bytes": 2097152,
+                    "seconds": 1.008982
+                  },
+                  {
+                    "streams": 64,
+                    "bytes": 131072,
+                    "seconds": 18.600153
+                  },
+                  {
+                    "streams": 64,
+                    "bytes": 8388608,
+                    "seconds": 1.048633
+                  },
+                  {
+                    "streams": 1,
+                    "bytes": 131072,
+                    "seconds": 1.000904
+                  },
+                  {
+                    "streams": 1,
+                    "bytes": 131072,
+                    "seconds": 1.001016
+                  },
+                  {
+                    "streams": 4,
+                    "bytes": 131072,
+                    "seconds": 0.082419
+                  },
+                  {
+                    "streams": 4,
+                    "bytes": 524288,
+                    "seconds": 1.001419
+                  },
+                  {
+                    "streams": 16,
+                    "bytes": 131072,
+                    "seconds": 1.346334
+                  },
+                  {
+                    "streams": 16,
+                    "bytes": 2097152,
+                    "seconds": 1.009174
+                  },
+                  {
+                    "streams": 64,
+                    "bytes": 262144,
+                    "seconds": 18.726605
+                  },
+                  {
+                    "streams": 64,
+                    "bytes": 8388608,
+                    "seconds": 1.060635
+                  }
+                ],
+                "cleanup": "Bothvisitsquiescent;ownedrunscempty;daemonstopped/filesremoved;client0-1/server2-3."
+              },
+              {
+                "role": "owningTestIperf+MakeCmd",
+                "run": 45842121208,
+                "status": "PASS",
+                "request": "iperf-original-caller-fixture-inputs.json",
+                "artifact": 15127563436,
+                "log": "iperf-original-matrix-fixture-45842121208.log",
+                "results": "Originalcommandfixture and5JSONmetric/errorcases passed."
+              }
+            ],
+            "accountingCheck": {
+              "source": "5a598bd899bb9e43c7732fb3d596b7a137d7a5a7",
+              "parent": "c1e3052832f73ec52908f694cc888a7a8237ab08",
+              "qualificationOnlyInput": "Existing CLI32Mbit/s perstream; fourstreams,64MiBbytegoal via65536x,~4.2sminimum targetduration, original30sclienttimeout. Producer image/runtime unchanged; no throughputcomparison.",
+              "gates": [
+                {
+                  "role": "NATIVE",
+                  "run": 45842650822,
+                  "status": "PASS_INTENDED_LONGER_TRANSFER",
+                  "request": "iperf-periodic-accounting-native-inputs.json",
+                  "artifact": 15128582323,
+                  "log": "iperf-periodic-accounting-native-45842650822.log",
+                  "reports": [
+                    {
+                      "N": 1,
+                      "goalBytes": 1024,
+                      "periodicIntervals": 1,
+                      "intervalByteSum": 16252928,
+                      "finalWindow": {
+                        "start": 0,
+                        "end": 1.001367,
+                        "seconds": 1.0013669729232788,
+                        "bytes": 16252928,
+                        "bits_per_second": 129845928.13204549,
+                        "retransmits": 0,
+                        "omitted": false,
+                        "sender": true
+                      },
+                      "sender": {
+                        "start": 0,
+                        "end": 1.001367,
+                        "seconds": 1.001367,
+                        "bytes": 16252928,
+                        "bits_per_second": 129845924.62104304,
+                        "retransmits": 0,
+                        "sender": true
+                      },
+                      "receiver": {
+                        "start": 0,
+                        "end": 1.001447,
+                        "seconds": 1.001447,
+                        "bytes": 16252928,
+                        "bits_per_second": 129835551.95631921,
+                        "sender": true
+                      }
+                    },
+                    {
+                      "N": 65536,
+                      "goalBytes": 67108864,
+                      "periodicIntervals": 5,
+                      "intervalByteSum": 80216064,
+                      "finalWindow": {
+                        "start": 4.001072,
+                        "end": 5.000581,
+                        "seconds": 0.9995089769363403,
+                        "bytes": 15728640,
+                        "bits_per_second": 125890935.35276389,
+                        "retransmits": 0,
+                        "omitted": false,
+                        "sender": true
+                      },
+                      "sender": {
+                        "start": 0,
+                        "end": 5.000581,
+                        "seconds": 5.000581,
+                        "bytes": 80216064,
+                        "bits_per_second": 128330790.36215991,
+                        "retransmits": 0,
+                        "sender": true
+                      },
+                      "receiver": {
+                        "start": 0,
+                        "end": 5.000859,
+                        "seconds": 5.000859,
+                        "bytes": 80216064,
+                        "bits_per_second": 128323656.3958312,
+                        "sender": true
+                      }
+                    }
+                  ],
+                  "cleanup": "Quiescentprocessesempty,ownedrunscempty,daemonstopped/filesremoved; imageidenticaltoc1preflight/matrix."
+                },
+                {
+                  "role": "SENTRY",
+                  "run": 45842662906,
+                  "status": "PASS_INTENDED_LONGER_TRANSFER",
+                  "request": "iperf-periodic-accounting-sentry-inputs.json",
+                  "artifact": 15128647395,
+                  "log": "iperf-periodic-accounting-sentry-45842662906.log",
+                  "reports": [
+                    {
+                      "N": 1,
+                      "goalBytes": 1024,
+                      "periodicIntervals": 1,
+                      "intervalByteSum": 393216,
+                      "finalWindow": {
+                        "start": 0,
+                        "end": 0.003295,
+                        "seconds": 0.00329499994404614,
+                        "bytes": 393216,
+                        "bits_per_second": 954697436.545981,
+                        "retransmits": 0,
+                        "omitted": false,
+                        "sender": true
+                      },
+                      "sender": {
+                        "start": 0,
+                        "end": 0.003295,
+                        "seconds": 0.003295,
+                        "bytes": 393216,
+                        "bits_per_second": 954697420.333839,
+                        "retransmits": 0,
+                        "sender": true
+                      },
+                      "receiver": {
+                        "start": 0,
+                        "end": 0.00356,
+                        "seconds": 0.00356,
+                        "bytes": 262144,
+                        "bits_per_second": 589087640.4494382,
+                        "sender": true
+                      }
+                    },
+                    {
+                      "N": 65536,
+                      "goalBytes": 67108864,
+                      "periodicIntervals": 5,
+                      "intervalByteSum": 80216064,
+                      "finalWindow": {
+                        "start": 4.000788,
+                        "end": 5.001147,
+                        "seconds": 1.000359058380127,
+                        "bytes": 15728640,
+                        "bits_per_second": 125783956.21643497,
+                        "retransmits": 0,
+                        "omitted": false,
+                        "sender": true
+                      },
+                      "sender": {
+                        "start": 0,
+                        "end": 5.001147,
+                        "seconds": 5.001147,
+                        "bytes": 80216064,
+                        "bits_per_second": 128316266.64843085,
+                        "retransmits": 0,
+                        "sender": true
+                      },
+                      "receiver": {
+                        "start": 0,
+                        "end": 5.001424,
+                        "seconds": 5.001424,
+                        "bytes": 80216064,
+                        "bits_per_second": 128309159.95124589,
+                        "sender": true
+                      }
+                    }
+                  ],
+                  "cleanup": "Quiescentprocessesempty,ownedrunscempty,daemonstopped/filesremoved; imageidenticaltoc1preflight/matrix."
+                }
+              ],
+              "contract": "Verify actualN/goal/rate,≥1periodicinterval+lastpartial, intervalbytes sum matches finalsenderbytes/receiverbytes, noerror and cleanup. Separatefromoriginalmatrix/productioncandidate.",
+              "limitations": "Lastwindow~1s,notprovenshortpartialduration; finalwindowbytes15,728,640retained. AuxiliarypacedN1Sentrysender393,216/receiver262,144differs,noerror; originalunpacedmatrixandintendedlongertransfermatch. Unknownbaselineattribution;retainforindependentsupplierreview,notthroughputcomparison."
+            }
           }
         },
         "metricDisposition": {
@@ -61201,6 +61705,13 @@
             "source": "ead57716",
             "contract": "Payload bytes divided by b.Elapsed; not delivered by67601"
           }
+        },
+        "supplierPublication": {
+          "item": "investigation:iperf-supplier-sender-completion",
+          "source": "ee3f2f309b11fa3d7c9a5f91e23b315ee363895e",
+          "state": "Local-only qualified source; actual upstream publication decision pending",
+          "reviewCommand": "git -C ~/code/iperf show ee3f2f309b11fa3d7c9a5f91e23b315ee363895e",
+          "downstreamAlternatives": "Reviewed3.18 backport integration or compatible BCR release/adoption unresolved; neither downstream source change approved."
         }
       },
       "refinement": {
@@ -64179,8 +64690,8 @@
       "title": "netstack: end a lingering close when the peer acknowledges the FIN",
       "url": "https://github.com/google/gvisor/pull/16787",
       "status": "open",
-      "updatedAt": "2026-11-26T14:48:39.896255+00:00",
-      "summary": "Foreign-author #16787 remains at 0e0295b65e, native APPROVED/MERGEABLE with existing named checks green; stricter effective source review remains distinct. The author now asks to start Pipeline via approval or ready-to-test label after merging master. Their local-test and unchanged-patch statements are author-reported. The old fork-hook failure is historical; no approval, label, trigger or source move was performed.",
+      "updatedAt": "2026-11-26T15:52:16.104921+00:00",
+      "summary": "Foreign-author #16787 head 0e0295b65 exactly matches root’s recomputed clean merge of previously reviewed 6869 and master 8075. First Pass 2968 and maintainer approval passed; full Pipeline is missing. Existing auto-merge remains enabled. The actual question asks permission to apply upstream’s ready to test trust label to this exact head; no label or approval has been issued by us.",
       "evidence": [
         {
           "label": "Author’s offer to include the tested commit",
@@ -64224,9 +64735,9 @@
         "mergeable": "MERGEABLE",
         "sourceHead": "0e0295b65ea33e97c07545f04e32eee873d7fc4d",
         "observedAt": "2026-11-26T02:27:01.977045+00:00",
-        "disposition": "Foreign-author #16787 remains at 0e0295b65e, native APPROVED/MERGEABLE with existing named checks green; stricter effective source review remains distinct. The author now asks to start Pipeline via approval or ready-to-test label after merging master. Their local-test and unchanged-patch statements are author-reported. The old fork-hook failure is historical; no approval, label, trigger or source move was performed.",
-        "nextAction": "Root assesses the author’s current Pipeline request against actual source/review and CI authority. Preserve foreign-source ownership and the distinction between native approval and effective source review; do not grant approval from the comment, apply a label, transfer old qualification or infer merge authority.",
-        "recheckCondition": "Root disposition of the actual author request, or new source-bound review/check/lifecycle evidence; no unchanged polling or duplicate outreach.",
+        "disposition": "Foreign-author #16787 head 0e0295b65 exactly matches root’s recomputed clean merge of previously reviewed 6869 and master 8075. First Pass 2968 and maintainer approval passed; full Pipeline is missing. Existing auto-merge remains enabled. The actual question asks permission to apply upstream’s ready to test trust label to this exact head; no label or approval has been issued by us.",
+        "nextAction": "Await Tamir’s actual exact-head CI trust-label decision. Preserve existing auto-merge and reviewer ownership; a passing Pipeline could allow GitHub’s existing auto-merge to land the PR. No repeated question, trust-label grant or source/performance approval is inferred.",
+        "recheckCondition": "Actual label-decision answer or changed head/review/check/lifecycle evidence.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16787",
           "https://github.com/google/gvisor/pull/16787#pullrequestreview-6029118218",
@@ -64239,7 +64750,7 @@
           "https://github.com/google/gvisor/pull/16787#issuecomment-7194263130"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
-        "curatedAt": "2026-11-26T14:48:39.896255+00:00",
+        "curatedAt": "2026-11-26T15:52:16.104921+00:00",
         "ownAuthorDCOLineage": {
           "observedAt": "2026-11-18T11:43:42.194827+00:00",
           "pr": 16787,
@@ -64318,7 +64829,34 @@
           "request": "Start Pipeline through a new approval or ready-to-test label",
           "authorClaims": "Master merged cleanly, PR edits unchanged and local TCP/native syscall tests passed; approvals/auto-merge retained. Author-reported, not independent source or runtime qualification.",
           "disposition": "Root review/CI coordination only; no label, approval, merge or outreach performed."
+        },
+        "cleanMergeVerification": {
+          "previousReviewed": "6869e8002ace5d787ef464938b49ba215fbd1693",
+          "master": "8075b38443e475fd4e12ef9d423e2cd460e2396d",
+          "mergeBase": "7d1b049",
+          "recomputedTree": "8cecf298",
+          "head": "0e0295b65ea33e97c07545f04e32eee873d7fc4d",
+          "verifiedBy": "Root independently recomputed clean merge; exact tree matches public head.",
+          "limits": "No new source/test/performance qualification or CI trust grant inferred."
+        },
+        "upstreamCITrust": {
+          "label": "ready to test",
+          "labelExists": true,
+          "present": false,
+          "FirstPass": 2968,
+          "maintainerApproval": "SUCCESS",
+          "fullPipeline": "missing",
+          "autoMerge": "Already enabled; unchanged by us"
         }
+      },
+      "contributorReview": {
+        "kind": "information",
+        "status": "pending",
+        "url": "https://github.com/google/gvisor/pull/16787",
+        "title": "Admit #16787 to upstream CI",
+        "summary": "Actual submitted exact-head trust-label question; unanswered.",
+        "contextHead": "0e0295b65ea33e97c07545f04e32eee873d7fc4d",
+        "body": "May I apply upstream gVisor’s `ready to test` label to #16787 at `0e0295b65`, as the contributor requested? This admits their fork to upstream Buildkite. I verified the head is exactly the clean merge of the previously reviewed source with master. First Pass and the maintainer check passed. Auto-merge is already enabled, so a passing Pipeline could let GitHub merge it."
       }
     },
     {
@@ -72917,7 +73455,7 @@
       "url": "https://github.com/google/gvisor/pull/16830",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-26T14:47:52.575095+00:00",
+      "updatedAt": "2026-11-26T15:52:16.104921+00:00",
       "summary": "Public #16830 at 62adc7d9 has Shayonj formal current-head approval; native GitHub reports APPROVED, tracker effective decision remains REVIEW_REQUIRED. Main build 56026 reports success. First Pass 3023 failed pipeline upload before agent assignment/start solely on its own 30-day 360,000 compute-minute author quota record. No source/test failure or old-build cause transfer is claimed.",
       "evidence": [
         {
@@ -72990,7 +73528,7 @@
         "mergeable": "MERGEABLE",
         "recheckCondition": "Quota availability, new CI event or substantive review/source change; no unchanged retry or repeated classification.",
         "providerHead": "62adc7d9cf16a0805efad38bedcf6d516d1b2ec0",
-        "curatedAt": "2026-11-26T14:47:52.575095+00:00",
+        "curatedAt": "2026-11-26T15:52:16.104921+00:00",
         "attentionDispositions": [
           {
             "reason": "author-feedback",
@@ -73073,7 +73611,8 @@
             "stackErrorDetail": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
             "provenance": "Root canonical reader underlying structured jobs record for this exact build/head; not old2809 transfer."
           },
-          "observedAt": "2026-11-26T13:42:03.995449+00:00"
+          "observedAt": "2026-11-26T13:42:03.995449+00:00",
+          "effectiveReviewExplanation": "Shayonj’s head-specific approval is real, but reviewer is absent from current MAINTAINERS.md. Already-requested manninglucas and milantracy are on the roster; preserve their requests, no repeat outreach."
         }
       },
       "dcoAmendment": {
@@ -85282,8 +85821,8 @@
       "title": "Claim TCP processor queue membership atomically",
       "group": "runtime",
       "status": "Contributor approved; qualifying integration",
-      "updatedAt": "2026-11-26T14:47:52.575095+00:00",
-      "summary": "Original 70-by-four capability screen completed 280 outcomes: 245 passed, 35 HTTPD failed; all original C<=100 HTTPD, Node/Ruby and Redis Go cases passed. Redis completed/retry operation counts remain unknown. A separate corrected Apache-capacity C1000 cohort passed 32/36: all eight non-10Mb variants passed across four frozen sources; static 10Mb still timed out on each. Original outcomes and configurations remain intact. No current-head, throughput or statistical qualification.",
+      "updatedAt": "2026-11-26T15:52:16.104921+00:00",
+      "summary": "Original 280 capability outcomes remain 245 passed/35 failed; corrected Apache-capacity cohort remains 32/36, with static10Mb/C1000 failing on all four frozen sources. One BASE GET verified gzip/chunked delivery: a 10 MiB zero file produced 10,208 body bytes and 10,522 bytes including headers. Hey zero size fields mean unknown Content-Length, not bytes read. These remain request-status/header-timeout results, not full-body or wire-throughput proof; timeout cause is unassigned.",
       "evidence": [
         {
           "label": "Original benchstat, sixteen paired samples, race and Nogo results",
@@ -85306,8 +85845,8 @@
         "owner": "root",
         "sourceHead": "a8e54633f47fda892caa896ab37f3200b662cccf",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
-        "disposition": "Original 70-by-four capability screen completed 280 outcomes: 245 passed, 35 HTTPD failed; all original C<=100 HTTPD, Node/Ruby and Redis Go cases passed. Redis completed/retry operation counts remain unknown. A separate corrected Apache-capacity C1000 cohort passed 32/36: all eight non-10Mb variants passed across four frozen sources; static 10Mb still timed out on each. Original outcomes and configurations remain intact. No current-head, throughput or statistical qualification.",
-        "nextAction": "benchmark_measurement_review follows existing BASE client/server capacity evidence for static 10Mb/C1000. Preserve original 245/35 and distinct corrected 32/36 cohorts, exact frozen sources and accounting. Do not repeat the full screen or treat failed QPS/Redis rates as completed-work counts. Root retains source review and broader performance/publication boundaries.",
+        "disposition": "Original 280 capability outcomes remain 245 passed/35 failed; corrected Apache-capacity cohort remains 32/36, with static10Mb/C1000 failing on all four frozen sources. One BASE GET verified gzip/chunked delivery: a 10 MiB zero file produced 10,208 body bytes and 10,522 bytes including headers. Hey zero size fields mean unknown Content-Length, not bytes read. These remain request-status/header-timeout results, not full-body or wire-throughput proof; timeout cause is unassigned.",
+        "nextAction": "benchmark_measurement_review retains both cohorts and the non-reproducing BASE singleton. Recheck phase-specific evidence at an actual recurrence; no identical load rerun, four-source clearance, timeout-cause or throughput attribution. Preserve frozen source and publication/performance boundaries.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/a8e54633f",
           "https://github.com/google/gvisor/pull/17045",
@@ -85326,7 +85865,7 @@
           "recheckCondition": "Exact ref/head change, canonical PR feedback/check/import or terminal-state change, dependency landing or contributor decision.",
           "owner": "root"
         },
-        "recheckCondition": "Owner-audited changed-input capacity evidence or substantive source disposition; no unchanged full-screen retry or statistical inference.",
+        "recheckCondition": "Actual recurrence with phase evidence, or material source/capacity change; no identical diagnostic rerun.",
         "qualificationHistory": [
           {
             "disposition": "Approved for publication after #17045 lands.",
@@ -85393,7 +85932,7 @@
           }
         },
         "remainingNetworkOutcomeOwner": "tcp_conflict",
-        "curatedAt": "2026-11-26T14:47:52.575095+00:00",
+        "curatedAt": "2026-11-26T15:52:16.104921+00:00",
         "ciExecutionAuthorization": {
           "status": "Authorized CI-only capability screen dispatched through shared Bazel mechanism; source publication and statistical qualification separate",
           "owner": "root",
@@ -85499,7 +86038,22 @@
             "calibrations": "All36N1 correct",
             "cleanup": "All4cleanup0; products/source guards PASS"
           },
-          "statisticalQualification": false
+          "statisticalQualification": false,
+          "representation": {
+            "run": 45845501214,
+            "artifact": 15130058712,
+            "scope": "One frozenBASE GET only",
+            "acceptEncoding": "gzip",
+            "contentEncoding": "gzip",
+            "transferEncoding": "chunked",
+            "contentLength": "absent",
+            "zeroFileBytes": 10485760,
+            "ApacheBodyBytes": 10208,
+            "ApacheOutputIncludingHeaders": 10522,
+            "HeySizeFields": "Zero means unknown positive Content-Length; not actual bytes read",
+            "cleanup": 0,
+            "limits": "Preserve original245/35 and corrected32/4 as request-status/header-timeout outcomes. No whole-body,10GiBwire-throughput or timeout-cause proof. Instrumented BASE1000/1000 pass does not clear four-source failures."
+          }
         }
       },
       "refinement": {
@@ -137963,7 +138517,7 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-26T12:38:58.600426+00:00",
+      "updatedAt": "2026-11-26T15:52:16.104921+00:00",
       "group": "analysis",
       "summary": "Analyzer source 0edf29aac is unchanged. The hosted gRPC dirty-bindfs study is running on one accepted 12-hour worker: candidate A/A first, then conditional baseline/candidate A/B, 24 retained pairs per phase. Exact product identities, six synthetic children and real Docker reload/restoration passed before dispatch. Previous dirty-bindfs A/A remains scoped evidence; 71 filesystem leaves have matched data. Other gRPC controls, FUSE, Node stability and broader qualification remain open.",
       "findings": [
@@ -138337,7 +138891,7 @@
           ]
         }
       ],
-      "nextStep": "analysis_delivery owns study f828a443-dd9a-49c8-a15e-7b8e5d0b3b5a (nested e29c64dd-b083-4a22-afed-c616ad917024), candidate A/A then conditional A/B on the same worker. Recheck the meaningful A/A milestone around 17:30 UTC or earlier terminal; do not duplicate its observer. Original 24 pairs per phase and 12-hour budget remain fixed. Synthetic reload/restoration and the real child passed; no full comparison or stability conclusion exists yet. Other gRPC controls, both FUSE holds and the Node candidate hold remain.",
+      "nextStep": "analysis_delivery owns study f828a443-dd9a-49c8-a15e-7b8e5d0b3b5a (nested e29c64dd-b083-4a22-afed-c616ad917024), candidate A/A then conditional A/B on the same worker. Recheck the meaningful A/A milestone around 17:30 UTC or earlier terminal; do not duplicate its observer. Original 24 pairs per phase and 12-hour budget remain fixed. Synthetic reload/restoration and the real child passed; no full comparison or stability conclusion exists yet. Other gRPC controls, both FUSE holds and the Node candidate hold remain. Abseil dirty-FUSE old cohort is blocked on pinned platforms fetch 403; analysis_delivery owns fork-only prefetched fixture admission 45851414824 and formatting 45851343130 before any new timings. The upstream prefetch PR question is independent.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -139060,13 +139614,13 @@
         ],
         "owner": "root",
         "disposition": "Analyzer source 0edf29aac is unchanged. The hosted gRPC dirty-bindfs study is running on one accepted 12-hour worker: candidate A/A first, then conditional baseline/candidate A/B, 24 retained pairs per phase. Exact product identities, six synthetic children and real Docker reload/restoration passed before dispatch. Previous dirty-bindfs A/A remains scoped evidence; 71 filesystem leaves have matched data. Other gRPC controls, FUSE, Node stability and broader qualification remain open.",
-        "nextAction": "analysis_delivery owns study f828a443-dd9a-49c8-a15e-7b8e5d0b3b5a (nested e29c64dd-b083-4a22-afed-c616ad917024), candidate A/A then conditional A/B on the same worker. Recheck the meaningful A/A milestone around 17:30 UTC or earlier terminal; do not duplicate its observer. Original 24 pairs per phase and 12-hour budget remain fixed. Synthetic reload/restoration and the real child passed; no full comparison or stability conclusion exists yet. Other gRPC controls, both FUSE holds and the Node candidate hold remain.",
+        "nextAction": "analysis_delivery owns study f828a443-dd9a-49c8-a15e-7b8e5d0b3b5a (nested e29c64dd-b083-4a22-afed-c616ad917024), candidate A/A then conditional A/B on the same worker. Recheck the meaningful A/A milestone around 17:30 UTC or earlier terminal; do not duplicate its observer. Original 24 pairs per phase and 12-hour budget remain fixed. Synthetic reload/restoration and the real child passed; no full comparison or stability conclusion exists yet. Other gRPC controls, both FUSE holds and the Node candidate hold remain. Abseil dirty-FUSE old cohort is blocked on pinned platforms fetch 403; analysis_delivery owns fork-only prefetched fixture admission 45851414824 and formatting 45851343130 before any new timings. The upstream prefetch PR question is independent.",
         "recheckCondition": "Owner-reported A/A milestone or actual terminal study result; no sample expansion, duplicate watcher or cross-worker inference.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-26T12:38:58.600426+00:00",
+        "curatedAt": "2026-11-26T15:52:16.104921+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -139665,6 +140219,53 @@
                 "proof": "GetInvocation namedSetOfFiles forbc9b3f32; identical to original45759909463 and retainedAA45761231714 executable."
               }
             }
+          },
+          "abslDirtyFuseRecovery": {
+            "owner": "analysis_delivery",
+            "source": "91b3c9719a2d5f8b02bf4554768ec85f29f1bba9",
+            "nativeCandidate": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
+            "nativeBaseline": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
+            "branch": "qualification/absl-dirty-fuse-prefetch-20261126",
+            "status": "synthetic-admission-running",
+            "originalFailure": 45722613653,
+            "qualifiedRecipe": "d4b55cd9df05ea0519a124c00fd31f0f99468ec9",
+            "qualifiedOfflineRun": 45737661122,
+            "preflightRun": 45852933115,
+            "formatRun": 45851343130,
+            "target": "//test/benchmarks/fs:absl_dirty_fuse_paired_test",
+            "protocol": {
+              "pairsPerPhase": 24,
+              "childrenPerPhase": 50,
+              "alpha": 0.00025,
+              "contrasts": 5,
+              "metric": "sec/op",
+              "iterations": 1,
+              "visitSeconds": 240,
+              "sameSourceControl": "candidate/candidate before conditional baseline/candidate",
+              "scope": "only BuildABSL/page_cache.dirty/filesystem.fusefs; other seven historical workloads preserved unchanged"
+            },
+            "preflight": "Synthetic rows only, exact original base image+qualified prefetch recipe/cache hash, frozen18products and cleanup; no timing cohort until substantive admission passes",
+            "publication": "fork-only qualification; d4 upstream opening decision remains pending, no replacement-fixture measurement hold found",
+            "next": "Consume mode/recipe corrected synthetic admission45852933115 at terminal; no timing before actual fixture succeeds",
+            "checkout": "Restored qualification/node-accounting-control-20261126 at516e4814ae; trackedclean+originalpycache; released",
+            "initialAdmissionFailure": {
+              "run": 45851414824,
+              "boundary": "Bazel repository fetch before any fixture/child execution",
+              "cause": "Missing existing api.github.com credential_helper option; original baseline artifact14935569879 GET401",
+              "sourceUnchanged": true
+            },
+            "format": {
+              "run": 45851343130,
+              "conclusion": "success"
+            },
+            "modeRecovery": {
+              "failedRun": 45852008692,
+              "cause": "sh_test source lacked executable mode; failure before fixture",
+              "change": "100755 script. Pre-dispatch comparison also removed accidentally duplicated prefetch block; Dockerfile now byte-identical to d4 and existing0452. FROM uses exact previously successful loaded tag after checking frozenimageID.",
+              "checks": "bash-n passed; exact qualified Dockerfile bytes; generated FROM+tail six lines"
+            },
+            "formatReuse": "BUILD/text unchanged from passed45851343130; Dockerfile restored to already-qualifiedbytes",
+            "currentDisposition": "Old cohort stopped at pinned platforms HTTP403. Fork-only prefetched fixture admission 45851414824 and formatting 45851343130 pending; no new timing before substantive admission. Upstream d4b prefetch opening decision remains separate."
           }
         }
       },
@@ -151507,9 +152108,9 @@
       "title": "Report client aggregate Iperf bandwidth",
       "owner": "root",
       "head": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
-      "updatedAt": "2026-11-26T14:47:52.575095+00:00",
-      "summary": "The private sender-only early-done remedy with interval 0 passed P64 twice with matching sender/receiver totals, but the full original caller matrix failed: native P4 and Sentry P4/P16 download timed out, and OneConnection failed with producer output dropped. Owning parser/argv fixtures passed. P64 success is functional evidence only, not full compatibility, throughput or publication qualification.",
-      "nextStep": "analysis_delivery restores the original reporting interval in the next narrowly scoped remedy and validates the original native/Sentry caller matrix. Preserve interval 0 P64 successes and native P4/other matrix failures as separate evidence; do not narrow the workload, increase timeouts or infer a version upgrade, throughput result or source publication grant. Supplier/general review remains separate.",
+      "updatedAt": "2026-11-26T15:52:16.104921+00:00",
+      "summary": "The fork-only original-interval 3.18 remedy passed the complete native/Sentry 32-row caller matrix and independent longer accounting checks. It is distinct from stock released software. Current supplier source ee3f2f309 is local-only, qualified on Linux and independently reviewed; its actual upstream publication decision is pending. Reviewed backport integration versus compatible BCR release/adoption remains unresolved and unapproved downstream. Older tiny paced Sentry discrepancy remains scoped.",
+      "nextStep": "Root awaits the separate exact local-source Iperf supplier publication answer. Preserve the qualified 3.18 consumer backport as fork-only evidence; choose reviewed backport integration or compatible BCR release/adoption only after the actual downstream source decision. No further build-authorization ask, stock-release equivalence, throughput qualification or publication grant is inferred.",
       "evidence": [
         {
           "label": "Exact reviewable source and included DCO",
@@ -151596,13 +152197,23 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/44966632076/artifacts/14731637727"
         }
       ],
-      "findings": [],
+      "findings": [
+        {
+          "text": "The separate Iperf supplier sender-completion decision binds exact local ee3f2f309. Review its local command and submitted PR draft; it has no public commit URL.",
+          "evidence": [
+            {
+              "label": "Review Iperf supplier publication decision",
+              "url": "https://tamird.github.io/gvisor/?view=investigations&q=Iperf%20supplier%20sender%20completion"
+            }
+          ]
+        }
+      ],
       "followup": {
         "owner": "root",
-        "disposition": "The private sender-only early-done remedy with interval 0 passed P64 twice with matching sender/receiver totals, but the full original caller matrix failed: native P4 and Sentry P4/P16 download timed out, and OneConnection failed with producer output dropped. Owning parser/argv fixtures passed. P64 success is functional evidence only, not full compatibility, throughput or publication qualification.",
-        "nextAction": "analysis_delivery restores the original reporting interval in the next narrowly scoped remedy and validates the original native/Sentry caller matrix. Preserve interval 0 P64 successes and native P4/other matrix failures as separate evidence; do not narrow the workload, increase timeouts or infer a version upgrade, throughput result or source publication grant. Supplier/general review remains separate.",
-        "recheckCondition": "Owner-reported original-interval remedy and complete caller-matrix evidence with exact products/finalJSON/cleanup; no unchanged matrix retry or partial-success clearance.",
-        "curatedAt": "2026-11-26T14:47:52.575095+00:00",
+        "disposition": "The fork-only original-interval 3.18 remedy passed the complete native/Sentry 32-row caller matrix and independent longer accounting checks. It is distinct from stock released software. Current supplier source ee3f2f309 is local-only, qualified on Linux and independently reviewed; its actual upstream publication decision is pending. Reviewed backport integration versus compatible BCR release/adoption remains unresolved and unapproved downstream. Older tiny paced Sentry discrepancy remains scoped.",
+        "nextAction": "Root awaits the separate exact local-source Iperf supplier publication answer. Preserve the qualified 3.18 consumer backport as fork-only evidence; choose reviewed backport integration or compatible BCR release/adoption only after the actual downstream source decision. No further build-authorization ask, stock-release equivalence, throughput qualification or publication grant is inferred.",
+        "recheckCondition": "Actual supplier publication answer or material reviewed downstream integration/release evidence; no repeat caller matrix.",
+        "curatedAt": "2026-11-26T15:52:16.104921+00:00",
         "remoteBuild": {
           "run": 45691659853,
           "operation": "make rebuild-moby ARCH=x86_64 DOCKER_BUILD=false",
@@ -152004,7 +152615,516 @@
             "artifactFile": "iperf-stock-p4-control-45840173458.zip",
             "log": "iperf-stock-p4-control-45840173458.log",
             "result": "BothnativeP4leaves time out at29.999439/30.004492s,262144sent/receiver0,interval0, stockproducerwithoutshutdownpatch. Cleanupempty/stopped/filesremoved. Confirms failure existswithoutcandidateearlydonepatch; staticproducerhasnocontrollerwakeupwithinterval0."
+          },
+          "completionBeforeTimers": {
+            "source": "c1e3052832f73ec52908f694cc888a7a8237ab08",
+            "parent": "617d29e27dd11370a800ca592e8e078d9105ced6",
+            "caller": "OriginalMakeCmd,TestIperfMakeCmd andreportinterval1 restored exactly to617; no qualification-only-i0flag.",
+            "producer": "Existingcountlimitpredicate factored intohelper. Skipperiodiccallbacks onlyforattainedSENDERbyte/blockgoaloutsideomit; retainsduration/reverse/bidirectional timers anddirectfinalstatscallback. Sender-onlyshared-donebeforeteardown retained.",
+            "preflights": [
+              {
+                "role": "NATIVE",
+                "run": 45841127263,
+                "status": "PASS",
+                "request": "iperf-before-timers-native-preflight-inputs.json",
+                "artifact": 15128720677,
+                "log": "iperf-before-timers-native-45841127263.log",
+                "reports": [
+                  {
+                    "case": "BenchmarkIperfManyConnections/operation.Upload/parallel.4-4",
+                    "streams": 4,
+                    "bytes": 262144,
+                    "senderSeconds": 1.005582,
+                    "receiverSeconds": 1.00567
+                  },
+                  {
+                    "case": "BenchmarkIperfManyConnections/operation.Download/parallel.4-4",
+                    "streams": 4,
+                    "bytes": 262144,
+                    "senderSeconds": 1.004998,
+                    "receiverSeconds": 1.005084
+                  },
+                  {
+                    "case": "BenchmarkIperfManyConnections/operation.Upload/parallel.64-4",
+                    "streams": 64,
+                    "bytes": 131072,
+                    "senderSeconds": 0.002883,
+                    "receiverSeconds": 0.003005
+                  },
+                  {
+                    "case": "BenchmarkIperfManyConnections/operation.Download/parallel.64-4",
+                    "streams": 64,
+                    "bytes": 131072,
+                    "senderSeconds": 0.002842,
+                    "receiverSeconds": 0.002979
+                  }
+                ],
+                "cleanup": "Empty runtime processes, owned runsc empty, daemon stopped/files removed; correct client/server CPU sets retained."
+              },
+              {
+                "role": "SENTRY",
+                "run": 45841138448,
+                "status": "PASS",
+                "request": "iperf-before-timers-sentry-preflight-inputs.json",
+                "artifact": 15129120600,
+                "log": "iperf-before-timers-sentry-45841138448.log",
+                "reports": [
+                  {
+                    "case": "BenchmarkIperfManyConnections/operation.Upload/parallel.4-4",
+                    "streams": 4,
+                    "bytes": 131072,
+                    "senderSeconds": 0.060377,
+                    "receiverSeconds": 0.060831
+                  },
+                  {
+                    "case": "BenchmarkIperfManyConnections/operation.Download/parallel.4-4",
+                    "streams": 4,
+                    "bytes": 524288,
+                    "senderSeconds": 1.002962,
+                    "receiverSeconds": 1.003247
+                  },
+                  {
+                    "case": "BenchmarkIperfManyConnections/operation.Upload/parallel.64-4",
+                    "streams": 64,
+                    "bytes": 131072,
+                    "senderSeconds": 14.744896,
+                    "receiverSeconds": 14.745586
+                  },
+                  {
+                    "case": "BenchmarkIperfManyConnections/operation.Download/parallel.64-4",
+                    "streams": 64,
+                    "bytes": 8388608,
+                    "senderSeconds": 1.066356,
+                    "receiverSeconds": 1.066781
+                  }
+                ],
+                "cleanup": "Empty runtime processes, owned runsc empty, daemon stopped/files removed; correct client/server CPU sets retained."
+              }
+            ],
+            "coverage": "Oneexistingselectedvisit/role;P4+P64Upload/Download4leaves,N1/1KiB,original30s+5skill;5mGo/6mBazel scaledfixturebudget.",
+            "next": "Afteraffectedcalibrationadmission, verifyordinarylongertransferperiodic+finalintervalbyteaccounting and fulloriginal8leafindependentmatrix; no supplierpublicationapproval.",
+            "checkout": "Restored516e4814ae,cleantracked+originalpycache,released.",
+            "producerImage": "sha256:98ffe299f09eba7cb4b8f6800bb66372cab7a94ac5a84f3554da52e6da815f3b",
+            "fullMatrix": [
+              {
+                "role": "NATIVE",
+                "run": 45842103720,
+                "status": "PASS",
+                "request": "iperf-original-interval-matrix-native-inputs.json",
+                "artifact": 15127958356,
+                "log": "iperf-original-matrix-native-45842103720.log",
+                "completedRows": 16,
+                "distinctLeaves": 8,
+                "producerReports": 16,
+                "identity": [
+                  {
+                    "paired_visit": 1,
+                    "paired_worker": "AXS42RIRLS22OXIR3ACYDHKW4Q",
+                    "paired_block": 0,
+                    "paired_warmup": false,
+                    "arm": "NATIVE",
+                    "runtime_source": "native-runc:9c1d6487f5139f4d71113e3a3eef1a4c881d7714b39ee47ed22bff9aba856b4d",
+                    "pair_process": 9109,
+                    "runsc_entrypoint_sha256": "",
+                    "benchmark_sha256": "c942042e94a0c24e6e952c052c0bfa378aef05d00fada49751ba58a182a22b92"
+                  },
+                  {
+                    "paired_visit": 2,
+                    "paired_worker": "AXS42RIRLS22OXIR3ACYDHKW4Q",
+                    "paired_block": 0,
+                    "paired_warmup": false,
+                    "arm": "NATIVE",
+                    "runtime_source": "native-runc:9c1d6487f5139f4d71113e3a3eef1a4c881d7714b39ee47ed22bff9aba856b4d",
+                    "pair_process": 9109,
+                    "runsc_entrypoint_sha256": "",
+                    "benchmark_sha256": "c942042e94a0c24e6e952c052c0bfa378aef05d00fada49751ba58a182a22b92"
+                  }
+                ],
+                "image": "sha256:98ffe299f09eba7cb4b8f6800bb66372cab7a94ac5a84f3554da52e6da815f3b",
+                "results": [
+                  {
+                    "streams": 1,
+                    "bytes": 131072,
+                    "seconds": 1.00185
+                  },
+                  {
+                    "streams": 1,
+                    "bytes": 131072,
+                    "seconds": 1.001086
+                  },
+                  {
+                    "streams": 4,
+                    "bytes": 262144,
+                    "seconds": 1.006931
+                  },
+                  {
+                    "streams": 4,
+                    "bytes": 262144,
+                    "seconds": 1.005006
+                  },
+                  {
+                    "streams": 16,
+                    "bytes": 262144,
+                    "seconds": 0.002468
+                  },
+                  {
+                    "streams": 16,
+                    "bytes": 131072,
+                    "seconds": 0.000551
+                  },
+                  {
+                    "streams": 64,
+                    "bytes": 262144,
+                    "seconds": 0.020997
+                  },
+                  {
+                    "streams": 64,
+                    "bytes": 131072,
+                    "seconds": 0.001925
+                  },
+                  {
+                    "streams": 1,
+                    "bytes": 131072,
+                    "seconds": 1.001169
+                  },
+                  {
+                    "streams": 1,
+                    "bytes": 131072,
+                    "seconds": 1.001085
+                  },
+                  {
+                    "streams": 4,
+                    "bytes": 262144,
+                    "seconds": 1.004357
+                  },
+                  {
+                    "streams": 4,
+                    "bytes": 262144,
+                    "seconds": 1.005589
+                  },
+                  {
+                    "streams": 16,
+                    "bytes": 131072,
+                    "seconds": 0.000518
+                  },
+                  {
+                    "streams": 16,
+                    "bytes": 131072,
+                    "seconds": 0.000526
+                  },
+                  {
+                    "streams": 64,
+                    "bytes": 131072,
+                    "seconds": 0.002133
+                  },
+                  {
+                    "streams": 64,
+                    "bytes": 131072,
+                    "seconds": 0.001765
+                  }
+                ],
+                "cleanup": "Bothvisitsquiescent;ownedrunscempty;daemonstopped/filesremoved;client0-1/server2-3."
+              },
+              {
+                "role": "SENTRY",
+                "run": 45842112570,
+                "status": "PASS",
+                "request": "iperf-original-interval-matrix-sentry-inputs.json",
+                "artifact": 15129061612,
+                "log": "iperf-original-matrix-sentry-45842112570.log",
+                "completedRows": 16,
+                "distinctLeaves": 8,
+                "producerReports": 16,
+                "identity": [
+                  {
+                    "paired_visit": 0,
+                    "paired_worker": "JF4XSOOOR3TK6XAYULZQPAYQYE",
+                    "paired_block": 0,
+                    "paired_warmup": false,
+                    "arm": "SENTRY",
+                    "runtime_source": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+                    "pair_process": 9223,
+                    "runsc_entrypoint_sha256": "be14f918ceec4fdffeea239a344566a1c10e606bdd7f7fbccd689624ae454b24",
+                    "benchmark_sha256": "c942042e94a0c24e6e952c052c0bfa378aef05d00fada49751ba58a182a22b92"
+                  },
+                  {
+                    "paired_visit": 3,
+                    "paired_worker": "JF4XSOOOR3TK6XAYULZQPAYQYE",
+                    "paired_block": 0,
+                    "paired_warmup": false,
+                    "arm": "SENTRY",
+                    "runtime_source": "eb263e1f414d0bceaf10decea6c73e2c77332112",
+                    "pair_process": 9223,
+                    "runsc_entrypoint_sha256": "be14f918ceec4fdffeea239a344566a1c10e606bdd7f7fbccd689624ae454b24",
+                    "benchmark_sha256": "c942042e94a0c24e6e952c052c0bfa378aef05d00fada49751ba58a182a22b92"
+                  }
+                ],
+                "image": "sha256:98ffe299f09eba7cb4b8f6800bb66372cab7a94ac5a84f3554da52e6da815f3b",
+                "results": [
+                  {
+                    "streams": 1,
+                    "bytes": 131072,
+                    "seconds": 1.001482
+                  },
+                  {
+                    "streams": 1,
+                    "bytes": 131072,
+                    "seconds": 1.001046
+                  },
+                  {
+                    "streams": 4,
+                    "bytes": 131072,
+                    "seconds": 0.046116
+                  },
+                  {
+                    "streams": 4,
+                    "bytes": 524288,
+                    "seconds": 1.002181
+                  },
+                  {
+                    "streams": 16,
+                    "bytes": 131072,
+                    "seconds": 1.196776
+                  },
+                  {
+                    "streams": 16,
+                    "bytes": 2097152,
+                    "seconds": 1.008982
+                  },
+                  {
+                    "streams": 64,
+                    "bytes": 131072,
+                    "seconds": 18.600153
+                  },
+                  {
+                    "streams": 64,
+                    "bytes": 8388608,
+                    "seconds": 1.048633
+                  },
+                  {
+                    "streams": 1,
+                    "bytes": 131072,
+                    "seconds": 1.000904
+                  },
+                  {
+                    "streams": 1,
+                    "bytes": 131072,
+                    "seconds": 1.001016
+                  },
+                  {
+                    "streams": 4,
+                    "bytes": 131072,
+                    "seconds": 0.082419
+                  },
+                  {
+                    "streams": 4,
+                    "bytes": 524288,
+                    "seconds": 1.001419
+                  },
+                  {
+                    "streams": 16,
+                    "bytes": 131072,
+                    "seconds": 1.346334
+                  },
+                  {
+                    "streams": 16,
+                    "bytes": 2097152,
+                    "seconds": 1.009174
+                  },
+                  {
+                    "streams": 64,
+                    "bytes": 262144,
+                    "seconds": 18.726605
+                  },
+                  {
+                    "streams": 64,
+                    "bytes": 8388608,
+                    "seconds": 1.060635
+                  }
+                ],
+                "cleanup": "Bothvisitsquiescent;ownedrunscempty;daemonstopped/filesremoved;client0-1/server2-3."
+              },
+              {
+                "role": "owningTestIperf+MakeCmd",
+                "run": 45842121208,
+                "status": "PASS",
+                "request": "iperf-original-caller-fixture-inputs.json",
+                "artifact": 15127563436,
+                "log": "iperf-original-matrix-fixture-45842121208.log",
+                "results": "Originalcommandfixture and5JSONmetric/errorcases passed."
+              }
+            ],
+            "accountingCheck": {
+              "source": "5a598bd899bb9e43c7732fb3d596b7a137d7a5a7",
+              "parent": "c1e3052832f73ec52908f694cc888a7a8237ab08",
+              "qualificationOnlyInput": "Existing CLI32Mbit/s perstream; fourstreams,64MiBbytegoal via65536x,~4.2sminimum targetduration, original30sclienttimeout. Producer image/runtime unchanged; no throughputcomparison.",
+              "gates": [
+                {
+                  "role": "NATIVE",
+                  "run": 45842650822,
+                  "status": "PASS_INTENDED_LONGER_TRANSFER",
+                  "request": "iperf-periodic-accounting-native-inputs.json",
+                  "artifact": 15128582323,
+                  "log": "iperf-periodic-accounting-native-45842650822.log",
+                  "reports": [
+                    {
+                      "N": 1,
+                      "goalBytes": 1024,
+                      "periodicIntervals": 1,
+                      "intervalByteSum": 16252928,
+                      "finalWindow": {
+                        "start": 0,
+                        "end": 1.001367,
+                        "seconds": 1.0013669729232788,
+                        "bytes": 16252928,
+                        "bits_per_second": 129845928.13204549,
+                        "retransmits": 0,
+                        "omitted": false,
+                        "sender": true
+                      },
+                      "sender": {
+                        "start": 0,
+                        "end": 1.001367,
+                        "seconds": 1.001367,
+                        "bytes": 16252928,
+                        "bits_per_second": 129845924.62104304,
+                        "retransmits": 0,
+                        "sender": true
+                      },
+                      "receiver": {
+                        "start": 0,
+                        "end": 1.001447,
+                        "seconds": 1.001447,
+                        "bytes": 16252928,
+                        "bits_per_second": 129835551.95631921,
+                        "sender": true
+                      }
+                    },
+                    {
+                      "N": 65536,
+                      "goalBytes": 67108864,
+                      "periodicIntervals": 5,
+                      "intervalByteSum": 80216064,
+                      "finalWindow": {
+                        "start": 4.001072,
+                        "end": 5.000581,
+                        "seconds": 0.9995089769363403,
+                        "bytes": 15728640,
+                        "bits_per_second": 125890935.35276389,
+                        "retransmits": 0,
+                        "omitted": false,
+                        "sender": true
+                      },
+                      "sender": {
+                        "start": 0,
+                        "end": 5.000581,
+                        "seconds": 5.000581,
+                        "bytes": 80216064,
+                        "bits_per_second": 128330790.36215991,
+                        "retransmits": 0,
+                        "sender": true
+                      },
+                      "receiver": {
+                        "start": 0,
+                        "end": 5.000859,
+                        "seconds": 5.000859,
+                        "bytes": 80216064,
+                        "bits_per_second": 128323656.3958312,
+                        "sender": true
+                      }
+                    }
+                  ],
+                  "cleanup": "Quiescentprocessesempty,ownedrunscempty,daemonstopped/filesremoved; imageidenticaltoc1preflight/matrix."
+                },
+                {
+                  "role": "SENTRY",
+                  "run": 45842662906,
+                  "status": "PASS_INTENDED_LONGER_TRANSFER",
+                  "request": "iperf-periodic-accounting-sentry-inputs.json",
+                  "artifact": 15128647395,
+                  "log": "iperf-periodic-accounting-sentry-45842662906.log",
+                  "reports": [
+                    {
+                      "N": 1,
+                      "goalBytes": 1024,
+                      "periodicIntervals": 1,
+                      "intervalByteSum": 393216,
+                      "finalWindow": {
+                        "start": 0,
+                        "end": 0.003295,
+                        "seconds": 0.00329499994404614,
+                        "bytes": 393216,
+                        "bits_per_second": 954697436.545981,
+                        "retransmits": 0,
+                        "omitted": false,
+                        "sender": true
+                      },
+                      "sender": {
+                        "start": 0,
+                        "end": 0.003295,
+                        "seconds": 0.003295,
+                        "bytes": 393216,
+                        "bits_per_second": 954697420.333839,
+                        "retransmits": 0,
+                        "sender": true
+                      },
+                      "receiver": {
+                        "start": 0,
+                        "end": 0.00356,
+                        "seconds": 0.00356,
+                        "bytes": 262144,
+                        "bits_per_second": 589087640.4494382,
+                        "sender": true
+                      }
+                    },
+                    {
+                      "N": 65536,
+                      "goalBytes": 67108864,
+                      "periodicIntervals": 5,
+                      "intervalByteSum": 80216064,
+                      "finalWindow": {
+                        "start": 4.000788,
+                        "end": 5.001147,
+                        "seconds": 1.000359058380127,
+                        "bytes": 15728640,
+                        "bits_per_second": 125783956.21643497,
+                        "retransmits": 0,
+                        "omitted": false,
+                        "sender": true
+                      },
+                      "sender": {
+                        "start": 0,
+                        "end": 5.001147,
+                        "seconds": 5.001147,
+                        "bytes": 80216064,
+                        "bits_per_second": 128316266.64843085,
+                        "retransmits": 0,
+                        "sender": true
+                      },
+                      "receiver": {
+                        "start": 0,
+                        "end": 5.001424,
+                        "seconds": 5.001424,
+                        "bytes": 80216064,
+                        "bits_per_second": 128309159.95124589,
+                        "sender": true
+                      }
+                    }
+                  ],
+                  "cleanup": "Quiescentprocessesempty,ownedrunscempty,daemonstopped/filesremoved; imageidenticaltoc1preflight/matrix."
+                }
+              ],
+              "contract": "Verify actualN/goal/rate,≥1periodicinterval+lastpartial, intervalbytes sum matches finalsenderbytes/receiverbytes, noerror and cleanup. Separatefromoriginalmatrix/productioncandidate.",
+              "limitations": "Lastwindow~1s,notprovenshortpartialduration; finalwindowbytes15,728,640retained. AuxiliarypacedN1Sentrysender393,216/receiver262,144differs,noerror; originalunpacedmatrixandintendedlongertransfermatch. Unknownbaselineattribution;retainforindependentsupplierreview,notthroughputcomparison."
+            }
           }
+        },
+        "supplierPublication": {
+          "item": "investigation:iperf-supplier-sender-completion",
+          "source": "ee3f2f309b11fa3d7c9a5f91e23b315ee363895e",
+          "state": "Local-only qualified source; actual upstream publication decision pending",
+          "reviewCommand": "git -C ~/code/iperf show ee3f2f309b11fa3d7c9a5f91e23b315ee363895e",
+          "downstreamAlternatives": "Reviewed3.18 backport integration or compatible BCR release/adoption unresolved; neither downstream source change approved."
         }
       },
       "recheckCondition": "Actual new source/functional evidence that localizes or resolves P64 completion, or an explicit owning technical disposition. No new run is authorized by this metadata update.",
@@ -152386,7 +153506,62 @@
           ]
         }
       ]
+    },
+    {
+      "id": "investigation:iperf-supplier-sender-completion",
+      "title": "Iperf supplier sender completion",
+      "group": "analysis",
+      "status": "active",
+      "owner": "root",
+      "head": "ee3f2f309b11fa3d7c9a5f91e23b315ee363895e",
+      "repo": "esnet/iperf",
+      "updatedAt": "2026-11-26T15:52:16.104921+00:00",
+      "summary": "Local-only ee3f2f309 changes one C file (+21/-7). Current Linux AMD64 qualification and two independent reviews passed; SCTP was unavailable. The actual publication question includes creating tamird/iperf and opening the upstream PR. No public fork, push, PR or commit URL exists; older tiny paced Sentry discrepancy remains unattributed.",
+      "nextStep": "Await Tamir’s actual publication decision for exact local ee3f2f309, fork creation and the reviewed title/body. Downstream reviewed backport integration versus a compatible BCR release remains an unresolved alternative, not an approved source change or mandatory release gate.",
+      "recheckCondition": "Actual publication answer or material source/review evidence; no additional build authorization question.",
+      "evidence": [
+        {
+          "label": "Exact current-source Linux qualification",
+          "url": "https://app.buildbuddy.io/invocation/daf5d899-5cc0-48ae-90d4-1743fce49e7b"
+        },
+        {
+          "label": "Upstream repository context",
+          "url": "https://github.com/esnet/iperf"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "ee3f2f309b11fa3d7c9a5f91e23b315ee363895e",
+        "nextAction": "Await the actual exact-source publication decision; preserve local-only source and qualification limits.",
+        "recheckCondition": "Actual answer or source/review change.",
+        "curatedAt": "2026-11-26T15:52:16.104921+00:00",
+        "localSource": {
+          "checkout": "~/code/iperf",
+          "head": "ee3f2f309b11fa3d7c9a5f91e23b315ee363895e",
+          "reviewCommand": "git -C ~/code/iperf show ee3f2f309b11fa3d7c9a5f91e23b315ee363895e",
+          "publication": "No fork/push/PR; no public commit link."
+        },
+        "qualification": {
+          "invocation": "daf5d899-5cc0-48ae-90d4-1743fce49e7b",
+          "unitTests": 5,
+          "structuredCases": 7,
+          "independentReviews": "Two accepted",
+          "scope": "Linux AMD64 only; SCTP unavailable; other OS/ARM/ASan/cppcheck not run. Same-worker native baseline paced check is distinct from older tiny Sentry discrepancy."
+        }
+      },
+      "contributorReview": {
+        "kind": "information",
+        "status": "pending",
+        "title": "Publish Iperf sender-completion fix",
+        "summary": "Actual submitted exact local-source publication decision; unanswered. No public source URL exists.",
+        "body": "Actual submitted scope: create tamird/iperf, publish exact ee3f2f309b11fa3d7c9a5f91e23b315ee363895e and open an esnet/iperf PR with the reviewed title/body below. No downstream gVisor amendment, merge or deployment is included.\n\nReview the local source:\n\ngit -C ~/code/iperf show ee3f2f309b11fa3d7c9a5f91e23b315ee363895e\n\nPR title: Finish sender limits before periodic reports\n\n* Version: `master`.\n* Issues fixed: none filed.\n* Brief description:\n\nA sender can reach its byte or block limit while the client is still starting the other stream threads. Check that completed transfer before running overdue periodic callbacks, and let all sender loops stop before canceling and joining them.\n\nActive transfers keep their timer wakeups, and final statistics still collect the last interval. Omit, duration, reverse and bidirectional timer ordering is preserved.\n\nThis addresses the completion ordering observed with a 64-stream, 1 KiB gVisor benchmark using iperf3 3.18. The matching current-source change was validated on Linux; the worker kernel could not exercise SCTP.\n\nPosted by Codex on behalf of @tamird.\n",
+        "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/iperf-supplier-pr-body.txt",
+        "sourceSha256": "31084efe7a5432c51c68d45d3d563508351d7243c731a4a79a1e20f44c2d90eb",
+        "localSourceHead": "ee3f2f309b11fa3d7c9a5f91e23b315ee363895e",
+        "reviewCommand": "git -C ~/code/iperf show ee3f2f309b11fa3d7c9a5f91e23b315ee363895e"
+      },
+      "findings": []
     }
   ],
-  "updatedAt": "2026-11-26T14:48:39.896255+00:00"
+  "updatedAt": "2026-11-26T15:52:16.104921+00:00"
 }
