@@ -40,6 +40,9 @@ before computing the image hash, so changes to a helper or the SDK invalidate
 the image cache. The selected architecture controls both the helper binaries and
 the Docker build.
 
+The utility image stages its Bazel-built Hey client from
+`//images/benchmarks:util_context`.
+
 The Ollama HTTP client uses the same pinned Alpine base as the benchmark image.
 Bazel assembles its image directly.
 

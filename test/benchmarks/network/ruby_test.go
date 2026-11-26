@@ -116,7 +116,7 @@ func runRuby(b *testing.B, hey *tools.Hey) {
 	client := clientMachine.GetNativeContainer(ctx, b)
 	defer client.CleanUp(ctx)
 	runHTTPBenchmark(b, ctx, client, dockerutil.RunOpts{
-		Image:      "benchmarks/hey",
+		Image:      "benchmarks/util",
 		Links:      []string{rubyApp.MakeLink("ruby")},
 		CpusetCpus: harness.ClientCPUSet(),
 	}, hey, heyCmd...)

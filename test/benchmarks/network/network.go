@@ -64,7 +64,7 @@ func runStaticServer(b *testing.B, serverOpts dockerutil.RunOpts, serverCmd []st
 	}
 
 	runHTTPBenchmark(b, ctx, client, dockerutil.RunOpts{
-		Image:      "benchmarks/hey",
+		Image:      "benchmarks/util",
 		Links:      []string{server.MakeLink("server")},
 		CpusetCpus: harness.ClientCPUSet(),
 	}, hey, hey.MakeCmd("server", port)...)

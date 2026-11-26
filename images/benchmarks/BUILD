@@ -2,6 +2,7 @@ load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_img//img:image.bzl", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//images:img.bzl", "image_outputs")
+load("//tools:defs.bzl", "pkg_tar")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -12,6 +13,17 @@ filegroup(
     name = "sources",
     srcs = glob(["**"]),
     visibility = ["//images:__pkg__"],
+)
+
+pkg_tar(
+    name = "util_context",
+    files = {
+        "//images/benchmarks/hey": "hey",
+        "util/Dockerfile": "Dockerfile",
+    },
+    mode = "0644",
+    modes = {"hey": "0755"},
+    package_dir = "images/benchmarks/util",
 )
 
 _HTTP_PAYLOAD_SIZES = [
