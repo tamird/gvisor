@@ -1,3 +1,4 @@
+diff --git a/src/iperf_client_api.c b/src/iperf_client_api.c
 --- a/src/iperf_client_api.c
 +++ b/src/iperf_client_api.c
 @@ -29,6 +29,7 @@
@@ -106,6 +107,7 @@
                              if (rc != 0 && rc != ESRCH) {
                                  i_errno = IEPTHREADJOIN;
                                  errno = rc;
+diff --git a/src/iperf_api.c b/src/iperf_api.c
 --- a/src/iperf_api.c
 +++ b/src/iperf_api.c
 @@ -4818,6 +4818,8 @@
@@ -117,6 +119,7 @@
      /*
       * If we're the client, or if we're a server and running a test,
       * then dump out the accumulated stats so far.
+diff --git a/src/iperf_api.h b/src/iperf_api.h
 --- a/src/iperf_api.h
 +++ b/src/iperf_api.h
 @@ -355,6 +355,7 @@
