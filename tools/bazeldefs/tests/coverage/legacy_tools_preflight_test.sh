@@ -16,13 +16,15 @@
 
 set -euo pipefail
 
-if [[ $# != 3 ]]; then
-  echo "Expected bootstrap archive, source archive and go.mod" >&2
+if [[ $# != 5 ]]; then
+  echo "Expected bootstrap archive, source archive, manifests and module proxy" >&2
   exit 1
 fi
 bootstrap="$1"
 source_archive="$2"
-go_mod="$3"
+go_mod=$(realpath "$3")
+go_sum=$(realpath "$4")
+module_proxy=$(dirname "$(realpath "$5")")
 for tool in bash curl tar gzip patch unzip realpath grep paste gcc mktemp sha256sum; do
   if ! command -v "$tool" >/dev/null; then
     echo "Missing legacy coverage tool: $tool" >&2
@@ -39,6 +41,14 @@ trap 'rm -rf "$sdk_dir"' EXIT
 tar -xzf "$bootstrap" -C "$sdk_dir"
 version="$(cd "$sdk_dir" && GOROOT="$sdk_dir/go" GOTOOLCHAIN=local GOENV=off GOWORK=off "$sdk_dir/go/bin/go" version)"
 [[ "$version" == 'go version go1.27.3 linux/amd64' ]]
+mkdir "$sdk_dir/work"
+cp "$go_mod" "$go_sum" "$sdk_dir/work/"
+export GOROOT="$sdk_dir/go" GOTOOLCHAIN=local GOENV=off GOWORK=off
+export GOPATH="$sdk_dir/gopath" GOMODCACHE="$sdk_dir/modules" GOCACHE="$sdk_dir/cache"
+export GOPROXY="file://$module_proxy" GOSUMDB=off GOVCS='*:off' GOFLAGS=-mod=readonly
+(cd "$sdk_dir/work" && "$GOROOT/bin/go" mod download && "$GOROOT/bin/go" mod verify)
+cmp "$go_mod" "$sdk_dir/work/go.mod"
+cmp "$go_sum" "$sdk_dir/work/go.sum"
 bootstrap_sha="$(sha256sum "$bootstrap")"
 source_sha="$(sha256sum "$source_archive")"
-printf '{"go_version":"go1.27.3","architecture":"amd64","required_tools_present":true,"bootstrap_sha256":"%s","source_sha256":"%s","sdk_built":false,"modules_downloaded":false}\n' "${bootstrap_sha%% *}" "${source_sha%% *}"
+printf '{"go_version":"go1.27.3","architecture":"amd64","required_tools_present":true,"bootstrap_sha256":"%s","source_sha256":"%s","sdk_built":false,"modules_downloaded":true}\n' "${bootstrap_sha%% *}" "${source_sha%% *}"

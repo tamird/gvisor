@@ -168,13 +168,16 @@ genrule(
         "//:go.sum",
         "//:gopath",
         "//tools:go_cover_toolchain",
+        "@coverage_legacy_modules//:proxy",
+        "@coverage_legacy_modules//:modules/cache/download/ROOT",
     ],
     outs = ["legacy_current_sentry_cov"],
     cmd = (
         "\"$(execpath //tools:build_cover.sh)\" \"$@\" " +
         "\"$(execpath //:gopath)\" \"$(execpath //:go.mod)\" " +
         "\"$(execpath //:go.sum)\" \"$(execpath sentry_main.go)\" " +
-        "\"$(execpath //tools:go_cover_toolchain)\" false"
+        "\"$(execpath //tools:go_cover_toolchain)\" false " +
+        "\"$(execpath @coverage_legacy_modules//:modules/cache/download/ROOT)\""
     ),
     exec_compatible_with = [
         "//tools/bazeldefs:rbe_ubuntu24_c",
