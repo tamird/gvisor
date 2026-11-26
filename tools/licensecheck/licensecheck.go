@@ -734,7 +734,7 @@ func pickURL(urls []string) string {
 
 // repoSHA256 returns the hex sha256 that Bazel pins for an archive repo,
 // from its sha256 or "sha256-"-prefixed integrity attribute.
-// Empty string if the repo is unpinned (e.g. @google_root_pem).
+// Empty string if the repo is unpinned.
 func repoSHA256(r repoInfo) string {
 	if s := r.first("sha256"); s != "" {
 		return s

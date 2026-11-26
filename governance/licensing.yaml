@@ -32,8 +32,8 @@ exceptions:
     license: NOASSERTION
     exception_rationale: >-
       Not software: a bundle of CA root certificates from https://pki.goog,
-      installed as trust anchors in test images only and never part of
-      released gVisor binaries.
+      installed as trust anchors in the website serving image and never
+      part of released gVisor binaries.
   - dependency: grpc
     license:
       - Apache-2.0

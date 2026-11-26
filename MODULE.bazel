@@ -244,12 +244,11 @@ register_toolchains(
     "@qemu_user_toolchains//:qemu_linux_x86_64_on_linux_aarch64",
 )
 
-# Root certificates.
-#
-# Note that the sha256 hash is omitted here intentionally. This should not be
-# used in any part of the build other than as certificates present in images.
+# Google trust roots for the website profile viewer. Pin the bundle so a
+# rotation cannot silently change the serving image's trust roots.
 http_file(
     name = "google_root_pem",
+    sha256 = "ec989df46c8f4419ef2ee2517cad7619d555e4973f3307be697662aa2497e480",
     urls = [
         "https://pki.goog/roots.pem",
     ],
