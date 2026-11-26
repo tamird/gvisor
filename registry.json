@@ -57181,14 +57181,14 @@
       "group": "bazel",
       "status": "Agent work",
       "url": "https://github.com/tamird/gvisor/commit/a5265547f",
-      "updatedAt": "2026-11-26T06:01:09.268312+00:00",
-      "summary": "The old a5265547f8 website renderer/publisher migration retains historical qualification but needs current-base integration. Trust-root work is now a separate three-file current-master proposal d07e6af434, pinning the existing Google bundle and updating its catalog. Its two validation jobs are running. Shared bootstrap is fulfilled; no configured or dated human prerequisite on unlanded LLVM was established.",
+      "updatedAt": "2026-11-26T06:11:59.708714+00:00",
+      "summary": "The old a5265547f8 website renderer/publisher migration retains historical qualification but needs current-base integration. Its trust-root fix is now the separate reviewed b8c204be9 proposal, awaiting Tamir\u2019s actual opening decision. Shared bootstrap is fulfilled; no unlanded LLVM prerequisite was established.",
       "followup": {
         "owner": "root",
         "sourceHead": "a5265547f8c17b32b19021c4d8f9100c1012c2aa",
         "observedAt": "2026-11-08T22:36:47+00:00",
-        "disposition": "The old a5265547f8 website renderer/publisher migration retains historical qualification but needs current-base integration. Trust-root work is now a separate three-file current-master proposal d07e6af434, pinning the existing Google bundle and updating its catalog. Its two validation jobs are running. Shared bootstrap is fulfilled; no configured or dated human prerequisite on unlanded LLVM was established.",
-        "nextAction": "actions_bazel_cache completes the existing trust-root proposal\u2019s pinned-fetch/catalog and fixture validation, then root reviews the exact source before any publication decision. Integrate the old renderer/publisher edits onto current source without copying obsolete content or selections; reconcile delivery-version/license inputs separately.",
+        "disposition": "The old a5265547f8 website renderer/publisher migration retains historical qualification but needs current-base integration. Its trust-root fix is now the separate reviewed b8c204be9 proposal, awaiting Tamir\u2019s actual opening decision. Shared bootstrap is fulfilled; no unlanded LLVM prerequisite was established.",
+        "nextAction": "Root integrates the old renderer/publisher edits onto current source without copying obsolete content or selections, and reconciles delivery-version/license inputs. Follow the standalone trust-bundle pin on branch:website-google-roots-pin; its qualification does not qualify the full renderer migration or authorize deployment.",
         "evidence": [
           {
             "label": "Buildkite release with local registry authentication and a simulated Cloud Run deployment",
@@ -57220,8 +57220,8 @@
           "owner": "root"
         },
         "technicalOwner": "actions_bazel_cache",
-        "recheckCondition": "The existing owner\u2019s source-bound validation/review milestone, current-base integration evidence, or an actual publication decision.",
-        "curatedAt": "2026-11-26T06:01:09.268312+00:00",
+        "recheckCondition": "Current-base migration/catalog evidence or an actual source/publication decision; standalone pin lifecycle is tracked separately.",
+        "curatedAt": "2026-11-26T06:11:59.708714+00:00",
         "compilerAssessment": {
           "websiteSource": "a5265547f8c17b32b19021c4d8f9100c1012c2aa",
           "declaredSupplier": "llvm0.8.24, MODULE.bazel:18",
@@ -57240,13 +57240,13 @@
           "scope": "Landed shared Bazelisk launcher;does not satisfy independent consumer/worker/source gates"
         },
         "trustRootProposal": {
-          "source": "d07e6af4340a332335e3a08eb92cfc15687c2e02",
+          "source": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
           "base": "496ac9cc19ff744a8fd9714bd310af98a3a5767f",
           "ref": "review/website-google-roots-pin-20261126",
           "files": 3,
-          "state": "Validation in progress; no publication decision asked",
-          "fixtureRun": 45764764503,
-          "pinnedFetchCatalogRun": 45764769667,
+          "state": "Validation and independent reviews accepted; actual upstream opening decision pending",
+          "fixtureRun": 45765701308,
+          "pinnedFetchCatalogRun": 45765707772,
           "bundleSHA256": "ec989df46c8f4419ef2ee2517cad7619d555e4973f3307be697662aa2497e480",
           "bundleBytes": 38766,
           "bundleRoots": 21,
@@ -57254,7 +57254,8 @@
           "servingFetchOrigin": "storage.googleapis.com/gvisor-buildkite",
           "rotation": "Mutable URL rotation can make future fresh fetch fail closed; availability is not guaranteed",
           "grpcAlternative": "115 roots vs Google21;19 shared/96 extra/2 missing, not a matching replacement",
-          "oldMigration": "a526 remains separate; copying its obsolete tree is unsafe"
+          "oldMigration": "a526 remains separate; copying its obsolete tree is unsafe",
+          "owningRecord": "branch:website-google-roots-pin"
         }
       },
       "refinement": {
@@ -57401,6 +57402,10 @@
         {
           "label": "Google\u2019s rotation guidance for the profile viewer\u2019s trust bundle",
           "url": "https://pki.goog/faq/"
+        },
+        {
+          "label": "Standalone current-master trust-bundle pin decision",
+          "url": "https://tamird.github.io/gvisor/?view=table#branch%3Awebsite-google-roots-pin"
         }
       ]
     },
@@ -67238,7 +67243,7 @@
       "url": "https://github.com/tamird/gvisor/commit/1954485c9",
       "group": "analysis",
       "status": "Agent work",
-      "updatedAt": "2026-11-17T20:32:28.027492+00:00",
+      "updatedAt": "2026-11-26T06:06:36.834544+00:00",
       "summary": "The proposed GitHub lint step calls bazel build --keep_going //tools/lint:check. On hosted Ubuntu with Docker unavailable, Bazel 9.3.1 ran six actions for all five default linters. With a formatting error and a spelling mistake in the same checkout, both checks reported the affected files and the build failed.\n\nThe earlier six-action scratch run used a filename-only goimports check. On 8858bbb35, the scratch-worker check produced a unified diff that applied and reversed cleanly with both x/tools changes in place. The restored action selected all 2,685 intended Go files.",
       "evidence": [
         {
@@ -67268,6 +67273,14 @@
         {
           "label": "x/tools child prints goimports diffs without invoking another program",
           "url": "https://go-review.googlesource.com/c/tools/+/858482"
+        },
+        {
+          "label": "Released x/tools includes the goimports changes",
+          "url": "https://github.com/golang/tools/compare/588ada3c4d4d6d24ab1758e86bd2768beba5946d...v0.53.0"
+        },
+        {
+          "label": "Module release metadata",
+          "url": "https://proxy.golang.org/golang.org/x/tools/@v/v0.53.0.info"
         }
       ],
       "refinement": {
@@ -67282,8 +67295,8 @@
         "owner": "root",
         "sourceHead": "1954485c9a50945b0189fba1ed6bb3852cc016ea",
         "observedAt": "2026-11-09T22:10:43+00:00",
-        "disposition": "The hunk correction and in-process goimports formatter both merged in x/tools. The latest tagged module, v0.52.0, predates them.",
-        "nextAction": "Once the shared source inventory lands and x/tools tags a release containing 588ada3c4, rebase and run the full-diff lint build on an empty worker.",
+        "disposition": "Both goimports changes merged in x/tools and are included in v0.53.0, released November 17. The module release prerequisite is fulfilled; the shared source inventory from declared-codespell d25ca53f67 still has its clang-format prerequisite. Formatting priority is unchanged.",
+        "nextAction": "Preserve formatting priority and follow the shared source inventory\u2019s clang-format prerequisite. After that prerequisite and inventory integration, rebase this proposal onto the released x/tools v0.53.0 or a verified successor and run the existing full-diff lint qualification on an empty worker. No build, source publication or outreach is started by this update.",
         "evidence": [
           "https://go-review.googlesource.com/c/tools/+/858481",
           "https://go-review.googlesource.com/c/tools/+/858482",
@@ -67302,7 +67315,16 @@
           "owner": "root"
         },
         "technicalOwner": "Agent",
-        "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings."
+        "recheckCondition": "The tracked clang-format/source-inventory prerequisite advances, the exact candidate changes, or an actual source/publication decision arrives.",
+        "curatedAt": "2026-11-26T06:06:36.834544+00:00",
+        "releasePrerequisite": {
+          "state": "fulfilled",
+          "version": "v0.53.0",
+          "releasedAt": "2026-11-17",
+          "requiredCommit": "588ada3c4d4d6d24ab1758e86bd2768beba5946d",
+          "comparison": "ahead35/behind0; merge-base equals required commit",
+          "provenance": "Root verified GitHub comparison and Go module proxy; no new provider read"
+        }
       }
     },
     {
@@ -110233,6 +110255,77 @@
           "url": "https://github.com/tamird/gvisor/commit/d4b55cd9df05ea0519a124c00fd31f0f99468ec9"
         }
       ]
+    },
+    {
+      "id": "branch:website-google-roots-pin",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/website-google-roots-pin-20261126",
+      "head": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
+      "url": "https://github.com/tamird/gvisor/commit/b8c204be9daf2ea1132727b9e4b735f818a1ba76",
+      "title": "Pin the website Google trust bundle",
+      "group": "bazel",
+      "status": "Contributor review",
+      "summary": "Standalone current-master Google trust-bundle pin b8c204be9 is validated and independently reviewed; Tamir\u2019s actual opening decision is pending. Exact 38,766-byte/21-root bundle and all 225 catalog entries verified. Origin-fetch availability and a full current image build are not established; the older Jekyll migration remains separate.",
+      "updatedAt": "2026-11-26T06:11:59.708714+00:00",
+      "followup": {
+        "owner": "root",
+        "technicalOwner": "actions_bazel_cache",
+        "sourceHead": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
+        "base": "496ac9cc19ff744a8fd9714bd310af98a3a5767f",
+        "disposition": "Standalone current-master Google trust-bundle pin b8c204be9 is validated and independently reviewed; Tamir\u2019s actual opening decision is pending. Exact 38,766-byte/21-root bundle and all 225 catalog entries verified. Origin-fetch availability and a full current image build are not established; the older Jekyll migration remains separate.",
+        "nextAction": "Root awaits Tamir\u2019s actual upstream publication decision for exact b8c204be9. Preserve the existing trust policy and fail-closed behavior on changed bundle bytes. No cloud image push/deployment or full renderer migration is authorized by this proposal.",
+        "recheckCondition": "Answer to the actual source-bound opening question or substantive source/review evidence.",
+        "curatedAt": "2026-11-26T06:11:59.708714+00:00",
+        "validation": {
+          "fixtureRun": 45765701308,
+          "fixtureArtifact": 15091981597,
+          "fixtureResult": "One uncached REMOTE Bazel test action PASS; XML50 tests/0failures/0errors/0skips.",
+          "catalogRun": 45765707772,
+          "catalogArtifact": 15092026498,
+          "catalogResult": "The Bazel http_file resolves; independent SHA/size check verifies38766 bytes/21certificates; all225 existing dependency entries conform.",
+          "fetchProvenance": "Not established. The file target is up-to-date; logs do not record origin HTTP retrieval or repository-cache reuse. Remote action cache hits belong to building the CLI and are not proof of repository-fetch provenance.",
+          "sourcePreservation": "Both workflows source verification and source preservation pass.",
+          "currentCaller": "Makefile894 runs //website:website; images/defs.bzl docker importer consumes :files tar; website/BUILD45 and70 declare/copy @google_root_pem//file into /etc/ssl/cert.pem. This checked-in Docker caller consumes the module target, independently of older proposed packaging.",
+          "imagePayloadEvidence": "Historical image CA hash is identical. No current-source complete Docker image rebuild or proposed packager equivalence was newly executed.",
+          "limits": "No new renderer/image build, broad lint/corpus run, cloud deployment or public registry push."
+        },
+        "independentReview": {
+          "correctness": "Accepted finalb8c204be9; stale policy rationale corrected; no remaining findings.",
+          "styleDocsFreeRangeCatchall": "Accepted finalb8c204be9; no additional findings or reviewer needed.",
+          "rolesNotRequired": "Testing exhaustivity exempt for build/metadata-only change; no Sentry/Gofer/runsc/hot-path code, so kernel security/performance roles do not apply. Correctness reviewer included supply-chain integrity and policy preservation."
+        },
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/b8c204be9daf2ea1132727b9e4b735f818a1ba76",
+          "https://github.com/tamird/gvisor/actions/runs/45765701308/artifacts/15091981597",
+          "https://github.com/tamird/gvisor/actions/runs/45765707772/artifacts/15092026498"
+        ]
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
+        "baseHead": "496ac9cc19ff744a8fd9714bd310af98a3a5767f",
+        "url": "https://github.com/tamird/gvisor/commit/b8c204be9daf2ea1132727b9e4b735f818a1ba76",
+        "title": "Pin the website Google trust bundle",
+        "summary": "Actual submitted upstream opening question; unanswered.",
+        "body": "The website profile viewer uses Google's trust bundle for its HTTPS profile fetches. The bundle previously came from a mutable URL without a content checksum, so a later fetch could silently change the serving image's trusted certificate authorities.\n\nPin the existing bundle bytes and record the checksum in the manual dependency catalog. Correct the existing licensing exception rationale to identify the website serving image as the consumer. The Google URL remains mutable: if it rotates to different bytes, a fresh fetch fails until the checksum and catalog entry are deliberately updated.\n",
+        "reviewCommand": "git show b8c204be9daf2ea1132727b9e4b735f818a1ba76"
+      },
+      "evidence": [
+        {
+          "label": "Exact independently reviewed source",
+          "url": "https://github.com/tamird/gvisor/commit/b8c204be9daf2ea1132727b9e4b735f818a1ba76"
+        },
+        {
+          "label": "Uncached remote fixture: 50 cases passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45765701308/artifacts/15091981597"
+        },
+        {
+          "label": "Exact pinned bundle and 225-entry catalog verification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45765707772/artifacts/15092026498"
+        }
+      ]
     }
   ],
   "edges": [
@@ -148892,5 +148985,5 @@
       "inactive": true
     }
   ],
-  "updatedAt": "2026-11-26T06:01:09.268312+00:00"
+  "updatedAt": "2026-11-26T06:11:59.708714+00:00"
 }
