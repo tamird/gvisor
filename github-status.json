@@ -480806,6 +480806,15 @@
         "qualifier": null,
         "observedAt": "2026-11-26T05:43:54.635646+00:00"
       }
+    },
+    "investigation:hey-client-placement": {
+      "contributor-review": {
+        "scope": "https://github.com/gvisor/gvisor/pull/17780",
+        "since": "2026-11-26T05:43:54.635646+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-26T05:43:54.635646+00:00"
+      }
     }
   },
   "limits": {
