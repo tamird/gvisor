@@ -942,6 +942,11 @@ syscall_test(
     # Takes too long for TSAN. Creates a lot of TCP sockets.
     tags = ["nogotsan"],
     test = "//test/syscalls/linux:socket_inet_loopback_nogotsan_test",
+    exec_properties = {
+        "test.dockerUser": "root",
+        "test.network-enable-ipv6": "true",
+        "test.workload-isolation-type": "firecracker",
+    },
 )
 
 syscall_test(
@@ -1011,6 +1016,11 @@ syscall_test(
     # Takes too long to run with S/R.
     save = False,
     test = "//test/syscalls/linux:socket_ipv4_udp_unbound_loopback_test",
+    exec_properties = {
+        "test.dockerUser": "root",
+        "test.network-enable-ipv6": "true",
+        "test.workload-isolation-type": "firecracker",
+    },
 )
 
 syscall_test(
