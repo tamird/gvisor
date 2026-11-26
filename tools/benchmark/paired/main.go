@@ -89,6 +89,7 @@ func run() error {
 	cases := flag.String("cases", "", "JSON map from Bazel test labels to canonical benchfmt names")
 	casesFile := flag.String("cases-file", "", "file containing the cases JSON instead of -cases")
 	benchstat := flag.String("benchstat", "", "benchstat executable; collect A/A then conditional A/B when set")
+	validate := flag.Bool("validate", false, "validate inputs without starting benchmark processes")
 	alpha := flag.Float64("alpha", 0.01, "predeclared per-contrast significance threshold")
 	confidence := flag.Float64("confidence", 0.95, "confidence level for benchstat estimates")
 	preflight := flag.Bool("preflight", false, "validate two pairs with one-iteration results")
@@ -172,6 +173,14 @@ func run() error {
 			return err
 		}
 		r.Commands[arm] = command{hex.EncodeToString(h.Sum(nil)), argv}
+	}
+	if *benchstat != "" {
+		if _, err := exec.LookPath(*benchstat); err != nil {
+			return err
+		}
+	}
+	if *validate {
+		return nil
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

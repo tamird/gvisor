@@ -27,4 +27,5 @@ restore_outputs() {
 }
 trap restore_outputs EXIT
 unset GITHUB_TOKEN
+"$recorder" -validate "$@"
 "$host" --filesystem --compare --products "$products" -- sudo -E "$recorder" "$@"

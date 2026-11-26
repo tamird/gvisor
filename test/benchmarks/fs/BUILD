@@ -1,3 +1,4 @@
+load("@bazel_skylib//lib:shell.bzl", "shell")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//test/benchmarks:defs.bzl", "benchmark_test")
 
@@ -53,7 +54,7 @@ sh_test(
         "-alpha=0.00001388888888888889",
         "-confidence=0.95",
     ] + [
-        "-" + arm + "=" + json.encode([
+        shell.quote("-" + arm + "=" + json.encode([
             "$(rootpath :fio_test)",
             "-test.run=^$$",
             "-test.bench=^BenchmarkFio",
@@ -63,7 +64,7 @@ sh_test(
             "--config_path=/etc/docker/daemon.json",
             "--pgo-benchmarks=false",
             "--runtime=benchmark-" + runtime,
-        ])
+        ]))
         for arm, runtime in [
             ("a", "baseline"),
             ("b", "candidate"),
