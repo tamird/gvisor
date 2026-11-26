@@ -13,7 +13,8 @@ go_binary(
         "xml.go",
     ],
     data = [
-        "//:release",
+        "//debian:gvisor-release-coverage-tar-zstd",
+        "//debian:gvisor-release-race-coverage-tar-zstd",
         "//test/runner/fuse",
         "//test/runner/setup_container",
     ],
