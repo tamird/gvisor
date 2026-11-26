@@ -86,8 +86,7 @@ http_archive(
 """,
     patch_args = ["-p1"],
     patches = [
-        "//images:benchmarks/rubydev/token-time.patch",
-        "//images:benchmarks/rubydev/openssl-salt.patch",
+        "//images:benchmarks/rubydev/fastlane.patch",
     ],
     sha256 = "dcccef51d48a183ded1595aa4e04090d0bbf9fe6311d3107bd74cc4d4d7326e0",
     strip_prefix = "fastlane-3344301a0d6ea9a69450432e2a87aa6cef7922c8",
