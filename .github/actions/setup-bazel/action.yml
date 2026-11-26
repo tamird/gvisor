@@ -1,0 +1,23 @@
+name: Set up Bazel caches
+description: Restore Bazel caches for native and Docker-wrapped builds.
+runs:
+  using: composite
+  steps:
+  - uses: bazel-contrib/setup-bazel@f34d6a05eae3c24acab7fa54587492daeaeffdab # 0.19.2
+    with:
+      bazelisk-cache: true
+      disk-cache: ${{ github.workflow }}
+      repository-cache: true
+      cache-version: ${{ hashFiles('.bazelversion') }}
+      # PR caches are scoped to their merge ref by GitHub. Keep saves to
+      # trusted push and scheduled jobs as well.
+      cache-save: ${{ github.event_name == 'push' || github.event_name == 'schedule' }}
+      token: ''
+  - name: Share caches with the Docker builder
+    shell: bash
+    run: |
+      mkdir -p "$HOME/.cache/bazel-disk" "$HOME/.cache/bazel-repo"
+      {
+        echo "BAZEL_DISK_CACHE=$HOME/.cache/bazel-disk"
+        echo "BAZEL_REPOSITORY_CACHE=$HOME/.cache/bazel-repo"
+      } >> "$GITHUB_ENV"
