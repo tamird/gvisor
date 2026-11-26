@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T01:47:16.498762+00:00",
+    "updatedAt": "2026-11-26T02:19:45.141533+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -76935,8 +76935,8 @@
       "url": "https://github.com/google/gvisor/pull/17067",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-24T20:55:31.712040+00:00",
-      "summary": "Public a3ca22afe is confirmed dirty against root-verified current basebf5df9a1c. approved_rebase_queue has queued current-PR rebase preparation after #17444. #17446 landing satisfies only its exact C/header prerequisite; replacement #16522, internal adapter, root review and performance obligations remain independent.",
+      "updatedAt": "2026-11-26T02:19:45.141533+00:00",
+      "summary": "Public a3ca22afe remains dirty against actual master 86ea830659. Existing prepared resolution 5026ce5162 replays clean; no duplicate preparation is needed. Tamir explicitly says this waits on #16522, which remains open with changes requested. #17446’s exact landing prerequisite is satisfied; internal adapter, source review and performance conditions remain.",
       "evidence": [
         {
           "label": "Revised #17089 source with explicit ARM64 layouts for 4 KiB and 64 KiB pages",
@@ -77084,11 +77084,11 @@
         }
       ],
       "followup": {
-        "owner": "approved_rebase_queue / root",
+        "owner": "root / approved_rebase_queue",
         "sourceHead": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
         "observedAt": "2026-11-24T20:55:31.712040+00:00",
-        "disposition": "Public a3ca22afe is confirmed dirty against root-verified current basebf5df9a1c. approved_rebase_queue has queued current-PR rebase preparation after #17444. #17446 landing satisfies only its exact C/header prerequisite; replacement #16522, internal adapter, root review and performance obligations remain independent.",
-        "nextAction": "approved_rebase_queue prepares the current PR after #17444 under the existing source-authority boundary. Preserve the replacement’s #16522 prerequisite and independent qualification/internal/performance gates; no historical strict-proof transfer to a new base.",
+        "disposition": "Public a3ca22afe remains dirty against actual master 86ea830659. Existing prepared resolution 5026ce5162 replays clean; no duplicate preparation is needed. Tamir explicitly says this waits on #16522, which remains open with changes requested. #17446’s exact landing prerequisite is satisfied; internal adapter, source review and performance conditions remain.",
+        "nextAction": "Follow #16522 and its required export, then reassess the retained prepared resolution under the existing internal/source/performance boundaries. Do not prepare another replacement or transfer historical qualification to a new base.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17067#discussion_r4486895273",
           "https://github.com/tamird/gvisor/commit/7f6ecfff61b465c2ae00d20ee4ebaad09d430519",
@@ -77129,10 +77129,10 @@
           "https://github.com/google/gvisor/pull/17067#issuecomment-7139245011",
           "https://github.com/google/gvisor/commit/e597012bfea79de2a377822696c3c22a3cc7dbeb"
         ],
-        "recheckCondition": "Existing owner’s source-bound preparation/validation milestone or actual prerequisite/source event.",
+        "recheckCondition": "Substantive #16522/export event, source change or root disposition.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "mergeable": "CONFLICTING",
-        "curatedAt": "2026-11-26T01:47:16.498762+00:00",
+        "curatedAt": "2026-11-26T02:19:45.141533+00:00",
         "actionableComment": {
           "kind": "review",
           "commentId": "PRR_kwDOB9IlXs8AAAABZMfcOw",
@@ -77141,9 +77141,9 @@
         },
         "rootCurrentBaseObservation": {
           "source": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
-          "base": "bf5df9a1c9211afe4dbd7267c4423e9ae575f7fa",
+          "base": "86ea830659a8855752d1ad56141e29788e3aaa00",
           "state": "mergeable=false/dirty per root direct REST",
-          "curatedAt": "2026-11-26T01:47:16.498762+00:00"
+          "curatedAt": "2026-11-26T02:19:45.141533+00:00"
         },
         "mainBootstrap": {
           "build": 55478,
@@ -77151,7 +77151,8 @@
           "state": "Repository pre-command failed fetching literal ref tamird before project tests",
           "evidence": "https://buildkite.com/gvisor/pipeline/builds/55478",
           "classification": "Root source-bound canonical-reader diagnosis; distinct from FirstPass admission/runtime outcomes. Existing source/import/performance boundaries remain."
-        }
+        },
+        "preparedResolution": "5026ce51627344ab6518fca565e1ea00ff295ac4"
       },
       "dcoAmendment": {
         "oldHead": "005743727b3d80d373085133b5da9cd906cc9d7c",
@@ -77175,7 +77176,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "root / existing Systrap native stub workstream"
       },
-      "recheckCondition": "Existing owner’s source-bound preparation/validation milestone or actual prerequisite/source event."
+      "recheckCondition": "Substantive #16522/export event, source change or root disposition."
     },
     {
       "id": "pr:bazel-contrib/buildtools:1527",
@@ -98355,19 +98356,19 @@
       "repo": "google/gvisor",
       "number": 17444,
       "ref": "research/tldk-musl-exported-builds",
-      "head": "53f2efd95be8bed7e53be3e681a37f7a519a7c16",
+      "head": "ad7b865833d3c68da3a36aa010a167a7a18bbf42",
       "title": "Allow the TLDK plugin to link against musl",
       "url": "https://github.com/google/gvisor/pull/17444",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-17T19:04:58.120129+00:00",
-      "summary": "Exact public53f2efd95 has a new formal GitHub approval; repository governance still reports one of two maintainer approvals. Main55988 failed both attempts in repository pre-command fetching literal ref tamird after checkout, before project tests. FirstPass2952 started on the same head. Historical FirstPass1585 daily-quota evidence is separate; no new source failure or green main result is inferred.",
+      "updatedAt": "2026-11-26T02:19:45.141533+00:00",
+      "summary": "Strict-equal rebase ad7b865833 is published. Native GitHub approval moved with its original submission time; DCO and observed source checks pass. First Pass 2975 and the second maintainer approval are pending; no current main result is observed. GNU archive/runsc/Sentry and musl archive/runsc link; musl Sentry fails in an unchanged independent systrap linker action.",
       "followup": {
-        "owner": "approved_rebase_queue / root",
-        "sourceHead": "53f2efd95be8bed7e53be3e681a37f7a519a7c16",
+        "owner": "root / approved_rebase_queue",
+        "sourceHead": "ad7b865833d3c68da3a36aa010a167a7a18bbf42",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Exact public53f2efd95 has a new formal GitHub approval; repository governance still reports one of two maintainer approvals. Main55988 failed both attempts in repository pre-command fetching literal ref tamird after checkout, before project tests. FirstPass2952 started on the same head. Historical FirstPass1585 daily-quota evidence is separate; no new source failure or green main result is inferred.",
-        "nextAction": "approved_rebase_queue qualifies strict-equal rebase candidatead7b865833 on actual basef6b3afd736. GNU/musl graph and source gates45737000190/45737003365/45737005712 are dispatched, with no result inferred. After exact qualification, use the recovered original05bf approval and standing mechanical publication/notice grant; verify new-head review state rather than transferring old approvals. Current public53f2 and FirstPass2952 remain separate.",
+        "disposition": "Strict-equal rebase ad7b865833 is published. Native GitHub approval moved with its original submission time; DCO and observed source checks pass. First Pass 2975 and the second maintainer approval are pending; no current main result is observed. GNU archive/runsc/Sentry and musl archive/runsc link; musl Sentry fails in an unchanged independent systrap linker action.",
+        "nextAction": "Root resolves the automatic-review rejection of the standing-authorized rebase notice; the notice is unposted. Follow actual First Pass, maintainer and source events. No new source approval or unchanged retry is required.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17444",
           "https://github.com/tamird/gvisor/commit/05bf77c06",
@@ -98437,10 +98438,14 @@
           "https://buildkite.com/gvisor/pipeline/builds/55988",
           "https://buildkite.com/gvisor/first-pass/builds/2952",
           "https://github.com/gvisor/gvisor/pull/17444#pullrequestreview-6067034201",
-          "https://github.com/gvisor/gvisor/pull/17735"
+          "https://github.com/gvisor/gvisor/pull/17735",
+          "https://github.com/tamird/gvisor/actions/runs/45737435451",
+          "https://github.com/tamird/gvisor/actions/runs/45737647916",
+          "https://github.com/tamird/gvisor/actions/runs/45737005712",
+          "https://github.com/tamird/gvisor/actions/runs/45737438146"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Existing owner’s graph/source, affected-product and final publication milestone; no duplicate watcher or unchanged public-head retry.",
+        "recheckCondition": "Notice execution resolution or a new source-bound CI/review event.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -98464,7 +98469,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-26T01:47:16.498762+00:00",
+        "curatedAt": "2026-11-26T02:19:45.141533+00:00",
         "currentCI": {
           "head": "53f2efd95be8bed7e53be3e681a37f7a519a7c16",
           "main": 55988,
@@ -98493,7 +98498,10 @@
           "state": "Repository pre-command failed fetching literal ref tamird before project tests",
           "evidence": "https://buildkite.com/gvisor/pipeline/builds/55988",
           "classification": "Root source-bound canonical-reader diagnosis; distinct from FirstPass admission/runtime outcomes. Existing source/import/performance boundaries remain."
-        }
+        },
+        "providerHead": "ad7b865833d3c68da3a36aa010a167a7a18bbf42",
+        "base": "f6b3afd7368b3ef9e0e92302e248c94e0db22f2b",
+        "noticeDisposition": "Unposted: automatic approval review applied a public-reply hold despite standing rebase-notice authority; root owns reconciliation."
       },
       "settledReviews": [
         {
@@ -98789,6 +98797,22 @@
         {
           "label": "Pinned TLDK main revision",
           "url": "https://github.com/alipay/tldk/commit/cec8ff773"
+        },
+        {
+          "label": "GNU linked products",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45737435451"
+        },
+        {
+          "label": "Musl archive/runsc and independent Sentry limitation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45737647916"
+        },
+        {
+          "label": "Source checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45737005712"
+        },
+        {
+          "label": "All 225 license checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45737438146"
         }
       ],
       "dcoAmendment": {
@@ -100471,7 +100495,7 @@
       "head": "b0d665d9f298bf84db405213b403467d8470af4f",
       "title": "Stabilize the Fastlane token check in the Ruby benchmark",
       "group": "ci-flakes",
-      "summary": "Published b0d665d9f2 has passing exact-head GitHub Actions validation, DCO and First Pass 2929; canonical First Pass had no failed attempts. Source delivery and notice are complete. Maintainer status remains pending, last detailed as “Maintainer approvals: 1, needs 2.” No main build is observed or inferred green.",
+      "summary": "Published b0d665d9f remains unchanged. Reviewed amendment d260f684af preserves all 3,613 examples while backporting clock-skew handling and fixing the wrong-password salt fixture. Both runtime functional suites and the actual Dockerfile patch check passed; independent reviews accepted.",
       "evidence": [
         {
           "label": "Published gVisor fix",
@@ -100500,6 +100524,14 @@
         {
           "label": "Supplier token timestamp change",
           "url": "https://github.com/fastlane/fastlane/commit/2beac83f8"
+        },
+        {
+          "label": "Exact proposed amendment",
+          "url": "https://github.com/tamird/gvisor/commit/d260f684af25fc5cee37b4f3188b18c094494fd1"
+        },
+        {
+          "label": "Actual Dockerfile patch proof",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45738543851"
         }
       ],
       "id": "pr:17479",
@@ -100509,13 +100541,13 @@
       "ref": "research/ruby-fastlane-token-clock",
       "url": "https://github.com/google/gvisor/pull/17479",
       "status": "open",
-      "updatedAt": "2026-11-17T19:05:00.391405+00:00",
+      "updatedAt": "2026-11-26T02:19:45.141533+00:00",
       "followup": {
-        "owner": "approved_rebase_queue",
+        "owner": "root",
         "sourceHead": "b0d665d9f298bf84db405213b403467d8470af4f",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Published b0d665d9f2 has passing exact-head GitHub Actions validation, DCO and First Pass 2929; canonical First Pass had no failed attempts. Source delivery and notice are complete. Maintainer status remains pending, last detailed as “Maintainer approvals: 1, needs 2.” No main build is observed or inferred green.",
-        "nextAction": "Follow event-driven additional maintainer approval, natural main/check events or source changes. Existing requested reviewers remain; no recurring CI polling, source question, retry, outreach or merge.",
+        "disposition": "Published b0d665d9f remains unchanged. Reviewed amendment d260f684af preserves all 3,613 examples while backporting clock-skew handling and fixing the wrong-password salt fixture. Both runtime functional suites and the actual Dockerfile patch check passed; independent reviews accepted.",
+        "nextAction": "Await Tamir’s submitted amendment decision for d260f684af. Keep current PR lifecycle and all performance qualification separate.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17479",
           "https://github.com/google/gvisor/pull/17479#issuecomment-6799672981",
@@ -100528,10 +100560,12 @@
           "https://github.com/tamird/gvisor/commit/b0d665d9f298bf84db405213b403467d8470af4f",
           "https://github.com/tamird/gvisor/actions/runs/45712767233",
           "https://github.com/gvisor/gvisor/pull/17479#issuecomment-7177944558",
-          "https://buildkite.com/gvisor/first-pass/builds/2929"
+          "https://buildkite.com/gvisor/first-pass/builds/2929",
+          "https://github.com/tamird/gvisor/commit/d260f684af25fc5cee37b4f3188b18c094494fd1",
+          "https://github.com/tamird/gvisor/actions/runs/45738543851"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Actual maintainer/main/source event. No recurring CI watch.",
+        "recheckCondition": "Answer to the exact amendment question or actual PR/source event.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -100555,7 +100589,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-26T00:05:51.079754+00:00",
+        "curatedAt": "2026-11-26T02:19:45.141533+00:00",
         "candidate": {
           "head": "b0d665d9f298bf84db405213b403467d8470af4f",
           "base": "e28474f026f4f6d6cfa46710e34f01786d54477e",
@@ -100628,7 +100662,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "recheckCondition": "Actual maintainer/main/source event. No recurring CI watch.",
+      "recheckCondition": "Answer to the exact amendment question or actual PR/source event.",
       "settledReviews": [
         {
           "kind": "amendment",
@@ -100653,7 +100687,18 @@
             "coverage": "DCO-only99759→518 identicaltree/parents, strict=518→b0; standinguserrebase/push/noticegrant; no new useranswer inferred"
           }
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "d260f684af25fc5cee37b4f3188b18c094494fd1",
+        "baseHead": "b0d665d9f298bf84db405213b403467d8470af4f",
+        "url": "https://github.com/tamird/gvisor/commit/d260f684af25fc5cee37b4f3188b18c094494fd1",
+        "title": "Stabilize the pinned Fastlane test fixtures",
+        "summary": "Actual submitted amendment question; current PR remains b0d665d9f.",
+        "body": "The pinned Fastlane suite compared token issue time with a second clock reading and failed across a clock tick. Backport upstream's clock-skew adjustment and updated assertion [1], preserving all 3,613 selected examples.\n\nThe same suite's legacy CBC test intermittently accepted its wrong password when a random salt gave valid padding [2]. Use a fixed salt that makes this specific wrong-password fixture invalid, while retaining real encryption, decryption and error propagation.\n\n[1]: https://github.com/fastlane/fastlane/commit/2beac83f8\n[2]: https://github.com/fastlane/fastlane/issues/21663\n\nPrepared by Codex on behalf of @tamird.\n",
+        "reviewCommand": "git range-diff b0d665d9f^! d260f684af25fc5cee37b4f3188b18c094494fd1^!"
+      }
     },
     {
       "head": "c4098b8d0fdcf02ea31202c40f54a4c774c794fc",
@@ -109399,6 +109444,53 @@
         "replyBody": "Updated the third window to start at 990 and corrected its expected offset.\n\nPosted by Codex on behalf of @tamird.",
         "reviewCommand": "git range-diff f0a6a2dd4027ff6bef9b0d99b043016f6a8c1665^! 4162e5c47a836f10c20292c32878b2c14d6f03f8^!"
       }
+    },
+    {
+      "id": "branch:absl-prefetch",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/absl-prefetch-20261125",
+      "head": "d4b55cd9df05ea0519a124c00fd31f0f99468ec9",
+      "url": "https://github.com/tamird/gvisor/commit/d4b55cd9df05ea0519a124c00fd31f0f99468ec9",
+      "title": "Prefetch Abseil benchmark dependencies",
+      "group": "analysis",
+      "status": "Contributor review",
+      "summary": "Six-line Dockerfile proposal prefetches pinned dependencies before measured cold builds. Offline 61-target cold builds passed on both runtime arms; two independent reviews accepted. No upstream PR, image publication or timing result.",
+      "updatedAt": "2026-11-26T02:19:45.141533+00:00",
+      "followup": {
+        "owner": "root",
+        "disposition": "Six-line Dockerfile proposal prefetches pinned dependencies before measured cold builds. Offline 61-target cold builds passed on both runtime arms; two independent reviews accepted. No upstream PR, image publication or timing result.",
+        "nextAction": "Await Tamir’s submitted opening decision for exact d4b55cd9df. Preserve the cold-build and functional-only qualification scope.",
+        "recheckCondition": "Answer to the actual publication question or substantive source/review change.",
+        "curatedAt": "2026-11-26T02:19:45.141533+00:00",
+        "sourceHead": "d4b55cd9df05ea0519a124c00fd31f0f99468ec9",
+        "base": "86ea830659a8855752d1ad56141e29788e3aaa00",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/45737661122",
+          "https://github.com/tamird/gvisor/commit/d4b55cd9df05ea0519a124c00fd31f0f99468ec9"
+        ]
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "d4b55cd9df05ea0519a124c00fd31f0f99468ec9",
+        "baseHead": "86ea830659a8855752d1ad56141e29788e3aaa00",
+        "url": "https://github.com/tamird/gvisor/commit/d4b55cd9df05ea0519a124c00fd31f0f99468ec9",
+        "title": "Prefetch Abseil benchmark dependencies",
+        "summary": "Actual submitted upstream opening question; unanswered.",
+        "body": "Abseil benchmark visits fetched external repositories during the measured build, so a GitHub download failure could abort a visit. Prefetch the pinned source archives into a common repository cache when building the image, then expunge build outputs so fresh benchmark containers still perform cold builds.\n",
+        "reviewCommand": "git show d4b55cd9df05ea0519a124c00fd31f0f99468ec9"
+      },
+      "evidence": [
+        {
+          "label": "Offline cold-build qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45737661122"
+        },
+        {
+          "label": "Exact reviewed source",
+          "url": "https://github.com/tamird/gvisor/commit/d4b55cd9df05ea0519a124c00fd31f0f99468ec9"
+        }
+      ]
     }
   ],
   "edges": [
@@ -135938,8 +136030,10 @@
               "source": "1dd9a26fb3",
               "baseline": 45735105058,
               "candidate": 45735107440,
-              "scope": "Dirty rootfs RubySpec N1 on each original runtime product set;3613 examples,0 failures,31 pending per arm;18 product hashes and cleanup0. Functional only, not completed A/A/A/B or retroactive clearance of old OpenSSL/JWT failures."
-            }
+              "scope": "Dirty rootfs RubySpec N1 on each original runtime product set;3613 examples,0 failures,31 pending per arm;18 product hashes and cleanup0. Functional only, not completed A/A/A/B or retroactive clearance of old OpenSSL/JWT failures.",
+              "nextState": "All eight original leaves admitted; finite measurements running under analysis_delivery. No terminal comparison inferred."
+            },
+            "fixtureAmendment": "pr:17479 contributor decision for d260f684af; current public b0d unchanged."
           },
           "fio": {
             "run": 45728693661,
@@ -135967,7 +136061,8 @@
             "abSuccessful": 13,
             "abFailed": 1,
             "failure": "Baseline pair5A could not fetch pinned Bazel platforms0.0.10 from GitHub release:HTTP403.",
-            "limits": "No complete candidate estimate or Sentry compatibility failure proven;no successful-subset analysis/unchanged retry."
+            "limits": "No complete candidate estimate or Sentry compatibility failure proven;no successful-subset analysis/unchanged retry.",
+            "supplierProposal": "branch:absl-prefetch"
           }
         }
       },
@@ -141462,12 +141557,12 @@
     },
     {
       "id": "investigation:master-pgo-profile-refresh",
-      "title": "Master PGO profile refresh has failed since Go 1.27.2",
+      "title": "Follow master PGO profile publication",
       "status": "active",
       "group": "tests",
       "owner": "root",
-      "updatedAt": "2026-11-25T10:10:54.050204+00:00",
-      "summary": "Public current-master status for 8075b384 reports PGO build 4029 SUCCESS. Historical build 3910 remains an unexplained failure; the canonical PGO reader still returns 403. Current status success does not prove profile publication or explain the old failure.",
+      "updatedAt": "2026-11-26T02:19:45.141533+00:00",
+      "summary": "Publisher correction #17492 merged. The bot opened #17923 at 376f04f56e with 12 Go 1.27.3 AMD64 KVM/systrap profiles and companion hashes; it remains open. Current master 3e9bbb3cc reports PGO 4061 success. Historical build 3910 remains unexplained; these observations do not diagnose its failure.",
       "findings": [
         {
           "text": "A scan of 1,019 published commits found every numbered build in that interval. Build #3173 on 689b011dd passed in 17m31s. Build #3174 on d39e500a2, the Go 1.27.2 upgrade, failed in 3h55m. Build #3781 on 2552c6787 failed in 4h30m.",
@@ -141551,7 +141646,7 @@
           ]
         }
       ],
-      "nextStep": "Root follows an actual new PGO/default-branch failure or naturally accessible diagnostic/profile-publication evidence. No restricted-build retry, broader credential request, inferred profile refresh or old-failure remediation.",
+      "nextStep": "Follow actual #17923 landing or substantive new PGO evidence. Profile publication is now observed; do not await another publication proof, retry restricted historical builds or infer the old failure’s cause.",
       "evidence": [
         {
           "label": "Publisher correction, gVisor #17492",
@@ -141600,11 +141695,19 @@
         {
           "label": "Stock benchmark replay on master",
           "url": "https://github.com/tamird/gvisor/actions/runs/43067257412"
+        },
+        {
+          "label": "Published profile PR, open",
+          "url": "https://github.com/gvisor/gvisor/pull/17923"
+        },
+        {
+          "label": "Current master PGO success",
+          "url": "https://buildkite.com/gvisor/pgo-profiles/builds/4061"
         }
       ],
       "defaultBranchCheck": {
         "context": "buildkite/pgo-profiles",
-        "onSuccess": "Check whether the successful master build published new profile files for the expected Go version and platforms."
+        "onSuccess": "Follow the observed #17923 profile PR through landing; retain exact Go-version/platform scope."
       },
       "settledReviews": [
         {
@@ -141623,23 +141726,31 @@
           "note": "The tested publisher change opened as one commit in #17492."
         }
       ],
-      "recheckCondition": "A new source-bound PGO result, accessible diagnostic evidence or actual profile-publication event.",
+      "recheckCondition": "A #17923 lifecycle/source event or new source-bound PGO failure/evidence.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Root follows an actual new PGO/default-branch failure or naturally accessible diagnostic/profile-publication evidence. No restricted-build retry, broader credential request, inferred profile refresh or old-failure remediation.",
-        "recheckCondition": "A new source-bound PGO result, accessible diagnostic evidence or actual profile-publication event."
+        "nextAction": "Follow actual #17923 landing or substantive new PGO evidence. Profile publication is now observed; do not await another publication proof, retry restricted historical builds or infer the old failure’s cause.",
+        "recheckCondition": "A #17923 lifecycle/source event or new source-bound PGO failure/evidence."
       },
       "followup": {
-        "curatedAt": "2026-11-19T11:00:16.411290+00:00",
-        "nextAction": "Root follows an actual new PGO/default-branch failure or naturally accessible diagnostic/profile-publication evidence. No restricted-build retry, broader credential request, inferred profile refresh or old-failure remediation.",
-        "recheckCondition": "A new source-bound PGO result, accessible diagnostic evidence or actual profile-publication event.",
+        "curatedAt": "2026-11-26T02:19:45.141533+00:00",
+        "nextAction": "Follow actual #17923 landing or substantive new PGO evidence. Profile publication is now observed; do not await another publication proof, retry restricted historical builds or infer the old failure’s cause.",
+        "recheckCondition": "A #17923 lifecycle/source event or new source-bound PGO failure/evidence.",
         "owner": "root",
-        "disposition": "Public current-master status for 8075b384 reports PGO build 4029 SUCCESS. Historical build 3910 remains an unexplained failure; the canonical PGO reader still returns 403. Current status success does not prove profile publication or explain the old failure.",
+        "disposition": "Publisher correction #17492 merged. The bot opened #17923 at 376f04f56e with 12 Go 1.27.3 AMD64 KVM/systrap profiles and companion hashes; it remains open. Current master 3e9bbb3cc reports PGO 4061 success. Historical build 3910 remains unexplained; these observations do not diagnose its failure.",
         "observedAt": "2026-11-25T10:10:54.050204+00:00",
         "evidence": [
           "https://buildkite.com/gvisor/pgo-profiles/builds/4024",
-          "https://buildkite.com/gvisor/pgo-profiles/builds/4029"
-        ]
+          "https://buildkite.com/gvisor/pgo-profiles/builds/4029",
+          "https://github.com/gvisor/gvisor/pull/17923",
+          "https://buildkite.com/gvisor/pgo-profiles/builds/4061"
+        ],
+        "profilePublication": {
+          "pr": 17923,
+          "head": "376f04f56eba307cf805ed9cf42fa0abeff76e29",
+          "state": "OPEN",
+          "scope": "12 Go1.27.3 AMD64 KVM/systrap profiles and companion hashes"
+        }
       }
     },
     {
@@ -147884,5 +147995,5 @@
       "inactive": true
     }
   ],
-  "updatedAt": "2026-11-24T06:29:20.083295+00:00"
+  "updatedAt": "2026-11-26T02:19:45.141533+00:00"
 }
