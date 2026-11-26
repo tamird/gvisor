@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T11:24:40.325532+00:00",
+    "updatedAt": "2026-11-26T11:32:57.655715+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40905,14 +40905,14 @@
       "url": "https://github.com/google/gvisor/pull/16507",
       "group": "bazel",
       "status": "open",
-      "summary": "Prepared e2101026eb passes current AMD64 normal static parity: all 117,318 legacy positions are included in 117,320 candidate positions, with zero missing and 2,418 generated-PB positions each. Exact candidate ELF and source-archive identities match prior qualification. Four reports and 24 KCOV cases remain passed. Performance controls, current-base final review and publication approval remain outstanding; runner EACCES is separate.",
-      "updatedAt": "2026-11-26T10:49:50.407884+00:00",
+      "summary": "Prepared e2101026eb now has a functionally usable AMD64 normal opaque baseline/candidate pair: baseline archive build 45808877775 and its retained benign-guest report passed, alongside the existing candidate archive/report. Current static parity remains 117,318 legacy positions included in 117,320 candidate positions, zero missing; four candidate reports and 24 KCOV cases passed. This is functional provenance, not performance qualification or publication approval.",
+      "updatedAt": "2026-11-26T11:32:57.655715+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
-        "disposition": "Prepared e2101026eb passes current AMD64 normal static parity: all 117,318 legacy positions are included in 117,320 candidate positions, with zero missing and 2,418 generated-PB positions each. Exact candidate ELF and source-archive identities match prior qualification. Four reports and 24 KCOV cases remain passed. Performance controls, current-base final review and publication approval remain outstanding; runner EACCES is separate.",
-        "nextAction": "For prepared e2101026eb (public c715 unchanged), root completes current-base final review and the remaining performance controls/A-B release provenance before requesting publication approval. The AMD64 normal static-inclusion dependency is resolved; do not repeat its old module failure or infer race/ARM static parity. Keep the historical canonical-runner EACCES limitation separate.",
+        "disposition": "Prepared e2101026eb now has a functionally usable AMD64 normal opaque baseline/candidate pair: baseline archive build 45808877775 and its retained benign-guest report passed, alongside the existing candidate archive/report. Current static parity remains 117,318 legacy positions included in 117,320 candidate positions, zero missing; four candidate reports and 24 KCOV cases passed. This is functional provenance, not performance qualification or publication approval.",
+        "nextAction": "For prepared e2101026eb (public c715 unchanged), root completes current-base final review and metric-compatible performance producer/control qualification before requesting publication approval. The normal AMD64 opaque pair and static-inclusion dependencies are resolved. Preserve the separate historical syscall-runner EACCES limitation; do not infer race/ARM static parity, timings or source approval.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -41005,10 +41005,18 @@
           "https://github.com/tamird/gvisor/actions/runs/45797886145",
           "https://github.com/tamird/gvisor/actions/runs/45798978937",
           "https://github.com/tamird/gvisor/actions/runs/45803632211",
-          "https://app.buildbuddy.io/invocation/e909d87e-a556-4e7b-be14-8f8fc4e8e213"
+          "https://app.buildbuddy.io/invocation/e909d87e-a556-4e7b-be14-8f8fc4e8e213",
+          {
+            "label": "Current baseline opaque archive build",
+            "url": "https://github.com/tamird/gvisor/actions/runs/45808877775"
+          },
+          {
+            "label": "Retained baseline guest and report artifact",
+            "url": "https://github.com/tamird/gvisor/actions/runs/45810571304/artifacts/15112412051"
+          }
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Actual current-base final review, performance qualification or submitted source/publication decision; no stale module-input wait.",
+        "recheckCondition": "Actual current-base final review, metric-compatible performance/control evidence or submitted publication decision; no duplicate archive/report or static-parity run.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "qualificationHistory": [
           {
@@ -41343,7 +41351,7 @@
           "proofSHA256": "8cfa9665fca33bd1625d96c7b184d3b8454523fbfe87c0b7bd9744d867d14c0b",
           "recheckCondition": "Root permanent-mechanism decision, same-operation execution-review result or actual fidelity evidence."
         },
-        "curatedAt": "2026-11-26T10:49:50.407884+00:00",
+        "curatedAt": "2026-11-26T11:32:57.655715+00:00",
         "permanentBazelFirstLayer": {
           "testSource": "340e1072aa5a3d47e01ff68dffea34f91be4a9f4",
           "ciSource": "fa452727d8d6af2399f8644f9d64a40dc5d902ae",
@@ -42044,6 +42052,62 @@
             "generatedPBEach": 2418,
             "candidateBinarySHA256": "f5806dd0b3adb8c090736080f9ef04bedfbcae9ec1584bb98ef3f6c129179a0c",
             "sourceArchiveSHA256": "55772745932767a146a1eecb3fa810207bb766f2e56c75b65ae1275e04c6c34b"
+          },
+          "opaqueNormalAMDPair": {
+            "disposition": "AMD64 normal opaque baseline/candidate pair is functionally usable; not performance-qualified",
+            "nativeBaseline": "c3efd8c9381c89b78c1d86b6c64a49d53ee938f8",
+            "nativeCandidate": "e2101026eb7e6601ed02a04dff43069e11d5d189",
+            "baselineCI": "2c6f8b8995814406751fc4ed31043f57540838a1",
+            "baseline": {
+              "graphRun": 45808412186,
+              "archiveBuildRun": 45808877775,
+              "buildInvocation": "https://app.buildbuddy.io/invocation/faac42b2-a757-45cb-a6db-806c02dc1d41",
+              "reportRun": 45810571304,
+              "reportInvocation": "https://app.buildbuddy.io/invocation/bbdfd68d-9ef0-432f-9a20-0679c6f6be54",
+              "artifactURL": "https://github.com/tamird/gvisor/actions/runs/45810571304/artifacts/15112412051",
+              "archiveSHA256": "c1a739b8790a723945cef9b0d318cfe0bdf9b8530d09acc172e0455670b24906",
+              "archiveBytes": 44729762,
+              "archiveTarget": "//debian:gvisor-release-coverage-tar-zstd",
+              "opaqueMembers": "All nine ELF x86_64 binaries and single gvisor-bin directory; no missing/duplicate/absolute/traversal member; canonical root ownership,0755 and fixed2000timestamp. Complete archive retained.",
+              "memberAudit": "/private/tmp/gvisor-owner-20261117.knEPWo/16507-baseline-opaque-members-and-profile-audit.json",
+              "runscSHA256": "28c2e6e123c1d43a9a84572875c2c63094849bd743632e22fe352d35e8deb920",
+              "sentrySHA256": "f6a86db3a5458df893d8381ee5fed1a7c21633efe2d0a9deef827f430d3597b0",
+              "sentryStaticCorrespondence": "Exact f6a86db3 hash equals current legacy binary used in successful static inclusion45803632211",
+              "report": {
+                "path": "bazel-amd64-45810571304-1/_temp/bazel-qualification/artifacts/coverage-baseline-do-normal/reports/runsc.log.20261126-112842.346758.cov.txt",
+                "sha256": "af46e30ffa5c4b8018dcba174ecbb284829e503c7ffb1bc93b3b18ffcee95116",
+                "bytes": 744828,
+                "format": "gVisor covered-position list, not Go count profile",
+                "positions": 11816,
+                "sentry": 7454,
+                "generatedPB": 55,
+                "pbFiles": 16,
+                "grammarAndExclusions": "PASS"
+              }
+            },
+            "candidate": {
+              "producerCI": "31157ddd2e81c981ee92adf1b1da1ec0f27ea8b1",
+              "callerCI": "dfd9e27caef154da63b242774d794fdb6504715a",
+              "archiveBuildRun": 45785973454,
+              "archiveSHA256": "c2718b424cf18241e2ca498d4b63263a2e88610492b5464fef378f41148eeb17",
+              "archiveBytes": 27413842,
+              "archiveTarget": "//debian:gvisor-release-coverage-tar-zstd",
+              "runscSHA256": "2bbf5880097ccd623bb904e4a61eb44ce495eb3e752ea6d5be3b1a564f5bd802",
+              "sentrySHA256": "f5806dd0b3adb8c090736080f9ef04bedfbcae9ec1584bb98ef3f6c129179a0c",
+              "reportRun": 45792664585,
+              "reportArtifactURL": "https://github.com/tamird/gvisor/actions/runs/45792664585/artifacts/15104250700",
+              "reportPositions": 11865,
+              "reportSentryPositions": 7496,
+              "reportGeneratedPBPositions": 48,
+              "reportPBFiles": 14,
+              "reportSHA256": "7465a58331dce6eab35249af97cc676db45efcc51f4d4c1e3d764218710fa44b"
+            },
+            "sourceProvenance": "Baseline production source, Go1.27.3/go.mod/go.sum and compiler/module choices remain native c3efd; same13path RBE support plus CI-only module proxy/SDK action and declared archive caller. No Go/C runtime edits, no new dependency versions/resolver. tools/release.bzl and release map unchanged. Module manifests compared unchanged after both original module-mode binary builds.",
+            "actualCaller": "Both use whole canonical normal coverage archive, tar --same-permissions, sudo env-i minimal environment, --platform=systrap --network=none --host-settings=check_mandatory --coverage-report=<retained>/ do --quiet /bin/true; actual child exit0. Controller-local after RBE/cached products. Not syscall-runner Uname.",
+            "reportContract": "Actual gVisor covered-position lists: every entry satisfies positive ordered line/column interval grammar; unique positions, nonzero Sentry/generatedPB, no coverage/ring0/sleep/sync/syncevent/bpf/platform excluded packages. Baseline11816positions/7454Sentry/55PB across16PBfiles; candidate counts retain original dynamic scope and are not asserted identical. Static comparison independently proves all117318legacy positions included, candidate+2.",
+            "warning": "Baseline original instrumented Go controller prints GOCOVERDIR not set; this refers to Go runtime coverage-file emission, not absence of requested gVisor profile. Actual744828byte position report retained and validated. No source/flag workaround.",
+            "cacheAndSafety": "Archive digest from build BEP exactly equals actual caller-retained file; report caller build reports5198remote-cache hits,2057internal,zero remote actions (no rebuilt binaries). Exact source/HEAD/index/tracked and credential-cleanup guards pass both jobs. Scoped runtime/temp directory removed by existing successful EXIT trap; artifact whitelist contains only intended reports/logs/release package, no runtime state/checkpoint. No persistent watcher remains.",
+            "remaining": "No timings run. Metric-compatible performance producer/control and statistical/broad requirements remain; source57/e210 publication hold and current-base final review remain. Historical syscall-runner EACCES remains separate and unresolved. No new user decision requested."
           }
         },
         "technicalOwner": "approved_rebase_queue",
@@ -137091,7 +137155,7 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-26T11:24:40.325532+00:00",
+      "updatedAt": "2026-11-26T11:32:57.655715+00:00",
       "group": "analysis",
       "summary": "Source 0edf29aac is unchanged. The gRPC dirty-bindfs candidate-only A/A completed 50 successful children and 24 retained pairs, with no corrected flags across five comparisons. Its test passed; only post-test BES upload failed. No A/B or cross-worker stability is established. The 71 filesystem leaves with matched data remain scoped; other gRPC controls, FUSE, Node stability and broader qualification remain open.",
       "findings": [
@@ -137465,7 +137529,7 @@
           ]
         }
       ],
-      "nextStep": "Root and analysis_delivery qualify the non-systemd Docker reload fixture on 0452ed02d after its Goimports TLS timeout; BUILD formatting passed. Then verify synthetic fixture and canonical native baseline archive identities before real measurement. Authenticated BuildBuddy placement has a verified 12-hour budget for the observed invocation. The selected native rebuild and digest-check route replaces the artifact-fetch credential wait. Five other non-FUSE controls, both FUSE holds and the Node candidate hold remain; no timing authorization or cross-worker stability is inferred.",
+      "nextStep": "analysis_delivery audits original baseline producer recovery 45810749174 for the exact archive digest and cache outputs, then verifies synthetic non-systemd reload/restoration and runtime identities before real measurement. The Go helper on 0452ed02dd has passed formatting, compilation and identity positive/negative checks. Direct same-scope cache upload was acknowledged but readback returned NotFound; no further direct retry. The observed 12-hour budget is verified, not full fixture admission. Other gRPC controls, both FUSE holds and the Node candidate hold remain.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -138188,13 +138252,13 @@
         ],
         "owner": "root",
         "disposition": "Source 0edf29aac is unchanged. The gRPC dirty-bindfs candidate-only A/A completed 50 successful children and 24 retained pairs, with no corrected flags across five comparisons. Its test passed; only post-test BES upload failed. No A/B or cross-worker stability is established. The 71 filesystem leaves with matched data remain scoped; other gRPC controls, FUSE, Node stability and broader qualification remain open.",
-        "nextAction": "Root and analysis_delivery qualify the non-systemd Docker reload fixture on 0452ed02d after its Goimports TLS timeout; BUILD formatting passed. Then verify synthetic fixture and canonical native baseline archive identities before real measurement. Authenticated BuildBuddy placement has a verified 12-hour budget for the observed invocation. The selected native rebuild and digest-check route replaces the artifact-fetch credential wait. Five other non-FUSE controls, both FUSE holds and the Node candidate hold remain; no timing authorization or cross-worker stability is inferred.",
-        "recheckCondition": "Actual source-check and synthetic fixture results, exact baseline archive/product identity proof, and an accepted worker/control plan; no unchanged retry or automatic candidate comparison.",
+        "nextAction": "analysis_delivery audits original baseline producer recovery 45810749174 for the exact archive digest and cache outputs, then verifies synthetic non-systemd reload/restoration and runtime identities before real measurement. The Go helper on 0452ed02dd has passed formatting, compilation and identity positive/negative checks. Direct same-scope cache upload was acknowledged but readback returned NotFound; no further direct retry. The observed 12-hour budget is verified, not full fixture admission. Other gRPC controls, both FUSE holds and the Node candidate hold remain.",
+        "recheckCondition": "Terminal producer artifact/hash audit, then actual synthetic reload/restoration and runtime admission; no real measurement or automatic candidate comparison before those gates.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-26T11:24:40.325532+00:00",
+        "curatedAt": "2026-11-26T11:32:57.655715+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -138510,7 +138574,7 @@
               "Cross-worker measurement stability",
               "General tenant maximum or 12-hour durability"
             ],
-            "next": "Root and analysis_delivery complete source qualification and synthetic non-systemd daemon fixture admission on 0452ed02d, then verify canonical baseline archive/product identities and worker/control binding before any real measurement.",
+            "next": "analysis_delivery audits original producer recovery 45810749174 for exact cb479 archive and same-cache outputs, then executes the synthetic reload/restoration admission before real measurement.",
             "immutableBaselineAssessment": {
               "producerSource": "b231e0bc296cbe3dfb08e44cd92845885542464f",
               "nativeBaseline": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -138549,19 +138613,18 @@
               "cleanup": "Remote platform cleanup completed; local selector restored; no task temp repository was created."
             },
             "normalReloadCorrection": {
-              "source": "86ddb338b98fef7e5ed144e7ea9ad4d89a3266b5",
+              "source": "0452ed02dd33cf662143a3a4abfa28a2a9f4b9b6",
               "ref": "qualification/grpc-nonsystemd-preflight-20261126",
-              "delta": "3files,+87/-2, fork qualification only",
-              "url": "https://github.com/tamird/gvisor/commit/86ddb338b98fef7e5ed144e7ea9ad4d89a3266b5",
-              "run": "https://app.buildbuddy.io/invocation/4fbb6a5d-e2c0-4f79-b2d8-63c33cf4ea12",
-              "buildifier": "PASS,710c4a17-f124-48f1-9425-fb8e10dd29b5",
-              "helperBuild": "PASS,41d958f6-be0a-40cc-8ade-3d3da87c825e",
-              "admission": "FAIL before mutation: declared Python3.11.15 lacks os.pidfd_open; kernel pidfd support not tested.",
-              "previousAssertionFailure": "aba6b2b4-f313-4a3a-bcc5-e0ac25ab8c3d: systemPython pre3.9 lacks removeprefix; preserved.",
+              "url": "https://github.com/tamird/gvisor/commit/0452ed02dd33cf662143a3a4abfa28a2a9f4b9b6",
               "scope": "Shared normal reload/cleanup only; default systemd and checkpoint/restart paths unchanged. Requires caller attestation of exclusive disposable guest, local root dockerd socket peer, guest PID namespace, config and original process identity.",
-              "actual": "No signal/config mutation, archive build, runtime fixture or timing ran. Remote cleanup completed and local selector restored.",
-              "next": "Root decides same small helper via existing Go/x/sys pidfd APIs versus holding this placement. No further fallback or new run dispatched.",
-              "checkout": "Prior qualification/node-accounting-control-20261126 restored at516e4814ae988a3f8c9aba934d38a3ba2d6b2447; trackedclean, original tools/buildkite/__pycache__/ preserved."
+              "helperBuild": "PASS379510cd: localrootdockerd659:117 and wrongidentity0:0 rejected before signal",
+              "format": {
+                "status": "PASS",
+                "outer": "https://app.buildbuddy.io/invocation/058ebfcc-fd03-4690-a463-bb51dee0d72d",
+                "sdkInvocation": "28c80ebe-bf08-4a22-ad38-710bae2ef784",
+                "goimportsInvocation": "31f055a5-491b-4529-859e-ea8e77ff06b0",
+                "command": "DeclaredGoSDK via Bazel envGOROOT; canonicalgoimports -format-only -d; emptydiff."
+              }
             },
             "effectiveBudgetProof": {
               "invocation": "4fbb6a5d-e2c0-4f79-b2d8-63c33cf4ea12",
@@ -138588,8 +138651,24 @@
             ],
             "state": "Non-systemd fixture admission pending; no measurements",
             "selectedInputRoute": "Canonical native baseline rebuild, opaque archive digest verification and standard override_repository; no credential forwarding.",
-            "currentSource": "0452ed02d",
-            "currentQualification": "BUILD formatting passed; Goimports encountered a TLS timeout. Synthetic fixture and exact archive identities remain required before real measurement."
+            "currentSource": "0452ed02dd33cf662143a3a4abfa28a2a9f4b9b6",
+            "currentQualification": "Go helper compiled; socket/PID/config identity and mismatch rejection passed. Buildifier and canonical Goimports passed. Full reload/restoration fixture remains unexecuted.",
+            "cacheRehydration": {
+              "group": "GR7777278340284790152",
+              "originalInvocation": "330e37ff-8cff-4427-bb8a-913ddf554a74",
+              "instance": "",
+              "digestFunction": "SHA256",
+              "digest": "cb479886af63e2616c04640084fa8d4822a84716b8b6ee2996c2548d68d7a57e/40270884",
+              "result": "Nativebb upload acknowledged exactobject, immediate read failed NotFound manifestKey; no further direct reuse retries. Root selected original trusted producer/cache route."
+            },
+            "trustedProducerRecovery": {
+              "run": 45810749174,
+              "url": "https://github.com/tamird/gvisor/actions/runs/45810749174",
+              "source": "b231e0bc296cbe3dfb08e44cd92845885542464f",
+              "request": "grpc-baseline-producer-recovery-request.json",
+              "scope": "Unchanged original capture invocation/configuration; normalBazelcacheproducer. No newworkflow/source/collector/timing.",
+              "next": "Terminalartifact audit of exactcb479archive and producer cache output; then held synthetic fixture with same input."
+            }
           }
         }
       },
@@ -151001,5 +151080,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-26T11:24:40.325532+00:00"
+  "updatedAt": "2026-11-26T11:32:57.655715+00:00"
 }
