@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T05:18:26.909421+00:00",
+    "updatedAt": "2026-11-26T05:26:36.856313+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -135434,9 +135434,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-26T04:15:51.438230+00:00",
+      "updatedAt": "2026-11-26T05:26:36.856313+00:00",
       "group": "analysis",
-      "summary": "Source 0edf29aac is the completed 36-commit analyzer rewrite. All eight Abseil A/A controls and seven A/B cohorts are complete. Dirty FUSE stopped during A/B on a dependency HTTP 403. Four outer jobs failed only during post-test BES upload. Ruby rootfs retains a corrected 2.61% candidate drift. gRPC functional admissions are not paired measurements. Other qualification gates and #17884 remain separate.",
+      "summary": "Source 0edf29aac remains the completed 36-commit analyzer rewrite. Filesystem matched data cover 71 leaves: 48 Fio, eight RubyNoOp, eight RubySpec and seven Abseil. Ruby FUSE completed A/A and A/B before a separate BES timeout: clean elapsed −0.398%, dirty +0.369%, primary intervals 1–3%, no corrected flags. This is not full filesystem clearance: Ruby rootfs drift, Fio throughput precision, one incomplete Abseil cohort and missing gRPC comparisons remain.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -135808,7 +135808,7 @@
           ]
         }
       ],
-      "nextStep": "Existing owners finish the Ruby FUSE assessment and reconcile missing paired workload coverage. Preserve adverse directions, precision limits and incomplete cohorts. No Abseil measurements remain active or need an unchanged retry. Keep FUSE architecture, source decisions and #17884 separate.",
+      "nextStep": "The performance owner audits gRPC dirty-bindfs A/A-only run 45761231714 after its verified N1 admission. It is the first of six non-FUSE controls; no gRPC A/B is complete or automatically authorized. Two baseline FUSE gRPC leaves still fail ELF loading with ENOSYS. Preserve every leaf, Ruby rootfs drift, Fio throughput limits, dirty-FUSE Abseil fetch stop, source decisions and #17884. Do not repeat completed cohorts.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -136253,6 +136253,18 @@
         {
           "label": "Final Abseil dirty-tmpfs complete AA and AB;post-test BES timeout",
           "url": "https://github.com/tamird/gvisor/actions/runs/45722602120"
+        },
+        {
+          "label": "Ruby FUSE complete AA and AB;post-test BES timeout",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45737714897"
+        },
+        {
+          "label": "gRPC dirty-bindfs verified N1 functional admission",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45759909463"
+        },
+        {
+          "label": "First gRPC A/A-only control;owner terminal audit pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45761231714"
         }
       ],
       "reviewWatch": {
@@ -136275,11 +136287,11 @@
           }
         ]
       },
-      "recheckCondition": "Owner-confirmed terminal Ruby or remaining paired evidence, an actual prerequisite/source event, or an answer to an existing decision.",
+      "recheckCondition": "The existing owner’s terminal gRPC control audit, substantive remaining-gate evidence, an actual prerequisite/source event, or an answer to an existing decision.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Existing owners finish the Ruby FUSE assessment and reconcile missing paired workload coverage. Preserve adverse directions, precision limits and incomplete cohorts. No Abseil measurements remain active or need an unchanged retry. Keep FUSE architecture, source decisions and #17884 separate.",
-        "recheckCondition": "Owner-confirmed terminal Ruby or remaining paired evidence, an actual prerequisite/source event, or an answer to an existing decision."
+        "nextAction": "The performance owner audits gRPC dirty-bindfs A/A-only run 45761231714 after its verified N1 admission. It is the first of six non-FUSE controls; no gRPC A/B is complete or automatically authorized. Two baseline FUSE gRPC leaves still fail ELF loading with ENOSYS. Preserve every leaf, Ruby rootfs drift, Fio throughput limits, dirty-FUSE Abseil fetch stop, source decisions and #17884. Do not repeat completed cohorts.",
+        "recheckCondition": "The existing owner’s terminal gRPC control audit, substantive remaining-gate evidence, an actual prerequisite/source event, or an answer to an existing decision."
       },
       "head": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
       "settledReviews": [
@@ -136502,17 +136514,20 @@
           "https://github.com/tamird/gvisor/actions/runs/45737103786",
           "https://github.com/tamird/gvisor/actions/runs/45737105626",
           "https://github.com/tamird/gvisor/actions/runs/45737101591",
-          "https://github.com/tamird/gvisor/actions/runs/45722602120"
+          "https://github.com/tamird/gvisor/actions/runs/45722602120",
+          "https://github.com/tamird/gvisor/actions/runs/45737714897",
+          "https://github.com/tamird/gvisor/actions/runs/45759909463",
+          "https://github.com/tamird/gvisor/actions/runs/45761231714"
         ],
         "owner": "root",
-        "disposition": "Source 0edf29aac is the completed 36-commit analyzer rewrite. All eight Abseil A/A controls and seven A/B cohorts are complete. Dirty FUSE stopped during A/B on a dependency HTTP 403. Four outer jobs failed only during post-test BES upload. Ruby rootfs retains a corrected 2.61% candidate drift. gRPC functional admissions are not paired measurements. Other qualification gates and #17884 remain separate.",
-        "nextAction": "Existing owners finish the Ruby FUSE assessment and reconcile missing paired workload coverage. Preserve adverse directions, precision limits and incomplete cohorts. No Abseil measurements remain active or need an unchanged retry. Keep FUSE architecture, source decisions and #17884 separate.",
-        "recheckCondition": "Owner-confirmed terminal Ruby or remaining paired evidence, an actual prerequisite/source event, or an answer to an existing decision.",
+        "disposition": "Source 0edf29aac remains the completed 36-commit analyzer rewrite. Filesystem matched data cover 71 leaves: 48 Fio, eight RubyNoOp, eight RubySpec and seven Abseil. Ruby FUSE completed A/A and A/B before a separate BES timeout: clean elapsed −0.398%, dirty +0.369%, primary intervals 1–3%, no corrected flags. This is not full filesystem clearance: Ruby rootfs drift, Fio throughput precision, one incomplete Abseil cohort and missing gRPC comparisons remain.",
+        "nextAction": "The performance owner audits gRPC dirty-bindfs A/A-only run 45761231714 after its verified N1 admission. It is the first of six non-FUSE controls; no gRPC A/B is complete or automatically authorized. Two baseline FUSE gRPC leaves still fail ELF loading with ENOSYS. Preserve every leaf, Ruby rootfs drift, Fio throughput limits, dirty-FUSE Abseil fetch stop, source decisions and #17884. Do not repeat completed cohorts.",
+        "recheckCondition": "The existing owner’s terminal gRPC control audit, substantive remaining-gate evidence, an actual prerequisite/source event, or an answer to an existing decision.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-26T04:15:51.438230+00:00",
+        "curatedAt": "2026-11-26T05:26:36.856313+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -136638,9 +136653,24 @@
                   "AB": 4
                 },
                 "scope": "Original clean/dirty workloads;18 frozen products and cleanup verified;no equivalence/otherleaf clearance"
+              },
+              "fuse": {
+                "run": 45737714897,
+                "state": "Full AA and AB data complete;benchmark PASS before post-test BES timeout",
+                "children": 100,
+                "benchmarkRows": 200,
+                "AAFlags": 0,
+                "ABFlags": 0,
+                "candidateElapsedPercent": {
+                  "clean": -0.398,
+                  "dirty": 0.369
+                },
+                "primaryABCIs": "1–3%",
+                "rawManifestSHA256": "224d644bf627127ff7c37ce6b40733d21a0d11e01d433d77c8f5c5728d23a67f",
+                "scope": "Corrected commonfixture;18products and cleanup0;no equivalence or rootfs drift clearance"
               }
             },
-            "currentScope": "Corrected common fixture admitted all eight leaves; bindfs/tmpfs/rootfs AA+AB complete, FUSE AA→conditionalAB still running."
+            "currentScope": "All8correctedRubySpecleaves complete AA+AB;rootfsdriftretained;FUSEouterfailureafteracceptedtest"
           },
           "fio": {
             "run": 45728693661,
@@ -136695,9 +136725,34 @@
             "limits": "Original network-dependent image;not timings for prefetch proposal. Clean-FUSE+1.48%,p=.007 retained (above corrected .00025). All completed AB primary median CIs0–1%;no equivalence. Four outer jobs fail only post-test BES stream/UNKNOWN despite completed accepted local cohorts;dirtyFUSE retains13successful ABchildren then dependencyHTTP403."
           },
           "grpcQualification": {
-            "state": "Retained non-FUSE recipes are functionalN1 admissions,not paired statistical evidence",
-            "fuse": "Baseline ELF execution ConfigureMMap ENOSYS remains separate feature/scope prerequisite",
-            "next": "Reconcile remaining paired non-FUSE coverage before full filesystem qualification"
+            "owner": "analysis_delivery",
+            "state": "First non-FUSE A/A-only control running;noABresult",
+            "run": 45761231714,
+            "source": "58d843fffb7b71f9ba3836539d22d1e877e37dbf",
+            "case": "BuildGRPC/page_cache.dirty/filesystem.bindfs",
+            "nativeAnalyzer": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
+            "functionalAdmission": {
+              "run": 45759909463,
+              "iterations": 1,
+              "runtime": "benchmark-candidate",
+              "cleanup": 0,
+              "scope": "Actual workloadN1only,not paired statistical evidence"
+            },
+            "expectedTerminal": "50candidate-onlychildren,AA-onlyreportdirectory,all5contrasts/flags/CIs,18products/cleanup;noautomaticAB/retry",
+            "remaining": "Six non-FUSE controls/candidatecomparisons not complete;two baselineFUSE ENOSYS leaves separatefeaturehold"
+          },
+          "filesystemMatchedData": {
+            "source": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
+            "matchedLeaves": 71,
+            "groups": {
+              "Fio": 48,
+              "RubyNoOp": 8,
+              "RubySpec": 8,
+              "Abseil": 7
+            },
+            "scope": "Completed paired data,not blanket statistical acceptance or fullfilesystemqualification",
+            "remaining": "Abseil dirtyFUSE AB incomplete;gRPC8 lacks completed paired candidate evidence;two baselineFUSE gRPC ENOSYS leaves separate",
+            "RubyCorrectedFlags": "AA0/80;AB1/80 rootfs candidateearly/late+2.61%;all16primarycandidatecontrastsunflagged"
           }
         }
       },
@@ -148630,5 +148685,5 @@
       "inactive": true
     }
   ],
-  "updatedAt": "2026-11-26T05:18:26.909421+00:00"
+  "updatedAt": "2026-11-26T05:26:36.856313+00:00"
 }
