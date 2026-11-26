@@ -1,0 +1,17 @@
+Legacy CBC checks padding rather than authenticating the password. A random
+salt can give this wrong key valid padding. Keep this error-path fixture
+deterministic while running the real encryption and decryption operations.
+
+https://github.com/fastlane/fastlane/issues/21663
+
+--- a/match/spec/encryption/openssl_spec.rb
++++ b/match/spec/encryption/openssl_spec.rb
+@@ -25,6 +25,8 @@
+     end
+ 
+     it "raises an exception if invalid password is passed" do
++      # Keep the legacy CBC error-path fixture deterministic.
++      allow(SecureRandom).to receive(:random_bytes).with(8).and_return("\0" * 8)
+       @e.encrypt_files
+       expect(File.read(@full_path)).to_not(eq(@content))
+ 
