@@ -44,6 +44,8 @@ COVERAGE_SRCS = [
     "//:gopath",
     "//tools:build_cover.sh",
     "//tools:go_cover_toolchain",
+    "@coverage_legacy_modules//:proxy",
+    "@coverage_legacy_modules//:modules/cache/download/ROOT",
 ]
 
 COVERAGE_CMD = (
@@ -54,7 +56,8 @@ COVERAGE_CMD = (
     "\"$(execpath //:go.sum)\" " +
     "\"$(execpath sentry_main.go)\" " +
     "\"$(execpath //tools:go_cover_toolchain)\" " +
-    "\"%s\" "
+    "\"%s\" " +
+    "\"$(execpath @coverage_legacy_modules//:modules/cache/download/ROOT)\" "
 )
 
 go_cov(
@@ -62,7 +65,8 @@ go_cov(
     srcs = COVERAGE_SRCS,
     outs = ["gvisor_sentry_cov"],
     cmd = COVERAGE_CMD % ("//runsc/cmd/sentry:gvisor_sentry_cov", "false"),
-    tags = ["manual"],
+    exec_compatible_with = ["//tools/bazeldefs:rbe_ubuntu24_c", "@platforms//cpu:x86_64", "@platforms//os:linux"],
+    tags = ["manual", "no-local"],
     visibility = ["//debian:__pkg__"],
 )
 
@@ -71,7 +75,8 @@ go_cov(
     srcs = COVERAGE_SRCS,
     outs = ["gvisor_sentry_race_cov"],
     cmd = COVERAGE_CMD % ("//runsc/cmd/sentry:gvisor_sentry_race_cov", "true"),
-    tags = ["manual"],
+    exec_compatible_with = ["//tools/bazeldefs:rbe_ubuntu24_c", "@platforms//cpu:x86_64", "@platforms//os:linux"],
+    tags = ["manual", "no-local"],
     visibility = ["//debian:__pkg__"],
 )
 

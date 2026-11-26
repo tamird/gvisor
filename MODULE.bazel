@@ -1034,3 +1034,14 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+coverage_legacy_module_proxy = use_repo_rule(
+    "//tools/bazeldefs/tests/coverage:module_proxy.bzl",
+    "coverage_legacy_module_proxy",
+)
+coverage_legacy_module_proxy(
+    name = "coverage_legacy_modules",
+    go_mod = "//:go.mod",
+    go_sum = "//:go.sum",
+    sdk_root = "@go_sdk//:ROOT",
+)

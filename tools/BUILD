@@ -1,6 +1,6 @@
 load("@bazel_skylib//rules:common_settings.bzl", "bool_setting")
 load("@rules_python//python:py_test.bzl", "py_test")
-load("//tools:defs.bzl", "bzl_library", "go_cov", "gotsan_flag_values", "gotsan_values", "select_goarch")
+load("//tools:defs.bzl", "bzl_library", "gotsan_flag_values", "gotsan_values", "select_goarch")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -89,7 +89,7 @@ exports_files([
 
 # Go toolchain patched to allow imports of internal packages for coverage
 # builds.
-go_cov(
+genrule(
     name = "go_cover_toolchain",
     srcs = [
         "build_go_cover_toolchain.sh",
@@ -106,8 +106,16 @@ go_cov(
           # @go_sdk is for the host's arch, so cross-compilation is not
           # supported. The script fails upon target-arch mismatch.
           select_goarch(),
+    exec_compatible_with = [
+        "//tools/bazeldefs:rbe_ubuntu24_c",
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
     # Only needed for coverage builds.
-    tags = ["manual"],
+    tags = [
+        "manual",
+        "no-local",
+    ],
     visibility = [
         "//runsc:__pkg__",
         "//runsc/cmd/sentry:__pkg__",

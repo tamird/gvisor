@@ -18,11 +18,14 @@ set -x -e -o pipefail
 
 dst=$(realpath "$1")
 gopath_zip="$2"
-go_mod="$3"
-go_sum="$4"
+go_mod=$(realpath "$3")
+go_sum=$(realpath "$4")
 main_go="$5" # Path of the main package Go file, relative to the repository root.
 go_toolchain=$(realpath "$6") # Tarball built by build_go_cover_toolchain.sh.
 race="$7"
+module_proxy=$(dirname "$(realpath "$8")")
+export GOPROXY="file://$module_proxy" GOSUMDB=off GOVCS='*:off'
+export GOENV=off GOTOOLCHAIN=local GOWORK=off GO111MODULE=on GOFLAGS=-mod=readonly
 
 mkdir .gocache
 GOMODCACHE="$(pwd)/.gocache"
@@ -69,3 +72,6 @@ fi
 # binary, so it is forced to run from scratch.
 gopkgs=$("$go_tool" list ./... | grep -E -v 'pkg/sentry/platform|pkg/ring0|pkg/coverage|pkg/sleep|pkg/sync|pkg/syncevent|pkg/bpf' | paste -sd,)
 "$go_tool" build --tags "$go_tags" $go_opts -cover -coverpkg="$gopkgs" -covermode=atomic -o "$dst" "$main_go"
+
+cmp "$go_mod" go.mod
+cmp "$go_sum" go.sum
