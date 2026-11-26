@@ -1036,3 +1036,17 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+http_file(
+    name = "coverage_legacy_go_bootstrap",
+    sha256 = "65efbc80fdc1fa2cd2631cad5b481777a68e8725f34e89f50fc6ac714e379b40",
+    urls = ["https://dl.google.com/go/go1.27.3.linux-amd64.tar.gz"],
+)
+
+
+http_file(
+    name = "coverage_legacy_go_source",
+    sha256 = "6e7749035cf360f06b2575d162ea79df9fda8ef671889e5c375f8e50777f26bb",
+    urls = ["https://dl.google.com/go/go1.27.3.src.tar.gz"],
+)
+
