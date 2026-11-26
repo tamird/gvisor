@@ -170,6 +170,20 @@ image_outputs(
     visibility = ["//test/benchmarks/harness:__pkg__"],
 )
 
+genrule(
+    name = "rubydev_fixture_content_check",
+    srcs = [
+        "@fastlane_benchmark_fixture//:match/spec/encryption/openssl_spec.rb",
+        "@fastlane_benchmark_fixture//:spaceship/lib/spaceship/connect_api/token.rb",
+        "@fastlane_benchmark_fixture//:spaceship/spec/connect_api/token_spec.rb",
+    ],
+    outs = ["rubydev_fixture_content_checked"],
+    cmd = "echo '202cab0d0c85b1ce14e923ef115c6d709c909168998f2cce34fa2bf5ad8b568c  $(location @fastlane_benchmark_fixture//:match/spec/encryption/openssl_spec.rb)\n" +
+          "72344d9f37b888e1e6717400e412e8c19189cdaaee599d45c3e9bf8c3ee2c1a5  $(location @fastlane_benchmark_fixture//:spaceship/lib/spaceship/connect_api/token.rb)\n" +
+          "fc78ac05618eba99103fada579e00bf057872164f02e44ebf5c30985b67368b5  $(location @fastlane_benchmark_fixture//:spaceship/spec/connect_api/token_spec.rb)' | sha256sum -c - && touch $@",
+    tags = ["manual"],
+)
+
 image_layer(
     name = "rubydev_fixture_layer",
     srcs = {
