@@ -121,7 +121,7 @@ jobs:
           path.write_text(json.dumps(identity, indent=2) + '\n')
           PY
       - name: Prepare source-appropriate tooling
-        id: tools
+        id: tooling_scope
         run: |
           set -euo pipefail
           if [[ ! -e .bazelversion && ! -L .bazelversion ]]; then
@@ -135,19 +135,31 @@ jobs:
             echo 'QUAL_TOOLING_SCOPE=static-tracker' >> "$GITHUB_ENV"
             exit 0
           fi
-          test "$(cat .bazelversion)" = 9.3.1
-          case "$QUAL_ARCH" in
-            amd64) arch=x86_64; sha=7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c ;;
-            arm64) arch=arm64; sha=10ba9cb76d4ee748d274dcc2981992bb12b74a203dc41a9c2eceeb8f29359366 ;;
+      - name: Install source-pinned Bazel
+        id: tools
+        if: env.QUAL_TOOLING_SCOPE != 'static-tracker'
+        env:
+          BAZEL_INSTALL_DIR: ${{ runner.temp }}/qualification/bin
+          BAZEL_INSTALL_ADD_PATH: 'true'
+        run: &install_bazel |
+          set -euo pipefail
+          version=$(cat .bazelversion)
+          case "$version/$QUAL_ARCH" in
+            8.8.1/amd64) arch=x86_64; sha=5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160 ;;
+            8.8.1/arm64) arch=arm64; sha=41ad5f9e833fcaee7398111343570cb155ca14985abb084b1f0ad2d29eaaec6d ;;
+            9.3.1/amd64) arch=x86_64; sha=7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c ;;
+            9.3.1/arm64) arch=arm64; sha=10ba9cb76d4ee748d274dcc2981992bb12b74a203dc41a9c2eceeb8f29359366 ;;
             *) exit 1 ;;
           esac
-          mkdir -m 700 "$RUNNER_TEMP/qualification/bin"
-          bazel="$RUNNER_TEMP/qualification/bin/bazel"
-          curl --proto '=https' --proto-redir '=https' -fsSL --retry 3 "https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-$arch" -o "$bazel"
+          mkdir -m 700 "$BAZEL_INSTALL_DIR"
+          bazel="$BAZEL_INSTALL_DIR/bazel"
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 3 "https://releases.bazel.build/$version/release/bazel-$version-linux-$arch" -o "$bazel"
           printf '%s  %s\n' "$sha" "$bazel" | sha256sum -c -
           chmod 700 "$bazel"
-          echo "$RUNNER_TEMP/qualification/bin" >> "$GITHUB_PATH"
-          echo 'QUAL_TOOLING_SCOPE=bazel-9.3.1' >> "$GITHUB_ENV"
+          if [[ "$BAZEL_INSTALL_ADD_PATH" == true ]]; then
+            echo "$BAZEL_INSTALL_DIR" >> "$GITHUB_PATH"
+          fi
+          echo "QUAL_TOOLING_SCOPE=bazel-$version" >> "$GITHUB_ENV"
       - name: Execute the verified plan against source
         id: qualify
         run: |
@@ -160,7 +172,7 @@ jobs:
         if: always()
         env:
           PREPARE_OUTCOME: ${{ steps.prepare.outcome }}
-          TOOLS_OUTCOME: ${{ steps.tools.outcome }}
+          TOOLS_OUTCOME: ${{ steps.tools.outcome == 'skipped' && steps.tooling_scope.outcome || steps.tools.outcome }}
           QUALIFY_OUTCOME: ${{ steps.qualify.outcome }}
         run: |
           python3 - <<'PY'
@@ -227,17 +239,12 @@ jobs:
           git fetch --depth=1 --no-tags --no-write-fetch-head origin "$SOURCE"
           git checkout --detach "$SOURCE"
           test "$(git rev-parse HEAD)" = "$SOURCE"
-          test "$(cat .bazelversion)" = 9.3.1
-          case "$QUAL_ARCH" in
-            amd64) arch=x86_64; sha=7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c ;;
-            arm64) arch=arm64; sha=10ba9cb76d4ee748d274dcc2981992bb12b74a203dc41a9c2eceeb8f29359366 ;;
-            *) exit 1 ;;
-          esac
-          mkdir -m 700 "$RUNNER_TEMP/bazel-qualification"
-          bazel="$RUNNER_TEMP/bazel-qualification/bazel"
-          curl --proto '=https' --proto-redir '=https' -fsSL --retry 3 "https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-$arch" -o "$bazel"
-          printf '%s  %s\n' "$sha" "$bazel" | sha256sum -c -
-          chmod 700 "$bazel"
+          test -f .bazelversion
+      - name: Install source-pinned Bazel
+        env:
+          BAZEL_INSTALL_DIR: ${{ runner.temp }}/bazel-qualification
+          BAZEL_INSTALL_ADD_PATH: 'false'
+        run: *install_bazel
       - name: Build the credential helper
         run: |
           set -euo pipefail
