@@ -106,11 +106,7 @@ using SocketMultiProtocolInetLoopbackTest =
 TEST_P(SocketMultiProtocolInetLoopbackTest,
        TCPBindAvoidsOtherBoundPortsReuseAddr) {
   ProtocolTestParam const& param = GetParam();
-  // UDP sockets are allowed to bind/listen on an already bound port w/
-  // SO_REUSEADDR even when requesting a port from the kernel. In case of TCP
-  // rebinding is only permitted when SO_REUSEADDR is set and an explicit port
-  // is specified. When a zero port is specified to the bind() call then an
-  // already bound port will not be picked.
+  // TCP must select a free ephemeral port even with SO_REUSEADDR.
   SKIP_IF(param.type != SOCK_STREAM);
 
   DisableSave ds;  // Too many syscalls.
@@ -123,14 +119,7 @@ TEST_P(SocketMultiProtocolInetLoopbackTest,
   [[maybe_unused]] const int nports =
       ASSERT_NO_ERRNO_AND_VALUE(MaybeLimitEphemeralPorts());
 
-  // In native hostinet runs, tests often cannot write to
-  // /proc/sys/net/ipv4/ip_local_port_range to reduce the ephemeral ports. If it
-  // defaults to the standard ~28,000 ports (between 32768 and 60999),
-  // attempting to exhaust all of them inside a single test will cause it to hit
-  // EMFILE or exceed test timeout. This is not an issue in non-native runs
-  // (gVisor sandbox) because the sandbox setup has privileges to write to its
-  // own virtual /proc, successfully limiting ports to ~50. We skip native cases
-  // since port exhaust tests are intended for constrained ranges anyway.
+  // Exhaust only a small range to avoid file limits and timeouts.
   SKIP_IF(nports > 1000);
 
   // Exhaust all ephemeral ports.
@@ -165,8 +154,8 @@ TEST_P(SocketMultiProtocolInetLoopbackTest,
 TEST_P(SocketMultiProtocolInetLoopbackTest,
        UDPBindMayBindOtherBoundPortsReuseAddr) {
   ProtocolTestParam const& param = GetParam();
-  // UDP sockets are allowed to bind/listen on an already bound port w/
-  // SO_REUSEADDR even when requesting a port from the kernel.
+  // UDP sockets may reuse an occupied ephemeral port with SO_REUSEADDR. Host
+  // kernels may instead require a free port when bind requests port zero.
   SKIP_IF(param.type != SOCK_DGRAM);
 
   DisableSave ds;  // Too many syscalls.
@@ -179,18 +168,10 @@ TEST_P(SocketMultiProtocolInetLoopbackTest,
   [[maybe_unused]] const int nports =
       ASSERT_NO_ERRNO_AND_VALUE(MaybeLimitEphemeralPorts());
 
-  // In native hostinet runs, tests often cannot write to
-  // /proc/sys/net/ipv4/ip_local_port_range to reduce the ephemeral ports. If it
-  // defaults to the standard ~28,000 ports (between 32768 and 60999),
-  // attempting to exhaust all of them inside a single test will cause it to hit
-  // EMFILE or exceed test timeout. This is not an issue in non-native runs
-  // (gVisor sandbox) because the sandbox setup has privileges to write to its
-  // own virtual /proc, successfully limiting ports to ~50. We skip native cases
-  // since port exhaust tests are intended for constrained ranges anyway.
+  // Exhaust only a small range to avoid file limits and timeouts.
   SKIP_IF(nports > 1000);
 
   // Exhaust all ephemeral ports.
-  bool duplicate_binding = false;
   while (true) {
     // Bind the v4 loopback on a v4 socket.
     TestAddress const& test_addr = V4Loopback();
@@ -202,9 +183,14 @@ TEST_P(SocketMultiProtocolInetLoopbackTest,
                            &kSockOptOn, sizeof(kSockOptOn)),
                 SyscallSucceeds());
 
-    ASSERT_THAT(
-        bind(bound_fd.get(), AsSockAddr(&bound_addr), test_addr.addr_len),
-        SyscallSucceeds());
+    int ret = bind(bound_fd.get(), AsSockAddr(&bound_addr), test_addr.addr_len);
+    if (ret != 0) {
+      ASSERT_THAT(ret, SyscallFailsWithErrno(EADDRINUSE));
+      ASSERT_TRUE(!IsRunningOnGvisor() || IsRunningWithHostinet());
+      // The ephemeral range includes both endpoints.
+      ASSERT_EQ(bound_sockets.size(), nports + 1);
+      break;
+    }
 
     // Get the port that we bound.
     socklen_t bound_addr_len = test_addr.addr_len;
@@ -215,11 +201,9 @@ TEST_P(SocketMultiProtocolInetLoopbackTest,
 
     auto [iter, inserted] = bound_sockets.emplace(port, std::move(bound_fd));
     if (!inserted) {
-      duplicate_binding = true;
       break;
     }
   }
-  ASSERT_TRUE(duplicate_binding);
 }
 
 INSTANTIATE_TEST_SUITE_P(AllFamilies, SocketMultiProtocolInetLoopbackTest,
