@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T15:52:16.104921+00:00",
+    "updatedAt": "2026-11-26T16:55:52.414384+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -110162,7 +110162,7 @@
           "https://github.com/tamird/gvisor/actions/runs/45768612458/artifacts/15092842201",
           "https://github.com/tamird/gvisor/actions/runs/45771527305/artifacts/15093907787"
         ],
-        "curatedAt": "2026-11-26T14:47:52.575095+00:00",
+        "curatedAt": "2026-11-26T16:52:56.263022+00:00",
         "supersededExecutionBlocker": {
           "nextAction": "Root consumes each existing decision independently: open the cache 86cffbf72 PR, replace the issue body with the current measured-scope draft, and open the Go export f8500dffe PR. Canonical lint coverage is reconciled through unchanged-input parent evidence. Deliver approved changes through the existing authorized routes; the unpublished Go export fork ref still needs its SSH/HTTPS execution blocker to clear.",
           "recordedAt": "2026-11-24T06:29:20.083295+00:00",
@@ -110405,9 +110405,57 @@
           },
           "method": "Actual retried_in_job_uuid links plus start/finish; close gate followed",
           "limits": "Job runtimes are not Bazel compiler time or a predicted RBE win. A five-minute goal for this workload requires addressing the long runtime shard itself. Pending source/issue questions and exact drafts unchanged."
+        },
+        "firstPassSchedulingEvidence": {
+          "sourcePR": 16787,
+          "build": 2968,
+          "source": "0e0295b65ea33e97c07545f04e32eee873d7fc4d",
+          "jobURL": "https://buildkite.com/gvisor/first-pass/builds/2968#01a2157d-2a0b-45d5-96b6-a01c1154843b",
+          "firstJobCreationToGateSeconds": 1378.1,
+          "firstAgentSeconds": 13.4,
+          "criticalShard": 10,
+          "runnableToStartSeconds": 121.8,
+          "failedExecutionSeconds": 540.7,
+          "retryStartGapSeconds": 16.2,
+          "retryExecutionSeconds": 468.9,
+          "closingGateIncludingQueueSeconds": 116.9,
+          "lastBazelCallSeconds": 188.305,
+          "criticalPathSeconds": 23.6,
+          "remoteCacheHits": 1289,
+          "linuxSandboxActions": 3681,
+          "retryReuseScope": "Both attempts reran1455/1456targets with matched partition/runtime/HOST_KERNEL6.8.0-1073-gcp. Passing-test reuse not observed; complete keys/service write policy unverified.",
+          "successfulPartitions": 20,
+          "reportedBazelTargetExecutions": 29100,
+          "notCaseCount": "Each invokes identical targets with PARTITION; test/runner/main.go:1212 lists cases before TestIndicesForShard selects them. These are not29100repeated syscall cases.",
+          "quotaCounterexample": {
+            "PR": 16830,
+            "build": 3023,
+            "elapsedSeconds": 88.6,
+            "assignedAgents": 0,
+            "failure": "30-day quota admission"
+          },
+          "limits": "Measured examples, not a matched speedup, compiler-only time or percentile. Pending source/issue draft/questions unchanged.",
+          "next": "Root compares whole-target scheduling with existing outer partitions on the same source and proves exact selected-case coverage; retain complete retry/job timing."
+        },
+        "safeSyscallFeasibilityPilot": {
+          "source": "19e1bc9b17c078e1531cefecd712500d6ae43b23",
+          "case": "ClockGetres.Timespec",
+          "local": {
+            "run": 45861397046,
+            "artifactURL": "https://github.com/tamird/gvisor/actions/runs/45861397046/artifacts/15137269242"
+          },
+          "remote": {
+            "run": 45861944205,
+            "artifactURL": "https://github.com/tamird/gvisor/actions/runs/45861944205/artifacts/15139250155"
+          },
+          "eachArm": "Fresh TestRunner; exactly1C++case,0skips/disabled/errors;3453shared-cache buildhits+1295internal+1executing test",
+          "identity": "Owner verified identical configuration6591f079 prefix, C++7218a58 prefix and wrapperff8f228 prefix; full hashes retained in native-clockres-receipt.json.",
+          "scope": "Safe-case admission/identity feasible only. GHA image versions differ; RBE host kernel/hardware not attested. No speedup, full-matrix or selected-coverage inference.",
+          "failedAdmission": 45860199770,
+          "recovery": "Standard sandboxed,local respects existing nogo no-sandbox; no source/publication change."
         }
       },
-      "updatedAt": "2026-11-26T14:47:52.575095+00:00",
+      "updatedAt": "2026-11-26T16:52:56.263022+00:00",
       "nextStep": "Root consumes the actual b245 cache-PR and revised issue-title/body decisions independently; approved_delivery_batch owns the cache revision. Preserve the distinct Go-export opening decision. No source publication, issue edit, merge or runtime/speedup result is inferred.",
       "recheckCondition": "Technical review milestone for revised cache source/text or actual Go-export answer.",
       "reviewWatch": {
@@ -128535,8 +128583,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-26T01:28:23.740644+00:00",
-      "summary": "Due native-first inspection found no newer or live native delivery. Sole manual fallback 45735089178 was accepted by direct API response, created 01:20:26 UTC and succeeded with API sample 2026-11-26T01:23:16.161346+00:00. Last verified native scheduled run remains 45690562113 at 19:59 Nov25. This is one-shot recovery, not demonstrated recurring delivery; missing native-event cause remains unknown.",
+      "updatedAt": "2026-11-26T16:31:41.937459+00:00",
+      "summary": "Read the live GitHub snapshot timestamp in the page header or github-status.json.checkedAt; use the Refresh work map workflow inventory for actual collector handles and outcomes. Dated findings are historical evidence, not the current run. Scheduled delivery has gaps and reliable recurring cadence remains unproven. Missed-delivery ownership evidence and the bounded 503 read retry remain retained.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -128779,192 +128827,229 @@
           ]
         }
       ],
-      "nextStep": "Complete this one-shot public proof and release. Preserve the missed-delivery ownership evidence and bounded 503 read retry. No future observer/fallback is armed and no scheduler repair is claimed.",
+      "nextStep": "At an assigned freshness check, inspect the actual newer or live native collector first. If needed, use one authorized snapshot-only fallback, own its direct returned handle through terminal public proof, then release. A registry edit does not refresh API observations, and a future timestamp does not arm an observer. Do not finish an already-completed historical proof or create another scheduler.",
       "evidence": [
         {
-          "label": "Published maintainer handoff",
-          "url": "https://tamird.github.io/gvisor/?view=handoff"
+          "label": "Live published snapshot: checkedAt is the observation clock",
+          "url": "https://tamird.github.io/gvisor/github-status.json"
         },
         {
-          "label": "Successful browser validation",
-          "url": "https://app.buildbuddy.io/invocation/c67d56bd-d07c-4442-9a48-cebec2b5555e"
-        },
-        {
-          "label": "Published Pages deployment",
-          "url": "https://github.com/tamird/gvisor/actions/runs/38399801505"
-        },
-        {
-          "label": "Refresh work map workflow",
+          "label": "Actual Refresh work map run inventory",
           "url": "https://github.com/tamird/gvisor/actions/workflows/work-map.yml"
-        },
-        {
-          "label": "Authorized existing-workflow refresh; full snapshot restored",
-          "url": "https://github.com/tamird/gvisor/actions/runs/39009543031"
-        },
-        {
-          "label": "Ten-minute workflow cadence",
-          "url": "https://github.com/tamird/gvisor/commit/444b1f24c96954067d4a0d503b6e76dbdc0d0278"
-        },
-        {
-          "label": "Revised workflow checks and full refresh",
-          "url": "https://github.com/tamird/gvisor/actions/runs/39098361336"
-        },
-        {
-          "label": "Ten-minute stale-snapshot recovery",
-          "url": "https://github.com/tamird/gvisor/actions/runs/39098984398"
-        },
-        {
-          "label": "Second ten-minute stale-snapshot recovery",
-          "url": "https://github.com/tamird/gvisor/actions/runs/39099661673"
-        },
-        {
-          "label": "Latest requested refresh and actual reminder decisions",
-          "url": "https://github.com/tamird/gvisor/actions/runs/39845533696"
-        },
-        {
-          "label": "Resumed scheduled event; cadence remains unverified",
-          "url": "https://github.com/tamird/gvisor/actions/runs/39846866366"
-        },
-        {
-          "label": "November 8 scheduled refresh",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42531769651"
-        },
-        {
-          "label": "Successful November 9 dispatch",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42538110194"
-        },
-        {
-          "label": "Latest actual pre-reset scheduled event",
-          "url": "https://github.com/tamird/gvisor/actions/runs/44886461540"
-        },
-        {
-          "label": "Unchanged fork-default workflow source",
-          "url": "https://github.com/tamird/gvisor/blob/fc8a0f4298cb4b48dd2109ed3c8029f1f0c4871d/.github/workflows/work-map.yml"
-        },
-        {
-          "label": "Documented workflow enable/disable control",
-          "url": "https://docs.github.com/en/actions/how-tos/manage-workflow-runs/disable-and-enable-workflows"
-        },
-        {
-          "label": "Scheduled-event constraints and delay limits",
-          "url": "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule"
-        },
-        {
-          "label": "Existing manual fallback after the single reset",
-          "url": "https://github.com/tamird/gvisor/actions/runs/44919894578"
-        },
-        {
-          "label": "First verified post-reset scheduled collection",
-          "url": "https://github.com/tamird/gvisor/actions/runs/44949501220"
-        },
-        {
-          "label": "Second verified scheduled collection",
-          "url": "https://github.com/tamird/gvisor/actions/runs/44970034296"
-        },
-        {
-          "label": "GitHub provider status; operational does not exclude a repository-specific condition",
-          "url": "https://www.githubstatus.com/api/v2/summary.json"
-        },
-        {
-          "label": "Fresh native schedule reused; manual collection skipped",
-          "url": "https://github.com/tamird/gvisor/actions/runs/45000638069"
-        },
-        {
-          "label": "Fresh recovery collection",
-          "url": "https://github.com/tamird/gvisor/actions/runs/45152394764"
-        },
-        {
-          "label": "Actual native scheduled recovery",
-          "url": "https://github.com/tamird/gvisor/actions/runs/45690562113"
-        },
-        {
-          "label": "Current one-shot collector receipt",
-          "url": "https://github.com/tamird/gvisor/actions/runs/45700702767"
         }
       ],
       "technicalOwner": "Codex",
-      "recheckCondition": "Actual subsequent native delivery or a separately assigned current reconciliation.",
+      "recheckCondition": "Actual independent native delivery, an owner-assigned freshness check, or a material collector defect; read the live observation timestamp rather than copying a run into this row.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Preserve the actual scheduled receipt, prior missed-delivery evidence and bounded 503 read retry. No future fallback or observer is armed, and no recurring scheduling fix is claimed.",
-        "recheckCondition": "Actual subsequent native scheduled delivery or separately authorized current reconciliation."
-      },
-      "currentHealth": {
-        "observedAt": "2026-11-25T12:51:30.999228+00:00",
-        "owner": "root",
-        "workflowState": "active",
-        "actionsEnabled": true,
-        "defaultWorkflowHead": "5d504727a0851a505875c8b7fc3ce85a8302a78a",
-        "cron": "7,17,27,37,47,57 * * * *",
-        "latestNativeScheduleRun": 45594344209,
-        "latestNativeScheduleAt": "2026-11-25T10:22:22Z",
-        "latestNativeScheduleConclusion": "success",
-        "currentManualSweep": 45615038308,
-        "currentSnapshotAt": "2026-11-25T12:47:27.424253+00:00",
-        "currentManualConclusion": "success on failed-job-only attempt 2",
-        "cause": "Native event-gap cause remains unknown; successful native deliveries do not establish cadence. The receipt-validator defect caused this run’s first-attempt failure and was fixed at 6ffd4ed5. Earlier 04:41:37/05:11:37 delivery was missed with no armed manual observer after the owner ended around03:47; the earlier21:35 miss remains ownership/timing, not proved provider dispatch delay.",
-        "nextAction": "This milestone recovery ends after verified public delivery. Preserve the failed first attempt, bounded 503 retry and missed-delivery evidence. The existing active native workflow remains configured; unattended freshness is still an external scheduling/delivery limitation with unknown event-gap cause. No new scheduler, duplicate observer, access change or promised foreground fallback.",
-        "recheckCondition": "Actual new native delivery or a separately established execution mechanism; a future timestamp alone is not an armed guard.",
-        "currentSnapshotSource": "Milestone snapshot-only run 45615038308 attempt 2"
+        "nextAction": "At an assigned freshness check, inspect the actual newer or live native collector first. If needed, use one authorized snapshot-only fallback, own its direct returned handle through terminal public proof, then release. A registry edit does not refresh API observations, and a future timestamp does not arm an observer. Do not finish an already-completed historical proof or create another scheduler.",
+        "recheckCondition": "Actual independent native delivery, an owner-assigned freshness check, or a material collector defect; read the live observation timestamp rather than copying a run into this row."
       },
       "followup": {
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/45157946718",
-          "https://github.com/tamird/gvisor/blob/c1c30b6b13079debb356befab9de2fb529e4af83/.github/workflows/work-map.yml",
-          "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule",
-          "https://docs.github.com/en/actions/how-tos/troubleshoot-workflows#scheduled-workflow-stopped-running",
-          "https://github.com/tamird/gvisor/actions/runs/45277681053",
-          "https://github.com/tamird/gvisor/actions/runs/45287620194",
-          "https://github.com/tamird/gvisor/actions/runs/45296589443",
-          "https://github.com/tamird/gvisor/actions/runs/45374435406",
-          "https://github.com/tamird/gvisor/actions/runs/45384586173",
-          "https://github.com/tamird/gvisor/actions/runs/45394813634",
-          "https://github.com/tamird/gvisor/actions/runs/45405557424",
-          "https://github.com/tamird/gvisor/actions/runs/45417195867",
-          "https://github.com/tamird/gvisor/actions/runs/45430212258",
-          "https://github.com/tamird/gvisor/actions/runs/45443163776",
-          "https://github.com/tamird/gvisor/actions/runs/45449232722",
-          "https://github.com/tamird/gvisor/actions/runs/45460996764",
-          "https://github.com/tamird/gvisor/actions/runs/45476428340",
-          "https://github.com/tamird/gvisor/actions/runs/45497289229",
-          "https://github.com/tamird/gvisor/actions/runs/45507373437",
-          "https://github.com/tamird/gvisor/actions/runs/45516302399",
-          "https://github.com/gvisor/gvisor/actions/runs/45507638072",
-          "https://github.com/tamird/gvisor/actions/runs/45524494233",
-          "https://github.com/tamird/gvisor/actions/runs/45526464103",
-          "https://github.com/tamird/gvisor/actions/runs/45534009507",
-          "https://github.com/tamird/gvisor/actions/runs/45541397778",
-          "https://github.com/tamird/gvisor/actions/runs/45591409191",
-          "https://github.com/tamird/gvisor/blob/5d504727a0851a505875c8b7fc3ce85a8302a78a/.github/workflows/work-map.yml",
-          "https://github.com/tamird/gvisor/actions/runs/45615038308",
-          "https://github.com/tamird/gvisor/actions/runs/45615038308/attempts/1",
-          "https://github.com/tamird/gvisor/commit/6ffd4ed5a6d6edc5aca2b65da6fedb5388d1e58f",
-          "https://github.com/tamird/gvisor/actions/workflows/work-map.yml",
-          "https://github.com/tamird/gvisor/actions/runs/45594344209",
-          "https://github.com/tamird/gvisor/actions/runs/45690562113",
-          "https://github.com/tamird/gvisor/actions/runs/45700702767",
-          "https://github.com/tamird/gvisor/actions/runs/45710783086",
-          "https://github.com/tamird/gvisor/actions/runs/45719620987",
-          "https://github.com/tamird/gvisor/actions/runs/45727579893"
+          "https://tamird.github.io/gvisor/github-status.json",
+          "https://github.com/tamird/gvisor/actions/workflows/work-map.yml"
         ],
-        "observedAt": "2026-11-26T01:28:23.740644+00:00",
-        "disposition": "Due native-first inspection found no newer or live native delivery. Sole manual fallback 45735089178 was accepted by direct API response, created 01:20:26 UTC and succeeded with API sample 2026-11-26T01:23:16.161346+00:00. Last verified native scheduled run remains 45690562113 at 19:59 Nov25. This is one-shot recovery, not demonstrated recurring delivery; missing native-event cause remains unknown.",
-        "nextAction": "Complete this one-shot public proof and release. Preserve the missed-delivery ownership evidence and bounded 503 read retry. No future observer/fallback is armed and no scheduler repair is claimed.",
-        "recheckCondition": "Actual native delivery/live handle or freshness condition2026-11-26T02:23:16.161346+00:00, deadline2026-11-26T02:53:16.161346+00:00; no observer is armed.",
+        "disposition": "Read the live GitHub snapshot timestamp in the page header or github-status.json.checkedAt; use the Refresh work map workflow inventory for actual collector handles and outcomes. Dated findings are historical evidence, not the current run. Scheduled delivery has gaps and reliable recurring cadence remains unproven. Missed-delivery ownership evidence and the bounded 503 read retry remain retained.",
+        "nextAction": "At an assigned freshness check, inspect the actual newer or live native collector first. If needed, use one authorized snapshot-only fallback, own its direct returned handle through terminal public proof, then release. A registry edit does not refresh API observations, and a future timestamp does not arm an observer. Do not finish an already-completed historical proof or create another scheduler.",
+        "recheckCondition": "Actual independent native delivery, an owner-assigned freshness check, or a material collector defect; read the live observation timestamp rather than copying a run into this row.",
         "owner": "root",
-        "curatedAt": "2026-11-26T01:28:23.740644+00:00",
-        "collectorReceipt": {
-          "id": 45735089178,
-          "event": "workflow_dispatch",
-          "createdAt": "2026-11-26T01:20:26Z",
-          "terminalAt": "2026-11-26T01:23:34Z",
-          "checkedAt": "2026-11-26T01:23:16.161346+00:00",
-          "nativeSnapshot": "393c285b7047ee6ead88eb237d3ba3ffbca0038a",
-          "nextFreshnessCondition": "2026-11-26T02:23:16.161346+00:00",
-          "freshnessDeadline": "2026-11-26T02:53:16.161346+00:00",
-          "observerArmed": false,
-          "scheduledDeliveryProven": false
+        "curatedAt": "2026-11-26T16:31:41.937459+00:00"
+      },
+      "healthHistory": [
+        {
+          "retiredAt": "2026-11-26T16:31:41.937459+00:00",
+          "curatedAsOf": "2026-11-26T01:28:23.740644+00:00",
+          "summary": "Due native-first inspection found no newer or live native delivery. Sole manual fallback 45735089178 was accepted by direct API response, created 01:20:26 UTC and succeeded with API sample 2026-11-26T01:23:16.161346+00:00. Last verified native scheduled run remains 45690562113 at 19:59 Nov25. This is one-shot recovery, not demonstrated recurring delivery; missing native-event cause remains unknown.",
+          "nextStep": "Complete this one-shot public proof and release. Preserve the missed-delivery ownership evidence and bounded 503 read retry. No future observer/fallback is armed and no scheduler repair is claimed.",
+          "currentHealth": {
+            "observedAt": "2026-11-25T12:51:30.999228+00:00",
+            "owner": "root",
+            "workflowState": "active",
+            "actionsEnabled": true,
+            "defaultWorkflowHead": "5d504727a0851a505875c8b7fc3ce85a8302a78a",
+            "cron": "7,17,27,37,47,57 * * * *",
+            "latestNativeScheduleRun": 45594344209,
+            "latestNativeScheduleAt": "2026-11-25T10:22:22Z",
+            "latestNativeScheduleConclusion": "success",
+            "currentManualSweep": 45615038308,
+            "currentSnapshotAt": "2026-11-25T12:47:27.424253+00:00",
+            "currentManualConclusion": "success on failed-job-only attempt 2",
+            "cause": "Native event-gap cause remains unknown; successful native deliveries do not establish cadence. The receipt-validator defect caused this run’s first-attempt failure and was fixed at 6ffd4ed5. Earlier 04:41:37/05:11:37 delivery was missed with no armed manual observer after the owner ended around03:47; the earlier21:35 miss remains ownership/timing, not proved provider dispatch delay.",
+            "nextAction": "This milestone recovery ends after verified public delivery. Preserve the failed first attempt, bounded 503 retry and missed-delivery evidence. The existing active native workflow remains configured; unattended freshness is still an external scheduling/delivery limitation with unknown event-gap cause. No new scheduler, duplicate observer, access change or promised foreground fallback.",
+            "recheckCondition": "Actual new native delivery or a separately established execution mechanism; a future timestamp alone is not an armed guard.",
+            "currentSnapshotSource": "Milestone snapshot-only run 45615038308 attempt 2"
+          },
+          "collectorReceipt": {
+            "id": 45735089178,
+            "event": "workflow_dispatch",
+            "createdAt": "2026-11-26T01:20:26Z",
+            "terminalAt": "2026-11-26T01:23:34Z",
+            "checkedAt": "2026-11-26T01:23:16.161346+00:00",
+            "nativeSnapshot": "393c285b7047ee6ead88eb237d3ba3ffbca0038a",
+            "nextFreshnessCondition": "2026-11-26T02:23:16.161346+00:00",
+            "freshnessDeadline": "2026-11-26T02:53:16.161346+00:00",
+            "observerArmed": false,
+            "scheduledDeliveryProven": false
+          },
+          "evidence": [
+            {
+              "label": "Published maintainer handoff",
+              "url": "https://tamird.github.io/gvisor/?view=handoff"
+            },
+            {
+              "label": "Successful browser validation",
+              "url": "https://app.buildbuddy.io/invocation/c67d56bd-d07c-4442-9a48-cebec2b5555e"
+            },
+            {
+              "label": "Published Pages deployment",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38399801505"
+            },
+            {
+              "label": "Refresh work map workflow",
+              "url": "https://github.com/tamird/gvisor/actions/workflows/work-map.yml"
+            },
+            {
+              "label": "Authorized existing-workflow refresh; full snapshot restored",
+              "url": "https://github.com/tamird/gvisor/actions/runs/39009543031"
+            },
+            {
+              "label": "Ten-minute workflow cadence",
+              "url": "https://github.com/tamird/gvisor/commit/444b1f24c96954067d4a0d503b6e76dbdc0d0278"
+            },
+            {
+              "label": "Revised workflow checks and full refresh",
+              "url": "https://github.com/tamird/gvisor/actions/runs/39098361336"
+            },
+            {
+              "label": "Ten-minute stale-snapshot recovery",
+              "url": "https://github.com/tamird/gvisor/actions/runs/39098984398"
+            },
+            {
+              "label": "Second ten-minute stale-snapshot recovery",
+              "url": "https://github.com/tamird/gvisor/actions/runs/39099661673"
+            },
+            {
+              "label": "Latest requested refresh and actual reminder decisions",
+              "url": "https://github.com/tamird/gvisor/actions/runs/39845533696"
+            },
+            {
+              "label": "Resumed scheduled event; cadence remains unverified",
+              "url": "https://github.com/tamird/gvisor/actions/runs/39846866366"
+            },
+            {
+              "label": "November 8 scheduled refresh",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42531769651"
+            },
+            {
+              "label": "Successful November 9 dispatch",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42538110194"
+            },
+            {
+              "label": "Latest actual pre-reset scheduled event",
+              "url": "https://github.com/tamird/gvisor/actions/runs/44886461540"
+            },
+            {
+              "label": "Unchanged fork-default workflow source",
+              "url": "https://github.com/tamird/gvisor/blob/fc8a0f4298cb4b48dd2109ed3c8029f1f0c4871d/.github/workflows/work-map.yml"
+            },
+            {
+              "label": "Documented workflow enable/disable control",
+              "url": "https://docs.github.com/en/actions/how-tos/manage-workflow-runs/disable-and-enable-workflows"
+            },
+            {
+              "label": "Scheduled-event constraints and delay limits",
+              "url": "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule"
+            },
+            {
+              "label": "Existing manual fallback after the single reset",
+              "url": "https://github.com/tamird/gvisor/actions/runs/44919894578"
+            },
+            {
+              "label": "First verified post-reset scheduled collection",
+              "url": "https://github.com/tamird/gvisor/actions/runs/44949501220"
+            },
+            {
+              "label": "Second verified scheduled collection",
+              "url": "https://github.com/tamird/gvisor/actions/runs/44970034296"
+            },
+            {
+              "label": "GitHub provider status; operational does not exclude a repository-specific condition",
+              "url": "https://www.githubstatus.com/api/v2/summary.json"
+            },
+            {
+              "label": "Fresh native schedule reused; manual collection skipped",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45000638069"
+            },
+            {
+              "label": "Fresh recovery collection",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45152394764"
+            },
+            {
+              "label": "Actual native scheduled recovery",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45690562113"
+            },
+            {
+              "label": "Current one-shot collector receipt",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45700702767"
+            }
+          ],
+          "followupObservedAt": "2026-11-26T01:28:23.740644+00:00",
+          "followupDisposition": "Due native-first inspection found no newer or live native delivery. Sole manual fallback 45735089178 was accepted by direct API response, created 01:20:26 UTC and succeeded with API sample 2026-11-26T01:23:16.161346+00:00. Last verified native scheduled run remains 45690562113 at 19:59 Nov25. This is one-shot recovery, not demonstrated recurring delivery; missing native-event cause remains unknown.",
+          "followupNextAction": "Complete this one-shot public proof and release. Preserve the missed-delivery ownership evidence and bounded 503 read retry. No future observer/fallback is armed and no scheduler repair is claimed.",
+          "followupRecheckCondition": "Actual native delivery/live handle or freshness condition2026-11-26T02:23:16.161346+00:00, deadline2026-11-26T02:53:16.161346+00:00; no observer is armed.",
+          "followupEvidence": [
+            "https://github.com/tamird/gvisor/actions/runs/45157946718",
+            "https://github.com/tamird/gvisor/blob/c1c30b6b13079debb356befab9de2fb529e4af83/.github/workflows/work-map.yml",
+            "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule",
+            "https://docs.github.com/en/actions/how-tos/troubleshoot-workflows#scheduled-workflow-stopped-running",
+            "https://github.com/tamird/gvisor/actions/runs/45277681053",
+            "https://github.com/tamird/gvisor/actions/runs/45287620194",
+            "https://github.com/tamird/gvisor/actions/runs/45296589443",
+            "https://github.com/tamird/gvisor/actions/runs/45374435406",
+            "https://github.com/tamird/gvisor/actions/runs/45384586173",
+            "https://github.com/tamird/gvisor/actions/runs/45394813634",
+            "https://github.com/tamird/gvisor/actions/runs/45405557424",
+            "https://github.com/tamird/gvisor/actions/runs/45417195867",
+            "https://github.com/tamird/gvisor/actions/runs/45430212258",
+            "https://github.com/tamird/gvisor/actions/runs/45443163776",
+            "https://github.com/tamird/gvisor/actions/runs/45449232722",
+            "https://github.com/tamird/gvisor/actions/runs/45460996764",
+            "https://github.com/tamird/gvisor/actions/runs/45476428340",
+            "https://github.com/tamird/gvisor/actions/runs/45497289229",
+            "https://github.com/tamird/gvisor/actions/runs/45507373437",
+            "https://github.com/tamird/gvisor/actions/runs/45516302399",
+            "https://github.com/gvisor/gvisor/actions/runs/45507638072",
+            "https://github.com/tamird/gvisor/actions/runs/45524494233",
+            "https://github.com/tamird/gvisor/actions/runs/45526464103",
+            "https://github.com/tamird/gvisor/actions/runs/45534009507",
+            "https://github.com/tamird/gvisor/actions/runs/45541397778",
+            "https://github.com/tamird/gvisor/actions/runs/45591409191",
+            "https://github.com/tamird/gvisor/blob/5d504727a0851a505875c8b7fc3ce85a8302a78a/.github/workflows/work-map.yml",
+            "https://github.com/tamird/gvisor/actions/runs/45615038308",
+            "https://github.com/tamird/gvisor/actions/runs/45615038308/attempts/1",
+            "https://github.com/tamird/gvisor/commit/6ffd4ed5a6d6edc5aca2b65da6fedb5388d1e58f",
+            "https://github.com/tamird/gvisor/actions/workflows/work-map.yml",
+            "https://github.com/tamird/gvisor/actions/runs/45594344209",
+            "https://github.com/tamird/gvisor/actions/runs/45690562113",
+            "https://github.com/tamird/gvisor/actions/runs/45700702767",
+            "https://github.com/tamird/gvisor/actions/runs/45710783086",
+            "https://github.com/tamird/gvisor/actions/runs/45719620987",
+            "https://github.com/tamird/gvisor/actions/runs/45727579893"
+          ]
         }
+      ],
+      "currentHealth": {
+        "owner": "root",
+        "snapshotURL": "https://tamird.github.io/gvisor/github-status.json",
+        "snapshotTimestampField": "checkedAt",
+        "renderedTimestamp": "GitHub snapshot in the freshness header",
+        "collectorRunInventory": "https://github.com/tamird/gvisor/actions/workflows/work-map.yml",
+        "collectorFieldLimit": "The snapshot has no collector-run field; verify the actual workflow run inventory instead of inventing one.",
+        "scheduledCadence": "Unproven; native event gaps have no established cause.",
+        "history": "Dated receipts, missed deadlines and source repairs are retained in healthHistory and findings.",
+        "nextAction": "At an assigned freshness check, inspect the actual newer or live native collector first. If needed, use one authorized snapshot-only fallback, own its direct returned handle through terminal public proof, then release. A registry edit does not refresh API observations, and a future timestamp does not arm an observer. Do not finish an already-completed historical proof or create another scheduler.",
+        "recheckCondition": "Actual independent native delivery, an owner-assigned freshness check, or a material collector defect; read the live observation timestamp rather than copying a run into this row."
       }
     },
     {
@@ -138517,7 +138602,7 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-26T15:52:16.104921+00:00",
+      "updatedAt": "2026-11-26T16:31:41.937459+00:00",
       "group": "analysis",
       "summary": "Analyzer source 0edf29aac is unchanged. The hosted gRPC dirty-bindfs study is running on one accepted 12-hour worker: candidate A/A first, then conditional baseline/candidate A/B, 24 retained pairs per phase. Exact product identities, six synthetic children and real Docker reload/restoration passed before dispatch. Previous dirty-bindfs A/A remains scoped evidence; 71 filesystem leaves have matched data. Other gRPC controls, FUSE, Node stability and broader qualification remain open.",
       "findings": [
@@ -138891,7 +138976,7 @@
           ]
         }
       ],
-      "nextStep": "analysis_delivery owns study f828a443-dd9a-49c8-a15e-7b8e5d0b3b5a (nested e29c64dd-b083-4a22-afed-c616ad917024), candidate A/A then conditional A/B on the same worker. Recheck the meaningful A/A milestone around 17:30 UTC or earlier terminal; do not duplicate its observer. Original 24 pairs per phase and 12-hour budget remain fixed. Synthetic reload/restoration and the real child passed; no full comparison or stability conclusion exists yet. Other gRPC controls, both FUSE holds and the Node candidate hold remain. Abseil dirty-FUSE old cohort is blocked on pinned platforms fetch 403; analysis_delivery owns fork-only prefetched fixture admission 45851414824 and formatting 45851343130 before any new timings. The upstream prefetch PR question is independent.",
+      "nextStep": "analysis_delivery owns study f828a443-dd9a-49c8-a15e-7b8e5d0b3b5a (nested e29c64dd-b083-4a22-afed-c616ad917024), candidate A/A then conditional A/B on the same worker. Recheck the meaningful A/A milestone around 17:30 UTC or earlier terminal; do not duplicate its observer. Original 24 pairs per phase and 12-hour budget remain fixed. Synthetic reload/restoration and the real child passed; no full comparison or stability conclusion exists yet. Other gRPC controls, both FUSE holds and the Node candidate hold remain. Abseil dirty-FUSE original 24-pair A/A then conditional A/B is now running as 45853685673 after actual prefetched-fixture admission 45852933115; analysis_delivery is sole owner. Other seven old Abseil cohorts remain separate; upstream d4 prefetch publication decision is still pending and is not a measurement hold.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -139614,13 +139699,13 @@
         ],
         "owner": "root",
         "disposition": "Analyzer source 0edf29aac is unchanged. The hosted gRPC dirty-bindfs study is running on one accepted 12-hour worker: candidate A/A first, then conditional baseline/candidate A/B, 24 retained pairs per phase. Exact product identities, six synthetic children and real Docker reload/restoration passed before dispatch. Previous dirty-bindfs A/A remains scoped evidence; 71 filesystem leaves have matched data. Other gRPC controls, FUSE, Node stability and broader qualification remain open.",
-        "nextAction": "analysis_delivery owns study f828a443-dd9a-49c8-a15e-7b8e5d0b3b5a (nested e29c64dd-b083-4a22-afed-c616ad917024), candidate A/A then conditional A/B on the same worker. Recheck the meaningful A/A milestone around 17:30 UTC or earlier terminal; do not duplicate its observer. Original 24 pairs per phase and 12-hour budget remain fixed. Synthetic reload/restoration and the real child passed; no full comparison or stability conclusion exists yet. Other gRPC controls, both FUSE holds and the Node candidate hold remain. Abseil dirty-FUSE old cohort is blocked on pinned platforms fetch 403; analysis_delivery owns fork-only prefetched fixture admission 45851414824 and formatting 45851343130 before any new timings. The upstream prefetch PR question is independent.",
+        "nextAction": "analysis_delivery owns study f828a443-dd9a-49c8-a15e-7b8e5d0b3b5a (nested e29c64dd-b083-4a22-afed-c616ad917024), candidate A/A then conditional A/B on the same worker. Recheck the meaningful A/A milestone around 17:30 UTC or earlier terminal; do not duplicate its observer. Original 24 pairs per phase and 12-hour budget remain fixed. Synthetic reload/restoration and the real child passed; no full comparison or stability conclusion exists yet. Other gRPC controls, both FUSE holds and the Node candidate hold remain. Abseil dirty-FUSE original 24-pair A/A then conditional A/B is now running as 45853685673 after actual prefetched-fixture admission 45852933115; analysis_delivery is sole owner. Other seven old Abseil cohorts remain separate; upstream d4 prefetch publication decision is still pending and is not a measurement hold.",
         "recheckCondition": "Owner-reported A/A milestone or actual terminal study result; no sample expansion, duplicate watcher or cross-worker inference.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-26T15:52:16.104921+00:00",
+        "curatedAt": "2026-11-26T16:31:41.937459+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -140226,7 +140311,7 @@
             "nativeCandidate": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
             "nativeBaseline": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
             "branch": "qualification/absl-dirty-fuse-prefetch-20261126",
-            "status": "synthetic-admission-running",
+            "status": "matched-cohort-running",
             "originalFailure": 45722613653,
             "qualifiedRecipe": "d4b55cd9df05ea0519a124c00fd31f0f99468ec9",
             "qualifiedOfflineRun": 45737661122,
@@ -140246,7 +140331,7 @@
             },
             "preflight": "Synthetic rows only, exact original base image+qualified prefetch recipe/cache hash, frozen18products and cleanup; no timing cohort until substantive admission passes",
             "publication": "fork-only qualification; d4 upstream opening decision remains pending, no replacement-fixture measurement hold found",
-            "next": "Consume mode/recipe corrected synthetic admission45852933115 at terminal; no timing before actual fixture succeeds",
+            "next": "One terminal or meaningful AA (~90min after workload starts) checkpoint; preserve all5contrasts,stopbeforeABifAAflagged; no duplicate observer",
             "checkout": "Restored qualification/node-accounting-control-20261126 at516e4814ae; trackedclean+originalpycache; released",
             "initialAdmissionFailure": {
               "run": 45851414824,
@@ -140265,7 +140350,28 @@
               "checks": "bash-n passed; exact qualified Dockerfile bytes; generated FROM+tail six lines"
             },
             "formatReuse": "BUILD/text unchanged from passed45851343130; Dockerfile restored to already-qualifiedbytes",
-            "currentDisposition": "Old cohort stopped at pinned platforms HTTP403. Fork-only prefetched fixture admission 45851414824 and formatting 45851343130 pending; no new timing before substantive admission. Upstream d4b prefetch opening decision remains separate."
+            "admission": {
+              "run": 45852933115,
+              "status": "success",
+              "baseImage": "sha256:f98e15990ecac4f5a0b28753acece11c97efca4766bfb3472d50418c5ff23a7c",
+              "commonImage": "sha256:7f68cd672cff6f3de9c5dbe04ae56d2c87bed95d0a29fec2f3043d85facb49df",
+              "cacheFiles": 124,
+              "cacheSHA256": "20c679e8b74953dad569745779c0b451e7fbf9d5d3b835db7f73ebebe45e7ead",
+              "contracts": [
+                "all18frozenproducts match offline receipt",
+                "native/baseline/candidate runtime probes pass",
+                "noexecroot before children",
+                "6synthetic children,distinctpids,exit0,exactcase/metric",
+                "original4m visit bound",
+                "image tag restored; sharedfixturecleanup0"
+              ],
+              "limitation": "synthetic only; no workload measurement or statistical clearance"
+            },
+            "matchedRun": 45853685673,
+            "url": "https://github.com/tamird/gvisor/actions/runs/45853685673",
+            "jobMinutes": 330,
+            "bazelTestSeconds": 18000,
+            "acceptedUTC": "2026-11-26T15:55:11.686900+00:00"
           }
         }
       },
@@ -141116,8 +141222,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-24T08:14:16.668124+00:00",
-      "summary": "The approved bootstrap rebases for #15106 and #17416 were delivered. #16591 is closed after its complete change landed in 3767e597a; its approved closure comment was posted. No closure approval remains for that PR. Canonical PR records own current heads, checks, feedback and imports; this umbrella no longer repeats transient CI states. Separate incident records retain their source-bound causes, uncertainties and explicit sensitive/performance holds.",
+      "updatedAt": "2026-11-26T16:47:44.316441+00:00",
+      "summary": "Canonical PR records own their CI/review states. RC worker host 7.4.0-070400rc4-generic exposes UDP automatic-bind contract and separate native seccomp assertion failures on parent, push and scheduled builds. #17987 is not their origin. Root owns the focused contract/test follow-up; unrelated incidents and source/performance/import holds remain separate.",
       "findings": [
         {
           "text": "Buildkite #54191 recovered an ARM64 unit job and four syscall shards. Each original log records agent cancellation. The first unit retry also exited −1 and its log ends during compilation. The next unit attempt and all four final syscall attempts passed.",
@@ -141762,9 +141868,86 @@
               "url": "https://buildkite.com/gvisor/first-pass/builds/1605"
             }
           ]
+        },
+        {
+          "text": "Release-candidate builds 56017, 56023 and 56025 show the same UDP bind(0) and native seccomp failures; the intervening#17987merge is not their origin. The host release is7.4.0-070400rc4-generic from HOST_KERNEL, while 4.19.0-gvisor in the retained boot trace is the guest.",
+          "evidence": [
+            {
+              "label": "Scheduled master build56025",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/56025"
+            },
+            {
+              "label": "Parent build56017",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/56017"
+            },
+            {
+              "label": "Same-source push build56023",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/56023"
+            }
+          ]
+        },
+        {
+          "text": "The 56025 UDP trace fills exactly 51 distinct ports in 32768–32818; after successful SO_REUSEADDR, automatic bind #52 returns EADDRINUSE. Linux 20d020a075366 changed this automatic-bind contract while keeping explicit-port reuse. Existing #13873 skips a different large-range condition before this assertion. Root owns a test adjustment that distinguishes contracts and preserves explicit-port checks; no global skip/sysctl workaround.",
+          "evidence": [
+            {
+              "label": "Scheduled master build56025",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/56025"
+            },
+            {
+              "label": "Upstream UDP automatic-bind contract change",
+              "url": "https://github.com/torvalds/linux/commit/20d020a075366d201fc95001dc5b6cb92cb04195"
+            }
+          ]
+        },
+        {
+          "text": "The separate native SeccompRejectsUnknownFlags case expects EINVAL and receives EFAULT. Its cause remains unassigned; do not attribute it to the UDP change.",
+          "evidence": [
+            {
+              "label": "Scheduled master build56025",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/56025"
+            },
+            {
+              "label": "Parent build56017",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/56017"
+            },
+            {
+              "label": "Same-source push build56023",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/56023"
+            }
+          ]
+        },
+        {
+          "text": "The test-only UDP contract candidate 6ba66db passed 20 actual native/Sentry/hostnet cases on kernel 6.18.57 with no skips, plus source/strict checks. It has not executed on the failing 7.4 worker; the earlier controller setup EACCES was before cases. Original 51-port exhaustion proof remains independent. Root owns final scope/review, not a new VM framework.",
+          "evidence": [
+            {
+              "label": "Native AMD64 four-case qualification",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45857878772"
+            },
+            {
+              "label": "AMD64 Sentry and hostnet eight cases",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45858788264"
+            },
+            {
+              "label": "ARM64 Sentry and hostnet eight cases",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45858788504"
+            }
+          ]
+        },
+        {
+          "text": "Final UDP proposal fbe95e306 changes comments only relative to the 20-case qualified implementation. Behavior reviews accepted, final source checks passed, and the exact opening question is now pending. Original 7.4 failure and 6.18.57 test results retain their distinct scope.",
+          "evidence": [
+            {
+              "label": "Exact pending UDP proposal source",
+              "url": "https://github.com/tamird/gvisor/commit/fbe95e306434aa0a649fd6a66ba63530d38b695c"
+            },
+            {
+              "label": "Final source checks",
+              "url": "https://github.com/tamird/gvisor/actions/runs/45860693315"
+            }
+          ]
         }
       ],
-      "nextStep": "Consume actual new CI, review and import events through the existing canonical PR owners and incident records. Preserve #16957 sensitive/performance and #16507/#17067 replacement holds. Do not revive consumed #16591 decisions, retry unchanged heads, duplicate quota outreach, or merge automatically.",
+      "nextStep": "Await Tamir’s actual publication answer for exact fbe95e306, title and body. Final reviews accepted; source checks passed after comment-only corrections to the 20-case tested implementation. Direct candidate execution on 7.4 remains unestablished. No duplicate question, global skip or sysctl workaround; native seccomp EINVAL/EFAULT follow-up remains separate.",
       "evidence": [
         {
           "label": "GitHub issues mentioning “flaky”",
@@ -141820,14 +142003,97 @@
       "followup": {
         "owner": "root",
         "observedAt": "2026-11-24T08:14:16.668124+00:00",
-        "disposition": "The approved bootstrap rebases for #15106 and #17416 were delivered. #16591 is closed after its complete change landed in 3767e597a; its approved closure comment was posted. No closure approval remains for that PR. Canonical PR records own current heads, checks, feedback and imports; this umbrella no longer repeats transient CI states. Separate incident records retain their source-bound causes, uncertainties and explicit sensitive/performance holds.",
-        "nextAction": "Consume actual new CI, review and import events through the existing canonical PR owners and incident records. Preserve #16957 sensitive/performance and #16507/#17067 replacement holds. Do not revive consumed #16591 decisions, retry unchanged heads, duplicate quota outreach, or merge automatically.",
+        "disposition": "Canonical PR records own their CI/review states. RC worker host 7.4.0-070400rc4-generic exposes UDP automatic-bind contract and separate native seccomp assertion failures on parent, push and scheduled builds. #17987 is not their origin. Root owns the focused contract/test follow-up; unrelated incidents and source/performance/import holds remain separate.",
+        "nextAction": "Await Tamir’s actual publication answer for exact fbe95e306, title and body. Final reviews accepted; source checks passed after comment-only corrections to the 20-case tested implementation. Direct candidate execution on 7.4 remains unestablished. No duplicate question, global skip or sysctl workaround; native seccomp EINVAL/EFAULT follow-up remains separate.",
         "recheckCondition": "A new canonical CI/review/import event or the next existing collector sweep; no source action follows from the already-completed closure.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/16591",
           "https://github.com/gvisor/gvisor/pull/16591#issuecomment-7079160484",
           "https://github.com/gvisor/gvisor/commit/3767e597a341236280bff142471f063a755ec2ff"
-        ]
+        ],
+        "curatedAt": "2026-11-26T16:47:44.316441+00:00"
+      },
+      "releaseCandidateContractEvidence": {
+        "builds": [
+          {
+            "build": 56025,
+            "source": "c3efd8c938",
+            "event": "scheduled"
+          },
+          {
+            "build": 56023,
+            "source": "c3efd8c938",
+            "event": "push"
+          },
+          {
+            "build": 56017,
+            "source": "bf581410a",
+            "event": "parent"
+          }
+        ],
+        "hostKernel": "7.4.0-070400rc4-generic",
+        "hostKernelProof": "Bazel --test_env=HOST_KERNEL on AMD64 shards3/13 andARM64shard3, set from uname-r by Makefile:294",
+        "guestKernel": "Boot trace4.19.0-gvisor is guest identity, not host",
+        "UDP": {
+          "case": "UDPBindMayBindOtherBoundPortsReuseAddr",
+          "line": 205,
+          "range": [
+            32768,
+            32818
+          ],
+          "distinctSuccessfulPorts": 51,
+          "nextAutomaticBind": 52,
+          "result": "EADDRINUSE despite SO_REUSEADDR",
+          "affected": "RC native and systrap/hostnet; matching failures on AMD64 andARM64 across recorded builds",
+          "oldFix": "#13873 nports>1000 EMFILE/timeout skip occurs before this line and does not address this failure",
+          "upstreamContractChange": "20d020a075366d201fc95001dc5b6cb92cb04195",
+          "contract": "UDP bind(0) exhausts ephemeral range with EADDRINUSE under newer contract, while explicit-port reuse remains; ip_autobind_reuse was TCP-only at that change.",
+          "nextScope": "Distinguish old/new bind(0) contracts and preserve explicit-port reuse coverage; no global skip or sysctl workaround.",
+          "testOnlyCandidate": {
+            "head": "fbe95e306434aa0a649fd6a66ba63530d38b695c",
+            "base": "c3efd8c938",
+            "CI": "2a0d7f45b2b3630355f5a6b7addf79be1f6ad5e0",
+            "delta": "One C++ test,+10/-8",
+            "nativeAMD": 45857878772,
+            "SentryHostnetAMD": 45858788264,
+            "SentryHostnetARM": 45858788504,
+            "actualCases": 20,
+            "passed": 20,
+            "skipped": 0,
+            "testKernel": "6.18.57",
+            "sourceAndAffectedStrict": "PASS",
+            "currentBoundary": "No direct candidate execution on7.4 established. No existing compatible7.4 worker/bootable image route found inside no-new-VM-framework scope. Controller7.0 setup_container EACCES was pre-case setup failure, not source verdict.",
+            "next": "Actual source/publication decision submitted and unanswered; no upstream PR/outreach.",
+            "testedHead": "6ba66db4293d33117aeea2c76519a0b456c757e8",
+            "sourceURL": "https://github.com/tamird/gvisor/commit/fbe95e306434aa0a649fd6a66ba63530d38b695c",
+            "finalSourceChecks": {
+              "run": 45860693315,
+              "state": "PASS Clang-format,Cpplint,spelling"
+            },
+            "reuse": "Only comments changed since the20executed cases; statement-stripped source matches6ba. No byte-identical executable or direct7.4 execution claim."
+          }
+        },
+        "seccomp": {
+          "case": "SeccompRejectsUnknownFlags",
+          "affected": "AMD64 native",
+          "expected": "EINVAL",
+          "actual": "EFAULT",
+          "cause": "Unassigned; distinct from UDP contract finding."
+        },
+        "attribution": "Same failures on56017parent and56023push rule out intervening#17987merge as origin; no exact worker-image or further cause claim."
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "fbe95e306434aa0a649fd6a66ba63530d38b695c",
+        "baseHead": "c3efd8c9381c89b78c1d86b6c64a49d53ee938f8",
+        "url": "https://github.com/tamird/gvisor/commit/fbe95e306434aa0a649fd6a66ba63530d38b695c",
+        "title": "Allow UDP bind(0) to exhaust reusable ports",
+        "summary": "Actual opening question submitted; unanswered. Final behavior reviews and source checks accepted; 7.4 observation remains original failure, not fixed-candidate execution.\n\nReview command: git show fbe95e306434aa0a649fd6a66ba63530d38b695c",
+        "body": "COMPATIBILITY:UPCOMING-KERNEL\n\nOn Linux 7.4.0-070400rc4-generic, the UDP test allocated all 51 ephemeral ports with `SO_REUSEADDR`. The next `bind(0)` returned `EADDRINUSE`. [Failing syscall shard](https://buildkite.com/gvisor/pipeline/builds/56025#01a217c6-8fc3-4715-b214-b23ab6ab6224)\n\nAccept this result on native Linux and hostnet only after the test holds every port in the range. Netstack must still demonstrate reuse. A separate test covers explicitly binding an occupied port.\n\nThe focused tests passed on Linux 6.18.57 under native Linux, netstack and hostnet. The 7.4-rc4 observation comes from the original failure. [Native results](https://github.com/tamird/gvisor/actions/runs/45857878772) · [AMD64](https://github.com/tamird/gvisor/actions/runs/45858788264) · [ARM64](https://github.com/tamird/gvisor/actions/runs/45858788504)\n\nPosted by Codex on behalf of @tamird.\n",
+        "reviewCommand": "git show fbe95e306434aa0a649fd6a66ba63530d38b695c",
+        "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/udp-bind-pr-body.txt",
+        "sourceSha256": "6a592826e6dd299a48f14102c2eb9872a7d560696f17fbd085a906911e39510e"
       }
     },
     {
@@ -153563,5 +153829,5 @@
       "findings": []
     }
   ],
-  "updatedAt": "2026-11-26T15:52:16.104921+00:00"
+  "updatedAt": "2026-11-26T16:55:52.414384+00:00"
 }
