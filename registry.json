@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T04:32:50.296591+00:00",
+    "updatedAt": "2026-11-26T05:18:26.909421+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4086,8 +4086,8 @@
       "title": "Stage only the current Python release archives",
       "url": "https://github.com/google/gvisor/pull/16766",
       "status": "open",
-      "updatedAt": "2026-11-20T15:52:49.020424+00:00",
-      "summary": "Current0cba97076a190364b6d941135b167263f01f74ba is OPEN/MERGEABLE/REVIEW_REQUIRED. Carzh explicitly says no contributor action is needed; internal approval/re-import remains his coordination, and the earlier removal request is implemented/resolved. First Pass1863 has three compiler/build deadlines while compiling protobuf/grpc/LLVM; no Python-release assertion or attributable source failure is established.",
+      "updatedAt": "2026-11-26T05:18:26.909421+00:00",
+      "summary": "Native GitHub reports 0cba97076 OPEN/MERGEABLE/APPROVED; the tracker’s stricter effective review remains REVIEW_REQUIRED. Carzh owns re-import coordination and explicitly requests no author code action. Imports #17222 and #17590 are closed, neither merged. The earlier removal request is implemented/resolved. Historical First Pass 1863 compiler/build deadlines do not establish a Python-release source failure.",
       "evidence": [
         {
           "label": "Remote verification for the submitted change",
@@ -4187,7 +4187,7 @@
         "sourceHead": "0cba97076a190364b6d941135b167263f01f74ba",
         "providerHead": "04df6c244952232769db6b4123555354f9873e9b",
         "observedAt": "2026-11-20T16:20:16.754185+00:00",
-        "disposition": "Carzh explicitly requires no contributor code action and owns internal approval/re-import. All three First Pass 1863 compiler jobs reached their 55-minute caps while compilation/analysis progressed; setup took three to four minutes, with no proven source defect or OOM. Root closed the bounded compiler investigation to an external re-import wait. Current-master Nogo evidence uses newer toolchains/cache and is not a matched performance comparison or proof of an RBE repair.",
+        "disposition": "Native GitHub reports 0cba97076 OPEN/MERGEABLE/APPROVED; the tracker’s stricter effective review remains REVIEW_REQUIRED. Carzh owns re-import coordination and explicitly requests no author code action. Imports #17222 and #17590 are closed, neither merged. The earlier removal request is implemented/resolved. Historical First Pass 1863 compiler/build deadlines do not establish a Python-release source failure.",
         "nextAction": "Await Carzh’s new import head and inspect its exact-head CI. Do not rerun or alter source solely for historical 1863. If the same cap recurs, the CI owner needs per-action BEP plus memory/cache telemetry.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16766#issuecomment-6840823106",
@@ -4199,7 +4199,7 @@
           "https://github.com/gvisor/gvisor/pull/17590"
         ],
         "recheckCondition": "A new Carzh re-import head or exact-head recurrence with attributable compiler/cache/memory evidence.",
-        "curatedAt": "2026-11-26T00:39:54.598989+00:00",
+        "curatedAt": "2026-11-26T05:18:26.909421+00:00",
         "priorImportNextAction": "Await the re-import and internal approval. DCO import coordination: Root coordinates #17590 at 7d4bf516f07f. Inspect the listed import’s current CI and importing maintainer disposition. Preserve the exported source revision and its approval. If it is about to land, let that delivery finish; otherwise reconcile the same-tree replacement with the importing workstream before rewriting the source. Never push the upstream export branch.",
         "closedExportReconciliation": {
           "export": 17590,
@@ -60124,9 +60124,9 @@
       "title": "Build Python archives only for versioned releases",
       "url": "https://github.com/tamird/gvisor/compare/aa767e4c4...a11061ec1",
       "group": "release",
-      "status": "Agent work",
-      "summary": "A publisher preparation mode shares the upload tag filter with Buildkite. Six unversioned jobs skipped the builder, four versioned jobs built once, and all ten produced the same raw release paths as stock. The tagged Linux builder produced both Python distributions. Tagged releases still require the Docker packaging environment.",
-      "updatedAt": "2026-11-17T20:32:28.027492+00:00",
+      "status": "Superseded",
+      "summary": "The Docker eligibility trial is superseded by the existing pending staged publisher at 6cbcb14d9. The declared Flit producer at be90b4814 already supplies wheel and sdist; the publisher selects them for final release tags and uses an empty Python stage for master/nightly builds. These replacement proposals remain pending, not approved or delivered upstream. Preserve the old trial and its qualification as history.",
+      "updatedAt": "2026-11-26T05:18:26.909421+00:00",
       "evidence": [
         {
           "label": "12 Linux cases: ten stock/candidate file layouts, a visible Git error and a real versioned wheel and sdist",
@@ -60143,14 +60143,30 @@
         {
           "label": "Existing nightly and directory publication policy",
           "url": "https://github.com/google/gvisor/blob/aa767e4c4/tools/make_release.sh#L89-L131"
+        },
+        {
+          "label": "Existing pending replacement / maintainer coordination",
+          "url": "https://github.com/tamird/gvisor/commit/be90b48140bff63fd99eebd1f1cfa14c1fab7024"
+        },
+        {
+          "label": "Existing pending replacement / maintainer coordination",
+          "url": "https://github.com/tamird/gvisor/commit/6cbcb14d9706952a5ad4fc4ba00cf88e54af9d0b"
+        },
+        {
+          "label": "Existing pending replacement / maintainer coordination",
+          "url": "https://github.com/gvisor/gvisor/pull/16766"
+        },
+        {
+          "label": "Existing pending replacement / maintainer coordination",
+          "url": "https://github.com/gvisor/gvisor/pull/16766#issuecomment-6840823106"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "a11061ec1abab5beb2c6fa2e8c91f5df0ece0c0e",
-        "disposition": "Hold the release eligibility change",
+        "disposition": "The Docker eligibility trial is superseded by the existing pending staged publisher at 6cbcb14d9. The declared Flit producer at be90b4814 already supplies wheel and sdist; the publisher selects them for final release tags and uses an empty Python stage for master/nightly builds. These replacement proposals remain pending, not approved or delivered upstream. Preserve the old trial and its qualification as history.",
         "observedAt": "2026-10-31T13:00:43.140376+00:00",
-        "nextAction": "Keep both eligibility trials off contributor review. The package exposes a Bazel library and test. Integrate a declared wheel and source archive in the versioned publishing path once a suitable producer exists.",
+        "nextAction": "Preserve this trial as history; do not implement or qualify a second eligibility path. Continue the existing Flit, staged-publisher and release-tag proposal decisions and their named prerequisites. Carzh owns #16766 re-import coordination and has requested no author code action.",
         "branchRefObservation": {
           "repo": "tamird/gvisor",
           "ref": "review/python-versioned-releases",
@@ -60163,7 +60179,25 @@
           "owner": "root"
         },
         "technicalOwner": "release_owner",
-        "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings."
+        "recheckCondition": "An actual replacement decision or named prerequisite landing; do not reactivate this superseded trial merely because its producer exists.",
+        "curatedAt": "2026-11-26T05:18:26.909421+00:00",
+        "supersededBy": [
+          "branch:bazel-python-release",
+          "branch:staged-release-publication"
+        ],
+        "sourceVerifiedRetirement": {
+          "receipt": "python-versioned-release-reconciliation.json",
+          "sha256": "0ca8fa5d15d551a2f09c785a2814e58eda7f395a1d82cfcaefc1a9204a65d7da",
+          "producer": "be90b48140bff63fd99eebd1f1cfa14c1fab7024",
+          "publisher": "6cbcb14d9706952a5ad4fc4ba00cf88e54af9d0b",
+          "scope": "Existing integration supersedes duplicate eligibility work;no replacement approval/publication inferred"
+        },
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/be90b48140bff63fd99eebd1f1cfa14c1fab7024",
+          "https://github.com/tamird/gvisor/commit/6cbcb14d9706952a5ad4fc4ba00cf88e54af9d0b",
+          "https://github.com/gvisor/gvisor/pull/16766",
+          "https://github.com/gvisor/gvisor/pull/16766#issuecomment-6840823106"
+        ]
       },
       "refinement": {
         "before": {
@@ -60172,7 +60206,8 @@
         "after": {
           "head": "a11061ec1abab5beb2c6fa2e8c91f5df0ece0c0e"
         }
-      }
+      },
+      "inactive": true
     },
     {
       "id": "branch:proc-sandbox-boot-id",
@@ -148595,5 +148630,5 @@
       "inactive": true
     }
   ],
-  "updatedAt": "2026-11-26T04:32:50.296591+00:00"
+  "updatedAt": "2026-11-26T05:18:26.909421+00:00"
 }
