@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T00:05:51.079754+00:00",
+    "updatedAt": "2026-11-26T00:25:23.324029+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -6576,10 +6576,15 @@
           "descriptionUnchanged": true,
           "autoMergeRequest": null,
           "firstPass": {
-            "build": 2925,
-            "state": "SUCCESS"
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/gvisor/first-pass/builds/2925"
           },
-          "provenance": "Saved delivery/checkpoint receipts; full API clock unchanged"
+          "provenance": "Saved delivery/checkpoint receipts; full API clock unchanged",
+          "effectiveReviewDecision": "REVIEW_REQUIRED",
+          "reviewRequests": [],
+          "latestFullAPICheckedAt": "2026-11-26T00:19:47.268281+00:00",
+          "scope": "Publication receipt retained; current source/check/review state now observed in the full API sample.",
+          "maintainerDescription": "Maintainer approvals: 1, needs 2."
         },
         "receiptCheckpoint": {
           "at": "2026-11-25T23:48:00Z",
@@ -16527,7 +16532,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-17T19:04:43.853615+00:00",
-      "summary": "Public f11f74a174 is unchanged. Later private candidate d015e4c537 includes the accepted Insert/private insert correction; both architecture qualifications and source checks passed, and both final static reviews were accepted. Broad performance and eventual publication review remain; no static-review task or approval question is reopened.",
+      "summary": "Public f11f74a174 remains unchanged; private d015e4c537 has completed functional/source qualification and both final static reviews. Root assigned benchmark_measurement_review the same-source parent A/A using the unchanged maintained TCP bulk-transfer fixture. Historical different-arm n=12 and sparse-ACK n=8 evidence do not qualify this control. Independent Iperf P64 and rewritten-TCP holds do not block the assigned A/A.",
       "number": 15634,
       "reviewDecision": null,
       "evidence": [
@@ -16624,10 +16629,10 @@
       ],
       "followup": {
         "owner": "root",
-        "disposition": "Public f11f74a174 is unchanged. Later private candidate d015e4c537 includes the accepted Insert/private insert correction; both architecture qualifications and source checks passed, and both final static reviews were accepted. Broad performance and eventual publication review remain; no static-review task or approval question is reopened.",
+        "disposition": "Public f11f74a174 remains unchanged; private d015e4c537 has completed functional/source qualification and both final static reviews. Root assigned benchmark_measurement_review the same-source parent A/A using the unchanged maintained TCP bulk-transfer fixture. Historical different-arm n=12 and sparse-ACK n=8 evidence do not qualify this control. Independent Iperf P64 and rewritten-TCP holds do not block the assigned A/A.",
         "sourceHead": "f11f74a174170eedf4b158ef111937c4533d4abe",
         "observedAt": "2026-11-20T23:41:26.383263+00:00",
-        "nextAction": "Root owns the remaining broad performance assessment and any eventual qualified-source publication decision. Reuse the accepted static reviews; do not assign another source rewrite or adversarial-review round.",
+        "nextAction": "benchmark_measurement_review prepares and executes the assigned identical-parent A/A, then returns its source/product/control receipt. Root remains accountable for broad performance and any eventual publication decision. No candidate A/B or extra samples are inferred from the fixture assessment.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15634",
           "https://github.com/tamird/gvisor/actions/runs/41091511027/artifacts/12994247763",
@@ -16662,18 +16667,30 @@
           "https://buildkite.com/gvisor/first-pass/builds/1454#01a1ead6-2076-4f95-bbfb-475105e2d6a6",
           "https://buildkite.com/gvisor/first-pass/builds/1454#01a1ead6-2076-4b23-a6b9-ab65f8ae04de",
           "https://buildkite.com/gvisor/first-pass/builds/1454#01a1ead6-2077-4a61-8951-2ccc3f48ae1f",
-          "https://github.com/tamird/gvisor/commit/d015e4c537be52d4a0bbeda2cd04c3f54efa8d0d"
+          "https://github.com/tamird/gvisor/commit/d015e4c537be52d4a0bbeda2cd04c3f54efa8d0d",
+          "https://github.com/tamird/gvisor/actions/runs/41253178508/artifacts/13061718262",
+          "https://github.com/tamird/gvisor/actions/runs/40997495310/artifacts/12951717490"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Actual broad performance/source evidence or a publication decision.",
+        "recheckCondition": "Existing owner’s accepted A/A handle/terminal receipt or substantive source/review evidence.",
         "implementationOwner": "approved_rebase_queue",
-        "curatedAt": "2026-11-26T00:05:51.079754+00:00",
+        "curatedAt": "2026-11-26T00:18:21.223046+00:00",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "candidate": {
           "head": "d015e4c537be52d4a0bbeda2cd04c3f54efa8d0d",
           "staticReviews": "Both accepted",
           "state": "Broad performance and eventual publication assessment remain",
           "upstreamPublished": false
+        },
+        "assignedAA": {
+          "executionOwner": "benchmark_measurement_review",
+          "status": "Assigned preparation; exact-parent CI-only projection of accepted e7ec recorder/tool dependencies is being prepared. No dispatched handle or timing samples.",
+          "parent": "4b3af1c2a1eaf79480ce2c6aa59dbf3ac623624d",
+          "bothArms": "Same exact parent",
+          "fixture": "//pkg/tcpip/transport/tcp/test/benchmarks:netstack_bench_test / BenchmarkBulkBatchedLocalhost",
+          "packageTree": "e5bf57adc1ff4278af018c4bbad99eb4784fae65",
+          "scope": "All four original CUBIC/SACK cases;0/100us batching and RACK toggles;64MiB one-way transfer;common Go1.27.3/MODULE/go.mod",
+          "historicalLimit": "Prior broad n12 differs in source arms; old sparse-ACK n8 is change-specific. Neither is current same-source control."
         }
       },
       "outreachReviewClock": {
@@ -16708,8 +16725,8 @@
         "priorOwner": "netstack owner",
         "historicalOutreachClockHead": "679d14eed77a4ce6029065d88248c8ce0902c270"
       },
-      "nextStep": "Root owns the remaining broad performance assessment and any eventual qualified-source publication decision. Reuse the accepted static reviews; do not assign another source rewrite or adversarial-review round.",
-      "recheckCondition": "Actual broad performance/source evidence or a publication decision."
+      "nextStep": "benchmark_measurement_review prepares and executes the assigned identical-parent A/A, then returns its source/product/control receipt. Root remains accountable for broad performance and any eventual publication decision. No candidate A/B or extra samples are inferred from the fixture assessment.",
+      "recheckCondition": "Existing owner’s accepted A/A handle/terminal receipt or substantive source/review evidence."
     },
     {
       "id": "pr:15618",
@@ -33726,26 +33743,27 @@
       "url": "https://github.com/google/benchmark/issues/1634",
       "head": "e80986b5007460a9bf77c718d5e2daa247c4d841",
       "status": "Agent work",
-      "summary": "Exact proposed release-workflow source e80986b5007460a9bf77c718d5e2daa247c4d841 exists, but the old review-shaped record has no verified request timestamp or conversation provenance. It represents source/new-PR proposal review, not an outgoing PR review. No current user decision, approval, publication or settled human review is inferred. Original exact proposal text is preserved in immutable registry 63c0231c41e5078853eec27304a22dc60845e221.",
+      "summary": "Latest upstream v1.10.0 is already in BCR, with no uploaded release assets or existing upstream publisher. Maintainers retain the release/credential choices. Fork preview e80986b50 assumes an attached tarball and release-account fork; no current missing module needs publication. Earlier bcdac689f9 review and 63c0231c prepared-proposal records are not submission grants.",
       "followup": {
         "owner": "root",
         "sourceHead": "e80986b5007460a9bf77c718d5e2daa247c4d841",
-        "disposition": "Exact proposed release-workflow source e80986b5007460a9bf77c718d5e2daa247c4d841 exists, but the old review-shaped record has no verified request timestamp or conversation provenance. It represents source/new-PR proposal review, not an outgoing PR review. No current user decision, approval, publication or settled human review is inferred. Original exact proposal text is preserved in immutable registry 63c0231c41e5078853eec27304a22dc60845e221.",
-        "nextAction": "Root verifies original source/prose request and any approval/supersession before projecting a contributor decision or publishing. Preserve the prepared source and immutable original record; do not manufacture, repeat or silently settle a question.",
+        "disposition": "Latest upstream v1.10.0 is already in BCR, with no uploaded release assets or existing upstream publisher. Maintainers retain the release/credential choices. Fork preview e80986b50 assumes an attached tarball and release-account fork; no current missing module needs publication. Earlier bcdac689f9 review and 63c0231c prepared-proposal records are not submission grants.",
+        "nextAction": "Root follows an actual maintainer decision or the next release’s concrete publication gap. Preserve the preview and original records; no outreach, push, credential change or repeated reconstruction of a send timestamp.",
         "evidence": [
           "https://github.com/google/benchmark/issues/1634",
           "https://github.com/google/benchmark/blob/1fa8ea1c0d5f580748c2217efcad301729a8285c/AGENTS.md",
           "https://app.buildbuddy.io/invocation/3fb83843-be08-482c-bd75-d6433d0611c6",
           "https://github.com/tamird/benchmark/commit/e80986b50",
-          "https://github.com/tamird/gvisor/blob/63c0231c41e5078853eec27304a22dc60845e221/registry.json"
+          "https://github.com/tamird/gvisor/blob/63c0231c41e5078853eec27304a22dc60845e221/registry.json",
+          "https://github.com/google/benchmark/issues/1634#issuecomment-6273497610"
         ],
         "technicalOwner": "tamird",
-        "recheckCondition": "Verified exact original request/approval provenance or changed source/maintainer requirements.",
+        "recheckCondition": "Actual upstream maintainer/release decision or a new concrete publication gap.",
         "policyReconciliation": {
           "file": "benchmark-1634-policy-reconciliation.json",
           "sha256": "4b7747be140ddd2709c6b8f412b85e58ff343049cdda3bbc8cec91a728988e70"
         },
-        "curatedAt": "2026-11-20T15:12:08.864966+00:00"
+        "curatedAt": "2026-11-26T00:19:01.082627+00:00"
       },
       "evidence": [
         {
@@ -33774,8 +33792,8 @@
         }
       ],
       "updatedAt": "2026-11-20T15:12:08.864966+00:00",
-      "nextStep": "Root verifies original source/prose request and any approval/supersession before projecting a contributor decision or publishing. Preserve the prepared source and immutable original record; do not manufacture, repeat or silently settle a question.",
-      "recheckCondition": "Verified exact original request/approval provenance or changed source/maintainer requirements."
+      "nextStep": "Root follows an actual maintainer decision or the next release’s concrete publication gap. Preserve the preview and original records; no outreach, push, credential change or repeated reconstruction of a send timestamp.",
+      "recheckCondition": "Actual upstream maintainer/release decision or a new concrete publication gap."
     },
     {
       "id": "pr:16337",
@@ -97492,12 +97510,14 @@
           "notice": "https://github.com/gvisor/gvisor/pull/17376#issuecomment-7177892142",
           "descriptionUnchanged": true,
           "firstPass": {
-            "build": 2928,
             "state": "SUCCESS",
             "url": "https://buildkite.com/gvisor/first-pass/builds/2928"
           },
           "provenance": "17376-publication-receipt.json; saved exact native/provider/comment readbacks",
-          "scope": "Targeted delivery receipt, not a new full API snapshot; old check results do not qualify the new head."
+          "scope": "Publication receipt retained; current source/check/review state now observed in the full API sample.",
+          "effectiveReviewDecision": "REVIEW_REQUIRED",
+          "latestFullAPICheckedAt": "2026-11-26T00:19:47.268281+00:00",
+          "maintainerDescription": "Maintainer approvals: 1, needs 2."
         },
         "receiptCheckpoint": {
           "at": "2026-11-25T23:48:00Z",
@@ -100487,12 +100507,14 @@
           "notice": "https://github.com/gvisor/gvisor/pull/17479#issuecomment-7177944558",
           "descriptionUnchanged": true,
           "firstPass": {
-            "build": 2929,
             "state": "SUCCESS",
             "url": "https://buildkite.com/gvisor/first-pass/builds/2929"
           },
           "provenance": "17479-publication-receipt.json; saved exact native/provider/comment readbacks",
-          "scope": "Targeted delivery receipt, not a new full API snapshot; old check results do not qualify the new head."
+          "scope": "Publication receipt retained; current source/check/review state now observed in the full API sample.",
+          "effectiveReviewDecision": "REVIEW_REQUIRED",
+          "latestFullAPICheckedAt": "2026-11-26T00:19:47.268281+00:00",
+          "maintainerDescription": "Maintainer approvals: 1, needs 2."
         },
         "receiptCheckpoint": {
           "at": "2026-11-25T23:48:00Z",
@@ -104210,7 +104232,7 @@
       "head": "3810f2bbe2a84d9b7e90a4ecf2535e4691874648",
       "group": "bazel",
       "status": "open",
-      "summary": "Current source 3810f2bbe has carzh’s exact-head approval. First Pass 2911 passed; main 55969 remains pending. Required maintainer-approval/master reports “Maintainer approvals: 1, needs 2.” No source amendment or CI failure is established by these new events.",
+      "summary": "Current source 3810f2bbe has passing main 55969 and First Pass 2911. Native carzh approval is retained, while required maintainer-approval/master reports “Maintainer approvals: 1, needs 2.” No current source/CI repair obligation is established.",
       "updatedAt": "2026-11-21T08:24:54.472503+00:00",
       "evidence": [
         {
@@ -104250,8 +104272,8 @@
         "owner": "root",
         "sourceHead": "3810f2bbe2a84d9b7e90a4ecf2535e4691874648",
         "observedAt": "2026-11-21T08:11:49.734766+00:00",
-        "disposition": "Current source 3810f2bbe has carzh’s exact-head approval. First Pass 2911 passed; main 55969 remains pending. Required maintainer-approval/master reports “Maintainer approvals: 1, needs 2.” No source amendment or CI failure is established by these new events.",
-        "nextAction": "Root follows the existing second-approval and admitted main 55969 lifecycle. Preserve current qualification/source limits; no duplicate reviewer request, unchanged retry, outreach or merge.",
+        "disposition": "Current source 3810f2bbe has passing main 55969 and First Pass 2911. Native carzh approval is retained, while required maintainer-approval/master reports “Maintainer approvals: 1, needs 2.” No current source/CI repair obligation is established.",
+        "nextAction": "Root follows the existing additional-approval and source/landing lifecycle. No repeated CI poll, reviewer request, unchanged retry or merge.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17641",
           "https://github.com/tamird/gvisor/actions/runs/43452602601/artifacts/14053568098",
@@ -104277,7 +104299,7 @@
           "https://buildkite.com/gvisor/pipeline/builds/55969"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Actual additional approval, terminal current-head CI or substantive source event.",
+        "recheckCondition": "Actual additional approval, source/check event or landing.",
         "latestReviewObservation": {
           "checkedAt": "2026-11-18T19:22:58.577211+00:00",
           "head": "1692a9405af5de11203c7cd913ead169f8f06936",
@@ -104302,7 +104324,7 @@
             }
           ]
         },
-        "curatedAt": "2026-11-25T23:17:55.397746+00:00",
+        "curatedAt": "2026-11-26T00:22:54.469787+00:00",
         "ciHistory": [
           {}
         ],
@@ -104359,8 +104381,8 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "nextStep": "Root follows the existing second-approval and admitted main 55969 lifecycle. Preserve current qualification/source limits; no duplicate reviewer request, unchanged retry, outreach or merge.",
-      "recheckCondition": "Actual additional approval, terminal current-head CI or substantive source event."
+      "nextStep": "Root follows the existing additional-approval and source/landing lifecycle. No repeated CI poll, reviewer request, unchanged retry or merge.",
+      "recheckCondition": "Actual additional approval, source/check event or landing."
     },
     {
       "id": "pr:buildbuddy-io/buildbuddy:13938",
@@ -108344,12 +108366,14 @@
           "notice": "https://github.com/gvisor/gvisor/pull/17343#issuecomment-7177815802",
           "descriptionUnchanged": true,
           "firstPass": {
-            "build": 2927,
             "state": "SUCCESS",
             "url": "https://buildkite.com/gvisor/first-pass/builds/2927"
           },
           "provenance": "17343-publication-receipt.json; saved exact native/provider/comment readbacks",
-          "scope": "Targeted delivery receipt, not a new full API snapshot; old check results do not qualify the new head."
+          "scope": "Publication receipt retained; current source/check/review state now observed in the full API sample.",
+          "effectiveReviewDecision": "REVIEW_REQUIRED",
+          "latestFullAPICheckedAt": "2026-11-26T00:19:47.268281+00:00",
+          "maintainerDescription": "Maintainer approvals: 1, needs 2."
         },
         "receiptCheckpoint": {
           "at": "2026-11-25T23:48:00Z",
@@ -109051,16 +109075,16 @@
           "url": "https://buildkite.com/gvisor/pipeline/builds/55936"
         }
       ],
-      "summary": "Published #16962 is now at b2b018bfeb with the verified rebase notice. Recovered exact original approval plus standing rebase authority cover delivery; the obsolete question is superseded, not newly answered. Native receipt is MERGEABLE/APPROVED with DCO passing; First Pass 2936 started without failed attempts. Prior opaque-archive evidence retains its scope; no new Kind cluster or runtime result is claimed.",
-      "nextStep": "approved_rebase_queue owns current-head CI follow-through. Preserve nybidari’s pending request; no duplicate approval ask, retry, reviewer request or merge.",
-      "recheckCondition": "Existing owner’s actual CI/review/source event; full API sample predates the targeted delivery receipt.",
+      "summary": "Published b2b018bfeb has passing GitHub Actions validation, DCO and exact-head First Pass 2936 with zero failed attempts. The newer full snapshot reports MERGEABLE, superseding the saved 00:12 UNKNOWN without any conflict inference. Native GitHub APPROVED remains distinct from effective review and required “Maintainer approvals: 1, needs 2.” No required main, new Kind cluster or runtime pass is observed.",
+      "nextStep": "Root follows actual additional approval, main/check/source or conflict events. The local CI observer is closed; preserve nybidari’s pending request. No recurring polling, unchanged retry, source churn or merge.",
+      "recheckCondition": "Actual maintainer/main/source/mergeability event.",
       "updatedAt": "2026-11-25T21:37:40.347012+00:00",
       "followup": {
-        "owner": "approved_rebase_queue",
-        "disposition": "Published #16962 is now at b2b018bfeb with the verified rebase notice. Recovered exact original approval plus standing rebase authority cover delivery; the obsolete question is superseded, not newly answered. Native receipt is MERGEABLE/APPROVED with DCO passing; First Pass 2936 started without failed attempts. Prior opaque-archive evidence retains its scope; no new Kind cluster or runtime result is claimed.",
-        "nextAction": "approved_rebase_queue owns current-head CI follow-through. Preserve nybidari’s pending request; no duplicate approval ask, retry, reviewer request or merge.",
-        "recheckCondition": "Existing owner’s actual CI/review/source event; full API sample predates the targeted delivery receipt.",
-        "curatedAt": "2026-11-25T23:55:50.246211+00:00",
+        "owner": "root",
+        "disposition": "Published b2b018bfeb has passing GitHub Actions validation, DCO and exact-head First Pass 2936 with zero failed attempts. The newer full snapshot reports MERGEABLE, superseding the saved 00:12 UNKNOWN without any conflict inference. Native GitHub APPROVED remains distinct from effective review and required “Maintainer approvals: 1, needs 2.” No required main, new Kind cluster or runtime pass is observed.",
+        "nextAction": "Root follows actual additional approval, main/check/source or conflict events. The local CI observer is closed; preserve nybidari’s pending request. No recurring polling, unchanged retry, source churn or merge.",
+        "recheckCondition": "Actual maintainer/main/source/mergeability event.",
+        "curatedAt": "2026-11-26T00:22:54.469787+00:00",
         "sourceHead": "b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3",
         "providerHead": "b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3",
         "mergeable": "MERGEABLE",
@@ -109087,7 +109111,8 @@
           "https://github.com/tamird/gvisor/actions/runs/45703283876",
           "https://github.com/tamird/gvisor/actions/runs/45703289124",
           "https://buildkite.com/gvisor/first-pass/builds/2867",
-          "https://github.com/gvisor/gvisor/pull/16962#issuecomment-7178157856"
+          "https://github.com/gvisor/gvisor/pull/16962#issuecomment-7178157856",
+          "https://buildkite.com/gvisor/first-pass/builds/2936"
         ],
         "attentionDispositions": [
           {
@@ -109143,11 +109168,21 @@
           "notice": "https://github.com/gvisor/gvisor/pull/16962#issuecomment-7178157856",
           "descriptionUnchanged": true,
           "firstPass": {
-            "build": 2936,
-            "state": "PENDING",
+            "state": "SUCCESS",
             "url": "https://buildkite.com/gvisor/first-pass/builds/2936"
           },
-          "provenance": "16962-publication-receipt.json and saved exact provider/native/comment readbacks; not a new full snapshot"
+          "provenance": "16962-publication-receipt.json and saved exact provider/native/comment readbacks; not a new full snapshot",
+          "effectiveReviewDecision": "REVIEW_REQUIRED",
+          "latestFullAPICheckedAt": "2026-11-26T00:19:47.268281+00:00",
+          "scope": "Publication receipt retained; current source/check/review state now observed in the full API sample.",
+          "maintainerDescription": "Maintainer approvals: 1, needs 2."
+        },
+        "mergeabilityReceipt": {
+          "at": "2026-11-26T00:12:08Z",
+          "state": "UNKNOWN",
+          "source": "16962-terminal-ci-receipt.json",
+          "supersededByAPISample": "2026-11-26T00:19:47.268281+00:00",
+          "latestState": "MERGEABLE"
         }
       },
       "settledReviews": [
@@ -113340,6 +113375,13 @@
       "type": "depends_on",
       "reason": "Artifact selection waits on the existing declared website/Python supplier instead of creating a duplicate extraction.",
       "evidence": "https://tamird.github.io/gvisor/#branch%3Abazel-python-release"
+    },
+    {
+      "from": "pr:17479",
+      "to": "investigation:repository-lint",
+      "type": "includes",
+      "reason": "RubySpec fixture reuses the existing qualified Fastlane input on both arms. This is an input-composition link, not a new source-review or upstream-landing prerequisite.",
+      "evidence": "https://github.com/gvisor/gvisor/pull/17479"
     }
   ],
   "investigations": [
@@ -124642,7 +124684,7 @@
       "status": "active",
       "owner": "root",
       "updatedAt": "2026-11-25T20:13:29.584037+00:00",
-      "summary": "Due native-first inspection found no newer or live native delivery. Sole manual fallback 45719620987 was accepted by its direct API response, created 23:13:09 UTC and succeeded with API sample 2026-11-25T23:15:59.484334+00:00. The last verified native scheduled run remains 45690562113 at 19:59. Recurring unattended delivery is not demonstrated; the cause of missing native events remains unknown.",
+      "summary": "Due native-first inspection found no newer or live native delivery. Sole manual fallback 45727579893 was accepted by direct API response, created 00:16:41 UTC and succeeded with API sample 2026-11-26T00:19:47.268281+00:00. The last verified scheduled run remains 45690562113 at 19:59 on Nov25. This one-shot recovery does not demonstrate recurring unattended delivery; missing native-event cause remains unknown.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -124885,7 +124927,7 @@
           ]
         }
       ],
-      "nextStep": "Finish this one-shot public proof and release its observer. Preserve missed-delivery evidence and bounded 503 read retry. No future observer or fallback is armed, and no recurring scheduler repair is claimed.",
+      "nextStep": "Finish this one-shot public proof and release its observer. Preserve prior missed-delivery evidence and bounded 503 read retry. No future fallback or observer is armed, and no scheduler repair is claimed.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -125050,14 +125092,15 @@
           "https://github.com/tamird/gvisor/actions/runs/45690562113",
           "https://github.com/tamird/gvisor/actions/runs/45700702767",
           "https://github.com/tamird/gvisor/actions/runs/45710783086",
-          "https://github.com/tamird/gvisor/actions/runs/45719620987"
+          "https://github.com/tamird/gvisor/actions/runs/45719620987",
+          "https://github.com/tamird/gvisor/actions/runs/45727579893"
         ],
         "observedAt": "2026-11-25T12:51:30.999228+00:00",
-        "disposition": "Due native-first inspection found no newer or live native delivery. Sole manual fallback 45719620987 was accepted by its direct API response, created 23:13:09 UTC and succeeded with API sample 2026-11-25T23:15:59.484334+00:00. The last verified native scheduled run remains 45690562113 at 19:59. Recurring unattended delivery is not demonstrated; the cause of missing native events remains unknown.",
-        "nextAction": "Finish this one-shot public proof and release its observer. Preserve missed-delivery evidence and bounded 503 read retry. No future observer or fallback is armed, and no recurring scheduler repair is claimed.",
+        "disposition": "Due native-first inspection found no newer or live native delivery. Sole manual fallback 45727579893 was accepted by direct API response, created 00:16:41 UTC and succeeded with API sample 2026-11-26T00:19:47.268281+00:00. The last verified scheduled run remains 45690562113 at 19:59 on Nov25. This one-shot recovery does not demonstrate recurring unattended delivery; missing native-event cause remains unknown.",
+        "nextAction": "Finish this one-shot public proof and release its observer. Preserve prior missed-delivery evidence and bounded 503 read retry. No future fallback or observer is armed, and no scheduler repair is claimed.",
         "recheckCondition": "Actual subsequent native delivery or a separately assigned current reconciliation.",
         "owner": "root",
-        "curatedAt": "2026-11-25T23:17:55.397746+00:00",
+        "curatedAt": "2026-11-26T00:22:54.469787+00:00",
         "collectorReceipt": {
           "run": 45700702767,
           "job": 139509739237,
@@ -134608,7 +134651,7 @@
       "owner": "root",
       "updatedAt": "2026-11-25T21:04:58.790048+00:00",
       "group": "analysis",
-      "summary": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, syscall, CPU/Memory and eight-leaf RubyNoOp comparisons are complete at their recorded precision; RubyNoOp primary intervals reach 5–6%, without a demonstrated regression or equivalence. HTTP and the full RubySpec/ABSL splits remain owned and running. Size/Usage/Mutex, FUSE architecture and open #17884 retain independent limits.",
+      "summary": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, syscall, CPU/Memory and RubyNoOp comparisons are complete at their recorded precision. Three RubySpec A/A runs stopped on workload assertions before benchstat or A/B; HTTP and remaining ABSL work stay owned. Size/Usage/Mutex, FUSE architecture and open #17884 retain independent limits.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -134980,7 +135023,7 @@
           ]
         }
       ],
-      "nextStep": "analysis_delivery consumes the existing HTTP and full original RubySpec/ABSL terminal artifacts. Reuse completed groups; do not repeat samples, expand scope or treat the earlier cheap preflight as the full category. Preserve all precision, baseline behavioral, FUSE and prerequisite limits.",
+      "nextStep": "analysis_delivery reuses the already-qualified #17479 Fastlane image/input on both arms for future tmpfs RubySpec qualification; no new patch or source review is needed. Root and the existing owner independently assess the FUSE/rootfs OpenSSL invalid-password failure. Preserve all incomplete A/A failures and remaining HTTP/ABSL ownership; no duplicate observer, blind rerun or source-regression claim.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -135383,7 +135426,7 @@
           }
         ]
       },
-      "recheckCondition": "Existing owners’ terminal receipts or a substantive prerequisite/FUSE/source event.",
+      "recheckCondition": "Owner’s workload-reliability disposition, remaining terminal qualification receipts or substantive prerequisite/source evidence.",
       "lifecycleCoordination": {
         "owner": "root",
         "nextAction": "Root assesses existing #15866 multiple-default and FindRoute cases before deciding any route source change. c9b remains diagnostic-only; its green projection does not qualify compatibility or alter frozen 0edf. Separately assign FUSE/MM design/parity → tiny exec-on-FUSE → GRPC and finish remaining performance qualification; #17884 remains open.",
@@ -135598,17 +135641,21 @@
           "https://github.com/tamird/gvisor/actions/runs/45716778901",
           "https://github.com/tamird/gvisor/actions/runs/45718197392",
           "https://github.com/tamird/gvisor/actions/runs/45718730945",
-          "https://github.com/tamird/gvisor/actions/runs/45722340702"
+          "https://github.com/tamird/gvisor/actions/runs/45722340702",
+          "https://github.com/tamird/gvisor/actions/runs/45722555854",
+          "https://github.com/tamird/gvisor/actions/runs/45722588175",
+          "https://github.com/tamird/gvisor/actions/runs/45722591323",
+          "https://github.com/gvisor/gvisor/pull/17479"
         ],
         "owner": "root",
-        "disposition": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, syscall, CPU/Memory and eight-leaf RubyNoOp comparisons are complete at their recorded precision; RubyNoOp primary intervals reach 5–6%, without a demonstrated regression or equivalence. HTTP and the full RubySpec/ABSL splits remain owned and running. Size/Usage/Mutex, FUSE architecture and open #17884 retain independent limits.",
-        "nextAction": "analysis_delivery consumes the existing HTTP and full original RubySpec/ABSL terminal artifacts. Reuse completed groups; do not repeat samples, expand scope or treat the earlier cheap preflight as the full category. Preserve all precision, baseline behavioral, FUSE and prerequisite limits.",
-        "recheckCondition": "Existing owners’ terminal receipts or a substantive prerequisite/FUSE/source event.",
+        "disposition": "Native 0edf29aac remains the completed 36-commit analyzer rewrite. Startup, syscall, CPU/Memory and RubyNoOp comparisons are complete at their recorded precision. Three RubySpec A/A runs stopped on workload assertions before benchstat or A/B; HTTP and remaining ABSL work stay owned. Size/Usage/Mutex, FUSE architecture and open #17884 retain independent limits.",
+        "nextAction": "analysis_delivery reuses the already-qualified #17479 Fastlane image/input on both arms for future tmpfs RubySpec qualification; no new patch or source review is needed. Root and the existing owner independently assess the FUSE/rootfs OpenSSL invalid-password failure. Preserve all incomplete A/A failures and remaining HTTP/ABSL ownership; no duplicate observer, blind rerun or source-regression claim.",
+        "recheckCondition": "Owner’s workload-reliability disposition, remaining terminal qualification receipts or substantive prerequisite/source evidence.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-26T00:05:51.079754+00:00",
+        "curatedAt": "2026-11-26T00:25:23.323460+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -135664,6 +135711,28 @@
             "run": 45722340702,
             "state": "AA and admitted AB complete",
             "scope": "All eight original leaves;100 children/800rows;40contrasts perphase unflagged. Primary95%CIs AA1–6%/AB1–5%;ancillary11%/10%;medians−3.01%to+1.98%;no equivalence claim."
+          },
+          "rubySpec": {
+            "state": "Three functional assertion failures during incomplete candidate/candidate AA; no benchstat or AB",
+            "runs": [
+              45722555854,
+              45722588175,
+              45722591323
+            ],
+            "successfulChildrenBeforeFailure": [
+              9,
+              25,
+              39
+            ],
+            "limits": "OpenSSL named failure also appeared in prior baseline45521717637; causality not inferred. Tmpfs dirty JWT iat differs fromTime.now by1second. All18products/commonbinary3a654/cleanup0 verified; full failure traces retained, successful nonverbose transcripts truncated.",
+            "tmpfsFixDependency": {
+              "node": "pr:17479",
+              "source": "b0d665d9f298bf84db405213b403467d8470af4f",
+              "upstreamCommit": "2beac83f8ce5",
+              "status": "Existing qualified Fastlane backport; b075 fixture lacks it",
+              "adoption": "Reuse input on both arms in future qualification; no new patch/review or upstream-landing wait",
+              "exampleCount": 3613
+            }
           }
         }
       },
@@ -138816,7 +138885,7 @@
       "group": "ci-flakes",
       "owner": "root",
       "updatedAt": "2026-11-17T19:01:06.487079+00:00",
-      "summary": "TestSudo timed out three times each on #17391 and #17393 while the test waited for the traced sudo command. Rollback #17412 removed the regression from master. Botir’s draft reland #17432 includes the checked PTRACE_SEIZE fix and syscall regression.",
+      "summary": "The corrected TestSudo reland #17556 merged as dd72c9dc6 on Nov15 after rollback #17412. Retained exports #16647/#17398/#17006/#17387 still sit one commit past common dd49ce763 and lack the 201 intervening commits through that fix. Their old timeout records do not establish a new failure on corrected master.",
       "findings": [
         {
           "text": "The four tests ran for 14m38s to 14m41s. An intervening #54238 attempt exited −1 without this timeout. Passing parallel shards exercised other tests.",
@@ -138997,7 +139066,7 @@
           ]
         },
         {
-          "text": "The replacement export #17556 (c3e77336c) matches the source #17432 (fb1d78aea) in all 24 file patches, including the group-stop test and both fresh-sandbox settings. The surrounding test/syscalls/BUILD differs between the bases. The export is open.",
+          "text": "The replacement export #17556 matched source #17432 in all24 recorded file patches and later merged as dd72c9dc6 on Nov15. Historical export-specific timeouts remain bound to their old heads; the retained downstream exports do not yet include the corrected reland.",
           "evidence": [
             {
               "label": "Source reland file changes",
@@ -139010,7 +139079,7 @@
           ]
         }
       ],
-      "nextStep": "Rollback #17412 and corrected reland #17556 are merged. Obtain refreshed exports for #16647, #17398, #17006 and #17387 with the fixed integration ancestry, then verify the TestSudo integration partition. The old failed results do not establish recovery; importing maintainers own internal refreshes.",
+      "nextStep": "Importing maintainers refresh the affected export bases, then validate the owning integration partition on the new heads. Root follows actual export-head changes; no repeated tests on stale branches, duplicate fix or new outreach.",
       "evidence": [
         {
           "label": "Cgroup v1 original",
@@ -139150,11 +139219,28 @@
           "postedURL": "https://github.com/google/gvisor/pull/17432#pullrequestreview-5851917183"
         }
       ],
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
+      "recheckCondition": "Changed export head incorporating the corrected reland, then its owning integration result.",
       "lifecycleCoordination": {
         "owner": "root",
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+      },
+      "followup": {
+        "disposition": "The corrected TestSudo reland #17556 merged as dd72c9dc6 on Nov15 after rollback #17412. Retained exports #16647/#17398/#17006/#17387 still sit one commit past common dd49ce763 and lack the 201 intervening commits through that fix. Their old timeout records do not establish a new failure on corrected master.",
+        "nextAction": "Importing maintainers refresh the affected export bases, then validate the owning integration partition on the new heads. Root follows actual export-head changes; no repeated tests on stale branches, duplicate fix or new outreach.",
+        "recheckCondition": "Changed export head incorporating the corrected reland, then its owning integration result.",
+        "owner": "root",
+        "curatedAt": "2026-11-26T00:20:19.325827+00:00",
+        "staleExports": {
+          "16647": "08242cbb1",
+          "17398": "414a285f6",
+          "17006": "ed094e627",
+          "17387": "ef7141859"
+        },
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/17556",
+          "https://github.com/gvisor/gvisor/commit/dd72c9dc6"
+        ]
       }
     },
     {
@@ -140559,11 +140645,11 @@
     {
       "id": "investigation:ci-flake-docker-builder-apt-dns",
       "title": "Ubuntu DNS failures while rebuilding the CI image",
-      "status": "active",
+      "status": "concluded",
       "group": "ci-flakes",
       "owner": "root",
       "updatedAt": "2026-11-11T23:26:49+00:00",
-      "summary": "Lint and Go generation on #16663 both stopped before Bazel started. Docker could pull Ubuntu, but apt could not resolve the Ubuntu archive and security hosts.",
+      "summary": "Closed for the recorded #16663 builder-DNS incident: both owning generate and lint jobs completed on source 651437132. The source-defined default image tag is 74bc4a9768b3310e, not historical 830786f662550d98. Do not await a rebuild of that obsolete input; this does not establish a global apt/DNS repair.",
       "findings": [
         {
           "text": "Both jobs missed default_x86_64:830786f662550d98 in the registry and ran the normal local rebuild. Its first apt install failed. The Lint job attempted the rebuild twice.",
@@ -140609,7 +140695,7 @@
           ]
         }
       ],
-      "nextStep": "On the next run rebuilding 830786f662550d98, check whether apt can fetch the package indexes and whether lint or Go generation completes.",
+      "nextStep": "Complete. Preserve the historical before-Bazel DNS failures and reopen only on a relevant actual recurrence; no obsolete-image rebuild or repeated test.",
       "evidence": [
         {
           "label": "Lint · apt could not resolve archive.ubuntu.com",
@@ -140641,12 +140727,19 @@
         }
       ],
       "technicalOwner": "CI flake triage",
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
-      "lifecycleCoordination": {
-        "owner": "root",
-        "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
-        "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
-      }
+      "recheckCondition": "Actual relevant builder/DNS recurrence on its recorded current inputs.",
+      "lifecycleCoordination": null,
+      "followup": {
+        "disposition": "Closed for the recorded #16663 builder-DNS incident: both owning generate and lint jobs completed on source 651437132. The source-defined default image tag is 74bc4a9768b3310e, not historical 830786f662550d98. Do not await a rebuild of that obsolete input; this does not establish a global apt/DNS repair.",
+        "nextAction": "Complete. Preserve the historical before-Bazel DNS failures and reopen only on a relevant actual recurrence; no obsolete-image rebuild or repeated test.",
+        "recheckCondition": "Actual relevant builder/DNS recurrence on its recorded current inputs.",
+        "curatedAt": "2026-11-26T00:22:54.469787+00:00",
+        "evidence": [
+          "https://github.com/gvisor/gvisor/actions/runs/44901335512/job/136837683129",
+          "https://github.com/gvisor/gvisor/actions/runs/44901335538/job/136837683373"
+        ]
+      },
+      "inactive": true
     },
     {
       "id": "investigation:ci-nightly-issue-reviver-pr-reference",
