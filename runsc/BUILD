@@ -165,8 +165,8 @@ go_cov(
         "//:gopath",
         "//tools:build_cover.sh",
         "//tools:go_cover_toolchain",
-        "@coverage_legacy_modules//:proxy",
         "@coverage_legacy_modules//:modules/cache/download/ROOT",
+        "@coverage_legacy_modules//:proxy",
     ],
     outs = ["runsc_cov"],
     cmd =
@@ -179,8 +179,15 @@ go_cov(
         "\"$(location //tools:go_cover_toolchain)\" " +
         "\"false\" " +
         "\"$(location @coverage_legacy_modules//:modules/cache/download/ROOT)\" ",
-    exec_compatible_with = ["//tools/bazeldefs:rbe_ubuntu24_c", "@platforms//cpu:x86_64", "@platforms//os:linux"],
-    tags = ["manual", "no-local"],
+    exec_compatible_with = [
+        "//tools/bazeldefs:rbe_ubuntu24_c",
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    tags = [
+        "manual",
+        "no-local",
+    ],
     visibility = ["//debian:__pkg__"],
 )
 
@@ -193,8 +200,8 @@ go_cov(
         "//:gopath",
         "//tools:build_cover.sh",
         "//tools:go_cover_toolchain",
-        "@coverage_legacy_modules//:proxy",
         "@coverage_legacy_modules//:modules/cache/download/ROOT",
+        "@coverage_legacy_modules//:proxy",
     ],
     outs = ["runsc_race_cov"],
     cmd =
@@ -207,7 +214,14 @@ go_cov(
         "\"$(location //tools:go_cover_toolchain)\" " +
         "\"true\" " +
         "\"$(location @coverage_legacy_modules//:modules/cache/download/ROOT)\" ",
-    exec_compatible_with = ["//tools/bazeldefs:rbe_ubuntu24_c", "@platforms//cpu:x86_64", "@platforms//os:linux"],
-    tags = ["manual", "no-local"],
+    exec_compatible_with = [
+        "//tools/bazeldefs:rbe_ubuntu24_c",
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    tags = [
+        "manual",
+        "no-local",
+    ],
     visibility = ["//debian:__pkg__"],
 )

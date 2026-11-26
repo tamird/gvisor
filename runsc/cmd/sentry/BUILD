@@ -65,8 +65,15 @@ go_cov(
     srcs = COVERAGE_SRCS,
     outs = ["gvisor_sentry_cov"],
     cmd = COVERAGE_CMD % ("//runsc/cmd/sentry:gvisor_sentry_cov", "false"),
-    exec_compatible_with = ["//tools/bazeldefs:rbe_ubuntu24_c", "@platforms//cpu:x86_64", "@platforms//os:linux"],
-    tags = ["manual", "no-local"],
+    exec_compatible_with = [
+        "//tools/bazeldefs:rbe_ubuntu24_c",
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    tags = [
+        "manual",
+        "no-local",
+    ],
     visibility = ["//debian:__pkg__"],
 )
 
@@ -75,8 +82,15 @@ go_cov(
     srcs = COVERAGE_SRCS,
     outs = ["gvisor_sentry_race_cov"],
     cmd = COVERAGE_CMD % ("//runsc/cmd/sentry:gvisor_sentry_race_cov", "true"),
-    exec_compatible_with = ["//tools/bazeldefs:rbe_ubuntu24_c", "@platforms//cpu:x86_64", "@platforms//os:linux"],
-    tags = ["manual", "no-local"],
+    exec_compatible_with = [
+        "//tools/bazeldefs:rbe_ubuntu24_c",
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    tags = [
+        "manual",
+        "no-local",
+    ],
     visibility = ["//debian:__pkg__"],
 )
 
