@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T08:09:25.520848+00:00",
+    "updatedAt": "2026-11-26T09:16:18.300903+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40905,14 +40905,14 @@
       "url": "https://github.com/google/gvisor/pull/16507",
       "group": "bazel",
       "status": "open",
-      "summary": "Public c715 remains conflicting; source 57 is not publication-approved. Recorded compiler, report/KCOV correctness, ZIP and implementation-review evidence retains its exact source scope. Strict legacy/candidate position inclusion passed with two additional candidate positions, not an identity claim. Recorder bf96 captures Go benchmark stdout, not instrumented coverage reports. Coverage performance remains unestablished.",
-      "updatedAt": "2026-11-26T04:32:50.296591+00:00",
+      "summary": "Unpublished current-base candidate e2101026eb preserves recovered57\u2019s patch by strict replay. Both architectures\u2019 eight coverage/race binaries and four complete archives, graph/source gates and226-entry catalog passed. One-case recovery45789919746 now uses a declared extractor after two pre-guest setup failures; no current-base report/KCOV or performance pass is claimed. Historical reportGate identifies real exercising workloads, not isolated cost benchmarks.",
+      "updatedAt": "2026-11-26T09:16:18.300903+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
-        "disposition": "Public c715 remains conflicting; source 57 is not publication-approved. Recorded compiler, report/KCOV correctness, ZIP and implementation-review evidence retains its exact source scope. Strict legacy/candidate position inclusion passed with two additional candidate positions, not an identity claim. Recorder bf96 captures Go benchmark stdout, not instrumented coverage reports. Coverage performance remains unestablished.",
-        "nextAction": "Before any future authorized qualification, root identifies a real report/KCOV performance producer and freezes both opaque A/B runtime releases with complete identities. The existing startup caller is //test/benchmarks/base:startup_test, selecting BenchmarkStartupEmpty. Recorder bf96 can retain per-arm benchstat files and explicit child argv; it does not identify every runtime sidecar. Keep paired rows out of the ordinary single-version BigQuery upload. Producer 479 is unrelated; no grouped or non-Linux prerequisite is demonstrated. Preserve no-new-timing, source and publication holds, historical inconclusive controls and scoped ARM-affinity limits. Any replacement still needs current-base/bootstrap integration.",
+        "disposition": "Unpublished current-base candidate e2101026eb preserves recovered57\u2019s patch by strict replay. Both architectures\u2019 eight coverage/race binaries and four complete archives, graph/source gates and226-entry catalog passed. One-case recovery45789919746 now uses a declared extractor after two pre-guest setup failures; no current-base report/KCOV or performance pass is claimed. Historical reportGate identifies real exercising workloads, not isolated cost benchmarks.",
+        "nextAction": "Audit Uname recovery45789919746 for prepared e2101026eb (public c715 unchanged). Then qualify independently controlled report/KCOV behavior and both complete A/B opaque releases, reusing existing reportGate target/case knowledge. BenchmarkStartupEmpty remains the separate startup caller. Timing and publication remain held.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -40991,10 +40991,17 @@
           "https://github.com/tamird/gvisor/actions/runs/45070653512/artifacts/14773066667",
           "https://github.com/tamird/gvisor/actions/runs/45070656007/artifacts/14772694991",
           "https://github.com/tamird/gvisor/actions/runs/45070658275/artifacts/14772772674",
-          "https://github.com/tamird/gvisor/actions/runs/45070660673/artifacts/14773501134"
+          "https://github.com/tamird/gvisor/actions/runs/45070660673/artifacts/14773501134",
+          "https://github.com/tamird/gvisor/commit/e2101026eb7e6601ed02a04dff43069e11d5d189",
+          "https://github.com/tamird/gvisor/actions/runs/44254336532/artifacts/14406811432",
+          "https://github.com/tamird/gvisor/actions/runs/45784602741",
+          "https://github.com/tamird/gvisor/actions/runs/45784605700",
+          "https://github.com/tamird/gvisor/actions/runs/45785973454",
+          "https://github.com/tamird/gvisor/actions/runs/45785976363",
+          "https://github.com/tamird/gvisor/actions/runs/45789919746"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "A concrete report/KCOV producer and exact A/B release-provenance plan, substantive source-bound evidence, and an explicitly authorized next step.",
+        "recheckCondition": "Existing owner\u2019s exact current-base runtime/report evidence or actual source/performance/publication disposition; do not mirror-poll or repeat old orchestration.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "qualificationHistory": [
           {
@@ -41223,7 +41230,7 @@
             44246313719,
             44246691602
           ],
-          "observationLimit": "Last executed BASE reportoff/reporton each passed100 actual Uname iterations, but canonical successful cleanup removes generated profiles before post-run parsing. This does not prove report generation failed; candidate/KCOV were not reached.",
+          "observationLimit": "Current run44254336532 completed all six100-repeat observations with validated profiles/consumption. Wall durations include support-wrapper/harness launch and are not comparative performance qualification. Earlier cleanup/report-path failures remain historical; this does not prove current-base runner/product report behavior.",
           "correction": "Only exact generated coverage-report path relocated outside deleted log tree; original/final/no-flag argv and same ELF/sidecar hashes audited. All six rerun under common wrapper. Its launch overhead and omitted profile unlink are explicit timing limits.",
           "recheckCondition": "Source or report mechanism changes; otherwise reuse exact7e/1f evidence.",
           "totalCompletedIterations": 600,
@@ -41231,7 +41238,8 @@
           "failures": 0,
           "artifact": 14406811432,
           "artifactSHA256": "613fe22ddb94b406e4063bfe5027d3bd422edd9c89efed198c9185f114426c9e",
-          "statisticalQualification": false
+          "statisticalQualification": false,
+          "historicalFailedAttemptLimit": "Last executed BASE reportoff/reporton each passed100 actual Uname iterations, but canonical successful cleanup removes generated profiles before post-run parsing. This does not prove report generation failed; candidate/KCOV were not reached."
         },
         "generatedCoverageFidelity": {
           "source": "7eafb7afe2c0255c98392c2e701ec6aecad22b27",
@@ -41318,7 +41326,7 @@
           "proofSHA256": "8cfa9665fca33bd1625d96c7b184d3b8454523fbfe87c0b7bd9744d867d14c0b",
           "recheckCondition": "Root permanent-mechanism decision, same-operation execution-review result or actual fidelity evidence."
         },
-        "curatedAt": "2026-11-26T04:32:50.296591+00:00",
+        "curatedAt": "2026-11-26T09:16:18.300903+00:00",
         "permanentBazelFirstLayer": {
           "testSource": "340e1072aa5a3d47e01ff68dffea34f91be4a9f4",
           "ciSource": "fa452727d8d6af2399f8644f9d64a40dc5d902ae",
@@ -41573,15 +41581,253 @@
             "coveragePrerequisite": false
           },
           "requirements": {
-            "realReportKCOVPerformanceProducer": "Not identified in inspected pkg/coverage and test/runner functional tests",
+            "realReportKCOVPerformanceProducer": "Existing reportGate identifies real whole-workload Uname report-on/off and KCOV exercising callers. No dedicated isolated serializer or KCOV cost benchmark was found. Compatible explicitly controlled runner/product inputs and full two-release A/B provenance remain necessary.",
             "exactABReleaseProvenance": "Freeze both complete opaque runtime filesets;child executable hash alone omits runtime sidecars/data",
             "groupedAtomicCommands": "No demonstrated requirement;per-target recording suffices for maintained sequential execution",
             "nonLinux": "No demonstrated requirement for this Linux/root/Docker/runsc caller",
             "crossRevisionDecoding": "Not requested;symbolize with metadata from producing binary",
             "maintainedMigration": "Not done;Make sudo directly executes benchmark after build,so a build-only run_under does not wrap execution"
           },
-          "limits": "bf96 data-integrity success is not A/A stability or a performance pass;0.5% was agent-selected,not a user regression budget;no new timings/source/publication authorized"
-        }
+          "limits": "bf96 data-integrity success is not A/A stability or a performance pass;0.5% was agent-selected,not a user regression budget;no new timings/source/publication authorized",
+          "reportGateCrossReference": {
+            "field": "followup.reportGate",
+            "run": 44254336532,
+            "source": "7eafb7afe2c0255c98392c2e701ec6aecad22b27",
+            "plan": "78bcae1e7164ec502e5c6148651e255dda882144",
+            "producerFile": ".github/qualification/workload.py:140",
+            "reportTarget": "//test/syscalls:uname_test_runsc_systrap_directfs",
+            "reportCase": "UnameTest.Sanity",
+            "reportConditions": [
+              "off",
+              "on"
+            ],
+            "kcovTarget": "//test/syscalls:kcov_test_runsc_systrap_directfs",
+            "kcovCase": "KcovTest.Kcov",
+            "kcovReportSetting": "off",
+            "repeatsInsideOneProcess": 100,
+            "observations": 6,
+            "completedIterations": 600,
+            "scope": "Historical whole-workload exercising caller with validated profile generation/consumption; six wall durations include harness launch and are not comparative performance qualification",
+            "notFound": "Dedicated isolated serializer or KCOV cost benchmark",
+            "currentRunnerBoundary": {
+              "source": "c3efd8c93",
+              "reportFlag": "test/runner/main.go:516 always adds -coverage-report when undeclared outputs are set",
+              "cleanup": "test/runner/main.go:786 deletes successful testLogDir",
+              "historicalRunnerChange": "7eafb adds --collect-coverage; cannot assume current runner has independently controlled report semantics"
+            },
+            "remaining": "Compatible runner/product pair with explicit independent report/KCOV controls and complete two-release opaque fileset identities; reuse target/case knowledge, not obsolete orchestration"
+          }
+        },
+        "currentBaseQualification": {
+          "native": "e2101026eb7e6601ed02a04dff43069e11d5d189",
+          "base": "c3efd8c9381c89b78c1d86b6c64a49d53ee938f8",
+          "ci": "31157ddd2e81c981ee92adf1b1da1ec0f27ea8b1",
+          "strictReplay": "= from recovered57c5e7b58eb7d0657aa0091065e7c2b16aeab735;11files+113/-262 unchanged",
+          "publicPR": "c715 remains unchanged/conflicting; no publication approval",
+          "graphRuns": [
+            45783707171,
+            45783711217
+          ],
+          "sourceRun": 45783715565,
+          "sourceScope": "Goimports/Buildifier/spelling and source guards PASS",
+          "binaryProducts": [
+            {
+              "run": 45784602741,
+              "targets": [
+                {
+                  "target": "//runsc:runsc_coverage",
+                  "success": true
+                },
+                {
+                  "target": "//runsc:runsc_race_coverage",
+                  "success": true
+                },
+                {
+                  "target": "//runsc/cmd/sentry:gvisor_sentry_coverage",
+                  "success": true
+                },
+                {
+                  "target": "//runsc/cmd/sentry:gvisor_sentry_race_coverage",
+                  "success": true
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "runsc/runsc_cov",
+                  "digest": "2bbf5880097ccd623bb904e4a61eb44ce495eb3e752ea6d5be3b1a564f5bd802",
+                  "length": "15786144"
+                },
+                {
+                  "name": "runsc/runsc_race_cov",
+                  "digest": "71185ded4f0393fb3502c74b76929d7dab28efa0df2431752c78c9bd3e380352",
+                  "length": "22276487"
+                },
+                {
+                  "name": "runsc/cmd/sentry/gvisor_sentry_cov",
+                  "digest": "f5806dd0b3adb8c090736080f9ef04bedfbcae9ec1584bb98ef3f6c129179a0c",
+                  "length": "47124640"
+                },
+                {
+                  "name": "runsc/cmd/sentry/gvisor_sentry_race_cov",
+                  "digest": "ba1064c44837d131983747ea7edc3b1314e660a33e846b4fd217f6290325f3d2",
+                  "length": "62086439"
+                }
+              ]
+            },
+            {
+              "run": 45784605700,
+              "targets": [
+                {
+                  "target": "//runsc:runsc_coverage",
+                  "success": true
+                },
+                {
+                  "target": "//runsc:runsc_race_coverage",
+                  "success": true
+                },
+                {
+                  "target": "//runsc/cmd/sentry:gvisor_sentry_coverage",
+                  "success": true
+                },
+                {
+                  "target": "//runsc/cmd/sentry:gvisor_sentry_race_coverage",
+                  "success": true
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "runsc/runsc_cov",
+                  "digest": "0e58310c92298bba78b39f20b3a486b872d6c0b5db612eef6d5c9880e7aaea09",
+                  "length": "16515232"
+                },
+                {
+                  "name": "runsc/runsc_race_cov",
+                  "digest": "f96704a6a9f350123d70dcda2d866330d841b0979f47443254a25a8c9c8d7545",
+                  "length": "19567735"
+                },
+                {
+                  "name": "runsc/cmd/sentry/gvisor_sentry_cov",
+                  "digest": "35a5f0d4123939922bb7c2367ee9f6b3e29bdc172fb122cb4ca25a89ddde4408",
+                  "length": "54526112"
+                },
+                {
+                  "name": "runsc/cmd/sentry/gvisor_sentry_race_cov",
+                  "digest": "08af7c027078405567474204f6455272629eb99b81127f76c9ebae4e24943347",
+                  "length": "55041815"
+                }
+              ]
+            }
+          ],
+          "archiveProducts": [
+            {
+              "run": 45785973454,
+              "targets": [
+                {
+                  "target": "//debian:gvisor-release-race-coverage-tar-zstd",
+                  "success": true
+                },
+                {
+                  "target": "//debian:gvisor-release-coverage-tar-zstd",
+                  "success": true
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "debian/gvisor-release-race-coverage.tar.zstd",
+                  "digest": "c9291cbafc560f820e1fe043439540e2654b49fee5284655b40eb3397ed912a5",
+                  "length": "34633588"
+                },
+                {
+                  "name": "debian/gvisor-release-coverage.tar.zstd",
+                  "digest": "c2718b424cf18241e2ca498d4b63263a2e88610492b5464fef378f41148eeb17",
+                  "length": "27413842"
+                }
+              ]
+            },
+            {
+              "run": 45785976363,
+              "targets": [
+                {
+                  "target": "//debian:gvisor-release-race-coverage-tar-zstd",
+                  "success": true
+                },
+                {
+                  "target": "//debian:gvisor-release-coverage-tar-zstd",
+                  "success": true
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "debian/gvisor-release-race-coverage.tar.zstd",
+                  "digest": "ef46213c0f3a963f62c7a23425eff68867e78f3fe3b66e9a61a3bdb52f9068bb",
+                  "length": "30377340"
+                },
+                {
+                  "name": "debian/gvisor-release-coverage.tar.zstd",
+                  "digest": "01007f270ac273f6dc85638ebc9c5a97816f9dd31532ed65c29843e0505eef85",
+                  "length": "26435349"
+                }
+              ]
+            }
+          ],
+          "binaryCount": 8,
+          "completeArchiveCount": 4,
+          "catalog": {
+            "run": 45784608992,
+            "dependencies": 226,
+            "result": "PASS"
+          },
+          "runtimeAdmission": {
+            "run": 45789919746,
+            "url": "https://github.com/tamird/gvisor/actions/runs/45789919746",
+            "native": "e2101026eb7e6601ed02a04dff43069e11d5d189",
+            "ci": "9ae42ad5d005dae70d3f9b79306e182d647397c3",
+            "parentCI": "31157ddd2e81c981ee92adf1b1da1ec0f27ea8b1",
+            "additionalCIChange": {
+              "paths": [
+                "test/runner/BUILD",
+                "debian/BUILD",
+                "MODULE.bazel",
+                "test/syscalls/BUILD"
+              ],
+              "delta": "Archive data selection; narrow archive visibility; existing pinned tar.bzl target toolchain exposed through native_binary data alias; known test.dockerUser=root/test.workload-isolation-type=firecracker on Uname only. No native proposal source or version change."
+            },
+            "target": "//test/syscalls:uname_test_runsc_systrap_shared",
+            "filter": "UnameTest.Sanity",
+            "repeat": 1,
+            "arch": "amd64",
+            "runtime": "coverage",
+            "scope": "Startup/caller admission only; successful cleanup removes reports, so no report-reader assertion or report-generation claim.",
+            "nativePreservation": "Native e210 unchanged; only CI metadata/declared tool inputs differ. Existing13path RBE support remains separate.",
+            "failedAdmissions": [
+              {
+                "run": 45787266020,
+                "phase": "analysis",
+                "reason": "archive visibility",
+                "guestCases": 0
+              },
+              {
+                "run": 45788350224,
+                "phase": "wrapper extraction",
+                "reason": "worker lacks zstd executable",
+                "guestCases": 0
+              }
+            ],
+            "state": "Recovery dispatched; no guest/runtime/report pass claimed",
+            "owner": "approved_rebase_queue / root",
+            "priorAdmissionAudit": {
+              "run": 45788350224,
+              "state": "FAILURE before guest execution",
+              "selectedAMDArchive": "c2718b424cf18241e2ca498d4b63263a2e88610492b5464fef378f41148eeb17",
+              "failure": "GNU tar could not invoke zstd on actual RBE worker",
+              "guestCasesExecuted": 0
+            }
+          },
+          "scope": "Both-architecture product/archive build evidence only. One Uname admission is caller/startup scope, not a report-reader assertion, KCOV workload pass or performance. Default //:release is not coverage proof.",
+          "timingAuthorized": false,
+          "upstreamPublicationApproved": false
+        },
+        "technicalOwner": "approved_rebase_queue"
       },
       "evidence": [
         {
@@ -41651,6 +41897,34 @@
         {
           "label": "Four AMD64 coverage binaries and both Sentry source maps",
           "url": "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231"
+        },
+        {
+          "label": "Prepared current-base source; no publication approval",
+          "url": "https://github.com/tamird/gvisor/commit/e2101026eb7e6601ed02a04dff43069e11d5d189"
+        },
+        {
+          "label": "Historical whole-workload report/KCOV exercising caller",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44254336532/artifacts/14406811432"
+        },
+        {
+          "label": "Current-base AMD coverage products",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45784602741"
+        },
+        {
+          "label": "Current-base ARM coverage products",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45784605700"
+        },
+        {
+          "label": "AMD complete coverage archives",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45785973454"
+        },
+        {
+          "label": "ARM complete coverage archives",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45785976363"
+        },
+        {
+          "label": "One-case caller admission; owner audit pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45789919746"
         }
       ],
       "number": 16507,
@@ -150322,5 +150596,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-26T08:09:25.520848+00:00"
+  "updatedAt": "2026-11-26T09:16:18.300903+00:00"
 }
