@@ -107,6 +107,7 @@ release_tars(
     name = "gvisor-release-coverage",
     bins = RELEASE_TAR_EXTRA_BINS,
     flavor = "coverage",
+    visibility = ["//test/runner:__pkg__"],
 )
 
 # Go race detector.
@@ -121,4 +122,5 @@ release_tars(
     name = "gvisor-release-race-coverage",
     bins = RELEASE_TAR_EXTRA_BINS,
     flavor = "race-coverage",
+    visibility = ["//test/runner:__pkg__"],
 )
