@@ -1,0 +1,13 @@
+diff --git a/src/iperf_client_api.c b/src/iperf_client_api.c
+--- a/src/iperf_client_api.c
++++ b/src/iperf_client_api.c
+@@ -749,6 +749,9 @@
+ 	         (test->settings->blocks != 0 && (test->blocks_sent >= test->settings->blocks ||
+ 						  test->blocks_received >= test->settings->blocks)))) {
+ 
++                if (test->mode == SENDER)
++                    test->done = 1;
++
+                 /* Cancel outstanding sender threads */
+                 SLIST_FOREACH(sp, &test->streams, streams) {
+                     if (sp->sender) {
