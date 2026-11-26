@@ -35,6 +35,7 @@ sh_binary(
         "//test/benchmarks/base:startup_test",
         "//test/benchmarks/base:syscallbench_test",
         "//tools/bazeldefs/tests/coverage:coverage_lifecycle_test",
+        "//tools/bazeldefs/tests/coverage:fileset.py",
         "//tools/benchmark/paired",
         "@coverage_baseline_release//:release.tar.zstd",
     ],

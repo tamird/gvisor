@@ -38,4 +38,5 @@ image_outputs(
     name = "syscallbench",
     image = ":syscallbench_image",
     image_name = "benchmarks/syscallbench",
+    visibility = ["//test/benchmarks/harness:__pkg__"],
 )

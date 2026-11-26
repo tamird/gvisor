@@ -89,4 +89,5 @@ image_outputs(
         "@platforms//cpu:x86_64": "@benchmark_alpine_amd64",
     }),
     image_name = "benchmarks/alpine",
+    visibility = ["//test/benchmarks/harness:__pkg__"],
 )
