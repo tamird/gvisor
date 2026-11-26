@@ -8,6 +8,7 @@ name: Dependency licenses
     branches:
       - master
       - "release/**"
+      - "review/bazel-actions-cache-callers-20261126"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

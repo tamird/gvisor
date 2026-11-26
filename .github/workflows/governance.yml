@@ -8,6 +8,7 @@ name: Governance
     branches:
       - master
       - "release/**"
+      - "review/bazel-actions-cache-callers-20261126"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -27,4 +28,39 @@ jobs:
 
     - uses: ./.github/actions/setup-bazel
 
+    - name: Check workflow sources
+      run: bazel test --test_output=errors //:github_actions_test //:github_workflows_test
+
+    - name: Exercise whitespace host paths
+      run: |
+        mkdir -p "$RUNNER_TEMP/cache paths"
+        ln -s "$BAZEL_DISK_CACHE" "$RUNNER_TEMP/cache paths/disk cache"
+        ln -s "$BAZEL_REPOSITORY_CACHE" "$RUNNER_TEMP/cache paths/repository cache"
+        {
+          echo "BAZEL_DISK_CACHE=$RUNNER_TEMP/cache paths/disk cache"
+          echo "BAZEL_REPOSITORY_CACHE=$RUNNER_TEMP/cache paths/repository cache"
+        } >> "$GITHUB_ENV"
+
     - run: make governance-check
+
+    - name: Verify Docker and native cache paths
+      run: |
+        python3 - <<'VERIFY'
+        import json, os, pathlib, subprocess
+        containers = subprocess.check_output(['docker', 'ps', '--filter', 'name=gvisor-bazel-', '--format', '{{.ID}}'], text=True).split()
+        assert len(containers) == 1, containers
+        container = containers[0]
+        mounts = json.loads(subprocess.check_output(['docker', 'inspect', container], text=True))[0]['Mounts']
+        expected = {'/tmp/gvisor-bazel-disk-cache': os.environ['BAZEL_DISK_CACHE'], '/tmp/gvisor-bazel-repository-cache': os.environ['BAZEL_REPOSITORY_CACHE']}
+        for destination, host in expected.items():
+            entries = [entry for entry in mounts if entry['Destination'] == destination]
+            assert len(entries) == 1 and entries[0]['RW'], entries
+            assert pathlib.Path(entries[0]['Source']).resolve() == pathlib.Path(host).resolve(), entries
+        probe = 'set -eu; for cache in "$@"; do test -w "$cache"; touch "$cache/.cache-path-probe-$$"; rm "$cache/.cache-path-probe-$$"; done'
+        subprocess.run(['docker', 'exec', '--user', f'{os.getuid()}:{os.getgid()}', container, 'sh', '-c', probe, '--', *expected], check=True)
+        native = ['make', 'test', 'DOCKER_BUILD=false', 'TARGETS=//:github_actions_test']
+        expanded = subprocess.check_output([*native, '--just-print'], text=True)
+        assert '/tmp/gvisor-bazel-disk-cache' not in expanded and '/tmp/gvisor-bazel-repository-cache' not in expanded, expanded
+        subprocess.run(native, check=True)
+        print(json.dumps({'whitespaceHostPaths': expected, 'freshBuilderMountsWritableByBuildUser': True, 'nativeMakeHasNoContainerFlags': True, 'nativeBazelTestPassed': True}))
+        VERIFY
