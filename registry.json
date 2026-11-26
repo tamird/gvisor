@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T11:54:16.015819+00:00",
+    "updatedAt": "2026-11-26T12:40:09.280960+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40920,14 +40920,14 @@
       "url": "https://github.com/google/gvisor/pull/16507",
       "group": "bazel",
       "status": "open",
-      "summary": "Prepared e2101026eb has verified report-off/on functional smokes on both frozen releases: runs 45812516017 and 45813625070 used the same checked c900cae5 executable, all guests exited zero, off produced no report and on produced one valid profile; cleanup passed. Smoke timings were discarded. Static parity remains 117,318 legacy positions included in 117,320 candidate positions, zero missing. This establishes the caller/metric and opaque pair, not A/A, A/B, performance or publication approval.",
-      "updatedAt": "2026-11-26T11:54:16.015819+00:00",
+      "summary": "Prepared e2101026eb passed same-host functional admission: 18 fresh processes, 60 N1 leaf visits across report modes and all eight broad leaves on both releases; six valid on-profiles, off empty, zero failures/skips and cleanup passed. Frozen opaque release and common executable identities were verified before/after; raw times were discarded. Static parity remains 117,318 legacy positions included in 117,320 candidate positions, zero missing. AMD C++ lint passed; ARM found only the inherited ssize_t header issue already addressed by #17920. No A/A, A/B or publication approval is established.",
+      "updatedAt": "2026-11-26T12:38:58.600426+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
-        "disposition": "Prepared e2101026eb has verified report-off/on functional smokes on both frozen releases: runs 45812516017 and 45813625070 used the same checked c900cae5 executable, all guests exited zero, off produced no report and on produced one valid profile; cleanup passed. Smoke timings were discarded. Static parity remains 117,318 legacy positions included in 117,320 candidate positions, zero missing. This establishes the caller/metric and opaque pair, not A/A, A/B, performance or publication approval.",
-        "nextAction": "Root advances same-host broad functional admission using frozen opaque releases and benchmark/image identities; no timing yet. The report-off/on metric/caller gap is resolved with the same checked executable on both releases. Root owns in-progress AMD/ARM C++ lint 45813582592/45813586276 and current-base final review; do not duplicate observation. Preserve performance/source-publication boundaries and historical syscall-runner EACCES separately.",
+        "disposition": "Prepared e2101026eb passed same-host functional admission: 18 fresh processes, 60 N1 leaf visits across report modes and all eight broad leaves on both releases; six valid on-profiles, off empty, zero failures/skips and cleanup passed. Frozen opaque release and common executable identities were verified before/after; raw times were discarded. Static parity remains 117,318 legacy positions included in 117,320 candidate positions, zero missing. AMD C++ lint passed; ARM found only the inherited ssize_t header issue already addressed by #17920. No A/A, A/B or publication approval is established.",
+        "nextAction": "Root advances controlled same-source A/A with the verified immutable release/tool bundle and existing stop rules, then conditional comparison only if admitted. Same-host input, recorder, Docker and broad-caller functional setup is complete. Root finishes current-base review and tracks #17920 for the inherited ARM header finding; do not copy its fix or repeat unchanged lint. Preserve source-publication and performance boundaries and historical syscall-runner EACCES separately.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -41024,10 +41024,11 @@
           "https://github.com/tamird/gvisor/actions/runs/45808877775",
           "https://github.com/tamird/gvisor/actions/runs/45810571304/artifacts/15112412051",
           "https://github.com/tamird/gvisor/actions/runs/45812516017/artifacts/15112544332",
-          "https://github.com/tamird/gvisor/actions/runs/45813625070/artifacts/15114720462"
+          "https://github.com/tamird/gvisor/actions/runs/45813625070/artifacts/15114720462",
+          "https://github.com/tamird/gvisor/actions/runs/45817774382/artifacts/15116492869"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Actual same-host broad functional admission, root-owned lint terminal evidence or current-base review/source decision; no new timing or duplicate smoke run.",
+        "recheckCondition": "Actual source-bound A/A admission/results, current-base final review, or #17920 integration; no repeated functional setup, duplicate header fix or inferred publication approval.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "qualificationHistory": [
           {
@@ -41362,7 +41363,7 @@
           "proofSHA256": "8cfa9665fca33bd1625d96c7b184d3b8454523fbfe87c0b7bd9744d867d14c0b",
           "recheckCondition": "Root permanent-mechanism decision, same-operation execution-review result or actual fidelity evidence."
         },
-        "curatedAt": "2026-11-26T11:54:16.015819+00:00",
+        "curatedAt": "2026-11-26T12:38:58.600426+00:00",
         "permanentBazelFirstLayer": {
           "testSource": "340e1072aa5a3d47e01ff68dffea34f91be4a9f4",
           "ciSource": "fa452727d8d6af2399f8644f9d64a40dc5d902ae",
@@ -42224,9 +42225,73 @@
           },
           "currentCppLint": {
             "owner": "root",
-            "status": "in progress at supplied owner observation; not independently polled",
-            "AMD": 45813582592,
-            "ARM": 45813586276
+            "AMD": {
+              "run": 45813582592,
+              "state": "PASS",
+              "compileDBEntries": 379
+            },
+            "ARM": {
+              "run": 45813586276,
+              "compileDBEntries": 377,
+              "state": "One inherited finding",
+              "finding": "signalfd.cc:506 missing direct header for ssize_t; file identical in native baseline c3efd and candidate e210",
+              "existingResolution": "#17920 ea66bb33d already addresses the header; no duplicate patch or unchanged retry."
+            }
+          },
+          "sameHostFunctionalAdmission": {
+            "run": 45817774382,
+            "source": "fe0314b48beb77faa0bf5cdc8b9b5fa8fb1b75a5",
+            "verdict": "PASS same-host functional admission only",
+            "artifactURL": "https://github.com/tamird/gvisor/actions/runs/45817774382/artifacts/15116492869",
+            "artifactTransportSHA256": "7157706adf25adbf4eab51fe6da84b0eb633ca7c0e4230d79af408b5fa467b12",
+            "inputs": {
+              "candidate.tar.zstd": {
+                "sha256": "c2718b424cf18241e2ca498d4b63263a2e88610492b5464fef378f41148eeb17",
+                "bytes": 27413842
+              },
+              "baseline.tar.zstd": {
+                "sha256": "c1a739b8790a723945cef9b0d318cfe0bdf9b8530d09acc172e0455670b24906",
+                "bytes": 44729762
+              },
+              "paired": {
+                "sha256": "1027e6dd4c7fd263f198a1527ac1276070b33492937066501fd4be6f1adc3e3e",
+                "bytes": 3203232
+              },
+              "coverage_lifecycle_test": {
+                "sha256": "78b0a4ae6f608279f9edb2d833c05445f3f81bb94b0b46a8ae33de613d6e3601",
+                "bytes": 4178080
+              }
+            },
+            "sources": {
+              "baseline": "c3efd8c9381c89b78c1d86b6c64a49d53ee938f8",
+              "candidate": "e2101026eb7e6601ed02a04dff43069e11d5d189"
+            },
+            "actualCounts": {
+              "freshGoBenchmarkProcesses": 18,
+              "reportModeLeafVisits": 12,
+              "existingBroadLeafVisits": 48,
+              "totalLeafVisits": 60,
+              "profiles": 6,
+              "offReports": 0,
+              "failures": 0,
+              "skips": 0
+            },
+            "memberProof": "Two complete nine-binary installed release trees; all SHA/size/mode records identical before/after; seven noncoverage binaries identical between baseline/candidate, only runsc andSentry differ as expected. HostDocker copied both whole archives and verified all18memberSHA values against same staged products map.",
+            "compiledProof": "One common Go report-benchmark byte sequence78b0a4ae…4178080B retained and checksum verified before/after, selected runtime+sidecar input differs per arm. Recorder reports /usr/bin/env SHA886e5fa8 for report commands; that is NOT the Go binary hash. Separate executable manifest+retained binary proves fixed Go executable. Startup andsyscall producer digests same across their own arms.",
+            "worker": "One ubuntu24 AMD64 GHAcontroller/job; all timed child commands and Docker workload containers local after RBE/cache builds. Natural caller affinity0-3 explicitly supplied unchanged through taskset; recorder pin_cpu=-1, per-child affinity fields null so no direct per-child mask or physical-core/exclusivity claim. All observed Go concurrency suffixes4.",
+            "images": [
+              "HOST_DOCKER_IMAGE sha256:b92841763c5c2140a20eeb2a44e94ebb0e80fd51d9d6b5895ea72fa999525d68 amd64",
+              "HOST_DOCKER_IMAGE sha256:b3912f506d92ab0350d4497c11d9919b0f9bd14dc83c7a253b483b85930ab76b amd64"
+            ],
+            "cleanup": "HostDocker command0/cleanup0 restored daemon/images; complete staged filesets and four executable checksums matched afterward; outer input-stage removal+absence check exit0. Only intended binary archives/tools, position profiles, benchmark outputs and metadata retained; no runtime/checkpoint state.",
+            "measurementDisposition": "Every recorder invocation preflight=true, only warmup+two functional pairs withone iteration/leaf. All rawtimingsdiscarded; no normal24pair A/A/A/B or nativebenchstat run. No precision/order/drift/equivalence/benefit claim. This resolves actual input/recorder/Docker/broad-call admission, not performance qualification.",
+            "sourceChecks": {
+              "graph": 45817412702,
+              "source": 45817421222,
+              "formatScope": "Goimports/Buildifier/spelling; no fullC++lint claim"
+            },
+            "nextAction": "Stop at requested admission. Existing pipeline can now stage one immutable bundle withboth opaque releases andcommon executable for controlledsame-source work when owning instructions permit. Preserve report cmd.Run lifecycle boundary, original eight broadleaves, same-host placement andscientificcontrol stop rules; no sample expansion.",
+            "observers": "none; all foreground handles terminal"
           }
         },
         "technicalOwner": "approved_rebase_queue",
@@ -85751,9 +85816,9 @@
       "title": "Run the TCP benchmark from Go",
       "url": "https://github.com/tamird/gvisor/commit/e20198216",
       "group": "tests",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-11-17T20:32:28.027492+00:00",
-      "summary": "Six native AMD64 transfer modes passed on the tested tree, including IPv6, parallel streams, an installed binary found through PATH, and the default user namespace under UID 1001. The installed shell driver exited before iperf3 started when its directory contained a space. Six error and interruption controls passed. An interrupted proxy flushed a 1,475-byte CPU profile. The original workflow failed because its observer counted nested iperf3 interval objects. The corrected readback verifies the original logs. The positive IPv6 transfer’s profile digest was not recorded.",
+      "status": "Superseded",
+      "updatedAt": "2026-11-26T12:38:58.600426+00:00",
+      "summary": "Historical e20198216 conditional publication retired after #17184 closed. Preserve its prior approval/evidence and rejection history. Separate private 4aba Go rewrite scope and legacy dependency remain only on canonical #17184; no restored publication authority or repeat approval.",
       "evidence": [
         {
           "label": "Original native benchmark logs and per-case evidence",
@@ -85783,11 +85848,9 @@
         }
       ],
       "followup": {
-        "owner": "root",
         "sourceHead": "e20198216672dfba7dd01052df660dcad47be013",
         "observedAt": "2026-11-07T17:15:36+00:00",
-        "disposition": "The contributor approved e20198216 for submission after #17184 lands.",
-        "nextAction": "Open the one-commit Go benchmark replacement after #17184 merges.",
+        "disposition": "Historical e20198216 conditional publication retired after #17184 closed. Preserve its prior approval/evidence and rejection history. Separate private 4aba Go rewrite scope and legacy dependency remain only on canonical #17184; no restored publication authority or repeat approval.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17184",
           "https://github.com/tamird/gvisor/commit/e20198216"
@@ -85804,8 +85867,16 @@
           "owner": "root"
         },
         "technicalOwner": "Workstream owner",
-        "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings."
-      }
+        "historicalConditionalPublication": {
+          "source": "e20198216672dfba7dd01052df660dcad47be013",
+          "disposition": "The contributor approved e20198216 for submission after #17184 lands.",
+          "nextAction": "Open the one-commit Go benchmark replacement after #17184 merges.",
+          "retiredAt": "2026-11-26T12:38:58.600426+00:00",
+          "reason": "#17184 closed, so the conditional after-merge opening is obsolete; private rewrite scope remains on canonical #17184."
+        },
+        "curatedAt": "2026-11-26T12:38:58.600426+00:00"
+      },
+      "inactive": true
     },
     {
       "id": "branch:proc-umounter-process-handle",
@@ -98461,8 +98532,8 @@
       "title": "Honor module mirrors for the implicit Bazel Central Registry",
       "group": "bazel",
       "status": "Delivered",
-      "updatedAt": "2026-11-09T22:32:51+00:00",
-      "summary": "Bazel 9.3.2 rejects a mirror scoped to the default BCR unless the same registry is explicitly selected. The rebuilt Bazel accepted both forms and produced identical module URLs and fresh lockfiles. The offline regression and two existing mirror controls passed.",
+      "updatedAt": "2026-11-26T12:40:09.280960+00:00",
+      "summary": "Source delivery complete: implicit scoped-registry mirror fix landed as 3a8a02bfd; 10.0 backport merged as 26578f659 and 9.4 backport as 0b1ff8355. Published 10.0.0rc4 contains the correction. No upstream review action remains. Optional release/adoption and actual CI download recurrence are separate on the dependency-download investigation; current gVisor unscoped mirror is not rejected by this bug.",
       "evidence": [
         {
           "label": "Published pull request",
@@ -98486,16 +98557,22 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
         "sourceHead": "a6d03b87ce5689d871074bce123ebbf25f305933",
         "observedAt": "2026-11-09T22:32:51+00:00",
-        "disposition": "Published",
-        "nextAction": "Follow review on bazelbuild/bazel#32541.",
+        "disposition": "Source delivery complete: implicit scoped-registry mirror fix landed as 3a8a02bfd; 10.0 backport merged as 26578f659 and 9.4 backport as 0b1ff8355. Published 10.0.0rc4 contains the correction. No upstream review action remains. Optional release/adoption and actual CI download recurrence are separate on the dependency-download investigation; current gVisor unscoped mirror is not rejected by this bug.",
         "evidence": [
           "https://github.com/bazelbuild/bazel/pull/32541",
           "https://github.com/tamird/bazel/commit/a6d03b87c",
           "https://github.com/bazelbuild/bazel/issues/32540"
-        ]
+        ],
+        "qualificationHistory": [
+          {
+            "at": "2026-11-26T12:40:09.280960+00:00",
+            "priorNextAction": "Follow review on bazelbuild/bazel#32541.",
+            "outcome": "Completed upstream delivery and backport review; no further human-review follow-up."
+          }
+        ],
+        "curatedAt": "2026-11-26T12:40:09.280960+00:00"
       },
       "settledReviews": [
         {
@@ -98624,8 +98701,8 @@
       "url": "https://github.com/bazelbuild/bazel/pull/32541",
       "group": "bazel",
       "status": "closed",
-      "updatedAt": "2026-11-11T16:01:07+00:00",
-      "summary": "Bazel landed the implicit-registry mirror fix in 3a8a02bfd. Both release backports are open. The 9.4 change adapts the fix to that branch’s ImmutableSet.",
+      "updatedAt": "2026-11-26T12:40:09.280960+00:00",
+      "summary": "Source delivery complete: implicit scoped-registry mirror fix landed as 3a8a02bfd; 10.0 backport merged as 26578f659 and 9.4 backport as 0b1ff8355. Published 10.0.0rc4 contains the correction. No upstream review action remains. Optional release/adoption and actual CI download recurrence are separate on the dependency-download investigation; current gVisor unscoped mirror is not rejected by this bug.",
       "evidence": [
         {
           "label": "Upstream commit 3a8a02bfd",
@@ -98708,19 +98785,26 @@
         }
       ],
       "followup": {
-        "owner": "Upstream delivery complete",
         "sourceHead": "a6d03b87ce5689d871074bce123ebbf25f305933",
         "observedAt": "2026-11-11T15:13:43+00:00",
-        "disposition": "Copybara landed the fix in 3a8a02bfd.",
-        "nextAction": "Follow the Bazel 10.0 and 9.4 backports through upstream review.",
+        "disposition": "Source delivery complete: implicit scoped-registry mirror fix landed as 3a8a02bfd; 10.0 backport merged as 26578f659 and 9.4 backport as 0b1ff8355. Published 10.0.0rc4 contains the correction. No upstream review action remains. Optional release/adoption and actual CI download recurrence are separate on the dependency-download investigation; current gVisor unscoped mirror is not rejected by this bug.",
         "evidence": [
           "https://github.com/bazelbuild/bazel/commit/3a8a02bfd",
           "https://github.com/bazelbuild/bazel/pull/32541#event-35706360058",
           "https://github.com/bazelbuild/bazel/pull/32574",
           "https://github.com/bazelbuild/bazel/issues/32565#issuecomment-6773618148",
           "https://github.com/bazelbuild/bazel/pull/32595"
-        ]
-      }
+        ],
+        "qualificationHistory": [
+          {
+            "at": "2026-11-26T12:40:09.280960+00:00",
+            "priorNextAction": "Follow the Bazel 10.0 and 9.4 backports through upstream review.",
+            "outcome": "Completed upstream delivery and backport review; no further human-review follow-up."
+          }
+        ],
+        "curatedAt": "2026-11-26T12:40:09.280960+00:00"
+      },
+      "inactive": true
     },
     {
       "id": "pr:bazelbuild/bazel-central-registry:11683",
@@ -108970,11 +109054,11 @@
       "url": "https://github.com/gvisor/gvisor/issues/17832",
       "group": "rbe",
       "status": "open",
-      "summary": "Successor cache source b245b95c47 and the refreshed #17832 title/body have two actual unanswered publication questions. At base bf581410, it covers nine Bazel job definitions in eight workflows, including do.yml’s two architecture entries. Source tests passed; Make preflight verifies command expansion only, not Docker/ARM runtime or speedup. Withdrawn e61 history and the distinct Go-export decision remain intact. A separate ordinary-build probe had 510 remote cache hits and 136 internal actions, with no compiler/generator spawn execution; no matched execution speedup was measured.",
+      "summary": "Successor cache source b245b95c47 and the refreshed #17832 title/body have two actual unanswered publication questions. At base bf581410, it covers nine Bazel job definitions in eight workflows, including do.yml’s two architecture entries. Source tests passed; Make preflight verifies command expansion only, not Docker/ARM runtime or speedup. Withdrawn e61 history and the distinct Go-export decision remain intact. A separate ordinary-build probe had 510 remote cache hits and 136 internal actions, with no compiler/generator spawn execution; no matched execution speedup was measured. A separate ordinary release build recorded 416 remote executions and 2,787 cache hits; its profile has 132 worker spans, peak overlap 14. This measures worker overlap, not local speedup or PR latency.",
       "followup": {
         "owner": "root",
         "observedAt": "2026-11-25T13:09:11.551551+00:00",
-        "disposition": "Successor cache source b245b95c47 and the refreshed #17832 title/body have two actual unanswered publication questions. At base bf581410, it covers nine Bazel job definitions in eight workflows, including do.yml’s two architecture entries. Source tests passed; Make preflight verifies command expansion only, not Docker/ARM runtime or speedup. Withdrawn e61 history and the distinct Go-export decision remain intact. A separate ordinary-build probe had 510 remote cache hits and 136 internal actions, with no compiler/generator spawn execution; no matched execution speedup was measured.",
+        "disposition": "Successor cache source b245b95c47 and the refreshed #17832 title/body have two actual unanswered publication questions. At base bf581410, it covers nine Bazel job definitions in eight workflows, including do.yml’s two architecture entries. Source tests passed; Make preflight verifies command expansion only, not Docker/ARM runtime or speedup. Withdrawn e61 history and the distinct Go-export decision remain intact. A separate ordinary-build probe had 510 remote cache hits and 136 internal actions, with no compiler/generator spawn execution; no matched execution speedup was measured. A separate ordinary release build recorded 416 remote executions and 2,787 cache hits; its profile has 132 worker spans, peak overlap 14. This measures worker overlap, not local speedup or PR latency.",
         "nextAction": "Root consumes the actual b245 cache-PR and revised issue-title/body decisions independently; approved_delivery_batch owns the cache revision. Preserve the distinct Go-export opening decision. No source publication, issue edit, merge or runtime/speedup result is inferred.",
         "recheckCondition": "An actual answer to one of the three independent questions or substantive source/coverage evidence.",
         "evidence": [
@@ -109005,7 +109089,7 @@
           "https://github.com/tamird/gvisor/actions/runs/45768612458/artifacts/15092842201",
           "https://github.com/tamird/gvisor/actions/runs/45771527305/artifacts/15093907787"
         ],
-        "curatedAt": "2026-11-26T07:04:10.906515+00:00",
+        "curatedAt": "2026-11-26T12:38:58.600426+00:00",
         "supersededExecutionBlocker": {
           "nextAction": "Root consumes each existing decision independently: open the cache 86cffbf72 PR, replace the issue body with the current measured-scope draft, and open the Go export f8500dffe PR. Canonical lint coverage is reconciled through unchanged-input parent evidence. Deliver approved changes through the existing authorized routes; the unpublished Go export fork ref still needs its SSH/HTTPS execution blocker to clear.",
           "recordedAt": "2026-11-24T06:29:20.083295+00:00",
@@ -109177,9 +109261,27 @@
           },
           "decision": "Hold timed comparison: selected current/post-change ordinary workload has zero executing cache misses. A historical preimage would not establish a matched newly changed-input pair against the already cached postimage. No cache eviction, cache-bypass flags, unique diagnostic source, new cache namespace, synthetic provider or archive-wide rebuild will be used to manufacture concurrency.",
           "remainingEvidenceGap": "Need a naturally pending real generator/build-input change with sufficient comparable unfilled action keys, or an explicitly authorized separate cache-isolation design; verify parent shared-cache state and both arms before timing."
+        },
+        "ordinaryReleaseWorkerOverlap": {
+          "run": 45810749174,
+          "invocation": "e2852ce3-173d-4e9f-bede-0480be68fdda",
+          "url": "https://app.buildbuddy.io/invocation/e2852ce3-173d-4e9f-bede-0480be68fdda",
+          "remoteExecutions": 416,
+          "remoteCacheHits": 2787,
+          "internalActions": 1280,
+          "overallSeconds": 193.694,
+          "executionPhaseSeconds": 163.627,
+          "profile": {
+            "sha256": "58f870f703e9b2a97e9a7fd6a56ed5c5f3e73e26f65322cc02fe6a0abe8f9c2e",
+            "bytes": 240825,
+            "workerExecutionSpans": 132,
+            "peakSimultaneous": 14,
+            "sumWorkerExecutionSeconds": 569.739
+          },
+          "scope": "Worker process spans only; excludes queues, uploads and cache activity. No measured local comparison or PR latency. Cache proposal workflows/actions/Makefile/tools/bazel.mk unchanged from bf581410 to c3efd8c93."
         }
       },
-      "updatedAt": "2026-11-26T07:04:10.906515+00:00",
+      "updatedAt": "2026-11-26T12:38:58.600426+00:00",
       "nextStep": "Root consumes the actual b245 cache-PR and revised issue-title/body decisions independently; approved_delivery_batch owns the cache revision. Preserve the distinct Go-export opening decision. No source publication, issue edit, merge or runtime/speedup result is inferred.",
       "recheckCondition": "Technical review milestone for revised cache source/text or actual Go-export answer.",
       "reviewWatch": {
@@ -137289,9 +137391,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-26T11:41:06.718254+00:00",
+      "updatedAt": "2026-11-26T12:38:58.600426+00:00",
       "group": "analysis",
-      "summary": "Source 0edf29aac is unchanged. The gRPC dirty-bindfs candidate-only A/A completed 50 successful children and 24 retained pairs, with no corrected flags across five comparisons. Its test passed; only post-test BES upload failed. No A/B or cross-worker stability is established. The 71 filesystem leaves with matched data remain scoped; other gRPC controls, FUSE, Node stability and broader qualification remain open.",
+      "summary": "Analyzer source 0edf29aac is unchanged. The hosted gRPC dirty-bindfs study is running on one accepted 12-hour worker: candidate A/A first, then conditional baseline/candidate A/B, 24 retained pairs per phase. Exact product identities, six synthetic children and real Docker reload/restoration passed before dispatch. Previous dirty-bindfs A/A remains scoped evidence; 71 filesystem leaves have matched data. Other gRPC controls, FUSE, Node stability and broader qualification remain open.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -137663,7 +137765,7 @@
           ]
         }
       ],
-      "nextStep": "analysis_delivery verifies the synthetic non-systemd reload/restoration fixture and exact runtime/archive identities before real measurement. Original baseline producer 45810749174 passed, retaining exact cb479886 archive (40,270,884 bytes); same-group native download and SHA256 verification succeeded with installed bb 5.0.507 using bare HASH/SIZE. Earlier URI argument forms were misparsed. Go helper formatting, compilation and identity controls passed; actual reload/restoration remains unproven. Other gRPC controls, both FUSE holds and the Node candidate hold remain.",
+      "nextStep": "analysis_delivery owns study f828a443-dd9a-49c8-a15e-7b8e5d0b3b5a (nested e29c64dd-b083-4a22-afed-c616ad917024), candidate A/A then conditional A/B on the same worker. Recheck the meaningful A/A milestone around 17:30 UTC or earlier terminal; do not duplicate its observer. Original 24 pairs per phase and 12-hour budget remain fixed. Synthetic reload/restoration and the real child passed; no full comparison or stability conclusion exists yet. Other gRPC controls, both FUSE holds and the Node candidate hold remain.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -138385,14 +138487,14 @@
           "https://github.com/tamird/gvisor/actions/runs/45761231714/artifacts/15108186254"
         ],
         "owner": "root",
-        "disposition": "Source 0edf29aac is unchanged. The gRPC dirty-bindfs candidate-only A/A completed 50 successful children and 24 retained pairs, with no corrected flags across five comparisons. Its test passed; only post-test BES upload failed. No A/B or cross-worker stability is established. The 71 filesystem leaves with matched data remain scoped; other gRPC controls, FUSE, Node stability and broader qualification remain open.",
-        "nextAction": "analysis_delivery verifies the synthetic non-systemd reload/restoration fixture and exact runtime/archive identities before real measurement. Original baseline producer 45810749174 passed, retaining exact cb479886 archive (40,270,884 bytes); same-group native download and SHA256 verification succeeded with installed bb 5.0.507 using bare HASH/SIZE. Earlier URI argument forms were misparsed. Go helper formatting, compilation and identity controls passed; actual reload/restoration remains unproven. Other gRPC controls, both FUSE holds and the Node candidate hold remain.",
-        "recheckCondition": "Actual synthetic reload/restoration and runtime/archive binding evidence, then an accepted worker/control plan; no full fixture admission, timing or cross-worker stability inferred.",
+        "disposition": "Analyzer source 0edf29aac is unchanged. The hosted gRPC dirty-bindfs study is running on one accepted 12-hour worker: candidate A/A first, then conditional baseline/candidate A/B, 24 retained pairs per phase. Exact product identities, six synthetic children and real Docker reload/restoration passed before dispatch. Previous dirty-bindfs A/A remains scoped evidence; 71 filesystem leaves have matched data. Other gRPC controls, FUSE, Node stability and broader qualification remain open.",
+        "nextAction": "analysis_delivery owns study f828a443-dd9a-49c8-a15e-7b8e5d0b3b5a (nested e29c64dd-b083-4a22-afed-c616ad917024), candidate A/A then conditional A/B on the same worker. Recheck the meaningful A/A milestone around 17:30 UTC or earlier terminal; do not duplicate its observer. Original 24 pairs per phase and 12-hour budget remain fixed. Synthetic reload/restoration and the real child passed; no full comparison or stability conclusion exists yet. Other gRPC controls, both FUSE holds and the Node candidate hold remain.",
+        "recheckCondition": "Owner-reported A/A milestone or actual terminal study result; no sample expansion, duplicate watcher or cross-worker inference.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-26T11:41:06.718254+00:00",
+        "curatedAt": "2026-11-26T12:38:58.600426+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -138708,7 +138810,7 @@
               "Cross-worker measurement stability",
               "General tenant maximum or 12-hour durability"
             ],
-            "next": "analysis_delivery verifies the synthetic non-systemd reload/restoration fixture and exact runtime/archive binding before any real measurement.",
+            "next": "analysis_delivery consumes the original study A/A milestone around 17:30 UTC or earlier terminal; A/B remains conditional on all existing controls. No duplicate observer or repeat.",
             "immutableBaselineAssessment": {
               "producerSource": "b231e0bc296cbe3dfb08e44cd92845885542464f",
               "nativeBaseline": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -138749,9 +138851,17 @@
             "normalReloadCorrection": {
               "source": "0452ed02dd33cf662143a3a4abfa28a2a9f4b9b6",
               "ref": "qualification/grpc-nonsystemd-preflight-20261126",
+              "delta": "4files,+151/-2; declaredLinuxGo helper; failedPython variant/runtime dependency removed",
               "url": "https://github.com/tamird/gvisor/commit/0452ed02dd33cf662143a3a4abfa28a2a9f4b9b6",
-              "scope": "Shared normal reload/cleanup only; default systemd and checkpoint/restart paths unchanged. Requires caller attestation of exclusive disposable guest, local root dockerd socket peer, guest PID namespace, config and original process identity.",
+              "run": "https://app.buildbuddy.io/invocation/aee862da-27da-4859-80ef-735f6d16183e",
+              "buildifier": "PASS,710c4a17-f124-48f1-9425-fb8e10dd29b5",
               "helperBuild": "PASS379510cd: localrootdockerd659:117 and wrongidentity0:0 rejected before signal",
+              "admission": "PASS: exact0452 full synthetic fixture with Docker generic loader; runtime install/reload/uninstall/restoration verified in328086a0.",
+              "previousAssertionFailure": "aba6b2b4-f313-4a3a-bcc5-e0ac25ab8c3d: systemPython pre3.9 lacks removeprefix; preserved.",
+              "scope": "Shared normal reload/cleanup only; default systemd and checkpoint/restart paths unchanged. Requires caller attestation of exclusive disposable guest, local root dockerd socket peer, guest PID namespace, config and original process identity.",
+              "actual": "Both exact runtime release inventories matched; runtime probes and six synthetic children passed; command0/cleanup0; temporary remote selector restored.",
+              "next": "Root acceptance before actual long matched study.",
+              "checkout": "Prior qualification/node-accounting-control-20261126 restored at516e4814ae988a3f8c9aba934d38a3ba2d6b2447; trackedclean, original tools/buildkite/__pycache__/ preserved.",
               "format": {
                 "status": "PASS",
                 "outer": "https://app.buildbuddy.io/invocation/058ebfcc-fd03-4690-a463-bb51dee0d72d",
@@ -138783,7 +138893,7 @@
                 "actual": "Hosted runner executed exact source; Bazel9.3.1 analysis attempted. No Docker fixture or benchmark children executed."
               }
             ],
-            "state": "Canonical baseline archive and consumption verified; synthetic reload/restoration admission remains",
+            "state": "Synthetic reload/restoration passed; original co-located matched study running",
             "selectedInputRoute": "Canonical native baseline rebuild, opaque archive digest verification and standard override_repository; no credential forwarding.",
             "currentSource": "0452ed02dd33cf662143a3a4abfa28a2a9f4b9b6",
             "currentQualification": "Go helper compiled; socket/PID/config identity and mismatch rejection passed. Buildifier and canonical Goimports passed. Full reload/restoration fixture remains unexecuted.",
@@ -138817,6 +138927,170 @@
                 "sha256": "cb479886af63e2616c04640084fa8d4822a84716b8b6ee2996c2548d68d7a57e",
                 "bytes": 40270884,
                 "scope": "Exact downloaded bytes verified; prior argument forms were misparsed, not a proven cache service defect."
+              }
+            },
+            "currentAdmission": {
+              "source": "0452ed02dd33cf662143a3a4abfa28a2a9f4b9b6",
+              "invocation": "d5c76a74-f51b-43e2-95d1-8351a17a83ca",
+              "localHandle": 15354,
+              "status": "SUCCESS",
+              "image": "gcr.io/flame-public/rbe-ubuntu24-04@sha256:be9853fc45092d2cf2bda3abed30d22182881659a50bf35c7125161d7cfc8a75",
+              "actual": "Fresh Ubuntu24.04/GCC13.3 guest; root, passwordless sudo, Docker28.1.0, seven visible CPUs (EstimatedCPU request4).",
+              "changedInvocation": [
+                "rules_img load_daemon=generic",
+                "LOADER_BINARY=docker",
+                "allow-universal-snapshot=false"
+              ],
+              "unsupportedRejectedBeforeAllocation": "remote-snapshot-save-policy=never; omitted, no VM allocated",
+              "priorCompiledFixture": "c2b65bdd-4dd1-4818-b359-7caa2750f354 / nested f6eca224-b0a3-42ac-82c7-222b3d979816",
+              "priorFailure": "Automatic containerd loader imports not visible to Docker API; Alpine admission failed before daemon reload. command1/cleanup0 does not prove wrong-containerd image cleanup.",
+              "expected": "Six synthetic printf children, exact18 product identities, all runtime image checks, actual reload plus restoration and cleanup. No benchmark workload timing.",
+              "bazelInvocation": "328086a0-ef3f-4755-b9b2-60d50ff50554",
+              "log": "grpc-nonsystemd-generic-loader-328086a0.log",
+              "logSHA256": "5b37456ed252344c748bc29783e9c6230f3669e77d9553a6a8318ce7769799f1",
+              "products": {
+                "benchmark-baseline": {
+                  "containerd-shim-runsc-v1": "081ef07da48fa1cbfcab660e1a89fa45e1f82a6a8c0c3c294ef8b2b38831d073",
+                  "gvisor-bin/checkpointgofer": "116f07ebe0d287fe45de3c51b1b25a4352407953c5c3fdae374ecf1aabc8968b",
+                  "gvisor-bin/gvisor-proc-umounter": "f8bcc91a9ea695c817cab5e401f93d02b791717385c95ac5d4d9b4d2ff42f7ab",
+                  "gvisor-bin/gvisor-sentry-prewarmer": "fd80f1972b1d4284cf489ae54c8250a820ac5a9edb81d73affbf2faea755aebf",
+                  "gvisor-bin/gvisor_sentry": "054597794142395419f9239c59adfe071814b09b12ee98d0ec7eb39416c4ebb1",
+                  "gvisor-bin/runsc-fd-parking": "c367c27ce0da4ce8529c9ba0b091eda0e159e966062137e963d451c37d25880a",
+                  "gvisor-bin/runsc-metric-server": "3c5673c7f65c32173dbc30afa6a2d176c368e6525aba29e5ea9fe7a67249f019",
+                  "gvisor-bin/runsc-netgofer": "56b599e460f3128142cf0a1c78506364a24be6536442bdd817c4b5fb6e30f679",
+                  "runsc": "be14f918ceec4fdffeea239a344566a1c10e606bdd7f7fbccd689624ae454b24"
+                },
+                "benchmark-candidate": {
+                  "containerd-shim-runsc-v1": "02e79b3a86904c759eb1964c66cefba311f185944fa8110709003ad79b0db938",
+                  "gvisor-bin/checkpointgofer": "f2690351b2e5276cedb202f5ed09c36586ec0d8645fc5e7ccb84aadc3a32d7b9",
+                  "gvisor-bin/gvisor-proc-umounter": "f8bcc91a9ea695c817cab5e401f93d02b791717385c95ac5d4d9b4d2ff42f7ab",
+                  "gvisor-bin/gvisor-sentry-prewarmer": "fd80f1972b1d4284cf489ae54c8250a820ac5a9edb81d73affbf2faea755aebf",
+                  "gvisor-bin/gvisor_sentry": "e85c443d30260e1bde71a6c2495d75bd2279a7672d662fad2623e142392626bd",
+                  "gvisor-bin/runsc-fd-parking": "c367c27ce0da4ce8529c9ba0b091eda0e159e966062137e963d451c37d25880a",
+                  "gvisor-bin/runsc-metric-server": "2e0e54bfa1993e17899e92c3f12857cf9189fdf9c8a5c4d467eb9e22e15b8c5e",
+                  "gvisor-bin/runsc-netgofer": "3bbae9eb8f5a51ca949e52434d52959fe5355ef5a1ff1fbe9184bf0f7e4951e5",
+                  "runsc": "3adcedefb3afbb8ed8076664be9eddf6ce6fffafdce57ec8608f12ff6a53e644"
+                }
+              },
+              "syntheticChildren": [
+                {
+                  "pair": -1,
+                  "arm": "A",
+                  "pid": 9006
+                },
+                {
+                  "pair": -1,
+                  "arm": "B",
+                  "pid": 9009
+                },
+                {
+                  "pair": 0,
+                  "arm": "A",
+                  "pid": 9010
+                },
+                {
+                  "pair": 0,
+                  "arm": "B",
+                  "pid": 9011
+                },
+                {
+                  "pair": 1,
+                  "arm": "B",
+                  "pid": 9012
+                },
+                {
+                  "pair": 1,
+                  "arm": "A",
+                  "pid": 9013
+                }
+              ],
+              "runtimeAdmission": [
+                "runc",
+                "benchmark-baseline",
+                "benchmark-candidate"
+              ],
+              "commandExit": 0,
+              "cleanupExit": 0,
+              "testSeconds": 27.2,
+              "totalBazelSeconds": 89.436,
+              "remoteCacheHits": 3966,
+              "checks": "Five images loaded through selected Docker API; exact18 products; both runtime paths installed after Go-helper reload; all3 runtime true probes passed; six synthetic rows; uninstall/reload and runtime/container/image/config restoration checks passed. Selector restored.",
+              "limit": "Synthetic rows prove integration and cleanup, not workload timing/stability or ten-hour service durability. Prior Action metadata proves effective12h, not general tenant maximum."
+            },
+            "matchedStudy": {
+              "status": "RUNNING",
+              "source": "0452ed02dd33cf662143a3a4abfa28a2a9f4b9b6",
+              "nativeCandidate": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
+              "nativeBaseline": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
+              "outer": "f828a443-dd9a-49c8-a15e-7b8e5d0b3b5a",
+              "nested": "e29c64dd-b083-4a22-afed-c616ad917024",
+              "localHandle": 66317,
+              "acceptedUTC": "2026-11-26T12:17:13Z",
+              "script": "grpc-original-matched-study-STAGED-NOT-DISPATCHED.sh",
+              "scriptSHA256": "f2031fc7457f9f57d7125879e5a0d026036819d28bcabdc210c6297dc3f596bc",
+              "selector": "Restored immediately after accepted dispatch; client finally block also restores original selector on exit.",
+              "protocol": "One co-located job; candidate/candidateAA with24retainedpairs+warmup; baselineA/candidateBAB only if existing all-five-contrast control passes. No repeats or sample expansion.",
+              "visitTimeoutSeconds": 600,
+              "testTimeoutSeconds": 42000,
+              "runnerBudgetSeconds": 43200,
+              "affinity": "0-6",
+              "visibleCPUs": 7,
+              "diskBytesBefore": 14143234048,
+              "image": "gcr.io/flame-public/rbe-ubuntu24-04@sha256:be9853fc45092d2cf2bda3abed30d22182881659a50bf35c7125161d7cfc8a75",
+              "baselineArchive": "cb479886af63e2616c04640084fa8d4822a84716b8b6ee2996c2548d68d7a57e/40270884",
+              "next": "Meaningful AA-phase/terminal checkpoint (~17:30UTC from pilot; full projection~23:32UTC); no persistent observer. Consume existing client66317/retainedBEP outputs. Service deadline~2026-11-27T00:17:13Z, testbound roughly20min earlier."
+            },
+            "realChildBudgetPreflight": {
+              "status": "SUCCESS",
+              "source": "0452ed02dd33cf662143a3a4abfa28a2a9f4b9b6",
+              "outer": "be2b8f92-c8c3-43b4-9f3f-b7092e834f3e",
+              "nested": "bc9b3f32-38a3-4884-bb57-b4b45308c8de",
+              "localHandle": 44256,
+              "script": "grpc-original-child-budget-preflight.sh",
+              "target": "//test/benchmarks/fs:bazel_test",
+              "visit": "BenchmarkBuildGRPC/page_cache.dirty/filesystem.bindfs",
+              "runtime": "benchmark-candidate",
+              "samples": "Diagnostic only; excluded from all statistical samples. One original N1 child.",
+              "observedHostAffinity": "0-6",
+              "visibleCPUs": 7,
+              "requestedEstimatedCPU": 4,
+              "diskBytesBefore": 14187139072,
+              "goChildTimeoutSeconds": 600,
+              "bazelTestIncludingSetupCleanupTimeoutSeconds": 660,
+              "next": "Root accepts capacity projection before dispatching same-image same-source one-jobAA→conditionalAB; preserve all failures and24pairs per phase.",
+              "benchmarkResult": {
+                "name": "BenchmarkBuildGRPC/page_cache.dirty/filesystem.bindfs-7",
+                "iterations": 1,
+                "nanosecondsPerOp": 360492547681
+              },
+              "testIncludingFixtureSeconds": 392.6,
+              "bazelSeconds": 403.045,
+              "shellMeasuredSeconds": 404,
+              "diskBytesAfter": 14188404736,
+              "commandExit": 0,
+              "cleanupExit": 0,
+              "log": "grpc-original-child-budget-bc9b3f32.log",
+              "products": "All18 declared hashes machine-checked against frozen paired_products.json; runc and both runtimes passed true probe; benchmark uses candidate.",
+              "selector": "restored",
+              "projection": {
+                "children": 100,
+                "phaseStructure": "Two warmups plus24pairs in each phase; candidate-onlyAA then conditionalbaseline/candidateAB; no sample changes.",
+                "conservativeSeconds": 40490,
+                "reason": "Charges the entire observed one-child Bazel+fixture duration to each child, plus90s setup; deliberately overcounts repeated fixture setup. One observation is not a guaranteed upper bound; baseline duration not directly measured here.",
+                "conservativeMarginToExecutorSeconds": 2710,
+                "conservativeMarginToTestSeconds": 1510,
+                "testTimeoutSeconds": 42000,
+                "runnerEffectiveSecondsPreviouslyVerified": 43200,
+                "existingPerVisitDeadlineSeconds": 600,
+                "allVisitsWorstCaseDeadlineSeconds": 60000,
+                "limitation": "Individual600s limits do not guarantee all100visits fit12h. Whole42000stest and43200sexecutor bounds still apply; unforeseen sustained slowdown may leave incomplete data, retained as failure."
+              },
+              "decision": "Capacity supports staging the original full protocol with measured margin. No full timing dispatched; root acceptance required.",
+              "stagedInvocation": "grpc-original-matched-study-STAGED-NOT-DISPATCHED.sh",
+              "executable": {
+                "sha256": "ab0e0b255ebf523210400ba457e24846ff1336ae7cb7ee23f6ec90cf0c6e2038",
+                "bytes": 15556768,
+                "proof": "GetInvocation namedSetOfFiles forbc9b3f32; identical to original45759909463 and retainedAA45761231714 executable."
               }
             }
           }
@@ -141211,7 +141485,7 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-12T14:27:57+00:00",
+      "updatedAt": "2026-11-26T12:40:09.280960+00:00",
       "summary": "GitHub release downloads stopped independent gVisor jobs before their checks could run. The affected archives include Skylib, Protobuf and toml.bzl (HTTP 504), and rules_foreign_cc (HTTP 500).",
       "findings": [
         {
@@ -141327,7 +141601,7 @@
           ]
         },
         {
-          "text": "Bazel accepted the change that honors a module mirror for the implicit central registry. The 10.0 release backport is open and approved. The automatic 9.4 cherry-pick conflicted in BazelRepositoryModule.java.",
+          "text": "The mirror correction is in the published Bazel 10.0.0rc4 prerelease through actual merge 26578f659. The manual 9.4 backport merged as 0b1ff8355. Current gVisor still pins 9.3.1; stable release/adoption and actual failed URL/mirror-attempt evidence remain distinct.",
           "evidence": [
             {
               "label": "Upstream commit 3a8a02bfd",
@@ -141344,7 +141618,7 @@
           ]
         }
       ],
-      "nextStep": "The Bazel 10.0 backport #32574 merged on Nov16 as 97c3cfb8bc40ad28ed83a66d1f1a5b254a8c12da; its merge wait is closed, like the 9.4 backport #32595. Follow an actual release and gVisor adoption before claiming the current Bazel 9.3.1 uses either fix. On the next dependency-download failure from a base containing workspace mirror #17311, identify the archive URL and whether Bazel attempted its configured mirror.",
+      "nextStep": "On the next actual dependency-download failure, retain the archive URL and whether its configured mirror was attempted. Current gVisor uses an unscoped mirror supported by Bazel 9.3.1; the scoped implicit-registry correction does not establish a cause of HTTP 5xx or a prerequisite for #17311. Optional future scoped configuration can follow stable Bazel release/adoption. Published 10.0.0rc4 includes #32574 actual merge 26578f659 (topic 97c3cfb8b); #32595 merged on 9.4 as 0b1ff8355. No current upgrade or failure resolution is inferred.",
       "evidence": [
         {
           "label": "Independent Bazel fix for registry-scoped mirrors",
@@ -141403,7 +141677,7 @@
           "url": "https://github.com/bazelbuild/bazel/commit/3a8a02bfd"
         },
         {
-          "label": "Approved Bazel 10.0 backport (#32574)",
+          "label": "Merged Bazel 10.0 backport (#32574)",
           "url": "https://github.com/bazelbuild/bazel/pull/32574"
         },
         {
@@ -141417,6 +141691,10 @@
         {
           "label": "Bazel 9.4 release branch merge of the implicit registry mirror fix",
           "url": "https://github.com/bazelbuild/bazel/commit/0b1ff8355"
+        },
+        {
+          "label": "Published Bazel 10.0.0rc4 prerelease",
+          "url": "https://github.com/bazelbuild/bazel/releases/tag/10.0.0rc4"
         }
       ],
       "technicalOwner": "CI flake triage",
@@ -141425,6 +141703,19 @@
         "owner": "root",
         "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
         "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+      },
+      "releaseObservation": {
+        "version": "10.0.0rc4",
+        "state": "Published prerelease observed",
+        "merge": "26578f659",
+        "topic": "97c3cfb8bc40ad28ed83a66d1f1a5b254a8c12da",
+        "descendantCommits": 8,
+        "contract": "BazelRepositoryModule.DEFAULT_REGISTRIES lacks trailing slash; 9.3.1 and 9.3.3 retain it.",
+        "backport94Merge": "0b1ff8355",
+        "gvisorSource": "c3efd8c93",
+        "gvisorBazel": "9.3.1",
+        "limit": "No stable-release adoption, actual failed-URL/mirror attempt or current gVisor use of the fix established.",
+        "currentMirrorSetting": "Current gVisor .bazelrc:22 uses an unscoped mirror, handled in Bazel9.3.1 through the empty default key. #32541 concerns scoped --module_mirrors=https://bcr.bazel.build=<mirror> with implicit registry; no rejection of current setting or explanation for HTTP5xx established."
       }
     },
     {
@@ -151230,5 +151521,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-26T11:54:16.015819+00:00"
+  "updatedAt": "2026-11-26T12:40:09.280960+00:00"
 }
