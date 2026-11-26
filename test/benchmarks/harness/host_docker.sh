@@ -146,6 +146,20 @@ PY
   test -f "$baseline_archive"
 fi
 engine_changed=false
+# Only the caller that owns an entire disposable guest may select direct reload.
+# Other callers keep the service manager, including the checkpoint engine route.
+reload_docker() {
+  if test "${HOST_DOCKER_EXCLUSIVE_GUEST:-}" != 1; then
+    if test "$1" != check; then sudo systemctl reload docker; fi
+    return
+  fi
+  ! $checkpoint_mode || return 1
+  test -z "${DOCKER_CONTEXT:-}" || return 1
+  endpoint=${DOCKER_HOST:-$(docker context inspect --format '{{.Endpoints.docker.Host}}')} || return 1
+  sudo "$runfiles/test/benchmarks/harness/reload_docker/reload_docker" \
+    "$1" "$endpoint" "$config" "${daemon_identity:-}"
+}
+daemon_identity=$(reload_docker check)
 if $checkpoint_mode; then
   initial_engine=$(docker version --format '{{.Server.Version}}')
   initial_driver=$(docker info --format '{{.Driver}}')
@@ -258,7 +272,7 @@ PYCONFIG
     if $restart_experimental || $engine_changed; then
       restart_original_service || ret=1
     else
-      sudo systemctl reload docker || ret=1
+      reload_docker reload || ret=1
     fi
     for i in {1..10}; do
       if test "$(docker info --format '{{json .Runtimes}}')" = "$initial_runtimes" &&
@@ -392,7 +406,7 @@ sudo cp "$owned_config" "$config"
 if $restart_experimental || $engine_changed; then
   timeout 90s sudo systemctl restart docker
 else
-  sudo systemctl reload docker
+  reload_docker reload
 fi
 if $checkpoint_mode; then
   test "$(docker version --format '{{.Server.Version}}')" = 27.5.1
