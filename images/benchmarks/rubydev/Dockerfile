@@ -4,7 +4,7 @@ FROM ruby:3.0-alpine
 RUN apk add --no-cache ruby ruby-dev ruby-bundler ruby-json build-base bash \
     wget git unzip
 RUN wget -q \
-      'https://github.com/fastlane/fastlane/archive/refs/tags/2.207.0.tar.gz' \
+      'https://github.com/fastlane/fastlane/archive/refs/tags/2.220.0.tar.gz' \
       -O /tmp/fastlane.tar.gz \
     && mkdir /fastlane \
     && cd /fastlane \
