@@ -22,3 +22,9 @@ RUN wget -q https://github.com/bazelbuild/bazel/releases/download/7.3.2/bazel-7.
 RUN mkdir abseil-cpp && cd abseil-cpp \
     && git init && git remote add origin https://github.com/abseil/abseil-cpp.git \
     && git fetch --depth 1 origin 79e414672f447ac1b27f8cb27ad61df315a3792b && git checkout FETCH_HEAD
+
+# Cache source downloads without retaining warm build outputs.
+RUN printf '%s\n' 'common --repository_cache=/opt/bazel-repository-cache' > /root/.bazelrc \
+    && cd /abseil-cpp \
+    && bazel fetch -c opt --host_cxxopt=-std=c++14 --cxxopt=-std=c++14 absl/base/... \
+    && bazel clean --expunge
