@@ -110,7 +110,10 @@ benchmark_test(
             shell.quote("-cases=" + json.encode({
                 "//test/benchmarks/fs:rubyspec_" + filesystem + "_paired_test": [
                     "RubySpecTest/page_cache." + cache + "/filesystem." + filesystem
-                    for cache in ["clean", "dirty"]
+                    for cache in [
+                        "clean",
+                        "dirty",
+                    ]
                 ],
             })),
             "-visit-timeout=4m",
@@ -146,5 +149,10 @@ benchmark_test(
         tags = ["manual"],
         target_compatible_with = ["@platforms//cpu:x86_64"],
     )
-    for filesystem in ["bindfs", "tmpfs", "rootfs", "fusefs"]
+    for filesystem in [
+        "bindfs",
+        "tmpfs",
+        "rootfs",
+        "fusefs",
+    ]
 ]
