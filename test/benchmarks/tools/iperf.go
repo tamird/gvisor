@@ -30,6 +30,7 @@ type Iperf struct {
 func (i *Iperf) MakeCmd(host string, port int) []string {
 	cmd := []string{"iperf3"}
 	cmd = append(cmd, "--json")           // Report aggregate sender throughput.
+	cmd = append(cmd, "--interval", "0") // Keep final JSON without periodic statistics.
 	cmd = append(cmd, "--length", "128K") // Data buffer size per write.
 	n := max(i.Num, 1)                    // iperf3 requires a positive total across all streams.
 	cmd = append(cmd, "--bytes", fmt.Sprintf("%dK", n))
