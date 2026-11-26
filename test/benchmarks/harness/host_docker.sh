@@ -323,6 +323,14 @@ PY
     echo "HOST_DOCKER_ORIGINAL_ENGINE_RESTORED=$initial_engine"
   fi
   sudo rm -rf -- "$work" || ret=1
+  # Privileged callers must leave their declared results readable by Bazel.
+  owner="$(id -u):$(id -g)"
+  if test -n "${TEST_UNDECLARED_OUTPUTS_DIR:-}"; then
+    sudo chown -R "$owner" "$TEST_UNDECLARED_OUTPUTS_DIR" || ret=1
+  fi
+  if test -f "${XML_OUTPUT_FILE:-}"; then
+    sudo chown "$owner" "$XML_OUTPUT_FILE" || ret=1
+  fi
   echo "HOST_DOCKER_COMMAND_EXIT=$command_status"
   echo "HOST_DOCKER_CLEANUP_EXIT=$ret"
   if test "$ret" -ne 0; then exit "$ret"; fi

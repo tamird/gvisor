@@ -15,17 +15,6 @@ host=$1
 recorder=$2
 products=$3
 shift 3
-# Root is needed for host cache resets. Return declared outputs to Bazel's user.
-restore_outputs() {
-  status=$?
-  trap - EXIT
-  sudo chown -R "$(id -u):$(id -g)" "$TEST_UNDECLARED_OUTPUTS_DIR"
-  if test -f "$XML_OUTPUT_FILE"; then
-    sudo chown "$(id -u):$(id -g)" "$XML_OUTPUT_FILE"
-  fi
-  exit "$status"
-}
-trap restore_outputs EXIT
 unset GITHUB_TOKEN
 "$recorder" -validate "$@"
 "$host" --filesystem --compare --products "$products" -- sudo -E "$recorder" "$@"
