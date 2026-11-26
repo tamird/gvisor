@@ -1,3 +1,5 @@
+load("@rules_img//img:image.bzl", "image_manifest")
+load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
 load("//images:img.bzl", "image_outputs")
 load("//tools:defs.bzl", "go_binary", "pkg_tar")
@@ -168,9 +170,27 @@ image_outputs(
     visibility = ["//test/benchmarks/harness:__pkg__"],
 )
 
+image_layer(
+    name = "rubydev_fixture_layer",
+    srcs = {
+        "/fastlane/match/spec/encryption/openssl_spec.rb": "@fastlane_benchmark_fixture//:match/spec/encryption/openssl_spec.rb",
+        "/fastlane/spaceship/lib/spaceship/connect_api/token.rb": "@fastlane_benchmark_fixture//:spaceship/lib/spaceship/connect_api/token.rb",
+        "/fastlane/spaceship/spec/connect_api/token_spec.rb": "@fastlane_benchmark_fixture//:spaceship/spec/connect_api/token_spec.rb",
+    },
+    default_metadata = file_metadata(mode = "0644"),
+    include_runfiles = False,
+)
+
+image_manifest(
+    name = "rubydev_fixture",
+    base = "@benchmark_rubydev_amd64",
+    layers = [":rubydev_fixture_layer"],
+    tags = ["manual"],
+)
+
 image_outputs(
     name = "benchmark_rubydev",
-    image = "@benchmark_rubydev_amd64",
+    image = ":rubydev_fixture",
     image_name = "benchmarks/rubydev",
     visibility = ["//test/benchmarks/harness:__pkg__"],
 )

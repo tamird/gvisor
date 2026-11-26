@@ -77,6 +77,24 @@ use_repo(llvm_source, "llvm-project")
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
+    name = "fastlane_benchmark_fixture",
+    build_file_content = """exports_files([
+    "match/spec/encryption/openssl_spec.rb",
+    "spaceship/lib/spaceship/connect_api/token.rb",
+    "spaceship/spec/connect_api/token_spec.rb",
+])
+""",
+    patch_args = ["-p1"],
+    patches = [
+        "//images:benchmarks/rubydev/token-time.patch",
+        "//images:benchmarks/rubydev/openssl-salt.patch",
+    ],
+    sha256 = "dcccef51d48a183ded1595aa4e04090d0bbf9fe6311d3107bd74cc4d4d7326e0",
+    strip_prefix = "fastlane-3344301a0d6ea9a69450432e2a87aa6cef7922c8",
+    urls = ["https://github.com/fastlane/fastlane/archive/3344301a0d6ea9a69450432e2a87aa6cef7922c8.tar.gz"],
+)
+
+http_archive(
     name = "kythe_release",
     sha256 = "52a9c6e8111237043b8d0b6127637f0eb8d2ba3a776e4749b036e911ec3529ce",
     strip_prefix = "kythe-v0.0.74",
