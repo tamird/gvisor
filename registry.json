@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T09:16:18.300903+00:00",
+    "updatedAt": "2026-11-26T10:20:46.917706+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40905,14 +40905,14 @@
       "url": "https://github.com/google/gvisor/pull/16507",
       "group": "bazel",
       "status": "open",
-      "summary": "Unpublished current-base candidate e2101026eb preserves recovered57\u2019s patch by strict replay. Both architectures\u2019 eight coverage/race binaries and four complete archives, graph/source gates and226-entry catalog passed. One-case recovery45789919746 now uses a declared extractor after two pre-guest setup failures; no current-base report/KCOV or performance pass is claimed. Historical reportGate identifies real exercising workloads, not isolated cost benchmarks.",
-      "updatedAt": "2026-11-26T09:16:18.300903+00:00",
+      "summary": "Prepared e2101026eb passes four benign report combinations and 24 KCOV cases across both architectures and flavors, with no KCOV skips or failures. Eight binaries, four complete archives and the 226-entry catalog also pass. Current-source static inclusion remains under audit; source archives match and the patched SDK built remotely. Performance and publication remain held; canonical-runner EACCES is unresolved.",
+      "updatedAt": "2026-11-26T10:20:46.917706+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "c71526cea11bd81898c588264c0940d1fb33e511",
         "observedAt": "2026-11-18T09:21:28.062516+00:00",
-        "disposition": "Unpublished current-base candidate e2101026eb preserves recovered57\u2019s patch by strict replay. Both architectures\u2019 eight coverage/race binaries and four complete archives, graph/source gates and226-entry catalog passed. One-case recovery45789919746 now uses a declared extractor after two pre-guest setup failures; no current-base report/KCOV or performance pass is claimed. Historical reportGate identifies real exercising workloads, not isolated cost benchmarks.",
-        "nextAction": "Audit Uname recovery45789919746 for prepared e2101026eb (public c715 unchanged). Then qualify independently controlled report/KCOV behavior and both complete A/B opaque releases, reusing existing reportGate target/case knowledge. BenchmarkStartupEmpty remains the separate startup caller. Timing and publication remain held.",
+        "disposition": "Prepared e2101026eb passes four benign report combinations and 24 KCOV cases across both architectures and flavors, with no KCOV skips or failures. Eight binaries, four complete archives and the 226-entry catalog also pass. Current-source static inclusion remains under audit; source archives match and the patched SDK built remotely. Performance and publication remain held; canonical-runner EACCES is unresolved.",
+        "nextAction": "For prepared e2101026eb (public c715 unchanged), audit current-source parity run 45798978937. Report/KCOV functional checks have passed; performance controls and complete A/B release identities remain unqualified. Retain the runner EACCES limitation and historical timing limits. No timing or publication approval is inferred.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2799abaa",
           "https://github.com/tamird/gvisor/actions/runs/43353809603/artifacts/14004799231",
@@ -40998,10 +40998,15 @@
           "https://github.com/tamird/gvisor/actions/runs/45784605700",
           "https://github.com/tamird/gvisor/actions/runs/45785973454",
           "https://github.com/tamird/gvisor/actions/runs/45785976363",
-          "https://github.com/tamird/gvisor/actions/runs/45789919746"
+          "https://github.com/tamird/gvisor/actions/runs/45789919746",
+          "https://github.com/tamird/gvisor/actions/runs/45794242098",
+          "https://github.com/tamird/gvisor/actions/runs/45792664585/artifacts/15104250700",
+          "https://github.com/tamird/gvisor/actions/runs/45797082588",
+          "https://github.com/tamird/gvisor/actions/runs/45797886145",
+          "https://github.com/tamird/gvisor/actions/runs/45798978937"
         ],
         "mergeable": "CONFLICTING",
-        "recheckCondition": "Existing owner\u2019s exact current-base runtime/report evidence or actual source/performance/publication disposition; do not mirror-poll or repeat old orchestration.",
+        "recheckCondition": "Existing owner\u2019s audited parity result or actual source/performance/publication disposition; no duplicate polling or Uname retry.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "qualificationHistory": [
           {
@@ -41326,7 +41331,7 @@
           "proofSHA256": "8cfa9665fca33bd1625d96c7b184d3b8454523fbfe87c0b7bd9744d867d14c0b",
           "recheckCondition": "Root permanent-mechanism decision, same-operation execution-review result or actual fidelity evidence."
         },
-        "curatedAt": "2026-11-26T09:16:18.300903+00:00",
+        "curatedAt": "2026-11-26T10:20:46.917706+00:00",
         "permanentBazelFirstLayer": {
           "testSource": "340e1072aa5a3d47e01ff68dffea34f91be4a9f4",
           "ciSource": "fa452727d8d6af2399f8644f9d64a40dc5d902ae",
@@ -41548,17 +41553,44 @@
           }
         },
         "currentStaticParity": {
-          "source": "6759f7e7bbbbea2125d89d7c9fc1a39eeb2f091d",
-          "run": 44574573815,
-          "state": "PASS fresh remote validator: legacy115850/current115852 positions, missing0, protobuf2418 each, additional2. Legacy producer reused shared cache; no fresh SDK rebuild claim. One-time legacy support remains CI-only.",
-          "receipt": {
-            "file": "coverage-current-legacy-44574573815-evidence.json",
-            "sha256": "c495833d8330c89138c2431babd895d7f16f55032cd6832ea198796a279b0522"
+          "native": "e2101026eb7e6601ed02a04dff43069e11d5d189",
+          "source": "1dfabcdc48ee21d56317faf11cad156d1de37a64",
+          "baselineSource": "6f00faa4208c98aff14e772429a608907f572cff",
+          "run": 45798978937,
+          "state": "Existing owner\u2019s current-source legacy Sentry/static inclusion audit pending; no verdict yet",
+          "configuration": "amd64 normal, nostamp, same shared worker/cache/network settings, fresh test result",
+          "sourceArchives": {
+            "baselineRun": 45797082588,
+            "candidateRun": 45797079447,
+            "SHA256": "55772745932767a146a1eecb3fa810207bb766f2e56c75b65ae1275e04c6c34b",
+            "bytes": 19423908,
+            "equal": true,
+            "scope": "Go source archive equality, not A/B runtime release equality"
           },
-          "priorColdCap": {
-            "file": "coverage-current-legacy-44570817821-evidence.json",
-            "sha256": "f2011f2f25fbb8734b853212416c1cc6f7bed6b9af09eb50a2b8efc24b8e5c7c"
-          }
+          "correctedGraph": {
+            "run": 45798288146,
+            "result": "PASS"
+          },
+          "toolsPreflight": {
+            "run": 45797079447,
+            "Go": "1.27.3",
+            "result": "PASS; no SDK build/module download in preflight"
+          },
+          "SDK": {
+            "run": 45797886145,
+            "result": "PASS",
+            "cacheHit": false,
+            "execution": "fresh remote make.bash;164.529s total157.91s criticalpath",
+            "SHA256": "7805c5b29ece5c57337871f920258bf4465740cf7debb9c7062938dac9792a98",
+            "bytes": 67148918,
+            "sourcePreservation": "Existing scripts/version/module/internal-import patch are exact matched qualified/current baseline inputs; no network/cache policy changes."
+          },
+          "priorVisibilityFailure": {
+            "run": 45797076471,
+            "scope": "CI fixture visibility only; corrected graph passed"
+          },
+          "remaining": "Actual current legacy Sentry generation and static position set inclusion; no verdict inferred from historical output. Verify candidate ELF hash matches qualified current product and archive matches exact baseline export.",
+          "limits": "No current inclusion verdict transferred from historical6759/4b3 output; original cache/network settings retained. No timing/publication approval."
         },
         "mainBootstrap": {
           "build": 55416,
@@ -41581,7 +41613,7 @@
             "coveragePrerequisite": false
           },
           "requirements": {
-            "realReportKCOVPerformanceProducer": "Existing reportGate identifies real whole-workload Uname report-on/off and KCOV exercising callers. No dedicated isolated serializer or KCOV cost benchmark was found. Compatible explicitly controlled runner/product inputs and full two-release A/B provenance remain necessary.",
+            "realReportKCOVPerformanceProducer": "Current direct shipped do CLI proves benign report generation and24named KCOV cases. Metric-compatible performance producer/controls and frozen complete A/B opaque fileset provenance remain separate and unqualified; no isolated serializer or KCOV cost benchmark is claimed.",
             "exactABReleaseProvenance": "Freeze both complete opaque runtime filesets;child executable hash alone omits runtime sidecars/data",
             "groupedAtomicCommands": "No demonstrated requirement;per-target recording suffices for maintained sequential execution",
             "nonLinux": "No demonstrated requirement for this Linux/root/Docker/runsc caller",
@@ -41616,6 +41648,31 @@
               "historicalRunnerChange": "7eafb adds --collect-coverage; cannot assume current runner has independently controlled report semantics"
             },
             "remaining": "Compatible runner/product pair with explicit independent report/KCOV controls and complete two-release opaque fileset identities; reuse target/case knowledge, not obsolete orchestration"
+          },
+          "currentFunctionalProducer": {
+            "source": "e2101026eb7e6601ed02a04dff43069e11d5d189",
+            "CI": "dfd9e27caef154da63b242774d794fdb6504715a",
+            "reportRuns": [
+              45792664585,
+              45793494621,
+              45793499251,
+              45793504100
+            ],
+            "kcovRuns": [
+              45793617604,
+              45794229837,
+              45794234073,
+              45794237929,
+              45794242098
+            ],
+            "functionalScope": "Four benign /bin/true guest startup/shutdown passes. Four actual profiles satisfy established grammar and each contains nonzero Sentry and48 generated-PB positions across14 PB files. No full current legacy inventory equivalence asserted.",
+            "KCOV": {
+              "passed": 24,
+              "skipped": 0,
+              "failed": 0,
+              "reportCollection": "off"
+            },
+            "performanceQualification": false
           }
         },
         "currentBaseQualification": {
@@ -41813,7 +41870,7 @@
                 "guestCases": 0
               }
             ],
-            "state": "Recovery dispatched; no guest/runtime/report pass claimed",
+            "state": "Historical canonical Uname admissions failed before guest. EACCES remains unisolated; no further Uname retry. Current functional evidence uses the separate supported shipped do CLI.",
             "owner": "approved_rebase_queue / root",
             "priorAdmissionAudit": {
               "run": 45788350224,
@@ -41821,13 +41878,147 @@
               "selectedAMDArchive": "c2718b424cf18241e2ca498d4b63263a2e88610492b5464fef378f41148eeb17",
               "failure": "GNU tar could not invoke zstd on actual RBE worker",
               "guestCasesExecuted": 0
-            }
+            },
+            "historicalFailures": [
+              {
+                "run": 45787266020,
+                "failure": "archive visibility",
+                "guestCases": 0
+              },
+              {
+                "run": 45788350224,
+                "failure": "worker lacks zstd executable",
+                "guestCases": 0
+              },
+              {
+                "run": 45789919746,
+                "failure": "native_binary cannot wrap non-executable toolchain provider",
+                "guestCases": 0
+              },
+              {
+                "run": 45790990779,
+                "failure": "archived runsc exec EACCES",
+                "guestCases": 0
+              },
+              {
+                "run": 45791639549,
+                "failure": "EACCES persisted; parent-only permission diagnosis unverified",
+                "guestCases": 0
+              }
+            ],
+            "canonicalRunnerResolved": false
           },
-          "scope": "Both-architecture product/archive build evidence only. One Uname admission is caller/startup scope, not a report-reader assertion, KCOV workload pass or performance. Default //:release is not coverage proof.",
+          "scope": "Eight binary/four opaque archive products and named source/catalog gates plus four benign report profiles and24KCOV cases are complete. Current static inclusion and performance remain separate; canonical runner EACCES unresolved.",
           "timingAuthorized": false,
-          "upstreamPublicationApproved": false
+          "upstreamPublicationApproved": false,
+          "functionalProof": {
+            "native": "e2101026eb7e6601ed02a04dff43069e11d5d189",
+            "ci": "dfd9e27caef154da63b242774d794fdb6504715a",
+            "reportMatrix": [
+              {
+                "run": 45792664585,
+                "arch": "amd64",
+                "flavor": "coverage",
+                "positions": 11865,
+                "sentry": 7496,
+                "generatedPB": 48,
+                "generatedPBFiles": 14
+              },
+              {
+                "run": 45793494621,
+                "arch": "amd64",
+                "flavor": "race-coverage",
+                "positions": 12966,
+                "sentry": 8301,
+                "generatedPB": 48,
+                "generatedPBFiles": 14
+              },
+              {
+                "run": 45793499251,
+                "arch": "arm64",
+                "flavor": "coverage",
+                "positions": 11516,
+                "sentry": 7284,
+                "generatedPB": 48,
+                "generatedPBFiles": 14
+              },
+              {
+                "run": 45793504100,
+                "arch": "arm64",
+                "flavor": "race-coverage",
+                "positions": 12635,
+                "sentry": 8104,
+                "generatedPB": 48,
+                "generatedPBFiles": 14
+              }
+            ],
+            "reportScope": "Four benign /bin/true guest startup/shutdown passes. Four actual profiles satisfy established grammar and each contains nonzero Sentry and48 generated-PB positions across14 PB files. No full current legacy inventory equivalence asserted.",
+            "kcov": {
+              "runs": [
+                45793617604,
+                45794229837,
+                45794234073,
+                45794237929,
+                45794242098
+              ],
+              "casesEach": [
+                "KcovTest.Kcov",
+                "KcovTest.PrematureMmap",
+                "KcovTest.UnalignedSize",
+                "KcovTest.MappingRange",
+                "KcovTest.MultipleFds",
+                "KcovTest.MultipleThreads"
+              ],
+              "matrix": "amd64/arm64 x coverage/race-coverage",
+              "passed": 24,
+              "skipped": 0,
+              "failed": 0,
+              "reports": "off; no profile retained; exact real GTest RUN/OK membership inspected, command exit0.",
+              "execution": "Shipped runsc do caller on separate GitHub architecture controller, RBE compilation/cache; not remote TestRunner or Bazel test XML claim."
+            },
+            "sourceComposition": {
+              "paths": [
+                ".bazelrc",
+                "BUILD",
+                "MODULE.bazel",
+                "debian/BUILD",
+                "test/runner/BUILD",
+                "tools/BUILD",
+                "tools/bazeldefs/BUILD",
+                "tools/bazeldefs/cc.bzl",
+                "tools/buildbuddy/BUILD",
+                "tools/buildbuddy/README.md",
+                "tools/buildbuddy/credential_helper.py",
+                "tools/buildbuddy/credential_helper_test.py",
+                "tools/crosstool-arm-dirs.patch",
+                "tools/lint.sh",
+                "tools/rules_go_proto_exec.patch"
+              ],
+              "unchangedSourceObjects": {
+                "pkg": "6d46ef482da8548133488309702aa33c7070f1a0",
+                "runsc": "97a3dd7b65876d511d4fa430983aa941b5fb5fa4",
+                "test/syscalls": "b9a4e279230cbff628eff823ce78c11a70ac70e5",
+                "test/runner/main.go": "e1919ab1b14fa3d652563283156ae79d1fafb789",
+                "test/runner/xml.go": "1e26f14ef25ac028963c7dfef8da79c0300e5eb5"
+              }
+            },
+            "scope": "Actual direct shipped do CLI; benign guest report generation and24actual named KCOV passes. Not canonical Uname, full static inclusion, timings or source-publication approval."
+          }
         },
-        "technicalOwner": "approved_rebase_queue"
+        "technicalOwner": "approved_rebase_queue",
+        "historicalStaticParity": {
+          "source": "6759f7e7bbbbea2125d89d7c9fc1a39eeb2f091d",
+          "run": 44574573815,
+          "state": "PASS fresh remote validator: legacy115850/current115852 positions, missing0, protobuf2418 each, additional2. Legacy producer reused shared cache; no fresh SDK rebuild claim. One-time legacy support remains CI-only.",
+          "receipt": {
+            "file": "coverage-current-legacy-44574573815-evidence.json",
+            "sha256": "c495833d8330c89138c2431babd895d7f16f55032cd6832ea198796a279b0522"
+          },
+          "priorColdCap": {
+            "file": "coverage-current-legacy-44570817821-evidence.json",
+            "sha256": "f2011f2f25fbb8734b853212416c1cc6f7bed6b9af09eb50a2b8efc24b8e5c7c"
+          }
+        }
       },
       "evidence": [
         {
@@ -41925,6 +42116,26 @@
         {
           "label": "One-case caller admission; owner audit pending",
           "url": "https://github.com/tamird/gvisor/actions/runs/45789919746"
+        },
+        {
+          "label": "Actual current-base report and KCOV qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45794242098"
+        },
+        {
+          "label": "Actual benign guest report profile",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45792664585/artifacts/15104250700"
+        },
+        {
+          "label": "Current source-archive equality",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45797082588"
+        },
+        {
+          "label": "Fresh current patched SDK build",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45797886145"
+        },
+        {
+          "label": "Current legacy-position inclusion audit; owner pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45798978937"
         }
       ],
       "number": 16507,
@@ -150596,5 +150807,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-26T09:16:18.300903+00:00"
+  "updatedAt": "2026-11-26T10:20:46.917706+00:00"
 }
