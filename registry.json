@@ -57340,7 +57340,7 @@
           "source": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
           "base": "496ac9cc19ff744a8fd9714bd310af98a3a5767f",
           "ref": "review/website-google-roots-pin-20261126",
-          "files": 3,
+          "files": 4,
           "state": "Validation and independent reviews accepted; actual upstream opening decision pending",
           "fixtureRun": 45765701308,
           "pinnedFetchCatalogRun": 45765707772,
@@ -107721,13 +107721,13 @@
       "url": "https://github.com/gvisor/gvisor/issues/17832",
       "group": "rbe",
       "status": "open",
-      "summary": "The e61e5c1d8 cache-source and issue-text questions are withdrawn: landed #17914 adds do.yml AMD64/ARM64 Make callers missing from that revision. actions_bazel_cache owns revised candidate preparation and validation; no successor approval question has been asked. Go-export f850 remains a separate actual pending decision.",
+      "summary": "Successor cache source b245b95c47 and the refreshed #17832 title/body have two actual unanswered publication questions. At base bf581410, it covers nine Bazel job definitions in eight workflows, including do.yml\u2019s two architecture entries. Source tests passed; Make preflight verifies command expansion only, not Docker/ARM runtime or speedup. Withdrawn e61 history and the distinct Go-export decision remain intact.",
       "followup": {
         "owner": "root",
         "observedAt": "2026-11-25T13:09:11.551551+00:00",
-        "disposition": "The e61e5c1d8 cache-source and issue-text questions are withdrawn: landed #17914 adds do.yml AMD64/ARM64 Make callers missing from that revision. actions_bazel_cache owns revised candidate preparation and validation; no successor approval question has been asked. Go-export f850 remains a separate actual pending decision.",
-        "nextAction": "actions_bazel_cache prepares and validates the cache revision covering the newly landed do.yml Make callers, then returns the exact source and revised issue text for review. Do not act on the withdrawn e61 source/drafts. Root handles the unchanged Go-export opening decision independently.",
-        "recheckCondition": "Revised source/coverage and review evidence, or an answer to the distinct Go-export question.",
+        "disposition": "Successor cache source b245b95c47 and the refreshed #17832 title/body have two actual unanswered publication questions. At base bf581410, it covers nine Bazel job definitions in eight workflows, including do.yml\u2019s two architecture entries. Source tests passed; Make preflight verifies command expansion only, not Docker/ARM runtime or speedup. Withdrawn e61 history and the distinct Go-export decision remain intact.",
+        "nextAction": "Root consumes the actual b245 cache-PR and revised issue-title/body decisions independently; approved_delivery_batch owns the cache revision. Preserve the distinct Go-export opening decision. No source publication, issue edit, merge or runtime/speedup result is inferred.",
+        "recheckCondition": "An actual answer to one of the three independent questions or substantive source/coverage evidence.",
         "evidence": [
           "https://github.com/gvisor/gvisor/issues/17832",
           "https://github.com/google/gvisor/issues/17832#issuecomment-7097716495",
@@ -107750,9 +107750,12 @@
           "https://github.com/tamird/gvisor/tree/review/go-export-promisor-20261124",
           "https://github.com/tamird/gvisor/commit/e61e5c1d8052e797c30c4cfe1dc754250c4d57db",
           "https://github.com/tamird/gvisor/actions/runs/45747835406",
-          "https://github.com/tamird/gvisor/actions/runs/45747835362"
+          "https://github.com/tamird/gvisor/actions/runs/45747835362",
+          "https://github.com/tamird/gvisor/commit/b245b95c473225833d389569b42b7397fad4d987",
+          "https://github.com/tamird/gvisor/actions/runs/45768609331/artifacts/15092339833",
+          "https://github.com/tamird/gvisor/actions/runs/45768612458/artifacts/15092842201"
         ],
-        "curatedAt": "2026-11-26T06:25:44.630702+00:00",
+        "curatedAt": "2026-11-26T06:38:21.475106+00:00",
         "supersededExecutionBlocker": {
           "nextAction": "Root consumes each existing decision independently: open the cache 86cffbf72 PR, replace the issue body with the current measured-scope draft, and open the Go export f8500dffe PR. Canonical lint coverage is reconciled through unchanged-input parent evidence. Deliver approved changes through the existing authorized routes; the unpublished Go export fork ref still needs its SSH/HTTPS execution blocker to clear.",
           "recordedAt": "2026-11-24T06:29:20.083295+00:00",
@@ -107769,7 +107772,7 @@
           "upstreamPRApproval": "Still unanswered"
         },
         "cacheCoverageRevision": {
-          "owner": "actions_bazel_cache",
+          "owner": "approved_delivery_batch",
           "supersededSource": "e61e5c1d8052e797c30c4cfe1dc754250c4d57db",
           "master": "3e9bbb3cc75e4dd3d074541d5e43b5adbc4dfcfc",
           "reason": "Landed #17914 adds do.yml AMD64/ARM64 Make callers absent from e61; e61 questions withdrawn with user notified.",
@@ -107781,12 +107784,54 @@
               52
             ]
           },
-          "stage": "Agent-owned revised candidate preparation; no successor question asked",
-          "historicalCandidate": "e61e5c1d8052e797c30c4cfe1dc754250c4d57db"
-        }
+          "stage": "Independent review accepted; two actual successor-bound questions pending",
+          "historicalCandidate": "e61e5c1d8052e797c30c4cfe1dc754250c4d57db",
+          "candidate": "b245b95c473225833d389569b42b7397fad4d987",
+          "base": "bf581410aba9e69e4337501a125fc71559e0e001",
+          "qualification": {
+            "sourceTests": {
+              "run": 45768609331,
+              "state": "PASS",
+              "artifact": 15092339833,
+              "labels": [
+                "//:github_actions_test",
+                "//:github_workflows_test"
+              ],
+              "xml": {
+                "cases": 2,
+                "failures": 0,
+                "skips": 0
+              }
+            },
+            "doCommandPreflight": {
+              "run": 45768612458,
+              "state": "PASS",
+              "artifact": 15092842201,
+              "scenarios": [
+                "x86_64",
+                "aarch64"
+              ],
+              "limits": "Both native ARCH cases expanded on an actual AMD64 worker with uname/Docker probes stubbed; no Docker container, ARM worker or runsc workload executed. This establishes Make/cache/command wiring, and reuses source-identical prior real Docker mount/UID evidence."
+            },
+            "actualNativeAutomaticBuilds": "build.yml provider state ACTIVE, but exact native-head run list empty at final audit; no automatic build result or speed claim. No explicit full release build repeated.",
+            "retainedEvidence": {
+              "DockerUIDMountsAndNativePaths": 45747835406,
+              "licenseVerifyAndDiskHits": 45747835362
+            },
+            "limits": [
+              "No new do runtime execution or cache speedup claim",
+              "Simulated native ARCH values in Make command preflight are configuration evidence, not actual ARM worker execution",
+              "NativeBuildkite or source publication not performed"
+            ],
+            "sourceGuards": "Both source verification/preservation steps PASS on exact19e1bc9b17c078e1531cefecd712500d6ae43b23; overlay differs from native only by listed12 support paths."
+          },
+          "currentJobDefinitions": 9,
+          "currentWorkflows": 8
+        },
+        "technicalOwner": "approved_delivery_batch"
       },
-      "updatedAt": "2026-11-26T06:25:44.630702+00:00",
-      "nextStep": "actions_bazel_cache prepares and validates the cache revision covering the newly landed do.yml Make callers, then returns the exact source and revised issue text for review. Do not act on the withdrawn e61 source/drafts. Root handles the unchanged Go-export opening decision independently.",
+      "updatedAt": "2026-11-26T06:38:21.475106+00:00",
+      "nextStep": "Root consumes the actual b245 cache-PR and revised issue-title/body decisions independently; approved_delivery_batch owns the cache revision. Preserve the distinct Go-export opening decision. No source publication, issue edit, merge or runtime/speedup result is inferred.",
       "recheckCondition": "Technical review milestone for revised cache source/text or actual Go-export answer.",
       "reviewWatch": {
         "inspected": [
@@ -107876,6 +107921,16 @@
           "body": "Go export fetched its selected Go commit from a temporary local clone even when cloning had already copied that commit. With Buildkite's blobless checkout, that fetch enumerated about 189,000 objects; the Windows attempt in build 55748 timed out in this phase.\n\nKeep the original fetch when the commit is absent. Otherwise, let checkout retrieve the missing Go-tip blobs through the original promisor sources. Local cloning copies their packs without their remote configuration, so register those object-source URLs in the temporary clone and resolve relative local paths against the source repository. Keep invalid boolean configuration fatal. Export assembly and merge construction are unchanged.\n\nShallow-source merge limitations remain. Full generated-export assembly has not been rebuilt; this patch does not explain unrelated CI cancellations.\n\nPosted by Codex on behalf of @tamird.\n",
           "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/go-export-promisor-pr-body.txt",
           "sourceSha256": "6e4c040184c00fa0f58e930703680dcbb289d12b163941e61ad9308e38656302"
+        },
+        {
+          "kind": "proposal",
+          "status": "pending",
+          "url": "https://github.com/gvisor/gvisor/issues/17832",
+          "title": "Reduce PR CI latency with Bazel reuse and remote execution",
+          "summary": "Separate actual submitted successor-bound issue-title/body question; unanswered. No issue edit posted. Go-export remains independent.",
+          "body": "Keep Buildkite as the orchestrator. First enable caching for the existing GitHub Actions builds, then measure whether remote execution reduces the remaining build and test time. Replacing Buildkite is a separate decision. Buildkite already shares Bazel action results; the proposed RBE benefit is concurrent execution of independent cache misses.\n\nThe proposed [cache-only patch](https://github.com/tamird/gvisor/commit/b245b95c473225833d389569b42b7397fad4d987) covers all nine Bazel job definitions across eight GitHub Actions workflows, including both architecture entries of do-tests with GitHub-managed disk, repository and Bazelisk caches. It preserves GitHub's existing branch-scoped PR cache isolation and the workflows' permissions and credentials. [Governance](https://github.com/tamird/gvisor/actions/runs/45747835406) reported 11 disk-cache hits; [Dependency licenses](https://github.com/tamird/gvisor/actions/runs/45747835362) reported 52 and verified all 225 dependencies.\n\nWe have observed remote parallelism, but have not measured its speedup against a cache-enabled local baseline. One [fork invocation](https://app.buildbuddy.io/invocation/6c83284e-f123-43a2-8063-4a633b20dba7) recorded up to 14 simultaneous remote executions: 1,866 seconds of recorded action intervals within a 348-second span. The complete build took 396 seconds. Summed action time is not a serial baseline, and the profile captured only part of the executions. A controlled comparison remains necessary.\n\nTwo recent builds illustrate delays beyond compilation. [Build 55727](https://buildkite.com/gvisor/pipeline/builds/55727) took 62m53s; its last Go-runtime workload used nine attempts spanning 60m24s. [Build 55724](https://buildkite.com/gvisor/pipeline/builds/55724) took 51m47s; its last ARM64 Docker workload used six attempts spanning 47m59s. These examples identify finish-determining retry chains, not a representative latency distribution or a reconstructed dependency critical path. Separately, [build 55748's Windows attempt](https://buildkite.com/gvisor/pipeline/builds/55748#01a20ba6-9ca1-4088-96df-d29b12cd33fa) timed out fetching Go-export history after Bazel's work. RBE cannot remove that Git phase. Its fix is being qualified separately. We still need to establish how much of the complete PR critical path is eligible for RBE.\n\nBefore enabling untrusted PR execution, validate the trust boundary in a disposable environment with no release consumers:\n\n- PR-controlled repository rules and actions receive no trusted cache-write or release credential.\n- Server policy prevents untrusted clients and executor result publication from replacing trusted action results, even when the PR changes flags or instance names. Read results back with a trusted identity to verify denied writes.\n- Workers and snapshots isolate trust domains. Different API keys alone do not establish this.\n\nBuildBuddy's pinned source [accepts CAS-write-only execution keys](https://github.com/buildbuddy-io/buildbuddy/blob/c622472f1/enterprise/server/remote_execution/execution_server/execution_server.go#L1242-L1246), [uses the submitting task's identity for execution](https://github.com/buildbuddy-io/buildbuddy/blob/c622472f1/enterprise/server/scheduling/priority_task_scheduler/priority_task_scheduler.go#L633-L644), and [requires CACHE_WRITE for action-cache writes](https://github.com/buildbuddy-io/buildbuddy/blob/c622472f1/server/remote_cache/action_cache_server/action_cache_server.go#L386-L395). This identifies mechanisms to test; it does not prove the hosted configuration. The [OCI network-isolation correction](https://github.com/buildbuddy-io/buildbuddy/pull/14275) is merged, but deployment to the hosted workers remains unverified.\n\nPrivileged tests are not categorically excluded: existing fork qualification ran namespace tests remotely on [AMD64](https://github.com/tamird/gvisor/actions/runs/44905173511/artifacts/14706968774) and [ARM64](https://github.com/tamird/gvisor/actions/runs/44905178697/artifacts/14707548246), and [native/systrap PTY syscall targets](https://github.com/tamird/gvisor/actions/runs/45261803627/artifacts/14861107334) passed on AMD64. These prove specific worker configurations, not support for the full syscall, runtime, KVM or GPU matrix. Keep unsupported device workloads on existing capacity.\n\nAfter the security gate, compare cache-enabled local execution with RBE at the same source, toolchain, configuration and workload. Preflight actual permissions, devices and cleanup first. Report complete job latency, retries, setup, analysis, cache hits and execution overlap separately. Keep required checks until coverage and reporting match; keep fresh benchmark measurements separate from cacheable builds. Under-five-minute ordinary PR validation remains a target, not a demonstrated result.\n\nBuildBuddy's [published free plan](https://www.buildbuddy.io/pricing/) includes open-source projects, 100 GB of cache transfer and up to 80 Linux execution cores. No paid migration is proposed; extra project capacity or commitments need confirmation. Bazel's Remote Execution API permits other providers, while provider-specific worker properties and isolation still require validation when switching.\n\nPosted by Codex on behalf of @tamird.\n",
+          "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/rbe-cache-research/refresh-issue-body-draft.txt",
+          "sourceSha256": "dad064956ebe73773fd479c37ae825facfa43f725512a97bda00f732a689e5b9"
         }
       ],
       "evidence": [
@@ -107894,8 +107949,33 @@
         {
           "label": "Native license caller with52disk hits",
           "url": "https://github.com/tamird/gvisor/actions/runs/45747835362"
+        },
+        {
+          "label": "Current reviewed cache successor",
+          "url": "https://github.com/tamird/gvisor/commit/b245b95c473225833d389569b42b7397fad4d987"
+        },
+        {
+          "label": "Exact source tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45768609331/artifacts/15092339833"
+        },
+        {
+          "label": "Make command-expansion preflight, not runtime",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45768612458/artifacts/15092842201"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "b245b95c473225833d389569b42b7397fad4d987",
+        "baseHead": "bf581410aba9e69e4337501a125fc71559e0e001",
+        "url": "https://github.com/tamird/gvisor/commit/b245b95c473225833d389569b42b7397fad4d987",
+        "title": "Cache Bazel builds in GitHub Actions",
+        "summary": "Actual submitted successor-source opening question; unanswered. Independent review found no blocker. Source gates and Make command-expansion preflight passed; no new DO runtime or cache-speed claim.",
+        "body": "The nine Bazel job definitions across eight GitHub Actions workflows started with empty action and repository caches. Restore Bazel disk, repository and Bazelisk caches through one shared setup action, including the paths used by Docker-wrapped Make builds.\n\nInclude both AMD64 and ARM64 do-tests entries through the same Docker cache paths, preserving their existing rootless/root test setup.\n\nRestore the source checkout after Go export before cache post-processing hashes the manifests. Keep Go publishing isolated, and use GitHub-managed cache scoping without introducing BuildBuddy credentials into PR-controlled jobs.\n\nPosted by Codex on behalf of @tamird.\n",
+        "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/rbe-cache-research/refresh-pr-body.txt",
+        "sourceSha256": "380449df38d4db7919e73cd603e6b7a7eb08460bf0592c8fb31436383d695008",
+        "reviewCommand": "git show b245b95c473225833d389569b42b7397fad4d987"
+      }
     },
     {
       "id": "pr:kiron1/bazel-compile-commands:236",
@@ -110402,7 +110482,8 @@
           "https://github.com/tamird/gvisor/commit/b8c204be9daf2ea1132727b9e4b735f818a1ba76",
           "https://github.com/tamird/gvisor/actions/runs/45765701308/artifacts/15091981597",
           "https://github.com/tamird/gvisor/actions/runs/45765707772/artifacts/15092026498"
-        ]
+        ],
+        "files": 4
       },
       "contributorReview": {
         "kind": "proposal",
@@ -149106,5 +149187,5 @@
       "inactive": true
     }
   ],
-  "updatedAt": "2026-11-26T06:25:44.630702+00:00"
+  "updatedAt": "2026-11-26T06:38:21.475106+00:00"
 }
