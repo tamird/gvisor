@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T03:53:54.357727+00:00",
+    "updatedAt": "2026-11-26T04:13:17.729890+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -63666,8 +63666,8 @@
       "url": "https://github.com/tamird/gvisor/commit/09b196bf630b2a6be83ab28e6c7611f7e766a023",
       "group": "runtime",
       "status": "Agent work: functional gates passed; remaining qualification open",
-      "updatedAt": "2026-11-26T03:53:54.357727+00:00",
-      "summary": "Native09b196bf63 is unchanged. Diagnostic45750566922 verified standard shared-caller retention of nonempty run/gofer and empty boot files, without checkpoint/state/archive payloads; expected invalid-platform failure, source and cleanup checks pass. The runner was already capable; old qualification intentionally discarded archives. Ordinary ARM45751139112 is pending. Historical save30PASS/resumeexit66 cause remains unknown; no race/performance or #17127 landing claim.",
+      "updatedAt": "2026-11-26T04:13:17.729890+00:00",
+      "summary": "Native09b is unchanged. Ordinary ARM45751139112 executed8Go and30systrap cases PASS,plus29Linux PASS/one CAP_SYS_ADMIN skip (SemOpNamespace),fresh remote/zero failures. Only safe logs/XML/metadata were published;no state/archive. Capable-worker graph45752935381 passed;only that skipped case is dispatched as45753550154,owner audit pending. Race-resumeexit66 remains UNKNOWN;ARM SR/race,#17127,performance and publication limits remain.",
       "evidence": [
         {
           "label": "Two architecture analyzers on all 23 marked cases in fa6b9080f",
@@ -63728,6 +63728,18 @@
         {
           "label": "Ordinary ARM functional gate, owner audit pending",
           "url": "https://github.com/tamird/gvisor/actions/runs/45751139112"
+        },
+        {
+          "label": "Ordinary ARM exact-case functional evidence withone capabilityskip",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45751139112/artifacts/15085649162"
+        },
+        {
+          "label": "Capable ARM graph preflight",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45752935381"
+        },
+        {
+          "label": "Single missing namespace case;owner audit pending",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45753550154"
         }
       ],
       "settledReviews": [
@@ -63777,8 +63789,8 @@
         "owner": "approved_rebase_queue",
         "sourceHead": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
         "observedAt": "2026-11-18T21:05:51.124797+00:00",
-        "disposition": "Native09b196bf63 is unchanged. Diagnostic45750566922 verified standard shared-caller retention of nonempty run/gofer and empty boot files, without checkpoint/state/archive payloads; expected invalid-platform failure, source and cleanup checks pass. The runner was already capable; old qualification intentionally discarded archives. Ordinary ARM45751139112 is pending. Historical save30PASS/resumeexit66 cause remains unknown; no race/performance or #17127 landing claim.",
-        "nextAction": "approved_rebase_queue consumes the ordinary ARM functional gate45751139112 and its source-bound artifacts at the existing checkpoint. Diagnostic retention is verified without a runner edit; do not repeat save/resume or infer failure cause. Preserve #17127, remaining race/performance qualification and explicit source-publication boundaries.",
+        "disposition": "Native09b is unchanged. Ordinary ARM45751139112 executed8Go and30systrap cases PASS,plus29Linux PASS/one CAP_SYS_ADMIN skip (SemOpNamespace),fresh remote/zero failures. Only safe logs/XML/metadata were published;no state/archive. Capable-worker graph45752935381 passed;only that skipped case is dispatched as45753550154,owner audit pending. Race-resumeexit66 remains UNKNOWN;ARM SR/race,#17127,performance and publication limits remain.",
+        "nextAction": "approved_rebase_queue consumes the sole remaining SemOpNamespace run45753550154 and verifies its actual XML/source/cleanup. Reuse verified ordinary ARM and diagnostic retention;no save/resume retry,whole-qualification or failure-cause claim.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42954488637/artifacts/13827402659",
           "https://github.com/tamird/gvisor/actions/runs/42958677889/artifacts/13828218556",
@@ -63790,7 +63802,10 @@
           "https://github.com/tamird/gvisor/commit/8d8a461be",
           "https://github.com/tamird/gvisor/actions/runs/44347958039",
           "https://github.com/tamird/gvisor/actions/runs/45750566922/artifacts/15085466612",
-          "https://github.com/tamird/gvisor/actions/runs/45751139112"
+          "https://github.com/tamird/gvisor/actions/runs/45751139112",
+          "https://github.com/tamird/gvisor/actions/runs/45751139112/artifacts/15085649162",
+          "https://github.com/tamird/gvisor/actions/runs/45752935381",
+          "https://github.com/tamird/gvisor/actions/runs/45753550154"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -63803,7 +63818,7 @@
           "recheckCondition": "Remaining-gate plan/result, prerequisite landing, source or contributor decision changes."
         },
         "technicalOwner": "approved_rebase_queue",
-        "recheckCondition": "Existing owner’s terminal ARM audit, substantive diagnostic/source evidence or actual prerequisite/publication decision.",
+        "recheckCondition": "Existing owner’s namespace terminal artifact audit,substantive diagnostic/source evidence or prerequisite/publication decision.",
         "qualificationHistory": [
           {
             "sourceHead": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
@@ -64265,7 +64280,7 @@
             44316942020
           ]
         },
-        "curatedAt": "2026-11-26T03:53:54.357727+00:00",
+        "curatedAt": "2026-11-26T04:13:17.729890+00:00",
         "preparedSyscallConsumer": {
           "source": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
           "plan": "8adfbf18fadfd0c5a5cd3c64528939c3c90b55ce",
@@ -64364,8 +64379,25 @@
           "run": 45751139112,
           "native": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
           "ci": "11e81191f70442a816795d1d605a18a55d3e331a",
-          "state": "pending owner terminal audit",
-          "scope": "Go owner,Linux30,ordinary systrap30;CI-only13pathRBEsupport;no save/resume/race/performance claim"
+          "state": "Terminal partial functional qualification",
+          "scope": "Go owner,Linux30,ordinary systrap30;CI-only13pathRBEsupport;no save/resume/race/performance claim",
+          "goPASS": 8,
+          "systrapPASS": 30,
+          "nativePASS": 29,
+          "nativeSkip": "SemOpNamespace:CAP_SYS_ADMIN unavailable",
+          "failures": 0,
+          "artifact": 15085649162
+        },
+        "namespaceRecovery": {
+          "graph": 45752935381,
+          "graphState": "PASS;ARM/rootFirecracker;compiler capability leaks0",
+          "run": 45753550154,
+          "native": "09b196bf630b2a6be83ab28e6c7611f7e766a023",
+          "ci": "cd5d200a2802b5919b84ff42a2ac1143c9122899",
+          "state": "Owner terminal artifact audit pending",
+          "expected": [
+            "SemaphoreTest.SemOpNamespace"
+          ]
         }
       },
       "contributorChangesRequested": {
@@ -108398,16 +108430,16 @@
       "url": "https://github.com/google/gvisor/pull/17885",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-24T06:27:10.701611+00:00",
-      "summary": "Delivered057d07808 and its approved Node67595 upstream fix remain complete. Exact-head First Pass2904 and DCO pass. Main55964 is now terminalFAILURE after5h36m; earlier inspected attempts ended during Node image loading/interruption, with no TLS assertion in inspected lines. This does not establish the final failure cause or a source regression.",
+      "updatedAt": "2026-11-26T04:13:17.729890+00:00",
+      "summary": "Delivered057d07808 and Node67595 remain complete;FirstPass2904 and DCO pass. Main55964 final shard timed out compiling V8 after the patched image tag was missing;the changed TLS test never ran on that attempt. Nine of ten partitions exited0, but a verified sibling returned cached Bazel PASS after local image construction (0of1 tests executed). This is setup/cache evidence,not per-test TLS qualification.",
       "followup": {
         "owner": "root",
         "sourceHead": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
         "providerHead": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
         "observedAt": "2026-11-24T06:20:46.557823+00:00",
-        "disposition": "Delivered057d07808 and its approved Node67595 upstream fix remain complete. Exact-head First Pass2904 and DCO pass. Main55964 is now terminalFAILURE after5h36m; earlier inspected attempts ended during Node image loading/interruption, with no TLS assertion in inspected lines. This does not establish the final failure cause or a source regression.",
-        "nextAction": "Root/existing CI owner classifies the terminal main55964 attempt evidence, preserving earlier image-loading/interruption observations as scoped evidence. No unchanged retry, duplicate upstream/publication task or TLS-cause inference.",
-        "recheckCondition": "Source-bound final main-failure classification, new provider/source event or substantive human feedback.",
+        "disposition": "Delivered057d07808 and Node67595 remain complete;FirstPass2904 and DCO pass. Main55964 final shard timed out compiling V8 after the patched image tag was missing;the changed TLS test never ran on that attempt. Nine of ten partitions exited0, but a verified sibling returned cached Bazel PASS after local image construction (0of1 tests executed). This is setup/cache evidence,not per-test TLS qualification.",
+        "nextAction": "Root/CI image pipeline owner investigates a source-bound same-build artifact handoff for the unchanged patched image before compiling Node. The stale compiled-base overlay is rejected: #17971 lacks the TLS patch and has no enforced bootstrap-input binding. No blind retry, speculative TLS edit, new registry write or publication follows.",
+        "recheckCondition": "Qualified native same-build artifact producer/consumer boundary, or a source-bound published patched image;#17971 landing alone is insufficient.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17885",
           "https://buildkite.com/gvisor/first-pass/builds/2468",
@@ -108415,18 +108447,40 @@
           "https://github.com/google/gvisor/pull/17885#pullrequestreview-6031127244",
           "https://buildkite.com/gvisor/pipeline/builds/55757",
           "https://buildkite.com/gvisor/pipeline/builds/55964",
-          "https://buildkite.com/gvisor/first-pass/builds/2904"
+          "https://buildkite.com/gvisor/first-pass/builds/2904",
+          "https://buildkite.com/gvisor/pipeline/builds/55964#01a215b7-64b2-429c-9851-b459d26fe16d",
+          "https://buildkite.com/gvisor/pipeline/builds/55964#01a214b6-9c62-4297-8edd-1426545fee1a"
         ],
-        "curatedAt": "2026-11-26T01:47:16.498762+00:00",
+        "curatedAt": "2026-11-26T04:13:17.729890+00:00",
         "mainTerminal": {
           "build": 55964,
           "state": "FAILURE",
-          "duration": "5h36m5s",
-          "cause": "not newly established",
-          "evidence": "https://buildkite.com/gvisor/pipeline/builds/55964"
+          "job": "01a215b7-64b2-429c-9851-b459d26fe16d",
+          "cause": "Missing patched image;fallback V8 compilation timed out before TLS test",
+          "testExecuted": false,
+          "evidence": "https://buildkite.com/gvisor/pipeline/builds/55964#01a215b7-64b2-429c-9851-b459d26fe16d"
+        },
+        "imageSetupDisposition": {
+          "source": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
+          "tag": "bce8dfe8ff8da04b",
+          "successfulSibling": "01a214b6-9c62-4297-8edd-1426545fee1a",
+          "boundary": "load-runtimes builds before cached Bazel decision;test-image builds locally and does not publish across workers;registry writes release-only",
+          "rejectedOverlay": "Retagging an old compiled base cannot enforce version/patch/build-input parity;#17971 is not patched-tag substitution",
+          "nextOwner": "root / CI image pipeline owner",
+          "artifactContract": "Under investigation;not implemented or qualified"
         }
       },
-      "recheckCondition": "Main55964 terminal or substantive new source/reviewer/provider evidence."
+      "recheckCondition": "Qualified native same-build artifact producer/consumer boundary, or a source-bound published patched image;#17971 landing alone is insufficient.",
+      "evidence": [
+        {
+          "label": "Final Node setup timeout before TLS execution",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/55964#01a215b7-64b2-429c-9851-b459d26fe16d"
+        },
+        {
+          "label": "Sibling local build then cached test result",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/55964#01a214b6-9c62-4297-8edd-1426545fee1a"
+        }
+      ]
     },
     {
       "id": "pr:buildbuddy-io/buildbuddy:14275",
@@ -135271,9 +135325,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-26T03:53:54.357727+00:00",
+      "updatedAt": "2026-11-26T04:13:17.729890+00:00",
       "group": "analysis",
-      "summary": "Native0edf remains the completed36-commit analyzer rewrite. Ruby bindfs completed AA+AB with no corrected flags (+0.17%clean,+0.51%dirty); tmpfs is also complete. Rootfs retains corrected+2.61% candidate early/late drift despite unflagged primary comparisons. Other scoped workload results and unfinished fixture/FUSE/#17884 conditions remain distinct.",
+      "summary": "Native0edf remains the completed36-commit analyzer rewrite. Abseil has all8AA controls and7complete AB cohorts;dirty-FUSE AB stopped on dependencyHTTP403. Final dirty-tmpfs cohort is complete;four outer jobs failed only post-test BES upload. Ruby completed groups retain the rootfs+2.61% corrected drift;gRPC N1 admissions are not paired evidence. Other qualification and #17884 gates remain distinct.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -135645,7 +135699,7 @@
           ]
         }
       ],
-      "nextStep": "Existing owners assess remaining workload and measurement-quality gates. Preserve Ruby rootfs drift and incomplete leaf evidence; completed bindfs/tmpfs/Fio comparisons need no repeat. Keep source-publication questions and architectural prerequisites separate.",
+      "nextStep": "Existing owners finish the remaining Ruby FUSE assessment and reconcile missing paired workload coverage. Preserve adverse directions, precision limits and incomplete cohorts;no Abseil measurements remain active or unchanged retries due. Keep FUSE architecture, source decisions and #17884 separate.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -136086,6 +136140,10 @@
         {
           "label": "Ruby bindfs complete scoped AA and AB",
           "url": "https://github.com/tamird/gvisor/actions/runs/45737101591"
+        },
+        {
+          "label": "Final Abseil dirty-tmpfs complete AA and AB;post-test BES timeout",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45722602120"
         }
       ],
       "reviewWatch": {
@@ -136108,11 +136166,11 @@
           }
         ]
       },
-      "recheckCondition": "Owner-confirmed remaining workload evidence, actual prerequisite/source event or answer to an existing question.",
+      "recheckCondition": "Owner-confirmed terminal Ruby/remaining paired evidence, actual prerequisite/source event or an existing decision answer.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Existing owners assess remaining workload and measurement-quality gates. Preserve Ruby rootfs drift and incomplete leaf evidence; completed bindfs/tmpfs/Fio comparisons need no repeat. Keep source-publication questions and architectural prerequisites separate.",
-        "recheckCondition": "Owner-confirmed remaining workload evidence, actual prerequisite/source event or answer to an existing question."
+        "nextAction": "Existing owners finish the remaining Ruby FUSE assessment and reconcile missing paired workload coverage. Preserve adverse directions, precision limits and incomplete cohorts;no Abseil measurements remain active or unchanged retries due. Keep FUSE architecture, source decisions and #17884 separate.",
+        "recheckCondition": "Owner-confirmed terminal Ruby/remaining paired evidence, actual prerequisite/source event or an existing decision answer."
       },
       "head": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
       "settledReviews": [
@@ -136334,17 +136392,18 @@
           "https://github.com/tamird/gvisor/actions/runs/45722610237",
           "https://github.com/tamird/gvisor/actions/runs/45737103786",
           "https://github.com/tamird/gvisor/actions/runs/45737105626",
-          "https://github.com/tamird/gvisor/actions/runs/45737101591"
+          "https://github.com/tamird/gvisor/actions/runs/45737101591",
+          "https://github.com/tamird/gvisor/actions/runs/45722602120"
         ],
         "owner": "root",
-        "disposition": "Native0edf remains the completed36-commit analyzer rewrite. Ruby bindfs completed AA+AB with no corrected flags (+0.17%clean,+0.51%dirty); tmpfs is also complete. Rootfs retains corrected+2.61% candidate early/late drift despite unflagged primary comparisons. Other scoped workload results and unfinished fixture/FUSE/#17884 conditions remain distinct.",
-        "nextAction": "Existing owners assess remaining workload and measurement-quality gates. Preserve Ruby rootfs drift and incomplete leaf evidence; completed bindfs/tmpfs/Fio comparisons need no repeat. Keep source-publication questions and architectural prerequisites separate.",
-        "recheckCondition": "Owner-confirmed remaining workload evidence, actual prerequisite/source event or answer to an existing question.",
+        "disposition": "Native0edf remains the completed36-commit analyzer rewrite. Abseil has all8AA controls and7complete AB cohorts;dirty-FUSE AB stopped on dependencyHTTP403. Final dirty-tmpfs cohort is complete;four outer jobs failed only post-test BES upload. Ruby completed groups retain the rootfs+2.61% corrected drift;gRPC N1 admissions are not paired evidence. Other qualification and #17884 gates remain distinct.",
+        "nextAction": "Existing owners finish the remaining Ruby FUSE assessment and reconcile missing paired workload coverage. Preserve adverse directions, precision limits and incomplete cohorts;no Abseil measurements remain active or unchanged retries due. Keep FUSE architecture, source decisions and #17884 separate.",
+        "recheckCondition": "Owner-confirmed terminal Ruby/remaining paired evidence, actual prerequisite/source event or an existing decision answer.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-26T03:53:54.357727+00:00",
+        "curatedAt": "2026-11-26T04:13:17.729890+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -136471,7 +136530,8 @@
                 },
                 "scope": "Original clean/dirty workloads;18 frozen products and cleanup verified;no equivalence/otherleaf clearance"
               }
-            }
+            },
+            "currentScope": "Corrected common fixture admitted all eight leaves; bindfs/tmpfs/rootfs AA+AB complete, FUSE AA→conditionalAB still running."
           },
           "fio": {
             "run": 45728693661,
@@ -136503,12 +136563,32 @@
             "supplierProposal": "branch:absl-prefetch"
           },
           "abslCompleted": {
-            "dirtyRootfs": 45722607167,
-            "cleanTmpfs": 45722599766,
-            "state": "AA and admitted AB complete for these two original workloads",
-            "scope": "Four original-image workloads complete AA+AB,100 visits each. Dirty rootfs+0.116%;clean tmpfs−0.0148%;clean rootfs+0.269%(p=.721);clean FUSE+1.48%(107.991→109.589s,p=.007),above corrected .00025 threshold. All declared contrasts unflagged;18 products/cleanup verified. Clean-FUSE Bazel target passed; outer job failed only subsequent BEP upload. Three leaves remain active;dirty-FUSE AB incomplete on fetch. No timings for the new prefetch patch or equivalence claim.",
-            "cleanRootfs": 45722604330,
-            "cleanFuse": 45722610237
+            "state": "All eight AA complete;seven complete AB;dirty FUSE AB incomplete on dependency fetch",
+            "runs": [
+              45722607167,
+              45722599766,
+              45722604330,
+              45722610237,
+              45722597292,
+              45722594312,
+              45722602120
+            ],
+            "finalDirtyTmpfs": {
+              "run": 45722602120,
+              "children": 100,
+              "AAFlags": 0,
+              "ABFlags": 0,
+              "ABEffectPercent": -0.0750004513542124,
+              "ABP": ".846",
+              "rawManifestSHA256": "7b27162b977a39d627d3ad9be19ecfd3bc3a9d626b35e18e5c778044dabec4d6"
+            },
+            "flags": "0/40 AA;0/35 completed AB contrasts atalpha.01/40",
+            "limits": "Original network-dependent image;not timings for prefetch proposal. Clean-FUSE+1.48%,p=.007 retained (above corrected .00025). All completed AB primary median CIs0–1%;no equivalence. Four outer jobs fail only post-test BES stream/UNKNOWN despite completed accepted local cohorts;dirtyFUSE retains13successful ABchildren then dependencyHTTP403."
+          },
+          "grpcQualification": {
+            "state": "Retained non-FUSE recipes are functionalN1 admissions,not paired statistical evidence",
+            "fuse": "Baseline ELF execution ConfigureMMap ENOSYS remains separate feature/scope prerequisite",
+            "next": "Reconcile remaining paired non-FUSE coverage before full filesystem qualification"
           }
         }
       },
@@ -148441,5 +148521,5 @@
       "inactive": true
     }
   ],
-  "updatedAt": "2026-11-26T03:53:54.357727+00:00"
+  "updatedAt": "2026-11-26T04:13:17.729890+00:00"
 }
