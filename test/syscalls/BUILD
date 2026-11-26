@@ -937,6 +937,11 @@ syscall_test(
 syscall_test(
     size = "large",
     add_hostinet = True,
+    exec_properties = {
+        "test.dockerUser": "root",
+        "test.network-enable-ipv6": "true",
+        "test.workload-isolation-type": "firecracker",
+    },
     limit_ephemeral_ports = True,
     shard_count = most_shards,
     # Takes too long for TSAN. Creates a lot of TCP sockets.
@@ -1008,6 +1013,11 @@ syscall_test(
 syscall_test(
     size = "medium",
     add_hostinet = True,
+    exec_properties = {
+        "test.dockerUser": "root",
+        "test.network-enable-ipv6": "true",
+        "test.workload-isolation-type": "firecracker",
+    },
     # Takes too long to run with S/R.
     save = False,
     test = "//test/syscalls/linux:socket_ipv4_udp_unbound_loopback_test",
