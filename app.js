@@ -1091,6 +1091,21 @@ function appendInvestigationWork(parent, node) {
   if (node.followup?.recheckCondition) section.append(element("p", "detail-meta", `Recheck: ${node.followup.recheckCondition}`));
   parent.append(section);
 }
+function appendFollowupWork(parent, node) {
+  const followup = node.followup, pr = node.github, head = node.type === "pr" ? pr?.head : node.head;
+  if (!["pr", "branch"].includes(node.type) || historical(node) || providerClosed(node)
+      || node.type === "pr" && (!["open", "draft"].includes(pr?.status) || pr.branchHead && pr.branchHead !== pr.head)
+      || pr?.revisionChanged || !/^[a-f0-9]{40}$/.test(head || "")
+      || node.head !== head || followup?.sourceHead !== head
+      || typeof followup.owner !== "string" || !followup.owner.trim()
+      || typeof followup.nextAction !== "string" || !followup.nextAction.trim()) return;
+  const section = element("section", "detail-section current-work");
+  section.append(element("h3", "", "Current work"), element("p", "detail-meta", `Owner: ${followup.owner}`));
+  appendInvestigationSource(section, node);
+  section.append(element("h4", "", "Next action"), element("p", "", followup.nextAction));
+  if (followup.recheckCondition) section.append(element("p", "detail-meta", `Recheck: ${followup.recheckCondition}`));
+  parent.append(section);
+}
 function appendAttributes(container, node) {
   if (node.type !== "pr") return;
   const section = element("section", "detail-section pr-attributes"), pr = node.github;
@@ -2108,6 +2123,7 @@ function drawDetails() {
   // Service-owned attributes lead PR details; curated notes remain available
   // separately without obscuring the current head, checks, or conflict refresh.
   appendAttributes(details, node);
+  appendFollowupWork(details, node);
   appendOutreach(details, node);
   const evidenceURL = node.followup?.evidence?.[0];
   if (node.type === "branch" && node.status === "Agent work" && evidenceURL && node.followup.sourceHead === node.head) {

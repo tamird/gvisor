@@ -4001,3 +4001,48 @@ test('source receipts retain pending companion prose across head changes and rej
   proposal.replyBody = 'Another reply.';
   assert.equal(vm.runInContext('pendingDecisions(node).length', c), 1);
 });
+
+
+test('details expose current source-bound actions before curated history', () => {
+  const c = client(), node = attentionNode();
+  Object.assign(node, { repo: 'google/gvisor', head: node.github.head, summary: 'Earlier qualification diary.',
+    followup: { owner: 'root', sourceHead: node.github.head, nextAction: 'Identify the coverage performance producer.',
+      recheckCondition: 'Exact runtime release provenance and an authorized next step.' } });
+  const create = () => ({ children: [], dataset: {}, append(...items) { this.children.push(...items); },
+    replaceChildren() { this.children = []; }, setAttribute() {}, addEventListener() {} });
+  const details = create();
+  c.document = { createElement: create, createTextNode: textContent => ({ textContent }), getElementById: id => id === 'details' ? details : {} };
+  c.location = new URL('https://tamird.github.io/gvisor/'); c.nodeInput = node;
+  const render = () => {
+    vm.runInContext('model = {nodes: [nodeInput], edges: []}; selected = nodeInput.id; drawDetails()', c);
+    return details.children.find(child => child.className === 'detail-section current-work');
+  };
+  const text = el => [el.textContent || '', ...(el.children || []).map(text)].join(' ');
+  let work = render();
+  for (const expected of ['Current work', 'Owner: root', node.followup.nextAction, node.followup.recheckCondition])
+    assert.ok(text(work).includes(expected), expected);
+  assert.ok(!text(work).includes(node.summary));
+  assert.ok(details.children.indexOf(work) < details.children.findIndex(child => child.className === 'curated-notes'));
+  assert.ok(details.children.findIndex(child => child.className === 'detail-section pr-attributes') < details.children.indexOf(work));
+  node.followup.sourceHead = 'b'.repeat(40);
+  assert.equal(render(), undefined);
+  node.followup.sourceHead = node.head;
+  node.github.head = 'c'.repeat(40);
+  assert.equal(render(), undefined);
+  delete node.github.head;
+  c.workParent = create();
+  vm.runInContext('appendFollowupWork(workParent, nodeInput)', c);
+  assert.equal(c.workParent.children.length, 0);
+  node.github.head = node.head; node.github.status = 'closed';
+  assert.equal(render(), undefined);
+  node.github.status = 'open'; node.github.branchHead = 'd'.repeat(40);
+  assert.equal(render(), undefined);
+  delete node.github.branchHead;
+  delete node.github;
+  assert.equal(render(), undefined);
+  Object.assign(node, { id: 'branch:coverage', type: 'branch', repo: 'tamird/gvisor', status: 'Agent work' });
+  work = render();
+  assert.ok(text(work).includes(node.followup.nextAction));
+  node.status = 'retired';
+  assert.equal(render(), undefined);
+});
