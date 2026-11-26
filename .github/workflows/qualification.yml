@@ -265,6 +265,9 @@ jobs:
           options = json.loads(os.environ['QUALIFICATION_INPUT_BAZEL_OPTIONS_JSON'])
           if not isinstance(options, list) or any(not isinstance(value, str) or not value.startswith('--') or value == '--' or '\0' in value for value in options):
               raise SystemExit('bazel_options must be a JSON array of --flag[=value] strings without NUL characters')
+          for i, value in enumerate(options):
+              if value == '--credential_helper=api.github.com=tools/github/credential_helper.py':
+                  options[i] = '--credential_helper=api.github.com=' + os.path.abspath('tools/github/credential_helper.py')
           sys.stdout.buffer.write(b''.join(value.encode() + b'\0' for value in options))
           PY
           mapfile -d '' -t caller_options < "$results/bazel-options"
