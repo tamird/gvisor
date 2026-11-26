@@ -279,8 +279,8 @@ jobs:
           PY
           mapfile -d '' -t caller_options < "$results/bazel-options"
           rm "$results/bazel-options"
-          options=(--config=buildbuddy "${caller_options[@]}"
-            --config="$QUAL_CONFIG" --announce_rc=false --keep_going
+          options=(--config=buildbuddy --config="$QUAL_CONFIG"
+            "${caller_options[@]}" --announce_rc=false --keep_going
             --credential_helper="remote.buildbuddy.io=$helper"
             --bes_backend=grpcs://remote.buildbuddy.io
             --bes_results_url=https://app.buildbuddy.io/invocation/
