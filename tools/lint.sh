@@ -383,6 +383,34 @@ run_check() {
 }
 
 main() {
+  if [[ -n "${QUALIFICATION_BAZEL:-}" || -n "${QUALIFICATION_BAZEL_OPTIONS_JSON:-}" ]]; then
+    if [[ -z "${QUALIFICATION_BAZEL:-}" || -z "${QUALIFICATION_BAZEL_OPTIONS_JSON:-}" ]]; then
+      echo "lint: incomplete qualification Bazel configuration" >&2
+      exit 1
+    fi
+    BAZEL=("${QUALIFICATION_BAZEL}")
+    local options_file
+    options_file="$(mktemp)"
+    if ! python3 - <<'OPTIONS' > "${options_file}"
+import json
+import os
+import sys
+
+options = json.loads(os.environ["QUALIFICATION_BAZEL_OPTIONS_JSON"])
+if not isinstance(options, list) or any(
+    not isinstance(option, str) or "\0" in option for option in options
+):
+  raise ValueError("qualification Bazel options must be a JSON string array")
+for option in options:
+  sys.stdout.buffer.write(option.encode() + b"\0")
+OPTIONS
+    then
+      rm -f "${options_file}"
+      exit 1
+    fi
+    mapfile -d '' -t BAZEL_OPTIONS < "${options_file}"
+    rm -f "${options_file}"
+  fi
   mkdir -p "${CACHE_DIR}"
 
   local -a args=()

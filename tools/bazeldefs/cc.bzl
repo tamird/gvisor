@@ -22,7 +22,7 @@ def cc_library(**kwargs):
 
 cc_proto_library = _cc_proto_library
 cc_test = _cc_test
-cc_toolchain = "@bazel_tools//tools/cpp:current_cc_toolchain"
+cc_toolchain = "@bazel_tools//tools/cpp:toolchain_type"
 gtest = "@com_google_googletest//:gtest"
 gbenchmark = "@com_google_benchmark//:benchmark"
 gbenchmark_internal = "@com_google_benchmark//:benchmark"

@@ -76,6 +76,7 @@ exports_files([
     "build_cover.sh",
     "go-allow-internal.patch",
     "llvm-linux-header-default.patch",
+    "rules_go_proto_exec.patch",
 ])
 
 py_test(
