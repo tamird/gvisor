@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T07:49:16.730719+00:00",
+    "updatedAt": "2026-11-26T08:09:25.520848+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -59935,16 +59935,16 @@
       "head": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
       "title": "Run both iperf3 benchmark endpoints on Ubuntu Jammy",
       "group": "bazel",
-      "status": "Approved source; independent qualification holds remain",
-      "updatedAt": "2026-11-26T03:53:54.357727+00:00",
+      "status": "Approved source; P64 functional completion held",
+      "updatedAt": "2026-11-26T08:09:25.520848+00:00",
       "url": "https://github.com/tamird/gvisor/commit/67601a14c",
-      "summary": "Approved source67601a14c directly pins released iperf3.18.0.bcr.1 without a local override. BCR#11518 merged70404f85e; the module tree454efbec1484645fed36b45207886c83309b6368 is identical to qualified PR headfe25c8ed and is served by registry/main. The pending-registry prerequisite is complete. Existing package/license evidence, P64 timeout and aggregate-measurement/source-publication limits remain source-bound.",
+      "summary": "Approved source67601a14c directly pins released iperf3.18.0.bcr.1; BCR and the ce163 build prerequisites are complete. Its explicit aggregate sender metric does not require the old Iperf2 SUM parser. Landing remains held on P64 completion in the maintained caller, including calibration. Retained native success and Sentry/debug timeouts do not identify a blocking function or establish performance.",
       "followup": {
         "owner": "root",
         "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
         "observedAt": "2026-11-02T17:47:05.918366+00:00",
-        "disposition": "Approved source67601a14c directly pins released iperf3.18.0.bcr.1 without a local override. BCR#11518 merged70404f85e; the module tree454efbec1484645fed36b45207886c83309b6368 is identical to qualified PR headfe25c8ed and is served by registry/main. The pending-registry prerequisite is complete. Existing package/license evidence, P64 timeout and aggregate-measurement/source-publication limits remain source-bound.",
-        "nextAction": "Root retains the unexplained P64 functional timeout, topology and measurement-control/source-publication conditions. The BCR export and previously approved ce163 remote build are complete prerequisites, not pending asks. Preserve any independent licensing requirements; no new build, timing or source permutation follows.",
+        "disposition": "Approved source67601a14c directly pins released iperf3.18.0.bcr.1; BCR and the ce163 build prerequisites are complete. Its explicit aggregate sender metric does not require the old Iperf2 SUM parser. Landing remains held on P64 completion in the maintained caller, including calibration. Retained native success and Sentry/debug timeouts do not identify a blocking function or establish performance.",
+        "nextAction": "Root/analysis_delivery uses the retained native/Sentry completion and debug evidence to localize the remaining P64 completion interval or identify a verified applicable upstream fix. Do not repeat stock debug output, the deferred-cancellation experiment or unchanged old heads; do not increase timeouts, drop P64/calibration, clamp bytes or infer zero delivered data from an incomplete receiver summary. Preserve source/publication and performance bounds.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
@@ -59986,15 +59986,82 @@
           "recheckCondition": "Exact ref/head change, canonical PR feedback/check/import or terminal-state change, dependency landing or contributor decision.",
           "owner": "root"
         },
-        "technicalOwner": "Build and release",
-        "recheckCondition": "Relevant new source/functional evidence, explicit root assignment or an actual source/operational decision.",
-        "curatedAt": "2026-11-26T03:53:54.357727+00:00",
+        "technicalOwner": "analysis_delivery / root",
+        "recheckCondition": "Actual new source/functional evidence that localizes or resolves P64 completion, or an explicit owning technical disposition. No new run is authorized by this metadata update.",
+        "curatedAt": "2026-11-26T08:09:25.520848+00:00",
         "bcrPublication": {
           "pr": 11518,
           "merge": "70404f85e",
           "version": "3.18.0.bcr.1",
           "moduleTree": "454efbec1484645fed36b45207886c83309b6368",
           "scope": "Identical PR-head/merged module tree;registry/main serves module;candidate67601 directly pins it"
+        },
+        "P64CompletionEvidence": {
+          "requestedBytes": 1024,
+          "parallelStreams": 64,
+          "blockBytes": 131072,
+          "native": {
+            "run": 44969537655,
+            "artifact": 14732218777,
+            "sentBytes": 131072,
+            "receivedBytes": 131072,
+            "senderSeconds": 0.93868,
+            "receiverSeconds": 0.93885,
+            "result": "Success; overshoot is normal Iperf3 block behavior, not the defect"
+          },
+          "sentry90s": {
+            "run": 44969536131,
+            "artifact": 14732822824,
+            "sentBytes": 262144,
+            "interruptedSeconds": 90.170322,
+            "result": "Incomplete; receiver-summary zero does not establish no delivered data"
+          },
+          "sentry30s": {
+            "run": 44973895706,
+            "artifact": 14734029396,
+            "result": "One-KiB P64 calibration timeout124; no large-transfer/performance result"
+          },
+          "retainedDebug": {
+            "source": "05e0aa769",
+            "baseVersion": "Iperf3.18 with isolated upstream deferred-cancellation backport",
+            "run": 44966632076,
+            "artifact": 14731637727,
+            "clientOutputLines": 4762,
+            "observed": "TEST_START \u2192 TEST_RUNNING; DISPLAY_RESULTS from TEST_RUNNING \u2192 CLIENT_TERMINATE at timeout124",
+            "senderStoppedMarkerCaptured": false,
+            "TEST_ENDCaptured": false,
+            "meaning": "Backport alone did not clear this controlled case; no blocking-function proof or full3.21 result",
+            "supersededSuggestion": "Do not dispatch stock -d again; bounded debug output already exists"
+          },
+          "experimentHistory": {
+            "initialSource": "075b4a103",
+            "initialRun": 44965784356,
+            "initialFailure": "Patch application, not execution",
+            "formatCorrection": "089f",
+            "debugSource": "05e0aa769"
+          },
+          "publishedBCRVersions": [
+            "3.18.0",
+            "3.18.0.bcr.1"
+          ],
+          "stockMarkerBoundary": "Sender threads stopped is emitted after sender joins and before final stats/TEST_END; absence does not identify the blocking function; presence alone would not prove TEST_END",
+          "selectedPatch": null,
+          "newRun": false
+        },
+        "metricDisposition": {
+          "selectedVehicle": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
+          "aggregateSenderMetric": "Iperf3 end.sum_sent.bytes and rate/8; explicit common sender interval",
+          "supersededStandaloneIperf2": "9cf0dbbe278572fd39d877a0d542483573a0185b",
+          "supersessionScope": "Aggregate-bandwidth selection only; historical SUM interval mismatch is not a blocker for the separate Iperf3 producer contract",
+          "Iperf2Evidence": {
+            "run": 44924729979,
+            "artifact": 14714394555,
+            "result": "SUM bytes add consistently but its interval differs from longest stream; 4KiB/0.0004s vs a1.0170s stream. No whole-transfer makespan inference or max-relative-end repair."
+          },
+          "separateUndeliveredMetric": {
+            "source": "ead57716",
+            "contract": "Payload bytes divided by b.Elapsed; not delivered by67601"
+          }
         }
       },
       "refinement": {
@@ -60071,7 +60138,7 @@
           "at": "2026-11-02T16:20:02.085486+00:00"
         }
       ],
-      "recheckCondition": "Relevant new source/functional evidence, explicit root assignment or an actual source/operational decision."
+      "recheckCondition": "Actual new source/functional evidence that localizes or resolves P64 completion, or an explicit owning technical disposition. No new run is authorized by this metadata update."
     },
     {
       "id": "pr:hermeticbuild/hermetic-llvm:909",
@@ -149659,10 +149726,10 @@
       "group": "analysis",
       "title": "Report client aggregate Iperf bandwidth",
       "owner": "root",
-      "head": "9cf0dbbe278572fd39d877a0d542483573a0185b",
-      "updatedAt": "2026-11-25T20:43:01.329836+00:00",
-      "summary": "Standalone Iperf2 reporter publication remains technically held by the measured SUM/longest-stream interval mismatch. The separate ce163 DING fixture is functionally qualified for ten native and ten systrap topologies with exact product/config restoration; this is not timing approval or a performance comparison. The original P64 timeout and reporting/source-publication limits remain separate.",
-      "nextStep": "Root assesses the Iperf SUM interval and P64 evidence under their existing measurement boundaries. Moby build/package/empty-TestMain and ten-topology functional gates are complete; no remote-build approval or startup-card dependency remains. No unchanged retry, new timing or standalone reporter publication.",
+      "head": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
+      "updatedAt": "2026-11-26T08:09:25.520848+00:00",
+      "summary": "Approved Iperf3 vehicle 67601a14c supplies aggregate sender bytes/rate; the standalone Iperf2 reporter is superseded only for that metric. P64 completion remains a functional blocker. A retained debug control with the deferred-cancellation backport timed out before any captured sender-stopped or TEST_END marker; its blocking boundary is unlocalized. Payload divided by outer benchmark elapsed time remains a separate undelivered metric.",
+      "nextStep": "Root/analysis_delivery uses the retained native/Sentry completion and debug evidence to localize the remaining P64 completion interval or identify a verified applicable upstream fix. Do not repeat stock debug output, the deferred-cancellation experiment or unchanged old heads; do not increase timeouts, drop P64/calibration, clamp bytes or infer zero delivered data from an incomplete receiver summary. Preserve source/publication and performance bounds.",
       "evidence": [
         {
           "label": "Exact reviewable source and included DCO",
@@ -149727,15 +149794,35 @@
         {
           "label": "DING functional binding/restoration or ten systrap topology rows",
           "url": "https://github.com/tamird/gvisor/actions/runs/45706372749"
+        },
+        {
+          "label": "Approved aggregate Iperf3 vehicle",
+          "url": "https://github.com/tamird/gvisor/commit/67601a14c6ffdf37d7e27a9124170a9d54ef0e12"
+        },
+        {
+          "label": "Iperf2 SUM interval evidence",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44924729979/artifacts/14714394555"
+        },
+        {
+          "label": "Native P64 completion control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44969537655/artifacts/14732218777"
+        },
+        {
+          "label": "Sentry90s completion control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44969536131/artifacts/14732822824"
+        },
+        {
+          "label": "Retained isolated cancellation-backport debug control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/44966632076/artifacts/14731637727"
         }
       ],
       "findings": [],
       "followup": {
         "owner": "root",
-        "disposition": "Standalone Iperf2 reporter publication remains technically held by the measured SUM/longest-stream interval mismatch. The separate ce163 DING fixture is functionally qualified for ten native and ten systrap topologies with exact product/config restoration; this is not timing approval or a performance comparison. The original P64 timeout and reporting/source-publication limits remain separate.",
-        "nextAction": "Root assesses the Iperf SUM interval and P64 evidence under their existing measurement boundaries. Moby build/package/empty-TestMain and ten-topology functional gates are complete; no remote-build approval or startup-card dependency remains. No unchanged retry, new timing or standalone reporter publication.",
-        "recheckCondition": "Evidence-backed reporting/P64 disposition, changed source/control evidence or an actual source-publication decision.",
-        "curatedAt": "2026-11-26T00:05:51.079754+00:00",
+        "disposition": "Approved Iperf3 vehicle 67601a14c supplies aggregate sender bytes/rate; the standalone Iperf2 reporter is superseded only for that metric. P64 completion remains a functional blocker. A retained debug control with the deferred-cancellation backport timed out before any captured sender-stopped or TEST_END marker; its blocking boundary is unlocalized. Payload divided by outer benchmark elapsed time remains a separate undelivered metric.",
+        "nextAction": "Root/analysis_delivery uses the retained native/Sentry completion and debug evidence to localize the remaining P64 completion interval or identify a verified applicable upstream fix. Do not repeat stock debug output, the deferred-cancellation experiment or unchanged old heads; do not increase timeouts, drop P64/calibration, clamp bytes or infer zero delivered data from an incomplete receiver summary. Preserve source/publication and performance bounds.",
+        "recheckCondition": "Actual new source/functional evidence that localizes or resolves P64 completion, or an explicit owning technical disposition. No new run is authorized by this metadata update.",
+        "curatedAt": "2026-11-26T08:09:25.520848+00:00",
         "remoteBuild": {
           "run": 45691659853,
           "operation": "make rebuild-moby ARCH=x86_64 DOCKER_BUILD=false",
@@ -149768,7 +149855,7 @@
           "timingApproval": false,
           "performanceResult": false
         },
-        "executionOwner": "benchmark_measurement_review",
+        "executionOwner": "analysis_delivery / root",
         "dingSourceHead": "ce1634b4adf686f6067b4fed388de417efd43ddd",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45691659853",
@@ -149778,10 +149865,83 @@
           "https://github.com/tamird/gvisor/actions/runs/45705007458",
           "https://github.com/tamird/gvisor/actions/runs/45706372749",
           "https://github.com/tamird/gvisor/actions/runs/45698369467",
-          "https://github.com/tamird/gvisor/actions/runs/44956385628"
-        ]
+          "https://github.com/tamird/gvisor/actions/runs/44956385628",
+          "https://github.com/tamird/gvisor/commit/67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
+          "https://github.com/tamird/gvisor/actions/runs/44924729979/artifacts/14714394555",
+          "https://github.com/tamird/gvisor/actions/runs/44969537655/artifacts/14732218777",
+          "https://github.com/tamird/gvisor/actions/runs/44969536131/artifacts/14732822824",
+          "https://github.com/tamird/gvisor/actions/runs/44966632076/artifacts/14731637727"
+        ],
+        "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
+        "metricDisposition": {
+          "selectedVehicle": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
+          "aggregateSenderMetric": "Iperf3 end.sum_sent.bytes and rate/8; explicit common sender interval",
+          "supersededStandaloneIperf2": "9cf0dbbe278572fd39d877a0d542483573a0185b",
+          "supersessionScope": "Aggregate-bandwidth selection only; historical SUM interval mismatch is not a blocker for the separate Iperf3 producer contract",
+          "Iperf2Evidence": {
+            "run": 44924729979,
+            "artifact": 14714394555,
+            "result": "SUM bytes add consistently but its interval differs from longest stream; 4KiB/0.0004s vs a1.0170s stream. No whole-transfer makespan inference or max-relative-end repair."
+          },
+          "separateUndeliveredMetric": {
+            "source": "ead57716",
+            "contract": "Payload bytes divided by b.Elapsed; not delivered by67601"
+          }
+        },
+        "P64CompletionEvidence": {
+          "requestedBytes": 1024,
+          "parallelStreams": 64,
+          "blockBytes": 131072,
+          "native": {
+            "run": 44969537655,
+            "artifact": 14732218777,
+            "sentBytes": 131072,
+            "receivedBytes": 131072,
+            "senderSeconds": 0.93868,
+            "receiverSeconds": 0.93885,
+            "result": "Success; overshoot is normal Iperf3 block behavior, not the defect"
+          },
+          "sentry90s": {
+            "run": 44969536131,
+            "artifact": 14732822824,
+            "sentBytes": 262144,
+            "interruptedSeconds": 90.170322,
+            "result": "Incomplete; receiver-summary zero does not establish no delivered data"
+          },
+          "sentry30s": {
+            "run": 44973895706,
+            "artifact": 14734029396,
+            "result": "One-KiB P64 calibration timeout124; no large-transfer/performance result"
+          },
+          "retainedDebug": {
+            "source": "05e0aa769",
+            "baseVersion": "Iperf3.18 with isolated upstream deferred-cancellation backport",
+            "run": 44966632076,
+            "artifact": 14731637727,
+            "clientOutputLines": 4762,
+            "observed": "TEST_START \u2192 TEST_RUNNING; DISPLAY_RESULTS from TEST_RUNNING \u2192 CLIENT_TERMINATE at timeout124",
+            "senderStoppedMarkerCaptured": false,
+            "TEST_ENDCaptured": false,
+            "meaning": "Backport alone did not clear this controlled case; no blocking-function proof or full3.21 result",
+            "supersededSuggestion": "Do not dispatch stock -d again; bounded debug output already exists"
+          },
+          "experimentHistory": {
+            "initialSource": "075b4a103",
+            "initialRun": 44965784356,
+            "initialFailure": "Patch application, not execution",
+            "formatCorrection": "089f",
+            "debugSource": "05e0aa769"
+          },
+          "publishedBCRVersions": [
+            "3.18.0",
+            "3.18.0.bcr.1"
+          ],
+          "stockMarkerBoundary": "Sender threads stopped is emitted after sender joins and before final stats/TEST_END; absence does not identify the blocking function; presence alone would not prove TEST_END",
+          "selectedPatch": null,
+          "newRun": false
+        }
       },
-      "recheckCondition": "Evidence-backed reporting/P64 disposition, changed source/control evidence or an actual source-publication decision.",
+      "recheckCondition": "Actual new source/functional evidence that localizes or resolves P64 completion, or an explicit owning technical disposition. No new run is authorized by this metadata update.",
       "settledReviews": [
         {
           "kind": "exception",
@@ -149793,7 +149953,8 @@
           "body": "Scope summary, not a verbatim question: permit one remote canonical `make rebuild-moby ARCH=x86_64 DOCKER_BUILD=false` on gVisor source ce1634b4adf686f6067b4fed388de417efd43ddd, capped at 30 minutes, without image publication, followed by Bazel validation. Generic CI authorization does not answer this specific exception to the Bazel-only rule.",
           "outcome": "approved"
         }
-      ]
+      ],
+      "url": "https://github.com/tamird/gvisor/commit/67601a14c6ffdf37d7e27a9124170a9d54ef0e12"
     },
     {
       "id": "investigation:httpd-client-capacity",
@@ -150161,5 +150322,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-26T07:49:16.730719+00:00"
+  "updatedAt": "2026-11-26T08:09:25.520848+00:00"
 }
