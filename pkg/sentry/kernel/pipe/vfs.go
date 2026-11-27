@@ -119,22 +119,33 @@ func (vp *VFSPipe) Open(ctx context.Context, mnt *vfs.Mount, vfsd *vfs.Dentry, s
 		}
 		// If this pipe is being opened as blocking and there's no
 		// writer, we have to wait for a writer to open the other end.
-		for vp.pipe.isNamed && !nonblocking && !hasWriter && !vp.pipe.HasWriters() &&
-			generation == vp.pipe.writerGeneration.Load() {
-			if !ctx.BlockOn((*waitWriters)(&vp.pipe), waiter.EventInternal) {
-				fd.vfsfd.DecRef(ctx)
-				return nil, linuxerr.EINTR
+		if vp.pipe.isNamed && !nonblocking && !hasWriter && !vp.pipe.HasWriters() {
+			e, ch := waiter.NewChannelEntry(waiter.EventInternal)
+			vp.pipe.queue.EventRegister(&e)
+			defer vp.pipe.queue.EventUnregister(&e)
+			// Recheck the generation after registration: a writer may have
+			// opened and closed before the waiter was registered.
+			for !vp.pipe.HasWriters() && generation == vp.pipe.writerGeneration.Load() {
+				if err := ctx.Block(ch); err != nil {
+					fd.vfsfd.DecRef(ctx)
+					return nil, linuxerr.EINTR
+				}
 			}
 		}
 
 	case writable:
 		tReaders := vp.pipe.totalReaders.Load()
 		vp.pipe.wOpen()
-		for vp.pipe.isNamed && !nonblocking && !vp.pipe.HasReaders() &&
-			tReaders == vp.pipe.totalReaders.Load() {
-			if !ctx.BlockOn((*waitReaders)(&vp.pipe), waiter.EventInternal) {
-				fd.vfsfd.DecRef(ctx)
-				return nil, linuxerr.EINTR
+		if vp.pipe.isNamed && !nonblocking && !vp.pipe.HasReaders() {
+			e, ch := waiter.NewChannelEntry(waiter.EventInternal)
+			vp.pipe.queue.EventRegister(&e)
+			defer vp.pipe.queue.EventUnregister(&e)
+			// As for writers, a reader that already closed satisfies open.
+			for !vp.pipe.HasReaders() && tReaders == vp.pipe.totalReaders.Load() {
+				if err := ctx.Block(ch); err != nil {
+					fd.vfsfd.DecRef(ctx)
+					return nil, linuxerr.EINTR
+				}
 			}
 		}
 
