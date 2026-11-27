@@ -35,6 +35,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <ctime>
 #include <iterator>
@@ -676,6 +677,80 @@ TEST_P(TcpSocketTest, NoLingerOnProcessExit) {
 
 TEST_P(TcpSocketTest, AbortiveLingerOnExit) {
   CheckLingerOnExit(/*abortive=*/true);
+}
+
+// Qualification-only workload. Socket setup and fork are outside the clock;
+// release-to-wait includes scheduling and the child's final socket closes.
+TEST_P(TcpSocketTest, DefaultLingerExitBenchmark) {
+  const DisableSave disable_save;
+  listener_.reset();
+  connected_.reset();
+  accepted_.reset();
+  constexpr int kIterations = 128;
+  for (int count : {1, 64}) {
+    absl::Duration elapsed = absl::ZeroDuration();
+    for (int iteration = 0; iteration < kIterations; ++iteration) {
+      FileDescriptor listener = ASSERT_NO_ERRNO_AND_VALUE(
+          Socket(GetParam(), SOCK_STREAM, IPPROTO_TCP));
+      sockaddr_storage addr =
+          ASSERT_NO_ERRNO_AND_VALUE(InetLoopbackAddrZeroPort(GetParam()));
+      socklen_t addrlen = sizeof(addr);
+      ASSERT_THAT(bind(listener.get(), AsSockAddr(&addr), addrlen),
+                  SyscallSucceeds());
+      ASSERT_THAT(listen(listener.get(), SOMAXCONN), SyscallSucceeds());
+      ASSERT_THAT(getsockname(listener.get(), AsSockAddr(&addr), &addrlen),
+                  SyscallSucceeds());
+      std::vector<FileDescriptor> clients;
+      std::vector<FileDescriptor> peers;
+      for (int i = 0; i < count; ++i) {
+        clients.push_back(ASSERT_NO_ERRNO_AND_VALUE(
+            Socket(GetParam(), SOCK_STREAM, IPPROTO_TCP)));
+        ASSERT_THAT(RetryEINTR(connect)(clients.back().get(), AsSockAddr(&addr),
+                                       addrlen), SyscallSucceeds());
+        peers.push_back(ASSERT_NO_ERRNO_AND_VALUE(
+            Accept(listener.get(), nullptr, nullptr)));
+        struct linger linger = {};
+        socklen_t size = sizeof(linger);
+        ASSERT_THAT(getsockopt(clients.back().get(), SOL_SOCKET, SO_LINGER,
+                               &linger, &size), SyscallSucceeds());
+        ASSERT_EQ(linger.l_onoff, 0);
+      }
+      int ready[2], release[2];
+      ASSERT_THAT(pipe(ready), SyscallSucceeds());
+      FileDescriptor ready_read(ready[0]), ready_write(ready[1]);
+      ASSERT_THAT(pipe(release), SyscallSucceeds());
+      FileDescriptor release_read(release[0]), release_write(release[1]);
+      const pid_t child = fork();
+      if (child == 0) {
+        listener.reset();
+        peers.clear();
+        ready_read.reset();
+        release_write.reset();
+        char byte = 0;
+        TEST_PCHECK(RetryEINTR(write)(ready_write.get(), &byte, 1) == 1);
+        ready_write.reset();
+        TEST_PCHECK(RetryEINTR(read)(release_read.get(), &byte, 1) == 1);
+        _exit(0);
+      }
+      ASSERT_THAT(child, SyscallSucceeds());
+      ready_write.reset();
+      release_read.reset();
+      clients.clear();
+      char byte = 0;
+      ASSERT_THAT(RetryEINTR(read)(ready_read.get(), &byte, 1),
+                  SyscallSucceedsWithValue(1));
+      const absl::Time start = absl::Now();
+      ASSERT_THAT(RetryEINTR(write)(release_write.get(), &byte, 1),
+                  SyscallSucceedsWithValue(1));
+      int status;
+      ASSERT_THAT(RetryEINTR(waitpid)(child, &status, 0),
+                  SyscallSucceedsWithValue(child));
+      elapsed += absl::Now() - start;
+      ASSERT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0);
+    }
+    printf("BenchmarkHostinetExit/FDs=%d %d %.3f ns/op\n", count,
+           kIterations, absl::ToDoubleNanoseconds(elapsed) / kIterations);
+  }
 }
 
 TEST_P(TcpSocketTest, MsgTrunc) {
