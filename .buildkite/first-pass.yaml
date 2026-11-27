@@ -62,7 +62,7 @@ steps:
   - <<: *common
     label: ":toolbox: System call tests (AMD64)"
     command: make OPTIONS=--config=syscalls-amd64 syscall-tests
-    parallelism: 20
+    parallelism: 10
 
   - <<: *common
     <<: *docker
