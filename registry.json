@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-27T14:54:24.090682+00:00",
+    "updatedAt": "2026-11-27T16:01:57.617996+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -58415,20 +58415,20 @@
       "id": "branch:declared-jekyll-site",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/website-deploy-native",
-      "head": "a5265547f8c17b32b19021c4d8f9100c1012c2aa",
-      "title": "Render the gVisor website without its Jekyll builder",
+      "ref": "fix/website-declared-ruby-restacked-20261127",
+      "head": "dcba6299493f61c86d04b413abdda955d425e44f",
+      "title": "Declare the website renderer toolchain",
       "group": "bazel",
-      "status": "Agent work",
-      "url": "https://github.com/tamird/gvisor/commit/a5265547f",
-      "updatedAt": "2026-11-27T12:43:45.159584+00:00",
-      "summary": "Tamir approved the website checker/parser migration scope. actions_bazel_cache is implementing the canonical dependency migration and parity qualification; current source is not newly approved upstream. The CA-pin/fallback and existing Docker publisher remain distinct.",
+      "status": "Contributor review",
+      "url": "https://github.com/tamird/gvisor/compare/1be6fd509...dcba62994",
+      "updatedAt": "2026-11-27T16:01:57.617996+00:00",
+      "summary": "Corrected renderer dcba62994 is qualified and both review owners confirmed it. Its tree matches 5f04427522; only message wrapping changed. Declared-date/cache/reproduction and final 46027875407 inspection/render contracts passed. The opening question is pending, conditional on the separate HTML fix 1be6 landing. #18012 fallback roots remain independent; later packaging integration is separate.",
       "followup": {
         "owner": "root",
-        "sourceHead": "a5265547f8c17b32b19021c4d8f9100c1012c2aa",
+        "sourceHead": "dcba6299493f61c86d04b413abdda955d425e44f",
         "observedAt": "2026-11-08T22:36:47+00:00",
-        "disposition": "Tamir approved the website checker/parser migration scope. actions_bazel_cache is implementing the canonical dependency migration and parity qualification; current source is not newly approved upstream. The CA-pin/fallback and existing Docker publisher remain distinct.",
-        "nextAction": "actions_bazel_cache completes the canonical dependency migration and actual renderer/checker parity evidence, then root reviews the exact source before any upstream publication decision.",
+        "disposition": "Corrected renderer dcba62994 is qualified and both review owners confirmed it. Its tree matches 5f04427522; only message wrapping changed. Declared-date/cache/reproduction and final 46027875407 inspection/render contracts passed. The opening question is pending, conditional on the separate HTML fix 1be6 landing. #18012 fallback roots remain independent; later packaging integration is separate.",
+        "nextAction": "Root awaits the actual conditional renderer-opening decision and the separate HTML1be6 decision/landing. Preserve independent #18012 approval; when either source lands, reconcile only website/BUILD normal :files packaging to omit the old Google certificate and verify the combined archive. No deployment or broader source authority is inferred.",
         "evidence": [
           {
             "label": "Buildkite release with local registry authentication and a simulated Cloud Run deployment",
@@ -58447,7 +58447,9 @@
           "https://github.com/tamird/gvisor/commit/d07e6af4340a332335e3a08eb92cfc15687c2e02",
           "https://github.com/tamird/gvisor/actions/runs/45764764503",
           "https://github.com/tamird/gvisor/actions/runs/45764769667",
-          "https://github.com/tamird/gvisor/actions/runs/45770079130/artifacts/15093523995"
+          "https://github.com/tamird/gvisor/actions/runs/45770079130/artifacts/15093523995",
+          "https://github.com/tamird/gvisor/compare/1be6fd509...dcba62994",
+          "https://github.com/tamird/gvisor/actions/runs/46027875407"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -58461,8 +58463,8 @@
           "owner": "root"
         },
         "technicalOwner": "actions_bazel_cache",
-        "recheckCondition": "Source-bound canonical dependency/parity milestone or substantive review.",
-        "curatedAt": "2026-11-27T12:43:45.159584+00:00",
+        "recheckCondition": "Answer to the actual renderer question, HTML prerequisite landing, or the counterpart fallback-root integration event.",
+        "curatedAt": "2026-11-27T16:01:57.617996+00:00",
         "compilerAssessment": {
           "websiteSource": "a5265547f8c17b32b19021c4d8f9100c1012c2aa",
           "declaredSupplier": "llvm0.8.24, MODULE.bazel:18",
@@ -58539,17 +58541,61 @@
           "url": "https://github.com/gvisor/gvisor/pull/18012",
           "state": "Published; larger migration and architecture decision separate"
         },
-        "currentDependencyMigration": "Canonical migration lock step passed per root; renderer/checker parity and final source review remain unclaimed."
-      },
-      "refinement": {
-        "before": {
-          "base": "757a452f9265d02a963203d1ccf7704e7d1ebc57",
-          "head": "bb040106f370ea27c513a984a51995a08da69f26"
+        "currentDependencyMigration": "Canonical migration lock step passed per root; renderer/checker parity and final source review remain unclaimed.",
+        "historicalRendererSources": [
+          {
+            "head": "a5265547f8c17b32b19021c4d8f9100c1012c2aa",
+            "ref": "review/website-deploy-native",
+            "url": "https://github.com/tamird/gvisor/commit/a5265547f",
+            "summary": "Tamir approved the website checker/parser migration scope. actions_bazel_cache is implementing the canonical dependency migration and parity qualification; current source is not newly approved upstream. The CA-pin/fallback and existing Docker publisher remain distinct."
+          }
+        ],
+        "currentRenderer": {
+          "native": "dcba6299493f61c86d04b413abdda955d425e44f",
+          "sameTreeAs": "5f04427522f8ebf7ee39dde221f7a531d69a0770",
+          "delta": "Commit-message wrapping only",
+          "parent": "1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
+          "finalGate": 46027875407,
+          "artifact": 15213126100,
+          "gateResult": "Substantive PASS: timestamp-free query/fetch, empty render fails closed, valid reproducible archives, formatting/source preservation",
+          "dateCacheRun": 46026356866,
+          "independentReproduction": 46026360397,
+          "cache": "A2 no spawns; independent archive bytes identical",
+          "historicalParityAndPackaging": [
+            46020586096,
+            46023045016
+          ],
+          "historicalParityScope": "Six common input archives match;290 paths/modes/links/anchors preserved; documented equal-weight navigation order changes",
+          "priorCallerFailure": {
+            "run": 46027485895,
+            "artifact": 15212394297,
+            "cause": "Build-only --config=buildbuddy incorrectly forwarded to bazel query; failure before source execution",
+            "status": "Historical; caller-only recovery passed"
+          },
+          "review": "Packaging and other review owners confirmed final source",
+          "publicationQuestion": "Actually submitted, unanswered, conditional on HTML1be landing",
+          "upstreamPublished": false,
+          "deploymentAuthorized": false
         },
-        "after": {
-          "base": "757a452f9265d02a963203d1ccf7704e7d1ebc57",
-          "head": "a5265547f8c17b32b19021c4d8f9100c1012c2aa"
-        }
+        "fallbackIntegration": {
+          "dependencyOn18012": false,
+          "mergeTreeConflict": "website/BUILD only",
+          "trigger": "When either lands",
+          "next": "Normal :files omits @google_root_pem and etc/ssl/cert.pem, retains :site+server; verify combined archive.",
+          "independentQualification": true
+        },
+        "historicalRendererRefinements": [
+          {
+            "before": {
+              "base": "757a452f9265d02a963203d1ccf7704e7d1ebc57",
+              "head": "bb040106f370ea27c513a984a51995a08da69f26"
+            },
+            "after": {
+              "base": "757a452f9265d02a963203d1ccf7704e7d1ebc57",
+              "head": "a5265547f8c17b32b19021c4d8f9100c1012c2aa"
+            }
+          }
+        ]
       },
       "evidence": [
         {
@@ -58663,6 +58709,14 @@
         {
           "label": "Actual Nokogiri/Ruby incompatibility; no renderer/checker execution",
           "url": "https://github.com/tamird/gvisor/actions/runs/45770079130/artifacts/15093523995"
+        },
+        {
+          "label": "Current immutable renderer increment",
+          "url": "https://github.com/tamird/gvisor/compare/1be6fd509...dcba62994"
+        },
+        {
+          "label": "Final corrected contract gate",
+          "url": "https://github.com/tamird/gvisor/actions/runs/46027875407"
         }
       ],
       "links": [
@@ -58707,7 +58761,19 @@
           "note": "Tamir approved including checker/parser migration in the existing workstream; no upstream source publication grant.",
           "recordedAt": "2026-11-27T12:43:45.159584+00:00"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "dcba6299493f61c86d04b413abdda955d425e44f",
+        "baseHead": "1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
+        "url": "https://github.com/tamird/gvisor/compare/1be6fd509...dcba62994",
+        "title": "Declare the website renderer toolchain",
+        "summary": "Actual opening question submitted and unanswered, conditional on HTML 1be6 landing. The precursor decision and #18012 fallback amendment remain separate.",
+        "body": "Replace the website renderer’s locally built Jekyll image with declared Ruby and Node tools from maintained Bazel integrations. Keep the current content producers and the existing serving-image archive and Make build, preview, push, and deploy callers.\n\nUse the HTMLProofer 3.19.3/Nokogiri 1.19.7 checker without Nokogumbo. The Ruby 3.4 runtime also needs the compatible Jekyll and Liquid patch releases and explicit bundled-library dependencies; the other plugin versions remain pinned. The Go server already serves SVG files, so remove the unused WEBrick hook.\n\nSidebar links retain category, subcategory, selection, expansion, and weight ordering. Equal-weight links can reorder: Contributing precedes Releases, CNI precedes the GKE and gVisor Docker tutorials, and Linux/amd64 precedes Linux/arm64. Content, links, anchors, CSS, and static assets remain the same.\n\nMake supplies the publication timestamp; direct Bazel rendering uses `--repo_env=WEBSITE_PUBLICATION_TIME=<ISO8601 timestamp>`. Fetches and queries need no timestamp. Normalize archive metadata and gzip headers for reproducible output.\n\nThe [fork cache qualification](https://github.com/tamird/gvisor/actions/runs/46026356866) shows a same-time rebuild executing no spawns and a changed timestamp rerunning only `:site` and `:files`.\n\nPosted by Codex on behalf of @tamird.\n",
+        "reviewCommand": "git diff 1be6fd5097fe1b433d5b5db0df2891fb291d6d26 dcba6299493f61c86d04b413abdda955d425e44f",
+        "sourceSha256": "9c8ecab3d168056bbd3c4625b041a7317b8939a70bc4c66e204c558a62599123"
+      }
     },
     {
       "id": "branch:tun-setiff-copyout",
@@ -114437,17 +114503,17 @@
       "url": "https://github.com/tamird/gvisor/commit/165933c11003e1d49f5a696e3286e85fc28172ea",
       "title": "Halve First Pass syscall job fan-out",
       "status": "Contributor review",
-      "summary": "Exact syscall fan-out source165933c11 passed both independent reviews and representative XML union:97+81=178 cases, zero skips. The actual opening question is pending. Ten jobs reserve600 instead of1200 compute-minutes per clean untrusted run;55-minute timeout/default selections are unchanged. Historical31.8-minute paired maximum is headroom evidence, not measured ten-job timing.",
-      "updatedAt": "2026-11-27T14:54:23.907715+00:00",
+      "summary": "The unanswered 600-minute syscall and conditional 35-minute smoke reservation decisions remain first. The 14:49 triage found 158 mergeable source PRs with failed First Pass; none had every other required status green. #16830 and #17962 had green main checks but pending maintainer reviews; #17232 had 2/2 maintainer approval but no main check. All three had confirmed quota denials. No duplicate outreach or retry probe.",
+      "updatedAt": "2026-11-27T16:01:57.617996+00:00",
       "followup": {
         "owner": "root",
         "technicalOwner": "approved_rebase_queue",
         "sourceHead": "165933c11003e1d49f5a696e3286e85fc28172ea",
         "observedAt": "2026-11-27T12:58:35.566526+00:00",
-        "nextAction": "Root awaits the actual exact165933 opening decision. Keep the one-line syscall fan-out change separate from the local smoke-timeout question; do not rerun completed XML or claim full ten-job timing.",
-        "recheckCondition": "Answer to the submitted source-bound opening question, or material source/quota-policy change.",
-        "disposition": "Exact syscall fan-out source165933c11 passed both independent reviews and representative XML union:97+81=178 cases, zero skips. The actual opening question is pending. Ten jobs reserve600 instead of1200 compute-minutes per clean untrusted run;55-minute timeout/default selections are unchanged. Historical31.8-minute paired maximum is headroom evidence, not measured ten-job timing.",
-        "curatedAt": "2026-11-27T13:14:44.464664+00:00",
+        "nextAction": "Root first awaits the two existing reservation-reduction decisions. Existing quota owner rechecks a real same-author untrusted admission or the next UTC date boundary; available minutes remain unknown. Do not probe with a retry, change generic exit2 retry rules or create a third approval request.",
+        "recheckCondition": "Answer to either existing source question, actual same-author untrusted admission, or relevant quota-policy evidence.",
+        "disposition": "The unanswered 600-minute syscall and conditional 35-minute smoke reservation decisions remain first. The 14:49 triage found 158 mergeable source PRs with failed First Pass; none had every other required status green. #16830 and #17962 had green main checks but pending maintainer reviews; #17232 had 2/2 maintainer approval but no main check. All three had confirmed quota denials. No duplicate outreach or retry probe.",
+        "curatedAt": "2026-11-27T16:01:57.617996+00:00",
         "qualification": {
           "source": "165933c11003e1d49f5a696e3286e85fc28172ea",
           "reviews": "Two independent reviews accepted",
@@ -114492,6 +114558,67 @@
           "quotaSavingClaim": false,
           "unitTimeoutMinutes": 55,
           "constraint": "Preserve all existing compilation obligations; this is not part of the pending syscall fan-out or smoke source decision."
+        },
+        "priorQualifiedSourceSummary": "Exact syscall fan-out source165933c11 passed both independent reviews and representative XML union:97+81=178 cases, zero skips. The actual opening question is pending. Ten jobs reserve600 instead of1200 compute-minutes per clean untrusted run;55-minute timeout/default selections are unchanged. Historical31.8-minute paired maximum is headroom evidence, not measured ten-job timing.",
+        "priorityDecisions": [
+          "branch:first-pass-syscall-fanout",
+          "investigation:first-pass-smoke-timeouts"
+        ],
+        "admissionTriage": {
+          "asOf": "2026-11-27T14:49:04.447865+00:00",
+          "mergeableTrackedSourcePRsWithFailedFirstPass": 158,
+          "allOtherRequiredStatusesGreen": 0,
+          "cases": [
+            {
+              "number": 16830,
+              "main": "Green",
+              "otherGate": "Pending maintainer review requests",
+              "quota": "Confirmed"
+            },
+            {
+              "number": 17962,
+              "main": "Green",
+              "otherGate": "Pending maintainer review requests",
+              "quota": "Confirmed"
+            },
+            {
+              "number": 17232,
+              "maintainer": "2/2",
+              "otherGate": "Missing required main",
+              "quota": "Confirmed"
+            }
+          ],
+          "scope": "Root completed14:49 required-status audit; historical triage, not a fresh15:49 recount."
+        },
+        "quotaCalendarMechanism": {
+          "source": "Root inspected ratelimit.go AccountForTime",
+          "windowsDays": [
+            1,
+            7,
+            30
+          ],
+          "buckets": "UTC calendar-day buckets",
+          "increasingTotal": "Only on admission",
+          "nextDateBoundaryUTC": "2026-11-28T00:00:00Z",
+          "leaving30DayBucket": "2026-10-29",
+          "availableMinutes": "Unknown; no guaranteed midnight admission/reset",
+          "observableRecheck": "A later actual same-author untrusted admission; no retry or extra collector solely to probe quota"
+        },
+        "retrySample": {
+          "source": "Root inspected existing smoke-source sample",
+          "buildsWithRepeatedSourceFailures": [
+            1950,
+            1960,
+            2050,
+            3022
+          ],
+          "nonproductiveLintNogoRetries": 8,
+          "signatures": "Identical include-cleaner failures at1950/1960/2050; identical Go type errors on all3 attempts at3022",
+          "counterexample": {
+            "build": 3020,
+            "result": "C++ lint passed on third attempt after2 exit100s"
+          },
+          "disposition": "Make exit2 is generic: no blanket retry disabling, new patch, saving claim, third question or new machinery."
         }
       },
       "evidence": [
@@ -118788,6 +118915,15 @@
       "reason": "Approved source delivered; lifecycle follows the actual PR.",
       "evidence": [
         "https://github.com/esnet/iperf/pull/2137"
+      ]
+    },
+    {
+      "from": "branch:website-html-nesting",
+      "to": "branch:declared-jekyll-site",
+      "type": "depends_on",
+      "reason": "Renderer dcba is built above standalone HTML1be6; its actual opening question is conditional on that prerequisite landing. Distinct decisions; no #18012 dependency.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/compare/1be6fd509...dcba62994"
       ]
     }
   ],
@@ -136951,9 +137087,18 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-12T08:08:14+00:00",
+      "updatedAt": "2026-11-27T16:01:57.617996+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
+        {
+          "text": "The separate e3e8 unused-line diagnostic and 16 redundant-comment removals have an actual pending opening decision. Broader contract/caller-enforcement work is not included.",
+          "evidence": [
+            {
+              "label": "Pending unused-line opening decision",
+              "url": "https://tamird.github.io/gvisor/?view=investigations&q=Reject%20unused%20line-level%20checklocks%20annotations"
+            }
+          ]
+        },
         {
           "text": "The #16868 audit neutralized 306 checklocks directives across 74 Go files in pkg, runsc and test. All 41 affected Nogo targets, including templates, ran on AMD64 and ARM64. Production diagnostic locations and messages matched after normalizing temporary SSA identifiers and printed locksets. Only the synthetic callback that held its guard lost a warning. Both analyzers still diagnosed its unlocked twin. The audited source had no production suppressions specific to this change.",
           "evidence": [
@@ -140118,10 +140263,23 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-27T01:14:12.353830+00:00",
+      "updatedAt": "2026-11-27T16:01:57.617996+00:00",
       "group": "analysis",
-      "summary": "Native0edf analyzer source remains unchanged. All eight original Abseil leaves now have matched data: seven old-image cohorts plus a separate prefetched dirty-FUSE AA+AB cohort (100 children,24 pairs/phase,−0.319%,p=.56,no corrected flags). Post-test BES timeout preserves data; no equivalence claim. The hosted gRPC study ended in provider status13 with no result/exit code and zero attributable new comparisons; prior independent A/A remains. FUSE architecture and source gates remain separate.",
+      "summary": "Current 36-commit series: 0c7e69e35...0edf29aac. Source, endpoint and prefix audits are accepted; the 891-target AMD64/ARM64 corpus remains within its verified reuse scope and was not rerun. Publication is held on #17884 and long gRPC comparison visibility/retention. The 36-minute synthetic preflight completed six children and verified 18 products, but live reads showed only setup. It adds no workload or A/A–A/B data. FUSE mmap and precision gates remain separate.",
       "findings": [
+        {
+          "text": "Current series: 36 commits from 0c7e69e35 to 0edf29aac. First/final endpoint checks, the 36-prefix/1,044-anchor audit and two reviews are accepted. The original 891-target corpus is reused only at its verified source scope. The earlier 54-commit series is historical; publication gates remain open.",
+          "evidence": [
+            {
+              "label": "Current 36-commit compare — review this series",
+              "url": "https://github.com/tamird/gvisor/compare/0c7e69e359dbfc284a7d109ad007395086a70cd4...0edf29aac22811b7ef84d6da461c54edb5af8d78"
+            },
+            {
+              "label": "Current native0edf source",
+              "url": "https://github.com/tamird/gvisor/commit/0edf29aac22811b7ef84d6da461c54edb5af8d78"
+            }
+          ]
+        },
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
           "evidence": [
@@ -140492,7 +140650,7 @@
           ]
         }
       ],
-      "nextStep": "Root assesses remaining gRPC execution evidence after terminal provider failure; original wait is closed and no retry/candidate result is inferred. Preserve prior independent A/A, completed Abseil scope, workload precision and separate FUSE/source gates.",
+      "nextStep": "Root resolves live child-result visibility/connection-lifetime and provider-retention evidence before another long study. Preserve the original within-worker full24-pair A/A gate before conditional A/B; no weaker block gate, unchanged retry or new study. Follow #17884 and the independent FUSE/precision gates separately.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -140543,7 +140701,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/45456849968"
         },
         {
-          "label": "Complete 54-commit analyzer series: dependency first, then 53 activations",
+          "label": "Historical pre-rewrite: Complete 54-commit analyzer series: dependency first, then 53 activations",
           "url": "https://github.com/tamird/gvisor/compare/0c7e69e359dbfc284a7d109ad007395086a70cd4...26090b334cf9c5f4657ec33aef64efc6fa86ef82"
         },
         {
@@ -140983,11 +141141,11 @@
           }
         ]
       },
-      "recheckCondition": "Owner-confirmed terminal remaining study, actual source/prerequisite event or decision.",
+      "recheckCondition": "Changed observability/retention mechanism with source-bound admission evidence, actual prerequisite event or an existing decision outcome.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Existing owners assess remaining real gRPC and measurement gates using retained evidence. Abseil dirty-FUSE is terminal; no rerun or image splicing. Preserve workload-specific precision, compatibility and publication conditions.",
-        "recheckCondition": "Owner-confirmed terminal remaining study, actual source/prerequisite event or decision."
+        "nextAction": "Root resolves live child-result visibility/connection-lifetime and provider-retention evidence before another long study. Preserve the original within-worker full24-pair A/A gate before conditional A/B; no weaker block gate, unchanged retry or new study. Follow #17884 and the independent FUSE/precision gates separately.",
+        "recheckCondition": "Changed observability/retention mechanism with source-bound admission evidence, actual prerequisite event or an existing decision outcome."
       },
       "head": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
       "settledReviews": [
@@ -141219,14 +141377,14 @@
           "https://github.com/tamird/gvisor/actions/runs/45853685673"
         ],
         "owner": "root",
-        "disposition": "Native0edf analyzer source remains unchanged. All eight original Abseil leaves now have matched data: seven old-image cohorts plus a separate prefetched dirty-FUSE AA+AB cohort (100 children,24 pairs/phase,−0.319%,p=.56,no corrected flags). Post-test BES timeout preserves data; no equivalence claim. The hosted gRPC study ended in provider status13 with no result/exit code and zero attributable new comparisons; prior independent A/A remains. FUSE architecture and source gates remain separate.",
-        "nextAction": "Root assesses remaining gRPC execution evidence after terminal provider failure; original wait is closed and no retry/candidate result is inferred. Preserve prior independent A/A, completed Abseil scope, workload precision and separate FUSE/source gates.",
-        "recheckCondition": "Owner-confirmed terminal remaining study, actual source/prerequisite event or decision.",
+        "disposition": "Current 36-commit series: 0c7e69e35...0edf29aac. Source, endpoint and prefix audits are accepted; the 891-target AMD64/ARM64 corpus remains within its verified reuse scope and was not rerun. Publication is held on #17884 and long gRPC comparison visibility/retention. The 36-minute synthetic preflight completed six children and verified 18 products, but live reads showed only setup. It adds no workload or A/A–A/B data. FUSE mmap and precision gates remain separate.",
+        "nextAction": "Root resolves live child-result visibility/connection-lifetime and provider-retention evidence before another long study. Preserve the original within-worker full24-pair A/A gate before conditional A/B; no weaker block gate, unchanged retry or new study. Follow #17884 and the independent FUSE/precision gates separately.",
+        "recheckCondition": "Changed observability/retention mechanism with source-bound admission evidence, actual prerequisite event or an existing decision outcome.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-27T01:14:12.353830+00:00",
+        "curatedAt": "2026-11-27T16:01:57.617996+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -141864,7 +142022,33 @@
             "oldImageCohorts": 7,
             "prefetchedDirtyFuseCohorts": 1,
             "crossImageCombination": false
+          },
+          "grpc36MinutePreflight": {
+            "source": "0452ed02dd33cf662143a3a4abfa28a2a9f4b9b6",
+            "outer": "439eaa57-d038-4f7a-b847-75e9584ec323",
+            "nested": "774201f2-b85c-4173-993c-ea4e018a1311",
+            "terminal": "SUCCESS; visibility contract NOT established",
+            "syntheticChildren": 6,
+            "delaySecondsEach": 360,
+            "rows": 6,
+            "products": 18,
+            "commandExit": 0,
+            "cleanupExit": 0,
+            "executorLifetime": "About37minutes only; not12h",
+            "liveReads": "Two independent reads showed setup prefix despite active/completed children; no independent post30min read before completion",
+            "nestedCreatedAtChange": "12:29 live→13:00 final; reconnect/recording cause unproven",
+            "workloadTiming": false,
+            "matchedAAorAB": false,
+            "disposition": "Long timing held; no retry, weaker gate or equivalence claim"
           }
+        },
+        "currentSeries": {
+          "head": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
+          "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
+          "commits": 36,
+          "compare": "https://github.com/tamird/gvisor/compare/0c7e69e359dbfc284a7d109ad007395086a70cd4...0edf29aac22811b7ef84d6da461c54edb5af8d78",
+          "corpus": "Retained891-target per-architecture source-bound reuse; no fresh rerun",
+          "publicationReady": false
         }
       },
       "comparisons": [
@@ -155668,7 +155852,74 @@
         "localSourceHead": "0f6dd3a38ff3a2a8f29b79e1b950057953a690bc",
         "reviewCommand": "git show 0f6dd3a38 -- .buildkite/first-pass.yaml"
       }
+    },
+    {
+      "id": "investigation:checklocks-unused-lines",
+      "repo": "google/gvisor",
+      "group": "analysis",
+      "title": "Reject unused line-level checklocks annotations",
+      "head": "e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
+      "status": "active",
+      "owner": "root",
+      "updatedAt": "2026-11-27T16:01:57.617996+00:00",
+      "summary": "Opening approval for exact e3e8c97d2 is pending. The unused-line diagnostic removes 16 proven redundant annotations. Generated redundancy stays advisory, and the exact internal PostFork-callee exception preserves the AMD64 obligation. All 894 validators passed (891 fresh, 3 cached), plus 22 driver cases per host. Both finding authors cleared the fixes. Broader caller enforcement is separate.",
+      "nextStep": "Root awaits the actual exact e3e8 source-opening decision. Add the standing-authorized DCO trailer only in final delivery context; no duplicate build/question or transfer of the broader caller-enforcement experiment.",
+      "findings": [
+        {
+          "text": "The canonical corpus has 894 clean validator XML cases total across its target-architecture transitions: 891 fresh and 3 cached test results. This is not 894 fresh cases per architecture. Each native host driver has 22 clean cases plus one owning validator.",
+          "evidence": [
+            {
+              "label": "Canonical full validator corpus",
+              "url": "https://github.com/tamird/gvisor/actions/runs/46021216375"
+            },
+            {
+              "label": "AMD64 driver and validator",
+              "url": "https://github.com/tamird/gvisor/actions/runs/46020611566"
+            },
+            {
+              "label": "ARM64 driver and validator",
+              "url": "https://github.com/tamird/gvisor/actions/runs/46021212791"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Exact pending source",
+          "url": "https://github.com/tamird/gvisor/commit/e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
+        "disposition": "Opening approval for exact e3e8c97d2 is pending. The unused-line diagnostic removes 16 proven redundant annotations. Generated redundancy stays advisory, and the exact internal PostFork-callee exception preserves the AMD64 obligation. All 894 validators passed (891 fresh, 3 cached), plus 22 driver cases per host. Both finding authors cleared the fixes. Broader caller enforcement is separate.",
+        "nextAction": "Root awaits the actually submitted source-opening decision; no duplicate job or question. Keep caller enforcement and generated real-lock obligations intact.",
+        "recheckCondition": "Answer to the exact opening question or substantive source/review change.",
+        "curatedAt": "2026-11-27T16:01:57.617996+00:00",
+        "qualification": {
+          "validators": 894,
+          "freshTests": 891,
+          "cachedTests": 3,
+          "XMLCases": 894,
+          "driverCasesPerHost": 22,
+          "reviews": "Both independent finding authors cleared fixes",
+          "sourceStatements": "Unchanged;16 direct redundant annotation removals",
+          "generatedRedundancy": "Advisory only; actual lock checks remain",
+          "PostFork": "Exact internal callee redundancy message only; real AMD64 errors preserved"
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
+        "baseHead": "c3efd8c9381c89b78c1d86b6c64a49d53ee938f8",
+        "url": "https://github.com/tamird/gvisor/commit/e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
+        "title": "Reject unused line-level checklocks annotations",
+        "summary": "Actual submitted source-opening question; unanswered. Body is factual decision scope, not an approved PR description.",
+        "body": "Opening-decision scope summary (not a proposed PR description)\n\nThe actual unanswered question is approval to open “Reject unused line-level checklocks annotations” for e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910.\n\nReport line forces/ignores that affect no checked obligation and remove 16 proven redundant annotations without changing executable statements. Generated redundancy findings remain advisory; actual generated lock checks and caller enforcement stay enabled. The exact internal PostFork-callee exception cannot match its real AMD64 missing-lock/release diagnostics. The broader caller-enforcement experiment is separate.\n\nOne canonical894-validator corpus passed (891 fresh,3 cached), covering both target GOARCHs via arch_transition. Each host driver had22 clean cases plus its owning validator. Both independent finding authors cleared the fixes. No duplicate build or new question is needed.\n\nReview command: git show e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
+        "reviewCommand": "git show e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910"
+      }
     }
   ],
-  "updatedAt": "2026-11-27T14:54:24.090682+00:00"
+  "updatedAt": "2026-11-27T16:01:57.617996+00:00"
 }

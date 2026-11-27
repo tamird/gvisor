@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-27T15:52:57.526913+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-27T14:54:24.090682+00:00",
+  "registryDate": "2026-11-27T16:01:57.617996+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -483180,7 +483180,7 @@
         "since": "2026-11-27T14:54:24.090682+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T14:54:24.090682+00:00"
+        "observedAt": "2026-11-27T16:01:57.617996+00:00"
       }
     },
     "pr:17445": {
@@ -483901,7 +483901,7 @@
         "since": "2026-11-27T13:46:22.675005+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T14:54:24.090682+00:00"
+        "observedAt": "2026-11-27T16:01:57.617996+00:00"
       }
     },
     "pr:18013": {
@@ -484579,7 +484579,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T14:54:24.090682+00:00"
+        "observedAt": "2026-11-27T16:01:57.617996+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -484588,7 +484588,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T14:54:24.090682+00:00"
+        "observedAt": "2026-11-27T16:01:57.617996+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -484597,7 +484597,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T14:54:24.090682+00:00"
+        "observedAt": "2026-11-27T16:01:57.617996+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -484606,7 +484606,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T14:54:24.090682+00:00"
+        "observedAt": "2026-11-27T16:01:57.617996+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -484615,7 +484615,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T14:54:24.090682+00:00"
+        "observedAt": "2026-11-27T16:01:57.617996+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -484624,7 +484624,16 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T14:54:24.090682+00:00"
+        "observedAt": "2026-11-27T16:01:57.617996+00:00"
+      }
+    },
+    "branch:declared-jekyll-site": {
+      "contributor-review": {
+        "scope": "dcba6299493f61c86d04b413abdda955d425e44f",
+        "since": "2026-11-27T16:01:57.617996+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-27T16:01:57.617996+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -484633,7 +484642,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T14:54:24.090682+00:00"
+        "observedAt": "2026-11-27T16:01:57.617996+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -484642,7 +484651,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T14:54:24.090682+00:00"
+        "observedAt": "2026-11-27T16:01:57.617996+00:00"
       }
     },
     "issue:17832": {
@@ -484651,7 +484660,7 @@
         "since": "2026-11-26T05:43:54.635646+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T14:54:24.090682+00:00"
+        "observedAt": "2026-11-27T16:01:57.617996+00:00"
       }
     },
     "branch:first-pass-syscall-fanout": {
@@ -484660,7 +484669,7 @@
         "since": "2026-11-27T13:14:44.464664+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T14:54:24.090682+00:00"
+        "observedAt": "2026-11-27T16:01:57.617996+00:00"
       }
     },
     "branch:website-html-nesting": {
@@ -484669,7 +484678,7 @@
         "since": "2026-11-27T14:54:24.090682+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T14:54:24.090682+00:00"
+        "observedAt": "2026-11-27T16:01:57.617996+00:00"
       }
     },
     "investigation:first-pass-smoke-timeouts": {
@@ -484678,7 +484687,16 @@
         "since": "2026-11-27T13:14:44.464664+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T14:54:24.090682+00:00"
+        "observedAt": "2026-11-27T16:01:57.617996+00:00"
+      }
+    },
+    "investigation:checklocks-unused-lines": {
+      "contributor-review": {
+        "scope": "e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
+        "since": "2026-11-27T16:01:57.617996+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-27T16:01:57.617996+00:00"
       }
     }
   },
