@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-27T12:45:14.118671+00:00",
+    "updatedAt": "2026-11-27T12:58:35.566526+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -114286,6 +114286,41 @@
         "recheckCondition": "Actual CI/review/source or landing event.",
         "curatedAt": "2026-11-27T12:43:45.159584+00:00"
       }
+    },
+    {
+      "id": "branch:first-pass-syscall-fanout",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "group": "rbe",
+      "ref": "proposal/first-pass-syscall-fanout-20261127",
+      "head": "165933c11003e1d49f5a696e3286e85fc28172ea",
+      "url": "https://github.com/tamird/gvisor/commit/165933c11003e1d49f5a696e3286e85fc28172ea",
+      "title": "Halve First Pass syscall job fan-out",
+      "status": "Qualifying on the fork",
+      "summary": "Using ten syscall jobs instead of twenty saves 600 reserved compute-minutes per clean untrusted First Pass build. The 55-minute timeout and test configurations are unchanged. In 24 builds with a complete successful set of original partitions, the largest sum of paired job times was 31.8 minutes.",
+      "updatedAt": "2026-11-27T12:58:35.566526+00:00",
+      "followup": {
+        "owner": "root",
+        "technicalOwner": "approved_rebase_queue",
+        "sourceHead": "165933c11003e1d49f5a696e3286e85fc28172ea",
+        "observedAt": "2026-11-27T12:58:35.566526+00:00",
+        "nextAction": "Compare named test cases from the two original partitions with the combined partition, including native and Sentry runs. Check failures, skips and remaining headroom before publication review.",
+        "recheckCondition": "Terminal XML for all three fork runs, or a source or quota-policy change."
+      },
+      "evidence": [
+        {
+          "label": "Original partition 1 of 20",
+          "url": "https://github.com/tamird/gvisor/actions/runs/46002929520"
+        },
+        {
+          "label": "Original partition 11 of 20",
+          "url": "https://github.com/tamird/gvisor/actions/runs/46002937488"
+        },
+        {
+          "label": "Combined partition 1 of 10",
+          "url": "https://github.com/tamird/gvisor/actions/runs/46002930684"
+        }
+      ]
     }
   ],
   "edges": [
@@ -155155,5 +155190,5 @@
       "inactive": true
     }
   ],
-  "updatedAt": "2026-11-27T12:45:14.118671+00:00"
+  "updatedAt": "2026-11-27T12:58:35.566526+00:00"
 }
