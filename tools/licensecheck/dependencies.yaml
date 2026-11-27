@@ -1351,6 +1351,12 @@
   commit: f85e7d6309f28f031bf049f7d6283ce0d41d7546
   sha256: 26d4021f6898e23b82ef953078389dd49ac2b5618ac564ade4ef87cced147b38
   license: Apache-2.0
+- dependency: rules_nodejs
+  version: https://github.com/bazel-contrib/rules_nodejs/releases/download/v6.7.5/rules_nodejs-v6.7.5.tar.gz
+  retrieved: "2026-11-27"
+  commit: 97386de7b34483058e1ac330a5c6d07159d1902c
+  sha256: 5e803a42bd0af134529f0724edb4d26e295e3c17a0af0655e5265250c82ce9b5
+  license: Apache-2.0
 - dependency: rules_pkg
   version: https://github.com/bazelbuild/rules_pkg/releases/download/1.0.1/rules_pkg-1.0.1.tar.gz
   retrieved: "2026-08-27"
@@ -1368,6 +1374,12 @@
   retrieved: "2026-10-17"
   commit: de0cdb392c5a4095528122a0725d48eec9c6befd
   sha256: cc9ee54a94849eb2467d7ba71773a28ee53f14a0a1d615f283a770d532df889b
+  license: Apache-2.0
+- dependency: rules_ruby
+  version: https://github.com/bazel-contrib/rules_ruby/releases/download/v1.0.0-rc2/rules_ruby-v1.0.0-rc2.tar.gz
+  retrieved: "2026-11-27"
+  commit: 9b24a5c2c11b073d1a41b7c209e5572cbf79af49
+  sha256: edd804ae103bf3836c7ba0bfc7388963743bd41d437d8a2a6d692f5678051101
   license: Apache-2.0
 - dependency: rules_shell
   version: https://github.com/bazel-contrib/rules_shell/releases/download/v0.8.0/rules_shell-v0.8.0.tar.gz

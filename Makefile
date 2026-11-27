@@ -878,21 +878,23 @@ fscheckpoint-compat-tests: ## Run fscheckpoint backward compatibility tests agai
 ##
 ## Website & documentation helpers.
 ##
-##   The website is built from repository documentation and wrappers, using
-##   using a locally-defined Docker image (see images/jekyll). The following
+##   The website is built from repository documentation and wrappers,
+##   using declared Ruby and Node tools. The following
 ##   variables may be set when using website-push:
 ##     WEBSITE_IMAGE   - The name of the container image.
 ##     WEBSITE_SERVICE - The backend service.
 ##     WEBSITE_PROJECT - The project id to use.
 ##     WEBSITE_REGION  - The region to deploy to.
+##     WEBSITE_PUBLICATION_TIME - ISO8601 timestamp (default: current UTC).
 ##
 WEBSITE_IMAGE   := gcr.io/gvisordev/gvisordev
 WEBSITE_SERVICE := gvisordev
 WEBSITE_PROJECT := gvisordev
 WEBSITE_REGION  := us-central1
 
-website-build: load-jekyll ## Build the site image locally.
-	@$(call run,//website:website,$(WEBSITE_IMAGE))
+website-build: WEBSITE_PUBLICATION_TIME := $(or $(WEBSITE_PUBLICATION_TIME),$(shell date -u +%Y-%m-%dT%H:%M:%SZ))
+website-build: ## Build the site image locally.
+	@$(call run,--repo_env=WEBSITE_PUBLICATION_TIME=$(WEBSITE_PUBLICATION_TIME) //website:website,$(WEBSITE_IMAGE))
 .PHONY: website-build
 
 website-server: website-build ## Run a local server for development.

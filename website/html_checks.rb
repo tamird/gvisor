@@ -1,4 +1,3 @@
-#!/usr/local/bin/ruby
 #
 # HTMLProofer checks for the gVisor website.
 #
