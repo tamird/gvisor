@@ -30,7 +30,7 @@ GEM
     http_parser.rb (0.6.0)
     i18n (1.8.2)
       concurrent-ruby (~> 1.0)
-    jekyll (4.0.0)
+    jekyll (4.0.1)
       addressable (~> 2.4)
       colorator (~> 1.0)
       em-websocket (~> 0.5)
@@ -141,7 +141,7 @@ DEPENDENCIES
   html-proofer (= 3.19.3)
   http_parser.rb (= 0.6.0)
   i18n (= 1.8.2)
-  jekyll (= 4.0.0)
+  jekyll (= 4.0.1)
   jekyll-autoprefixer (= 1.0.2)
   jekyll-feed (= 0.13.0)
   jekyll-inline-svg (= 1.1.4)
@@ -191,7 +191,7 @@ CHECKSUMS
   html-proofer (3.19.3) sha256=ee4b2b6da6998e824c4e3b4c4dc1c7a747ff44e61de1a65a305cf261d40b5dd3
   http_parser.rb (0.6.0) sha256=f11d0aec50ef26a7d1f991e627ac88acdb5979282aeba7a5c3be6ce0636ed196
   i18n (1.8.2) sha256=95cf147081cc6f1dbfb32a8f29a03afe8b0f4da6a300d37d34e0f74a6868994b
-  jekyll (4.0.0) sha256=4a1dc48895d525bfb98cd562bf03ab6dd2727b5795360877c90e12670b9fec3a
+  jekyll (4.0.1) sha256=02c51f9d8a0e090c6d5284355b190ac8d36567540502dea9e8b6c598e02a80bf
   jekyll-autoprefixer (1.0.2) sha256=7aee7ef80ea1cce9f33fbff979189e19867c3677b26c96b24a2a874410d3fe27
   jekyll-feed (0.13.0) sha256=3906c7d7365f6a15c42d86caa5d75fb72ece7c36a068b346e581a206e7b6a8d3
   jekyll-inline-svg (1.1.4) sha256=909004a6ec69ec944dd496e18c940d8986faa151bc2564b50bc324cc7d73fd81
