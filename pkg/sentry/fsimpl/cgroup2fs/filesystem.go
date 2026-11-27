@@ -376,7 +376,7 @@ func (fs *filesystem) newCgroupLocked(ctx context.Context, creds *auth.Credentia
 
 	c.IncLinks(c.OrderedChildren.Populate(fs.cgroupInodes(ctx, creds.FilesystemKUID, creds.FilesystemKGID, c)))
 
-	c.init(ctx) // +checklocksforce: c.fs.treeMu is locked
+	c.init(ctx)
 	c.maxDescendants.Store(limitMax)
 	c.maxDepth.Store(limitMax)
 	parent.children[c] = struct{}{} // +checklocksforce: c.fs.treeMu is locked

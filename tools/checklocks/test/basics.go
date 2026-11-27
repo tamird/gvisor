@@ -171,3 +171,7 @@ func testFieldCommentValid(tc *fieldCommentStruct) {
 func testFieldCommentInvalid(tc *fieldCommentStruct) {
 	tc.guardedField = 2 // +checklocksfail
 }
+
+func testUnlockedAccessIgnored(tc *oneGuardStruct) {
+	tc.guardedField = 2 // +checklocksignore
+}

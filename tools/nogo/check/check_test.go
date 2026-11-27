@@ -225,3 +225,112 @@ func use() {
 		}
 	}
 }
+
+func TestUnusedChecklocksAnnotations(t *testing.T) {
+	// Supply the atomic signature without an undeclared toolchain import.
+	atomicSource := filepath.Join(t.TempDir(), "atomic.go")
+	if err := os.WriteFile(atomicSource, []byte("package atomic\nfunc LoadInt32(p *int32) int32\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	const declarations = `
+type testMutex struct{}
+// +checklocksignore
+func (*testMutex) Lock() {}
+// +checklocksignore
+func (*testMutex) Unlock() {}
+type counter int32
+type item struct {
+	mu testMutex
+	// +checklocks:mu
+	value int32
+	// +checklocks:mu
+	converted counter
+}
+`
+	const indirectAtomic = `import "sync/atomic"
+func f(s *item) {
+ s.mu.Lock()
+ p := &s.value
+ _ = atomic.LoadInt32(p) // +checklocksforce
+ q := (*int32)(&s.converted)
+ _ = atomic.LoadInt32(q) // +checklocksforce
+ s.mu.Unlock()
+}
+`
+	for _, tc := range []struct {
+		name, source, want string
+		atomicDisabled     bool
+	}{
+		{"unused_force", `func f(s *item) {
+ s.mu.Lock() // +checklocksforce
+ s.mu.Unlock()
+}`, "unnecessary +checklocksforce annotation when calling (*sample.testMutex).Lock", false},
+		{"unused_ignore", `func f(s *item) {
+ s.mu.Lock()
+ s.value = 1 // +checklocksignore
+ s.mu.Unlock()
+}`, "unnecessary +checklocksignore annotation", false},
+		{"local_declaration", `func f(s *item) {
+ var p = s // +checklocksignore
+ _ = p
+}`, "unnecessary +checklocksignore annotation", false},
+		{"unchecked_callee_force", `func f(s *item) {
+ s.mu.Unlock() // +checklocksforce
+}`, "", false},
+		{"closure", `func f(s *item) {
+ func() {
+  s.value = 1 // +checklocksforce
+  s.mu.Unlock()
+ }()
+}`, "", false},
+		{"unrelated_incomplete_checks", `func f(s *item) {
+ s.mu.Lock() // +checklocksforce
+ s.mu.Unlock()
+}`, "unnecessary +checklocksforce annotation when calling (*sample.testMutex).Lock", true},
+		{"incomplete_checks", indirectAtomic, "", true},
+		{"necessary_indirect_atomic", indirectAtomic, "", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			analyzers := make(map[*analysis.Analyzer]analyzer)
+			for a, runner := range allAnalyzers {
+				if a.Name == "checklocks" {
+					register(analyzers, runner)
+					if tc.atomicDisabled {
+						value := a.Flags.Lookup("atomic").Value
+						old := value.String()
+						if err := value.Set("false"); err != nil {
+							t.Fatal(err)
+						}
+						t.Cleanup(func() {
+							if err := value.Set(old); err != nil {
+								t.Error(err)
+							}
+						})
+					}
+				}
+			}
+			source := filepath.Join(t.TempDir(), "sample.go")
+			if err := os.WriteFile(source, []byte("package sample\n"+tc.source+declarations), 0600); err != nil {
+				t.Fatal(err)
+			}
+			i := &importer{
+				fset:      token.NewFileSet(),
+				sources:   map[string][]string{"sync/atomic": {atomicSource}},
+				cache:     make(map[string]*importerEntry),
+				imports:   make(map[string]*types.Package),
+				analyzers: analyzers,
+			}
+			_, findings, _, err := i.checkPackage("sample", []string{source})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if tc.want == "" {
+				if len(findings) != 0 {
+					t.Fatalf("unexpected findings: %v", findings)
+				}
+			} else if len(findings) != 1 || findings[0].Category != "checklocks" || !strings.Contains(findings[0].Message, tc.want) {
+				t.Fatalf("findings = %v, want one checklocks finding %q", findings, tc.want)
+			}
+		})
+	}
+}

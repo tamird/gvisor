@@ -74,8 +74,8 @@ type objectObservations struct {
 type passContext struct {
 	pass             *analysis.Pass
 	failures         map[positionKey]*failData
-	exemptions       map[positionKey]struct{}
-	forced           map[positionKey]struct{}
+	exemptions       map[positionKey]*suppression
+	forced           map[positionKey]*suppression
 	functions        map[*ssa.Function]struct{}
 	escapedFunctions map[*ssa.Function]struct{}
 	observations     map[types.Object]*objectObservations
@@ -145,8 +145,8 @@ func run(pass *analysis.Pass) (any, error) {
 	pc := &passContext{
 		pass:             pass,
 		failures:         make(map[positionKey]*failData),
-		exemptions:       make(map[positionKey]struct{}),
-		forced:           make(map[positionKey]struct{}),
+		exemptions:       make(map[positionKey]*suppression),
+		forced:           make(map[positionKey]*suppression),
 		functions:        make(map[*ssa.Function]struct{}),
 		escapedFunctions: make(map[*ssa.Function]struct{}),
 	}
@@ -216,6 +216,8 @@ func run(pass *analysis.Pass) (any, error) {
 	if enableInferred {
 		pc.checkInferred()
 	}
+
+	pc.checkSuppressions()
 
 	// Check for expected failures.
 	pc.checkFailures()

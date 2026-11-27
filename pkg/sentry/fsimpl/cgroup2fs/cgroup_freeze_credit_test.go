@@ -113,12 +113,8 @@ func TestFreezeCreditAccountingAccountsForGrandchildren(t *testing.T) {
 	fs.tasksMu.Lock()
 	defer fs.tasksMu.Unlock()
 
-	// w.fs, a.fs, and b.fs are all fs (locked above): checklocks can't see
-	// through the struct-literal construction to prove that alias, the
-	// same way it can't for a curr/node loop variable walking c.parent
-	// elsewhere in this package (e.g. propagateHasCreditsLocked's own
-	// +checklocksforce uses for exactly this reason).
-	runFreezeThawCycle(t, ctx, "cycle 1", w, a, b) // +checklocksforce: w.fs == a.fs == b.fs == fs, locked above
+	// w.fs, a.fs, and b.fs are all fs (locked above).
+	runFreezeThawCycle(t, ctx, "cycle 1", w, a, b)
 
 	// Thaw (retract both credits back out isn't needed: the tree is
 	// already fully settled/credit-free after cycle 1) and run the exact
@@ -127,5 +123,5 @@ func TestFreezeCreditAccountingAccountsForGrandchildren(t *testing.T) {
 	// would no longer behave identically -- it would either fail the
 	// negative-counter check immediately or reach the wrong frozenLocked()
 	// state at some step.
-	runFreezeThawCycle(t, ctx, "cycle 2", w, a, b) // +checklocksforce: w.fs == a.fs == b.fs == fs, locked above
+	runFreezeThawCycle(t, ctx, "cycle 2", w, a, b)
 }

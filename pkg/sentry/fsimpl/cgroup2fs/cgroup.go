@@ -503,11 +503,11 @@ func applyFreezeCreditDeltaLocked(ctx context.Context, delta kernel.FreezeCredit
 	case kernel.FreezeCreditNone:
 	case kernel.FreezeCreditIssue:
 		if c.nrFreezeCredits.Add(1) == 1 { // +checklocksforce: caller holds fs.tasksMu
-			c.propagateHasCreditsLocked(ctx, true, notify) // +checklocksforce: caller holds fs.tasksMu
+			c.propagateHasCreditsLocked(ctx, true, notify)
 		}
 	case kernel.FreezeCreditRetract:
 		if c.nrFreezeCredits.Add(-1) == 0 { // +checklocksforce: caller holds fs.tasksMu
-			c.propagateHasCreditsLocked(ctx, false, notify) // +checklocksforce: caller holds fs.tasksMu
+			c.propagateHasCreditsLocked(ctx, false, notify)
 		}
 	default:
 		panic(fmt.Sprintf("cgroup2fs: unknown FreezeCreditDelta %d", delta))
@@ -562,7 +562,7 @@ func (c *cgroup) rebuildCtrlsLocked(ctx context.Context, cTypes []kernel.Cgroup2
 			if newPids, ok := ctrl.(*pids); ok {
 				c.chargePidsForExistingTasksLocked(newPids)
 			}
-		} else if !c.parent.subtreeCtrls[cType] && c.ctrls[cType] != nil { // +checklocksforce: c.fs.treeMu is locked
+		} else if !c.parent.subtreeCtrls[cType] && c.ctrls[cType] != nil {
 			ctrl := c.ctrls[cType]
 			c.ctrls[cType] = nil
 			c.removeInterfaceFiles(ctx, ctrl)
@@ -817,9 +817,9 @@ func (c *cgroup) attach(ctx context.Context, actx *attachCtx) {
 			panic("cgroup tree inconsistency: task has no cgroup2 node")
 		}
 
-		delete(oldNode.tasks, t)             // +checklocksforce: c.fs.tasksMu is locked
-		if oldNode.tasksCount.Add(-1) == 0 { // +checklocksforce: c.fs.tasksMu is locked
-			oldNode.updatePopulated(ctx, false) // +checklocksforce: c.fs.tasksMu is locked
+		delete(oldNode.tasks, t) // +checklocksforce: c.fs.tasksMu is locked
+		if oldNode.tasksCount.Add(-1) == 0 {
+			oldNode.updatePopulated(ctx, false)
 		}
 
 		c.tasks[t] = struct{}{}
@@ -1339,8 +1339,8 @@ func (c *cgroup) freeze(ctx context.Context, freezeRequested bool) error {
 	}
 	c.walkSubtreeLocked(func(child *cgroup) bool {
 		childEff := child.freezeOrderedLocked() // +checklocksforce: c.fs.tasksMu is locked
-		for t := range child.tasks {            // +checklocksforce: c.fs.tasksMu is locked
-			delta, creditCg := t.ApplyFreezeTasksLocked(child, childEff) // +checklocksforce: c.fs.tasksMu is locked
+		for t := range child.tasks {
+			delta, creditCg := t.ApplyFreezeTasksLocked(child, childEff)
 			applyFreezeCreditDeltaLocked(ctx, delta, creditCg, false)
 		}
 		return true

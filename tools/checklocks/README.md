@@ -322,12 +322,13 @@ when their arguments are evaluated.
 From time to time, it may be necessary to ignore results produced by the
 analyzer. These can be disabled on a per-field, per-function or per-line basis.
 
-For fields, only lock suggestions may be ignored. See below for details.
+For fields, the annotation disables lock suggestions and checks for unexpected
+atomic operations. Explicit lock guards still apply.
 
-For functions, the `+checklocksignore` annotation can be applied. This prevents
-any local analysis from taking place. Note that the other annotations can still
-be applied to the function, which will enforce assertions in caller analysis.
-For example:
+For functions, the `+checklocksignore` annotation can be applied. This disables
+local checking, including nested closures. Other annotations still contribute
+lock state at calls, but checks of caller obligations are incomplete for ignored
+functions. For example:
 
 ```go
 // +checklocks:ts.mu
@@ -347,6 +348,15 @@ func foo(ts *testStruct) {
   ts.guardedField = 1 // +checklocksforce: don't care about locking.
 }
 ```
+
+Unused line-level ignore and force annotations are errors. Declaration-level
+ignores and annotations inside an ignored function body are not checked for
+redundancy. A line annotation is also not reported as unused when a relevant
+check was skipped, such as an ignored caller obligation or disabled atomic
+analysis of a field access.
+Nogo leaves these redundancy findings advisory for generated files: a shared
+template annotation may be necessary in another instantiation. Lock analysis
+and its diagnostics remain enabled for generated code.
 
 In general, both annotations should be highly discouraged. It should be possible
 to avoid their use by factoring functions in such a way that annotations can be

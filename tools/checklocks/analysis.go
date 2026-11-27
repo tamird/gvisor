@@ -127,21 +127,18 @@ func (pc *passContext) checkAtomicCall(inst ssa.Instruction, value ssa.Value, ar
 	allowNonAtomicRead := ar == mixedAtomic || ar == readOnlyMixedAtomic
 	switch x := inst.(type) {
 	case *ssa.Call, *ssa.Defer, *ssa.Go:
-		if _, immediate := x.(*ssa.Call); !immediate {
+		_, immediate := x.(*ssa.Call)
+		if !immediate {
 			// Values combining atomic and mutex requirements need their locks
 			// checked at execution, not argument evaluation. Conservatively
 			// reject deferred and goroutine calls for those values.
 			if ar != readWriteAtomic && ar != nonAtomic {
 				break
 			}
-			// Honor force annotations as for other unsupported uses below.
-			if _, ok := pc.forced[pc.positionKey(inst.Pos())]; ok {
-				return
-			}
 		}
 		call := x.(ssa.CallInstruction).Common()
 		if call.IsInvoke() {
-			if ar != nonAtomic {
+			if ar != nonAtomic && (immediate || !pc.force(inst.Pos())) {
 				// This is an illegal interface dispatch.
 				pc.maybeFail(inst.Pos(), "dynamic dispatch with atomic-only field")
 			}
@@ -149,7 +146,7 @@ func (pc *passContext) checkAtomicCall(inst ssa.Instruction, value ssa.Value, ar
 		}
 		fn, ok := call.Value.(*ssa.Function)
 		if !ok {
-			if ar != nonAtomic {
+			if ar != nonAtomic && (immediate || !pc.force(inst.Pos())) {
 				// This is an illegal call to a non-static function.
 				pc.maybeFail(inst.Pos(), "dispatch to non-static function with atomic-only field")
 			}
@@ -161,18 +158,21 @@ func (pc *passContext) checkAtomicCall(inst ssa.Instruction, value ssa.Value, ar
 		}
 		pkg := functionPackage(fn)
 		if pkg == nil {
-			if ar != nonAtomic {
+			if ar != nonAtomic && (immediate || !pc.force(inst.Pos())) {
 				// This is a call to some shared wrapper function.
 				pc.maybeFail(inst.Pos(), "dispatch to shared function or wrapper")
 			}
 			return
 		}
 		var lff lockFunctionFacts // Check for exemption.
-		if obj := fn.Object(); obj != nil && pc.pass.ImportObjectFact(obj, &lff) && lff.Ignore {
+		obj := fn.Object()
+		ignored := obj != nil && pc.pass.ImportObjectFact(obj, &lff) && lff.Ignore
+		if ignored && ar != nonAtomic {
+			pc.skipSuppressionCheck(inst.Pos())
 			return
 		}
 		if path := pkg.Path(); path != "sync/atomic" && path != "gvisor.dev/gvisor/pkg/atomicbitops" {
-			if ar != nonAtomic {
+			if ar != nonAtomic && (immediate || !pc.force(inst.Pos())) {
 				// This is an illegal call to a non-atomic package function.
 				pc.maybeFail(inst.Pos(), "dispatch to non-atomic function with atomic-only field")
 			}
@@ -191,7 +191,15 @@ func (pc *passContext) checkAtomicCall(inst ssa.Instruction, value ssa.Value, ar
 				return
 			}
 			// We are *not* expecting an atomic dispatch.
-			if _, ok := pc.forced[pc.positionKey(inst.Pos())]; !ok {
+			if ignored {
+				pc.skipSuppressionCheck(inst.Pos())
+				return
+			}
+			if !enableAtomic {
+				pc.skipSuppressionCheck(inst.Pos())
+				return
+			}
+			if !pc.force(inst.Pos()) {
 				pc.maybeFail(inst.Pos(), "unexpected call to atomic function")
 			}
 		}
@@ -200,7 +208,7 @@ func (pc *passContext) checkAtomicCall(inst ssa.Instruction, value ssa.Value, ar
 			// reads under the lock, but writes must remain atomic for
 			// concurrent lock-free readers.
 			if ar != nonAtomic && (!allowNonAtomicRead || fn.Name() != "RacyLoad") {
-				if _, ok := pc.forced[pc.positionKey(inst.Pos())]; !ok {
+				if !pc.force(inst.Pos()) {
 					pc.maybeFail(inst.Pos(), "non-atomic operation %s on atomic-only field", fn.Name())
 				}
 			}
@@ -209,7 +217,7 @@ func (pc *passContext) checkAtomicCall(inst ssa.Instruction, value ssa.Value, ar
 		if (ar == readOnlyAtomic || ar == readOnlyMixedAtomic) &&
 			!strings.HasPrefix(fn.Name(), "Load") {
 			// We are not allowing any writes in this context.
-			if _, ok := pc.forced[pc.positionKey(inst.Pos())]; !ok {
+			if !pc.force(inst.Pos()) {
 				pc.maybeFail(inst.Pos(), "unexpected call to atomic write function, is a lock missing?")
 			}
 			return
@@ -229,7 +237,7 @@ func (pc *passContext) checkAtomicCall(inst ssa.Instruction, value ssa.Value, ar
 	}
 	if ar != nonAtomic {
 		// This is something else entirely.
-		if _, ok := pc.forced[pc.positionKey(inst.Pos())]; !ok {
+		if !pc.force(inst.Pos()) {
 			pc.maybeFail(inst.Pos(), "illegal use of atomic-only field by %T instruction", inst)
 		}
 		return
@@ -384,7 +392,7 @@ func (pc *passContext) checkGuards(inst almostInst, value, from ssa.Value, acces
 			guardsHeld[s] = exclusive
 			continue
 		}
-		if _, ok := pc.forced[pc.positionKey(inst.Pos())]; ok {
+		if pc.force(inst.Pos()) {
 			// Mark this as locked, since it has been forced. All
 			// forces are treated as an exclusive lock.
 			s, _ := ls.lockField(r, true /* exclusive */)
@@ -442,10 +450,6 @@ func (pc *passContext) checkGuards(inst almostInst, value, from ssa.Value, acces
 			pc.maybeFail(inst.Pos(), "non-atomic write of field %s, writes must still be atomic with locks held (locks: %s)", accessObj.Name(), ls.String())
 		}
 	case atomicDisallow:
-		// If atomic analysis is not enabled, skip.
-		if !enableAtomic {
-			break
-		}
 		// Check that this is *not* used atomically.
 		if refs := inst.Referrers(); refs != nil {
 			for _, otherInst := range *refs {
@@ -591,8 +595,8 @@ func (pc *passContext) postFunctionCallUpdate(call callCommon, lff *lockFunction
 			pc.maybeFail(call.Pos(), "field %s cannot be resolved", fieldName)
 			continue
 		}
-		if s, ok := ls.unlockField(r, fg.Exclusive); !ok && !lff.Ignore {
-			if _, ok := pc.forced[pc.positionKey(call.Pos())]; !ok && !lff.Ignore {
+		if s, ok := ls.unlockField(r, fg.Exclusive); !ok {
+			if !pc.forceOrIgnore(call.Pos(), lff.Ignore) {
 				pc.maybeFail(call.Pos(), "attempt to release %s (%s), but not held (locks: %s)", fieldName, s, ls.String())
 			}
 		}
@@ -609,8 +613,8 @@ func (pc *passContext) postFunctionCallUpdate(call callCommon, lff *lockFunction
 			pc.maybeFail(call.Pos(), "field %s cannot be resolved", fieldName)
 			continue
 		}
-		if s, ok := ls.lockField(r, fg.Exclusive); !ok && !lff.Ignore {
-			if _, ok := pc.forced[pc.positionKey(call.Pos())]; !ok && !lff.Ignore {
+		if s, ok := ls.lockField(r, fg.Exclusive); !ok {
+			if !pc.forceOrIgnore(call.Pos(), lff.Ignore) {
 				pc.maybeFail(call.Pos(), "attempt to acquire %s (%s), but already held (locks: %s)", fieldName, s, ls.String())
 			}
 		}
@@ -631,6 +635,9 @@ func exclusiveStr(exclusive bool) string {
 // access, not at a later use of a retained field address. Direct global atomic
 // operations are checked at their consuming instructions.
 func (pc *passContext) checkFunctionCall(call callCommon, fn *types.Func, lff *lockFunctionFacts, ls *lockState) {
+	if s := pc.forced[pc.positionKey(call.Pos())]; s != nil {
+		s.callee = fn.FullName()
+	}
 	// Extract the "receiver" properly.
 	var args []ssa.Value
 	if call.Common().Method != nil {
@@ -643,8 +650,6 @@ func (pc *passContext) checkFunctionCall(call callCommon, fn *types.Func, lff *l
 	}
 
 	callPos := call.Pos()
-	posKey := pc.positionKey(callPos)
-	_, forced := pc.forced[posKey]
 	callValue := call.Value()
 	resolve := func(fg functionGuardInfo) resolvedValue {
 		return fg.Resolver.resolveCall(pc, ls, args, callValue)
@@ -661,7 +666,7 @@ func (pc *passContext) checkFunctionCall(call callCommon, fn *types.Func, lff *l
 			continue
 		}
 		if s, ok := ls.isHeld(r, fg.Exclusive); ok {
-			if !forced && !lff.Ignore {
+			if !pc.forceOrIgnore(callPos, lff.Ignore) {
 				if fg.Exclusive {
 					pc.maybeFail(callPos, "must not hold %s exclusively (%s) to call %s, but held (locks: %s)", fieldName, s, fn.Name(), ls.String())
 				} else {
@@ -679,7 +684,7 @@ func (pc *passContext) checkFunctionCall(call callCommon, fn *types.Func, lff *l
 			continue
 		}
 		if s, ok := ls.isHeld(r, fg.Exclusive); !ok {
-			if !forced && !lff.Ignore {
+			if !pc.forceOrIgnore(callPos, lff.Ignore) {
 				pc.maybeFail(callPos, "must hold %s %s (%s) to call %s, but not held (locks: %s)", fieldName, exclusiveStr(fg.Exclusive), s, fn.Name(), ls.String())
 			} else {
 				// Force the lock to be acquired.
@@ -702,8 +707,8 @@ func (pc *passContext) checkFunctionCall(call callCommon, fn *types.Func, lff *l
 			isExclusive = true
 			fallthrough
 		case "RLock", "NestedRLock":
-			if s, ok := ls.lockField(rv, isExclusive); !ok && !lff.Ignore {
-				if !forced {
+			if s, ok := ls.lockField(rv, isExclusive); !ok {
+				if !pc.forceOrIgnore(callPos, lff.Ignore) {
 					// Double locking a mutex that is already locked.
 					pc.maybeFail(callPos, "%s already locked (locks: %s)", s, ls.String())
 				}
@@ -712,15 +717,15 @@ func (pc *passContext) checkFunctionCall(call callCommon, fn *types.Func, lff *l
 			isExclusive = true
 			fallthrough
 		case "RUnlock", "NestedRUnlock":
-			if s, ok := ls.unlockField(rv, isExclusive); !ok && !lff.Ignore {
-				if !forced {
+			if s, ok := ls.unlockField(rv, isExclusive); !ok {
+				if !pc.forceOrIgnore(callPos, lff.Ignore) {
 					// Unlocking something that is already unlocked.
 					pc.maybeFail(callPos, "%s already unlocked or locked differently (locks: %s)", s, ls.String())
 				}
 			}
 		case "DowngradeLock":
 			if s, ok := ls.downgradeField(rv); !ok {
-				if !forced && !lff.Ignore {
+				if !pc.forceOrIgnore(callPos, lff.Ignore) {
 					// Downgrading something that may not be downgraded.
 					pc.maybeFail(callPos, "%s already unlocked or not exclusive (locks: %s)", s, ls.String())
 				}
@@ -988,7 +993,7 @@ func (pc *passContext) checkBasicBlock(fn *ssa.Function, block *ssa.BasicBlock, 
 					continue
 				}
 				if s, ok := rls.isHeld(r, fg.Exclusive); !ok {
-					if _, ok := pc.forced[pc.positionKey(rvPos)]; !ok && !lff.Ignore {
+					if !pc.forceOrIgnore(rvPos, lff.Ignore) {
 						pc.maybeFail(rvPos, "lock %s (%s) not held %s (locks: %s)", fieldName, s, exclusiveStr(fg.Exclusive), rls.String())
 						failed = true
 					} else {
@@ -1025,7 +1030,7 @@ func (pc *passContext) checkBasicBlock(fn *ssa.Function, block *ssa.BasicBlock, 
 		// respected.
 		if pls := pc.checkBasicBlock(fn, succ, lff, ls, seen, rg, implicitPos, inline); pls != nil {
 			if rls != nil && !rls.hasSameLocks(pls) {
-				if _, ok := pc.forced[pc.positionKey(fn.Pos())]; !ok && !lff.Ignore {
+				if !pc.forceOrIgnore(fn.Pos(), lff.Ignore) {
 					pc.maybeFail(fn.Pos(), "incompatible return states (first: %s, second: %s)", rls.String(), pls.String())
 				}
 			}

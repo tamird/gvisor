@@ -44,6 +44,14 @@ type failData struct {
 	wants []string
 }
 
+// suppression records whether an annotation changed an analysis result.
+type suppression struct {
+	callee string
+	pos    token.Pos
+	used   bool
+	check  bool
+}
+
 // positionKey is a simple position string.
 type positionKey string
 
@@ -71,12 +79,62 @@ func (pc *passContext) addFailures(pos token.Pos, s string) {
 
 // addExemption adds an exemption.
 func (pc *passContext) addExemption(pos token.Pos) {
-	pc.exemptions[pc.positionKey(pos)] = struct{}{}
+	pc.exemptions[pc.positionKey(pos)] = &suppression{pos: pos, check: true}
 }
 
 // addForce adds a force annotation.
 func (pc *passContext) addForce(pos token.Pos) {
-	pc.forced[pc.positionKey(pos)] = struct{}{}
+	pc.forced[pc.positionKey(pos)] = &suppression{pos: pos, check: true}
+}
+
+// force marks an annotation used when it overrides a requirement.
+func (pc *passContext) force(pos token.Pos) bool {
+	if s, ok := pc.forced[pc.positionKey(pos)]; ok {
+		s.used = true
+		return true
+	}
+	return false
+}
+
+// skipSuppressionCheck records that an obligation was not checked at pos.
+func (pc *passContext) skipSuppressionCheck(pos token.Pos) {
+	key := pc.positionKey(pos)
+	for _, annotations := range []map[positionKey]*suppression{pc.exemptions, pc.forced} {
+		if annotation := annotations[key]; annotation != nil {
+			annotation.check = false
+		}
+	}
+}
+
+// forceOrIgnore handles an unsatisfied obligation under the current policy.
+func (pc *passContext) forceOrIgnore(pos token.Pos, ignore bool) bool {
+	if ignore {
+		pc.skipSuppressionCheck(pos)
+		return true
+	}
+	return pc.force(pos)
+}
+
+// checkSuppressions reports line annotations that did not affect analysis.
+func (pc *passContext) checkSuppressions() {
+	for _, group := range []struct {
+		name        string
+		annotations map[positionKey]*suppression
+	}{
+		{checkLocksIgnore, pc.exemptions},
+		{checkLocksForce, pc.forced},
+	} {
+		for _, s := range group.annotations {
+			if s.check && !s.used {
+				delete(group.annotations, pc.positionKey(s.pos))
+				message := fmt.Sprintf("unnecessary %s annotation", strings.TrimPrefix(group.name, "// "))
+				if s.callee != "" {
+					message += " when calling " + s.callee
+				}
+				pc.maybeFail(s.pos, "%s", message)
+			}
+		}
+	}
 }
 
 // maybeFail checks a potential failure against a specific failure map.
@@ -91,7 +149,8 @@ func (pc *passContext) maybeFail(pos token.Pos, fmtStr string, args ...any) {
 			return
 		}
 	}
-	if _, ok := pc.exemptions[pc.positionKey(pos)]; ok {
+	if s, ok := pc.exemptions[pc.positionKey(pos)]; ok {
+		s.used = true
 		return // Ignored, not counted.
 	}
 	if !enableWrappers && !pos.IsValid() {

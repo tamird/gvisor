@@ -1020,7 +1020,7 @@ func (fs *Filesystem) RmdirAt(ctx context.Context, rp *vfs.ResolvingPath) error 
 	defer mntns.DecRef(ctx)
 	vfsd := child.VFSDentry()
 	if err := virtfs.PrepareDeleteDentry(mntns, vfsd); err != nil {
-		return err // +checklocksforce: vfsd is not locked.
+		return err
 	}
 
 	if err := parent.inode.RmDir(ctx, name, child.inode); err != nil {

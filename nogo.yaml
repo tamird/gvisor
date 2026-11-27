@@ -125,7 +125,15 @@ analyzers:
     external: # Enabled.
   checklocks:
     checklocks_tests: # Enabled.
+    generated:
+      suppress:
+        # A shared template annotation may be necessary in another instance.
+        # Keep lock diagnostics; only source annotations can be removed safely.
+        - '^unnecessary \+checklocks(force|ignore) annotation( when calling .+)?$'
     internal:
+      suppress:
+        # PostFork releases a read lock on amd64; arm64 has no lock obligation.
+        - '^unnecessary \+checklocksforce annotation when calling \(\*gvisor\.dev/gvisor/pkg/sentry/platform/systrap/usertrap\.State\)\.PostFork$'
       exclude:
         - "^-$" # b/181776900: analyzer fails on buildkite.
   shadow: # Disable for now.

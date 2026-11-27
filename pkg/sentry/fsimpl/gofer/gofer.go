@@ -1991,7 +1991,7 @@ func (d *dentry) checkCachingLocked(ctx context.Context, renameMuWriteLocked, ke
 		if ds != nil {
 			// d is destroyed now, so checkCachingLocked is a no-op for it.
 			for _, td := range *ds {
-				td.checkCachingLocked(ctx, true /* renameMuWriteLocked */, keepRenameMu) // +checklocksforce: renameMu must be acquired at this point.
+				td.checkCachingLocked(ctx, true /* renameMuWriteLocked */, keepRenameMu)
 			}
 			putDentrySlice(ds)
 		}
@@ -2169,7 +2169,7 @@ func (d *dentry) evictLocked(ctx context.Context, keepRenameMu bool) {
 	// try to acquire fs.renameMu (which we have already acquiredd). Hence,
 	// fs.renameMu will synchronize the destroy attempts.
 	d.cachingMu.Unlock()
-	d.destroyLocked(ctx, keepRenameMu) // +checklocksforce: owned as precondition.
+	d.destroyLocked(ctx, keepRenameMu)
 }
 
 // destroyDisconnected destroys an uncached, unparented dentry. There are no

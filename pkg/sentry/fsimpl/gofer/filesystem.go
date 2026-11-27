@@ -700,7 +700,7 @@ func (fs *filesystem) unlinkAt(ctx context.Context, rp *vfs.ResolvingPath, dir b
 					vfsObj.AbortDeleteDentry(&child.vfsd) // +checklocksforce: see above.
 					return linuxerr.ENOTDIR
 				}
-				for _, grandchild := range child.children { // +checklocksforce: child.childrenMu is held if child != nil.
+				for _, grandchild := range child.children {
 					if grandchild != nil {
 						vfsObj.AbortDeleteDentry(&child.vfsd) // +checklocksforce: see above.
 						return linuxerr.ENOTEMPTY

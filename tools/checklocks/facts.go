@@ -774,6 +774,8 @@ func (pc *passContext) fillLockGuardFacts(obj types.Object, cg *ast.CommentGroup
 				lgf.AtomicDisposition = atomicRequired
 			},
 			checkLocksIgnore: func(string) {
+				// This declares field/global atomic and inference policy.
+				pc.exemptions[pc.positionKey(l.Pos())].check = false
 				switch lgf.AtomicDisposition {
 				case atomicIgnore:
 					pc.maybeFail(obj.Pos(), "annotation is redundant, already atomic ignored")
@@ -1041,6 +1043,15 @@ func (pc *passContext) functionFacts(d *ast.FuncDecl) {
 				// atomic analysis, as we expect this use to be
 				// extremely rare.
 				lff.Ignore = true
+				pc.exemptions[pc.positionKey(l.Pos())].check = false
+				// Local checks are disabled, including in nested closures.
+				for _, annotations := range []map[positionKey]*suppression{pc.exemptions, pc.forced} {
+					for _, annotation := range annotations {
+						if d.Pos() <= annotation.pos && annotation.pos < d.End() {
+							annotation.check = false
+						}
+					}
+				}
 			},
 			checkLocksReadAny:        func(string) { pc.maybeFail(d.Pos(), "checklocksreadany is only valid on fields") },
 			checkLocksAnnotation:     func(guardName string) { lff.addGuardedBy(pc, d, guardName, true /* exclusive */) },

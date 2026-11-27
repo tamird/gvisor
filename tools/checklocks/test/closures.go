@@ -60,6 +60,8 @@ func testClosureIgnore(tc *oneGuardStruct) {
 	x := func() {
 		tc.guardedField = 1
 		atomicGlobal.RacyStore(1)
+		_ = 0 // +checklocksignore
+		_ = 0 // +checklocksforce
 	}
 	x()
 

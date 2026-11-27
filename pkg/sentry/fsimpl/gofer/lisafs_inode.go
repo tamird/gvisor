@@ -443,7 +443,7 @@ func (i *lisafsInode) getRemoteChildAndWalkPathLocked(ctx context.Context, rp re
 
 		curParentLock()
 		// Did we race with another walk + cache operation?
-		child, ok := curParent.children[names[i]] // +checklocksforce: locked via curParentLock()
+		child, ok := curParent.children[names[i]]
 		if ok && child != nil {
 			// We raced. Clean up the new inode and proceed with
 			// the cached child.

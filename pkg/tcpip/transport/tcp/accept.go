@@ -265,7 +265,7 @@ func (l *listenContext) startHandshake(s *segment, opts header.TCPSynOptions, qu
 			ep.mu.Unlock()
 			ep.Close()
 
-			return nil, &tcpip.ErrConnectionAborted{} // +checklocksignore
+			return nil, &tcpip.ErrConnectionAborted{}
 		}
 
 		// Propagate any inheritable options from the listening endpoint
