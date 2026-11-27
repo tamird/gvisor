@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-27T12:27:03.547909+00:00",
+    "updatedAt": "2026-11-27T12:45:14.118671+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36850,14 +36850,14 @@
       "url": "https://github.com/google/gvisor/pull/16419",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-25T22:04:11.018203+00:00",
-      "summary": "Public #16419 remains at 0ae405ec7; candidate 14d87bd3f retains its scoped functional/source/review evidence. The matched broad-throughput A/B completed 24 measured pairs: candidate contrast −0.295%, paired 95% interval −2.224% to +1.673%. No directional difference was detected under that model; this is not equivalence, full-network qualification or a repeated-RTO-specific benefit. The actual reply question about Linux’s repeated closed-window reduction awaits Tamir.",
+      "updatedAt": "2026-11-27T12:43:45.159584+00:00",
+      "summary": "Linux repeated closed-window threshold reply is posted, and Lucas is re-requested. Scoped24-pair broad throughput A/B remains estimation-only; no repeated-RTO-specific benefit or full-network qualification claim.",
       "followup": {
-        "owner": "actions_bazel_cache / root",
+        "owner": "root",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
         "observedAt": "2026-11-20T23:31:27.372182+00:00",
-        "disposition": "Public #16419 remains at 0ae405ec7; candidate 14d87bd3f retains its scoped functional/source/review evidence. The matched broad-throughput A/B completed 24 measured pairs: candidate contrast −0.295%, paired 95% interval −2.224% to +1.673%. No directional difference was detected under that model; this is not equivalence, full-network qualification or a repeated-RTO-specific benefit. The actual reply question about Linux’s repeated closed-window reduction awaits Tamir.",
-        "nextAction": "Root awaits Tamir’s answer on the exact reply to Lucas, then assesses the scoped result and remaining broader network/loss qualification before source-publication review. No extra samples, automatic retry, foreign-source edit or whole-PR approval is inferred.",
+        "disposition": "Linux repeated closed-window threshold reply is posted, and Lucas is re-requested. Scoped24-pair broad throughput A/B remains estimation-only; no repeated-RTO-specific benefit or full-network qualification claim.",
+        "nextAction": "Follow Lucas response and assess remaining source/performance publication gates. No duplicate re-request or extra samples.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16419",
           "https://github.com/google/gvisor/pull/16419#discussion_r4504268180",
@@ -36893,9 +36893,10 @@
           "https://github.com/tamird/gvisor/actions/runs/45658848993/artifacts/15042454959",
           "https://github.com/tamird/gvisor/actions/runs/45698335217/artifacts/15062545605",
           "https://github.com/tamird/gvisor/actions/runs/45704792383/artifacts/15065374378",
-          "https://github.com/tamird/gvisor/actions/runs/45710153246"
+          "https://github.com/tamird/gvisor/actions/runs/45710153246",
+          "https://github.com/gvisor/gvisor/pull/16419#discussion_r4719441892"
         ],
-        "recheckCondition": "Actual reply decision, root’s remaining performance/publication disposition or substantive new source/review evidence.",
+        "recheckCondition": "Substantive author/reviewer/importing-owner response or changed source/evidence.",
         "base": "eb263e1f414d0bceaf10decea6c73e2c77332112",
         "mergeable": "CONFLICTING",
         "qualificationHistory": [
@@ -37014,7 +37015,7 @@
           ]
         },
         "remainingNetworkOutcomeOwner": "tcp_conflict",
-        "curatedAt": "2026-11-25T22:41:21.827202+00:00",
+        "curatedAt": "2026-11-27T12:43:45.159584+00:00",
         "ciExecutionAuthorization": {
           "status": "Authorized CI-only; held for permanent Bazel mechanism migration",
           "owner": "root",
@@ -37223,6 +37224,10 @@
         {
           "label": "Baseline-only bounded calibration; not candidate comparison",
           "url": "https://github.com/tamird/gvisor/actions/runs/45704792383/artifacts/15065374378"
+        },
+        {
+          "label": "Verified posted approved reply/review",
+          "url": "https://github.com/gvisor/gvisor/pull/16419#discussion_r4719441892"
         }
       ],
       "number": 16419,
@@ -37286,6 +37291,19 @@
           "outcome": "posted",
           "at": "2026-11-12T00:47:50Z",
           "postedURL": "https://github.com/google/gvisor/pull/16419#discussion_r4544891392"
+        },
+        {
+          "kind": "reply",
+          "status": "settled",
+          "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
+          "url": "https://github.com/google/gvisor/pull/16419#discussion_r4648619071",
+          "title": "Explain Linux’s repeated closed-window threshold reduction",
+          "summary": "The actual question to post this reply is unanswered. It does not approve a source amendment or the whole PR.",
+          "body": "Yes, the next timeout can reduce ssthresh to 2 here. That matches Linux: with the window closed and eight segments unacknowledged, we observed ssthresh fall from 5 to 2 with Reno and from 7 to 2 with CUBIC. Moving the assignment above the probe return would prevent that second reduction. [Linux results](https://github.com/tamird/gvisor/actions/runs/45657171085)\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved-and-delivered",
+          "note": "Approved Linux threshold reply posted; Lucas natively re-requested. No source amendment approval.",
+          "recordedAt": "2026-11-27T12:43:45.159584+00:00",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/16419#discussion_r4719441892"
         }
       ],
       "refinement": {
@@ -37312,16 +37330,7 @@
           "https://github.com/tamird/gvisor/commit/0ae405ec7d1ace5894645c28910c69605c0de20e"
         ]
       },
-      "recheckCondition": "Actual reply decision, root’s remaining performance/publication disposition or substantive new source/review evidence.",
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
-        "url": "https://github.com/google/gvisor/pull/16419#discussion_r4648619071",
-        "title": "Explain Linux’s repeated closed-window threshold reduction",
-        "summary": "The actual question to post this reply is unanswered. It does not approve a source amendment or the whole PR.",
-        "body": "Yes, the next timeout can reduce ssthresh to 2 here. That matches Linux: with the window closed and eight segments unacknowledged, we observed ssthresh fall from 5 to 2 with Reno and from 7 to 2 with CUBIC. Moving the assignment above the probe return would prevent that second reduction. [Linux results](https://github.com/tamird/gvisor/actions/runs/45657171085)\n\nPosted by Codex on behalf of @tamird."
-      }
+      "recheckCondition": "Substantive author/reviewer/importing-owner response or changed source/evidence."
     },
     {
       "id": "pr:17114",
@@ -58412,14 +58421,14 @@
       "group": "bazel",
       "status": "Agent work",
       "url": "https://github.com/tamird/gvisor/commit/a5265547f",
-      "updatedAt": "2026-11-26T07:04:10.906515+00:00",
-      "summary": "The old a5265547f8 renderer/publisher migration remains unintegrated. Its maintained Ruby feasibility reached a real Nokogiri1.10.9/Ruby3.4.11 native-extension incompatibility before CSS or HTML checking. Tamir’s actual question now asks whether to include a supported checker/parser migration or keep the current renderer. The separate reviewed b8c trust pin and existing Docker publisher can proceed independently.",
+      "updatedAt": "2026-11-27T12:43:45.159584+00:00",
+      "summary": "Tamir approved the website checker/parser migration scope. actions_bazel_cache is implementing the canonical dependency migration and parity qualification; current source is not newly approved upstream. The CA-pin/fallback and existing Docker publisher remain distinct.",
       "followup": {
         "owner": "root",
         "sourceHead": "a5265547f8c17b32b19021c4d8f9100c1012c2aa",
         "observedAt": "2026-11-08T22:36:47+00:00",
-        "disposition": "The old a5265547f8 renderer/publisher migration remains unintegrated. Its maintained Ruby feasibility reached a real Nokogiri1.10.9/Ruby3.4.11 native-extension incompatibility before CSS or HTML checking. Tamir’s actual question now asks whether to include a supported checker/parser migration or keep the current renderer. The separate reviewed b8c trust pin and existing Docker publisher can proceed independently.",
-        "nextAction": "Root awaits the actual checker/parser scope choice. If included, compare current output and checker acceptance using the stated parity gates before proposing source upstream. Do not repeat incompatible dependency trials, treat this scope choice as pin approval, or block the independent CA pin/current Docker publisher.",
+        "disposition": "Tamir approved the website checker/parser migration scope. actions_bazel_cache is implementing the canonical dependency migration and parity qualification; current source is not newly approved upstream. The CA-pin/fallback and existing Docker publisher remain distinct.",
+        "nextAction": "actions_bazel_cache completes the canonical dependency migration and actual renderer/checker parity evidence, then root reviews the exact source before any upstream publication decision.",
         "evidence": [
           {
             "label": "Buildkite release with local registry authentication and a simulated Cloud Run deployment",
@@ -58452,8 +58461,8 @@
           "owner": "root"
         },
         "technicalOwner": "actions_bazel_cache",
-        "recheckCondition": "Answer to the actual checker/parser scope question or substantive source/architecture evidence.",
-        "curatedAt": "2026-11-26T07:04:10.906515+00:00",
+        "recheckCondition": "Source-bound canonical dependency/parity milestone or substantive review.",
+        "curatedAt": "2026-11-27T12:43:45.159584+00:00",
         "compilerAssessment": {
           "websiteSource": "a5265547f8c17b32b19021c4d8f9100c1012c2aa",
           "declaredSupplier": "llvm0.8.24, MODULE.bazel:18",
@@ -58529,7 +58538,8 @@
           "head": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
           "url": "https://github.com/gvisor/gvisor/pull/18012",
           "state": "Published; larger migration and architecture decision separate"
-        }
+        },
+        "currentDependencyMigration": "Canonical migration lock step passed per root; renderer/checker parity and final source review remain unclaimed."
       },
       "refinement": {
         "before": {
@@ -58685,14 +58695,19 @@
           "url": "https://tamird.github.io/gvisor/?view=table#branch%3Awebsite-google-roots-pin"
         }
       ],
-      "contributorReview": {
-        "kind": "information",
-        "status": "pending",
-        "url": "https://github.com/tamird/gvisor/actions/runs/45770079130",
-        "title": "Choose website checker/parser migration scope",
-        "summary": "Actual submitted scope question; unanswered. Separate from b8c trust-pin source approval.",
-        "body": "Should the website renderer migration include upgrading its HTML checker and parser? The maintained Bazel Ruby toolchain gets past dependency resolution, but the current Nokogiri fails to compile on Ruby 3.4, and the checker’s Nokogumbo dependency does not support Ruby 3.2 or newer. The proposed migration uses HTMLProofer 3.19.3 and Nokogiri 1.19.7, removes Nokogumbo, and changes the parser used to validate the site. I would compare current site output and checker behavior before proposing it upstream. The separate CA pin and the existing Docker publisher can proceed independently.\n\nhttps://github.com/tamird/gvisor/actions/runs/45770079130\n\nOptions: Include checker migration / Keep current renderer."
-      }
+      "settledReviews": [
+        {
+          "kind": "information",
+          "status": "settled",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45770079130",
+          "title": "Choose website checker/parser migration scope",
+          "summary": "Actual submitted scope question; unanswered. Separate from b8c trust-pin source approval.",
+          "body": "Should the website renderer migration include upgrading its HTML checker and parser? The maintained Bazel Ruby toolchain gets past dependency resolution, but the current Nokogiri fails to compile on Ruby 3.4, and the checker’s Nokogumbo dependency does not support Ruby 3.2 or newer. The proposed migration uses HTMLProofer 3.19.3 and Nokogiri 1.19.7, removes Nokogumbo, and changes the parser used to validate the site. I would compare current site output and checker behavior before proposing it upstream. The separate CA pin and the existing Docker publisher can proceed independently.\n\nhttps://github.com/tamird/gvisor/actions/runs/45770079130\n\nOptions: Include checker migration / Keep current renderer.",
+          "outcome": "scope-approved",
+          "note": "Tamir approved including checker/parser migration in the existing workstream; no upstream source publication grant.",
+          "recordedAt": "2026-11-27T12:43:45.159584+00:00"
+        }
+      ]
     },
     {
       "id": "branch:tun-setiff-copyout",
@@ -60950,15 +60965,15 @@
       "title": "Run both iperf3 benchmark endpoints on Ubuntu Jammy",
       "group": "bazel",
       "status": "Approved source; P64 functional completion held",
-      "updatedAt": "2026-11-26T15:52:16.104921+00:00",
+      "updatedAt": "2026-11-27T12:43:45.159584+00:00",
       "url": "https://github.com/tamird/gvisor/commit/67601a14c",
-      "summary": "The fork-only original-interval 3.18 remedy passed the complete native/Sentry 32-row caller matrix and independent longer accounting checks. It is distinct from stock released software. Current supplier source ee3f2f309 is local-only, qualified on Linux and independently reviewed; its actual upstream publication decision is pending. Reviewed backport integration versus compatible BCR release/adoption remains unresolved and unapproved downstream. Older tiny paced Sentry discrepancy remains scoped.",
+      "summary": "Supplier sender-completion fix ee3f2f309 is published as esnet/iperf#2137. The qualified3.18 consumer backport remains separate from released software. Reviewed downstream backport integration versus compatible release/BCR adoption is unresolved and unapproved; prior tiny Sentry accounting discrepancy remains scoped.",
       "followup": {
         "owner": "root",
         "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
         "observedAt": "2026-11-02T17:47:05.918366+00:00",
-        "disposition": "The fork-only original-interval 3.18 remedy passed the complete native/Sentry 32-row caller matrix and independent longer accounting checks. It is distinct from stock released software. Current supplier source ee3f2f309 is local-only, qualified on Linux and independently reviewed; its actual upstream publication decision is pending. Reviewed backport integration versus compatible BCR release/adoption remains unresolved and unapproved downstream. Older tiny paced Sentry discrepancy remains scoped.",
-        "nextAction": "Root awaits the separate exact local-source Iperf supplier publication answer. Preserve the qualified 3.18 consumer backport as fork-only evidence; choose reviewed backport integration or compatible BCR release/adoption only after the actual downstream source decision. No further build-authorization ask, stock-release equivalence, throughput qualification or publication grant is inferred.",
+        "disposition": "Supplier sender-completion fix ee3f2f309 is published as esnet/iperf#2137. The qualified3.18 consumer backport remains separate from released software. Reviewed downstream backport integration versus compatible release/BCR adoption is unresolved and unapproved; prior tiny Sentry accounting discrepancy remains scoped.",
+        "nextAction": "Follow supplier #2137 review/landing and resolve the distinct downstream source choice. No supplier-opening approval wait, new build request or stock-release equivalence.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
@@ -60987,7 +61002,8 @@
           "https://github.com/tamird/gvisor/actions/runs/44969536131",
           "https://github.com/tamird/gvisor/actions/runs/44973350323",
           "https://github.com/tamird/gvisor/actions/runs/44973895706",
-          "https://github.com/bazelbuild/bazel-central-registry/pull/11518"
+          "https://github.com/bazelbuild/bazel-central-registry/pull/11518",
+          "https://github.com/esnet/iperf/pull/2137"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -61001,8 +61017,8 @@
           "owner": "root"
         },
         "technicalOwner": "analysis_delivery / root",
-        "recheckCondition": "Actual supplier publication answer or material reviewed downstream integration/release evidence; no repeat caller matrix.",
-        "curatedAt": "2026-11-26T15:52:16.104921+00:00",
+        "recheckCondition": "Actual supplier/release event or downstream source/adoption decision.",
+        "curatedAt": "2026-11-27T12:43:45.159584+00:00",
         "bcrPublication": {
           "pr": 11518,
           "merge": "70404f85e",
@@ -61937,6 +61953,10 @@
         {
           "label": "Released OpenSSL license export",
           "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11381"
+        },
+        {
+          "label": "Published supplier sender-completion fix",
+          "url": "https://github.com/esnet/iperf/pull/2137"
         }
       ],
       "settledReviews": [
@@ -61947,7 +61967,7 @@
           "at": "2026-11-02T16:20:02.085486+00:00"
         }
       ],
-      "recheckCondition": "Actual new source/functional evidence that localizes or resolves P64 completion, or an explicit owning technical disposition. No new run is authorized by this metadata update."
+      "recheckCondition": "Actual supplier/release event or downstream source/adoption decision."
     },
     {
       "id": "pr:hermeticbuild/hermetic-llvm:909",
@@ -62602,9 +62622,9 @@
       "head": "daa2d24389d1fea28197add328e4e875488c306d",
       "title": "Honor IN_MASK_CREATE when adding inotify watches",
       "url": "https://github.com/google/gvisor/pull/16842",
-      "updatedAt": "2026-11-26T23:11:59.045396+00:00",
+      "updatedAt": "2026-11-27T12:43:45.159584+00:00",
       "status": "open",
-      "summary": "Source daa2d2438 and the Nov10 explanation reply to Alexander are approved and public. A distinct pending outreach comment asks importing maintainers to refresh the three stale integrations onto #17556 and rerun integration tests; source approval does not authorize that comment. Exact #17398 evidence retains eight TestSudo timeouts and four independent checkout403s.",
+      "summary": "The approved comment asking maintainers to refresh three imports onto #17556 and rerun integration is posted. Existing daa2d2438 source and earlier Alexander reply remain delivered; private integration causes and source/DCO coordination stay separate.",
       "evidence": [
         {
           "label": "Six native Linux syscall cases, three kernfs tests and both Nogo checks passed on the rebased source",
@@ -62657,6 +62677,10 @@
         {
           "label": "Merged corrected TestSudo reland",
           "url": "https://github.com/gvisor/gvisor/pull/17556"
+        },
+        {
+          "label": "Verified posted approved reply/review",
+          "url": "https://github.com/gvisor/gvisor/pull/16842#issuecomment-7218410213"
         }
       ],
       "settledReviews": [
@@ -62689,6 +62713,19 @@
           "at": "2026-11-10T18:45:59+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/16842#discussion_r4529053275",
           "note": "Published the comment-only amendment and replied to Alexander. AddWatch documents the syscall and explains EEXIST where it is returned."
+        },
+        {
+          "kind": "reply",
+          "status": "settled",
+          "head": "daa2d24389d1fea28197add328e4e875488c306d",
+          "url": "https://github.com/google/gvisor/pull/16842",
+          "title": "Request the three imports include the TestSudo fix",
+          "summary": "Separate pending outreach only: request refreshing #16842/#16594/#16854 integrations onto #17556 and rerunning integration. daa2d2438 source and the Nov10 Alexander reply are already approved and delivered; they do not authorize this new comment.",
+          "body": "The import builds for this PR, #16594 and #16854 all timed out in TestSudo on bases that predate its fix in #17556. Could you refresh the three imports onto a base containing that fix and rerun the affected integration tests?\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved-and-delivered",
+          "note": "Approved one-comment import-refresh outreach is posted. Existing daa2 source approval remains distinct.",
+          "recordedAt": "2026-11-27T12:43:45.159584+00:00",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/16842#issuecomment-7218410213"
         }
       ],
       "number": 16842,
@@ -62705,8 +62742,8 @@
         "owner": "root",
         "sourceHead": "daa2d24389d1fea28197add328e4e875488c306d",
         "observedAt": "2026-11-17T19:01:06.487079+00:00",
-        "disposition": "Source daa2d2438 and the Nov10 explanation reply to Alexander are approved and public. A distinct pending outreach comment asks importing maintainers to refresh the three stale integrations onto #17556 and rerun integration tests; source approval does not authorize that comment. Exact #17398 evidence retains eight TestSudo timeouts and four independent checkout403s.",
-        "nextAction": "Importing owner refreshes the existing internal/export integration onto the #17556 fix, then qualifies the affected integration partition. Root awaits the single proposed comment on #16842 covering all three imports; do not duplicate #16854’s existing generic reimport request. Preserve exact source/DCO-import coordination; no mount/eventfd/inotify patch, unchanged-head retry or export-branch push.",
+        "disposition": "The approved comment asking maintainers to refresh three imports onto #17556 and rerun integration is posted. Existing daa2d2438 source and earlier Alexander reply remain delivered; private integration causes and source/DCO coordination stay separate.",
+        "nextAction": "Follow importing-owner response or refreshed source/base and owning integration evidence; no repeated outreach or export-branch edits.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/aab0e06b4",
           "https://github.com/tamird/gvisor/actions/runs/42009462257/artifacts/13407460630",
@@ -62718,9 +62755,10 @@
           "https://buildkite.com/gvisor/pipeline/builds/54243",
           "https://github.com/gvisor/gvisor/pull/17412",
           "https://github.com/gvisor/gvisor/pull/17556",
-          "https://github.com/gvisor/gvisor/pull/17398"
+          "https://github.com/gvisor/gvisor/pull/17398",
+          "https://github.com/gvisor/gvisor/pull/16842#issuecomment-7218410213"
         ],
-        "recheckCondition": "Actual importing-owner/source/base change and owning integration evidence; the submitted one-comment outreach decision remains separate.",
+        "recheckCondition": "Substantive author/reviewer/importing-owner response or changed source/evidence.",
         "currentDCOAudit": {
           "number": 16842,
           "head": "daa2d24389d1fea28197add328e4e875488c306d",
@@ -62744,7 +62782,7 @@
           "observedAt": "2026-11-26T07:22:31.393956+00:00",
           "requiredApp": 974774
         },
-        "curatedAt": "2026-11-26T07:41:31.491746+00:00",
+        "curatedAt": "2026-11-27T12:43:45.159584+00:00",
         "publicTestSudoReconciliation": {
           "export": 17398,
           "head": "414a285f63dfc554b34610240fe344665291f91e",
@@ -62780,15 +62818,6 @@
         "nextAction": "Preserve current imported revision; importing-owner coordination before any same-tree DCO rewrite. Missing app event alone would not supply the absent trailer.",
         "recheckCondition": "Exact import/source lifecycle change or explicit importing-owner coordination before any source rewrite.",
         "holdsPreserved": {}
-      },
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "daa2d24389d1fea28197add328e4e875488c306d",
-        "url": "https://github.com/google/gvisor/pull/16842",
-        "title": "Request the three imports include the TestSudo fix",
-        "summary": "Separate pending outreach only: request refreshing #16842/#16594/#16854 integrations onto #17556 and rerunning integration. daa2d2438 source and the Nov10 Alexander reply are already approved and delivered; they do not authorize this new comment.",
-        "body": "The import builds for this PR, #16594 and #16854 all timed out in TestSudo on bases that predate its fix in #17556. Could you refresh the three imports onto a base containing that fix and rerun the affected integration tests?\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -97056,8 +97085,8 @@
       "url": "https://github.com/google/gvisor/pull/17264",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-26T23:11:59.045396+00:00",
-      "summary": "Full current-source review at 22401767a is complete. Tamir approved the COMMENTED request for before/after benchstat revisions and the 27%/40% MSG_MORE slowdown explanation; posting was rejected by automatic approval review under a reply-only interpretation.",
+      "updatedAt": "2026-11-27T12:43:45.159584+00:00",
+      "summary": "The approved COMMENTED review requesting exact benchmark revisions and explanation of27%/40% MSG_MORE slowdowns is posted. Earlier restore/short-write source findings remain resolved; no whole-PR approval. The execution clarification is complete.",
       "evidence": [
         {
           "label": "Timer restore",
@@ -97090,6 +97119,10 @@
         {
           "label": "First Pass TCP test on 0aa0a1abf",
           "url": "https://buildkite.com/gvisor/first-pass/builds/1026#01a1c17d-64d4-4b4f-aad8-4454095ac826"
+        },
+        {
+          "label": "Verified posted approved reply/review",
+          "url": "https://github.com/gvisor/gvisor/pull/17264#pullrequestreview-6088216866"
         }
       ],
       "settledReviews": [
@@ -97126,6 +97159,18 @@
           "outcome": "approved-execution-blocked",
           "note": "Tamir approved the exact COMMENTED review. Automatic approval review rejected POST /reviews as reply-only; root requested exact-operation clarification. No review posted.",
           "recordedAt": "2026-11-26T17:20:00.247741+00:00"
+        },
+        {
+          "kind": "information",
+          "status": "settled",
+          "url": "https://github.com/google/gvisor/pull/17264",
+          "title": "Formal COMMENTED review blocked by automatic approval review",
+          "summary": "Exact-operation clarification is pending. Tamir already approved the review text; this is not an unanswered source approval. No retry or alternate posting route.",
+          "body": "The approved operation is a formal COMMENTED review via POST /repos/gvisor/gvisor/pulls/17264/reviews. Automatic approval review rejected that operation under a reply-only interpretation. Root has already requested exact-operation clarification; no review has been posted.\n\nApproved review text:\n\nThe restore and short-write changes address my earlier comments. Could you link the before/after benchstat output and the two revisions for the bulk and fragmented workloads? What accounts for the 27% and 40% slowdowns with `MSG_MORE`?\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved-and-delivered",
+          "note": "Approved formal COMMENTED review is posted. Tamir clarified reply/draft approvals cover COMMENTED reviews; prior automatic rejection is historical, not current. #17254 is distinct and has no draft.",
+          "recordedAt": "2026-11-27T12:43:45.159584+00:00",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/17264#pullrequestreview-6088216866"
         }
       ],
       "followup": {
@@ -97135,9 +97180,9 @@
         "mergeable": "MERGEABLE",
         "sourceHead": "22401767ad9317e22aaebb118d3f0dafd031d6a1",
         "observedAt": "2026-11-24T17:06:51.520893+00:00",
-        "disposition": "Full current-source review at 22401767a is complete. Tamir approved the COMMENTED request for before/after benchstat revisions and the 27%/40% MSG_MORE slowdown explanation; posting was rejected by automatic approval review under a reply-only interpretation.",
-        "nextAction": "Root resolves the existing exact review-operation execution boundary; post only under resolved authority. Preserve generate infrastructure failure and no whole-PR approval.",
-        "recheckCondition": "Existing execution clarification outcome, author evidence or changed source.",
+        "disposition": "The approved COMMENTED review requesting exact benchmark revisions and explanation of27%/40% MSG_MORE slowdowns is posted. Earlier restore/short-write source findings remain resolved; no whole-PR approval. The execution clarification is complete.",
+        "nextAction": "Follow substantive author performance evidence or source/review change. No repeat review, new draft or transfer to the distinct #17254.",
+        "recheckCondition": "Substantive author/reviewer/importing-owner response or changed source/evidence.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17264",
           "https://github.com/gvisor/gvisor/commit/e5f0f6f7fc500b646b4a0dbd738f142e1a9032a2",
@@ -97165,10 +97210,11 @@
           "https://buildkite.com/gvisor/first-pass/builds/2646",
           "https://github.com/gvisor/gvisor/actions/runs/45441491513/job/138613530223",
           "https://github.com/gvisor/gvisor/pull/17893",
-          "https://github.com/gvisor/gvisor/pull/17894"
+          "https://github.com/gvisor/gvisor/pull/17894",
+          "https://github.com/gvisor/gvisor/pull/17264#pullrequestreview-6088216866"
         ],
         "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
-        "curatedAt": "2026-11-26T17:20:00.247741+00:00",
+        "curatedAt": "2026-11-27T12:43:45.159584+00:00",
         "footerHeadReconciliation": {
           "old": "0aa0a1abf8a6586ae534f80a683f76aceb35d74a",
           "new": "92e403ef2d8cb7e24a334d37dabb248cef3b4407",
@@ -97194,23 +97240,23 @@
           ],
           "limits": "Dependency ZIP transport failed during //:gopath analysis; FirstPass pending, no target-source failure established."
         },
-        "executionClarification": {
+        "executionHistory": [
+          {
+            "operation": "POST /repos/gvisor/gvisor/pulls/17264/reviews",
+            "event": "COMMENT",
+            "state": "Blocked by automatic approval review; existing clarification pending",
+            "textAlreadyApproved": true,
+            "retry": "None; no alternate route"
+          }
+        ],
+        "postedFormalReview": {
+          "url": "https://github.com/gvisor/gvisor/pull/17264#pullrequestreview-6088216866",
+          "event": "COMMENTED",
           "operation": "POST /repos/gvisor/gvisor/pulls/17264/reviews",
-          "event": "COMMENT",
-          "state": "Blocked by automatic approval review; existing clarification pending",
-          "textAlreadyApproved": true,
-          "retry": "None; no alternate route"
+          "authorization": "Tamir clarified approved reply/draft scope covers this formal COMMENTED review; no source/merge grant."
         }
       },
-      "recheckCondition": "Existing execution clarification outcome, author evidence or changed source.",
-      "contributorReview": {
-        "kind": "information",
-        "status": "pending",
-        "url": "https://github.com/google/gvisor/pull/17264",
-        "title": "Formal COMMENTED review blocked by automatic approval review",
-        "summary": "Exact-operation clarification is pending. Tamir already approved the review text; this is not an unanswered source approval. No retry or alternate posting route.",
-        "body": "The approved operation is a formal COMMENTED review via POST /repos/gvisor/gvisor/pulls/17264/reviews. Automatic approval review rejected that operation under a reply-only interpretation. Root has already requested exact-operation clarification; no review has been posted.\n\nApproved review text:\n\nThe restore and short-write changes address my earlier comments. Could you link the before/after benchstat output and the two revisions for the bulk and fragmented workloads? What accounts for the 27% and 40% slowdowns with `MSG_MORE`?\n\nPosted by Codex on behalf of @tamird."
-      }
+      "recheckCondition": "Substantive author/reviewer/importing-owner response or changed source/evidence."
     },
     {
       "id": "pr:17265",
@@ -104034,10 +104080,10 @@
       ]
     },
     {
-      "head": "b0d665d9f298bf84db405213b403467d8470af4f",
-      "title": "Stabilize the Fastlane token check in the Ruby benchmark",
+      "head": "a8328732a975736e1dbada0b81058afd61da268b",
+      "title": "Update the Ruby benchmark to Fastlane 2.220.0",
       "group": "ci-flakes",
-      "summary": "Ruby-compatible Fastlane2.220.0 candidate1948bb8b6 retains all100 selected files and includes upstream fixes. Native and both Sentry validations each passed3679 examples/0failures/31pending. The actual replacement/title/body decision is pending; expanded workload differs from3613-example measurements.",
+      "summary": "Approved Fastlane2.220.0 upgrade is delivered at a8328732a; tree and parent match1948. Body cites actual upstream2beac83f8/387691bb5 fixes. The same100 selected files now contain3679 examples (0failures/31pending each validation), so older3613-example measurements remain separate.",
       "evidence": [
         {
           "label": "Published gVisor fix",
@@ -104095,13 +104141,13 @@
       "ref": "research/ruby-fastlane-token-clock",
       "url": "https://github.com/google/gvisor/pull/17479",
       "status": "open",
-      "updatedAt": "2026-11-26T21:04:20.239849+00:00",
+      "updatedAt": "2026-11-27T12:43:45.159584+00:00",
       "followup": {
         "owner": "root",
-        "sourceHead": "b0d665d9f298bf84db405213b403467d8470af4f",
-        "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Ruby-compatible Fastlane2.220.0 candidate1948bb8b6 retains all100 selected files and includes upstream fixes. Native and both Sentry validations each passed3679 examples/0failures/31pending. The actual replacement/title/body decision is pending; expanded workload differs from3613-example measurements.",
-        "nextAction": "Root awaits the actual exact1948 amendment/title/body decision. Preserve current public backport and separate old-workload measurements; no separate reply is authorized by this question.",
+        "sourceHead": "a8328732a975736e1dbada0b81058afd61da268b",
+        "observedAt": "2026-11-27T12:40:02.632933+00:00",
+        "disposition": "Approved Fastlane2.220.0 upgrade is delivered at a8328732a; tree and parent match1948. Body cites actual upstream2beac83f8/387691bb5 fixes. The same100 selected files now contain3679 examples (0failures/31pending each validation), so older3613-example measurements remain separate.",
+        "nextAction": "Follow actual new-head CI/review lifecycle and preserved Kerumeto request. Amendment/title/body decision is fulfilled; no new comment or repeated request.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17479",
           "https://github.com/google/gvisor/pull/17479#issuecomment-6799672981",
@@ -104122,7 +104168,7 @@
           "https://github.com/tamird/gvisor/actions/runs/45868564557"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Answer to exact replacement/title/body question or substantive source/review evidence.",
+        "recheckCondition": "Actual CI/reviewer/source or landing event.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -104146,7 +104192,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-26T21:04:20.239849+00:00",
+        "curatedAt": "2026-11-27T12:43:45.159584+00:00",
         "candidate": {
           "head": "b0d665d9f298bf84db405213b403467d8470af4f",
           "base": "e28474f026f4f6d6cfa46710e34f01786d54477e",
@@ -104155,7 +104201,7 @@
           "state": "Published under recovered original grant and standing source-only rebase authority; unnecessary question superseded",
           "upstreamPublished": true
         },
-        "providerHead": "b0d665d9f298bf84db405213b403467d8470af4f",
+        "providerHead": "a8328732a975736e1dbada0b81058afd61da268b",
         "currentPublishedLifecycle": {
           "head": "b0d665d9f298bf84db405213b403467d8470af4f",
           "ref": "research/ruby-fastlane-token-clock",
@@ -104207,6 +104253,15 @@
           "failures": 0,
           "pending": 31,
           "workloadChange": "100 selected files retained;3613→3679 examples. No cross-version performance equivalence."
+        },
+        "deliveredUpgrade": {
+          "approved": "1948bb8b6f05ef755b94649f726704de5d95610c",
+          "published": "a8328732a975736e1dbada0b81058afd61da268b",
+          "identicalTreeAndParent": true,
+          "upstreamFixes": [
+            "2beac83f8",
+            "387691bb5"
+          ]
         }
       },
       "dcoAmendment": {
@@ -104231,7 +104286,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "recheckCondition": "Answer to exact replacement/title/body question or substantive source/review evidence.",
+      "recheckCondition": "Actual CI/reviewer/source or landing event.",
       "settledReviews": [
         {
           "kind": "amendment",
@@ -104269,21 +104324,25 @@
           "outcome": "conditional-reassessment",
           "note": "User response conditions d260 amendment on reassessing upgrade; no unconditional publication authority.",
           "recordedAt": "2026-11-26T17:20:00.247741+00:00"
+        },
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "head": "1948bb8b6f05ef755b94649f726704de5d95610c",
+          "baseHead": "b0d665d9f298bf84db405213b403467d8470af4f",
+          "url": "https://github.com/tamird/gvisor/commit/1948bb8b6f05ef755b94649f726704de5d95610c",
+          "title": "Update the Ruby benchmark to Fastlane 2.220.0",
+          "summary": "Actual submitted decision to replace the backport and update the PR title/body; unanswered. No separate public reply is part of this decision.",
+          "body": "The Ruby benchmark can fail when the token spec crosses a clock tick or when the legacy encryption fixture accepts an incorrect password. Fastlane 2.220.0 includes both fixes and runs on the benchmark’s Ruby 3.0 image. [Token fix](https://github.com/fastlane/fastlane/pull/21583) · [Encryption fixture fix](https://github.com/fastlane/fastlane/pull/21790)\n\nThe same 100 selected spec files now contain 3,679 examples, up from 3,613. Each validation run reported 3,679 examples, 0 failures, and 31 pending. Performance comparisons across this update need to account for the change in workload. [Native run](https://github.com/tamird/gvisor/actions/runs/45867086535) · [First Sentry run](https://github.com/tamird/gvisor/actions/runs/45868554437) · [Second Sentry run](https://github.com/tamird/gvisor/actions/runs/45868564557)\n\nPrepared by Codex on behalf of @tamird.\n",
+          "reviewCommand": "git show 1948bb8b6f05ef755b94649f726704de5d95610c",
+          "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/fastlane-220-pr-body.md",
+          "sourceSha256": "fd63ca861268158e99ab95adf1656a1e7ad2f40654f046aa5e52a041ab3b8a73",
+          "outcome": "approved-and-delivered",
+          "note": "Approved1948 source delivered as a8328732a with identical tree/parent and corrected SHA citations; title/body updated. No separate reply.",
+          "recordedAt": "2026-11-27T12:43:45.159584+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/17479"
         }
-      ],
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "1948bb8b6f05ef755b94649f726704de5d95610c",
-        "baseHead": "b0d665d9f298bf84db405213b403467d8470af4f",
-        "url": "https://github.com/tamird/gvisor/commit/1948bb8b6f05ef755b94649f726704de5d95610c",
-        "title": "Update the Ruby benchmark to Fastlane 2.220.0",
-        "summary": "Actual submitted decision to replace the backport and update the PR title/body; unanswered. No separate public reply is part of this decision.",
-        "body": "The Ruby benchmark can fail when the token spec crosses a clock tick or when the legacy encryption fixture accepts an incorrect password. Fastlane 2.220.0 includes both fixes and runs on the benchmark’s Ruby 3.0 image. [Token fix](https://github.com/fastlane/fastlane/pull/21583) · [Encryption fixture fix](https://github.com/fastlane/fastlane/pull/21790)\n\nThe same 100 selected spec files now contain 3,679 examples, up from 3,613. Each validation run reported 3,679 examples, 0 failures, and 31 pending. Performance comparisons across this update need to account for the change in workload. [Native run](https://github.com/tamird/gvisor/actions/runs/45867086535) · [First Sentry run](https://github.com/tamird/gvisor/actions/runs/45868554437) · [Second Sentry run](https://github.com/tamird/gvisor/actions/runs/45868564557)\n\nPrepared by Codex on behalf of @tamird.\n",
-        "reviewCommand": "git show 1948bb8b6f05ef755b94649f726704de5d95610c",
-        "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/fastlane-220-pr-body.md",
-        "sourceSha256": "fd63ca861268158e99ab95adf1656a1e7ad2f40654f046aa5e52a041ab3b8a73"
-      }
+      ]
     },
     {
       "head": "c4098b8d0fdcf02ea31202c40f54a4c774c794fc",
@@ -113881,8 +113940,8 @@
       "title": "Pin the website Google trust bundle",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-26T21:04:20.239849+00:00",
-      "summary": "Etienne requested changes on exactb8c204be9: the Google bundle URL is mutable. Live bytes still match the pinned38766-byte/21-root SHA, but rotation breaks a clean fetch of old revisions without an immutable copy. The actual explanatory reply decision is pending.",
+      "updatedAt": "2026-11-27T12:43:45.159584+00:00",
+      "summary": "Tamir and Etienne discussed mutable trust-bundle rotation in the published comments. The old explanatory-reply question is superseded. approved_delivery_batch owns fallback investigation; no immutable-copy design, source delivery or deployment is inferred.",
       "evidence": [
         {
           "label": "Published pull request",
@@ -113891,6 +113950,18 @@
         {
           "label": "Etienne change request",
           "url": "https://github.com/google/gvisor/pull/18012#pullrequestreview-6079556332"
+        },
+        {
+          "label": "Published trust-bundle discussion",
+          "url": "https://github.com/gvisor/gvisor/pull/18012#issuecomment-7204793945"
+        },
+        {
+          "label": "Published trust-bundle discussion",
+          "url": "https://github.com/gvisor/gvisor/pull/18012#issuecomment-7204934476"
+        },
+        {
+          "label": "Published trust-bundle discussion",
+          "url": "https://github.com/gvisor/gvisor/pull/18012#issuecomment-7205265945"
         }
       ],
       "followup": {
@@ -113899,10 +113970,10 @@
         "providerHead": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-26T20:31:29.209734+00:00",
-        "disposition": "Etienne requested changes on exactb8c204be9: the Google bundle URL is mutable. Live bytes still match the pinned38766-byte/21-root SHA, but rotation breaks a clean fetch of old revisions without an immutable copy. The actual explanatory reply decision is pending.",
-        "nextAction": "Root awaits approval for the exact rotation reply to Etienne. Preserve fail-closed checksum behavior; no immutable-copy implementation or deployment is inferred.",
-        "recheckCondition": "Answer to the actual reply question, source/reviewer change or material bundle availability evidence.",
-        "curatedAt": "2026-11-26T21:04:20.239849+00:00",
+        "disposition": "Tamir and Etienne discussed mutable trust-bundle rotation in the published comments. The old explanatory-reply question is superseded. approved_delivery_batch owns fallback investigation; no immutable-copy design, source delivery or deployment is inferred.",
+        "nextAction": "approved_delivery_batch investigates the fallback needed to keep old revisions buildable, then hands source/contract evidence to root for review. Do not post the retired rotation reply.",
+        "recheckCondition": "Fallback investigation/source milestone or substantive reviewer response.",
+        "curatedAt": "2026-11-27T12:43:45.159584+00:00",
         "bundleAvailability": {
           "currentSHA256": "ec989df46c8f4419ef2ee2517cad7619d555e4973f3307be697662aa2497e480",
           "bytes": 38766,
@@ -113911,7 +113982,10 @@
           "future": "Mutable URL rotation can break clean old-revision fetch; no immutable copy established."
         },
         "evidence": [
-          "https://github.com/google/gvisor/pull/18012#pullrequestreview-6079556332"
+          "https://github.com/google/gvisor/pull/18012#pullrequestreview-6079556332",
+          "https://github.com/gvisor/gvisor/pull/18012#issuecomment-7204793945",
+          "https://github.com/gvisor/gvisor/pull/18012#issuecomment-7204934476",
+          "https://github.com/gvisor/gvisor/pull/18012#issuecomment-7205265945"
         ],
         "firstPassAdmission": {
           "head": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
@@ -113930,17 +114004,23 @@
           "provenance": "Root inspected each build separately through canonical reader data/jobs structured records; empty logs are not the diagnosis.",
           "owner": "existing root/provider quota workstream",
           "nextAction": "Recheck quota availability or a genuine new CI event; no unchanged retry or outreach."
-        }
+        },
+        "technicalOwner": "approved_delivery_batch"
       },
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
-        "url": "https://github.com/google/gvisor/pull/18012#pullrequestreview-6079556332",
-        "title": "Explain trust-bundle rotation and old-revision builds",
-        "summary": "Actual submitted reply question; unanswered. No new source, mirror, access or deployment commitment.",
-        "body": "Yes. Google rotates the bundle at this URL. After a rotation, a clean build would fail the checksum until we updated it. To keep old revisions buildable we’d need an immutable copy of the bundle as well.\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "status": "settled",
+          "head": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
+          "url": "https://github.com/google/gvisor/pull/18012#pullrequestreview-6079556332",
+          "title": "Explain trust-bundle rotation and old-revision builds",
+          "summary": "Actual submitted reply question; unanswered. No new source, mirror, access or deployment commitment.",
+          "body": "Yes. Google rotates the bundle at this URL. After a rotation, a clean build would fail the checksum until we updated it. To keep old revisions buildable we’d need an immutable copy of the bundle as well.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "superseded-by-published-discussion",
+          "note": "Old rotation reply is superseded by actual Tamir/Etienne discussion; do not post it.",
+          "recordedAt": "2026-11-27T12:43:45.159584+00:00"
+        }
+      ]
     },
     {
       "id": "pr:18013",
@@ -114174,6 +114254,37 @@
         "nextAction": "Follow substantive upstream review/landing and distinct downstream adoption decision.",
         "recheckCondition": "Actual CI/review/source or upstream lifecycle event.",
         "curatedAt": "2026-11-26T17:20:00.247741+00:00"
+      }
+    },
+    {
+      "id": "pr:18022",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 18022,
+      "ref": "fix/udp-reuseaddr-record-20261126",
+      "head": "aa1518e26a0c441585ec08f6b4dc482fed20ea30",
+      "url": "https://github.com/google/gvisor/pull/18022",
+      "title": "Allow UDP bind(0) to exhaust reusable ports",
+      "group": "ci-flakes",
+      "status": "open",
+      "updatedAt": "2026-11-27T12:43:45.159584+00:00",
+      "summary": "Approved UDP test source published at aa1518e26. Original7.4-rc4 trace remains distinct from20 passing cases on6.18.57; native source checks passed.",
+      "evidence": [
+        {
+          "label": "Published UDP test PR",
+          "url": "https://github.com/google/gvisor/pull/18022"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "aa1518e26a0c441585ec08f6b4dc482fed20ea30",
+        "providerHead": "aa1518e26a0c441585ec08f6b4dc482fed20ea30",
+        "mergeable": "MERGEABLE",
+        "observedAt": "2026-11-27T12:40:02.632933+00:00",
+        "disposition": "Source opening complete; actual PR owns CI/review.",
+        "nextAction": "Follow source-bound CI and substantive reviewer/lifecycle events; preserve original qualification limits.",
+        "recheckCondition": "Actual CI/review/source or landing event.",
+        "curatedAt": "2026-11-27T12:43:45.159584+00:00"
       }
     }
   ],
@@ -142297,8 +142408,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-26T17:23:22.513386+00:00",
-      "summary": "Revised UDP test publication question binds aa1518e26, message-only from qualified fbe. The original test recorded Linux behavior at the time; the revised message explains changed port-zero exhaustion. Twenty cases passed on6.18.57; the7.4-rc4 trace remains the original failure, not a fixed-candidate pass. Separate seccomp evidence remains.",
+      "updatedAt": "2026-11-27T12:43:45.159584+00:00",
+      "summary": "UDP bind(0) test aa1518e26 is published as #18022. The original7.4-rc4 exhaustion trace and20 passing6.18.57 cases remain scoped; current PR owns CI/review. Other CI incidents, including seccomp EINVAL/EFAULT, remain separate.",
       "findings": [
         {
           "text": "Buildkite #54191 recovered an ARM64 unit job and four syscall shards. Each original log records agent cancellation. The first unit retry also exited −1 and its log ends during compilation. The next unit attempt and all four final syscall attempts passed.",
@@ -143022,7 +143133,7 @@
           ]
         }
       ],
-      "nextStep": "Root awaits the actual revised opening decision for aa1518e26. Preserve the explicit-port coverage and exact qualification scope; no duplicate question or unchanged test retry.",
+      "nextStep": "Follow the actual #18022 lifecycle through its canonical PR card; continue only independent unresolved CI incidents. No duplicate opening or unchanged test retry.",
       "evidence": [
         {
           "label": "GitHub issues mentioning “flaky”",
@@ -143067,26 +143178,31 @@
         {
           "label": "Landed removal of obsolete branch check",
           "url": "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321"
+        },
+        {
+          "label": "Published UDP test PR",
+          "url": "https://github.com/google/gvisor/pull/18022"
         }
       ],
-      "recheckCondition": "Completed motivation revision or material source/review evidence; no current opening question.",
+      "recheckCondition": "Actual #18022 lifecycle or independent incident evidence.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Root rewrites the UDP motivation for exact fbe95e306, preserving the 51-port 7.4-rc4 trace, explicit-port coverage and qualification limits. Keep seccomp EINVAL/EFAULT follow-through separate.",
-        "recheckCondition": "Completed motivation revision or material source/review evidence; no current opening question."
+        "nextAction": "Follow the actual #18022 lifecycle through its canonical PR card; continue only independent unresolved CI incidents. No duplicate opening or unchanged test retry.",
+        "recheckCondition": "Actual #18022 lifecycle or independent incident evidence."
       },
       "followup": {
         "owner": "root",
         "observedAt": "2026-11-24T08:14:16.668124+00:00",
-        "disposition": "Revised UDP test publication question binds aa1518e26, message-only from qualified fbe. The original test recorded Linux behavior at the time; the revised message explains changed port-zero exhaustion. Twenty cases passed on6.18.57; the7.4-rc4 trace remains the original failure, not a fixed-candidate pass. Separate seccomp evidence remains.",
-        "nextAction": "Root awaits the actual revised opening decision for aa1518e26. Preserve the explicit-port coverage and exact qualification scope; no duplicate question or unchanged test retry.",
-        "recheckCondition": "Answer to the revised source-bound opening question or material source/review evidence.",
+        "disposition": "UDP bind(0) test aa1518e26 is published as #18022. The original7.4-rc4 exhaustion trace and20 passing6.18.57 cases remain scoped; current PR owns CI/review. Other CI incidents, including seccomp EINVAL/EFAULT, remain separate.",
+        "nextAction": "Follow the actual #18022 lifecycle through its canonical PR card; continue only independent unresolved CI incidents. No duplicate opening or unchanged test retry.",
+        "recheckCondition": "Actual #18022 lifecycle or independent incident evidence.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/16591",
           "https://github.com/gvisor/gvisor/pull/16591#issuecomment-7079160484",
-          "https://github.com/gvisor/gvisor/commit/3767e597a341236280bff142471f063a755ec2ff"
+          "https://github.com/gvisor/gvisor/commit/3767e597a341236280bff142471f063a755ec2ff",
+          "https://github.com/google/gvisor/pull/18022"
         ],
-        "curatedAt": "2026-11-26T17:23:22.513386+00:00"
+        "curatedAt": "2026-11-27T12:43:45.159584+00:00"
       },
       "releaseCandidateContractEvidence": {
         "builds": [
@@ -143173,21 +143289,25 @@
           "outcome": "revision-requested",
           "note": "Tamir requested a motivation rewrite for fbe95e306; opening ask withdrawn, not publication approval.",
           "recordedAt": "2026-11-26T17:20:00.247741+00:00"
+        },
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "aa1518e26a0c441585ec08f6b4dc482fed20ea30",
+          "baseHead": "c3efd8c9381c89b78c1d86b6c64a49d53ee938f8",
+          "url": "https://github.com/tamird/gvisor/commit/aa1518e26a0c441585ec08f6b4dc482fed20ea30",
+          "title": "Allow UDP bind(0) to exhaust reusable ports",
+          "summary": "Actual revised opening question submitted; unanswered. Only commit message changed since fbe; tested source tree and qualification scope remain unchanged.\n\nReview command: git show aa1518e26a0c441585ec08f6b4dc482fed20ea30",
+          "body": "COMPATIBILITY:UPCOMING-KERNEL\n\nOn Linux 7.4.0-070400rc4-generic, the UDP test allocated all 51 ephemeral ports with `SO_REUSEADDR`. The next `bind(0)` returned `EADDRINUSE`. [Failing syscall shard](https://buildkite.com/gvisor/pipeline/builds/56025#01a217c6-8fc3-4715-b214-b23ab6ab6224)\n\nAccept this result on native Linux and hostnet only after the test holds every port in the range. Netstack must still demonstrate reuse. A separate test covers explicitly binding an occupied port.\n\nThe focused tests passed on Linux 6.18.57 under native Linux, netstack and hostnet. The 7.4-rc4 observation comes from the original failure. [Native results](https://github.com/tamird/gvisor/actions/runs/45857878772) · [AMD64](https://github.com/tamird/gvisor/actions/runs/45858788264) · [ARM64](https://github.com/tamird/gvisor/actions/runs/45858788504)\n\nPosted by Codex on behalf of @tamird.\n",
+          "reviewCommand": "git show aa1518e26a0c441585ec08f6b4dc482fed20ea30",
+          "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/udp-bind-pr-body.txt",
+          "sourceSha256": "6a592826e6dd299a48f14102c2eb9872a7d560696f17fbd085a906911e39510e",
+          "outcome": "approved-and-delivered",
+          "note": "Approved exact UDP test source is public as #18022; opening question complete.",
+          "recordedAt": "2026-11-27T12:43:45.159584+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/18022"
         }
-      ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "aa1518e26a0c441585ec08f6b4dc482fed20ea30",
-        "baseHead": "c3efd8c9381c89b78c1d86b6c64a49d53ee938f8",
-        "url": "https://github.com/tamird/gvisor/commit/aa1518e26a0c441585ec08f6b4dc482fed20ea30",
-        "title": "Allow UDP bind(0) to exhaust reusable ports",
-        "summary": "Actual revised opening question submitted; unanswered. Only commit message changed since fbe; tested source tree and qualification scope remain unchanged.\n\nReview command: git show aa1518e26a0c441585ec08f6b4dc482fed20ea30",
-        "body": "COMPATIBILITY:UPCOMING-KERNEL\n\nOn Linux 7.4.0-070400rc4-generic, the UDP test allocated all 51 ephemeral ports with `SO_REUSEADDR`. The next `bind(0)` returned `EADDRINUSE`. [Failing syscall shard](https://buildkite.com/gvisor/pipeline/builds/56025#01a217c6-8fc3-4715-b214-b23ab6ab6224)\n\nAccept this result on native Linux and hostnet only after the test holds every port in the range. Netstack must still demonstrate reuse. A separate test covers explicitly binding an occupied port.\n\nThe focused tests passed on Linux 6.18.57 under native Linux, netstack and hostnet. The 7.4-rc4 observation comes from the original failure. [Native results](https://github.com/tamird/gvisor/actions/runs/45857878772) · [AMD64](https://github.com/tamird/gvisor/actions/runs/45858788264) · [ARM64](https://github.com/tamird/gvisor/actions/runs/45858788504)\n\nPosted by Codex on behalf of @tamird.\n",
-        "reviewCommand": "git show aa1518e26a0c441585ec08f6b4dc482fed20ea30",
-        "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/udp-bind-pr-body.txt",
-        "sourceSha256": "6a592826e6dd299a48f14102c2eb9872a7d560696f17fbd085a906911e39510e"
-      }
+      ]
     },
     {
       "id": "investigation:ci-flake-cuda-no-device",
@@ -147716,8 +147836,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-25T21:04:58.790048+00:00",
-      "summary": "FUSE admission passed on both runtime arms; 12 of16 visits passed and all four GRPC visits failed at ELF loading because ConfigureMMap returns ENOSYS. File-backed mmap requires fault/invalidation/lifetime work; #17911 is gofer-only. The actual question to track a separate upstream feature or implement it here is pending. Other analyzer gates continue independently.",
+      "updatedAt": "2026-11-27T12:45:14.118671+00:00",
+      "summary": "Status checked2026-11-27: Nov25 trace45681177653 has four gRPC ELF-loading failures across both arms (FUSE ConfigureMMap ENOSYS); other12 visits passed. Current upstream cc5b7474bf and both retained FUSE refs still return ENOSYS. This is a pre-existing external feature blocker: #3234, with #3237 related. No feature implementation is assigned or approved; the old scope question is withdrawn.",
       "findings": [
         {
           "text": "The original Ruby and ABSL jobs reported “could not create fuse server: no such file or directory” for fusefs. Other filesystem variants reported benchmark timings. The two logs do not identify the missing path or establish a passing retry.",
@@ -147796,7 +147916,7 @@
           ]
         }
       ],
-      "nextStep": "Root awaits the actual FUSE scope answer. analysis_delivery inventories the existing design only; no implementation is assigned or authorized from this question alone. Preserve the baseline/candidate GRPC limitation; native parity and tiny exec-on-FUSE precede any later GRPC validation.",
+      "nextStep": "Root rechecks the pre-existing external feature blocker on changed upstream or retained implementation. Native parity and tiny exec-on-FUSE admission must precede later gRPC validation; no new feature work or approval question follows from this status request.",
       "evidence": [
         {
           "label": "#54492 Ruby benchmark failure",
@@ -147900,18 +148020,18 @@
         }
       ],
       "technicalOwner": "CI flake triage",
-      "recheckCondition": "Tamir’s scope answer or new relevant design evidence; other analyzer qualification does not wait for this answer.",
+      "recheckCondition": "Explicit FUSE/MM design owner plus source/native-parity evidence; then tiny exec-on-FUSE admission before gRPC.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Root awaits the actual FUSE scope answer. analysis_delivery inventories the existing design only; no implementation is assigned or authorized from this question alone. Preserve the baseline/candidate GRPC limitation; native parity and tiny exec-on-FUSE precede any later GRPC validation.",
-        "recheckCondition": "Tamir’s scope answer or new relevant design evidence; other analyzer qualification does not wait for this answer."
+        "nextAction": "Root coordinates the existing file-backed mmap design/owner status. Recheck after an explicit FUSE/MM design owner and native parity tests, then tiny exec-on-FUSE before gRPC. No feature implementation, new run or new approval question follows from this status request.",
+        "recheckCondition": "Explicit FUSE/MM design owner plus source/native-parity evidence; then tiny exec-on-FUSE admission before gRPC."
       },
       "followup": {
         "owner": "root",
-        "disposition": "FUSE admission passed on both runtime arms; 12 of16 visits passed and all four GRPC visits failed at ELF loading because ConfigureMMap returns ENOSYS. File-backed mmap requires fault/invalidation/lifetime work; #17911 is gofer-only. The actual question to track a separate upstream feature or implement it here is pending. Other analyzer gates continue independently.",
-        "nextAction": "Root awaits the actual FUSE scope answer. analysis_delivery inventories the existing design only; no implementation is assigned or authorized from this question alone. Preserve the baseline/candidate GRPC limitation; native parity and tiny exec-on-FUSE precede any later GRPC validation.",
-        "recheckCondition": "Tamir’s scope answer or new relevant design evidence; other analyzer qualification does not wait for this answer.",
-        "curatedAt": "2026-11-25T21:04:58.790048+00:00",
+        "disposition": "Status checked2026-11-27: Nov25 trace45681177653 has four gRPC ELF-loading failures across both arms (FUSE ConfigureMMap ENOSYS); other12 visits passed. Current upstream cc5b7474bf and both retained FUSE refs still return ENOSYS. This is a pre-existing external feature blocker: #3234, with #3237 related. No feature implementation is assigned or approved; the old scope question is withdrawn.",
+        "nextAction": "Root rechecks the pre-existing external feature blocker on changed upstream or retained implementation. Native parity and tiny exec-on-FUSE admission must precede later gRPC validation; no new feature work or approval question follows from this status request.",
+        "recheckCondition": "Changed upstream or retained file-backed mmap implementation; then native parity and tiny exec-on-FUSE evidence.",
+        "curatedAt": "2026-11-27T12:45:14.118671+00:00",
         "implementationOwner": null,
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/45678371880",
@@ -147924,15 +148044,34 @@
           "https://github.com/gvisor/gvisor/issues/3237",
           "https://github.com/gvisor/gvisor/pull/17911"
         ],
-        "designOwner": "analysis_delivery"
+        "designOwner": null,
+        "reviewerCheck": {
+          "date": "2026-11-27",
+          "source": "Root current-source/retained-ref inspection; no new build or functional rerun",
+          "upstream": "cc5b7474bf",
+          "bothRetainedRefs": "ConfigureMMap still ENOSYS",
+          "lastFunctionalTrace": 45681177653,
+          "passedOtherVisits": 12,
+          "failedGRPCVisits": 4,
+          "compatibility": "NEW-APP-CONFIG"
+        },
+        "statusOnly": true,
+        "designInventoryOwner": "analysis_delivery",
+        "primaryFeatureIssue": 3234,
+        "relatedIssue": 3237
       },
-      "contributorReview": {
-        "kind": "information",
-        "status": "pending",
-        "title": "Choose the scope of FUSE mmap work",
-        "summary": "The actual scope question is pending: track a separate upstream feature or implement it here.",
-        "body": "Scope summary of the accepted question: should FUSE file-backed mmap be tracked as a separate upstream feature or implemented in this work? This requires nontrivial fault, invalidation and lifetime behavior; #17911 is gofer-only. analysis_delivery owns design inventory only until the answer. No implementation/publication commitment or approval of a particular source is inferred. Deciding this scope does not block advancing the other analyzer gates."
-      }
+      "settledReviews": [
+        {
+          "kind": "information",
+          "status": "settled",
+          "title": "Choose the scope of FUSE mmap work",
+          "summary": "The actual scope question is pending: track a separate upstream feature or implement it here.",
+          "body": "Scope summary of the accepted question: should FUSE file-backed mmap be tracked as a separate upstream feature or implemented in this work? This requires nontrivial fault, invalidation and lifetime behavior; #17911 is gofer-only. analysis_delivery owns design inventory only until the answer. No implementation/publication commitment or approval of a particular source is inferred. Deciding this scope does not block advancing the other analyzer gates.",
+          "outcome": "superseded-by-status-only-disposition",
+          "recordedAt": "2026-11-27T12:45:14.118671+00:00",
+          "note": "Nov25 scope question withdrawn from active attention. Current request is status only; no approval for feature development."
+        }
+      ]
     },
     {
       "id": "investigation:cos-driver-580-196-07",
@@ -154825,19 +154964,66 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-27T12:27:03.547909+00:00",
-      "summary": "The pinned Hey binary adds 8,765,600 bytes to the utility image with identical parent layers and image configuration. The HTTPd client completed one request on runc and left no containers. All four callers link and their five owning Nogo targets pass on AMD64 and ARM64.",
-      "nextStep": "Run the remaining finite Nginx, Node and Ruby caller cases and verify runtime and daemon transport before publication review.",
+      "updatedAt": "2026-11-27T12:43:45.159584+00:00",
+      "summary": "All four finite AMD64/runc Hey utility-image callers are admitted: retained HTTPd plus Nginx/Node/Ruby45999324087 each actually ran one selected iteration, no skip, exit0. All callers link and five owning Nogo targets pass on both architectures; pinned Hey adds8765600 bytes with unchanged parent layers/config. No performance comparison, ARM container execution or separately configured remote-daemon transport claim.",
+      "nextStep": "approved_delivery_batch hands the complete source and finite caller/image-size evidence to root for final review/publication decision. Do not rerun the completed caller set or infer downstream publication approval.",
       "followup": {
         "owner": "root",
-        "disposition": "The pinned Hey binary adds 8,765,600 bytes to the utility image with identical parent layers and image configuration. The HTTPd client completed one request on runc and left no containers. All four callers link and their five owning Nogo targets pass on AMD64 and ARM64.",
-        "nextAction": "Run the remaining finite Nginx, Node and Ruby caller cases and verify runtime and daemon transport before publication review.",
-        "recheckCondition": "A remaining caller produces a result or its image or transport setup fails.",
-        "curatedAt": "2026-11-27T12:27:03.547909+00:00",
+        "disposition": "All four finite AMD64/runc Hey utility-image callers are admitted: retained HTTPd plus Nginx/Node/Ruby45999324087 each actually ran one selected iteration, no skip, exit0. All callers link and five owning Nogo targets pass on both architectures; pinned Hey adds8765600 bytes with unchanged parent layers/config. No performance comparison, ARM container execution or separately configured remote-daemon transport claim.",
+        "nextAction": "approved_delivery_batch hands the complete source and finite caller/image-size evidence to root for final review/publication decision. Do not rerun the completed caller set or infer downstream publication approval.",
+        "recheckCondition": "Final source-review/publication milestone or material source/caller evidence.",
+        "curatedAt": "2026-11-27T12:43:45.159584+00:00",
         "evidence": [
-          "https://github.com/rakyll/hey/pull/348"
+          "https://github.com/rakyll/hey/pull/348",
+          "https://github.com/tamird/gvisor/actions/runs/45999324087"
         ],
-        "technicalOwner": "approved_delivery_batch"
+        "technicalOwner": "approved_delivery_batch",
+        "remainingCallersTerminal": {
+          "source": "997a3107cb92311d3af832d0b0e506ca7e8dde12",
+          "nativeSource": "0a0225664167d6d1f5a72cc307a9123b575d11d0",
+          "run": 45999324087,
+          "artifact": 15197288422,
+          "callers": [
+            {
+              "name": "nginx",
+              "stage": "caller",
+              "case": "ContinuousNginx/filesize.10Kb/concurrency.1",
+              "runtime": "runc",
+              "iterations": 1,
+              "exit": 0,
+              "selected": true,
+              "skipped": false
+            },
+            {
+              "name": "node",
+              "stage": "caller",
+              "case": "Node/concurrency.1",
+              "runtime": "runc",
+              "iterations": 1,
+              "exit": 0,
+              "selected": true,
+              "skipped": false
+            },
+            {
+              "name": "ruby",
+              "stage": "caller",
+              "case": "Ruby/concurrency.1",
+              "runtime": "runc",
+              "iterations": 1,
+              "exit": 0,
+              "selected": true,
+              "skipped": false
+            }
+          ],
+          "remainingContainers": [],
+          "runtime": "runc",
+          "limits": [
+            "AMD64/runc only; no actual ARM container execution.",
+            "Finite one-iteration correctness/admission evidence, not a performance comparison.",
+            "Docker configuration/runtime registration unchanged; no separately configured remote-daemon endpoint or gVisor server-runtime claim.",
+            "Earlier HTTPd package/admission45972259828 retained; not repeated."
+          ]
+        }
       },
       "evidence": [
         {
@@ -154855,6 +155041,10 @@
         {
           "label": "Utility image contents, size and HTTPd admission",
           "url": "https://github.com/tamird/gvisor/actions/runs/45972259828/artifacts/15185961660"
+        },
+        {
+          "label": "Remaining finite caller admission",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45999324087"
         }
       ],
       "findings": [
@@ -154965,5 +155155,5 @@
       "inactive": true
     }
   ],
-  "updatedAt": "2026-11-27T12:27:03.547909+00:00"
+  "updatedAt": "2026-11-27T12:45:14.118671+00:00"
 }

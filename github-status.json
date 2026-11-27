@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-27T12:40:45.435296+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-27T12:27:03.547909+00:00",
+  "registryDate": "2026-11-27T12:45:14.118671+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -465834,7 +465834,7 @@
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
       "sourceNumber": 16419,
-      "owner": "actions_bazel_cache / root",
+      "owner": "root",
       "claimed": true,
       "overdue": false,
       "kind": "inline",
@@ -465931,7 +465931,7 @@
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
       "sourceNumber": 16419,
-      "owner": "actions_bazel_cache / root",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABUTON0A",
       "needsTriage": false,
@@ -466098,7 +466098,7 @@
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
       "sourceNumber": 16419,
-      "owner": "actions_bazel_cache / root",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABVzsOnQ",
       "needsTriage": false,
@@ -466934,7 +466934,7 @@
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
       "sourceNumber": 16419,
-      "owner": "actions_bazel_cache / root",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABXbKd7w",
       "needsTriage": false,
@@ -467287,7 +467287,7 @@
       "number": 16419,
       "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
       "sourceNumber": 16419,
-      "owner": "actions_bazel_cache / root",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABZaeShA",
       "needsTriage": false,
@@ -467528,7 +467528,7 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "22401767ad9317e22aaebb118d3f0dafd031d6a1",
-      "action": "Root resolves the existing exact review-operation execution boundary; post only under resolved authority. Preserve generate infrastructure failure and no whole-PR approval.",
+      "action": "Follow substantive author performance evidence or source/review change. No repeat review, new draft or transfer to the distinct #17254.",
       "claimed": true,
       "firstObservedHead": "e5f0f6f7fc500b646b4a0dbd738f142e1a9032a2",
       "reviewHead": null,
@@ -467548,7 +467548,7 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "22401767ad9317e22aaebb118d3f0dafd031d6a1",
-      "action": "Root resolves the existing exact review-operation execution boundary; post only under resolved authority. Preserve generate infrastructure failure and no whole-PR approval.",
+      "action": "Follow substantive author performance evidence or source/review change. No repeat review, new draft or transfer to the distinct #17254.",
       "claimed": true,
       "firstObservedHead": "3389a2aa144abf8f474fc65bcabc84487564ee86",
       "reviewHead": null,
@@ -467568,7 +467568,7 @@
       "repo": "google/gvisor",
       "number": 17264,
       "head": "22401767ad9317e22aaebb118d3f0dafd031d6a1",
-      "action": "Root resolves the existing exact review-operation execution boundary; post only under resolved authority. Preserve generate infrastructure failure and no whole-PR approval.",
+      "action": "Follow substantive author performance evidence or source/review change. No repeat review, new draft or transfer to the distinct #17254.",
       "claimed": true,
       "firstObservedHead": "0ec767e4d4f1ec1bdf56d3675e06b860a02d7e19",
       "reviewHead": null,
@@ -467720,13 +467720,13 @@
       "checkedAt": "2026-11-27T12:40:02.632933+00:00",
       "mergeabilityCheckedAt": "2026-11-27T12:38:00.687266+00:00",
       "sourceBranchMismatch": false,
-      "owner": "actions_bazel_cache / root",
-      "action": "Root awaits Tamir’s answer on the exact reply to Lucas, then assesses the scoped result and remaining broader network/loss qualification before source-publication review. No extra samples, automatic retry, foreign-source edit or whole-PR approval is inferred.",
+      "owner": "root",
+      "action": "Follow Lucas response and assess remaining source/performance publication gates. No duplicate re-request or extra samples.",
       "recordedFollowup": {
-        "owner": "actions_bazel_cache / root",
+        "owner": "root",
         "sourceHead": "0ae405ec7d1ace5894645c28910c69605c0de20e",
-        "disposition": "Public #16419 remains at 0ae405ec7; candidate 14d87bd3f retains its scoped functional/source/review evidence. The matched broad-throughput A/B completed 24 measured pairs: candidate contrast −0.295%, paired 95% interval −2.224% to +1.673%. No directional difference was detected under that model; this is not equivalence, full-network qualification or a repeated-RTO-specific benefit. The actual reply question about Linux’s repeated closed-window reduction awaits Tamir.",
-        "nextAction": "Root awaits Tamir’s answer on the exact reply to Lucas, then assesses the scoped result and remaining broader network/loss qualification before source-publication review. No extra samples, automatic retry, foreign-source edit or whole-PR approval is inferred."
+        "disposition": "Linux repeated closed-window threshold reply is posted, and Lucas is re-requested. Scoped24-pair broad throughput A/B remains estimation-only; no repeated-RTO-specific benefit or full-network qualification claim.",
+        "nextAction": "Follow Lucas response and assess remaining source/performance publication gates. No duplicate re-request or extra samples."
       },
       "conflictObservedSince": "2026-11-18T02:49:23.559025+00:00"
     },
@@ -479519,13 +479519,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-27T12:40:02.632933+00:00"
-      },
-      "contributor-review": {
-        "scope": "0ae405ec7d1ace5894645c28910c69605c0de20e",
-        "since": "2026-11-25T22:41:21.827202+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     },
     "pr:16445": {
@@ -481081,13 +481074,6 @@
         "basis": "observed",
         "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-27T12:40:02.632933+00:00"
-      },
-      "contributor-review": {
-        "scope": "daa2d24389d1fea28197add328e4e875488c306d",
-        "since": "2026-11-26T05:43:54.635646+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     },
     "pr:16843": {
@@ -482676,13 +482662,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-27T12:40:02.632933+00:00"
-      },
-      "contributor-review": {
-        "scope": "https://github.com/google/gvisor/pull/17264",
-        "since": "2026-11-27T05:10:49.901099+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     },
     "pr:17265": {
@@ -483857,13 +483836,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-27T12:40:02.632933+00:00"
-      },
-      "contributor-review": {
-        "scope": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
-        "since": "2026-11-27T05:10:49.901099+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     },
     "pr:18013": {
@@ -484548,7 +484520,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T12:27:03.547909+00:00"
+        "observedAt": "2026-11-27T12:45:14.118671+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -484557,7 +484529,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T12:27:03.547909+00:00"
+        "observedAt": "2026-11-27T12:45:14.118671+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -484566,7 +484538,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T12:27:03.547909+00:00"
+        "observedAt": "2026-11-27T12:45:14.118671+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -484575,7 +484547,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T12:27:03.547909+00:00"
+        "observedAt": "2026-11-27T12:45:14.118671+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -484584,7 +484556,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T12:27:03.547909+00:00"
+        "observedAt": "2026-11-27T12:45:14.118671+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -484593,16 +484565,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T12:27:03.547909+00:00"
-      }
-    },
-    "branch:declared-jekyll-site": {
-      "contributor-review": {
-        "scope": "https://github.com/tamird/gvisor/actions/runs/45770079130",
-        "since": "2026-11-26T05:43:54.635646+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-27T12:27:03.547909+00:00"
+        "observedAt": "2026-11-27T12:45:14.118671+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -484611,7 +484574,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T12:27:03.547909+00:00"
+        "observedAt": "2026-11-27T12:45:14.118671+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -484620,7 +484583,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T12:27:03.547909+00:00"
+        "observedAt": "2026-11-27T12:45:14.118671+00:00"
       }
     },
     "issue:17832": {
@@ -484629,16 +484592,7 @@
         "since": "2026-11-26T05:43:54.635646+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T12:27:03.547909+00:00"
-      }
-    },
-    "investigation:ci-benchmark-fuse-device": {
-      "contributor-review": {
-        "scope": "Choose the scope of FUSE mmap work",
-        "since": "2026-11-25T21:11:04.741354+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-27T12:27:03.547909+00:00"
+        "observedAt": "2026-11-27T12:45:14.118671+00:00"
       }
     }
   },
