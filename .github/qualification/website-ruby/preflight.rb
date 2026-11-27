@@ -2,6 +2,7 @@ require "json"
 require "fileutils"
 require "tmpdir"
 require "jekyll"
+require "rouge"
 require "jekyll-autoprefixer"
 require_relative "html_checks"
 workspace = ENV.fetch("BUILD_WORKSPACE_DIRECTORY")
