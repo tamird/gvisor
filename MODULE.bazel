@@ -1028,3 +1028,96 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+# Website rendering and validation tools.
+bazel_dep(name = "rules_ruby", version = "1.0.0-rc2", dev_dependency = True)
+
+ruby = use_extension("@rules_ruby//ruby:extensions.bzl", "ruby", dev_dependency = True)
+ruby.toolchain(
+    name = "ruby",
+    portable_ruby = True,
+    version = "3.4.11",
+)
+use_repo(ruby, "ruby", "ruby_toolchains")
+
+register_toolchains(
+    "@ruby_toolchains//:all",
+    dev_dependency = True,
+)
+
+bazel_dep(name = "rules_nodejs", version = "6.7.5", dev_dependency = True)
+
+node = use_extension("@rules_nodejs//nodejs:extensions.bzl", "node", dev_dependency = True)
+node.toolchain(node_version = "12.15.0")
+use_repo(node, "nodejs")
+
+ruby.bundle_fetch(
+    name = "website_bundle",
+    # rules_ruby rc2 ignores lock checksums during repository downloads.
+    # Pin gems before it extracts their executable metadata:
+    # https://github.com/bazel-contrib/rules_ruby/blob/v1.0.0-rc2/ruby/private/bundle_fetch.bzl#L183-L189
+    gem_checksums = {
+        "addressable-2.7.0": "5e9b62fe1239091ea9b2893cd00ffe1bcbdd9371f4e1d35fac595c98c5856cbb",
+        "autoprefixer-rails-9.8.6.5": "15b036f5fac8d1b0439bec7881cf1322ba86474c81d93e02be42741b476770ea",
+        "base64-0.2.0": "0f25e9b21a02a0cc0cea8ef92b2041035d39350946e8789c562b2d1a3da01507",
+        "bigdecimal-3.1.8": "a89467ed5a44f8ae01824af49cbc575871fa078332e8f77ea425725c1ffe27be",
+        "colorator-1.1.0": "e2f85daf57af47d740db2a32191d1bdfb0f6503a0dfbc8327d0c9154d5ddfc38",
+        "concurrent-ruby-1.1.6": "14da21d5cfe9ccb02e9359b01cb7291e0167ded0ec805d4f3a4b2b4ffa418324",
+        "csv-3.3.2": "6ff0c135e65e485d1864dde6c1703b60d34cc9e19bed8452834a0b28a519bd4e",
+        "em-websocket-0.5.1": "c39e6d64352eca13aedf4f5d7009666ab7f3ddce75410b883c467cf0e5465caf",
+        "ethon-0.12.0": "e99d3095e89f82c5a7e63d9261ddf4a21f28ae5d12a9d3abaa6920cce6cbef3d",
+        "eventmachine-1.2.7": "994016e42aa041477ba9cff45cbe50de2047f25dd418eba003e84f0d16560972",
+        "execjs-2.7.0": "e1fae0c5c831934c47d92363b4ea66ef2951350ab91b5d8d3174342b9c2ee5fb",
+        "ffi-1.12.2": "048ad01d5369f67075f943c16f1058f10663af2a66eedb87d921316ba1828e82",
+        "forwardable-extended-2.6.0": "1bec948c469bbddfadeb3bd90eb8c85f6e627a412a3e852acfd7eaedbac3ec97",
+        "html-proofer-3.19.3": "ee4b2b6da6998e824c4e3b4c4dc1c7a747ff44e61de1a65a305cf261d40b5dd3",
+        "http_parser.rb-0.6.0": "f11d0aec50ef26a7d1f991e627ac88acdb5979282aeba7a5c3be6ce0636ed196",
+        "i18n-1.8.2": "95cf147081cc6f1dbfb32a8f29a03afe8b0f4da6a300d37d34e0f74a6868994b",
+        "jekyll-inline-svg-1.1.4": "909004a6ec69ec944dd496e18c940d8986faa151bc2564b50bc324cc7d73fd81",
+        "jekyll-paginate-1.1.0": "880aadf4b02529a93541d508c5cbb744f014cbfc071d0263a31f25ec9066eb64",
+        "jekyll-relative-links-0.6.1": "d11301f57b39e94b6c04fff2a3b145fe2f6a27be631a403e2542fa2e1548dd6d",
+        "jekyll-feed-0.13.0": "3906c7d7365f6a15c42d86caa5d75fb72ece7c36a068b346e581a206e7b6a8d3",
+        "jekyll-sitemap-1.4.0": "0de08c5debc185ea5a8f980e1025c7cd3f8e0c35c8b6ef592f15c46235cf4218",
+        "svg_optimizer-0.2.6": "bd83e5eb0203d73a74ca337845006968828dfd98002da00dfde8c40260893b2b",
+        "jekyll-4.0.1": "02c51f9d8a0e090c6d5284355b190ac8d36567540502dea9e8b6c598e02a80bf",
+        "jekyll-autoprefixer-1.0.2": "7aee7ef80ea1cce9f33fbff979189e19867c3677b26c96b24a2a874410d3fe27",
+        "jekyll-sass-converter-2.1.0": "bb25965bfdec2c61220192f45d9358d34a9fce388f72ec95119fc6cc09c9cc12",
+        "jekyll-watch-2.2.1": "bc44ed43f5e0a552836245a54dbff3ea7421ecc2856707e8a1ee203a8387a7e1",
+        "kramdown-2.2.1": "c6b22245c496fe26869db2f4cccac30b7b2ffab99768a39450e2b656299a3515",
+        "kramdown-parser-gfm-1.1.0": "fb39745516427d2988543bf01fc4cf0ab1149476382393e0e9c48592f6581729",
+        "liquid-4.0.4": "4fcfebb1a045e47918388dbb7a0925e7c3893e58d2bd6c3b3c73ec17a2d8fdb3",
+        "listen-3.3.0": "0f91c5287358feee216f41e00a5b70ec125dd5c1d8fe51a014e864a29842041f",
+        "mercenary-0.3.6": "2a084b18f5692c86a633e185d5311ba6d11fc46c802eb414ae05368178078a82",
+        "mini_portile2-2.8.9": "0cd7c7f824e010c072e33f68bc02d85a00aeb6fce05bb4819c03dfd3c140c289",
+        "nokogiri-1.19.7": "abe94507c54cb18f872777b16bdca4aad32b1abdc4c52fe843f1c80fbdf992b8",
+        "nokogiri-1.19.7-aarch64-linux-gnu": "8f5e15d299602456406e1f03a9f3456cceb33a0722811e818d2ee2214eb4c84a",
+        "nokogiri-1.19.7-aarch64-linux-musl": "efe0c3602e6e54521bc21c681930ce5568e2d11203de17400710b2b3ca2e4cb4",
+        "nokogiri-1.19.7-arm-linux-gnu": "7fd1907125691aa89e838cc91161761c758b4e17bb32f0dd9b5515a82cc759af",
+        "nokogiri-1.19.7-arm-linux-musl": "28d0ff0c87b6bb2e56580323a6fb049d5d4a02b94f0958fdd47e9ac146991c77",
+        "nokogiri-1.19.7-arm64-darwin": "f27d7f25f4873fbc3aa35a2cc2fb680c98555fec1925348da439d0869d541142",
+        "nokogiri-1.19.7-x86_64-darwin": "508e81e8c5f84aaa240dce981bf1c43faae60808726f0ce7024ee92effc5cafe",
+        "nokogiri-1.19.7-x86_64-linux-gnu": "25865ccb462f714e712fdf8906fde07849cb6704a808e3d629d75baa5af5dd3b",
+        "nokogiri-1.19.7-x86_64-linux-musl": "464d1f3dfb0d53cf54c0c6a7e23e8e91cf68ec3cafc2b27dc4a7682f2d9bf546",
+        "parallel-1.19.1": "c27ee2925978e8100f49063fd60f625522a6e96b08541ac26e7f2a72d594518a",
+        "pathutil-0.16.2": "e43b74365631cab4f6d5e4228f812927efc9cb2c71e62976edcb252ee948d589",
+        "public_suffix-4.0.5": "efbc976b8f8cd7e2f9387b41ad4dc5447bcc7e862cf3afd909f13b0048a3dc6f",
+        "racc-1.8.1": "4a7f6929691dbec8b5209a0b373bc2614882b55fc5d2e447a21aaa691303d62f",
+        "rainbow-3.0.0": "13ce4ffc3c94fb7a842117ecabdcdc5ff7fa27bec15ea44137b9f9abe575622d",
+        "rb-fsevent-0.10.4": "0741522cac72db1fc15250453b557a57f896a60ede7ba64f73e281688fd42bcd",
+        "rb-inotify-0.10.1": "050062d4f31d307cca52c3f6a7f4b946df8de25fc4bd373e1a5142e41034a7ca",
+        "rexml-3.2.3": "90381d4a2f7841c66c747f52a2612395a43671b31532643dda2086787667e638",
+        "rouge-3.19.0": "65b0914e26b1f7f40fd5e591b7d9071c7c6ef80bcd260de85c65a2d30e605980",
+        "safe_yaml-1.0.5": "a6ac2d64b7eb027bdeeca1851fe7e7af0d668e133e8a88066a0c6f7087d9f848",
+        "sassc-2.3.0": "6f0e15b0aab4b76ef29404b1d27b07850bd66c0d690eab05376cc389d6b6eee3",
+        "terminal-table-1.8.0": "13371f069af18e9baa4e44d404a4ada9301899ce0530c237ac1a96c19f652294",
+        "typhoeus-1.4.0": "fff9880d5dc35950e7706cf132fd297f377c049101794be1cf01c95567f642d4",
+        "unicode-display_width-1.7.0": "cad681071867a4cf52613412e379e39e85ac72b1d236677a2001187d448b231a",
+        "yell-2.2.2": "1d166f3cc3b6dc49a59778ea7156ed6d8de794c15106d48ffd6cbb061b9b26bc",
+    },
+    gemfile = "//website:Gemfile",
+    gemfile_lock = "//website:Gemfile.lock",
+)
+use_repo(ruby, "website_bundle")
+
+website_publication_time = use_repo_rule("//website:repositories.bzl", "publication_time")
+website_publication_time(name = "website_publication_time")

@@ -1,6 +1,4 @@
-#!/bin/bash
-
-# Copyright 2020 The gVisor Authors.
+# Copyright 2026 The gVisor Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,9 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -euxo pipefail
+"""Declared publication time for the website renderer."""
 
-# Generate the syntax highlighting css file.
-/usr/gem/bin/rougify style github >/input/_sass/syntax.css
-# Build website including pages irrespective of date.
-/usr/gem/bin/jekyll build --future -t -s /input -d /output
+def _publication_time_impl(ctx):
+    value = ctx.getenv("WEBSITE_PUBLICATION_TIME")
+    if not value:
+        fail("Set --repo_env=WEBSITE_PUBLICATION_TIME=<ISO8601 timestamp>, or use make website-build.")
+    ctx.file("time.txt", value + "\n", executable = False)
+    ctx.file("BUILD.bazel", 'exports_files(["time.txt"])\n', executable = False)
+
+publication_time = repository_rule(
+    implementation = _publication_time_impl,
+)
