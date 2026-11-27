@@ -117,8 +117,7 @@ will lag behind that of KVM.
 
 <!-- disableFinding(LINK_RELATIVE_G3DOC) -->
 
-<a class="button">[Configure Platform](../architecture_guide/platforms.md)
-&raquo;</a>
+[Configure Platform &raquo;](../architecture_guide/platforms.md){: .button}
 
 ### Optimizing I/O performance {#configure-io}
 
@@ -128,7 +127,7 @@ default configuration must support all possible I/O interaction patterns.
 However, you can configure gVisor to use more aggressive caching policies where
 it makes sense.
 
-<a class="button">[Configure Filesystem](filesystem.md) &raquo;</a>
+[Configure Filesystem &raquo;](filesystem.md){: .button}
 
 ### Optimizing network performance {#configure-network}
 
@@ -140,8 +139,7 @@ Passthrough to use the host's (Linux's) network stack, rather than gVisor's own.
 
 <!-- disableFinding(LINK_RELATIVE_G3DOC) -->
 
-<a class="button">[Configure Networking](../architecture_guide/networking.md)
-&raquo;</a>
+[Configure Networking &raquo;](../architecture_guide/networking.md){: .button}
 
 ### Optimizing MM performance {#configure-mm}
 

@@ -37,8 +37,8 @@ categories:
                 <li{% if page.url == p.url %} class="active"{% endif %}><a href="{{ p.url }}">{{ p.title }}</a></li>
               {% endfor %}
               {% if subcategory.name != "" %}
+                  </ul>
                 </li>
-              </ul>
               {% endif %}
             {% endif %}
           {% endfor %}
