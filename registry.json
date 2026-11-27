@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-27T16:01:57.617996+00:00",
+    "updatedAt": "2026-11-27T17:03:29.842766+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -111382,22 +111382,48 @@
       "url": "https://github.com/kiron1/bazel-compile-commands/pull/236",
       "group": "bazel",
       "status": "open",
-      "summary": "Supplier #236 remains open and mergeable at 324cf87, with its success gate passing and no reported reviews/comments. LLVM producer 44774d5 is already user-approved and has #236 as its exact parent. Public release v0.22.4 predates both. There is no unresolved producer-toolchain choice or new producer approval question.",
+      "summary": "Supplier #236 is open with all 13 finished checks green, including Success. The actual user question is a native review request to @kiron1 only; no comment, new source approval or rebase. Existing producer 44774d5 still follows #236 landing and compatible release/adoption gates.",
       "followup": {
         "owner": "root",
         "sourceHead": "324cf87d3065afb993520a4104720ef7c7647b0b",
-        "observedAt": "2026-11-20T22:36:05.105044+00:00",
-        "disposition": "Supplier #236 remains open and mergeable at 324cf87, with its success gate passing and no reported reviews/comments. LLVM producer 44774d5 is already user-approved and has #236 as its exact parent. Public release v0.22.4 predates both. There is no unresolved producer-toolchain choice or new producer approval question.",
-        "nextAction": "Root follows actual #236 landing, then the approved producer 44774d5 publication, a compatible supplier release and explicit downstream caller adoption. Keep the gVisor qualification branch separate; no merge, duplicate approval/outreach, upstream gVisor PR or permanent fork pin is inferred.",
-        "recheckCondition": "Actual #236 landing; then approved producer publication and a compatible supplier release, or substantive source/review evidence affecting that sequence.",
+        "observedAt": "2026-11-27T16:56:48.395428+00:00",
+        "disposition": "Supplier #236 is open with all 13 finished checks green, including Success. The actual user question is a native review request to @kiron1 only; no comment, new source approval or rebase. Existing producer 44774d5 still follows #236 landing and compatible release/adoption gates.",
+        "nextAction": "Root awaits the actual native @kiron1 review-request decision, then follows substantive supplier review/landing. Source publication is complete; do not duplicate outreach or adopt the downstream qualification branch.",
+        "recheckCondition": "Answer to the native request question or actual supplier review/source/landing/release event.",
         "evidence": [
           "https://github.com/kiron1/bazel-compile-commands/pull/236",
-          "https://github.com/kiron1/bazel-compile-commands/actions/runs/44807549343"
+          "https://github.com/kiron1/bazel-compile-commands/actions/runs/44807549343",
+          "https://github.com/kiron1/bazel-compile-commands/pull/88"
         ],
-        "curatedAt": "2026-11-26T05:43:54.635646+00:00"
+        "curatedAt": "2026-11-27T17:03:29.842766+00:00",
+        "nativeReviewRequestDecision": {
+          "reviewer": "kiron1",
+          "operation": "Native requested-reviewer API only",
+          "comment": false,
+          "sourceApprovalRequested": false,
+          "rebaseRequested": false,
+          "pending": true,
+          "observedAlreadyRequested": false,
+          "relatedMergedPR": 88
+        },
+        "providerHead": "324cf87d3065afb993520a4104720ef7c7647b0b"
       },
-      "recheckCondition": "Actual #236 landing; then approved producer publication and a compatible supplier release, or substantive source/review evidence affecting that sequence.",
-      "updatedAt": "2026-11-26T05:43:54.635646+00:00"
+      "recheckCondition": "Answer to the native request question or actual supplier review/source/landing/release event.",
+      "updatedAt": "2026-11-27T17:03:29.842766+00:00",
+      "contributorReview": {
+        "kind": "information",
+        "status": "pending",
+        "url": "https://github.com/kiron1/bazel-compile-commands/pull/236",
+        "title": "Request @kiron1’s native review of #236",
+        "summary": "Actual submitted review-request question; unanswered. No comment or source/publication/rebase decision.",
+        "body": "The actual pending question is solely whether to request @kiron1’s review natively on kiron1/bazel-compile-commands#236. No comment is included. Source publication already happened; no source approval, rebase or consumer-adoption operation is requested. This maintainer merged related #88.\n\nRoot awaits the actual review-request answer before acting; no duplicate outreach."
+      },
+      "evidence": [
+        {
+          "label": "Related PR merged by proposed reviewer",
+          "url": "https://github.com/kiron1/bazel-compile-commands/pull/88"
+        }
+      ]
     },
     {
       "id": "pr:17836",
@@ -114503,17 +114529,17 @@
       "url": "https://github.com/tamird/gvisor/commit/165933c11003e1d49f5a696e3286e85fc28172ea",
       "title": "Halve First Pass syscall job fan-out",
       "status": "Contributor review",
-      "summary": "The unanswered 600-minute syscall and conditional 35-minute smoke reservation decisions remain first. The 14:49 triage found 158 mergeable source PRs with failed First Pass; none had every other required status green. #16830 and #17962 had green main checks but pending maintainer reviews; #17232 had 2/2 maintainer approval but no main check. All three had confirmed quota denials. No duplicate outreach or retry probe.",
-      "updatedAt": "2026-11-27T16:01:57.617996+00:00",
+      "summary": "The two reservation-reduction source decisions remain first. A separate, actually proposed issue documents obsolete build 3049: all 28 make attempts, including retry, started after replacement 3050 was created and consumed 236.7 worker-minutes (237 rounded in the proposed issue). The replacement passed; this does not establish Tamir quota clearance.",
+      "updatedAt": "2026-11-27T17:03:29.842766+00:00",
       "followup": {
         "owner": "root",
         "technicalOwner": "approved_rebase_queue",
         "sourceHead": "165933c11003e1d49f5a696e3286e85fc28172ea",
         "observedAt": "2026-11-27T12:58:35.566526+00:00",
-        "nextAction": "Root first awaits the two existing reservation-reduction decisions. Existing quota owner rechecks a real same-author untrusted admission or the next UTC date boundary; available minutes remain unknown. Do not probe with a retry, change generic exit2 retry rules or create a third approval request.",
-        "recheckCondition": "Answer to either existing source question, actual same-author untrusted admission, or relevant quota-policy evidence.",
-        "disposition": "The unanswered 600-minute syscall and conditional 35-minute smoke reservation decisions remain first. The 14:49 triage found 158 mergeable source PRs with failed First Pass; none had every other required status green. #16830 and #17962 had green main checks but pending maintainer reviews; #17232 had 2/2 maintainer approval but no main check. All three had confirmed quota denials. No duplicate outreach or retry probe.",
-        "curatedAt": "2026-11-27T16:01:57.617996+00:00",
+        "nextAction": "Prioritize the two existing source decisions; separately await the already-submitted obsolete-revision issue-filing decision. No issue has been filed, retry rule changed, quota probe or extra outreach performed.",
+        "recheckCondition": "An existing decision answer, actual same-author admission/calendar event, or changed pipeline/source evidence.",
+        "disposition": "The two reservation-reduction source decisions remain first. A separate, actually proposed issue documents obsolete build 3049: all 28 make attempts, including retry, started after replacement 3050 was created and consumed 236.7 worker-minutes (237 rounded in the proposed issue). The replacement passed; this does not establish Tamir quota clearance.",
+        "curatedAt": "2026-11-27T17:03:29.842766+00:00",
         "qualification": {
           "source": "165933c11003e1d49f5a696e3286e85fc28172ea",
           "reviews": "Two independent reviews accepted",
@@ -114619,7 +114645,27 @@
             "result": "C++ lint passed on third attempt after2 exit100s"
           },
           "disposition": "Make exit2 is generic: no blanket retry disabling, new patch, saving claim, third question or new machinery."
-        }
+        },
+        "obsoleteRevisionIssue": {
+          "status": "Proposed, not filed",
+          "PR": 18024,
+          "sameForkAndBranch": true,
+          "replacementBuild": 3050,
+          "replacementCreatedUTC": "15:50:47",
+          "oldBuild": 3049,
+          "oldUploadUTC": "15:51:24",
+          "firstAgentAssignmentUTC": "15:51:49",
+          "makeAttemptsAfterReplacementIncludingRetry": 28,
+          "workerMinutes": 236.7,
+          "workerMinutesRoundedInBody": 237,
+          "replacement": "Passed with a recovered FIFO timeout",
+          "TamirQuotaClearanceInferred": false,
+          "scope": "External issue proposal only; no pipeline configuration or source patch."
+        },
+        "evidence": [
+          "https://buildkite.com/gvisor/first-pass/builds/3049",
+          "https://buildkite.com/gvisor/first-pass/builds/3050"
+        ]
       },
       "evidence": [
         {
@@ -114637,6 +114683,14 @@
         {
           "label": "Separate local smoke-timeout decision",
           "url": "https://tamird.github.io/gvisor/?view=investigations&q=Budget%20First%20Pass%20smoke%20jobs%20for%20cold%20builds"
+        },
+        {
+          "label": "Superseded First Pass build",
+          "url": "https://buildkite.com/gvisor/first-pass/builds/3049"
+        },
+        {
+          "label": "Passing replacement, not quota-clearance proof",
+          "url": "https://buildkite.com/gvisor/first-pass/builds/3050"
         }
       ],
       "contributorReview": {
@@ -114651,7 +114705,17 @@
         "reviewCommand": "git show 165933c11003e1d49f5a696e3286e85fc28172ea -- .buildkite/first-pass.yaml",
         "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/first-pass-fanout-pr-body.md",
         "sourceSha256": "b546a48d6a45a83d646b4ed1d1a2b68fb22de570866d6f0f028647ae2e049ee5"
-      }
+      },
+      "additionalReviews": [
+        {
+          "kind": "issue",
+          "status": "pending",
+          "url": "https://github.com/gvisor/gvisor/issues/new",
+          "title": "First Pass runs obsolete PR revisions",
+          "summary": "Actual submitted issue-filing decision; proposed, not filed. Keep the two existing reservation-reduction source decisions first.",
+          "body": "For #18024, [build 3050](https://buildkite.com/gvisor/first-pass/builds/3050) was created at 15:50:47 UTC. The superseded [build 3049](https://buildkite.com/gvisor/first-pass/builds/3049) uploaded its test jobs at 15:51:24. All 28 attempts started after the replacement build was created and used 237 worker-minutes. The replacement passed.\n\nFirst Pass should skip queued builds and cancel running builds superseded by a new revision of the same PR. Buildkite supports both at the [pipeline level](https://buildkite.com/docs/pipelines/configure/canceling-builds).\n\nPosted by Codex on behalf of @tamird."
+        }
+      ]
     },
     {
       "id": "branch:website-html-nesting",
@@ -140263,9 +140327,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-27T16:01:57.617996+00:00",
+      "updatedAt": "2026-11-27T17:03:29.842766+00:00",
       "group": "analysis",
-      "summary": "Current 36-commit series: 0c7e69e35...0edf29aac. Source, endpoint and prefix audits are accepted; the 891-target AMD64/ARM64 corpus remains within its verified reuse scope and was not rerun. Publication is held on #17884 and long gRPC comparison visibility/retention. The 36-minute synthetic preflight completed six children and verified 18 products, but live reads showed only setup. It adds no workload or A/A–A/B data. FUSE mmap and precision gates remain separate.",
+      "summary": "Current 36-commit series: 0c7e69e35...0edf29aac. Source/endpoint/prefix audits and the verified 891-target corpus reuse remain accepted; publication gates stay open. The supported paginated live reader now works in a marker-only preflight. The remaining long-gRPC blocker is hosted executor lease loss: the original f828/e29 study ended with zero rows, BUILT only/no TestResult, status 13/no ActionResult. No comparison or new full study is inferred. #17884, FUSE mmap and precision gates remain separate.",
       "findings": [
         {
           "text": "Current series: 36 commits from 0c7e69e35 to 0edf29aac. First/final endpoint checks, the 36-prefix/1,044-anchor audit and two reviews are accepted. The original 891-target corpus is reused only at its verified source scope. The earlier 54-commit series is historical; publication gates remain open.",
@@ -140279,6 +140343,10 @@
               "url": "https://github.com/tamird/gvisor/commit/0edf29aac22811b7ef84d6da461c54edb5af8d78"
             }
           ]
+        },
+        {
+          "text": "A marker-only preflight recovered live progress by following nextChunkId 0001 in the same supported API: BEGIN was visible while PARTIAL; BEGIN and END were present after success. The previous 36-minute snapshot reader omitted the live tail, so past child visibility cannot be reconstructed. Both old f828/e29 log cursors now reach EOF with zero rows; only BUILT/no TestResult and status 13/no ActionResult remain. Related supplier issues #13789 and #14035 already exist; no duplicate filing or long retry.",
+          "evidence": []
         },
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -140650,7 +140718,7 @@
           ]
         }
       ],
-      "nextStep": "Root resolves live child-result visibility/connection-lifetime and provider-retention evidence before another long study. Preserve the original within-worker full24-pair A/A gate before conditional A/B; no weaker block gate, unchanged retry or new study. Follow #17884 and the independent FUSE/precision gates separately.",
+      "nextStep": "Root follows existing executor lease/retention evidence and related supplier issues before another long comparison. Reader pagination is resolved; do not repeat the long study, file duplicate issues or infer missing rows. Keep the full same-worker 24-pair A/A gate before conditional A/B.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -141141,11 +141209,11 @@
           }
         ]
       },
-      "recheckCondition": "Changed observability/retention mechanism with source-bound admission evidence, actual prerequisite event or an existing decision outcome.",
+      "recheckCondition": "Material executor lease/retention evidence or an actual source/prerequisite event; no unchanged long retry.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Root resolves live child-result visibility/connection-lifetime and provider-retention evidence before another long study. Preserve the original within-worker full24-pair A/A gate before conditional A/B; no weaker block gate, unchanged retry or new study. Follow #17884 and the independent FUSE/precision gates separately.",
-        "recheckCondition": "Changed observability/retention mechanism with source-bound admission evidence, actual prerequisite event or an existing decision outcome."
+        "nextAction": "Root follows existing executor lease/retention evidence and related supplier issues before another long comparison. Reader pagination is resolved; do not repeat the long study, file duplicate issues or infer missing rows. Keep the full same-worker 24-pair A/A gate before conditional A/B.",
+        "recheckCondition": "Material executor lease/retention evidence or an actual source/prerequisite event; no unchanged long retry."
       },
       "head": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
       "settledReviews": [
@@ -141377,14 +141445,14 @@
           "https://github.com/tamird/gvisor/actions/runs/45853685673"
         ],
         "owner": "root",
-        "disposition": "Current 36-commit series: 0c7e69e35...0edf29aac. Source, endpoint and prefix audits are accepted; the 891-target AMD64/ARM64 corpus remains within its verified reuse scope and was not rerun. Publication is held on #17884 and long gRPC comparison visibility/retention. The 36-minute synthetic preflight completed six children and verified 18 products, but live reads showed only setup. It adds no workload or A/A–A/B data. FUSE mmap and precision gates remain separate.",
-        "nextAction": "Root resolves live child-result visibility/connection-lifetime and provider-retention evidence before another long study. Preserve the original within-worker full24-pair A/A gate before conditional A/B; no weaker block gate, unchanged retry or new study. Follow #17884 and the independent FUSE/precision gates separately.",
-        "recheckCondition": "Changed observability/retention mechanism with source-bound admission evidence, actual prerequisite event or an existing decision outcome.",
+        "disposition": "Current 36-commit series: 0c7e69e35...0edf29aac. Source/endpoint/prefix audits and the verified 891-target corpus reuse remain accepted; publication gates stay open. The supported paginated live reader now works in a marker-only preflight. The remaining long-gRPC blocker is hosted executor lease loss: the original f828/e29 study ended with zero rows, BUILT only/no TestResult, status 13/no ActionResult. No comparison or new full study is inferred. #17884, FUSE mmap and precision gates remain separate.",
+        "nextAction": "Root follows existing executor lease/retention evidence and related supplier issues before another long comparison. Reader pagination is resolved; do not repeat the long study, file duplicate issues or infer missing rows. Keep the full same-worker 24-pair A/A gate before conditional A/B.",
+        "recheckCondition": "Material executor lease/retention evidence or an actual source/prerequisite event; no unchanged long retry.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-27T16:01:57.617996+00:00",
+        "curatedAt": "2026-11-27T17:03:29.842766+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -141929,7 +141997,7 @@
               "image": "gcr.io/flame-public/rbe-ubuntu24-04@sha256:be9853fc45092d2cf2bda3abed30d22182881659a50bf35c7125161d7cfc8a75",
               "baselineArchive": "cb479886af63e2616c04640084fa8d4822a84716b8b6ee2996c2548d68d7a57e/40270884",
               "next": "Meaningful AA-phase/terminal checkpoint (~17:30UTC from pilot; full projection~23:32UTC); no persistent observer. Consume existing client66317/retainedBEP outputs. Service deadline~2026-11-27T00:17:13Z, testbound roughly20min earlier.",
-              "state": "Terminal provider failure; zero attributable new comparisons; no result/exit code"
+              "state": "Terminal: both cursors EOF/no rows; BUILT only/no TestResult; status 13/no ActionResult"
             },
             "realChildBudgetPreflight": {
               "status": "SUCCESS",
@@ -141993,7 +142061,19 @@
               "exitCode": null,
               "lastLog": "Nested target analysis",
               "attributableNewComparisons": 0,
-              "disposition": "Original handle wait closed; no rerun or fresh corpus. Prior independent candidate A/A retained."
+              "disposition": "Original handle wait closed; no rerun or fresh corpus. Prior independent candidate A/A retained.",
+              "logCursorResult": "Both supported cursors followed to EOF",
+              "rowCount": 0,
+              "nestedTarget": "BUILT only",
+              "TestResult": false,
+              "ActionResult": false,
+              "remaining": "Long hosted executor lease loss",
+              "relatedExistingSupplierIssues": [
+                13789,
+                14035
+              ],
+              "duplicateFiling": "None; follow existing supplier issues",
+              "retry": "No long retry"
             }
           },
           "abslDirtyFuseRecovery": {
@@ -142039,7 +142119,19 @@
             "nestedCreatedAtChange": "12:29 live→13:00 final; reconnect/recording cause unproven",
             "workloadTiming": false,
             "matchedAAorAB": false,
-            "disposition": "Long timing held; no retry, weaker gate or equivalence claim"
+            "disposition": "Long timing held; no retry, weaker gate or equivalence claim",
+            "currentReaderAssessment": "Historical snapshot reader omitted the live tail. Past child-marker visibility cannot be reconstructed; do not treat those snapshots as proof that the provider lacked live markers.",
+            "currentBlocker": "Long hosted executor lease loss, not missing API pagination"
+          },
+          "paginatedLiveReader": {
+            "invocation": "9c7515f4-3597-443f-8a4e-1b150f8c113b",
+            "source": "0452ed02dd33cf662143a3a4abfa28a2a9f4b9b6",
+            "supportedAPI": "Existing log API nextChunkId pagination",
+            "chunk": "0001",
+            "liveObservation": "BEGIN while PARTIAL",
+            "terminal": "BEGIN and END after success",
+            "scope": "30-second markers only; no build/test, product loading, workload timing or A/A–A/B",
+            "conclusion": "Reader mismatch resolved; long executor lease/retention remains separate"
           }
         },
         "currentSeries": {
@@ -155919,7 +156011,103 @@
         "body": "Opening-decision scope summary (not a proposed PR description)\n\nThe actual unanswered question is approval to open “Reject unused line-level checklocks annotations” for e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910.\n\nReport line forces/ignores that affect no checked obligation and remove 16 proven redundant annotations without changing executable statements. Generated redundancy findings remain advisory; actual generated lock checks and caller enforcement stay enabled. The exact internal PostFork-callee exception cannot match its real AMD64 missing-lock/release diagnostics. The broader caller-enforcement experiment is separate.\n\nOne canonical894-validator corpus passed (891 fresh,3 cached), covering both target GOARCHs via arch_transition. Each host driver had22 clean cases plus its owning validator. Both independent finding authors cleared the fixes. No duplicate build or new question is needed.\n\nReview command: git show e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
         "reviewCommand": "git show e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910"
       }
+    },
+    {
+      "id": "investigation:fifo-open-generation",
+      "repo": "google/gvisor",
+      "group": "ci-flakes",
+      "title": "Recheck FIFO generations after registering waiters",
+      "head": "fca9e4659b1d6598fa5e75ed04bcb565e62ed20d",
+      "status": "active",
+      "owner": "root",
+      "updatedAt": "2026-11-27T17:03:29.842766+00:00",
+      "summary": "Reviewed FIFO repair fca9e4659 rechecks generations after waiter registration in both open directions. Existing AMD64/ARM64 functional, unit/NoGo and source suites passed; scoped timing remains pending. The recovered FifoOtrunc timeout is consistent with this gap, not proof of the interleaving; no new reproducer/stress result. No human source-publication decision has been asked.",
+      "nextStep": "approved_rebase_queue advances only the assigned timing gate and reports its scope to root before source-publication review. Do not rerun passed suites, treat the recovered timeout as causal proof or create a premature source/DCO question.",
+      "findings": [
+        {
+          "text": "First Pass 3050 had a 300-second FifoTest.FifoOtrunc timeout under systrap_shared; retry passed. The failed/current FIFO source files are identical. A generation-aware outer wait can still lose a transient peer because its registration recheck used counts only. Source review accepts the defensive gap repair; the stack is consistent, not a demonstrated interleaving.",
+          "evidence": [
+            {
+              "label": "Recovered FIFO timeout",
+              "url": "https://buildkite.com/gvisor/first-pass/builds/3050#01a21db6-5d3b-47ba-b487-1d3fbe802694"
+            }
+          ]
+        },
+        {
+          "text": "Related #14849 handles SA_RESTART/interrupted open and is separate from the count-only registration recheck.",
+          "evidence": [
+            {
+              "label": "Separate interrupted-open proposal",
+              "url": "https://github.com/gvisor/gvisor/pull/14849"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Qualified defensive source",
+          "url": "https://github.com/tamird/gvisor/commit/fca9e4659b1d6598fa5e75ed04bcb565e62ed20d"
+        },
+        {
+          "label": "Passed architecture/source qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/46034791027"
+        },
+        {
+          "label": "Passed architecture/source qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/46034792092"
+        },
+        {
+          "label": "Passed architecture/source qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/46034792280"
+        },
+        {
+          "label": "Passed architecture/source qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/46034926387"
+        },
+        {
+          "label": "Passed architecture/source qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/46034931727"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "technicalOwner": "approved_rebase_queue",
+        "sourceHead": "fca9e4659b1d6598fa5e75ed04bcb565e62ed20d",
+        "disposition": "Reviewed FIFO repair fca9e4659 rechecks generations after waiter registration in both open directions. Existing AMD64/ARM64 functional, unit/NoGo and source suites passed; scoped timing remains pending. The recovered FifoOtrunc timeout is consistent with this gap, not proof of the interleaving; no new reproducer/stress result. No human source-publication decision has been asked.",
+        "nextAction": "approved_rebase_queue advances only the assigned timing gate and reports its scope to root before source-publication review. Do not rerun passed suites, treat the recovered timeout as causal proof or create a premature source/DCO question.",
+        "recheckCondition": "Actual scoped timing/control evidence and root final source/publication disposition.",
+        "curatedAt": "2026-11-27T17:03:29.842766+00:00",
+        "qualification": {
+          "native": "fca9e4659b1d6598fa5e75ed04bcb565e62ed20d",
+          "CI": "b4f0dd029f908adf2da3fec6b42d315295d32bc7",
+          "base": "cc5b7474bf134432a4f41a47d37022fc4f05ede6",
+          "runs": {
+            "unitsNogoAMD": 46034791027,
+            "unitsNogoARM": 46034792092,
+            "source": 46034792280,
+            "functionalAMD": 46034926387,
+            "functionalARM": 46034931727
+          },
+          "functionalArchitectures": [
+            "AMD64",
+            "ARM64"
+          ],
+          "existingSuites": "Passed per terminal owner audit",
+          "sourceChecks": "Goimports/Buildifier/spelling PASS",
+          "review": "Accepted per root current handoff",
+          "timing": "Scoped timing pending; no performance clearance",
+          "causalClaim": "No demonstrated interleaving/reproducer or flake-eradication claim"
+        },
+        "DCOExecutionHistory": {
+          "operation": "DCO-bearing local commit",
+          "result": "Automatic approval review rejected before execution under generic human-signoff rule",
+          "retry": false,
+          "standingUserAuthorization": "Remains intact",
+          "qualificationPath": "Unsigned-off qualification allowed by root; final exact source/PR approval/override remains separate and unasked"
+        },
+        "upstreamPublished": false
+      }
     }
   ],
-  "updatedAt": "2026-11-27T16:01:57.617996+00:00"
+  "updatedAt": "2026-11-27T17:03:29.842766+00:00"
 }
