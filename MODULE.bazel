@@ -445,6 +445,7 @@ go_deps.from_file(go_mod = "//:go.mod")
 use_repo(
     go_deps,
     "co_honnef_go_tools",
+    "com_github_aclements_go_moremath",
     "com_github_burntsushi_toml",
     "com_github_cenkalti_backoff",
     "com_github_cilium_ebpf",
@@ -553,6 +554,7 @@ use_repo(
     "org_golang_x_mod",
     "org_golang_x_net",
     "org_golang_x_oauth2",
+    "org_golang_x_perf",
     "org_golang_x_sync",
     "org_golang_x_sys",
     "org_golang_x_telemetry",
@@ -1051,4 +1053,16 @@ http_archive(
     strip_prefix = "_temp/bazel-qualification/artifacts/fifo-archive-candidate",
     type = "zip",
     urls = ["https://api.github.com/repos/tamird/gvisor/actions/artifacts/15218086780/zip"],
+)
+
+go_deps.module(
+    path = "github.com/aclements/go-moremath",
+    sum = "h1:xlwdaKcTNVW4PtpQb8aKA4Pjy0CdJHEqvFbAnvR5m2g=",
+    version = "v0.0.0-20210112150236-f10218a38794",
+)
+
+go_deps.module(
+    path = "golang.org/x/perf",
+    sum = "h1:eIwwPvTmcIzTN2qXPzVy5oOvSX7f6C8S4JG9nSRf+pI=",
+    version = "v0.0.0-20261117185222-4febdb082b2c",
 )
