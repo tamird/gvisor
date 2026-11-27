@@ -1,3 +1,5 @@
+load("@rules_img//img:convert.bzl", "image_flatten")
+load("//website:legacy_parity.bzl", "jekyll_sdk")
 load("@rules_ruby//ruby:defs.bzl", "rb_binary")
 load("//images:defs.bzl", "docker_image")
 load("//tools:defs.bzl", "bzl_library", "pkg_tar")
@@ -303,4 +305,41 @@ yaml_test(
     name = "application_compatibility_test",
     srcs = ["_data/application-compatibility.yml"],
     schema = "//website:application-compatibility.schema.json",
+)
+
+image_flatten(name = "legacy_filesystem", image = "@legacy_jekyll_runtime")
+jekyll_sdk(name = "legacy_sdk", image = ":legacy_filesystem")
+
+genrule(
+    name = "legacy_site",
+    srcs = [':config', ':css', ':docs', ':static', ':syscallmd', '//website/blog:posts', 'legacy_render.rb', 'legacy_html_checks.rb', 'legacy_svg_mime_type.rb', '@legacy_gem_autoprefixer_rails//file', '@legacy_gem_jekyll_autoprefixer//file', '@legacy_gem_jekyll_feed//file', '@legacy_gem_jekyll_inline_svg//file', '@legacy_gem_jekyll_relative_links//file', '@legacy_gem_jekyll_sitemap//file', '@legacy_gem_svg_optimizer//file'],
+    tools = [":legacy_sdk"],
+    outs = ["legacy-site.tgz"],
+    tags = ["manual"],
+    cmd = """
+set -eu
+T=$$(mktemp -d)
+trap 'rm -rf "$$T"' EXIT
+mkdir -p "$$T/input" "$$T/static" "$$T/output/_site"
+tar -xf "$(location :config)" -C "$$T/input"
+tar -xf "$(location :css)" -C "$$T/input"
+tar -xf "$(location :docs)" -C "$$T/input"
+tar -xf "$(location :syscallmd)" -C "$$T/input"
+tar -xf "$(location //website/blog:posts)" -C "$$T/input"
+tar -xf "$(location :static)" -C "$$T/static"
+mkdir -p "$$T/input/_plugins"
+cp "$(location legacy_svg_mime_type.rb)" "$$T/input/_plugins/svg_mime_type.rb"
+find "$$T/input" -type f -exec chmod u+rw {} +
+printf '%s' '{"as_of": "2026-11-27T00:00:00-06:00", "workspace_status": "", "staged": "'"$$T/input"'", "static": "'"$$T/static"'", "gems": ["$(location @legacy_gem_autoprefixer_rails//file)", "$(location @legacy_gem_jekyll_autoprefixer//file)", "$(location @legacy_gem_jekyll_feed//file)", "$(location @legacy_gem_jekyll_inline_svg//file)", "$(location @legacy_gem_jekyll_relative_links//file)", "$(location @legacy_gem_jekyll_sitemap//file)", "$(location @legacy_gem_svg_optimizer//file)"]}' > "$$T/inputs.json"
+SDK=$$(readlink -m "$(location :legacy_sdk)")
+LIB="$$SDK/lib:$$SDK/usr/local/lib:$$SDK/usr/lib"
+export LANG=C.UTF-8
+export GEM_PATH="$$SDK/usr/local/lib/ruby/gems/2.7.0:$$SDK/usr/gem"
+export RUBYLIB="$$SDK/usr/local/lib/ruby/site_ruby/2.7.0:$$SDK/usr/local/lib/ruby/site_ruby/2.7.0/x86_64-linux-musl:$$SDK/usr/local/lib/ruby/site_ruby:$$SDK/usr/local/lib/ruby/vendor_ruby/2.7.0:$$SDK/usr/local/lib/ruby/vendor_ruby/2.7.0/x86_64-linux-musl:$$SDK/usr/local/lib/ruby/vendor_ruby:$$SDK/usr/local/lib/ruby/2.7.0:$$SDK/usr/local/lib/ruby/2.7.0/x86_64-linux-musl"
+"$$SDK/lib/ld-musl-x86_64.so.1" --library-path "$$LIB" "$$SDK/usr/local/bin/ruby" --disable-gems \
+    "$(location legacy_render.rb)" "$$(readlink -m "$$T/inputs.json")" "$$(readlink -m "$$T/output/_site")" \
+    "$$SDK/lib/ld-musl-x86_64.so.1" "$$LIB" "$$SDK/usr/bin/node" "$$(readlink -m "$(location legacy_html_checks.rb)")"
+tar -xf "$(location :static)" -C "$$T/output/_site"
+tar -zcf "$@" -C "$$T/output" .
+""",
 )
