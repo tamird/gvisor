@@ -1,3 +1,4 @@
+load("@rules_ruby//ruby:defs.bzl", "rb_binary")
 load("//images:defs.bzl", "docker_image")
 load("//tools:defs.bzl", "bzl_library", "pkg_tar")
 load("//tools/yamltest:defs.bzl", "yaml_test")
@@ -22,18 +23,9 @@ docker_image(
     ],
 )
 
-# files is the full file system of the generated container.
-#
-# It must collect the all tarballs (produced by the rules below), and run it
-# through the Dockerfile to generate the site. Note that this checks all links,
-# and therefore requires all static content to be present as well.
-#
-# Note that this rule violates most aspects of hermetic builds. However, this
-# works much more reliably than depending on the container_image rules from
-# bazel itself, which are convoluted and seem to have a hard time even finding
-# the toolchain.
+# Render the content and check its links before packaging it.
 genrule(
-    name = "files",
+    name = "site",
     srcs = [
         ":config",
         ":css",
@@ -41,40 +33,77 @@ genrule(
         ":static",
         ":syscallmd",
         "//website/blog:posts",
+    ],
+    outs = ["site.tgz"],
+    cmd = """
+set -eu
+T=$$(mktemp -d)
+trap 'rm -rf "$$T"' EXIT
+mkdir -p "$$T/input" "$$T/output/_site"
+tar -xf "$(location :config)" -C "$$T/input"
+tar -xf "$(location :css)" -C "$$T/input"
+tar -xf "$(location :docs)" -C "$$T/input"
+tar -xf "$(location :syscallmd)" -C "$$T/input"
+tar -xf "$(location //website/blog:posts)" -C "$$T/input"
+find "$$T/input" -type f -exec chmod u+rw {} +
+node=$$(readlink -m "$(location @nodejs//:node_bin)")
+PATH="$$(dirname "$$node"):$$PATH" "$(location :render)" \
+    "$$(readlink -m "$$T/input")" "$$(readlink -m "$$T/output/_site")"
+tar -xf "$(location :static)" -C "$$T/output/_site"
+"$(location :html_checks)" "$$(readlink -m "$$T/output/_site")"
+tar -zcf "$@" -C "$$T/output" .
+""",
+    tags = ["manual"],
+    tools = [
+        ":html_checks",
+        ":render",
+        "@nodejs//:node_bin",
+    ],
+)
+
+# files is the full file system of the generated serving container.
+genrule(
+    name = "files",
+    srcs = [
+        ":site",
         "//website/cmd/server",
         "@google_root_pem//file",
     ],
     outs = ["files.tgz"],
-    cmd = "set -x; " +
-          "T=$$(mktemp -d); " +
-          "mkdir -p $$T/input && " +
-          "mkdir -p $$T/output/_site && " +
-          "tar -xf $(location :config)    -C $$T/input && " +
-          "tar -xf $(location :css)       -C $$T/input && " +
-          "tar -xf $(location :docs)      -C $$T/input && " +
-          "tar -xf $(location :syscallmd) -C $$T/input && " +
-          "tar -xf $(location //website/blog:posts) -C $$T/input && " +
-          "find $$T/input -type f -exec chmod u+rw {} \\; && " +
-          "docker run -i --user $$(id -u):$$(id -g) " +
-          "-v $$(readlink -m $$T/input):/input " +
-          "-v $$(readlink -m $$T/output/_site):/output " +
-          "gvisor.dev/images/jekyll && " +
-          "tar -xf $(location :static) -C $$T/output/_site && " +
-          "docker run -i --user $$(id -u):$$(id -g) " +
-          "-v $$(readlink -m $$T/output/_site):/output " +
-          "gvisor.dev/images/jekyll " +
-          "ruby /checks.rb " +
-          "/output && " +
-          "cp $(location //website/cmd/server) $$T/output/server && " +
-          "mkdir -p $$T/output/etc/ssl && " +
-          "cp $(location @google_root_pem//file) $$T/output/etc/ssl/cert.pem && " +
-          "tar -zcf $@ -C $$T/output . && " +
-          "rm -rf $$T",
-    tags = [
-        "local",
-        "manual",
-        "no-sandbox",
-    ],
+    cmd = """
+set -eu
+T=$$(mktemp -d)
+trap 'rm -rf "$$T"' EXIT
+tar -xf "$(location :site)" -C "$$T"
+cp "$(location //website/cmd/server)" "$$T/server"
+mkdir -p "$$T/etc/ssl"
+cp "$(location @google_root_pem//file)" "$$T/etc/ssl/cert.pem"
+tar -zcf "$@" -C "$$T" .
+""",
+    tags = ["manual"],
+)
+
+exports_files([
+    "Gemfile",
+    "Gemfile.lock",
+])
+
+rb_binary(
+    name = "render",
+    srcs = ["render.rb"],
+    env = {"LC_ALL": "C.UTF-8"},
+    main = "render.rb",
+    tags = ["manual"],
+    deps = ["@website_bundle"],
+)
+
+rb_binary(
+    name = "html_checks",
+    srcs = ["html_checks.rb"],
+    env = {"LC_ALL": "C.UTF-8"},
+    main = "html_checks.rb",
+    tags = ["manual"],
+    deps = ["@website_bundle"],
 )
 
 # static are the purely static parts of the site. These are effectively copied
@@ -123,7 +152,6 @@ pkg_tar(
         "assets/**",
         "_includes/**",
         "_layouts/**",
-        "_plugins/**",
         "_sass/**",
     ]),
     strip_prefix = "./",

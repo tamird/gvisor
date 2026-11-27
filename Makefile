@@ -878,8 +878,8 @@ fscheckpoint-compat-tests: ## Run fscheckpoint backward compatibility tests agai
 ##
 ## Website & documentation helpers.
 ##
-##   The website is built from repository documentation and wrappers, using
-##   using a locally-defined Docker image (see images/jekyll). The following
+##   The website is built from repository documentation and wrappers,
+##   using declared Ruby and Node tools. The following
 ##   variables may be set when using website-push:
 ##     WEBSITE_IMAGE   - The name of the container image.
 ##     WEBSITE_SERVICE - The backend service.
@@ -891,7 +891,7 @@ WEBSITE_SERVICE := gvisordev
 WEBSITE_PROJECT := gvisordev
 WEBSITE_REGION  := us-central1
 
-website-build: load-jekyll ## Build the site image locally.
+website-build: ## Build the site image locally.
 	@$(call run,//website:website,$(WEBSITE_IMAGE))
 .PHONY: website-build
 
