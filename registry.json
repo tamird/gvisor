@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-27T05:10:49.901099+00:00",
+    "updatedAt": "2026-11-27T09:16:26.001122+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -65052,9 +65052,9 @@
       "head": "c53942792678277f0195068aa41ad17620dd9dd1",
       "title": "hostinet: skip the TCP linger wait on task exit",
       "url": "https://github.com/tamird/gvisor/commit/c53942792",
-      "status": "Approved; waiting for #16787",
-      "updatedAt": "2026-11-27T01:14:12.353830+00:00",
-      "summary": "Parent #16787 merged; this distinct child remains unpublished. Landing still skips NoLingerOnProcessExit under hostinet; child adds final-close positive-linger handling and abortive-zero-linger test coverage. Historical evidence retains its original source scope.",
+      "status": "Landed-parent tests passed; performance and review pending",
+      "updatedAt": "2026-11-27T09:16:26.001122+00:00",
+      "summary": "On the merged #16787 parent, all four IPv4/IPv6 positive and abortive linger cases passed on native Linux, hostinet and netstack. The hostinet unit test, Nogo, source lint and strict C++ lint passed.",
       "evidence": [
         {
           "label": "Original Linux, hostinet and netstack XML: 12 passed, zero skips",
@@ -65071,6 +65071,26 @@
         {
           "label": "IPv6 comparison of stock and corrected host networking",
           "url": "https://github.com/tamird/gvisor/actions/runs/41262136830/artifacts/13065543661"
+        },
+        {
+          "label": "Landed-parent candidate",
+          "url": "https://github.com/tamird/gvisor/commit/fc6993573a8fa1d47100d11e333dff8475637592"
+        },
+        {
+          "label": "12 process-exit syscall cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45932844313"
+        },
+        {
+          "label": "Hostinet unit test and Nogo",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45932844393"
+        },
+        {
+          "label": "C++ lint",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45941961082"
+        },
+        {
+          "label": "Source lint",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45941960331"
         }
       ],
       "settledReviews": [
@@ -65089,10 +65109,10 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "c53942792678277f0195068aa41ad17620dd9dd1",
-        "observedAt": "2026-11-09T23:56:20+00:00",
-        "disposition": "Parent #16787 merged; this distinct child remains unpublished. Landing still skips NoLingerOnProcessExit under hostinet; child adds final-close positive-linger handling and abortive-zero-linger test coverage. Historical evidence retains its original source scope.",
-        "nextAction": "Prepare this landed-parent replay, replace historical non-ABI Linux implementation citations in source/record with retained black-box evidence, add authorized DCO, qualify the current process-exit/abortive tests in native/hostinet/netstack and affectedNoGo/source inputs, and perform final proportional source review before applying the existing openinggrant. No newquestion solelytoaskwhether16787landed.",
+        "sourceHead": "fc6993573a8fa1d47100d11e333dff8475637592",
+        "observedAt": "2026-11-27T09:16:26.001122+00:00",
+        "disposition": "The landed-parent candidate is available through its qualification tag. The original proposal branch still points to c53942792.",
+        "nextAction": "Assess process exit with open host TCP sockets and default linger, then complete independent review before opening under the existing conditional approval.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16787"
         ],
@@ -65107,8 +65127,8 @@
           "recheckCondition": "Exact ref/head change, canonical PR feedback/check/import or terminal-state change, dependency landing or contributor decision.",
           "owner": "root"
         },
-        "technicalOwner": "Agent",
-        "recheckCondition": "Root allocation for current landed-parent qualification or actual source/publication decision.",
+        "technicalOwner": "approved_rebase_queue",
+        "recheckCondition": "A workload-relevant performance result or a final review finding.",
         "landedParentAssessment": {
           "source": "c53942792678277f0195068aa41ad17620dd9dd1",
           "liveRef": "refs/heads/proposal/hostinet-exit-linger",
@@ -154941,5 +154961,5 @@
       "inactive": true
     }
   ],
-  "updatedAt": "2026-11-27T05:10:49.901099+00:00"
+  "updatedAt": "2026-11-27T09:16:26.001122+00:00"
 }
