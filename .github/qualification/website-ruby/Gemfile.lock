@@ -16,10 +16,10 @@ GEM
     execjs (2.7.0)
     ffi (1.12.2)
     forwardable-extended (2.6.0)
-    html-proofer (3.15.3)
+    html-proofer (3.19.3)
       addressable (~> 2.3)
       mercenary (~> 0.3)
-      nokogumbo (~> 2.0)
+      nokogiri (~> 1.12)
       parallel (~> 1.3)
       rainbow (~> 3.0)
       typhoeus (~> 1.3)
@@ -57,15 +57,31 @@ GEM
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
     mercenary (0.3.6)
-    mini_portile2 (2.4.0)
-    nokogiri (1.10.9)
-      mini_portile2 (~> 2.4.0)
-    nokogumbo (2.0.2)
-      nokogiri (~> 1.8, >= 1.8.4)
+    mini_portile2 (2.8.9)
+    nokogiri (1.19.7)
+      mini_portile2 (~> 2.8.2)
+      racc (~> 1.4)
+    nokogiri (1.19.7-aarch64-linux-gnu)
+      racc (~> 1.4)
+    nokogiri (1.19.7-aarch64-linux-musl)
+      racc (~> 1.4)
+    nokogiri (1.19.7-arm-linux-gnu)
+      racc (~> 1.4)
+    nokogiri (1.19.7-arm-linux-musl)
+      racc (~> 1.4)
+    nokogiri (1.19.7-arm64-darwin)
+      racc (~> 1.4)
+    nokogiri (1.19.7-x86_64-darwin)
+      racc (~> 1.4)
+    nokogiri (1.19.7-x86_64-linux-gnu)
+      racc (~> 1.4)
+    nokogiri (1.19.7-x86_64-linux-musl)
+      racc (~> 1.4)
     parallel (1.19.1)
     pathutil (0.16.2)
       forwardable-extended (~> 2.6)
     public_suffix (4.0.5)
+    racc (1.8.1)
     rainbow (3.0.0)
     rb-fsevent (0.10.4)
     rb-inotify (0.10.1)
@@ -83,8 +99,15 @@ GEM
     yell (2.2.2)
 
 PLATFORMS
+  aarch64-linux-gnu
+  aarch64-linux-musl
+  arm-linux-gnu
+  arm-linux-musl
+  arm64-darwin
   ruby
-  x86_64-linux
+  x86_64-darwin
+  x86_64-linux-gnu
+  x86_64-linux-musl
 
 DEPENDENCIES
   addressable (= 2.7.0)
@@ -97,7 +120,7 @@ DEPENDENCIES
   execjs (= 2.7.0)
   ffi (= 1.12.2)
   forwardable-extended (= 2.6.0)
-  html-proofer (= 3.15.3)
+  html-proofer (= 3.19.3)
   http_parser.rb (= 0.6.0)
   i18n (= 1.8.2)
   jekyll (= 4.0.0)
@@ -109,12 +132,12 @@ DEPENDENCIES
   liquid (= 4.0.3)
   listen (= 3.3.0)
   mercenary (= 0.3.6)
-  mini_portile2 (= 2.4.0)
-  nokogiri (= 1.10.9)
-  nokogumbo (= 2.0.2)
+  mini_portile2 (= 2.8.9)
+  nokogiri (= 1.19.7)
   parallel (= 1.19.1)
   pathutil (= 0.16.2)
   public_suffix (= 4.0.5)
+  racc (= 1.8.1)
   rainbow (= 3.0.0)
   rb-fsevent (= 0.10.4)
   rb-inotify (= 0.10.1)
@@ -138,7 +161,7 @@ CHECKSUMS
   execjs (2.7.0) sha256=e1fae0c5c831934c47d92363b4ea66ef2951350ab91b5d8d3174342b9c2ee5fb
   ffi (1.12.2) sha256=048ad01d5369f67075f943c16f1058f10663af2a66eedb87d921316ba1828e82
   forwardable-extended (2.6.0) sha256=1bec948c469bbddfadeb3bd90eb8c85f6e627a412a3e852acfd7eaedbac3ec97
-  html-proofer (3.15.3) sha256=d1eef0ec692b6480d5630bfa18480fdee5007910d9c3ff9c85488af3b3f94ea1
+  html-proofer (3.19.3) sha256=ee4b2b6da6998e824c4e3b4c4dc1c7a747ff44e61de1a65a305cf261d40b5dd3
   http_parser.rb (0.6.0) sha256=f11d0aec50ef26a7d1f991e627ac88acdb5979282aeba7a5c3be6ce0636ed196
   i18n (1.8.2) sha256=95cf147081cc6f1dbfb32a8f29a03afe8b0f4da6a300d37d34e0f74a6868994b
   jekyll (4.0.0) sha256=4a1dc48895d525bfb98cd562bf03ab6dd2727b5795360877c90e12670b9fec3a
@@ -150,12 +173,20 @@ CHECKSUMS
   liquid (4.0.3) sha256=7e15a957fbeb424dec15b52311880524954ce6e384ba9171e21ff98f142c0f7e
   listen (3.3.0) sha256=0f91c5287358feee216f41e00a5b70ec125dd5c1d8fe51a014e864a29842041f
   mercenary (0.3.6) sha256=2a084b18f5692c86a633e185d5311ba6d11fc46c802eb414ae05368178078a82
-  mini_portile2 (2.4.0) sha256=7e178a397ad62bb8a96977986130dc81f1b13201c6dd95a48bd8cec1dda5f797
-  nokogiri (1.10.9) sha256=d562108c5cdf7e9208c267107a0a54581d868689aefed9c5480898bb4033478a
-  nokogumbo (2.0.2) sha256=3acd625616ec8505fe9c1b22e100f834180419acb109ee6a7b20d8bce5b5b26b
+  mini_portile2 (2.8.9) sha256=0cd7c7f824e010c072e33f68bc02d85a00aeb6fce05bb4819c03dfd3c140c289
+  nokogiri (1.19.7) sha256=abe94507c54cb18f872777b16bdca4aad32b1abdc4c52fe843f1c80fbdf992b8
+  nokogiri (1.19.7-aarch64-linux-gnu) sha256=8f5e15d299602456406e1f03a9f3456cceb33a0722811e818d2ee2214eb4c84a
+  nokogiri (1.19.7-aarch64-linux-musl) sha256=efe0c3602e6e54521bc21c681930ce5568e2d11203de17400710b2b3ca2e4cb4
+  nokogiri (1.19.7-arm-linux-gnu) sha256=7fd1907125691aa89e838cc91161761c758b4e17bb32f0dd9b5515a82cc759af
+  nokogiri (1.19.7-arm-linux-musl) sha256=28d0ff0c87b6bb2e56580323a6fb049d5d4a02b94f0958fdd47e9ac146991c77
+  nokogiri (1.19.7-arm64-darwin) sha256=f27d7f25f4873fbc3aa35a2cc2fb680c98555fec1925348da439d0869d541142
+  nokogiri (1.19.7-x86_64-darwin) sha256=508e81e8c5f84aaa240dce981bf1c43faae60808726f0ce7024ee92effc5cafe
+  nokogiri (1.19.7-x86_64-linux-gnu) sha256=25865ccb462f714e712fdf8906fde07849cb6704a808e3d629d75baa5af5dd3b
+  nokogiri (1.19.7-x86_64-linux-musl) sha256=464d1f3dfb0d53cf54c0c6a7e23e8e91cf68ec3cafc2b27dc4a7682f2d9bf546
   parallel (1.19.1) sha256=c27ee2925978e8100f49063fd60f625522a6e96b08541ac26e7f2a72d594518a
   pathutil (0.16.2) sha256=e43b74365631cab4f6d5e4228f812927efc9cb2c71e62976edcb252ee948d589
   public_suffix (4.0.5) sha256=efbc976b8f8cd7e2f9387b41ad4dc5447bcc7e862cf3afd909f13b0048a3dc6f
+  racc (1.8.1) sha256=4a7f6929691dbec8b5209a0b373bc2614882b55fc5d2e447a21aaa691303d62f
   rainbow (3.0.0) sha256=13ce4ffc3c94fb7a842117ecabdcdc5ff7fa27bec15ea44137b9f9abe575622d
   rb-fsevent (0.10.4) sha256=0741522cac72db1fc15250453b557a57f896a60ede7ba64f73e281688fd42bcd
   rb-inotify (0.10.1) sha256=050062d4f31d307cca52c3f6a7f4b946df8de25fc4bd373e1a5142e41034a7ca
