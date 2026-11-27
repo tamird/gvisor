@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-27T03:13:18.455902+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-26T17:23:22.513386+00:00",
+  "registryDate": "2026-11-27T05:10:49.901099+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -466872,10 +466872,10 @@
       "number": 18012,
       "head": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
       "sourceNumber": 18012,
-      "owner": "Agent",
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABal6q7A",
-      "needsTriage": true,
+      "needsTriage": false,
       "url": "https://github.com/google/gvisor/pull/18012#pullrequestreview-6079556332",
       "author": "EtiennePerot",
       "updatedAt": "2026-11-26T19:30:10Z",
@@ -478831,7 +478831,7 @@
         "since": "2026-11-25T22:41:21.827202+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T17:23:22.513386+00:00"
+        "observedAt": "2026-11-27T05:10:49.901099+00:00"
       }
     },
     "pr:16445": {
@@ -480393,7 +480393,7 @@
         "since": "2026-11-26T05:43:54.635646+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T17:23:22.513386+00:00"
+        "observedAt": "2026-11-27T05:10:49.901099+00:00"
       }
     },
     "pr:16843": {
@@ -481982,6 +481982,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-27T03:12:39.037229+00:00"
+      },
+      "contributor-review": {
+        "scope": "https://github.com/google/gvisor/pull/17264",
+        "since": "2026-11-27T05:10:49.901099+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-27T05:10:49.901099+00:00"
       }
     },
     "pr:17265": {
@@ -482560,6 +482567,13 @@
         "basis": "observed",
         "qualifier": "Maintainer approvals: 1, needs 2.",
         "observedAt": "2026-11-27T03:12:39.037229+00:00"
+      },
+      "contributor-review": {
+        "scope": "1948bb8b6f05ef755b94649f726704de5d95610c",
+        "since": "2026-11-27T05:10:49.901099+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-27T05:10:49.901099+00:00"
       }
     },
     "pr:17480": {
@@ -483135,6 +483149,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-27T03:12:39.037229+00:00"
+      },
+      "contributor-review": {
+        "scope": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
+        "since": "2026-11-27T05:10:49.901099+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-27T05:10:49.901099+00:00"
       }
     },
     "pr:18013": {
@@ -483796,7 +483817,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T17:23:22.513386+00:00"
+        "observedAt": "2026-11-27T05:10:49.901099+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -483805,7 +483826,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T17:23:22.513386+00:00"
+        "observedAt": "2026-11-27T05:10:49.901099+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -483814,7 +483835,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T17:23:22.513386+00:00"
+        "observedAt": "2026-11-27T05:10:49.901099+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -483823,7 +483844,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T17:23:22.513386+00:00"
+        "observedAt": "2026-11-27T05:10:49.901099+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -483832,7 +483853,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T17:23:22.513386+00:00"
+        "observedAt": "2026-11-27T05:10:49.901099+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -483841,7 +483862,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T17:23:22.513386+00:00"
+        "observedAt": "2026-11-27T05:10:49.901099+00:00"
       }
     },
     "branch:declared-jekyll-site": {
@@ -483850,7 +483871,7 @@
         "since": "2026-11-26T05:43:54.635646+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T17:23:22.513386+00:00"
+        "observedAt": "2026-11-27T05:10:49.901099+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -483859,7 +483880,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T17:23:22.513386+00:00"
+        "observedAt": "2026-11-27T05:10:49.901099+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -483868,7 +483889,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T17:23:22.513386+00:00"
+        "observedAt": "2026-11-27T05:10:49.901099+00:00"
       }
     },
     "issue:17832": {
@@ -483877,7 +483898,7 @@
         "since": "2026-11-26T05:43:54.635646+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T17:23:22.513386+00:00"
+        "observedAt": "2026-11-27T05:10:49.901099+00:00"
       }
     },
     "investigation:ci-flakes": {
@@ -483886,7 +483907,7 @@
         "since": "2026-11-26T17:23:22.513386+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T17:23:22.513386+00:00"
+        "observedAt": "2026-11-27T05:10:49.901099+00:00"
       }
     },
     "investigation:ci-benchmark-fuse-device": {
@@ -483895,7 +483916,7 @@
         "since": "2026-11-25T21:11:04.741354+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-26T17:23:22.513386+00:00"
+        "observedAt": "2026-11-27T05:10:49.901099+00:00"
       }
     }
   },

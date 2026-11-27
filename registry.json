@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-26T17:23:22.513386+00:00",
+    "updatedAt": "2026-11-27T05:10:49.901099+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2538,7 +2538,25 @@
           }
         ],
         "providerHead": "d5d4d36bb4ff63e5750adf5a1306ffa7586ff754",
-        "nativeReviewRequests": []
+        "nativeReviewRequests": [],
+        "firstPassAdmission": {
+          "head": "d5d4d36bb4ff63e5750adf5a1306ffa7586ff754",
+          "build": 3032,
+          "url": "https://buildkite.com/gvisor/first-pass/builds/3032",
+          "latestObservedCheck": {
+            "url": "https://buildkite.com/gvisor/first-pass/builds/3032",
+            "state": "FAILURE"
+          },
+          "historical": false,
+          "exitStatus": 80,
+          "stackErrored": true,
+          "agentAssigned": false,
+          "stackErrorDetail": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+          "classification": "External author rolling30-day quota; no source/test execution",
+          "provenance": "Root inspected each build separately through canonical reader data/jobs structured records; empty logs are not the diagnosis.",
+          "owner": "existing root/provider quota workstream",
+          "nextAction": "Recheck quota availability or a genuine new CI event; no unchanged retry or outreach."
+        }
       },
       "head": "d5d4d36bb4ff63e5750adf5a1306ffa7586ff754",
       "evidence": [
@@ -6998,7 +7016,25 @@
         "nativeReviewRequests": [
           "nybidari",
           "trantoji"
-        ]
+        ],
+        "firstPassAdmission": {
+          "head": "40d658b147fd3ab5d10a0d37c4a5fd56c121f3fe",
+          "build": 3030,
+          "url": "https://buildkite.com/gvisor/first-pass/builds/3030",
+          "latestObservedCheck": {
+            "url": "https://buildkite.com/gvisor/first-pass/builds/3030",
+            "state": "FAILURE"
+          },
+          "historical": false,
+          "exitStatus": 80,
+          "stackErrored": true,
+          "agentAssigned": false,
+          "stackErrorDetail": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+          "classification": "External author rolling30-day quota; no source/test execution",
+          "provenance": "Root inspected each build separately through canonical reader data/jobs structured records; empty logs are not the diagnosis.",
+          "owner": "existing root/provider quota workstream",
+          "nextAction": "Recheck quota availability or a genuine new CI event; no unchanged retry or outreach."
+        }
       },
       "head": "40d658b147fd3ab5d10a0d37c4a5fd56c121f3fe",
       "evidence": [
@@ -17325,7 +17361,25 @@
         "nativeReviewRequests": [
           "fvoznika",
           "konstantin-s-bogom"
-        ]
+        ],
+        "firstPassAdmission": {
+          "head": "e1e2d03562b5215e8815237efb607627fe2c6033",
+          "build": 3031,
+          "url": "https://buildkite.com/gvisor/first-pass/builds/3031",
+          "latestObservedCheck": {
+            "url": "https://buildkite.com/gvisor/first-pass/builds/3031",
+            "state": "FAILURE"
+          },
+          "historical": false,
+          "exitStatus": 80,
+          "stackErrored": true,
+          "agentAssigned": false,
+          "stackErrorDetail": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+          "classification": "External author rolling30-day quota; no source/test execution",
+          "provenance": "Root inspected each build separately through canonical reader data/jobs structured records; empty logs are not the diagnosis.",
+          "owner": "existing root/provider quota workstream",
+          "nextAction": "Recheck quota availability or a genuine new CI event; no unchanged retry or outreach."
+        }
       },
       "dcoAmendment": {
         "oldHead": "80bbb7478312a10e7335a5475c9683a76d5c17d6",
@@ -62548,9 +62602,9 @@
       "head": "daa2d24389d1fea28197add328e4e875488c306d",
       "title": "Honor IN_MASK_CREATE when adding inotify watches",
       "url": "https://github.com/google/gvisor/pull/16842",
-      "updatedAt": "2026-11-26T07:41:31.491746+00:00",
+      "updatedAt": "2026-11-26T23:11:59.045396+00:00",
       "status": "open",
-      "summary": "Exact export #17398 at 414a285f63 has eight latest unretried shard-4 integration timeouts, all naming TestSudo at 15 minutes. Four separate checkout HTTP403 failures also occurred before project execution. Its ancestry lacks rollback #17412 and fixed reland #17556. Public evidence supports refreshing the owning integration base; separate private internal failures remain undiagnosed.",
+      "summary": "Source daa2d2438 and the Nov10 explanation reply to Alexander are approved and public. A distinct pending outreach comment asks importing maintainers to refresh the three stale integrations onto #17556 and rerun integration tests; source approval does not authorize that comment. Exact #17398 evidence retains eight TestSudo timeouts and four independent checkout403s.",
       "evidence": [
         {
           "label": "Six native Linux syscall cases, three kernfs tests and both Nogo checks passed on the rebased source",
@@ -62651,7 +62705,7 @@
         "owner": "root",
         "sourceHead": "daa2d24389d1fea28197add328e4e875488c306d",
         "observedAt": "2026-11-17T19:01:06.487079+00:00",
-        "disposition": "Exact export #17398 at 414a285f63 has eight latest unretried shard-4 integration timeouts, all naming TestSudo at 15 minutes. Four separate checkout HTTP403 failures also occurred before project execution. Its ancestry lacks rollback #17412 and fixed reland #17556. Public evidence supports refreshing the owning integration base; separate private internal failures remain undiagnosed.",
+        "disposition": "Source daa2d2438 and the Nov10 explanation reply to Alexander are approved and public. A distinct pending outreach comment asks importing maintainers to refresh the three stale integrations onto #17556 and rerun integration tests; source approval does not authorize that comment. Exact #17398 evidence retains eight TestSudo timeouts and four independent checkout403s.",
         "nextAction": "Importing owner refreshes the existing internal/export integration onto the #17556 fix, then qualifies the affected integration partition. Root awaits the single proposed comment on #16842 covering all three imports; do not duplicate #16854’s existing generic reimport request. Preserve exact source/DCO-import coordination; no mount/eventfd/inotify patch, unchanged-head retry or export-branch push.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/aab0e06b4",
@@ -62701,7 +62755,14 @@
           "checkout403": 4,
           "fixAncestryAbsent": true
         },
-        "privateCause": "Unknown for internal36128/36132/36082; not equated with public timeouts"
+        "privateCause": "Unknown for internal36128/36132/36082; not equated with public timeouts",
+        "sourceApprovalScope": {
+          "head": "daa2d24389d1fea28197add328e4e875488c306d",
+          "state": "Settled and public",
+          "scope": "Move the inotify mask error explanation beside its check; already-posted Nov10 reply to Alexander",
+          "postedURL": "https://github.com/google/gvisor/pull/16842#discussion_r4529053275",
+          "distinctOutreach": "Pending single comment asking importing maintainers to refresh #16842/#16594/#16854 onto #17556 and rerun integration. No public send."
+        }
       },
       "dcoCoordination": {
         "owner": "root",
@@ -62726,7 +62787,7 @@
         "head": "daa2d24389d1fea28197add328e4e875488c306d",
         "url": "https://github.com/google/gvisor/pull/16842",
         "title": "Request the three imports include the TestSudo fix",
-        "summary": "Actual submitted one-comment outreach question; unanswered. No public comment sent.",
+        "summary": "Separate pending outreach only: request refreshing #16842/#16594/#16854 integrations onto #17556 and rerunning integration. daa2d2438 source and the Nov10 Alexander reply are already approved and delivered; they do not authorize this new comment.",
         "body": "The import builds for this PR, #16594 and #16854 all timed out in TestSudo on bases that predate its fix in #17556. Could you refresh the three imports onto a base containing that fix and rerun the affected integration tests?\n\nPosted by Codex on behalf of @tamird."
       }
     },
@@ -64794,9 +64855,9 @@
       "head": "0e0295b65ea33e97c07545f04e32eee873d7fc4d",
       "title": "netstack: end a lingering close when the peer acknowledges the FIN",
       "url": "https://github.com/google/gvisor/pull/16787",
-      "status": "open",
-      "updatedAt": "2026-11-26T17:20:00.247741+00:00",
-      "summary": "Tamir admitted the verified clean-merge head 0e0295b65 to upstream CI. First Pass and maintainer checks passed; actual main build56027 is pending. Existing auto-merge remains unchanged.",
+      "status": "merged",
+      "updatedAt": "2026-11-26T21:04:20.239849+00:00",
+      "summary": "Merged at 2026-11-26T17:58:08Z after main56027 passed. The trust-label question and source lifecycle are complete.",
       "evidence": [
         {
           "label": "Author’s offer to include the tested commit",
@@ -64850,127 +64911,137 @@
         }
       ],
       "followup": {
-        "owner": "root",
-        "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
-        "providerHead": "0e0295b65ea33e97c07545f04e32eee873d7fc4d",
-        "mergeable": "MERGEABLE",
-        "sourceHead": "0e0295b65ea33e97c07545f04e32eee873d7fc4d",
-        "observedAt": "2026-11-26T02:27:01.977045+00:00",
-        "disposition": "Tamir admitted the verified clean-merge head 0e0295b65 to upstream CI. First Pass and maintainer checks passed; actual main build56027 is pending. Existing auto-merge remains unchanged.",
-        "nextAction": "Follow actual Pipeline56027 and substantive lifecycle/review events; the trust-label question is fulfilled.",
-        "recheckCondition": "Actual Pipeline terminal or source/lifecycle event.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/16787",
-          "https://github.com/google/gvisor/pull/16787#pullrequestreview-6029118218",
-          "https://buildkite.com/gvisor/pipeline/builds/55735",
-          "https://github.com/gvisor/gvisor/pull/17735",
-          "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321",
-          "https://github.com/google/gvisor/pull/16787#pullrequestreview-6045704912",
-          "https://buildkite.com/gvisor/pipeline/builds/55839",
-          "https://buildkite.com/gvisor/pipeline/builds/55839#01a20efa-ce5e-4869-8cef-4743a0da24eb",
-          "https://github.com/google/gvisor/pull/16787#issuecomment-7194263130",
-          "https://buildkite.com/gvisor/pipeline/builds/56027"
+        "disposition": "Merged at 2026-11-26T17:58:08Z after main56027 passed. The trust-label question and source lifecycle are complete.",
+        "completionHistory": [
+          {
+            "owner": "root",
+            "currentStateObservedAt": "2026-11-18T02:49:56.432216+00:00",
+            "providerHead": "0e0295b65ea33e97c07545f04e32eee873d7fc4d",
+            "mergeable": "MERGEABLE",
+            "sourceHead": "0e0295b65ea33e97c07545f04e32eee873d7fc4d",
+            "observedAt": "2026-11-26T02:27:01.977045+00:00",
+            "disposition": "Tamir admitted the verified clean-merge head 0e0295b65 to upstream CI. First Pass and maintainer checks passed; actual main build56027 is pending. Existing auto-merge remains unchanged.",
+            "nextAction": "Follow actual Pipeline56027 and substantive lifecycle/review events; the trust-label question is fulfilled.",
+            "recheckCondition": "Actual Pipeline terminal or source/lifecycle event.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/16787",
+              "https://github.com/google/gvisor/pull/16787#pullrequestreview-6029118218",
+              "https://buildkite.com/gvisor/pipeline/builds/55735",
+              "https://github.com/gvisor/gvisor/pull/17735",
+              "https://github.com/gvisor/gvisor/commit/909c3dce2edc3a9ff9525168d9c71e17a91f7321",
+              "https://github.com/google/gvisor/pull/16787#pullrequestreview-6045704912",
+              "https://buildkite.com/gvisor/pipeline/builds/55839",
+              "https://buildkite.com/gvisor/pipeline/builds/55839#01a20efa-ce5e-4869-8cef-4743a0da24eb",
+              "https://github.com/google/gvisor/pull/16787#issuecomment-7194263130",
+              "https://buildkite.com/gvisor/pipeline/builds/56027"
+            ],
+            "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
+            "curatedAt": "2026-11-26T17:20:00.247741+00:00",
+            "ownAuthorDCOLineage": {
+              "observedAt": "2026-11-18T11:43:42.194827+00:00",
+              "pr": 16787,
+              "old": "65a40ff9c6e750d8d9b3dc0cb0e3fdc02dee6309",
+              "new": "6869e8002ace5d787ef464938b49ba215fbd1693",
+              "sameTree": true,
+              "oldTree": "7d2de909126392b3d24ee29917cfe9d9ba645135",
+              "newTree": "7d2de909126392b3d24ee29917cfe9d9ba645135",
+              "sameParents": true,
+              "oldParents": [
+                "7d1b049f5d541992b47cc38cf564025908a9ed7b"
+              ],
+              "newParents": [
+                "7d1b049f5d541992b47cc38cf564025908a9ed7b"
+              ],
+              "sameAuthorAndDate": true,
+              "oldAuthor": {
+                "name": "Aditya Merchant",
+                "email": "adityamerchant08@gmail.com",
+                "date": "2026-10-31T18:50:24Z"
+              },
+              "newAuthor": {
+                "name": "Aditya Merchant",
+                "email": "adityamerchant08@gmail.com",
+                "date": "2026-10-31T18:50:24Z"
+              },
+              "oldCommitter": {
+                "name": "Aditya Merchant",
+                "email": "adityamerchant08@gmail.com",
+                "date": "2026-11-08T04:05:30Z"
+              },
+              "newCommitter": {
+                "name": "Aditya Merchant",
+                "email": "adityamerchant08@gmail.com",
+                "date": "2026-11-18T11:06:06Z"
+              },
+              "messageDelta": [
+                "--- 65a40ff9c6e750d8d9b3dc0cb0e3fdc02dee6309",
+                "+++ 6869e8002ace5d787ef464938b49ba215fbd1693",
+                "@@ -35,3 +35,5 @@",
+                " ",
+                " Fixes #16783",
+                " Updates #3663",
+                "+",
+                "+Signed-off-by: Aditya Merchant <adityamerchant08@gmail.com>"
+              ],
+              "oldMessage": "netstack: end a lingering close when the peer acknowledges the FIN\n\nWith a nonzero SO_LINGER timeout, sock.Release waits for EventHUp or\nEventErr after it closes a TCP endpoint. Its comment says that it waits\nonly while the endpoint is in FIN-WAIT-1, CLOSING or LAST-ACK, but the\nendpoint notifies these events only when it reaches TIME-WAIT or\nCLOSED, or fails, and not when the peer acknowledges our FIN in\nFIN-WAIT-1. #4702 removed the notification on entry to FIN-WAIT-2 that\nthis wait relied on. So while the peer keeps its side open, close(2)\nblocks for the whole linger timeout, although the FIN was acknowledged\nat once. Linux waits in sk_stream_wait_close only while\nsk_stream_closing() is true, that is in FIN-WAIT-1, CLOSING or\nLAST-ACK, and tcp_rcv_state_process wakes the waiter when it moves the\nsocket to FIN-WAIT-2.\n\nNotify waiter.EventInternal when the peer acknowledges our FIN in\nFIN-WAIT-1, and make Release wait until the endpoint is in none of\nthese states, the timeout expires or the task is interrupted. A close\nin FIN-WAIT-2 or TIME-WAIT, such as one after shutdown(SHUT_WR), now\nreturns at once instead of after the timeout. EventInternal is not a\npoll(2) event, so poll and epoll waiters do not see it.\n\nAlso do not linger when the task is exiting. inet_release passes a\nzero timeout to tcp_close when the current task has PF_EXITING set,\nwhich corresponds to TaskExitInitiated. Before this change, a process\nthat exited while it held such a socket was reaped only after the\nlinger timeout.\n\nThe zero-timeout (abortive) close does not change.\n\nThe new packetimpact test TestTCPLingerStates closes a socket with a\nnonzero SO_LINGER timeout in each state from ESTABLISHED to TIME-WAIT,\non Linux and on netstack. These include the FIN-WAIT-2, CLOSE-WAIT,\nCLOSING and LAST-ACK states that #3663 asks to test.\n\nFixes #16783\nUpdates #3663",
+              "newMessage": "netstack: end a lingering close when the peer acknowledges the FIN\n\nWith a nonzero SO_LINGER timeout, sock.Release waits for EventHUp or\nEventErr after it closes a TCP endpoint. Its comment says that it waits\nonly while the endpoint is in FIN-WAIT-1, CLOSING or LAST-ACK, but the\nendpoint notifies these events only when it reaches TIME-WAIT or\nCLOSED, or fails, and not when the peer acknowledges our FIN in\nFIN-WAIT-1. #4702 removed the notification on entry to FIN-WAIT-2 that\nthis wait relied on. So while the peer keeps its side open, close(2)\nblocks for the whole linger timeout, although the FIN was acknowledged\nat once. Linux waits in sk_stream_wait_close only while\nsk_stream_closing() is true, that is in FIN-WAIT-1, CLOSING or\nLAST-ACK, and tcp_rcv_state_process wakes the waiter when it moves the\nsocket to FIN-WAIT-2.\n\nNotify waiter.EventInternal when the peer acknowledges our FIN in\nFIN-WAIT-1, and make Release wait until the endpoint is in none of\nthese states, the timeout expires or the task is interrupted. A close\nin FIN-WAIT-2 or TIME-WAIT, such as one after shutdown(SHUT_WR), now\nreturns at once instead of after the timeout. EventInternal is not a\npoll(2) event, so poll and epoll waiters do not see it.\n\nAlso do not linger when the task is exiting. inet_release passes a\nzero timeout to tcp_close when the current task has PF_EXITING set,\nwhich corresponds to TaskExitInitiated. Before this change, a process\nthat exited while it held such a socket was reaped only after the\nlinger timeout.\n\nThe zero-timeout (abortive) close does not change.\n\nThe new packetimpact test TestTCPLingerStates closes a socket with a\nnonzero SO_LINGER timeout in each state from ESTABLISHED to TIME-WAIT,\non Linux and on netstack. These include the FIN-WAIT-2, CLOSE-WAIT,\nCLOSING and LAST-ACK states that #3663 asks to test.\n\nFixes #16783\nUpdates #3663\n\nSigned-off-by: Aditya Merchant <adityamerchant08@gmail.com>",
+              "classification": "Own-author DCO-only commit-metadata amendment; no source-tree or baseline change",
+              "historicalReviewCodeBindingPreserved": true,
+              "existingReviewAndQualificationGatesWaived": false,
+              "currentExactHeadVerified": true,
+              "currentState": "OPEN",
+              "currentMergeability": "MERGEABLE",
+              "currentDCO": "SUCCESS",
+              "currentGitHubWorkflowChecks": "SUCCESS",
+              "generateRun": {
+                "id": 44291586543,
+                "conclusion": "SUCCESS",
+                "url": "https://github.com/gvisor/gvisor/actions/runs/44291586543"
+              },
+              "firstPass": {
+                "number": 1701,
+                "state": "PENDING",
+                "statusSource": "GitHub current exact-head rollup",
+                "url": "https://buildkite.com/gvisor/first-pass/builds/1701"
+              },
+              "metadataOnly": true,
+              "reviewsAndGatesPreserved": true
+            },
+            "authorPipelineRequest": {
+              "url": "https://github.com/google/gvisor/pull/16787#issuecomment-7194263130",
+              "author": "adios-404",
+              "at": "2026-11-26T14:05:29Z",
+              "head": "0e0295b65ea33e97c07545f04e32eee873d7fc4d",
+              "request": "Start Pipeline through a new approval or ready-to-test label",
+              "authorClaims": "Master merged cleanly, PR edits unchanged and local TCP/native syscall tests passed; approvals/auto-merge retained. Author-reported, not independent source or runtime qualification.",
+              "disposition": "Root review/CI coordination only; no label, approval, merge or outreach performed."
+            },
+            "cleanMergeVerification": {
+              "previousReviewed": "6869e8002ace5d787ef464938b49ba215fbd1693",
+              "master": "8075b38443e475fd4e12ef9d423e2cd460e2396d",
+              "mergeBase": "7d1b049",
+              "recomputedTree": "8cecf298",
+              "head": "0e0295b65ea33e97c07545f04e32eee873d7fc4d",
+              "verifiedBy": "Root independently recomputed clean merge; exact tree matches public head.",
+              "limits": "No new source/test/performance qualification or CI trust grant inferred."
+            },
+            "upstreamCITrust": {
+              "label": "ready to test",
+              "labelExists": true,
+              "present": false,
+              "FirstPass": 2968,
+              "maintainerApproval": "SUCCESS",
+              "fullPipeline": "missing",
+              "autoMerge": "Already enabled; unchanged by us"
+            }
+          }
         ],
-        "ownershipReconciledAt": "2026-11-18T02:57:42.449215+00:00",
-        "curatedAt": "2026-11-26T17:20:00.247741+00:00",
-        "ownAuthorDCOLineage": {
-          "observedAt": "2026-11-18T11:43:42.194827+00:00",
-          "pr": 16787,
-          "old": "65a40ff9c6e750d8d9b3dc0cb0e3fdc02dee6309",
-          "new": "6869e8002ace5d787ef464938b49ba215fbd1693",
-          "sameTree": true,
-          "oldTree": "7d2de909126392b3d24ee29917cfe9d9ba645135",
-          "newTree": "7d2de909126392b3d24ee29917cfe9d9ba645135",
-          "sameParents": true,
-          "oldParents": [
-            "7d1b049f5d541992b47cc38cf564025908a9ed7b"
-          ],
-          "newParents": [
-            "7d1b049f5d541992b47cc38cf564025908a9ed7b"
-          ],
-          "sameAuthorAndDate": true,
-          "oldAuthor": {
-            "name": "Aditya Merchant",
-            "email": "adityamerchant08@gmail.com",
-            "date": "2026-10-31T18:50:24Z"
-          },
-          "newAuthor": {
-            "name": "Aditya Merchant",
-            "email": "adityamerchant08@gmail.com",
-            "date": "2026-10-31T18:50:24Z"
-          },
-          "oldCommitter": {
-            "name": "Aditya Merchant",
-            "email": "adityamerchant08@gmail.com",
-            "date": "2026-11-08T04:05:30Z"
-          },
-          "newCommitter": {
-            "name": "Aditya Merchant",
-            "email": "adityamerchant08@gmail.com",
-            "date": "2026-11-18T11:06:06Z"
-          },
-          "messageDelta": [
-            "--- 65a40ff9c6e750d8d9b3dc0cb0e3fdc02dee6309",
-            "+++ 6869e8002ace5d787ef464938b49ba215fbd1693",
-            "@@ -35,3 +35,5 @@",
-            " ",
-            " Fixes #16783",
-            " Updates #3663",
-            "+",
-            "+Signed-off-by: Aditya Merchant <adityamerchant08@gmail.com>"
-          ],
-          "oldMessage": "netstack: end a lingering close when the peer acknowledges the FIN\n\nWith a nonzero SO_LINGER timeout, sock.Release waits for EventHUp or\nEventErr after it closes a TCP endpoint. Its comment says that it waits\nonly while the endpoint is in FIN-WAIT-1, CLOSING or LAST-ACK, but the\nendpoint notifies these events only when it reaches TIME-WAIT or\nCLOSED, or fails, and not when the peer acknowledges our FIN in\nFIN-WAIT-1. #4702 removed the notification on entry to FIN-WAIT-2 that\nthis wait relied on. So while the peer keeps its side open, close(2)\nblocks for the whole linger timeout, although the FIN was acknowledged\nat once. Linux waits in sk_stream_wait_close only while\nsk_stream_closing() is true, that is in FIN-WAIT-1, CLOSING or\nLAST-ACK, and tcp_rcv_state_process wakes the waiter when it moves the\nsocket to FIN-WAIT-2.\n\nNotify waiter.EventInternal when the peer acknowledges our FIN in\nFIN-WAIT-1, and make Release wait until the endpoint is in none of\nthese states, the timeout expires or the task is interrupted. A close\nin FIN-WAIT-2 or TIME-WAIT, such as one after shutdown(SHUT_WR), now\nreturns at once instead of after the timeout. EventInternal is not a\npoll(2) event, so poll and epoll waiters do not see it.\n\nAlso do not linger when the task is exiting. inet_release passes a\nzero timeout to tcp_close when the current task has PF_EXITING set,\nwhich corresponds to TaskExitInitiated. Before this change, a process\nthat exited while it held such a socket was reaped only after the\nlinger timeout.\n\nThe zero-timeout (abortive) close does not change.\n\nThe new packetimpact test TestTCPLingerStates closes a socket with a\nnonzero SO_LINGER timeout in each state from ESTABLISHED to TIME-WAIT,\non Linux and on netstack. These include the FIN-WAIT-2, CLOSE-WAIT,\nCLOSING and LAST-ACK states that #3663 asks to test.\n\nFixes #16783\nUpdates #3663",
-          "newMessage": "netstack: end a lingering close when the peer acknowledges the FIN\n\nWith a nonzero SO_LINGER timeout, sock.Release waits for EventHUp or\nEventErr after it closes a TCP endpoint. Its comment says that it waits\nonly while the endpoint is in FIN-WAIT-1, CLOSING or LAST-ACK, but the\nendpoint notifies these events only when it reaches TIME-WAIT or\nCLOSED, or fails, and not when the peer acknowledges our FIN in\nFIN-WAIT-1. #4702 removed the notification on entry to FIN-WAIT-2 that\nthis wait relied on. So while the peer keeps its side open, close(2)\nblocks for the whole linger timeout, although the FIN was acknowledged\nat once. Linux waits in sk_stream_wait_close only while\nsk_stream_closing() is true, that is in FIN-WAIT-1, CLOSING or\nLAST-ACK, and tcp_rcv_state_process wakes the waiter when it moves the\nsocket to FIN-WAIT-2.\n\nNotify waiter.EventInternal when the peer acknowledges our FIN in\nFIN-WAIT-1, and make Release wait until the endpoint is in none of\nthese states, the timeout expires or the task is interrupted. A close\nin FIN-WAIT-2 or TIME-WAIT, such as one after shutdown(SHUT_WR), now\nreturns at once instead of after the timeout. EventInternal is not a\npoll(2) event, so poll and epoll waiters do not see it.\n\nAlso do not linger when the task is exiting. inet_release passes a\nzero timeout to tcp_close when the current task has PF_EXITING set,\nwhich corresponds to TaskExitInitiated. Before this change, a process\nthat exited while it held such a socket was reaped only after the\nlinger timeout.\n\nThe zero-timeout (abortive) close does not change.\n\nThe new packetimpact test TestTCPLingerStates closes a socket with a\nnonzero SO_LINGER timeout in each state from ESTABLISHED to TIME-WAIT,\non Linux and on netstack. These include the FIN-WAIT-2, CLOSE-WAIT,\nCLOSING and LAST-ACK states that #3663 asks to test.\n\nFixes #16783\nUpdates #3663\n\nSigned-off-by: Aditya Merchant <adityamerchant08@gmail.com>",
-          "classification": "Own-author DCO-only commit-metadata amendment; no source-tree or baseline change",
-          "historicalReviewCodeBindingPreserved": true,
-          "existingReviewAndQualificationGatesWaived": false,
-          "currentExactHeadVerified": true,
-          "currentState": "OPEN",
-          "currentMergeability": "MERGEABLE",
-          "currentDCO": "SUCCESS",
-          "currentGitHubWorkflowChecks": "SUCCESS",
-          "generateRun": {
-            "id": 44291586543,
-            "conclusion": "SUCCESS",
-            "url": "https://github.com/gvisor/gvisor/actions/runs/44291586543"
-          },
-          "firstPass": {
-            "number": 1701,
-            "state": "PENDING",
-            "statusSource": "GitHub current exact-head rollup",
-            "url": "https://buildkite.com/gvisor/first-pass/builds/1701"
-          },
-          "metadataOnly": true,
-          "reviewsAndGatesPreserved": true
-        },
-        "authorPipelineRequest": {
-          "url": "https://github.com/google/gvisor/pull/16787#issuecomment-7194263130",
-          "author": "adios-404",
-          "at": "2026-11-26T14:05:29Z",
-          "head": "0e0295b65ea33e97c07545f04e32eee873d7fc4d",
-          "request": "Start Pipeline through a new approval or ready-to-test label",
-          "authorClaims": "Master merged cleanly, PR edits unchanged and local TCP/native syscall tests passed; approvals/auto-merge retained. Author-reported, not independent source or runtime qualification.",
-          "disposition": "Root review/CI coordination only; no label, approval, merge or outreach performed."
-        },
-        "cleanMergeVerification": {
-          "previousReviewed": "6869e8002ace5d787ef464938b49ba215fbd1693",
-          "master": "8075b38443e475fd4e12ef9d423e2cd460e2396d",
-          "mergeBase": "7d1b049",
-          "recomputedTree": "8cecf298",
-          "head": "0e0295b65ea33e97c07545f04e32eee873d7fc4d",
-          "verifiedBy": "Root independently recomputed clean merge; exact tree matches public head.",
-          "limits": "No new source/test/performance qualification or CI trust grant inferred."
-        },
-        "upstreamCITrust": {
-          "label": "ready to test",
-          "labelExists": true,
-          "present": false,
-          "FirstPass": 2968,
-          "maintainerApproval": "SUCCESS",
-          "fullPipeline": "missing",
-          "autoMerge": "Already enabled; unchanged by us"
-        }
-      }
+        "completedAt": "2026-11-26T17:58:08Z",
+        "head": "0e0295b65ea33e97c07545f04e32eee873d7fc4d",
+        "mergeCommit": "84708bc9b0a3ceeee1357c3621ae25f9d9ba3c5f",
+        "mainBuild": 56027
+      },
+      "inactive": true
     },
     {
       "id": "branch:hostinet-exit-linger",
@@ -64982,8 +65053,8 @@
       "title": "hostinet: skip the TCP linger wait on task exit",
       "url": "https://github.com/tamird/gvisor/commit/c53942792",
       "status": "Approved; waiting for #16787",
-      "updatedAt": "2026-11-17T20:32:28.027492+00:00",
-      "summary": "With host networking, a guest process exiting while holding its last TCP socket can wait out a positive SO_LINGER timeout. The host sees a running Sentry thread closing the socket. Disable positive linger for that final close and preserve the peer reset requested by zero linger. All four IPv4/IPv6 cases passed on each of Linux, hostinet and netstack.",
+      "updatedAt": "2026-11-27T01:14:12.353830+00:00",
+      "summary": "Parent #16787 merged; this distinct child remains unpublished. Landing still skips NoLingerOnProcessExit under hostinet; child adds final-close positive-linger handling and abortive-zero-linger test coverage. Historical evidence retains its original source scope.",
       "evidence": [
         {
           "label": "Original Linux, hostinet and netstack XML: 12 passed, zero skips",
@@ -65020,8 +65091,8 @@
         "owner": "root",
         "sourceHead": "c53942792678277f0195068aa41ad17620dd9dd1",
         "observedAt": "2026-11-09T23:56:20+00:00",
-        "disposition": "Contributor approved",
-        "nextAction": "Open the approved hostinet exit change after #16787 lands.",
+        "disposition": "Parent #16787 merged; this distinct child remains unpublished. Landing still skips NoLingerOnProcessExit under hostinet; child adds final-close positive-linger handling and abortive-zero-linger test coverage. Historical evidence retains its original source scope.",
+        "nextAction": "Prepare this landed-parent replay, replace historical non-ABI Linux implementation citations in source/record with retained black-box evidence, add authorized DCO, qualify the current process-exit/abortive tests in native/hostinet/netstack and affectedNoGo/source inputs, and perform final proportional source review before applying the existing openinggrant. No newquestion solelytoaskwhether16787landed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16787"
         ],
@@ -65037,7 +65108,21 @@
           "owner": "root"
         },
         "technicalOwner": "Agent",
-        "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings."
+        "recheckCondition": "Root allocation for current landed-parent qualification or actual source/publication decision.",
+        "landedParentAssessment": {
+          "source": "c53942792678277f0195068aa41ad17620dd9dd1",
+          "liveRef": "refs/heads/proposal/hostinet-exit-linger",
+          "liveMatches": true,
+          "existingPRs": [],
+          "approval": "Exact conditional opening approval retained in settledReviews2026-11-09; prerequisite nowfulfilled. Currenttask expressly prohibits publication.",
+          "remainingBehavior": "Landing still skips NoLingerOnProcessExit under hostinet; child adds final-close positive-linger handling and abortive-zero-linger test coverage.",
+          "replayTree": "d288a36d6cc4a317f2222c63b3b4d36af90f410f",
+          "replayScope": "Clean automatic two-file34add/10remove; stable patch-id0dea0651201f8c9188fc10d5f094c58f7b21e505 exactly original",
+          "sourceDrift": "Compared with old qualified child:hostinet file adds existing upstream MSG_NOSIGNAL line; tcp_socket fixture has96upstreamaddedlines. Full postimages/binaries differ, so historical12case qualification is not a current-basepass.",
+          "nextAction": "Prepare this landed-parent replay, replace historical non-ABI Linux implementation citations in source/record with retained black-box evidence, add authorized DCO, qualify the current process-exit/abortive tests in native/hostinet/netstack and affectedNoGo/source inputs, and perform final proportional source review before applying the existing openinggrant. No newquestion solelytoaskwhether16787landed.",
+          "qualificationReuse": "Retain four IPv4/IPv6 positive/abortivecases each on Linux/hostinet/netstack and old AMDhostinetNoGo as historical source-bound evidence; preserve applicable performance/review requirements, no fresh clearance inferred."
+        },
+        "curatedAt": "2026-11-27T01:14:12.353830+00:00"
       }
     },
     {
@@ -69090,8 +69175,8 @@
       "title": "Measure waiter allocation on ordinary TCP and UDP close",
       "url": "https://github.com/tamird/gvisor/commit/fd2a30841",
       "status": "validated",
-      "updatedAt": "2026-11-17T20:32:28.027492+00:00",
-      "summary": "Registering the waiter inside the positive-linger branch cut unconnected TCP close from 1.563 to 1.300 µs and UDP close from 1.141 to 0.957 µs in 16 paired AMD64 systrap runs. The Unix socket control and 28 linger cases on each of Linux and the two gVisor builds stayed consistent. Aditya agreed to a separate follow-up after #16787 merges.",
+      "updatedAt": "2026-11-27T01:14:12.353830+00:00",
+      "summary": "Parent #16787 merged; this distinct child remains unpublished. Unconditional waiter registration still occurs before endpointClose; child restricts allocation/registration to the positive non-exiting TCP linger path while retaining post-registration state check. Historical evidence retains its original source scope.",
       "evidence": [
         {
           "label": "Sixteen paired socket-close measurements and 28 selected Linux and gVisor linger tests",
@@ -69119,10 +69204,25 @@
           "owner": "root"
         },
         "owner": "root",
-        "nextAction": "Wait for #16787 to merge as agreed with Aditya, then prepare the existing separate linger follow-up using retained paired results.",
-        "recheckCondition": "Recheck on exact ref/head changes, prerequisite landing, current PR feedback/check/import changes or contributor decision; preserve existing holds and approval bindings.",
+        "nextAction": "Prepare/evaluate the clean landed-parent optimization and current owninglinger correctness; retain old16paired socket-close result only at original parent/source scope. Use maintained worker/control/performance requirements prospectively before candidate claims, then present exact standalone source/publication decision if notalreadygranted. No timings/job or sourceedit authorized bythisassessment.",
+        "recheckCondition": "Root allocation for current landed-parent qualification or actual source/publication decision.",
         "observedAt": "2026-11-17T19:58:27.788317+00:00",
-        "sourceHead": "fd2a308413e5fa06af407e08799d88351087dbc2"
+        "sourceHead": "fd2a308413e5fa06af407e08799d88351087dbc2",
+        "landedParentAssessment": {
+          "source": "fd2a308413e5fa06af407e08799d88351087dbc2",
+          "liveRef": "refs/heads/research/socket-close-linger-waiter",
+          "liveMatches": true,
+          "existingPRs": [],
+          "sourceParent": "1072c7c5b69f66636a755f29a207a8ce876a91f4",
+          "replayTree": "d257d5af61224442b4703c4a9ba34af44091f5f8",
+          "replayScope": "Clean automatic one-file6add/4remove; stable patch-idab6f5f606a34e517fe91c3227c843ac586f0b683 exactlyoriginal",
+          "remainingBehavior": "Unconditional waiter registration still occurs before endpointClose; child restricts allocation/registration to the positive non-exiting TCP linger path while retaining post-registration state check.",
+          "sourceDrift": "Current netstack source postimage differs from old qualified fd2 by47added/12removedlines; no identicalcompiledinputclaim.",
+          "authority": "Author agrees separate follow-up after merge; branch has no recorded standalone user publication grant. External author agreement is not active-user approval; root should reconcile any retained actual grant before opening.",
+          "nextAction": "Prepare/evaluate the clean landed-parent optimization and current owninglinger correctness; retain old16paired socket-close result only at original parent/source scope. Use maintained worker/control/performance requirements prospectively before candidate claims, then present exact standalone source/publication decision if notalreadygranted. No timings/job or sourceedit authorized bythisassessment."
+        },
+        "disposition": "Parent #16787 merged; this distinct child remains unpublished. Unconditional waiter registration still occurs before endpointClose; child restricts allocation/registration to the positive non-exiting TCP linger path while retaining post-registration state check. Historical evidence retains its original source scope.",
+        "curatedAt": "2026-11-27T01:14:12.353830+00:00"
       }
     },
     {
@@ -72093,7 +72193,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-26T17:23:22.513386+00:00",
-      "summary": "Approved amendment a97c0844e8 is delivered; native MERGEABLE, DCO passes, review lifecycle continues. Attributed notice and approved description are delivered. First Pass upload failed before execution; cause remains unclassified. ",
+      "summary": "Approved amendment a97c0844e8 is delivered; native MERGEABLE, DCO passes, review lifecycle continues. Attributed notice and approved description are delivered. First Pass upload failed before agent allocation; own structured metadata confirms rolling30-day author compute quota. ",
       "evidence": [
         {
           "label": "Public CI stopped fetching rules_m4 with HTTP 500; the archive now matches BCR’s checksum",
@@ -72219,7 +72319,7 @@
           "https://github.com/tamird/gvisor/actions/runs/45701622855",
           "https://github.com/gvisor/gvisor/pull/16821#issuecomment-7198807226"
         ],
-        "disposition": "Approved amendment a97c0844e8 is delivered; native MERGEABLE, DCO passes, review lifecycle continues. Attributed notice and approved description are delivered. First Pass upload failed before execution; cause remains unclassified. ",
+        "disposition": "Approved amendment a97c0844e8 is delivered; native MERGEABLE, DCO passes, review lifecycle continues. Attributed notice and approved description are delivered. First Pass upload failed before agent allocation; own structured metadata confirms rolling30-day author compute quota. ",
         "curatedAt": "2026-11-26T17:23:22.513386+00:00",
         "candidate": {
           "head": "a97c0844e84c3faba95d7f880d548046160b323e",
@@ -72380,7 +72480,25 @@
             "approvedCandidate": "a97c0844e84c3faba95d7f880d548046160b323e"
           }
         ],
-        "providerHead": "a97c0844e84c3faba95d7f880d548046160b323e"
+        "providerHead": "a97c0844e84c3faba95d7f880d548046160b323e",
+        "firstPassAdmission": {
+          "head": "a97c0844e84c3faba95d7f880d548046160b323e",
+          "build": 3034,
+          "url": "https://buildkite.com/gvisor/first-pass/builds/3034",
+          "latestObservedCheck": {
+            "url": "https://buildkite.com/gvisor/first-pass/builds/3034",
+            "state": "FAILURE"
+          },
+          "historical": false,
+          "exitStatus": 80,
+          "stackErrored": true,
+          "agentAssigned": false,
+          "stackErrorDetail": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+          "classification": "External author rolling30-day quota; no source/test execution",
+          "provenance": "Root inspected each build separately through canonical reader data/jobs structured records; empty logs are not the diagnosis.",
+          "owner": "existing root/provider quota workstream",
+          "nextAction": "Recheck quota availability or a genuine new CI event; no unchanged retry or outreach."
+        }
       },
       "dcoAmendment": {
         "oldHead": "9f3a1efe5acf05722e7910b465d96c8a2c26a637",
@@ -73183,7 +73301,7 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-11-26T17:23:22.513386+00:00",
-      "summary": "Approved amendment 1fa9c7ace8 is delivered; native MERGEABLE, DCO passes, review lifecycle continues. Signed metadata-only amendment preserves the exact approved4049 tree and parent. Attributed notice and approved description are delivered. First Pass upload failed before execution; cause remains unclassified. ",
+      "summary": "Approved amendment 1fa9c7ace8 is delivered; native MERGEABLE, DCO passes, review lifecycle continues. Signed metadata-only amendment preserves the exact approved4049 tree and parent. Attributed notice and approved description are delivered. First Pass upload failed before agent allocation; own structured metadata confirms rolling30-day author compute quota. ",
       "evidence": [
         {
           "label": "Wire receipts: native Linux, stock gVisor, corrected gVisor and TCP Nogo",
@@ -73248,7 +73366,7 @@
           "https://github.com/gvisor/gvisor/pull/17118",
           "https://github.com/gvisor/gvisor/pull/16827#issuecomment-7198813426"
         ],
-        "disposition": "Approved amendment 1fa9c7ace8 is delivered; native MERGEABLE, DCO passes, review lifecycle continues. Signed metadata-only amendment preserves the exact approved4049 tree and parent. Attributed notice and approved description are delivered. First Pass upload failed before execution; cause remains unclassified. ",
+        "disposition": "Approved amendment 1fa9c7ace8 is delivered; native MERGEABLE, DCO passes, review lifecycle continues. Signed metadata-only amendment preserves the exact approved4049 tree and parent. Attributed notice and approved description are delivered. First Pass upload failed before agent allocation; own structured metadata confirms rolling30-day author compute quota. ",
         "curatedAt": "2026-11-26T17:23:22.513386+00:00",
         "deliveryHistory": [
           {
@@ -73270,7 +73388,25 @@
             "approvedCandidate": "4049b6b148b44c411a8eb1269fe62bf4c89dbbb7"
           }
         ],
-        "providerHead": "1fa9c7ace8845c603b6c5cfa19960e3b68f670eb"
+        "providerHead": "1fa9c7ace8845c603b6c5cfa19960e3b68f670eb",
+        "firstPassAdmission": {
+          "head": "1fa9c7ace8845c603b6c5cfa19960e3b68f670eb",
+          "build": 3035,
+          "url": "https://buildkite.com/gvisor/first-pass/builds/3035",
+          "latestObservedCheck": {
+            "url": "https://buildkite.com/gvisor/first-pass/builds/3035",
+            "state": "FAILURE"
+          },
+          "historical": false,
+          "exitStatus": 80,
+          "stackErrored": true,
+          "agentAssigned": false,
+          "stackErrorDetail": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+          "classification": "External author rolling30-day quota; no source/test execution",
+          "provenance": "Root inspected each build separately through canonical reader data/jobs structured records; empty logs are not the diagnosis.",
+          "owner": "existing root/provider quota workstream",
+          "nextAction": "Recheck quota availability or a genuine new CI event; no unchanged retry or outreach."
+        }
       },
       "dcoAmendment": {
         "oldHead": "3732b4758e2276a9e60ff9ed250ee0a10339e8db",
@@ -75759,7 +75895,7 @@
       "title": "Keep the MTU on each veth endpoint",
       "url": "https://github.com/google/gvisor/pull/16957",
       "group": "runtime",
-      "summary": "Approved amendment 299a4bf8f4 is delivered; native MERGEABLE, DCO passes, review lifecycle continues. Attributed notice and approved description are delivered. First Pass upload failed before execution; cause remains unclassified. ",
+      "summary": "Approved amendment 299a4bf8f4 is delivered; native MERGEABLE, DCO passes, review lifecycle continues. Attributed notice and approved description are delivered. First Pass upload failed before agent allocation; own structured metadata confirms rolling30-day author compute quota. ",
       "evidence": [
         {
           "label": "Proposed amendment",
@@ -75804,7 +75940,7 @@
         "owner": "root / approved_rebase_queue",
         "sourceHead": "299a4bf8f489b96c7d148e1fa9f2d7c7171925d4",
         "observedAt": "2026-11-26T17:22:22.003322+00:00",
-        "disposition": "Approved amendment 299a4bf8f4 is delivered; native MERGEABLE, DCO passes, review lifecycle continues. Attributed notice and approved description are delivered. First Pass upload failed before execution; cause remains unclassified. ",
+        "disposition": "Approved amendment 299a4bf8f4 is delivered; native MERGEABLE, DCO passes, review lifecycle continues. Attributed notice and approved description are delivered. First Pass upload failed before agent allocation; own structured metadata confirms rolling30-day author compute quota. ",
         "nextAction": "Follow actual new-head CI and substantive review/lifecycle events. Source amendment approval is fulfilled; preserve independent performance and import conditions.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16957",
@@ -75997,7 +76133,25 @@
             "approvedCandidate": "299a4bf8f489b96c7d148e1fa9f2d7c7171925d4"
           }
         ],
-        "providerHead": "299a4bf8f489b96c7d148e1fa9f2d7c7171925d4"
+        "providerHead": "299a4bf8f489b96c7d148e1fa9f2d7c7171925d4",
+        "firstPassAdmission": {
+          "head": "299a4bf8f489b96c7d148e1fa9f2d7c7171925d4",
+          "build": 3036,
+          "url": "https://buildkite.com/gvisor/first-pass/builds/3036",
+          "latestObservedCheck": {
+            "url": "https://buildkite.com/gvisor/first-pass/builds/3036",
+            "state": "FAILURE"
+          },
+          "historical": false,
+          "exitStatus": 80,
+          "stackErrored": true,
+          "agentAssigned": false,
+          "stackErrorDetail": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+          "classification": "External author rolling30-day quota; no source/test execution",
+          "provenance": "Root inspected each build separately through canonical reader data/jobs structured records; empty logs are not the diagnosis.",
+          "owner": "existing root/provider quota workstream",
+          "nextAction": "Recheck quota availability or a genuine new CI event; no unchanged retry or outreach."
+        }
       },
       "refinement": {
         "before": {
@@ -96882,7 +97036,7 @@
       "url": "https://github.com/google/gvisor/pull/17264",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-26T17:20:00.247741+00:00",
+      "updatedAt": "2026-11-26T23:11:59.045396+00:00",
       "summary": "Full current-source review at 22401767a is complete. Tamir approved the COMMENTED request for before/after benchstat revisions and the 27%/40% MSG_MORE slowdown explanation; posting was rejected by automatic approval review under a reply-only interpretation.",
       "evidence": [
         {
@@ -97019,9 +97173,24 @@
             "https://github.com/gvisor/gvisor/actions/runs/45441491513/job/138613530223"
           ],
           "limits": "Dependency ZIP transport failed during //:gopath analysis; FirstPass pending, no target-source failure established."
+        },
+        "executionClarification": {
+          "operation": "POST /repos/gvisor/gvisor/pulls/17264/reviews",
+          "event": "COMMENT",
+          "state": "Blocked by automatic approval review; existing clarification pending",
+          "textAlreadyApproved": true,
+          "retry": "None; no alternate route"
         }
       },
-      "recheckCondition": "Existing execution clarification outcome, author evidence or changed source."
+      "recheckCondition": "Existing execution clarification outcome, author evidence or changed source.",
+      "contributorReview": {
+        "kind": "information",
+        "status": "pending",
+        "url": "https://github.com/google/gvisor/pull/17264",
+        "title": "Formal COMMENTED review blocked by automatic approval review",
+        "summary": "Exact-operation clarification is pending. Tamir already approved the review text; this is not an unanswered source approval. No retry or alternate posting route.",
+        "body": "The approved operation is a formal COMMENTED review via POST /repos/gvisor/gvisor/pulls/17264/reviews. Automatic approval review rejected that operation under a reply-only interpretation. Root has already requested exact-operation clarification; no review has been posted.\n\nApproved review text:\n\nThe restore and short-write changes address my earlier comments. Could you link the before/after benchstat output and the two revisions for the bulk and fragmented workloads? What accounts for the 27% and 40% slowdowns with `MSG_MORE`?\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "pr:17265",
@@ -103848,7 +104017,7 @@
       "head": "b0d665d9f298bf84db405213b403467d8470af4f",
       "title": "Stabilize the Fastlane token check in the Ruby benchmark",
       "group": "ci-flakes",
-      "summary": "The conditional Fastlane amendment is under upgrade reassessment. Ruby-compatible2.220.0 retains all100 selected files and upstream fixes; remote qualification45867086535 is running. Latest2.242.0 requires Ruby>=3.2 and drops two selected files. No unconditional source delivery grant.",
+      "summary": "Ruby-compatible Fastlane2.220.0 candidate1948bb8b6 retains all100 selected files and includes upstream fixes. Native and both Sentry validations each passed3679 examples/0failures/31pending. The actual replacement/title/body decision is pending; expanded workload differs from3613-example measurements.",
       "evidence": [
         {
           "label": "Published gVisor fix",
@@ -103889,6 +104058,14 @@
         {
           "label": "Conditional upgrade qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/45867086535"
+        },
+        {
+          "label": "Fastlane2.220 functional qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45868554437"
+        },
+        {
+          "label": "Fastlane2.220 functional qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45868564557"
         }
       ],
       "id": "pr:17479",
@@ -103898,13 +104075,13 @@
       "ref": "research/ruby-fastlane-token-clock",
       "url": "https://github.com/google/gvisor/pull/17479",
       "status": "open",
-      "updatedAt": "2026-11-26T17:20:00.247741+00:00",
+      "updatedAt": "2026-11-26T21:04:20.239849+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "b0d665d9f298bf84db405213b403467d8470af4f",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "The conditional Fastlane amendment is under upgrade reassessment. Ruby-compatible2.220.0 retains all100 selected files and upstream fixes; remote qualification45867086535 is running. Latest2.242.0 requires Ruby>=3.2 and drops two selected files. No unconditional source delivery grant.",
-        "nextAction": "Root and assigned owner consume the2.220.0 reassessment qualification, then resolve the conditional amendment scope before delivery.",
+        "disposition": "Ruby-compatible Fastlane2.220.0 candidate1948bb8b6 retains all100 selected files and includes upstream fixes. Native and both Sentry validations each passed3679 examples/0failures/31pending. The actual replacement/title/body decision is pending; expanded workload differs from3613-example measurements.",
+        "nextAction": "Root awaits the actual exact1948 amendment/title/body decision. Preserve current public backport and separate old-workload measurements; no separate reply is authorized by this question.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17479",
           "https://github.com/google/gvisor/pull/17479#issuecomment-6799672981",
@@ -103919,10 +104096,13 @@
           "https://github.com/gvisor/gvisor/pull/17479#issuecomment-7177944558",
           "https://buildkite.com/gvisor/first-pass/builds/2929",
           "https://github.com/tamird/gvisor/commit/d260f684af25fc5cee37b4f3188b18c094494fd1",
-          "https://github.com/tamird/gvisor/actions/runs/45738543851"
+          "https://github.com/tamird/gvisor/actions/runs/45738543851",
+          "https://github.com/tamird/gvisor/actions/runs/45867086535",
+          "https://github.com/tamird/gvisor/actions/runs/45868554437",
+          "https://github.com/tamird/gvisor/actions/runs/45868564557"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Completed upgrade reassessment or actual source/review direction.",
+        "recheckCondition": "Answer to exact replacement/title/body question or substantive source/review evidence.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -103946,7 +104126,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-26T17:23:22.513386+00:00",
+        "curatedAt": "2026-11-26T21:04:20.239849+00:00",
         "candidate": {
           "head": "b0d665d9f298bf84db405213b403467d8470af4f",
           "base": "e28474f026f4f6d6cfa46710e34f01786d54477e",
@@ -103995,6 +104175,18 @@
           "maintainerDescription": "Maintainer approvals: 1, needs 2.",
           "mainObserved": false,
           "scope": "Saved source-bound checkpoint, not a new global API sample"
+        },
+        "upgradeQualification": {
+          "head": "1948bb8b6f05ef755b94649f726704de5d95610c",
+          "native": 45867086535,
+          "sentry": [
+            45868554437,
+            45868564557
+          ],
+          "examples": 3679,
+          "failures": 0,
+          "pending": 31,
+          "workloadChange": "100 selected files retained;3613→3679 examples. No cross-version performance equivalence."
         }
       },
       "dcoAmendment": {
@@ -104019,7 +104211,7 @@
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
       },
-      "recheckCondition": "Completed upgrade reassessment or actual source/review direction.",
+      "recheckCondition": "Answer to exact replacement/title/body question or substantive source/review evidence.",
       "settledReviews": [
         {
           "kind": "amendment",
@@ -104058,7 +104250,20 @@
           "note": "User response conditions d260 amendment on reassessing upgrade; no unconditional publication authority.",
           "recordedAt": "2026-11-26T17:20:00.247741+00:00"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "1948bb8b6f05ef755b94649f726704de5d95610c",
+        "baseHead": "b0d665d9f298bf84db405213b403467d8470af4f",
+        "url": "https://github.com/tamird/gvisor/commit/1948bb8b6f05ef755b94649f726704de5d95610c",
+        "title": "Update the Ruby benchmark to Fastlane 2.220.0",
+        "summary": "Actual submitted decision to replace the backport and update the PR title/body; unanswered. No separate public reply is part of this decision.",
+        "body": "The Ruby benchmark can fail when the token spec crosses a clock tick or when the legacy encryption fixture accepts an incorrect password. Fastlane 2.220.0 includes both fixes and runs on the benchmark’s Ruby 3.0 image. [Token fix](https://github.com/fastlane/fastlane/pull/21583) · [Encryption fixture fix](https://github.com/fastlane/fastlane/pull/21790)\n\nThe same 100 selected spec files now contain 3,679 examples, up from 3,613. Each validation run reported 3,679 examples, 0 failures, and 31 pending. Performance comparisons across this update need to account for the change in workload. [Native run](https://github.com/tamird/gvisor/actions/runs/45867086535) · [First Sentry run](https://github.com/tamird/gvisor/actions/runs/45868554437) · [Second Sentry run](https://github.com/tamird/gvisor/actions/runs/45868564557)\n\nPrepared by Codex on behalf of @tamird.\n",
+        "reviewCommand": "git show 1948bb8b6f05ef755b94649f726704de5d95610c",
+        "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/fastlane-220-pr-body.md",
+        "sourceSha256": "fd63ca861268158e99ab95adf1656a1e7ad2f40654f046aa5e52a041ab3b8a73"
+      }
     },
     {
       "head": "c4098b8d0fdcf02ea31202c40f54a4c774c794fc",
@@ -113451,7 +113656,25 @@
         ],
         "providerHead": "4162e5c47a836f10c20292c32878b2c14d6f03f8",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-26T17:22:37.079754+00:00"
+        "observedAt": "2026-11-26T17:22:37.079754+00:00",
+        "firstPassAdmission": {
+          "head": "4162e5c47a836f10c20292c32878b2c14d6f03f8",
+          "build": 3033,
+          "url": "https://buildkite.com/gvisor/first-pass/builds/3033",
+          "latestObservedCheck": {
+            "url": "https://buildkite.com/gvisor/first-pass/builds/3033",
+            "state": "FAILURE"
+          },
+          "historical": false,
+          "exitStatus": 80,
+          "stackErrored": true,
+          "agentAssigned": false,
+          "stackErrorDetail": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+          "classification": "External author rolling30-day quota; no source/test execution",
+          "provenance": "Root inspected each build separately through canonical reader data/jobs structured records; empty logs are not the diagnosis.",
+          "owner": "existing root/provider quota workstream",
+          "nextAction": "Recheck quota availability or a genuine new CI event; no unchanged retry or outreach."
+        }
       },
       "settledReviews": [
         {
@@ -113638,12 +113861,16 @@
       "title": "Pin the website Google trust bundle",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-26T17:20:00.247741+00:00",
-      "summary": "Published at b8c204be9d. Exact bundle/catalog checks passed; origin availability, a full image build and the larger renderer migration remain separate.",
+      "updatedAt": "2026-11-26T21:04:20.239849+00:00",
+      "summary": "Etienne requested changes on exactb8c204be9: the Google bundle URL is mutable. Live bytes still match the pinned38766-byte/21-root SHA, but rotation breaks a clean fetch of old revisions without an immutable copy. The actual explanatory reply decision is pending.",
       "evidence": [
         {
           "label": "Published pull request",
           "url": "https://github.com/google/gvisor/pull/18012"
+        },
+        {
+          "label": "Etienne change request",
+          "url": "https://github.com/google/gvisor/pull/18012#pullrequestreview-6079556332"
         }
       ],
       "followup": {
@@ -113651,11 +113878,48 @@
         "sourceHead": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
         "providerHead": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-26T17:18:35.570355+00:00",
-        "disposition": "Publication complete. Exact bundle/catalog checks passed; origin availability, a full image build and the larger renderer migration remain separate.",
-        "nextAction": "Follow actual upstream CI and substantive review events; source opening approval is fulfilled.",
-        "recheckCondition": "Actual CI/review/source or upstream lifecycle event.",
-        "curatedAt": "2026-11-26T17:20:00.247741+00:00"
+        "observedAt": "2026-11-26T20:31:29.209734+00:00",
+        "disposition": "Etienne requested changes on exactb8c204be9: the Google bundle URL is mutable. Live bytes still match the pinned38766-byte/21-root SHA, but rotation breaks a clean fetch of old revisions without an immutable copy. The actual explanatory reply decision is pending.",
+        "nextAction": "Root awaits approval for the exact rotation reply to Etienne. Preserve fail-closed checksum behavior; no immutable-copy implementation or deployment is inferred.",
+        "recheckCondition": "Answer to the actual reply question, source/reviewer change or material bundle availability evidence.",
+        "curatedAt": "2026-11-26T21:04:20.239849+00:00",
+        "bundleAvailability": {
+          "currentSHA256": "ec989df46c8f4419ef2ee2517cad7619d555e4973f3307be697662aa2497e480",
+          "bytes": 38766,
+          "certificates": 21,
+          "source": "Root bounded live-bundle verification; no new build",
+          "future": "Mutable URL rotation can break clean old-revision fetch; no immutable copy established."
+        },
+        "evidence": [
+          "https://github.com/google/gvisor/pull/18012#pullrequestreview-6079556332"
+        ],
+        "firstPassAdmission": {
+          "head": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
+          "build": 3026,
+          "url": "https://buildkite.com/gvisor/first-pass/builds/3026",
+          "latestObservedCheck": {
+            "url": "https://buildkite.com/gvisor/first-pass/builds/3026",
+            "state": "FAILURE"
+          },
+          "historical": false,
+          "exitStatus": 80,
+          "stackErrored": true,
+          "agentAssigned": false,
+          "stackErrorDetail": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+          "classification": "External author rolling30-day quota; no source/test execution",
+          "provenance": "Root inspected each build separately through canonical reader data/jobs structured records; empty logs are not the diagnosis.",
+          "owner": "existing root/provider quota workstream",
+          "nextAction": "Recheck quota availability or a genuine new CI event; no unchanged retry or outreach."
+        }
+      },
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
+        "url": "https://github.com/google/gvisor/pull/18012#pullrequestreview-6079556332",
+        "title": "Explain trust-bundle rotation and old-revision builds",
+        "summary": "Actual submitted reply question; unanswered. No new source, mirror, access or deployment commitment.",
+        "body": "Yes. Google rotates the bundle at this URL. After a rotation, a clean build would fail the checksum until we updated it. To keep old revisions buildable we’d need an immutable copy of the bundle as well.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -113669,12 +113933,16 @@
       "title": "Prefetch Abseil benchmark dependencies",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-26T17:20:00.247741+00:00",
-      "summary": "Published at d4b55cd9df. Prefetch source delivered; analyzer measurement and its frozen images remain independently scoped.",
+      "updatedAt": "2026-11-26T21:04:20.239849+00:00",
+      "summary": "Published d4b55cd9d; Etienne approved this head. Latest First Pass3039 passed; older admission failure remains historical. Source opening is complete.",
       "evidence": [
         {
           "label": "Published pull request",
           "url": "https://github.com/google/gvisor/pull/18013"
+        },
+        {
+          "label": "Etienne approval",
+          "url": "https://github.com/google/gvisor/pull/18013#pullrequestreview-6079562673"
         }
       ],
       "followup": {
@@ -113682,11 +113950,32 @@
         "sourceHead": "d4b55cd9df05ea0519a124c00fd31f0f99468ec9",
         "providerHead": "d4b55cd9df05ea0519a124c00fd31f0f99468ec9",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-26T17:18:35.571032+00:00",
-        "disposition": "Publication complete. Prefetch source delivered; analyzer measurement and its frozen images remain independently scoped.",
-        "nextAction": "Follow actual upstream CI and substantive review events; source opening approval is fulfilled.",
-        "recheckCondition": "Actual CI/review/source or upstream lifecycle event.",
-        "curatedAt": "2026-11-26T17:20:00.247741+00:00"
+        "observedAt": "2026-11-26T20:31:29.209734+00:00",
+        "disposition": "Published d4b55cd9d; Etienne approved this head. Latest First Pass3039 passed; older admission failure remains historical. Source opening is complete.",
+        "nextAction": "Follow the remaining actual maintainer/CI and landing events; preserve qualification limits and existing requests. No duplicate outreach or retry.",
+        "recheckCondition": "Actual review, quota availability, new CI or landing event.",
+        "curatedAt": "2026-11-26T21:04:20.239849+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/18013#pullrequestreview-6079562673"
+        ],
+        "firstPassAdmission": {
+          "head": "d4b55cd9df05ea0519a124c00fd31f0f99468ec9",
+          "build": 3027,
+          "url": "https://buildkite.com/gvisor/first-pass/builds/3027",
+          "latestObservedCheck": {
+            "url": "https://buildkite.com/gvisor/first-pass/builds/3039",
+            "state": "SUCCESS"
+          },
+          "historical": true,
+          "exitStatus": 80,
+          "stackErrored": true,
+          "agentAssigned": false,
+          "stackErrorDetail": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+          "classification": "External author rolling30-day quota; no source/test execution",
+          "provenance": "Root inspected each build separately through canonical reader data/jobs structured records; empty logs are not the diagnosis.",
+          "owner": "existing root/provider quota workstream",
+          "nextAction": "Recheck quota availability or a genuine new CI event; no unchanged retry or outreach."
+        }
       }
     },
     {
@@ -113700,12 +113989,16 @@
       "title": "Reject Size results when cache reset fails",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-26T17:20:00.247741+00:00",
-      "summary": "Published at 5ad880c7c7. Cache-integrity source delivered; statistical performance holds remain.",
+      "updatedAt": "2026-11-26T21:04:20.239849+00:00",
+      "summary": "Published 5ad880c7c; Etienne approved this head. Latest First Pass3040 passed; older admission failure remains historical. Source opening is complete.",
       "evidence": [
         {
           "label": "Published pull request",
           "url": "https://github.com/google/gvisor/pull/18014"
+        },
+        {
+          "label": "Etienne approval",
+          "url": "https://github.com/google/gvisor/pull/18014#pullrequestreview-6079568459"
         }
       ],
       "followup": {
@@ -113713,11 +114006,32 @@
         "sourceHead": "5ad880c7c7b1b609fa792b121d30cf5964ccbbe4",
         "providerHead": "5ad880c7c7b1b609fa792b121d30cf5964ccbbe4",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-26T17:18:35.571039+00:00",
-        "disposition": "Publication complete. Cache-integrity source delivered; statistical performance holds remain.",
-        "nextAction": "Follow actual upstream CI and substantive review events; source opening approval is fulfilled.",
-        "recheckCondition": "Actual CI/review/source or upstream lifecycle event.",
-        "curatedAt": "2026-11-26T17:20:00.247741+00:00"
+        "observedAt": "2026-11-26T20:31:29.209734+00:00",
+        "disposition": "Published 5ad880c7c; Etienne approved this head. Latest First Pass3040 passed; older admission failure remains historical. Source opening is complete.",
+        "nextAction": "Follow the remaining actual maintainer/CI and landing events; preserve qualification limits and existing requests. No duplicate outreach or retry.",
+        "recheckCondition": "Actual review, quota availability, new CI or landing event.",
+        "curatedAt": "2026-11-26T21:04:20.239849+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/18014#pullrequestreview-6079568459"
+        ],
+        "firstPassAdmission": {
+          "head": "5ad880c7c7b1b609fa792b121d30cf5964ccbbe4",
+          "build": 3028,
+          "url": "https://buildkite.com/gvisor/first-pass/builds/3028",
+          "latestObservedCheck": {
+            "url": "https://buildkite.com/gvisor/first-pass/builds/3040",
+            "state": "SUCCESS"
+          },
+          "historical": true,
+          "exitStatus": 80,
+          "stackErrored": true,
+          "agentAssigned": false,
+          "stackErrorDetail": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+          "classification": "External author rolling30-day quota; no source/test execution",
+          "provenance": "Root inspected each build separately through canonical reader data/jobs structured records; empty logs are not the diagnosis.",
+          "owner": "existing root/provider quota workstream",
+          "nextAction": "Recheck quota availability or a genuine new CI event; no unchanged retry or outreach."
+        }
       }
     },
     {
@@ -113731,12 +114045,16 @@
       "title": "Check staged archives against the release layout",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-26T17:20:00.247741+00:00",
-      "summary": "Published at 5a12d3ca8a. Approved 724058a9bb received only DCO metadata; identical tree and parent. Audited nine-member Make controls passed; no release binaries were built during qualification.",
+      "updatedAt": "2026-11-26T21:04:20.239849+00:00",
+      "summary": "Published 5a12d3ca8; Etienne approved this head. Latest First Pass3041 passed; older admission failure remains historical. Source opening is complete.",
       "evidence": [
         {
           "label": "Published pull request",
           "url": "https://github.com/google/gvisor/pull/18015"
+        },
+        {
+          "label": "Etienne approval",
+          "url": "https://github.com/google/gvisor/pull/18015#pullrequestreview-6079598200"
         }
       ],
       "followup": {
@@ -113744,11 +114062,32 @@
         "sourceHead": "5a12d3ca8a6d4fc50b8ad149fdae9d5de8d7f4dc",
         "providerHead": "5a12d3ca8a6d4fc50b8ad149fdae9d5de8d7f4dc",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-26T17:18:35.571044+00:00",
-        "disposition": "Publication complete. Approved 724058a9bb received only DCO metadata; identical tree and parent. Audited nine-member Make controls passed; no release binaries were built during qualification.",
-        "nextAction": "Follow actual upstream CI and substantive review events; source opening approval is fulfilled.",
-        "recheckCondition": "Actual CI/review/source or upstream lifecycle event.",
-        "curatedAt": "2026-11-26T17:20:00.247741+00:00"
+        "observedAt": "2026-11-26T20:31:29.209734+00:00",
+        "disposition": "Published 5a12d3ca8; Etienne approved this head. Latest First Pass3041 passed; older admission failure remains historical. Source opening is complete.",
+        "nextAction": "Follow the remaining actual maintainer/CI and landing events; preserve qualification limits and existing requests. No duplicate outreach or retry.",
+        "recheckCondition": "Actual review, quota availability, new CI or landing event.",
+        "curatedAt": "2026-11-26T21:04:20.239849+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/18015#pullrequestreview-6079598200"
+        ],
+        "firstPassAdmission": {
+          "head": "5a12d3ca8a6d4fc50b8ad149fdae9d5de8d7f4dc",
+          "build": 3029,
+          "url": "https://buildkite.com/gvisor/first-pass/builds/3029",
+          "latestObservedCheck": {
+            "url": "https://buildkite.com/gvisor/first-pass/builds/3041",
+            "state": "SUCCESS"
+          },
+          "historical": true,
+          "exitStatus": 80,
+          "stackErrored": true,
+          "agentAssigned": false,
+          "stackErrorDetail": "Author with GitHub ID 1535036 has reached 30 day quota of 360000 compute-minutes",
+          "classification": "External author rolling30-day quota; no source/test execution",
+          "provenance": "Root inspected each build separately through canonical reader data/jobs structured records; empty logs are not the diagnosis.",
+          "owner": "existing root/provider quota workstream",
+          "nextAction": "Recheck quota availability or a genuine new CI event; no unchanged retry or outreach."
+        }
       }
     },
     {
@@ -129768,6 +130107,15 @@
             "https://github.com/tamird/gvisor/actions/runs/45719620987",
             "https://github.com/tamird/gvisor/actions/runs/45727579893"
           ]
+        },
+        {
+          "observedAt": "2026-11-26T21:04:20.239849+00:00",
+          "collectorRun": 45891290460,
+          "event": "schedule",
+          "snapshotCheckedAt": "2026-11-26T20:31:30.287485+00:00",
+          "previousDeliveredSnapshot": "2026-11-26T16:54:16.948313+00:00",
+          "assessment": "Actual native scheduled delivery observed. The16:54→20:31 gap remains; this single event does not establish recurring hourly delivery.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45891290460"
         }
       ],
       "currentHealth": {
@@ -139333,9 +139681,9 @@
       "title": "Audit and enable x/tools analysis passes",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-26T16:31:41.937459+00:00",
+      "updatedAt": "2026-11-27T01:14:12.353830+00:00",
       "group": "analysis",
-      "summary": "Analyzer source 0edf29aac is unchanged. The hosted gRPC dirty-bindfs study is running on one accepted 12-hour worker: candidate A/A first, then conditional baseline/candidate A/B, 24 retained pairs per phase. Exact product identities, six synthetic children and real Docker reload/restoration passed before dispatch. Previous dirty-bindfs A/A remains scoped evidence; 71 filesystem leaves have matched data. Other gRPC controls, FUSE, Node stability and broader qualification remain open.",
+      "summary": "Native0edf analyzer source remains unchanged. All eight original Abseil leaves now have matched data: seven old-image cohorts plus a separate prefetched dirty-FUSE AA+AB cohort (100 children,24 pairs/phase,−0.319%,p=.56,no corrected flags). Post-test BES timeout preserves data; no equivalence claim. The hosted gRPC study ended in provider status13 with no result/exit code and zero attributable new comparisons; prior independent A/A remains. FUSE architecture and source gates remain separate.",
       "findings": [
         {
           "text": "Six local Bazel 9.3.1 runs tested a cache-only Buildkite handoff against a loopback HTTP cache. Regular build and test populated it. On the warm first-pass runs, build read one action result and test read three. Changing the input made both commands execute locally and pass. All four first-pass runs issued zero PUTs. In a separate option check the direct mixed-test and ARM64-build commands preserved both agent rc profiles. These runs did not exercise the private Buildkite agents or remote execution.",
@@ -139707,7 +140055,7 @@
           ]
         }
       ],
-      "nextStep": "analysis_delivery owns study f828a443-dd9a-49c8-a15e-7b8e5d0b3b5a (nested e29c64dd-b083-4a22-afed-c616ad917024), candidate A/A then conditional A/B on the same worker. Recheck the meaningful A/A milestone around 17:30 UTC or earlier terminal; do not duplicate its observer. Original 24 pairs per phase and 12-hour budget remain fixed. Synthetic reload/restoration and the real child passed; no full comparison or stability conclusion exists yet. Other gRPC controls, both FUSE holds and the Node candidate hold remain. Abseil dirty-FUSE original 24-pair A/A then conditional A/B is now running as 45853685673 after actual prefetched-fixture admission 45852933115; analysis_delivery is sole owner. Other seven old Abseil cohorts remain separate; upstream d4 prefetch publication decision is still pending and is not a measurement hold.",
+      "nextStep": "Root assesses remaining gRPC execution evidence after terminal provider failure; original wait is closed and no retry/candidate result is inferred. Preserve prior independent A/A, completed Abseil scope, workload precision and separate FUSE/source gates.",
       "evidence": [
         {
           "label": "Current 36-commit analyzer series",
@@ -140172,6 +140520,10 @@
         {
           "label": "Complete dirty-bindfs A/A data; post-test BES failure only",
           "url": "https://github.com/tamird/gvisor/actions/runs/45761231714/artifacts/15108186254"
+        },
+        {
+          "label": "Abseil dirty FUSE full matched cohort",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45853685673"
         }
       ],
       "reviewWatch": {
@@ -140194,11 +140546,11 @@
           }
         ]
       },
-      "recheckCondition": "Materially different measurement evidence or actual contributor/authorization disposition; preserve no-AB/no-retry for this Node control.",
+      "recheckCondition": "Owner-confirmed terminal remaining study, actual source/prerequisite event or decision.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Root resolves valid worker/control binding and execution budget before gRPC candidate comparison: A/B alone is about5h9m; fresh co-located A/A+A/B is about10h18m, above the6h hosted cap. Keep remote capability assessment separate. Five other non-FUSE controls, both FUSE gRPC holds and Node candidate HOLD remain; no live filesystem run or automatic timing authorization.",
-        "recheckCondition": "An actual accepted worker/control/budget plan or new source-bound qualification evidence; no retry or A/A-to-A/B inference across workers."
+        "nextAction": "Existing owners assess remaining real gRPC and measurement gates using retained evidence. Abseil dirty-FUSE is terminal; no rerun or image splicing. Preserve workload-specific precision, compatibility and publication conditions.",
+        "recheckCondition": "Owner-confirmed terminal remaining study, actual source/prerequisite event or decision."
       },
       "head": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
       "settledReviews": [
@@ -140426,17 +140778,18 @@
           "https://github.com/tamird/gvisor/actions/runs/45759909463",
           "https://github.com/tamird/gvisor/actions/runs/45761231714",
           "https://github.com/tamird/gvisor/actions/runs/45769403144",
-          "https://github.com/tamird/gvisor/actions/runs/45761231714/artifacts/15108186254"
+          "https://github.com/tamird/gvisor/actions/runs/45761231714/artifacts/15108186254",
+          "https://github.com/tamird/gvisor/actions/runs/45853685673"
         ],
         "owner": "root",
-        "disposition": "Analyzer source 0edf29aac is unchanged. The hosted gRPC dirty-bindfs study is running on one accepted 12-hour worker: candidate A/A first, then conditional baseline/candidate A/B, 24 retained pairs per phase. Exact product identities, six synthetic children and real Docker reload/restoration passed before dispatch. Previous dirty-bindfs A/A remains scoped evidence; 71 filesystem leaves have matched data. Other gRPC controls, FUSE, Node stability and broader qualification remain open.",
-        "nextAction": "analysis_delivery owns study f828a443-dd9a-49c8-a15e-7b8e5d0b3b5a (nested e29c64dd-b083-4a22-afed-c616ad917024), candidate A/A then conditional A/B on the same worker. Recheck the meaningful A/A milestone around 17:30 UTC or earlier terminal; do not duplicate its observer. Original 24 pairs per phase and 12-hour budget remain fixed. Synthetic reload/restoration and the real child passed; no full comparison or stability conclusion exists yet. Other gRPC controls, both FUSE holds and the Node candidate hold remain. Abseil dirty-FUSE original 24-pair A/A then conditional A/B is now running as 45853685673 after actual prefetched-fixture admission 45852933115; analysis_delivery is sole owner. Other seven old Abseil cohorts remain separate; upstream d4 prefetch publication decision is still pending and is not a measurement hold.",
-        "recheckCondition": "Owner-reported A/A milestone or actual terminal study result; no sample expansion, duplicate watcher or cross-worker inference.",
+        "disposition": "Native0edf analyzer source remains unchanged. All eight original Abseil leaves now have matched data: seven old-image cohorts plus a separate prefetched dirty-FUSE AA+AB cohort (100 children,24 pairs/phase,−0.319%,p=.56,no corrected flags). Post-test BES timeout preserves data; no equivalence claim. The hosted gRPC study ended in provider status13 with no result/exit code and zero attributable new comparisons; prior independent A/A remains. FUSE architecture and source gates remain separate.",
+        "nextAction": "Root assesses remaining gRPC execution evidence after terminal provider failure; original wait is closed and no retry/candidate result is inferred. Preserve prior independent A/A, completed Abseil scope, workload precision and separate FUSE/source gates.",
+        "recheckCondition": "Owner-confirmed terminal remaining study, actual source/prerequisite event or decision.",
         "sourceHead": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
         "technicalOwner": "analysis_pass_inventory (series and focused static qualification completed)",
         "base": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "implementationOwner": "analysis_delivery",
-        "curatedAt": "2026-11-26T16:31:41.937459+00:00",
+        "curatedAt": "2026-11-27T01:14:12.353830+00:00",
         "routeAttribution": {
           "state": "AMD attribution complete",
           "parent": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
@@ -140980,7 +141333,8 @@
               "diskBytesBefore": 14143234048,
               "image": "gcr.io/flame-public/rbe-ubuntu24-04@sha256:be9853fc45092d2cf2bda3abed30d22182881659a50bf35c7125161d7cfc8a75",
               "baselineArchive": "cb479886af63e2616c04640084fa8d4822a84716b8b6ee2996c2548d68d7a57e/40270884",
-              "next": "Meaningful AA-phase/terminal checkpoint (~17:30UTC from pilot; full projection~23:32UTC); no persistent observer. Consume existing client66317/retainedBEP outputs. Service deadline~2026-11-27T00:17:13Z, testbound roughly20min earlier."
+              "next": "Meaningful AA-phase/terminal checkpoint (~17:30UTC from pilot; full projection~23:32UTC); no persistent observer. Consume existing client66317/retainedBEP outputs. Service deadline~2026-11-27T00:17:13Z, testbound roughly20min earlier.",
+              "state": "Terminal provider failure; zero attributable new comparisons; no result/exit code"
             },
             "realChildBudgetPreflight": {
               "status": "SUCCESS",
@@ -141034,75 +141388,45 @@
                 "bytes": 15556768,
                 "proof": "GetInvocation namedSetOfFiles forbc9b3f32; identical to original45759909463 and retainedAA45761231714 executable."
               }
+            },
+            "matchedStudyTerminal": {
+              "observedAt": "2026-11-27T00:26:00Z",
+              "execution": "bb-snapshot/uploads/213af5d3-417f-4bd2-bf6b-fc39d4444a23/blobs/blake3/462bf4a7167f547b61aa3491b59863a81676fde5702e7bdaa8eaa81150ab169e/150",
+              "providerStatusCode": 13,
+              "providerMessage": "stream closed with task still claimed",
+              "result": null,
+              "exitCode": null,
+              "lastLog": "Nested target analysis",
+              "attributableNewComparisons": 0,
+              "disposition": "Original handle wait closed; no rerun or fresh corpus. Prior independent candidate A/A retained."
             }
           },
           "abslDirtyFuseRecovery": {
-            "owner": "analysis_delivery",
             "source": "91b3c9719a2d5f8b02bf4554768ec85f29f1bba9",
-            "nativeCandidate": "0edf29aac22811b7ef84d6da461c54edb5af8d78",
-            "nativeBaseline": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
-            "branch": "qualification/absl-dirty-fuse-prefetch-20261126",
-            "status": "matched-cohort-running",
-            "originalFailure": 45722613653,
-            "qualifiedRecipe": "d4b55cd9df05ea0519a124c00fd31f0f99468ec9",
-            "qualifiedOfflineRun": 45737661122,
-            "preflightRun": 45852933115,
-            "formatRun": 45851343130,
-            "target": "//test/benchmarks/fs:absl_dirty_fuse_paired_test",
-            "protocol": {
-              "pairsPerPhase": 24,
-              "childrenPerPhase": 50,
-              "alpha": 0.00025,
-              "contrasts": 5,
-              "metric": "sec/op",
-              "iterations": 1,
-              "visitSeconds": 240,
-              "sameSourceControl": "candidate/candidate before conditional baseline/candidate",
-              "scope": "only BuildABSL/page_cache.dirty/filesystem.fusefs; other seven historical workloads preserved unchanged"
-            },
-            "preflight": "Synthetic rows only, exact original base image+qualified prefetch recipe/cache hash, frozen18products and cleanup; no timing cohort until substantive admission passes",
-            "publication": "Published as gVisor #18013; measurement scope and frozen images remain separate.",
-            "next": "One terminal or meaningful AA (~90min after workload starts) checkpoint; preserve all5contrasts,stopbeforeABifAAflagged; no duplicate observer",
-            "checkout": "Restored qualification/node-accounting-control-20261126 at516e4814ae; trackedclean+originalpycache; released",
-            "initialAdmissionFailure": {
-              "run": 45851414824,
-              "boundary": "Bazel repository fetch before any fixture/child execution",
-              "cause": "Missing existing api.github.com credential_helper option; original baseline artifact14935569879 GET401",
-              "sourceUnchanged": true
-            },
-            "format": {
-              "run": 45851343130,
-              "conclusion": "success"
-            },
-            "modeRecovery": {
-              "failedRun": 45852008692,
-              "cause": "sh_test source lacked executable mode; failure before fixture",
-              "change": "100755 script. Pre-dispatch comparison also removed accidentally duplicated prefetch block; Dockerfile now byte-identical to d4 and existing0452. FROM uses exact previously successful loaded tag after checking frozenimageID.",
-              "checks": "bash-n passed; exact qualified Dockerfile bytes; generated FROM+tail six lines"
-            },
-            "formatReuse": "BUILD/text unchanged from passed45851343130; Dockerfile restored to already-qualifiedbytes",
-            "admission": {
-              "run": 45852933115,
-              "status": "success",
-              "baseImage": "sha256:f98e15990ecac4f5a0b28753acece11c97efca4766bfb3472d50418c5ff23a7c",
-              "commonImage": "sha256:7f68cd672cff6f3de9c5dbe04ae56d2c87bed95d0a29fec2f3043d85facb49df",
-              "cacheFiles": 124,
-              "cacheSHA256": "20c679e8b74953dad569745779c0b451e7fbf9d5d3b835db7f73ebebe45e7ead",
-              "contracts": [
-                "all18frozenproducts match offline receipt",
-                "native/baseline/candidate runtime probes pass",
-                "noexecroot before children",
-                "6synthetic children,distinctpids,exit0,exactcase/metric",
-                "original4m visit bound",
-                "image tag restored; sharedfixturecleanup0"
-              ],
-              "limitation": "synthetic only; no workload measurement or statistical clearance"
-            },
-            "matchedRun": 45853685673,
-            "url": "https://github.com/tamird/gvisor/actions/runs/45853685673",
-            "jobMinutes": 330,
-            "bazelTestSeconds": 18000,
-            "acceptedUTC": "2026-11-26T15:55:11.686900+00:00"
+            "run": 45853685673,
+            "status": "Complete AA and AB; post-test BES timeout only",
+            "children": 100,
+            "pairsPerPhase": 24,
+            "contrastsPerPhase": 5,
+            "alpha": 0.00025,
+            "AAFlags": 0,
+            "ABFlags": 0,
+            "primaryABPercent": -0.3191,
+            "p": 0.56,
+            "primaryABMedianCIPercent": [
+              1,
+              0
+            ],
+            "products": 18,
+            "cleanup": "PASS",
+            "scope": "Only prefetched dirty-FUSE cohort; seven original image cohorts remain separately scoped. All eight Abseil leaves now have matched data; no image splicing or equivalence claim.",
+            "publication": "Prefetch source delivered as #18013; independent of measurement."
+          },
+          "abslMatchedCoverage": {
+            "leaves": 8,
+            "oldImageCohorts": 7,
+            "prefetchedDirtyFuseCohorts": 1,
+            "crossImageCombination": false
           }
         }
       },
@@ -154481,15 +154805,15 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-26T17:20:00.247741+00:00",
-      "summary": "Tamir selected the existing utility image with a staged Hey binary. Preserve the native client container, Docker bridge and CPU assignment for a comparable baseline. Remote-daemon file transport remains relevant; host-client placement would need a separate endpoint/CPU/baseline.",
-      "nextStep": "approved_delivery_batch prepares existing utility-image reuse with staged Hey binary, preserving bridge and CPU placement. Root reviews the source milestone; no downstream publication grant is inferred.",
+      "updatedAt": "2026-11-26T23:11:59.045396+00:00",
+      "summary": "Accepted utility-image reuse is advancing: preflight45894771600 passed with37 targets, pinned Hey present and no CUDA; AMD64 util_context build45897736398 is running. Caller and image-size qualification are not yet established. Preserve bridge/CPU placement and remote-daemon transport.",
+      "nextStep": "approved_delivery_batch consumes AMD64 util_context build45897736398, then qualifies actual caller and size before root source review. No current caller/size pass or downstream publication grant.",
       "followup": {
         "owner": "root",
-        "disposition": "Tamir selected the existing utility image with a staged Hey binary. Preserve the native client container, Docker bridge and CPU assignment for a comparable baseline. Remote-daemon file transport remains relevant; host-client placement would need a separate endpoint/CPU/baseline.",
-        "nextAction": "approved_delivery_batch prepares existing utility-image reuse with staged Hey binary, preserving bridge and CPU placement. Root reviews the source milestone; no downstream publication grant is inferred.",
+        "disposition": "Accepted utility-image reuse is advancing: preflight45894771600 passed with37 targets, pinned Hey present and no CUDA; AMD64 util_context build45897736398 is running. Caller and image-size qualification are not yet established. Preserve bridge/CPU placement and remote-daemon transport.",
+        "nextAction": "approved_delivery_batch consumes AMD64 util_context build45897736398, then qualifies actual caller and size before root source review. No current caller/size pass or downstream publication grant.",
         "recheckCondition": "Source-bound implementation/review milestone for utility-image reuse.",
-        "curatedAt": "2026-11-26T17:20:00.247741+00:00",
+        "curatedAt": "2026-11-26T23:11:59.045396+00:00",
         "evidence": [
           "https://github.com/rakyll/hey/pull/348"
         ],
@@ -154617,5 +154941,5 @@
       "inactive": true
     }
   ],
-  "updatedAt": "2026-11-26T17:23:22.513386+00:00"
+  "updatedAt": "2026-11-27T05:10:49.901099+00:00"
 }
