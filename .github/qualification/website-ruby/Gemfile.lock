@@ -47,8 +47,18 @@ GEM
       terminal-table (~> 1.8)
     jekyll-autoprefixer (1.0.2)
       autoprefixer-rails (~> 9.3)
+    jekyll-feed (0.13.0)
+      jekyll (>= 3.7, < 5.0)
+    jekyll-inline-svg (1.1.4)
+      jekyll (>= 3.3, < 5.0)
+      svg_optimizer (~> 0.2.5)
+    jekyll-paginate (1.1.0)
+    jekyll-relative-links (0.6.1)
+      jekyll (>= 3.3, < 5.0)
     jekyll-sass-converter (2.1.0)
       sassc (> 2.0.1, < 3.0)
+    jekyll-sitemap (1.4.0)
+      jekyll (>= 3.7, < 5.0)
     jekyll-watch (2.2.1)
       listen (~> 3.0)
     kramdown (2.2.1)
@@ -94,6 +104,8 @@ GEM
     safe_yaml (1.0.5)
     sassc (2.3.0)
       ffi (~> 1.9)
+    svg_optimizer (0.2.6)
+      nokogiri
     terminal-table (1.8.0)
       unicode-display_width (~> 1.1, >= 1.1.1)
     typhoeus (1.4.0)
@@ -131,7 +143,12 @@ DEPENDENCIES
   i18n (= 1.8.2)
   jekyll (= 4.0.0)
   jekyll-autoprefixer (= 1.0.2)
+  jekyll-feed (= 0.13.0)
+  jekyll-inline-svg (= 1.1.4)
+  jekyll-paginate (= 1.1.0)
+  jekyll-relative-links (= 0.6.1)
   jekyll-sass-converter (= 2.1.0)
+  jekyll-sitemap (= 1.4.0)
   jekyll-watch (= 2.2.1)
   kramdown (= 2.2.1)
   kramdown-parser-gfm (= 1.1.0)
@@ -151,6 +168,7 @@ DEPENDENCIES
   rouge (= 3.19.0)
   safe_yaml (= 1.0.5)
   sassc (= 2.3.0)
+  svg_optimizer (= 0.2.6)
   terminal-table (= 1.8.0)
   typhoeus (= 1.4.0)
   unicode-display_width (= 1.7.0)
@@ -175,7 +193,12 @@ CHECKSUMS
   i18n (1.8.2) sha256=95cf147081cc6f1dbfb32a8f29a03afe8b0f4da6a300d37d34e0f74a6868994b
   jekyll (4.0.0) sha256=4a1dc48895d525bfb98cd562bf03ab6dd2727b5795360877c90e12670b9fec3a
   jekyll-autoprefixer (1.0.2) sha256=7aee7ef80ea1cce9f33fbff979189e19867c3677b26c96b24a2a874410d3fe27
+  jekyll-feed (0.13.0) sha256=3906c7d7365f6a15c42d86caa5d75fb72ece7c36a068b346e581a206e7b6a8d3
+  jekyll-inline-svg (1.1.4) sha256=909004a6ec69ec944dd496e18c940d8986faa151bc2564b50bc324cc7d73fd81
+  jekyll-paginate (1.1.0) sha256=880aadf4b02529a93541d508c5cbb744f014cbfc071d0263a31f25ec9066eb64
+  jekyll-relative-links (0.6.1) sha256=d11301f57b39e94b6c04fff2a3b145fe2f6a27be631a403e2542fa2e1548dd6d
   jekyll-sass-converter (2.1.0) sha256=bb25965bfdec2c61220192f45d9358d34a9fce388f72ec95119fc6cc09c9cc12
+  jekyll-sitemap (1.4.0) sha256=0de08c5debc185ea5a8f980e1025c7cd3f8e0c35c8b6ef592f15c46235cf4218
   jekyll-watch (2.2.1) sha256=bc44ed43f5e0a552836245a54dbff3ea7421ecc2856707e8a1ee203a8387a7e1
   kramdown (2.2.1) sha256=c6b22245c496fe26869db2f4cccac30b7b2ffab99768a39450e2b656299a3515
   kramdown-parser-gfm (1.1.0) sha256=fb39745516427d2988543bf01fc4cf0ab1149476382393e0e9c48592f6581729
@@ -203,6 +226,7 @@ CHECKSUMS
   rouge (3.19.0) sha256=65b0914e26b1f7f40fd5e591b7d9071c7c6ef80bcd260de85c65a2d30e605980
   safe_yaml (1.0.5) sha256=a6ac2d64b7eb027bdeeca1851fe7e7af0d668e133e8a88066a0c6f7087d9f848
   sassc (2.3.0) sha256=6f0e15b0aab4b76ef29404b1d27b07850bd66c0d690eab05376cc389d6b6eee3
+  svg_optimizer (0.2.6) sha256=bd83e5eb0203d73a74ca337845006968828dfd98002da00dfde8c40260893b2b
   terminal-table (1.8.0) sha256=13371f069af18e9baa4e44d404a4ada9301899ce0530c237ac1a96c19f652294
   typhoeus (1.4.0) sha256=fff9880d5dc35950e7706cf132fd297f377c049101794be1cf01c95567f642d4
   unicode-display_width (1.7.0) sha256=cad681071867a4cf52613412e379e39e85ac72b1d236677a2001187d448b231a
