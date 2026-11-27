@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-27T13:14:44.464664+00:00",
+    "updatedAt": "2026-11-27T13:46:22.675005+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -113940,8 +113940,8 @@
       "title": "Pin the website Google trust bundle",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-27T12:43:45.159584+00:00",
-      "summary": "Tamir and Etienne discussed mutable trust-bundle rotation in the published comments. The old explanatory-reply question is superseded. approved_delivery_batch owns fallback investigation; no immutable-copy design, source delivery or deployment is inferred.",
+      "updatedAt": "2026-11-27T13:46:22.675005+00:00",
+      "summary": "Exact fallback-roots amendment f9ed4cde7 and reply are independently reviewed, qualified and actually awaiting Tamir. The scratch serving binary fetched/rendered an existing GCS profile without system roots; build/NoGo/licensing checks passed. This changes Google trust anchors to pinned NSS fallback roots and distrust constraints; full Jekyll/static-site assembly is not claimed.",
       "evidence": [
         {
           "label": "Published pull request",
@@ -113962,6 +113962,10 @@
         {
           "label": "Published trust-bundle discussion",
           "url": "https://github.com/gvisor/gvisor/pull/18012#issuecomment-7205265945"
+        },
+        {
+          "label": "Actual scratch serving qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/46003673648"
         }
       ],
       "followup": {
@@ -113970,10 +113974,10 @@
         "providerHead": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-26T20:31:29.209734+00:00",
-        "disposition": "Tamir and Etienne discussed mutable trust-bundle rotation in the published comments. The old explanatory-reply question is superseded. approved_delivery_batch owns fallback investigation; no immutable-copy design, source delivery or deployment is inferred.",
-        "nextAction": "approved_delivery_batch investigates the fallback needed to keep old revisions buildable, then hands source/contract evidence to root for review. Do not post the retired rotation reply.",
-        "recheckCondition": "Fallback investigation/source milestone or substantive reviewer response.",
-        "curatedAt": "2026-11-27T12:43:45.159584+00:00",
+        "disposition": "Exact fallback-roots amendment f9ed4cde7 and reply are independently reviewed, qualified and actually awaiting Tamir. The scratch serving binary fetched/rendered an existing GCS profile without system roots; build/NoGo/licensing checks passed. This changes Google trust anchors to pinned NSS fallback roots and distrust constraints; full Jekyll/static-site assembly is not claimed.",
+        "nextAction": "Root awaits the actual exact f9ed amendment and reply decision. Preserve the trust-anchor change and scratch-serving limits; no upstream amendment or external reply has occurred.",
+        "recheckCondition": "Answer to the submitted exact amendment/reply question or material source/reviewer evidence.",
+        "curatedAt": "2026-11-27T13:46:22.675005+00:00",
         "bundleAvailability": {
           "currentSHA256": "ec989df46c8f4419ef2ee2517cad7619d555e4973f3307be697662aa2497e480",
           "bytes": 38766,
@@ -113985,7 +113989,8 @@
           "https://github.com/google/gvisor/pull/18012#pullrequestreview-6079556332",
           "https://github.com/gvisor/gvisor/pull/18012#issuecomment-7204793945",
           "https://github.com/gvisor/gvisor/pull/18012#issuecomment-7204934476",
-          "https://github.com/gvisor/gvisor/pull/18012#issuecomment-7205265945"
+          "https://github.com/gvisor/gvisor/pull/18012#issuecomment-7205265945",
+          "https://github.com/tamird/gvisor/actions/runs/46003673648"
         ],
         "firstPassAdmission": {
           "head": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
@@ -114005,7 +114010,17 @@
           "owner": "existing root/provider quota workstream",
           "nextAction": "Recheck quota availability or a genuine new CI event; no unchanged retry or outreach."
         },
-        "technicalOwner": "approved_delivery_batch"
+        "technicalOwner": "approved_delivery_batch",
+        "fallbackReview": {
+          "native": "f9ed4cde755d81d60bb4681d306f1486993f7c05",
+          "oldPublic": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
+          "qualificationCI": "bce9c7198be86069f9eb3aef22aa0dd547bc5e5f",
+          "servingRun": 46003673648,
+          "servingArtifact": 15199885484,
+          "checks": "Actual serving/ARM build/AMD+ARM NoGo/licensing and source checks passed; independent review clear.",
+          "trustChange": "Google21 roots to pinned NSS fallback111 roots,17 shared;3 distrust constraints. Not an identical-bundle substitution.",
+          "limits": "No full Jekyll/static-site assembly or source publication."
+        }
       },
       "settledReviews": [
         {
@@ -114020,7 +114035,23 @@
           "note": "Old rotation reply is superseded by actual Tamir/Etienne discussion; do not post it.",
           "recordedAt": "2026-11-27T12:43:45.159584+00:00"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "f9ed4cde755d81d60bb4681d306f1486993f7c05",
+        "baseHead": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
+        "url": "https://github.com/tamird/gvisor/commit/f9ed4cde755d81d60bb4681d306f1486993f7c05",
+        "title": "Amend #18012 to embed fallback trust roots",
+        "summary": "Actual submitted exact amendment and reply question; unanswered. This deliberately changes the trust-anchor set.",
+        "body": "The website profile viewer fetched its trust bundle from a mutable Google URL. Embed the pinned golang.org/x/crypto/x509roots/fallback module in the serving binary and remove the separate certificate download, image copy and manual licensing exception. Root updates then follow ordinary Go dependency updates.\n\nThis changes the serving image's trust anchors from Google's bundle to the NSS bundle, including the module's distrust constraints. The profile source URL and bucket checks remain unchanged.\n\nPosted by Codex on behalf of @tamird.\n",
+        "replyBody": "I've prepared a version using golang.org/x/crypto/x509roots/fallback, pinned to v0.0.0-20261123192653-4dc4fb521066. It removes the separate certificate fetch and image copy. The serving binary fetched and rendered an existing GCS profile in a scratch image without system roots. This changes the trust anchors from Google's bundle to NSS, including its distrust constraints.\n\nPosted by Codex on behalf of @tamird.\n",
+        "reviewCommand": "git range-diff b8c204be9^! f9ed4cde755d81d60bb4681d306f1486993f7c05^!",
+        "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/website-fallback-proposed-pr-body.txt",
+        "sourceSha256": "8e8088e73dbfbf805405c62aafef0ac0d24b7100a8e77f0ee48f9fe5020386f6",
+        "replySourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/website-fallback-proposed-reply.txt",
+        "replySourceSha256": "ad9199277ff63a226fc8bcdca1b3fe7726063db41707b16ae6cbcd24c270bcf8"
+      }
     },
     {
       "id": "pr:18013",
@@ -143477,8 +143508,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-13T15:43:34+00:00",
-      "summary": "Three Buildkite runs stopped at the first wire dump with “error printing state: unreachable”. A native AMD64 workload reproduced the error on two of eight valid guest checkpoints. Stock mistook saved page data for a stream header. #17208 dumped all eight and the guests restored.",
+      "updatedAt": "2026-11-27T13:46:22.675005+00:00",
+      "summary": "First Pass1910 has the existing checkpoint-inspector signature: actual shard3 systrap/wire_to_graph_to_wire hop0 dump exited128 with error printing state: unreachable after22.27 minutes; automatic retry passed. Existing #17208 covers this signature, with retained2/8 stock failures versus8/8 corrected dumps. Current PR is mergeable/review-required with two requested reviewers; its own First Pass1554 hit a one-day quota, distinct from this executed1910 failure.",
       "findings": [
         {
           "text": "The chained cross-engine checkpoint dump at hop 0 in build 54697 printed “error printing state: overflow”. Earlier incidents printed “unreachable”. This build did not include #17208. The original log artifact is 01a1d0e9-f9a2-4a6d-94e0-2b02ed74b004.",
@@ -143669,9 +143700,18 @@
               "url": "https://github.com/google/gvisor/pull/17208"
             }
           ]
+        },
+        {
+          "text": "First Pass1910 actual shard3 failed at systrap/wire_to_graph_to_wire hop0 dump with exit128 and error printing state: unreachable. Failed attempt22.27 minutes; automatic retry passed. This is the established inspector signature, not a quota-admission failure.",
+          "evidence": [
+            {
+              "label": "Executed First Pass1910 checkpoint dump failure",
+              "url": "https://buildkite.com/gvisor/first-pass/builds/1910#01a1f3b8-3395-4f41-91b8-b6fdbedae4b8"
+            }
+          ]
         }
       ],
-      "nextStep": "Check the original chained restore test on the first upstream run that includes #17208. If the error recurs, retain the failing header offset and the type of checkpoint region it falls in.\n\nRoot owns the newly retained builds1474/1475/1527 checkpoint-dump evidence. Preserve original failing checkpoint images where available and correlate exact heads with #17208. Recheck the first upstream execution containing the fix or new evidence from those retained artifacts; diagnose overflow independently until its cause is established. A quota rejection is not a passing runtime retry.",
+      "nextStep": "Follow existing #17208 review/import and real CI/admission events. Preserve its independent qualification/cleanup limits; no fixed-series rerun or duplicate outreach.",
       "evidence": [
         {
           "label": "Repeated systrap hop-0 failure on #17475",
@@ -143712,14 +143752,40 @@
         {
           "label": "Chained checkpoint overflow in build 54697",
           "url": "https://buildkite.com/gvisor/pipeline/builds/54697"
+        },
+        {
+          "label": "Executed First Pass1910 checkpoint dump failure",
+          "url": "https://buildkite.com/gvisor/first-pass/builds/1910#01a1f3b8-3395-4f41-91b8-b6fdbedae4b8"
         }
       ],
       "technicalOwner": "CI flake triage",
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
+      "recheckCondition": "Substantive #17208 reviewer/source/import/CI event or natural signature recurrence.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
-        "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+        "nextAction": "Follow existing #17208 review/import and real CI/admission events. Preserve its independent qualification/cleanup limits; no fixed-series rerun or duplicate outreach.",
+        "recheckCondition": "Substantive #17208 reviewer/source/import/CI event or natural signature recurrence."
+      },
+      "followup": {
+        "owner": "root",
+        "disposition": "First Pass1910 has the existing checkpoint-inspector signature: actual shard3 systrap/wire_to_graph_to_wire hop0 dump exited128 with error printing state: unreachable after22.27 minutes; automatic retry passed. Existing #17208 covers this signature, with retained2/8 stock failures versus8/8 corrected dumps. Current PR is mergeable/review-required with two requested reviewers; its own First Pass1554 hit a one-day quota, distinct from this executed1910 failure.",
+        "nextAction": "Follow existing #17208 review/import and real CI/admission events. Preserve its independent qualification/cleanup limits; no fixed-series rerun or duplicate outreach.",
+        "recheckCondition": "Substantive #17208 reviewer/source/import/CI event or natural signature recurrence.",
+        "curatedAt": "2026-11-27T13:46:22.675005+00:00",
+        "firstPass1910": {
+          "job": "https://buildkite.com/gvisor/first-pass/builds/1910#01a1f3b8-3395-4f41-91b8-b6fdbedae4b8",
+          "attemptMinutes": 22.27,
+          "exitStatus": 128,
+          "signature": "error printing state: unreachable",
+          "subtest": "systrap/wire_to_graph_to_wire;hop0;shard3",
+          "retry": "Passed",
+          "existingFix": 17208,
+          "retainedQualification": "2/8 stock failures;8/8 corrected dumps",
+          "currentFixLifecycle": "MERGEABLE/REVIEW_REQUIRED;2 requested reviewers;First Pass1554 one-day quota",
+          "scope": "No current-source rerun/whole-series qualification transfer; existing independent limits preserved."
+        },
+        "evidence": [
+          "https://buildkite.com/gvisor/first-pass/builds/1910#01a1f3b8-3395-4f41-91b8-b6fdbedae4b8"
+        ]
       }
     },
     {
@@ -144185,8 +144251,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-09T18:43:26+00:00",
-      "summary": "The author of #16788 traced an ARP retry racing the test’s MAC change. Their proposed fix sets the address before enabling the NIC.",
+      "updatedAt": "2026-11-27T13:46:22.675005+00:00",
+      "summary": "Contributor adios-404 merged master into #16788 head26a13d0e3. Approval and auto-merge are present, zero unresolved threads, and DCO/First Pass/maintainer-approval checks are green. Required buildkite/pipeline/pr is absent on that head. The contributor already explained the old fork-fetch failure and requested a run; this is an admission/check gap, not an unanswered review request.",
       "findings": [
         {
           "text": "With 0–2 ms delays around the operations, the author reported 160 failures in 300 runs before the change and none in 300 afterward. They also distinguished a separate two-second stall that they had only seen with an injected delay.",
@@ -144198,19 +144264,50 @@
           ]
         }
       ],
-      "nextStep": "Follow #16788 through review and import, then check for recurrences of the destination-MAC timeout on the landed change.",
+      "nextStep": "Root rechecks actual required main-check admission or a substantive lifecycle/source event. Do not duplicate the existing run request or change contributor source. Preserve the independent #17470 DCO wrong-range hold.",
       "evidence": [
         {
           "label": "Change under review",
           "url": "https://github.com/google/gvisor/pull/16788/changes"
+        },
+        {
+          "label": "Current neighbor-cache PR lifecycle",
+          "url": "https://github.com/gvisor/gvisor/pull/16788"
         }
       ],
       "technicalOwner": "CI flake triage",
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
+      "recheckCondition": "Actual buildkite/pipeline/pr check/admission, contributor source/lifecycle change or natural failure recurrence.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
-        "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+        "nextAction": "Root rechecks actual required main-check admission or a substantive lifecycle/source event. Do not duplicate the existing run request or change contributor source. Preserve the independent #17470 DCO wrong-range hold.",
+        "recheckCondition": "Actual buildkite/pipeline/pr check/admission, contributor source/lifecycle change or natural failure recurrence."
+      },
+      "followup": {
+        "owner": "root",
+        "disposition": "Contributor adios-404 merged master into #16788 head26a13d0e3. Approval and auto-merge are present, zero unresolved threads, and DCO/First Pass/maintainer-approval checks are green. Required buildkite/pipeline/pr is absent on that head. The contributor already explained the old fork-fetch failure and requested a run; this is an admission/check gap, not an unanswered review request.",
+        "nextAction": "Root rechecks actual required main-check admission or a substantive lifecycle/source event. Do not duplicate the existing run request or change contributor source. Preserve the independent #17470 DCO wrong-range hold.",
+        "recheckCondition": "Actual buildkite/pipeline/pr check/admission, contributor source/lifecycle change or natural failure recurrence.",
+        "curatedAt": "2026-11-27T13:46:22.675005+00:00",
+        "currentLifecycle": {
+          "headPrefix": "26a13d0e3",
+          "author": "adios-404",
+          "source": "Root verified live GitHub current-head state and master required rule",
+          "approved": true,
+          "autoMergePresent": true,
+          "unresolvedThreads": 0,
+          "green": [
+            "DCO",
+            "First Pass",
+            "maintainer-approval/master"
+          ],
+          "requiredMainContext": "buildkite/pipeline/pr",
+          "mainContext": "Absent on observed head",
+          "contributorRunRequest": "Already posted; no duplicate outreach",
+          "independentHold": "#17470 DCO wrong-range unchanged"
+        },
+        "evidence": [
+          "https://github.com/gvisor/gvisor/pull/16788"
+        ]
       }
     },
     {
@@ -155042,22 +155139,24 @@
     },
     {
       "id": "investigation:hey-client-placement",
-      "title": "Choose Hey benchmark client placement",
+      "title": "Reuse the utility image for Hey benchmark clients",
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-27T12:43:45.159584+00:00",
-      "summary": "All four finite AMD64/runc Hey utility-image callers are admitted: retained HTTPd plus Nginx/Node/Ruby45999324087 each actually ran one selected iteration, no skip, exit0. All callers link and five owning Nogo targets pass on both architectures; pinned Hey adds8765600 bytes with unchanged parent layers/config. No performance comparison, ARM container execution or separately configured remote-daemon transport claim.",
-      "nextStep": "approved_delivery_batch hands the complete source and finite caller/image-size evidence to root for final review/publication decision. Do not rerun the completed caller set or infer downstream publication approval.",
+      "updatedAt": "2026-11-27T13:46:22.675005+00:00",
+      "summary": "Current utility-placement source de5d7ebfb is local-only and reviewer-confirmed after the make-inventory correction:4AMD64/2ARM64 inventory shards are unique. It depends on open #17780@4ef1c7dd6 plus the replay of open #16871@24959d472; #16871 First Pass2650 is quota-blocked. Earlier finite caller/build/NoGo evidence retains its original unchanged-input scope. Upstream Hey#348 accounting is independent, not a prerequisite or adopted source.",
+      "nextStep": "Root waits for actual #17780/#16871 integration, then replays onto integrated source and assesses changed inputs before publication review. No generic ready-for-publication claim, remote link or new run for local de5d.",
       "followup": {
         "owner": "root",
-        "disposition": "All four finite AMD64/runc Hey utility-image callers are admitted: retained HTTPd plus Nginx/Node/Ruby45999324087 each actually ran one selected iteration, no skip, exit0. All callers link and five owning Nogo targets pass on both architectures; pinned Hey adds8765600 bytes with unchanged parent layers/config. No performance comparison, ARM container execution or separately configured remote-daemon transport claim.",
-        "nextAction": "approved_delivery_batch hands the complete source and finite caller/image-size evidence to root for final review/publication decision. Do not rerun the completed caller set or infer downstream publication approval.",
-        "recheckCondition": "Final source-review/publication milestone or material source/caller evidence.",
-        "curatedAt": "2026-11-27T12:43:45.159584+00:00",
+        "disposition": "Current utility-placement source de5d7ebfb is local-only and reviewer-confirmed after the make-inventory correction:4AMD64/2ARM64 inventory shards are unique. It depends on open #17780@4ef1c7dd6 plus the replay of open #16871@24959d472; #16871 First Pass2650 is quota-blocked. Earlier finite caller/build/NoGo evidence retains its original unchanged-input scope. Upstream Hey#348 accounting is independent, not a prerequisite or adopted source.",
+        "nextAction": "Root waits for actual #17780/#16871 integration, then replays onto integrated source and assesses changed inputs before publication review. No generic ready-for-publication claim, remote link or new run for local de5d.",
+        "recheckCondition": "Actual parent source/integration event or root source-review outcome; no age-only rebase, speculative retry or duplicate monitoring.",
+        "curatedAt": "2026-11-27T13:46:22.675005+00:00",
         "evidence": [
           "https://github.com/rakyll/hey/pull/348",
-          "https://github.com/tamird/gvisor/actions/runs/45999324087"
+          "https://github.com/tamird/gvisor/actions/runs/45999324087",
+          "https://github.com/gvisor/gvisor/pull/17780",
+          "https://github.com/gvisor/gvisor/pull/16871"
         ],
         "technicalOwner": "approved_delivery_batch",
         "remainingCallersTerminal": {
@@ -155105,6 +155204,38 @@
             "Docker configuration/runtime registration unchanged; no separately configured remote-daemon endpoint or gVisor server-runtime claim.",
             "Earlier HTTPd package/admission45972259828 retained; not repeated."
           ]
+        },
+        "sourceHead": "de5d7ebfbd8bfc31636b4d4f7aa333784f078a74",
+        "currentLocalCandidate": {
+          "head": "de5d7ebfbd8bfc31636b4d4f7aa333784f078a74",
+          "remote": "None; no public source link",
+          "reviewCommand": "git show de5d7ebfbd8bfc31636b4d4f7aa333784f078a74",
+          "inventory": "4AMD64/2ARM64 make inventory verified unique; reviewer confirmed",
+          "scope": "Only utility placement increment; source/CI combinations and previous evidence remain scoped.",
+          "qualifiedOriginal": "0a0225664167d6d1f5a72cc307a9123b575d11d0"
+        },
+        "sourcePrerequisites": [
+          {
+            "number": 17780,
+            "head": "4ef1c7dd6c58f85305c19070c3f666d903559bb7",
+            "state": "OPEN/unmerged",
+            "role": "Shared HTTP caller/timer/strict JSON source"
+          },
+          {
+            "number": 16871,
+            "head": "24959d472baf3aa7405ac1d3d3b88e47af8f7f76",
+            "replayed": "d4f093dfec493b75a24e4bc61e88fe1b15f159ac",
+            "state": "OPEN/unmerged",
+            "role": "Pinned pure/static Hey binary and packaging route",
+            "firstPass": 2650,
+            "admission": "Existing source-bound quota block"
+          }
+        ],
+        "independentSupplier": {
+          "pr": "rakyll/hey#348",
+          "head": "5f17b673523e57b344c91c8d8b59b97b5ec2f984",
+          "prerequisite": false,
+          "adopted": false
         }
       },
       "evidence": [
@@ -155156,7 +155287,9 @@
           "note": "Tamir accepted existing util-image reuse, preserving container bridge/CPU scope.",
           "recordedAt": "2026-11-26T17:20:00.247741+00:00"
         }
-      ]
+      ],
+      "repo": "google/gvisor",
+      "head": "de5d7ebfbd8bfc31636b4d4f7aa333784f078a74"
     },
     {
       "id": "investigation:iperf-supplier-sender-completion",
@@ -155304,5 +155437,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-27T13:14:44.464664+00:00"
+  "updatedAt": "2026-11-27T13:46:22.675005+00:00"
 }
