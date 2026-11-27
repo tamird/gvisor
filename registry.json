@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-27T17:03:29.842766+00:00",
+    "updatedAt": "2026-11-27T18:01:53.784965+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -156020,9 +156020,9 @@
       "head": "fca9e4659b1d6598fa5e75ed04bcb565e62ed20d",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-27T17:03:29.842766+00:00",
-      "summary": "Reviewed FIFO repair fca9e4659 rechecks generations after waiter registration in both open directions. Existing AMD64/ARM64 functional, unit/NoGo and source suites passed; scoped timing remains pending. The recovered FifoOtrunc timeout is consistent with this gap, not proof of the interleaving; no new reproducer/stress result. No human source-publication decision has been asked.",
-      "nextStep": "approved_rebase_queue advances only the assigned timing gate and reports its scope to root before source-publication review. Do not rerun passed suites, treat the recovered timeout as causal proof or create a premature source/DCO question.",
+      "updatedAt": "2026-11-27T18:01:53.784965+00:00",
+      "summary": "Reviewed FIFO repair fca9e4659 retains passed AMD64/ARM64 functional, unit/NoGo and source suites. Run 46040127912 verified all 128 guest lifecycle cases, clean teardown and both immutable release archives. Its single 85 ms observation was discarded. Statistical collection 46043596243 stopped on GitHub artifact-fetch HTTP 403 before any sample; no BuildBuddy hosted dispatch ran. Automatic approval review rejected that transport; fork-only CI bef42ee132 restored the existing narrow artifact helper c12a3980f9, but automatic approval review rejected its GitHub dispatch before execution for missing exact external-execution authorization. No A/A, A/B or speedup result exists.",
+      "nextStep": "Root resolves the existing exact GitHub external-execution authorization boundary for prepared fork-only CI bef42ee132; approved_rebase_queue retains the unchanged caller and immutable inputs. Only after an authorized dispatch and admission may same-worker A/A precede conditional A/B. Await the actual execution-override answer; this is not a source-approval question. Do not retry the rejected dispatch. Root reviews actual scoped control evidence before publication.",
       "findings": [
         {
           "text": "First Pass 3050 had a 300-second FifoTest.FifoOtrunc timeout under systrap_shared; retry passed. The failed/current FIFO source files are identical. A generation-aware outer wait can still lose a transient peer because its registration recheck used counts only. Source review accepts the defensive gap repair; the stack is consistent, not a demonstrated interleaving.",
@@ -156067,16 +156067,24 @@
         {
           "label": "Passed architecture/source qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/46034931727"
+        },
+        {
+          "label": "Verified 128-case lifecycle admission",
+          "url": "https://github.com/tamird/gvisor/actions/runs/46040127912"
+        },
+        {
+          "label": "Artifact-fetch failure before statistical sampling",
+          "url": "https://github.com/tamird/gvisor/actions/runs/46043596243"
         }
       ],
       "followup": {
         "owner": "root",
         "technicalOwner": "approved_rebase_queue",
         "sourceHead": "fca9e4659b1d6598fa5e75ed04bcb565e62ed20d",
-        "disposition": "Reviewed FIFO repair fca9e4659 rechecks generations after waiter registration in both open directions. Existing AMD64/ARM64 functional, unit/NoGo and source suites passed; scoped timing remains pending. The recovered FifoOtrunc timeout is consistent with this gap, not proof of the interleaving; no new reproducer/stress result. No human source-publication decision has been asked.",
-        "nextAction": "approved_rebase_queue advances only the assigned timing gate and reports its scope to root before source-publication review. Do not rerun passed suites, treat the recovered timeout as causal proof or create a premature source/DCO question.",
-        "recheckCondition": "Actual scoped timing/control evidence and root final source/publication disposition.",
-        "curatedAt": "2026-11-27T17:03:29.842766+00:00",
+        "disposition": "Reviewed FIFO repair fca9e4659 retains passed AMD64/ARM64 functional, unit/NoGo and source suites. Run 46040127912 verified all 128 guest lifecycle cases, clean teardown and both immutable release archives. Its single 85 ms observation was discarded. Statistical collection 46043596243 stopped on GitHub artifact-fetch HTTP 403 before any sample; no BuildBuddy hosted dispatch ran. Automatic approval review rejected that transport; fork-only CI bef42ee132 restored the existing narrow artifact helper c12a3980f9, but automatic approval review rejected its GitHub dispatch before execution for missing exact external-execution authorization. No A/A, A/B or speedup result exists.",
+        "nextAction": "Root resolves the existing exact GitHub external-execution authorization boundary for prepared fork-only CI bef42ee132; approved_rebase_queue retains the unchanged caller and immutable inputs. Only after an authorized dispatch and admission may same-worker A/A precede conditional A/B. Await the actual execution-override answer; this is not a source-approval question. Do not retry the rejected dispatch. Root reviews actual scoped control evidence before publication.",
+        "recheckCondition": "Actual supported input-admission or same-worker control result from the existing owner; no standing observer.",
+        "curatedAt": "2026-11-27T18:01:53.784965+00:00",
         "qualification": {
           "native": "fca9e4659b1d6598fa5e75ed04bcb565e62ed20d",
           "CI": "b4f0dd029f908adf2da3fec6b42d315295d32bc7",
@@ -156095,7 +156103,7 @@
           "existingSuites": "Passed per terminal owner audit",
           "sourceChecks": "Goimports/Buildifier/spelling PASS",
           "review": "Accepted per root current handoff",
-          "timing": "Scoped timing pending; no performance clearance",
+          "timing": "Functional admission passed; statistical sample collection blocked before first sample by artifact HTTP 403; existing narrow GitHub helper restored at fork-only CI bef42ee132; dispatch rejected before execution.",
           "causalClaim": "No demonstrated interleaving/reproducer or flake-eradication claim"
         },
         "DCOExecutionHistory": {
@@ -156105,9 +156113,51 @@
           "standingUserAuthorization": "Remains intact",
           "qualificationPath": "Unsigned-off qualification allowed by root; final exact source/PR approval/override remains separate and unasked"
         },
-        "upstreamPublished": false
+        "upstreamPublished": false,
+        "lifecycleAdmission": {
+          "run": 46040127912,
+          "actualGuestRunMarkers": 128,
+          "actualGuestPassMarkers": 128,
+          "cleanup": "PASS",
+          "baselineArchiveSHA256": "3f2d47d1aacc3c16608c4d14ded67e88bc6a132801f868735432655477513539",
+          "candidateArchiveSHA256": "5c31f98a77d0be4700e45345762b4ab77af951eee0e8dd1a5f39f3a559ffe69a",
+          "singleTiming": "85 ms discarded; no speedup/stability claim"
+        },
+        "statisticalAttempt": {
+          "run": 46043596243,
+          "outcome": "GitHub artifact-fetch HTTP 403 before statistical sampling",
+          "samples": 0,
+          "AA": false,
+          "AB": false,
+          "recovery": "Existing GitHub workflow per-host/per-artifact helper c12a3980f9; CI-only restoration",
+          "BuildBuddyDispatchRan": false,
+          "BuildBuddyTransport": "Automatic approval review rejected bb remote sending local repository/script and locally retrieved BuildBuddy API key to the external controller; missing destination-specific authorization. No retry or new user decision.",
+          "owner": "approved_rebase_queue",
+          "helperCI": "bef42ee132a95c63da341c9e6fafca74d2c625f0",
+          "helperSource": "Exact existing c12a3980f9 artifact helper only; native fca9 unchanged",
+          "GitHubDispatch": "Automatic approval review rejected before execution: missing exact external-execution authorization",
+          "newRun": false
+        },
+        "executionBlock": {
+          "status": "Automatic execution block; actual override question pending",
+          "operation": "POST /repos/tamird/gvisor/actions/workflows/qualification.yml/dispatches",
+          "reason": "This POST dispatches a remote GitHub Actions workflow and consumes authenticated repository/workflow resources; the trusted user instructions do not explicitly authorize this exact external execution.",
+          "beforeExecution": true,
+          "questionActuallySubmitted": true,
+          "answerReceived": false,
+          "sourceApprovalRequested": false,
+          "retry": false
+        }
+      },
+      "contributorReview": {
+        "kind": "information",
+        "status": "pending",
+        "url": "https://github.com/tamird/gvisor/commit/bef42ee132a95c63da341c9e6fafca74d2c625f0",
+        "title": "Allow the blocked FIFO qualification dispatch",
+        "summary": "Actual execution-override question submitted and unanswered. Automatic approval review blocked the GitHub dispatch before execution; no source approval is requested.",
+        "body": "The exact operation is POST /repos/tamird/gvisor/actions/workflows/qualification.yml/dispatches for helper-only CI bef42ee132a95c63da341c9e6fafca74d2c625f0. Automatic approval review rejected it before execution because the trusted instructions did not explicitly authorize this exact external execution. Root submitted one execution-override question; it remains unanswered. The existing standing CI grant is intact. No retry, new run or statistical sample; native fca9 is unchanged and this is not a source-publication decision."
       }
     }
   ],
-  "updatedAt": "2026-11-27T17:03:29.842766+00:00"
+  "updatedAt": "2026-11-27T18:01:53.784965+00:00"
 }
