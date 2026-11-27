@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-27T12:58:35.566526+00:00",
+    "updatedAt": "2026-11-27T13:14:44.464664+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -114296,16 +114296,46 @@
       "head": "165933c11003e1d49f5a696e3286e85fc28172ea",
       "url": "https://github.com/tamird/gvisor/commit/165933c11003e1d49f5a696e3286e85fc28172ea",
       "title": "Halve First Pass syscall job fan-out",
-      "status": "Qualifying on the fork",
-      "summary": "Using ten syscall jobs instead of twenty saves 600 reserved compute-minutes per clean untrusted First Pass build. The 55-minute timeout and test configurations are unchanged. In 24 builds with a complete successful set of original partitions, the largest sum of paired job times was 31.8 minutes.",
-      "updatedAt": "2026-11-27T12:58:35.566526+00:00",
+      "status": "Contributor review",
+      "summary": "Exact syscall fan-out source165933c11 passed both independent reviews and representative XML union:97+81=178 cases, zero skips. The actual opening question is pending. Ten jobs reserve600 instead of1200 compute-minutes per clean untrusted run;55-minute timeout/default selections are unchanged. Historical31.8-minute paired maximum is headroom evidence, not measured ten-job timing.",
+      "updatedAt": "2026-11-27T13:14:44.464664+00:00",
       "followup": {
         "owner": "root",
         "technicalOwner": "approved_rebase_queue",
         "sourceHead": "165933c11003e1d49f5a696e3286e85fc28172ea",
         "observedAt": "2026-11-27T12:58:35.566526+00:00",
-        "nextAction": "Compare named test cases from the two original partitions with the combined partition, including native and Sentry runs. Check failures, skips and remaining headroom before publication review.",
-        "recheckCondition": "Terminal XML for all three fork runs, or a source or quota-policy change."
+        "nextAction": "Root awaits the actual exact165933 opening decision. Keep the one-line syscall fan-out change separate from the local smoke-timeout question; do not rerun completed XML or claim full ten-job timing.",
+        "recheckCondition": "Answer to the submitted source-bound opening question, or material source/quota-policy change.",
+        "disposition": "Exact syscall fan-out source165933c11 passed both independent reviews and representative XML union:97+81=178 cases, zero skips. The actual opening question is pending. Ten jobs reserve600 instead of1200 compute-minutes per clean untrusted run;55-minute timeout/default selections are unchanged. Historical31.8-minute paired maximum is headroom evidence, not measured ten-job timing.",
+        "curatedAt": "2026-11-27T13:14:44.464664+00:00",
+        "qualification": {
+          "source": "165933c11003e1d49f5a696e3286e85fc28172ea",
+          "reviews": "Two independent reviews accepted",
+          "originalCases": [
+            97,
+            81
+          ],
+          "combinedCases": 178,
+          "skips": 0,
+          "runs": [
+            46002929520,
+            46002937488,
+            46002930684
+          ],
+          "scope": "Representative native and systrap target selection; exact merged case union, not full ten-job wall-time qualification."
+        },
+        "quotaDisposition": {
+          "kind": "Reserved untrusted admission compute minutes, distinct from actual execution time",
+          "syscallCleanRun": {
+            "before": 1200,
+            "after": 600,
+            "saving": 600
+          },
+          "timeoutMinutes": 55,
+          "fullTenJobTiming": "Unmeasured",
+          "smoke": "Separate local0f6 decision; conditional35-minute saving cannot be treated as delivered or merged.",
+          "existingQuotaFailures": "Existing structured30-day admission failures retain their own sources/receipts; proposed reservation reductions do not clear current quota."
+        }
       },
       "evidence": [
         {
@@ -114319,8 +114349,25 @@
         {
           "label": "Combined partition 1 of 10",
           "url": "https://github.com/tamird/gvisor/actions/runs/46002930684"
+        },
+        {
+          "label": "Separate local smoke-timeout decision",
+          "url": "https://tamird.github.io/gvisor/?view=investigations&q=Budget%20First%20Pass%20smoke%20jobs%20for%20cold%20builds"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "165933c11003e1d49f5a696e3286e85fc28172ea",
+        "baseHead": "cc5b7474bf134432a4f41a47d37022fc4f05ede6",
+        "url": "https://github.com/tamird/gvisor/commit/165933c11003e1d49f5a696e3286e85fc28172ea",
+        "title": "Halve First Pass syscall job fan-out",
+        "summary": "Actual submitted opening question; unanswered. Exact178-case union and both reviews accepted; no full ten-job timing claim.",
+        "body": "First Pass starts 20 syscall jobs. Each admitted untrusted job reserves 60 quota minutes even if it finishes early, so these jobs reserve 1,200 minutes. Use ten jobs to save 600 reserved minutes per clean build, while keeping the 55-minute timeout.\n\nThe default targets, architecture, test configurations and filters stay unchanged. Each new partition combines two old partitions. Tests that ignore partition variables still run.\n\nAcross 24 completed builds in the public 3000–3045 sample, the largest sum of paired old job durations was 31.8 minutes. This is headroom evidence, not an observed ten-job runtime. Actual allocated wall time and retry costs remain distinct from reserved quota.\n\nThe representative native and systrap runs exercised 97 and 81 distinct cases in the two original partitions. The combined partition exercised exactly those 178 cases, with zero skips. [Original partition 1](https://github.com/tamird/gvisor/actions/runs/46002929520) · [Original partition 11](https://github.com/tamird/gvisor/actions/runs/46002937488) · [Combined partition](https://github.com/tamird/gvisor/actions/runs/46002930684)\n\nPosted by Codex on behalf of @tamird.\n",
+        "reviewCommand": "git show 165933c11003e1d49f5a696e3286e85fc28172ea -- .buildkite/first-pass.yaml",
+        "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/first-pass-fanout-pr-body.md",
+        "sourceSha256": "b546a48d6a45a83d646b4ed1d1a2b68fb22de570866d6f0f028647ae2e049ee5"
+      }
     }
   ],
   "edges": [
@@ -155188,7 +155235,74 @@
         }
       ],
       "inactive": true
+    },
+    {
+      "id": "investigation:first-pass-smoke-timeouts",
+      "repo": "google/gvisor",
+      "group": "rbe",
+      "title": "Budget First Pass smoke jobs for cold builds",
+      "status": "active",
+      "owner": "root",
+      "head": "0f6dd3a38ff3a2a8f29b79e1b950057953a690bc",
+      "updatedAt": "2026-11-27T13:14:44.464664+00:00",
+      "summary": "Local-only0f6dd3a38 changes normal/race smoke timeouts to25/40 minutes. Static pipeline expansion passed; each mode has107 historical successes with15.8/25.9-minute maxima. Saving35 reserved minutes depends on Buildkite returning timeout metadata. Independent review is clear and the distinct DCO/fork-push/opening question is unanswered; no remote ref exists.",
+      "nextStep": "Root awaits the actual local0f6 DCO/fork-push/PR-opening decision. Preserve the rejected bundled fork push as history; no retry, bypass or inference from the separate165933 question.",
+      "findings": [
+        {
+          "text": "Only two First Pass timeout values change:55→25 normal,55→40 race. Commands, environments and retry settings are unchanged in static expansion; Nogo and C++ lint budgets remain. No new job timing was run.",
+          "evidence": []
+        },
+        {
+          "text": "Historical sample:107 observed successes per smoke mode; normal maximum15.8 minutes, race25.9. With timeout metadata, reservation falls120→85 minutes (35 saved); without that metadata no such saving is claimed.",
+          "evidence": []
+        },
+        {
+          "text": "Automatic approval review rejected a bundled fork push. No remote preview exists. This is historical execution evidence, not a denial inferred for the separate newly submitted explicit smoke publication question.",
+          "evidence": []
+        }
+      ],
+      "evidence": [],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "0f6dd3a38ff3a2a8f29b79e1b950057953a690bc",
+        "disposition": "Local-only0f6dd3a38 changes normal/race smoke timeouts to25/40 minutes. Static pipeline expansion passed; each mode has107 historical successes with15.8/25.9-minute maxima. Saving35 reserved minutes depends on Buildkite returning timeout metadata. Independent review is clear and the distinct DCO/fork-push/opening question is unanswered; no remote ref exists.",
+        "nextAction": "Root awaits the actual local0f6 DCO/fork-push/PR-opening decision. Preserve the rejected bundled fork push; do not retry or combine it with165933 without actual authority.",
+        "recheckCondition": "Answer to the distinct smoke publication question, or material source/reservation-policy evidence.",
+        "curatedAt": "2026-11-27T13:14:44.464664+00:00",
+        "localSource": {
+          "checkout": "~/code/gvisor",
+          "head": "0f6dd3a38ff3a2a8f29b79e1b950057953a690bc",
+          "reviewCommand": "git show 0f6dd3a38 -- .buildkite/first-pass.yaml",
+          "remote": "None; no public commit URL"
+        },
+        "staticExpansion": "PASS per /private/tmp/first-pass-source-budgets/expanded-diff.json",
+        "historicalSample": "/private/tmp/first-pass-source-budgets/sample.json",
+        "independentReview": "Clear; no blocker",
+        "reservation": {
+          "beforeMinutes": 120,
+          "afterMinutes": 85,
+          "savingMinutes": 35,
+          "condition": "Only when Buildkite returns timeout metadata"
+        },
+        "executionHistory": [
+          {
+            "operation": "Bundled fork push",
+            "result": "Rejected before execution by automatic approval review",
+            "remoteCreated": false,
+            "retry": "None"
+          }
+        ]
+      },
+      "contributorReview": {
+        "kind": "information",
+        "status": "pending",
+        "title": "Publish the local smoke timeout change",
+        "summary": "Actual separate DCO/fork-push/PR-opening question; unanswered. Local-only source, no nonexistent commit link.",
+        "body": "Approve pushing local commit `0f6dd3a38` to your gVisor fork with DCO and opening “Budget smoke jobs for cold builds”? The entire source change is two First Pass timeout values, 25 minutes for normal smoke and 40 for race. This saves another 35 reserved minutes per eligible run when Buildkite returns timeout metadata. Each mode had 107 observed successes, with maxima of 15.8 and 25.9 minutes. Independent review found no blocker.\n\nCommand: git show 0f6dd3a38 -- .buildkite/first-pass.yaml",
+        "localSourceHead": "0f6dd3a38ff3a2a8f29b79e1b950057953a690bc",
+        "reviewCommand": "git show 0f6dd3a38 -- .buildkite/first-pass.yaml"
+      }
     }
   ],
-  "updatedAt": "2026-11-27T12:58:35.566526+00:00"
+  "updatedAt": "2026-11-27T13:14:44.464664+00:00"
 }
