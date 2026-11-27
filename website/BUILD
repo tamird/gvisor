@@ -55,7 +55,7 @@ tar -xf "$(location :static)" -C "$$T/output/_site"
 "$(location :html_checks)" "$$(readlink -m "$$T/output/_site")"
 tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -cf - -C "$$T/output" . | gzip -n > "$@"
 """,
-    tags = ["manual"],
+    tags = ["manual", "no-cache"],
     tools = [
         ":html_checks",
         ":render",
@@ -82,7 +82,7 @@ mkdir -p "$$T/etc/ssl"
 cp "$(location @google_root_pem//file)" "$$T/etc/ssl/cert.pem"
 tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -cf - -C "$$T" . | gzip -n > "$@"
 """,
-    tags = ["manual"],
+    tags = ["manual", "no-cache"],
 )
 
 exports_files([
