@@ -61,6 +61,43 @@ tar -zcf "$@" -C "$$T/output" .
     ],
 )
 
+# Fork-only unchecked snapshot for before/after markup inspection.
+genrule(
+    name = "html_snapshot",
+    srcs = [
+        ":config",
+        ":css",
+        ":docs",
+        ":static",
+        ":syscallmd",
+        "//website/blog:posts",
+    ],
+    outs = ["html-snapshot.tgz"],
+    cmd = """
+set -eu
+T=$$(mktemp -d)
+trap 'rm -rf "$$T"' EXIT
+mkdir -p "$$T/input" "$$T/output/_site"
+tar -xf "$(location :config)" -C "$$T/input"
+tar -xf "$(location :css)" -C "$$T/input"
+tar -xf "$(location :docs)" -C "$$T/input"
+tar -xf "$(location :syscallmd)" -C "$$T/input"
+tar -xf "$(location //website/blog:posts)" -C "$$T/input"
+find "$$T/input" -type f -exec chmod u+rw {} +
+node=$$(readlink -m "$(location @nodejs//:node_bin)")
+PATH="$$(dirname "$$node"):$$PATH" "$(location :render)" \
+    "$$(readlink -m "$$T/input")" "$$(readlink -m "$$T/output/_site")"
+tar -xf "$(location :static)" -C "$$T/output/_site"
+tar -zcf "$@" -C "$$T/output" .
+""",
+    tags = ["manual"],
+    tools = [
+        ":html_checks",
+        ":render",
+        "@nodejs//:node_bin",
+    ],
+)
+
 # files is the full file system of the generated serving container.
 genrule(
     name = "files",
