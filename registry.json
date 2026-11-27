@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-27T13:46:22.675005+00:00",
+    "updatedAt": "2026-11-27T14:54:24.090682+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -65082,8 +65082,8 @@
       "title": "hostinet: skip the TCP linger wait on task exit",
       "url": "https://github.com/tamird/gvisor/commit/c53942792",
       "status": "Landed-parent tests passed; performance and review pending",
-      "updatedAt": "2026-11-27T09:16:26.001122+00:00",
-      "summary": "On the merged #16787 parent, all four IPv4/IPv6 positive and abortive linger cases passed on native Linux, hostinet and netstack. The hostinet unit test, Nogo, source lint and strict C++ lint passed.",
+      "updatedAt": "2026-11-27T14:54:23.907715+00:00",
+      "summary": "Landed-parent candidate fc6993573 is prepared on merged84708bc9. Separate baseline-only default-linger admission45999464492 passed one fresh remote case with FD1/FD64 rows and128 iterations each; its timings were discarded. This is baseline functional admission only, not candidate execution or paired performance. Original source/conditional opening authority and historical qualification scopes remain distinct from current-source review/performance acceptance.",
       "evidence": [
         {
           "label": "Original Linux, hostinet and netstack XML: 12 passed, zero skips",
@@ -65120,6 +65120,10 @@
         {
           "label": "Source lint",
           "url": "https://github.com/tamird/gvisor/actions/runs/45941960331"
+        },
+        {
+          "label": "Default-linger functional admission, timings discarded",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45999464492"
         }
       ],
       "settledReviews": [
@@ -65140,10 +65144,11 @@
         "owner": "root",
         "sourceHead": "fc6993573a8fa1d47100d11e333dff8475637592",
         "observedAt": "2026-11-27T09:16:26.001122+00:00",
-        "disposition": "The landed-parent candidate is available through its qualification tag. The original proposal branch still points to c53942792.",
-        "nextAction": "Assess process exit with open host TCP sockets and default linger, then complete independent review before opening under the existing conditional approval.",
+        "disposition": "Landed-parent candidate fc6993573 is prepared on merged84708bc9. Separate baseline-only default-linger admission45999464492 passed one fresh remote case with FD1/FD64 rows and128 iterations each; its timings were discarded. This is baseline functional admission only, not candidate execution or paired performance. Original source/conditional opening authority and historical qualification scopes remain distinct from current-source review/performance acceptance.",
+        "nextAction": "Root consumes the assigned owner’s current-source qualification/performance disposition and final source review under the retained conditional opening grant. Parent landing and preparation are complete; do not repeat them, infer paired statistical clearance or rerun the admitted smoke case.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16787"
+          "https://github.com/google/gvisor/pull/16787",
+          "https://github.com/tamird/gvisor/actions/runs/45999464492"
         ],
         "branchRefObservation": {
           "repo": "tamird/gvisor",
@@ -65157,7 +65162,7 @@
           "owner": "root"
         },
         "technicalOwner": "approved_rebase_queue",
-        "recheckCondition": "A workload-relevant performance result or a final review finding.",
+        "recheckCondition": "Actual current-source qualification/review/performance owner receipt or source/publication event.",
         "landedParentAssessment": {
           "source": "c53942792678277f0195068aa41ad17620dd9dd1",
           "liveRef": "refs/heads/proposal/hostinet-exit-linger",
@@ -65171,7 +65176,30 @@
           "nextAction": "Prepare this landed-parent replay, replace historical non-ABI Linux implementation citations in source/record with retained black-box evidence, add authorized DCO, qualify the current process-exit/abortive tests in native/hostinet/netstack and affectedNoGo/source inputs, and perform final proportional source review before applying the existing openinggrant. No newquestion solelytoaskwhether16787landed.",
           "qualificationReuse": "Retain four IPv4/IPv6 positive/abortivecases each on Linux/hostinet/netstack and old AMDhostinetNoGo as historical source-bound evidence; preserve applicable performance/review requirements, no fresh clearance inferred."
         },
-        "curatedAt": "2026-11-27T01:14:12.353830+00:00"
+        "curatedAt": "2026-11-27T14:54:23.907715+00:00",
+        "landedParentCandidate": {
+          "head": "fc6993573a8fa1d47100d11e333dff8475637592",
+          "parent": "84708bc9b0a3ceeee1357c3621ae25f9d9ba3c5f",
+          "CI": "60a254a2bb3fa8d77a87925ea4aca651ff71d846",
+          "upstreamPublished": false
+        },
+        "defaultLingerAdmission": {
+          "run": 45999464492,
+          "baselineFixtureCI": "6870dd3b07994441e5f2218e4b0ab93d8ce4de6a",
+          "baselineNative": "84708bc9b0a3ceeee1357c3621ae25f9d9ba3c5f",
+          "candidateExecuted": false,
+          "cases": 1,
+          "failures": 0,
+          "skips": 0,
+          "strategy": "remote",
+          "metrics": [
+            "BenchmarkHostinetExit/FDs=1",
+            "BenchmarkHostinetExit/FDs=64"
+          ],
+          "iterationsEach": 128,
+          "timings": "Discarded; functional admission only",
+          "pairedClearanceClaim": false
+        }
       }
     },
     {
@@ -101917,14 +101945,14 @@
       "url": "https://github.com/google/gvisor/pull/17444",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-26T02:19:45.141533+00:00",
-      "summary": "Strict-equal rebase ad7b865833 is published. Native GitHub approval moved with its original submission time; DCO and observed source checks pass. Exact-head First Pass2975 passed; the second maintainer approval remains pending; no current main result is observed. GNU archive/runsc/Sentry and musl archive/runsc link; musl Sentry fails in an unchanged independent systrap linker action.",
+      "updatedAt": "2026-11-27T14:54:23.907715+00:00",
+      "summary": "Source-equivalent ad7b865833 is already published and source approval is complete. The standing-authorized rebase notice is unposted: automatic approval review rejected gh pr comment17444 under a public-reply hold. A notice-only execution override has now actually been requested; no earlier override or previous retry was found. Existing qualification and review limits remain.",
       "followup": {
-        "owner": "root / approved_rebase_queue",
+        "owner": "root",
         "sourceHead": "ad7b865833d3c68da3a36aa010a167a7a18bbf42",
         "observedAt": "2026-11-17T19:29:29.454062+00:00",
-        "disposition": "Strict-equal rebase ad7b865833 is published. Native GitHub approval moved with its original submission time; DCO and observed source checks pass. Exact-head First Pass2975 passed; the second maintainer approval remains pending; no current main result is observed. GNU archive/runsc/Sentry and musl archive/runsc link; musl Sentry fails in an unchanged independent systrap linker action.",
-        "nextAction": "Root resolves the automatic-review rejection of the standing-authorized rebase notice; the notice is unposted. Follow actual First Pass, maintainer and source events. No new source approval or unchanged retry is required.",
+        "disposition": "Source-equivalent ad7b865833 is already published and source approval is complete. The standing-authorized rebase notice is unposted: automatic approval review rejected gh pr comment17444 under a public-reply hold. A notice-only execution override has now actually been requested; no earlier override or previous retry was found. Existing qualification and review limits remain.",
+        "nextAction": "Root awaits the actual notice-only execution override outcome, then posts only the existing authorized notice if permitted. Follow genuine PR lifecycle events separately; no new source approval, retry or alternative posting route.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17444",
           "https://github.com/tamird/gvisor/commit/05bf77c06",
@@ -102001,7 +102029,7 @@
           "https://github.com/tamird/gvisor/actions/runs/45737438146"
         ],
         "mergeable": "MERGEABLE",
-        "recheckCondition": "Notice execution resolution or a new source-bound CI/review event.",
+        "recheckCondition": "Outcome of the actually requested notice-only override, or a source-bound CI/review event.",
         "attentionDispositions": [
           {
             "reason": "author-public-checks",
@@ -102025,29 +102053,7 @@
             }
           }
         ],
-        "curatedAt": "2026-11-26T02:30:13.367576+00:00",
-        "currentCI": {
-          "head": "53f2efd95be8bed7e53be3e681a37f7a519a7c16",
-          "main": 55988,
-          "mainState": "FAILURE before project tests",
-          "cause": "Both pre-command attempts fail fetching literal remote ref tamird after checkout.",
-          "firstPass": 2952,
-          "firstPassState": "PENDING at sample",
-          "maintainerApproval": "Maintainer approvals: 1, needs 2."
-        },
-        "currentCandidate": {
-          "native": "ad7b865833d3c68da3a36aa010a167a7a18bbf42",
-          "base": "f6b3afd7368b3ef9e0e92302e248c94e0db22f2b",
-          "ci": "ae684f27ed88fc9f6641734bb344099d02dd616e",
-          "sourcePatch": "strict equal",
-          "state": "Preview published;qualification in progress; publicPR53f2 unchanged",
-          "owner": "approved_rebase_queue",
-          "runs": [
-            45737000190,
-            45737003365,
-            45737005712
-          ]
-        },
+        "curatedAt": "2026-11-27T14:54:23.907715+00:00",
         "mainBootstrap": {
           "build": 55988,
           "sourceHead": "53f2efd95be8bed7e53be3e681a37f7a519a7c16",
@@ -102057,7 +102063,45 @@
         },
         "providerHead": "ad7b865833d3c68da3a36aa010a167a7a18bbf42",
         "base": "f6b3afd7368b3ef9e0e92302e248c94e0db22f2b",
-        "noticeDisposition": "Unposted: automatic approval review applied a public-reply hold despite standing rebase-notice authority; root owns reconciliation."
+        "noticeDisposition": "Unposted; notice-only execution override actually requested. Earlier automatic public-reply-hold rejection retained; no prior override/retry.",
+        "sourcePublication": {
+          "head": "ad7b865833d3c68da3a36aa010a167a7a18bbf42",
+          "state": "Delivered",
+          "sourceApproval": "Complete; independent from notice execution"
+        },
+        "historicalDeliveryRecords": {
+          "currentCI": {
+            "head": "53f2efd95be8bed7e53be3e681a37f7a519a7c16",
+            "main": 55988,
+            "mainState": "FAILURE before project tests",
+            "cause": "Both pre-command attempts fail fetching literal remote ref tamird after checkout.",
+            "firstPass": 2952,
+            "firstPassState": "PENDING at sample",
+            "maintainerApproval": "Maintainer approvals: 1, needs 2."
+          },
+          "currentCandidate": {
+            "native": "ad7b865833d3c68da3a36aa010a167a7a18bbf42",
+            "base": "f6b3afd7368b3ef9e0e92302e248c94e0db22f2b",
+            "ci": "ae684f27ed88fc9f6641734bb344099d02dd616e",
+            "sourcePatch": "strict equal",
+            "state": "Preview published;qualification in progress; publicPR53f2 unchanged",
+            "owner": "approved_rebase_queue",
+            "runs": [
+              45737000190,
+              45737003365,
+              45737005712
+            ]
+          }
+        },
+        "noticeExecutionOverride": {
+          "operation": "gh pr comment 17444 --repo gvisor/gvisor",
+          "scope": "Existing standing-authorized rebase notice only",
+          "actuallyRequested": true,
+          "earlierOverrideFound": false,
+          "previousRetry": false,
+          "posted": false,
+          "priorRejection": "Automatic approval review applied separate public-reply hold"
+        }
       },
       "settledReviews": [
         {
@@ -102392,6 +102436,14 @@
         ],
         "qualification": "Only the DCO old/new tree and parents are identical. Existing tests, benchmark results and reviews retain their recorded source scopes; no new approval is asserted.",
         "priorOwner": "Upstream review"
+      },
+      "contributorReview": {
+        "kind": "information",
+        "status": "pending",
+        "url": "https://github.com/google/gvisor/pull/17444",
+        "title": "Resolve the #17444 notice-only execution override",
+        "summary": "Actual execution-override request is pending. Source and notice content are already authorized; this is not another source/prose approval. No previous override/retry.",
+        "body": "Automatic approval review rejected `gh pr comment 17444 --repo gvisor/gvisor` under a separate public-reply hold. Root has now actually requested a notice-only execution override. Preserve the published source and standing notice-content grant; no retry or alternate posting route has occurred.\n\nExact authorized notice:\n\nRebased on master to pick up the fork CI bootstrap fix in #17735.\n\nPosted by Codex on behalf of @tamird.\n"
       }
     },
     {
@@ -111292,14 +111344,14 @@
       "url": "https://github.com/google/gvisor/pull/17836",
       "group": "ci-flakes",
       "status": "open",
-      "summary": "Exact29ff39685e49bee9d4144d6301162e359e2ec6c8 has passed First Pass2207 and main55568, together with all GitHub source/export and DCO checks. The PR remains OPEN/MERGEABLE with aggregate REVIEW_REQUIRED; Etienne’s exact-head approval and the existing requested reviewers are preserved. All CI watches are closed. Historical admission failures and recovered infrastructure attempts remain linked at their original scopes; no general provider-quota recovery is inferred.",
+      "summary": "Native GitHub reviewDecision is APPROVED. Two Etienne reviews represent one unique maintainer; required status says Maintainer approvals: 1, needs 2. Both Buildkite contexts and DCO are green. Existing reviewer requests are preserved. This cancellation/reporting mitigation is not a demonstrated fix for the bridge workload cause.",
       "followup": {
         "owner": "root",
         "sourceHead": "29ff39685e49bee9d4144d6301162e359e2ec6c8",
-        "observedAt": "2026-11-21T03:13:31.088095+00:00",
-        "disposition": "Exact29ff39685e49bee9d4144d6301162e359e2ec6c8 has passed First Pass2207 and main55568, together with all GitHub source/export and DCO checks. The PR remains OPEN/MERGEABLE with aggregate REVIEW_REQUIRED; Etienne’s exact-head approval and the existing requested reviewers are preserved. All CI watches are closed. Historical admission failures and recovered infrastructure attempts remain linked at their original scopes; no general provider-quota recovery is inferred.",
-        "nextAction": "Root follows the already-requested maintainer review of29ff and genuine feedback, import or merge events. No duplicate review request, CI retry or active CI watch remains. Preserve the independently owned nested-Docker investigation without making it a prerequisite for this completed mitigation.",
-        "recheckCondition": "New substantive reviewer feedback, approval/import/merge event or source/check change.",
+        "observedAt": "2026-11-27T14:48:18.960007+00:00",
+        "disposition": "Native GitHub reviewDecision is APPROVED. Two Etienne reviews represent one unique maintainer; required status says Maintainer approvals: 1, needs 2. Both Buildkite contexts and DCO are green. Existing reviewer requests are preserved. This cancellation/reporting mitigation is not a demonstrated fix for the bridge workload cause.",
+        "nextAction": "Follow the existing requested maintainer reviews and real integration/lifecycle events. No duplicate review request, CI retry or causal bridge-fix claim.",
+        "recheckCondition": "Actual maintainer response, integration/source event or changed source-bound CI.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17836",
           "https://github.com/tamird/gvisor/commit/1e0fd46b7e0f82bcd945498b82265a3f5234b9f1",
@@ -111311,11 +111363,50 @@
           "https://buildkite.com/gvisor/pipeline/builds/55568"
         ],
         "attentionDispositions": [],
-        "curatedAt": "2026-11-21T03:15:14.927530+00:00",
-        "mergeable": "MERGEABLE"
+        "curatedAt": "2026-11-27T14:54:23.907715+00:00",
+        "mergeable": "MERGEABLE",
+        "currentGovernance": {
+          "head": "29ff39685e49bee9d4144d6301162e359e2ec6c8",
+          "nativeGitHubDecision": "APPROVED",
+          "existingEtienneReviews": 2,
+          "uniqueEtienneMaintainers": 1,
+          "requiredDescription": "Maintainer approvals: 1, needs 2.",
+          "requiredState": "PENDING",
+          "nativeRequests": [
+            "carzh",
+            "shailend-g"
+          ],
+          "buildkiteContexts": [
+            {
+              "id": "SC_kwDOB9IlXs8AAAAN3GETDg",
+              "name": "buildkite/first-pass/pr",
+              "state": "SUCCESS",
+              "url": "https://buildkite.com/gvisor/first-pass/builds/2207",
+              "description": "Build #2207 passed (3 minutes, 41 seconds)",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            },
+            {
+              "id": "SC_kwDOB9IlXs8AAAAN3HEDEw",
+              "name": "buildkite/pipeline/pr",
+              "state": "SUCCESS",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/55568",
+              "description": "Build #55568 passed (53 minutes, 31 seconds)",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            }
+          ],
+          "rootPreviouslyVerifiedRequests": [
+            "carzh",
+            "shailend-g"
+          ]
+        },
+        "providerHead": "29ff39685e49bee9d4144d6301162e359e2ec6c8"
       },
-      "recheckCondition": "New substantive reviewer feedback, approval/import/merge event or source/check change.",
-      "updatedAt": "2026-11-21T03:15:14.927530+00:00"
+      "recheckCondition": "Actual maintainer response, integration/source event or changed source-bound CI.",
+      "updatedAt": "2026-11-27T14:54:23.907715+00:00"
     },
     {
       "id": "pr:17838",
@@ -112178,26 +112269,44 @@
       "url": "https://github.com/google/gvisor/pull/17884",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-23T17:18:37.535937+00:00",
-      "summary": "Published0c7e69e3 is collected as OPEN/MERGEABLE; all current GitHub validation checks and DCO are successful. FirstPass2458 remains the verified pre-agent rolling30-day360,000compute-minute quota for Tamir; no tests ran there. Supporting checker publication is complete, while root owns review/import/provider-admission follow-through. The unified analyzer investigation remains active.",
+      "updatedAt": "2026-11-27T14:54:23.907715+00:00",
+      "summary": "Main56035 on exact0c7e69e35 is terminal: three cgroupv2 image attempts timed out at15 minutes in the privileged Docker VFS bridge case; one other attempt lost its agent. This executed workload failure is separate from historical First Pass2458 pre-agent quota. Checker publication is complete; existing analyzer, review/import and source gates remain.",
       "evidence": [
         {
           "label": "Published source",
           "url": "https://github.com/tamird/gvisor/commit/0c7e69e359dbfc284a7d109ad007395086a70cd4"
+        },
+        {
+          "label": "Terminal main56035 privileged bridge timeout",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/56035#01a21d29-be31-4a02-8add-b10793beeaec"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
         "observedAt": "2026-11-23T18:16:34.852164+00:00",
-        "disposition": "Published0c7e69e3 is collected as OPEN/MERGEABLE; all current GitHub validation checks and DCO are successful. FirstPass2458 remains the verified pre-agent rolling30-day360,000compute-minute quota for Tamir; no tests ran there. Supporting checker publication is complete, while root owns review/import/provider-admission follow-through. The unified analyzer investigation remains active.",
-        "nextAction": "Root follows actual current-head native checks, provider admission and maintainer/import events in the next canonical sweep. No tests ran in FirstPass2458; do not retry unchanged CI, contact operators, conflate the quota with the foreign author’s daily limit or change source.",
-        "recheckCondition": "Actual admission/check/review/import/head event or next normal canonical sweep.",
+        "disposition": "Main56035 on exact0c7e69e35 is terminal: three cgroupv2 image attempts timed out at15 minutes in the privileged Docker VFS bridge case; one other attempt lost its agent. This executed workload failure is separate from historical First Pass2458 pre-agent quota. Checker publication is complete; existing analyzer, review/import and source gates remain.",
+        "nextAction": "Root follows existing ci-flake-dind-bridge integration/evidence conditions and real PR lifecycle events. Do not retry blindly, transfer quota causes to56035 or edit checklinkname source from this failure.",
+        "recheckCondition": "Changed-source post-retention incident evidence, actual maintainer/import event or new source-bound CI.",
         "evidence": [
           "https://github.com/gvisor/gvisor/pull/17884",
           "https://buildkite.com/gvisor/first-pass/builds/2458",
-          "https://buildkite.com/gvisor/first-pass/builds/2458#01a20969-0f79-46fd-84d3-74439eaf30cf"
-        ]
+          "https://buildkite.com/gvisor/first-pass/builds/2458#01a20969-0f79-46fd-84d3-74439eaf30cf",
+          "https://buildkite.com/gvisor/pipeline/builds/56035#01a21d29-be31-4a02-8add-b10793beeaec"
+        ],
+        "curatedAt": "2026-11-27T14:54:23.907715+00:00",
+        "mainDockerFailure": {
+          "build": 56035,
+          "head": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
+          "terminalJob": "https://buildkite.com/gvisor/pipeline/builds/56035#01a21d29-be31-4a02-8add-b10793beeaec",
+          "timedOutAttempts": 3,
+          "timeoutMinutes": 15,
+          "namedTest": "TestDockerWithVFS/docker_run_bridge_network_privileged",
+          "caseDurationRange": "14m35s–14m44s",
+          "separateAgentLossAttempts": 1,
+          "logRetentionAncestorPresent": false,
+          "rootCause": "Not established; no checklinkname source repair or unchanged retry inferred."
+        }
       }
     },
     {
@@ -114329,7 +114438,7 @@
       "title": "Halve First Pass syscall job fan-out",
       "status": "Contributor review",
       "summary": "Exact syscall fan-out source165933c11 passed both independent reviews and representative XML union:97+81=178 cases, zero skips. The actual opening question is pending. Ten jobs reserve600 instead of1200 compute-minutes per clean untrusted run;55-minute timeout/default selections are unchanged. Historical31.8-minute paired maximum is headroom evidence, not measured ten-job timing.",
-      "updatedAt": "2026-11-27T13:14:44.464664+00:00",
+      "updatedAt": "2026-11-27T14:54:23.907715+00:00",
       "followup": {
         "owner": "root",
         "technicalOwner": "approved_rebase_queue",
@@ -114366,6 +114475,23 @@
           "fullTenJobTiming": "Unmeasured",
           "smoke": "Separate local0f6 decision; conditional35-minute saving cannot be treated as delivered or merged.",
           "existingQuotaFailures": "Existing structured30-day admission failures retain their own sources/receipts; proposed reservation reductions do not clear current quota."
+        },
+        "separateUnitSelectionAnalysis": {
+          "mode": "Identical-source bazel test --nobuild analysis only",
+          "beforeTopLevelLabels": 2542,
+          "afterTopLevelLabels": 371,
+          "newLabels": 0,
+          "removedNonTestLabels": 2168,
+          "removedAlreadyFilteredRequiresKVMTests": 3,
+          "includesRemovedTopLevel": "//:release",
+          "artifacts": [
+            15204335470,
+            15203291599
+          ],
+          "sourcePatch": "None",
+          "quotaSavingClaim": false,
+          "unitTimeoutMinutes": 55,
+          "constraint": "Preserve all existing compilation obligations; this is not part of the pending syscall fan-out or smoke source decision."
         }
       },
       "evidence": [
@@ -114398,6 +114524,73 @@
         "reviewCommand": "git show 165933c11003e1d49f5a696e3286e85fc28172ea -- .buildkite/first-pass.yaml",
         "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/first-pass-fanout-pr-body.md",
         "sourceSha256": "b546a48d6a45a83d646b4ed1d1a2b68fb22de570866d6f0f028647ae2e049ee5"
+      }
+    },
+    {
+      "id": "branch:website-html-nesting",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "group": "bazel",
+      "ref": "fix/website-html-nesting-20261127",
+      "head": "1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
+      "url": "https://github.com/tamird/gvisor/commit/1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
+      "title": "Fix invalid nesting in website HTML",
+      "status": "Contributor review",
+      "summary": "Actual opening question for standalone HTML markup1be6fd509 is pending. Three files(+5/−7) fix sidebar lists, blog excerpts and production-guide links. The same checker went432→0 errors across85 pages, with all links/IDs/text preserved; independent review passed and before/after screenshots are retained. Ruby/checker migration and #18012 fallback roots remain separate.",
+      "updatedAt": "2026-11-27T14:54:24.090682+00:00",
+      "evidence": [
+        {
+          "label": "Exact standalone markup source",
+          "url": "https://github.com/tamird/gvisor/commit/1be6fd5097fe1b433d5b5db0df2891fb291d6d26"
+        },
+        {
+          "label": "Before rendered-site/checker comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/46016013865"
+        },
+        {
+          "label": "Before same-site screenshot evidence",
+          "url": "https://github.com/tamird/gvisor/actions/runs/46017447303"
+        },
+        {
+          "label": "After rendered-site/checker comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/46016017666"
+        },
+        {
+          "label": "After same-site screenshot evidence",
+          "url": "https://github.com/tamird/gvisor/actions/runs/46017451160"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
+        "disposition": "Actual opening question for standalone HTML markup1be6fd509 is pending. Three files(+5/−7) fix sidebar lists, blog excerpts and production-guide links. The same checker went432→0 errors across85 pages, with all links/IDs/text preserved; independent review passed and before/after screenshots are retained. Ruby/checker migration and #18012 fallback roots remain separate.",
+        "nextAction": "Root awaits the actual exact1be6 PR-opening decision. Keep this three-file markup fix independent of renderer dependency migration and #18012 fallback-root amendment.",
+        "recheckCondition": "Answer to the submitted exact markup opening question or material source/review evidence.",
+        "curatedAt": "2026-11-27T14:54:24.090682+00:00",
+        "qualification": {
+          "files": 3,
+          "added": 5,
+          "removed": 7,
+          "checkerBefore": 432,
+          "checkerAfter": 0,
+          "pages": 85,
+          "linksIDsText": "Preserved",
+          "independentReview": "Clear",
+          "screenshots": "Before/after evidence retained; no local filesystem links published",
+          "scope": "Same-checker output comparison; no approval or delivery of separate renderer/Ruby or fallback-root changes."
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
+        "baseHead": "cc5b7474bf134432a4f41a47d37022fc4f05ede6",
+        "url": "https://github.com/tamird/gvisor/commit/1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
+        "title": "Fix invalid nesting in website HTML",
+        "summary": "Actual submitted standalone PR-opening question; unanswered. Three HTML files only; Ruby upgrade remains separate.",
+        "body": "The website emitted invalid nesting in the documentation sidebar, blog excerpts, and production-guide configuration links. Close submenus before their containing list items, wrap block excerpts in a div, and express each configuration button as one Markdown link. This preserves the existing text and destinations and lets the HTML checker validate the rendered site.\n\nPrepared by Codex on behalf of @tamird.\n",
+        "reviewCommand": "git show 1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
+        "retainedDraftSHA256": "e37a13fec37cb33781b04111cbc536e830dbaaeebbe34f3c890a4b18c9f11720"
       }
     }
   ],
@@ -146266,8 +146459,8 @@
       "status": "active",
       "group": "ci-flakes",
       "owner": "root",
-      "updatedAt": "2026-11-23T22:28:52.692599+00:00",
-      "summary": "Log-retention prerequisite17855 is fulfilled by merged6547111625e38fff684f7e3d68225814d87872cf. The separate cancellation/reporting prerequisite17836 remains open. Existing Docker/image timeout evidence, including main55739, is retained; no bounded post-fix result or underlying workload-cause fix is established.",
+      "updatedAt": "2026-11-27T14:54:23.907715+00:00",
+      "summary": "Main56035 at0c7e69e35 adds three15-minute cgroupv2 privileged-bridge timeouts and one separate agent loss. That failing source does not descend from log-retention654711162, so it is not post-retention evidence. Log retention #17855 is landed; #17836 native decision and required unique-maintainer status are recorded independently. No underlying bridge workload-cause fix is established.",
       "findings": [
         {
           "text": "Both AMD64 jobs on build 54543 reached 900 seconds in TestDockerWithVFS/docker_run_bridge_network_privileged. On each platform, the preceding host-network docker run completed apk add curl and apk info with exit status 0. The privileged bridge run then began mount setup on the same Alpine image and produced no exit status. Removing a completed container leaves the image available for the next run. The logs do not locate the wait inside the bridge command. The uncached retries passed in 127.3 seconds on systrap and 50 seconds on KVM.",
@@ -146402,7 +146595,7 @@
           ]
         }
       ],
-      "nextStep": "Follow the remaining17836 integration and existing authorized post-fix evidence conditions. Do not keep17855 as an open landing wait, repeat unchanged runs, or start a new diagnosis from the already-captured recurrence.",
+      "nextStep": "Follow #17836’s existing review/integration and the next genuine post-retention failure evidence. Preserve existing authorized evidence conditions; do not retry blindly, duplicate outreach or treat cancellation/reporting as a workload-cause fix.",
       "evidence": [
         {
           "label": "Third attempt, privileged container",
@@ -146439,14 +146632,22 @@
         {
           "label": "Actual pending source proposal",
           "url": "https://github.com/tamird/gvisor/commit/5ad44c8892f6d9ce773e448357a83917b3c79b5b"
+        },
+        {
+          "label": "Terminal main56035 privileged bridge timeout",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/56035#01a21d29-be31-4a02-8add-b10793beeaec"
+        },
+        {
+          "label": "Existing cancellation/reporting mitigation",
+          "url": "https://github.com/gvisor/gvisor/pull/17836"
         }
       ],
       "technicalOwner": "CI flake triage",
-      "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding.",
+      "recheckCondition": "Actual #17836 integration/review event or a natural changed-source failure with retained Docker logs.",
       "lifecycleCoordination": {
         "owner": "root",
-        "nextAction": "Coordinate the existing technical nextStep and its blockers; preserve technical ownership, explicit holds and contributor decisions.",
-        "recheckCondition": "On the existing nextStep trigger, linked PR head/review/check/import or release change, natural failure recurrence, or contributor decision. Existing explicit holds and evidence limits remain binding."
+        "nextAction": "Follow #17836’s existing review/integration and the next genuine post-retention failure evidence. Preserve existing authorized evidence conditions; do not retry blindly, duplicate outreach or treat cancellation/reporting as a workload-cause fix.",
+        "recheckCondition": "Actual #17836 integration/review event or a natural changed-source failure with retained Docker logs."
       },
       "head": "5ad44c8892f6d9ce773e448357a83917b3c79b5b",
       "settledReviews": [
@@ -146462,7 +146663,39 @@
           "outcome": "APPROVED",
           "postedURL": "https://github.com/gvisor/gvisor/pull/17855"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "root",
+        "disposition": "Main56035 at0c7e69e35 adds three15-minute cgroupv2 privileged-bridge timeouts and one separate agent loss. That failing source does not descend from log-retention654711162, so it is not post-retention evidence. Log retention #17855 is landed; #17836 native decision and required unique-maintainer status are recorded independently. No underlying bridge workload-cause fix is established.",
+        "nextAction": "Follow #17836’s existing review/integration and the next genuine post-retention failure evidence. Preserve existing authorized evidence conditions; do not retry blindly, duplicate outreach or treat cancellation/reporting as a workload-cause fix.",
+        "recheckCondition": "Actual #17836 integration/review event or a natural changed-source failure with retained Docker logs.",
+        "curatedAt": "2026-11-27T14:54:23.907715+00:00",
+        "main56035": {
+          "build": 56035,
+          "head": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
+          "terminalJob": "https://buildkite.com/gvisor/pipeline/builds/56035#01a21d29-be31-4a02-8add-b10793beeaec",
+          "timedOutAttempts": 3,
+          "timeoutMinutes": 15,
+          "namedTest": "TestDockerWithVFS/docker_run_bridge_network_privileged",
+          "caseDurationRange": "14m35s–14m44s",
+          "separateAgentLossAttempts": 1,
+          "logRetentionAncestorPresent": false,
+          "rootCause": "Not established; no checklinkname source repair or unchanged retry inferred."
+        },
+        "mitigation17836": {
+          "nativeGitHubDecision": "APPROVED",
+          "requiredDescription": "Maintainer approvals: 1, needs 2.",
+          "requestedReviewers": [
+            "carzh",
+            "shailend-g"
+          ],
+          "causalFixClaim": false
+        },
+        "evidence": [
+          "https://buildkite.com/gvisor/pipeline/builds/56035#01a21d29-be31-4a02-8add-b10793beeaec",
+          "https://github.com/gvisor/gvisor/pull/17836"
+        ]
+      }
     },
     {
       "id": "investigation:ci-flake-containerd-runp",
@@ -155437,5 +155670,5 @@
       }
     }
   ],
-  "updatedAt": "2026-11-27T13:46:22.675005+00:00"
+  "updatedAt": "2026-11-27T14:54:24.090682+00:00"
 }
