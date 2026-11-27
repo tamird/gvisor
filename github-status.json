@@ -5,7 +5,7 @@
   "owner": "tamird",
   "checkedAt": "2026-11-27T12:16:56.886395+00:00",
   "outreachPostingMode": "rotations",
-  "registryDate": "2026-11-27T09:16:26.001122+00:00",
+  "registryDate": "2026-11-27T12:27:03.547909+00:00",
   "repositories": {
     "google/gvisor": "none",
     "buildbuddy-io/buildbuddy": "none",
@@ -467484,12 +467484,12 @@
       "mergeabilityCheckedAt": "2026-11-27T12:16:56.884900+00:00",
       "sourceBranchMismatch": false,
       "owner": "dzbarsky / root",
-      "action": "The author and maintainers own current-source review and the cross-platform wrapper decision. Root tracks actual review/head/landing changes; do not publish the prepared fork into the author branch or transfer old qualification.",
+      "action": "Recheck the author’s next push for mergeability and the maintainers’ decision on the cross-platform wrapper. Reconcile the dependent XML patch against the merged source.",
       "recordedFollowup": {
         "owner": "dzbarsky / root",
         "sourceHead": "d063f629beda6e4add527fafb1c5022c6dc98e3f",
-        "disposition": "The foreign-authored POSIX wrapper proposal advanced to d063f629 and is now MERGEABLE with all collected presubmit/CLA checks successful. The old b9d conflict is historical. This does not qualify Tamir’s separate prepared aa90 fork or resolve the cross-platform design decision.",
-        "nextAction": "The author and maintainers own current-source review and the cross-platform wrapper decision. Root tracks actual review/head/landing changes; do not publish the prepared fork into the author branch or transfer old qualification."
+        "disposition": "The native POSIX wrapper PR is open at d063f629b. GitHub now reports a merge conflict on that head. Its author owns the rebase; the approved fallback XML change still depends on the wrapper landing.",
+        "nextAction": "Recheck the author’s next push for mergeability and the maintainers’ decision on the cross-platform wrapper. Reconcile the dependent XML patch against the merged source."
       },
       "conflictObservedSince": "2026-11-25T12:47:17.734436+00:00"
     },
@@ -478832,7 +478832,7 @@
         "since": "2026-11-25T22:41:21.827202+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T09:16:26.001122+00:00"
+        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     },
     "pr:16445": {
@@ -480394,7 +480394,7 @@
         "since": "2026-11-26T05:43:54.635646+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T09:16:26.001122+00:00"
+        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     },
     "pr:16843": {
@@ -481989,7 +481989,7 @@
         "since": "2026-11-27T05:10:49.901099+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T09:16:26.001122+00:00"
+        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     },
     "pr:17265": {
@@ -482574,7 +482574,7 @@
         "since": "2026-11-27T05:10:49.901099+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T09:16:26.001122+00:00"
+        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     },
     "pr:17480": {
@@ -483156,7 +483156,7 @@
         "since": "2026-11-27T05:10:49.901099+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T09:16:26.001122+00:00"
+        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     },
     "pr:18013": {
@@ -483818,7 +483818,7 @@
         "since": "2026-11-09T19:26:47+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T09:16:26.001122+00:00"
+        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -483827,7 +483827,7 @@
         "since": "2026-11-11T00:17:51+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T09:16:26.001122+00:00"
+        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     },
     "branch:rbe-declared-lint-tools": {
@@ -483836,7 +483836,7 @@
         "since": "2026-11-22T10:27:43+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T09:16:26.001122+00:00"
+        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -483845,7 +483845,7 @@
         "since": "2026-11-13T16:29:28.570953+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T09:16:26.001122+00:00"
+        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     },
     "branch:fix/license-npm-artifacts": {
@@ -483854,7 +483854,7 @@
         "since": "2026-11-23T23:03:59.853434+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T09:16:26.001122+00:00"
+        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     },
     "branch:rules-img-rust": {
@@ -483863,7 +483863,7 @@
         "since": "2026-11-12T19:57:09+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T09:16:26.001122+00:00"
+        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     },
     "branch:declared-jekyll-site": {
@@ -483872,7 +483872,7 @@
         "since": "2026-11-26T05:43:54.635646+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T09:16:26.001122+00:00"
+        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -483881,7 +483881,7 @@
         "since": "2026-11-11T19:24:40+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T09:16:26.001122+00:00"
+        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     },
     "branch:staged-release-publication": {
@@ -483890,7 +483890,7 @@
         "since": "2026-11-12T08:42:54+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T09:16:26.001122+00:00"
+        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     },
     "issue:17832": {
@@ -483899,7 +483899,7 @@
         "since": "2026-11-26T05:43:54.635646+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T09:16:26.001122+00:00"
+        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     },
     "investigation:ci-flakes": {
@@ -483908,7 +483908,7 @@
         "since": "2026-11-26T17:23:22.513386+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T09:16:26.001122+00:00"
+        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     },
     "investigation:ci-benchmark-fuse-device": {
@@ -483917,7 +483917,7 @@
         "since": "2026-11-25T21:11:04.741354+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-27T09:16:26.001122+00:00"
+        "observedAt": "2026-11-27T12:27:03.547909+00:00"
       }
     }
   },

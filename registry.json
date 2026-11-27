@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-27T09:16:26.001122+00:00",
+    "updatedAt": "2026-11-27T12:27:03.547909+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -56527,16 +56527,16 @@
       "title": "Add an opt-in native POSIX test wrapper",
       "url": "https://github.com/bazelbuild/bazel/pull/30837",
       "group": "bazel",
-      "summary": "The foreign-authored POSIX wrapper proposal advanced to d063f629 and is now MERGEABLE with all collected presubmit/CLA checks successful. The old b9d conflict is historical. This does not qualify Tamir’s separate prepared aa90 fork or resolve the cross-platform design decision.",
+      "summary": "The native POSIX wrapper PR is open at d063f629b. GitHub now reports a merge conflict on that head. Its author owns the rebase; the approved fallback XML change still depends on the wrapper landing.",
       "ref": "codex/native-posix-test-wrapper",
-      "updatedAt": "2026-11-24T20:51:36.949756+00:00",
+      "updatedAt": "2026-11-27T12:27:03.547909+00:00",
       "status": "open",
       "followup": {
         "owner": "dzbarsky / root",
-        "disposition": "The foreign-authored POSIX wrapper proposal advanced to d063f629 and is now MERGEABLE with all collected presubmit/CLA checks successful. The old b9d conflict is historical. This does not qualify Tamir’s separate prepared aa90 fork or resolve the cross-platform design decision.",
+        "disposition": "The native POSIX wrapper PR is open at d063f629b. GitHub now reports a merge conflict on that head. Its author owns the rebase; the approved fallback XML change still depends on the wrapper landing.",
         "sourceHead": "d063f629beda6e4add527fafb1c5022c6dc98e3f",
-        "observedAt": "2026-11-24T20:51:36.949756+00:00",
-        "nextAction": "The author and maintainers own current-source review and the cross-platform wrapper decision. Root tracks actual review/head/landing changes; do not publish the prepared fork into the author branch or transfer old qualification.",
+        "observedAt": "2026-11-27T12:27:03.547909+00:00",
+        "nextAction": "Recheck the author’s next push for mergeability and the maintainers’ decision on the cross-platform wrapper. Reconcile the dependent XML patch against the merged source.",
         "evidence": [
           "https://github.com/bazelbuild/bazel/pull/30837",
           "https://github.com/tamird/bazel/commit/aa90c0a75",
@@ -56544,7 +56544,7 @@
           "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/40067"
         ],
         "recheckCondition": "Actual review, changed source or merge/closure.",
-        "mergeable": "MERGEABLE"
+        "mergeable": "CONFLICTING"
       },
       "evidence": [
         {
@@ -154825,15 +154825,15 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-26T23:11:59.045396+00:00",
-      "summary": "Accepted utility-image reuse is advancing: preflight45894771600 passed with37 targets, pinned Hey present and no CUDA; AMD64 util_context build45897736398 is running. Caller and image-size qualification are not yet established. Preserve bridge/CPU placement and remote-daemon transport.",
-      "nextStep": "approved_delivery_batch consumes AMD64 util_context build45897736398, then qualifies actual caller and size before root source review. No current caller/size pass or downstream publication grant.",
+      "updatedAt": "2026-11-27T12:27:03.547909+00:00",
+      "summary": "The pinned Hey binary adds 8,765,600 bytes to the utility image with identical parent layers and image configuration. The HTTPd client completed one request on runc and left no containers. All four callers link and their five owning Nogo targets pass on AMD64 and ARM64.",
+      "nextStep": "Run the remaining finite Nginx, Node and Ruby caller cases and verify runtime and daemon transport before publication review.",
       "followup": {
         "owner": "root",
-        "disposition": "Accepted utility-image reuse is advancing: preflight45894771600 passed with37 targets, pinned Hey present and no CUDA; AMD64 util_context build45897736398 is running. Caller and image-size qualification are not yet established. Preserve bridge/CPU placement and remote-daemon transport.",
-        "nextAction": "approved_delivery_batch consumes AMD64 util_context build45897736398, then qualifies actual caller and size before root source review. No current caller/size pass or downstream publication grant.",
-        "recheckCondition": "Source-bound implementation/review milestone for utility-image reuse.",
-        "curatedAt": "2026-11-26T23:11:59.045396+00:00",
+        "disposition": "The pinned Hey binary adds 8,765,600 bytes to the utility image with identical parent layers and image configuration. The HTTPd client completed one request on runc and left no containers. All four callers link and their five owning Nogo targets pass on AMD64 and ARM64.",
+        "nextAction": "Run the remaining finite Nginx, Node and Ruby caller cases and verify runtime and daemon transport before publication review.",
+        "recheckCondition": "A remaining caller produces a result or its image or transport setup fails.",
+        "curatedAt": "2026-11-27T12:27:03.547909+00:00",
         "evidence": [
           "https://github.com/rakyll/hey/pull/348"
         ],
@@ -154851,6 +154851,10 @@
         {
           "label": "Independent upstream accounting PR",
           "url": "https://github.com/rakyll/hey/pull/348"
+        },
+        {
+          "label": "Utility image contents, size and HTTPd admission",
+          "url": "https://github.com/tamird/gvisor/actions/runs/45972259828/artifacts/15185961660"
         }
       ],
       "findings": [
@@ -154961,5 +154965,5 @@
       "inactive": true
     }
   ],
-  "updatedAt": "2026-11-27T09:16:26.001122+00:00"
+  "updatedAt": "2026-11-27T12:27:03.547909+00:00"
 }
