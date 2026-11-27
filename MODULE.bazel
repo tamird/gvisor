@@ -1034,3 +1034,21 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+http_archive(
+    name = "fifo_baseline_release",
+    build_file_content = 'exports_files(["release.tar.zstd"], visibility = ["//visibility:public"])',
+    sha256 = "55d55c49940aa923f626a39d2809f9b1129242b6d62ea4c733d5e76856221fb9",
+    strip_prefix = "_temp/bazel-qualification/artifacts/fifo-do-corrected-smoke",
+    type = "zip",
+    urls = ["https://api.github.com/repos/tamird/gvisor/actions/artifacts/15218764512/zip"],
+)
+
+http_archive(
+    name = "fifo_candidate_release",
+    build_file_content = 'exports_files(["release.tar.zstd"], visibility = ["//visibility:public"])',
+    sha256 = "369b8a049029c805473e5659454fa3cddb1bb52cee7bffad630a8e5b453c72f2",
+    strip_prefix = "_temp/bazel-qualification/artifacts/fifo-archive-candidate",
+    type = "zip",
+    urls = ["https://api.github.com/repos/tamird/gvisor/actions/artifacts/15218086780/zip"],
+)
