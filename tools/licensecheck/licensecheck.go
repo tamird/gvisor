@@ -24,9 +24,9 @@
 // it, and records it in a YAML file. Verify checks that the YAML file has an
 // entry for every dependency, without fetching any licenses.
 //
-// Entries whose license cannot be fetched automatically (e.g.
-// @google_root_pem) are maintained by hand: Fetch preserves an existing entry
-// whenever fetching fails. Explicit license_source notices are re-fetched on
+// Entries whose license cannot be fetched automatically are maintained by
+// hand: Fetch preserves an existing entry whenever fetching fails. Explicit
+// license_source notices are re-fetched on
 // every audit and fail closed if the notice or its artifact binding is invalid.
 // Terms audited from the artifact itself are retained while its pin matches.
 package licensecheck
@@ -734,7 +734,7 @@ func pickURL(urls []string) string {
 
 // repoSHA256 returns the hex sha256 that Bazel pins for an archive repo,
 // from its sha256 or "sha256-"-prefixed integrity attribute.
-// Empty string if the repo is unpinned (e.g. @google_root_pem).
+// Empty string if the repo is unpinned.
 func repoSHA256(r repoInfo) string {
 	if s := r.first("sha256"); s != "" {
 		return s

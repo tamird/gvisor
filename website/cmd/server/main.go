@@ -27,6 +27,7 @@ import (
 	"strings"
 
 	"github.com/google/pprof/driver"
+	_ "golang.org/x/crypto/x509roots/fallback"
 )
 
 var redirects = map[string]string{

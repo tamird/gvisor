@@ -244,17 +244,6 @@ register_toolchains(
     "@qemu_user_toolchains//:qemu_linux_x86_64_on_linux_aarch64",
 )
 
-# Root certificates.
-#
-# Note that the sha256 hash is omitted here intentionally. This should not be
-# used in any part of the build other than as certificates present in images.
-http_file(
-    name = "google_root_pem",
-    urls = [
-        "https://pki.goog/roots.pem",
-    ],
-)
-
 ### Docker integration test images
 # LTP provides the standalone fsstress filesystem workload.
 http_archive(
@@ -542,6 +531,7 @@ use_repo(
     "org_golang_google_grpc",
     "org_golang_google_protobuf",
     "org_golang_x_crypto",
+    "org_golang_x_crypto_x509roots_fallback",
     "org_golang_x_exp",
     "org_golang_x_exp_typeparams",
     "org_golang_x_mod",

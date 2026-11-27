@@ -890,6 +890,12 @@
   commit: 3f62bf119e84c6e35e8518a2958089ade622d1a3
   sha256: 856c916b92f1fc5b53983c04f6249f632f56c47ebc003bbcdfc503500dfb58b8
   license: BSD-3-Clause
+- dependency: golang.org/x/crypto/x509roots/fallback
+  version: v0.0.0-20261123192653-4dc4fb521066
+  retrieved: "2026-11-27"
+  commit: 4dc4fb521066771bf29f551e6bc3912493c58b7c
+  sha256: 6eb20fcbf98a5c09b60ae18e617bd8c914bee1c192c6569b52ac40c6b64f7236
+  license: BSD-3-Clause
 - dependency: golang.org/x/exp
   version: v0.0.0-20250711185948-6ae5c78190dc
   retrieved: "2026-08-27"
@@ -1010,12 +1016,6 @@
   commit: a6b4a9f00b36c19af9997d68a1cf6e0b5b3d032c
   sha256: acc5c7c0fbed855c4aaa2d7c3c36fb82b0c15c28f4e151e3f679c2fc0aa404af
   license: Apache-2.0
-- dependency: google_root_pem
-  version: https://pki.goog/roots.pem
-  retrieved: "2026-08-25"
-  commit: ""
-  sha256: ""
-  license: NOASSERTION
 - dependency: googletest
   version: https://github.com/google/googletest/releases/download/v1.18.0/googletest-1.18.0.tar.gz
   retrieved: "2026-10-06"

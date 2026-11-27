@@ -38,6 +38,7 @@ require (
 	github.com/opencontainers/runtime-spec v1.2.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/vishvananda/netlink v1.3.1-0.20250303224720-0e7078ed04c8
+	golang.org/x/crypto/x509roots/fallback v0.0.0-20261123192653-4dc4fb521066
 	golang.org/x/exp v0.0.0-20250711185948-6ae5c78190dc
 	golang.org/x/mod v0.41.0
 	golang.org/x/sync v0.23.0

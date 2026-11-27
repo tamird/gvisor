@@ -28,12 +28,6 @@ allowed_licenses:
   - Zlib
   - Google patent license for Golang
 exceptions:
-  - dependency: google_root_pem
-    license: NOASSERTION
-    exception_rationale: >-
-      Not software: a bundle of CA root certificates from https://pki.goog,
-      installed as trust anchors in test images only and never part of
-      released gVisor binaries.
   - dependency: grpc
     license:
       - Apache-2.0

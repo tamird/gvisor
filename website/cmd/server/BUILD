@@ -12,5 +12,6 @@ go_binary(
     visibility = ["//website:__pkg__"],
     deps = [
         "@com_github_google_pprof//driver:go_default_library",
+        "@org_golang_x_crypto_x509roots_fallback//:go_default_library",
     ],
 )
