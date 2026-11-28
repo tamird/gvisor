@@ -35,6 +35,8 @@ jobs:
       with:
         persist-credentials: false
 
+    - uses: ./.github/actions/setup-bazel
+
     # Ubuntu 23.10+ uses AppArmor to restrict unprivileged user namespaces,
     # which breaks rootless runsc.
     - name: Allow unprivileged user namespaces

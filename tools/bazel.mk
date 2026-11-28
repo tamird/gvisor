@@ -32,6 +32,8 @@
 ##     PRE_BAZEL_INIT         - If set, run this command with bash outside the Bazel
 ##                              server container.
 ##     BAZEL_CACHE            - The bazel cache directory (default: detected).
+##     BAZEL_DISK_CACHE       - Optional host action cache directory for Docker.
+##     BAZEL_REPOSITORY_CACHE - Optional host repository cache directory for Docker.
 ##     BAZEL_CACHE_VOLUME     - Docker volume for Bazel cache (default: detected).
 ##     BAZEL_CACHE_USE_VOLUME - If set to true, use a Docker volume for
 ##                              BAZEL_CACHE instead of a host bind mount.
@@ -120,6 +122,14 @@ BAZEL_OPTIONS      ?=
 BAZEL_REMOTE_CACHE ?=
 BAZEL              := bazel $(STARTUP_OPTIONS)
 BASE_OPTIONS       := --color=no --curses=no $(BAZEL_REMOTE_CACHE)
+ifeq ($(DOCKER_BUILD),true)
+ifneq ($(BAZEL_DISK_CACHE),)
+BASE_OPTIONS += --disk_cache=/tmp/gvisor-bazel-disk-cache
+endif
+ifneq ($(BAZEL_REPOSITORY_CACHE),)
+BASE_OPTIONS += --repository_cache=/tmp/gvisor-bazel-repository-cache
+endif
+endif
 BAZEL_TEST_OUTPUT  ?= errors
 TEST_OPTIONS       += $(BASE_OPTIONS) \
   --sandbox_add_mount_pair=/tmp \
@@ -150,6 +160,14 @@ else
 DOCKER_RUN_OPTIONS += -v "$(shell $(REALPATH_M) $(BAZEL_CACHE)):$(BAZEL_CACHE)"
 ifneq ($(patsubst %/,%,$(BAZEL_CACHE)),$(HOME)/.cache/bazel)
 DOCKER_RUN_OPTIONS += -v "$(shell $(REALPATH_M) $(BAZEL_CACHE)):$(HOME)/.cache/bazel"
+endif
+endif
+ifeq ($(DOCKER_BUILD),true)
+ifneq ($(BAZEL_DISK_CACHE),)
+DOCKER_RUN_OPTIONS += -v "$(BAZEL_DISK_CACHE):/tmp/gvisor-bazel-disk-cache"
+endif
+ifneq ($(BAZEL_REPOSITORY_CACHE),)
+DOCKER_RUN_OPTIONS += -v "$(BAZEL_REPOSITORY_CACHE):/tmp/gvisor-bazel-repository-cache"
 endif
 endif
 ifneq ($(GO_REPOSITORY_USE_HOST_CACHE),)
