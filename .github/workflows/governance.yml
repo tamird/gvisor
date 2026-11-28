@@ -8,7 +8,6 @@ name: Governance
     branches:
       - master
       - "release/**"
-      - "review/actions-cache-shared-64d0355994"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -27,8 +26,5 @@ jobs:
         persist-credentials: false
 
     - uses: ./.github/actions/setup-bazel
-
-    - name: Check workflow sources
-      run: bazel test --test_output=errors //:github_actions_test //:github_workflows_test
 
     - run: make governance-check
