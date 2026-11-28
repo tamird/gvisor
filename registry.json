@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-27T18:01:53.784965+00:00",
+    "updatedAt": "2026-11-28T12:42:06.279964+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -111382,20 +111382,20 @@
       "url": "https://github.com/kiron1/bazel-compile-commands/pull/236",
       "group": "bazel",
       "status": "open",
-      "summary": "Supplier #236 is open with all 13 finished checks green, including Success. The actual user question is a native review request to @kiron1 only; no comment, new source approval or rebase. Existing producer 44774d5 still follows #236 landing and compatible release/adoption gates.",
+      "summary": "Tamir requested @kiron1 review in issuecomment-7239011508. The supplier source remains 324cf87d3 with its current finished checks green; source publication and this outreach are complete.",
       "followup": {
         "owner": "root",
         "sourceHead": "324cf87d3065afb993520a4104720ef7c7647b0b",
         "observedAt": "2026-11-27T16:56:48.395428+00:00",
-        "disposition": "Supplier #236 is open with all 13 finished checks green, including Success. The actual user question is a native review request to @kiron1 only; no comment, new source approval or rebase. Existing producer 44774d5 still follows #236 landing and compatible release/adoption gates.",
-        "nextAction": "Root awaits the actual native @kiron1 review-request decision, then follows substantive supplier review/landing. Source publication is complete; do not duplicate outreach or adopt the downstream qualification branch.",
-        "recheckCondition": "Answer to the native request question or actual supplier review/source/landing/release event.",
+        "disposition": "Tamir requested @kiron1 review in issuecomment-7239011508. The supplier source remains 324cf87d3 with its current finished checks green; source publication and this outreach are complete.",
+        "nextAction": "Follow substantive supplier review/landing and compatible release gates; do not duplicate the request or adopt downstream source.",
+        "recheckCondition": "New source, review, provider-admission evidence or the next normal canonical sweep.",
         "evidence": [
           "https://github.com/kiron1/bazel-compile-commands/pull/236",
           "https://github.com/kiron1/bazel-compile-commands/actions/runs/44807549343",
           "https://github.com/kiron1/bazel-compile-commands/pull/88"
         ],
-        "curatedAt": "2026-11-27T17:03:29.842766+00:00",
+        "curatedAt": "2026-11-28T12:30:29.204554+00:00",
         "nativeReviewRequestDecision": {
           "reviewer": "kiron1",
           "operation": "Native requested-reviewer API only",
@@ -111409,19 +111409,29 @@
         "providerHead": "324cf87d3065afb993520a4104720ef7c7647b0b"
       },
       "recheckCondition": "Answer to the native request question or actual supplier review/source/landing/release event.",
-      "updatedAt": "2026-11-27T17:03:29.842766+00:00",
-      "contributorReview": {
-        "kind": "information",
-        "status": "pending",
-        "url": "https://github.com/kiron1/bazel-compile-commands/pull/236",
-        "title": "Request @kiron1’s native review of #236",
-        "summary": "Actual submitted review-request question; unanswered. No comment or source/publication/rebase decision.",
-        "body": "The actual pending question is solely whether to request @kiron1’s review natively on kiron1/bazel-compile-commands#236. No comment is included. Source publication already happened; no source approval, rebase or consumer-adoption operation is requested. This maintainer merged related #88.\n\nRoot awaits the actual review-request answer before acting; no duplicate outreach."
-      },
+      "updatedAt": "2026-11-28T12:30:29.204554+00:00",
       "evidence": [
         {
           "label": "Related PR merged by proposed reviewer",
           "url": "https://github.com/kiron1/bazel-compile-commands/pull/88"
+        },
+        {
+          "label": "Tamir requested supplier review",
+          "url": "https://github.com/kiron1/bazel-compile-commands/pull/236#issuecomment-7239011508"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "information",
+          "status": "settled",
+          "url": "https://github.com/kiron1/bazel-compile-commands/pull/236",
+          "title": "Request @kiron1’s native review of #236",
+          "summary": "Actual submitted review-request question; unanswered. No comment or source/publication/rebase decision.",
+          "body": "The actual pending question is solely whether to request @kiron1’s review natively on kiron1/bazel-compile-commands#236. No comment is included. Source publication already happened; no source approval, rebase or consumer-adoption operation is requested. This maintainer merged related #88.\n\nRoot awaits the actual review-request answer before acting; no duplicate outreach.",
+          "outcome": "completed-by-user",
+          "observedAt": "2026-11-28T12:30:29.204554+00:00",
+          "postedURL": "https://github.com/kiron1/bazel-compile-commands/pull/236#issuecomment-7239011508",
+          "note": "Tamir already requested @kiron1 review in this comment. No additional native request or agent comment is authorized or needed."
         }
       ]
     },
@@ -114136,13 +114146,13 @@
       "repo": "google/gvisor",
       "number": 18012,
       "ref": "review/website-google-roots-pin-20261126",
-      "head": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
+      "head": "8f59a623bf3b1c71fa780cf9f142fe6a2b10ebe6",
       "url": "https://github.com/google/gvisor/pull/18012",
-      "title": "Pin the website Google trust bundle",
+      "title": "Embed the website's trust roots",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-27T13:46:22.675005+00:00",
-      "summary": "Exact fallback-roots amendment f9ed4cde7 and reply are independently reviewed, qualified and actually awaiting Tamir. The scratch serving binary fetched/rendered an existing GCS profile without system roots; build/NoGo/licensing checks passed. This changes Google trust anchors to pinned NSS fallback roots and distrust constraints; full Jekyll/static-site assembly is not claimed.",
+      "updatedAt": "2026-11-28T12:30:29.204554+00:00",
+      "summary": "Approved fallback-roots amendment f9ed4cde7 and its reply are delivered at equivalent signed/DCO 8f59a623b. DCO passed. First Pass 3078: First Pass refused upload before agent assignment because author 1535036 reached the rolling 30-day 360,000 compute-minute quota; no tests ran in that build.",
       "evidence": [
         {
           "label": "Published pull request",
@@ -114167,18 +114177,26 @@
         {
           "label": "Actual scratch serving qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/46003673648"
+        },
+        {
+          "label": "Approved companion reply delivered",
+          "url": "https://github.com/gvisor/gvisor/pull/18012#issuecomment-7239135822"
+        },
+        {
+          "label": "First Pass 3078 admission refusal",
+          "url": "https://buildkite.com/gvisor/first-pass/builds/3078"
         }
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
+        "sourceHead": "8f59a623bf3b1c71fa780cf9f142fe6a2b10ebe6",
         "providerHead": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
         "mergeable": "MERGEABLE",
         "observedAt": "2026-11-26T20:31:29.209734+00:00",
-        "disposition": "Exact fallback-roots amendment f9ed4cde7 and reply are independently reviewed, qualified and actually awaiting Tamir. The scratch serving binary fetched/rendered an existing GCS profile without system roots; build/NoGo/licensing checks passed. This changes Google trust anchors to pinned NSS fallback roots and distrust constraints; full Jekyll/static-site assembly is not claimed.",
-        "nextAction": "Root awaits the actual exact f9ed amendment and reply decision. Preserve the trust-anchor change and scratch-serving limits; no upstream amendment or external reply has occurred.",
-        "recheckCondition": "Answer to the submitted exact amendment/reply question or material source/reviewer evidence.",
-        "curatedAt": "2026-11-27T13:46:22.675005+00:00",
+        "disposition": "Approved fallback-roots amendment f9ed4cde7 and its reply are delivered at equivalent signed/DCO 8f59a623b. DCO passed. First Pass 3078: First Pass refused upload before agent assignment because author 1535036 reached the rolling 30-day 360,000 compute-minute quota; no tests ran in that build.",
+        "nextAction": "Follow maintainer review and actual quota admission; the Google-to-NSS trust-anchor change and scratch-profile serving scope remain explicit.",
+        "recheckCondition": "New source, review, provider-admission evidence or the next normal canonical sweep.",
+        "curatedAt": "2026-11-28T12:30:29.204554+00:00",
         "bundleAvailability": {
           "currentSHA256": "ec989df46c8f4419ef2ee2517cad7619d555e4973f3307be697662aa2497e480",
           "bytes": 38766,
@@ -114221,7 +114239,30 @@
           "checks": "Actual serving/ARM build/AMD+ARM NoGo/licensing and source checks passed; independent review clear.",
           "trustChange": "Google21 roots to pinned NSS fallback111 roots,17 shared;3 distrust constraints. Not an identical-bundle substitution.",
           "limits": "No full Jekyll/static-site assembly or source publication."
-        }
+        },
+        "attentionDispositions": [
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "First Pass 3078: pre-agent quota refusal",
+            "nextAction": "Await actual admission/provider change through the existing CI owner; no unchanged retry or source churn.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/3078"
+            ],
+            "binding": {
+              "sourceHead": "8f59a623bf3b1c71fa780cf9f142fe6a2b10ebe6",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN_ojMfQ",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/3078",
+                  "kind": "status"
+                }
+              ]
+            }
+          }
+        ]
       },
       "settledReviews": [
         {
@@ -114235,24 +114276,40 @@
           "outcome": "superseded-by-published-discussion",
           "note": "Old rotation reply is superseded by actual Tamir/Etienne discussion; do not post it.",
           "recordedAt": "2026-11-27T12:43:45.159584+00:00"
+        },
+        {
+          "kind": "amendment",
+          "status": "settled",
+          "head": "f9ed4cde755d81d60bb4681d306f1486993f7c05",
+          "baseHead": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
+          "url": "https://github.com/tamird/gvisor/commit/f9ed4cde755d81d60bb4681d306f1486993f7c05",
+          "title": "Amend #18012 to embed fallback trust roots",
+          "summary": "Actual submitted exact amendment and reply question; unanswered. This deliberately changes the trust-anchor set.",
+          "body": "The website profile viewer fetched its trust bundle from a mutable Google URL. Embed the pinned golang.org/x/crypto/x509roots/fallback module in the serving binary and remove the separate certificate download, image copy and manual licensing exception. Root updates then follow ordinary Go dependency updates.\n\nThis changes the serving image's trust anchors from Google's bundle to the NSS bundle, including the module's distrust constraints. The profile source URL and bucket checks remain unchanged.\n\nPosted by Codex on behalf of @tamird.\n",
+          "replyBody": "I've prepared a version using golang.org/x/crypto/x509roots/fallback, pinned to v0.0.0-20261123192653-4dc4fb521066. It removes the separate certificate fetch and image copy. The serving binary fetched and rendered an existing GCS profile in a scratch image without system roots. This changes the trust anchors from Google's bundle to NSS, including its distrust constraints.\n\nPosted by Codex on behalf of @tamird.\n",
+          "reviewCommand": "git range-diff b8c204be9^! f9ed4cde755d81d60bb4681d306f1486993f7c05^!",
+          "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/website-fallback-proposed-pr-body.txt",
+          "sourceSha256": "8e8088e73dbfbf805405c62aafef0ac0d24b7100a8e77f0ee48f9fe5020386f6",
+          "replySourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/website-fallback-proposed-reply.txt",
+          "replySourceSha256": "ad9199277ff63a226fc8bcdca1b3fe7726063db41707b16ae6cbcd24c270bcf8",
+          "outcome": "posted",
+          "observedAt": "2026-11-28T12:30:29.204554+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/18012",
+          "note": "User approved f9ed4cde7 amendment and reply; signed/DCO 8f59a623b preserves the approved tree.",
+          "approvalOutcome": "approved"
+        },
+        {
+          "kind": "reply",
+          "status": "settled",
+          "head": "f9ed4cde755d81d60bb4681d306f1486993f7c05",
+          "url": "https://github.com/google/gvisor/pull/18012",
+          "title": "Reply about embedded fallback trust roots",
+          "body": "I've prepared a version using golang.org/x/crypto/x509roots/fallback, pinned to v0.0.0-20261123192653-4dc4fb521066. It removes the separate certificate fetch and image copy. The serving binary fetched and rendered an existing GCS profile in a scratch image without system roots. This changes the trust anchors from Google's bundle to NSS, including its distrust constraints.\n\nPosted by Codex on behalf of @tamird.\n",
+          "outcome": "posted",
+          "postedURL": "https://github.com/gvisor/gvisor/pull/18012#issuecomment-7239135822",
+          "observedAt": "2026-11-28T12:30:29.204554+00:00"
         }
-      ],
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "f9ed4cde755d81d60bb4681d306f1486993f7c05",
-        "baseHead": "b8c204be9daf2ea1132727b9e4b735f818a1ba76",
-        "url": "https://github.com/tamird/gvisor/commit/f9ed4cde755d81d60bb4681d306f1486993f7c05",
-        "title": "Amend #18012 to embed fallback trust roots",
-        "summary": "Actual submitted exact amendment and reply question; unanswered. This deliberately changes the trust-anchor set.",
-        "body": "The website profile viewer fetched its trust bundle from a mutable Google URL. Embed the pinned golang.org/x/crypto/x509roots/fallback module in the serving binary and remove the separate certificate download, image copy and manual licensing exception. Root updates then follow ordinary Go dependency updates.\n\nThis changes the serving image's trust anchors from Google's bundle to the NSS bundle, including the module's distrust constraints. The profile source URL and bucket checks remain unchanged.\n\nPosted by Codex on behalf of @tamird.\n",
-        "replyBody": "I've prepared a version using golang.org/x/crypto/x509roots/fallback, pinned to v0.0.0-20261123192653-4dc4fb521066. It removes the separate certificate fetch and image copy. The serving binary fetched and rendered an existing GCS profile in a scratch image without system roots. This changes the trust anchors from Google's bundle to NSS, including its distrust constraints.\n\nPosted by Codex on behalf of @tamird.\n",
-        "reviewCommand": "git range-diff b8c204be9^! f9ed4cde755d81d60bb4681d306f1486993f7c05^!",
-        "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/website-fallback-proposed-pr-body.txt",
-        "sourceSha256": "8e8088e73dbfbf805405c62aafef0ac0d24b7100a8e77f0ee48f9fe5020386f6",
-        "replySourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/website-fallback-proposed-reply.txt",
-        "replySourceSha256": "ad9199277ff63a226fc8bcdca1b3fe7726063db41707b16ae6cbcd24c270bcf8"
-      }
+      ]
     },
     {
       "id": "pr:18013",
@@ -114528,18 +114585,18 @@
       "head": "165933c11003e1d49f5a696e3286e85fc28172ea",
       "url": "https://github.com/tamird/gvisor/commit/165933c11003e1d49f5a696e3286e85fc28172ea",
       "title": "Halve First Pass syscall job fan-out",
-      "status": "Contributor review",
-      "summary": "The two reservation-reduction source decisions remain first. A separate, actually proposed issue documents obsolete build 3049: all 28 make attempts, including retry, started after replacement 3050 was created and consumed 236.7 worker-minutes (237 rounded in the proposed issue). The replacement passed; this does not establish Tamir quota clearance.",
-      "updatedAt": "2026-11-27T17:03:29.842766+00:00",
+      "status": "Superseded",
+      "summary": "The ten-shard 165933c11 source is superseded and the later 45-minute, 20-shard c22e5eea7 source is held. Neither awaits a decision. Current work investigates actual-time coordinator accounting and native Buildkite superseded-build settings.",
+      "updatedAt": "2026-11-28T12:38:28.365808+00:00",
       "followup": {
         "owner": "root",
         "technicalOwner": "approved_rebase_queue",
         "sourceHead": "165933c11003e1d49f5a696e3286e85fc28172ea",
         "observedAt": "2026-11-27T12:58:35.566526+00:00",
-        "nextAction": "Prioritize the two existing source decisions; separately await the already-submitted obsolete-revision issue-filing decision. No issue has been filed, retry rule changed, quota probe or extra outreach performed.",
-        "recheckCondition": "An existing decision answer, actual same-author admission/calendar event, or changed pipeline/source evidence.",
-        "disposition": "The two reservation-reduction source decisions remain first. A separate, actually proposed issue documents obsolete build 3049: all 28 make attempts, including retry, started after replacement 3050 was created and consumed 236.7 worker-minutes (237 rounded in the proposed issue). The replacement passed; this does not establish Tamir quota clearance.",
-        "curatedAt": "2026-11-27T17:03:29.842766+00:00",
+        "nextAction": "No action on these source proposals; follow the two owning accounting/settings investigations.",
+        "recheckCondition": "New source, review, provider-admission evidence or the next normal canonical sweep.",
+        "disposition": "The ten-shard 165933c11 source is superseded and the later 45-minute, 20-shard c22e5eea7 source is held. Neither awaits a decision. Current work investigates actual-time coordinator accounting and native Buildkite superseded-build settings.",
+        "curatedAt": "2026-11-28T12:38:28.365808+00:00",
         "qualification": {
           "source": "165933c11003e1d49f5a696e3286e85fc28172ea",
           "reviews": "Two independent reviews accepted",
@@ -114693,29 +114750,36 @@
           "url": "https://buildkite.com/gvisor/first-pass/builds/3050"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "165933c11003e1d49f5a696e3286e85fc28172ea",
-        "baseHead": "cc5b7474bf134432a4f41a47d37022fc4f05ede6",
-        "url": "https://github.com/tamird/gvisor/commit/165933c11003e1d49f5a696e3286e85fc28172ea",
-        "title": "Halve First Pass syscall job fan-out",
-        "summary": "Actual submitted opening question; unanswered. Exact178-case union and both reviews accepted; no full ten-job timing claim.",
-        "body": "First Pass starts 20 syscall jobs. Each admitted untrusted job reserves 60 quota minutes even if it finishes early, so these jobs reserve 1,200 minutes. Use ten jobs to save 600 reserved minutes per clean build, while keeping the 55-minute timeout.\n\nThe default targets, architecture, test configurations and filters stay unchanged. Each new partition combines two old partitions. Tests that ignore partition variables still run.\n\nAcross 24 completed builds in the public 3000–3045 sample, the largest sum of paired old job durations was 31.8 minutes. This is headroom evidence, not an observed ten-job runtime. Actual allocated wall time and retry costs remain distinct from reserved quota.\n\nThe representative native and systrap runs exercised 97 and 81 distinct cases in the two original partitions. The combined partition exercised exactly those 178 cases, with zero skips. [Original partition 1](https://github.com/tamird/gvisor/actions/runs/46002929520) · [Original partition 11](https://github.com/tamird/gvisor/actions/runs/46002937488) · [Combined partition](https://github.com/tamird/gvisor/actions/runs/46002930684)\n\nPosted by Codex on behalf of @tamird.\n",
-        "reviewCommand": "git show 165933c11003e1d49f5a696e3286e85fc28172ea -- .buildkite/first-pass.yaml",
-        "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/first-pass-fanout-pr-body.md",
-        "sourceSha256": "b546a48d6a45a83d646b4ed1d1a2b68fb22de570866d6f0f028647ae2e049ee5"
-      },
-      "additionalReviews": [
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "165933c11003e1d49f5a696e3286e85fc28172ea",
+          "baseHead": "cc5b7474bf134432a4f41a47d37022fc4f05ede6",
+          "url": "https://github.com/tamird/gvisor/commit/165933c11003e1d49f5a696e3286e85fc28172ea",
+          "title": "Halve First Pass syscall job fan-out",
+          "summary": "Actual submitted opening question; unanswered. Exact178-case union and both reviews accepted; no full ten-job timing claim.",
+          "body": "First Pass starts 20 syscall jobs. Each admitted untrusted job reserves 60 quota minutes even if it finishes early, so these jobs reserve 1,200 minutes. Use ten jobs to save 600 reserved minutes per clean build, while keeping the 55-minute timeout.\n\nThe default targets, architecture, test configurations and filters stay unchanged. Each new partition combines two old partitions. Tests that ignore partition variables still run.\n\nAcross 24 completed builds in the public 3000–3045 sample, the largest sum of paired old job durations was 31.8 minutes. This is headroom evidence, not an observed ten-job runtime. Actual allocated wall time and retry costs remain distinct from reserved quota.\n\nThe representative native and systrap runs exercised 97 and 81 distinct cases in the two original partitions. The combined partition exercised exactly those 178 cases, with zero skips. [Original partition 1](https://github.com/tamird/gvisor/actions/runs/46002929520) · [Original partition 11](https://github.com/tamird/gvisor/actions/runs/46002937488) · [Combined partition](https://github.com/tamird/gvisor/actions/runs/46002930684)\n\nPosted by Codex on behalf of @tamird.\n",
+          "reviewCommand": "git show 165933c11003e1d49f5a696e3286e85fc28172ea -- .buildkite/first-pass.yaml",
+          "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/first-pass-fanout-pr-body.md",
+          "sourceSha256": "b546a48d6a45a83d646b4ed1d1a2b68fb22de570866d6f0f028647ae2e049ee5",
+          "outcome": "changes_requested",
+          "observedAt": "2026-11-28T12:30:29.204554+00:00",
+          "note": "Retain 20 shards; the separate 45-minute timeout proposal replaces this ten-shard approach."
+        },
         {
           "kind": "issue",
-          "status": "pending",
+          "status": "settled",
           "url": "https://github.com/gvisor/gvisor/issues/new",
           "title": "First Pass runs obsolete PR revisions",
           "summary": "Actual submitted issue-filing decision; proposed, not filed. Keep the two existing reservation-reduction source decisions first.",
-          "body": "For #18024, [build 3050](https://buildkite.com/gvisor/first-pass/builds/3050) was created at 15:50:47 UTC. The superseded [build 3049](https://buildkite.com/gvisor/first-pass/builds/3049) uploaded its test jobs at 15:51:24. All 28 attempts started after the replacement build was created and used 237 worker-minutes. The replacement passed.\n\nFirst Pass should skip queued builds and cancel running builds superseded by a new revision of the same PR. Buildkite supports both at the [pipeline level](https://buildkite.com/docs/pipelines/configure/canceling-builds).\n\nPosted by Codex on behalf of @tamird."
+          "body": "For #18024, [build 3050](https://buildkite.com/gvisor/first-pass/builds/3050) was created at 15:50:47 UTC. The superseded [build 3049](https://buildkite.com/gvisor/first-pass/builds/3049) uploaded its test jobs at 15:51:24. All 28 attempts started after the replacement build was created and used 237 worker-minutes. The replacement passed.\n\nFirst Pass should skip queued builds and cancel running builds superseded by a new revision of the same PR. Buildkite supports both at the [pipeline level](https://buildkite.com/docs/pipelines/configure/canceling-builds).\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "superseded",
+          "observedAt": "2026-11-28T12:30:29.204554+00:00",
+          "note": "The repository already has a PR-hook path; investigate/fix that source rather than file this pipeline-operator issue. No issue was posted."
         }
-      ]
+      ],
+      "inactive": true
     },
     {
       "id": "branch:website-html-nesting",
@@ -114726,9 +114790,9 @@
       "head": "1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
       "url": "https://github.com/tamird/gvisor/commit/1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
       "title": "Fix invalid nesting in website HTML",
-      "status": "Contributor review",
-      "summary": "Actual opening question for standalone HTML markup1be6fd509 is pending. Three files(+5/−7) fix sidebar lists, blog excerpts and production-guide links. The same checker went432→0 errors across85 pages, with all links/IDs/text preserved; independent review passed and before/after screenshots are retained. Ruby/checker migration and #18012 fallback roots remain separate.",
-      "updatedAt": "2026-11-27T14:54:24.090682+00:00",
+      "status": "Published as google/gvisor#18044",
+      "summary": "Approved three-file HTML fix 1be6fd509 is delivered as #18044 at equivalent signed/DCO 0c9379fb0. Renderer dependency work remains separate and held.",
+      "updatedAt": "2026-11-28T12:30:29.204554+00:00",
       "evidence": [
         {
           "label": "Exact standalone markup source",
@@ -114749,15 +114813,19 @@
         {
           "label": "After same-site screenshot evidence",
           "url": "https://github.com/tamird/gvisor/actions/runs/46017451160"
+        },
+        {
+          "label": "Published HTML PR",
+          "url": "https://github.com/google/gvisor/pull/18044"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
-        "disposition": "Actual opening question for standalone HTML markup1be6fd509 is pending. Three files(+5/−7) fix sidebar lists, blog excerpts and production-guide links. The same checker went432→0 errors across85 pages, with all links/IDs/text preserved; independent review passed and before/after screenshots are retained. Ruby/checker migration and #18012 fallback roots remain separate.",
-        "nextAction": "Root awaits the actual exact1be6 PR-opening decision. Keep this three-file markup fix independent of renderer dependency migration and #18012 fallback-root amendment.",
-        "recheckCondition": "Answer to the submitted exact markup opening question or material source/review evidence.",
-        "curatedAt": "2026-11-27T14:54:24.090682+00:00",
+        "disposition": "Approved three-file HTML fix 1be6fd509 is delivered as #18044 at equivalent signed/DCO 0c9379fb0. Renderer dependency work remains separate and held.",
+        "nextAction": "No separate branch action; current review and CI live on pr:18044.",
+        "recheckCondition": "New source, review, provider-admission evidence or the next normal canonical sweep.",
+        "curatedAt": "2026-11-28T12:30:29.204554+00:00",
         "qualification": {
           "files": 3,
           "added": 5,
@@ -114771,18 +114839,307 @@
           "scope": "Same-checker output comparison; no approval or delivery of separate renderer/Ruby or fallback-root changes."
         }
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
-        "baseHead": "cc5b7474bf134432a4f41a47d37022fc4f05ede6",
-        "url": "https://github.com/tamird/gvisor/commit/1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
-        "title": "Fix invalid nesting in website HTML",
-        "summary": "Actual submitted standalone PR-opening question; unanswered. Three HTML files only; Ruby upgrade remains separate.",
-        "body": "The website emitted invalid nesting in the documentation sidebar, blog excerpts, and production-guide configuration links. Close submenus before their containing list items, wrap block excerpts in a div, and express each configuration button as one Markdown link. This preserves the existing text and destinations and lets the HTML checker validate the rendered site.\n\nPrepared by Codex on behalf of @tamird.\n",
-        "reviewCommand": "git show 1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
-        "retainedDraftSHA256": "e37a13fec37cb33781b04111cbc536e830dbaaeebbe34f3c890a4b18c9f11720"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
+          "baseHead": "cc5b7474bf134432a4f41a47d37022fc4f05ede6",
+          "url": "https://github.com/tamird/gvisor/commit/1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
+          "title": "Fix invalid nesting in website HTML",
+          "summary": "Actual submitted standalone PR-opening question; unanswered. Three HTML files only; Ruby upgrade remains separate.",
+          "body": "The website emitted invalid nesting in the documentation sidebar, blog excerpts, and production-guide configuration links. Close submenus before their containing list items, wrap block excerpts in a div, and express each configuration button as one Markdown link. This preserves the existing text and destinations and lets the HTML checker validate the rendered site.\n\nPrepared by Codex on behalf of @tamird.\n",
+          "reviewCommand": "git show 1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
+          "retainedDraftSHA256": "e37a13fec37cb33781b04111cbc536e830dbaaeebbe34f3c890a4b18c9f11720",
+          "outcome": "posted",
+          "observedAt": "2026-11-28T12:30:29.204554+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/18044",
+          "note": "User approved 1be6fd509; signed/DCO 0c9379fb0 preserves its exact tree.",
+          "approvalOutcome": "approved"
+        }
+      ],
+      "inactive": true
+    },
+    {
+      "id": "pr:18042",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 18042,
+      "group": "analysis",
+      "title": "Reject unused line-level checklocks annotations",
+      "url": "https://github.com/google/gvisor/pull/18042",
+      "ref": "review/checklocks-unused-lines-20261128",
+      "head": "db29ac4be27b340ecf7754a35865f55ff460df25",
+      "status": "open",
+      "summary": "Approved e3e8c97d2 is published at signed/DCO db29ac4be with the identical qualified tree. DCO passed. First Pass 3076: First Pass refused upload before agent assignment because author 1535036 reached the rolling 30-day 360,000 compute-minute quota; no tests ran in that build.",
+      "updatedAt": "2026-11-28T12:30:29.204554+00:00",
+      "followup": {
+        "owner": "root",
+        "disposition": "Approved e3e8c97d2 is published at signed/DCO db29ac4be with the identical qualified tree. DCO passed. First Pass 3076: First Pass refused upload before agent assignment because author 1535036 reached the rolling 30-day 360,000 compute-minute quota; no tests ran in that build.",
+        "nextAction": "Follow maintainer review and actual quota admission through the existing owner; preserve passing source qualification and do not retry unchanged jobs.",
+        "recheckCondition": "New source, review, provider-admission evidence or the next normal canonical sweep.",
+        "curatedAt": "2026-11-28T12:30:29.204554+00:00",
+        "sourceHead": "db29ac4be27b340ecf7754a35865f55ff460df25",
+        "approvedSource": "e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
+        "attentionDispositions": [
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "First Pass 3076: pre-agent quota refusal",
+            "nextAction": "Await actual admission/provider change through the existing CI owner; no unchanged retry or source churn.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/3076"
+            ],
+            "binding": {
+              "sourceHead": "db29ac4be27b340ecf7754a35865f55ff460df25",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN_oi2wQ",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/3076",
+                  "kind": "status"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
+          "baseHead": "c3efd8c9381c89b78c1d86b6c64a49d53ee938f8",
+          "url": "https://github.com/tamird/gvisor/commit/e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
+          "title": "Reject unused line-level checklocks annotations",
+          "summary": "Actual submitted source-opening question; unanswered. Body is factual decision scope, not an approved PR description.",
+          "body": "Opening-decision scope summary (not a proposed PR description)\n\nThe actual unanswered question is approval to open “Reject unused line-level checklocks annotations” for e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910.\n\nReport line forces/ignores that affect no checked obligation and remove 16 proven redundant annotations without changing executable statements. Generated redundancy findings remain advisory; actual generated lock checks and caller enforcement stay enabled. The exact internal PostFork-callee exception cannot match its real AMD64 missing-lock/release diagnostics. The broader caller-enforcement experiment is separate.\n\nOne canonical894-validator corpus passed (891 fresh,3 cached), covering both target GOARCHs via arch_transition. Each host driver had22 clean cases plus its owning validator. Both independent finding authors cleared the fixes. No duplicate build or new question is needed.\n\nReview command: git show e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
+          "reviewCommand": "git show e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
+          "outcome": "posted",
+          "observedAt": "2026-11-28T12:30:29.204554+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/18042",
+          "note": "User approved e3e8c97d2; signed/DCO db29ac4be preserves its exact source tree.",
+          "approvalOutcome": "approved"
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Published source",
+          "url": "https://github.com/google/gvisor/pull/18042"
+        },
+        {
+          "label": "Signed source",
+          "url": "https://github.com/tamird/gvisor/commit/db29ac4be"
+        },
+        {
+          "label": "First Pass 3076 admission refusal",
+          "url": "https://buildkite.com/gvisor/first-pass/builds/3076"
+        }
+      ]
+    },
+    {
+      "id": "pr:18044",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 18044,
+      "group": "rbe",
+      "title": "Fix invalid nesting in website HTML",
+      "url": "https://github.com/google/gvisor/pull/18044",
+      "ref": "fix/website-html-nesting-20261127",
+      "head": "0c9379fb03651b78918b95903651f8900f51139d",
+      "status": "open",
+      "summary": "Approved HTML-only 1be6fd509 is published at equivalent signed/DCO 0c9379fb0 as #18044. DCO passed; Ruby/checker migration remains separate. First Pass 3079: First Pass refused upload before agent assignment because author 1535036 reached the rolling 30-day 360,000 compute-minute quota; no tests ran in that build.",
+      "updatedAt": "2026-11-28T12:30:29.204554+00:00",
+      "followup": {
+        "owner": "root",
+        "disposition": "Approved HTML-only 1be6fd509 is published at equivalent signed/DCO 0c9379fb0 as #18044. DCO passed; Ruby/checker migration remains separate. First Pass 3079: First Pass refused upload before agent assignment because author 1535036 reached the rolling 30-day 360,000 compute-minute quota; no tests ran in that build.",
+        "nextAction": "Follow maintainer review and actual quota admission through the existing owner; preserve passing source qualification and do not retry unchanged jobs.",
+        "recheckCondition": "New source, review, provider-admission evidence or the next normal canonical sweep.",
+        "curatedAt": "2026-11-28T12:30:29.204554+00:00",
+        "sourceHead": "0c9379fb03651b78918b95903651f8900f51139d",
+        "approvedSource": "1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
+        "attentionDispositions": [
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "First Pass 3079: pre-agent quota refusal",
+            "nextAction": "Await actual admission/provider change through the existing CI owner; no unchanged retry or source churn.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/3079"
+            ],
+            "binding": {
+              "sourceHead": "0c9379fb03651b78918b95903651f8900f51139d",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN_okXTQ",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/3079",
+                  "kind": "status"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
+          "baseHead": "cc5b7474bf134432a4f41a47d37022fc4f05ede6",
+          "url": "https://github.com/tamird/gvisor/commit/1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
+          "title": "Fix invalid nesting in website HTML",
+          "summary": "Actual submitted standalone PR-opening question; unanswered. Three HTML files only; Ruby upgrade remains separate.",
+          "body": "The website emitted invalid nesting in the documentation sidebar, blog excerpts, and production-guide configuration links. Close submenus before their containing list items, wrap block excerpts in a div, and express each configuration button as one Markdown link. This preserves the existing text and destinations and lets the HTML checker validate the rendered site.\n\nPrepared by Codex on behalf of @tamird.\n",
+          "reviewCommand": "git show 1be6fd5097fe1b433d5b5db0df2891fb291d6d26",
+          "retainedDraftSHA256": "e37a13fec37cb33781b04111cbc536e830dbaaeebbe34f3c890a4b18c9f11720",
+          "outcome": "posted",
+          "observedAt": "2026-11-28T12:30:29.204554+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/18044",
+          "note": "User approved 1be6fd509; signed/DCO 0c9379fb0 preserves its exact tree.",
+          "approvalOutcome": "approved"
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Published source",
+          "url": "https://github.com/google/gvisor/pull/18044"
+        },
+        {
+          "label": "Signed source",
+          "url": "https://github.com/tamird/gvisor/commit/0c9379fb0"
+        },
+        {
+          "label": "First Pass 3079 admission refusal",
+          "url": "https://buildkite.com/gvisor/first-pass/builds/3079"
+        }
+      ]
+    },
+    {
+      "id": "pr:18043",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 18043,
+      "group": "rbe",
+      "title": "Budget smoke jobs for cold builds",
+      "url": "https://github.com/google/gvisor/pull/18043",
+      "ref": "review/first-pass-smoke-budgets-20261127",
+      "head": "d239129380b0544f13f13cb11b8b46f54cc671f6",
+      "status": "open",
+      "summary": "Approved 0f6dd3a38 smoke budgets are published at equivalent signed/DCO d23912938. DCO passed. First Pass 3077: First Pass refused upload before agent assignment because author 1535036 reached the rolling 30-day 360,000 compute-minute quota; no tests ran in that build.",
+      "updatedAt": "2026-11-28T12:30:29.204554+00:00",
+      "followup": {
+        "owner": "root",
+        "disposition": "Approved 0f6dd3a38 smoke budgets are published at equivalent signed/DCO d23912938. DCO passed. First Pass 3077: First Pass refused upload before agent assignment because author 1535036 reached the rolling 30-day 360,000 compute-minute quota; no tests ran in that build.",
+        "nextAction": "Follow maintainer review and actual quota admission through the existing owner; preserve passing source qualification and do not retry unchanged jobs.",
+        "recheckCondition": "New source, review, provider-admission evidence or the next normal canonical sweep.",
+        "curatedAt": "2026-11-28T12:30:29.204554+00:00",
+        "sourceHead": "d239129380b0544f13f13cb11b8b46f54cc671f6",
+        "approvedSource": "0f6dd3a38ff3a2a8f29b79e1b950057953a690bc",
+        "attentionDispositions": [
+          {
+            "reason": "author-public-checks",
+            "action": "ci-infrastructure-retry",
+            "title": "First Pass 3077: pre-agent quota refusal",
+            "nextAction": "Await actual admission/provider change through the existing CI owner; no unchanged retry or source churn.",
+            "evidence": [
+              "https://buildkite.com/gvisor/first-pass/builds/3077"
+            ],
+            "binding": {
+              "sourceHead": "d239129380b0544f13f13cb11b8b46f54cc671f6",
+              "checks": [
+                {
+                  "id": "SC_kwDOB9IlXs8AAAAN_ojdrA",
+                  "name": "buildkite/first-pass/pr",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/first-pass/builds/3077",
+                  "kind": "status"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "settledReviews": [
+        {
+          "kind": "information",
+          "status": "settled",
+          "title": "Publish the local smoke timeout change",
+          "summary": "Actual separate DCO/fork-push/PR-opening question; unanswered. Local-only source, no nonexistent commit link.",
+          "body": "Approve pushing local commit `0f6dd3a38` to your gVisor fork with DCO and opening “Budget smoke jobs for cold builds”? The entire source change is two First Pass timeout values, 25 minutes for normal smoke and 40 for race. This saves another 35 reserved minutes per eligible run when Buildkite returns timeout metadata. Each mode had 107 observed successes, with maxima of 15.8 and 25.9 minutes. Independent review found no blocker.\n\nCommand: git show 0f6dd3a38 -- .buildkite/first-pass.yaml",
+          "localSourceHead": "0f6dd3a38ff3a2a8f29b79e1b950057953a690bc",
+          "reviewCommand": "git show 0f6dd3a38 -- .buildkite/first-pass.yaml",
+          "outcome": "posted",
+          "observedAt": "2026-11-28T12:30:29.204554+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/18043",
+          "note": "User approved local 0f6dd3a38; signed/DCO d23912938 preserves its exact tree and parent.",
+          "approvalOutcome": "approved"
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Published source",
+          "url": "https://github.com/google/gvisor/pull/18043"
+        },
+        {
+          "label": "Signed source",
+          "url": "https://github.com/tamird/gvisor/commit/d23912938"
+        },
+        {
+          "label": "First Pass 3077 admission refusal",
+          "url": "https://buildkite.com/gvisor/first-pass/builds/3077"
+        }
+      ]
+    },
+    {
+      "id": "branch:first-pass-syscall-timeout",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "group": "rbe",
+      "ref": "review/first-pass-syscall-timeout-20261128",
+      "head": "c22e5eea7e7dd6c524bdf4992ccf51131464caa9",
+      "url": "https://github.com/tamird/gvisor/commit/c22e5eea7",
+      "title": "Budget syscall jobs for historical cold builds",
+      "status": "Held",
+      "summary": "The qualified c22e5eea7 45-minute timeout proposal is held and its opening question is withdrawn. The user now prefers investigating actual-time charging in the coordinator, with a reservation at admission and settlement after job completion. No upstream PR was opened for c22.",
+      "updatedAt": "2026-11-28T12:38:28.365808+00:00",
+      "followup": {
+        "owner": "root",
+        "disposition": "The qualified c22e5eea7 45-minute timeout proposal is held and its opening question is withdrawn. The user now prefers investigating actual-time charging in the coordinator, with a reservation at admission and settlement after job completion. No upstream PR was opened for c22.",
+        "nextAction": "Keep this source held. Follow investigation:first-pass-quota-accounting; do not publish without a new explicit source decision.",
+        "recheckCondition": "New explicit source-publication decision or the actual-time accounting investigation result.",
+        "curatedAt": "2026-11-28T12:38:28.365808+00:00",
+        "sourceHead": "c22e5eea7e7dd6c524bdf4992ccf51131464caa9"
+      },
+      "evidence": [
+        {
+          "label": "Qualified timeout-only source",
+          "url": "https://github.com/tamird/gvisor/commit/c22e5eea7"
+        },
+        {
+          "label": "Observed older maximum",
+          "url": "https://buildkite.com/gvisor/first-pass/builds/1700#01a1ee5a-aea0-44a0-bc0b-ae9e35338ede"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "c22e5eea7e7dd6c524bdf4992ccf51131464caa9",
+          "baseHead": "7a5e5732acc1afdea4727ceca3e2c540453ee1f7",
+          "url": "https://github.com/tamird/gvisor/commit/c22e5eea7",
+          "title": "Budget syscall jobs for historical cold builds",
+          "summary": "Actual source-opening question submitted; unanswered. The body shows the exact reviewed commit rationale.",
+          "body": "First Pass gave each of its 20 syscall jobs a 55-minute timeout. The coordinator reserves the timeout plus ten minutes, capped at an hour, before admitting an untrusted job. Finishing early does not refund it.\n\nSet the syscall timeout to 45 minutes and retain all 20 shards. Recent successes took at most 19.25 minutes, but a longer historical sample includes seven successful attempts above 28 minutes, with a maximum of 35m57s. The new budget leaves 9m03s above that observed maximum.\n\nWhen Buildkite supplies timeout metadata, the syscall jobs reserve 1100 rather than 1200 minutes. Keep the commands, partition selection and automatic retry settings unchanged.\n\ngit show c22e5eea7e7dd6c524bdf4992ccf51131464caa9 -- .buildkite/first-pass.yaml",
+          "reviewCommand": "git show c22e5eea7e7dd6c524bdf4992ccf51131464caa9 -- .buildkite/first-pass.yaml",
+          "outcome": "withdrawn",
+          "observedAt": "2026-11-28T12:38:28.365808+00:00",
+          "note": "User now prefers actual-time accounting in the coordinator; hold the timeout proposal and withdraw this opening question."
+        }
+      ],
+      "inactive": true
     }
   ],
   "edges": [
@@ -155883,12 +156240,12 @@
       "repo": "google/gvisor",
       "group": "rbe",
       "title": "Budget First Pass smoke jobs for cold builds",
-      "status": "active",
+      "status": "concluded",
       "owner": "root",
       "head": "0f6dd3a38ff3a2a8f29b79e1b950057953a690bc",
-      "updatedAt": "2026-11-27T13:14:44.464664+00:00",
-      "summary": "Local-only0f6dd3a38 changes normal/race smoke timeouts to25/40 minutes. Static pipeline expansion passed; each mode has107 historical successes with15.8/25.9-minute maxima. Saving35 reserved minutes depends on Buildkite returning timeout metadata. Independent review is clear and the distinct DCO/fork-push/opening question is unanswered; no remote ref exists.",
-      "nextStep": "Root awaits the actual local0f6 DCO/fork-push/PR-opening decision. Preserve the rejected bundled fork push as history; no retry, bypass or inference from the separate165933 question.",
+      "updatedAt": "2026-11-28T12:30:29.204554+00:00",
+      "summary": "Approved 25/40-minute smoke budgets 0f6dd3a38 are published as #18043 at equivalent signed/DCO d23912938. Savings remain conditional on Buildkite timeout metadata.",
+      "nextStep": "Follow the published smoke-budget PR; no separate source approval remains.",
       "findings": [
         {
           "text": "Only two First Pass timeout values change:55→25 normal,55→40 race. Commands, environments and retry settings are unchanged in static expansion; Nogo and C++ lint budgets remain. No new job timing was run.",
@@ -155903,14 +156260,19 @@
           "evidence": []
         }
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "label": "Published smoke-budget PR",
+          "url": "https://github.com/google/gvisor/pull/18043"
+        }
+      ],
       "followup": {
         "owner": "root",
         "sourceHead": "0f6dd3a38ff3a2a8f29b79e1b950057953a690bc",
-        "disposition": "Local-only0f6dd3a38 changes normal/race smoke timeouts to25/40 minutes. Static pipeline expansion passed; each mode has107 historical successes with15.8/25.9-minute maxima. Saving35 reserved minutes depends on Buildkite returning timeout metadata. Independent review is clear and the distinct DCO/fork-push/opening question is unanswered; no remote ref exists.",
-        "nextAction": "Root awaits the actual local0f6 DCO/fork-push/PR-opening decision. Preserve the rejected bundled fork push; do not retry or combine it with165933 without actual authority.",
-        "recheckCondition": "Answer to the distinct smoke publication question, or material source/reservation-policy evidence.",
-        "curatedAt": "2026-11-27T13:14:44.464664+00:00",
+        "disposition": "Approved 25/40-minute smoke budgets 0f6dd3a38 are published as #18043 at equivalent signed/DCO d23912938. Savings remain conditional on Buildkite timeout metadata.",
+        "nextAction": "No separate investigation action; current review and CI live on pr:18043.",
+        "recheckCondition": "New source, review, provider-admission evidence or the next normal canonical sweep.",
+        "curatedAt": "2026-11-28T12:30:29.204554+00:00",
         "localSource": {
           "checkout": "~/code/gvisor",
           "head": "0f6dd3a38ff3a2a8f29b79e1b950057953a690bc",
@@ -155935,15 +156297,22 @@
           }
         ]
       },
-      "contributorReview": {
-        "kind": "information",
-        "status": "pending",
-        "title": "Publish the local smoke timeout change",
-        "summary": "Actual separate DCO/fork-push/PR-opening question; unanswered. Local-only source, no nonexistent commit link.",
-        "body": "Approve pushing local commit `0f6dd3a38` to your gVisor fork with DCO and opening “Budget smoke jobs for cold builds”? The entire source change is two First Pass timeout values, 25 minutes for normal smoke and 40 for race. This saves another 35 reserved minutes per eligible run when Buildkite returns timeout metadata. Each mode had 107 observed successes, with maxima of 15.8 and 25.9 minutes. Independent review found no blocker.\n\nCommand: git show 0f6dd3a38 -- .buildkite/first-pass.yaml",
-        "localSourceHead": "0f6dd3a38ff3a2a8f29b79e1b950057953a690bc",
-        "reviewCommand": "git show 0f6dd3a38 -- .buildkite/first-pass.yaml"
-      }
+      "settledReviews": [
+        {
+          "kind": "information",
+          "status": "settled",
+          "title": "Publish the local smoke timeout change",
+          "summary": "Actual separate DCO/fork-push/PR-opening question; unanswered. Local-only source, no nonexistent commit link.",
+          "body": "Approve pushing local commit `0f6dd3a38` to your gVisor fork with DCO and opening “Budget smoke jobs for cold builds”? The entire source change is two First Pass timeout values, 25 minutes for normal smoke and 40 for race. This saves another 35 reserved minutes per eligible run when Buildkite returns timeout metadata. Each mode had 107 observed successes, with maxima of 15.8 and 25.9 minutes. Independent review found no blocker.\n\nCommand: git show 0f6dd3a38 -- .buildkite/first-pass.yaml",
+          "localSourceHead": "0f6dd3a38ff3a2a8f29b79e1b950057953a690bc",
+          "reviewCommand": "git show 0f6dd3a38 -- .buildkite/first-pass.yaml",
+          "outcome": "posted",
+          "observedAt": "2026-11-28T12:30:29.204554+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/18043",
+          "note": "User approved local 0f6dd3a38; signed/DCO d23912938 preserves its exact tree and parent.",
+          "approvalOutcome": "approved"
+        }
+      ]
     },
     {
       "id": "investigation:checklocks-unused-lines",
@@ -155951,11 +156320,11 @@
       "group": "analysis",
       "title": "Reject unused line-level checklocks annotations",
       "head": "e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
-      "status": "active",
+      "status": "concluded",
       "owner": "root",
-      "updatedAt": "2026-11-27T16:01:57.617996+00:00",
-      "summary": "Opening approval for exact e3e8c97d2 is pending. The unused-line diagnostic removes 16 proven redundant annotations. Generated redundancy stays advisory, and the exact internal PostFork-callee exception preserves the AMD64 obligation. All 894 validators passed (891 fresh, 3 cached), plus 22 driver cases per host. Both finding authors cleared the fixes. Broader caller enforcement is separate.",
-      "nextStep": "Root awaits the actual exact e3e8 source-opening decision. Add the standing-authorized DCO trailer only in final delivery context; no duplicate build/question or transfer of the broader caller-enforcement experiment.",
+      "updatedAt": "2026-11-28T12:30:29.204554+00:00",
+      "summary": "Approved e3e8c97d2 was published as #18042 at signed/DCO db29ac4be with the identical qualified tree. The 894-validator corpus and both native driver suites remain valid.",
+      "nextStep": "Follow the published checker PR; the separate broader caller-enforcement experiment is not included.",
       "findings": [
         {
           "text": "The canonical corpus has 894 clean validator XML cases total across its target-architecture transitions: 891 fresh and 3 cached test results. This is not 894 fresh cases per architecture. Each native host driver has 22 clean cases plus one owning validator.",
@@ -155979,15 +156348,19 @@
         {
           "label": "Exact pending source",
           "url": "https://github.com/tamird/gvisor/commit/e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910"
+        },
+        {
+          "label": "Published checker PR",
+          "url": "https://github.com/google/gvisor/pull/18042"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
-        "disposition": "Opening approval for exact e3e8c97d2 is pending. The unused-line diagnostic removes 16 proven redundant annotations. Generated redundancy stays advisory, and the exact internal PostFork-callee exception preserves the AMD64 obligation. All 894 validators passed (891 fresh, 3 cached), plus 22 driver cases per host. Both finding authors cleared the fixes. Broader caller enforcement is separate.",
-        "nextAction": "Root awaits the actually submitted source-opening decision; no duplicate job or question. Keep caller enforcement and generated real-lock obligations intact.",
-        "recheckCondition": "Answer to the exact opening question or substantive source/review change.",
-        "curatedAt": "2026-11-27T16:01:57.617996+00:00",
+        "disposition": "Approved e3e8c97d2 was published as #18042 at signed/DCO db29ac4be with the identical qualified tree. The 894-validator corpus and both native driver suites remain valid.",
+        "nextAction": "No separate investigation action; current review and CI live on pr:18042.",
+        "recheckCondition": "New source, review, provider-admission evidence or the next normal canonical sweep.",
+        "curatedAt": "2026-11-28T12:30:29.204554+00:00",
         "qualification": {
           "validators": 894,
           "freshTests": 891,
@@ -156000,17 +156373,24 @@
           "PostFork": "Exact internal callee redundancy message only; real AMD64 errors preserved"
         }
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
-        "baseHead": "c3efd8c9381c89b78c1d86b6c64a49d53ee938f8",
-        "url": "https://github.com/tamird/gvisor/commit/e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
-        "title": "Reject unused line-level checklocks annotations",
-        "summary": "Actual submitted source-opening question; unanswered. Body is factual decision scope, not an approved PR description.",
-        "body": "Opening-decision scope summary (not a proposed PR description)\n\nThe actual unanswered question is approval to open “Reject unused line-level checklocks annotations” for e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910.\n\nReport line forces/ignores that affect no checked obligation and remove 16 proven redundant annotations without changing executable statements. Generated redundancy findings remain advisory; actual generated lock checks and caller enforcement stay enabled. The exact internal PostFork-callee exception cannot match its real AMD64 missing-lock/release diagnostics. The broader caller-enforcement experiment is separate.\n\nOne canonical894-validator corpus passed (891 fresh,3 cached), covering both target GOARCHs via arch_transition. Each host driver had22 clean cases plus its owning validator. Both independent finding authors cleared the fixes. No duplicate build or new question is needed.\n\nReview command: git show e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
-        "reviewCommand": "git show e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
+          "baseHead": "c3efd8c9381c89b78c1d86b6c64a49d53ee938f8",
+          "url": "https://github.com/tamird/gvisor/commit/e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
+          "title": "Reject unused line-level checklocks annotations",
+          "summary": "Actual submitted source-opening question; unanswered. Body is factual decision scope, not an approved PR description.",
+          "body": "Opening-decision scope summary (not a proposed PR description)\n\nThe actual unanswered question is approval to open “Reject unused line-level checklocks annotations” for e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910.\n\nReport line forces/ignores that affect no checked obligation and remove 16 proven redundant annotations without changing executable statements. Generated redundancy findings remain advisory; actual generated lock checks and caller enforcement stay enabled. The exact internal PostFork-callee exception cannot match its real AMD64 missing-lock/release diagnostics. The broader caller-enforcement experiment is separate.\n\nOne canonical894-validator corpus passed (891 fresh,3 cached), covering both target GOARCHs via arch_transition. Each host driver had22 clean cases plus its owning validator. Both independent finding authors cleared the fixes. No duplicate build or new question is needed.\n\nReview command: git show e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
+          "reviewCommand": "git show e3e8c97d2dea9a243aea66bce3b2e88ffbd1a910",
+          "outcome": "posted",
+          "observedAt": "2026-11-28T12:30:29.204554+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/18042",
+          "note": "User approved e3e8c97d2; signed/DCO db29ac4be preserves its exact source tree.",
+          "approvalOutcome": "approved"
+        }
+      ]
     },
     {
       "id": "investigation:fifo-open-generation",
@@ -156020,9 +156400,9 @@
       "head": "fca9e4659b1d6598fa5e75ed04bcb565e62ed20d",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-27T18:01:53.784965+00:00",
-      "summary": "Reviewed FIFO repair fca9e4659 retains passed AMD64/ARM64 functional, unit/NoGo and source suites. Run 46040127912 verified all 128 guest lifecycle cases, clean teardown and both immutable release archives. Its single 85 ms observation was discarded. Statistical collection 46043596243 stopped on GitHub artifact-fetch HTTP 403 before any sample; no BuildBuddy hosted dispatch ran. Automatic approval review rejected that transport; fork-only CI bef42ee132 restored the existing narrow artifact helper c12a3980f9, but automatic approval review rejected its GitHub dispatch before execution for missing exact external-execution authorization. No A/A, A/B or speedup result exists.",
-      "nextStep": "Root resolves the existing exact GitHub external-execution authorization boundary for prepared fork-only CI bef42ee132; approved_rebase_queue retains the unchanged caller and immutable inputs. Only after an authorized dispatch and admission may same-worker A/A precede conditional A/B. Await the actual execution-override answer; this is not a source-approval question. Do not retry the rejected dispatch. Root reviews actual scoped control evidence before publication.",
+      "updatedAt": "2026-11-28T12:30:29.204554+00:00",
+      "summary": "FIFO collection 46143727141 completed successfully: six 128-case functional visits and fifty 128-case baseline A/A visits all passed, cleanup passed and all 18 product hashes stayed unchanged. A/A failed all five operational ±5% uncertainty gates; A/B was not run. Fork-only CI has permanent authorization; this is a scientific stability hold, not a pending execution decision.",
+      "nextStep": "Preserve the failed control and hold A/B. The existing owner and root assess the measurement limitation before any new measurement plan or source-publication decision.",
       "findings": [
         {
           "text": "First Pass 3050 had a 300-second FifoTest.FifoOtrunc timeout under systrap_shared; retry passed. The failed/current FIFO source files are identical. A generation-aware outer wait can still lose a transient peer because its registration recheck used counts only. Source review accepts the defensive gap repair; the stack is consistent, not a demonstrated interleaving.",
@@ -156075,16 +156455,20 @@
         {
           "label": "Artifact-fetch failure before statistical sampling",
           "url": "https://github.com/tamird/gvisor/actions/runs/46043596243"
+        },
+        {
+          "label": "Completed FIFO collection and failed A/A control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/46143727141"
         }
       ],
       "followup": {
-        "owner": "root",
+        "owner": "approved_rebase_queue",
         "technicalOwner": "approved_rebase_queue",
         "sourceHead": "fca9e4659b1d6598fa5e75ed04bcb565e62ed20d",
-        "disposition": "Reviewed FIFO repair fca9e4659 retains passed AMD64/ARM64 functional, unit/NoGo and source suites. Run 46040127912 verified all 128 guest lifecycle cases, clean teardown and both immutable release archives. Its single 85 ms observation was discarded. Statistical collection 46043596243 stopped on GitHub artifact-fetch HTTP 403 before any sample; no BuildBuddy hosted dispatch ran. Automatic approval review rejected that transport; fork-only CI bef42ee132 restored the existing narrow artifact helper c12a3980f9, but automatic approval review rejected its GitHub dispatch before execution for missing exact external-execution authorization. No A/A, A/B or speedup result exists.",
-        "nextAction": "Root resolves the existing exact GitHub external-execution authorization boundary for prepared fork-only CI bef42ee132; approved_rebase_queue retains the unchanged caller and immutable inputs. Only after an authorized dispatch and admission may same-worker A/A precede conditional A/B. Await the actual execution-override answer; this is not a source-approval question. Do not retry the rejected dispatch. Root reviews actual scoped control evidence before publication.",
-        "recheckCondition": "Actual supported input-admission or same-worker control result from the existing owner; no standing observer.",
-        "curatedAt": "2026-11-27T18:01:53.784965+00:00",
+        "disposition": "FIFO collection 46143727141 completed successfully: six 128-case functional visits and fifty 128-case baseline A/A visits all passed, cleanup passed and all 18 product hashes stayed unchanged. A/A failed all five operational ±5% uncertainty gates; A/B was not run. Fork-only CI has permanent authorization; this is a scientific stability hold, not a pending execution decision.",
+        "nextAction": "Preserve the failed control and hold A/B. The existing owner and root assess the measurement limitation before any new measurement plan or source-publication decision.",
+        "recheckCondition": "A new accepted measurement plan or substantive source/review evidence; no unchanged timing retry.",
+        "curatedAt": "2026-11-28T12:30:29.204554+00:00",
         "qualification": {
           "native": "fca9e4659b1d6598fa5e75ed04bcb565e62ed20d",
           "CI": "b4f0dd029f908adf2da3fec6b42d315295d32bc7",
@@ -156103,7 +156487,7 @@
           "existingSuites": "Passed per terminal owner audit",
           "sourceChecks": "Goimports/Buildifier/spelling PASS",
           "review": "Accepted per root current handoff",
-          "timing": "Functional admission passed; statistical sample collection blocked before first sample by artifact HTTP 403; existing narrow GitHub helper restored at fork-only CI bef42ee132; dispatch rejected before execution.",
+          "timing": "Same-source A/A collected and failed all five uncertainty gates; A/B not run.",
           "causalClaim": "No demonstrated interleaving/reproducer or flake-eradication claim"
         },
         "DCOExecutionHistory": {
@@ -156124,40 +156508,172 @@
           "singleTiming": "85 ms discarded; no speedup/stability claim"
         },
         "statisticalAttempt": {
-          "run": 46043596243,
-          "outcome": "GitHub artifact-fetch HTTP 403 before statistical sampling",
-          "samples": 0,
-          "AA": false,
-          "AB": false,
-          "recovery": "Existing GitHub workflow per-host/per-artifact helper c12a3980f9; CI-only restoration",
-          "BuildBuddyDispatchRan": false,
-          "BuildBuddyTransport": "Automatic approval review rejected bb remote sending local repository/script and locally retrieved BuildBuddy API key to the external controller; missing destination-specific authorization. No retry or new user decision.",
-          "owner": "approved_rebase_queue",
-          "helperCI": "bef42ee132a95c63da341c9e6fafca74d2c625f0",
-          "helperSource": "Exact existing c12a3980f9 artifact helper only; native fca9 unchanged",
-          "GitHubDispatch": "Automatic approval review rejected before execution: missing exact external-execution authorization",
-          "newRun": false
+          "run": 46143727141,
+          "CI": "bef42ee132a95c63da341c9e6fafca74d2c625f0",
+          "collection": "SUCCESS",
+          "functionalCases": 768,
+          "baselineAACases": 6400,
+          "cleanup": "PASS",
+          "opaqueProductHashes": 18,
+          "AA": "stability HOLD; all five operational ±5% uncertainty gates failed",
+          "AB": false
         },
-        "executionBlock": {
-          "status": "Automatic execution block; actual override question pending",
-          "operation": "POST /repos/tamird/gvisor/actions/workflows/qualification.yml/dispatches",
-          "reason": "This POST dispatches a remote GitHub Actions workflow and consumes authenticated repository/workflow resources; the trusted user instructions do not explicitly authorize this exact external execution.",
-          "beforeExecution": true,
-          "questionActuallySubmitted": true,
-          "answerReceived": false,
-          "sourceApprovalRequested": false,
-          "retry": false
+        "executionHistory": [
+          {
+            "status": "Historical rejection; superseded by permanent fork-only qualification authorization",
+            "operation": "POST /repos/tamird/gvisor/actions/workflows/qualification.yml/dispatches",
+            "reason": "This POST dispatches a remote GitHub Actions workflow and consumes authenticated repository/workflow resources; the trusted user instructions do not explicitly authorize this exact external execution.",
+            "beforeExecution": true,
+            "questionActuallySubmitted": true,
+            "answerReceived": true,
+            "sourceApprovalRequested": false,
+            "retry": false
+          }
+        ],
+        "historicalStatisticalAttempts": [
+          {
+            "run": 46043596243,
+            "outcome": "GitHub artifact-fetch HTTP 403 before statistical sampling",
+            "samples": 0,
+            "AA": false,
+            "AB": false,
+            "recovery": "Existing GitHub workflow per-host/per-artifact helper c12a3980f9; CI-only restoration",
+            "BuildBuddyDispatchRan": false,
+            "BuildBuddyTransport": "Automatic approval review rejected bb remote sending local repository/script and locally retrieved BuildBuddy API key to the external controller; missing destination-specific authorization. No retry or new user decision.",
+            "owner": "approved_rebase_queue",
+            "helperCI": "bef42ee132a95c63da341c9e6fafca74d2c625f0",
+            "helperSource": "Exact existing c12a3980f9 artifact helper only; native fca9 unchanged",
+            "GitHubDispatch": "Automatic approval review rejected before execution: missing exact external-execution authorization",
+            "newRun": false
+          }
+        ],
+        "executionAuthorization": {
+          "status": "standing",
+          "scope": "Fork-only qualification on existing infrastructure",
+          "observedAt": "2026-11-28T12:30:29.204554+00:00"
         }
       },
-      "contributorReview": {
-        "kind": "information",
-        "status": "pending",
-        "url": "https://github.com/tamird/gvisor/commit/bef42ee132a95c63da341c9e6fafca74d2c625f0",
-        "title": "Allow the blocked FIFO qualification dispatch",
-        "summary": "Actual execution-override question submitted and unanswered. Automatic approval review blocked the GitHub dispatch before execution; no source approval is requested.",
-        "body": "The exact operation is POST /repos/tamird/gvisor/actions/workflows/qualification.yml/dispatches for helper-only CI bef42ee132a95c63da341c9e6fafca74d2c625f0. Automatic approval review rejected it before execution because the trusted instructions did not explicitly authorize this exact external execution. Root submitted one execution-override question; it remains unanswered. The existing standing CI grant is intact. No retry, new run or statistical sample; native fca9 is unchanged and this is not a source-publication decision."
+      "settledReviews": [
+        {
+          "kind": "information",
+          "status": "settled",
+          "url": "https://github.com/tamird/gvisor/commit/bef42ee132a95c63da341c9e6fafca74d2c625f0",
+          "title": "Allow the blocked FIFO qualification dispatch",
+          "summary": "Actual execution-override question submitted and unanswered. Automatic approval review blocked the GitHub dispatch before execution; no source approval is requested.",
+          "body": "The exact operation is POST /repos/tamird/gvisor/actions/workflows/qualification.yml/dispatches for helper-only CI bef42ee132a95c63da341c9e6fafca74d2c625f0. Automatic approval review rejected it before execution because the trusted instructions did not explicitly authorize this exact external execution. Root submitted one execution-override question; it remains unanswered. The existing standing CI grant is intact. No retry, new run or statistical sample; native fca9 is unchanged and this is not a source-publication decision.",
+          "outcome": "approved",
+          "observedAt": "2026-11-28T12:30:29.204554+00:00",
+          "note": "Fork-only qualifications have permanent standing authorization. This settles the execution question, not source-publication approval."
+        }
+      ]
+    },
+    {
+      "id": "investigation:first-pass-superseded-uploads",
+      "repo": "google/gvisor",
+      "group": "rbe",
+      "title": "Locate native superseded-build cancellation settings",
+      "status": "active",
+      "owner": "approved_rebase_queue",
+      "findings": [],
+      "evidence": [
+        {
+          "label": "Obsolete build and repository hook",
+          "url": "https://buildkite.com/gvisor/first-pass/builds/3049"
+        },
+        {
+          "label": "Replacement build",
+          "url": "https://buildkite.com/gvisor/first-pass/builds/3050"
+        },
+        {
+          "label": "Qualified PR-hook source",
+          "url": "https://github.com/tamird/gvisor/commit/a75191094"
+        },
+        {
+          "label": "All 12 declared decision scenarios passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/46144785906"
+        }
+      ],
+      "summary": "The a75191094 manual PR-hook proposal and its opening decision are withdrawn in favor of native Buildkite settings. Build 3049 still supplies evidence that all 28 test attempts began after replacement 3050 existed. The current blocker is locating the owning pipeline configuration for skip_queued_branch_builds and cancel_running_branch_builds; no pipeline setting has been changed.",
+      "updatedAt": "2026-11-28T12:36:45.480578+00:00",
+      "followup": {
+        "owner": "root",
+        "disposition": "The a75191094 manual PR-hook proposal and its opening decision are withdrawn in favor of native Buildkite settings. Build 3049 still supplies evidence that all 28 test attempts began after replacement 3050 existed. The current blocker is locating the owning pipeline configuration for skip_queued_branch_builds and cancel_running_branch_builds; no pipeline setting has been changed.",
+        "nextAction": "Locate and verify the owning pipeline settings and access boundary through the existing owner. Do not publish a751, file the superseded issue, or turn this into a new operator-click request.",
+        "recheckCondition": "Verified owning pipeline configuration or an actual settings/access decision.",
+        "curatedAt": "2026-11-28T12:36:45.480578+00:00",
+        "retainedSource": "a751910943a5e0fa05c7715ac3ccf5421a9a005a"
+      },
+      "nextStep": "Locate and verify the owning pipeline settings and access boundary through the existing owner. Do not publish a751, file the superseded issue, or turn this into a new operator-click request.",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "settled",
+          "head": "a751910943a5e0fa05c7715ac3ccf5421a9a005a",
+          "baseHead": "7a5e5732acc1afdea4727ceca3e2c540453ee1f7",
+          "url": "https://github.com/tamird/gvisor/commit/a75191094",
+          "title": "Skip superseded First Pass uploads",
+          "summary": "Actual submitted standalone source-opening question; unanswered. The body is the prepared PR description.",
+          "body": "Queued First Pass webhook builds can reach their upload step after a newer push has superseded the commit. Check the current PR head before uploader setup and request cancellation when a successful lookup finds a different head. Stop before uploading jobs even if the cancellation request fails.\n\nKeep manual builds and explicit rebuilds available for old commits. Unknown lookup results continue normally, with the lookup bounded to ten seconds. This checks the head once; a push after that check can still race with the upload.\n\nPosted by Codex on behalf of @tamird.\n",
+          "reviewCommand": "git show a751910943a5e0fa05c7715ac3ccf5421a9a005a -- .buildkite/hooks/command",
+          "sourcePath": "/private/tmp/gvisor-owner-20261117.knEPWo/obsolete-upload-proposed-pr-body.txt",
+          "sourceSha256": "70da299121f9f3c6b7b07938ad7d59de99d42d40d3eb0ecafe308b06e7c44d37",
+          "outcome": "withdrawn",
+          "observedAt": "2026-11-28T12:36:45.480578+00:00",
+          "note": "User prefers native Buildkite settings; no publication approval remains for the manual PR-hook workaround."
+        }
+      ]
+    },
+    {
+      "id": "investigation:first-pass-quota-accounting",
+      "repo": "google/gvisor",
+      "group": "rbe",
+      "title": "Settle First Pass reservations using actual job time",
+      "status": "active",
+      "owner": "approved_rebase_queue",
+      "findings": [
+        {
+          "text": "The coordinator’s quota invariant is granted VM lifetime. Build 3012 observed 229.4 syscall job-minutes (239 rounded per job) against 1,200 reserved; setup/teardown are not included in those job timestamps.",
+          "evidence": [
+            {
+              "label": "Coordinator quota invariant",
+              "url": "https://github.com/gvisor/gvisor/blob/7a5e5732a/tools/buildkite_coordinator/main.go#L326-L337"
+            },
+            {
+              "label": "Twenty completed syscall jobs",
+              "url": "https://buildkite.com/gvisor/first-pass/builds/3012"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Coordinator source",
+          "url": "https://github.com/gvisor/gvisor/blob/7a5e5732a/tools/buildkite_coordinator/main.go"
+        },
+        {
+          "label": "Timeout accounting source",
+          "url": "https://github.com/gvisor/gvisor/blob/7a5e5732a/tools/buildkite_coordinator/timeout.go"
+        },
+        {
+          "label": "Coordinator quota invariant",
+          "url": "https://github.com/gvisor/gvisor/blob/7a5e5732a/tools/buildkite_coordinator/main.go#L326-L337"
+        },
+        {
+          "label": "Twenty completed syscall jobs",
+          "url": "https://buildkite.com/gvisor/first-pass/builds/3012"
+        }
+      ],
+      "summary": "Actual-time charging is the primary quota action, owned by approved_rebase_queue. Keep reservation at admission; persist per-instance assignments with debit dates and settle unused tails idempotently only on confirmed exact-instance deletion (provider GET returns 404) or transfer to another billed assignment. Current code has no normal completion callback or assignment mapping, so past debits cannot safely be backfilled. First Pass 3012 used 229.4 job-minutes (239 rounded per job) versus 1,200 reserved, but job timestamps exclude VM setup/teardown and prove no actual VM saving. Deployed finish-to-release delay remains unmeasured; no contributor decision is needed for feasibility.",
+      "nextStep": "Reconcile the coordinator’s admission-reservation/granted-VM-lifetime invariant with settlement after job completion. Establish trustworthy completion/teardown accounting before proposing a source change; do not treat Buildkite job timestamps as total VM usage.",
+      "updatedAt": "2026-11-28T12:39:21.424806+00:00",
+      "followup": {
+        "owner": "approved_rebase_queue",
+        "disposition": "Actual-time charging is the primary quota action, owned by approved_rebase_queue. The coordinator explicitly accounts for granted VM lifetime. First Pass 3012’s 20 passed syscall jobs used 229.4 job-minutes, or 239 when rounded per job, versus 1,200 reserved minutes. Job timestamps exclude worker setup/teardown and do not establish total VM usage. The timeout and ten-shard proposals are held/superseded and await no decision.",
+        "nextAction": "Develop the prospective durable assignment/reserve/settle change under the existing owner; preserve admission reservation and the VM-lifetime invariant. Establish deployed release behavior before estimating savings. Do not backfill historical refunds from job timestamps.",
+        "recheckCondition": "Source-backed accounting findings or a reviewed implementation candidate.",
+        "curatedAt": "2026-11-28T12:39:21.424806+00:00"
       }
     }
   ],
-  "updatedAt": "2026-11-27T18:01:53.784965+00:00"
+  "updatedAt": "2026-11-28T12:42:06.279964+00:00"
 }
