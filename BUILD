@@ -158,10 +158,12 @@ native_test(
         "-shellcheck=",
         "-pyflakes=",
     ] + ['"$(rootpath %s)"' % workflow for workflow in GITHUB_WORKFLOWS],
-    # These optional configuration files may be absent.
+    # Local action metadata and optional project configuration may be absent.
     # buildifier: disable=constant-glob
     data = GITHUB_WORKFLOWS + [":actionlint_project_marker"] + glob(
         [
+            ".github/actions/**/action.yaml",
+            ".github/actions/**/action.yml",
             ".github/actionlint.yaml",
             ".github/actionlint.yml",
         ],

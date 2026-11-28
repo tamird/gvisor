@@ -40,8 +40,12 @@ jobs:
     - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
       with:
         go-version-file: 'go.mod'
+    - uses: ./.github/actions/setup-bazel
+
     - run: tools/go_branch.sh
-    - run: git checkout go && git clean -xf . && go build ./...
+    - run: |
+        git worktree add --detach "$RUNNER_TEMP/go-build" refs/heads/go
+        go -C "$RUNNER_TEMP/go-build" build ./...
     - if: ${{ success() }}
       run: |
         jq -nc '{"state": "success", "context": "go tests"}' | \
@@ -74,8 +78,12 @@ jobs:
     - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
       with:
         go-version-file: 'go.mod'
+    - uses: ./.github/actions/setup-bazel
+
     - run: tools/go_branch.sh
-    - run: git checkout go && git clean -xf . && go build ./...
+    - run: |
+        git worktree add --detach "$RUNNER_TEMP/go-build" refs/heads/go
+        go -C "$RUNNER_TEMP/go-build" build ./...
     # The commits of the Go branch that are not in the repository.
     - run: git bundle create "${RUNNER_TEMP}/go.bundle" refs/remotes/origin/go..refs/heads/go
     - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

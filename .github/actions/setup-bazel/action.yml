@@ -1,0 +1,20 @@
+name: Set up Bazel caches
+description: Restore Bazel caches for native and Docker-wrapped builds.
+runs:
+  using: composite
+  steps:
+  - uses: bazel-contrib/setup-bazel@f34d6a05eae3c24acab7fa54587492daeaeffdab # 0.19.2
+    with:
+      bazelisk-cache: true
+      disk-cache: true
+      repository-cache: true
+      # Bazelisk is preinstalled; do not export the job's GitHub token.
+      token: ''
+  - name: Share caches with the Docker builder
+    shell: bash
+    run: |
+      mkdir -p "$HOME/.cache/bazel-disk" "$HOME/.cache/bazel-repo"
+      {
+        echo "BAZEL_DISK_CACHE=$HOME/.cache/bazel-disk"
+        echo "BAZEL_REPOSITORY_CACHE=$HOME/.cache/bazel-repo"
+      } >> "$GITHUB_ENV"
