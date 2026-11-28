@@ -61,6 +61,7 @@ steps:
   # System call tests.
   - <<: *common
     label: ":toolbox: System call tests (AMD64)"
+    timeout_in_minutes: 45
     command: make OPTIONS=--config=syscalls-amd64 syscall-tests
     parallelism: 20
 
