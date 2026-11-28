@@ -8,7 +8,6 @@ name: Dependency licenses
     branches:
       - master
       - "release/**"
-      - "review/actions-cache-shared-64d0355994"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

@@ -7,6 +7,7 @@ name: "Go"
   push:
     branches:
       - master
+      - "review/actions-cache-shared-64d0355994"
   pull_request:
     branches:
       - master
@@ -20,22 +21,15 @@ permissions: {}
 
 jobs:
   generate:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
-      statuses: write
+      contents: read
     steps:
-    - run: |
-        jq -nc '{"state": "pending", "context": "go tests"}' | \
-        curl -sL -X POST -d @- \
-            -H "Content-Type: application/json" \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "$STATUSES_URL"
-      env:
-        STATUSES_URL: ${{ github.event.pull_request.statuses_url }}
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 0
+        ref: e62e0bfb6f71092bcf09d285bc6c98aa831f6512
         persist-credentials: false
     - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
       with:
@@ -43,28 +37,18 @@ jobs:
     - uses: ./.github/actions/setup-bazel
 
     - run: tools/go_branch.sh
-    - run: git checkout go && git clean -xf . && go build ./...
-    # setup-bazel hashes source manifests again when saving its caches.
-    - if: always()
-      run: git checkout --detach "$GITHUB_SHA"
-    - if: ${{ success() }}
+    - run: |
+        git worktree add --detach "$RUNNER_TEMP/go-build" refs/heads/go
+        go -C "$RUNNER_TEMP/go-build" build ./...
+    - name: Verify native source and worktree
       run: |
-        jq -nc '{"state": "success", "context": "go tests"}' | \
-        curl -sL  -X POST -d @- \
-            -H "Content-Type: application/json" \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "$STATUSES_URL"
-      env:
-        STATUSES_URL: ${{ github.event.pull_request.statuses_url }}
-    - if: ${{ failure() }}
-      run: |
-        jq -nc '{"state": "failure", "context": "go tests"}' | \
-        curl -sL  -X POST -d @- \
-            -H "Content-Type: application/json" \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "$STATUSES_URL"
-      env:
-        STATUSES_URL: ${{ github.event.pull_request.statuses_url }}
+        test "$(git rev-parse HEAD)" = e62e0bfb6f71092bcf09d285bc6c98aa831f6512
+        git diff --exit-code
+        git diff --cached --exit-code
+        test -f .github/actions/setup-bazel/action.yml
+        test -f .bazelversion
+        test "$(git -C "$RUNNER_TEMP/go-build" rev-parse HEAD)" = "$(git rev-parse refs/heads/go)"
+        git worktree list
 
   build:
     if: github.event_name == 'push'
@@ -75,19 +59,38 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 0
+        ref: e62e0bfb6f71092bcf09d285bc6c98aa831f6512
         persist-credentials: false
     - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
       with:
         go-version-file: 'go.mod'
     - uses: ./.github/actions/setup-bazel
 
+    - name: Check workflow sources
+      run: bazel test --test_output=errors //:github_actions_test //:github_workflows_test
     - run: tools/go_branch.sh
-    - run: git checkout go && git clean -xf . && go build ./...
-    # setup-bazel hashes source manifests again when saving its caches.
-    - if: always()
-      run: git checkout --detach "$GITHUB_SHA"
+    - run: |
+        git worktree add --detach "$RUNNER_TEMP/go-build" refs/heads/go
+        go -C "$RUNNER_TEMP/go-build" build ./...
+    - name: Verify native source and worktree
+      run: |
+        test "$(git rev-parse HEAD)" = e62e0bfb6f71092bcf09d285bc6c98aa831f6512
+        git diff --exit-code
+        git diff --cached --exit-code
+        test -f .github/actions/setup-bazel/action.yml
+        test -f .bazelversion
+        test "$(git -C "$RUNNER_TEMP/go-build" rev-parse HEAD)" = "$(git rev-parse refs/heads/go)"
+        git worktree list
     # The commits of the Go branch that are not in the repository.
     - run: git bundle create "${RUNNER_TEMP}/go.bundle" refs/remotes/origin/go..refs/heads/go
+    - name: Verify native bundle
+      run: |
+        commit="$(git rev-parse refs/heads/go)"
+        test "$(git rev-list --parents --max-count=1 "$commit")" = "$commit $(git rev-parse refs/remotes/origin/go) e62e0bfb6f71092bcf09d285bc6c98aa831f6512"
+        test -z "$(git ls-tree --name-only "$commit" -- .github)"
+        git bundle verify "$RUNNER_TEMP/go.bundle"
+        test "$(git bundle list-heads "$RUNNER_TEMP/go.bundle" refs/heads/go)" = "$commit refs/heads/go"
+        echo "Native Go bundle $commit validated"
     - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: go-branch
@@ -97,6 +100,7 @@ jobs:
   # Pushes the Go branch. This job has the token, thus it runs no code of the
   # build.
   push:
+    if: false
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
