@@ -25,6 +25,8 @@ jobs:
       with:
         persist-credentials: false
 
+    - uses: ./.github/actions/setup-bazel
+
     # The runner's bazel is bazelisk, which honors .bazelversion.
     - name: Check BUILD files (apply reported diffs with bazel run //:gazelle_fix)
       run: bazel run //:gazelle_check
