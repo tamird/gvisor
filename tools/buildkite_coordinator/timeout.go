@@ -146,6 +146,12 @@ const (
 // If RegisterTimeout returns an error, it is guaranteed that the previous timeout
 // was NOT cleared.
 func (tc *TimeoutController) RegisterTimeout(ctx context.Context, id instanceIdentity, timeout time.Duration, policy TimeoutPolicy) (bool, error) {
+	return tc.RegisterDeadline(ctx, id, time.Now().Add(timeout), policy)
+}
+
+// RegisterDeadline installs an absolute VM expiry, using the same policies as
+// RegisterTimeout. An accounting reservation can cover this exact deadline.
+func (tc *TimeoutController) RegisterDeadline(ctx context.Context, id instanceIdentity, expiry time.Time, policy TimeoutPolicy) (bool, error) {
 	tc.mu.Lock()
 	pt := tc.pendingTimers[id]
 	if pt == nil {
@@ -179,8 +185,6 @@ func (tc *TimeoutController) RegisterTimeout(ctx context.Context, id instanceIde
 		return false, fmt.Errorf("%v was deleted by timeout expiry", id)
 	}
 
-	expiry := time.Now().Add(timeout)
-
 	if pt.timer != nil {
 		switch policy {
 		case ShortenTimeout:
@@ -213,14 +217,16 @@ func (tc *TimeoutController) RegisterTimeout(ctx context.Context, id instanceIde
 //
 // Agents get a timeout whenever they request a job, so such an instance has
 // never requested one (for example, because its startup script failed).
-func (tc *TimeoutController) DeleteUntimedInstances(ctx context.Context, project, agentServiceAccount string) error {
+// The returned complete inventory can be reused even if individual cleanup
+// operations fail. An inventory failure returns nil.
+func (tc *TimeoutController) DeleteUntimedInstances(ctx context.Context, project, agentServiceAccount string) (map[instanceIdentity]time.Time, error) {
 	instances, err := listAllInstances(ctx, tc.svc, project, agentServiceAccount)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	expiries, err := getInstanceExpiryBulk(ctx, tc.svc, slices.Collect(maps.Keys(instances)))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var errs []error
 	now := time.Now()
@@ -242,7 +248,7 @@ func (tc *TimeoutController) DeleteUntimedInstances(ctx context.Context, project
 			log.Printf("Deleting %v, created at %v, since it has no timeout", id, created)
 		}
 	}
-	return errors.Join(errs...)
+	return instances, errors.Join(errs...)
 }
 
 // registerTimeoutLocked schedules the instance to be deleted at the specified time.

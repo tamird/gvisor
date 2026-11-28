@@ -33,6 +33,7 @@ import (
 	"time"
 
 	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/googleapi"
 	monitoring "google.golang.org/api/monitoring/v3"
 	yaml "gopkg.in/yaml.v3"
 	"gvisor.dev/gvisor/pkg/cleanup"
@@ -185,6 +186,16 @@ type AgentRequestJobResponse struct {
 	ArtifactToken       string `json:"artifact_token"`
 }
 
+// idleAgent bounds the lifetime of a VM that was not granted another job.
+func (s *server) idleAgent(w http.ResponseWriter, r *http.Request, id instanceIdentity) {
+	if _, err := s.tc.RegisterTimeout(r.Context(), id, idleTimeout, ShortenTimeout); err != nil {
+		log.Printf("Failed to register idle timeout for %v: %v", id, err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (s *server) handleAgentRequestJob(w http.ResponseWriter, r *http.Request) {
 	idToken, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
 	if !ok {
@@ -209,17 +220,7 @@ func (s *server) handleAgentRequestJob(w http.ResponseWriter, r *http.Request) {
 	// Try to pick a job for the agent
 	jobAssignment, pinAgent := s.pool.assignJob(s.computeSvc, agent)
 	if jobAssignment == nil {
-		// No job currently available for this agent.
-
-		// Set an idle timeout so it doesn't sit there doing nothing when the build finishes.
-		_, err = s.tc.RegisterTimeout(r.Context(), id, idleTimeout, ShortenTimeout)
-		if err != nil {
-			log.Printf("Failed to register idle timeout for %v: %v", id, err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusNoContent)
+		s.idleAgent(w, r, id)
 		return
 	}
 
@@ -259,18 +260,33 @@ func (s *server) handleAgentRequestJob(w http.ResponseWriter, r *http.Request) {
 	// Clamp the buildkite-specified timeout to jobTimeout
 	timeout = min(timeout, jobTimeout)
 
+	var reservation *reservationRef
 	var unaccountCleanup *cleanup.Cleanup
+	now := time.Now()
+	expiry := now.Add(timeout)
 	if !s.pool.trusted(jobAssignment.metadata) {
 		// Account for the job for this author.
 		author := jobAssignment.metadata.author
-		now := time.Now()
-		success, interval, quota, err := s.rc.AccountForTime(r.Context(), author, now, timeout)
+		key, interval, quota, err := s.rc.ReserveTime(r.Context(), author, id, now, expiry)
+		if errors.Is(err, errAllocationOwner) || errors.Is(err, errGrantPending) {
+			s.pool.returnUnattempted(jobAssignment)
+			restoreJobToPoolCleanup.Release()
+			if errors.Is(err, errAllocationOwner) {
+				// Metadata may recover a previously unknown author. Retire this
+				// allocation rather than mixing owners; another VM can take the job.
+				s.idleAgent(w, r, id)
+			} else {
+				// Another grant is still in flight. Do not shorten its VM timeout.
+				w.WriteHeader(http.StatusNoContent)
+			}
+			return
+		}
 		if err != nil {
 			log.Printf("Failed to account for job for author %v: %v", author, err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
-		if !success {
+		if key == nil {
 			// Author is rate-limited!
 
 			// Fail the job in Buildkite.
@@ -282,21 +298,21 @@ func (s *server) handleAgentRequestJob(w http.ResponseWriter, r *http.Request) {
 				restoreJobToPoolCleanup.Release()
 			}
 
-			// Finally, indicate no available job to the agent
-			w.WriteHeader(http.StatusNoContent)
+			s.idleAgent(w, r, id)
 			return
 		}
 
 		// On failure, unaccount for the job
 		c := cleanup.Make(func() {
 			// The request may have been cancelled; unaccount regardless.
-			err := s.rc.UnaccountForTime(context.WithoutCancel(r.Context()), author, now, timeout)
+			err := s.rc.Cancel(context.WithoutCancel(r.Context()), key)
 			if err != nil {
 				log.Printf("Warning: failed to unaccount for job %v for author %v: %v", jobAssignment.jobUUID, author, err)
 			}
 		})
 		defer c.Clean()
 		unaccountCleanup = &c
+		reservation = key
 	}
 
 	// Get a token for the agent to upload artifacts with.
@@ -318,24 +334,24 @@ func (s *server) handleAgentRequestJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Before assigning the job: register a job timeout to kill the agent if it's
-	// not done.
-	_, err = s.tc.RegisterTimeout(r.Context(), id, timeout, ReplaceTimeout)
+	// Activate durably before granting a VM timeout. An ambiguous activation or
+	// any later failure must retain the debit until provider-confirmed release.
+	if reservation != nil {
+		if err := s.rc.Activate(r.Context(), reservation); err != nil {
+			log.Printf("Failed to activate reservation for %v: %v", id, err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		unaccountCleanup.Release()
+	}
+
+	// Install the same absolute deadline that was reserved, without extending
+	// it by time spent provisioning the assignment.
+	_, err = s.tc.RegisterDeadline(r.Context(), id, expiry, ReplaceTimeout)
 	if err != nil {
 		log.Printf("Failed to register timeout for %v: %v", id, err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
-	}
-
-	// Ideally, if any of the below steps fail, we would undo the per-author job
-	// accounting we did since the job didn't run successfully.
-	//
-	// Unfortunately, we can't because once the timeout is reset, the author gets
-	// access to another timeout worth of compute time regardless of the failure.
-	//
-	// So we account for a job even when the below steps fail. Oh well.
-	if unaccountCleanup != nil {
-		unaccountCleanup.Release()
 	}
 
 	// Assign the job to the agent
@@ -422,11 +438,29 @@ func (s *server) runDeleteUntimedInstancesTicker(ctx context.Context) {
 	for {
 		<-ticker
 		ctx, cancel := context.WithTimeout(ctx, deleteUntimedInstancesInterval)
-		err := s.tc.DeleteUntimedInstances(ctx, s.cfg.project, s.cfg.agentServiceAccount)
-		cancel()
+		instances, err := s.tc.DeleteUntimedInstances(ctx, s.cfg.project, s.cfg.agentServiceAccount)
 		if err != nil {
 			log.Printf("Failed to delete instances without timeouts: %v", err)
 		}
+		if instances == nil {
+			cancel()
+			continue
+		}
+		inventory := make(map[reservedInstance]struct{}, len(instances))
+		for id := range instances {
+			inventory[id.reservedInstance()] = struct{}{}
+		}
+		if err := s.rc.Reconcile(ctx, inventory, func(ctx context.Context, id reservedInstance) (time.Time, error) {
+			_, err := s.computeSvc.Instances.Get(id.Project, id.Zone, id.ID).Context(ctx).Do()
+			var apiErr *googleapi.Error
+			if errors.As(err, &apiErr) && apiErr.Code == http.StatusNotFound {
+				return time.Now(), nil
+			}
+			return time.Time{}, err
+		}); err != nil {
+			log.Printf("Failed to reconcile compute reservations: %v", err)
+		}
+		cancel()
 	}
 }
 

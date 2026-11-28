@@ -225,14 +225,16 @@ func (p *JobPool) count() map[string]uint {
 	return counts
 }
 
-// addLocked implements add.
+// addLocked inserts a reserved job and optionally advances its retry budget.
 //
-// p.mu must be held.
-func (p *JobPool) addLocked(queue string, uuid BuildUUID, metadata BuildMetadata, jobID JobUUID, token JobAcquisitionToken) bool {
-	if token.attempts >= jatMaxAttempts {
-		return false
+// +checklocks:p.mu
+func (p *JobPool) addLocked(queue string, uuid BuildUUID, metadata BuildMetadata, jobID JobUUID, token JobAcquisitionToken, countAttempt bool) bool {
+	if countAttempt {
+		if token.attempts >= jatMaxAttempts {
+			return false
+		}
+		token.attempts++
 	}
-	token.attempts++
 
 	q := p.queues[queue]
 	builds := q.untrustedBuilds
@@ -253,7 +255,15 @@ func (p *JobPool) addLocked(queue string, uuid BuildUUID, metadata BuildMetadata
 func (p *JobPool) add(queue string, uuid BuildUUID, metadata BuildMetadata, jobID JobUUID, token JobAcquisitionToken) bool {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	return p.addLocked(queue, uuid, metadata, jobID, token)
+	return p.addLocked(queue, uuid, metadata, jobID, token, true)
+}
+
+// returnUnattempted makes intentionally unassigned work available again without
+// consuming the retry budget of its job acquisition token.
+func (p *JobPool) returnUnattempted(job *JobAssignment) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.addLocked(job.queue, job.buildUUID, job.metadata, job.jobUUID, job.jat, false)
 }
 
 // jobIDsLocked returns a list of all jobs present in the pool.
@@ -603,7 +613,7 @@ func (s *BuildkiteStack) Replenish(ctx context.Context, pool *JobPool, listLimit
 	// Add every job to the pool
 	for jobUUID, token := range tokens {
 		c := candidates[jobUUID]
-		pool.addLocked(c.queue, c.build, c.metadata, jobUUID, token)
+		pool.addLocked(c.queue, c.build, c.metadata, jobUUID, token, true)
 	}
 	log.Printf("Reserved %d jobs and added %d to the pool", len(reserved), len(tokens))
 
