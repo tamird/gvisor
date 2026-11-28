@@ -1621,16 +1621,17 @@ function drawReviewPlans() {
   const counts = new Map();
   for (const plan of plans) for (const person of plan.candidates) counts.set(person.login, (counts.get(person.login) || 0) + 1);
   chooser.replaceChildren(new Option("All reviewers", ""));
-  for (const [login, count] of [...counts].sort(([a], [b]) => a.localeCompare(b))) chooser.add(new Option(`@${login} · ${count} PRs`, login));
+  for (const [login, count] of [...counts].sort(([a], [b]) => a.localeCompare(b))) chooser.add(new Option(`@${login} · ${count} matches before filters`, login));
   if (!counts.has(reviewerFilter)) reviewerFilter = "";
   chooser.value = reviewerFilter;
-  const shown = reviewerFilter ? plans.filter(plan => plan.candidates.some(person => person.login === reviewerFilter)) : plans;
-  const copyable = shown.filter(plan => reviewerFilter && ($("review-include-requested").checked || !plan.candidates.find(person => person.login === reviewerFilter).requested)
-    && !activeReviewHold(plan.node, plan.node.github));
+  const matching = reviewerFilter ? plans.filter(plan => plan.candidates.some(person => person.login === reviewerFilter)) : plans;
+  const shown = reviewerFilter ? matching.filter(plan => ($("review-include-requested").checked
+    || !plan.candidates.find(person => person.login === reviewerFilter).requested)
+    && !activeReviewHold(plan.node, plan.node.github)) : matching;
   $("review-copy-control").hidden = !reviewerFilter;
-  $("review-copy").value = copyable.map(plan => plan.node.url).join("\n");
-  $("review-copy").rows = Math.min(12, Math.max(3, copyable.length));
-  $("review-copy-note").textContent = `${copyable.length} PRs for @${reviewerFilter}. ${$("review-include-requested").checked ? "Already-requested reviews included for follow-up." : "Already-requested reviews omitted."} Explicitly held requests are omitted. Drag to select any consecutive lines, then copy.`;
+  $("review-copy").value = reviewerFilter ? shown.map(plan => plan.node.url).join("\n") : "";
+  $("review-copy").rows = Math.min(12, Math.max(3, shown.length));
+  $("review-copy-note").textContent = `${shown.length} PRs, in the same order as the table below. Reviewer totals include already-requested and held reviews. ${$("review-include-requested").checked ? "Already-requested reviews included for follow-up." : "Already-requested reviews omitted."} Explicitly held requests are omitted. Drag to select any consecutive lines, then copy.`;
   const body = $("review-plan-body"); body.replaceChildren();
   for (const plan of shown) {
     const { node, agreements } = plan, tr = element("tr"); tr.dataset.node = node.id;
@@ -1652,7 +1653,7 @@ function drawReviewPlans() {
     if (activeReviewHold(node, node.github)) people.append(element("p", "notice", "Review outreach is explicitly held."));
     tr.append(name, value, effort, people); body.append(tr);
   }
-  $("review-plan-count").textContent = `${shown.length} of ${plans.length} maintainer-attention PRs${reviewerFilter ? " · @" + reviewerFilter : ""}`;
+  $("review-plan-count").textContent = reviewerFilter ? `${shown.length} visible of ${matching.length} matches · @${reviewerFilter}` : `${shown.length} maintainer-attention PRs`;
   return shown.map(plan => plan.node);
 }
 
