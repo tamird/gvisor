@@ -2,6 +2,7 @@ load("@bazel_lib//lib:write_source_files.bzl", "write_source_files")
 load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_license//rules:license.bzl", "license")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//tools:defs.bzl", "build_test", "gazelle", "go_path")
 load("//tools:gazelle.bzl", "GAZELLE_PACKAGES")
 load("//tools:release.bzl", "RELEASE_RUNSC", "RELEASE_SIDECARS", "release_files")
@@ -270,6 +271,7 @@ toolchain(
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
     ],
+    target_settings = ["//tools/bazeldefs:rbe_native_c_disabled"],
     toolchain = "@crosstool//:cc-compiler-k8",
     toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
 )
@@ -280,6 +282,41 @@ toolchain(
         "@platforms//os:linux",
         "@platforms//cpu:aarch64",
     ],
+    target_settings = ["//tools/bazeldefs:rbe_native_c_disabled"],
+    toolchain = "@crosstool//:cc-compiler-aarch64",
+    toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+)
+
+# Image-provided C tools execute on their native CPU under RBE. Keep the
+# unconstrained cross toolchains available for ordinary host builds.
+toolchain(
+    name = "cc_toolchain_k8_rbe",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+        "//tools/bazeldefs:rbe_ubuntu24_c",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    target_settings = ["//tools/bazeldefs:rbe_native_c_enabled"],
+    toolchain = "@crosstool//:cc-compiler-k8",
+    toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+)
+
+toolchain(
+    name = "cc_toolchain_aarch64_rbe",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+        "//tools/bazeldefs:rbe_ubuntu24_c",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+    ],
+    target_settings = ["//tools/bazeldefs:rbe_native_c_enabled"],
     toolchain = "@crosstool//:cc-compiler-aarch64",
     toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
 )
@@ -334,4 +371,13 @@ exports_files([
 exports_files(
     [".clang-format"],
     visibility = ["//tools:__pkg__"],
+)
+
+sh_test(
+    name = "obsolete_upload_test",
+    srcs = [".github/qualification/obsolete_upload_test.sh"],
+    data = [
+        ".buildkite/hooks/libhook",
+        ".buildkite/hooks/pre-command",
+    ],
 )
